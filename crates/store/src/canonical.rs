@@ -346,8 +346,8 @@ pub(crate) const SCHEMA: &str = "
         tender_id INTEGER NOT NULL,
         seq       INTEGER NOT NULL,
         lot_id    INTEGER REFERENCES lots(id),
-        field     TEXT NOT NULL, -- main | additional | place | nature
-        scheme    TEXT NOT NULL, -- cpv | nuts | nature (issue 397)
+        field     TEXT NOT NULL, -- main | additional | place | nature | procedure
+        scheme    TEXT NOT NULL, -- cpv | nuts | nature (issue 397) | procedure (issue 479)
         code      TEXT NOT NULL,
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
@@ -1154,7 +1154,8 @@ pub(crate) const SCHEMA: &str = "
              WHERE b.tender_id = r.tender_id LIMIT 1) AS buyer_name
       FROM v_lot_results r;
 
-    -- CPV, NUTS and nature codes of each current Tender (scheme in ('cpv','nuts','nature')). Joins
+    -- CPV, NUTS, nature and procedure-type codes of each current Tender (scheme in
+    -- ('cpv','nuts','nature','procedure')). Joins
     -- tenders on current_seq directly so a per-tender lookup seeks the satellite's
     -- `_version` index (issue 25); same shape for amounts and dates below.
     DROP VIEW IF EXISTS v_tender_classifications;

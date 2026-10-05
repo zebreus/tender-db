@@ -860,6 +860,95 @@ async fn the_filters_narrow_the_same_way_on_every_collection() {
     assert!(!items(&server.get(&format!("/v1/lots?tender={id}")).await).is_empty());
 }
 
+/// Issue 479: `?procedure_type=` filters Tenders and Lots on the current version's
+/// procedure type (eForms BT-105 vocabulary), is applied rather than ignored,
+/// folds case once at the boundary, takes a comma list, and rejects junk with a
+/// 400. The row and the detail echo the type the filter matched.
+#[tokio::test]
+async fn the_procedure_type_filter_applies_to_tenders_and_lots() {
+    let server = Server::start("procedure-type").await;
+    // The Maltese chain publishes `open` on every notice; the renewals CN is a
+    // separate procedure, negotiated with a prior call.
+    server.ingest_chain().await;
+    server.ingest("eforms/cn-renewals-00660164-2023.xml").await;
+
+    fn ignored(page: &Value) -> Vec<String> {
+        page["ignored_filters"]
+            .as_array()
+            .expect("ignored_filters is always present")
+            .iter()
+            .map(|v| v.as_str().expect("a filter name").to_owned())
+            .collect()
+    }
+    let ids = |page: &Value| -> Vec<i64> {
+        let mut ids: Vec<i64> = items(page).iter().map(|r| r["id"].as_i64().expect("id")).collect();
+        ids.sort_unstable();
+        ids
+    };
+
+    let all = server.get("/v1/tenders").await;
+    assert_eq!(items(&all).len(), 2, "two procedures");
+    let open = server.get("/v1/tenders?procedure_type=open").await;
+    assert!(ignored(&open).is_empty(), "applied, not ignored: {:?}", ignored(&open));
+    assert_eq!(items(&open).len(), 1);
+    assert_eq!(items(&open)[0]["procedure_type"], "open", "the row echoes what it matched");
+    let open_id = items(&open)[0]["id"].as_i64().expect("id");
+
+    let negotiated = server.get("/v1/tenders?procedure_type=neg-w-call").await;
+    assert_eq!(items(&negotiated).len(), 1);
+    assert_eq!(items(&negotiated)[0]["procedure_type"], "neg-w-call");
+    assert_ne!(items(&negotiated)[0]["id"].as_i64(), Some(open_id));
+
+    // The ordered walks (`tenders_ordered`) apply it too, both directions.
+    for sort in ["sort=published_at", "sort=published_at&order=asc"] {
+        let sorted = server.get(&format!("/v1/tenders?procedure_type=open&{sort}")).await;
+        assert!(ignored(&sorted).is_empty(), "{sort}: applied: {:?}", ignored(&sorted));
+        assert_eq!(ids(&sorted), vec![open_id], "{sort}");
+    }
+
+    // Case folds once at the boundary; a comma list is any-of; repeats collapse.
+    assert_eq!(ids(&server.get("/v1/tenders?procedure_type=%20OPEN%20").await), vec![open_id]);
+    assert_eq!(ids(&server.get("/v1/tenders?procedure_type=open,NEG-W-CALL,open").await), ids(&all));
+    // A well-shaped code nobody carries matches nothing (the guard answers it).
+    assert!(items(&server.get("/v1/tenders?procedure_type=innovation").await).is_empty());
+    assert!(items(&server.get("/v1/tenders?procedure_type=us-res-no-tw").await).is_empty());
+    // Junk is a 400, never a pattern or an unfiltered page.
+    for junk in ["%25", "", "open,", "op%20en", "open;restricted", "a,b,c,d,e,f,g,h,i,j,k"] {
+        assert_eq!(server.status(&format!("/v1/tenders?procedure_type={junk}")).await, 400, "{junk:?}");
+    }
+    assert_eq!(
+        server.status(&format!("/v1/tenders?procedure_type={}", "a".repeat(33))).await,
+        400,
+        "over 32 characters"
+    );
+
+    // Lots inherit their Tender's procedure type.
+    let lots = server.get("/v1/lots?procedure_type=neg-w-call").await;
+    assert!(ignored(&lots).is_empty(), "lots honour it: {:?}", ignored(&lots));
+    assert!(!items(&lots).is_empty());
+    assert!(items(&lots).iter().all(|l| l["tender_id"].as_i64() != Some(open_id)));
+    let open_lots = server.get("/v1/lots?procedure_type=open").await;
+    assert!(!items(&open_lots).is_empty());
+    assert!(items(&open_lots).iter().all(|l| l["tender_id"].as_i64() == Some(open_id)));
+    // Organizations and notices carry no procedure type: accepted, named ignored.
+    assert_eq!(ignored(&server.get("/v1/organizations?procedure_type=open").await), ["procedure_type"]);
+    assert_eq!(ignored(&server.get("/v1/notices?procedure_type=open").await), ["procedure_type"]);
+
+    // The detail serves the same value, and the classification row behind it.
+    let detail = server.get(&format!("/v1/tenders/{open_id}")).await;
+    assert_eq!(detail["procedure_type"], "open");
+    let procedure: Vec<&Value> = detail["classifications"]
+        .as_array()
+        .expect("classifications")
+        .iter()
+        .filter(|c| c["scheme"] == "procedure")
+        .collect();
+    assert_eq!(procedure.len(), 1, "one procedure type per version: {procedure:?}");
+    assert_eq!(procedure[0]["code"], "open");
+    assert_eq!(procedure[0]["field"], "procedure");
+    assert!(procedure[0]["lot"].is_null(), "Tender scope");
+}
+
 /// ADR-0013 D3: `?lang=` prefers a language for the picked titles (list and
 /// detail), normalizes ISO 639-1 input through the fold's own vocabulary map,
 /// falls back down the chain when the language is absent, and rejects junk

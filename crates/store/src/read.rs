@@ -192,6 +192,14 @@ pub struct Filter {
     /// normalized: `HRK` finds the tenders that were published in kuna, however
     /// they convert. Tenders/Lots; the other collections name it ignored.
     pub currency: Option<String>,
+    /// Exact-match the procedure type (issue 479): eForms `procurement-procedure-type`
+    /// codes as the fold stores them (lowercase, e.g. `open`, `neg-wo-call`,
+    /// `us-res-no-tw`), already trimmed, lowercased and shape-checked by the caller.
+    /// Any of the codes matches; empty means no filter. Decided at the CURRENT
+    /// version's Tender scope — the latest MAPPED type after supersession (a notice
+    /// whose value the fold does not map emits nothing and keeps the earlier one).
+    /// Tenders/Lots; the other collections name it ignored.
+    pub procedure_type: Vec<String>,
     /// Preferred language for the PICKED text values (ADR-0013 D3): ISO
     /// 639-2/T uppercase (`DEU`), normalized by the caller. A PROJECTION
     /// selector, not a predicate — it changes which title a row serves, never
@@ -241,6 +249,13 @@ pub struct Filter {
     /// EXISTS still decides membership, exactly like the issue-223
     /// participation seeds.
     pub country_seed: bool,
+    /// The same drive-side decision for `procedure_type` (issue 479): set by the
+    /// async entries when a capped count says the codes are sparse enough to
+    /// enumerate their tenders off the `(scheme, code)` index — `innovation`,
+    /// `comp-dial` — instead of testing an EXISTS per walked row. A superset seed
+    /// (any version carried the code); the head-version EXISTS still decides.
+    /// Never set by callers, and below the country seed in precedence.
+    pub procedure_seed: bool,
 }
 
 /// Which slice of the versioned layer a collection query reads.
@@ -356,6 +371,11 @@ pub struct TenderRow {
     /// shows why it matched a `cpv`/`country` filter (issue 49).
     pub cpv: Vec<String>,
     pub country: Vec<String>,
+    /// The version's procedure type at Tender scope (issue 479): eForms'
+    /// `procurement-procedure-type` code, or `None` where no notice of the Tender
+    /// up to this version published a mapped one. Echoed so a list row shows why
+    /// it matched `procedure_type`.
+    pub procedure_type: Option<String>,
 }
 
 /// A Lot in its current (or a specific) version — the `/v1/lots` item.
@@ -665,14 +685,14 @@ impl Collection {
             // no meaning.
             Collection::Tenders => &[
                 "source", "country", "cpv", "buyer", "winner", "bidder", "status",
-                "min_value", "max_value", "currency", "kind", "publication_id",
+                "min_value", "max_value", "currency", "procedure_type", "kind", "publication_id",
                 "published_after", "published_before", "deadline_after", "deadline_before",
             ],
             // `lots_query` adds the `tender` containment shape (issue 115) to the same
             // version predicates, so the whole vocabulary applies here.
             Collection::Lots => &[
                 "source", "country", "cpv", "buyer", "winner", "bidder", "status",
-                "min_value", "max_value", "currency", "kind", "tender",
+                "min_value", "max_value", "currency", "procedure_type", "kind", "tender",
             ],
             // `organizations_query`: the identity-shaped predicates. `identifier` is
             // the official id value (issue 217), paired with `kind` for the scheme. The
@@ -716,7 +736,7 @@ impl Collection {
 /// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
 /// absent here, so a field added with `..` is caught by a test even though it compiled.
 #[cfg(test)]
-pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 22] = [
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 24] = [
     ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
     ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
     ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
@@ -732,6 +752,9 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 22] = [
     ("currency", "EXISTS over tender_version_amounts per row -> isolates (ADR-0014 D5). \
                   Guarded by the projection-maintained present-set tender_currency_presence \
                   rather than by an index on the column (issue 371)"),
+    ("procedure_type", "EXISTS over tender_version_classifications per row -> isolates (issue 479). \
+                        Guarded by an exact-code seek on the (scheme, code) index; a sparse code \
+                        drives the read from that index (procedure_seed)"),
     ("kind", "Tenders: t.kind, NO index -> isolates. Lots: vl.kind, JOINED -> isolates. \
               Organizations/Notices: index-served"),
     ("tender", "the containment shape (issue 115), index-served -> never isolates"),
@@ -761,6 +784,8 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 22] = [
     ("country_seed", "not a request parameter: the async entries' drive-side decision \
                       (issue 273 step 2), set AFTER isolation routing consults `walks`, \
                       so it can never change where a read runs — only how fast it is there"),
+    ("procedure_seed", "not a request parameter: the procedure_type twin of country_seed \
+                        (issue 479), decided after isolation routing like it"),
 ];
 
 /// One isolation-routed filter: a filter that, on this collection, sends the request
@@ -811,6 +836,7 @@ pub enum Isolated {
     Winner,
     Bidder,
     Currency,
+    ProcedureType,
     Status,
     MinValue,
     MaxValue,
@@ -846,6 +872,7 @@ pub fn isolation_routed(collection: Collection, f: &Filter) -> Vec<Isolated> {
         min_value,
         max_value,
         currency,
+        procedure_type,
         kind,
         tender,
         // A projection selector, not a predicate (ADR-0013 D3): it changes
@@ -865,6 +892,9 @@ pub fn isolation_routed(collection: Collection, f: &Filter) -> Vec<Isolated> {
         // routing has already run, so it cannot change where a read executes —
         // a seeded country read still runs isolated, it is just fast there.
         country_seed: _,
+        // The procedure_type twin of `country_seed` (issue 479): decided after
+        // routing, so it can only make an isolated read faster.
+        procedure_seed: _,
     } = f;
 
     // The `version_predicates` set: `EXISTS` subqueries evaluated PER ROW over the
@@ -883,6 +913,7 @@ pub fn isolation_routed(collection: Collection, f: &Filter) -> Vec<Isolated> {
         (Isolated::Winner, winner.is_some()),
         (Isolated::Bidder, bidder.is_some()),
         (Isolated::Currency, currency.is_some()),
+        (Isolated::ProcedureType, !procedure_type.is_empty()),
         (Isolated::Status, status.is_some()),
         (Isolated::MinValue, min_value.is_some()),
         (Isolated::MaxValue, max_value.is_some()),
@@ -1141,6 +1172,20 @@ fn version_predicates(
             q.push(&format!(" AND {value_col} {op} ?"), [Value::Integer(eur_cents)]);
         }
     }
+    if !f.procedure_type.is_empty() {
+        // Issue 479: the procedure type the CURRENT version carries at Tender scope —
+        // the fold elects at most one per notice and supersession carries it, so
+        // this is the latest MAPPED type (an unmapped value keeps the earlier one). Exact codes, never a pattern. Lots
+        // inherit their Tender's (no source publishes a lot-level procedure type).
+        let marks = vec!["?"; f.procedure_type.len()].join(", ");
+        q.push(
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_classifications c
+                           WHERE c.tender_id = {tid} AND c.seq = {seq}
+                             AND c.scheme = 'procedure' AND c.lot_id IS NULL
+                             AND c.code IN ({marks}))"),
+            f.procedure_type.iter().map(|c| t(c.as_str())).collect::<Vec<_>>(),
+        );
+    }
     if let Some(currency) = &f.currency {
         // The PUBLISHED currency (ADR-0014 D5): any amount row of the current
         // version in that currency, tender-level or lot-level — the same
@@ -1316,6 +1361,11 @@ async fn reachable(conn: &Connection, filter: &Filter, collection: Collection) -
                 org_reachable(conn, "tender_version_bid_parties", filter.bidder).await?
             }
             Isolated::Currency => currency_reachable(conn, filter.currency.as_deref()).await?,
+            // Issue 479: an exact code is one seek on `(scheme, code)` — a code no
+            // classification row carries (a typo, a code of a list the fold does not
+            // map) answers empty without the walk. Ignores the version and the
+            // Tender scope, so it is a superset in the safe direction.
+            Isolated::ProcedureType => procedure_reachable(conn, &filter.procedure_type).await?,
             // Issue 275 (measured 2026-08-25): `?source=<absent>` on LOTS ran 33.4s to
             // the shed — the lots shape tests source through a correlated seek into
             // `tenders` PER CANDIDATE ROW, 13.2M seeks for a value no row carries. The
@@ -1440,6 +1490,29 @@ async fn prefix_reachable(
             "SELECT 1 FROM tender_version_classifications
               WHERE scheme = ? AND code >= ? AND code < ? LIMIT 1",
             vec![t(scheme), t(&low), t(&high)],
+        )
+        .await?
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+/// The `procedure_type` leg (issue 479): does any classification row carry one of
+/// these codes under scheme `procedure`? One exact seek per code on
+/// `tender_version_classifications_code (scheme, code)`. The codes are stored
+/// lowercase and the API lowercases its input, so equality here IS the predicate's
+/// own comparison (no case-variant union, unlike the `LIKE` prefixes).
+async fn procedure_reachable(conn: &Connection, codes: &[String]) -> turso::Result<bool> {
+    if codes.is_empty() {
+        return Ok(true);
+    }
+    for code in codes {
+        if exists(
+            conn,
+            "SELECT 1 FROM tender_version_classifications WHERE scheme = 'procedure' AND code = ? LIMIT 1",
+            vec![t(code)],
         )
         .await?
         {
@@ -1639,7 +1712,18 @@ pub async fn tenders(
     if matches!(scope, Scope::Page { .. }) && !reachable(conn, filter, Collection::Tenders).await? {
         return Ok(Vec::new());
     }
-    let filter = &with_country_seed(conn, filter).await?;
+    // Page-scoped only, like `lots` (issue 275): `Scope::At` reads ONE tender by
+    // primary key for the SSE diff, where a seed bounds nothing — and the capped
+    // seed counts (`country_seed_viable`, issue 479's `procedure_seed_viable` over
+    // up to COUNTRY_SEED_CAP index entries for a dense `open`) would bill every
+    // change classification for nothing. The unseeded At read is the same row.
+    let seeded;
+    let filter = if matches!(scope, Scope::Page { .. }) {
+        seeded = with_country_seed(conn, filter).await?;
+        &seeded
+    } else {
+        filter
+    };
     let q = tenders_query(filter, scope);
     let mut rows = q.rows(conn, tender_row).await?;
     retain_publication_companions(&mut rows, filter);
@@ -1693,6 +1777,7 @@ fn tender_row(row: &turso::Row) -> TenderRow {
         original_lang: opt_text_of(row, 18),
         published: stored_stamp(row, 5, 19),
         dispatched: stored_stamp(row, 15, 21),
+        procedure_type: opt_text_of(row, 24),
     }
 }
 
@@ -1972,7 +2057,12 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
                 (SELECT n.dispatched_has_time FROM notices n WHERE n.id = v.caused_by_notice_id),
                 -- The elected deadline's lot_id: NULL for the procedure's own
                 -- date, a lot for a lot-level one (issue 370 unit 4's scope).
-                {scope}
+                {scope},
+                -- The procedure type at Tender scope (issue 479): at most one per
+                -- version by the fold's election; MIN only makes the pick total.
+                (SELECT MIN(c.code) FROM tender_version_classifications c
+                  WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'procedure'
+                    AND c.lot_id IS NULL)
            FROM {from}
            JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
         cents = elected("cents"),
@@ -2034,9 +2124,63 @@ fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
                 }
                 None => ("tenders t".to_owned(), vec![]),
             },
+            // Issue 479: a sparse procedure type drives from its own index entries
+            // the same way — below the country seed, which already bounds the read.
+            _ if filter.procedure_seed && !filter.procedure_type.is_empty() => {
+                let (hits, params) = procedure_seed_hits(&filter.procedure_type);
+                (format!("{hits} hits\n                               JOIN tenders t ON t.id = hits.tender_id"), params)
+            }
             _ => ("tenders t".to_owned(), vec![]),
         },
     }
+}
+
+/// The sparse-procedure-type `hits` set (issue 479), the tenders and lots seeds'
+/// one construction: UNION ALL of one exact `(scheme, code)` seek per code — the
+/// form `country_seed_hits` measured as index-served, where an OR'd/IN WHERE was
+/// not. A superset (any version that carried the code); the head-version EXISTS
+/// in `version_predicates` decides membership.
+fn procedure_seed_hits(codes: &[String]) -> (String, Vec<Value>) {
+    let branches = codes
+        .iter()
+        .map(|_| {
+            "SELECT tender_id FROM tender_version_classifications
+              WHERE scheme = 'procedure' AND code = ?"
+        })
+        .collect::<Vec<_>>()
+        .join(" UNION ALL ");
+    let params = codes.iter().map(|c| t(c.as_str())).collect();
+    (format!("(SELECT DISTINCT tender_id FROM ({branches}))"), params)
+}
+
+/// Should these procedure codes drive the read (issue 479)? The country seed's
+/// capped count, over exact codes: under [`COUNTRY_SEED_CAP`] index entries the
+/// seed enumerates quickly (`innovation`, `comp-dial`); at the cap the code is
+/// dense (`open`) and an id walk fills a page fast. The same unmeasured crossover
+/// caveat applies — the served latency of a rare code after the backfill is the
+/// test, and issue 408's band bounds the walk either way.
+pub async fn procedure_seed_viable(conn: &Connection, codes: &[String]) -> turso::Result<bool> {
+    if codes.is_empty() {
+        return Ok(false);
+    }
+    let mut total = 0i64;
+    for code in codes {
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*) FROM (
+                   SELECT 1 FROM tender_version_classifications
+                    WHERE scheme = 'procedure' AND code = ? LIMIT ?)",
+                (t(code.as_str()), Value::Integer(COUNTRY_SEED_CAP - total)),
+            )
+            .await?;
+        if let Some(row) = rows.next().await? {
+            total += int(&row, 0);
+        }
+        if total >= COUNTRY_SEED_CAP {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 /// The sparse-country `hits` set the seeded FROM builders share (issue 273
@@ -2125,10 +2269,19 @@ pub async fn country_seed_viable(conn: &Connection, prefix: &str) -> turso::Resu
 async fn with_country_seed(conn: &Connection, filter: &Filter) -> turso::Result<Filter> {
     let mut f = filter.clone();
     f.country_seed = false;
+    f.procedure_seed = false;
     if let Some(prefix) = &filter.country {
         if filter.publication_id.is_none() && participation_seed(filter).is_none() {
             f.country_seed = country_seed_viable(conn, prefix).await?;
         }
+    }
+    // Issue 479: the procedure-type seed, only where no higher seed drives.
+    if !filter.procedure_type.is_empty()
+        && !f.country_seed
+        && filter.publication_id.is_none()
+        && participation_seed(filter).is_none()
+    {
+        f.procedure_seed = procedure_seed_viable(conn, &filter.procedure_type).await?;
     }
     Ok(f)
 }
@@ -2175,6 +2328,7 @@ fn bounded_walk(collection: Collection, filter: &Filter) -> bool {
         && filter.publication_id.is_none()
         && participation_seed(filter).is_none()
         && !filter.country_seed
+        && !filter.procedure_seed
         && (!matches!(collection, Collection::Lots) || filter.tender.is_none())
 }
 
@@ -3256,6 +3410,13 @@ fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
             [Value::Integer(org), Value::Integer(org)],
         );
         return; // the org seed is the tighter one; the country arms stay out
+    }
+    // Issue 479: a sparse procedure type bounds the lots to its tenders. Pushed as
+    // its own conjunct (a superset, like every seed here), so it composes with the
+    // country and open-head arms below rather than displacing them.
+    if filter.procedure_seed && !filter.procedure_type.is_empty() {
+        let (hits, params) = procedure_seed_hits(&filter.procedure_type);
+        q.push(&format!(" AND l.tender_id IN {hits}"), params);
     }
     match (&filter.country, filter.country_seed) {
         (Some(prefix), true) => {
@@ -4786,6 +4947,11 @@ mod head_pointer_plan_tests {
             ("min_value", Filter { min_value: Some(1000), ..base.clone() }),
             ("max_value", Filter { max_value: Some(9000), ..base.clone() }),
             ("currency", Filter { currency: Some("EUR".into()), ..base.clone() }),
+            ("procedure_type", Filter { procedure_type: vec!["open".into()], ..base.clone() }),
+            (
+                "procedure-seeded",
+                Filter { procedure_type: vec!["innovation".into(), "comp-dial".into()], procedure_seed: true, ..base.clone() },
+            ),
             ("publication_id", Filter { publication_id: Some("00018218-2024".into()), ..base.clone() }),
             ("published_after", Filter { published_after: Some(1_754_000_000), ..base.clone() }),
             ("deadline_before", Filter { deadline_before: Some(1_786_000_000), ..base.clone() }),
@@ -5202,5 +5368,136 @@ mod head_pointer_plan_tests {
             let _ = std::fs::remove_file(format!("{path}{s}"));
         }
         assert!(failures.is_empty(), "{} plan(s) failed:\n{}", failures.len(), failures.join("\n"));
+    }
+}
+
+/// Issue 479 review: the procedure seed is a SUPERSET (any version that ever carried
+/// the code) and the head-version EXISTS decides membership. Pinned on a superseded
+/// chain by running every list shape with the seed forced on and forced off — the
+/// two must return the same ids, and an earlier version's code must not match.
+#[cfg(test)]
+mod procedure_seed_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn the_procedure_seed_never_admits_a_superseded_type() {
+        let path = format!("/tmp/tender-db-479-procedure-seed-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        {
+            let db = crate::Db::open(&path).await.unwrap();
+            db.build_tender_indexes().await.unwrap();
+        }
+        let conn = turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        // (tender, procedure code per version; None = the version carries none)
+        //   1: restricted -> neg-wo-call   (head neg-wo-call)
+        //   2: restricted                  (head restricted)
+        //   3: open -> restricted          (head restricted)
+        //   4: open -> none                (head none: a superseded type with nothing after it)
+        let chains: [(i64, &[Option<&str>]); 4] = [
+            (1, &[Some("restricted"), Some("neg-wo-call")]),
+            (2, &[Some("restricted")]),
+            (3, &[Some("open"), Some("restricted")]),
+            (4, &[Some("open"), None]),
+        ];
+        for (id, versions) in chains {
+            let head = versions.len() as i64;
+            conn.execute(
+                "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at)
+                 VALUES (?, 'ted', ?, 'procedure', ?, ?, 1700000000)",
+                (Value::Integer(id), Value::Text(format!("pk-{id}")), Value::Integer(head), Value::Integer(1_700_000_000 + id)),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO lots (id, tender_id, lot_key) VALUES (?, ?, 'LOT-1')",
+                (Value::Integer(100 + id), Value::Integer(id)),
+            )
+            .await
+            .unwrap();
+            for (i, code) in versions.iter().enumerate() {
+                let seq = i as i64 + 1;
+                conn.execute(
+                    "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id)
+                     VALUES (?, ?, ?, ?, ?)",
+                    (
+                        Value::Integer(id),
+                        Value::Integer(seq),
+                        Value::Integer(1_700_000_000 + id),
+                        Value::Text(format!("pub-{id}-{seq}")),
+                        Value::Integer(id * 10 + seq),
+                    ),
+                )
+                .await
+                .unwrap();
+                conn.execute(
+                    "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (?, ?, ?, 'Lot')",
+                    (Value::Integer(id), Value::Integer(seq), Value::Integer(100 + id)),
+                )
+                .await
+                .unwrap();
+                if let Some(code) = code {
+                    conn.execute(
+                        "INSERT INTO tender_version_classifications (tender_id, seq, lot_id, field, scheme, code)
+                         VALUES (?, ?, NULL, 'procedure', 'procedure', ?)",
+                        (Value::Integer(id), Value::Integer(seq), Value::Text((*code).into())),
+                    )
+                    .await
+                    .unwrap();
+                }
+            }
+        }
+
+        async fn shapes(conn: &Connection, f: &Filter) -> [Vec<i64>; 3] {
+            let page = Scope::Page { after: 0, limit: 100 };
+            let mut by_id: Vec<i64> =
+                tenders_query(f, page).rows(conn, tender_row).await.unwrap().iter().map(|r| r.id).collect();
+            let mut ordered: Vec<i64> = tenders_ordered_query(f, HeadOrder::PublishedAt, true, None, 100)
+                .rows(conn, tender_row)
+                .await
+                .unwrap()
+                .iter()
+                .map(|r| r.id)
+                .collect();
+            let mut lots: Vec<i64> =
+                lots_query(f, page).rows(conn, lot_identity_row).await.unwrap().iter().map(|l| l.tender_id).collect();
+            by_id.sort_unstable();
+            ordered.sort_unstable();
+            lots.sort_unstable();
+            [by_id, ordered, lots]
+        }
+
+        for (codes, expected) in [
+            (vec!["restricted"], vec![2i64, 3]),
+            (vec!["neg-wo-call"], vec![1]),
+            (vec!["open"], vec![]),
+            (vec!["open", "neg-wo-call"], vec![1]),
+        ] {
+            let base = Filter {
+                now: 1_756_000_000,
+                procedure_type: codes.iter().map(|c| (*c).to_owned()).collect(),
+                ..Filter::default()
+            };
+            let walked = shapes(&conn, &Filter { procedure_seed: false, ..base.clone() }).await;
+            let seeded = shapes(&conn, &Filter { procedure_seed: true, ..base.clone() }).await;
+            for (name, w, s) in [("tenders", 0, 0), ("tenders_ordered", 1, 1), ("lots", 2, 2)] {
+                assert_eq!(walked[w], expected, "{codes:?} {name}: the walk decides at the head");
+                assert_eq!(seeded[s], walked[w], "{codes:?} {name}: the seed is a superset, never a decider");
+            }
+            // The seeded statement really is the seeded shape (the test is not
+            // comparing the walk with itself).
+            let seeded_filter = Filter { procedure_seed: true, ..base };
+            let (sql, _) = (tenders_query(&seeded_filter, Scope::Page { after: 0, limit: 100 }).sql, ());
+            assert!(sql.contains("hits"), "the seeded tenders read drives from the hits set: {sql}");
+            assert!(
+                lots_query(&seeded_filter, Scope::Page { after: 0, limit: 100 }).sql.contains("l.tender_id IN (SELECT DISTINCT tender_id"),
+                "the seeded lots read carries the IN semi-join"
+            );
+        }
+        drop(conn);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
     }
 }

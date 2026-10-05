@@ -5702,3 +5702,172 @@ fn no_legacy_org_section_publishes_two_name_ids() {
     }
     assert!(direct > 0 && wrapped > 0, "the sweep saw both shapes ({direct} direct, {wrapped} wrapped)");
 }
+
+// ------------------------------------------------- issue 479: the procedure type
+
+/// The current version's Tender-scope procedure types, sorted — what
+/// `?procedure_type=` reads.
+async fn current_procedure_types(db: &Db) -> Vec<String> {
+    let cell = query_text(
+        db,
+        "SELECT group_concat(code, ',') FROM (SELECT c.code FROM tender_version_classifications c
+           JOIN tenders t ON t.id = c.tender_id AND t.current_seq = c.seq
+          WHERE c.scheme = 'procedure' AND c.field = 'procedure' AND c.lot_id IS NULL
+          ORDER BY c.code)",
+    )
+    .await;
+    cell.map(|s| s.split(',').map(str::to_owned).collect()).unwrap_or_default()
+}
+
+/// Issue 479: one real fixture per era through dispatch, parse and the fold — each
+/// era's own procedure field lands as ONE `procedure` classification at Tender
+/// scope in eForms' vocabulary, and the run's tally counts it under its family.
+/// (FTS is covered beside its nature in `tests/fts.rs`.)
+#[tokio::test]
+async fn every_era_folds_its_procedure_type() {
+    // (era, source, fixture, dispatch member path, expected code, tally family)
+    let matrix: &[(&str, &str, &str, &str, Option<&str>, &str)] = &[
+        // BT-105-Procedure `neg-w-call`
+        ("eforms-eu", "ted", "eforms/cn-renewals-00660164-2023.xml", "eforms/cn-renewals-00660164-2023.xml",
+         Some("neg-w-call"), "eforms"),
+        // DÖE eForms-DE 2.1: the same BT-105 id
+        ("eforms-de-2.1", "doe", "doe/eforms-de-2.1-can-15063f7d-0f02-42f6-960a-96e35c9cc374-01.xml",
+         "doe/eforms-de-2.1-can-15063f7d-0f02-42f6-960a-96e35c9cc374-01.xml", Some("open"), "eforms-de-2x"),
+        // DE1-TenderingProcess-ProcedureCode through the alias
+        ("eforms-de-1.1", "doe", "doe/eforms-de-1.1-cn-7d69b0f7.xml", "doe/eforms-de-1.1-cn-7d69b0f7.xml",
+         Some("open"), "eforms-de-1x"),
+        // SDK01-TenderingProcess-ProcedureCode, a national code kept verbatim
+        ("doe-sdk01", "doe", "doe/sdk-0.1-numeric-cn-25599482-1.xml", "doe/sdk-0.1-numeric-cn-25599482-1.xml",
+         Some("de-restricted-wo-call"), "doe-sdk01"),
+        // PR_PROC 4 with PT_NEGOTIATED_WITH_PRIOR_CALL
+        ("r209", "ted", "r209/f05-001315-2019.xml", "r209/f05-001315-2019.xml", Some("neg-w-call"), "r209"),
+        // PR_PROC 2 with PT_RESTRICTED
+        ("r208", "ted", "r208/f02-000333-2014.xml", "r208/f02-000333-2014.xml", Some("restricted"), "r208"),
+        // PR_PROC T, a VEAT
+        ("r208-veat", "ted", "r208/veat-294050-2011.xml", "r208/veat-294050-2011.xml", Some("neg-wo-call"), "r208"),
+        // PR_PROC 9 "Not applicable" on an F07 qualification system: not a type
+        ("r208-f07", "ted", "r208/f07-185353-2013.xml", "r208/f07-185353-2013.xml", None, "r208"),
+        // internal-ojs (May 2008): bare-text CODIF `<PROC>1</PROC>` → `TED-PROC`
+        ("internal-ojs", "ted", "internal_ojs/115165_2008.en", "20080502_2008085.tar.gz/internal_ojs/115165_2008.en",
+         Some("open"), "internal-ojs"),
+        // `<PROC>9</PROC>` on the EEIG notice: not a type, counted unmapped
+        ("internal-ojs-9", "ted", "internal_ojs/114238_2008.en", "20080502_2008085.tar.gz/internal_ojs/114238_2008.en",
+         None, "internal-ojs"),
+        // `PR: 1 - Open procedure`
+        ("text-2008", "ted", "text/2008-cn-723-2008.txt", "en_20080103_001_utf8_org.zip!EN_20080103_2008001_UTF8_ORG",
+         Some("open"), "text"),
+    ];
+    for &(era, source, fixture, member, expected, family) in matrix {
+        let (db, fetch_id, path) = scratch(&format!("procedure-{era}")).await;
+        ingest_as(&db, fetch_id, source, fixture, member).await;
+        let report = project::project(&db, false).await.expect("project");
+        assert_eq!(report.notices, 1, "{era}: one notice folds");
+        assert_eq!(
+            current_procedure_types(&db).await,
+            expected.map(|c| vec![c.to_owned()]).unwrap_or_default(),
+            "{era}: the Tender's procedure type"
+        );
+        assert_eq!(
+            scalar(&db, "SELECT COUNT(*) FROM tender_version_classifications WHERE scheme = 'procedure' AND lot_id IS NOT NULL").await,
+            0,
+            "{era}: never at lot scope"
+        );
+        let rows: Vec<_> = report.procedure.rows().collect();
+        assert_eq!(rows.len(), 1, "{era}: one family counted: {rows:?}");
+        let (counted_family, counts) = rows[0];
+        assert_eq!(counted_family, family, "{era}: the tally's family");
+        assert_eq!(
+            (counts.folded, counts.unmapped, counts.none, counts.conflicting),
+            if expected.is_some() { (1, 0, 0, 0) } else { (0, 1, 0, 0) },
+            "{era}: the tally agrees with the fold"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
+/// Issue 479: DÖE sdk-0.1 also publishes free German text under the same list
+/// name (live notice 26544162, tender 1542904: `beabsichtigte Beschränkte
+/// Ausschreibung`). It is not a code: nothing folds, and the run counts it as
+/// published-but-unmapped rather than as silent.
+#[tokio::test]
+async fn an_sdk01_free_text_procedure_label_folds_nothing_and_is_counted() {
+    let (db, fetch_id, path) = scratch("procedure-sdk01-label").await;
+    let relative = "doe/sdk-0.1-numeric-cn-25599482-1.xml";
+    let bytes = std::fs::read(format!("tests/fixtures/{relative}")).expect("fixture");
+    let text = String::from_utf8(bytes).expect("utf-8 fixture");
+    assert!(text.contains(">de-restricted-wo-call<"), "the fixture still carries its code");
+    let label = text.replace(">de-restricted-wo-call<", ">beabsichtigte Beschränkte Ausschreibung<");
+    ingest_bytes(&db, fetch_id, "doe", relative, label.as_bytes()).await;
+    let report = project::project(&db, false).await.expect("project");
+    assert!(current_procedure_types(&db).await.is_empty(), "a label is not a code");
+    let rows: Vec<_> = report.procedure.rows().collect();
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].0, "doe-sdk01");
+    assert_eq!((rows[0].1.folded, rows[0].1.unmapped, rows[0].1.none), (0, 1, 0));
+    let _ = std::fs::remove_file(&path);
+}
+
+fn ted_code(section: &str, field: &str, code: &str) -> ValueRow {
+    ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Code { list: None, code: code.into() },
+    }
+}
+
+/// Issue 479: the procedure type versions like every classification. A later
+/// notice that states none — an award's `PR_PROC 9` — carries the contract
+/// notice's type forward; a later notice that states a different one replaces it.
+/// And a value published inside a lot section still lands at Tender scope.
+#[tokio::test]
+async fn the_procedure_type_carries_forward_through_a_silent_notice_and_supersedes() {
+    let (db, fetch_id, path) = scratch("procedure-carry").await;
+    // Chain A: CN `PR_PROC 1` (open), then an award that says `9`.
+    let (cn, mut pc) = legacy_cn(fetch_id, "000001-2019", 5, 728_000_000, &[]);
+    if let Parse::Parsed(p) = &mut pc {
+        p.values.push(ted_code("PROCEDURE", "TED-PR_PROC", "1"));
+    }
+    let (award, mut pa) =
+        legacy_award(fetch_id, "000200-2019", 30, "Builders Ltd", 1_500_000, &["2019/S 001-000001"]);
+    if let Parse::Parsed(p) = &mut pa {
+        p.values.push(ted_code("PROCEDURE", "TED-PR_PROC", "9"));
+    }
+    // Chain B: CN `PR_PROC 2` published in a lot section (restricted), then an
+    // award that says `T` (negotiated without a call).
+    let (cn_b, mut pcb) = legacy_cn(fetch_id, "000002-2019", 6, 728_000_000, &[]);
+    if let Parse::Parsed(p) = &mut pcb {
+        p.sections.push(sec("LOT-1", "Lot", Some("PROCEDURE")));
+        p.values.push(ted_code("LOT-1", "TED-PR_PROC", "2"));
+    }
+    let (award_b, mut pab) =
+        legacy_award(fetch_id, "000300-2019", 31, "Roofers Ltd", 900_000, &["2019/S 001-000002"]);
+    if let Parse::Parsed(p) = &mut pab {
+        p.values.push(ted_code("PROCEDURE", "TED-PR_PROC", "T"));
+    }
+    for (n, p) in [(&cn, &pc), (&award, &pa), (&cn_b, &pcb), (&award_b, &pab)] {
+        db.record_notice(n, p).await.expect("record");
+    }
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.tenders, 2, "two chains");
+
+    let per_version = query_text(
+        &db,
+        "SELECT group_concat(line, ' ') FROM (
+           SELECT t.procedure_key || '@' || v.seq || ':' || COALESCE(
+                    (SELECT group_concat(c.code) FROM tender_version_classifications c
+                      WHERE c.tender_id = v.tender_id AND c.seq = v.seq
+                        AND c.scheme = 'procedure' AND c.lot_id IS NULL), '-') AS line
+             FROM tender_versions v JOIN tenders t ON t.id = v.tender_id
+            ORDER BY t.procedure_key, v.seq)",
+    )
+    .await;
+    assert_eq!(
+        per_version.as_deref(),
+        Some("ojs:2019-000001@1:open ojs:2019-000001@2:open ojs:2019-000002@1:restricted ojs:2019-000002@2:neg-wo-call"),
+        "a silent award keeps open; a stated T supersedes restricted"
+    );
+    let r209 = report.procedure.rows().find(|(f, _)| *f == "r209").expect("r209 counted").1;
+    assert_eq!((r209.folded, r209.unmapped, r209.none), (3, 1, 0));
+    let _ = std::fs::remove_file(&path);
+}

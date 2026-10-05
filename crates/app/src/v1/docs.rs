@@ -171,6 +171,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline). On <code>/v1/lots</code> the deadline may be the procedure's rather than the lot's &mdash; see <a href="#caveats">caveats &rarr; Dates</a>.</td></tr>
   <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the tender's highest amount converted to EUR at its publication date (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount never matches a value bound.</td></tr>
   <tr><td class="ep">currency</td><td>ISO&nbsp;4217 code, case-insensitive (e.g. <code>EUR</code>, <code>sek</code>) — Tenders/Lots whose current version publishes at least one amount in that currency, <em>as published</em>.</td></tr>
+  <tr><td class="ep">procedure_type</td><td>The <strong>procedure type</strong> (eForms BT-105, <code>procurement-procedure-type</code>): one or more codes, comma-separated, case-insensitive, at most 10 &mdash; <code>open</code>, <code>restricted</code>, <code>neg-w-call</code>, <code>neg-wo-call</code>, <code>comp-dial</code>, <code>innovation</code>, <code>oth-single</code>, <code>oth-mult</code>, and the German national codes as published (eForms-DE&rsquo;s below-threshold <code>us-*</code>, DÖE sdk-0.1&rsquo;s <code>de-*</code>; not cross-walked onto the EU list). Exact match on the current version&rsquo;s procedure type &mdash; the latest <em>mapped</em> type a notice of the Tender stated; lots inherit their Tender&rsquo;s. The pre-eForms TED eras fold the form&rsquo;s own procedure checkbox where it names one type, else the <code>PR</code> code through a closed table (1 open, 2/3 restricted, 4 neg-w-call, T neg-wo-call); any other value or a silent notice folds nothing, so the earlier type stays in place (it can predate the latest notice), and a Tender no notice typed matches no code. E.g. <code>procedure_type=neg-wo-call</code> for awards without a prior call &mdash; complete for eForms, <em>not</em> before it: a legacy award is typed only when its form ticked a without-call box, and FTS&rsquo;s Procurement Act routes (<em>Direct award</em>, <em>Competitive flexible procedure</em>, &hellip;) are not mapped. Tenders/Lots.</td></tr>
   <tr><td class="ep">lang</td><td>Preferred language for the <em>picked</em> text values (the <code>title</code> on tenders, lots and the detail header): ISO&nbsp;639 code, case-insensitive (<code>de</code> and <code>DEU</code> both work). Fallback chain: requested &rarr; English &rarr; the notice's original language &rarr; any labelled &rarr; unlabelled. A <em>selector</em>, not a filter &mdash; it changes which title a row serves, never which rows match, so it is never reported in <code>ignored_filters</code>. The detail's <code>texts</code> array always carries every stored language variant regardless.</td></tr>
   <tr><td class="ep">kind</td><td>Tender/Lot kind flag &mdash; on <code>/v1/lots</code> one of <code>Lot</code>, <code>LotsGroup</code>, <code>Part</code> (any letter case; anything else is a 400); on <code>/v1/organizations</code>, the identifier scheme (e.g. <code>VAT</code>).</td></tr>
   <tr><td class="ep">tender</td><td>Restrict Lots to one Tender id; on <code>/v1/notices</code>, list the Notices that caused that Tender's versions.</td></tr>
@@ -196,10 +197,10 @@ filtered, every list response names the filters it dropped in
 <code>ignored_filters</code>; an empty array means all of them applied. The full map:</p>
 <table>
   <tr><th>Collection</th><th>Applies</th><th>Accepted but ignored</th></tr>
-  <tr><td class="ep">/v1/tenders</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, currency, kind, publication_id, published_after/_before, deadline_after/_before (+ sort/order)</td><td>tender, identifier, name_prefix</td></tr>
-  <tr><td class="ep">/v1/lots</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, currency, kind, tender</td><td>publication_id, identifier, name_prefix, the date bounds</td></tr>
-  <tr><td class="ep">/v1/organizations</td><td>country, kind, buyer, identifier, name_prefix</td><td>source, cpv, winner, bidder, status, min_value, max_value, currency, tender, publication_id, the date bounds</td></tr>
-  <tr><td class="ep">/v1/notices</td><td>source, kind, publication_id, tender</td><td>country, cpv, buyer, winner, bidder, status, min_value, max_value, currency, identifier, name_prefix, the date bounds</td></tr>
+  <tr><td class="ep">/v1/tenders</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, currency, procedure_type, kind, publication_id, published_after/_before, deadline_after/_before (+ sort/order)</td><td>tender, identifier, name_prefix</td></tr>
+  <tr><td class="ep">/v1/lots</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, currency, procedure_type, kind, tender</td><td>publication_id, identifier, name_prefix, the date bounds</td></tr>
+  <tr><td class="ep">/v1/organizations</td><td>country, kind, buyer, identifier, name_prefix</td><td>source, cpv, winner, bidder, status, min_value, max_value, currency, procedure_type, tender, publication_id, the date bounds</td></tr>
+  <tr><td class="ep">/v1/notices</td><td>source, kind, publication_id, tender</td><td>country, cpv, buyer, winner, bidder, status, min_value, max_value, currency, procedure_type, identifier, name_prefix, the date bounds</td></tr>
 </table>
 <p>So <code>GET /v1/notices?country=DE</code> returns
 <em>every</em> notice with <code>"ignored_filters": ["country"]</code> in the
@@ -280,7 +281,9 @@ Tender plus its satellites: <code>lots</code> count and <code>lot_details</code>
 <code>texts</code>, <code>amounts</code>, <code>dates</code>,
 <code>classifications</code> (schemes <code>cpv</code>, <code>nuts</code> and <code>nature</code>
 &mdash; the contract nature, <code>works</code>/<code>supplies</code>/<code>services</code>, in one
-vocabulary across eras, plus <code>combined</code> where a pre-eForms notice published it), <code>parties</code>, <code>lot_results</code>
+vocabulary across eras, plus <code>combined</code> where a pre-eForms notice published it; and
+<code>procedure</code> &mdash; the procedure type, Tender scope only, the value the row&rsquo;s
+<code>procedure_type</code> serves), <code>parties</code>, <code>lot_results</code>
 (award decisions, accumulating across framework/DPS rounds), <code>bids</code>,
 <code>contracts</code>, and <code>versions</code> — each version naming the
 <code>caused_by_notice_id</code> that produced it (the ADR-0001 traceability

@@ -775,6 +775,45 @@ where
 
 // ------------------------------------------------------------------- params
 
+/// At most this many codes in one `?procedure_type=` (issue 479). The vocabulary
+/// has eight EU codes and a dozen national ones; a longer list is not a question
+/// a client asks, and each code is one seek in the guard and one seed branch.
+const MAX_PROCEDURE_TYPES: usize = 10;
+
+/// `?procedure_type=` (issue 479): comma-separated codes, each trimmed and
+/// lowercased HERE, once — the fold stores eForms' `procurement-procedure-type`
+/// codes lowercase, so `OPEN` reaches the store as `open` (issue 387's rule) —
+/// and shape-checked: `[a-z0-9-]{1,32}`, at most [`MAX_PROCEDURE_TYPES`]. Junk is a
+/// 400, never a silent pattern (the store matches EXACTLY, no `LIKE`). A
+/// well-shaped code the corpus does not carry matches nothing, the posture `lang`
+/// takes: the vocabulary is open by design (`us-*`, `de-*` national codes).
+/// Repeats collapse. Empty for an absent parameter; an empty value is a 400.
+fn procedure_types(raw: Option<&str>) -> Result<Vec<String>, ApiError> {
+    let Some(raw) = raw else { return Ok(Vec::new()) };
+    let mut codes: Vec<String> = Vec::new();
+    for part in raw.split(',') {
+        let code = part.trim().to_ascii_lowercase();
+        let shaped = (1..=32).contains(&code.len())
+            && code.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+        if !shaped {
+            return Err(ApiError::bad_request(format!(
+                "procedure_type must be one or more eForms procedure-type codes, comma-separated \
+                 (e.g. open, neg-wo-call), not {raw:?}"
+            )));
+        }
+        if !codes.contains(&code) {
+            codes.push(code);
+        }
+    }
+    if codes.len() > MAX_PROCEDURE_TYPES {
+        return Err(ApiError::bad_request(format!(
+            "procedure_type takes at most {MAX_PROCEDURE_TYPES} codes, not {}",
+            codes.len()
+        )));
+    }
+    Ok(codes)
+}
+
 /// Every query parameter the API understands, in one struct: the filters are
 /// shared across collections by design (docs/architecture.md — a subscription
 /// *is* a collection query plus its filters).
@@ -796,6 +835,10 @@ pub struct Params {
     /// e.g. `EUR`) on any amount of the current version (ADR-0014 D5).
     /// Tenders/Lots.
     currency: Option<String>,
+    /// The procedure type (issue 479): one or more eForms
+    /// `procurement-procedure-type` codes, comma-separated, case-insensitive
+    /// (`open`, `neg-wo-call,oth-single`). Tenders/Lots.
+    procedure_type: Option<String>,
     /// Preferred language for picked text values (ADR-0013 D3): ISO 639-1 or
     /// 639-2 code, case-insensitive (`de`, `DEU`). A projection selector, not
     /// a filter — it changes which title a row serves, never which rows match.
@@ -908,6 +951,7 @@ impl Params {
                     )));
                 }
             },
+            procedure_type: procedure_types(self.procedure_type.as_deref())?,
             // Normalized HERE through the fold's own vocabulary map
             // (ISO 639-2/T uppercase — `ingest::project::normalize_lang`), so
             // `?lang=de`, `?lang=DE` and `?lang=deu` all reach the store as
@@ -961,6 +1005,7 @@ impl Params {
                 Some(p) => Some(store::org_name_norm(p)),
             },
             now,
+            procedure_seed: false,
         })
     }
 
@@ -1036,6 +1081,9 @@ impl Params {
         }
         if self.currency.is_some() {
             out.push("currency");
+        }
+        if self.procedure_type.is_some() {
+            out.push("procedure_type");
         }
         if self.kind.is_some() {
             out.push("kind");

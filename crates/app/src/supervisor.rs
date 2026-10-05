@@ -2741,6 +2741,25 @@ fn f14_target_suffix(t: &ingest::project::F14TargetGate) -> String {
     )
 }
 
+/// Issue 479 §3: the procedure-type census of record — per profile family, how
+/// many planned notices folded a code, published only unmapped values, or
+/// published none (and any mapped value that disagreed with the elected one).
+/// Silent when the run planned nothing, like the F14 tally.
+fn procedure_suffix(t: &ingest::project::ProcedureTally) -> String {
+    let rows: Vec<String> = t
+        .rows()
+        .map(|(family, c)| {
+            let conflicting =
+                if c.conflicting > 0 { format!(", {} CONFLICTING", c.conflicting) } else { String::new() };
+            format!("{family} {} folded / {} unmapped / {} none{conflicting}", c.folded, c.unmapped, c.none)
+        })
+        .collect();
+    if rows.is_empty() {
+        return String::new();
+    }
+    format!("; issue-479 procedure type: {}", rows.join(", "))
+}
+
 /// Issue 443: the stored dry plan of `sweep-orphan-orgs`, and after a wet
 /// window the residual it leaves.
 const ORPHAN_SWEEP_PLAN: &str = "orphan-org-sweep-plan";
@@ -4389,12 +4408,13 @@ impl Supervisor {
             String::new()
         };
         let citations = format!(
-            "{}{}{}{}{}",
+            "{}{}{}{}{}{}",
             citation_suffix(&report.citations),
             target_refusal_suffix(&report.target_refusals),
             link_suffix(&report.links),
             uuid_hub_suffix(&report.uuid_hubs),
-            f14_target_suffix(&report.f14_targets)
+            f14_target_suffix(&report.f14_targets),
+            procedure_suffix(&report.procedure)
         );
         // Issue 443 step 3: a re-bind can leave the row it left with no mention
         // at all, so a fold that re-bound anything queues the sweep behind it —

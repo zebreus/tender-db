@@ -104,6 +104,10 @@ pub struct Report {
     /// `citations` in the plan sweep, and read the same way — `other` is the
     /// alarm, the named classes are context.
     pub f14_targets: F14TargetGate,
+    /// Issue 479 §3: per profile family, how many planned notices folded a
+    /// procedure type, published only values the closed table does not map, or
+    /// published none. A full fold — the backfill — makes this the corpus census.
+    pub procedure: ProcedureTally,
 }
 
 /// The canonical fields this layer carries, as data. Source field ids are
@@ -901,6 +905,9 @@ const DE1_FIELD_ALIASES: &[(&str, &str)] = &[
     ("DE1-Publication-PublicationDate", "OPP-012-notice"),
     ("DE1-RequestedPublicationDate", "BT-738-notice"),
     ("DE1-IssueDate", "BT-05(a)-notice"),
+    // The procedure type (issue 479): the same `procurement-procedure-type` code
+    // eForms publishes as BT-105, so `procedure_type`'s BT-105 arm reads it.
+    ("DE1-TenderingProcess-ProcedureCode", "BT-105-Procedure"),
     // Title and description, at Tender and Lot scope.
     ("DE1-ProcurementProject-Name", "BT-21-Procedure"),
     ("DE1-ProcurementProjectLot-ProcurementProject-Name", "BT-21-Lot"),
@@ -1494,7 +1501,7 @@ pub async fn project_with_progress_phase2_stoppable(
              skipping Phase-1 and re-running grouping + Phase-2 (salvage)"
         );
     } else {
-        let (notices, mentions, stopped, citations, f14, refresh, alias) =
+        let (notices, mentions, stopped, citations, f14, procedure, refresh, alias) =
             build_plan(db, now, total, &mut on_progress, stop).await?;
         report.alias = alias;
         report.stopped = stopped;
@@ -1502,6 +1509,7 @@ pub async fn project_with_progress_phase2_stoppable(
         report.mentions = mentions;
         report.citations = citations;
         report.f14_targets = f14;
+        report.procedure = procedure;
         report.mentions_refreshed = refresh.refreshed;
         report.mentions_rebound = refresh.rebound;
     }
@@ -1676,7 +1684,16 @@ async fn build_plan(
     total: u64,
     mut on_progress: impl FnMut(Progress),
     stop: &(dyn Fn() -> bool + Sync),
-) -> turso::Result<(u64, u64, bool, CitationGate, F14TargetGate, store::MentionRefresh, store::AltIdAliasCounts)> {
+) -> turso::Result<(
+    u64,
+    u64,
+    bool,
+    CitationGate,
+    F14TargetGate,
+    ProcedureTally,
+    store::MentionRefresh,
+    store::AltIdAliasCounts,
+)> {
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
     db.reset_plan().await?;
@@ -1707,6 +1724,8 @@ async fn build_plan(
         /// Issue 385 unit 2's F14 target tally, carried and summed the same way
         /// and for the same reason.
         f14: F14TargetGate,
+        /// Issue 479's procedure-type tally, the same way again.
+        procedure: ProcedureTally,
     }
     let (tx, rx) = std::sync::mpsc::sync_channel::<turso::Result<PlanChunk>>(0);
     let readers = db.readers(1)?;
@@ -1747,16 +1766,18 @@ async fn build_plan(
                     let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(chunk.len());
                     let mut citations = CitationGate::default();
                     let mut f14 = F14TargetGate::default();
+                    let mut procedure = ProcedureTally::default();
                     for (notice, parsed) in &chunk {
                         let ident = Ident::read(notice, parsed);
                         mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
                         citations.add(ident.citations);
                         f14.add(ident.f14_targets);
+                        procedure.add(ident.procedure);
                         let (row, sections) = ident.into_plan_row();
                         rows.push(row);
                         guard_sections.push(sections);
                     }
-                    if tx.send(Ok(PlanChunk { rows, guard_sections, mentions, citations, f14 })).is_err() {
+                    if tx.send(Ok(PlanChunk { rows, guard_sections, mentions, citations, f14, procedure })).is_err() {
                         return; // the writer half bailed on an error
                     }
                 }
@@ -1767,6 +1788,7 @@ async fn build_plan(
     let (mut notices, mut mentions_total) = (0u64, 0u64);
     let mut citations = CitationGate::default();
     let mut f14 = F14TargetGate::default();
+    let mut procedure = ProcedureTally::default();
     let mut chunks = 0usize;
     // The newest planned notice id — the legacy-adjacency attestation bound
     // (issue 58 v2). Chunks arrive id-ordered, but take the max rather than
@@ -1792,6 +1814,7 @@ async fn build_plan(
         notices += chunk.rows.len() as u64;
         citations.add(chunk.citations);
         f14.add(chunk.f14);
+        procedure.add(chunk.procedure);
         max_planned = chunk.rows.iter().map(|r| r.notice_id).fold(max_planned, i64::max);
         let resolved = match db.resolve_mentions(&mut resolver, &chunk.mentions, now).await {
             Ok(resolved) => resolved,
@@ -1885,7 +1908,7 @@ async fn build_plan(
         t0.elapsed().as_secs_f64(),
         if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
-    Ok((notices, mentions_total, stopped, citations, f14, refresh, alias))
+    Ok((notices, mentions_total, stopped, citations, f14, procedure, refresh, alias))
 }
 
 /// Run only the interruptible PREFIX of a full rebuild — clear the canonical
@@ -1900,13 +1923,14 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
         db.clear_canonical().await?;
         db.strip_organization_indexes().await?;
         let total = db.parsed_notice_count().await?;
-        let (notices, mentions, _, citations, f14_targets, refresh, alias) =
+        let (notices, mentions, _, citations, f14_targets, procedure, refresh, alias) =
             build_plan(db, store::now_unix(), total, |_| {}, &|| false).await?;
         Ok::<Report, turso::Error>(Report {
             notices,
             mentions,
             citations,
             f14_targets,
+            procedure,
             mentions_refreshed: refresh.refreshed,
             mentions_rebound: refresh.rebound,
             alias,
@@ -2931,6 +2955,7 @@ pub async fn project_incremental_chunked_observed(
             // every citation in the delta.
             report.citations.add(ident.citations);
             report.f14_targets.add(ident.f14_targets);
+            report.procedure.add(ident.procedure);
             let (row, sections) = ident.into_plan_row();
             rows.push(row);
             guard_sections.push(sections);
@@ -3900,6 +3925,21 @@ impl NoticeState {
             })
             .collect();
 
+        // Issue 479: the procedure type, one code per notice, at Tender scope
+        // whatever section published it — no source publishes a lot-level
+        // procedure type, and lots inherit their Tender's for filtering. A notice
+        // that publishes none (or only values the closed table does not map)
+        // emits nothing, so the type its Tender's earlier notice stated carries
+        // forward by supersession: a text-era award's `PR: 7` or an F20's
+        // `PR_PROC 9` keeps its contract notice's procedure.
+        if let Some(code) = elect_procedure_type(parsed).code {
+            facts.insert(Fact::Classification {
+                field: "procedure".to_owned(),
+                scheme: "procedure".to_owned(),
+                code: code.into_owned(),
+            });
+        }
+
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
@@ -4378,6 +4418,9 @@ struct Ident {
     /// rail into the run's [`Report`], which is the whole reason it is read
     /// here rather than in the fold.
     f14_targets: F14TargetGate,
+    /// Issue 479: this notice's procedure-type outcome, one count in its profile
+    /// family's slot. Rides the same rail into the run's [`Report`].
+    procedure: ProcedureTally,
     /// Issue 369 unit 2: the buyer SET this notice publishes, sorted and joined —
     /// see [`buyer_key`] for why a set and not one buyer.
     buyer_key: Option<String>,
@@ -4846,6 +4889,11 @@ impl Ident {
             subtype: first_code(parsed, SUBTYPE_FIELD),
             citations,
             f14_targets: f14_target_gate(parsed),
+            procedure: {
+                let mut tally = ProcedureTally::default();
+                tally.count(&notice.profile, &elect_procedure_type(parsed));
+                tally
+            },
             buyer_key,
             // issue 481 unit 2b: the same buyers (and 2c: their signatories) as the
             // link guard's tolerant tokens.
@@ -5846,11 +5894,16 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
                 || ORIGINAL_LANG_FIELDS.contains(&field_id)
                 || RESULT_CODE_STEMS.contains(&stem)
                 || NATURE_STEMS.contains(&stem)
+                // Issue 479: the procedure type folds from every era's own field.
+                // `field_id` is already the DE-1.x alias target here.
+                || PROCEDURE_FIELDS.contains(&field_id)
         }
         Channel::Integer => {
             LEGACY_BID_COUNT_FIELDS.contains(&field_id)
                 || field_id.ends_with(AMOUNT_ELEMENT)
                 || field_id == LEGACY_NO_AWARD_MARKER
+                // Issue 479 review: the legacy form markers that name a procedure type.
+                || procedure_marker(field_id).is_some()
         }
         // The legacy bid count arrives as an Integer OR a Number (the reader takes
         // both), so it has a destination on both channels.
@@ -5981,6 +6034,301 @@ pub fn contract_nature(field_id: &str, code: &str) -> Option<&'static str> {
             _ => None,
         },
         _ => None,
+    }
+}
+
+/// The CODE field ids that publish a procedure type (issue 479), one per era, in
+/// the fold's election order: eForms' BT-105 (TED eForms, DÖE eForms-DE 2.x, FTS
+/// since issue 465), the eForms-DE 1.x spelling of it (aliased onto BT-105 by
+/// [`DE1_FIELD_ALIASES`], listed so a chunk read without the alias still counts),
+/// DÖE sdk-0.1's own path id, the XML era's `PR_PROC`, the internal-ojs era's
+/// `PROC` (May 2008; the same single-character CODIF list — live notice 27161440,
+/// 114238-2008, reads `TED-PROC 9`) and the text era's `PR` header. Exact ids, not
+/// stems: `BT-105` has no lot-level field in any SDK, and the stem would also admit
+/// an attribute id a future parser might emit. The legacy section-IV form markers
+/// ([`PROCEDURE_MARKERS`]) are the Integer-channel companion of this list.
+pub const PROCEDURE_FIELDS: &[&str] = &[
+    "BT-105-Procedure",
+    "DE1-TenderingProcess-ProcedureCode",
+    "SDK01-TenderingProcess-ProcedureCode",
+    "TED-PR_PROC",
+    "TED-PROC",
+    "TXT-PR",
+];
+
+/// The r208/r209 (and internal-ojs full-form) section-IV.1.1 procedure checkboxes
+/// that name ONE eForms procedure type unambiguously (issue 479 review), as the
+/// Integer-1 presence markers the r209 walker emits. They are the form's own
+/// statement of the procedure — `PR_PROC` is TED's coding of it — so in the
+/// election they rank ABOVE the PR code: a `PR_PROC 4` notice that ticks a
+/// without-call box folds `neg-wo-call` (the design's PR-4 gate, answered per
+/// notice rather than by a corpus threshold), and a code the PR table leaves
+/// unmapped (`V`, `C`, `G`, …) still folds when its form ticked a box this table
+/// names. Read off `r209/rules.rs`'s marker list; the fixtures pair `PT_OPEN` with
+/// PR 1 (6/6), `PT_RESTRICTED` with 2 (3/3), the with-call markers with 4 (4/4) and
+/// `F03_/F15_PT_NEGOTIATED_WITHOUT_COMPETITION` with T (2/2). Left out because
+/// they do not name one type: `PT_ACCELERATED_NEGOTIATED` (with or without a call
+/// by form vintage), `PT_INVOLVING_NEGOTIATION` / `PT_COMPETITIVE_TENDERING` /
+/// `PT_REQUEST_EXPRESSION_INTEREST` (light-regime and public-transport routes),
+/// `PT_AWARD_CONTRACT_WITH(OUT)_PRIOR_PUBLICATION` / `_WITHOUT_PUBLICATION`
+/// (concessions), and the `PT_DA_*` direct-award grounds.
+pub const PROCEDURE_MARKERS: &[(&str, &str)] = &[
+    ("TED-PT_OPEN", "open"),
+    ("TED-PT_RESTRICTED", "restricted"),
+    ("TED-PT_ACCELERATED_RESTRICTED", "restricted"),
+    ("TED-PT_COMPETITIVE_DIALOGUE", "comp-dial"),
+    ("TED-PT_INNOVATION_PARTNERSHIP", "innovation"),
+    ("TED-PT_NEGOTIATED_WITH_PRIOR_CALL", "neg-w-call"),
+    ("TED-PT_NEGOTIATED_WITH_COMPETITION", "neg-w-call"),
+    ("TED-PT_COMPETITIVE_NEGOTIATION", "neg-w-call"),
+    ("TED-PT_AWARD_CONTRACT_WITHOUT_CALL", "neg-wo-call"),
+    ("TED-PT_NEGOTIATED_WITHOUT_PUBLICATION", "neg-wo-call"),
+    ("TED-F03_PT_NEGOTIATED_WITHOUT_COMPETITION", "neg-wo-call"),
+    ("TED-F06_PT_NEGOTIATED_WITHOUT_COMPETITION", "neg-wo-call"),
+    ("TED-F15_PT_NEGOTIATED_WITHOUT_COMPETITION", "neg-wo-call"),
+];
+
+/// The procedure type a legacy form marker names, if it is one of
+/// [`PROCEDURE_MARKERS`].
+pub fn procedure_marker(field_id: &str) -> Option<&'static str> {
+    PROCEDURE_MARKERS.iter().find(|(id, _)| *id == field_id).map(|(_, code)| *code)
+}
+
+/// eForms' `procurement-procedure-type` codes (the EU SDK's list, read off the
+/// vendored field files), kept as published.
+const EFORMS_PROCEDURE_CODES: &[&str] = &[
+    "open",
+    "restricted",
+    "neg-w-call",
+    "neg-wo-call",
+    "comp-dial",
+    "innovation",
+    "oth-single",
+    "oth-mult",
+];
+
+/// The German below-threshold extension of the same list (eForms-DE SDK field
+/// files' rules name exactly these eight). Kept verbatim: `us-res-no-tw` has no
+/// EU counterpart, so no cross-walk is attempted (issue 479 §1).
+const DE_US_PROCEDURE_CODES: &[&str] = &[
+    "us-open",
+    "us-res-tw",
+    "us-res-no-tw",
+    "us-neg-w-call",
+    "us-neg-wo-call",
+    "us-free-tw",
+    "us-free-no-tw",
+    "us-hhr",
+];
+
+/// Is `code` (already trimmed and lowercased) a DÖE sdk-0.1 national procedure
+/// code? Two are seen in the committed fixtures (`de-restricted-wo-call`,
+/// `de-comp-wo-call`), two documented (`de-open`, `de-comp-neg-wo-call`,
+/// docs/research/eforms-de-profile.md), and the island's list has more. The design's
+/// rule is "German national codes kept as published, never cross-walked", so ANY
+/// `de-` code of the API filter's own shape (`[a-z0-9-]`, at most 32 characters) is
+/// kept verbatim (issue 479 review) rather than a closed four. Free-text labels
+/// (`beabsichtigte Beschränkte Ausschreibung`) fail the shape and fold nothing.
+fn is_sdk01_de_code(code: &str) -> bool {
+    code.len() <= 32
+        && code
+            .strip_prefix("de-")
+            .is_some_and(|rest| !rest.is_empty() && rest.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-'))
+}
+
+/// The procedure type in eForms' `procurement-procedure-type` vocabulary (issue
+/// 479), from any era's own CODE field — the [`contract_nature`] of BT-105. (The
+/// legacy form markers are read by [`procedure_marker`].)
+///
+/// A closed table: anything outside it folds to NOTHING (the notice then carries
+/// the type an earlier notice of its Tender stated, by supersession) and is
+/// counted by [`ProcedureTally`], never guessed.
+///
+/// - `BT-105-Procedure` (and its DE-1.x spelling): the EU codes and the German
+///   `us-*` extension, as themselves.
+/// - sdk-0.1: the same, plus any well-shaped `de-*` national code, verbatim. Its
+///   free-text labels (`beabsichtigte Beschränkte Ausschreibung`, notice 26544162)
+///   emit nothing.
+/// - `TED-PR_PROC` / `TED-PROC` / `TXT-PR`, one table — the eras share TED's code
+///   list, read off the committed fixtures where code, label and form marker sit
+///   together: `1` open (6/6 with `PT_OPEN`), `2` restricted (3/3 with
+///   `PT_RESTRICTED`), `3` accelerated restricted is restricted (eForms states
+///   acceleration separately, BT-106), `4` negotiated with a call (4/4 with a
+///   with-call marker, never a without-call one — and a notice whose form ticks a
+///   without-call marker folds the marker, which outranks this code), `T`
+///   negotiated without a call (2/2 with `*_PT_NEGOTIATED_WITHOUT_COMPETITION`).
+///   EVERY other code folds nothing here: `9` not applicable, `Z`, and the text
+///   era's `0` PIN / `7` contract awards / `8` general information are not
+///   procedure types; the rest of TED's list (`6`, `B`, `C`, `E`, `F`, `G`, `N`,
+///   `V`, and any code the census surfaces) waits for the census cross-tab, and
+///   meanwhile folds through its form marker where one names the type.
+pub fn procedure_type(field_id: &str, code: &str) -> Option<std::borrow::Cow<'static, str>> {
+    use std::borrow::Cow;
+    let field_id = DE1_FIELD_ALIASES
+        .iter()
+        .find(|(de1, _)| *de1 == field_id)
+        .map_or(field_id, |(_, target)| *target);
+    let code = code.trim();
+    let lower = code.to_ascii_lowercase();
+    let listed = |lists: &[&[&'static str]]| -> Option<Cow<'static, str>> {
+        lists.iter().flat_map(|l| l.iter()).find(|c| **c == lower).map(|c| Cow::Borrowed(*c))
+    };
+    match field_id {
+        "BT-105-Procedure" => listed(&[EFORMS_PROCEDURE_CODES, DE_US_PROCEDURE_CODES]),
+        "SDK01-TenderingProcess-ProcedureCode" => listed(&[EFORMS_PROCEDURE_CODES, DE_US_PROCEDURE_CODES])
+            .or_else(|| is_sdk01_de_code(&lower).then(|| Cow::Owned(lower.clone()))),
+        "TED-PR_PROC" | "TED-PROC" | "TXT-PR" => match code.to_ascii_uppercase().as_str() {
+            "1" => Some(Cow::Borrowed("open")),
+            "2" | "3" => Some(Cow::Borrowed("restricted")),
+            "4" => Some(Cow::Borrowed("neg-w-call")),
+            "T" => Some(Cow::Borrowed("neg-wo-call")),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// What one notice's procedure-type fields elect (issue 479): at most ONE code per
+/// notice, the first mapped value in election order — the eForms/DÖE code fields,
+/// then the legacy form markers ([`PROCEDURE_MARKERS`]), then the legacy PR codes
+/// (`PR_PROC`, `PROC`, `TXT-PR`) — and then published order. `published` says
+/// whether any procedure field (or a named marker) was present at all, so a notice
+/// that published only unmapped values is told apart from a silent one;
+/// `conflicting` counts mapped values that DISAGREE with the elected one — on the
+/// legacy eras that is the PR × marker cross-tab's disagreement column (a
+/// `PR_PROC 4` that ticked a without-call box counts one), so a non-zero count is
+/// a finding to read, not an error.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ProcedureElection {
+    pub code: Option<std::borrow::Cow<'static, str>>,
+    pub published: bool,
+    pub conflicting: u64,
+}
+
+/// Elect a notice's procedure type — the ONE function both the fold
+/// (`NoticeState::read`) and the run's tally (`Ident::read`) call, so the count a
+/// report prints cannot disagree with what the fold wrote (the
+/// `F14TargetGate::count` discipline).
+pub fn elect_procedure_type(parsed: &Parsed) -> ProcedureElection {
+    // Election rank: the eForms/DÖE code fields (0..3), the markers (3), the
+    // legacy PR codes (4..).
+    const MARKER_RANK: usize = 3;
+    let rank_of = |field: usize| if field < MARKER_RANK { field } else { field + 1 };
+    let mut published = false;
+    let mut mapped: Vec<(usize, std::borrow::Cow<'static, str>)> = Vec::new();
+    for value in &parsed.values {
+        match &value.value {
+            NoticeValue::Code { code, .. } => {
+                let Some(field) = PROCEDURE_FIELDS.iter().position(|f| *f == value.field_id) else { continue };
+                published = true;
+                if let Some(c) = procedure_type(&value.field_id, code) {
+                    mapped.push((rank_of(field), c));
+                }
+            }
+            NoticeValue::Integer(1) => {
+                if let Some(c) = procedure_marker(&value.field_id) {
+                    published = true;
+                    mapped.push((MARKER_RANK, std::borrow::Cow::Borrowed(c)));
+                }
+            }
+            _ => {}
+        }
+    }
+    // Stable: equal ranks keep published order.
+    mapped.sort_by_key(|(rank, _)| *rank);
+    let code = mapped.first().map(|(_, c)| c.clone());
+    let conflicting = mapped.iter().filter(|(_, c)| Some(c) != code.as_ref()).count() as u64;
+    ProcedureElection { code, published, conflicting }
+}
+
+/// The profile families [`ProcedureTally`] reports one line each for, in report
+/// order. A fixed list rather than the raw profile string: TED eForms alone
+/// publishes under fifteen SDK versions, and the report wants one line per era.
+pub const PROCEDURE_FAMILIES: [&str; 10] = [
+    "eforms",
+    "eforms-de-2x",
+    "eforms-de-1x",
+    "doe-sdk01",
+    "fts",
+    "r209",
+    "r208",
+    "internal-ojs",
+    "text",
+    "other",
+];
+
+fn procedure_family(profile: &str) -> usize {
+    let family = if profile == "text" {
+        "text"
+    } else if profile == "internal-ojs" {
+        "internal-ojs"
+    } else if profile.starts_with("ted-export-r209") {
+        "r209"
+    } else if profile.starts_with("ted-export") {
+        "r208"
+    } else if is_sdk01_profile(profile) {
+        "doe-sdk01"
+    } else if is_de1_profile(profile) {
+        "eforms-de-1x"
+    } else if profile.starts_with("eforms:eforms-de-") {
+        "eforms-de-2x"
+    } else if profile.starts_with("eforms:") {
+        "eforms"
+    } else if profile.starts_with("fts:") {
+        "fts"
+    } else {
+        "other"
+    };
+    PROCEDURE_FAMILIES.iter().position(|f| *f == family).unwrap_or(PROCEDURE_FAMILIES.len() - 1)
+}
+
+/// One profile family's procedure-type outcome over a run (issue 479): notices
+/// that folded a code, that published only values the closed table does not map,
+/// and that published none; plus mapped values that disagreed with the elected one.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ProcedureCounts {
+    pub folded: u64,
+    pub unmapped: u64,
+    pub none: u64,
+    pub conflicting: u64,
+}
+
+/// Issue 479 §3: the census of record. Counted where `Ident::read` runs — the plan
+/// sweep — like [`CitationGate`] and [`F14TargetGate`], so a full fold (the
+/// backfill) reports the WHOLE corpus per profile family and an incremental one its
+/// delta plus the touched expansion. A resumed run skips Phase 1 and reports zeroes.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ProcedureTally {
+    pub by_family: [ProcedureCounts; PROCEDURE_FAMILIES.len()],
+}
+
+impl ProcedureTally {
+    fn count(&mut self, profile: &str, election: &ProcedureElection) {
+        let slot = &mut self.by_family[procedure_family(profile)];
+        match (election.code.is_some(), election.published) {
+            (true, _) => slot.folded += 1,
+            (false, true) => slot.unmapped += 1,
+            (false, false) => slot.none += 1,
+        }
+        slot.conflicting += election.conflicting;
+    }
+
+    fn add(&mut self, other: ProcedureTally) {
+        for (a, b) in self.by_family.iter_mut().zip(other.by_family) {
+            a.folded += b.folded;
+            a.unmapped += b.unmapped;
+            a.none += b.none;
+            a.conflicting += b.conflicting;
+        }
+    }
+
+    /// The families this run saw at least one notice of, with their counts.
+    pub fn rows(&self) -> impl Iterator<Item = (&'static str, ProcedureCounts)> + '_ {
+        PROCEDURE_FAMILIES
+            .iter()
+            .zip(self.by_family)
+            .filter(|(_, c)| c.folded + c.unmapped + c.none > 0)
+            .map(|(f, c)| (*f, c))
     }
 }
 
@@ -8732,6 +9080,186 @@ mod tests {
         assert_eq!(natures(&state.facts), vec!["supplies"], "the procedure's nature at Tender scope");
         let lot = state.lots.iter().find(|l| l.key == "LOT-1").expect("the lot");
         assert_eq!(natures(&lot.facts), vec!["services"], "the lot's own nature at Lot scope");
+    }
+
+    /// Issue 479: the procedure-type table, arm by arm — each era's own code onto
+    /// eForms' `procurement-procedure-type`, the German extension kept verbatim, and
+    /// everything off the closed table folding to nothing.
+    #[test]
+    fn the_procedure_type_maps_every_eras_code_onto_one_vocabulary() {
+        let pt = |field: &str, code: &str| procedure_type(field, code).map(|c| c.into_owned());
+        let some = |c: &str| Some(c.to_owned());
+        // eForms (TED, DÖE 2.x, FTS) and the DE-1.x spelling of the same field.
+        assert_eq!(pt("BT-105-Procedure", "neg-w-call"), some("neg-w-call"));
+        assert_eq!(pt("BT-105-Procedure", " OPEN "), some("open"), "trimmed, case-folded");
+        assert_eq!(pt("BT-105-Procedure", "us-res-no-tw"), some("us-res-no-tw"), "kept verbatim");
+        assert_eq!(pt("DE1-TenderingProcess-ProcedureCode", "open"), some("open"));
+        assert_eq!(pt("BT-105-Procedure", "comp-tend"), None, "not seen; waits for the census");
+        assert_eq!(pt("BT-105-Procedure", "de-restricted-wo-call"), None, "sdk-0.1's codes only");
+        // sdk-0.1: EU, us-* and ANY well-shaped de-* national code, verbatim (the
+        // two seen, the two documented, and one no fixture shows); free text and
+        // off-shape strings are not codes.
+        for de in ["de-restricted-wo-call", "de-comp-wo-call", "de-open", "de-comp-neg-wo-call", "de-free-wo-call"] {
+            assert_eq!(pt("SDK01-TenderingProcess-ProcedureCode", de), some(de), "{de}");
+        }
+        assert_eq!(pt("SDK01-TenderingProcess-ProcedureCode", " DE-Open "), some("de-open"), "trimmed, lowercased");
+        assert_eq!(pt("SDK01-TenderingProcess-ProcedureCode", "open"), some("open"));
+        for junk in ["beabsichtigte Beschränkte Ausschreibung", "de-", "de-a b", "de-ö", &format!("de-{}", "a".repeat(30))] {
+            assert_eq!(pt("SDK01-TenderingProcess-ProcedureCode", junk), None, "{junk:?}");
+        }
+        // The XML, internal-ojs and text eras share TED's code list; EVERY code but
+        // 1/2/3/4/T folds nothing (not a type, or waiting for the census).
+        for field in ["TED-PR_PROC", "TED-PROC", "TXT-PR"] {
+            assert_eq!(pt(field, "1"), some("open"), "{field}");
+            assert_eq!(pt(field, "2"), some("restricted"), "{field}");
+            assert_eq!(pt(field, "3"), some("restricted"), "{field}: accelerated is restricted");
+            assert_eq!(pt(field, "4"), some("neg-w-call"), "{field}");
+            assert_eq!(pt(field, "T"), some("neg-wo-call"), "{field}");
+            assert_eq!(pt(field, "t"), some("neg-wo-call"), "{field}: case-folded");
+            for silent in ["9", "Z", "0", "7", "8", "6", "B", "C", "E", "F", "G", "N", "V", "5", "A", ""] {
+                assert_eq!(pt(field, silent), None, "{field} {silent:?}");
+            }
+        }
+        // The legacy form markers: each names one type; the ambiguous ones none.
+        assert_eq!(procedure_marker("TED-PT_OPEN"), Some("open"));
+        assert_eq!(procedure_marker("TED-PT_AWARD_CONTRACT_WITHOUT_CALL"), Some("neg-wo-call"));
+        assert_eq!(procedure_marker("TED-F15_PT_NEGOTIATED_WITHOUT_COMPETITION"), Some("neg-wo-call"));
+        assert_eq!(procedure_marker("TED-PT_COMPETITIVE_DIALOGUE"), Some("comp-dial"));
+        assert_eq!(procedure_marker("TED-PT_INNOVATION_PARTNERSHIP"), Some("innovation"));
+        for vague in ["TED-PT_ACCELERATED_NEGOTIATED", "TED-PT_INVOLVING_NEGOTIATION", "TED-PT_DA_SMALL_CONTRACT", "PT_OPEN"] {
+            assert_eq!(procedure_marker(vague), None, "{vague}");
+        }
+        // Every marker is one the r209 walker emits as a presence marker.
+        for (id, _) in PROCEDURE_MARKERS {
+            let name = id.strip_prefix("TED-").expect("a TED id");
+            assert_eq!(rules::rule("PROCEDURE", name), Some(rules::Rule::Marker), "{name} is an r209 Marker");
+        }
+        // Only the procedure ids: another field's code, the withheld declaration.
+        assert_eq!(pt("BT-23-Procedure", "open"), None);
+        assert_eq!(pt("BT-195(BT-105)-Procedure", "pro-typ"), None);
+        // The drop sieve agrees: a folded procedure type is not "published and dropped".
+        for id in PROCEDURE_FIELDS {
+            assert!(table_reads("notice_codes", id), "{id} folds as the procedure type");
+        }
+        for (id, _) in PROCEDURE_MARKERS {
+            assert!(table_reads("notice_integers", id), "{id} folds as the procedure type");
+        }
+    }
+
+    /// Issue 479: through `NoticeState::read` — one code per notice, at Tender
+    /// scope even when the value sits in a lot section, the first field in
+    /// election order winning a disagreement (which is counted), and a notice whose
+    /// only value is unmapped or absent emitting nothing.
+    #[test]
+    fn a_notice_folds_one_procedure_type_at_tender_scope() {
+        fn code_value(section: &str, field: &str, ordinal: i64, code: &str) -> store::ValueRow {
+            store::ValueRow {
+                section_id: section.into(),
+                field_id: field.into(),
+                ordinal,
+                value: store::NoticeValue::Code { list: None, code: code.into() },
+            }
+        }
+        fn procedures<'a>(facts: impl IntoIterator<Item = &'a Fact>) -> Vec<String> {
+            facts
+                .into_iter()
+                .filter_map(|f| match f {
+                    Fact::Classification { field, scheme, code } if field == "procedure" && scheme == "procedure" => {
+                        Some(code.clone())
+                    }
+                    _ => None,
+                })
+                .collect()
+        }
+        let sections = vec![
+            store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+            store::Section { id: "LOT-1".into(), kind: "Lot".into(), parent: Some("PROCEDURE".into()) },
+        ];
+        let notice = |profile: &str| store::NoticeRef {
+            id: 1,
+            source: "ted".into(),
+            publication_id: "00001-2026".into(),
+            profile: profile.into(),
+        };
+
+        // A value in a lot section folds at Tender scope; the lot carries none.
+        let lot_scoped = Parsed {
+            sections: sections.clone(),
+            values: vec![code_value("LOT-1", "BT-105-Procedure", 0, "restricted")],
+        };
+        let state = NoticeState::read(&notice("eforms:eforms-sdk-1.13"), &lot_scoped);
+        assert_eq!(procedures(&state.facts), vec!["restricted"]);
+        let lot = state.lots.iter().find(|l| l.key == "LOT-1").expect("the lot");
+        assert!(procedures(&lot.facts).is_empty(), "no lot-level procedure type");
+
+        // Two different codes in one notice: one folds — BT-105 outranks PR_PROC,
+        // whatever the published order — and the disagreement is counted.
+        let two = Parsed {
+            sections: sections.clone(),
+            values: vec![
+                code_value("PROCEDURE", "TED-PR_PROC", 0, "1"),
+                code_value("PROCEDURE", "BT-105-Procedure", 1, "neg-wo-call"),
+            ],
+        };
+        assert_eq!(procedures(&NoticeState::read(&notice("eforms:eforms-sdk-1.13"), &two).facts), vec!["neg-wo-call"]);
+        let election = elect_procedure_type(&two);
+        assert_eq!((election.code.as_deref(), election.published, election.conflicting), (Some("neg-wo-call"), true, 1));
+
+        // The legacy form markers outrank the PR code (issue 479 review): a PR 4 whose
+        // form ticks a without-call box folds `neg-wo-call` (the disagreement is
+        // counted — the PR × marker cross-tab), and a PR code the table leaves
+        // unmapped (`V`, `C`) folds through the marker that names the type.
+        let marker = |field: &str| store::ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: store::NoticeValue::Integer(1),
+        };
+        for (pr, mark, expected, conflicting) in [
+            ("4", "TED-PT_AWARD_CONTRACT_WITHOUT_CALL", Some("neg-wo-call"), 1),
+            ("4", "TED-PT_NEGOTIATED_WITH_PRIOR_CALL", Some("neg-w-call"), 0),
+            ("V", "TED-PT_AWARD_CONTRACT_WITHOUT_CALL", Some("neg-wo-call"), 0),
+            ("C", "TED-PT_COMPETITIVE_DIALOGUE", Some("comp-dial"), 0),
+            ("G", "TED-PT_INNOVATION_PARTNERSHIP", Some("innovation"), 0),
+            ("V", "TED-PT_DA_SMALL_CONTRACT", None, 0),
+        ] {
+            let p = Parsed {
+                sections: sections.clone(),
+                values: vec![code_value("PROCEDURE", "TED-PR_PROC", 0, pr), marker(mark)],
+            };
+            let e = elect_procedure_type(&p);
+            assert_eq!((e.code.as_deref(), e.published, e.conflicting), (expected, true, conflicting), "{pr} + {mark}");
+            assert_eq!(
+                procedures(&NoticeState::read(&notice("ted-export-r209"), &p).facts),
+                expected.map(|c| vec![c.to_owned()]).unwrap_or_default(),
+                "{pr} + {mark}"
+            );
+        }
+        // A marker alone is a published type (an r208 form without PR_PROC).
+        let alone = Parsed { sections: sections.clone(), values: vec![marker("TED-PT_OPEN")] };
+        assert_eq!(elect_procedure_type(&alone).code.as_deref(), Some("open"));
+
+        // Unmapped (PR 9) and absent both emit nothing; the tally tells them apart.
+        let unmapped = Parsed { sections: sections.clone(), values: vec![code_value("PROCEDURE", "TED-PR_PROC", 0, "9")] };
+        let silent = Parsed { sections, values: vec![] };
+        assert!(procedures(&NoticeState::read(&notice("ted-export-r209"), &unmapped).facts).is_empty());
+        assert!(procedures(&NoticeState::read(&notice("ted-export-r209"), &silent).facts).is_empty());
+        let mut tally = ProcedureTally::default();
+        tally.count("ted-export-r209", &elect_procedure_type(&unmapped));
+        tally.count("ted-export-r209", &elect_procedure_type(&silent));
+        tally.count("text", &elect_procedure_type(&two));
+        let rows: Vec<_> = tally.rows().collect();
+        assert_eq!(
+            rows,
+            vec![
+                ("r209", ProcedureCounts { folded: 0, unmapped: 1, none: 1, conflicting: 0 }),
+                ("text", ProcedureCounts { folded: 1, unmapped: 0, none: 0, conflicting: 1 }),
+            ]
+        );
+        assert_eq!(procedure_family("eforms:eforms-de-1.1"), 2);
+        assert_eq!(PROCEDURE_FAMILIES[procedure_family("eforms:eforms-de-2.1")], "eforms-de-2x");
+        assert_eq!(PROCEDURE_FAMILIES[procedure_family("fts:ocds-1.1")], "fts");
+        assert_eq!(PROCEDURE_FAMILIES[procedure_family("ted-export-r208")], "r208");
     }
 
     /// Issue 394 (unit 2): the sdk-0.1 shapes through the fold. One code serves

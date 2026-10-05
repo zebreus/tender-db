@@ -443,6 +443,24 @@ async fn an_fts_release_folds_its_category_as_the_contract_nature() {
              052408-2025:PROCEDURE:procurement-procedure-type:neg-w-call"
         )
     );
+    // Issue 479: and the fold carries it onto the Tender, at Tender scope, in the
+    // same vocabulary. 028961-2025 published no code, so its Tender carries none.
+    assert_eq!(
+        cell_text(
+            &db,
+            "SELECT group_concat(line, ' ') FROM (SELECT n.publication_id || ':' || COALESCE(c.code, '-') AS line \
+               FROM tenders t \
+               JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq \
+               JOIN notices n ON n.id = v.caused_by_notice_id \
+               LEFT JOIN tender_version_classifications c \
+                 ON c.tender_id = t.id AND c.seq = t.current_seq AND c.scheme = 'procedure' \
+                AND c.field = 'procedure' AND c.lot_id IS NULL \
+              ORDER BY line)",
+        )
+        .await
+        .as_deref(),
+        Some("028961-2025:- 029615-2025:open 052408-2025:neg-w-call")
+    );
 
     let _ = std::fs::remove_dir_all(&archive);
 }

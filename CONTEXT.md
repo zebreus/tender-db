@@ -158,6 +158,15 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   (schema supports more); Reviews stay notice-layer-only in v1, Parts are
   Lots with a kind flag, BRIN notices become minimal Tenders of a distinct
   kind.
+- Procedure type (issue 479): one per Tender version, Tender scope only, in
+  eForms' BT-105 `procurement-procedure-type` vocabulary (`open`, `restricted`,
+  `neg-w-call`, `neg-wo-call`, …), folded from every era's own field. German
+  national codes (`us-*`, `de-*`) are kept as published, never cross-walked;
+  the legacy TED eras fold the form's procedure checkbox where it names one
+  type, else the `PR`/`PROC` code through a closed table; an unmapped value
+  emits nothing, so the latest *mapped* type an earlier notice stated carries
+  forward. Stored as the classification scheme `procedure`, filtered as
+  `?procedure_type=`.
 - Ingestion is strict: a notice with any unmapped content is quarantined whole
   (raw payload kept, reason recorded, reprocessable), never partially or
   silently imported (ADR-0004). The quarantine count is the dashboard's

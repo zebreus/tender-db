@@ -617,6 +617,8 @@ durable and is what `/admin/jobs`, `jobwatch` and the issues' Verify lines read:
 ; issue-364 previous-publication citations: N admitted, M refused (prior-information …, buyer-profile …, periodic-indicative …, qualification-system …, DPS …, undeclared …, unknown kind …)
 ; issue-364 edges refused by the cited notice's own type: K (prior-information …, buyer-profile …, periodic-indicative …, qualification-system …, DPS …, unknown kind …)
 ; issue-481 tender links joined: J (previous-notice … of which cross-source …, logical-notice …, matched …); refused: R (not-earlier …, fan-in …, not-one-to-one …, keyed-weld …, oversized …); deferred: D; largest component: L key(s)
+; issue-385 F14 corrigendum dates: …
+; issue-479 procedure type: eforms F folded / U unmapped / N none, r209 …, text …   ← one entry per profile family the run planned
 ```
 
 The two issue-364 lines are two different gates and read differently:
@@ -671,6 +673,124 @@ one a full fold would refuse; after the attestation the link closure keeps it at
 component` is the biggest component the step built, in group keys: the check for an issue-482 hub
 welded through previous-notice links, which have no cap — a jump from single digits is the thing
 to look at. The line is absent when nothing joined, was refused or deferred.
+
+### The procedure type and its backfill (issue 479)
+
+Every Tender version carries at most one `procedure` classification (scheme `procedure`, field
+`procedure`, Tender scope, `lot_id` NULL) in eForms' `procurement-procedure-type` vocabulary — the
+value `/v1/tenders?procedure_type=` filters on and every row echoes as `procedure_type`. The fold
+elects it per notice (`project::elect_procedure_type`) from each era's own field, in this order:
+the code fields `BT-105-Procedure` (TED eForms, DÖE eForms-DE 2.x, FTS),
+`DE1-TenderingProcess-ProcedureCode` (through the DE-1.x alias) and
+`SDK01-TenderingProcess-ProcedureCode`; then the r208/r209 form's own section-IV checkbox where it
+names one type (`project::PROCEDURE_MARKERS`: `PT_OPEN`, `PT_RESTRICTED`, `PT_COMPETITIVE_DIALOGUE`,
+`PT_INNOVATION_PARTNERSHIP`, the with-call and the without-call markers, Integer-1 rows in
+`notice_integers`); then TED's code `TED-PR_PROC`, the internal-ojs era's `TED-PROC` and the text
+era's `TXT-PR` through the closed table in `project::procedure_type` (1 open, 2/3 restricted,
+4 neg-w-call, T neg-wo-call). The marker outranks the PR code, so a `PR_PROC 4` notice whose form
+ticked a without-call box folds `neg-wo-call`, and a PR code the table does not map (`V`, `C`, `G`)
+still folds when its form ticked a box that names the type.
+
+Everything else emits nothing: **every PR/PROC code but 1/2/3/4/T** — `9`/`Z` and the text era's
+`0`/`7`/`8` (not procedure types), and `6`, `B`, `C`, `E`, `F`, `G`, `N`, `V` or any code the census
+surfaces (unclassified until it does) — an eForms code off the list (`comp-tend`), an sdk-0.1
+free-text label. A notice that emits nothing keeps the type an earlier notice of its Tender stated,
+so the served type is the latest MAPPED one. German national codes are stored as published: the
+eight eForms-DE `us-*` codes, and any well-shaped sdk-0.1 `de-*` code.
+
+**The fold's `counts` line reports coverage.** The `issue-479 procedure type` suffix reports, per
+profile family (`eforms`, `eforms-de-2x`, `eforms-de-1x`, `doe-sdk01`, `fts`, `r209`, `r208`,
+`internal-ojs`, `text`), how many planned notices folded a code (F), published only unmapped values
+(U), or published none (N) — counted where `Ident::read` runs, through the same
+`elect_procedure_type` the fold calls, so the line cannot disagree with what was written.
+`CONFLICTING` counts mapped values that disagree with the elected one; on `r208`/`r209` that is the
+PR × marker cross-tab's disagreement column (a PR 4 with a without-call marker counts one), so read
+it rather than alarm on it. Two blind spots:
+- **`fts` U is structurally 0.** FTS's parser (`fts::parse::procedure_type`, issue 465) drops every
+  `procurementMethodDetails` label off its own closed table before the notice layer, so the
+  Procurement Act routes (`Competitive flexible procedure`, `Direct award`, `Award under
+  framework`, the `Below threshold - …` routes) and unknown labels arrive as nothing and land in
+  `fts` N, not U. FTS coverage of those labels needs the raw releases, not this line.
+- **A resumed fold prints no suffix.** The tally is filled in Phase 1, which a resumed run skips
+  (it reports zeroes, and `rows()` hides empty families). If the backfill fold is stopped at a
+  checkpoint and resumed, the `issue-479` suffix of the FIRST, stopped run's counts line is the only
+  record, and it covers only what that run planned before it stopped — partial if the stop fell
+  inside Phase 1. Note that in the issue when it happens; the per-profile coverage then comes from
+  the census reads below, not from the fold.
+
+**Census before the backfill (do not skip).** The PR table is frozen from fixtures (PR 4 →
+`neg-w-call` rests on 4/4 fixtures, and `6`/`B`/`C`/`E`/`F`/`G`/`N`/`V` are unmapped). A table change
+after the backfill costs a SECOND full fold (~7.5 h) and a second change event per Tender, so read the
+legacy cross-tab first. Bounded PK-window reads through `/v1/sql`, two or three windows per legacy
+profile, in a low-traffic window, each on the team lead's word, never retrying a 408. Window starts
+come free from `/v1/notices?publication_id=…` (e.g. 100002-2019 → 20320242, 100002-2014 → 17806795,
+100002-2003 → 2114278, 114238-2008 → 27161440):
+
+```sql
+-- per profile × PR code × procedure marker, over one 50k notice-id window
+SELECT n.profile, c.field_id, c.code, COALESCE(i.field_id, '-') AS marker, COUNT(*) AS notices
+  FROM notice_codes c
+  JOIN notices n ON n.id = c.notice_id
+  LEFT JOIN notice_integers i
+         ON i.notice_id = c.notice_id AND i.field_id LIKE 'TED-%PT\_%' ESCAPE '\'
+ WHERE c.notice_id BETWEEN :start AND :start + 50000
+   AND c.field_id IN ('TED-PR_PROC', 'TED-PROC', 'TXT-PR')
+ GROUP BY 1, 2, 3, 4
+```
+
+Read it for: (a) **the PR 4 gate** — PR 4 rows with NO marker (r208 forms that print none) are the
+only ones still folded by the code alone; if a window shows without-call markers on more than 1 % of
+PR 4 notices, the unmarked remainder is suspect too, and PR 4 should fold only through its marker
+(change the `"4"` arm to `None`) BEFORE the backfill; (b) **every unmapped code** with its marker
+distribution — a code that co-occurs ≥ 99 % with one marker gets that marker's type in the table
+(`V` ↔ `PT_AWARD_CONTRACT_WITHOUT_CALL` → `neg-wo-call`, `C` ↔ `PT_COMPETITIVE_DIALOGUE` →
+`comp-dial`, `G` ↔ `PT_INNOVATION_PARTNERSHIP` → `innovation`), which matters only for the notices
+whose form printed no marker; (c) the share of PR codes off the table, for the record. Freeze the
+table from that (a code change, the gate, a deploy), then run the ONE backfill below. If the census
+is skipped on purpose, say so in the issue: any table change it would have caught then costs another
+full fold.
+
+**Backfill: one full fold, no re-parse, no `PROJECTION_EPOCH` bump.** Every era already stores its
+procedure field in the notice layer (FTS since issue 465; the markers since the r209 walker), so
+nothing is re-parsed; the DE-1.x alias, the sdk-0.1 arm and the markers are fold-side. New ingests
+carry the type from the deploy. Existing Tenders get it only when a fold rewrites them, and every era
+publishes the field, so the cohort is the corpus: `refold-fields` on the field ids would first sweep
+the value tables (~46 min) and then requeue ~all notices, and either way the legacy delta is far
+over `LEGACY_CLOSURE_CAP` (500,000), so the incremental fold takes the full fallback (job 1616:
+~442 min). One `refold` over every profile skips the sweep:
+
+```sh
+# 0. Free disk first: ~14 M new classification rows (one per version that has a code) plus two
+#    index entries each, order 1–1.5 GB. The fold also emits a change event per rewritten Tender.
+df -h /var/lib/tender-db
+# 1. The census above is read and the table frozen from it (deployed).
+# 2. Off the daily tick, on a queue read idle by hand (issue 459), and batched with any other
+#    corpus-wide fold change pending at the time so the corpus pays ONE fold (397's 1595–1597).
+/root/aj.sh /admin/jobs | jq '.recent[:5], .queued'
+# 3. Size it: expect=1 aborts with the real count and writes nothing. The profiles are exact
+#    profile strings (`/v1/notices?kind=` spells them: every `eforms:eforms-sdk-*`,
+#    `eforms:eforms-de-*`, `fts:ocds-1.1`, `ted-export-r209`, `ted-export-r208`,
+#    `internal-ojs`, `text`); the count must come out at the corpus notice count.
+/root/aj.sh /admin/jobs '{"kind":"refold","profiles":[<every profile>],"expect":1}'
+# 4. The real run with that count. It requeues every notice, stamps every Tender stale (the
+#    issue-179 pair) and queues `project rebuild=false`, which takes the full fallback (~7.5 h).
+/root/aj.sh /admin/jobs '{"kind":"refold","profiles":[<every profile>],"expect":<count>}'
+# 5. Read the trailing project job's counts line: the issue-479 suffix is the per-era coverage
+#    (fts U is 0 by construction; a stopped-and-resumed fold prints no suffix — see above).
+```
+
+Rejected: a bespoke writer inserting `procedure` rows directly — it would re-implement supersession
+and carry-forward outside the fold, a second writer of one table, to save a fold that has a runbook.
+
+**Verify** after the fold: `curl -s https://tenders.zebreus.click/v1/tenders/8576017 | jq -c
+'[(.classifications // [])[] | select(.scheme == "procedure") | .code]'` gives `["open"]`;
+`/v1/tenders?procedure_type=open&limit=1` answers with `ignored_filters: []`; and one tender per era
+(TED eForms tender 2 `neg-w-call`, the tenders of r209 100002-2019 and r208 100002-2014 `open`, the
+internal-ojs CN of 115165-2008 `open`, the text-era award 100002-2003 `[]` unless chained to a CN,
+DÖE 1542904 `[]` — a free-text label). Then time a rare code (`?procedure_type=innovation&limit=10`):
+the read seeds from the `(scheme, code)` index under `COUNTRY_SEED_CAP` entries
+(`read::procedure_seed_viable`, list reads only — the SSE diff's single-tender reads never seed); a
+slow answer means the crossover is wrong for this shape, and the 408 band still bounds the walk.
 
 ### The Tender-link ledger and `backfill-tender-links` (issue 481)
 

@@ -39,6 +39,7 @@ fn every_version_predicate_isolates_on_the_collections_that_apply_them() {
         ("min_value", Filter { min_value: Some(1), ..f() }),
         ("max_value", Filter { max_value: Some(1), ..f() }),
         ("currency", Filter { currency: Some("EUR".into()), ..f() }),
+        ("procedure_type", Filter { procedure_type: vec!["innovation".into()], ..f() }),
     ];
     for (name, filter) in &cases {
         assert!(walks(Collection::Tenders, filter), "tenders?{name}= must isolate");
@@ -250,6 +251,11 @@ fn the_isolated_set_and_the_guard_set_are_one_set() {
         ("winner", Filter { winner: Some(7), ..f() }, vec![Isolated::Winner]),
         ("bidder", Filter { bidder: Some(7), ..f() }, vec![Isolated::Bidder]),
         ("currency", Filter { currency: Some("EUR".into()), ..f() }, vec![Isolated::Currency]),
+        (
+            "procedure_type",
+            Filter { procedure_type: vec!["open".into()], ..f() },
+            vec![Isolated::ProcedureType],
+        ),
         ("status", Filter { status: Some(store::read::Status::Open), ..f() }, vec![Isolated::Status]),
         ("min_value", Filter { min_value: Some(1), ..f() }, vec![Isolated::MinValue]),
         ("max_value", Filter { max_value: Some(1), ..f() }, vec![Isolated::MaxValue]),

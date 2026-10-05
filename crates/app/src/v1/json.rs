@@ -110,6 +110,9 @@ pub fn tender(t: &TenderRow) -> Value {
         // matched (issue 49): CPV codes and NUTS place codes of this version.
         "cpv": t.cpv,
         "country": t.country,
+        // Issue 479: the procedure type (eForms BT-105 vocabulary), what
+        // `?procedure_type=` matches; null where no notice published a mapped one.
+        "procedure_type": t.procedure_type,
     })
 }
 
