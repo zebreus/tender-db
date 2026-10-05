@@ -1,0 +1,65 @@
+# Compile what lands on main (issue 468).
+#
+# Nothing outside the committing session compiled a push to main: ops/check.sh runs
+# over that agent's own tree, and deploy.sh guards prod, not main. Both recorded
+# escapes (2026-08-24 in v1/, 2026-08-30 in a supervisor.rs test) broke code that
+# only compiles under `--features tender-db/server`, and the second was test code.
+#
+# So this compiles exactly what the gate (ops/check.sh) compiles, and runs nothing:
+#   * the gate's package set in ONE invocation, so features resolve once and the same
+#     way the gate resolves them (issue 260);
+#   * `--features tender-db/server`, without which accounts, admin, coverage, ledger,
+#     plan_capture, supervisor, v1 and webhooks are not compiled at all;
+#   * `--all-targets`: tests, benches and examples (crates/*/examples), like the gate's
+#     `cargo test` and the flake's clippy check;
+#   * `check`, not `test`: no test binaries are linked; running suites stays the gate's job;
+#   * `--locked`: a manifest edit pushed without its Cargo.lock change fails here.
+#
+# Toolchain: stable. The box builds with fenix `stable` pinned by flake.lock
+# (nix/package.nix); if the two ever disagree, the box's `nix build` decides.
+# No wasm target and no system packages: every dependency is pure Rust (rustls,
+# miniz_oxide, turso), and the wasm client (`--features web`) is out of scope.
+#
+# `claude/**` too: the session branches carry the same commits before main does,
+# so a red tree shows up there first.
+#
+# Drill (owner): push garbage appended to crates/app/src/supervisor.rs on a
+# `claude/**` or `ci-drill/**` branch and expect red with the error in supervisor.rs; push the clean
+# tree and expect green. A workflow that lost `--features tender-db/server` passes
+# that drill green, so the drill pins the footgun itself.
+name: compile
+
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+      - 'ci-drill/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compile-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_PROFILE_TEST_DEBUG: 0
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo check (gate package set, server feature, all targets)
+        run: cargo check --locked --all-targets -p model -p store -p ingest -p tender-db --features tender-db/server

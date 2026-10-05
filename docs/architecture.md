@@ -154,8 +154,9 @@ explicit `reset` event. Poll endpoint and webhooks consume the same log
 Ubuntu VPS. Build via `nix build .#tender-db` (on the VPS — 1 Gb/s), run as
 a hardened systemd unit (mirror of nix/module.nix flags), nginx + certbot in
 front terminating TLS for tenders.zebreus.click (SSE: proxy_buffering off /
-X-Accel-Buffering: no). The NixOS module + VM smoke test stay as CI and as a
-distributable for NixOS users; production parity lives in the Ubuntu unit.
+X-Accel-Buffering: no). The NixOS module + VM smoke test stay as a
+distributable for NixOS users and as `flake.nix` checks, which no CI runs (issue
+468); production parity lives in the Ubuntu unit.
 
 ## Testing strategy
 
@@ -164,7 +165,13 @@ distributable for NixOS users; production parity lives in the Ubuntu unit.
 - Completeness: per-profile checklist tests (the ADR-0002/0004 guarantee).
 - Integration: end-to-end ingest of a fixture package → canonical → API
   assertions, in-process.
-- `nix flake check`: clippy + VM smoke test (bundle serves, API answers).
+- CI (`.github/workflows/compile.yml`, issue 468): on every push to `main`
+  (and `ci-drill/**`), `cargo check --locked --all-targets` over the gate's
+  package set with `--features tender-db/server`. It compiles, it runs no tests.
+- The suites run in `ops/check.sh` (the committing agent's gate), and
+  `deploy.sh` runs that gate before the box's `nix build`.
+- `nix flake check` (clippy + VM smoke test: bundle serves, API answers) is
+  defined in `flake.nix` but run by no workflow or script; run it by hand.
 - Production verification: era-ladder spot checks + API-vs-package counts
   (the Search API count assertion from ted-access-channels.md) after
   backfill.

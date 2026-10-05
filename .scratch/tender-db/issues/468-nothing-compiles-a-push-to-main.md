@@ -1,6 +1,6 @@
 # 468 — nothing compiles a push to main: issue 254 deferred CI until a second committer, and main now has three
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is `.github/workflows/compile.yml`, which runs `cargo check` over the gate's package set with `--features tender-db/server --all-targets` on every push to `main`, and is drilled red once with garbage in `supervisor.rs`.
+Status: ready-for-agent — Unit 1 landed 2026-10-05 (`.github/workflows/compile.yml`, uncommitted at the time of writing; see "Unit 1 — landed" below). NEXT: the owner's red/green drill on a `ci-drill/468` branch, then record its run ids and wall times here. The `main-red` issue open/close step is not yet in the workflow. (Filed 2026-10-01 from the owner's board survey, workflow wf_4eac8781-4d0, verified by an adversarial pass.)
 Kind: risk (process: a non-compiling `main` reaches every other agent; prod stays gated)
 Relates to: 254 (chose the deploy gate over a workflow until "a second committer"), 300 (the 2026-08-30 escape),
 260 (the gate's flags and its single feature resolution), 414 (what the gate compiles), 24 (the repo's only
@@ -126,3 +126,34 @@ that the issue is in either state.
 - **done:** `[N,["compile","<sha>","success"]]`, with N ≥ 1 and `<sha>` the head of `main`
   (`git ls-remote --heads origin main`). A `"failure"` in the third slot means the check works and `main` is red,
   so fix `main` first.
+
+## Unit 1 — landed (2026-10-05)
+
+`.github/workflows/compile.yml` (`name: compile`):
+
+- **Triggers:** `push` to `main`, `push` to `ci-drill/**` (so the drill never touches `main`), and
+  `workflow_dispatch`. `concurrency: compile-${{ github.ref }}`, `cancel-in-progress: true`.
+  `permissions: contents: read`. `ubuntu-latest`, `timeout-minutes: 60`.
+- **Toolchain:** `dtolnay/rust-toolchain@stable`. The repo pins no `rust-toolchain*` file; the box's fenix
+  `stable` (flake.lock) is the reference.
+- **Env:** the gate's `CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0`.
+- **Cache:** `Swatinem/rust-cache@v2`.
+- **Step:** `cargo check --locked --all-targets -p model -p store -p ingest -p tender-db --features tender-db/server`.
+- **System deps:** none installed. Every dependency is pure Rust (rustls, miniz_oxide flate2, turso; no
+  `build.rs` needing pkg-config/openssl/protobuf), and nix/package.nix's only `nativeBuildInputs`
+  (dioxus-cli, binaryen) serve the wasm bundle, which this check does not build.
+- **Not yet:** the `main-red` issue open/close step from "Make a red run visible" (needs `issues: write`). A red
+  run marks the commit with a failed check today; nothing else notifies.
+- **Docs:** `docs/architecture.md` (Deployment, Testing strategy) and `CONTEXT.md` (Deployment decision) no
+  longer call the flake checks CI; they name `compile.yml` and say `nix flake check` is run by nothing.
+
+No cargo command was run locally for this unit (disk); the YAML was parsed with `python3 -c 'import yaml…'`.
+
+**NEXT — the drill, done by the owner** (it needs a push):
+
+1. `git switch -c ci-drill/468 origin/main`, append a line of garbage to `crates/app/src/supervisor.rs`,
+   commit, push. Expect `compile` red with the error reported in `supervisor.rs`.
+2. Revert the garbage (push the clean tree to the same branch). Expect `compile` green.
+3. Delete the branch. Record both run ids here, with the wall time of the first cold and first warm run.
+
+The issue closes when the drill is recorded and the Verify block's `done` line holds for the head of `main`.

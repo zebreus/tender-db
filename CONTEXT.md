@@ -209,7 +209,8 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   any dropped write future.
 - Deployment (resolved 2026-07-19): the VPS stays Ubuntu, running the
   flake-built bundle under a hardened systemd unit (ADR-0006); the NixOS
-  module + VM smoke test remain as CI and as a distributable. Public
+  module + VM smoke test remain as a distributable and as `flake.nix` checks
+  that no CI runs (CI is `compile.yml`'s `cargo check`, issue 468). Public
   hostname: tenders.zebreus.click. Storage: `/data` (`/dev/md3`, software RAID on
   the box's two local NVMe drives; 1.7 T on 2026-10-01, re-read with
   `df -h /data`) carries DB + raw archive. No off-box backups for now —
