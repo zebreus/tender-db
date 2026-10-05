@@ -442,11 +442,16 @@ first r209 window is in this issue's session log.
   job 2001 → project 2002, started at 13:51 UTC. It takes the full fallback, about 7.5 h.
 - **Next:** read 2002's `issue-479 procedure type` suffix, then run the Verify list from the
   runbook.
-- **Progress read, 2026-10-05 20:47 UTC.** Phase 1 (planning) covered all 14,887,661 notices and finished
+- **Progress read, 2026-10-05 18:47 UTC** (the box logs in CEST; this said 20:47 UTC at first). Phase 1 (planning) covered all 14,887,661 notices and finished
   around 19:51 UTC, about 6 h. Phase 2 (folding) is at 170,297 of 8,776,591 tenders: 400,008 versions and
   80.4 M leaf rows written. Its rate is rising, from 5 min per ~22k tenders at first to under 2 min now
   (the first tenders are the heaviest, about 470 leaf rows each). Projected end: around 08:00–10:00 UTC
-  2026-10-06. The 07:35 daily queues behind it. `/data` has 382 → 325 GB free; that crossed
+  2026-10-06 (revised below). The 07:35 daily queues behind it. `/data` has 382 → 325 GB free; that crossed
   `tender-db-diskwatch`'s 80 % threshold, so the unit is red. The freed plan pages stay in the database
   file as free pages, so `df` will not recover after the fold. If 80 % used is the new resting level,
   revisit the threshold.
+- **Second progress read, 19:40 UTC.** 430,455 of 8,776,591 tenders: 260k in 53 min, about 4.9k per minute.
+  The rest projects to about 28 h, so it ends around 2026-10-07 00:00 UTC unless the rate rises. Job 1616's
+  whole full fallback took 7.4 h. The fold is CPU-bound on one thread (`server` at 80 % CPU, IO pressure
+  about 5 %, WAL 118 MB), so it is working, not stalled. `/data` has 319 GB free (−6 GB in 53 min). Read again
+  next firing; if the rate stays below 1616's, compare the work per tender before the next corpus-wide fold.
