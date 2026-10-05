@@ -18428,4 +18428,3 @@ mod stage5_census {
     }
 }
 
-this is not rust (issue 468 red drill)
