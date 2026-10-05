@@ -1,6 +1,6 @@
 # 468 — nothing compiles a push to main: issue 254 deferred CI until a second committer, and main now has three
 
-Status: ready-for-agent — Unit 1 landed 2026-10-05 (`.github/workflows/compile.yml`, uncommitted at the time of writing; see "Unit 1 — landed" below). NEXT: the owner's red/green drill on a `ci-drill/468` branch, then record its run ids and wall times here. The `main-red` issue open/close step is not yet in the workflow. (Filed 2026-10-01 from the owner's board survey, workflow wf_4eac8781-4d0, verified by an adversarial pass.)
+Status: done (unit 1, drilled 2026-10-05; the main-red issue step stays open) — Unit 1 landed 2026-10-05 (`.github/workflows/compile.yml`, uncommitted at the time of writing; see "Unit 1 — landed" below). NEXT: the owner's red/green drill on a `ci-drill/468` branch, then record its run ids and wall times here. The `main-red` issue open/close step is not yet in the workflow. (Filed 2026-10-01 from the owner's board survey, workflow wf_4eac8781-4d0, verified by an adversarial pass.)
 Kind: risk (process: a non-compiling `main` reaches every other agent; prod stays gated)
 Relates to: 254 (chose the deploy gate over a workflow until "a second committer"), 300 (the 2026-08-30 escape),
 260 (the gate's flags and its single feature resolution), 414 (what the gate compiles), 24 (the repo's only
@@ -157,3 +157,16 @@ No cargo command was run locally for this unit (disk); the YAML was parsed with 
 3. Delete the branch. Record both run ids here, with the wall time of the first cold and first warm run.
 
 The issue closes when the drill is recorded and the Verify block's `done` line holds for the head of `main`.
+
+## Drill (2026-10-05, done)
+
+- **Green.** Runs 37343942721, 37343942954 and 37343943476 compiled `c430a5b` on `claude/cool-sagan-5bk0rc`,
+  the handover branch and `main`. Each took about 2 min 20 s from a cold cache. `claude/**` was added to the
+  triggers so the session branches go red before `main` does.
+- **Red.** `2ae804f` appended a line of non-Rust to `crates/app/src/supervisor.rs`, pushed to
+  `claude/cool-sagan-5bk0rc` only. Run 37351247405 failed in the `cargo check` step with "could not compile
+  `tender-db` (lib) due to 6 previous errors", about 30 s after a warm cache. The revert `34d0637` was pushed
+  after that run finished; this workflow's `cancel-in-progress` would otherwise have cancelled it.
+- **Open.** The `main-red` issue open/close step needs `issues: write`.
+- **Open, small.** `actions/checkout@v4` now runs on Node 24 with a deprecation warning. Bump it to `@v5` when
+  the issue is next touched.
