@@ -1,6 +1,6 @@
 # 484 — the buyer is served as its own contractor (the winner slot repeats the authority)
 
-Status: ready-for-agent — NEXT: unit 2 LANDED, NOT DEPLOYED (uncommitted; see "Unit 2 — landed"): gate
+Status: ready-for-agent — UNIT 2 DONE 2026-10-05 (deployed `14df8b4`, text + FTS re-parsed, re-projected; Verify done below). NEXT: unit 3 (projection flags a buyer-equal winner `is_buyer`, excluded from supplier statistics). Was: ready-for-agent — NEXT: unit 2 LANDED, NOT DEPLOYED (uncommitted; see "Unit 2 — landed"): gate
 (`ops/check.sh`), commit with 485, deploy, then the re-parse runbook in that section — probe one text package
 holding 2002406 and re-read `/v1/notices/2002406/content` (expect `Montte`), wet `text` + `fts:ocds-1.1` re-parse with
 `reclaim_only`, ONE `project`, re-run `buyer-role-census` at stride 10 against job 1942, then the Verify. No dry
@@ -353,3 +353,17 @@ counts only (see docs/operations.md, "There is no dry `reparse`"). Not built her
   `Fax 0044 …` winners. Re-parse `{"profiles":["text"],"packages":96}` from the floor = job 1977, then a project.
   Lesson recorded in docs: a probe chosen with `after` must be followed by a run from the profile's floor, not from
   the probe's `after`.
+
+## 2026-10-05 01:5x UTC — unit 2 DONE on prod
+
+- Re-parse of the missed range (1977): 2,473,223 notices / 96 packages, 0 unmatched / re-keyed / failing. Project
+  1978 (277 min) re-derived them. Sweeps 1976 (122,064) and 1980 (91,458) removed the provisional orgs the dropped
+  junk/defect winners left behind (logged in `org_sweep_log`).
+- **Verify — all done:** 2959772 winner **Montte** (2002406); 8822638 **Kirklees buyer / Microsoft Ltd tenderer**
+  (46804384); 3321955 (2808875) **19 winners, 0 `Fax …`** (485).
+- **After census** (1981, stride 10, `483-roles/census-1981.json`) vs 1943: contractor-name 125 → 128,
+  contractor-org-same-name 135 → 135, contractor-same-section 3 → 2, swap-legal-form 18,529 → 18,169 (fewer junk
+  "winners" from phone lines). As the sample read predicted: the class is ~97 % what the notices say; the parser
+  share was small, and the wider read adds real winners in both directions.
+- OPEN (unit 3): projection flags `is_buyer` on a buyer-equal winner and keeps it out of supplier statistics (the
+  57 source-says-so + 4 in-house shapes). Ready-for-agent.

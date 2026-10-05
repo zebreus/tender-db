@@ -1,6 +1,6 @@
 # 485 — a phone number is read as a lot reference and mints a junk winner
 
-Status: ready-for-agent — NEXT: ships with 484 unit 2 (landed, not deployed: the fix is in
+Status: done — 2026-10-05: landed with 484 unit 2 (`064870d`, deployed `14df8b4`); text era re-parsed and re-projected; 2808875 serves 19 winners, 0 `Fax …` (Verify). Was: ready-for-agent — NEXT: ships with 484 unit 2 (landed, not deployed: the fix is in
 `crates/ingest/src/text/parse.rs`, same change). After the deploy it rides 484's text-era re-parse and the one
 `project` after it; then run the Verify below. No separate re-parse.
 Kind: data correctness (awards, organizations)
