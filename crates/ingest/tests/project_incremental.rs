@@ -2681,12 +2681,14 @@ async fn a_qualification_system_notice_does_not_weld_the_awards_citing_it() {
 }
 
 /// Issue 486 review: the shared-publication refusal at its other ends. A stamped CITING
-/// end refuses too (an eForms PIN, OPP-070 `4`, citing an earlier contract notice by
-/// OPP-090); a LEGACY cited end refuses too (an eForms award citing a legacy prior
-/// information notice, `TED-TD_DOCUMENT_TYPE` `0`, whose plan row 364 stamps) — a change
-/// from before 486, when the link step read no plan row's kind. And a PIN used as a call
-/// for competition (OPP-070 `10`) is NOT a shared publication: the award citing it under
-/// another BT-04 joins it, as a CAN joins its CN. Full and daily identical.
+/// end refuses too (an eForms buyer-profile notice, OPP-070 `1`, citing an earlier
+/// contract notice by OPP-090); a LEGACY cited end refuses too (an eForms award citing a
+/// legacy buyer-profile notice, `TED-TD_DOCUMENT_TYPE` `B`, whose plan row 364 stamps) —
+/// a change from before 486, when the link step read no plan row's kind. A PIN used as a
+/// call for competition (OPP-070 `10`) is no shared publication, and since job 1982's dry
+/// run neither is a plain PIN (OPP-070 `4`) for the link step: an award citing either
+/// under another BT-04 joins it, as a CAN joins its CN (a PIN cited by MANY procedures is
+/// unit 1b's fan-in rule). Full and daily identical.
 #[tokio::test]
 async fn the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not_a_pin_used_as_a_call() {
     const KEY_PIN: &str = "a1b2c3d4-1111-4a6b-8c7d-8e9f0a1b2c3d";
@@ -2694,6 +2696,8 @@ async fn the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not
     const KEY_AWARD_LEGACY: &str = "a1b2c3d4-3333-4a6b-8c7d-8e9f0a1b2c3d";
     const KEY_CFC: &str = "a1b2c3d4-4444-4a6b-8c7d-8e9f0a1b2c3d";
     const KEY_AWARD_CFC: &str = "a1b2c3d4-5555-4a6b-8c7d-8e9f0a1b2c3d";
+    const KEY_PIN_ONLY: &str = "a1b2c3d4-6666-4a6b-8c7d-8e9f0a1b2c3d";
+    const KEY_AWARD_PIN: &str = "a1b2c3d4-7777-4a6b-8c7d-8e9f0a1b2c3d";
     let enel: Buyer = ("ENDESA, S.A.", "ESP", "");
     let parse = |day: i64, ids: &[(&str, &str)], codes: &[(&str, &str)]| {
         let mut parsed = linked_parse(day, ids, &[enel]);
@@ -2724,19 +2728,25 @@ async fn the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not
             section_id: "PROC".into(),
             field_id: "TED-TD_DOCUMENT_TYPE".into(),
             ordinal: 0,
-            value: NoticeValue::Code { list: None, code: "0".into() },
+            value: NoticeValue::Code { list: None, code: "B".into() },
         });
         record_p(db, fetch, LEGACY_PIN, "ted-export-r209", legacy).await;
         record(db, fetch, "00300001-2025", 20_000, &[("BT-04-notice", KEY_CN)], &[("OPP-070-notice", "16")]).await;
         let cfc = [("OPP-070-notice", "10"), ("BT-02-notice", "pin-cfc-standard")];
         record(db, fetch, "00300010-2025", 20_000, &[("BT-04-notice", KEY_CFC)], &cfc).await;
+        let pin = [("OPP-070-notice", "4"), ("BT-02-notice", "pin-only")];
+        record(db, fetch, "00300020-2025", 20_000, &[("BT-04-notice", KEY_PIN_ONLY)], &pin).await;
     }
     absorb_and_compare(&full, &incr, "the cited ends").await;
     for (db, fetch) in [(&full, ff), (&incr, fi)] {
-        // A PIN citing the earlier contract notice: the CITING end is the shared one.
+        // A buyer-profile notice citing the earlier contract notice: the CITING end is the
+        // shared one.
         let pin_ids = [("BT-04-notice", KEY_PIN), ("OPP-090-Procedure", "300001-2025")];
-        record(db, fetch, "00300003-2025", 20_100, &pin_ids, &[("OPP-070-notice", "4"), ("BT-02-notice", "pin-only")]).await;
-        // An award citing the legacy PIN.
+        record(db, fetch, "00300003-2025", 20_100, &pin_ids, &[("OPP-070-notice", "1"), ("BT-02-notice", "pin-buyer")]).await;
+        // An award citing a plain PIN under another BT-04: joined.
+        let pin_award_ids = [("BT-04-notice", KEY_AWARD_PIN), ("OPP-090-Procedure", "300020-2025")];
+        record(db, fetch, "00300021-2025", 20_100, &pin_award_ids, &award_codes).await;
+        // An award citing the legacy buyer-profile notice.
         let legacy_ids = [("BT-04-notice", KEY_AWARD_LEGACY), ("OPP-090-Procedure", "123456-2013")];
         record(db, fetch, "00300004-2025", 20_100, &legacy_ids, &award_codes).await;
         // An award citing its PIN-as-call under another BT-04.
@@ -2748,17 +2758,19 @@ async fn the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not
     for (label, links) in [("daily", &daily.links), ("full", &full_report.links)] {
         assert_eq!(
             (links.shared_kind, links.previous_notice),
-            (2, 1),
-            "{label}: the PIN's and the legacy-cited award's references refused, the pin-cfc's joined: {links:?}"
+            (2, 2),
+            "{label}: the buyer profile's and the legacy-cited award's references refused, the pin-cfc's and the PIN's joined: {links:?}"
         );
     }
     for db in [&full, &incr] {
-        assert_ne!(tender_of(db, "00300003-2025").await, tender_of(db, "00300001-2025").await, "the citing PIN stays apart");
-        assert_ne!(tender_of(db, "00300004-2025").await, tender_of(db, LEGACY_PIN).await, "the legacy PIN stays apart");
+        assert_ne!(tender_of(db, "00300003-2025").await, tender_of(db, "00300001-2025").await, "the citing buyer profile stays apart");
+        assert_ne!(tender_of(db, "00300004-2025").await, tender_of(db, LEGACY_PIN).await, "the legacy buyer profile stays apart");
+        assert_eq!(tender_of(db, "00300021-2025").await, tender_of(db, "00300020-2025").await, "the plain PIN joins its award");
         assert_eq!(tender_of(db, "00300011-2025").await, tender_of(db, "00300010-2025").await, "the pin-cfc joins its award");
     }
     // The census judges both ends as the fold does: the two refused pairs are
-    // `shared_kind` would-merges (re-queuing nothing), the joined pin-cfc pair is in no count.
+    // `shared_kind` would-merges (re-queuing nothing), the joined pin-cfc and PIN pairs are in
+    // no count.
     let never = || false;
     let dry = project::backfill_tender_links_windowed(&incr, true, 1_000, 1_000, &never, |_| {}).await.expect("dry");
     assert_eq!(

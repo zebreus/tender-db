@@ -149,3 +149,17 @@ apply the go/no-go rule. Then the wet run, the next daily, and the Verify.
    - **Stop:** otherwise. Report the counts here and decide per kind. A kind that must not split has to leave the
      table in code, because the fold refuses it on every re-planning daily whether or not the wet run happens.
    - The docs also say that the wet run carries the pending 481 `would_merge` and `stale` re-queues along.
+
+## 2026-10-05 05:4x–06:1x UTC — deployed `bb87cdc`; dry 1982 → STOP for PINs; unit 1a narrows the refusal
+
+Dry `backfill-tender-links` 1982 (report `.scratch/tender-db/481-dedup/backfill-1982.json`): would_split 12,115, of
+which **would_split_shared 12,112** — PRIOR_INFORMATION_NOTICE 10,277, PERIODIC_INDICATIVE_NOTICE 951,
+NOTICE_QUALIFICATION_SYSTEM 621, NOTICE_BUYER_PROFILE 263; shared_kind (not yet joined) 977. Over the go/stop rule's
+5,000 → **STOP, no wet run.** A PIN cited by its own procedure's CN/CAN is mostly that one procedure announced early;
+splitting 10k such pairs would break correct merges. And the fold refuses every re-planned edge, so the daily would
+have started splitting them: **unit 1a (this commit)** limits the REFUSAL to the two kinds that by definition publish
+many procurements — `store::link_refuses_shared_kind`: NOTICE_QUALIFICATION_SYSTEM and NOTICE_BUYER_PROFILE (884
+pairs in 1982's census). PIN and periodic-indicative stay stamped (`shared_kind` on the plan row), are no longer
+refused, in the fold and the census alike. NEXT: deploy 1a, dry again (expect would_split_shared ≈ 884), read 10
+samples per kind, wet, daily, Verify 202112. **Unit 1b:** a PIN / periodic notice refuses only when cited by ≥ 2
+keyed components (the same-Source analogue of 481's fan-in guard).
