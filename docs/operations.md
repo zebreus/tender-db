@@ -816,6 +816,32 @@ the latter down per kind (the cited end's kind, else the citing end's), each wit
 splits read apart from a qualification system's. A grouping plan from before 486 has no `plan_eforms_shared_kind`
 marker and is rebuilt, not resumed.
 
+**Since units 1a/1c (deployed `9f9db13`) the outright refusal above is the qualification system only**
+(`store::link_refuses_shared_kind`): dry 1982 would have split 10,277 PIN pairs, mostly one procedure announced early.
+**The PIN fan-in (issue 486 unit 1b).** A previous-notice reference, same- or cross-Source, into a PIN, periodic
+indicative or buyer-profile notice (`store::link_fans_in_shared_kind`, eForms or legacy) is refused when two or more
+keyed components cite that notice's component, counted after the other same-Source previous-notice unions. The PIN's
+own component counts as a citer when a non-PIN notice in it cites the PIN, for example a contract notice that reuses
+the PIN's BT-04. Every reference in is refused, and the PIN becomes a Tender of its own. A PIN cited by one procedure
+still joins it. The refusal is counted `pin-fan-in` on the `issue-481` line, after `buyer-disjoint`. It is judged
+after the buyer guard and before 481's cross-Source fan-in. A join waits (`deferred`) while the plan may not see
+every citer. A refusal never waits. When a second procedure cites a PIN that has already joined the first, the next
+daily's link closure walks from the newcomer to the PIN and on to every ledger row naming it. It refuses both
+references and splits the first procedure's Tender. Full and daily give the same result
+(`a_pin_joins_its_one_citer_and_stands_alone_once_a_second_procedure_cites_it`). The census judges the same rule.
+Its caller reads every citer of a PIN-kind target off the ledger (`tender_links_b`) plus the window's own rows, and
+counts their distinct procedure keys (`LinkEndpoint::pin_citer_keys`), pooled over the PIN-kind notices under the
+PIN's own BT-04 (an amendment's citers add up with the PIN's, as in the fold, whose node is the key; siblings are read
+from the Tender under that key). A would-merge pair it refuses is `pin_fan_in`
+(per rule and total; nothing re-queued). A would-split pair is `would_split` + `would_split_shared` under the PIN's kind
+in `would_split_shared_kinds`. The census counts KEYS where the fold counts components, so it can miss either way: two
+keys that a re-tender chain joins count twice, and a sibling PIN that another key's Tender absorbed is not found. The
+fold is the verdict; read the dry run as an estimate.
+**A 1:1 PIN join can wait.** Before 1b a same-Source reference into a PIN always joined. Now a join into a PIN-kind
+notice waits (`deferred`) under 481's conditions: the ledger not attested complete (`tender_links_complete`), or a
+one-ended link beside it. A later fold that sees every citer joins it. Before deploy, confirm the flag is set on prod;
+after the wet run, read the daily's `deferred` count.
+
 **The 486 re-queue on prod** reuses this job's wet run; there is no new job. The welds are `would_split_shared` pairs,
 for example Tender 202112's 234 versions behind qualification-system notice 24716938.
 ```sh

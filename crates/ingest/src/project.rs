@@ -2128,7 +2128,9 @@ pub async fn backfill_tender_links_windowed(
         // Issue 481 unit 2b: the buyer census reads both ends of every resolved
         // previous-notice row as the plan does. Boxed (issue 467's stack budgets): its
         // parse batches stay off the walk's frame.
-        let endpoints = Box::pin(link_endpoints(db, &resolved.previous_notice_endpoints())).await?;
+        let mut endpoints = Box::pin(link_endpoints(db, &resolved.previous_notice_endpoints())).await?;
+        // Issue 486 unit 1b: a PIN-kind target's fan-in, from every citer of it.
+        Box::pin(pin_citer_keys(db, &resolved.previous_notice_pairs(), &mut endpoints)).await?;
         // Boxed in its own fn (issue 467's stack budgets): issue 486's shared-kind census grew
         // this future, and built inline — even under `Box::pin` here, an O0 build makes the
         // future in a slot of THIS poll frame before moving it — its size lands on the walk's
@@ -2196,11 +2198,98 @@ async fn link_endpoints(db: &Db, ids: &[i64]) -> turso::Result<HashMap<i64, stor
                     procedure_key: row.procedure_key,
                     published_at: row.published_at,
                     shared_kind: row.shared_kind,
+                    pin_citer_keys: 0,
                 },
             );
         }
     }
     Ok(out)
+}
+
+/// Issue 486 unit 1b: stamp [`store::LinkEndpoint::pin_citer_keys`] on every PIN-kind
+/// target among `endpoints` ([`store::link_fans_in_shared_kind`]) — the distinct
+/// procedure keys citing it, counted as the fold counts them: per cited KEY, since the
+/// link step's node is the key (486 1b review). A PIN's citers are pooled with those of
+/// every PIN-kind sibling under its BT-04 (an amendment, a re-publication): the window's
+/// own targets and the notices the Tender under that key holds
+/// ([`Db::notices_under_procedure_keys`]). A citer comes from the ledger's rows
+/// ([`Db::previous_notice_citers`]) and the window's own `pairs`, read through the plan
+/// row's derivation ([`link_endpoints`]), and counts only when the fold's earlier guards
+/// would pass its reference: strictly earlier, neither end a qualification system, not
+/// buyer-disjoint. A citer under the PIN's own key counts (the PIN's own component is a
+/// procedure citing it) unless it is a PIN-kind notice itself (a PIN amendment). Costs one
+/// whole parse per citer and per cited sibling not already an endpoint, for the PIN
+/// targets' keys only.
+///
+/// Still keys where the fold counts components: two keys a re-tender chain joins count
+/// twice (over), and a sibling another key's Tender absorbed is not found (under) — the
+/// dry run is a reading, the fold the verdict.
+async fn pin_citer_keys(
+    db: &Db,
+    pairs: &[(i64, i64)],
+    endpoints: &mut HashMap<i64, store::LinkEndpoint>,
+) -> turso::Result<()> {
+    use std::collections::BTreeSet;
+    let fans_in = |e: &store::LinkEndpoint| e.shared_kind.as_deref().is_some_and(store::link_fans_in_shared_kind);
+    let targets: BTreeSet<i64> =
+        pairs.iter().map(|&(_, b)| b).filter(|b| endpoints.get(b).is_some_and(|e| fans_in(e))).collect();
+    if targets.is_empty() {
+        return Ok(());
+    }
+    // The cited groups: one per PIN key, else the PIN alone.
+    let group_of = |id: i64, e: &store::LinkEndpoint| match &e.procedure_key {
+        Some(key) => format!("k:{key}"),
+        None => format!("n:{id}"),
+    };
+    let mut groups: HashMap<String, BTreeSet<i64>> = HashMap::new();
+    for &b in &targets {
+        groups.entry(group_of(b, &endpoints[&b])).or_default().insert(b);
+    }
+    let pin_keys: Vec<String> =
+        targets.iter().filter_map(|b| endpoints[b].procedure_key.clone()).collect::<BTreeSet<_>>().into_iter().collect();
+    let under = db.notices_under_procedure_keys(&pin_keys).await?;
+    let mut cited: BTreeSet<i64> = targets.clone();
+    cited.extend(under.iter().map(|&(_, id)| id));
+    let cited: Vec<i64> = cited.into_iter().collect();
+    let mut citers = db.previous_notice_citers(&cited).await?;
+    citers.extend(pairs.iter().copied().filter(|(_, b)| targets.contains(b)));
+    citers.sort_unstable();
+    citers.dedup();
+    // Parse what is cited (a sibling with no citer adds nothing) and every citer.
+    let mut missing: Vec<i64> = citers.iter().flat_map(|&(a, b)| [a, b]).filter(|id| !endpoints.contains_key(id)).collect();
+    missing.sort_unstable();
+    missing.dedup();
+    let more = Box::pin(link_endpoints(db, &missing)).await?;
+    let read = |id: i64| endpoints.get(&id).or_else(|| more.get(&id));
+    // A sibling joins its key's group when it IS a PIN-kind notice under that key.
+    for (key, id) in &under {
+        if let Some(e) = read(*id).filter(|e| fans_in(e) && e.procedure_key.as_deref() == Some(key.as_str())) {
+            groups.entry(group_of(*id, e)).or_default().insert(*id);
+        }
+    }
+    let member: HashMap<i64, String> =
+        groups.iter().flat_map(|(g, ids)| ids.iter().map(move |&id| (id, g.clone()))).collect();
+    let qs = |e: &store::LinkEndpoint| e.shared_kind.as_deref().is_some_and(store::link_refuses_shared_kind);
+    let mut keys: HashMap<String, BTreeSet<String>> = HashMap::new();
+    for (a, b) in citers {
+        let (Some(group), Some(fa), Some(fb)) = (member.get(&b), read(a), read(b)) else { continue };
+        if fb.published_at >= fa.published_at || qs(fa) || qs(fb) || store::buyer_tokens_disjoint(&fa.buyer_tokens, &fb.buyer_tokens) {
+            continue;
+        }
+        if fans_in(fa) && fa.procedure_key == fb.procedure_key {
+            continue;
+        }
+        if let Some(key) = &fa.procedure_key {
+            keys.entry(group.clone()).or_default().insert(key.clone());
+        }
+    }
+    for b in targets {
+        let n = keys.get(&member[&b]).map_or(0, BTreeSet::len) as u64;
+        if let Some(e) = endpoints.get_mut(&b) {
+            e.pin_citer_keys = n;
+        }
+    }
+    Ok(())
 }
 
 /// The daily projection: re-derive only the Tenders TOUCHED by notices parsed

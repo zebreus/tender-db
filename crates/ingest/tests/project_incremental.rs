@@ -2787,6 +2787,507 @@ async fn the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not
     }
 }
 
+/// Issue 486 unit 1b: Tender 8813166 — 405 versions of Polska Grupa Górnicza's procurements,
+/// one buyer, each procedure under its own BT-04 — welded through PGG's utilities periodic
+/// indicative notices (OPP-070 `8`): `386157-2024` and `355936-2025` are each cited by
+/// OPP-090 from the contract notices of many procedures, and a later periodic notice
+/// cites the earlier one. The awards cite their own contract notices (a CN → CAN chain under
+/// two BT-04s), a re-tendered procedure's contract notice cites the earlier one's, and an
+/// award cites the periodic notice directly (27949755's shape, read on 2026-10-05).
+///
+/// Modelled here: periodic notice A cited by CN1, CN2, CN3, award CAN4 and periodic notice B;
+/// B cited by CN5 and CN6; CAN1 → CN1, CAN2 → CN2, CN4 → CN3 (the re-tender); and a PIN C
+/// (OPP-070 `4`) cited by CN7 alone — a procedure announced early, the 1:1 shape dry 1982
+/// counted 10,277 of. Folded with A and B untyped (the pre-1b fold joined a PIN's citers
+/// whatever the type), it is ONE 11-key component. Typed, the census counts the seven
+/// welded pairs into A and B as `would_split` under PERIODIC_INDICATIVE_NOTICE, the wet
+/// run re-queues them, and the next DAILY splits them exactly as a full fold does: A and B
+/// alone, the procedures with their own chains (largest component 2 keys), C still joined
+/// to CN7. The fan-in alone cuts the component: the CN → CAN and re-tender chains are two
+/// keys each.
+#[tokio::test]
+async fn a_periodic_notice_many_procedures_cite_does_not_weld_them() {
+    const KA: &str = "8813166a-0000-4a6b-8c7d-8e9f0a1b2c3d";
+    const KB: &str = "8813166b-0000-4a6b-8c7d-8e9f0a1b2c3d";
+    const KC: &str = "8813166c-0000-4a6b-8c7d-8e9f0a1b2c3d";
+    let key = |n: u32| format!("7fd2df6b-{n:04}-4a6b-8c7d-8e9f0a1b2c3d");
+    let pgg: Buyer = ("Polska Grupa Górnicza S.A.", "POL", "");
+    let parse = |day: i64, ids: &[(&str, &str)], codes: &[(&str, &str)]| {
+        let mut parsed = linked_parse(day, ids, &[pgg]);
+        for (field, code) in codes {
+            parsed.values.push(ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: (*field).into(),
+                ordinal: 0,
+                value: NoticeValue::Code { list: None, code: (*code).into() },
+            });
+        }
+        parsed
+    };
+    const PIN_A: &str = "00386157-2024";
+    const PIN_B: &str = "00355936-2025";
+    const PIN_C: &str = "00300030-2025";
+    let periodic = [("OPP-070-notice", "8"), ("BT-02-notice", "pin-only")];
+    let cn = [("OPP-070-notice", "17"), ("BT-02-notice", "cn-standard")];
+    let can = [("OPP-070-notice", "30"), ("BT-02-notice", "can-standard")];
+    // (publication id, day, key, cites, codes); the two periodic notices' codes are what
+    // the pre-1b state leaves out.
+    let k = |n| key(n);
+    let corpus: Vec<(&str, i64, String, Option<&str>, &[(&str, &str)])> = vec![
+        ("00400001-2025", 20_010, k(1), Some("386157-2024"), &cn),
+        ("00400002-2025", 20_011, k(2), Some("386157-2024"), &cn),
+        ("00400003-2025", 20_012, k(3), Some("386157-2024"), &cn),
+        ("00400011-2025", 20_050, k(11), Some("400001-2025"), &can),
+        ("00400012-2025", 20_051, k(12), Some("400002-2025"), &can),
+        ("00400004-2025", 20_060, k(4), Some("400003-2025"), &cn),
+        ("00400014-2025", 20_070, k(14), Some("386157-2024"), &can),
+        ("00400005-2025", 20_110, k(5), Some("355936-2025"), &cn),
+        ("00400006-2025", 20_111, k(6), Some("355936-2025"), &cn),
+        ("00400007-2025", 20_120, k(7), Some("300030-2025"), &cn),
+        (PIN_C, 20_100, KC.to_owned(), None, &[("OPP-070-notice", "4"), ("BT-02-notice", "pin-only")]),
+    ];
+    let pins: [(&str, i64, &str, Option<&str>); 2] = [(PIN_A, 20_000, KA, None), (PIN_B, 20_100, KB, Some("386157-2024"))];
+    let pin_parse = |day: i64, key: &str, cites: Option<&str>, codes: &[(&str, &str)]| {
+        let mut ids = vec![("BT-04-notice", key)];
+        ids.extend(cites.map(|c| ("OPP-090-Procedure", c)));
+        parse(day, &ids, codes)
+    };
+    let (full, ff, pf) = scratch("pgg-full").await;
+    let (incr, fi, pi) = scratch("pgg-incr").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        establish(db, fetch).await;
+        for (pub_id, day, key, cites) in pins {
+            let parsed = pin_parse(day, key, cites, &[]);
+            db.record_notice(&linked_notice(fetch, "ted", pub_id, day), &Parse::Parsed(parsed)).await.expect("record");
+        }
+        for (pub_id, day, key, cites, codes) in &corpus {
+            let mut ids = vec![("BT-04-notice", key.as_str())];
+            ids.extend(cites.map(|c| ("OPP-090-Procedure", c)));
+            let parsed = parse(*day, &ids, codes);
+            db.record_notice(&linked_notice(fetch, "ted", pub_id, *day), &Parse::Parsed(parsed)).await.expect("record");
+        }
+    }
+    absorb_and_compare(&full, &incr, "folded before the periodic notices' type is read").await;
+    let pre = project::project(&full, false).await.expect("a full fold");
+    assert_eq!(pre.links.largest_component, 11, "the pre-1b weld: {:?}", pre.links);
+    let welded = tender_of(&incr, PIN_A).await;
+    for (pub_id, ..) in corpus.iter().take(9) {
+        assert_eq!(tender_of(&incr, pub_id).await, welded, "{pub_id}: in the weld");
+    }
+    assert_eq!(tender_of(&incr, PIN_B).await, welded);
+    let c = tender_of(&incr, PIN_C).await;
+    assert_eq!(tender_of(&incr, "00400007-2025").await, c, "the PIN cited once joins its procedure");
+
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        for (pub_id, day, key, cites) in pins {
+            let parsed = pin_parse(day, key, cites, &periodic);
+            let notice = linked_notice(fetch, "ted", pub_id, day);
+            assert_eq!(db.reparse_notice(&notice, &parsed).await.expect("reparse"), store::Reparsed::Replaced);
+        }
+        db.execute_for_test("UPDATE notices SET projected = 1").await.expect("as the pre-1b binary left them");
+    }
+    let tenders_before = count(&incr, "SELECT COUNT(*) FROM tenders").await;
+    let opp = |r: &store::TenderLinkBackfill| r.rules.iter().find(|(n, _)| n == "opp-090").unwrap().1.clone();
+    let never = || false;
+    // Windows of three ids: a periodic notice's citers sit in other windows than it does,
+    // so the census reads them off the ledger.
+    let dry = project::backfill_tender_links_windowed(&incr, true, 3, 3, &never, |_| {}).await.expect("dry");
+    assert_eq!(
+        (opp(&dry).would_split, opp(&dry).would_split_shared, opp(&dry).pin_fan_in, opp(&dry).would_merge),
+        (7, 7, 0, 0),
+        "{dry:?}"
+    );
+    // The seven citers (periodic notice B among them) and A.
+    assert_eq!((dry.would_split, dry.would_split_shared, dry.requeued), (7, 7, 8), "{dry:?}");
+    let kinds: Vec<(&str, u64, usize)> =
+        dry.shared_split_kinds.iter().map(|(k, (n, samples))| (k.as_str(), *n, samples.len())).collect();
+    assert_eq!(kinds, [("PERIODIC_INDICATIVE_NOTICE", 7, 7)], "{dry:?}");
+    assert!(incr.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "a dry run queues nothing");
+    let wet = project::backfill_tender_links_windowed(&incr, false, 3, 3, &never, |_| {}).await.expect("wet");
+    assert_eq!((wet.would_split, wet.requeued), (7, 8), "{wet:?}");
+
+    let daily = absorb_and_compare(&full, &incr, "the split").await;
+    assert_eq!((daily.links.pin_fan_in, daily.links.previous_notice), (7, 3), "{:?}", daily.links);
+    assert_eq!(daily.links.largest_component, 2, "{:?}", daily.links);
+    let full_report = project::project(&full, false).await.expect("a full fold");
+    assert_eq!(
+        (full_report.links.pin_fan_in, full_report.links.previous_notice, full_report.links.largest_component),
+        (7, 4, 2),
+        "the full fold refuses the same seven and also joins the PIN cited once: {:?}",
+        full_report.links
+    );
+    assert_eq!(tender_of(&incr, PIN_A).await, welded, "the earlier periodic notice keeps the Tender");
+    let of = async |pub_id: &str| tender_of(&incr, pub_id).await;
+    let groups = [
+        vec![PIN_A],
+        vec![PIN_B],
+        vec!["00400001-2025", "00400011-2025"],
+        vec!["00400002-2025", "00400012-2025"],
+        vec!["00400003-2025", "00400004-2025"],
+        vec!["00400014-2025"],
+        vec!["00400005-2025"],
+        vec!["00400006-2025"],
+        vec![PIN_C, "00400007-2025"],
+    ];
+    let mut apart = std::collections::BTreeSet::new();
+    for group in &groups {
+        let t = of(group[0]).await;
+        assert!(apart.insert(t), "{group:?}: a Tender of its own");
+        for pub_id in &group[1..] {
+            assert_eq!(of(pub_id).await, t, "{pub_id} stays with {}", group[0]);
+        }
+    }
+    assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, tenders_before + 7);
+    let again = project::backfill_tender_links_windowed(&incr, true, 3, 3, &never, |_| {}).await.expect("re-run");
+    assert_eq!(
+        (again.would_split, again.would_merge, again.pin_fan_in, again.requeued),
+        (0, 7, 7, 0),
+        "the seven are refused would-merges now, re-queuing nothing: {again:?}"
+    );
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// Issue 486 unit 1b, arrival order: a PIN (here a utilities periodic indicative notice,
+/// OPP-070 `5`) cited by ONE procedure joins it; when a second procedure under another
+/// BT-04 cites it, the daily that plans the newcomer reaches the PIN through the ledger and
+/// every earlier citer through the PIN's own ledger rows, counts two, and refuses BOTH — the
+/// PIN leaves the first procedure's Tender and stands alone (decision (a): no citer keeps
+/// it, 364's verdict on a legacy PIN). A third adds a fourth Tender. The legacy PIN rides
+/// along: an eForms award citing a legacy `TED-TD_DOCUMENT_TYPE` `0` notice joins it when
+/// it is the only citer and is refused when two procedures cite it. And a PIN whose BT-04
+/// its own contract notice reuses counts that procedure among its citers. Full and daily
+/// identical after every step, with the same counts.
+#[tokio::test]
+async fn a_pin_joins_its_one_citer_and_stands_alone_once_a_second_procedure_cites_it() {
+    let key = |n: u32| format!("a1b2c3d4-{n:04}-4a6b-8c7d-8e9f0a1b2c3d");
+    let buyer: Buyer = ("Stadtwerke Musterstadt GmbH", "DEU", "");
+    let parse = |day: i64, ids: &[(&str, &str)], codes: &[(&str, &str)]| {
+        let mut parsed = linked_parse(day, ids, &[buyer]);
+        for (field, code) in codes {
+            parsed.values.push(ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: (*field).into(),
+                ordinal: 0,
+                value: NoticeValue::Code { list: None, code: (*code).into() },
+            });
+        }
+        parsed
+    };
+    let record = async |db: &Db, fetch: i64, pub_id: &str, day: i64, key: &str, cites: Option<&str>, codes: &[(&str, &str)]| {
+        let mut ids = vec![("BT-04-notice", key)];
+        ids.extend(cites.map(|c| ("OPP-090-Procedure", c)));
+        db.record_notice(&linked_notice(fetch, "ted", pub_id, day), &Parse::Parsed(parse(day, &ids, codes)))
+            .await
+            .expect("record");
+    };
+    let legacy_pin = |title: &str| {
+        let mut legacy = legacy_notice(title, &[]);
+        legacy.values.push(ValueRow {
+            section_id: "PROC".into(),
+            field_id: "TED-TD_DOCUMENT_TYPE".into(),
+            ordinal: 0,
+            value: NoticeValue::Code { list: None, code: "0".into() },
+        });
+        legacy
+    };
+    const PIN: &str = "00300050-2025";
+    const LEGACY_ONE: &str = "00111111-2013";
+    const LEGACY_TWO: &str = "00222222-2013";
+    let cn = [("OPP-070-notice", "20"), ("BT-02-notice", "cn-standard")];
+    let can = [("OPP-070-notice", "29"), ("BT-02-notice", "can-standard")];
+    let (full, ff, pf) = scratch("pinarrive-full").await;
+    let (incr, fi, pi) = scratch("pinarrive-incr").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        establish(db, fetch).await;
+        record_p(db, fetch, LEGACY_ONE, "ted-export-r209", legacy_pin("Legacy PIN one")).await;
+        record_p(db, fetch, LEGACY_TWO, "ted-export-r209", legacy_pin("Legacy PIN two")).await;
+        record(db, fetch, PIN, 20_000, &key(50), None, &[("OPP-070-notice", "5"), ("BT-02-notice", "pin-only")]).await;
+        record(db, fetch, "00300051-2025", 20_010, &key(51), Some("300050-2025"), &cn).await;
+        record(db, fetch, "00300061-2025", 20_010, &key(61), Some("111111-2013"), &can).await;
+        record(db, fetch, "00300071-2025", 20_010, &key(71), Some("222222-2013"), &can).await;
+        record(db, fetch, "00300072-2025", 20_011, &key(72), Some("222222-2013"), &can).await;
+        // A PIN whose own BT-04 its contract notice reuses (and cites it by): that
+        // procedure is a citer the fan-in counts though no edge joins anything, so
+        // another procedure citing the PIN is the second and is refused.
+        let pin_only = [("OPP-070-notice", "4"), ("BT-02-notice", "pin-only")];
+        record(db, fetch, "00300080-2025", 20_000, &key(80), None, &pin_only).await;
+        record(db, fetch, "00300081-2025", 20_010, &key(80), Some("300080-2025"), &cn).await;
+        record(db, fetch, "00300082-2025", 20_011, &key(82), Some("300080-2025"), &cn).await;
+    }
+    let tally = |l: &store::LinkTally| (l.pin_fan_in, l.previous_notice, l.deferred);
+    let step0 = absorb_and_compare(&full, &incr, "one citer").await;
+    let full0 = project::project(&full, false).await.expect("full");
+    for (label, links) in [("daily", &step0.links), ("full", &full0.links)] {
+        assert_eq!(
+            tally(links),
+            (3, 2, 0),
+            "{label}: the PIN and the first legacy PIN joined, the second and the shared-key PIN's stranger refused: {links:?}"
+        );
+    }
+    for db in [&full, &incr] {
+        assert_eq!(tender_of(db, "00300051-2025").await, tender_of(db, PIN).await, "one citer: joined");
+        assert_eq!(tender_of(db, "00300061-2025").await, tender_of(db, LEGACY_ONE).await, "the legacy PIN cited once: joined");
+        let two = tender_of(db, LEGACY_TWO).await;
+        assert_ne!(tender_of(db, "00300071-2025").await, two, "the legacy PIN cited twice stands alone");
+        assert_ne!(tender_of(db, "00300072-2025").await, two);
+        assert_ne!(tender_of(db, "00300071-2025").await, tender_of(db, "00300072-2025").await);
+        let shared_key = tender_of(db, "00300080-2025").await;
+        assert_eq!(tender_of(db, "00300081-2025").await, shared_key, "one BT-04, one Tender");
+        assert_ne!(tender_of(db, "00300082-2025").await, shared_key, "the other procedure stays out");
+    }
+    let joined = tender_of(&incr, PIN).await;
+    let tenders0 = count(&incr, "SELECT COUNT(*) FROM tenders").await;
+
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        record(db, fetch, "00300052-2025", 20_020, &key(52), Some("300050-2025"), &cn).await;
+    }
+    let step1 = absorb_and_compare(&full, &incr, "a second citer").await;
+    assert_eq!(tally(&step1.links), (2, 0, 0), "the daily plans the PIN and both citers: {:?}", step1.links);
+    let full1 = project::project(&full, false).await.expect("full");
+    assert_eq!(tally(&full1.links), (5, 1, 0), "{:?}", full1.links);
+    let pin = tender_of(&incr, PIN).await;
+    assert_eq!(pin, joined, "the PIN keeps the Tender it named");
+    let first = tender_of(&incr, "00300051-2025").await;
+    let second = tender_of(&incr, "00300052-2025").await;
+    assert!(first != pin && second != pin && first != second, "three Tenders: {pin} {first} {second}");
+    assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, tenders0 + 2, "the first citer split out, the second new");
+
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        record(db, fetch, "00300053-2025", 20_030, &key(53), Some("300050-2025"), &cn).await;
+    }
+    let step2 = absorb_and_compare(&full, &incr, "a third citer").await;
+    assert_eq!(tally(&step2.links), (3, 0, 0), "{:?}", step2.links);
+    let full2 = project::project(&full, false).await.expect("full");
+    assert_eq!(tally(&full2.links), (6, 1, 0), "{:?}", full2.links);
+    let mut apart = std::collections::BTreeSet::new();
+    for pub_id in [PIN, "00300051-2025", "00300052-2025", "00300053-2025"] {
+        assert!(apart.insert(tender_of(&incr, pub_id).await), "{pub_id}: a Tender of its own");
+    }
+    assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, tenders0 + 3, "PIN alone + 3");
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// The code rows a test parse carries (OPP-070 subtype, BT-02 type).
+fn with_codes(mut parsed: Parsed, codes: &[(&str, &str)]) -> Parsed {
+    for (field, code) in codes {
+        parsed.values.push(ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: (*field).into(),
+            ordinal: 0,
+            value: NoticeValue::Code { list: None, code: (*code).into() },
+        });
+    }
+    parsed
+}
+
+/// A keyed test notice citing `cites` by OPP-090, with `codes`.
+fn pin_case_parse(day: i64, key: &str, cites: Option<&str>, codes: &[(&str, &str)], buyer: Buyer) -> Parsed {
+    let mut ids = vec![("BT-04-notice", key)];
+    ids.extend(cites.map(|c| ("OPP-090-Procedure", c)));
+    with_codes(linked_parse(day, &ids, &[buyer]), codes)
+}
+
+/// Issue 486 unit 1b review: the PIN fan-in judges every reference against the roots as
+/// they stood before any PIN join, so the verdict cannot depend on the order the ledger
+/// rows are read in. 8813166's chained shape: periodic notice B, cited by CN5 and CN6
+/// (two BT-04s), itself cites last year's periodic notice A, which only B cites. B → A is
+/// a 1-citer join; joined mid-loop it re-rooted {A, B} to A's key, and CN5 → B then read
+/// A's one citer and welded. Recorded in both orders (the PINs first, the CNs first), full
+/// and daily identical: A and B one Tender, CN5 and CN6 each their own. Then a daily in
+/// which CN6 arrives later: CN5 had joined {A, B}, and the newcomer splits it out.
+#[tokio::test]
+async fn a_chained_periodic_notice_is_judged_on_the_roots_before_any_pin_join() {
+    let buyer: Buyer = ("Polska Grupa Górnicza S.A.", "POL", "");
+    let periodic = [("OPP-070-notice", "8"), ("BT-02-notice", "pin-only")];
+    let cn = [("OPP-070-notice", "17"), ("BT-02-notice", "cn-standard")];
+    let key = |n: u32| format!("c4a1b2d3-{n:04}-4a6b-8c7d-8e9f0a1b2c3d");
+    const A: &str = "00500100-2024";
+    const B: &str = "00500200-2025";
+    const CN5: &str = "00500305-2025";
+    const CN6: &str = "00500306-2025";
+    let pins = [(A, 20_000, key(1), None), (B, 20_100, key(2), Some("500100-2024"))];
+    let cns = [(CN5, 20_110, key(5), Some("500200-2025")), (CN6, 20_111, key(6), Some("500200-2025"))];
+    for (label, pins_first) in [("PINs first", true), ("CNs first", false)] {
+        let (full, ff, pf) = scratch(&format!("pinchain-full-{pins_first}")).await;
+        let (incr, fi, pi) = scratch(&format!("pinchain-incr-{pins_first}")).await;
+        for (db, fetch) in [(&full, ff), (&incr, fi)] {
+            establish(db, fetch).await;
+            let mut order: Vec<(&str, i64, &String, Option<&str>, &[(&str, &str)])> = Vec::new();
+            let p: Vec<_> = pins.iter().map(|(id, d, k, c)| (*id, *d, k, *c, &periodic[..])).collect();
+            let c: Vec<_> = cns.iter().map(|(id, d, k, c)| (*id, *d, k, *c, &cn[..])).collect();
+            if pins_first {
+                order.extend(p.into_iter().chain(c));
+            } else {
+                order.extend(c.into_iter().chain(p));
+            }
+            for (pub_id, day, key, cites, codes) in order {
+                let parsed = pin_case_parse(day, key, cites, codes, buyer);
+                db.record_notice(&linked_notice(fetch, "ted", pub_id, day), &Parse::Parsed(parsed)).await.expect("record");
+            }
+        }
+        let daily = absorb_and_compare(&full, &incr, label).await;
+        let full_report = project::project(&full, false).await.expect("full");
+        for (who, links) in [("daily", &daily.links), ("full", &full_report.links)] {
+            assert_eq!((links.pin_fan_in, links.previous_notice, links.deferred), (2, 1, 0), "{label}, {who}: {links:?}");
+        }
+        for db in [&full, &incr] {
+            let ab = tender_of(db, A).await;
+            assert_eq!(tender_of(db, B).await, ab, "{label}: B joins the A only it cites");
+            let (t5, t6) = (tender_of(db, CN5).await, tender_of(db, CN6).await);
+            assert!(t5 != ab && t6 != ab && t5 != t6, "{label}: CN5 and CN6 each their own: {ab} {t5} {t6}");
+        }
+        for p in [pf, pi] {
+            for s in ["", "-wal", "-shm"] {
+                let _ = std::fs::remove_file(format!("{p}{s}"));
+            }
+        }
+    }
+
+    // The second citer arrives on a later daily.
+    let (full, ff, pf) = scratch("pinchain-late-full").await;
+    let (incr, fi, pi) = scratch("pinchain-late-incr").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        establish(db, fetch).await;
+        for (pub_id, day, key, cites) in pins.iter().chain(&cns[..1]) {
+            let codes: &[(&str, &str)] = if *pub_id == CN5 { &cn } else { &periodic };
+            let parsed = pin_case_parse(*day, key, *cites, codes, buyer);
+            db.record_notice(&linked_notice(fetch, "ted", pub_id, *day), &Parse::Parsed(parsed)).await.expect("record");
+        }
+    }
+    absorb_and_compare(&full, &incr, "one citer of B").await;
+    let ab = tender_of(&incr, A).await;
+    assert_eq!((tender_of(&incr, B).await, tender_of(&incr, CN5).await), (ab, ab), "one citer each: one chain");
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        let (pub_id, day, key, cites) = &cns[1];
+        let parsed = pin_case_parse(*day, key, *cites, &cn, buyer);
+        db.record_notice(&linked_notice(fetch, "ted", pub_id, *day), &Parse::Parsed(parsed)).await.expect("record");
+    }
+    let daily = absorb_and_compare(&full, &incr, "B's second citer").await;
+    assert_eq!((daily.links.pin_fan_in, daily.links.deferred), (2, 0), "{:?}", daily.links);
+    assert_eq!(tender_of(&incr, B).await, ab, "A keeps its Tender, B with it");
+    let (t5, t6) = (tender_of(&incr, CN5).await, tender_of(&incr, CN6).await);
+    assert!(t5 != ab && t6 != ab && t5 != t6, "CN5 split out, CN6 its own: {ab} {t5} {t6}");
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// Issue 486 unit 1b review: a join into a PIN waits under 481's conditions. With the
+/// ledger not attested complete, the daily cannot know it sees every citer of the PIN, so
+/// a 1-citer join is `deferred`, not admitted. The wet backfill attests the ledger and
+/// re-queues the pair, and the next daily joins it, as a full fold does.
+#[tokio::test]
+async fn a_pin_join_waits_until_the_ledger_is_attested() {
+    let buyer: Buyer = ("Stadtwerke Musterstadt GmbH", "DEU", "");
+    let pin = [("OPP-070-notice", "4"), ("BT-02-notice", "pin-only")];
+    let cn = [("OPP-070-notice", "16"), ("BT-02-notice", "cn-standard")];
+    let (db, fetch, path) = scratch("pin-unattested").await;
+    establish(&db, fetch).await;
+    let key = |n: u32| format!("d5e6f7a8-{n:04}-4a6b-8c7d-8e9f0a1b2c3d");
+    const PIN: &str = "00600100-2025";
+    const CN: &str = "00600101-2025";
+    let parsed = pin_case_parse(20_000, &key(1), None, &pin, buyer);
+    db.record_notice(&linked_notice(fetch, "ted", PIN, 20_000), &Parse::Parsed(parsed)).await.expect("record");
+    project::project(&db, false).await.expect("project");
+    db.execute_for_test("UPDATE projection_state SET tender_links_complete = 0").await.expect("unattested");
+
+    let parsed = pin_case_parse(20_010, &key(2), Some("600100-2025"), &cn, buyer);
+    db.record_notice(&linked_notice(fetch, "ted", CN, 20_010), &Parse::Parsed(parsed)).await.expect("record");
+    let report = project::project_incremental(&db).await.expect("the daily");
+    assert_eq!((report.links.deferred, report.links.pin_fan_in, report.links.previous_notice), (1, 0, 0), "{:?}", report.links);
+    assert_ne!(tender_of(&db, CN).await, tender_of(&db, PIN).await, "held, not joined");
+
+    let never = || false;
+    let wet = project::backfill_tender_links_windowed(&db, false, 1_000, 1_000, &never, |_| {}).await.expect("wet");
+    assert!(db.tender_links_complete().await.unwrap());
+    assert_eq!(wet.requeued, 2, "the held pair re-queued: {wet:?}");
+    let report = project::project_incremental(&db).await.expect("the next daily");
+    assert_eq!((report.links.deferred, report.links.previous_notice), (0, 1), "{:?}", report.links);
+    assert_eq!(tender_of(&db, CN).await, tender_of(&db, PIN).await, "joined once the plan sees every citer");
+    let tenders = snapshot_content(&db).await;
+    project::project(&db, false).await.expect("a full fold");
+    assert_eq!(snapshot_content(&db).await, tenders, "as a full fold leaves them");
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// Issue 486 unit 1b review: the census pools a PIN's citers over the PIN-kind notices
+/// under its BT-04, as the fold (whose node is the key) does. PIN P and its amendment P'
+/// share one key; X cites P, Y cites P'. Folded with both untyped, the four are one Tender.
+/// Typed, the fold refuses both references; the census, per notice, saw one citer each and
+/// would neither count nor re-queue them. Windows of one id: P' is found through the Tender
+/// under the key. would_split 2 under PRIOR_INFORMATION_NOTICE, and the wet run's daily
+/// splits them as a full fold does.
+#[tokio::test]
+async fn the_census_pools_a_pins_citers_over_its_same_key_amendment() {
+    let buyer: Buyer = ("Stadtwerke Musterstadt GmbH", "DEU", "");
+    let pin = [("OPP-070-notice", "4"), ("BT-02-notice", "pin-only")];
+    let cn = [("OPP-070-notice", "16"), ("BT-02-notice", "cn-standard")];
+    let key = |n: u32| format!("e7f8a9b0-{n:04}-4a6b-8c7d-8e9f0a1b2c3d");
+    const P: &str = "00700100-2025";
+    const P2: &str = "00700101-2025";
+    const X: &str = "00700200-2025";
+    const Y: &str = "00700300-2025";
+    let pins = [(P, 20_000), (P2, 20_005)];
+    let (full, ff, pf) = scratch("pinkey-full").await;
+    let (incr, fi, pi) = scratch("pinkey-incr").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        establish(db, fetch).await;
+        for (pub_id, day) in pins {
+            let parsed = pin_case_parse(day, &key(1), None, &[], buyer);
+            db.record_notice(&linked_notice(fetch, "ted", pub_id, day), &Parse::Parsed(parsed)).await.expect("record");
+        }
+        for (pub_id, day, k, cites) in [(X, 20_010, key(2), "700100-2025"), (Y, 20_011, key(3), "700101-2025")] {
+            let parsed = pin_case_parse(day, &k, Some(cites), &cn, buyer);
+            db.record_notice(&linked_notice(fetch, "ted", pub_id, day), &Parse::Parsed(parsed)).await.expect("record");
+        }
+    }
+    absorb_and_compare(&full, &incr, "untyped").await;
+    let welded = tender_of(&incr, P).await;
+    for pub_id in [P2, X, Y] {
+        assert_eq!(tender_of(&incr, pub_id).await, welded, "{pub_id}: the pre-1b weld");
+    }
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        for (pub_id, day) in pins {
+            let parsed = pin_case_parse(day, &key(1), None, &pin, buyer);
+            let notice = linked_notice(fetch, "ted", pub_id, day);
+            assert_eq!(db.reparse_notice(&notice, &parsed).await.expect("reparse"), store::Reparsed::Replaced);
+        }
+        db.execute_for_test("UPDATE notices SET projected = 1").await.expect("as the pre-1b binary left them");
+    }
+    let never = || false;
+    let opp = |r: &store::TenderLinkBackfill| r.rules.iter().find(|(n, _)| n == "opp-090").unwrap().1.clone();
+    let dry = project::backfill_tender_links_windowed(&incr, true, 1, 1, &never, |_| {}).await.expect("dry");
+    assert_eq!((opp(&dry).would_split, opp(&dry).would_split_shared, opp(&dry).pin_fan_in), (2, 2, 0), "{dry:?}");
+    let kinds: Vec<(&str, u64)> = dry.shared_split_kinds.iter().map(|(k, (n, _))| (k.as_str(), *n)).collect();
+    assert_eq!(kinds, [("PRIOR_INFORMATION_NOTICE", 2)], "{dry:?}");
+    let wet = project::backfill_tender_links_windowed(&incr, false, 1, 1, &never, |_| {}).await.expect("wet");
+    assert_eq!(wet.would_split, 2, "{wet:?}");
+    let daily = absorb_and_compare(&full, &incr, "the split").await;
+    assert_eq!(daily.links.pin_fan_in, 2, "{:?}", daily.links);
+    let (tp, tx, ty) = (tender_of(&incr, P).await, tender_of(&incr, X).await, tender_of(&incr, Y).await);
+    assert_eq!(tender_of(&incr, P2).await, tp, "one key, one Tender");
+    assert!(tx != tp && ty != tp && tx != ty, "{tp} {tx} {ty}");
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
 /// Issue 481, the cap: an over-cap link closure reports the full-path fallback instead
 /// of a wrong scope; the production cap admits the same component.
 #[tokio::test]
@@ -2903,6 +3404,7 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
         not_earlier: 0,
         buyer_disjoint: 0,
         shared_kind: 0,
+        pin_fan_in: 0,
         would_split: 0,
         would_split_shared: 0,
         stale: 0,
@@ -2920,6 +3422,7 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
         not_earlier: 1,
         buyer_disjoint: 1,
         shared_kind: 0,
+        pin_fan_in: 0,
         would_split: 0,
         would_split_shared: 0,
         stale: 0,

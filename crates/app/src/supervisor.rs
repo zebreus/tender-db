@@ -2673,7 +2673,7 @@ fn link_suffix(l: &store::LinkTally) -> String {
     format!(
         "; issue-481 tender links joined: {} (previous-notice {} of which cross-source {}, \
          logical-notice {}, matched {}); refused: {} (not-earlier {}, shared-kind {}, buyer-disjoint {}, \
-         fan-in {}, not-one-to-one {}, keyed-weld {}, oversized {}); deferred: {}; largest component: {} key(s){}",
+         pin-fan-in {}, fan-in {}, not-one-to-one {}, keyed-weld {}, oversized {}); deferred: {}; largest component: {} key(s){}",
         l.admitted(),
         l.previous_notice,
         l.cross_source,
@@ -2683,6 +2683,7 @@ fn link_suffix(l: &store::LinkTally) -> String {
         l.not_earlier,
         l.shared_kind,
         l.buyer_disjoint,
+        l.pin_fan_in,
         l.fan_in,
         l.not_one_to_one,
         l.keyed_weld,
@@ -2988,6 +2989,7 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
                     "not_earlier": c.not_earlier,
                     "buyer_disjoint": c.buyer_disjoint,
                     "shared_kind": c.shared_kind,
+                    "pin_fan_in": c.pin_fan_in,
                     "would_split": c.would_split,
                     "would_split_shared": c.would_split_shared,
                     "stale": c.stale,
@@ -3003,6 +3005,7 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
         "not_earlier": r.not_earlier,
         "buyer_disjoint": r.buyer_disjoint,
         "shared_kind": r.shared_kind,
+        "pin_fan_in": r.pin_fan_in,
         "would_split": r.would_split,
         "would_split_shared": r.would_split_shared,
         "requeued": r.requeued,
@@ -3032,7 +3035,7 @@ fn tender_link_backfill_summary(r: &store::TenderLinkBackfill) -> String {
         .map(|(rule, c)| {
             format!(
                 "{rule}: {} declared, {} present, {} resolved, {} unresolved, {} would merge \
-                 ({} cross-source, {} not-earlier, {} shared-kind, {} buyer-disjoint), {} would split \
+                 ({} cross-source, {} not-earlier, {} shared-kind, {} buyer-disjoint, {} pin-fan-in), {} would split \
                  ({} shared-kind), {} stale",
                 c.declared,
                 c.present,
@@ -3043,6 +3046,7 @@ fn tender_link_backfill_summary(r: &store::TenderLinkBackfill) -> String {
                 c.not_earlier,
                 c.shared_kind,
                 c.buyer_disjoint,
+                c.pin_fan_in,
                 c.would_split,
                 c.would_split_shared,
                 c.stale
@@ -4483,7 +4487,7 @@ impl Supervisor {
                 Some(r.target.max(0) as u64),
                 format!(
                     "notice id {} of {}; {} notices walked, {} would merge ({} not-earlier, {} shared-kind, \
-                     {} buyer-disjoint), {} would split ({} shared-kind), {} {}",
+                     {} buyer-disjoint, {} pin-fan-in), {} would split ({} shared-kind), {} {}",
                     r.cursor,
                     r.target,
                     r.notices,
@@ -4491,6 +4495,7 @@ impl Supervisor {
                     r.not_earlier,
                     r.shared_kind,
                     r.buyer_disjoint,
+                    r.pin_fan_in,
                     r.would_split,
                     r.would_split_shared,
                     r.requeued,
@@ -15542,7 +15547,7 @@ mod tests {
         assert!(
             msg.contains(
                 "logical-notice: 1 declared, 0 present, 1 resolved, 0 unresolved, 1 would merge (1 cross-source, \
-                 0 not-earlier, 0 shared-kind, 0 buyer-disjoint), 0 would split (0 shared-kind), 0 stale"
+                 0 not-earlier, 0 shared-kind, 0 buyer-disjoint, 0 pin-fan-in), 0 would split (0 shared-kind), 0 stale"
             ),
             "{msg}"
         );
@@ -15565,6 +15570,7 @@ mod tests {
         // Issue 486: the shared-publication counts, and (its review) the per-kind split census.
         assert_eq!((v["shared_kind"].as_u64(), v["would_split_shared"].as_u64()), (Some(0), Some(0)), "{body}");
         assert_eq!(v["would_split_shared_kinds"], serde_json::json!({}), "{body}");
+        assert_eq!((v["pin_fan_in"].as_u64(), v["rules"]["opp-090"]["pin_fan_in"].as_u64()), (Some(0), Some(0)), "{body}");
         assert_eq!(ledger().await, 0, "dry wrote nothing");
 
         let msg = sup.run_spec(&job(2, false)).await.expect("wet");
@@ -16816,8 +16822,8 @@ mod tests {
         );
         assert!(
             s.contains(
-                "refused: 7 (not-earlier 0, shared-kind 0, buyer-disjoint 4, fan-in 2, not-one-to-one 0, keyed-weld 0, \
-                 oversized 1); deferred: 0; largest component: 7 key(s) at notice 1234"
+                "refused: 7 (not-earlier 0, shared-kind 0, buyer-disjoint 4, pin-fan-in 0, fan-in 2, not-one-to-one 0, \
+                 keyed-weld 0, oversized 1); deferred: 0; largest component: 7 key(s) at notice 1234"
             ),
             "{s}"
         );
@@ -16833,6 +16839,12 @@ mod tests {
         let mut sum = store::LinkTally { shared_kind: 2, ..Default::default() };
         sum.add(store::LinkTally { shared_kind: 5, ..Default::default() });
         assert_eq!((sum.shared_kind, sum.refused()), (7, 7));
+        // Issue 486 unit 1b: a PIN many procedures cite, kept from welding them, likewise.
+        let s = link_suffix(&store::LinkTally { pin_fan_in: 4, ..Default::default() });
+        assert!(s.contains("refused: 4 (not-earlier 0, shared-kind 0, buyer-disjoint 0, pin-fan-in 4, fan-in 0,"), "{s}");
+        let mut sum = store::LinkTally { pin_fan_in: 2, ..Default::default() };
+        sum.add(store::LinkTally { pin_fan_in: 3, ..Default::default() });
+        assert_eq!((sum.pin_fan_in, sum.refused()), (5, 5));
         // A deferred join alone is still news: a link this fold's plan could not judge.
         let s = link_suffix(&store::LinkTally { deferred: 2, ..Default::default() });
         assert!(s.contains("; deferred: 2;"), "{s}");

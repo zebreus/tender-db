@@ -1755,6 +1755,22 @@ pub fn link_refuses_shared_kind(kind: &str) -> bool {
     kind == "NOTICE_QUALIFICATION_SYSTEM"
 }
 
+/// Issue 486 unit 1b: the shared-publication kinds whose notices, as the CITED end of a
+/// previous-notice link, refuse it when two or more keyed components cite them — the
+/// same-Source analogue of 481's cross-Source fan-in guard ([`LinkTally::pin_fan_in`]).
+/// A prior-information, periodic-indicative or buyer-profile notice cited by ONE
+/// procedure is that procedure announced early (dry 1982: 10,277 PIN pairs, mostly 1:1
+/// and correct; 1983's buyer-profile sample 00261430-2024 → 00364806-2024), and keeps
+/// joining it. Cited by several, it is the planning notice of a buyer's whole programme
+/// (Tender 8813166: Polska Grupa Górnicza's utilities periodic indicative notices
+/// `386157-2024` and `355936-2025`, each cited by dozens of contract notices under their
+/// own BT-04, welded 405 versions into one Tender), and every one of those citations is
+/// refused — the notice becomes a Tender of its own, as 364 unit 6 left a legacy PIN.
+/// The kinds read the same eForms or legacy (`PlanRow::shared_kind`'s one vocabulary).
+pub fn link_fans_in_shared_kind(kind: &str) -> bool {
+    matches!(kind, "PRIOR_INFORMATION_NOTICE" | "PERIODIC_INDICATIVE_NOTICE" | "NOTICE_BUYER_PROFILE")
+}
+
 /// Issue 481: what the grouping's Tender-link step did. Durable on the run's Report and
 /// printed on the job row beside the issue-364 refusals — a weld guard that refuses
 /// silently is indistinguishable from one that is not running.
@@ -1779,8 +1795,9 @@ pub struct LinkTally {
     pub buyer_disjoint: u64,
     /// Refused (issue 486): a previous-notice reference, same- or cross-Source, whose
     /// citing OR cited notice is a shared publication by its own type
-    /// (`PlanRow::shared_kind`: a qualification system, a PIN, a buyer-profile or
-    /// periodic indicative notice) — the call for MANY procurements, which welded 234
+    /// (`PlanRow::shared_kind` in [`link_refuses_shared_kind`]: since unit 1c a
+    /// qualification system only; the PIN kinds go by [`LinkTally::pin_fan_in`]) — the
+    /// call for MANY procurements, which welded 234
     /// unrelated Endesa procedures into Tender 202112 through one qualification-system
     /// notice. Judged after the direction check, before the buyer guard and the fan-in
     /// count. Per kind it is one bounded query away (`plan_notice.shared_kind`, or the
@@ -1790,6 +1807,16 @@ pub struct LinkTally {
     /// components into one target — one TED notice gathering several procedures of
     /// another Source, which is a shared PIN or a colliding key, not one procedure.
     pub fan_in: u64,
+    /// Refused (issue 486 unit 1b): previous-notice references, same- or cross-Source,
+    /// into a notice whose own type is a PIN, a periodic indicative or a buyer-profile
+    /// notice ([`link_fans_in_shared_kind`]) that two or more keyed components cite —
+    /// counted after the other same-Source previous-notice unions, the PIN's own
+    /// component counting when a non-PIN member of it cites the PIN. Every reference into
+    /// such a notice is refused: it is the planning notice of many procedures, and picking
+    /// one of them would be calibration §4's "never pick the nearest". A PIN cited by one
+    /// procedure is not counted here and joins it. Judged after the buyer guard, so a
+    /// placeholder citer is no second procedure, and before 481's cross-Source fan-in.
+    pub pin_fan_in: u64,
     /// Refused: a logical notice id carried by citing notices of more than one
     /// component, or a notice matched to notices of more than one component — one
     /// notice must pair with one notice.
@@ -1826,6 +1853,7 @@ impl LinkTally {
             + self.shared_kind
             + self.buyer_disjoint
             + self.fan_in
+            + self.pin_fan_in
             + self.not_one_to_one
             + self.keyed_weld
             + self.oversized
@@ -1840,6 +1868,7 @@ impl LinkTally {
         self.buyer_disjoint += other.buyer_disjoint;
         self.shared_kind += other.shared_kind;
         self.fan_in += other.fan_in;
+        self.pin_fan_in += other.pin_fan_in;
         self.not_one_to_one += other.not_one_to_one;
         self.keyed_weld += other.keyed_weld;
         self.oversized += other.oversized;
@@ -1907,6 +1936,12 @@ pub struct TenderLinkRuleCounts {
     /// ([`LinkTally::shared_kind`]), so they re-queue nothing and are not sampled. Zero for
     /// every rule but `opp-090`.
     pub shared_kind: u64,
+    /// Of `would_merge` (issue 486 unit 1b), previous-notice rows into a PIN-kind notice
+    /// ([`link_fans_in_shared_kind`]) that two or more procedure keys cite
+    /// ([`LinkEndpoint::pin_citer_keys`]): the fold's [`LinkTally::pin_fan_in`] refuses
+    /// them after the buyer guard, so they re-queue nothing and are not sampled. Zero for
+    /// every rule but `opp-090`.
+    pub pin_fan_in: u64,
     /// Previous-notice rows whose notices share a Tender TODAY — an earlier full
     /// projection joined them, before the buyer guard — but are buyer-disjoint, with
     /// the target strictly earlier and the two notices under different procedure keys
@@ -1915,7 +1950,9 @@ pub struct TenderLinkRuleCounts {
     /// upper bound: another admitted path between the two keeps them together. Zero
     /// for every rule but `opp-090`. Since issue 486 a pair whose citing or cited notice
     /// is a shared publication by its own type is one too (the welds of Tender 202112),
-    /// whatever their buyers — counted again in `would_split_shared`.
+    /// whatever their buyers — counted again in `would_split_shared`. Since unit 1b so is
+    /// a pair into a PIN-kind notice two or more procedure keys cite (Tender 8813166's
+    /// periodic indicative notices), counted in `would_split_shared` under the PIN's kind.
     pub would_split: u64,
     /// Of `would_split` (issue 486), the pairs split because an end is a shared
     /// publication rather than because their buyers are disjoint.
@@ -1939,6 +1976,17 @@ pub struct LinkEndpoint {
     pub published_at: i64,
     /// [`PlanRow::shared_kind`] (issue 486).
     pub shared_kind: Option<String>,
+    /// Issue 486 unit 1b, for a PIN-kind notice ([`link_fans_in_shared_kind`]) only: the
+    /// distinct procedure keys among the notices citing it by a previous-notice reference
+    /// the fold's earlier guards pass (strictly earlier, no qualification-system end, not
+    /// buyer-disjoint) — a citer under the PIN's own key counting unless it is a PIN-kind
+    /// notice itself — pooled over the PIN-kind notices under the PIN's own key, as the
+    /// fold's node is the key. Read from the ledger (`tender_links_b`), the window's own
+    /// rows and the Tender under that key by the census's caller. Two or more refuse every
+    /// reference into it, as the fold's [`LinkTally::pin_fan_in`] does. The fold counts
+    /// COMPONENTS after its other unions, so this can miss either way: two keys a re-tender
+    /// chain joins count twice here, and a sibling another key's Tender absorbed is unseen.
+    pub pin_citer_keys: u64,
 }
 
 /// Issue 482: one version of a UUID-keyed Tender ([`Db::uuid_keyed_tender_versions`]).
@@ -1991,6 +2039,9 @@ pub struct TenderLinkBackfill {
     /// Issue 486: of `would_merge`, the previous-notice pairs the shared-publication
     /// refusal takes ([`TenderLinkRuleCounts::shared_kind`]), all rules. Counted only.
     pub shared_kind: u64,
+    /// Issue 486 unit 1b: of `would_merge`, the previous-notice pairs the PIN fan-in
+    /// refuses ([`TenderLinkRuleCounts::pin_fan_in`]), all rules. Counted only.
+    pub pin_fan_in: u64,
     /// Issue 481 unit 2b: up to [`LINK_BACKFILL_SAMPLES`] `would_split` pairs, and how
     /// many were seen, all rules.
     pub split_samples: Vec<TenderLinkSample>,
@@ -2059,6 +2110,23 @@ impl DeclaredWindow {
         ids.sort_unstable();
         ids.dedup();
         ids
+    }
+
+    /// Issue 486 unit 1b: every resolved previous-notice row the window declares, as
+    /// `(citing, cited)` — the citers of a PIN the ledger may not hold yet (a dry run
+    /// writes nothing), beside [`Db::previous_notice_citers`]'.
+    pub fn previous_notice_pairs(&self) -> Vec<(i64, i64)> {
+        let mut pairs: Vec<(i64, i64)> = Vec::new();
+        for (notice, diff) in &self.notices {
+            for (rule, _, _, target) in &diff.declared {
+                if let Some(b) = target.filter(|_| is_previous_notice_rule(rule)) {
+                    pairs.push((notice.id, b));
+                }
+            }
+        }
+        pairs.sort_unstable();
+        pairs.dedup();
+        pairs
     }
 }
 
@@ -11245,15 +11313,26 @@ impl Db {
         // false for such a row and the census counts it once.
         // The shared verdict is the kind (the cited end's, else the citing end's), for
         // the per-kind split census.
-        let judge = |a: i64, b: i64| -> Option<(bool, Option<String>, bool, bool)> {
+        //
+        // Issue 486 unit 1b: after the buyer guard, whether the target is a PIN-kind notice
+        // two or more procedure keys cite ([`LinkEndpoint::pin_citer_keys`]) — then the
+        // kind is the PIN's and the last flag says it is the fan-in's refusal, not the
+        // qualification system's.
+        let judge = |a: i64, b: i64| -> Option<(bool, Option<String>, bool, bool, bool)> {
             let (fa, fb) = (endpoints.get(&a)?, endpoints.get(&b)?);
             let not_earlier = fb.published_at >= fa.published_at;
             let refusing = |k: &Option<String>| k.clone().filter(|k| link_refuses_shared_kind(k));
             let shared = if not_earlier { None } else { refusing(&fb.shared_kind).or_else(|| refusing(&fa.shared_kind)) };
             let disjoint =
                 !not_earlier && shared.is_none() && buyer_tokens_disjoint(&fa.buyer_tokens, &fb.buyer_tokens);
+            let pin = !not_earlier
+                && shared.is_none()
+                && !disjoint
+                && fb.pin_citer_keys >= 2
+                && fb.shared_kind.as_deref().is_some_and(link_fans_in_shared_kind);
+            let shared = if pin { fb.shared_kind.clone() } else { shared };
             let apart = fa.procedure_key.is_none() || fa.procedure_key != fb.procedure_key;
-            Some((not_earlier, shared, disjoint, apart))
+            Some((not_earlier, shared, disjoint, apart, pin))
         };
         for (notice, diff) in window.notices {
             for row in &diff.declared {
@@ -11274,12 +11353,13 @@ impl Db {
                 let Some(b) = *target else { continue };
                 let previous = is_previous_notice_rule(rule);
                 let verdict = if previous { judge(notice.id, b) } else { None };
-                let not_earlier = verdict.as_ref().is_some_and(|(not_earlier, _, _, _)| *not_earlier);
-                let kind = verdict.as_ref().and_then(|(_, kind, _, _)| kind.clone());
+                let not_earlier = verdict.as_ref().is_some_and(|(not_earlier, _, _, _, _)| *not_earlier);
+                let kind = verdict.as_ref().and_then(|(_, kind, _, _, _)| kind.clone());
                 let kind_refused = kind.is_some();
-                let refused = verdict.as_ref().is_some_and(|(_, _, disjoint, _)| *disjoint);
+                let pin_refused = verdict.as_ref().is_some_and(|(_, _, _, _, pin)| *pin);
+                let refused = verdict.as_ref().is_some_and(|(_, _, disjoint, _, _)| *disjoint);
                 if shared.shared(notice.id, b).await? {
-                    if (refused || kind_refused) && verdict.as_ref().is_some_and(|(_, _, _, apart)| *apart) {
+                    if (refused || kind_refused) && verdict.as_ref().is_some_and(|(_, _, _, apart, _)| *apart) {
                         report.counts(rule).would_split += 1;
                         report.would_split += 1;
                         if let Some(kind) = kind {
@@ -11307,6 +11387,13 @@ impl Db {
                     counts.not_earlier += 1;
                     report.would_merge += 1;
                     report.not_earlier += 1;
+                    continue;
+                }
+                if pin_refused {
+                    // Issue 486 unit 1b: refused by the PIN fan-in — not a join either.
+                    counts.pin_fan_in += 1;
+                    report.would_merge += 1;
+                    report.pin_fan_in += 1;
                     continue;
                 }
                 if kind_refused {
@@ -11420,6 +11507,56 @@ impl Db {
             out.extend(reads.targets(link).await?);
         }
         Ok(out.into_iter().collect())
+    }
+
+    /// Issue 486 unit 1b: the ledger's resolved previous-notice rows INTO `cited`, as
+    /// `(citing, cited)` — every citer of a PIN, which the backfill census needs to judge
+    /// the PIN fan-in as the fold does. A seek on `tender_links_b` per id; sorted.
+    pub async fn previous_notice_citers(&self, cited: &[i64]) -> turso::Result<Vec<(i64, i64)>> {
+        let conn = self.reader().await?;
+        let mut out: Vec<(i64, i64)> = Vec::new();
+        for chunk in cited.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT a_notice_id, b_notice_id FROM tender_links WHERE b_notice_id IN ({}) AND +rule = ?",
+                placeholders(chunk.len())
+            );
+            let mut params = params;
+            params.push(t(LINK_OPP_090));
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                out.push((int(&row, 0), int(&row, 1)));
+            }
+        }
+        out.sort_unstable();
+        out.dedup();
+        Ok(out)
+    }
+
+    /// Issue 486 unit 1b review: the notices the projected Tenders under `keys` hold, as
+    /// `(procedure_key, notice_id)` — the census's way to the PIN-kind siblings of a cited
+    /// PIN under its own BT-04 (an amendment, a re-publication), whose citers the fold
+    /// pools with the PIN's because the link step's node is the KEY. A seek on
+    /// `tenders_procedure_key` per key and the versions' primary key. What another key's
+    /// Tender absorbed (a weld rooted elsewhere) is not found; sorted.
+    pub async fn notices_under_procedure_keys(&self, keys: &[String]) -> turso::Result<Vec<(String, i64)>> {
+        let conn = self.reader().await?;
+        let mut out: Vec<(String, i64)> = Vec::new();
+        for chunk in keys.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|k| t(k.as_str())).collect();
+            let sql = format!(
+                "SELECT t.procedure_key, v.caused_by_notice_id FROM tenders t \
+                 JOIN tender_versions v ON v.tender_id = t.id WHERE t.procedure_key IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                out.push((text(&row, 0), int(&row, 1)));
+            }
+        }
+        out.sort_unstable();
+        out.dedup();
+        Ok(out)
     }
 
     /// Issue 481: the notices one ledger hop away from `notice_ids`, both directions —
@@ -12300,6 +12437,12 @@ impl Db {
             /// A previous-notice edge with either notice a shared publication by its own
             /// type (issue 486, `plan_notice.shared_kind`); false for every other rule.
             shared: bool,
+            /// A previous-notice edge whose CITED notice is a PIN-kind shared publication
+            /// ([`link_fans_in_shared_kind`], issue 486 unit 1b): fan-in-guarded.
+            pin: bool,
+            /// The CITING notice is one too — a PIN amendment citing its PIN is no
+            /// procedure in that PIN's fan-in.
+            a_pin: bool,
         }
         let mut edges: Vec<LinkEdge> = Vec::new();
         // A key's rank orders who NAMES a component (issue 481). A keyed member first, so
@@ -12341,6 +12484,11 @@ impl Db {
         // included for the carriers' reason: a notice matched to a member of its own Tender
         // and to another Tender's is paired with two.
         let mut partners: std::collections::HashMap<i64, BTreeSet<String>> = std::collections::HashMap::new();
+        // Issue 486 unit 1b: the citing groups of a PIN-kind notice that already share
+        // the PIN's group (a CN filed under the PIN's own BT-04) — no edge to join, but a
+        // procedure in the PIN's fan-in all the same, as `carriers` keeps same-group
+        // carriers. Only references the earlier guards would pass.
+        let mut pin_same: Vec<String> = Vec::new();
         let t_read = std::time::Instant::now();
         {
             let mut read = 0u64;
@@ -12376,6 +12524,8 @@ impl Db {
                             .iter()
                             .flatten()
                             .any(|k| link_refuses_shared_kind(k)),
+                    pin: previous && opt_text_of(&row, 17).is_some_and(|k| link_fans_in_shared_kind(&k)),
+                    a_pin: opt_text_of(&row, 16).is_some_and(|k| link_fans_in_shared_kind(&k)),
                     rule,
                 };
                 if edge.rule == LINK_LOGICAL_NOTICE {
@@ -12385,7 +12535,11 @@ impl Db {
                     partners.entry(edge.b_id).or_default().insert(edge.a.clone());
                 }
                 if edge.a == edge.b {
-                    // Already one group: nothing to join, nothing to refuse.
+                    // Already one group: nothing to join, nothing to refuse — but a citer
+                    // the PIN fan-in counts (issue 486 unit 1b).
+                    if edge.pin && !edge.a_pin && edge.b_at < edge.a_at && !edge.shared && !edge.disjoint {
+                        pin_same.push(edge.b.clone());
+                    }
                     continue;
                 }
                 for (key, at, pub_id, source_rank) in [
@@ -12434,6 +12588,7 @@ impl Db {
             let mut uf = MinUnionFind::default();
             let mut guarded: Vec<&LinkEdge> = Vec::new();
             let mut crossing: Vec<&LinkEdge> = Vec::new();
+            let mut pinned: Vec<&LinkEdge> = Vec::new();
             for e in &edges {
                 if !is_previous_notice_rule(&e.rule) {
                     guarded.push(e);
@@ -12451,6 +12606,8 @@ impl Db {
                     links.shared_kind += 1;
                 } else if e.disjoint {
                     links.buyer_disjoint += 1;
+                } else if e.pin {
+                    pinned.push(e);
                 } else if e.cross {
                     crossing.push(e);
                 } else {
@@ -12464,6 +12621,73 @@ impl Db {
             let unseen = |uf: &mut MinUnionFind, near: &[i64]| -> std::collections::HashSet<i64> {
                 near.iter().map(|&at| uf.find(at)).collect()
             };
+            // Issue 486 unit 1b: previous-notice references into a PIN-kind notice — a PIN,
+            // a periodic indicative or a buyer-profile notice, eForms or legacy — judged
+            // after the other same-Source unions and before any of them joins: per cited
+            // component, the keyed components citing a PIN-kind notice of it, the PIN's own
+            // component included when a non-PIN member cites it (`pin_same`, or an edge
+            // already inside one component). Two or more refuse every such reference, same-
+            // or cross-Source: the PIN becomes a Tender of its own (364's verdict on a
+            // legacy PIN), since choosing which procedure keeps it would be picking the
+            // nearest. One keeps joining: a procedure announced early. A join waits like
+            // 481's cross-Source one when the plan may not see every citer — a refusal
+            // never does (more citers only add). The admitted cross-Source ones go on to
+            // the fan-in below.
+            let held = unseen(&mut uf, &near);
+            let root_key = |uf: &mut MinUnionFind, key: &str| match position.get(key) {
+                Some(&at) => keys[uf.find(at) as usize].clone(),
+                None => key.to_owned(),
+            };
+            let mut pin_citers: std::collections::HashMap<String, BTreeSet<String>> = std::collections::HashMap::new();
+            for key in &pin_same {
+                let root = root_key(&mut uf, key);
+                if link_rank_class(&root) == LINK_CLASS_KEYED {
+                    pin_citers.entry(root.clone()).or_default().insert(root);
+                }
+            }
+            for e in &pinned {
+                let (ra, rb) = (root_key(&mut uf, &e.a), root_key(&mut uf, &e.b));
+                if ra == rb && e.a_pin {
+                    continue;
+                }
+                if link_rank_class(&ra) == LINK_CLASS_KEYED {
+                    pin_citers.entry(rb).or_default().insert(ra);
+                }
+            }
+            // Every verdict reads the roots as they stand BEFORE any pinned join (486 1b
+            // review): a 1-citer PIN joined mid-loop re-roots its component to the
+            // earlier-published key, and a later edge into a PIN of it would look up the
+            // wrong root's citers — a periodic notice cited by two procedures that itself
+            // cites last year's (cited once) would weld or not by row order. So judge
+            // all, then join, as the crossing pass below does.
+            let mut pin_admitted: Vec<(i64, i64)> = Vec::new();
+            for e in pinned {
+                let (pa, pb) = (position[e.a.as_str()], position[e.b.as_str()]);
+                let (ra, rb) = (uf.find(pa), uf.find(pb));
+                if ra == rb {
+                    // Already one component through another path: neither a join nor a
+                    // refusal (as 481's crossing pass), so not a `pin_fan_in` either;
+                    // tallied as the same edge outside 1b would be.
+                    if e.cross {
+                        crossing.push(e);
+                    } else {
+                        links.previous_notice += 1;
+                    }
+                } else if pin_citers.get(&keys[rb as usize]).is_some_and(|roots| roots.len() >= 2) {
+                    links.pin_fan_in += 1;
+                } else if !guards_see_all || held.contains(&ra) || held.contains(&rb) {
+                    links.deferred += 1;
+                    near.extend([pa, pb]);
+                } else if e.cross {
+                    crossing.push(e);
+                } else {
+                    pin_admitted.push((pa, pb));
+                }
+            }
+            for (pa, pb) in pin_admitted {
+                uf.union(pa, pb);
+                links.previous_notice += 1;
+            }
             // Cross-Source previous-notice references, judged after the same-Source unions
             // and before any of them joins: per target component, the keyed components
             // citing it from another Source. Two or more refuse every crossing reference
@@ -12604,7 +12828,7 @@ impl Db {
         eprintln!(
             "[project] group step links union: {:.1}s ({} key(s) to relabel, largest component \
              {largest} key(s); admitted: previous-notice {} (cross-source {}), logical-notice {}, \
-             matched {}; refused: not-earlier {}, shared-kind {}, buyer-disjoint {}, fan-in {}, \
+             matched {}; refused: not-earlier {}, shared-kind {}, buyer-disjoint {}, pin-fan-in {}, fan-in {}, \
              not-one-to-one {}, keyed-weld {}, oversized {}; deferred {})",
             t_uf.elapsed().as_secs_f64(),
             merges.len(),
@@ -12615,6 +12839,7 @@ impl Db {
             links.not_earlier,
             links.shared_kind,
             links.buyer_disjoint,
+            links.pin_fan_in,
             links.fan_in,
             links.not_one_to_one,
             links.keyed_weld,

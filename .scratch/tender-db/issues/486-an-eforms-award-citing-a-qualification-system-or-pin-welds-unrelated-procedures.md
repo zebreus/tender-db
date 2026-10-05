@@ -1,6 +1,6 @@
 # 486 — an eForms notice citing a qualification-system notice or PIN (OPP-090) welds unrelated procedures into one Tender
 
-Status: ready-for-agent — UNIT 1 DONE 2026-10-05 (qualification systems refuse previous-notice links; deployed `9f9db13`; wet 1994 + project 1995; Verify 202112: 234 → 6 versions). NEXT: unit 1b (a PIN / periodic / buyer-profile notice refuses only when ≥ 2 keyed components cite it), and the 200-key component at notice 24090776. Was: ready-for-agent — NEXT: gate (`ops/check.sh`) with 487's budget change, then commit and deploy unit 1. On
+Status: ready-for-agent — UNIT 1b LANDED (not deployed) 2026-10-05: PIN fan-in, review fixes applied (judge-then-join; census pooled per PIN key). NEXT: gate (`ops/check.sh`), commit, deploy; dry `backfill-tender-links` (read `would_split_shared_kinds` PIN kinds + `pin_fan_in`), go/no-go, wet, next daily, Verify 8813166 (405 → a handful: its own key's chain). Was: UNIT 1 DONE 2026-10-05 (qualification systems refuse previous-notice links; deployed `9f9db13`; wet 1994 + project 1995; Verify 202112: 234 → 6 versions). NEXT: unit 1b (a PIN / periodic / buyer-profile notice refuses only when ≥ 2 keyed components cite it), and the 200-key component at notice 24090776. Was: ready-for-agent — NEXT: gate (`ops/check.sh`) with 487's budget change, then commit and deploy unit 1. On
 prod, run the dry `backfill-tender-links` and apply the go/no-go rule under "Review fixes" to `would_split_shared` and
 `would_split_shared_kinds`. Then the wet run, the next daily, and the Verify below.
 Kind: data correctness (a false merge)
@@ -199,3 +199,158 @@ carry distinct BT-04 keys (7fd2df6b…, ec0269cd…, 55528cfe…, c69ad6f6…) a
 (643900-2024, 158369-2023, 396975-2026, 355936-2025 — the last is a PERIODIC_INDICATIVE sample of dry 1982): PGG's
 periodic indicative notices are each cited by many procedures, and procedures cite each other in chains. Unit 1b
 (fan-in on PIN-kind targets) is the fix; launched 2026-10-05.
+
+## Unit 1b — landed (not deployed)
+
+**Rule.** A previous-notice edge (same- or cross-Source) whose CITED notice is PIN-kind is refused when two or more
+keyed components cite that notice's component. PIN-kind means `store::link_fans_in_shared_kind`:
+PRIOR_INFORMATION_NOTICE, PERIODIC_INDICATIVE_NOTICE or NOTICE_BUYER_PROFILE, eForms or legacy. Components are
+counted after the other same-Source previous-notice unions. This is the same-Source analogue of 481's cross-Source
+fan-in. A PIN cited by exactly one procedure keeps joining it, because it is that procedure announced early. The
+refusal is counted as `LinkTally::pin_fan_in` (`pin-fan-in N` on the `issue-481` line, after `buyer-disjoint`, and in
+`refused()`/`add()`).
+
+**Decisions.**
+- **(a) A PIN cited by many procedures joins none of them.** Every reference into it is refused and the PIN becomes
+  its own Tender. This is 364's verdict on a legacy PIN. Choosing which citer keeps it would be calibration §4's
+  "never pick the nearest". It is also the only choice that does not depend on order: "the first citer keeps it" would
+  differ between a full fold and a daily.
+- **Who counts as a citer.** A keyed component (islands and refused-hub notices do not count, as in 481). The PIN's
+  OWN component counts when a non-PIN notice in it cites the PIN, e.g. a CN that reuses the PIN's BT-04 and cites it.
+  That case has no edge to join (same group), so the read loop keeps it (`pin_same`). Otherwise a second procedure
+  citing the PIN would weld into the first. A PIN-kind citer inside the PIN's own component does not count (a PIN
+  amendment citing its PIN). A PIN-kind citer from ANOTHER component does count (Tender 8813166: the 2025 periodic
+  notice cites the 2024 one). Fan-in is per cited COMPONENT (481's convention), so citers split across a PIN and its
+  same-key amendment still add up.
+- **Order of checks:** not-earlier → shared-kind (qualification system) → buyer-disjoint → **pin-fan-in** → 481
+  cross-Source fan-in → union. A placeholder citer the buyer guard refuses is no second procedure. PIN edges that are
+  admitted and cross-Source go on to 481's guard.
+- **(b) Full and incremental give the same result.** A refusal never waits, because more citers only add to the count.
+  A join waits (`deferred`) exactly like 481's cross-Source join: while the ledger is not attested complete, or while
+  the PIN's or the citer's component holds a near end of a one-ended link. The incremental plan sees every citer
+  because the link closure goes from a new citer forward to the PIN, then to the PIN's Tender, then to every
+  `tender_links` row naming the PIN by `b_notice_id`, then to those citers' Tenders. **The later citer:** a PIN joined
+  to its one citer P1 splits when P2 arrives. The daily that plans P2 counts 2 and refuses both. The PIN keeps the
+  Tender it named, and P1 gets a new Tender under its own key. A third citer makes 4 Tenders. Every step matches the
+  full fold. No plan column changed (`shared_kind` was already on every plan row), so a plan written before 1b can
+  still be resumed and no marker is needed.
+- **(c) Census.** `backfill-tender-links` judges the same rule. Its ingest caller (`pin_citer_keys`) reads every
+  citer of each PIN-kind target. It takes them from the ledger (`Db::previous_notice_citers`, a seek on
+  `tender_links_b`) plus the window's own rows (`DeclaredWindow::previous_notice_pairs`, since a dry run writes
+  nothing). It parses citers it has not already parsed through `Ident::read`, keeps those the earlier guards pass, and
+  stamps `LinkEndpoint::pin_citer_keys`, the number of distinct procedure keys among them. The judge refuses at 2 or
+  more:
+  - a would-merge pair is counted as `pin_fan_in`, per rule and total, with nothing re-queued;
+  - a pair that is one Tender today under different keys is counted in `would_split` + `would_split_shared` under the
+    PIN's kind in `would_split_shared_kinds` (30 samples per kind), and both ends are re-queued.
+
+  `pin_fan_in` is on the job body, the summary and the progress line. **An estimate, either way** (review fix below):
+  the census pools citers per PIN KEY (the fold's node), but the fold counts COMPONENTS, so two keys that a re-tender
+  chain joins count twice (over), and a same-key PIN sibling another key's Tender absorbed is not found (under). A
+  pair the census over-splits is re-queued and the daily judges it correctly. Cost: one whole parse per citer and per
+  cited same-key sibling of a PIN target, per window that names the PIN.
+
+**Tender 8813166's other weld path.** Read on 2026-10-05 from 7 public `/v1/notices/{id}/content` GETs of its 405
+versions (subtypes 17 ×243 / 30 ×160 / 8 ×2). The contract notices cite PGG's utilities periodic indicative notices
+directly, e.g. 24090776 and 24231867 → `386157-2024` (notice 24034495, subtype 8), and 24866040, 25845502 →
+`355936-2025` (44520140, subtype 8). The awards cite their own CN under another BT-04: 24425689 → `561070-2024`,
+25365571 → `453698-2025`. An award can also cite the periodic notice directly (27949755 → `355936-2025`). The CN→CN
+"chains" are re-tenders of a few keys each, which is 481's intended join. The fixture
+`a_periodic_notice_many_procedures_cite_does_not_weld_them` models this: two periodic notices, B citing A; A cited by
+three CNs, one award and B; B cited by two CNs; CAN→CN chains; a re-tender CN→CN; and a PIN cited once. It folds
+pre-1b into **one 11-key component**. Under 1b the largest component is **2 keys**: the fan-in alone cuts it, and no
+other weld path is in the sampled shape. Not checked: the rest of the 405 versions. If the post-deploy daily still
+prints a large component at 24090776's neighbourhood, read its edges then.
+
+**Files.**
+- `crates/store/src/canonical.rs`: `link_fans_in_shared_kind`; `LinkTally::pin_fan_in`; the link step's
+  `LinkEdge.pin`/`a_pin`, `pin_same` and the PIN fan-in pass before the cross-Source one; `TenderLinkRuleCounts`/
+  `TenderLinkBackfill::pin_fan_in`; `LinkEndpoint::pin_citer_keys`; the census judge; `Db::previous_notice_citers`;
+  `DeclaredWindow::previous_notice_pairs`.
+- `crates/store/src/lib.rs`: re-exports `link_fans_in_shared_kind` and `link_refuses_shared_kind`.
+- `crates/ingest/src/project.rs`: `pin_citer_keys`, boxed in the walk like `link_endpoints`.
+- `crates/app/src/supervisor.rs`: `link_suffix` `pin-fan-in`; backfill body, summary and progress `pin_fan_in`; tests.
+- `docs/operations.md`: "The PIN fan-in (issue 486 unit 1b)". It also says that 1a/1c narrowed the outright refusal to
+  qualification systems.
+
+**Tests** (focused, gate flags and package set; all exit 0):
+- `a_periodic_notice_many_procedures_cite_does_not_weld_them`. Pre-1b weld of 11 keys. Dry census, walked in windows
+  of 3 ids so that citers come off the ledger: `would_split 7 (shared 7)`, kinds `[(PERIODIC_INDICATIVE_NOTICE, 7, 7
+  samples)]`, requeued 8, nothing queued.
+- Then the wet run, and the daily matching the full fold: daily `pin_fan_in 7, previous_notice 3`, full `7, 4`,
+  largest component 2. There are 9 Tender groups as listed, and the 1:1 PIN stays joined. A dry re-run finds
+  `would_split 0, would_merge 7 = pin_fan_in 7, requeued 0`.
+- `a_pin_joins_its_one_citer_and_stands_alone_once_a_second_procedure_cites_it`:
+  - step 0: an eForms periodic PIN (`5`) and one CN are joined; a legacy `TD 0` cited once is joined; a legacy `0`
+    cited twice is refused; a PIN whose BT-04 its own CN reuses is cited by a stranger, which is refused. Daily = full
+    `(pin_fan_in 3, previous_notice 2)`;
+  - step 1: a second citer leads to 3 Tenders, and the PIN keeps its Tender id;
+  - step 2: a third citer leads to PIN alone + 3.
+
+  Full and daily identical (`absorb_and_compare`) after every step.
+- Supervisor `the_link_suffix_…` (pin-fan-in line, `add`, `refused`) and `the_tender_link_backfill_job_…` (body
+  `pin_fan_in`, summary text).
+- Mutations, both caught: the census without ledger citers fails the periodic test (5 vs 7), and the fold without
+  `pin_same` fails the arrival test.
+- Also green: the unit-1 tests, the 364 legacy tests, filter groups `link`, `shared`, `ledger`, `legacy`,
+  `backfill`, `fold`, `incremental`, `closure`, `island`. `ops/check.sh` NOT run.
+
+**Cost to accept.** A PIN with several procedures citing it no longer joins any of them, including the one procedure
+whose planned contract it actually announced. That procedure is now a Tender of its own, beside the PIN's.
+
+**Prod (after deploy).**
+1. Gate, commit and deploy. No migration and no plan marker are needed.
+2. Run `backfill-tender-links` dry. Read `would_split_shared_kinds` for PRIOR_INFORMATION_NOTICE,
+   PERIODIC_INDICATIVE_NOTICE and NOTICE_BUYER_PROFILE (dry 1982 had 10,277/951/263 pairs with NO fan-in filter;
+   expect far fewer), plus `pin_fan_in` and `requeued`. Open about 10 samples per kind on TED. A sample is a correct
+   merge only if the PIN announced that citer's own contract AND no other procedure cites the PIN, which by
+   construction should be rare.
+3. Apply the go/no-go rule (≤ 5,000 total `would_split_shared`, ≤ ~1 in 10 correct merges per kind). Then run the wet
+   run, the next daily (its `pin-fan-in` count and largest component), and
+   `curl -s https://tenders.zebreus.click/v1/tenders/8813166 | jq '.versions | length'` (open: 405; done: a
+   handful — the Tender is keyed `7fd2df6b-…` (its first version 00287202-2024 is an award), so it keeps that
+   procedure's own CN/CAN chain; the periodic notices `386157-2024`/`355936-2025` each stand alone; the largest
+   component on the daily's `issue-481` line well below 200).
+
+## Unit 1b — review fixes (2026-10-05)
+
+Ten reviewer findings. Their outcomes:
+- **Blocker, raised by two reviewers: the PIN verdict depended on edge order. Fixed.** The judge loop unioned a
+  1-citer PIN join straight away. `MinUnionFind` then re-rooted that component to the earlier-published key, and the
+  next edge looked up `pin_citers` under the new root. In 8813166's chained shape (periodic B is cited by CN5 and CN6
+  and itself cites periodic A, which only B cites), reading B→A first welded CN5 and CN6 in. The pass now judges
+  every pinned edge against the roots as they stood before any pinned join. It collects the admitted same-Source
+  joins in `pin_admitted` and unions them after the loop, as 481's crossing pass does. Test:
+  `a_chained_periodic_notice_is_judged_on_the_roots_before_any_pin_join`. It records the PINs first and then the CNs
+  first, compares full and daily, and adds a daily where CN6 arrives later and splits CN5 out of {A, B, CN5}.
+  Mutation: putting back the in-loop union fails it (`PINs first, daily: (0, 3, 0)` against `(2, 1, 0)`, largest
+  component 4).
+- **Major, raised by two reviewers: the census counted per notice where the fold counts per key. Fixed.**
+  `pin_citer_keys` now groups PIN-kind targets by procedure key. It finds a PIN's same-key PIN-kind siblings among
+  the window's targets and in the Tender under that key (new `Db::notices_under_procedure_keys`: a seek on
+  `tenders_procedure_key`, then the versions). It pools the citers of all of them and stamps the group's count on
+  each target. Test: `the_census_pools_a_pins_citers_over_its_same_key_amendment`. A PIN and its same-key amendment,
+  each cited once, in windows of 1 id, give `would_split 2 (shared 2)` under PRIOR_INFORMATION_NOTICE, then wet,
+  then a daily that matches full. The "upper bound" wording is gone from `LinkEndpoint::pin_citer_keys`,
+  docs/operations.md and above. The count can miss in both directions: re-tender-joined keys count twice, and a
+  sibling absorbed into another key's Tender is not found.
+- **Minor: a deferred 1:1 PIN join, and no test for it. Fixed (documented and tested).** Before 1b a same-Source
+  join into a PIN always happened. Now it waits under 481's conditions: the ledger not attested, or a one-ended link
+  beside it. docs/operations.md says so. Test: `a_pin_join_waits_until_the_ledger_is_attested`. With the ledger
+  unattested the daily gives `deferred 1` and no join. The wet backfill attests the ledger and re-queues the pair
+  (requeued 2), and the next daily joins it (`deferred 0, previous_notice 1`), the same as a full fold. Without
+  the deferral branch it would fail on the asserted `deferred 1` (reasoned, not mutation-run).
+- **Minor, raised by two reviewers: `previous_notice_citers` split `tender_link_neighbours` from its doc. Fixed.** It
+  now sits above the 481 doc block.
+- **Minor: a `ra == rb` pinned edge was counted as `pin_fan_in`. Fixed.** An edge whose ends are already in one
+  component is neither a join nor a refusal. It is tallied as the same edge outside 1b would be: `previous_notice`,
+  or passed on to the crossing pass if it is cross-Source. The existing tests' counts did not move, because the
+  same-key case goes by `pin_same`, not by an edge.
+- **Minor: the duplicated "Was:" segment in Status. Fixed.**
+
+**Tests after the fixes** (focused, gate flags and package set): filters `pin`, `periodic`, `backfill`, `census`,
+`link` and `shared` all gave GATE-EXIT=0. `ops/check.sh` was NOT run.
+
+**Prod additions:** before deploy, confirm the ledger is attested (`tender_links_complete = 1` in
+`projection_state`; the wet 1994 should have set it). Otherwise every 1:1 PIN join defers. After the wet run, read
+the daily's `deferred` count beside `pin-fan-in`.
