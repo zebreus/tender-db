@@ -1,8 +1,6 @@
 # 483 — a contractor, review body or platform vendor sits in the buyer slot, and every buyer-based guard trusts it
 
-Status: ready-for-agent — NEXT: deploy unit 2 (landed 2026-10-04, not deployed, below) through the gate, then
-`refold-buyer-roles` dry → read the cohort → wet, and the daily re-derives the ~1,400 notices; then run Verify
-(438807 serves POLREGIO). The swap waits on the org-level role index (deferred, below).
+Status: ready-for-agent (2026-10-05) — UNIT 2 DONE on prod: census unit 1 (`9c2d2c7`, `9c7a950`; job 1942) and 1c (`dfbf93d`, job 1943: 139 decisive, ~30/30 precise); the demote at projection (`ebb9f20`, deployed; refold dry 1954) and its tightened promote 2b (`5b4a2a8`, deployed; dry 1955: 1,091 fixed, 110 promotes, ~5 residue) → wet 1956 → daily project 1965 re-derived the cohort (`cb060e7`, `1e8411b`). Verify amended to 265758 and DONE: serves `["Office of Public Works (OPW)"]`; also Armagh council (187092) and Gästrike Återvinnare (790032) now served. 438807 is not name-detectable (its mention is the bare UZP), and the original Verify exhibit 16698 (the swap) is left as published by design (unit 2b), not re-read since. NEXT: the org-level role index (a tenderer's organization is a `Procedure-Buyer` on other notices), which the swap (16698) and 438807's shape wait on — deferred, ready-for-agent once something else needs the index. The contractor-slot mis-tag is issue 484. Was: ready-for-agent — NEXT: deploy unit 2 (landed 2026-10-04, not deployed, below) through the gate, then `refold-buyer-roles` dry → read the cohort → wet, and the daily re-derives the ~1,400 notices; then run Verify (438807 serves POLREGIO). The swap waits on the org-level role index (deferred, below).
 Kind: data correctness (parties)
 Relates to: 482 (16 of 45 false splits in the 2-cluster read were role mis-tags), 481 unit 2b/2c (the buyer guard
 reads `Procedure-Buyer`), 456 (mention binding), the served `parties[]`
