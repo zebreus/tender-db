@@ -354,3 +354,13 @@ Ten reviewer findings. Their outcomes:
 **Prod additions:** before deploy, confirm the ledger is attested (`tender_links_complete = 1` in
 `projection_state`; the wet 1994 should have set it). Otherwise every 1:1 PIN join defers. After the wet run, read
 the daily's `deferred` count beside `pin-fan-in`.
+
+## 2026-10-05 10:2x–11:0x UTC — 1b deployed (`9c83fb3`); dry 1996; WET 1997
+
+Dry 1996 (`481-dedup/backfill-1996.json`): would_split 4,889, **would_split_shared 4,881** (PRIOR_INFORMATION 4,198,
+PERIODIC_INDICATIVE 627, BUYER_PROFILE 56), pin_fan_in 0 (no not-yet-joined pair), requeued 5,397. Under 5,000.
+Samples (public `/content`): BLM Braunschweig PIN (subtype 7, "Vorinformation 10480") → the Vieweghaus renovation's
+trade CNs; JVA PIN → "Baumeisterarbeiten"; "Medicamentos genéricos" PIN → a catheter CN; a Polish "all planned
+supply contracts" PIN → a vaccine CN; PSE's periodic notice 205815-2025 → two different substation expansions
+(Radkowice, Groszowice). Every one a many-procurements notice: 0 correct merges in the samples → **wet 1997**, then
+a project. NEXT: Verify 8813166 (405 → a handful) and the daily's `pin-fan-in` line.
