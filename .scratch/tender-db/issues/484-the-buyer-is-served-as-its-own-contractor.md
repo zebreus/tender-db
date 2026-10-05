@@ -1,6 +1,6 @@
 # 484 — the buyer is served as its own contractor (the winner slot repeats the authority)
 
-Status: ready-for-agent — UNIT 2 DONE 2026-10-05 (deployed `14df8b4`, text + FTS re-parsed, re-projected; Verify done below). NEXT: unit 3 (projection flags a buyer-equal winner `is_buyer`, excluded from supplier statistics). Was: ready-for-agent — NEXT: unit 2 LANDED, NOT DEPLOYED (uncommitted; see "Unit 2 — landed"): gate
+Status: ready-for-agent — UNIT 3 LANDED 2026-10-05, NOT DEPLOYED, UNCOMMITTED (see "Unit 3 — landed"; review fixes applied, focused runs GATE-EXIT=0). NEXT: `ops/check.sh` (gate from the current target; no dependency change), commit only the unit-3 files, deploy in a queue gap AFTER 479's 2002 finishes and its Verify is read, then the daily spot-check; BACKFILL PENDING: the flag is inert on the ~8.7M existing tenders until the next all-profile refold (listed under the 479 runbook's "batched with"; no job of its own) — then the Verify. Was: UNIT 3 DESIGNED 2026-10-05. ready-for-agent — UNIT 3 DESIGNED 2026-10-05 (see "Unit 3 design"; NEXT: build it — fold flag + `is_buyer` column + `winner=` exclusion + echo — gate, deploy after 2002, backfill rides the next all-profile refold). Was: UNIT 2 DONE 2026-10-05 (deployed `14df8b4`, text + FTS re-parsed, re-projected; Verify done below). NEXT: unit 3 (projection flags a buyer-equal winner `is_buyer`, excluded from supplier statistics). Was: ready-for-agent — NEXT: unit 2 LANDED, NOT DEPLOYED (uncommitted; see "Unit 2 — landed"): gate
 (`ops/check.sh`), commit with 485, deploy, then the re-parse runbook in that section — probe one text package
 holding 2002406 and re-read `/v1/notices/2002406/content` (expect `Montte`), wet `text` + `fts:ocds-1.1` re-parse with
 `reclaim_only`, ONE `project`, re-run `buyer-role-census` at stride 10 against job 1942, then the Verify. No dry
@@ -367,3 +367,267 @@ counts only (see docs/operations.md, "There is no dry `reparse`"). Not built her
   share was small, and the wider read adds real winners in both directions.
 - OPEN (unit 3): projection flags `is_buyer` on a buyer-equal winner and keeps it out of supplier statistics (the
   57 source-says-so + 4 in-house shapes). Ready-for-agent.
+
+## Unit 3 design (2026-10-05)
+
+Design only. Nothing is built, and prod was not touched: the 479 all-profile refold (2001 → project 2002, ~7.5 h)
+is running on code WITHOUT unit 3, so this unit cannot ride that fold.
+
+### 1. When a winner counts as "buyer-equal"
+
+**The verdict is parsed-side and notice-local, like 483's `buyer_fix`.** It does not depend on resolved organizations.
+A winner mention W of notice N is `is_buyer` iff N also names a buyer mention B (a `BUYER_ROLES` reference —
+`Procedure-Buyer` / `buyer`, sdk-0.1 `ContractingParty` — read AFTER `apply_buyer_fix`, so a demoted review body or
+platform is no buyer, and a promoted real buyer is one) where either:
+- **(a) same section:** W and B are one Organization section, with nested halves resolved through `org_alias`. This is
+  the census's `contractor-same-section`, and the FTS same-(id, name) party (Kirklees / Cabinet Office award updates).
+  Or:
+- **(b) same folded name:** `role_census::fold(W) == fold(B)`, with the fold non-empty. This is `contractor-org-same-name`
+  ∪ `contractor-name`.
+
+**What is NOT enough:**
+- **The same resolved organization id under a different name** (`contractor-org-other-name`). Org fusions are known
+  (shared switchboard ids, the PL823 stub, bare DE ids). An Eigenbetrieb or Städservice also shares its authority's id
+  and is a real in-house supplier, not the buyer. Precision over recall (ADR-0003).
+- **A buyer from ANOTHER notice of the chain.** Every award notice names its own buyer. Comparing across notices would
+  re-import 483's wrong-buyer cases into this flag.
+
+**Why the org id adds nothing.** Org id + name (`contractor-org-same-name`) is a subset of (b). Org id without the name is
+excluded above. So the strongest identity that is still precise here is the section, then the notice's own name. 63 of
+63 samples of these three classes were the buyer's own party: 57 source-says-so, 4 in-house, 2 parse defects (fixed in
+unit 2). That is the measured precision. The census's `contractor-name` read is 27 S / 2 I / 1 P, and every one of
+those 30 is "the buyer named as winner".
+
+**Where it is computed:** `NoticeState::read`, beside the `buyer_fix` call (project.rs ~4165). It is a pure function of
+`parsed` that both fold paths share, so full and daily folds agree by construction. The census and the fold use ONE
+predicate: `role_census::buyer_equal(buyer: &Party, winner: &Party) -> bool` = `same section || same_name`. The census
+keeps its own classes for measuring.
+
+**Implementation sketch:**
+- `read` collects the buyer mentions' folded names and sections (`notice_parties_from`'s mention names), and the
+  results graph's winner sections: `RawLotResult::direct_winners`, and the eForms winning bids' `TenderingParty`
+  members with role `tenderer`.
+- It stores only the flagged winner SECTIONS on `RawResults` as `buyer_winner_sections: Vec<String>`. This is empty
+  for >99.9 % of notices: 24 B per held notice, and no names are kept.
+- `RawResults::bind` resolves the winners as today. An org in `LotResultState::winners` is flagged when EVERY section
+  that bound it in that result is flagged. That is the precision side when a result's two sections fuse into one org.
+- **Cost:** `role_census::fold` (match_norm + buyer_name_fold) on the buyer and winner names of award notices only. It
+  is about 3 folds per award notice, gated on `!raw_results.is_empty()`.
+
+### 2. Representation
+
+**One nullable column on the statistics table.** Parties get no column:
+
+    ALTER TABLE tender_version_result_winners ADD COLUMN is_buyer INTEGER  -- 1 | NULL
+
+- **Values:** `1` = judged buyer-equal. `NULL` = not buyer-equal, OR a row written before unit 3. Unit 3 never writes
+  a `0`.
+  - Writing `0` would make every winner-bearing tender's content differ from its stored rows.
+  - It would also make NULL ambiguous during rollout, between "not yet judged" and "judged distinct".
+  - The served contract is "present only when true", so 1/NULL carries all of it.
+- **Migration:**
+  - Add the line to `store::MIGRATIONS` AND to the `CREATE TABLE` in canonical.rs in the SAME commit. That is 372's
+    lesson: the fix shipped inert because fresh test DBs had the column and prod did not.
+  - A nullable INTEGER without a default is metadata-only on turso (`alter_add_column_cost.rs`), so the change is
+    O(1) on the 127.8M-row table.
+  - No index is needed. Every reader reaches the row by PK `(tender_id, seq, lot_result_id, organization_id)` or by
+    `(organization_id, tender_id)` and then tests the column on the row.
+- **Fold model:**
+  - `LotResultState` gains `buyer_winners: Vec<i64>`, a subset of `winners`, with
+    `#[serde(default, skip_serializing_if = "Vec::is_empty")]`. Any stored or spilled state of an unflagged result
+    stays byte-identical, and old blobs deserialize.
+  - `flush_rows` for result_winners goes from 4 to 5 columns.
+  - Rounds carry forward with their own notice's verdict, so the flag is per round.
+- **Repairs that touch the table:**
+  - The org-merge collapse (canonical.rs ~3292: DELETE the loser's duplicate, then UPDATE the rest) keeps the
+    surviving row's own flag. A merge can only make orgs MORE equal, so a stored `1` is never invalidated. A new
+    equality a merge creates is not flagged until the next rewrite (the recall side).
+  - `repair_placeholder_orgs_batch` (~28311, INSERT OR IGNORE of a repointed row) must copy the source row's
+    `is_buyer`. Otherwise the repair silently clears it.
+  - Rehoming, the altid / r2 / r3 merges and the nested repair UPDATE `organization_id` only, so the column rides
+    along unchanged. Their tests need no change beyond a pin (see the test list).
+- **`parties[]` is derived at read, with no column.**
+  - A party with role `winner` / `Tenderer` is `is_buyer` iff the same version holds a flagged result_winners row
+    for its `organization_id` whose `lot_results.notice_id = party.mention_notice_id`.
+  - That is one EXISTS per detail on PK seeks, a handful of rows.
+  - A `tender_version_parties` column would cost a second write path and a second rollout for the same fact.
+- **Is it a derived view instead?** No. A read-time derivation over stored rows cannot see sections or mention names,
+  because winners carry no mention anchor (issue 456). All it could do is org-id equality, which section 1 rejects.
+
+**Refold:**
+- **Do not bump `PROJECTION_EPOCH`.** That would mark 8.7M tenders stale (issue 179).
+- **The backfill rides the NEXT corpus-wide fold**, the next all-profile `refold` that another change batches, the
+  way 479 batched its own. Any profile-scoped refold before then backfills that profile.
+- **Until then:**
+  - Every tender the daily rewrites is judged on write.
+  - Unrewritten rows read NULL, which is served and counted exactly as today. That is no regression and no false
+    claim.
+- **No dedicated unit-3 fold.**
+  - A full one costs ~7.5 h, and every rewritten tender's version event lands in the append-only feed.
+  - A cohort refold (the `refold-buyer-roles` pattern) can only find candidates by org-head names. That misses the
+    accent and case variants that `fold` catches, so it is a partial backfill that costs a new job. It is not worth
+    building for ~2,650 notices (census 1981: 2 + 135 + 128 at stride 10).
+
+### 3. The supplier statistics and what changes
+
+**Surveyed.** No per-organization win count or amount is served anywhere. `/v1/organizations[/{id}]` has no counts,
+and neither do `ui.rs`, the dashboard or `metrics.rs`. The GROUP BYs on `organization_id` in canonical.rs are org
+maintenance. What exists:
+
+| surface | what it is | unit 3 |
+| --- | --- | --- |
+| `?winner=<org>` on `/v1/tenders`, `/v1/lots`, SSE subscriptions and webhooks (`read.rs` per-row EXISTS ~1094; seeded pages' `head_members` ~3647) | "tenders this org won": the REST win count | **EXCLUDE flagged rows**: add `AND w.is_buyer IS NULL` to the per-row EXISTS, and pass it as `head_members`' existing `role` extra predicate for the winner seed. The seed window itself (`(organization_id, tender_id)` index-only GROUP BY) and `org_reachable` stay unchanged. They are supersets: a window whose tenders are all flagged returns a short or empty page with `more`, which the envelope already documents. There is no plan or index change. |
+| `v_lot_results`, `v_awards` (SQL surface; the view comment calls `v_lot_results` "the competitor question … a GROUP BY over this view") | the analyst's supplier statistics | **Additive column `winner_is_buyer`** (1/NULL) on both. Rows are KEPT: dropping one would make a published award look winnerless. The sql.rs notes for both views, the table note for `tender_version_result_winners.is_buyer`, and the canonical.rs view comment say: supplier statistics filter `WHERE winner_is_buyer IS NULL`. This is additive under ADR-0015, so no CHANGELOG break. |
+| `bidder=` (`tender_version_bid_parties`) | participation, not wins | unchanged. A buyer that tenders is out of scope. |
+| `data_quality` `winner` coverage and `with_winner` / `tender_db_dq_winner_named_rate` | "the notice named a winner": parse coverage | **unchanged, deliberately.** A buyer-equal winner IS a named winner, and the census measures the class. |
+
+**API echo:**
+- `lot_results[].winners[]` gets `"is_buyer": true` on a flagged row, with the key ABSENT otherwise. That is
+  `ResultOrgRow.is_buyer: bool`, read in the winners query (read.rs ~2937) and emitted by `json::winner`.
+- The detail's `parties[]` winner and `Tenderer` entries get the same key on the derivation above.
+
+**Docs:**
+- `docs.rs`:
+  - the tender detail paragraph (~295–310): what the flag means and that it is published data kept as published;
+  - the `winner` filter row (169): "excluding awards where the winner is the tender's own buyer (`is_buyer`)";
+  - the data-limits list (~644).
+- `data/openapi.json`:
+  - the `parties` and `lot_results` descriptions (992/993);
+  - the `winner` parameter (740).
+- CHANGELOG: one entry for the `winner=` semantic change. It is a REST filter-meaning change, not a shape change.
+
+### 4. Tests
+
+**Fold (`crates/ingest`):**
+- **`role_census::tests::buyer_equal_is_section_or_folded_name_never_org_alone`.**
+  - Flagged: same section; `GOBIERNO VASCO` vs `Gobierno Vasco` (case); `Consejería` vs `Consejeria` (accent).
+  - NOT flagged: the same org id with a different name (`Staffanstorps kommun, Städservice` vs the kommun); empty
+    names.
+- **`project::tests::a_buyer_equal_winner_is_flagged_per_round`**, one fixture per era:
+  - text 3002722 (single contractor = authority → flagged);
+  - text 1200610 (Staffanstorps kommun is lot 1's winner with a different folded name than the buyer → NOT flagged);
+    **superseded at build (see "Unit 3 — landed", review finding 3):** unit 2's parse mints entry 1 as
+    `Staffanstorps kommun` (cut at the first comma), which folds EQUAL to the buyer, so lot 1 IS flagged, on purpose;
+  - eForms 24210321 Morsø (same CVR, 5 of 12 lots). Read the winner section's published name off
+    `/v1/notices/24210321/content` before writing the expectation. If it folds to the buyer's name or is the buyer's
+    section → flagged on exactly those 5. If it is the road unit under its own name → NOT flagged (the Staffanstorp
+    case: the same org id is not enough);
+  - FTS 46804384 after unit 2 (Kirklees buyer, Microsoft tenderer → NOT flagged);
+  - an FTS same-(id, name) buyer+supplier section → flagged;
+  - 483's 438807 shape (a demoted review body that also appears as winner → judged against the promoted buyer,
+    not the demoted one).
+- **`tests/project_incremental.rs::a_buyer_equal_winner_is_flagged_on_full_and_daily_folds`:** full and daily
+  byte-identical; the CN and CAN on different days; a later round of a framework keeps round 1's flag.
+- **Golden:** `project_golden` moves only if its corpus holds such a notice. Read the diff; never re-pin blind.
+
+**Store:**
+- **The migration:** extend `org_schema_migration.rs` (or a sibling) to open a DB created without the column and
+  read `is_buyer`. 372's trap, pinned.
+- **The repairs:** `placeholder_dissolve.rs` keeps a flagged row's `is_buyer` through the repoint, and the merge
+  collapse keeps the survivor's flag (`org_merge_change_events.rs` or `r2_merge.rs` style).
+- **Read paths:**
+  - the `winner=` filter excludes a flagged-only tender and keeps a tender where the org won another result
+    unflagged;
+  - the seeded lots / tenders pages agree with the id-ordered stream on the same filter (the existing
+    seeded-vs-stream equivalence tests, given one flagged row);
+  - `head_members` is given the predicate.
+
+**App:**
+- **`crates/app/tests/api.rs`:**
+  - the detail serves `is_buyer: true` on the flagged winner and the derived party;
+  - the key is absent on others;
+  - `?winner=` drops the flagged-only tender.
+- **`crates/app/tests/sql.rs`:** `v_lot_results.winner_is_buyer` / `v_awards.winner_is_buyer` exist and have notes
+  (the allow-list note completeness test).
+- **`json.rs` unit:** `winner()` emits the key only when true.
+
+**Budgets:** no supervisor code changes, and no new locals in `run_project` / `project_incremental_chunked_observed`.
+The data rides heap Vecs (`RawResults`, `LotResultState`). The gate's future-size gauges and the 472 KiB `run_project`
+poll budget (measured 452–458 KiB) are re-read on the gate, not assumed.
+
+**Runs:** focused runs with the gate flags and package set, `--test project --test project_incremental --test api
+--test sql` plus the store tests above, output to a file, reading GATE-EXIT. Then `ops/check.sh`.
+
+### Rollout
+
+1. **Build and gate.** Commit with only these files. Deploy in a queue gap after 2002 finishes and its Verify is read.
+   Built 2026-10-05 (see "Unit 3 — landed"); not gated or deployed. On open, the migration adds the column.
+2. **Daily:** tenders the daily rewrites are judged. Spot-check a bounded `/v1/sql` read, `SELECT COUNT(*) FROM
+   tender_version_result_winners WHERE tender_id BETWEEN … AND is_buyer = 1`, over a recent PK window.
+3. **Backfill:** the next all-profile `refold` that another change batches. Note this unit in that runbook's "batched
+   with" list (479 is the model). Afterwards, read the per-profile count of `is_buyer = 1` and compare it with the
+   census 1981 totals × stride: expect ~2,650 notices, with several flagged rows per multi-lot notice.
+4. **Verify:**
+   - `/v1/tenders/<3002722's tender>` serves `"is_buyer": true` on its winner;
+   - `?winner=<Consejería org>` no longer lists that tender;
+   - `/v1/tenders/2959772` (Montte) and 8822638 (Microsoft) carry no flag;
+   - Morsø (24210321) gives the outcome its fixture pinned;
+   - 1200610's tender (Staffanstorp) serves lot 1's `Staffanstorps kommun` flagged and Clean Service System AB not.
+
+## Unit 3 — landed (2026-10-05)
+
+Built to the design above, uncommitted in the worktree, NOT gated by `ops/check.sh`, NOT deployed (prod untouched:
+479's 2001/2002 refold was running). Files: `crates/ingest/src/project.rs` (`buyer_winner_sections`, `party_names`,
+`party_name_field`; `RawResults::buyer_winner_sections`; the every-section rule in `RawResults::bind`),
+`crates/ingest/src/project/role_census.rs` (`buyer_equal`, `buyer_equal_winners`, `NON_NAME_FOLDS`),
+`crates/ingest/src/fts/parse.rs` (test fixture visibility), `crates/store/src/canonical.rs` (column in the CREATE
+TABLE, `LotResultState::buyer_winners`, the 5-column flush, `v_lot_results` / `v_awards.winner_is_buyer`, the
+merge-collapse and placeholder-repair flag rules), `crates/store/src/lib.rs` (MIGRATIONS line), `crates/store/src/read.rs`
+(`?winner=` exclusion in the per-row EXISTS and `participation_role`; `ResultOrgRow.is_buyer`; `flag_buyer_parties`),
+`crates/app/src/v1/{json,sql,docs}.rs`, `crates/app/data/openapi.json`, `CHANGELOG.md`, `CONTEXT.md`,
+`docs/operations.md` (section "The buyer-equal winner flag" + the 479 runbook's "batched with" line), and tests in
+`crates/{ingest,store,app}/tests/*` and the unit tests named in §4.
+
+Deviations from the design:
+- `LotResultState::buyer_winners` is `#[serde(default)]` WITHOUT `skip_serializing_if`: the only serializer is the
+  postcard bucket spill, which is not self-describing (a skipped field would misparse what follows); the spill dir
+  never outlives one run.
+- 1200610 is FLAGGED, not "not flagged" (§4 corrected above): the text era publishes the in-house unit as
+  `<Authority>, <Unit>` and the parse serves the authority's name as the winner.
+
+**Review fixes (2026-10-05)** — 9 findings; outcome per finding:
+1. **`parties[]` flag keyed on (notice, org) (medium, ×2 duplicate findings) — FIXED.** `flag_buyer_parties` now flags a
+   `winner`/`Tenderer` party only when EVERY winner row of its org on the party's OWN results is flagged: its anchoring
+   notice's results on the party's lot, or all that notice's results when the party has no lot (or no result of its lot
+   names the org). Morsø: the buyer's own section on lot 1 → flagged, `Morsø Kommune, Vej og Park` on lot 3 (same org via
+   the CVR) → not. Where lot cannot separate them, an unflagged row of the same org leaves the party unflagged (the fold's
+   own fused-org rule) — precision over recall. Pure over rows the detail already holds; no statement. Test
+   `read::buyer_party_flag_tests::a_party_is_flagged_by_its_own_lots_results_not_by_its_org`. openapi / operations.md
+   say so.
+2. **Merge collapse kept a flagged survivor over an unflagged loser duplicate (low, ×2 duplicate findings) — FIXED.**
+   `repoint_org_references` (every merge rule: provisional, r2/r3, altid, rekey, nested-repair) now runs
+   `clear_collapsed_buyer_flags` before the duplicate DELETE: driven by the loser's unflagged rows (`_org` index, the
+   walk the DELETE makes), each over-flagged keep row cleared by PK; boxed so no merge loop's future grows.
+   `repair_placeholder_orgs_batch`: on an `INSERT OR IGNORE` collision the target keeps `is_buyer` only if the source
+   row was flagged too. The false "a merge can only make orgs more equal / a stored 1 is never wrong" claims are gone
+   from the test docstring and operations.md. Tests: `a_merge_clears_a_survivor_flag_when_an_unflagged_duplicate_collapses_onto_it`
+   (both directions + both-flagged stays 1), `placeholder_dissolve` (lot_result 11's flagged target cleared by its
+   unflagged source).
+3. **1200610 flagged vs the design's "not flagged" (low) — KEPT, docs fixed.** Not a code change: the served winner of
+   that entry IS the string `Staffanstorps kommun`; an unflagged row would serve "the authority won" as a supplier win,
+   which is exactly what unit 3 exists to stop. Keeping the full segment (`…, Städservice`) would need a parse change
+   and a 3.8M re-parse for 4-in-63-sample in-house cases. §4 above, the project.rs test comment, docs.rs data limits,
+   operations.md and the Verify now say so.
+4. **Placeholder names fold equal (low) — FIXED.** `buyer_equal`'s NAME rule refuses a fold in `NON_NAME_FOLDS` (`n a`,
+   `na`, `nil`, `none`, `unknown`, `not known`, `confidential`, `withheld`, `not published`, `not disclosed`, `not
+   applicable`, `not specified`, `not provided`, `various`, `x`; whole-fold match). The section rule is unchanged. Not
+   measured against the corpus (the census classes still count such pairs; the flag does not). Test cases added to
+   `buyer_equal_is_section_or_folded_name_never_org_alone`.
+5. **docs.rs data-limits bullet read as already applied (low) — FIXED.** It now says the flag is written on fold and
+   that until the next corpus-wide re-fold only daily-rewritten tenders carry it.
+6. **Issue Status / Rollout stale; backfill untracked (low) — FIXED** here: Status line, Rollout step 1, and the
+   explicit "BACKFILL PENDING" in the Status; the backfill's tracker is the 479 runbook's "batched with" line plus this
+   Status (no separate issue: it has no job of its own, by design).
+7. **supervisor budget / migration (info) — confirmed**, re-run below.
+
+**Runs (gate flags + gate package set, output to a file, GATE-EXIT read):**
+- `-- buyer a_party_is_flagged a_merge dissolve an_existing_database_gains seeded head_pointer_plan
+  run_spec_futures_stay_inside_their_size_budgets is_buyer` → **GATE-EXIT=0** (incl.
+  `supervisor::tests::run_spec_futures_stay_inside_their_size_budgets`, the 472 KiB `run_project` poll budget).
+- `--lib --test project --test project_incremental --test api --test sql --test org_merge_change_events --test
+  placeholder_dissolve --test satellite_column_migration --test seeded_lots_page` → **GATE-EXIT=0** (libs 353 / 3 / 152 /
+  182, project 91, project_incremental 50, api 78, sql 17, org_merge_change_events 4, placeholder_dissolve 1,
+  satellite_column_migration 2, seeded_lots_page 6; 0 failed). `ops/check.sh` NOT run.
+
+NEXT: `ops/check.sh`; commit the unit-3 files only (`git diff` each first — shared worktree); deploy after 2002 in a
+queue gap; daily spot-check (Rollout 2); the backfill rides the next all-profile refold (Rollout 3); then the Verify.

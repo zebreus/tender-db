@@ -4559,3 +4559,136 @@ async fn the_demote_holds_when_the_cn_and_its_can_arrive_on_different_days() {
         }
     }
 }
+
+/// Issue 484 unit 3: `(tender, seq, lot_result, organization, is_buyer)` of every winner
+/// row — `snapshot` leaves the results layer out.
+async fn result_winners(db: &Db) -> String {
+    match db
+        .scalar(
+            "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||lot_result_id||'|'||organization_id \
+                    ||'|'||coalesce(is_buyer, 'null') AS r FROM tender_version_result_winners \
+              ORDER BY tender_id, seq, lot_result_id, organization_id)",
+        )
+        .await
+        .expect("winners digest")
+    {
+        Some(store::turso::Value::Text(s)) => s,
+        _ => String::new(),
+    }
+}
+
+/// An award notice under `key`: the keyed notice's buyer `ORG-A` ("Buyer One") plus one
+/// LotResult per `tenderers` entry, its winning bid's TenderingParty naming that section.
+/// A `(section, name, vat)` other than `ORG-A` adds its own Organization.
+fn award(key: &str, pub_at: i64, title: &str, tenderers: &[(&str, &str, &str)]) -> Parsed {
+    let mut parsed = keyed(key, pub_at, title);
+    let code = |section: &str, field: &str, value: &str| ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Code { list: None, code: value.into() },
+    };
+    let id_ref = |section: &str, field: &str, target: &str| ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Id { scheme: None, value: target.into(), is_ref: true },
+    };
+    for (i, (section, name, vat)) in tenderers.iter().enumerate() {
+        if *section != "ORG-A" && !parsed.sections.iter().any(|s| s.id == *section) {
+            parsed.sections.push(sec(section, "Organization", Some("PROC")));
+            parsed.values.push(text_val(section, "BT-500-Organization-Company", name));
+            let legal = format!("{section}-legal");
+            parsed.sections.push(sec(&legal, "CompanyLegalEntity", Some(section)));
+            parsed.values.push(ValueRow {
+                section_id: legal,
+                field_id: "BT-501-Organization-Company".into(),
+                ordinal: 0,
+                value: NoticeValue::Id { scheme: Some("VAT".into()), value: (*vat).into(), is_ref: false },
+            });
+        }
+        let (res, ten, tpa) = (format!("RES-{i}"), format!("TEN-{i}"), format!("TPA-{i}"));
+        parsed.sections.push(sec(&res, "LotResult", Some("PROC")));
+        parsed.sections.push(sec(&ten, "LotTender", Some("PROC")));
+        parsed.sections.push(sec(&tpa, "TenderingParty", Some("PROC")));
+        parsed.values.push(code(&res, "BT-142-LotResult", "selec-w"));
+        parsed.values.push(id_val(&res, "BT-13713-LotResult", "LOT-1"));
+        parsed.values.push(id_ref(&res, "OPT-320-LotResult", &ten));
+        parsed.values.push(id_val(&ten, "BT-13714-Tender", "LOT-1"));
+        parsed.values.push(id_ref(&ten, "OPT-310-Tender", &tpa));
+        parsed.values.push(id_ref(&tpa, "OPT-300-Tenderer", section));
+    }
+    parsed
+}
+
+/// Issue 484 unit 3: a winner that IS the notice's own buyer is flagged
+/// (`is_buyer = 1`) identically by the full and the daily fold. The contract notice and
+/// two award rounds arrive on three different days; round 1 names the buyer's own
+/// Organization as the winner of one result and a contractor of another, round 2 (a
+/// later framework round) names only the contractor. Round 1's flag rides forward
+/// with its round into round 2's version, and round 2's rows are unflagged; nothing is
+/// ever written as 0.
+#[tokio::test]
+async fn a_buyer_equal_winner_is_flagged_on_full_and_daily_folds() {
+    let (full, ff, pf) = scratch("buyer-winner-full").await;
+    let (incr, fi, pi) = scratch("buyer-winner-incr").await;
+    establish(&full, ff).await;
+    establish(&incr, fi).await;
+    const KEY: &str = "bt04-0484";
+    let days = [
+        ("K-cn", keyed(KEY, 1, "Kappa CN")),
+        (
+            "K-can1",
+            award(
+                KEY,
+                2,
+                "Kappa award round 1",
+                &[("ORG-A", "Buyer One", ""), ("ORG-W", "Winner BV", "NL000000099B01")],
+            ),
+        ),
+        ("K-can2", award(KEY, 3, "Kappa award round 2", &[("ORG-W", "Winner BV", "NL000000099B01")])),
+    ];
+    for (step, (pub_id, parsed)) in days.iter().enumerate() {
+        record(&full, ff, pub_id, parsed.clone()).await;
+        record(&incr, fi, pub_id, parsed.clone()).await;
+        absorb_and_compare(&full, &incr, &format!("day {step}")).await;
+        assert_eq!(result_winners(&full).await, result_winners(&incr).await, "day {step}: winner rows differ");
+    }
+
+    let head = "FROM tender_version_result_winners w JOIN tenders t ON t.id = w.tender_id AND w.seq = t.current_seq \
+                WHERE t.procedure_key = 'bt04-0484'";
+    for db in [&full, &incr] {
+        assert_eq!(count(db, &format!("SELECT COUNT(*) {head}")).await, 3, "two round-1 winners and round 2's");
+        assert_eq!(count(db, &format!("SELECT COUNT(*) {head} AND w.is_buyer = 1")).await, 1, "round 1's own win");
+        assert_eq!(
+            count(
+                db,
+                &format!(
+                    "SELECT COUNT(*) {head} AND w.is_buyer = 1 \
+                       AND w.organization_id = (SELECT p.organization_id FROM tender_version_parties p \
+                                                 WHERE p.tender_id = t.id AND p.seq = t.current_seq \
+                                                   AND p.role = 'Procedure-Buyer')"
+                ),
+            )
+            .await,
+            1,
+            "the flagged winner is the buyer's organization"
+        );
+        assert_eq!(count(db, "SELECT COUNT(*) FROM tender_version_result_winners WHERE is_buyer = 0").await, 0, "never 0");
+        // Round 1's version (seq 2) carries its own flag too.
+        assert_eq!(
+            count(
+                db,
+                "SELECT COUNT(*) FROM tender_version_result_winners w JOIN tenders t ON t.id = w.tender_id \
+                  WHERE t.procedure_key = 'bt04-0484' AND w.seq = 2 AND w.is_buyer = 1",
+            )
+            .await,
+            1
+        );
+    }
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}

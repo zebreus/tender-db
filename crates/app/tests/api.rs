@@ -1969,6 +1969,88 @@ async fn a_party_bound_by_another_organizations_identifier_serves_its_published_
     assert!(winners[0].get("mention_name").is_none(), "a winner has no mention to name: {}", winners[0]);
 }
 
+/// Issue 484 unit 3, through the real fold and the real handlers: an award notice that
+/// names its own buyer as the winner (the same name, upper-cased, in a second
+/// Organization section) serves the winner with `"is_buyer": true` — on
+/// `lot_results[].winners[]` and on the derived `Tenderer` party — and the key is
+/// absent on its buyer and on an ordinary award. `?winner=` drops the tender whose only
+/// win is the flagged one, and keeps a tender the same organization won as a real
+/// supplier.
+#[tokio::test]
+async fn a_buyer_served_as_its_own_winner_is_flagged_and_not_counted_as_a_win() {
+    let server = Server::start("is-buyer").await;
+    let notices = [
+        // The buyer named as its own contractor (3002722's shape, eForms-encoded).
+        notice_456(server.fetch_id, "48400001-2026", ("Gobierno Vasco", None), Some(("GOBIERNO VASCO", None))),
+        // The same organization winning someone else's award: a real win.
+        notice_456(server.fetch_id, "48400002-2026", ("Diputación Foral de Álava", None), Some(("Gobierno Vasco", None))),
+        // An ordinary award.
+        notice_456(server.fetch_id, "48400003-2026", ("Ayuntamiento de Beasain", None), Some(("Montte", None))),
+    ];
+    for (notice, parse) in &notices {
+        server.db.record_notice(notice, parse).await.expect("record");
+    }
+    project::project(&server.db, false).await.expect("project");
+    let tender_of = |publication_id: &'static str| {
+        let db = server.db.clone();
+        async move {
+            match db
+                .scalar(&format!("SELECT tender_id FROM tender_versions WHERE publication_id = '{publication_id}'"))
+                .await
+                .expect("tender of a publication")
+            {
+                Some(store::turso::Value::Integer(id)) => id,
+                other => panic!("{publication_id} projected no tender: {other:?}"),
+            }
+        }
+    };
+    let (own, real, plain) =
+        (tender_of("48400001-2026").await, tender_of("48400002-2026").await, tender_of("48400003-2026").await);
+
+    let detail = server.get(&format!("/v1/tenders/{own}")).await;
+    let winners = detail["lot_results"][0]["winners"].as_array().expect("winners").clone();
+    assert_eq!(winners.len(), 1, "{detail}");
+    assert_eq!(winners[0]["is_buyer"], true, "the buyer's own win is flagged: {}", winners[0]);
+    let party = |detail: &Value, role: &str| -> Value {
+        detail["parties"].as_array().expect("parties").iter().find(|p| p["role"] == role).cloned().unwrap_or_else(|| panic!("no {role}: {detail}"))
+    };
+    let tenderer = party(&detail, "Tenderer");
+    assert_eq!(tenderer["is_buyer"], true, "the derived party carries it too: {tenderer}");
+    assert_eq!(tenderer["organization_id"], winners[0]["organization_id"]);
+    assert!(party(&detail, "Procedure-Buyer").get("is_buyer").is_none(), "the buyer itself is not flagged");
+    // Kept as published: the award still names its winner, and the decision stands.
+    assert_eq!(detail["lot_results"][0]["decision"], "selec-w");
+
+    for id in [real, plain] {
+        let d = server.get(&format!("/v1/tenders/{id}")).await;
+        for w in d["lot_results"][0]["winners"].as_array().expect("winners") {
+            assert!(w.get("is_buyer").is_none(), "absent, not false, on an ordinary winner: {w}");
+        }
+        for p in d["parties"].as_array().expect("parties") {
+            assert!(p.get("is_buyer").is_none(), "absent on every ordinary party: {p}");
+        }
+    }
+
+    // `?winner=` — "tenders this org won" — leaves the flagged-only tender out.
+    let vasco = winners[0]["organization_id"].as_i64().expect("winner org");
+    let real_winner = server.get(&format!("/v1/tenders/{real}")).await["lot_results"][0]["winners"][0]["organization_id"]
+        .as_i64()
+        .expect("real winner org");
+    assert_eq!(real_winner, vasco, "one Gobierno Vasco organization (name-scoped provisional) wins both");
+    // (`/v1/lots` shares the predicate and the seeded walk — `seeded_lots_page.rs` pins
+    // it; these notices publish no lots to list.)
+    let page = server.get(&format!("/v1/tenders?winner={vasco}&limit=100")).await;
+    let tenders: Vec<i64> = items(&page).iter().map(|r| r["id"].as_i64().expect("id")).collect();
+    assert_eq!(tenders, vec![real], "the buyer's own award is not a win; the real win stays: {page}");
+    // The SQL surface says the same thing, by column.
+    let flagged = server
+        .db
+        .scalar(&format!("SELECT COUNT(*) FROM v_lot_results WHERE tender_id = {own} AND winner_is_buyer = 1"))
+        .await
+        .expect("view");
+    assert_eq!(flagged, Some(store::turso::Value::Integer(1)));
+}
+
 /// Issue 456 over a REAL notice chain: every `parties[]` and every bid's `parties[]`
 /// entry serves `mention_name`, the value is an organization name one of the tender's
 /// own notices published (read back through `/v1/notices/{id}/content`, the parse

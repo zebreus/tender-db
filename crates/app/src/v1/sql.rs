@@ -772,6 +772,16 @@ const EPOCH_NOTE: &str = "Unix epoch seconds — NOT ISO (the REST API returns \
     source stated; rows stamped before 2026-09-19 sit at the publisher's local \
     midnight — the day before, in UTC — until repair-notice-instants moves them.";
 
+/// Issue 484 unit 3: what `is_buyer` / `winner_is_buyer` say, on the table and on both
+/// award views.
+const IS_BUYER_NOTE: &str = "1 = this winner IS the result notice's own buyer: the \
+    notice names one organization as buyer AND contractor (the same party, or the same \
+    name up to case and accents) — kept as published, since an in-house award to \
+    oneself is real and a publisher error is still what the notice says. NULL = not the \
+    buyer, or a row written before 2026-10 that the next re-fold of its Tender judges; \
+    never 0. Supplier statistics (wins or amounts per organization) filter \
+    `WHERE winner_is_buyer IS NULL` (`is_buyer IS NULL` on the table), as ?winner= does.";
+
 /// One-line descriptions for the tables/views worth explaining in
 /// `/v1/sql/schema` (issue 50); the rest are self-describing.
 const TABLE_NOTES: &[(&str, &str)] = &[
@@ -813,7 +823,9 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("v_organizations", "Canonical Organizations (buyers, bidders, winners) with a mention count. NOT FILTERABLE, like every `v_*` view — a WHERE is applied after the view is \
       built, so a filtered query reads the whole corpus (issue 239); join `organizations` (and `organization_mentions` for the count) instead."),
     ("v_lot_results", "Current award decisions: one row per (result, winning organization); \
-      winner_* is NULL for an unresolved or withheld award. NOT FILTERABLE, like every `v_*` view — a WHERE is applied after the view is \
+      winner_* is NULL for an unresolved or withheld award. winner_is_buyer = 1 marks a \
+      winner that IS the notice's own buyer (issue 484): supplier statistics filter \
+      `WHERE winner_is_buyer IS NULL`. NOT FILTERABLE, like every `v_*` view — a WHERE is applied after the view is \
       built, so a filtered query reads the whole corpus (issue 239); join `lot_results` to `tender_version_result_winners` instead."),
     ("v_tender_current", "The (tender_id, seq) current-version pointer — not cheap to JOIN \
       either, turso rebuilds it whole per outer row. NOT FILTERABLE (issue 239); read \
@@ -840,6 +852,7 @@ const TABLE_NOTES: &[(&str, &str)] = &[
       first and a range of 2,000 Tenders exceeds the time limit (issue 421; 0.06 s this way)."),
     ("v_awards", "Current award decisions with their winner and a representative buyer — \
       keeps v_lot_results' one-row-per-winner grain (does not multiply by buyer count). \
+      winner_is_buyer as v_lot_results: supplier statistics filter `winner_is_buyer IS NULL`. \
       NOT FILTERABLE (issue 239); read `tenders t CROSS JOIN tender_version_lot_results s \
       ON s.tender_id = t.id AND s.seq = t.current_seq`, then `tender_version_result_winners` \
       and `lot_results` on the same `(tender_id, seq)`, and `tender_version_parties` \
@@ -984,6 +997,13 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
          translations outside the bulk feed and are not ingested, so ?lang= picks \
          only among languages the publisher wrote (issue 341).",
     ),
+    // Issue 484 unit 3: the winner that IS its notice's own buyer.
+    (
+        "tender_version_result_winners",
+        "is_buyer",
+        IS_BUYER_NOTE,
+    ),
+    ("*", "winner_is_buyer", IS_BUYER_NOTE),
     (
         "*",
         "provisional",

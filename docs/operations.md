@@ -768,6 +768,8 @@ df -h /data   # the DB is /data/db (the unit's WorkingDirectory)
 # 1. The census above is read and the table frozen from it (deployed).
 # 2. Off the daily tick, on a queue read idle by hand (issue 459), and batched with any other
 #    corpus-wide fold change pending at the time so the corpus pays ONE fold (397's 1595–1597).
+#    Batched with, pending (2026-10-05): issue 484 unit 3's `is_buyer` backfill — it has no job of
+#    its own and rides the next all-profile fold (see "The buyer-equal winner flag" below).
 /root/aj.sh /admin/jobs | jq '.recent[:5], .queued'
 # 3. Size it: expect=1 aborts with the real count and writes nothing. The profiles are exact
 #    profile strings (`/v1/notices?kind=` spells them: every `eforms:eforms-sdk-*`,
@@ -1385,6 +1387,67 @@ from the raw slot. A full re-plan (`project` with `rebuild`) applies the demote 
 
 **Verify** after the daily: `/v1/tenders/438807` names POLREGIO S.A. as buyer, not the UZP appeals
 department, and a re-run of the dry job reports `0 whose buyer role the demote changes`.
+
+### The buyer-equal winner flag `is_buyer` (issue 484 unit 3)
+
+A winner the award notice names as its OWN buyer is flagged, not dropped:
+`tender_version_result_winners.is_buyer = 1`. The verdict is the census's
+(`role_census::buyer_equal_winners`): the winner mention and a buyer mention of the SAME notice are
+one Organization section (nested halves folded), or their names fold equal (case, Latin accents) and
+are non-empty and not a withheld-name placeholder (`N/A`, `Unknown`, `Confidential`, …:
+`role_census::NON_NAME_FOLDS`) — the census's `contractor-same-section` ∪ `contractor-org-same-name` ∪
+`contractor-name` (the census classes still count the placeholder pairs; the flag does not). A
+text-era `<Authority>, <Unit>` in-house entry (1200610's `Staffanstorps kommun, Städservice`) is
+minted under the authority's name by the parse, so it is flagged — on purpose: the notice publishes
+no other name for it. The same resolved organization under another name is NOT enough
+(`contractor-org-other-name`: an Eigenbetrieb or a kommun's Städservice shares its authority's id and
+is a real supplier). Buyers are read after the 483 demote (a demoted review body is no buyer, a
+promoted real buyer is one). Parsed-side, in `NoticeState::read`, so the full and the daily fold agree
+by construction; a result's org is flagged only when EVERY section that bound it there is
+(`LotResultState::buyer_winners`, per round, carried forward with its round).
+
+- **Values:** 1 or NULL, never 0. NULL is "not buyer-equal" AND "written before unit 3"; both are
+  served and counted exactly as before the change. The column came by `store::MIGRATIONS` at open
+  (nullable, no default: metadata-only, O(1) on the 127.8M rows).
+- **Served:** `"is_buyer": true` on `lot_results[].winners[]` and on the derived `winner` /
+  `Tenderer` party (key absent otherwise); `v_lot_results.winner_is_buyer` / `v_awards`.
+- **Counted:** `?winner=` (REST, SSE, webhooks) excludes flagged rows (`w.is_buyer IS NULL` in the
+  per-row EXISTS and in the seeded walks' head-level role clause). The seed window and `org_reachable`
+  are unchanged supersets: a window of only flagged tenders pages short with a cursor. `bidder=`,
+  data-quality's `winner` coverage and `tender_db_dq_winner_named_rate` are unchanged on purpose.
+- **Repairs:** the org-merge collapse (`repoint_org_references`, every merge rule) keeps a moved
+  row's flag, and when a loser's duplicate collapses onto a survivor row on the same result the
+  survivor stays flagged only if BOTH were (`clear_collapsed_buyer_flags`: the fold's every-section
+  rule — a fused org bound by a non-buyer section is no buyer win). `repair_placeholder_orgs_batch`
+  copies the source row's flag through its repoint, with the same both-flagged rule on a collision.
+  The rehoming repairs update `organization_id` only. A merge can still CREATE a new equality the
+  flag does not see (an in-house unit fused into its authority); that is the recall side, read at
+  the next re-fold.
+- **Parties:** the detail's `winner` / `Tenderer` party is flagged at read when every winner row of
+  its organization on the party's own results (its notice's results on its lot; all of the
+  notice's results when it has no lot) is flagged — never on (notice, org) alone, which would flag
+  Morsø's road unit beside the buyer's own section.
+
+**Rollout.** No `PROJECTION_EPOCH` bump (that would stale 8.7M Tenders, issue 179) and no job of
+its own:
+
+```sh
+# 1. Deploy in a queue gap (never under a running project; the migration runs at open).
+/root/aj.sh /admin/jobs | jq '.recent[:5], .queued'
+# 2. Daily: every tender the daily rewrites is judged on write. Spot-check a recent PK window
+#    (bounded /v1/sql, never retry a 408):
+#    SELECT COUNT(*) FROM tender_version_result_winners
+#     WHERE tender_id BETWEEN <recent lo> AND <recent hi> AND is_buyer = 1
+# 3. Backfill: the NEXT all-profile `refold` another change batches (the issue-479 runbook above
+#    lists it under "batched with"). Any profile-scoped refold before then backfills that profile.
+#    Afterwards read the flagged rows per profile and compare with census 1981 × stride
+#    (2 + 135 + 128 notices at stride 10: expect ~2,650 notices, several rows per multi-lot one).
+```
+
+**Verify** after the backfill: the tender of 3002722 serves `"is_buyer": true` on its winner, and
+`?winner=<its Consejería org>` no longer lists it; `/v1/tenders/2959772` (Montte) and 8822638
+(Microsoft) carry no flag; Morsø (24210321) as its published section names say — flagged only where
+the winner IS the buyer's section or its name, never on the road unit under its own name.
 
 ### Reading a `process` job's `[process]` lines (issue 407)
 

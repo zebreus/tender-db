@@ -4,6 +4,29 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 484 unit 3) — `?winner=` no longer counts a buyer as its own winner
+
+`?winner=<org>` on `/v1/tenders`, `/v1/lots`, the SSE subscriptions and webhook
+filters means "tenders this organization won" — and now leaves out the awards
+where the winner **is the tender's own buyer**: the award notice names one
+organization as buyer and as contractor (the same party, or the same name up to
+case and accents). ~2,650 notices in the corpus have that shape (census 1981 at
+stride 10); in the 63 read by hand it was a publisher repeating its own block in
+the contractor slot (57) or a genuine in-house award to the authority's own
+service (4). Neither is a supplier win to count.
+
+**The award itself is unchanged and still served**, as published:
+`lot_results[].winners[]` keeps the winner and adds `"is_buyer": true`, and the
+detail's `parties[]` `winner` / `Tenderer` entry carries the same key (absent
+everywhere else — additive). A tender the organization ALSO won on another,
+unflagged award still matches. On `/v1/sql`, `v_lot_results` and `v_awards` gain
+`winner_is_buyer` (1 or NULL): supplier statistics filter `WHERE winner_is_buyer IS
+NULL`, as the filter does.
+
+The flag is written when a tender is folded: a tender not re-folded since the
+change reads unflagged (served and counted exactly as before) until the next
+re-fold reaches it.
+
 ## 2026-09-11 (last) — the derived EUR column never reports zero
 
 Completing the two entries below: the column also declines a conversion that

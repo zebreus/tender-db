@@ -499,6 +499,81 @@ impl Party {
     fn same_name(&self, other: &Party) -> bool {
         !self.folded.is_empty() && self.folded == other.folded
     }
+
+    /// A party known by its (outermost) section and published name only: no resolved
+    /// organization, no roles. What the projection has when it judges a winner
+    /// ([`buyer_equal_winners`]), before Phase 1 resolves anything.
+    fn named(section: &str, name: &str) -> Party {
+        Party { section: section.to_owned(), name: name.to_owned(), folded: fold(name), org: None, kinds: 0 }
+    }
+}
+
+/// Issue 484 unit 3: whether a winner mention IS the notice's buyer mention — the ONE
+/// predicate the census's contractor classes and the projection's `is_buyer` flag share.
+///
+/// Two mentions of one notice are buyer-equal when they are ONE Organization section
+/// (nested halves already folded onto the outer one: the census's
+/// `contractor-same-section`, and the FTS same-(id, name) party), or when their names
+/// fold equal ([`fold`]: case and Latin diacritics, `GOBIERNO VASCO` = `Gobierno Vasco`,
+/// `Consejería` = `Consejeria`) and are not empty (`contractor-org-same-name` ∪
+/// `contractor-name`).
+///
+/// The same RESOLVED organization under a different name is deliberately not enough
+/// (`contractor-org-other-name`): the org layer has known fusions, and an in-house
+/// supplier (Staffanstorps kommun, Städservice; an Eigenbetrieb) shares its authority's
+/// id while being a real supplier. Precision over recall (ADR-0003). The 63 samples of
+/// the three classes this covers were all the buyer's own party (issue 484's sample read).
+///
+/// The name rule refuses a fold that is a placeholder rather than a name
+/// ([`NON_NAME_FOLDS`]: `N/A`, `Unknown`, `Confidential`, …): two withheld names on one
+/// notice say nothing about the two parties being one.
+fn buyer_equal(buyer: &Party, winner: &Party) -> bool {
+    buyer.section == winner.section || (buyer.same_name(winner) && !NON_NAME_FOLDS.contains(&buyer.folded.as_str()))
+}
+
+/// Issue 484 unit 3 (review): folded names ([`fold`]) that stand for a withheld or
+/// missing name, not an organization — never "the same name" for the winner flag.
+/// Literal and short, like the text parser's `NAME_REJECTS`: a fold matches whole, so a
+/// company whose name merely contains one of these words is untouched. Not measured
+/// against the corpus; each entry is a withholding wording publishers use.
+const NON_NAME_FOLDS: [&str; 15] = [
+    "n a",
+    "na",
+    "nil",
+    "none",
+    "unknown",
+    "not known",
+    "confidential",
+    "withheld",
+    "not published",
+    "not disclosed",
+    "not applicable",
+    "not specified",
+    "not provided",
+    "various",
+    "x",
+];
+
+/// Issue 484 unit 3: the winner sections of one notice that are buyer-equal
+/// ([`buyer_equal`]) to one of its buyer mentions. `buyers` and `winners` are `(outermost
+/// section, published name)` pairs — the buyers read AFTER [`buyer_fix`], so a demoted
+/// review body is no buyer and a promoted real buyer is one. Notice-local and
+/// parsed-side, so the full and the daily fold judge alike. Sorted, deduplicated; empty
+/// for nearly every notice.
+pub(super) fn buyer_equal_winners(buyers: &[(&str, &str)], winners: &[(&str, &str)]) -> Vec<String> {
+    if buyers.is_empty() || winners.is_empty() {
+        return Vec::new();
+    }
+    let buyers: Vec<Party> = buyers.iter().map(|(s, n)| Party::named(s, n)).collect();
+    let mut out: Vec<String> = winners
+        .iter()
+        .map(|(s, n)| Party::named(s, n))
+        .filter(|w| buyers.iter().any(|b| buyer_equal(b, w)))
+        .map(|w| w.section)
+        .collect();
+    out.sort();
+    out.dedup();
+    out
 }
 
 /// A buyer mention's verdict: its classes (one bit per [`ROLE_CENSUS_CLASSES`] index) and
@@ -1898,5 +1973,73 @@ mod tests {
         backward.sort();
         assert_eq!(forward.samples.len(), ROLE_CENSUS_SAMPLES);
         assert_eq!(forward.samples, backward.samples);
+    }
+
+    /// Issue 484 unit 3: the winner flag's predicate. One section, or one non-empty
+    /// folded name; never the resolved organization alone.
+    #[test]
+    fn buyer_equal_is_section_or_folded_name_never_org_alone() {
+        let flagged = |buyer: (&str, &str), winner: (&str, &str)| {
+            !buyer_equal_winners(&[buyer], &[winner]).is_empty()
+        };
+        // One section (the census's `contractor-same-section`, the FTS same-(id, name)
+        // party): flagged whatever the name says, even with none.
+        assert!(flagged(("ORG-1", "Kirklees Council"), ("ORG-1", "Kirklees Council")));
+        assert!(flagged(("ORG-1", ""), ("ORG-1", "")));
+        // 2002406 before unit 2: the legacy text winner upper-cased the authority.
+        assert!(flagged(("ORG-1", "Gobierno Vasco"), ("ORG-2", "GOBIERNO VASCO")));
+        // 3002722: accents folded.
+        assert!(flagged(
+            ("ORG-1", "Consejería de Educación y Ciencia"),
+            ("ORG-3", "CONSEJERIA DE EDUCACION Y CIENCIA")
+        ));
+        // 1200610: the kommun's own Städservice is a different name; that it may resolve
+        // to the kommun's organization is not consulted at all.
+        assert!(!flagged(("ORG-1", "Staffanstorps kommun"), ("ORG-2", "Staffanstorps kommun, Städservice")));
+        // Placeholder names are no name: `N/A` as buyer and as contractor of one
+        // notice say nothing about the two being one party. One section still is.
+        assert!(!flagged(("ORG-1", "N/A"), ("ORG-2", "n/a")));
+        assert!(!flagged(("ORG-1", "Confidential"), ("ORG-2", "CONFIDENTIAL")));
+        assert!(!flagged(("ORG-1", "Unknown"), ("ORG-2", "unknown.")));
+        assert!(flagged(("ORG-1", "N/A"), ("ORG-1", "N/A")));
+        // …and a real name containing one of the words is untouched.
+        assert!(flagged(("ORG-1", "Unknown Pleasures Ltd"), ("ORG-2", "UNKNOWN PLEASURES LTD")));
+        // Two nameless sections are not "the same name".
+        assert!(!flagged(("ORG-1", ""), ("ORG-2", "")));
+        assert!(!flagged(("ORG-1", "  "), ("ORG-2", "")));
+        // Only the flagged winners come back, sorted, once each.
+        assert_eq!(
+            buyer_equal_winners(
+                &[("ORG-1", "Morsø Kommune"), ("ORG-9", "Morso Kommune")],
+                &[("ORG-4", "MORSØ KOMMUNE"), ("ORG-2", "Vejservice A/S"), ("ORG-1", "Morsø Kommune")],
+            ),
+            vec!["ORG-1".to_owned(), "ORG-4".to_owned()]
+        );
+        assert!(buyer_equal_winners(&[], &[("ORG-1", "x")]).is_empty());
+
+        // The census's contractor classes and the flag agree: the three classes the flag
+        // covers hold exactly when it does, and `contractor-org-other-name` never.
+        let cases: [(&[(&str, &str, &str)], &[(&str, i64)], &str, bool); 4] = [
+            (&[(BUYER, "ORG-1", "Ratio Web"), (TENDERER, "ORG-1", "Ratio Web")], &[("ORG-1", 7)], "contractor-same-section", true),
+            (
+                &[(BUYER, "ORG-1", "Naprzód Catering"), (TENDERER, "ORG-2", "NAPRZÓD CATERING")],
+                &[("ORG-1", 9), ("ORG-2", 9)],
+                "contractor-org-same-name",
+                true,
+            ),
+            (&[(BUYER, "ORG-1", "DOL-TRANS-TOUR"), (TENDERER, "ORG-2", "Dol-Trans-Tour")], &[], "contractor-name", true),
+            (
+                &[(BUYER, "ORG-1", "Stadt Musterstadt"), (TENDERER, "ORG-2", "Stadtentwässerung Musterstadt")],
+                &[("ORG-1", 9), ("ORG-2", 9)],
+                "contractor-org-other-name",
+                false,
+            ),
+        ];
+        for (roles, orgs, class, expect) in cases {
+            assert_eq!(verdicts(roles, orgs)[0].1, vec![class], "{class}");
+            let buyer = roles.iter().find(|r| r.0 == BUYER).map(|r| (r.1, r.2)).unwrap();
+            let winner = roles.iter().find(|r| r.0 == TENDERER).map(|r| (r.1, r.2)).unwrap();
+            assert_eq!(flagged(buyer, winner), expect, "{class}");
+        }
     }
 }

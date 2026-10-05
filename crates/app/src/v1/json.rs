@@ -329,14 +329,29 @@ fn fact(f: &FactRow) -> Value {
 /// survives. It is served whether or not it equals the head: a null standing for
 /// "same as the head" would make every reader infer the published name from an
 /// absence. Null means the anchoring notice published none.
+///
+/// Issue 484 unit 3: a winner / `Tenderer` party that IS its notice's own buyer carries
+/// `"is_buyer": true`; the key is absent otherwise ([`buyer_flag`]).
 fn party(p: &PartyRow) -> Value {
-    json!({
+    let mut out = json!({
         "lot": p.lot_key,
         "role": p.role,
         "organization_id": p.organization_id,
         "organization_name": p.organization_name,
         "mention_name": p.mention_name,
-    })
+    });
+    buyer_flag(&mut out, p.is_buyer);
+    out
+}
+
+/// Issue 484 unit 3: `"is_buyer": true` on a winner that IS the notice's own buyer (one
+/// organization named as buyer and contractor — kept as published, flagged so supplier
+/// statistics can leave it out). Present only when true: an absent key is "not judged
+/// buyer-equal", which is also what every row folded before the flag existed reads.
+fn buyer_flag(out: &mut Value, is_buyer: bool) {
+    if is_buyer && let Some(map) = out.as_object_mut() {
+        map.insert("is_buyer".to_owned(), Value::Bool(true));
+    }
 }
 
 /// A winner: the organization only. Its row carries no mention anchor, so there is
@@ -347,11 +362,13 @@ fn party(p: &PartyRow) -> Value {
 /// earlier round's winner can have no party entry at all (review D2). Its name is
 /// then in `organization_mentions` under the round's `notice_id`.
 fn winner(o: &ResultOrgRow) -> Value {
-    json!({
+    let mut out = json!({
         "role": o.role,
         "organization_id": o.organization_id,
         "organization_name": o.organization_name,
-    })
+    });
+    buyer_flag(&mut out, o.is_buyer);
+    out
 }
 
 /// A bid's tenderer or subcontractor, anchored to its mention like a [`party`].
@@ -558,6 +575,7 @@ mod tests {
             organization_id: 5_718_658,
             organization_name: "Sellafield Ltd".into(),
             mention_name: mention.map(str::to_owned),
+            is_buyer: false,
         };
         assert_eq!(party(&row(Some("Schneider Electric")))["mention_name"], json!("Schneider Electric"));
         assert_eq!(party(&row(Some("Sellafield Ltd")))["mention_name"], json!("Sellafield Ltd"), "equal is still served");
@@ -569,10 +587,40 @@ mod tests {
             organization_id: 5_718_658,
             organization_name: "Sellafield Ltd".into(),
             mention_name: None,
+            is_buyer: false,
         };
         assert!(winner(&org).get("mention_name").is_none(), "a winner has no mention to name");
         let tenderer = ResultOrgRow { role: "tenderer".into(), mention_name: Some("Schneider Electric".into()), ..org };
         assert_eq!(bid_party(&tenderer)["mention_name"], json!("Schneider Electric"));
+    }
+
+    /// Issue 484 unit 3: `is_buyer` is a key only when true, on a winner and on a party;
+    /// a bid party never carries it.
+    #[test]
+    fn the_buyer_flag_is_served_only_when_true() {
+        let org = ResultOrgRow {
+            role: "winner".into(),
+            organization_id: 42,
+            organization_name: "Consejería de Educación y Ciencia".into(),
+            mention_name: None,
+            is_buyer: true,
+        };
+        assert_eq!(winner(&org)["is_buyer"], json!(true));
+        let plain = ResultOrgRow { is_buyer: false, ..org.clone() };
+        assert!(winner(&plain).get("is_buyer").is_none(), "absent, not false: {}", winner(&plain));
+        assert!(bid_party(&org).get("is_buyer").is_none(), "a bid party is participation, not a win");
+
+        let row = PartyRow {
+            lot_key: None,
+            role: "winner".into(),
+            organization_id: 42,
+            organization_name: "Consejería de Educación y Ciencia".into(),
+            mention_name: Some("CONSEJERIA DE EDUCACION Y CIENCIA".into()),
+            is_buyer: true,
+        };
+        assert_eq!(party(&row)["is_buyer"], json!(true));
+        let buyer = PartyRow { role: "buyer".into(), is_buyer: false, ..row };
+        assert!(party(&buyer).get("is_buyer").is_none());
     }
 
     /// The same rule on the bids satellite, where BT-720 lands (issue 372's

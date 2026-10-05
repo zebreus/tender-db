@@ -57,6 +57,12 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   truth (ADR-0003 and its 2026-10-02 amendment). Every link is a reversible
   ledger row.
 - **Organizations** participate in Tenders in roles (buyer, bidder, winner, …).
+  A winner the award notice names as its OWN buyer (one Organization section, or
+  one name up to case and accents) is kept as published and flagged `is_buyer`:
+  an in-house award is real and a publisher's repeated block is still what the
+  notice says, so neither is dropped — but neither is a supplier win, and
+  supplier statistics (`?winner=`, `winner_is_buyer IS NULL`) leave it out
+  (issue 484). The same Organization id under another name is not the buyer.
 - A **Notice** contains **OrganizationMentions**; an **Organization** groups
   the mentions resolved to one real-world entity. Mentions are auto-merged on
   exact official identifiers (registration number, VAT id), and identifier-less

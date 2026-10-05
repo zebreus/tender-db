@@ -275,6 +275,17 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         .await
         .unwrap();
     }
+    // Issue 484 unit 3: lot_result 10's winner IS its notice's own buyer — the repoint
+    // must carry the flag, not re-insert the key columns alone. On 11 the TARGET row
+    // (org 60) is flagged and the collapsing source (org 50) is not — the survivor's
+    // flag must be cleared (the fold's every-section rule).
+    conn.execute(
+        "UPDATE tender_version_result_winners SET is_buyer = 1 \
+          WHERE lot_result_id = 10 OR (lot_result_id = 11 AND organization_id = 60)",
+        (),
+    )
+    .await
+    .unwrap();
     conn.execute("COMMIT", ()).await.unwrap();
     (db, conn)
 }
@@ -357,6 +368,16 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
     assert_eq!(
         count(&conn, "SELECT organization_id FROM tender_version_result_winners WHERE lot_result_id = 10").await,
         60
+    );
+    assert_eq!(
+        count(&conn, "SELECT is_buyer FROM tender_version_result_winners WHERE lot_result_id = 10").await,
+        1,
+        "issue 484: the repointed row keeps its own is_buyer"
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM tender_version_result_winners WHERE lot_result_id <> 10 AND is_buyer IS NOT NULL").await,
+        0,
+        "…an unflagged row stays NULL, and 11's flagged target is cleared by its unflagged duplicate"
     );
     assert_eq!(
         count(&conn, "SELECT COUNT(*) FROM tender_version_result_winners WHERE lot_result_id = 11").await,

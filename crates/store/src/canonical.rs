@@ -809,6 +809,11 @@ pub(crate) const SCHEMA: &str = "
         seq             INTEGER NOT NULL,
         lot_result_id   INTEGER NOT NULL REFERENCES lot_results(id),
         organization_id INTEGER NOT NULL REFERENCES organizations(id),
+        -- Issue 484 unit 3: 1 when the winner IS the result notice's own buyer (one
+        -- Organization section, or one folded name). NULL otherwise, and on every row
+        -- written before unit 3; never 0. Supplier statistics filter
+        -- `is_buyer IS NULL`. Also in store::MIGRATIONS (the issue-372 lesson).
+        is_buyer        INTEGER,
         PRIMARY KEY (tender_id, seq, lot_result_id, organization_id),
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
@@ -1099,7 +1104,10 @@ pub(crate) const SCHEMA: &str = "
     -- Current lot results with their winner — one row per (result, winning
     -- organization); a consortium yields one row per member, an unresolved or
     -- withheld winner yields NULL columns. The spec's competitor question
-    -- (org → won lots → values) is a GROUP BY over this view.
+    -- (org → won lots → values) is a GROUP BY over this view — supplier statistics
+    -- filter `WHERE winner_is_buyer IS NULL` (issue 484 unit 3): `winner_is_buyer` is
+    -- 1 where the winner IS the result notice's own buyer (kept, as published, so the
+    -- award does not read winnerless), NULL otherwise and on rows not yet re-folded.
     DROP VIEW IF EXISTS v_lot_results;
     CREATE VIEW v_lot_results AS
     SELECT r.id, r.tender_id, r.notice_id, r.result_key,
@@ -1107,7 +1115,8 @@ pub(crate) const SCHEMA: &str = "
            s.decision, s.reason, s.awarded_cents, s.awarded_currency,
            s.decided_utc, s.decided_offset, s.decided_has_time,
            w.organization_id AS winner_organization_id,
-           o.name AS winner_name, o.provisional AS winner_provisional
+           o.name AS winner_name, o.provisional AS winner_provisional,
+           w.is_buyer AS winner_is_buyer
       FROM lot_results r
       JOIN v_tender_current c ON c.tender_id = r.tender_id
       JOIN tender_version_lot_results s
@@ -1151,7 +1160,8 @@ pub(crate) const SCHEMA: &str = "
            (SELECT b.buyer_organization_id FROM v_tender_buyers b
              WHERE b.tender_id = r.tender_id LIMIT 1) AS buyer_organization_id,
            (SELECT b.buyer_name FROM v_tender_buyers b
-             WHERE b.tender_id = r.tender_id LIMIT 1) AS buyer_name
+             WHERE b.tender_id = r.tender_id LIMIT 1) AS buyer_name,
+           r.winner_is_buyer
       FROM v_lot_results r;
 
     -- CPV, NUTS, nature and procedure-type codes of each current Tender (scheme in
@@ -3056,6 +3066,19 @@ pub struct LotResultState {
     pub decided: Option<(i64, i64, bool)>,
     /// Winning Organization ids, resolved through the notice's own graph.
     pub winners: Vec<i64>,
+    /// Issue 484 unit 3: the subset of [`Self::winners`] that IS the notice's own buyer
+    /// (one Organization section, or one folded name, with a buyer mention of the
+    /// result's notice) — published data kept as published, flagged so supplier
+    /// statistics can leave it out. Written as `tender_version_result_winners.is_buyer = 1`.
+    /// Per round: a carried-forward round keeps its own notice's verdict. Empty for
+    /// nearly every result.
+    ///
+    /// `serde(default)` only, no `skip_serializing_if`: the one place this type is
+    /// serialized is the projection's postcard bucket spill, which is not
+    /// self-describing — a skipped field would misparse the bytes after it — and whose
+    /// directory never outlives one run (see `BucketRow`).
+    #[serde(default)]
+    pub buyer_winners: Vec<i64>,
     /// (received-submission-type code, count), from BT-759/BT-760.
     /// `(kind, count, quality)` — `quality` is [`QUALITY_WITHHELD`] when the
     /// notice declared BT-759 or BT-760 suppressed for this statistics block
@@ -3287,6 +3310,12 @@ async fn repoint_org_references(
             (Value::Integer(keep), Value::Integer(loser)),
         )
         .await?;
+    // Issue 484 unit 3 (review): before a loser's duplicate collapses onto the keep's
+    // row, a flagged keep row whose duplicate was NOT flagged loses its flag — the
+    // fused org is now bound by a non-buyer section, and the fold flags an org only when
+    // every section that bound it in the result is. (Loser flagged, keep not: the keep's
+    // NULL already says so.) Boxed so the merge loops' futures do not grow.
+    Box::pin(clear_collapsed_buyer_flags(conn, keep, loser)).await?;
     counts.winner_dups = conn
         .execute(
             "DELETE FROM tender_version_result_winners \
@@ -3321,6 +3350,39 @@ async fn repoint_org_references(
     )
     .await?;
     Ok(counts)
+}
+
+/// Issue 484 unit 3 (review): the keep rows a merge's collapse would leave
+/// over-flagged — `is_buyer = 1` on the keep where the loser's duplicate on the same
+/// (tender, seq, lot_result) is unflagged — are cleared to NULL. Driven by the loser's
+/// unflagged rows (the `_org` index, the same walk the duplicate DELETE makes), each
+/// keep row a PK seek; nearly every merge finds none and writes nothing.
+async fn clear_collapsed_buyer_flags(conn: &Connection, keep: i64, loser: i64) -> turso::Result<()> {
+    let mut rows = conn
+        .query(
+            "SELECT l.tender_id, l.seq, l.lot_result_id FROM tender_version_result_winners l \
+              WHERE l.organization_id = ? AND l.is_buyer IS NULL \
+                AND EXISTS (SELECT 1 FROM tender_version_result_winners w \
+                             WHERE w.tender_id = l.tender_id AND w.seq = l.seq \
+                               AND w.lot_result_id = l.lot_result_id \
+                               AND w.organization_id = ? AND w.is_buyer = 1)",
+            (Value::Integer(loser), Value::Integer(keep)),
+        )
+        .await?;
+    let mut hits = Vec::new();
+    while let Some(row) = rows.next().await? {
+        hits.push((int(&row, 0), int(&row, 1), int(&row, 2)));
+    }
+    drop(rows);
+    for (tender, seq, lot_result) in hits {
+        conn.execute(
+            "UPDATE tender_version_result_winners SET is_buyer = NULL \
+              WHERE tender_id = ? AND seq = ? AND lot_result_id = ? AND organization_id = ?",
+            (Value::Integer(tender), Value::Integer(seq), Value::Integer(lot_result), Value::Integer(keep)),
+        )
+        .await?;
+    }
+    Ok(())
 }
 
 /// Issue 460, run at EVERY merge (p0 alone folded 5.76M rows): drop the loser's
@@ -28306,21 +28368,52 @@ impl Db {
                 if dry_run {
                     continue;
                 }
+                // Issue 484 unit 3: the repointed row keeps the source row's own
+                // `is_buyer` — an INSERT of the four key columns alone would clear it.
                 let inserted = conn
                     .execute(
                         "INSERT OR IGNORE INTO tender_version_result_winners \
-                             (tender_id, seq, lot_result_id, organization_id) \
-                         VALUES (?, ?, ?, ?)",
+                             (tender_id, seq, lot_result_id, organization_id, is_buyer) \
+                         SELECT ?, ?, ?, ?, w.is_buyer FROM tender_version_result_winners w \
+                          WHERE w.tender_id = ? AND w.seq = ? AND w.lot_result_id = ? \
+                            AND w.organization_id = ?",
                         (
                             Value::Integer(*tender),
                             Value::Integer(*seq),
                             Value::Integer(*lot_result),
                             Value::Integer(target),
+                            Value::Integer(*tender),
+                            Value::Integer(*seq),
+                            Value::Integer(*lot_result),
+                            Value::Integer(loser),
                         ),
                     )
                     .await?;
                 if inserted == 0 {
                     report.winner_dups += 1;
+                    // The target row already stood: it stays flagged only when the
+                    // collapsing source row was flagged too (the fold's every-section
+                    // rule; `clear_collapsed_buyer_flags`'s twin).
+                    conn.execute(
+                        "UPDATE tender_version_result_winners SET is_buyer = NULL \
+                          WHERE tender_id = ? AND seq = ? AND lot_result_id = ? \
+                            AND organization_id = ? AND is_buyer IS NOT NULL \
+                            AND NOT EXISTS (SELECT 1 FROM tender_version_result_winners w \
+                                             WHERE w.tender_id = ? AND w.seq = ? \
+                                               AND w.lot_result_id = ? AND w.organization_id = ? \
+                                               AND w.is_buyer = 1)",
+                        (
+                            Value::Integer(*tender),
+                            Value::Integer(*seq),
+                            Value::Integer(*lot_result),
+                            Value::Integer(target),
+                            Value::Integer(*tender),
+                            Value::Integer(*seq),
+                            Value::Integer(*lot_result),
+                            Value::Integer(loser),
+                        ),
+                    )
+                    .await?;
                 }
                 conn.execute(
                     "DELETE FROM tender_version_result_winners \
@@ -28763,9 +28856,16 @@ impl Db {
             ]);
             for organization_id in &result.winners {
                 let (a, b) = scope();
+                // Issue 484 unit 3: 1 or NULL, never 0 — NULL is both "not the buyer"
+                // and "written before unit 3", which are served and counted alike.
+                let is_buyer = if result.buyer_winners.contains(organization_id) {
+                    Value::Integer(1)
+                } else {
+                    Value::Null
+                };
                 pending
                     .result_winners
-                    .extend([a, b, Value::Integer(id), Value::Integer(*organization_id)]);
+                    .extend([a, b, Value::Integer(id), Value::Integer(*organization_id), is_buyer]);
             }
             for (kind, count, quality) in &result.statistics {
                 let (a, b) = scope();
@@ -30757,7 +30857,7 @@ impl Pending {
         n += flush_rows(conn, "INSERT INTO tender_version_dates(tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time) VALUES ", 7, &mut self.dates).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.parties).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency, decided_utc, decided_offset, decided_has_time, awarded_eur_cents) VALUES ", 12, &mut self.lot_results).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id) VALUES ", 4, &mut self.result_winners).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id, is_buyer) VALUES ", 5, &mut self.result_winners).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count, quality) VALUES ", 6, &mut self.result_stats).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency, eur_cents, quality) VALUES ", 8, &mut self.bids).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.bid_parties).await?;

@@ -1252,7 +1252,7 @@ impl Statistic {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     fn fixture(name: &str) -> Vec<u8> {
@@ -1998,7 +1998,8 @@ mod tests {
     /// member is not reachable off the box. Before: ONE `ORG-GB-COH-01624297` holding
     /// both names and the identifier twice, referenced by the buyer role AND the
     /// tenderer, so the buyer was served as its own contractor.
-    const SHARED_ID_RELEASE: &str = r#"{"version":"1.1","releases":[{
+    /// `pub(crate)`: the projection's issue-484 unit-3 test folds the same release.
+    pub(crate) const SHARED_ID_RELEASE: &str = r#"{"version":"1.1","releases":[{
         "ocid":"ocds-h6vhtk-0678a8","id":"029468-2026","tag":["award","contract"],
         "parties":[
           {"name":"The Council of the Borough of Kirklees","id":"GB-COH-01624297",

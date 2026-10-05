@@ -518,6 +518,12 @@ pub struct PartyRow {
     /// Set whether or not it equals the head; `None` only when that notice
     /// published no name for the party.
     pub mention_name: Option<String>,
+    /// Issue 484 unit 3: a `winner` / `Tenderer` party that IS its notice's own buyer —
+    /// derived at read ([`flag_buyer_parties`]): every winner row this organization holds
+    /// on the party's own results (its anchoring notice's, on its lot when it has one)
+    /// is flagged (`tender_version_result_winners.is_buyer = 1`). `false` for every
+    /// other role.
+    pub is_buyer: bool,
 }
 
 /// One version of a Tender, traceable to the Notice that caused it (ADR-0001).
@@ -556,6 +562,9 @@ pub struct ResultOrgRow {
     /// have no party entry left (its name is then in `organization_mentions` under
     /// the round's `notice_id`, and in the notice's content).
     pub mention_name: Option<String>,
+    /// Issue 484 unit 3: on a WINNER, its row's `is_buyer = 1` — the winner IS the
+    /// result notice's own buyer. Always `false` on a bid party.
+    pub is_buyer: bool,
 }
 
 /// One award decision (lot result) in the Tender's current state. Results are
@@ -1090,10 +1099,13 @@ fn version_predicates(
         );
     }
     if let Some(winner) = f.winner {
+        // Issue 484 unit 3: "tenders this org won" leaves out the results where the
+        // org IS the notice's own buyer (`is_buyer = 1`) — the same exclusion
+        // `participation_role` gives the seeded walks.
         q.push(
             &format!(" AND EXISTS (SELECT 1 FROM tender_version_result_winners w
                            WHERE w.tender_id = {tid} AND w.seq = {seq}
-                             AND w.organization_id = ?)"),
+                             AND w.organization_id = ? AND w.is_buyer IS NULL)"),
             [Value::Integer(winner)],
         );
     }
@@ -1254,9 +1266,15 @@ fn participation_seed(f: &Filter) -> Option<(&'static str, &'static str, i64)> {
 /// `tender_version_parties_org_role`, but the bidder role is not, and
 /// `DISTINCT tender_id … AND role = 'tenderer'` cost a per-row table lookup for
 /// each of org 357's 194k bid rows (4.2 s against 2.1 s covered, prod 2026-09-18).
+///
+/// The winner seed's clause is issue 484 unit 3's: a win where the org IS the notice's
+/// own buyer is no win for `?winner=`. The DISTINCT pre-level stays role-blind (the
+/// `(organization_id, tender_id)` index, unchanged), a superset as the buyer's is: a
+/// window whose tenders are all flagged admits none, and the page comes back short
+/// with its cursor.
 fn participation_role(f: &Filter) -> &'static str {
     if f.winner.is_some() {
-        ""
+        " AND is_buyer IS NULL"
     } else if f.bidder.is_some() {
         " AND role = 'tenderer'"
     } else {
@@ -2828,6 +2846,8 @@ pub async fn tender_detail(
 
     let mut rows = conn.query(PARTIES_SQL, key.clone()).await?;
     let mut parties = Vec::new();
+    // Each party's anchoring notice, for the issue-484 `is_buyer` derivation below.
+    let mut anchors: Vec<Option<i64>> = Vec::new();
     // Rows whose anchor minted no mention (a nested legacy party): resolved once the
     // statement is drained, never with a second statement open on the connection.
     let mut nested = Vec::new();
@@ -2836,12 +2856,14 @@ pub async fn tender_detail(
         if stored.is_none() {
             nested.push((parties.len(), int(&row, 5), text(&row, 6)));
         }
+        anchors.push(opt_int_of(&row, 5));
         parties.push(PartyRow {
             lot_key: opt_text_of(&row, 0),
             role: text(&row, 1),
             organization_id: int(&row, 2),
             organization_name: text(&row, 3),
             mention_name: stored.and_then(published_name),
+            is_buyer: false,
         });
     }
     drop(rows);
@@ -2876,6 +2898,7 @@ pub async fn tender_detail(
 
     let lots = lots_of(conn, id, lang).await?;
     let (lot_results, bids, contracts) = results_of(conn, id, tender.seq).await?;
+    flag_buyer_parties(&mut parties, &anchors, &lot_results);
     Ok(Some(TenderDetail {
         tender,
         texts,
@@ -2889,6 +2912,50 @@ pub async fn tender_detail(
         contracts,
         versions,
     }))
+}
+
+/// Issue 484 unit 3: a `winner` (legacy) or `Tenderer` (eForms) party is `is_buyer` when
+/// the winner rows its organization holds on the party's own results are ALL flagged —
+/// "its own results" being the results of the party's anchoring notice
+/// (`mention_notice_id`) on the party's lot, or every result of that notice when the
+/// party has no lot or none of that lot's results names the org.
+///
+/// The result rows carry no section (issue 456), so (notice, org) alone would over-claim:
+/// Morsø's road unit under its own name (`Morsø Kommune, Vej og Park`) binds the buyer's
+/// org through the shared CVR and wins lot 3 unflagged while the buyer's own section
+/// wins lot 1 flagged — keyed on (notice, org) the unit's party would read `is_buyer`.
+/// The lot separates them; where it cannot (one lot, or a lot-less party), an unflagged
+/// row of the same org leaves the party unflagged — the fold's own rule for a fused org
+/// (flagged only when every section that bound it is). Read off the rows the detail
+/// already holds, so it costs no statement. A bid-side or other role is never flagged.
+fn flag_buyer_parties(parties: &mut [PartyRow], anchors: &[Option<i64>], lot_results: &[LotResultRow]) {
+    if !lot_results.iter().any(|r| r.winners.iter().any(|w| w.is_buyer)) {
+        return;
+    }
+    for (party, anchor) in parties.iter_mut().zip(anchors) {
+        let Some(notice) = *anchor else { continue };
+        if !matches!(party.role.as_str(), "winner" | "Tenderer") {
+            continue;
+        }
+        // The org's winner rows on the party's results: (on the party's lot, flagged).
+        let rows: Vec<(bool, bool)> = lot_results
+            .iter()
+            .filter(|r| r.notice_id == notice)
+            .flat_map(|r| {
+                let on_lot = party.lot_key.is_some() && r.lot_key == party.lot_key;
+                r.winners
+                    .iter()
+                    .filter(|w| w.organization_id == party.organization_id)
+                    .map(move |w| (on_lot, w.is_buyer))
+            })
+            .collect();
+        let scoped: Vec<bool> = if rows.iter().any(|(on_lot, _)| *on_lot) {
+            rows.iter().filter(|(on_lot, _)| *on_lot).map(|(_, f)| *f).collect()
+        } else {
+            rows.iter().map(|(_, f)| *f).collect()
+        };
+        party.is_buyer = !scoped.is_empty() && scoped.iter().all(|f| *f);
+    }
 }
 
 /// The results layer at one version: every accumulated round's lot results
@@ -2933,7 +3000,7 @@ async fn results_of(
     }
     let mut rows = conn
         .query(
-            "SELECT w.lot_result_id, w.organization_id, o.name
+            "SELECT w.lot_result_id, w.organization_id, o.name, w.is_buyer
                FROM tender_version_result_winners w
                JOIN organizations o ON o.id = w.organization_id
               WHERE w.tender_id = ? AND w.seq = ?",
@@ -2947,6 +3014,7 @@ async fn results_of(
                 organization_id: int(&row, 1),
                 organization_name: text(&row, 2),
                 mention_name: None,
+                is_buyer: opt_int_of(&row, 3) == Some(1),
             });
         }
     }
@@ -3001,6 +3069,7 @@ async fn results_of(
                 organization_id: int(&row, 2),
                 organization_name: text(&row, 3),
                 mention_name: stored.and_then(published_name),
+                is_buyer: false,
             });
         }
     }
@@ -5499,5 +5568,82 @@ mod procedure_seed_tests {
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{s}"));
         }
+    }
+}
+
+#[cfg(test)]
+mod buyer_party_flag_tests {
+    use super::{LotResultRow, PartyRow, ResultOrgRow, flag_buyer_parties};
+
+    fn party(role: &str, lot: Option<&str>, org: i64) -> PartyRow {
+        PartyRow {
+            lot_key: lot.map(Into::into),
+            role: role.into(),
+            organization_id: org,
+            organization_name: String::new(),
+            mention_name: None,
+            is_buyer: false,
+        }
+    }
+
+    fn result(notice: i64, lot: Option<&str>, winners: &[(i64, bool)]) -> LotResultRow {
+        LotResultRow {
+            notice_id: notice,
+            key: String::new(),
+            lot_key: lot.map(Into::into),
+            decision: None,
+            reason: None,
+            awarded_cents: None,
+            awarded_currency: None,
+            decided: None,
+            winners: winners
+                .iter()
+                .map(|&(org, is_buyer)| ResultOrgRow {
+                    role: "winner".into(),
+                    organization_id: org,
+                    organization_name: String::new(),
+                    mention_name: None,
+                    is_buyer,
+                })
+                .collect(),
+            statistics: Vec::new(),
+        }
+    }
+
+    fn flags(parties: &[PartyRow], anchors: &[Option<i64>], results: &[LotResultRow]) -> Vec<bool> {
+        let mut parties = parties.to_vec();
+        flag_buyer_parties(&mut parties, anchors, results);
+        parties.iter().map(|p| p.is_buyer).collect()
+    }
+
+    /// Issue 484 unit 3 (review): the party flag follows the party's OWN results, not
+    /// (notice, org). Morsø's shape: org 7 is the buyer's own section on lot 1
+    /// (flagged) and the road unit under its own name on lot 3 (unflagged, same org
+    /// through the shared CVR).
+    #[test]
+    fn a_party_is_flagged_by_its_own_lots_results_not_by_its_org() {
+        let results = [
+            result(9, Some("LOT-1"), &[(7, true)]),
+            result(9, Some("LOT-3"), &[(7, false)]),
+            result(9, Some("LOT-4"), &[(8, false)]),
+        ];
+        let parties = [
+            party("buyer", None, 7),
+            party("Tenderer", Some("LOT-1"), 7),
+            party("Tenderer", Some("LOT-3"), 7),
+            party("Tenderer", Some("LOT-4"), 8),
+            // No lot: the org has an unflagged row on the notice too → not flagged.
+            party("Tenderer", None, 7),
+            // Another notice's mention of the org: none of ITS results are flagged.
+            party("Tenderer", Some("LOT-1"), 7),
+        ];
+        let anchors = [Some(9), Some(9), Some(9), Some(9), Some(9), Some(10)];
+        assert_eq!(flags(&parties, &anchors, &results), vec![false, true, false, false, false, false]);
+
+        // A lot-less legacy winner whose every row on its notice is flagged is flagged;
+        // a bid-side or buyer role never is.
+        let results = [result(9, None, &[(7, true)])];
+        let parties = [party("winner", None, 7), party("buyer", None, 7), party("winner", Some("LOT-9"), 7)];
+        assert_eq!(flags(&parties, &[Some(9); 3], &results), vec![true, false, true]);
     }
 }

@@ -166,7 +166,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place). <strong>NUTS is not ISO everywhere</strong>: Greece is <code>EL</code> and the United Kingdom is <code>UK</code> &mdash; <code>GB</code> is not a NUTS code at all and matches nothing, and <code>GR</code> is Greece's pre-2013 NUTS spelling, which the corpus still holds on notices published under it.</td></tr>
   <tr><td class="ep">cpv</td><td>CPV code prefix, e.g. <code>45</code> (construction).</td></tr>
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
-  <tr><td class="ep">winner</td><td>Organization id that won at least one Lot.</td></tr>
+  <tr><td class="ep">winner</td><td>Organization id that won at least one Lot &mdash; excluding awards where the winner is the tender's own buyer (<code>is_buyer</code>, see the <a href="#tender-detail-buyer">tender detail</a>).</td></tr>
   <tr><td class="ep">bidder</td><td>Organization id that submitted a bid on at least one Lot — won or not, a superset of <code>winner</code>.</td></tr>
   <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline). On <code>/v1/lots</code> the deadline may be the procedure's rather than the lot's &mdash; see <a href="#caveats">caveats &rarr; Dates</a>.</td></tr>
   <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the tender's highest amount converted to EUR at its publication date (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount never matches a value bound.</td></tr>
@@ -308,6 +308,19 @@ still come from that round's notice &mdash; decisions accumulate, parties are re
 so an earlier round's winner, in a legacy era with no bids, can be named nowhere on the
 detail; its published name is then in <code>organization_mentions</code> under the
 decision's <code>notice_id</code>.</p>
+<p id="tender-detail-buyer"><strong>A buyer named as its own winner is flagged, not
+dropped.</strong> Some award notices name one organization as buyer <em>and</em> as
+contractor &mdash; the same party, or the same name up to case and accents. A winner of that
+shape carries <code>"is_buyer": true</code> on <code>lot_results[].winners[]</code>, and the
+detail's <code>parties[]</code> entry for it (role <code>winner</code> or
+<code>Tenderer</code>) carries the same key; it is absent everywhere else. The award is
+published data and stays as published: in the notices read by hand it was either a publisher
+repeating its own block in the contractor slot or a genuine in-house award to the
+authority's own service, and a notice alone cannot tell the two apart. What the flag changes
+is counting: <code>?winner=</code> does not count such an award as a win, and supplier
+statistics on <code>/v1/sql</code> should filter <code>winner_is_buyer IS NULL</code>
+(issue 484). The flag is written when a tender is folded, so a tender not re-folded since
+2026-10 reads unflagged until it is.</p>
 <pre><code>curl -s https://tenders.zebreus.click/v1/tenders/14327</code></pre>
 
 <h2 id="notice-content">Notice content</h2>
@@ -646,6 +659,19 @@ rates and the quarantine resolution ledger.</p>
   of award notices name nobody; where a winner <em>is</em> published it is resolved.
   Winner-coverage numbers on the dashboard exclude publisher silence from the
   denominator rather than reporting it as extraction failure.</li>
+  <li>About 2,650 award notices name the <strong>buyer as its own contractor</strong>
+  (census, 2026-10): served as published with <code>is_buyer: true</code> on the winner,
+  and left out of <code>?winner=</code> (see the <a href="#tender-detail-buyer">tender
+  detail</a>). <strong>The flag is written when a tender is folded, and the corpus has not
+  been re-folded since it was introduced:</strong> until the next corpus-wide re-fold only
+  tenders a daily update rewrote carry it, and the rest read unflagged and count as wins,
+  exactly as before. An in-house supplier under its own name (a municipality's road
+  service, an Eigenbetrieb) is not flagged, even when it shares the authority's
+  identifier &mdash; but a pre-2004 text-era notice that lists it as
+  <code>&lt;Authority&gt;, &lt;Unit&gt;</code> publishes no separate name for it: the
+  winner is read as the authority's name and is flagged as the authority's own award.
+  Withheld names (<code>N/A</code>, <code>Confidential</code>) on both sides are not
+  taken as the same party.</li>
 </ul>
 
 <h3>Amounts</h3>

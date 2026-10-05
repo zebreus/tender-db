@@ -95,3 +95,56 @@ async fn an_existing_database_gains_the_withheld_marker_column() {
         let _ = std::fs::remove_file(format!("{path}{suffix}"));
     }
 }
+
+/// Issue 484 unit 3, the same trap pinned for the winner flag: a prod-shaped
+/// `tender_version_result_winners` (no `is_buyer`) gains the column at open, and the
+/// two award views that read it (`v_lot_results.winner_is_buyer`, `v_awards`) answer —
+/// the views are created by the schema batch BEFORE the migration runs, so this also
+/// proves that order holds on an existing database.
+#[tokio::test]
+async fn an_existing_database_gains_the_winner_is_buyer_column() {
+    let path = format!("/tmp/tender-db-satcol-isbuyer-{}.db", std::process::id());
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
+    {
+        let raw = turso::Builder::new_local(&path).build().await.unwrap();
+        let c = raw.connect().unwrap();
+        c.execute(
+            "CREATE TABLE tender_version_result_winners (
+                 tender_id INTEGER NOT NULL, seq INTEGER NOT NULL,
+                 lot_result_id INTEGER NOT NULL, organization_id INTEGER NOT NULL,
+                 PRIMARY KEY (tender_id, seq, lot_result_id, organization_id)
+             ) STRICT",
+            (),
+        )
+        .await
+        .unwrap();
+        c.execute("INSERT INTO tender_version_result_winners VALUES (1, 1, 10, 7)", ()).await.unwrap();
+    }
+
+    let db = Db::open(&path).await.unwrap();
+    let sql = match db
+        .scalar("SELECT sql FROM sqlite_master WHERE type='table' AND name='tender_version_result_winners'")
+        .await
+        .unwrap()
+    {
+        Some(turso::Value::Text(s)) => s,
+        other => panic!("no table sql: {other:?}"),
+    };
+    assert!(!sql.contains("Issue 484"), "precondition: still the pre-column table:\n{sql}");
+    // The pre-existing row reads NULL: "not judged", served and counted as before.
+    assert_eq!(
+        db.scalar("SELECT COUNT(*) FROM tender_version_result_winners WHERE is_buyer IS NULL").await.unwrap(),
+        Some(turso::Value::Integer(1)),
+    );
+    for view in ["v_lot_results", "v_awards"] {
+        db.scalar(&format!("SELECT winner_is_buyer FROM {view} LIMIT 1"))
+            .await
+            .unwrap_or_else(|e| panic!("{view}.winner_is_buyer unreachable on an existing database: {e}"));
+    }
+
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
+}

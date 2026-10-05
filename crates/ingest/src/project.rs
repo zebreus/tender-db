@@ -3848,6 +3848,102 @@ fn apply_buyer_fix(
     }
 }
 
+/// Issue 484 unit 3: the winner sections of one notice that are its own buyer
+/// ([`role_census::buyer_equal_winners`]: one Organization section, or one folded name).
+///
+/// The buyers are the notice's [`BUYER_ROLES`] references (sdk-0.1's synthesised
+/// `buyer` included) AFTER [`apply_buyer_fix`]; the winners every section the results
+/// graph can bind as one — a legacy/sdk-0.1 direct winner, an eForms `TenderingParty`
+/// member in the `tenderer` role (a superset of the winning bids': only a section that
+/// binds a winner is ever consulted). Both through `alias` to the outermost party, named
+/// as [`NoticeState::mentions`] names it ([`party_names`]). Each flagged outer section is
+/// returned with its nested inner halves, since a winner reference may name either.
+fn buyer_winner_sections(
+    sdk01: bool,
+    sections: &HashMap<&str, &store::Section>,
+    alias: &HashMap<String, String>,
+    parsed: &Parsed,
+    raw_roles: &[(Scope, String, String, String)],
+    raw: &RawResults,
+) -> Vec<String> {
+    let outer = |id: &str| -> String { alias.get(id).cloned().unwrap_or_else(|| id.to_owned()) };
+    let buyers: BTreeSet<String> = raw_roles
+        .iter()
+        .filter(|(_, _, role, _)| BUYER_ROLES.contains(&role.as_str()))
+        .map(|(_, _, _, target)| outer(target))
+        .collect();
+    if buyers.is_empty() {
+        return Vec::new();
+    }
+    let winners: BTreeSet<String> = raw
+        .lot_results
+        .iter()
+        .flat_map(|r| r.direct_winners.iter())
+        .chain(raw.parties.iter().flat_map(|p| p.members.iter().filter(|(role, _)| role == "tenderer").map(|(_, s)| s)))
+        .map(|s| outer(s))
+        .collect();
+    if winners.is_empty() {
+        return Vec::new();
+    }
+    let wanted: BTreeSet<&str> = buyers.iter().chain(winners.iter()).map(String::as_str).collect();
+    let names = party_names(sdk01, sections, alias, parsed, &wanted);
+    fn named<'s>(set: &'s BTreeSet<String>, names: &HashMap<String, &'s str>) -> Vec<(&'s str, &'s str)> {
+        set.iter().map(|s| (s.as_str(), names.get(s.as_str()).copied().unwrap_or(""))).collect()
+    }
+    let mut flagged = role_census::buyer_equal_winners(&named(&buyers, &names), &named(&winners, &names));
+    if flagged.is_empty() {
+        return flagged;
+    }
+    let inner: Vec<String> =
+        alias.iter().filter(|(_, o)| flagged.binary_search(o).is_ok()).map(|(i, _)| i.clone()).collect();
+    flagged.extend(inner);
+    flagged.sort();
+    flagged.dedup();
+    flagged
+}
+
+/// Whether `field` names a party in the dialect: the name rule of
+/// [`NoticeState::mentions`] (eForms BT-500 / the legacy `OFFICIALNAME` family, or
+/// sdk-0.1's party-name fields).
+fn party_name_field(sdk01: bool, field: &str) -> bool {
+    if sdk01 {
+        SDK01_PARTY_NAME_FIELDS.contains(&field)
+    } else {
+        field == ORG_NAME_FIELD || ORG_NAME_FIELDS.contains(&field)
+    }
+}
+
+/// The published name of each `wanted` outermost party section, exactly as
+/// [`NoticeState::mentions`] picks a mention's name (the first non-empty name value in
+/// the party's subtree, nested halves folded onto the outer one) — without minting the
+/// mentions. A party with no name is absent.
+fn party_names<'a>(
+    sdk01: bool,
+    sections: &HashMap<&str, &store::Section>,
+    alias: &HashMap<String, String>,
+    parsed: &'a Parsed,
+    wanted: &BTreeSet<&str>,
+) -> HashMap<String, &'a str> {
+    let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
+    let mut names: HashMap<String, &'a str> = HashMap::new();
+    for value in &parsed.values {
+        let NoticeValue::Text { value: name, .. } = &value.value else { continue };
+        if !party_name_field(sdk01, &value.field_id) {
+            continue;
+        }
+        let Some(owner) = enclosing(sections, &value.section_id, kinds) else { continue };
+        let owner = alias.get(owner).map_or(owner, |o| o.as_str());
+        if !wanted.contains(owner) {
+            continue;
+        }
+        let slot = names.entry(owner.to_owned()).or_insert("");
+        if slot.is_empty() {
+            *slot = name.as_str();
+        }
+    }
+    names
+}
+
 /// A normalised OJS publication key `(year, number)`. The display form is not
 /// stable across eras (`2011/S 1-000181` vs `2019/S 001-000001` vs the
 /// `000001-2019` DOC form vs the text era's `154-2005`), so the join key is
@@ -4169,7 +4265,14 @@ impl NoticeState {
             if sdk01 || legacy { "buyer" } else { "Procedure-Buyer" },
         );
 
-        let raw_results = read_results(&sections, parsed, legacy, sdk01);
+        let mut raw_results = read_results(&sections, parsed, legacy, sdk01);
+        // Issue 484 unit 3: which winner sections are the notice's own buyer — judged
+        // against the buyers the fix above left, so a demoted review body is no buyer
+        // and a promoted real buyer is one. Award notices only.
+        if !raw_results.is_empty() {
+            raw_results.buyer_winner_sections =
+                buyer_winner_sections(sdk01, &sections, &org_alias, parsed, &raw_roles, &raw_results);
+        }
         // Award-side roles sit under the results graph, which has no Lot
         // ancestor — resolve their Lot through the graph instead (issue 04's
         // noted limitation, closed here).
@@ -4272,11 +4375,11 @@ impl NoticeState {
             // `COUNTRY` / `NATIONALID` address blocks (research §6); sdk-0.1 reads
             // the party section's *direct* name/country (never the nested
             // `ServiceProviderParty` eSender), and carries no official id there.
-            let (is_name, is_country, is_id) = if sdk01 {
-                (SDK01_PARTY_NAME_FIELDS.contains(&field), SDK01_PARTY_COUNTRY_FIELDS.contains(&field), false)
+            let is_name = party_name_field(sdk01, field);
+            let (is_country, is_id) = if sdk01 {
+                (SDK01_PARTY_COUNTRY_FIELDS.contains(&field), false)
             } else {
                 (
-                    field == ORG_NAME_FIELD || ORG_NAME_FIELDS.contains(&field),
                     field == ORG_COUNTRY_FIELD || ORG_COUNTRY_FIELDS.contains(&field),
                     field == ORG_IDENTIFIER_FIELD || field == ORG_NATIONALID_FIELD,
                 )
@@ -5155,6 +5258,10 @@ struct RawResults {
     bids: Vec<RawBid>,
     contracts: Vec<RawContract>,
     parties: Vec<RawParty>,
+    /// Issue 484 unit 3: the winner Organization sections (outermost, and each nested
+    /// inner half of one) that are the notice's own buyer ([`buyer_winner_sections`]).
+    /// Empty for nearly every notice; no names are kept.
+    buyer_winner_sections: Vec<String>,
 }
 
 #[derive(Default)]
@@ -5687,6 +5794,29 @@ impl RawResults {
                 };
                 winners.sort_unstable();
                 winners.dedup();
+                // Issue 484 unit 3: an org is the buyer's own win when EVERY section that
+                // bound it in this result is buyer-equal — two sections fused into one
+                // org, one of them a real supplier, stay unflagged (precision).
+                let buyer_winners: Vec<i64> = if self.buyer_winner_sections.is_empty() || winners.is_empty() {
+                    Vec::new()
+                } else {
+                    let flagged = |s: &str| self.buyer_winner_sections.iter().any(|f| f == s);
+                    let bound: Vec<(i64, bool)> = if !r.direct_winners.is_empty() {
+                        r.direct_winners.iter().filter_map(|s| orgs.get(s.as_str()).map(|&o| (o, flagged(s)))).collect()
+                    } else {
+                        winning
+                            .iter()
+                            .flat_map(|b| members_of(b.party_ref.as_deref()))
+                            .filter(|p| p.role == "tenderer")
+                            .map(|p| (p.organization_id, flagged(&p.section_id)))
+                            .collect()
+                    };
+                    winners
+                        .iter()
+                        .copied()
+                        .filter(|o| bound.iter().filter(|(b, _)| b == o).all(|(_, f)| *f))
+                        .collect()
+                };
                 LotResultState {
                     key: r.key.clone(),
                     lot_key: r.lot_key.clone(),
@@ -5696,6 +5826,7 @@ impl RawResults {
                     awarded_currency: currency,
                     decided: r.decided,
                     winners,
+                    buyer_winners,
                     statistics: r.statistics.clone(),
                 }
             })
@@ -8679,6 +8810,9 @@ mod tests {
                 awarded_currency: Some("EUR".into()),
                 decided: Some((700_050_000, -60, false)),
                 winners: vec![7, 8],
+                // Issue 484 unit 3: a non-empty flag between two fields, so a
+                // codec that skipped or misread it would shift `statistics`.
+                buyer_winners: vec![8],
                 statistics: vec![("t1".into(), 4, None)],
             }],
             bids: vec![BidState {
@@ -9440,6 +9574,235 @@ mod tests {
             ordinal,
             value: store::NoticeValue::Classification { scheme: scheme.into(), code: code.into() },
         }
+    }
+
+    /// Issue 484 unit 3: the winner a notice names as its own buyer is flagged on its
+    /// round (`LotResultState::buyer_winners`), one fixture per era. Every Organization
+    /// section is bound to its own org id unless a case says otherwise; the flag never
+    /// reads them, so a fusion cannot make or unmake it.
+    #[test]
+    fn a_buyer_equal_winner_is_flagged_per_round() {
+        let notice = |profile: &str| store::NoticeRef {
+            id: 9,
+            source: "ted".into(),
+            publication_id: "000009-2020".into(),
+            profile: profile.into(),
+        };
+        // Bind every Organization (or sdk-0.1 party) section: `same` maps listed
+        // sections onto one org id, the rest get their own.
+        let round = |profile: &str, parsed: &Parsed, same: &[(&str, i64)]| -> Round {
+            let mut state = NoticeState::read(&notice(profile), parsed);
+            let mut orgs: HashMap<String, i64> = HashMap::new();
+            for (i, s) in parsed.sections.iter().enumerate() {
+                if s.kind == ORGANIZATION_KIND || SDK01_PARTY_KINDS.contains(&s.kind.as_str()) {
+                    orgs.insert(s.id.clone(), 1_000 + i as i64);
+                }
+            }
+            for (section, org) in same {
+                orgs.insert((*section).to_owned(), *org);
+            }
+            state.bind_organizations(&orgs);
+            state.round.expect("an award notice binds a round")
+        };
+        // (winners, buyer_winners) per result, in result order.
+        let flags = |r: &Round| -> Vec<(usize, usize)> {
+            r.lot_results.iter().map(|l| (l.winners.len(), l.buyer_winners.len())).collect()
+        };
+        // A text-era record: `AU` names the awarding authority (the buyer), `TX` the body.
+        let text_record = |authority: &str, body: &str| -> Parsed {
+            let record = format!(
+                "1.0/000001\nND: 000009-2020\nAU: {authority}\nTX: {}\n",
+                body.replace('\n', "\n    ")
+            );
+            crate::text::parse::parse(&record).expect("parses")
+        };
+
+        // Text era, 3002722: the single V.3 contractor repeats the authority (accents
+        // and case aside) — flagged.
+        let toledo = text_record(
+            "Consejería de Educación y Ciencia",
+            "SECTION I: CONTRACTING AUTHORITY\n\
+             I.1)  NAME, ADDRESSES AND CONTACT POINT(S): Consejería de Educación y \n\
+             Ciencia, Bulevar del Río Alberche, s/nº, Attn: Servicio de Planificación y \n\
+             Centros (Secretaría General), E-45007 Toledo. Tel. 925 247439/27/17. \n\
+             E-mail: jaramon@jccm.es. Fax 925 247442.\n\
+             Internet address(es):\n\
+             General address of the contracting authority: www.jccm.es/contratacion.\n\
+             SECTION II: OBJECT OF THE CONTRACT\n\
+             SECTION V: AWARD OF CONTRACT\n\
+             CONTRACT NO: 33/06\n\
+             V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+             AWARDED: CONSEJERIA DE EDUCACION Y CIENCIA, A la atención de Servicio de \n\
+             Planificación y Centros (Secretaría General), Bulevar del Río Alberche \n\
+             s/nº, E-45007 Toledo. E-mail: jaramon@jccm.es. Tel. 925247439/17/27. URL: \n\
+             www.jccm.es/contratacion. Fax 925 247442.\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:",
+        );
+        let r = round("text", &toledo, &[]);
+        assert_eq!(flags(&r), vec![(1, 1)], "3002722: the authority as its own contractor");
+        assert_eq!(r.lot_results[0].buyer_winners, r.lot_results[0].winners);
+
+        // Text era, 1200610 (Staffanstorp): unit 2's parse reads entry 1 as
+        // `Staffanstorps kommun` — the in-house cleaning service under the authority's
+        // own name — so ITS result is flagged (the sample read's in-house verdict: kept,
+        // marked), and Clean Service System AB's is not. Deliberate, and a change from the
+        // design's first expectation (review, 2026-10-05): the text-era form publishes
+        // `<Authority>, <Unit>`, the parse cuts the name at the first comma, and the
+        // winner served IS the authority's name — an unflagged row would serve "the
+        // authority won" as a supplier win. The Morsø case below is the one where the unit
+        // publishes its OWN name, and that is not flagged.
+        let staffanstorp = text_record(
+            "Staffanstorps kommun",
+            "1.  Awarding authority: Staffanstorps kommun,  S-245 80 Staffanstorp.\n\
+             Tel. (046) 25 11 00. Facsimile (046) 25 55 70.\n\
+             6.  Tenders received: 9.\n\
+             7.  Service provider(s): 1: Staffanstorps kommun, Städservice, S-245 80 \n\
+             Staffanstorp, tel. (046) 25 14 27, facsimile (046) 25 11 66.\n\
+             2: Clean Service System AB, Box 41, S-291 21 Kristianstad, tel. (044) 10 \n\
+             60 38, facsimile (044) 10 60 39.\n\
+             8.  Price(s): Prices (for the duration of the contract):\n\
+             1: 2 750 000 SEK; 2: 245 000 SEK.\n\
+             9.\n\
+             10.\n\
+             11.  Notice published on: 21. 10. 1997.",
+        );
+        let r = round("text", &staffanstorp, &[]);
+        let mut per_result = flags(&r);
+        per_result.sort();
+        assert_eq!(per_result, vec![(1, 0), (1, 1)], "1200610: only the kommun's own entry");
+
+        // eForms, Morsø's shape (24210321: the municipality's own road service won some
+        // winter-service lots, same CVR). Lot 1: the buyer's own Organization section as
+        // tenderer. Lot 2: a separate section under the buyer's name in capitals. Lot 3:
+        // the road unit under ITS name, bound to the buyer's org id (the shared CVR) —
+        // not flagged, the org id is not enough. Lot 4: a contractor.
+        let section = |id: &str, kind: &str, parent: Option<&str>| store::Section {
+            id: id.into(),
+            kind: kind.into(),
+            parent: parent.map(Into::into),
+        };
+        let id_ref = |section: &str, field: &str, target: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: target.into(), is_ref: true },
+        };
+        let id_val = |section: &str, field: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: value.into(), is_ref: false },
+        };
+        let code = |section: &str, field: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Code { list: None, code: value.into() },
+        };
+        let name = |section: &str, value: &str| text_value(section, ORG_NAME_FIELD, 0, None, value);
+        // One eForms notice: `orgs` (section, name), the buyer references, and one lot
+        // per tenderer section.
+        let eforms = |orgs: &[(&str, &str)], buyers: &[(&str, &str)], tenderers: &[&str]| -> Parsed {
+            let mut p = Parsed { sections: vec![section("PROC", "Notice", None)], values: Vec::new() };
+            for (id, n) in orgs {
+                p.sections.push(section(id, ORGANIZATION_KIND, None));
+                p.values.push(name(id, n));
+            }
+            for (field, target) in buyers {
+                p.values.push(id_ref("PROC", field, target));
+            }
+            for (i, org) in tenderers.iter().enumerate() {
+                let (lot, res, ten, tpa) = (format!("LOT-{i}"), format!("RES-{i}"), format!("TEN-{i}"), format!("TPA-{i}"));
+                p.sections.push(section(&lot, "Lot", None));
+                p.sections.push(section(&res, "LotResult", None));
+                p.sections.push(section(&ten, "LotTender", None));
+                p.sections.push(section(&tpa, "TenderingParty", None));
+                p.values.push(code(&res, "BT-142-LotResult", "selec-w"));
+                p.values.push(id_val(&res, "BT-13713-LotResult", &lot));
+                p.values.push(id_ref(&res, "OPT-320-LotResult", &ten));
+                p.values.push(id_val(&ten, "BT-13714-Tender", &lot));
+                p.values.push(id_ref(&ten, "OPT-310-Tender", &tpa));
+                p.values.push(id_ref(&tpa, "OPT-300-Tenderer", org));
+            }
+            p
+        };
+        let morso = eforms(
+            &[
+                ("ORG-1", "Morsø Kommune"),
+                ("ORG-2", "MORSØ KOMMUNE"),
+                ("ORG-3", "Morsø Kommune, Vej og Park"),
+                ("ORG-4", "Thisted Entreprenør A/S"),
+            ],
+            &[("OPT-300-Procedure-Buyer", "ORG-1")],
+            &["ORG-1", "ORG-2", "ORG-3", "ORG-4"],
+        );
+        let r = round("eforms:eforms-sdk-1.10", &morso, &[("ORG-3", 1_001)]);
+        assert_eq!(flags(&r), vec![(1, 1), (1, 1), (1, 0), (1, 0)], "Morsø: section or name, never the org id alone");
+
+        // Two sections fused into ONE org in one result (a consortium of the buyer's own
+        // section and a real supplier the resolver bound to the same id): not flagged.
+        let mut fused = eforms(
+            &[("ORG-1", "Morsø Kommune"), ("ORG-4", "Thisted Entreprenør A/S")],
+            &[("OPT-300-Procedure-Buyer", "ORG-1")],
+            &["ORG-1"],
+        );
+        fused.values.push(id_ref("TPA-0", "OPT-300-Tenderer", "ORG-4"));
+        let r = round("eforms:eforms-sdk-1.10", &fused, &[("ORG-4", 1_001)]);
+        assert_eq!(flags(&r), vec![(1, 0)], "a fused org is flagged only when every section that bound it is");
+
+        // 483's 438807 shape: the UZP appeals office in the buyer slot is demoted and the
+        // paying POLREGIO promoted (unit 2) — the flag is judged against the PROMOTED
+        // buyer. The office as tenderer of lot 0 is not the buyer any more; a tenderer
+        // section under POLREGIO's name (lot 1) is. (POLREGIO's own section must not
+        // tender: a contractor is never promoted, and the office would stay the buyer.)
+        let uzp = "Urząd Zamówień Publicznych Departament Odwołań";
+        let polregio = "POLREGIO S.A ul. Kolejowa 1 , 01-217 Warszawa";
+        let demoted = eforms(
+            &[("ORG-1", uzp), ("ORG-2", polregio), ("ORG-3", "Krajowa Izba Odwoławcza"), ("ORG-4", polregio)],
+            &[
+                ("OPT-300-Procedure-Buyer", "ORG-1"),
+                ("OPT-301-Lot-ReviewInfo", "ORG-1"),
+                ("OPT-301-Lot-TenderReceipt", "ORG-2"),
+                ("OPT-301-LotResult-Paying", "ORG-2"),
+                ("OPT-301-Lot-ReviewOrg", "ORG-3"),
+            ],
+            &["ORG-1", "ORG-4"],
+        );
+        let r = round("eforms:eforms-sdk-1.10", &demoted, &[]);
+        assert_eq!(flags(&r), vec![(1, 0), (1, 1)], "438807: judged against the promoted buyer");
+
+        // FTS 46804384 after unit 2: Kirklees (buyer) and Microsoft (supplier) are two
+        // sections under one party id — not flagged, even bound to one org.
+        let release = crate::fts::parse::tests::SHARED_ID_RELEASE;
+        let fts = crate::fts::parse::parse(release.as_bytes()).ok().expect("parses");
+        let r = round("fts:ocds-1.1", &fts, &[("ORG-GB-COH-01624297", 7), ("ORG-GB-COH-01624297#2", 7)]);
+        assert_eq!(flags(&r), vec![(1, 0)], "46804384: Microsoft is not Kirklees");
+        // …and the same release with ONE party (same id, same name) as buyer and
+        // supplier (the Kirklees / Cabinet Office award updates): one section, flagged.
+        let one = release.replace("Microsoft Limited", "The Council of the Borough of Kirklees");
+        let fts = crate::fts::parse::parse(one.as_bytes()).ok().expect("parses");
+        let r = round("fts:ocds-1.1", &fts, &[]);
+        assert_eq!(flags(&r), vec![(1, 1)], "one party as buyer and supplier");
+
+        // sdk-0.1: the `WinningParty` repeats the `ContractingParty` by name.
+        let sdk01 = Parsed {
+            sections: vec![
+                section("PROC", "Notice", None),
+                section("CP-1", SDK01_BUYER_KIND, None),
+                section("TR-1", SDK01_RESULT_KIND, None),
+                section("WP-1", SDK01_WINNER_KIND, Some("TR-1")),
+            ],
+            values: vec![
+                text_value("CP-1", "SDK01-ContractingParty-Party-PartyName-Name", 0, None, "Stadt Regensburg"),
+                text_value("WP-1", "SDK01-TenderResult-WinningParty-Party-PartyName-Name", 0, None, "STADT REGENSBURG"),
+            ],
+        };
+        let r = round("eforms:eforms-sdk-0.1", &sdk01, &[]);
+        assert_eq!(flags(&r), vec![(1, 1)], "sdk-0.1 by name");
+
+        // Nothing to judge: no buyer reference at all leaves every result unflagged.
+        let buyerless = eforms(&[("ORG-1", "Morsø Kommune")], &[], &["ORG-1"]);
+        assert_eq!(flags(&round("eforms:eforms-sdk-1.10", &buyerless, &[])), vec![(1, 0)]);
     }
 
     fn text_value(

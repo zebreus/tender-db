@@ -688,7 +688,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 29] = [
+const MIGRATIONS: [&str; 30] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -763,6 +763,12 @@ const MIGRATIONS: [&str; 29] = [
     "ALTER TABLE org_identifier_verdicts ADD COLUMN applied_at INTEGER",
     "ALTER TABLE org_identifier_verdicts ADD COLUMN applied_literal TEXT",
     "ALTER TABLE org_identifier_verdicts ADD COLUMN job_id INTEGER",
+    // Issue 484 unit 3: a winner that IS its notice's own buyer. Nullable with no
+    // default, so metadata-only on turso (`alter_add_column_cost.rs`) — O(1) on the
+    // 127.8M-row table. Every existing row reads NULL ("not judged buyer-equal"), which
+    // is served and counted exactly as before; the next fold of a tender judges it.
+    // In the SAME commit as canonical.rs's CREATE TABLE column (the issue-372 lesson).
+    "ALTER TABLE tender_version_result_winners ADD COLUMN is_buyer INTEGER",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {
@@ -7041,6 +7047,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 awarded_currency: None,
                 decided: None,
                 winners: Vec::new(),
+                buyer_winners: Vec::new(),
                 statistics: Vec::new(),
             }],
             bids,

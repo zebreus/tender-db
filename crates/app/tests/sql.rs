@@ -653,6 +653,48 @@ async fn the_schema_documents_time_format_and_enums() {
     assert!(!body["examples"].as_array().unwrap().is_empty(), "worked examples present");
 }
 
+/// Issue 484 unit 3: the buyer-equal winner flag is visible on the table and on both
+/// award views, each with the note that tells a supplier statistic to filter it.
+#[tokio::test(flavor = "multi_thread")]
+async fn the_winner_is_buyer_columns_exist_and_say_how_to_filter() {
+    let server = Server::start("winner_is_buyer_notes").await;
+    let body: Value = server
+        .http
+        .get(format!("{}/v1/sql/schema", server.base))
+        .send()
+        .await
+        .expect("request")
+        .json()
+        .await
+        .unwrap();
+    let tables = body["tables"].as_array().unwrap();
+    let column = |table: &str, col: &str| -> Value {
+        tables
+            .iter()
+            .find(|t| t["name"] == table)
+            .unwrap_or_else(|| panic!("{table}"))["columns"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["name"] == col)
+            .unwrap_or_else(|| panic!("{table}.{col} missing"))
+            .clone()
+    };
+    for (table, col, filter) in [
+        ("tender_version_result_winners", "is_buyer", "is_buyer IS NULL"),
+        ("v_lot_results", "winner_is_buyer", "winner_is_buyer IS NULL"),
+        ("v_awards", "winner_is_buyer", "winner_is_buyer IS NULL"),
+    ] {
+        let c = column(table, col);
+        assert_eq!(c["type"], "INTEGER", "{table}.{col}: {c}");
+        assert!(c["note"].as_str().is_some_and(|n| n.contains(filter) && n.contains("never 0")), "{table}.{col}: {c}");
+    }
+    for view in ["v_lot_results", "v_awards"] {
+        let note = tables.iter().find(|t| t["name"] == view).unwrap()["note"].as_str().unwrap().to_owned();
+        assert!(note.contains("winner_is_buyer IS NULL"), "{view}: {note}");
+    }
+}
+
 // -------------------------------------------------------- runtime isolation
 
 /// Issue 17: SQL execution runs on its own runtime, so a pathological

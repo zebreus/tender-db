@@ -399,3 +399,62 @@ async fn the_seeded_tenders_walk_returns_the_stream_set_in_id_order_once_and_ter
     }
 }
 
+
+/// Issue 484 unit 3: `?winner=` leaves out a win where the org IS the result notice's
+/// own buyer (`is_buyer = 1`), on the id-ordered stream (the per-row EXISTS) and on
+/// both seeded walks (`head_members`' role clause) alike. Tender 4's only head win is
+/// flagged: it drops. Tender 2's head win is flagged on one result and unflagged on
+/// another: it stays. The DISTINCT pre-level is untouched, so the seed is a superset
+/// and the walks still terminate, set-equal to the stream.
+#[tokio::test]
+async fn a_win_as_the_notices_own_buyer_is_not_a_win_on_any_path() {
+    let (conn, path) = scratch("seeded-is-buyer").await;
+    seed(&conn).await;
+    conn.execute(
+        "UPDATE tender_version_result_winners SET is_buyer = 1
+          WHERE organization_id = ? AND ((tender_id = 4 AND seq = 1) OR (tender_id = 2 AND seq = 3))",
+        (Value::Integer(ORG),),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id) VALUES (2, 3, 150, ?)",
+        (Value::Integer(ORG),),
+    )
+    .await
+    .unwrap();
+
+    let winner = Filter { winner: Some(ORG), now: 1_756_000_000, ..Filter::default() };
+    assert!(read::seeded_lots(&winner) && read::seeded_tenders(&winner));
+
+    // Lots: tender 4's lots 7 and 8 are gone; tender 2's lot 5 stays.
+    let expected_lots: Vec<(i64, i64)> = vec![(1, 3), (1, 4), (2, 5), (5, 1), (5, 2), (8, 10), (9, 11), (9, 12)];
+    assert_eq!(oracle(&conn, &winner).await, expected_lots, "the stream drops the flagged-only tender");
+    let (small, _) = walk(&conn, &winner, 2, 2, 1).await;
+    assert_eq!(small, expected_lots, "the seeded lots walk agrees, tiny windows");
+    let (prod, _) = walk(&conn, &winner, 3, read::DEFAULT_SEED_WINDOW, read::DEFAULT_SEED_WINDOWS_PER_PAGE).await;
+    assert_eq!(prod, expected_lots, "…and production windows");
+
+    // Tenders: 4 is gone, the lotless 7 and the doubly-won 2 stay.
+    let expected_tenders: Vec<i64> = vec![1, 2, 5, 7, 8, 9];
+    let mut stream: Vec<i64> = read::tenders(&conn, &winner, Scope::Page { after: 0, limit: 1000 })
+        .await
+        .unwrap()
+        .iter()
+        .map(|r| r.id)
+        .collect();
+    stream.sort();
+    assert_eq!(stream, expected_tenders);
+    let (seeded, _) = walk_tenders(&conn, &winner, 2, 2, 1).await;
+    assert_eq!(seeded, expected_tenders, "the seeded tenders walk agrees");
+    let routed = read::tenders_page(&conn, &winner, 0, 100, read::DEFAULT_FALLBACK_BAND).await.unwrap();
+    assert_eq!(routed.rows.iter().map(|r| r.id).collect::<Vec<_>>(), expected_tenders);
+
+    // Bidder and buyer seeds are untouched by the flag.
+    let bidder = Filter { bidder: Some(ORG), now: 1_756_000_000, ..Filter::default() };
+    assert_eq!(oracle(&conn, &bidder).await, vec![(2, 5), (5, 1), (5, 2), (9, 11), (9, 12)]);
+
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
+}
