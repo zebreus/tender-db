@@ -1,6 +1,6 @@
 # 471 — r209 amounts are never checked against their `@FMTVAL`, and nothing adjudicates the €10–100 bn head-value band (366 units 5 and 6, dropped when 366 closed)
 
-Status: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); UNIT 2 READ DONE (r208: @FMTVAL disagrees with text — 4490098; r209: no FMTVAL, publisher text errors incl. a dropped decimal point); UNIT 3 MEASURED (the r208 @FMTVAL defect is TED July 2011: ~5.9 % of value elements in 17 daily packages, exact even 10^k; text is right); NEXT: unit 3 code (adopt text on an exact-10^k mismatch, mark fmtval_mismatch) + reparse 2011-04…08, then unit 4. Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
+Status: ready-for-agent — UNIT 3 LANDED + OWNER DECISION APPLIED 2026-10-06 (uncommitted, not deployed, not re-parsed; see "Unit 3 — decision (2026-10-06)"): an amount whose `@FMTVAL` was its text × an exact even 10^k (k ≥ 2) stores the TEXT as an ORDINARY amount — no `quality` marker, electable and served (4490098's fixture head = 4,970,000 cents, €49,700); the raw attribute stays in the parse layer as `.FMTVAL_MISMATCH`; `QUALITY_FMTVAL_MISMATCH` removed, `quality` is only 'withheld' again. NEXT: `ops/check.sh` → commit → deploy → reparse r208 2011-04…08 per docs/operations.md (one job, packages = 5) → `project` → re-read `/v1/tenders/4490098` and section 16 of the data-quality report; then count `.FMTVAL_TEXT` rows in those months; then unit 4. Was: ready-for-agent — UNIT 3 CODE LANDED IN THE TREE 2026-10-06, REVIEW FIXES APPLIED THE SAME DAY (uncommitted, not deployed, not re-parsed; see "Unit 3 — landed" and "Unit 3 — review fixes"): `@FMTVAL` checked against its text in the shared TED_EXPORT walk; ONLY the measured shape (attribute = text × an exact EVEN 10^k, k ≥ 2, compared in i128) adopts the text and marks `fmtval_mismatch`; every other disagreement keeps the attribute UNMARKED with the text filed beside it as `.FMTVAL_TEXT`. NEXT: decide whether an adopted text stays unelectable (today it does: 4490098's head goes NULL on the fixture), `ops/check.sh`, commit, deploy, re-parse r208 2011-04…08 per docs/operations.md (one job, packages = 5), then count `.FMTVAL_TEXT` rows in the re-parsed months before ever marking that class, then unit 4. Was: ready-for-agent — UNIT 3 CODE LANDED IN THE TREE 2026-10-06 (uncommitted, not deployed): exact-10^k mismatch adopts the text, every mismatch marked. Was: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); UNIT 2 READ DONE (r208: @FMTVAL disagrees with text — 4490098; r209: no FMTVAL, publisher text errors incl. a dropped decimal point); UNIT 3 MEASURED (the r208 @FMTVAL defect is TED July 2011: ~5.9 % of value elements in 17 daily packages, exact even 10^k; text is right); NEXT: unit 3 code (adopt text on an exact-10^k mismatch, mark fmtval_mismatch) + reparse 2011-04…08, then unit 4. Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
 Kind: data quality (amount plausibility: the legacy parse layer and the head election)
 Relates to: 366 (promised units 5 and 6, closed 2026-09-12 without them), 380 (its sweep still points at "the open half of
 issue 366"), 267 (the plausibility measure), 372 (the `quality` marker on `Fact::Amount`), 385 (F14 corrigendum dates:
@@ -267,15 +267,18 @@ These are bounded member reads, one stream per monthly tar. The members are save
 
 | tender | member | what the XML says | verdict |
 |---|---|---|---|
-| 4490098 (r208) | `2011-07.tar` → `2011-07-15.tar.gz` → `20110715_134/222043_2011.xml` | `<VALUE_COST FMTVAL="49700000000000000">49 700` (twice), beside `FMTVAL="4970000">49 700` and `FMTVAL="5000000">50 000` | **`@FMTVAL` disagrees with its text.** The text is 49,700 EUR; the attribute is 4.97×10¹⁶. The stored figure (4.97×10¹⁸ cents) is the attribute, so the error is TED's attribute, not the publisher's. |
+| 4490098 (r208 profile; the member is an `R2.0.7.S03.E01` form) | `2011-07.tar` → `2011-07-15.tar.gz` → `20110715_134/222043_2011.xml` | `<VALUE_COST FMTVAL="49700000000000000">49 700` (twice), beside `FMTVAL="4970000">49 700` and `FMTVAL="5000000">50 000` — these two are ALSO wrong, 10² above their texts (corrected by the unit-3 review; the first reading took them as agreeing) | **`@FMTVAL` disagrees with its text.** The text is 49,700 EUR; the attribute is 4.97×10¹⁶. The stored figure (4.97×10¹⁸ cents) is the attribute, so the error is TED's attribute, not the publisher's. |
 | 6581010 (r209) | `2020-01.tar` → `01/20200120_2020013.tar.gz` → `20200120_13/00026682_2020.xml` | `<VAL_TOTAL CURRENCY="EUR">59733280000.00` (no FMTVAL); lot `46549800.00` | The publisher's own text. The first notice published 597,332,800.00 (10²). |
 | 6941544 (r209) | `2021-10.tar` → `20211027_209/548977_2021.xml` | `<VAL_TOTAL CURRENCY="GBP">80000000000.00` beside `<VAL_ESTIMATED_TOTAL CURRENCY="GBP">80000000.00` (no FMTVAL) | The publisher's own text, with a 10³ partner in the same notice. |
 | 6843260 (r209) | `2021-01.tar` → `20210111_006/010347_2021.xml` | `<VAL_TOTAL CURRENCY="GBP">3097158480` and a total of `9318469680`, both without a decimal point, while sibling lots read `34647558.40`, `26438016.80`, `1127536.80` (no FMTVAL) | The publisher's own text: a dropped decimal point. The buyer's F14 prints 3 097 158.48. |
 
 - **Answer.**
-  - **r2.0.8 can carry a wrong `@FMTVAL` behind a correct text.** Unit 3 (parse both, mark the fact when they
+  - **The r208 profile can carry a wrong `@FMTVAL` behind a correct text** (the exhibit is an R2.0.7 form; "r2.0.8"
+    below means the `ted-export-r208` profile, which covers R2.0.7 and R2.0.8). Unit 3 (parse both, mark the fact when they
     disagree) is needed for r2.0.8.
-  - **r2.0.9 publishes no `@FMTVAL` on these values,** so its band errors are the publishers'. Units 4–5 (the
+  - **The three r2.0.9 members read publish no `@FMTVAL` on these values,** so their band errors are the publishers'.
+    (Unit-3 review: this holds for those 3 members, NOT for the profile — the committed r209 F06 and F18 fixtures do
+    carry `@FMTVAL` on `VALUE_COST`, agreeing with their texts.) Units 4–5 (the
     in-tender signals) carry them.
 - **A third signal for unit 4.** 010347 is a dropped decimal point: an integer text of ≥ 9 digits whose siblings in
   the same notice and currency carry 2 decimals, and whose value /100 matches nothing. It is weaker than the exact
@@ -316,3 +319,161 @@ stored wrong amount.
   `ted-export-r208` from that window's fetch floor with a package count.
 - **Wider than the band.** Most of the ~6,000 wrong amounts are below €10 bn, so they never showed in section 16, but
   they distort every 2011 value statistic.
+
+## Unit 3 — landed (2026-10-06, in the tree: not committed, not deployed, not re-parsed)
+
+> Superseded on the canonical marker by "Unit 3 — decision (2026-10-06)" below: a corrected figure is no longer
+> marked `fmtval_mismatch` and IS elected. Superseded in part by "Unit 3 — review fixes" below: only attribute = text × an exact EVEN 10^k (k ≥ 2) adopts and
+> marks; every other disagreement is now UNMARKED (`.FMTVAL_TEXT` beside it), and the attribute compares in i128.
+
+- **Parse** (`crates/ingest/src/r209/value.rs`, `parse.rs` `Rule::Amount`). `value::read_amount(@FMTVAL, text)`:
+  no attribute → the text, as before; attribute not a number, text not an UNAMBIGUOUS number
+  (`value::display_cents`), or the two equal → the attribute, unmarked, as before. Otherwise a mismatch:
+  attribute/text an exact `10^k`, `|k| >= 2` → the TEXT's cents are stored; any other disagreement → the
+  attribute's. Either way `Walk::emit_mismatched_amount` files the UNADOPTED representation, raw, as a
+  text row beside the amount — same section, same ordinal, field id + `.FMTVAL_MISMATCH`
+  (`value::FMTVAL_MISMATCH_SUFFIX`). Both representations stay in the parse layer (ADR-0004: nothing
+  published is dropped). Suppressed together with the amount in a translation copy.
+  - `display_cents` reads space/NBSP/narrow-NBSP thousands, `20 550,54`, `13260.00`, `1.234.567`,
+    `1.234,56`, `1,234.56`; it refuses a lone `.`/`,` before exactly three digits (`1.234`), any
+    non-3-digit group, letters/currency signs. A refused text means "nothing to check against" — the
+    attribute is read and nothing is marked (the measurement's 2011-01 "10⁻³" residue is this class).
+  - The early-R2.0.8 `Rule::Section` `@FMTVAL` (on `AWARD_AND_CONTRACT_VALUE`) has no text to check;
+    `Rule::Number`'s `@FMTVAL` is not checked (no measured defect; out of this unit).
+- **Fold** (`crates/ingest/src/project.rs`). `NoticeState::read` collects `(section, field, ordinal)` of
+  every `.FMTVAL_MISMATCH` row and marks the paired `Fact::Amount` `quality = 'fmtval_mismatch'`
+  (`store::QUALITY_FMTVAL_MISMATCH`, beside 372's `QUALITY_WITHHELD` in `canonical.rs`; `withheld` wins
+  if both apply). The mark rows themselves fold to nothing, and `has_destination(Text)` reads them, so
+  the unmapped-fields diagnostics do not list them as dropped.
+- **Consequence, decided by reuse rather than new code:** every reader of `quality` treats any value as
+  "not a figure" — `head_value_eur_cents` skips it (`quality.is_none()`), and `/v1` serves
+  `value: null` + `quality`. So even an ADOPTED text (the right figure, by the measurement) is not
+  elected and not served as a value. That is the conservative direction (the source contradicts
+  itself); if unit 6's re-read shows heads lost that only the adopted text could carry, splitting the
+  marker (`fmtval_rescaled` electable vs `fmtval_mismatch` not) is the follow-up. The legacy lot-result
+  `awarded_cents` (`read_legacy_results`, `direct_cents`) takes the adopted figure and has no quality
+  column, so it is corrected but unmarked.
+- **Tests** (focused, gate flags + package set):
+  - `crates/ingest/tests/project.rs::an_fmtval_that_disagrees_with_its_element_text_does_not_reach_the_head`
+    — the real member `222043_2011.xml`, committed as
+    `crates/ingest/tests/fixtures/r208/f03-fmtval-mismatch-222043-2011.xml`, ingested + projected: no
+    amount row above 1,000,000.00 EUR, every `fmtval_mismatch` row holds an adopted text (4,970,000 /
+    5,000,000 cents), and the head is NULL. Measured on the fixture: an award notice files ONE canonical
+    amount here (`result_value`, 4,970,000 cents, marked — the coded `VALUES` block and the
+    `INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT` figures are not canonical amounts of an award form), so
+    marking the adopted text leaves 4490098 with no elected head rather than a corrected one. That is
+    the "Consequence" above made concrete; it is the first thing to rule on before the re-parse.
+  - `crates/ingest/tests/r208.rs`: `a_scaled_fmtval_yields_to_its_element_text_and_is_kept_beside_it`
+    (every `VALUE_COST` of the member is 10¹² or 10² off and pairs with exactly one mark holding the raw
+    attribute), `an_agreeing_fmtval_is_unchanged_and_unmarked` (the member with agreeing attributes:
+    same cents, no mark row), `an_ambiguous_element_text_leaves_the_fmtval_as_it_was` (`49.700` beside
+    the 10¹² attribute: the attribute is read, unmarked). `every_r208_fixture_is_consumed_exhaustively`
+    now counts 12 fixtures.
+  - `r209::value` lib tests: `a_display_amount_is_read_only_when_its_decimal_point_is_unambiguous`,
+    `an_fmtval_is_overruled_only_by_an_exact_power_of_ten`.
+- **Re-parse runbook**: `docs/operations.md`, "Re-parsing the July-2011 `@FMTVAL` cohort (issue 471
+  unit 3)" — r208 packages 2011-04 … 2011-08 only, a one-package probe on `2011-07` re-reading
+  `/v1/notices/12376354/content`, then the rest, ONE `project`, and the exhibit
+  `/v1/tenders/4490098` (expected: no attribute figure; no head unless an earlier notice in the chain
+  carries an unmarked one).
+- **Next.** `ops/check.sh`, commit, deploy; the re-parse per the runbook; then unit 4.
+
+## Unit 3 — review fixes (2026-10-06, in the tree: not committed, not deployed, not re-parsed)
+
+An 11-finding review of the unit-3 change; each verified against the code before fixing.
+
+- **F1 (fixed) — the 10¹²/10¹⁴ scales overflowed before the check.** `read_amount` compared only when
+  `cents(@FMTVAL)` parsed in `i64`; `FMTVAL="100000000000000000">100 000` (10¹⁹ cents) fell through as raw text,
+  unmarked, its correct text dropped. Now the attribute is read by `value::wide_cents` (same normalisation and
+  rounding as `cents`, in `i128`; shared `value::normalize`), so an overflowing exact scale adopts its text. Tests:
+  lib `an_fmtval_is_overruled_only_by_the_measured_scale_error` (10¹² × 100 000, 10¹⁴ × 922,34, a non-scale
+  overflow), r208 `a_scaled_fmtval_too_large_for_the_stored_integer_still_yields_to_its_text`.
+- **F2 + F8 (fixed) — the rule went past its evidence.** Adoption is now ONLY attribute > text by an exact EVEN
+  `10^k`, `k ≥ 2` (`value::scaled_by_even_power_of_ten`) — the measured direction (fmtval.py's ratio is attr/text,
+  every exact k positive and even). A text 10² ABOVE its attribute (010347's dropped-decimal signature) and odd
+  powers (10³, 10⁵) keep the attribute. With the adopted class restricted to the measured shape, the unmarked
+  lot-result channel (`read_legacy_results` → `awarded_cents`, no quality column) now only ever takes a measured
+  correction; carrying the mark onto lot results would need a schema column — not done, recorded here.
+- **F5 + F7 (fixed by narrowing) — the "other disagreement" mark was unmeasured.** It nulled served values for every
+  FMTVAL/text disagreement in r209 and r208 2014-07…2018 and for the ~400 non-10^k disagreements inside the window
+  (fmtval2.py's `num()` is not `display_cents`). Now that class is `AmountReading::Disagrees`: the attribute is
+  read exactly as before and NOT marked; the text is filed beside the amount as `.FMTVAL_TEXT`
+  (`value::FMTVAL_TEXT_SUFFIX`, same section/ordinal pairing) — parse-layer evidence only (ADR-0004), countable
+  after a re-parse before anyone decides to mark it. The fold skips both suffixes (`project::is_fmtval_beside_row`)
+  and `has_destination(Text)` claims both. A scaled attribute with no currency in scope keeps today's raw-text row
+  plus a `.FMTVAL_TEXT` row, unmarked. This REVISES the measurement section's "any other disagreement … mark it".
+- **F3 (accepted as intended; runbook corrected).** Verified: `supersede` keys on `("amount", field)` and ignores
+  `quality`, so a later marked `result_value` replaces an earlier unmarked one and the head can go NULL. Kept (the
+  latest notice contradicts itself; same as `withheld`). `docs/operations.md` step 6 now says so instead of "unless
+  an earlier notice of the chain carries an unmarked figure"; unit 6's re-read should count those Tenders.
+- **F4 (fixed).** `v_tender_amounts` now selects `a.quality`; the `/v1/sql` table note and a new `*.quality`
+  column note describe both values. Asserted in `an_fmtval_that_disagrees_with_its_element_text_does_not_reach_the_head`.
+- **F6 (fixed).** Runbook step 4: ONE job over all five months (`after` = lowest id − 1, `packages` = 5; 07 sits in
+  the middle, so `packages` = 4 would never reach 08 — verified against `Db::reparse_packages`: id > after, fetch-id
+  order, capped), or one job per package when ids are not contiguous.
+- **F9 (fixed).** Fold test of the unmarked branch and of a no-currency mismatch
+  (`project.rs::an_fmtval_disagreement_outside_the_measured_shape_folds_as_before`: attribute folded, unmarked,
+  elected; no currency → no amount, no mark); parse tests `a_disagreement_outside_the_measured_shape_keeps_the_attribute_and_files_the_text`,
+  `a_scaled_fmtval_with_no_currency_in_scope_stays_raw_text`; zero beside rows asserted on every committed
+  FMTVAL-bearing fixture (`r208.rs::no_other_committed_r208_fmtval_fixture_files_anything_beside_its_amounts`,
+  `r209.rs::the_committed_fmtval_fixtures_agree_with_their_texts` — the r209 profile path, incl. f18's
+  `2162630.19` / `2 162 630,19`), and the internal-ojs path (`internal_ojs.rs::internal_ojs_amounts_read_their_text_and_file_nothing_beside`:
+  R2.0.5 publishes no `@FMTVAL`, text read as before).
+- **F10 (fixed).** `tests/fixtures/README.md`: totals (116 files, 3.0 MB; r208 12 files, 524 KB — both were already
+  stale before this unit) and a provenance row for `f03-fmtval-mismatch-222043-2011.xml` (monthly archive member,
+  byte-identical to the unit-2 save). `QUALITY_WITHHELD`'s doc, the `tender_version_amounts.quality` schema comment
+  and the public `/docs` Amounts list now name `fmtval_mismatch`. (Three older r208 fixtures —
+  `f03-099900-2018`, `f03-annexd-neg-022211-2011`, `veat-294050-2011` — still lack README rows; not this unit's.)
+- **F11 (fixed in text).** The exhibit is `R2.0.7.S03.E01` under the `ted-export-r208` profile; the code docs, the
+  runbook and the Unit 2 table now say so, and the table notes `FMTVAL="4970000"` / `"5000000"` are 10² off.
+- **Tests** (gate flags + package set, output to file, GATE-EXIT read): `--test r208 --test r209 --test internal_ojs
+  --test sql --test project` GATE-EXIT=0 (15 / 19 / 8 / 17 / 93 passed); `--lib` GATE-EXIT=0 (ingest 356, model 3,
+  store 152, app 182); `--test api --test withheld_fields_view --test stage4_schema --test view_pushdown_probe`
+  GATE-EXIT=0 (78 / 1 / 1 / 2). `ops/check.sh` NOT run.
+- **Next.** `ops/check.sh`, commit, deploy; the re-parse per the runbook; after it, a bounded count of
+  `.FMTVAL_TEXT` rows in the five months (the parse layer of those notices) to size the unmarked class; then unit 4.
+
+## Unit 3 — decision (2026-10-06): a corrected figure is an ordinary amount
+
+> This revises "Unit 3 — landed" (Consequence) and the review's F3/F4 wherever they assume a `fmtval_mismatch` mark.
+
+**Owner decision.** An amount whose `@FMTVAL` was its element text scaled by an exact even `10^k` (`k ≥ 2`, the
+attribute the larger) and whose text was adopted is CORRECT, and is elected and served like any other amount. The
+projection no longer marks it.
+
+**Why.**
+- The correction is applied only to the exact measured shape (unit 3 measurement: TED's July-2011 generator, every
+  exact ratio even and positive); every other disagreement keeps the attribute, as before. There is no residual
+  doubt for a marker to carry.
+- The element text is the published, human-read figure — what the notice actually says to a reader; the attribute
+  is the generator's machine copy, and in this shape it is the wrong one.
+- Marking it nulled heads: on the real member 4490098 lost its only canonical figure (the head went NULL), and by
+  supersession a cohort notice would also have replaced an earlier good `result_value` with a null one. That
+  discards correct information to express a doubt the measurement already resolved.
+- The record of the correction is kept where it belongs: the parse-layer `<field>.FMTVAL_MISMATCH` text row beside
+  the amount (raw attribute, same section and ordinal), unchanged — countable later, and ADR-0004 holds.
+
+**What changed in the tree.**
+- `crates/ingest/src/project.rs`: the `fmtval_mismatched` set and the `.or_else(… QUALITY_FMTVAL_MISMATCH …)` are gone;
+  `quality` is set only by a withholding declaration. The `.FMTVAL_MISMATCH` / `.FMTVAL_TEXT` rows still fold to
+  nothing (`is_fmtval_beside_row`) and stay claimed by `has_destination(Text)`.
+- `store::QUALITY_FMTVAL_MISMATCH` removed (constant, `lib.rs` re-export, `canonical.rs` docs/schema comments): the
+  `quality` vocabulary is only `'withheld'` again. `v_tender_amounts` keeps `a.quality` (withheld is useful there);
+  its view comment, the `/v1/sql` table note and the `*.quality` column note now name only `'withheld'`. `/docs`
+  Amounts: the `quality` bullet names only `withheld`, and a new bullet says a legacy amount is read from its
+  printed text when the attribute is that text × an exact even power of ten, served like any other.
+- Parse-layer docs (`r209/value.rs`, `parse.rs`, `rules.rs`) say the `.FMTVAL_MISMATCH` row is the record of the
+  correction, not a mark. `docs/operations.md` runbook: the rescaled bullet, the scope note and step 6 rewritten — no
+  head is nulled by this class, and the old supersession caveat about marked figures no longer applies.
+- Tests: `project.rs::an_fmtval_that_disagrees_with_its_element_text_does_not_reach_the_head` is now
+  `an_fmtval_scaled_by_ten_to_the_k_yields_to_its_text_and_is_elected`: on the real 222043 member, no amount row above
+  €1M, no `quality` on any amount, `result_value` = 4,970,000 cents, ONE `notice_texts` row
+  `….FMTVAL_MISMATCH` = `49700000000000000`, and tender 4490098's head (`current_value_eur_cents`) = 4,970,000 —
+  €49,700, verified by the run. The r208 parse tests are unchanged (their "marks" are the parse-layer rows).
+- Focused runs (gate flags + package set, output to file): `--test r208 --test r209 --test project --test sql --test
+  internal_ojs` GATE-EXIT=0 (15 / 19 / 93 / 17 / 8 passed); `--lib` GATE-EXIT=0 (ingest 356, model 3, store 152,
+  app 182); `--test api --test withheld_fields_view --test stage4_schema --test view_pushdown_probe` GATE-EXIT=0
+  (78 / 1 / 1 / 2). `ops/check.sh` NOT run.
+- **Next.** `ops/check.sh` → commit → deploy → reparse r208 2011-04…08 (one job, `packages` = 5, per the runbook) →
+  one `project` → re-read `/v1/tenders/4490098` (expect €49,700) and section 16 of the data-quality report; then the
+  `.FMTVAL_TEXT` count; then unit 4.

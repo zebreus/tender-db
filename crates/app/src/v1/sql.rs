@@ -867,7 +867,9 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     (
         "v_tender_amounts",
         "Money amounts of each current Tender (field, cents, currency, tax_basis, \
-         eur_cents). tax_basis is 'incl', 'excl' or NULL when the source did not say — and \
+         eur_cents, quality). quality is NULL for an ordinary figure and 'withheld' when the \
+         notice suppressed the field (cents is the -1 placeholder, issue 372); a withheld \
+         row is not a figure to aggregate. tax_basis is 'incl', 'excl' or NULL when the source did not say — and \
          NULL is most of the corpus, so a total over mixed rows is not comparable (issue \
          251). eur_cents is the derived EUR at publication date (ADR-0014), NULL where no \
          official rate resolves or the row predates the backfill refold. NOT FILTERABLE \
@@ -956,6 +958,13 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         "awarded_eur_cents",
         "Derived EUR at the version's publication date (ADR-0014) for awarded_cents — same \
          contract as eur_cents: beside the published value, NULL where no rate resolves.",
+    ),
+    (
+        "*",
+        "quality",
+        "Why this row's number is NOT a figure, when the source says so; NULL = an ordinary \
+         published figure. 'withheld': the notice suppressed the field and the number is the \
+         eForms -1 placeholder (issue 372). Filter `quality IS NULL` before aggregating.",
     ),
     ("tender_version_classifications", "scheme", CLASSIFICATION_SCHEME_NOTE),
     ("tender_version_classifications", "field", CLASSIFICATION_FIELD_NOTE),

@@ -68,7 +68,7 @@ fn every_r208_fixture_is_consumed_exhaustively() {
         })
         .collect();
     names.sort();
-    assert_eq!(names.len(), 11, "corpus changed; update the expectation");
+    assert_eq!(names.len(), 12, "corpus changed; update the expectation");
 
     for relative in names {
         let parsed = parse_fixture(&relative);
@@ -403,4 +403,224 @@ fn a_transliterated_address_block_is_claimed_and_opens_no_party() {
         names.iter().any(|n| n.starts_with("Περιφέρεια Αττικής")),
         "the Greek contracting body is still a party: {names:?}"
     );
+}
+
+const FMTVAL_FIXTURE: &str = "r208/f03-fmtval-mismatch-222043-2011.xml";
+
+fn parse_variant(edit: impl Fn(String) -> String) -> Parsed {
+    let path = format!("tests/fixtures/{FMTVAL_FIXTURE}");
+    let xml = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
+    let bytes = edit(xml).into_bytes();
+    let Disposition::Records(records) = profile::dispatch(FMTVAL_FIXTURE, &bytes) else {
+        panic!("dispatch skipped the variant");
+    };
+    let [Record::Notice(notice)] = &records[..] else { panic!("expected one notice record") };
+    assert_eq!(notice.profile, "ted-export-r208");
+    match parse_payload(&notice.profile, &bytes) {
+        Parse::Parsed(parsed) => parsed,
+        other => panic!("variant did not parse: {other:?}"),
+    }
+}
+
+/// `(section, field, ordinal) -> cents` of every `VALUE_COST` amount, and the
+/// unadopted representations the parser filed beside them.
+#[allow(clippy::type_complexity)]
+fn value_costs(parsed: &Parsed) -> (Vec<((String, String, i64), i64)>, Vec<((String, String, i64), String)>) {
+    let suffix = ingest::r209::value::FMTVAL_MISMATCH_SUFFIX;
+    let mut amounts = Vec::new();
+    let mut marks = Vec::new();
+    for v in &parsed.values {
+        if let Some(field) = v.field_id.strip_suffix(suffix) {
+            let NoticeValue::Text { value, .. } = &v.value else { panic!("a mark is text: {v:?}") };
+            marks.push(((v.section_id.clone(), field.to_owned(), v.ordinal), value.clone()));
+        } else if v.field_id.ends_with("VALUE_COST") {
+            let NoticeValue::Amount { cents, currency } = &v.value else { panic!("not an amount: {v:?}") };
+            assert_eq!(currency, "EUR");
+            amounts.push(((v.section_id.clone(), v.field_id.clone(), v.ordinal), *cents));
+        }
+    }
+    (amounts, marks)
+}
+
+/// Issue 471 unit 3, the parse half, on the real member behind tender 4490098
+/// (`2011-07-15.tar.gz/20110715_134/222043_2011.xml`, TED's July-2011
+/// generator; the member is an `R2.0.7.S03.E01` form under the r208 profile): `<VALUE_COST FMTVAL="49700000000000000">49 700` stores 49,700.00
+/// EUR — the text — not 4.97×10¹⁶, and files the attribute beside it as the
+/// record of the correction. The member's other two value elements are 10²
+/// off their texts (`FMTVAL="5000000">50 000`), the same defect.
+#[test]
+fn a_scaled_fmtval_yields_to_its_element_text_and_is_kept_beside_it() {
+    let parsed = parse_fixture(FMTVAL_FIXTURE);
+    let (amounts, marks) = value_costs(&parsed);
+    assert!(!amounts.is_empty());
+    assert!(
+        !parsed.values.iter().any(|v| matches!(v.value, NoticeValue::Amount { cents, .. } if cents > 100_000_000)),
+        "no figure above EUR 1,000,000.00 survives: the 10^12 and 10^2 attributes are overruled",
+    );
+    // Every VALUE_COST disagreed, so every one is paired with exactly one mark.
+    assert_eq!(marks.len(), amounts.len(), "{marks:?}");
+    for (key, raw) in &marks {
+        let cents = amounts.iter().find(|(k, _)| k == key).map(|(_, c)| *c)
+            .unwrap_or_else(|| panic!("mark {key:?} pairs with no amount"));
+        let expected = match raw.as_str() {
+            "49700000000000000" | "4970000" => 4_970_000,
+            "5000000" => 5_000_000,
+            other => panic!("unexpected unadopted representation {other:?}"),
+        };
+        assert_eq!(cents, expected, "{key:?}");
+    }
+    assert!(marks.iter().any(|(_, raw)| raw == "49700000000000000"), "the 10^12 attribute is kept as data");
+    // The coded VALUES block (no FMTVAL) agrees with the adopted text.
+    assert!(values(&parsed, "PROCEDURE", "TED-VALUE").iter().all(|v| matches!(v,
+        NoticeValue::Amount { cents: 4_970_000, .. })));
+}
+
+/// An agreeing `@FMTVAL` reads exactly as before the check: same figure,
+/// nothing filed beside it.
+#[test]
+fn an_agreeing_fmtval_is_unchanged_and_unmarked() {
+    let agreeing = parse_variant(|xml| {
+        xml.replace(r#"FMTVAL="49700000000000000">49 700"#, r#"FMTVAL="49700">49 700"#)
+            .replace(r#"FMTVAL="4970000">49 700"#, r#"FMTVAL="49700">49 700"#)
+            .replace(r#"FMTVAL="5000000">50 000"#, r#"FMTVAL="50000">50 000"#)
+    });
+    let (amounts, marks) = value_costs(&agreeing);
+    assert!(marks.is_empty(), "{marks:?}");
+    let (adopted, _) = value_costs(&parse_fixture(FMTVAL_FIXTURE));
+    assert_eq!(amounts, adopted, "the adopted texts are what an agreeing attribute says");
+    assert!(!agreeing.values.iter().any(|v| v.field_id.ends_with(ingest::r209::value::FMTVAL_MISMATCH_SUFFIX)));
+}
+
+/// A text whose decimal point is a guess (`49.700`: thousands, or mills?) is
+/// not a number to check against: the attribute is read as before, unmarked.
+#[test]
+fn an_ambiguous_element_text_leaves_the_fmtval_as_it_was() {
+    let ambiguous = parse_variant(|xml| {
+        xml.replace(r#"FMTVAL="49700000000000000">49 700"#, r#"FMTVAL="49700000000000000">49.700"#)
+    });
+    let (amounts, marks) = value_costs(&ambiguous);
+    let unchecked: Vec<_> = amounts.iter().filter(|(_, c)| *c == 4_970_000_000_000_000_000).collect();
+    assert!(!unchecked.is_empty(), "the attribute is still read: {amounts:?}");
+    for (key, _) in &unchecked {
+        assert!(!marks.iter().any(|(k, _)| k == key), "an unchecked figure carries no mark: {key:?}");
+    }
+    // The other two elements still disagree unambiguously and are still marked.
+    assert_eq!(marks.len(), amounts.len() - unchecked.len());
+}
+
+/// Every unit-3 beside row (`.FMTVAL_MISMATCH` or `.FMTVAL_TEXT`) of a parse,
+/// as `(section, field, ordinal, suffix, raw)`.
+fn beside_rows(parsed: &Parsed) -> Vec<(String, String, i64, &'static str, String)> {
+    use ingest::r209::value::{FMTVAL_MISMATCH_SUFFIX, FMTVAL_TEXT_SUFFIX};
+    let mut out = Vec::new();
+    for v in &parsed.values {
+        for suffix in [FMTVAL_MISMATCH_SUFFIX, FMTVAL_TEXT_SUFFIX] {
+            if let Some(field) = v.field_id.strip_suffix(suffix) {
+                let NoticeValue::Text { value, .. } = &v.value else { panic!("a beside row is text: {v:?}") };
+                out.push((v.section_id.clone(), field.to_owned(), v.ordinal, suffix, value.clone()));
+            }
+        }
+    }
+    out
+}
+
+/// Review finding 1: a 10^12 attribute whose cents overflow `i64`
+/// (`FMTVAL="100000000000000000">100 000` is 10^19 cents) is still compared,
+/// in `i128`, so its correct text is adopted and the attribute kept beside it —
+/// before the fix it fell through as a raw-text row and nothing was marked.
+#[test]
+fn a_scaled_fmtval_too_large_for_the_stored_integer_still_yields_to_its_text() {
+    let overflowing = parse_variant(|xml| {
+        xml.replace(r#"FMTVAL="49700000000000000">49 700"#, r#"FMTVAL="100000000000000000">100 000"#)
+    });
+    let (amounts, marks) = value_costs(&overflowing);
+    let adopted: Vec<_> = amounts.iter().filter(|(_, c)| *c == 10_000_000).collect();
+    assert!(!adopted.is_empty(), "the text 100 000 is the stored figure: {amounts:?}");
+    for (key, _) in &adopted {
+        assert!(
+            marks.iter().any(|(k, raw)| k == key && raw == "100000000000000000"),
+            "the overflowing attribute is kept beside its amount: {key:?} {marks:?}"
+        );
+    }
+    assert!(
+        !overflowing.values.iter().any(|v| matches!(&v.value,
+            NoticeValue::Text { value, .. } if value == "100000000000000000")
+            && !v.field_id.ends_with(ingest::r209::value::FMTVAL_MISMATCH_SUFFIX)),
+        "no raw-text fallback row for the attribute"
+    );
+}
+
+/// Review findings 2, 5, 7, 8: a disagreement OUTSIDE the measured shape (here
+/// the attribute 10^1 BELOW its text) keeps the attribute exactly as before the
+/// check — no rescale, no mark — and only files the text beside it as
+/// `.FMTVAL_TEXT`, so the class is countable in the parsed layer.
+#[test]
+fn a_disagreement_outside_the_measured_shape_keeps_the_attribute_and_files_the_text() {
+    let disagreeing = parse_variant(|xml| {
+        xml.replace(r#"FMTVAL="49700000000000000">49 700"#, r#"FMTVAL="4970">49 700"#)
+    });
+    let (amounts, marks) = value_costs(&disagreeing);
+    let kept: Vec<_> = amounts.iter().filter(|(_, c)| *c == 497_000).collect();
+    assert!(!kept.is_empty(), "the attribute 4,970.00 is still the stored figure: {amounts:?}");
+    let beside = beside_rows(&disagreeing);
+    for ((section, field, ordinal), _) in &kept {
+        assert!(!marks.iter().any(|((s, f, o), _)| (s, f, o) == (section, field, ordinal)), "no mark");
+        assert!(
+            beside.iter().any(|(s, f, o, suffix, raw)| (s, f, o) == (section, field, ordinal)
+                && *suffix == ingest::r209::value::FMTVAL_TEXT_SUFFIX && raw == "49 700"),
+            "the disagreeing text is kept beside {section}/{field}#{ordinal}: {beside:?}"
+        );
+    }
+}
+
+/// No currency in scope: there is no amount to rescale or mark. The raw
+/// attribute is the text row it always was, and the text is filed beside it.
+#[test]
+fn a_scaled_fmtval_with_no_currency_in_scope_stays_raw_text() {
+    let uncurrencied = parse_variant(|xml| {
+        xml.replace(
+            r#"<COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE CURRENCY="EUR"><VALUE_COST FMTVAL="49700000000000000">"#,
+            r#"<COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE><VALUE_COST FMTVAL="49700000000000000">"#,
+        )
+    });
+    let raw: Vec<_> = uncurrencied
+        .values
+        .iter()
+        .filter(|v| v.field_id.ends_with("VALUE_COST")
+            && matches!(&v.value, NoticeValue::Text { value, .. } if value == "49700000000000000"))
+        .collect();
+    assert!(!raw.is_empty(), "the attribute is kept as raw text, as before the check");
+    let beside = beside_rows(&uncurrencied);
+    for v in &raw {
+        assert!(
+            beside.iter().any(|(s, f, o, suffix, text)| s == &v.section_id && f == &v.field_id
+                && *o == v.ordinal && *suffix == ingest::r209::value::FMTVAL_TEXT_SUFFIX && text == "49 700"),
+            "{v:?}: {beside:?}"
+        );
+    }
+    assert!(
+        !beside.iter().any(|(s, f, o, suffix, _)| *suffix == ingest::r209::value::FMTVAL_MISMATCH_SUFFIX
+            && raw.iter().any(|v| (&v.section_id, &v.field_id, &v.ordinal) == (s, f, o))),
+        "nothing to mark without an amount"
+    );
+}
+
+/// Review finding 9: the committed r208 members that carry `@FMTVAL` and are
+/// NOT the July-2011 exhibit agree with their texts (or have none to check),
+/// so the check files nothing beside any of their amounts.
+#[test]
+fn no_other_committed_r208_fmtval_fixture_files_anything_beside_its_amounts() {
+    for relative in [
+        "r208/f02-000333-2014.xml",
+        "r208/f03-099900-2018.xml",
+        "r208/f03-annexd-neg-022211-2011.xml",
+        "r208/f13-187010-2013.xml",
+    ] {
+        let parsed = parse_fixture(relative);
+        assert!(
+            parsed.values.iter().any(|v| matches!(v.value, NoticeValue::Amount { .. })),
+            "{relative}: the fixture must still carry amounts for this to mean anything"
+        );
+        assert_eq!(beside_rows(&parsed), vec![], "{relative}");
+    }
 }

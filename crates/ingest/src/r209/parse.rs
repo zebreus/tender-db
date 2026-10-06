@@ -424,8 +424,24 @@ impl Walk {
                 self.no_element_children(el, &path)?;
             }
             Rule::Amount => {
-                let lexical = el.attribute("FMTVAL").map(str::to_owned)
-                    .or_else(|| (!text.is_empty()).then(|| text.clone()));
+                // Issue 471 unit 3: `@FMTVAL` is checked against the text beside
+                // it instead of adopted blind (see `value::read_amount`).
+                let (lexical, beside) = match value::read_amount(el.attribute("FMTVAL"), &text) {
+                    None => (None, None),
+                    Some(value::AmountReading::Lexical(lexical)) => (Some(lexical), None),
+                    Some(value::AmountReading::Rescaled { cents, attribute }) => match currency {
+                        Some(currency) => {
+                            self.emit_rescaled_amount(ctx.section, &field, cents, currency, attribute);
+                            (None, None)
+                        }
+                        // No currency in scope: no amount to correct. The raw
+                        // attribute is kept as text exactly as before the check, and
+                        // the text beside it, unmarked.
+                        None => (Some(attribute), Some(text.clone())),
+                    },
+                    Some(value::AmountReading::Disagrees { attribute, text }) => (Some(attribute), Some(text)),
+                };
+                let rows_before = self.parsed.values.len();
                 if let Some(lexical) = lexical {
                     match (currency, value::cents(&lexical)) {
                         (Some(currency), Ok(cents)) => {
@@ -441,6 +457,14 @@ impl Walk {
                         // unconsumed structure, not low-quality values
                         // (ted-legacy-mapping.md §8.2).
                         _ => self.emit_text(ctx.section, &field, lang, lexical),
+                    }
+                }
+                // The disagreeing text, beside the row just emitted (if the
+                // translation-copy rule suppressed it, the text goes with it).
+                if let Some(text) = beside {
+                    if self.parsed.values.len() > rows_before {
+                        let ordinal = self.parsed.values[rows_before].ordinal;
+                        self.push_beside(ctx.section, &field, value::FMTVAL_TEXT_SUFFIX, ordinal, text);
                     }
                 }
                 self.no_element_children(el, &path)?;
@@ -812,6 +836,34 @@ impl Walk {
             return;
         }
         self.push(section, field, value);
+    }
+
+    /// An amount whose `@FMTVAL` is its text scaled by an exact even `10^k`
+    /// (issue 471 unit 3): the TEXT's figure under the amount's own field, and
+    /// beside it — same section, same ordinal — the raw attribute as text,
+    /// under the field id plus [`value::FMTVAL_MISMATCH_SUFFIX`], the record of
+    /// the correction (paired by `(section, field, ordinal)`; the amount itself
+    /// folds as an ordinary figure). Suppressed together in a translation copy,
+    /// as `emit` suppresses amounts.
+    fn emit_rescaled_amount(&mut self, section: &str, field: &str, cents: i64, currency: &str, attribute: String) {
+        if self.translating && !self.adopted.contains(section) {
+            return;
+        }
+        self.push(section, field, NoticeValue::Amount { cents, currency: currency.to_owned() });
+        let ordinal = self.ordinals[&(section.to_owned(), field.to_owned())];
+        self.push_beside(section, field, value::FMTVAL_MISMATCH_SUFFIX, ordinal, attribute);
+    }
+
+    /// A raw representation filed beside an amount row: `field` + `suffix`, at
+    /// the amount's `ordinal` (not the suffixed field's own counter), so the
+    /// projection can pair the two.
+    fn push_beside(&mut self, section: &str, field: &str, suffix: &str, ordinal: i64, raw: String) {
+        self.parsed.values.push(ValueRow {
+            section_id: section.to_owned(),
+            field_id: format!("{field}{suffix}"),
+            ordinal,
+            value: NoticeValue::Text { lang: None, value: raw },
+        });
     }
 
     fn emit_text(&mut self, section: &str, field: &str, lang: Option<&str>, text: String) {

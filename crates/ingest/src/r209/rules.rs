@@ -62,6 +62,11 @@ pub enum Rule {
     Nuts,
     /// Money: `@FMTVAL` if present (defence), else the element text; currency
     /// from `@CURRENCY` here or on the nearest ancestor that declared one.
+    /// Issue 471 unit 3: when both are present the text is checked against the
+    /// attribute (`value::read_amount`) — an attribute that is the text times an
+    /// exact even `10^k` (`k >= 2`) yields to the text (the raw attribute kept
+    /// beside it as `.FMTVAL_MISMATCH`); any other
+    /// disagreement keeps the attribute, unmarked, with the text kept beside it.
     Amount,
     /// Decimal with a unit: from `@TYPE` (`DURATION TYPE="MONTH"`) or fixed.
     Number(Unit),

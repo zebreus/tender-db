@@ -262,3 +262,30 @@ fn every_decided_envelope_element_resolves() {
         assert!(via_overlay || via_r209, "{name} decided but has no rule");
     }
 }
+
+/// Issue 471 review finding 9: `internal-ojs` builds the same `Walk`, so its
+/// amounts go through `value::read_amount` too. The R2.0.5 export publishes no
+/// `@FMTVAL` (no committed member carries one), so every amount reads its text
+/// exactly as before and nothing is filed beside it.
+#[test]
+fn internal_ojs_amounts_read_their_text_and_file_nothing_beside() {
+    use ingest::r209::value::{FMTVAL_MISMATCH_SUFFIX, FMTVAL_TEXT_SUFFIX};
+    let mut amounts = 0;
+    // The `.en` members: the dispatch default reads the English member of a
+    // language set (the `.fr` sibling is skipped before any parser runs).
+    let members = std::fs::read_dir("tests/fixtures/internal_ojs")
+        .expect("fixture dir")
+        .map(|e| e.expect("entry").file_name().to_string_lossy().into_owned())
+        .filter(|name| name.ends_with(".en"))
+        .map(|name| format!("internal_ojs/{name}"));
+    for relative in members {
+        let parsed = parse_fixture(&relative);
+        amounts += parsed.values.iter().filter(|v| matches!(v.value, NoticeValue::Amount { .. })).count();
+        assert!(
+            !parsed.values.iter().any(|v| v.field_id.ends_with(FMTVAL_MISMATCH_SUFFIX)
+                || v.field_id.ends_with(FMTVAL_TEXT_SUFFIX)),
+            "{relative}"
+        );
+    }
+    assert!(amounts > 0, "the corpus must carry amounts for this to mean anything");
+}

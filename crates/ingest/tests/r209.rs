@@ -780,3 +780,25 @@ fn a_transliterated_address_block_is_claimed_and_opens_no_party() {
     assert!(!names.iter().any(|n| n.contains("Elektrorazpredelenie Yug")), "{names:?}");
     assert!(names.iter().any(|n| n.contains("Електроразпределение Юг")), "{names:?}");
 }
+
+/// Issue 471 review finding 9: the r209-profile path runs through the same
+/// `@FMTVAL` check, and the committed members that carry `@FMTVAL` (the F06
+/// utilities awards and the defence F18, whose `FMTVAL="2162630.19"` sits beside
+/// `2 162 630,19`) agree with their texts — nothing is filed beside any amount.
+#[test]
+fn the_committed_fmtval_fixtures_agree_with_their_texts() {
+    use ingest::r209::value::{FMTVAL_MISMATCH_SUFFIX, FMTVAL_TEXT_SUFFIX};
+    for relative in ["r209/f06-002856-2017.xml", "r209/f06-017037-2017.xml", "r209/f18-defence-001420-2019.xml"] {
+        let parsed = parse_fixture(relative);
+        assert!(
+            parsed.values.iter().any(|v| matches!(v.value, NoticeValue::Amount { .. })),
+            "{relative}: the fixture must still carry amounts"
+        );
+        let beside: Vec<_> = parsed
+            .values
+            .iter()
+            .filter(|v| v.field_id.ends_with(FMTVAL_MISMATCH_SUFFIX) || v.field_id.ends_with(FMTVAL_TEXT_SUFFIX))
+            .collect();
+        assert!(beside.is_empty(), "{relative}: {beside:?}");
+    }
+}

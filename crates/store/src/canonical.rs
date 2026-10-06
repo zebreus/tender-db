@@ -1176,11 +1176,13 @@ pub(crate) const SCHEMA: &str = "
      WHERE t.current_seq IS NOT NULL;
 
     -- Money amounts of each current Tender (field names the amount; cents+currency,
-    -- plus the derived EUR-at-publication-date beside them — ADR-0014).
+    -- plus the derived EUR-at-publication-date beside them — ADR-0014). `quality`
+    -- says a row's cents are NOT a figure ('withheld', issue 372: the -1
+    -- placeholder) — NULL for an ordinary figure.
     DROP VIEW IF EXISTS v_tender_amounts;
     CREATE VIEW v_tender_amounts AS
     SELECT t.id AS tender_id, a.lot_id, a.field, a.cents, a.currency, a.tax_basis,
-           a.eur_cents
+           a.eur_cents, a.quality
       FROM tenders t
       JOIN tender_version_amounts a ON a.tender_id = t.id AND a.seq = t.current_seq
      WHERE t.current_seq IS NOT NULL;

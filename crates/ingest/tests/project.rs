@@ -355,6 +355,104 @@ async fn a_withheld_amount_is_marked_and_an_undeclared_negative_is_not() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 471 unit 3, the fold half, on the real member behind tender 4490098
+/// (profile r208, an `R2.0.7.S03.E01` form,
+/// `2011-07-15.tar.gz/20110715_134/222043_2011.xml`), whose award value
+/// `<VALUE_COST FMTVAL="49700000000000000">49 700` served 4.97x10^18 cents. Now
+/// the stored figure is the TEXT, 49,700.00 EUR, and — owner decision
+/// 2026-10-06 — a corrected figure is an ordinary amount: unmarked, elected and
+/// served. The text is the published human figure and the correction applies
+/// only to the measured shape, so nulling the head would lose a correct value.
+/// The correction's record is the parse-layer `.FMTVAL_MISMATCH` row.
+#[tokio::test]
+async fn an_fmtval_scaled_by_ten_to_the_k_yields_to_its_text_and_is_elected() {
+    let (db, fetch_id, path) = scratch("fmtval-mismatch").await;
+    ingest(&db, fetch_id, "r208/f03-fmtval-mismatch-222043-2011.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_amounts WHERE cents > 100000000").await,
+        0,
+        "the 10^12 attribute (and the 10^2 ones) must reach no canonical row: nothing above EUR 1M",
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_amounts WHERE quality IS NOT NULL").await,
+        0,
+        "a corrected figure carries no quality marker",
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_amounts WHERE field = 'result_value' AND cents = 4970000").await,
+        1,
+        "the award value is the text's 49,700.00 EUR",
+    );
+    // The record of the correction: the raw attribute, beside its amount.
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM notice_texts WHERE field_id LIKE '%.FMTVAL_MISMATCH' \
+             AND value = '49700000000000000'",
+        )
+        .await,
+        1,
+        "the 10^12 attribute is kept in the parse layer",
+    );
+    // The head: the corrected text figure, never the attribute.
+    assert_eq!(
+        scalar(&db, "SELECT COALESCE(current_value_eur_cents, -1) FROM tenders").await,
+        4_970_000,
+        "the corrected figure is elected like any ordinary amount",
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 471 unit 3 review, the fold half of the DISAGREES branch: the same
+/// member with its 10^12 attributes replaced by `FMTVAL="4970">49 700` (the
+/// attribute 10^1 BELOW its text — outside the measured shape). The attribute
+/// is folded exactly as before the check, unmarked and electable; the text kept
+/// beside it in the parse layer reaches no canonical row. And with no currency
+/// in scope a scaled attribute folds to no amount and no mark.
+#[tokio::test]
+async fn an_fmtval_disagreement_outside_the_measured_shape_folds_as_before() {
+    let fixture = "r208/f03-fmtval-mismatch-222043-2011.xml";
+    let xml = std::fs::read_to_string(format!("tests/fixtures/{fixture}")).expect("fixture");
+
+    let (db, fetch_id, path) = scratch("fmtval-disagrees").await;
+    let variant = xml.replace(r#"FMTVAL="49700000000000000">49 700"#, r#"FMTVAL="4970">49 700"#);
+    ingest_bytes(&db, fetch_id, SOURCE, fixture, variant.as_bytes()).await;
+    project::project(&db, false).await.expect("project");
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_amounts WHERE quality IS NOT NULL").await,
+        0,
+        "a disagreement outside the measured shape is not marked",
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_amounts WHERE field = 'result_value' AND cents = 497000").await,
+        1,
+        "the attribute is the stored figure, as before the check",
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COALESCE(current_value_eur_cents, -1) FROM tenders").await,
+        497_000,
+        "an unmarked figure is elected as before",
+    );
+    let _ = std::fs::remove_file(&path);
+
+    let (db, fetch_id, path) = scratch("fmtval-no-currency").await;
+    let variant = xml.replace(
+        r#"<COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE CURRENCY="EUR"><VALUE_COST FMTVAL="49700000000000000">"#,
+        r#"<COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE><VALUE_COST FMTVAL="49700000000000000">"#,
+    );
+    ingest_bytes(&db, fetch_id, SOURCE, fixture, variant.as_bytes()).await;
+    project::project(&db, false).await.expect("project");
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_amounts WHERE cents > 100000000 OR quality IS NOT NULL").await,
+        0,
+        "no currency: no amount from the attribute, and nothing to mark",
+    );
+    let _ = std::fs::remove_file(&path);
+}
+
 /// Issue 365 unit 4, AFTER the reversal: an identifier declared under the
 /// `OTROS` ("others") scheme keys normally, and the scheme gate is inert.
 ///

@@ -1592,6 +1592,67 @@ Check `/admin/jobs` for a running or queued `process … daily` before enqueuein
 just before the last one: the daily is scheduled, so an idle queue now is not an idle queue in forty
 minutes.
 
+### Re-parsing the July-2011 `@FMTVAL` cohort (issue 471 unit 3)
+
+**What changed.** The TED_EXPORT parser (`r209/parse.rs`, `Rule::Amount`, shared by `ted-export-r208`,
+`ted-export-r209` and `internal-ojs`) no longer adopts an amount's `@FMTVAL` blind. When the element text
+is an unambiguous number (`value::display_cents`: space/NBSP thousands, `20 550,54`, `13260.00`; a lone
+`1.234` is a guess and is NOT read) and the two disagree:
+
+- attribute = text × an exact EVEN `10^k`, `k >= 2` (the attribute the larger — the measured shape of
+  TED's 2011 generator defect: `<VALUE_COST FMTVAL="49700000000000000">49 700`) → the TEXT is stored as an
+  ORDINARY amount (no `quality` marker: electable and served like any other figure — owner decision
+  2026-10-06), and the raw attribute is kept beside it in the parse layer (same section and ordinal, field
+  id + `.FMTVAL_MISMATCH`) as the record of the correction; that row reaches no canonical fact. Compared
+  in `i128`, so a 10¹²/10¹⁴ attribute that overflows the stored integer is still recognised;
+- any other disagreement (text larger, odd `k`, not a power of ten) → the attribute is stored EXACTLY as
+  before; the text is kept beside it as `.FMTVAL_TEXT`, parse-layer evidence only. That
+  class was never measured outside the sampled 2011–2014 r208 months, so it changes no served value.
+
+Rows whose text agrees, or is not an unambiguous number, read exactly as before. The legacy lot results
+(`tender_version_lot_results.awarded_cents`) take the adopted text's figure too.
+
+**Scope.** Standing rows change only on re-parse. The measured defect sits in 2011-04 … 2011-08 (the
+July packages 2011-07-08 … 07-30 carry ~5,900 of the scaled attributes, plus four 46/69-element batches on
+2011-04, 2011-05-26, 2011-06-03 and 2011-08-02; the notices are `R2.0.7` forms under the
+`ted-export-r208` profile), so re-parse those packages only — not the era's ~15 M amounts. A later
+whole-profile reparse (r208 or r209, for any other issue) is safe: outside the measured shape the
+attribute is read exactly as before. The change does not touch `publication_id` derivation, so it cannot re-key and does not race the
+daily ingest (issue 404); `re-keyed` must read 0.
+
+1. **Before.** Read the exhibit: `curl -s https://tenders.zebreus.click/v1/tenders/4490098 | jq -c .value`
+   (the stored rows are the attributes: 4.97×10¹⁸ cents for the 10¹² one, above
+   `IMPLAUSIBLE_EUR_CENTS`, and 497,000,000 cents for the 10² `FMTVAL="4970000"`, so the served head
+   is not 49,700 EUR) and its notice's stored parse,
+   `/v1/notices/12376354/content`.
+2. **Find the packages.** `fetches` is small, so this is a bounded read through `/v1/sql`:
+   `SELECT id, kind, period, path FROM fetches WHERE source = 'ted' AND period >= '2011-04' AND period < '2011-09' ORDER BY id`.
+   Fetch ids are INGESTION order, not publication order (the `after` doc in `supervisor.rs`), so
+   check the five ids are contiguous before using one cap for all of them.
+3. **Probe one package** — the one holding the exhibit (`2011-07`): with `F` its fetch id,
+   `/root/aj.sh /admin/jobs '{"kind":"reparse","profiles":["ted-export-r208"],"after":F-1,"packages":1,"reclaim_only":true}'`
+   (write `F-1` as the number). Then re-read `/v1/notices/12376354/content`: it serves the new parse
+   before any fold — every `TED-…VALUE_COST` 4,970,000 / 5,000,000 cents, each with a
+   `….VALUE_COST.FMTVAL_MISMATCH` text beside it holding the raw attribute, and no `.FMTVAL_TEXT` row.
+4. **Wet.** ALL FIVE months in one job when the five ids are contiguous: `after` = the LOWEST id − 1,
+   `packages` = 5. `reparse` walks every r208-holding fetch with id > `after` in fetch-id order and the cap
+   truncates that list, so `packages` = 4 from the lowest id would re-do 04–07 and NEVER reach 08 (07 sits
+   in the middle). Re-doing the probed 07 is harmless (a re-parse is idempotent). If the ids are not
+   contiguous, one job per package (`after` = its id − 1, `packages` = 1). Five monthly packages of r208
+   notices stay well under the 500,000-notice FULL-fallback line above, but `reparse` stamps every r208
+   Tender stale by PROFILE, so the following fold is the cohort's, not five packages'. Read `unmatched`
+   (expect ~0) and `re-keyed` (must be 0) per the table above, and check the job covered all five fetch ids.
+5. **Fold.** ONE `{"kind":"project"}` after the last chunk.
+6. **After.** `/v1/tenders/4490098 | jq -c .value` is the corrected text figure: the fixture projection
+   of its member (`an_fmtval_scaled_by_ten_to_the_k_yields_to_its_text_and_is_elected`) elects
+   `result_value` = 4,970,000 cents (49,700.00 EUR), and no amount of that notice is above €1M. A corrected
+   figure is an ordinary amount, so supersession and election treat it like any other — no head is nulled
+   by this change, and a Tender whose latest notice is in the cohort keeps that notice's (now correct)
+   figure. `/v1/notices/12376354/content` still serves each raw attribute as a
+   `….VALUE_COST.FMTVAL_MISMATCH` text beside its amount. There is no standing count of
+   `.FMTVAL_MISMATCH` rows yet — the parse-layer scan is not a bounded `/v1/sql` read — so record the
+   exhibit, the job counters and section 16's band before/after in issue 471.
+
 ### The organization-layer jobs (issues 300, 311-317)
 
 These are their own family: censuses that measure, merge arms that write, and

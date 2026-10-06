@@ -4058,6 +4058,13 @@ impl NoticeState {
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
+            // Issue 471: the other half of an `@FMTVAL` disagreement — a rescaled
+            // amount's raw attribute (the record of the correction) or a
+            // disagreeing text kept beside its attribute — is parse-layer
+            // evidence, not a fact.
+            if is_fmtval_beside_row(field_id) {
+                continue;
+            }
             // Issue 397 (unit 2): the contract nature, one vocabulary across eras.
             // Every era publishes it as a Code under its own id and none folded it,
             // so the text era's title atoms ("(Supply contract)") were the corpus's
@@ -4160,6 +4167,12 @@ impl NoticeState {
                             quality: withheld
                                 .contains(&(value.section_id.as_str(), stem(field_id)))
                                 .then(|| QUALITY_WITHHELD.to_owned()),
+                            // Issue 471 unit 3 (owner decision 2026-10-06): an
+                            // amount whose `@FMTVAL` was its text scaled by an
+                            // exact even 10^k carries the TEXT's figure here and
+                            // is an ordinary, electable amount. The correction's
+                            // record is the parse-layer `.FMTVAL_MISMATCH` row,
+                            // which reaches no canonical fact.
                         }
                     })
                 }
@@ -5997,6 +6010,13 @@ const NATURE_STEMS: &[&str] = &["BT-23", "TXT-NC", "TED-NC_CONTRACT_NATURE"];
 /// dropped because its Lot section is missing (`NoticeState::read`'s
 /// `lots.get_mut(key)` miss), so a `true` here means "the vocabulary knows this
 /// id", not "this particular row landed".
+/// A parse-layer row filed beside an amount by the issue-471 `@FMTVAL` check
+/// (`r209::value::FMTVAL_MISMATCH_SUFFIX` / `FMTVAL_TEXT_SUFFIX`).
+fn is_fmtval_beside_row(field_id: &str) -> bool {
+    field_id.ends_with(crate::r209::value::FMTVAL_MISMATCH_SUFFIX)
+        || field_id.ends_with(crate::r209::value::FMTVAL_TEXT_SUFFIX)
+}
+
 pub fn has_destination(field_id: &str, channel: Channel) -> bool {
     let field_id = DE1_FIELD_ALIASES
         .iter()
@@ -6006,6 +6026,9 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
     match channel {
         Channel::Text => {
             canonical_name(TEXTS, field_id).is_some()
+                // Issue 471: read and deliberately skipped — parse-layer evidence
+                // only (`.FMTVAL_MISMATCH` / `.FMTVAL_TEXT`).
+                || is_fmtval_beside_row(field_id)
                 || field_id == OJ_HEADING_FIELD
                 || field_id == ORG_NAME_FIELD
                 || ORG_NAME_FIELDS.contains(&field_id)

@@ -680,6 +680,17 @@ rates and the quarantine resolution ledger.</p>
   with more than two fraction digits (real practice: unit-price mills, float artifacts)
   is rounded half-away-from-zero to the cent &mdash; error &le; half a cent; the archived
   notice keeps the original lexical value.</li>
+  <li><strong>An amount can carry a <code>quality</code> key</strong>, and then its
+  <code>value</code> is <code>null</code>: the row exists, but its number is not a figure
+  to use. <code>"withheld"</code> &mdash; the notice suppressed the field and the stored
+  number is the eForms <code>-1</code> placeholder. The same column is <code>quality</code>
+  on <code>v_tender_amounts</code> through <a href="#sql">/v1/sql</a>; filter
+  <code>quality IS NULL</code> before aggregating.</li>
+  <li><strong>A legacy amount is read from its printed text when its machine attribute
+  is that text scaled by an exact even power of ten.</strong> TED's 2011 generator wrote
+  <code>FMTVAL</code> attributes such as 4.97&times;10<sup>16</sup> beside a printed
+  <code>49 700</code>; the printed figure is the amount and is served like any other.
+  Any other disagreement between the two keeps the attribute, as before.</li>
   <li><strong>Negative amounts are source-published</strong>, kept as published, and they
   are not one thing. About 15,500 are exactly <code>-1.00</code>, the eForms SDK's marker
   for a figure the buyer withheld. A much smaller set carries ordinary magnitudes

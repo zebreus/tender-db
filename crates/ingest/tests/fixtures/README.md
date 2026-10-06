@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 102 fixture files, 2.6 MB (every file under this directory except this README).
+Total: 116 fixture files, 3.0 MB (every file under this directory except this README).
 
 ## Selection policy
 
@@ -174,7 +174,7 @@ because that is where it is actually found in the wild.
 - `f19-concession-award-criteria-281627-2012.xml` (12,346 B): **issue 194 residue** — F19 sub-contract concession (defence, R2.0.8.S02.E01, EN/BE) whose `AWARD_CRITERIA_DETAIL` carries the award-criteria sentence as BARE TEXT where every other form nests children there. Pins the TextGroup rule (both shapes consumed). One of exactly 2 such members in 30 years of corpus.
 - `f13-prize-winner-362996-2018.xml` (7,875 B): **issue 259** — F13 design-contest result (PT, from monthly `2018-08`) whose prize block nests `<ADDRESS_WINNER>` inside `<WINNER>`. Both are `Rule::Org`, so ONE company opens TWO Organization sections: the outer empty and referenced as the winner, the inner holding `OFFICIALNAME`. The only `WINNER`/`ADDRESS_WINNER` pair in the corpus — every other award fixture uses `CONTRACTOR` > `ADDRESS_CONTRACTOR`, where the wrapper is a transparent container and nothing nests, which is why the defect was invisible for as long as it was.
 
-## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 10 files, 363 KB
+## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 12 files, 524 KB
 
 Mostly from TED daily package **`daily-201400001`** (published 2014-01-01, 1139
 notices, uniformly `R2.0.8.S02.E01`), plus one R2.0.7 file — issue 10 scopes
@@ -192,6 +192,7 @@ difference between the eras.
 | `f13-187010-2013.xml` | 11 604 | `FORM="13"` — result of a design contest | R2.0.8.S02.E01 | FR | FR | **Issue 368 unit 2.** From `20130607_109`. `TITLE_RESULT_DESIGN_CONTEST`; read to settle whether a result names the contest or something else — it names the procurement. |
 | `f08-198630-2013.xml` | 9 004 | `FORM="8"` — notice on a buyer profile | R2.0.8.S02.E01 | EN | UK | **Issue 368 unit 2.** From `20130618_116`. `TITLE_NOTICE_BUYER_PROFILE`: "GLA Helicopter Services 2015" — the procurement, not the profile. |
 | `f06-r207-070248-2010.xml` | 23 824 | `FORM="6"` — contract award, utilities | **R2.0.7.S02.E01** | EN | — | **Issue 383.** From monthly `2010-03` (`20100310_48`). Seventeen award blocks, each dating the award as `DATE_OF_CONTRACT_AWARD` (DAY/MONTH/YEAR) — the R2.0.7 spelling of the award-block date that R2.0.8 calls `CONTRACT_AWARD_DATE`; every one of them 2009-06-01. |
+| `f03-fmtval-mismatch-222043-2011.xml` | 131 301 | `FORM="3"` — contract award | **R2.0.7.S03.E01** | EN (+22 translations) | PL | **Issue 471 unit 3.** Byte-identical to the member `2011-07.tar` → `2011-07-15.tar.gz` → `20110715_134/222043_2011.xml` of the TED MONTHLY archive (not a daily sample), saved by unit 2's bounded archive read as `.scratch/tender-db/471-values/archive/222043_2011.xml`. Tender 4490098. TED's July-2011 generator wrote `<VALUE_COST FMTVAL="49700000000000000">49 700` (10¹²) and `FMTVAL="4970000">49 700` / `FMTVAL="5000000">50 000` (10²): every `@FMTVAL` is its correct text times an exact even power of ten. The fixture for the `@FMTVAL`-vs-text check (`r209::value::read_amount`). |
 
 ---
 
