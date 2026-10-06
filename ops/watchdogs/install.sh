@@ -74,7 +74,13 @@ systemctl daemon-reload
 systemctl reset-failed tender-db-diskwatch.service tender-db-jobwatch.service \
     tender-db-driftwatch.service 2>/dev/null || true
 systemctl enable --now tender-db-diskwatch.timer tender-db-jobwatch.timer \
-    tender-db-driftwatch.timer tender-db-snapshot.timer tender-db-tmpsweep.timer
+    tender-db-driftwatch.timer tender-db-tmpsweep.timer
+# The weekly reflink snapshot is OFF (issue 488, decided 2026-10-06): every snapshot
+# makes the live DB copy-on-write, which either fragments it (small cowextsize: 90M
+# extents, folds 2x slower) or leaks unreclaimed preallocation (large cowextsize:
+# issue 169's 220 GiB). The unit and script stay installed for a deliberate manual run
+# (`systemctl start tender-db-snapshot.service`); the raw archive is the rebuild path.
+systemctl disable --now tender-db-snapshot.timer 2>/dev/null || true
 echo "timers enabled:"
 systemctl list-timers 'tender-db-*.timer' --no-pager || true
 

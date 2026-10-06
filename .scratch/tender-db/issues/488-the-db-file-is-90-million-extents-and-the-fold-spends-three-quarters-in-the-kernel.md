@@ -1,6 +1,6 @@
 # 488 — the DB file is 90 million extents, and the fold spends three quarters of its time in the kernel
 
-Status: ready-for-agent — DEFRAG DONE 2026-10-06 (90.9M → 1.95M extents; see "Defrag run"); NEXT: time the next fold, and decide the snapshot strategy before 2026-10-11. Filed 2026-10-05 from a `perf` sample of fold 2002 (issue 479's refold). The first step needs
+Status: ready-for-agent — DEFRAG DONE 2026-10-06 (90.9M → 1.95M extents; see "Defrag run"); snapshot decision made (timer off, see "Decision"); NEXT: time the next corpus-wide fold against ~4.7 h. Filed 2026-10-05 from a `perf` sample of fold 2002 (issue 479's refold). The first step needs
 Lennart's word, because it removes the last snapshot and takes downtime. After the fold, decide the snapshot strategy,
 then defragment the DB once (see the proposed fix below).
 Kind: performance / ops
@@ -75,3 +75,16 @@ sample of the next fold shows the kernel share below ~20 %, and the next corpus-
 - **Full-fold baseline.** On 2026-10-04 the full folds 1974 and 1978 (14.88M notices → 8.77M tenders) took 17,706 s
   and 16,638 s (~4.7 h). Fold 2002, 36 h later on a file un-shared further by that weekend's snapshot, took
   38,189 s (10.6 h). The next corpus-wide fold is the real measure; compare it with ~4.7 h, not 10.6 h.
+
+## Decision (2026-10-06, owner): weekly reflink snapshots are off
+
+Every reflink snapshot makes the live DB copy-on-write. A small `cowextsize` fragments the file: at 4 KiB it reached
+90M extents, and folds ran about 2× slower. A large one leaks unreclaimed preallocation on the always-open file
+(issue 169: 220 GiB at 128 KiB). The snapshot script calls itself a forensics artifact, not DR; the raw archive is
+the rebuild path. So the timer is disabled. `install.sh` no longer enables it and disables it if present. The unit
+and the hardened script (bb3bfa3) stay installed for a deliberate manual run. The live file's hint was set back to
+`cowextsize 4096`; it is inert without sharing and leak-safe if someone takes a manual snapshot. Issue 269's
+"no snapshots exist" is now a deliberate state.
+
+If a point-in-time copy is wanted again, it should be one that does not share extents with the live file: a
+backup-API copy to another volume.

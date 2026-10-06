@@ -2123,7 +2123,8 @@ no snapshot shares the file; the script's default stays 4096, below).
 `tender-db-snapshot.sh` now holds that line itself, with three knobs (environment
 variables on the unit):
 
-- **`TENDER_SNAP_COWEXT`** (default `4096`, issue 169's leak-safe value, until issue 488
+- **Decided 2026-10-06 (issue 488): the weekly timer is disabled** — `install.sh` no longer enables it and disables it if present; the script and unit remain for a deliberate manual run. Without a reflink snapshot nothing is copy-on-write, so neither the fragmentation nor the leak can occur.
+- **`TENDER_SNAP_COWEXT`** (default `4096`, issue 169's leak-safe value; issue 488
   decides whether to drop reflink snapshots or pair a larger hint with a periodic
   `xfs_spaceman prealloc -s` reclaim): before each snapshot it runs `xfs_io -c
   "cowextsize <value>"` on the live DB, so a replaced inode (restore, defrag swap) gets
