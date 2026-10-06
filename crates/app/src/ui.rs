@@ -679,8 +679,11 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
                             // is still this era's; the ratio is now the years', and
                             // the `†` says which is which.
                             span { class: "era-cover",
-                                title: "{era_cover_note(era.shared)}",
-                                "{group(era.held)} held · {published_cell(era.published)} published{era_mark(era.shared)} · {coverage_pct(era.ratio, era.partial)}"
+                                // Issue 476: the summary's denominator goes through
+                                // the same renderer as the per-year cell, so a
+                                // partial year inside it keeps its dated `‡`.
+                                title: "{era_title(era.shared, era.published_as_of.clone())}",
+                                "{group(era.held)} held · {denominator(era.published, era.published_as_of.clone())} published{era_mark(era.shared)} · {coverage_pct(era.ratio, era.partial)}"
                             }
                         }
                         table {
@@ -699,7 +702,7 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
                                         td { class: "num", "{group(row.held)}" }
                                         td { class: "num",
                                             title: "{published_note(row.published_as_of.clone())}",
-                                            "{published_cell(row.published)}{published_mark(row.published_as_of.clone())}"
+                                            "{denominator(row.published, row.published_as_of.clone())}"
                                         }
                                         // A year served by two profiles has no
                                         // per-profile ratio (issue 229): show the
@@ -761,6 +764,11 @@ struct CoverageEra {
     shared: bool,
     /// Any year in the era is still open, so the aggregate ratio is a floor.
     partial: bool,
+    /// The snapshot date of the partial year inside `published`, if one is
+    /// (issue 476). The CSV holds at most one partial year, so there is at most
+    /// one date to carry; without it the summary served that year's floor
+    /// undated while the `*` footnote pointed at a `‡` that was not there.
+    published_as_of: Option<String>,
     years: Vec<Coverage>,
 }
 
@@ -784,6 +792,7 @@ fn coverage_by_era(rows: Vec<Coverage>) -> Vec<CoverageEra> {
                     ratio: None,
                     shared: false,
                     partial: false,
+                    published_as_of: None,
                     years: Vec::new(),
                 });
                 year_held.push(0);
@@ -799,6 +808,9 @@ fn coverage_by_era(rows: Vec<Coverage>) -> Vec<CoverageEra> {
             // `held` for a year this era serves alone, so an era with no shared
             // year is arithmetically unchanged by this.
             year_held[at] += row.year_held;
+            if era.published_as_of.is_none() {
+                era.published_as_of = row.published_as_of.clone();
+            }
         }
         era.shared |= row.shared_year();
         era.partial |= row.partial;
@@ -817,6 +829,22 @@ fn published_cell(published: Option<i64>) -> String {
     match published {
         Some(n) => group(n),
         None => "—".to_owned(),
+    }
+}
+
+/// A denominator with its mark: the count, then ` ‡` when it is a mid-year
+/// snapshot. The ONE renderer for a published count, used by the per-year cell
+/// and the era summary alike (issue 476), so no call site can drop the date.
+fn denominator(published: Option<i64>, as_of: Option<String>) -> String {
+    format!("{}{}", published_cell(published), published_mark(as_of))
+}
+
+/// The era summary's hover: what its `†` means, then — when a partial year sits
+/// inside its denominator — that year's dated note (issue 476).
+fn era_title(shared: bool, as_of: Option<String>) -> String {
+    match as_of {
+        Some(_) => format!("{} {}", era_cover_note(shared), published_note(as_of)),
+        None => era_cover_note(shared).to_owned(),
     }
 }
 
@@ -1727,6 +1755,42 @@ mod tests {
         // And the mark's hover says which of the two a reader is looking at.
         assert!(era_cover_note(true).contains("held count is this era's own"));
         assert!(era_cover_note(false).contains("this era's own"));
+    }
+
+    /// Issue 476 unit 1: the collapsed era summary is the second call site of a
+    /// denominator, and it used to drop the partial year's `‡` and its date —
+    /// six TED eras read `… published † · 113.15 % *` with no mark, while the
+    /// `*` footnote told the reader to hover a `‡` for the date.
+    #[test]
+    fn an_era_summary_spanning_a_partial_year_carries_its_dated_mark() {
+        let year = |year: &str, published, as_of: Option<&str>| Coverage {
+            source: "ted".into(),
+            profile: "eforms".into(),
+            year: year.into(),
+            held: 10,
+            published: Some(published),
+            ratio: Some(10.0 / published as f64),
+            partial: as_of.is_some(),
+            published_as_of: as_of.map(str::to_owned),
+            year_held: 10,
+            year_ratio: Some(10.0 / published as f64),
+        };
+        let eras = coverage_by_era(vec![year("2026", 497_791, Some("2026-07-17")), year("2025", 871_149, None)]);
+        assert_eq!(eras.len(), 1);
+        let era = &eras[0];
+        assert_eq!(era.published_as_of.as_deref(), Some("2026-07-17"));
+        assert_eq!(denominator(era.published, era.published_as_of.clone()), format!("{} ‡", group(497_791 + 871_149)));
+        let hover = era_title(era.shared, era.published_as_of.clone());
+        assert!(hover.contains("2026-07-17"), "the summary's hover names the snapshot date: {hover}");
+        assert!(hover.starts_with(era_cover_note(era.shared)), "{hover}");
+        // The per-year cell renders through the same helper, unchanged.
+        assert_eq!(denominator(Some(497_791), Some("2026-07-17".into())), format!("{} ‡", group(497_791)));
+
+        // An era of complete years only: no date, no mark, the old hover.
+        let closed = coverage_by_era(vec![year("2025", 871_149, None), year("2024", 801_444, None)]);
+        assert_eq!(closed[0].published_as_of, None);
+        assert_eq!(denominator(closed[0].published, None), group(871_149 + 801_444));
+        assert_eq!(era_title(false, None), era_cover_note(false));
     }
 
     /// Issue 396 unit 1: a partial year's denominator is DATED on the page, and
