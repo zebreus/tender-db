@@ -1,6 +1,6 @@
 # 470 — a letter O typed for a zero (or a zero for the O of `OC`) splits a GB company number from its organization, and no arm joins them
 
-Status: ready-for-agent (2026-10-06) — STEP 5 DONE (verdicts + R2 wet 2014: Roythornes, Aim2Learn, Robeco merged; Aberdeen kept; Verify line 2 read). NEXT: step 6 (the three withheld lookalikes → identifier verdicts, rekey dry/wet). Was (2026-10-05): UNIT 2 (`7a913af`) and its review fixes (`be61bc3`) DEPLOYED 2026-10-02 in `696dd9d` (with 481 2c). R2 dry job 1904: 27 orgs E1-keyed through the fold, 3 fold denials — Roythornes, Aim2Learn, Aberdeen/Net-Zero, exactly the predicted listing; plan 30 groups. R2 wet job 1906 ran clean (counts match 1904). Verify DONE (`940ba91`): `/v1/organizations/10312649` → `[null,null,10312664]`. Unverified: the Verify's second line (`?identifier=SCO46129` → one id) and the fold's `[issue 470] folded keys` diag line — the file records no read of either. NEXT: post the 362 merge verdicts for Roythornes (`06611251`) and Aim2Learn (`07687679`) plus `keep` for Aberdeen/Net Zero (`SC013683`), then an R2 dry and wet ("Unit 2" → NEXT step 5). Still open after that: the step-5 re-post of the three withheld lookalikes (cohort `470-lookalikes-2026-10-02`, then rekey dry/wet) and the altid/rekey dry movement read (NEXT step 3, skipped before the wet run). Was: ready-for-agent — UNIT 2 (the code, 7a913af) and its REVIEW FIXES (the commit after it; "Unit 2 review (2026-10-02)") COMMITTED 2026-10-02 on top of a5c7666. Re-gate at the shipped rev before deploying. NOT pushed, NOT deployed (prod is busy on a5c7666). NEXT: deploy it in a queue gap, then the rollout reads and the verdict re-posts, written out step by step under "Unit 2 (2026-10-02)" → "NEXT" (corrected in place by the review). No job has run on prod for this issue.
+Status: done (2026-10-06) — STEPS 5 AND 6 DONE (rekey wet 2017: CE019319, NI018750 moved; Co-op merged into IP030808); every lookalike from the measurement is folded, merged, kept or re-keyed. Was: STEP 5 DONE (verdicts + R2 wet 2014: Roythornes, Aim2Learn, Robeco merged; Aberdeen kept; Verify line 2 read). NEXT: step 6 (the three withheld lookalikes → identifier verdicts, rekey dry/wet). Was (2026-10-05): UNIT 2 (`7a913af`) and its review fixes (`be61bc3`) DEPLOYED 2026-10-02 in `696dd9d` (with 481 2c). R2 dry job 1904: 27 orgs E1-keyed through the fold, 3 fold denials — Roythornes, Aim2Learn, Aberdeen/Net-Zero, exactly the predicted listing; plan 30 groups. R2 wet job 1906 ran clean (counts match 1904). Verify DONE (`940ba91`): `/v1/organizations/10312649` → `[null,null,10312664]`. Unverified: the Verify's second line (`?identifier=SCO46129` → one id) and the fold's `[issue 470] folded keys` diag line — the file records no read of either. NEXT: post the 362 merge verdicts for Roythornes (`06611251`) and Aim2Learn (`07687679`) plus `keep` for Aberdeen/Net Zero (`SC013683`), then an R2 dry and wet ("Unit 2" → NEXT step 5). Still open after that: the step-5 re-post of the three withheld lookalikes (cohort `470-lookalikes-2026-10-02`, then rekey dry/wet) and the altid/rekey dry movement read (NEXT step 3, skipped before the wet run). Was: ready-for-agent — UNIT 2 (the code, 7a913af) and its REVIEW FIXES (the commit after it; "Unit 2 review (2026-10-02)") COMMITTED 2026-10-02 on top of a5c7666. Re-gate at the shipped rev before deploying. NOT pushed, NOT deployed (prod is busy on a5c7666). NEXT: deploy it in a queue gap, then the rollout reads and the verdict re-posts, written out step by step under "Unit 2 (2026-10-02)" → "NEXT" (corrected in place by the review). No job has run on prod for this issue.
 Was status: ready-for-agent — DECIDED 2026-10-02 (owner; decision below, under "Decision"). The proposed fold is accepted with three refinements. NEXT: unit 2, the code (crosswalk GB arm + R2 survivor + the resolver's guarded bind + tests), then the rollout in step 4. Sequence it after 481 unit 2 lands, because both edit crates/store/src/canonical.rs and one gate at a time fits the container's disk.
 Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The measurement 454 asked for is below (taken 2026-10-01, through FTS chunk 8), so the first unit is the decision it feeds: which shapes fold, at which tier and behind which name gate, recorded here with its reasoning before any code.
 Kind: data quality (identifiers)
@@ -451,3 +451,25 @@ Second line (the review's major): a merged lookalike's literal stays merged afte
     `[30919575]`, `O6611251` → `[16866854]`. Each comes with `resolved_filters.merged_into` naming its one survivor.
 - **Still open.** Step 6: the three withheld lookalikes (identifier verdicts, cohort `470-lookalikes-2026-10-02`,
   then rekey dry/wet). Also the step-3 altid/rekey movement read.
+
+## Step 6 done (2026-10-06): the three withheld lookalikes re-keyed
+
+- **Identifier verdicts.** Re-POST of the cohort `470-lookalikes-2026-10-02` answered `recorded 3, stale 0, changed 0`:
+  the `wrong` verdicts with their `correct_identifier` were already stored (the three orgs already served
+  `identifier_status: register_mismatch`).
+- **Rekey dry 2015.** Planned the two moves and denied the Co-op merge on `names`, exactly as predicted. The other six
+  `names` denials (Costa, Northern Education, CGI, Symology, Ford Trustford, VW CV; plus B Braun as `verdict-keep`)
+  predate this issue and are out of its scope.
+- **Issue-454 verdict.** Cohort `470-rekey-coop-2026-10-06`, `GB:rekey` key `GBCOHIPO30808~IP030808`, members
+  [31534918, 31536131], `merge`, high, `recorded 1`.
+- **Rekey dry 2016.** `plan 1 merge + 2 move`, with `keys` = the three named in step 6.
+- **Rekey wet 2017.** `merged 1 … moved 2, residual 0`.
+- **Verify.**
+  - 31574614 serves `GBCOHCE019319` and 31581165 serves `GBCOHNI018750`, both `identifier_status: null`.
+  - 31536131 → 308 to 31534918 (`GBCOHIP030808`).
+  - `?identifier=GBCOHCE019319` / `GBCOHNI018750` / `GBCOHIP030808` → [31574614] / [31581165] / [31534918].
+  - The wrong literal `GBCOHIPO30808` resolves to nothing, by design: a rekey merge never writes the loser's wrong
+    number; the resolver's alias handles the publisher's repeat.
+- **The fold's diag line** (2026-10-06 daily): `[issue 470] folded keys: 0 … 0 … 0 … 0`. Nothing is left to fold.
+- **Not run:** the step-3 altid/rekey movement read. It was a pre-wet check for step 4, which ran clean on
+  2026-10-02 (R2 1906 matched dry 1904), so it is moot now.
