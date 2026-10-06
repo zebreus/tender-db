@@ -10142,6 +10142,80 @@ mod tests {
         }
     }
 
+    /// Issue 489 units 2+3, at the fold: a correction applies only where the
+    /// chain carries the old figure it names; a lot correction only when exactly
+    /// ONE lot carries it.
+    #[test]
+    fn a_value_correction_applies_only_to_the_one_carrier_of_its_old_figure() {
+        let amount = |cents: i64| Fact::Amount {
+            field: "estimated_value".into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let lot = |key: &str, cents: i64| LotState {
+            key: key.into(),
+            kind: "Lot".into(),
+            facts: [amount(cents)].into_iter().collect(),
+        };
+        let state = |notice_id: i64, facts: Vec<Fact>, lots: Vec<LotState>, corrections: Vec<ValueCorrection>| NoticeState {
+            notice_id,
+            publication_id: format!("k{notice_id:04}-w0"),
+            published_at: notice_id * 1_000,
+            dispatched_at: None,
+            subtype: None,
+            original_lang: None,
+            logical_id: None,
+            is_correction: !corrections.is_empty(),
+            facts: facts.into_iter().collect(),
+            lots,
+            value_corrections: corrections,
+            roles: Vec::new(),
+            raw_results: RawResults::default(),
+            round: None,
+            org_alias: HashMap::new(),
+            group_members: Vec::new(),
+        };
+        let fix = |old: i64, new: i64, lot: bool| ValueCorrection {
+            field: "estimated_value".into(),
+            cents: new,
+            currency: "EUR".into(),
+            old_cents: old,
+            old_currency: Some("EUR".into()),
+            lot,
+        };
+        let lot_cents = |v: &TenderVersion, key: &str| -> Vec<i64> {
+            v.lots
+                .iter()
+                .find(|l| l.key == key)
+                .map(|l| l.facts.iter().filter_map(|f| match f { Fact::Amount { cents, .. } => Some(*cents), _ => None }).collect())
+                .unwrap_or_default()
+        };
+        let tender_cents = |v: &TenderVersion| -> Vec<i64> {
+            v.facts.iter().filter_map(|f| match f { Fact::Amount { cents, .. } => Some(*cents), _ => None }).collect()
+        };
+
+        let cn = state(1, vec![amount(9_000)], vec![lot("LOT-1", 5_000), lot("LOT-2", 4_000)], vec![]);
+        // Tender: a matching old figure moves; a stale one (names 7,000) does not.
+        let hit = state(2, vec![], vec![], vec![fix(9_000, 900, false), fix(5_000, 500, true)]);
+        let stale = state(3, vec![], vec![], vec![fix(7_000, 1, false), fix(6_000, 1, true)]);
+        let versions = fold(&[&cn, &hit, &stale]);
+        assert_eq!(tender_cents(&versions[1]), vec![900]);
+        assert_eq!(lot_cents(&versions[1], "LOT-1"), vec![500], "the lot carrying 5,000 took the correction");
+        assert_eq!(lot_cents(&versions[1], "LOT-2"), vec![4_000], "the other lot did not");
+        assert_eq!(tender_cents(&versions[2]), vec![900], "a correction of a figure no longer carried is dropped");
+        assert_eq!(lot_cents(&versions[2], "LOT-1"), vec![500]);
+
+        // Two lots carrying the same old figure: the block names no lot key, so
+        // neither moves.
+        let twins = state(1, vec![], vec![lot("LOT-1", 5_000), lot("LOT-2", 5_000)], vec![]);
+        let ambiguous = state(2, vec![], vec![], vec![fix(5_000, 500, true)]);
+        let versions = fold(&[&twins, &ambiguous]);
+        assert_eq!(lot_cents(&versions[1], "LOT-1"), vec![5_000]);
+        assert_eq!(lot_cents(&versions[1], "LOT-2"), vec![5_000]);
+    }
+
     #[test]
     fn lots_group_membership_carries_forward_and_supersedes_per_group() {
         let state = |notice_id: i64, members: &[(&str, &str)]| NoticeState {
