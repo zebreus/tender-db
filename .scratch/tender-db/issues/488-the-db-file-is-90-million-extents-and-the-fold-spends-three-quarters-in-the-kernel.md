@@ -69,3 +69,9 @@ sample of the next fold shows the kernel share below ~20 %, and the next corpus-
      move them off-volume, or switch to a backup-API copy.
   3. A second copy pass now has better free space (the 649 GiB original was freed whole), if 1.95M extents still
      show in the profile.
+- **First daily after the defrag (2026-10-06).** Project 2010 folded 4,048 notices into 4,260 tenders in 299 s.
+  Before the defrag, project 1991 folded 4,685 notices in 311 s. Daily folds are dominated by fixed per-run costs
+  (closure, grouping, index upkeep), so they cannot show the gain. Extents held at 1,946,893.
+- **Full-fold baseline.** On 2026-10-04 the full folds 1974 and 1978 (14.88M notices → 8.77M tenders) took 17,706 s
+  and 16,638 s (~4.7 h). Fold 2002, 36 h later on a file un-shared further by that weekend's snapshot, took
+  38,189 s (10.6 h). The next corpus-wide fold is the real measure; compare it with ~4.7 h, not 10.6 h.
