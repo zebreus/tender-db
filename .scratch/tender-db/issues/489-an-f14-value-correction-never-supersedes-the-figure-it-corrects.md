@@ -1,6 +1,6 @@
 # 489 — an F14 value correction never supersedes the figure it corrects
 
-Status: ready-for-agent — UNIT 2 DEPLOYED (`39bd8d1`), UNIT 3 LANDED 2026-10-06 (II.2.6 by old-figure match, see "Unit 3"); NEXT: gate → deploy unit 3 → the ONE drain (refold-fields sizing → wet) covers both. Was: UNIT 2 LANDED 2026-10-06 (see "Unit 2 — landed"; gate, deploy, then the drain). Was: filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
+Status: ready-for-agent — UNITS 2+3 DEPLOYED 2026-10-06 (`6d6ecfd`); DRAIN RUNNING: sizing job 2937 counted 191,493 carrier notices (aborted, nothing written), wet refold-fields enqueued as jobs 2030/2031 (`expect` 191,493) with its paired project. Before: 3,822 Tenders ≥ €1 bn; 6891632 €25,280,256,000.00, 7257797 €12,545,764,416.17, 4871119 £25 bn. NEXT: read the paired project's `issue-489` clause, re-read those three and the ≥ €1 bn count. Was: UNIT 2 LANDED 2026-10-06 (see "Unit 2 — landed"; gate, deploy, then the drain). Was: filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
 "whether (b) stays here or becomes its own issue" decision: it is a different mechanism — free-text
 amount parsing plus same-field supersession in the version state — and inside 471's band it moves
 one row). UNIT 1 MEASURED on a window (see "Unit 1 — window measurement (2026-10-06)"); scope decided: II.1.5 / II.1.7 (tender scope) only. NEXT: unit 2 — read how a corrigendum version inherits amounts, then the strict reader + supersession with the pin.
