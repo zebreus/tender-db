@@ -460,8 +460,9 @@ echo normal >"$work/mode"
 cp "$work/state.keep" "$work/state.json"
 
 # --- the snapshot's quiescence gate (issue 420): wait, then skip ---------------
-# The reflink itself needs XFS and is not exercised here; TENDER_SNAP_DRY=1 stops
-# the script right after the gate, which is the part that lost 2026-09-13's
+# The reflink itself needs XFS; these cases use TENDER_SNAP_DRY=1, which stops
+# the script right after the gate (the steps past it — COW hint, disk guard, prune —
+# run further down with stub binaries, issue 488), which is the part that lost 2026-09-13's
 # snapshot by skipping while the weekly data-quality run was still going.
 set_current() {
     python3 - "$work/state.json" "$1" <<'PY'
@@ -582,6 +583,145 @@ out=$(TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$work/
       bash "$work/stub-noverdict/tender-db-snapshot.sh" 2>&1); rc=$?
 check "a snapshot installed without its queue verdict refuses" 1 "ERROR snapshot: cannot load" "$out" "$rc"
 refute "…no dry-run line without the verdict" "dry run" "$out"
+
+# --- the snapshot past its gate: COW hint, disk guard, KEEP=1 (issue 488) ----------------
+# Every reflink snapshot is un-shared page by page as the app rewrites the live DB: at a
+# 4 KiB cowextsize that cut the file into 90M extents (fold 76 % in the kernel), and a
+# corpus-wide refold un-shared ~40 GB/h of /data. These cases run the real script past
+# TENDER_SNAP_DRY against a small real SQLite file, with `cp`, `xfs_io` and `df` stubbed
+# on PATH: the cp stub drops --reflink=always (no xfs here) and logs, xfs_io logs and
+# exits $work/xfs_io.rc, df answers $work/df.out with exit $work/df.rc. The queue probe
+# is a stub answering `idle`, so the gate passes without the fixture server.
+real_cp=$(command -v cp)
+mkdir -p "$work/snapbin"
+cat >"$work/snapbin/cp" <<STUB
+#!/bin/sh
+echo "cp \$*" >>"$work/calls.log"
+[ "\$1" = "--reflink=always" ] || { echo "stub cp: the snapshot must reflink, got: \$*" >&2; exit 9; }
+shift
+exec "$real_cp" "\$@"
+STUB
+cat >"$work/snapbin/xfs_io" <<STUB
+#!/bin/sh
+echo "xfs_io \$*" >>"$work/calls.log"
+rc=\$(cat "$work/xfs_io.rc")
+[ "\$rc" = 0 ] || echo "xfs_io: Inappropriate ioctl for device" >&2
+exit "\$rc"
+STUB
+cat >"$work/snapbin/df" <<STUB
+#!/bin/sh
+if [ "\$1 \$2" != "-B1 --output=avail" ] || [ \$# -ne 3 ]; then
+    echo "stub df: unexpected question: \$*" >&2; exit 3
+fi
+cat "$work/df.out"
+exit "\$(cat "$work/df.rc")"
+STUB
+chmod +x "$work/snapbin/cp" "$work/snapbin/xfs_io" "$work/snapbin/df"
+mkdir -p "$work/real-snap"
+cp "$here/tender-db-snapshot.sh" "$here/tender-db-queue-verdict.sh" "$work/real-snap/"
+echo 'echo idle' >"$work/real-snap/tender-db-queue-probe.sh"
+python3 - "$work/live.db" <<'PY'
+import sqlite3, sys
+c = sqlite3.connect(sys.argv[1])
+c.execute("create table t (x)"); c.executemany("insert into t values (?)", [("x" * 100,)] * 40)
+c.commit(); c.close()
+PY
+db_size=$(stat -c %s "$work/live.db")
+need_12=$(awk -v s="$db_size" 'BEGIN { printf "%.0f", s * 1.2 }')
+df_says() { printf '%s\n' "$1" >"$work/df.out"; echo "${2:-0}" >"$work/df.rc"; }
+# run_real_snapshot <case> <old snapshots to plant> [VAR=value…]: a fresh snapshot dir
+# per case (the stamp is per second), the planted ones two days old.
+run_real_snapshot() {
+    local d="$work/snaps-$1" n=$2 i; shift 2
+    rm -rf "$d"; mkdir -p "$d"; : >"$work/calls.log"
+    for i in $(seq 1 "$n"); do
+        echo old >"$d/tender-db-100$i.db"; : >"$d/tender-db-100$i.db-wal"
+        touch -d "$((i + 1)) days ago" "$d/tender-db-100$i.db"
+    done
+    env PATH="$work/snapbin:$PATH" TENDER_SNAP_DB="$work/live.db" TENDER_SNAP_DIR="$d" \
+        TENDER_SNAP_POLL_SECS=1 TENDER_SNAP_WAIT_MIN=0 "$@" \
+        bash "$work/real-snap/tender-db-snapshot.sh" 2>&1
+}
+snaps_in() { ls -1 "$work/snaps-$1" | grep -c '^tender-db-[0-9]*\.db$'; }
+want_count() {   # want_count <name> <case> <n>
+    local got; got=$(snaps_in "$2")
+    if [ "$got" = "$3" ]; then echo "ok   $1"; else
+        echo "FAIL $1 — wanted $3 snapshot(s) in $2, found $got: $(ls "$work/snaps-$2")"; failures=$((failures + 1)); fi
+}
+echo 0 >"$work/xfs_io.rc"
+
+df_says $'     Avail\n'"$((db_size * 10))"
+out=$(run_real_snapshot plenty 1); rc=$?
+check "with room, the snapshot is written" 0 "snapshot written: $work/snaps-plenty/tender-db-" "$out" "$rc"
+check "…the default (4096) COW hint is re-applied to the live DB first" 0 "cowextsize 4096 applied to $work/live.db" "$out" "$rc"
+if [ "$(head -1 "$work/calls.log")" = "xfs_io -c cowextsize 4096 $work/live.db" ] \
+   && grep -q '^cp --reflink=always' "$work/calls.log"; then
+    echo "ok   …xfs_io set the hint before the reflink copy"
+else
+    echo "FAIL …xfs_io must set the hint before the copy — calls: $(cat "$work/calls.log")"; failures=$((failures + 1))
+fi
+check "…and the default KEEP=1 prunes the old one after the copy" 0 "pruned $work/snaps-plenty/tender-db-1001.db" "$out" "$rc"
+want_count "…leaving exactly the new snapshot" plenty 1
+[ ! -e "$work/snaps-plenty/tender-db-1001.db" ] && [ ! -e "$work/snaps-plenty/tender-db-1001.db-wal" ] \
+    && echo "ok   …the pruned snapshot's -wal went with it" \
+    || { echo "FAIL …the old snapshot or its -wal survived"; failures=$((failures + 1)); }
+
+out=$(run_real_snapshot first 0); rc=$?
+check "the first snapshot ever is kept (the last one is never pruned)" 0 "snapshots kept: 1 -> 1" "$out" "$rc"
+want_count "…one snapshot present" first 1
+
+out=$(run_real_snapshot keep2 3 TENDER_SNAP_KEEP=2); rc=$?
+want_count "TENDER_SNAP_KEEP=2 keeps two" keep2 2
+check "…the newest old one survives, the older two go" 0 "pruned $work/snaps-keep2/tender-db-1003.db" "$out" "$rc"
+out=$(run_real_snapshot keep0 2 TENDER_SNAP_KEEP=0); rc=$?
+want_count "TENDER_SNAP_KEEP=0 prunes nothing" keep0 3
+
+out=$(run_real_snapshot cow32 0 TENDER_SNAP_COWEXT=32m); rc=$?
+check "TENDER_SNAP_COWEXT sets the hint xfs_io is given" 0 "cowextsize 32m applied" "$out" "$rc"
+grep -qxF "xfs_io -c cowextsize 32m $work/live.db" "$work/calls.log" \
+    && echo "ok   …xfs_io was asked for 32m" || { echo "FAIL …xfs_io calls: $(cat "$work/calls.log")"; failures=$((failures + 1)); }
+
+echo 1 >"$work/xfs_io.rc"
+out=$(run_real_snapshot noxfs 1); rc=$?
+check "an xfs_io failure (not xfs) is a WARN line" 0 "WARN snapshot: could not set cowextsize 4096 on $work/live.db (xfs_io: Inappropriate ioctl for device)" "$out" "$rc"
+check "…and the snapshot is still taken" 0 "snapshot written:" "$out" "$rc"
+want_count "…and the old one pruned" noxfs 1
+echo 0 >"$work/xfs_io.rc"
+
+# The guard's arithmetic, both ways at the boundary: need = size × 1.2, rounded.
+df_says $'Avail\n'"$((need_12 - 1))"
+out=$(run_real_snapshot tight 1); rc=$?
+check "one byte under size × 1.2 free skips loudly with exit 0" 0 "SKIP snapshot: only $((need_12 - 1)) bytes free on the filesystem of $work/live.db, need $need_12" "$out" "$rc"
+refute "…no snapshot written when short of space" "snapshot written" "$out"
+refute "…and nothing pruned when short of space" "pruned $work/" "$out"
+want_count "…the old snapshot stays" tight 1
+[ -e "$work/snaps-tight/tender-db-1001.db" ] && echo "ok   …it is the planted one" \
+    || { echo "FAIL …the planted snapshot is gone"; failures=$((failures + 1)); }
+df_says $'Avail\n'"$need_12"
+out=$(run_real_snapshot exact 1); rc=$?
+check "exactly size × 1.2 free snapshots" 0 "snapshot written:" "$out" "$rc"
+df_says $'Avail\n'"$((db_size / 2 + 1))"
+out=$(run_real_snapshot factor 0 TENDER_SNAP_FREE_FACTOR=0.5); rc=$?
+check "TENDER_SNAP_FREE_FACTOR=0.5 lets half the size through" 0 "snapshot written:" "$out" "$rc"
+out=$(run_real_snapshot factor2 0 TENDER_SNAP_FREE_FACTOR=2); rc=$?
+check "…and FACTOR=2 refuses the same free space" 0 "SKIP snapshot:" "$out" "$rc"
+want_count "…with no snapshot" factor2 0
+out=$(run_real_snapshot badfactor 0 TENDER_SNAP_FREE_FACTOR=1,2); rc=$?
+check "a FREE_FACTOR that is not a number is an ERROR" 1 "ERROR snapshot: TENDER_SNAP_FREE_FACTOR='1,2' is not a number" "$out" "$rc"
+want_count "…with no snapshot" badfactor 0
+
+# Free space that cannot be read is a refusal, never a snapshot (fail closed).
+for bad in $'Avail\n12abc' $'Avail' '' $'Avail\n100\n200' $'Avail\n-5' $'Avail\n1.5e12'; do
+    df_says "$bad"
+    out=$(run_real_snapshot dfbad 1); rc=$?
+    check "df answering '${bad//$'\n'/|}' refuses" 1 "ERROR snapshot: cannot read free space on the filesystem of $work/live.db" "$out" "$rc"
+    refute "…no snapshot on df '${bad//$'\n'/|}'" "snapshot written" "$out"
+    want_count "…the old one kept on df '${bad//$'\n'/|}'" dfbad 1
+done
+df_says $'Avail\n'"$((db_size * 10))" 1
+out=$(run_real_snapshot dfexit 1); rc=$?
+check "df exiting non-zero refuses, even with a number" 1 "ERROR snapshot: cannot read free space" "$out" "$rc"
+want_count "…no snapshot when df fails" dfexit 1
 
 # --- queue_verdict: the rule deploy.sh and the snapshot both act on (issue 459) -----------
 # deploy.sh's `case` only maps this function's line to an action, so its whole decision

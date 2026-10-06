@@ -1978,8 +1978,10 @@ dev/verification work — harmless, but never point a CLI at the production file
 
 **The snapshot feature and its local ring were removed on 2026-08-06** (owner
 decision under storage pressure; commits 39c0e08/aa9f2a1/1faf9d9). There is still
-**no off-box copy**. On the box there is again a weekly reflink ring of two (issue
-269, `tender-db-snapshot.timer`, Sun 05:23 Berlin; `ls -l /data/db/snapshots`), but
+**no off-box copy**. On the box there is again a weekly reflink snapshot — one kept since issue 488,
+two before (issue 269, `tender-db-snapshot.timer`, Sun 05:23 Berlin; `ls -l
+/data/db/snapshots`; mechanics and knobs under [Live DB file allocation vs
+size](#live-db-file-allocation-vs-size-issue-169-2026-09-06)), but
 it sits on the same volume: a forensics and verification artifact that dies with
 `/data`, not disaster recovery. DR = re-ingest from sources. The full scenario
 analysis, measured stage rates, and the recommendation menu for re-introducing a
@@ -2014,7 +2016,8 @@ snapshot ever taken). Restore was a plain file copy: stop service, swap
 
 `/data` (1.7T in `df -h /data` on 2026-10-01, i.e. 1.78 TB) holds archive (~180
 GB) + DB (685 GB on 2026-10-01, `stat -c %s /data/db/tender-db.db`, and growing; it
-can never shrink — VACUUM is impossible) + the snapshot ring. 443 GiB (475.7 GB,
+can never shrink — VACUUM is impossible) + the snapshot (up to a full DB's worth once
+un-shared, issue 488). 443 GiB (475.7 GB,
 `/health/deep` `free_bytes`) free on 2026-10-01; a plain on-box DB copy no longer
 fits (XFS reflink copies do).
 Growth model and volume-full forecast: `docs/research/` storage-lifecycle
@@ -2101,4 +2104,43 @@ the file's size by 2026-09-06, counted by `df` as used. Two standing measures:
 
 The reads that diagnose it are all bounded: `stat -c '%s %b'` on the file (size vs
 blocks × 512), `xfs_io -r -c "stat -v"` for the hints and extent count. `filefrag` and
-`xfs_bmap` on this file are NOT (30 M+ extents).
+`xfs_bmap` on this file are NOT (millions of extents).
+
+**Superseded in part by issue 488 (2026-10-06): the 4 KiB hint fragments the file.**
+The page-sized COW allocation above fixed the preallocation leak and caused something
+worse. Each weekly reflink snapshot shares every extent with the live DB, and every
+page the app rewrites afterwards is copied out of sharing *in units of `cowextsize`*.
+At 4 KiB that was one new extent per rewritten page: by 2026-10-05 the 694 GB file
+was 90.2M extents (~7.7 KB each), and a `perf` sample of a fold showed 76 % of its
+CPU in the kernel walking the extent tree (`xfs_iext_lookup_extent` and friends).
+The same un-sharing is a disk cost: a snapshot costs nothing on the day it is taken
+but grows toward a full second copy as the DB is rewritten — a corpus-wide refold
+un-shared ~40 GB/h of `/data` (319 → 280 GB free, issue 479). On 2026-10-06 the
+file was defragmented (`ops/defrag-db.sh`, 90.9M → 1.95M extents, ~50 min downtime),
+both snapshots were deleted, and the hint was raised to `cowextsize 16m` by hand (inert while
+no snapshot shares the file; the script's default stays 4096, below).
+
+`tender-db-snapshot.sh` now holds that line itself, with three knobs (environment
+variables on the unit):
+
+- **`TENDER_SNAP_COWEXT`** (default `4096`, issue 169's leak-safe value, until issue 488
+  decides whether to drop reflink snapshots or pair a larger hint with a periodic
+  `xfs_spaceman prealloc -s` reclaim): before each snapshot it runs `xfs_io -c
+  "cowextsize <value>"` on the live DB, so a replaced inode (restore, defrag swap) gets
+  the hint back within a week. A failure is a `WARN snapshot: could not set
+  cowextsize …` line, not fatal. The trade-off is the one this section opened with:
+  a large hint can leave speculative COW preallocation on the always-open file. If
+  `stat -c '%s %b'` shows allocation well above size again, the `xfs_spaceman …
+  prealloc` command above reclaims it online.
+- **`TENDER_SNAP_KEEP`** (default `1`, was 2): every snapshot alive is another
+  potential full copy in un-sharing. Pruning still happens AFTER the new copy, so
+  with `KEEP=1` a snapshot exists at every moment. The cost is that the old one's
+  exclusive blocks are still held while the new one is taken. The prune never
+  removes the last snapshot or the one just written, and `KEEP=0` prunes nothing.
+- **`TENDER_SNAP_FREE_FACTOR`** (default `1.2`): the disk guard. Since one snapshot
+  can cost up to the whole live file in un-sharing before the next run prunes it, the
+  script refuses unless `df -B1 --output=avail` on the DB's filesystem reports at least
+  live DB size × factor. It then prints `SKIP snapshot: only N bytes free …, need M`
+  and exits 0: nothing is written, nothing pruned, and the old snapshot stays. If
+  space is short, delete the old snapshot by hand and re-run. Free space that cannot
+  be parsed fails closed (`ERROR snapshot: cannot read free space …`, exit 1).
