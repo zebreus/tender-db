@@ -3,7 +3,7 @@
 Status: ready-for-agent — filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
 "whether (b) stays here or becomes its own issue" decision: it is a different mechanism — free-text
 amount parsing plus same-field supersession in the version state — and inside 471's band it moves
-one row). NEXT: unit 1, the measurement below.
+one row). UNIT 1 MEASURED on a window (see "Unit 1 — window measurement (2026-10-06)"); scope decided: II.1.5 / II.1.7 (tender scope) only. NEXT: unit 2 — read how a corrigendum version inherits amounts, then the strict reader + supersession with the pin.
 Kind: data quality / canonical values
 Relates to: 471 (the band; 4(b) moved here), 385 (F14 corrigendum DATES — the pattern this follows)
 
@@ -47,3 +47,44 @@ carry amounts inside prose; those are NOT value sections and must not map (385's
 3. **Pin** `an_f14_value_correction_supersedes_the_figure_it_corrects` (`crates/ingest/tests/project.rs`)
    with 6891632's shape, plus the 4871119 flip-flop and a prose II.2.7 block that must NOT map.
 4. **Drain** with `refold-notices` over the affected Tenders' F14 notices and re-read section 16.
+
+## Unit 1 — window measurement (2026-10-06)
+
+385's window (notice ids 21,000,000–21,020,000, r2.0.9 era), one bounded `/v1/sql` read each
+(`489-values/f14v.sql`, `f14t.sql`; the 144 texts in `window-21000000-new-value-texts.json`):
+
+| coordinate | CHG blocks with `NEW_VALUE.TEXT` | notices |
+|---|---|---|
+| II.1.5 (total estimated value) | 32 | 32 |
+| II.1.7 (total value of the procurement) | 16 | 16 |
+| II.2.6 (a lot's estimated value) | 66 | 35 |
+| V.2.4 (a contract's value) | 31 | 17 |
+
+About 0.4 % of the window's notices correct a value section; extrapolated over the r2.0.9 era that
+is on the order of 10⁴ notices — a real population, mostly NOT scale errors (ordinary restated
+estimates), so 4(b) is a currency-of-the-record fix more than a band fix.
+
+**What the texts look like.** Mostly one figure, in every EU locale's formatting:
+`379 502,40 EUR`, `Wartość bez VAT: 1 703 480,12 PLN`, `Valore, IVA esclusa: 224,425,00 EUR`
+(a malformed grouping), `58 903,50EUR.`, `5000000`, `Hodnota bez DPH: 170 317 000,00`. Three
+complications:
+
+- **No currency** on roughly a fifth of them (`4 500 000,00`, `21 766 171,00`); some put it in a
+  SECOND block of the same section (`Munt: EUR`, `Měna: CZK`) or a second line (`Valeur totale
+  estimée:` / `Valeur hors TVA: 9 386 307,00 EUR.` as two CHG blocks).
+- **II.2.6 names no lot key** in the block; several lots' corrections arrive as consecutive blocks,
+  some as prose (`Per il lotto n. 17, provincia di Napoli: valore … 68 847 509,46 EUR, inclusivi di
+  254 362,50 EUR …`, `Pour le lot 1 …, la valeur estimée est de 430 000,00 EUR. Pour le lot 2 …`).
+- **V.2.4 carries two figures** in the Polish form (`Początkowa szacunkowa…` the initial estimate
+  AND `Całkowita końcowa…` the final value) as two blocks of the same coordinate.
+
+**Decision (owner, 2026-10-06): unit 2 maps II.1.5 → tender `estimated_value` and II.1.7 → tender
+`result_value` only.** Both are tender scope, one figure per notice in the sample (32/32, 16/16),
+so there is no lot or award to resolve. II.2.6 and V.2.4 stay unmapped (lot keying and two-figure
+blocks would need guessing — 385's rule: a missing correction is visible as a stale figure, an
+invented one is not), each recorded as a refused class in the project counters so their volume stays
+visible. The reader is STRICT: after stripping a label ending in `:` and a trailing `.`, the text must
+be exactly one amount (space / NBSP / `.` / `,` grouping, `,` or `.` decimal with exactly two
+digits, or none) optionally followed by an ISO currency; a currency-less figure takes the currency
+of the figure it supersedes only when the Tender's head carries that field in exactly ONE currency;
+anything else (prose, two figures, malformed grouping like `224,425,00`) is refused and counted.
