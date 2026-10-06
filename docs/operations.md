@@ -500,6 +500,30 @@ The same through the CLI: `tender-admin raw GET /admin/reports/data-quality </de
 measured" and "measured as zero" are different claims and the report is careful
 about the difference (its own text banners any section it could not measure).
 
+**Section 16, the head-value band (issue 471 unit 1).** Every Tender whose ELECTED head
+(`tenders.current_value_eur_cents`) is at or above €10 bn, one row per Tender, grouped by
+the currency the figure was published in; `IMPLAUSIBLE_EUR_CENTS` (€100 bn) caps it from
+above. Section 10 ranks the tail by repetition, so a figure that occurs once never shows
+there; this is where it shows. Each row carries the head notice and its era, the published
+and EUR figures, and three signals: the exact-10ᵏ (k ≥ 3) partner (the largest figure of
+the same Tender and currency, in any version, the head is exactly 10ᵏ above — the sharp
+scale-error signal; figures ≤ 10.00 as published are issue 380's placeholders and never
+count), the ratio to the smallest sibling (for reading only), and the newest F14 value
+corrigendum in the chain (II.1.5, II.1.7, II.2.6, V.2.4 — the 2014-directive numbering
+only, so on an r2.0.8-era chain `—` means not checked). The elected row is the one the
+read layer serves (same `cents DESC, currency` tiebreak); a Tender whose head column
+matches no amount row at its head version (a `rederive-eur` move awaiting its refold) is
+listed under "elected row NOT FOUND" rather than dropped. Bounded: a top-down range seek
+on `tenders_current_value_eur` (~330 rows on 2026-10-01) plus per-Tender seeks, never a
+scan; a safety cap of 1,000 Tenders prints LISTING FULL before the rows, and what it cuts
+is the band's lowest heads. It adjudicates nothing — it is the listing 471's units 4 and 5
+decide on. The stored report is TEXT only (`/admin/reports/data-quality` serves
+`{kind, computed_at, age_seconds, body}`); the JSON form `.head_value_band.rows` exists only
+from `bin/data-quality --json`, which runs every query over `/v1/sql` under that endpoint's deadline. Check it landed — the
+summary line, not the header, which also prints when the query failed:
+`/root/aj.sh /admin/reports/data-quality | jq -r .body | grep -cE 'Tender\(s\) in [0-9]+ currenc'`
+must print `1`, and the same with `grep -c 'UNMEASURED — the .band_listing'` must print `0`.
+
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|
 refold-notices|refold-sections|reparse|data-quality|backfill-titles|mark-skipped-siblings|clear-rebuild-flag,

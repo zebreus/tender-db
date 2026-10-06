@@ -1,6 +1,6 @@
 # 471 — r209 amounts are never checked against their `@FMTVAL`, and nothing adjudicates the €10–100 bn head-value band (366 units 5 and 6, dropped when 366 closed)
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
+Status: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
 Kind: data quality (amount plausibility: the legacy parse layer and the head election)
 Relates to: 366 (promised units 5 and 6, closed 2026-09-12 without them), 380 (its sweep still points at "the open half of
 issue 366"), 267 (the plausibility measure), 372 (the `quality` marker on `Fact::Amount`), 385 (F14 corrigendum dates:
@@ -128,9 +128,11 @@ that decides which amounts count drifts from the fold).
    reading only), and whether a value corrigendum (F14 `NEW_VALUE.TEXT` under II.1.5, II.1.7, II.2.6 or V.2.4) is in
    the chain. Each signal is a per-tender seek, not a scan. Pin it with
    `the_band_listing_shows_a_head_that_repeats_nowhere`: a fixture with one unique band figure appears in the listing
-   and not in section 10. Done when the stored report carries the section:
-   `ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh /admin/reports/data-quality" | jq -r .body | grep -c 'issue 471'`
-   printed `0` on 2026-10-01.
+   and not in section 10. Done when the stored report carries the section MEASURED — the header
+   alone is not enough, because it prints before the UNMEASURED check (review, 2026-10-06):
+   `ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh /admin/reports/data-quality" | jq -r .body | grep -cE 'Tender\(s\) in [0-9]+ currenc'`
+   prints `1` (it printed `0` on 2026-10-01, before the section existed) and the same body
+   piped to `grep -c 'UNMEASURED — the .band_listing'` prints `0`.
 2. **The gated archive read (366 unit 5's precondition).** Read the four members in the first table on the team
    lead's word, per read, and record each value element's `@FMTVAL` and text side by side. If they agree everywhere,
    the `@FMTVAL` question is answered "no": record that the scale errors are the publishers', and units 4 and 5 below
@@ -154,6 +156,79 @@ that decides which amounts count drifts from the fold).
    serving the residue as published with a sentence in `/docs#caveats`, and record the reasoning here.
 6. **Drain and re-read.** Refold the affected tenders with `refold-notices` (366's route), re-read the unit-1 section
    and the Verify, and record which band rows each signal removed and which remain.
+
+## Unit 1 — landed (2026-10-06)
+
+Section 16 of the weekly data-quality report, "The head-value band (every elected head at or above
+EUR 10,000,000,000.00, by published currency — issue 471)". In the tree, not committed, not deployed;
+the Done check above (the summary line, not the header) is still owed after deploy and the next
+Sunday run (or an on-demand `data-quality` job).
+
+- **Query**: `data_quality::band_listing_sql()`, registered in `whole_corpus_queries()` as
+  `band_listing` (whole-corpus because it is driven by a value range the tender-id windows cannot bind
+  to). The supervisor's data-quality job runs `whole_corpus_queries()` generically, so
+  `supervisor.rs` is untouched. The section reaches `/admin/reports/data-quality` as TEXT only: the
+  job stores `render_text`'s body, and the endpoint serves `{kind, computed_at, age_seconds, body}`.
+  The JSON form (`.head_value_band.rows`, plus `full` and `measured`) comes only from
+  `bin/data-quality --json` (every query over `/v1/sql`), so unit 4/6's before/after comparison reads
+  the text rows or runs the CLI.
+- **One SQL row per Tender**: the elected row `h` is a LEFT JOIN on ONE rowid, picked in a correlated
+  subquery the read layer's way (`eur_cents = t.current_value_eur_cents` on the head version, tie
+  broken `cents DESC, currency` as `read.rs`'s `elected` does), so the listed figure and currency
+  group are what `/v1/tenders` serves, and the LIMIT counts Tenders. A Tender whose head column
+  matches no amount row at its head version (a `rederive-eur` move awaiting its refold, issue 375)
+  is listed under "elected row NOT FOUND" with no published figure, not dropped.
+- **Order and cap**: walked top-down (`ORDER BY current_value_eur_cents DESC, id DESC`, still the
+  index's order — no sorter over the listing), so the safety cap `BAND_LISTING_CAP` = 1,000 Tenders
+  (3× the measured 324–330) cuts the LOWEST heads; LISTING FULL prints before the rows, and JSON has
+  `full`.
+- **Signals per row**: head notice + era; published figure and EUR; the exact-10ᵏ partner (k = 3…18:
+  the largest positive figure of the same Tender and currency, ANY version, from
+  `tender_version_amounts` and `tender_version_lot_results.awarded_cents`); `x smallest` (head over
+  the smallest same-currency sibling, reading only); and the newest F14 value corrigendum in the
+  chain (`TED-NEW_VALUE.TEXT` in a `CHG-n` whose `TED-SECTION`, normalised as
+  `project::f14_coordinate` does — `trim(rtrim(trim(x), ')'))` — is II.1.5 / II.1.7 / II.2.6 /
+  V.2.4). Siblings at or below 10.00 as published (`SENTINEL_AMOUNT_CEILING`, issue 380's
+  placeholders) are neither partners nor siblings, so a round €10 bn ceiling over a 1.00 placeholder
+  does not read as a 10¹² scale error. Rows are grouped by published currency, biggest group first,
+  largest figure first inside.
+- **Known blind spot, recorded rather than guessed at**: the corrigendum column knows the
+  2014-directive (r2.0.9) numbering only. r2.0.8 F14s name value sections in the 2004 numbering
+  (e.g. II.2.1 "total quantity or scope", which in 2014 is a lot's TITLE); none has been measured
+  carrying a `NEW_VALUE.TEXT` on prod. The footer says `—` on an r2.0.8 chain means NOT CHECKED, and
+  that a no-signal r2.0.8/r2.0.9 row is not 20905's class (the `@FMTVAL` check, units 2–3, can still
+  reach it). Measuring the 2004 value coordinates belongs to unit 4b.
+- **Bound, pinned by plan** in `the_band_listing_shows_a_head_that_repeats_nowhere`
+  (`crates/ingest/tests/data_quality.rs`): first line `SEARCH t USING INDEX tenders_current_value_eur
+  (current_value_eur_cents>=?)`, `h` by `INTEGER PRIMARY KEY (rowid=?)`, every satellite a SEARCH by
+  its `tender_id` / `notice_id` prefix, no SCAN anywhere, no sorter at the top level (the only sorter
+  is the per-Tender tiebreak over the head version's few rows) — asserted on an EMPTY `sqlite_stat1`
+  AND again after `store::ANALYZE_TABLES` are analyzed over a 2,000-Tender filler. That second half
+  is fixture statistics, not prod's: on the 8-Tender fixture alone the analyzed plan turns every read
+  into a SCAN (correct for 8 rows, and proof the stats are read). `measure_rows` has no deadline and
+  `band_listing` runs after every window, so a stats-driven scan on prod would hang the whole weekly
+  job — hence the plan-probe on an analyzed prod snapshot owed before 429's schedule (NEXT above).
+  The head-version profile / notice lookups are per-Tender chain seeks on `tender_versions` (turso
+  picks the `(tender_id, caused_by_notice_id)` autoindex and filters `seq`), not PK seeks; the doc
+  comment says so.
+- **Tests** (focused, gate flags + package set, GATE-EXIT=0 after the review fixes):
+  `the_band_listing_shows_a_head_that_repeats_nowhere` (scratch DB: a once-only EUR 33.26 bn head is
+  in section 16 and not in section 10, which does list a 10× repeated PLN value; €9,999,999,999.99
+  out, exactly €10 bn in, NULL head out; top-down order `[7, 2, 8, 9, 1, 4]`, one row per Tender;
+  EUR/GBP/SEK groups; 10³ lot estimate, 10⁴ lot award, `II.1.7 )` corrigendum; a 1.00 placeholder is
+  no sibling; the DKK/EUR tie resolves to the read layer's row; a stale head is listed figure-less;
+  the plan, before and after ANALYZE), `the_band_listing_groups_by_currency_and_merges_its_signals`
+  (render: grouping, dedupe guard, the two sibling sources merged, the footer's era caveats, the
+  stale-head group and JSON nulls, LISTING FULL before the rows at 1,000 and JSON `full`, `none`,
+  UNMEASURED). The other data-quality lib tests touched by the new label
+  (`every_report_field_is_read_by_the_renderer`, `the_sections_render_in_numbered_order`,
+  `queries_are_labelled_in_execution_order`, …) re-run after the fixes: all 61
+  `data_quality::tests` pass (GATE-EXIT=0). `ops/check.sh` NOT yet run.
+- Also: `data_quality.rs`'s `sentinel_amounts_sql` doc no longer sends the low/unrepeated tail to
+  "the open half of issue 366" (it names 380 and this section). The other two stale pointers
+  (`api-dq-review-2026-09-15.md:350–353`, `canonical.rs:1501–1506`) are untouched — the second is in
+  `store`, and a comment edit there re-hashes every crate above it.
+- Docs: `docs/operations.md`, "Section 16, the head-value band", beside the report-reading recipe.
 
 ## Verify
 

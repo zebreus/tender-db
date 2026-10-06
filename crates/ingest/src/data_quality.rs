@@ -798,7 +798,8 @@ const SENTINEL_DATE_FLOOR: i64 = store::canonical::DEADLINE_FLOOR_SECS;
 /// bound is stated rather than hidden: this cannot see a LOW-magnitude sentinel. In that
 /// region a frequency ranking is dominated by genuine round budgets anyway (measured —
 /// see [`SENTINEL_AMOUNT_FLOOR`]), so frequency alone would not identify one there; it
-/// would need a different discriminator, which is left as the open half of issue 366.
+/// would need a different discriminator — issue 380 swept the bottom of the range, and the
+/// unrepeated top (the €10–100 bn head-value band) is issue 471's section 16.
 ///
 /// **The floor is applied to `eur_cents`; the GROUPING stays on published `(currency, cents)`.**
 /// Measured on the first corpus run (job 816, 2026-09-08): a currency-blind floor of 1,000,000,000
@@ -1556,6 +1557,142 @@ pub const CPV_SHAPES_SQL: &str = "\
      GROUP BY shape \
      ORDER BY n DESC";
 
+/// The floor of the head-value band listing, in EUR cents: €10 bn (issue 471 unit 1,
+/// 366 unit 6). [`store::canonical::IMPLAUSIBLE_EUR_CENTS`] (€100 bn) caps the band from
+/// above, because the election refuses anything past it, so the listing is exactly the
+/// €10–100 bn region nothing adjudicates.
+pub const BAND_FLOOR_EUR_CENTS: i64 = 1_000_000_000_000;
+
+/// At most this many band TENDERS. NOT a ranking cap — the issue asks for every row,
+/// and 2026-10-01 read 324–330 of them — but a safety valve three times the measured
+/// population, so a fold that suddenly elected a million heads into the band cannot
+/// turn a weekly listing into a corpus dump. The SQL returns exactly one row per
+/// Tender, so the cap counts Tenders, and `rows == cap` is the truncation test. The
+/// walk runs from the TOP of the band down, so what a full listing cuts is the
+/// figures nearest the floor, never the €50–100 bn ones that are most suspect. A
+/// full listing SAYS it is full, before its rows.
+pub const BAND_LISTING_CAP: usize = 1_000;
+
+/// The F14 form coordinates a value corrigendum names (issue 471): II.1.5 and II.1.7
+/// (estimated / total value of the procurement), II.2.6 (the lot's estimated value) and
+/// V.2.4 (the contract's value). Matched after the normalisation
+/// `project::f14_coordinate` applies (trim, drop a trailing `)`, trim again — the
+/// corpus publishes every coordinate with and without the `)`).
+///
+/// **The 2014-directive (r2.0.9) numbering ONLY.** An r2.0.8-era F14 names its target
+/// in the 2004-directive numbering (`project::F14_TARGET_DATES` keeps `IV.3.4` /
+/// `IV.3.8` beside `IV.2.2` / `IV.2.7` for the date half), and its value sections are
+/// numbered differently again (e.g. `II.2.1` is "total quantity or scope" in 2004 but
+/// a lot's TITLE in 2014). None of those coordinates has been measured carrying a
+/// `NEW_VALUE.TEXT` on prod, and an unmeasured `II.2.1` would read every r209 lot
+/// title correction as a value correction, so they are not guessed at here: the
+/// column cannot see an r2.0.8 value correction, and the section footer says so.
+pub const BAND_VALUE_CORRIGENDUM_SECTIONS: [&str; 4] = ["II.1.5", "II.1.7", "II.2.6", "V.2.4"];
+
+/// The `10ᵏ` (k = 3…18) a band figure may sit above a sibling figure for the pair to
+/// be the exact-power-of-ten signal. k ≥ 3 because a factor of 10 or 100 between a
+/// framework and its lot is ordinary; 10¹⁸ is the last power an `i64` holds.
+fn band_powers_of_ten() -> String {
+    (3..=18).map(|k| 10i64.pow(k).to_string()).collect::<Vec<_>>().join(", ")
+}
+
+/// The €10–100 bn head-value band, row by row (issue 471 unit 1, 366 unit 6).
+///
+/// Section 10 ranks the implausible tail by REPETITION, so a figure that occurs once —
+/// 20905's EUR 33,260,500,000.00, 5948128's GBP 12,345,678,910.00 — never appears there.
+/// This lists every Tender whose ELECTED head (`tenders.current_value_eur_cents`) is at
+/// or above [`BAND_FLOOR_EUR_CENTS`], with the signals that separate a scale error from
+/// a big contract beside it. It adjudicates nothing: the listing is what a decision on
+/// 471 units 4 and 5 is made on.
+///
+/// **Bounded by construction.** The driving read is a range seek on
+/// `tenders_current_value_eur` `(current_value_eur_cents, id)` from the floor upward —
+/// ~330 rows on prod, never a scan of `tenders` — walked in that index's own order
+/// (DESCENDING, so a [`BAND_LISTING_CAP`] cut drops the least suspect rows), so there
+/// is no sorter either. Everything else is a per-Tender seek:
+///
+/// - the elected row (`h`) is found the way the read layer finds it
+///   (`s.eur_cents = t.current_value_eur_cents` on the head version, issue 366 unit 3,
+///   tie broken `s.cents DESC, s.currency` exactly as `read.rs`'s `elected` does), by
+///   ONE rowid chosen in a correlated subquery through
+///   `tender_version_amounts_version (tender_id, seq)` — zero drift from the election,
+///   because nothing here re-derives it, and exactly one SQL row per Tender, so the
+///   LIMIT counts Tenders. It is a LEFT JOIN: a Tender whose head column matches no
+///   amount row at its head version (a `rederive-eur` move not yet refolded, issue
+///   375) is still listed, with no published figure, instead of silently vanishing;
+/// - the head's profile and notice id are per-Tender chain seeks on `tender_versions`
+///   (turso picks the `(tender_id, caused_by_notice_id)` autoindex and filters `seq`)
+///   plus a PK seek on `notices`;
+/// - the exact-10ᵏ partner and the smallest sibling read the Tender's own positive
+///   figures in the head's published currency, across EVERY version (6581010's partner
+///   sits in its first notice), from `tender_version_amounts` and
+///   `tender_version_lot_results` — both seeked by their `tender_id` prefix. Siblings
+///   at or below the issue-380 bottom-of-range ceiling (10.00 as published,
+///   `SENTINEL_AMOUNT_CEILING`) are not siblings: 0.01 / 1.00 placeholders would hand a
+///   round €10 bn ceiling a "sharp" 10¹² partner;
+/// - the value corrigendum is the newest version whose causing notice carries an F14
+///   `TED-NEW_VALUE.TEXT` in a `CHG-n` section whose `TED-SECTION` names one of
+///   [`BAND_VALUE_CORRIGENDUM_SECTIONS`] — a seek on `notice_texts`' `notice_id` prefix
+///   per version.
+///
+/// **The plan pin holds on an EMPTY `sqlite_stat1` and on a fixture-ANALYZEd one**
+/// (`the_band_listing_shows_a_head_that_repeats_nowhere`); prod-scale statistics (issue
+/// 429's weekly `analyze`) are not a fixture, and `measure_rows` has no deadline, so a
+/// stats-driven scan here would hang the whole data-quality job. A plan-probe on an
+/// analyzed snapshot is owed before 429's schedule goes live (recorded on issue 471).
+///
+/// Whole-corpus registration, because the windowing machinery slices `tender_versions`
+/// by id while this is driven by a value range; its own floor bounds it.
+pub fn band_listing_sql() -> String {
+    let powers = band_powers_of_ten();
+    let sections = BAND_VALUE_CORRIGENDUM_SECTIONS
+        .iter()
+        .map(|s| format!("'{s}'"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let low = SENTINEL_AMOUNT_CEILING;
+    format!(
+        "SELECT t.id AS tender_id, t.source AS source, t.current_value_eur_cents AS eur_cents, \
+                h.currency AS currency, h.cents AS cents, \
+                (SELECT n.profile FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id \
+                  WHERE v.tender_id = t.id AND v.seq = t.current_seq) AS profile, \
+                (SELECT v.publication_id FROM tender_versions v \
+                  WHERE v.tender_id = t.id AND v.seq = t.current_seq) AS head_notice, \
+                (SELECT MAX(a.cents) FROM tender_version_amounts a \
+                  WHERE a.tender_id = t.id AND a.currency = h.currency \
+                    AND a.cents > {low} AND a.cents < h.cents AND h.cents % a.cents = 0 \
+                    AND h.cents / a.cents IN ({powers})) AS pow10_amount, \
+                (SELECT MAX(r.awarded_cents) FROM tender_version_lot_results r \
+                  WHERE r.tender_id = t.id AND r.awarded_currency = h.currency \
+                    AND r.awarded_cents > {low} AND r.awarded_cents < h.cents \
+                    AND h.cents % r.awarded_cents = 0 \
+                    AND h.cents / r.awarded_cents IN ({powers})) AS pow10_award, \
+                (SELECT MIN(a.cents) FROM tender_version_amounts a \
+                  WHERE a.tender_id = t.id AND a.currency = h.currency \
+                    AND a.cents > {low} AND a.cents < h.cents) AS min_amount, \
+                (SELECT MIN(r.awarded_cents) FROM tender_version_lot_results r \
+                  WHERE r.tender_id = t.id AND r.awarded_currency = h.currency \
+                    AND r.awarded_cents > {low} AND r.awarded_cents < h.cents) AS min_award, \
+                (SELECT v.publication_id FROM tender_versions v \
+                   JOIN notice_texts x ON x.notice_id = v.caused_by_notice_id \
+                  WHERE v.tender_id = t.id AND x.field_id = 'TED-SECTION' \
+                    AND trim(rtrim(trim(x.value), ')')) IN ({sections}) \
+                    AND EXISTS (SELECT 1 FROM notice_texts y \
+                                 WHERE y.notice_id = x.notice_id AND y.section_id = x.section_id \
+                                   AND y.field_id = 'TED-NEW_VALUE.TEXT') \
+                  ORDER BY v.seq DESC LIMIT 1) AS value_corrigendum \
+           FROM tenders t \
+           LEFT JOIN tender_version_amounts h \
+             ON h.rowid = (SELECT s.rowid FROM tender_version_amounts s \
+                            WHERE s.tender_id = t.id AND s.seq = t.current_seq \
+                              AND s.eur_cents = t.current_value_eur_cents \
+                            ORDER BY s.cents DESC, s.currency LIMIT 1) \
+          WHERE t.current_value_eur_cents >= {BAND_FLOOR_EUR_CENTS} \
+          ORDER BY t.current_value_eur_cents DESC, t.id DESC \
+          LIMIT {BAND_LISTING_CAP}"
+    )
+}
+
 pub fn whole_corpus_queries() -> Vec<(String, String)> {
     vec![
         ("fresh_holds".to_owned(), fresh_holds_sql()),
@@ -1603,6 +1740,10 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         // Issue 394 (c): the CPV spelling census. Whole-corpus because it walks the
         // `(scheme, code)` index, which the tender-id windows have nothing to bind to.
         ("cpv_shapes".to_owned(), CPV_SHAPES_SQL.to_owned()),
+        // Issue 471 unit 1: the €10–100 bn head-value band, row by row. Whole-corpus
+        // because it is driven by a VALUE range on `tenders_current_value_eur`, which
+        // the tender-id windows have nothing to bind to; that index seek bounds it.
+        ("band_listing".to_owned(), band_listing_sql()),
     ]
 }
 
@@ -2026,6 +2167,31 @@ pub struct CpvShapeRow {
     pub example: String,
 }
 
+/// One Tender whose elected head value sits in the €10–100 bn band (issue 471 unit 1),
+/// with the in-tender signals beside it. See [`band_listing_sql`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BandRow {
+    pub tender_id: i64,
+    pub source: String,
+    /// The elected head, `tenders.current_value_eur_cents`.
+    pub eur_cents: i64,
+    /// The elected figure as PUBLISHED — the listing's grouping key is `currency`.
+    pub currency: String,
+    pub cents: i64,
+    /// The head notice's profile and publication id.
+    pub profile: String,
+    pub head_notice: String,
+    /// The largest positive figure of the same Tender and currency that the head is
+    /// exactly 10ᵏ (k ≥ 3) above — the sharp signal. `None` when there is none.
+    pub pow10_partner: Option<i64>,
+    /// The smallest positive figure of the same Tender and currency below the head, for
+    /// the ratio column. For reading only: a plain ratio is NOT a signal (issue 471).
+    pub smallest_sibling: Option<i64>,
+    /// The newest version whose notice is an F14 value corrigendum (II.1.5, II.1.7,
+    /// II.2.6 or V.2.4), by publication id.
+    pub value_corrigendum: Option<String>,
+}
+
 /// One publication id carried by many distinct notices of a source (issue 394 b).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RepeatedIdRow {
@@ -2343,6 +2509,9 @@ pub struct Report {
     /// Issue 394 (c): CPV rows whose code is not one bare 8-digit string, per shape.
     /// Empty is the healthy state; UNMEASURED is told apart via [`Report::unmeasured`].
     pub cpv_shapes: Vec<CpvShapeRow>,
+    /// Issue 471 unit 1: every Tender whose elected head is at or above
+    /// [`BAND_FLOOR_EUR_CENTS`], one row per Tender, in the index's value order.
+    pub band: Vec<BandRow>,
     /// The longest version chain in the corpus (`MAX(tenders.current_seq)`) —
     /// the fold-cost tripwire (issue 92). 0 when unmeasured or the layer is
     /// empty; the render distinguishes the two via [`Report::unmeasured`].
@@ -2442,6 +2611,8 @@ pub struct Raw {
     pub publication_days: Rows,
     /// `[shape, rows, example]` per non-canonical CPV class (issue 394 c).
     pub cpv_shapes: Rows,
+    /// The head-value band rows, as [`band_listing_sql`] selects them (issue 471).
+    pub band_listing: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -2503,9 +2674,48 @@ impl Raw {
             unmapped_fields: take("unmapped_fields", &mut unmeasured)?,
             publication_days: take("publication_days", &mut unmeasured)?,
             cpv_shapes: take("cpv_shapes", &mut unmeasured)?,
+            band_listing: take("band_listing", &mut unmeasured)?,
             unmeasured,
         })
     }
+}
+
+/// A nullable JSON cell as a signed value — `None` for SQL NULL, which in the band
+/// listing means "no such sibling", a different claim from a sibling of 0.
+fn as_opt_i64(cell: Option<&Value>) -> Option<i64> {
+    cell.filter(|v| !v.is_null()).map(|v| as_i64(Some(v)))
+}
+
+/// The band listing's rows, one per Tender (issue 471). The SQL already returns one
+/// row per Tender (the elected row is ONE rowid, tie broken the read layer's way), so
+/// the dedupe here is a guard that never fires on a well-formed result — a duplicate
+/// would otherwise print twice. A stale head (no elected row found) arrives with an
+/// empty `currency`. The two sibling sources (amounts and lot awards) arrive as
+/// separate columns and are merged here: the larger exact-10ᵏ partner, the smaller
+/// sibling.
+fn band_rows(rows: &Rows) -> Vec<BandRow> {
+    let mut seen = std::collections::BTreeSet::new();
+    rows.iter()
+        .filter(|r| seen.insert(as_i64(r.first())))
+        .map(|r| {
+            let both = |a: Option<i64>, b: Option<i64>, pick: fn(i64, i64) -> i64| match (a, b) {
+                (Some(a), Some(b)) => Some(pick(a, b)),
+                (a, b) => a.or(b),
+            };
+            BandRow {
+                tender_id: as_i64(r.first()),
+                source: as_str(r.get(1)),
+                eur_cents: as_i64(r.get(2)),
+                currency: as_str(r.get(3)),
+                cents: as_i64(r.get(4)),
+                profile: as_str(r.get(5)),
+                head_notice: as_str(r.get(6)),
+                pow10_partner: both(as_opt_i64(r.get(7)), as_opt_i64(r.get(8)), i64::max),
+                smallest_sibling: both(as_opt_i64(r.get(9)), as_opt_i64(r.get(10)), i64::min),
+                value_corrigendum: r.get(11).and_then(Value::as_str).map(str::to_owned),
+            }
+        })
+        .collect()
 }
 
 /// Turn the raw result sets into a [`Report`]. Every era that appears as a
@@ -2798,6 +3008,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
             .iter()
             .map(|r| CpvShapeRow { shape: as_str(r.first()), rows: as_u64(r.get(1)), example: as_str(r.get(2)) })
             .collect(),
+        band: band_rows(&raw.band_listing),
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -3640,7 +3851,135 @@ pub fn render_text(report: &Report) -> String {
              a class's carriers with one indexed seek: `WHERE scheme = 'cpv' AND code = '<example>'`."
         );
     }
+    render_band(&mut out, report);
     out
+}
+
+/// Section 16: the €10–100 bn head-value band, every row, grouped by published
+/// currency (issue 471 unit 1).
+fn render_band(out: &mut String, report: &Report) {
+    use std::fmt::Write;
+    let _ = writeln!(
+        out,
+        "\n== 16. The head-value band (every elected head at or above EUR {}, by published \
+         currency — issue 471) ==",
+        major(BAND_FLOOR_EUR_CENTS)
+    );
+    if report.unmeasured.iter().any(|l| l == "band_listing") {
+        let _ = writeln!(out, "  UNMEASURED — the `band_listing` query did not run.");
+        return;
+    }
+    if report.band.is_empty() {
+        let _ = writeln!(out, "  none — no elected head value is at or above EUR {}.", major(BAND_FLOOR_EUR_CENTS));
+        return;
+    }
+    // Before the rows, so a reader meets it first: the walk is top-down, so a cut
+    // drops the figures nearest the floor.
+    if report.band.len() >= BAND_LISTING_CAP {
+        let _ = writeln!(
+            out,
+            "  LISTING FULL at {BAND_LISTING_CAP} Tenders — a safety cap three times the measured \
+             band, so the band has grown past anything 471 measured. The walk is from the top \
+             down: what is cut is the band's LOWEST heads."
+        );
+    }
+    // A Tender whose head column matches no amount row at its head version (the
+    // LEFT JOIN's empty side) has no published currency to group under.
+    let (stale, found): (Vec<&BandRow>, Vec<&BandRow>) = report.band.iter().partition(|r| r.currency.is_empty());
+    let mut by_currency: std::collections::BTreeMap<&str, Vec<&BandRow>> = Default::default();
+    for r in found {
+        by_currency.entry(r.currency.as_str()).or_default().push(r);
+    }
+    let mut groups: Vec<(&str, Vec<&BandRow>)> = by_currency.into_iter().collect();
+    // Biggest group first; the BTreeMap already made equal sizes alphabetical.
+    groups.sort_by(|a, b| b.1.len().cmp(&a.1.len()));
+    let _ = writeln!(
+        out,
+        "  {} Tender(s) in {} currenc{}{}; signals beside each row, nothing adjudicated.",
+        group(report.band.len() as u64),
+        groups.len(),
+        if groups.len() == 1 { "y" } else { "ies" },
+        if stale.is_empty() { String::new() } else { format!(", {} with no elected row found", stale.len()) }
+    );
+    if !stale.is_empty() {
+        let _ = writeln!(
+            out,
+            "  -- elected row NOT FOUND at the head version ({} Tender(s)) — the head column matches \
+             no amount row there (a `rederive-eur` move not yet refolded, issue 375?) --",
+            stale.len()
+        );
+        for r in &stale {
+            let _ = writeln!(
+                out,
+                "  {:>10}  {:<20} {:<16} {:>26} {:>22}",
+                r.tender_id,
+                band_era(&r.profile),
+                r.head_notice,
+                "—",
+                major(r.eur_cents)
+            );
+        }
+    }
+    for (currency, mut rows) in groups {
+        rows.sort_by(|a, b| b.cents.cmp(&a.cents).then(a.tender_id.cmp(&b.tender_id)));
+        let _ = writeln!(out, "  -- {currency} ({} Tender(s)) --", rows.len());
+        let _ = writeln!(
+            out,
+            "  {:>10}  {:<20} {:<16} {:>26} {:>22}  {:<30} {:>12}  {}",
+            "tender", "era", "head notice", "published", "EUR", "exact 10^k partner", "x smallest", "value corrigendum"
+        );
+        for r in rows {
+            let partner = match r.pow10_partner {
+                Some(p) if p > 0 => {
+                    let k = (r.cents / p).ilog10();
+                    format!("{} (10^{k})", major(p))
+                }
+                _ => "—".to_owned(),
+            };
+            let ratio = match r.smallest_sibling {
+                Some(m) if m > 0 => format!("x{}", group((r.cents / m) as u64)),
+                _ => "—".to_owned(),
+            };
+            let _ = writeln!(
+                out,
+                "  {:>10}  {:<20} {:<16} {:>26} {:>22}  {:<30} {:>12}  {}",
+                r.tender_id,
+                band_era(&r.profile),
+                r.head_notice,
+                major(r.cents),
+                major(r.eur_cents),
+                partner,
+                ratio,
+                r.value_corrigendum.as_deref().unwrap_or("—"),
+            );
+        }
+    }
+    let _ = writeln!(
+        out,
+        "  Read off `tenders_current_value_eur` from the top of the band down (an index range \
+         seek); EUR {} (`IMPLAUSIBLE_EUR_CENTS`) caps the band from above because the election \
+         refuses past it. `exact 10^k partner` is the largest figure of the same Tender and \
+         currency, in any version, that the head is exactly 10^k (k >= 3) above — the sharp \
+         scale-error signal; figures at or below 10.00 as published (issue 380's bottom-of-range \
+         placeholders) are never partners or siblings. `x smallest` is the head over the smallest \
+         such sibling, for reading only: a plain ratio is not a signal (a GBP 19 bn framework over \
+         its lots reads x540 too). `value corrigendum` names the newest F14 in the chain correcting \
+         II.1.5, II.1.7, II.2.6 or V.2.4 — the publisher's own correction, stored as prose and not \
+         yet applied. That column knows the 2014-directive (r2.0.9) numbering ONLY: an r2.0.8 F14 \
+         names its value sections in the 2004 numbering, which nothing has measured, so on an \
+         r2.0.8-era chain `—` means NOT CHECKED, not none. A row with none of the three signals \
+         is 20905's class (nothing inside the Tender separates it from a real contract) ONLY when \
+         its head is eForms, FTS or text-era: an r2.0.8 / r2.0.9 head still has a second \
+         representation of the figure (`@FMTVAL` against the element text), which 471 units 2–3 \
+         check.",
+        major(store::canonical::IMPLAUSIBLE_EUR_CENTS)
+    );
+}
+
+/// The band's era column: [`display_era`], cut to the column's 20 characters.
+fn band_era(profile: &str) -> String {
+    let era = display_era(profile);
+    if era.chars().count() > 20 { era.chars().take(19).collect::<String>() + "…" } else { era }
 }
 
 /// One sentinel listing, rendered. Shared by both halves of section 10 so the amount and
@@ -4022,6 +4361,33 @@ pub fn render_json(report: &Report) -> String {
             .iter()
             .map(|r| json!({ "shape": r.shape, "rows": r.rows, "example": r.example }))
             .collect::<Vec<_>>(),
+        // Issue 471 unit 1: the head-value band, every row. The floor rides along so a
+        // listing read later says what region it covered.
+        "head_value_band": {
+            "floor_eur_cents": BAND_FLOOR_EUR_CENTS,
+            "ceiling_eur_cents": store::canonical::IMPLAUSIBLE_EUR_CENTS,
+            "cap": BAND_LISTING_CAP,
+            "full": report.band.len() >= BAND_LISTING_CAP,
+            "measured": !report.unmeasured.iter().any(|l| l == "band_listing"),
+            "rows": report
+                .band
+                .iter()
+                .map(|r| json!({
+                    "tender_id": r.tender_id,
+                    "source": r.source,
+                    "eur_cents": r.eur_cents,
+                    // null = no elected row found at the head version (stale head).
+                    "currency": (!r.currency.is_empty()).then_some(&r.currency),
+                    "cents": (!r.currency.is_empty()).then_some(r.cents),
+                    "profile": r.profile,
+                    "era": era_of(&r.profile),
+                    "head_notice": r.head_notice,
+                    "pow10_partner": r.pow10_partner,
+                    "smallest_sibling": r.smallest_sibling,
+                    "value_corrigendum": r.value_corrigendum,
+                }))
+                .collect::<Vec<_>>(),
+        },
         "amount_vat_basis": amount_basis,
         "content_presence": presence,
         "amount_plausibility": plausibility,
@@ -4272,6 +4638,7 @@ mod tests {
             publication_days_seen: 0,
             publication_sources: 0,
             cpv_shapes: Vec::new(),
+            band: Vec::new(),
             completeness: vec![CompletenessRow {
                 profile: "eforms:eforms-sdk-1.13".into(),
                 versions: 1_000,
@@ -5392,6 +5759,126 @@ mod tests {
         assert!(blind.unmeasured.iter().any(|l| l == "cpv_shapes"));
     }
 
+    /// Issue 471 unit 1: section 16 groups the band by PUBLISHED currency, keeps one row
+    /// per Tender when the elected figure arrives twice (tender and lot scope), merges
+    /// the two sibling sources into one partner and one smallest sibling, and reads
+    /// three ways — rows, `none`, UNMEASURED — in text and JSON.
+    #[test]
+    fn the_band_listing_groups_by_currency_and_merges_its_signals() {
+        let row = |id: i64, cur: &str, cents: i64, eur: i64, p_amt: Value, p_award: Value, m_amt: Value, m_award: Value, corr: Value| {
+            vec![
+                json!(id), json!("ted"), json!(eur), json!(cur), json!(cents),
+                json!("ted-export-r209"), json!("000001-2021"),
+                p_amt, p_award, m_amt, m_award, corr,
+            ]
+        };
+        let n = Value::Null;
+        let mut found = sentinel_scaffold();
+        put(
+            &mut found,
+            "band_listing",
+            Some(vec![
+                // GBP 9 bn over a GBP 9 M lot estimate (10^3), and a value corrigendum.
+                row(5_592_948, "GBP", 900_000_000_000, 1_040_000_000_000, json!(900_000_000), n.clone(), json!(900_000_000), n.clone(), json!("071343-2017")),
+                // The same Tender again: the elected figure at lot scope as well.
+                row(5_592_948, "GBP", 900_000_000_000, 1_040_000_000_000, json!(900_000_000), n.clone(), json!(900_000_000), n.clone(), json!("071343-2017")),
+                // EUR 33.26 bn with nothing beside it: 20905's class.
+                row(20_905, "EUR", 3_326_050_000_000, 3_326_050_000_000, n.clone(), n.clone(), n.clone(), n.clone(), n.clone()),
+                // EUR 20 bn whose partner sits in the LOT AWARDS (10^6), above a smaller
+                // non-power amount sibling.
+                row(4_578_779, "EUR", 2_000_000_000_000, 2_000_000_000_000, n.clone(), json!(2_000_000), json!(3_000_000), json!(2_000_000), n.clone()),
+            ]),
+        );
+        let report = assemble("x", &Raw::from_labelled(found).expect("raw"));
+        assert_eq!(report.band.len(), 3, "one row per Tender: {:?}", report.band);
+        let gbp = report.band.iter().find(|r| r.tender_id == 5_592_948).expect("gbp row");
+        assert_eq!(gbp.pow10_partner, Some(900_000_000));
+        assert_eq!(gbp.value_corrigendum.as_deref(), Some("071343-2017"));
+        let lone = report.band.iter().find(|r| r.tender_id == 20_905).expect("lone row");
+        assert_eq!((lone.pow10_partner, lone.smallest_sibling, lone.value_corrigendum.clone()), (None, None, None));
+        let award = report.band.iter().find(|r| r.tender_id == 4_578_779).expect("award row");
+        assert_eq!(award.pow10_partner, Some(2_000_000), "the award column's partner is kept");
+        assert_eq!(award.smallest_sibling, Some(2_000_000), "the smaller of the two siblings");
+
+        let text = render_text(&report);
+        assert!(text.contains("== 16. The head-value band") && text.contains("issue 471"), "{text}");
+        assert!(text.contains("10,000,000,000.00"), "the floor is printed: {text}");
+        // Grouped by published currency: EUR (two Tenders) before GBP (one), and each
+        // Tender under its own currency's heading.
+        let eur = text.find("-- EUR (2 Tender(s)) --").expect("EUR group");
+        let gbp_h = text.find("-- GBP (1 Tender(s)) --").expect("GBP group");
+        assert!(eur < gbp_h, "biggest group first:\n{text}");
+        let pos = |needle: &str| text.find(needle).unwrap_or_else(|| panic!("{needle} missing:\n{text}"));
+        assert!(pos("20905") > eur && pos("20905") < gbp_h, "{text}");
+        assert!(pos("4578779") > eur && pos("4578779") < gbp_h, "{text}");
+        assert!(pos("5592948") > gbp_h, "{text}");
+        assert!(text.contains("9,000,000.00 (10^3)"), "{text}");
+        assert!(text.contains("20,000.00 (10^6)"), "{text}");
+        assert!(text.contains("071343-2017"), "{text}");
+        assert_eq!(text.matches("5592948").count(), 1, "the duplicate is not printed twice:\n{text}");
+
+        let v: Value = serde_json::from_str(&render_json(&report)).expect("json");
+        let band = &v["head_value_band"];
+        assert_eq!(band["floor_eur_cents"], BAND_FLOOR_EUR_CENTS);
+        assert_eq!(band["rows"].as_array().expect("rows").len(), 3);
+        assert_eq!(band["rows"][0]["era"], "TED_EXPORT r2.0.9");
+
+        assert_eq!(band["full"], false);
+        assert!(!text.contains("LISTING FULL"), "{text}");
+        // The footer does not class an r209 row with no signal as 20905's: @FMTVAL can
+        // still reach it, and the corrigendum column is blind to r2.0.8 numbering.
+        assert!(text.contains("ONLY when its head is eForms, FTS or text-era"), "{text}");
+        assert!(text.contains("`—` means NOT CHECKED"), "{text}");
+
+        // A stale head: the LEFT JOIN found no elected row, so no published figure.
+        // Listed under its own heading, never silently dropped; JSON currency is null.
+        let mut stale = sentinel_scaffold();
+        put(
+            &mut stale,
+            "band_listing",
+            Some(vec![
+                vec![json!(42), json!("ted"), json!(1_500_000_000_000i64), n.clone(), n.clone(), json!("ted-export-r209"), json!("000042-2020"), n.clone(), n.clone(), n.clone(), n.clone(), n.clone()],
+                row(20_905, "EUR", 3_326_050_000_000, 3_326_050_000_000, n.clone(), n.clone(), n.clone(), n.clone(), n.clone()),
+            ]),
+        );
+        let stale = assemble("x", &Raw::from_labelled(stale).expect("raw"));
+        let text = render_text(&stale);
+        assert!(text.contains("2 Tender(s) in 1 currency, 1 with no elected row found"), "{text}");
+        let h = text.find("elected row NOT FOUND at the head version (1 Tender(s))").expect("stale heading");
+        assert!(text[h..].contains("42") && text[h..].contains("15,000,000,000.00"), "{text}");
+        let v: Value = serde_json::from_str(&render_json(&stale)).expect("json");
+        let r42 = v["head_value_band"]["rows"].as_array().expect("rows").iter().find(|r| r["tender_id"] == 42).expect("42").clone();
+        assert!(r42["currency"].is_null() && r42["cents"].is_null(), "{r42}");
+
+        // A full listing says so BEFORE its rows, and says what the top-down walk cut.
+        let mut full = sentinel_scaffold();
+        put(
+            &mut full,
+            "band_listing",
+            Some(
+                (0..BAND_LISTING_CAP as i64)
+                    .map(|i| row(1_000 + i, "EUR", 2_000_000_000_000 - i, 2_000_000_000_000 - i, n.clone(), n.clone(), n.clone(), n.clone(), n.clone()))
+                    .collect(),
+            ),
+        );
+        let full = assemble("x", &Raw::from_labelled(full).expect("raw"));
+        let text = render_text(&full);
+        let banner = text.find("LISTING FULL at 1000 Tenders").expect("banner");
+        assert!(banner < text.find("-- EUR (").expect("rows"), "the banner leads:\n{text}");
+        assert!(text.contains("what is cut is the band's LOWEST heads"), "{text}");
+        let v: Value = serde_json::from_str(&render_json(&full)).expect("json");
+        assert_eq!(v["head_value_band"]["full"], true);
+
+        let none = assemble("x", &Raw::from_labelled(sentinel_scaffold()).expect("raw"));
+        assert!(render_text(&none).contains("none — no elected head value is at or above EUR 10,000,000,000.00"));
+        let mut blind = sentinel_scaffold();
+        put(&mut blind, "band_listing", None);
+        let blind = assemble("x", &Raw::from_labelled(blind).expect("raw"));
+        assert!(render_text(&blind).contains("UNMEASURED — the `band_listing` query did not run."));
+        let v: Value = serde_json::from_str(&render_json(&blind)).expect("json");
+        assert_eq!(v["head_value_band"]["measured"], false);
+    }
+
     /// Section 14 renders, and says the two things a reader needs: the bracketing
     /// counts and that the threshold is calibrated rather than picked.
     #[test]
@@ -5618,6 +6105,8 @@ mod tests {
                 "repeated_ids",
                 // Issue 394 (c): the CPV spelling census.
                 "cpv_shapes",
+                // Issue 471 unit 1: the head-value band listing.
+                "band_listing",
             ]
         );
     }
@@ -5822,6 +6311,7 @@ mod tests {
             ("publication_days".to_owned(), Some(vec![])),
             ("repeated_ids".to_owned(), Some(vec![])),
             ("cpv_shapes".to_owned(), Some(vec![])),
+            ("band_listing".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
@@ -6273,6 +6763,7 @@ mod tests {
             ("publication_days".to_owned(), Some(vec![])),
             ("repeated_ids".to_owned(), Some(vec![])),
             ("cpv_shapes".to_owned(), Some(vec![])),
+            ("band_listing".to_owned(), Some(vec![])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);

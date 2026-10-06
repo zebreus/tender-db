@@ -827,3 +827,239 @@ async fn the_cpv_shape_census_counts_each_shape_and_reads_only_its_index() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// Issue 471 unit 1 (366 unit 6), pinned by the name the issue gives it: a head figure
+/// that occurs ONCE in the corpus reaches the band listing (section 16) and does not
+/// reach section 10, which keeps only values repeating [`SENTINEL_MIN_REPEATS`] times.
+///
+/// The same scratch corpus pins the rest of the unit through the real SQL:
+/// - the THRESHOLD: €9,999,999,999.99 is out, exactly €10 bn is in, a NULL head is out;
+/// - the GROUPING: rows come back under their published currency, one per Tender even
+///   when the elected figure is published at tender and lot scope alike;
+/// - the SIGNALS: the exact-10³ lot estimate, the smallest sibling, and the F14 value
+///   corrigendum earlier in the chain (`II.1.7 )`: the trailing `)` with a space before
+///   it, normalised the way `project::f14_coordinate` does); a 1.00 placeholder sibling
+///   is neither a 10ᵏ partner nor the smallest sibling (issue 380's ceiling);
+/// - ONE ROW PER TENDER from the SQL itself (so the LIMIT counts Tenders), the tie
+///   between two head rows sharing the elected `eur_cents` broken the read layer's way
+///   (`cents DESC, currency`), and a STALE head (no amount row at the head version
+///   matches the head column) listed with no published figure rather than dropped;
+/// - the ORDER: top of the band first, so a capped listing cuts the lowest heads;
+/// - the BOUND: the plan drives from a range seek on `tenders_current_value_eur`, never
+///   a scan of `tenders`, every satellite read is a seek (issue 243's rule), and there
+///   is no temp B-tree (no sorter) — on an EMPTY `sqlite_stat1` and again after
+///   `store::ANALYZE_TABLES` are analyzed (issue 429's job, issue 428's finding that
+///   turso plans with the stats). The second check is fixture statistics, not prod's:
+///   a plan-probe on an analyzed prod snapshot is still owed before 429's schedule.
+#[tokio::test]
+async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
+    let (db, fetch_id, path) = scratch("band").await;
+    let raw = turso::Builder::new_local(&path).build().await.expect("raw open");
+    let conn = raw.connect().expect("connect");
+    let exec = |sql: String| {
+        let conn = &conn;
+        async move { conn.execute(&sql, ()).await.unwrap_or_else(|e| panic!("{sql}: {e}")) }
+    };
+    // Notices 1..=7, one per (tender, version) below.
+    let notices = [
+        ("071343-2017", "ted-export-r209"),  // 1: tender 1's F14 value corrigendum
+        ("123456-2017", "ted-export-r209"),  // 2: tender 1's award, the £9 bn head
+        ("00447172-2025", "eforms:eforms-sdk-1.13"), // 3: tender 2, 20905's class
+        ("200003-2020", "ted-export-r208"),  // 4: tender 3, just under the floor
+        ("200004-2020", "ted-export-r209"),  // 5: tender 4, exactly on the floor
+        ("200005-2020", "ted-export-r209"),  // 6: tender 5, the repeated sentinel
+        ("200007-2020", "ted-export-r209"),  // 7: tender 7, SEK
+        ("200008-2020", "ted-export-r209"),  // 8: tender 8, a tie on the elected eur_cents
+        ("200009-2020", "ted-export-r209"),  // 9: tender 9, a stale head column
+    ];
+    for (i, (pubid, profile)) in notices.iter().enumerate() {
+        exec(format!(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at) \
+             VALUES ({}, 'ted', '{pubid}', 'h{i}', '{profile}', {fetch_id}, 'm{i}.xml', 0)",
+            i + 1
+        ))
+        .await;
+    }
+    // (tender, current_seq, head eur_cents)
+    let tenders: [(i64, i64, Option<i64>); 8] = [
+        (1, 2, Some(1_040_000_000_000)),
+        (2, 1, Some(3_326_050_000_000)),
+        (3, 1, Some(999_999_999_999)),
+        (4, 1, Some(1_000_000_000_000)),
+        (5, 1, None),
+        (7, 1, Some(4_400_000_000_000)),
+        (8, 1, Some(2_000_000_000_000)),
+        (9, 1, Some(1_200_000_000_000)),
+    ];
+    for (id, seq, eur) in tenders {
+        let eur = eur.map_or("NULL".to_owned(), |e| e.to_string());
+        exec(format!(
+            "INSERT INTO tenders (id, source, kind, created_at, current_seq, current_value_eur_cents) \
+             VALUES ({id}, 'ted', 'procedure', 0, {seq}, {eur})"
+        ))
+        .await;
+    }
+    // (tender, seq, notice)
+    for (tender, seq, notice) in [(1, 1, 1), (1, 2, 2), (2, 1, 3), (3, 1, 4), (4, 1, 5), (5, 1, 6), (7, 1, 7), (8, 1, 8), (9, 1, 9)] {
+        exec(format!(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id) \
+             VALUES ({tender}, {seq}, {notice}, 0, '{}')",
+            notices[notice as usize - 1].0
+        ))
+        .await;
+    }
+    let amount = |tender: i64, seq: i64, lot: &str, cents: i64, cur: &str, eur: Option<i64>| {
+        let eur = eur.map_or("NULL".to_owned(), |e| e.to_string());
+        format!(
+            "INSERT INTO tender_version_amounts (tender_id, seq, lot_id, field, cents, currency, eur_cents) \
+             VALUES ({tender}, {seq}, {lot}, 'result_value', {cents}, '{cur}', {eur})"
+        )
+    };
+    // Tender 1: the £9 bn head over a £9 M lot estimate (10³), plus a £45 M sibling.
+    exec(amount(1, 2, "NULL", 900_000_000_000, "GBP", Some(1_040_000_000_000))).await;
+    exec(amount(1, 2, "1", 900_000_000, "GBP", Some(1_040_000_000))).await;
+    exec(amount(1, 1, "NULL", 4_500_000_000, "GBP", Some(5_200_000_000))).await;
+    // Tender 2: one figure, published in two slots, nowhere else in the corpus.
+    exec(amount(2, 1, "NULL", 3_326_050_000_000, "EUR", Some(3_326_050_000_000))).await;
+    exec(amount(2, 1, "1", 3_326_050_000_000, "EUR", Some(3_326_050_000_000))).await;
+    // Tender 3: a cent under the floor. Tender 4: exactly on it.
+    exec(amount(3, 1, "NULL", 999_999_999_999, "EUR", Some(999_999_999_999))).await;
+    exec(amount(4, 1, "NULL", 1_000_000_000_000, "EUR", Some(1_000_000_000_000))).await;
+    // ... beside a EUR 1.00 placeholder exactly 10¹² below it: NOT a partner (issue 380).
+    exec(amount(4, 1, "1", 100, "EUR", Some(100))).await;
+    // Tender 8: two head rows share the elected eur_cents. The read layer serves
+    // `cents DESC, currency` first — the DKK row — and so must the listing. Inserted
+    // EUR first so "keep the first joined row" would pick the wrong one.
+    exec(amount(8, 1, "NULL", 2_000_000_000_000, "EUR", Some(2_000_000_000_000))).await;
+    exec(amount(8, 1, "1", 14_920_000_000_000, "DKK", Some(2_000_000_000_000))).await;
+    // Tender 9: the head column says 12 bn, the only head row converts to 11 bn — a
+    // `rederive-eur` move not yet refolded (issue 375).
+    exec(amount(9, 1, "NULL", 1_100_000_000_000, "EUR", Some(1_100_000_000_000))).await;
+    // Tender 5: a REPEATED sentinel, so section 10 is not vacuously empty — and its head
+    // is NULL (the election refused it), so it is not in the band.
+    for _ in 0..10 {
+        exec(amount(5, 1, "NULL", 2_222_222_222_222, "PLN", Some(500_000_000_000))).await;
+    }
+    // Tender 7: SEK 500 bn, its own currency group; a lot award 10⁴ below it.
+    exec(amount(7, 1, "NULL", 50_000_000_000_000, "SEK", Some(4_400_000_000_000))).await;
+    exec(
+        "INSERT INTO tender_version_lot_results (tender_id, seq, lot_result_id, awarded_cents, awarded_currency) \
+         VALUES (7, 1, 1, 5000000000, 'SEK')"
+            .to_owned(),
+    )
+    .await;
+    // Tender 1's corrigendum: a CHG-1 block naming II.1.7 (with the trailing `)`) and
+    // its NEW_VALUE.TEXT, plus an unrelated CHG-2 naming IV.2.2.
+    for (section, field, value) in [
+        ("CHG-1", "TED-SECTION", "II.1.7 )"),
+        ("CHG-1", "TED-NEW_VALUE.TEXT", "9 000 000.00 GBP"),
+        ("CHG-2", "TED-SECTION", "IV.2.2"),
+    ] {
+        exec(format!(
+            "INSERT INTO notice_texts (notice_id, section_id, field_id, ordinal, value) \
+             VALUES (1, '{section}', '{field}', 0, '{value}')"
+        ))
+        .await;
+    }
+
+    // The deferred indexes after the seed, as on prod (and as issue 429's test does: a
+    // bulk build rather than 40k one-row index inserts).
+    db.build_tender_indexes().await.expect("tender indexes");
+    let report = measure(&db, "http://x").await;
+    let ids: Vec<i64> = report.band.iter().map(|r| r.tender_id).collect();
+    assert_eq!(ids, vec![7, 2, 8, 9, 1, 4], "top-down index order, one row per Tender; under the floor and NULL are out");
+    let row = |id: i64| report.band.iter().find(|r| r.tender_id == id).expect("row");
+    assert_eq!((row(1).currency.as_str(), row(1).cents), ("GBP", 900_000_000_000));
+    assert_eq!(row(1).profile, "ted-export-r209");
+    assert_eq!(row(1).head_notice, "123456-2017");
+    assert_eq!(row(1).pow10_partner, Some(900_000_000), "the exact 10³ lot estimate");
+    assert_eq!(row(1).smallest_sibling, Some(900_000_000));
+    assert_eq!(row(1).value_corrigendum.as_deref(), Some("071343-2017"));
+    assert_eq!(row(2).currency, "EUR");
+    assert_eq!((row(2).pow10_partner, row(2).smallest_sibling, row(2).value_corrigendum.clone()), (None, None, None));
+    assert_eq!(row(7).pow10_partner, Some(5_000_000_000), "a lot award 10⁴ below");
+    assert_eq!(row(4).value_corrigendum, None, "no F14 in its chain");
+    assert_eq!((row(4).pow10_partner, row(4).smallest_sibling), (None, None), "a 1.00 placeholder is no sibling");
+    assert_eq!((row(8).currency.as_str(), row(8).cents), ("DKK", 14_920_000_000_000), "the read layer's tiebreak");
+    assert_eq!((row(9).currency.as_str(), row(9).eur_cents), ("", 1_200_000_000_000), "a stale head is listed, figure-less");
+
+    let text = data_quality::render_text(&report);
+    let s10 = text.find("== 10.").expect("section 10");
+    let s11 = text.find("== 11.").expect("section 11");
+    let s16 = text.find("== 16.").expect("section 16");
+    assert!(text[s10..s11].contains("22,222,222,222.22"), "section 10 sees the repeat:\n{text}");
+    assert!(!text[s10..s11].contains("33,260,500,000.00"), "a unique figure is not a sentinel:\n{text}");
+    let band = &text[s16..];
+    assert!(band.contains("issue 471"), "{band}");
+    assert!(band.contains("33,260,500,000.00"), "the unique head is in the band:\n{band}");
+    for group in ["-- EUR (2 Tender(s)) --", "-- GBP (1 Tender(s)) --", "-- SEK (1 Tender(s)) --"] {
+        assert!(band.contains(group), "{group}:\n{band}");
+    }
+    assert!(!band.contains("9,999,999,999.99"), "{band}");
+    assert!(band.contains("1 with no elected row found"), "{band}");
+
+    // The bound. Driving read: a range seek on the value index, not a scan of tenders.
+    let sql = data_quality::band_listing_sql();
+    // `(parent, detail)` per plan line: a sorter under parent 0 sorts the whole
+    // listing; one under a correlated subquery sorts that Tender's few head rows.
+    let plan_of = |c: turso::Connection| {
+        let sql = sql.clone();
+        async move {
+            let mut rows = c.query(&format!("EXPLAIN QUERY PLAN {sql}"), ()).await.expect("plan");
+            let mut out = Vec::new();
+            while let Some(r) = rows.next().await.expect("plan row") {
+                let parent = r.get_value(1).ok().and_then(|v| v.as_integer().copied()).unwrap_or(-1);
+                out.push((parent, r.get_value(3).ok().and_then(|v| v.as_text().cloned()).unwrap_or_default()));
+            }
+            out
+        }
+    };
+    let check = |label: &str, plan: &[(i64, String)]| {
+        let text = plan.iter().map(|(p, d)| format!("{p:>4} {d}")).collect::<Vec<_>>().join("\n");
+        assert!(
+            plan.first().is_some_and(|(_, d)| d == "SEARCH t USING INDEX tenders_current_value_eur (current_value_eur_cents>=?)"),
+            "{label}: the band must drive from a seek on the value index; plan:\n{text}"
+        );
+        for (_, d) in plan.iter().filter(|(_, d)| d.contains("SCAN")) {
+            panic!("{label}: every read must be a SEARCH, found a scan: {d}\nplan:\n{text}");
+        }
+        for (_, d) in plan.iter().filter(|(p, d)| *p == 0 && (d.contains("SORTER") || d.contains("TEMP B-TREE"))) {
+            panic!("{label}: walked in index order, no sorter over the listing: {d}\nplan:\n{text}");
+        }
+    };
+    check("empty sqlite_stat1", &plan_of(raw.connect().expect("connect")).await);
+
+    // Filler, so statistics have a shape to plan with: 2,000 ordinary Tenders under
+    // the floor (added AFTER the measurement above, which it would only slow down), each with a head version, two
+    // amounts and a lot award — the "many rows, few per Tender" proportions of prod.
+    exec("INSERT INTO tenders (id, source, kind, created_at, current_seq, current_value_eur_cents) \
+          SELECT 100 + value, 'ted', 'procedure', 0, 1, 500000 + value FROM generate_series(1, 2000)"
+        .to_owned()).await;
+    exec("INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id) \
+          SELECT 100 + value, 1, 3, 0, 'f' || value FROM generate_series(1, 2000)"
+        .to_owned()).await;
+    for lot in ["NULL", "1"] {
+        exec(format!(
+            "INSERT INTO tender_version_amounts (tender_id, seq, lot_id, field, cents, currency, eur_cents) \
+             SELECT 100 + value, 1, {lot}, 'estimated_value', 500000 + value, 'EUR', 500000 + value \
+               FROM generate_series(1, 2000)"
+        )).await;
+    }
+    exec("INSERT INTO tender_version_lot_results (tender_id, seq, lot_result_id, awarded_cents, awarded_currency) \
+          SELECT 100 + value, 1, 1, 400000 + value, 'EUR' FROM generate_series(1, 2000)"
+        .to_owned()).await;
+
+    // The same plan with statistics (issue 428: turso plans with `sqlite_stat1`; issue
+    // 429's job writes it for exactly `ANALYZE_TABLES`). Fixture statistics over the
+    // 2,000-Tender filler, not prod's — see the doc comment.
+    for table in store::ANALYZE_TABLES {
+        db.analyze_table(table).await.unwrap_or_else(|e| panic!("{table}: {e}"));
+    }
+    db.finish_analyze().await.expect("finish analyze");
+    check("after ANALYZE", &plan_of(raw.connect().expect("reconnect")).await);
+
+    drop(conn);
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
