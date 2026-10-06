@@ -1,6 +1,6 @@
 # 471 — r209 amounts are never checked against their `@FMTVAL`, and nothing adjudicates the €10–100 bn head-value band (366 units 5 and 6, dropped when 366 closed)
 
-Status: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); NEXT: unit 2 (gated archive @FMTVAL read). Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
+Status: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); UNIT 2 READ DONE (r208: @FMTVAL disagrees with text — 4490098; r209: no FMTVAL, publisher text errors incl. a dropped decimal point); NEXT: unit 3 for r208 (measure the r208 band rows first), then unit 4. Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
 Kind: data quality (amount plausibility: the legacy parse layer and the head election)
 Relates to: 366 (promised units 5 and 6, closed 2026-09-12 without them), 380 (its sweep still points at "the open half of
 issue 366"), 267 (the plausibility measure), 372 (the `quality` marker on `Fact::Amount`), 385 (F14 corrigendum dates:
@@ -259,3 +259,26 @@ and 3 are recorded here as they land.
     frameworks and nothing is adjudicated.
 - **Next.** Unit 2, the gated archive read (`@FMTVAL` against the stored amount) for the r208/r209 rows. Then a
   verdict pass on the 22 rows with a 10^k partner.
+
+## Unit 2 — the archive read (2026-10-06): answered, and the answer splits by era
+
+These are bounded member reads, one stream per monthly tar. The members are saved under
+`.scratch/tender-db/471-values/archive/`.
+
+| tender | member | what the XML says | verdict |
+|---|---|---|---|
+| 4490098 (r208) | `2011-07.tar` → `2011-07-15.tar.gz` → `20110715_134/222043_2011.xml` | `<VALUE_COST FMTVAL="49700000000000000">49 700` (twice), beside `FMTVAL="4970000">49 700` and `FMTVAL="5000000">50 000` | **`@FMTVAL` disagrees with its text.** The text is 49,700 EUR; the attribute is 4.97×10¹⁶. The stored figure (4.97×10¹⁸ cents) is the attribute, so the error is TED's attribute, not the publisher's. |
+| 6581010 (r209) | `2020-01.tar` → `01/20200120_2020013.tar.gz` → `20200120_13/00026682_2020.xml` | `<VAL_TOTAL CURRENCY="EUR">59733280000.00` (no FMTVAL); lot `46549800.00` | The publisher's own text. The first notice published 597,332,800.00 (10²). |
+| 6941544 (r209) | `2021-10.tar` → `20211027_209/548977_2021.xml` | `<VAL_TOTAL CURRENCY="GBP">80000000000.00` beside `<VAL_ESTIMATED_TOTAL CURRENCY="GBP">80000000.00` (no FMTVAL) | The publisher's own text, with a 10³ partner in the same notice. |
+| 6843260 (r209) | `2021-01.tar` → `20210111_006/010347_2021.xml` | `<VAL_TOTAL CURRENCY="GBP">3097158480` and a total of `9318469680`, both without a decimal point, while sibling lots read `34647558.40`, `26438016.80`, `1127536.80` (no FMTVAL) | The publisher's own text: a dropped decimal point. The buyer's F14 prints 3 097 158.48. |
+
+- **Answer.**
+  - **r2.0.8 can carry a wrong `@FMTVAL` behind a correct text.** Unit 3 (parse both, mark the fact when they
+    disagree) is needed for r2.0.8.
+  - **r2.0.9 publishes no `@FMTVAL` on these values,** so its band errors are the publishers'. Units 4–5 (the
+    in-tender signals) carry them.
+- **A third signal for unit 4.** 010347 is a dropped decimal point: an integer text of ≥ 9 digits whose siblings in
+  the same notice and currency carry 2 decimals, and whose value /100 matches nothing. It is weaker than the exact
+  10^k partner. Record it and decide it on unit 1's listing.
+- **Next.** Unit 3 for r2.0.8. Measure how many r208 amount elements carry an `@FMTVAL` that disagrees with their
+  text, as a bounded member sample over the r208 band rows (34 tenders), before building. Then unit 4.
