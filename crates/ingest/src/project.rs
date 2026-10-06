@@ -403,6 +403,110 @@ fn f14_refusal_class(target: &str) -> &'static str {
     F14_REFUSED_TARGETS.iter().find(|(coord, _)| *coord == key).map(|(_, class)| *class).unwrap_or("other")
 }
 
+/// An F14 corrigendum's new VALUE, as published text (issue 489).
+const F14_VALUE_FIELD: &str = "TED-NEW_VALUE.TEXT";
+
+/// What a corrigendum's new value MEANS, by the form section it corrects
+/// (issue 489 unit 2). Tender scope only: II.1.5 is the procedure's total
+/// estimated value and II.1.7 its total awarded value — one figure per notice in
+/// every measured block (32/32 and 16/16 in 385's window, 2026-10-06), so there is
+/// no lot or award to resolve. II.2.6 (a lot's estimate) names no lot key in its
+/// block and arrives as several consecutive blocks or prose, and V.2.4 (a
+/// contract's value) carries the initial estimate AND the final value as two
+/// blocks of one coordinate in the Polish form; mapping either would mean
+/// guessing, so both stay in the notice layer and are counted
+/// ([`F14TargetGate::value_lot_or_award`]). Same direction as 385: a missing
+/// correction is visible as a stale figure, an invented one is not.
+const F14_TARGET_AMOUNTS: &[(&str, &str)] = &[("II.1.5", "estimated_value"), ("II.1.7", "result_value")];
+
+/// The value coordinates measured carrying a `NEW_VALUE.TEXT` that are refused
+/// on purpose (see [`F14_TARGET_AMOUNTS`]).
+const F14_REFUSED_VALUE_TARGETS: &[&str] = &["II.2.6", "V.2.4"];
+
+/// The canonical amount a corrigendum's `TED-SECTION` coordinate corrects, if
+/// it is one this layer maps.
+fn f14_target_amount(target: &str) -> Option<&'static str> {
+    let key = f14_coordinate(target);
+    F14_TARGET_AMOUNTS.iter().find(|(coord, _)| *coord == key).map(|(_, field)| *field)
+}
+
+/// A corrigendum's `NEW_VALUE.TEXT` as one (cents, currency), STRICTLY (issue
+/// 489 unit 2): `None` unless the text is exactly one figure and one currency.
+///
+/// Accepted, all measured: `379 502,40 EUR`, `Wartość bez VAT: 1 703 480,12 PLN`
+/// (a label ending in `:` is skipped when it holds no digit — the guard
+/// `read_value_item` uses, so a second figure in the "label" is never skipped
+/// past), `12.409.218.269,80 EUR`, `58 903,50EUR.` (a glued code, a closing
+/// period). The number goes through [`crate::r209::value::display_cents`], which
+/// refuses every spelling that does not say where the decimal point is
+/// (`1.234`, the malformed `224,425,00`).
+///
+/// Refused: no currency (`4 500 000,00` — about a fifth of the sample; the
+/// currency would have to come from the figure it corrects, which a notice cannot
+/// see), anything after the code (`769 309,88 EUR bez DPH.`), prose and second
+/// figures, zero.
+fn f14_new_value_amount(text: &str) -> Option<(i64, String)> {
+    let text = text.trim().trim_end_matches('.').trim();
+    let figure = match text.rsplit_once(':') {
+        Some((label, figure)) if !label.bytes().any(|b| b.is_ascii_digit()) => figure.trim(),
+        Some(_) => return None,
+        None => text,
+    };
+    let bytes = figure.as_bytes();
+    if bytes.len() < 4 || !bytes[bytes.len() - 3..].iter().all(u8::is_ascii_uppercase) {
+        return None;
+    }
+    // The last three bytes are ASCII, so this is a char boundary.
+    let (number, currency) = figure.split_at(figure.len() - 3);
+    let cents = crate::r209::value::display_cents(number.trim_end_matches([' ', '\u{a0}', '\u{202f}']))?;
+    (cents > 0).then(|| (cents, currency.to_owned()))
+}
+
+/// This notice's admitted value corrections, one per canonical field, and the
+/// tally of what was read (issue 489 unit 2). A field corrected to two DIFFERENT
+/// figures in one notice is ambiguous and yields nothing; the same figure twice
+/// is one correction.
+fn f14_value_corrections<'a>(
+    parsed: &'a Parsed,
+    targets: &BTreeMap<&str, &str>,
+) -> (BTreeMap<&'static str, Option<(i64, String)>>, F14TargetGate) {
+    let mut gate = F14TargetGate::default();
+    let mut found: BTreeMap<&'static str, Option<(i64, String)>> = BTreeMap::new();
+    for v in &parsed.values {
+        let NoticeValue::Text { value, .. } = &v.value else { continue };
+        if v.field_id != F14_VALUE_FIELD {
+            continue;
+        }
+        let Some(target) = targets.get(v.section_id.as_str()) else { continue };
+        let Some(field) = f14_target_amount(target) else {
+            if F14_REFUSED_VALUE_TARGETS.contains(&f14_coordinate(target)) {
+                gate.value_lot_or_award += 1;
+            }
+            continue;
+        };
+        match f14_new_value_amount(value) {
+            None => gate.value_unread += 1,
+            Some(read) => {
+                match field {
+                    "estimated_value" => gate.value_estimated += 1,
+                    _ => gate.value_result += 1,
+                }
+                found
+                    .entry(field)
+                    .and_modify(|seen| {
+                        if seen.as_ref() != Some(&read) {
+                            *seen = None;
+                        }
+                    })
+                    .or_insert(Some(read));
+            }
+        }
+    }
+    let ambiguous = found.values().filter(|v| v.is_none()).count() as u64;
+    gate.value_ambiguous += ambiguous;
+    (found, gate)
+}
+
 /// The grafted `UBL-*` ids that stay PARSE-LAYER-ONLY, each with its reason
 /// (issue 88). ADR-0004 allows two dispositions — mapped, or explicitly
 /// ignored — and until this ledger existed the grafts were neither: captured by
@@ -4225,6 +4329,20 @@ impl NoticeState {
             }
         }
 
+        // Issue 489 unit 2: an F14 corrigendum's new II.1.5 / II.1.7 value is the
+        // Tender's estimated / result value as of this notice. Tender scope, and
+        // the fold's per-field `supersede` does the rest: the carried figure of
+        // that field is replaced, exactly as 385's corrected deadline replaces
+        // the old one. The notice publishes no other amount (an F14 has no value
+        // elements), so nothing here competes with it.
+        if !change_targets.is_empty() {
+            for (field, read) in f14_value_corrections(parsed, &change_targets).0 {
+                if let Some((cents, currency)) = read {
+                    facts.insert(Fact::Amount { field: field.to_owned(), cents, currency, tax_basis: None, quality: None });
+                }
+            }
+        }
+
         // Issue 233: the OJ heading as a LAST-RESORT title.
         //
         // A notice that carries no title element still has a title: the heading
@@ -4727,6 +4845,19 @@ pub struct F14TargetGate {
     /// Measured 0 of 5,234 on prod (unit 1), so a non-zero value here is a shape
     /// the corpus has never produced, not a tail.
     pub untargeted: u64,
+    /// Issue 489: `NEW_VALUE.TEXT` blocks read as the tender's new estimated
+    /// value (II.1.5) / result value (II.1.7).
+    pub value_estimated: u64,
+    pub value_result: u64,
+    /// Issue 489: a II.1.5 / II.1.7 block whose text is not exactly one figure
+    /// and one currency — refused, the old figure stays.
+    pub value_unread: u64,
+    /// Issue 489: a field one notice corrects to two different figures — both
+    /// refused.
+    pub value_ambiguous: u64,
+    /// Issue 489: a lot (II.2.6) or contract (V.2.4) value correction — refused
+    /// by design, counted so its volume stays visible.
+    pub value_lot_or_award: u64,
 }
 
 impl F14TargetGate {
@@ -4753,6 +4884,16 @@ impl F14TargetGate {
         self.invitations += other.invitations;
         self.other += other.other;
         self.untargeted += other.untargeted;
+        self.value_estimated += other.value_estimated;
+        self.value_result += other.value_result;
+        self.value_unread += other.value_unread;
+        self.value_ambiguous += other.value_ambiguous;
+        self.value_lot_or_award += other.value_lot_or_award;
+    }
+
+    /// Every value-correction block this tally saw (issue 489).
+    pub fn values_seen(&self) -> u64 {
+        self.value_estimated + self.value_result + self.value_unread + self.value_lot_or_award
     }
 
     /// Count one corrigendum date by the coordinate its own block named, or
@@ -4805,7 +4946,7 @@ fn f14_target_gate(parsed: &Parsed) -> F14TargetGate {
     let is_f14_date = |v: &&store::ValueRow| {
         v.field_id == F14_DATE_FIELD && matches!(v.value, NoticeValue::Date { .. })
     };
-    if !parsed.values.iter().any(|v| is_f14_date(&v)) {
+    if !parsed.values.iter().any(|v| is_f14_date(&v) || v.field_id == F14_VALUE_FIELD) {
         return gate;
     }
     let targets: BTreeMap<&str, &str> = parsed
@@ -4821,6 +4962,9 @@ fn f14_target_gate(parsed: &Parsed) -> F14TargetGate {
     for v in parsed.values.iter().filter(is_f14_date) {
         gate.count(targets.get(v.section_id.as_str()).copied());
     }
+    // Issue 489: the value corrections, through the SAME function the fold's
+    // facts come from, so the tally cannot disagree with what was mapped.
+    gate.add(f14_value_corrections(parsed, &targets).1);
     gate
 }
 
@@ -9969,6 +10113,44 @@ mod tests {
 
     /// Issue 385 unit 2: the tally cannot disagree with the mapping.
     ///
+    /// Issue 489 unit 2: the strict `NEW_VALUE.TEXT` reader, on the shapes
+    /// measured in 385's window (2026-10-06).
+    #[test]
+    fn an_f14_new_value_text_is_read_only_when_it_is_one_figure_and_one_currency() {
+        let read = |t: &str| f14_new_value_amount(t);
+        let eur = |c: i64| Some((c, "EUR".to_owned()));
+        assert_eq!(read("379 502,40 EUR"), eur(37_950_240));
+        assert_eq!(read("Valore, IVA esclusa: 85 536 000,00 EUR"), eur(8_553_600_000));
+        assert_eq!(read("12.409.218.269,80 EUR"), eur(1_240_921_826_980));
+        assert_eq!(read("58 903,50EUR."), eur(5_890_350));
+        assert_eq!(read("6 000 000.00 EUR"), eur(600_000_000));
+        assert_eq!(read("Wartość bez VAT: 1 703 480,12 PLN"), Some((170_348_012, "PLN".to_owned())));
+        assert_eq!(read("Value excluding VAT: 250 000 000.00 GBP"), Some((25_000_000_000, "GBP".to_owned())));
+        assert_eq!(read("130 000 EUR"), eur(13_000_000));
+        assert_eq!(read("1\u{a0}957\u{a0}950\u{a0}RON"), Some((195_795_000, "RON".to_owned())));
+        // Refused: no currency, malformed grouping, trailing words, prose, a digit
+        // in the skipped label, a lone placeholder, a three-digit fraction.
+        for refused in [
+            "4 500 000,00",
+            "5000000",
+            "Valore, IVA esclusa: 224,425,00 EUR",
+            "769 309,88 EUR bez DPH.",
+            "Per il lotto n. 17, provincia di Napoli: valore, IVA esclusa: 68 847 509,46 EUR, inclusivi di 254 362,50 EUR",
+            "Lot 2: 430 000,00 EUR",
+            "0,00 EUR",
+            "1.234 EUR",
+            "Valeur totale estimée:",
+            "Munt: EUR",
+            "zł",
+        ] {
+            assert_eq!(read(refused), None, "{refused:?}");
+        }
+        assert_eq!(f14_target_amount("II.1.5)"), Some("estimated_value"));
+        assert_eq!(f14_target_amount(" II.1.7 "), Some("result_value"));
+        assert_eq!(f14_target_amount("II.2.6"), None);
+        assert_eq!(f14_target_amount("V.2.4)"), None);
+    }
+
     /// [`F14TargetGate::to_other`] exists only as a tripwire for a destination
     /// added to [`F14_TARGET_DATES`] without a slot here; this is the assertion
     /// that keeps it provably zero in the field. A run reporting `to_other`

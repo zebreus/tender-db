@@ -1856,6 +1856,91 @@ async fn an_f14_corrigendum_moves_the_deadline_as_a_version_event() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 489 unit 2: an F14 that restates II.1.5 (the total estimated value)
+/// supersedes the figure it corrects — tender 6891632's shape, a EUR 25.28 bn
+/// estimate corrected to EUR 85,536,000 by its own publisher. Before this the
+/// `NEW_VALUE.TEXT` stayed in the notice layer and the F14 version inherited the
+/// old figure, so the head kept the uncorrected EUR 25 bn.
+///
+/// The same notice's II.2.7 block (prose with an amount in it) and II.2.6 block
+/// (a lot's estimate, no lot key) must NOT become amounts, and a later F14
+/// correcting the value BACK (4871119's flip-flop) wins by publication order.
+#[tokio::test]
+async fn an_f14_value_correction_supersedes_the_figure_it_corrects() {
+    let (db, fetch_id, path) = scratch("f14-value").await;
+    let (cn, pc) = legacy_record(
+        fetch_id,
+        "000001-2020",
+        R209,
+        Parsed {
+            sections: vec![sec("PROCEDURE", "Notice", None)],
+            values: vec![
+                ted_text("PROCEDURE", "TED-TITLE", "Servizi di pulizia"),
+                ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 5 * 86_400),
+                ted_amount("PROCEDURE", "TED-VAL_ESTIMATED_TOTAL", 2_528_025_600_000),
+            ],
+        },
+    );
+    let f14 = |pub_id: &str, day: i64, chg: Vec<(&str, &str, &str)>| {
+        let mut sections = vec![sec("PROCEDURE", "Notice", None)];
+        let mut values = vec![
+            ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", day * 86_400),
+            ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", "000001-2020"),
+        ];
+        for (chg_id, target, text) in chg {
+            sections.push(sec(chg_id, "Change", Some("PROCEDURE")));
+            values.push(ted_text(chg_id, "TED-SECTION", target));
+            values.push(ted_text(chg_id, "TED-NEW_VALUE.TEXT", text));
+        }
+        legacy_record(fetch_id, pub_id, R209, Parsed { sections, values })
+    };
+    let (n1, p1) = f14(
+        "000119-2020",
+        20,
+        vec![
+            ("CHG-1", "II.1.5)", "Valore, IVA esclusa: 85 536 000,00 EUR"),
+            ("CHG-2", "II.2.6)", "Valore, IVA esclusa: 5 280 000,00 EUR"),
+            ("CHG-3", "II.2.7)", "per un importo massimo di 5 280 000,00 EUR, IVA"),
+        ],
+    );
+    db.record_notice(&cn, &pc).await.expect("cn");
+    db.record_notice(&n1, &p1).await.expect("f14");
+    project::project(&db, false).await.expect("project");
+
+    let estimates = |seq: i64| {
+        let db = &db;
+        async move {
+            query_text(
+                db,
+                &format!(
+                    "SELECT group_concat(v, ';') FROM (SELECT field || ' ' || cents || ' ' || currency AS v \
+                       FROM tender_version_amounts WHERE tender_id = 1 AND seq = {seq} ORDER BY field, cents)"
+                ),
+            )
+            .await
+        }
+    };
+    assert_eq!(estimates(1).await.as_deref(), Some("estimated_value 2528025600000 EUR"), "the CN's figure");
+    assert_eq!(
+        estimates(2).await.as_deref(),
+        Some("estimated_value 8553600000 EUR"),
+        "the F14 replaced it, and neither the II.2.6 nor the II.2.7 block became an amount"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT current_value_eur_cents FROM tenders WHERE id = 1").await,
+        8_553_600_000,
+        "the head is the corrected figure"
+    );
+
+    // A second F14 corrects it back: publication order decides.
+    let (n2, p2) = f14("000200-2020", 30, vec![("CHG-1", "II.1.5", "25 280 256 000,00 EUR")]);
+    db.record_notice(&n2, &p2).await.expect("second f14");
+    project::project(&db, false).await.expect("project");
+    assert_eq!(estimates(3).await.as_deref(), Some("estimated_value 2528025600000 EUR"), "the later restatement wins");
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// Issue 385: a corrigendum that moves BOTH the deadline and the opening must
 /// move each to its own field — the shape of the real notice 21000077, whose
 /// CHG-1 targets IV.2.2 (deadline 09:00) and CHG-2 targets IV.2.7 (opening

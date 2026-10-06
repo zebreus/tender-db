@@ -2721,10 +2721,26 @@ fn uuid_hub_suffix(h: &store::UuidHubTally) -> String {
 /// are being dropped), so it must be readable as "still zero" rather than absent
 /// because nothing happened to it.
 fn f14_target_suffix(t: &ingest::project::F14TargetGate) -> String {
+    // Issue 489: the value corrections, on their own clause and under the same
+    // "silent when none was seen" rule.
+    let values = if t.values_seen() == 0 {
+        String::new()
+    } else {
+        format!(
+            "; issue-489 F14 value corrections: {} mapped (estimated {}, result {}), {} unread, \
+             {} ambiguous field(s), {} lot/contract refused",
+            t.value_estimated + t.value_result,
+            t.value_estimated,
+            t.value_result,
+            t.value_unread,
+            t.value_ambiguous,
+            t.value_lot_or_award,
+        )
+    };
     if t.admitted() == 0 && t.refused() == 0 {
-        return String::new();
+        return values;
     }
-    format!(
+    let dates = format!(
         "; issue-385 F14 corrigendum dates: {} mapped (deadline {}, opening {}), \
          {} refused (validity {}, duration {}, information {}, invitations {}, \
          UNCLASSIFIED {}, no target stated {})",
@@ -2738,7 +2754,8 @@ fn f14_target_suffix(t: &ingest::project::F14TargetGate) -> String {
         t.invitations,
         t.other,
         t.untargeted,
-    )
+    );
+    dates + &values
 }
 
 /// Issue 479 §3: the procedure-type census of record — per profile family, how
@@ -16784,6 +16801,7 @@ mod tests {
             invitations: 17,
             other: 0,
             untargeted: 0,
+            ..Default::default()
         };
         let s = f14_target_suffix(&live);
         assert!(s.contains("5732 mapped"), "{s}");
@@ -16803,6 +16821,25 @@ mod tests {
         let s = f14_target_suffix(&all_refused);
         assert!(s.contains("0 mapped"), "{s}");
         assert!(s.contains("7 refused"), "{s}");
+        assert!(!s.contains("issue-489"), "no value correction seen, no value clause: {s}");
+
+        // Issue 489: the value corrections get their own clause, beside the dates
+        // or alone (an F14 that corrects only a value).
+        let values = project::F14TargetGate {
+            value_estimated: 32,
+            value_result: 16,
+            value_unread: 9,
+            value_ambiguous: 1,
+            value_lot_or_award: 97,
+            ..Default::default()
+        };
+        let s = f14_target_suffix(&values);
+        assert!(s.starts_with("; issue-489 F14 value corrections: 48 mapped (estimated 32, result 16), 9 unread"), "{s}");
+        assert!(s.contains("97 lot/contract refused"), "{s}");
+        assert!(!s.contains("issue-385"), "{s}");
+        let both = project::F14TargetGate { to_deadline: 3, ..values };
+        let s = f14_target_suffix(&both);
+        assert!(s.contains("issue-385") && s.contains("issue-489"), "{s}");
     }
 
     /// Issue 364 unit 6: the grouping's target-type refusals get their own line,

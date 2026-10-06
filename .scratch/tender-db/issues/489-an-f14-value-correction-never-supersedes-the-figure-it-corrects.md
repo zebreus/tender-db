@@ -1,6 +1,6 @@
 # 489 — an F14 value correction never supersedes the figure it corrects
 
-Status: ready-for-agent — filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
+Status: ready-for-agent — UNIT 2 LANDED 2026-10-06 (see "Unit 2 — landed"; gate, deploy, then the drain). Was: filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
 "whether (b) stays here or becomes its own issue" decision: it is a different mechanism — free-text
 amount parsing plus same-field supersession in the version state — and inside 471's band it moves
 one row). UNIT 1 MEASURED on a window (see "Unit 1 — window measurement (2026-10-06)"); scope decided: II.1.5 / II.1.7 (tender scope) only. NEXT: unit 2 — read how a corrigendum version inherits amounts, then the strict reader + supersession with the pin.
@@ -88,3 +88,27 @@ be exactly one amount (space / NBSP / `.` / `,` grouping, `,` or `.` decimal wit
 digits, or none) optionally followed by an ISO currency; a currency-less figure takes the currency
 of the figure it supersedes only when the Tender's head carries that field in exactly ONE currency;
 anything else (prose, two figures, malformed grouping like `224,425,00`) is refused and counted.
+
+## Unit 2 — landed (2026-10-06)
+
+- `project.rs`: `F14_TARGET_AMOUNTS` (II.1.5 → `estimated_value`, II.1.7 → `result_value`),
+  `f14_new_value_amount` (the strict reader over `r209::value::display_cents`; currency REQUIRED),
+  `f14_value_corrections` (one figure per field per notice; two different figures → ambiguous,
+  none). `NoticeState::read` inserts the admitted ones as tender-scope `Fact::Amount`s, and the
+  fold's per-field `supersede` replaces the carried figure — no new fold rule.
+- The tally rides `F14TargetGate` (`value_estimated`, `value_result`, `value_unread`,
+  `value_ambiguous`, `value_lot_or_award`), counted by the same function, and the project job's
+  line gains `; issue-489 F14 value corrections: N mapped (estimated …, result …), … unread, …
+  ambiguous field(s), … lot/contract refused`.
+- Pins: `an_f14_value_correction_supersedes_the_figure_it_corrects` (tests/project.rs: 6891632's
+  shape, the II.2.6 / II.2.7 blocks stay out, 4871119's flip-flop resolves by publication) and
+  `an_f14_new_value_text_is_read_only_when_it_is_one_figure_and_one_currency` (project.rs unit).
+
+**Known limit, recorded:** 6891632 itself will NOT leave the band through this unit — its F14 also
+corrects the lot's II.2.6 (€25.2 bn → €5.28 m), which stays unmapped, and the head is the MAX over
+tender and lot amounts. A single-lot II.2.6 mapping is the natural unit 3.
+
+**Drain (after deploy, queue idle):** size, then refold, as 385 did:
+`{"kind":"refold-fields","profiles":["TED-NEW_VALUE.TEXT"],"tables":["notice_texts"],"expect":1}`
+(aborts and prints the carrier count), then the same with `expect` set to that count, then
+`{"kind":"project"}`. The `issue-489` clause of that project line is the corpus-wide measurement.
