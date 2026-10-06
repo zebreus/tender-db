@@ -1,6 +1,6 @@
 # 471 — r209 amounts are never checked against their `@FMTVAL`, and nothing adjudicates the €10–100 bn head-value band (366 units 5 and 6, dropped when 366 closed)
 
-Status: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); UNIT 2 READ DONE (r208: @FMTVAL disagrees with text — 4490098; r209: no FMTVAL, publisher text errors incl. a dropped decimal point); NEXT: unit 3 for r208 (measure the r208 band rows first), then unit 4. Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
+Status: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); UNIT 2 READ DONE (r208: @FMTVAL disagrees with text — 4490098; r209: no FMTVAL, publisher text errors incl. a dropped decimal point); UNIT 3 MEASURED (the r208 @FMTVAL defect is TED July 2011: ~5.9 % of value elements in 17 daily packages, exact even 10^k; text is right); NEXT: unit 3 code (adopt text on an exact-10^k mismatch, mark fmtval_mismatch) + reparse 2011-04…08, then unit 4. Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
 Kind: data quality (amount plausibility: the legacy parse layer and the head election)
 Relates to: 366 (promised units 5 and 6, closed 2026-09-12 without them), 380 (its sweep still points at "the open half of
 issue 366"), 267 (the plausibility measure), 372 (the `quality` marker on `Fact::Amount`), 385 (F14 corrigendum dates:
@@ -282,3 +282,37 @@ These are bounded member reads, one stream per monthly tar. The members are save
   10^k partner. Record it and decide it on unit 1's listing.
 - **Next.** Unit 3 for r2.0.8. Measure how many r208 amount elements carry an `@FMTVAL` that disagrees with their
   text, as a bounded member sample over the r208 band rows (34 tenders), before building. Then unit 4.
+
+## Unit 3 measurement (2026-10-06): the r2.0.8 `@FMTVAL` defect is a three-week window in July 2011
+
+**Method.** `.scratch/tender-db/471-values/fmtval.py` and `fmtval2.py` stream a monthly tar (nice/ionice, 137–196 MB
+each). They compare every element's `FMTVAL` with its text parsed as a number. The parser takes the attribute when
+present (`r209/rules.rs:63`, "Money: `@FMTVAL` if present (defence), else the element text"), so a disagreement is a
+stored wrong amount.
+
+| month | value elements | disagree | exact 10^k, k ≥ 2 | where |
+|---|---|---|---|---|
+| 2008-01 … 2010-07 (quarterly) | 0 | — | — | no `FMTVAL` in these months' formats |
+| 2011-01 | 102,880 | 76 | 0 | 10⁻³ only: the script's thousands-separator ambiguity, not a defect |
+| 2011-04 | 95,791 | 138 | 46 (10¹²) | one batch |
+| 2011-05 | 90,954 | 70 | 46 (10¹⁰) | 2011-05-26 |
+| 2011-06 | 91,517 | 106 | 69 (10⁴, 10¹⁰) | 2011-06-03 |
+| **2011-07** | **106,288** | **6,253 (5.9 %)** | **≈5,900 (10² … 10¹⁴, even powers)** | **17 daily packages, 2011-07-08 … 2011-07-30** (07-15: 943, 07-12: 805, 07-28: 782, 07-20: 759 …) |
+| 2011-08 | 98,937 | 74 | 46 (10⁴) | 2011-08-02 |
+| 2011-09, 2011-10, 2012-01/04/07/10 | ~100k each | 3–66 | 0 | parse-ambiguity residue only |
+| 2013-03, 2014-06 | 108k, 111k | 24, 0 | 0 | clean |
+
+**Conclusions.**
+- **The defect is TED's July-2011 generator.** It affected about 5.9 % of value elements in 17 daily packages, plus
+  four isolated 46/69-element batches in April–August 2011. The attribute differs from the text by an exact even
+  power of ten, and the text is right (4490098: text `49 700`, attribute 4.97×10¹⁶).
+- **Fix for unit 3, in `r209/parse.rs`:**
+  - keep both representations (ADR-0004);
+  - when the text parses unambiguously and the attribute/text ratio is an exact 10^k with |k| ≥ 2, adopt the TEXT and
+    mark the fact `fmtval_mismatch`;
+  - in any other disagreement keep today's attribute but mark it, so it is visible and not silently trusted.
+- **Re-parse scope.** Only the r208 packages 2011-04 … 2011-08, at most ~25 daily packages, or 2011-07-08 … 07-30 plus
+  four days. Not the era's 15 M amounts, so the notice-list `reparse` form in step 3 is not needed. Run `reparse` over
+  `ted-export-r208` from that window's fetch floor with a package count.
+- **Wider than the band.** Most of the ~6,000 wrong amounts are below €10 bn, so they never showed in section 16, but
+  they distort every 2011 value statistic.
