@@ -1,6 +1,6 @@
 # 471 — r209 amounts are never checked against their `@FMTVAL`, and nothing adjudicates the €10–100 bn head-value band (366 units 5 and 6, dropped when 366 closed)
 
-Status: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
+Status: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); NEXT: unit 2 (gated archive @FMTVAL read). Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
 Kind: data quality (amount plausibility: the legacy parse layer and the head election)
 Relates to: 366 (promised units 5 and 6, closed 2026-09-12 without them), 380 (its sweep still points at "the open half of
 issue 366"), 267 (the plausibility measure), 372 (the `quality` marker on `Fact::Amount`), 385 (F14 corrigendum dates:
@@ -242,3 +242,20 @@ and 3 are recorded here as they land.
   lowered to £9,000,000.00.
 - **done**: `{"cents":900000000,"currency":"GBP"}`. Either 4a or 4b refuses or supersedes the £9 bn figure, so the
   election falls to the £9 M lot estimates.
+
+## Unit 1 deployed and measured (2026-10-06)
+
+- **Deploy.** `b1fcb29`, gated green on that exact revision.
+- **Run.** Data-quality job 2019 (`dry_run: false`, 4,833 s). The default is a dry run: job 2018 stored nothing. The
+  report text is saved as `.scratch/tender-db/471-values/section16-dq2019-2026-10-06.txt`.
+- **Done check.** `grep -c 'issue 471'` → 1. The summary line `Tender(s) in N currenc…` → 1. `UNMEASURED — the
+  .band_listing` → 0.
+- **Section 16.**
+  - 332 Tenders in 9 currencies: GBP 171, EUR 131, DKK 7, RON 7, SEK 5, CZK 4, PLN 4, HUF 2, BGN 1.
+  - 22 rows carry an exact 10^k partner, for example 6941544 at £80 bn against £80 m (10³), and 4972513 at
+    £43.6 bn against £43.6 m (10³).
+  - 0 elected rows were NOT FOUND, and there was no LISTING FULL.
+  - Most GBP rows are FTS OCDS framework ceilings of £30–80 bn with no partner, which is plausible for UK national
+    frameworks and nothing is adjudicated.
+- **Next.** Unit 2, the gated archive read (`@FMTVAL` against the stored amount) for the r208/r209 rows. Then a
+  verdict pass on the 22 rows with a 10^k partner.
