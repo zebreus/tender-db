@@ -1,0 +1,333 @@
+{
+  "tally": {
+    "big_is_error": 64,
+    "big_is_genuine": 1
+  },
+  "verdicts": [
+    {
+      "tender": "6681865",
+      "verdict": "big_is_error",
+      "evidence": "Hessisches Ministerium der Finanzen, a negotiated procedure without competition for SAP licences and support awarded to SAP Deutschland (r209 CAN 594729-2019). The same notice carries both EUR 9.7 M and EUR 9.7 bn as result_value, and a single state ministry's SAP licence buy is plausible at about EUR 9.7 M, not billions."
+    },
+    {
+      "tender": "634129",
+      "verdict": "big_is_error",
+      "evidence": "EDF SA, PIAT23-007, explosion-effect engineering studies with a single lot. The estimated_value, result_value and lot estimate are all EUR 9.7 M, and only the lot BT-271 framework_maximum says EUR 9.7 bn, which is implausible for a study contract."
+    },
+    {
+      "tender": "7535409",
+      "verdict": "big_is_error",
+      "evidence": "Kymenlaakson hyvinvointialue (a Finnish regional welfare authority), 5 lots of substance-abuse detox and rehab services. The CN estimate is EUR 9.2 M, the other CAN results are EUR 0.1-1 M, and one result_value of EUR 9.2 bn is 1000x the CN total."
+    },
+    {
+      "tender": "100246",
+      "verdict": "big_is_error",
+      "evidence": "Hellenic Aerospace Industry (EAB), 6-year catering and canteen service. The procedure title and description state the budget in words, 'προϋπολογισμού 7.849.600,00€' (EUR 7,849,600), which matches the lot estimate, so the EUR 7.85 bn procedure estimate repeated in all 4 versions is a scale error."
+    },
+    {
+      "tender": "748911",
+      "verdict": "big_is_error",
+      "evidence": "Samenwerkingsverband Passend Primair Onderwijs regio Leiden, ambulatory support for teachers and pupils at 75 schools. A EUR 6.7 bn result_value is absurd for this buyer, and the lot award of EUR 6.713 M is the credible figure."
+    },
+    {
+      "tender": "8424503",
+      "verdict": "big_is_error",
+      "evidence": "Royal Marsden NHS Foundation Trust, fit-out of a leased shell for a private patient unit at Cavendish Square. The PIN/CN estimate is GBP 5.8 M and the awarded result_value is GBP 6.02 M (T&B Contractors), so the CAN estimate of GBP 5.8 bn is a scale slip."
+    },
+    {
+      "tender": "955492",
+      "verdict": "big_is_error",
+      "evidence": "ASL TO4 (a Piedmont local health authority), treasury and cash-service contract awarded to Intesa Sanpaolo. The CN estimate was EUR 6.376 M, the CAN result is EUR 1.99 M, and the CAN's procedure and lot estimates of EUR 6.376 bn are 1000x the CN's."
+    },
+    {
+      "tender": "820284",
+      "verdict": "big_is_error",
+      "evidence": "Município de Arganil, construction of a new health centre. The same notice has a result_value of EUR 6.17 M against an estimated_value of EUR 6.17 bn, and a small-town health-centre works contract cannot be billions."
+    },
+    {
+      "tender": "180688",
+      "verdict": "big_is_error",
+      "evidence": "Københavns Universitet, a waste collection and handling framework with 3 lots. The procedure estimate, framework maximum and result are all DKK 44 M, and the lot estimates are 26+9+9 = 44 M, so only one lot's BT-271 framework_maximum of DKK 44 bn is off by 1000x."
+    },
+    {
+      "tender": "1165599",
+      "verdict": "big_is_error",
+      "evidence": "Resialentejo (Beja) is building a sorting plant for separately collected packaging, as one lot. Version 1 and the lot estimate are both EUR 5.6M and the award is EUR 5.33M, so the EUR 5.6bn head estimate in version 2 is a x1000 slip."
+    },
+    {
+      "tender": "723781",
+      "verdict": "big_is_error",
+      "evidence": "HUS-yhtymä is buying radiology services (ultrasound, MRI, CT, on-call; 9 lots). The framework maximum and the result are both EUR 5.6M and one lot's maximum is EUR 700k, so the EUR 5.6bn estimate is a x1000 error."
+    },
+    {
+      "tender": "6702424",
+      "verdict": "big_is_error",
+      "evidence": "This is NRK's (Norsk rikskringkasting) framework agreement for monitors, TVs and projectors. A second estimate and the result value both say NOK 60M, and NOK 60bn for monitors at a broadcaster is not credible."
+    },
+    {
+      "tender": "514188",
+      "verdict": "big_is_error",
+      "evidence": "CCDL's framework for sustainable-mobility vehicles for Catalan local authorities has 94 lots and a procedure-level estimate of EUR 140.9M. Lot estimates of EUR 0.5-5.2bn add up to about EUR 131bn, roughly 1000x the head figure, so the EUR 5.2bn lot figure is a scale error. The real lot value is probably near EUR 5.2M rather than the EUR 520k partner."
+    },
+    {
+      "tender": "8287294",
+      "verdict": "big_is_genuine",
+      "evidence": "Government Procurement Service (UK) ran a 12-lot national IT hardware framework (client devices, laptops, servers, storage, printers) with 17 suppliers, including Lenovo, Softcat and XMA. The GBP 4bn estimate is repeated in all three versions and is credible for a central-government technology-products framework. The GBP 4M result_value is the slip."
+    },
+    {
+      "tender": "361224",
+      "verdict": "big_is_error",
+      "evidence": "Ajuntament de Castelldefels is buying catering for its municipal 0-3 nurseries. The result is EUR 1,184,080.80 and the lot award is EUR 563,848, so a EUR 1.18bn lot estimate is a x1000 error."
+    },
+    {
+      "tender": "4816109",
+      "verdict": "big_is_error",
+      "evidence": "East Midlands Procurement Portal (EMPACT) is buying utilisation-review software tools. The head estimate in both versions is GBP 1M, and a GBP 1bn lot estimate is not credible for a regional software tool."
+    },
+    {
+      "tender": "1022924",
+      "verdict": "big_is_error",
+      "evidence": "CPAS/OCMW Brussel is renting and maintaining about 2,600-2,900 fire extinguishers. The lot estimate is EUR 1.116M and the framework maximum EUR 1.3M, so the EUR 1.116bn head estimate is a x1000 error."
+    },
+    {
+      "tender": "117783",
+      "verdict": "big_is_error",
+      "evidence": "Uniwersyteckie Centrum Kliniczne in Katowice awarded part 77 (immunoglobulins) of a drug supply procedure to Takeda Pharma. The lot award is PLN 4,747,800 against an estimate of PLN 7.11M, so a PLN 4.75bn result_value is a x1000 error."
+    },
+    {
+      "tender": "703247",
+      "verdict": "big_is_error",
+      "evidence": "Portuguese school training-equipment purchase on Vortal (15 lots: automotive mechatronics, robotics, CNC laser, soldering kits, sound/image studio). The procedure estimate of EUR 1,081,992,380 is exactly 1000x LOT-0001's EUR 1,081,992.38, and the other lots are EUR 0.5k-272k, so the real scale is about EUR 1-2M."
+    },
+    {
+      "tender": "8021864",
+      "verdict": "big_is_error",
+      "evidence": "GAZ-SYSTEM contract with GAZOPROJEKT for the design documentation of the Strachocina-Poland/Slovakia border gas interconnector (design services only, not construction). PLN 4.54bn is not credible for design work. The lot award of PLN 4,543,620 is the real value, and both CANs repeat the same single slip."
+    },
+    {
+      "tender": "8316053",
+      "verdict": "big_is_error",
+      "evidence": "Slovak Ministry of Environment air-ticket services framework (Satur Travel), modified for the EU presidency. The estimate is EUR 1.05M and the original award EUR 1.26M; only the 2016 modification notice carries EUR 1.05bn, exactly 1000x the estimate."
+    },
+    {
+      "tender": "91106",
+      "verdict": "big_is_error",
+      "evidence": "IPO Coimbra (oncology institute) high-precision radiotherapy solution awarded to Siemens Healthcare. The estimate and lot estimate are EUR 1,013,000; the CAN's EUR 1.013bn result is exactly 1000x, which is not credible for one radiotherapy installation."
+    },
+    {
+      "tender": "169383",
+      "verdict": "big_is_error",
+      "evidence": "Sintra municipal water services / Câmara Municipal de Sintra 24-month fuel call-off (Lot 1 of the AQ-CR-22 framework, B2 Mobility). EUR 1bn for one municipality's fuel is absurd. The other notice carries EUR 1M for the result, lot estimate and lot award, and the EUR 1bn is a uniform 1000x slip in the other notice."
+    },
+    {
+      "tender": "591121",
+      "verdict": "big_is_error",
+      "evidence": "ADIF consultancy contract (TYPSA) to supervise construction of the new passenger building at Montcada-Bifurcació station. The CN estimate is EUR 1,454,118.60; the CAN rescales it to EUR 1.454bn, and its EUR 1.009bn award is also evidently 1000x a ~EUR 1.01M award. Neither is credible for works supervision."
+    },
+    {
+      "tender": "355258",
+      "verdict": "big_is_error",
+      "evidence": "Portuguese Army General Staff (Estado-Maior do Exército) modernisation of Land Cruiser tactical vehicles (Rodasa). The original notice's estimate is EUR 1.45M; the later notices' EUR 1.45bn estimate and EUR 1.159bn award are 1000x slips for a vehicle-upgrade contract."
+    },
+    {
+      "tender": "263034",
+      "verdict": "big_is_error",
+      "evidence": "Greek Ministry of Interior sub-project for process simplification and digitisation (modelling administrative/HR procedures). The procedure estimate is EUR 1,410,200 in both versions; only the single lot's EUR 1.41bn is 1000x, which is implausible for a consultancy/IT service."
+    },
+    {
+      "tender": "6082649",
+      "verdict": "big_is_error",
+      "evidence": "Region Midtjylland's direct award to Alere for 5 Tosoh G11 HbA1c analysers. The same notice carries a result_value of EUR 1,350,000, which is credible; the EUR 1.35bn figure (result and lot award) is a 1000x slip."
+    },
+    {
+      "tender": "196783",
+      "verdict": "big_is_error",
+      "evidence": "Cleaning services for the General Hospital of Drama (Greece), a single lot. The lot estimate is EUR 1,347,024.19 and the CAN award is EUR 1,323,844.80, so a EUR 1.35bn procedure estimate for one hospital's cleaning is not credible."
+    },
+    {
+      "tender": "182086",
+      "verdict": "big_is_error",
+      "evidence": "CNRS Délégation Aquitaine is buying one autonomous supercritical-synthesis lab installation for ICMCB Bordeaux, a single lot. The lot estimate is EUR 1.3M and the award is EUR 1.59M, so EUR 1.3bn is a x1000 slip."
+    },
+    {
+      "tender": "7938187",
+      "verdict": "big_is_error",
+      "evidence": "Snow removal for 2026-27 on the regional roads of Magnesia/Sporades, bought by the Region of Thessaly. The single lot estimate is EUR 1,290,322.58, and a EUR 1.29bn procedure value for one winter season of local snow clearing is impossible."
+    },
+    {
+      "tender": "7547059",
+      "verdict": "big_is_error",
+      "evidence": "Municipal waste collection for Gmina Wolbrom, a small Polish town. The CAN result is PLN 5,603,109.48 and the lot award is PLN 6.81M, so a PLN 5.6bn estimate is a x1000 slip."
+    },
+    {
+      "tender": "7542286",
+      "verdict": "big_is_error",
+      "evidence": "Fraunhofer is buying architect/planning services for the HYKOS institute building in Freiburg (3,206 m2; the optional extra fee is described as ca. EUR 3.4M). The award is EUR 1,985,000, so a EUR 1.985bn estimate is a x1000 slip."
+    },
+    {
+      "tender": "7200537",
+      "verdict": "big_is_error",
+      "evidence": "Food purchases for 2022-2025 plus a 1-year option for the food services of Pyhäjärvi, a small Finnish town (suppliers Kesko/Kespro and HKScan). The CAN's own estimate is EUR 1.95M, so a EUR 1.95bn result is a x1000 slip."
+    },
+    {
+      "tender": "915781",
+      "verdict": "big_is_error",
+      "evidence": "Medicinal products for the University Hospital in Kraków, 14 lots. The big figure is lot 5's estimate in versions 2 and 3; version 1 gave that lot PLN 8,027,500, its award is PLN 7,963,280, and the procedure total is only PLN 29.6M. So PLN 7.96bn for one lot is a x1000 slip."
+    },
+    {
+      "tender": "5807966",
+      "verdict": "big_is_error",
+      "evidence": "School transport for the Comuni of Bracciano and Morlupo, procured by Città Metropolitana di Roma. The CAN text states the lot amounts as EUR 1,300,830 and EUR 544,484, which sum to EUR 1,845,314 (the partner). The EUR 1.845bn result/award is a x1000 slip."
+    },
+    {
+      "tender": "886867",
+      "verdict": "big_is_error",
+      "evidence": "Market-research services for Santa Casa da Misericórdia de Lisboa, 2 lots. The lot estimates of EUR 1,593,096 and EUR 206,904 sum to the EUR 1.8M procedure estimate, while the CAN's result and both lot awards are each exactly x1000 those figures. So EUR 1.8bn is a scale error."
+    },
+    {
+      "tender": "5070016",
+      "verdict": "big_is_error",
+      "evidence": "Severn Trent Water, 'Analytical Services (Regulated / Code of Practice Waste Water)', a single award to ALS Environmental. The lot award is GBP 1,500,000, and GBP 1.5bn for wastewater lab testing is not credible."
+    },
+    {
+      "tender": "523863",
+      "verdict": "big_is_error",
+      "evidence": "Romanian water company (siret.rowater.ro), 'Furnizare Motorina standard vrac' (bulk diesel supply), one lot. The head and procedure framework_maximum and the result_value are RON 8,812,800, and the lot estimate is RON 9.44m. Only the lot framework_maximum carries the x1000 figure."
+    },
+    {
+      "tender": "1032085",
+      "verdict": "big_is_error",
+      "evidence": "Zweckverband Ernst-Mach-Gymnasium Haar, timber and carpentry works (Holzbau- und Zimmererarbeiten) for a school extension. The lot estimate is EUR 1,625,000, and EUR 1.6bn for one carpentry trade package is impossible."
+    },
+    {
+      "tender": "8821187",
+      "verdict": "big_is_error",
+      "evidence": "Romanian hospital, medical equipment in 9 lots. The publisher's own text for lot 'RMN 3 Tesla' says 'Valoarea estimata contract = 8,340,000.00 lei'. Version 2 corrected the head to RON 17,339,950, but stale lot rows still carry the x1000 figures."
+    },
+    {
+      "tender": "998434",
+      "verdict": "big_is_error",
+      "evidence": "Secretaria Geral do MAI (Portugal), PRR purchase of computing goods and services for SIRESP, awarded to HP Portugal. The lot estimate is EUR 1,542,000 and the award is EUR 1,541,965, so EUR 1.54bn is x1000."
+    },
+    {
+      "tender": "81196",
+      "verdict": "big_is_error",
+      "evidence": "Wastewater Development Project Gjilan (Kosovo), supervision engineering services for two works contracts. The lot estimate is EUR 1,500,000 and the award is EUR 598,782, and EUR 1.5bn is absurd for supervision consultancy."
+    },
+    {
+      "tender": "7867216",
+      "verdict": "big_is_error",
+      "evidence": "ASIA Napoli Spa, a single-lot service to collect and transport cardboard (EER 15 01 01) in Naples. The result_value is EUR 2,992,800 and the lot award is EUR 2,955,035, so EUR 2.99bn is x1000."
+    },
+    {
+      "tender": "4393056",
+      "verdict": "big_is_error",
+      "evidence": "SEA (Milan airports), telephone and data transmission services (CPV 64210000). The award is EUR 2,960,310.50, and EUR 2.96bn for an airport operator's telecoms contract is not credible."
+    },
+    {
+      "tender": "873826",
+      "verdict": "big_is_error",
+      "evidence": "Osakidetza, centralised supply of the drugs raltegravir and sugammadex. Versions 1 and 2 give result_value EUR 2,860,863.10, and only version 3 adds a x1000 lot award (EUR 2.86bn), which is impossible for two medicines in one Basque health service."
+    },
+    {
+      "tender": "5718042",
+      "verdict": "big_is_error",
+      "evidence": "Italian Ministry of Defence (Direzione Armamenti Terrestri) buying 5 modular field-workshop tents plus 9 optional ones; the CN and CAN estimates are EUR 3.0M and 4.2M. The EUR 2.8532bn result is the EUR 2,853,200 award scaled by 10^3."
+    },
+    {
+      "tender": "5763279",
+      "verdict": "big_is_error",
+      "evidence": "ČEZ Distribuce is building one new 110/35 kV substation at Polička. An earlier version gives the award as CZK 71.74M, and the 2019 modification notice republishes it as 71.74bn, which is absurd for a single substation (both versions carry a placeholder CZK 1 estimate)."
+    },
+    {
+      "tender": "292308",
+      "verdict": "big_is_error",
+      "evidence": "Banedanmark, DOT and Sund og Bælt share a framework for traffic-information consultancy in 3 lots. The lot framework maximums are DKK 20M, 12.5M, 2.5M and 5M, so the procedure-level DKK 20bn maximum (and the 16bn estimate) are lot 1's 20M/16M times 10^3."
+    },
+    {
+      "tender": "8451272",
+      "verdict": "big_is_error",
+      "evidence": "Trafikverket is hiring resource consultants for Investering Syd, with an estimate of SEK 7M. A SEK 28bn consultancy award is absurd, and the second result_value of SEK 28M in the same notice is the real figure."
+    },
+    {
+      "tender": "752245",
+      "verdict": "big_is_error",
+      "evidence": "Hospital Universitario 12 de Octubre (SERMAS) is buying one ring-gantry linear accelerator. The lot estimate is EUR 2.46M and Varian was awarded EUR 2.43M, so the EUR 2.46bn procedure estimate is the lot figure times 10^3."
+    },
+    {
+      "tender": "459089",
+      "verdict": "big_is_error",
+      "evidence": "Comune di Finale Ligure is letting a 5-year concession to run the Fortezza di Castelfranco and its restaurant. The lot estimate is EUR 2,436,500, and a EUR 2.44bn procedure value is impossible for a small municipal concession."
+    },
+    {
+      "tender": "334570",
+      "verdict": "big_is_error",
+      "evidence": "Górnośląskie Towarzystwo Lotnicze (Katowice-Pyrzowice airport) is buying renewable electricity for its premises. The lot estimate is PLN 10.5M and the award is PLN 10.81M, so the PLN 10.5bn procedure estimate is a 10^3 scale error."
+    },
+    {
+      "tender": "4919432",
+      "verdict": "big_is_error",
+      "evidence": "Poste Immo (Centre region) is setting up a maîtrise d'œuvre framework in 3 lots, each estimated at EUR 800k, for EUR 2.4M in total. The 2014 CAN's EUR 2.4bn result is that EUR 2.4M times 10^3."
+    },
+    {
+      "tender": "6078483",
+      "verdict": "big_is_error",
+      "evidence": "Leeds City Council published a VEAT adding new providers to the White Rose 16+ accommodation framework for care leavers. The same notice carries GBP 2M beside GBP 2bn, and GBP 2bn is not credible for a regional care-leavers accommodation framework's provider addition."
+    },
+    {
+      "tender": "5759550",
+      "verdict": "big_is_error",
+      "evidence": "This is the AGMA (Greater Manchester) highways and infrastructure works framework, in construct-only lots banded from £0-500k up to £5m+. Every version estimates it at £10m, while CAN 435601-2017 carries a ladder of results £200k, £2m, £200m and £2bn; a £2bn award against a £10m estimate is not credible."
+    },
+    {
+      "tender": "7577665",
+      "verdict": "big_is_error",
+      "evidence": "SDIS 67 (Bas-Rhin fire and rescue service, a joint purchasing group) buys fluorine-free firefighting foam, renewable 3x one year. CAN 113631-2023 gives an estimate of €2bn against a result of €2m, and only the €2m is plausible for a fire-service consumables contract."
+    },
+    {
+      "tender": "7199083",
+      "verdict": "big_is_error",
+      "evidence": "The Luxembourg pension reserve fund (FDC) is awarding 6 portfolio-management mandates in 4 lots, and the €4.8bn is the indicative assets under management (2x850m + 2x1000m + 600m + 500m, stated in the lot texts), not the contract value. The award values are fees (€225k to €1.6m per mandate, summing to about €4.75m, total €4.8m), so the procurement value is near the partner. This is a deliberate AUM figure, not a typo, but it is still wrong as a head value."
+    },
+    {
+      "tender": "6120784",
+      "verdict": "big_is_error",
+      "evidence": "This is Trafikverket's framework for training and placing junior systems analysts (1+1 year options, one supplier, Academic Work). CAN 226766-2018 gives an estimate of SEK 42bn against a result of SEK 42m, and SEK 42bn (about EUR 4bn) for junior consultant staffing is absurd."
+    },
+    {
+      "tender": "7446274",
+      "verdict": "big_is_error",
+      "evidence": "Cerema is partly outsourcing local IT support (workstations and local infrastructure), awarded to Econocom. Both versions estimate €4bn, but the result is €4m, which fits the subject; €4bn for desktop support at one public agency is not credible."
+    },
+    {
+      "tender": "6258024",
+      "verdict": "big_is_error",
+      "evidence": "This is an EU-institution multilingual contract for 'implementation of training activities'. The estimate is €4.18m in both versions, and CAN 106793-2019 carries both €3,798,430 and €3,798,430,000; the bn figure is a x1000 slip of the award."
+    },
+    {
+      "tender": "8504410",
+      "verdict": "big_is_error",
+      "evidence": "This is a multilingual EU notice for the supply of small equipment for scientific laboratories. Versions 1-3 estimate €3.4m (lot estimates €1.6m + €1.8m), and the final CAN 732263-2022 repeats €1.6m/€1.8m beside x1000 copies (€1.6bn, €3.4bn); the €3.4bn is a scale slip."
+    },
+    {
+      "tender": "7524930",
+      "verdict": "big_is_error",
+      "evidence": "This is the Gemeente Leiden framework for client-manager staffing capacity (A04.40.2022, via Servicepunt71, four agency suppliers). The head-version estimate is €3.4m, and €3.4bn for a municipal staffing framework is impossible."
+    },
+    {
+      "tender": "959986",
+      "verdict": "big_is_error",
+      "evidence": "Santa Casa da Misericórdia de Lisboa is buying employee health insurance through broker Verlingue. Both versions estimate €3,219,000 at procedure and lot level, while the result in 00213117-2026 is €3,219,000,000, a x1000 slip of that same figure."
+    },
+    {
+      "tender": "8382559",
+      "verdict": "big_is_error",
+      "evidence": "Buyer is the Národný ústav srdcových a cievnych chorôb (Bratislava heart institute), buying 'Lieky' (Treprostinil infusion, an estimated 342 vials over 24 months). The corrigendum 356622-2016 states the old value as 3 183 383 000.00 EUR and the corrected new value as 3 183 383.00 EUR. The award result_value of EUR 3,150,531.36 also matches the EUR 3.18m figure."
+    },
+    {
+      "tender": "120715",
+      "verdict": "big_is_error",
+      "evidence": "Kammarkollegiet's Statens inköpscentral is procuring a hotel-services framework for Nacka zon 2. The notice text says call-offs are capped at 'en sammanlagd omsättning om 35 milj SEK' (a total turnover of SEK 35 million). The v2 result_value and both lot estimates are SEK 35m, so the SEK 35bn head figure is a 1000x slip."
+    }
+  ]
+}

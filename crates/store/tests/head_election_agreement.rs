@@ -246,8 +246,8 @@ async fn a_refused_lot_figure_is_not_served_as_the_lots_value() {
     assert_eq!(value("LOT-0001"), Some(small));
     assert_eq!(value("LOT-0002"), None, "the refused ceiling is not served as LOT-0002's value");
 
-    // Below the band nothing changes: the same shape at EUR 30 m over 30,000
-    // keeps both lots' figures (the rule is gated to the band it was measured on).
+    // Below the EUR 1 bn gate nothing changes: the same shape at EUR 30 m over 30,000
+    // keeps both lots' figures (the rule is gated to the decades it was measured on).
     let (db2, conn2) = open("scale-lot-below").await;
     let mut p = projection(1, Vec::new());
     p.versions[0].lots = vec![lot("LOT-0001", 3_000_000), lot("LOT-0002", 3_000_000_000)];

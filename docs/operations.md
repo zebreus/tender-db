@@ -530,8 +530,10 @@ positive amount F when (1) some positive figure P of the same Tender and currenc
 published, has F = P × 10ᵏ exactly with k ≥ 3 — P may sit in ANY version, in its amounts or in a
 results round's lot award — and (2) no amount of the head version with a DIFFERENT `field` carries
 the same figure (lot awards never corroborate: they are the same RES / BT-720 element as
-`result_value`), and (3) F's EUR conversion is at least €10 bn (`SCALE_ERROR_MIN_EUR_CENTS`, the
-band floor; the data-quality report's `BAND_FLOOR_EUR_CENTS` is that constant). The head falls to
+`result_value`), and (3) F's EUR conversion is at least €1 bn (`SCALE_ERROR_MIN_EUR_CENTS`; it was
+the €10 bn band floor until the below-band measurement of 2026-10-06 adjudicated the €1–10 bn
+decade whole — 65 refused heads, 64 scale errors, one genuine: 8287294's GBP 4 bn framework, the
+recorded false positive; the data-quality report's `BAND_FLOOR_EUR_CENTS` stays €10 bn). The head falls to
 the next admitted figure, which is not a correction: 6988280
 falls to a €1 bn placeholder, 6803400 to £50 M. The rule is computed in the election, not stored
 as a `quality` marker (the marker vocabulary stays `'withheld'`), so nothing in the parsed or
@@ -544,12 +546,22 @@ band), so 224156's LOT-0002 serves no value rather than its refused ceiling.
 
 **Who changes, and when.** No `PROJECTION_EPOCH` bump: a Tender is re-elected the next time the
 fold rewrites it. Because of (3), and because the election only removes candidates and takes the
-max, the rule can move ONLY a Tender whose elected value is already in the €10–100 bn band, and
-only downwards — the ~330 rows the drain below re-elects. Nothing below the band moves, ever,
-under this rule: the adjudication's evidence (22 rows drawn from the band, where the big figure
-was suspect by selection) says nothing about it, and below the band the slip often runs the other
-way (a small figure typed in thousands, a 1,000.00 placeholder beside a genuine €1 M ceiling).
-Lowering the gate is owed to a below-band measurement first (issue 471, unit 4(a) review).
+max, the rule can move ONLY a Tender whose elected value is already at or above €1 bn, and
+only downwards. Nothing below €1 bn moves, ever, under this rule: no adjudication reaches it, and
+there the slip often runs the other way (a small figure typed in thousands, a 1,000.00 placeholder
+beside a genuine €1 M ceiling). Lowering the gate again is owed to a measurement of the next
+decade first (issue 471; the €1–10 bn one is `.scratch/tender-db/471-values/below-band-*`).
+
+**The €1 bn extension's drain (2026-10-06).** The €1–10 bn decade is ~3,600 Tenders, past the
+1,000-id cap, so its drain is NOT the whole decade but the 65 measured heads
+(`.scratch/tender-db/471-values/below-band-refuse65.tsv`, ids in column 1): the election moves a
+Tender only when its elected head is refused, and the measurement's query
+(`below-band-query.sh`) computes exactly that predicate. Cohort: `SELECT t.id,
+v.caused_by_notice_id FROM tenders t JOIN tender_versions v ON v.tender_id = t.id AND v.seq =
+t.current_seq WHERE t.id IN (<the 65>)`, then `refold-notices` + `project` as below. Expected: each of
+the 65 heads drops (8287294 to GBP 4 m); one whose next figure is another unpartnered €1 bn+ slip
+(514188's 94 lots) stays above €1 bn and is a finding for unit 5, not this rule; and re-running `below-band-query.sh` over the decade lists no
+uncorroborated partner row.
 
 **Other jobs will apply it to band Tenders they touch.** Until the drain below has run, any
 `rederive-eur`, `reparse`, `refold-*` job or `PROJECTION_EPOCH` bump that rewrites a band Tender

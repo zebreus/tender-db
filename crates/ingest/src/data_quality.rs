@@ -1560,11 +1560,12 @@ pub const CPV_SHAPES_SQL: &str = "\
 /// The floor of the head-value band listing, in EUR cents: €10 bn (issue 471 unit 1,
 /// 366 unit 6). [`store::canonical::IMPLAUSIBLE_EUR_CENTS`] (€100 bn) caps the band from
 /// above, because the election refuses anything past it, so the listing is exactly the
-/// €10–100 bn region nothing adjudicates. It is the election's own
-/// [`store::canonical::SCALE_ERROR_MIN_EUR_CENTS`] (issue 471 unit 4(a)): the
-/// exact-10ᵏ rule refuses only figures at or above it, so this listing covers the
-/// whole population that rule can move.
-pub const BAND_FLOOR_EUR_CENTS: i64 = store::canonical::SCALE_ERROR_MIN_EUR_CENTS;
+/// €10–100 bn region nothing adjudicates. It was the election's own
+/// [`store::canonical::SCALE_ERROR_MIN_EUR_CENTS`] until the below-band measurement
+/// (issue 471, 2026-10-06) lowered that gate to €1 bn; the listing keeps €10 bn,
+/// because €1–10 bn is ~3,600 Tenders, past [`BAND_LISTING_CAP`], and that decade's
+/// refused heads were adjudicated whole (`.scratch/tender-db/471-values/below-band-*`).
+pub const BAND_FLOOR_EUR_CENTS: i64 = 1_000_000_000_000;
 
 /// At most this many band TENDERS. NOT a ranking cap — the issue asks for every row,
 /// and 2026-10-01 read 324–330 of them — but a safety valve three times the measured
@@ -4568,10 +4569,11 @@ mod tests {
         assert!(sql.contains(&format!("a.cents > {SENTINEL_AMOUNT_CEILING} ")));
         assert!(band_powers_of_ten().starts_with("1000, "));
         assert_eq!(store::canonical::SCALE_ERROR_MIN_EXPONENT, 3);
-        // The rule's EUR gate is the band's floor: the listing (and the drain
-        // built on it) reaches every Tender the rule can move.
-        assert_eq!(BAND_FLOOR_EUR_CENTS, store::canonical::SCALE_ERROR_MIN_EUR_CENTS);
+        // The rule's EUR gate sits a decade under the band's floor since the
+        // below-band measurement (issue 471, 2026-10-06): the listing shows the
+        // band, the rule also reaches the adjudicated EUR 1-10 bn decade.
         assert_eq!(BAND_FLOOR_EUR_CENTS, 1_000_000_000_000);
+        assert_eq!(store::canonical::SCALE_ERROR_MIN_EUR_CENTS, BAND_FLOOR_EUR_CENTS / 10);
     }
 
     #[test]

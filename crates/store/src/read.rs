@@ -4041,7 +4041,7 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
         // value while `/v1/lots?min_value=` reads the head column that refused
         // it (the issue-389 unit-1 incoherence, for this rule). The rule reads
         // the Tender's chain up to this version, so its inputs are loaded only
-        // when some candidate is in the band it is gated to — nearly never.
+        // when some candidate reaches the rule's EUR 1 bn gate — rarely.
         let reached = candidates
             .iter()
             .any(|c| c.3.is_some_and(|eur| eur >= crate::canonical::SCALE_ERROR_MIN_EUR_CENTS));

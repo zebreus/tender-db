@@ -2740,21 +2740,26 @@ pub const SCALE_ERROR_MIN_EXPONENT: u32 = 3;
 pub const SCALE_PARTNER_FLOOR_CENTS: i64 = 1_000;
 
 /// The exact-10^k rule refuses a figure only when its EUR conversion is at
-/// least this: EUR 10 bn, the floor of the head-value band (issue 471; the
-/// data-quality report's `BAND_FLOOR_EUR_CENTS` is this constant).
+/// least this: EUR 1 bn (issue 471, below-band measurement 2026-10-06).
 ///
-/// The rule was decided on 22 rows drawn FROM the band, where the big figure
-/// was suspect by selection. Below it the slip can run the other way (the
-/// SMALL figure typed in thousands, or a power-of-ten placeholder such as
-/// 1,000.00 beside a genuine EUR 1 m ceiling), and refusing the big figure
-/// there drops the genuine one: that population is unmeasured (issue 471,
-/// unit 4(a) review, 2026-10-06). Gated here, the rule can only move a Tender
-/// whose elected value is already in the band (the election only removes
-/// candidates and takes the max), so its whole reach is the ~330 rows the
-/// band drain re-elects, and no later refold, rederive or epoch bump can
-/// carry an unattributed change below it. Lowering this is a decision owed to
-/// the below-band measurement, not a tuning knob.
-pub const SCALE_ERROR_MIN_EUR_CENTS: i64 = 1_000_000_000_000;
+/// The rule was first decided on 22 rows drawn FROM the EUR 10-100 bn band,
+/// where the big figure was suspect by selection, and gated there because below
+/// it the slip can run the other way (the SMALL figure typed in thousands, or a
+/// power-of-ten placeholder such as 1,000.00 beside a genuine EUR 1 m ceiling).
+/// The EUR 1-10 bn decade was then measured whole: of its 3,579 Tenders, 65
+/// had an elected head the rule refuses (64 at k = 3, one at k = 4), and all 65
+/// were adjudicated against their notices: 64 scale errors, ONE genuine
+/// (8287294, the UK Government Procurement Service's GBP 4 bn IT hardware
+/// framework, whose GBP 4 m `result_value` is the slip; it now falls to
+/// GBP 4 m — the recorded false positive). Below EUR 1 bn is still unmeasured,
+/// and the decade below is where the "small figure in thousands" reading
+/// starts to be ordinary, so the floor stops here. Because the election only
+/// removes candidates and takes the max, the rule can move only a Tender whose
+/// elected value is already at or above this, and only down; lowering it again
+/// is a decision owed to a measurement of the next decade, not a tuning knob.
+/// The data-quality band listing keeps its own EUR 10 bn floor
+/// (`data_quality.rs`, `BAND_FLOOR_EUR_CENTS`); it is no longer this constant.
+pub const SCALE_ERROR_MIN_EUR_CENTS: i64 = 100_000_000_000;
 
 /// The exact-10^k scale-error rule of the head election (issue 471 unit 4(a),
 /// decided on the 22 adjudicated band rows, 2026-10-06).
@@ -2775,12 +2780,12 @@ pub const SCALE_ERROR_MIN_EUR_CENTS: i64 = 1_000_000_000_000;
 ///    VAL_TOTAL / BT-720 element as `result_value`, so it is the same
 ///    declaration twice, not a second one (5592948's five GBP 9 bn lot awards
 ///    would otherwise exempt its GBP 9 bn `result_value`).
-/// 3. **F is in the band.** Its EUR conversion is at least
-///    [`SCALE_ERROR_MIN_EUR_CENTS`] (EUR 10 bn). The adjudicated sample was
-///    drawn from the band, so the rule is applied where it was measured and
-///    nowhere else until the below-band population is counted (unit 4(a)
-///    review: below the band the slip often runs the other way, and refusing
-///    the big figure there would drop the genuine one).
+/// 3. **F is at least EUR 1 bn.** Its EUR conversion is at least
+///    [`SCALE_ERROR_MIN_EUR_CENTS`]. The rule was decided on 22 rows of the
+///    EUR 10-100 bn band and extended to EUR 1-10 bn only after that decade's
+///    65 refused heads were adjudicated (64 errors, one genuine: 8287294);
+///    below EUR 1 bn the slip often runs the other way (a small figure typed in
+///    thousands), and refusing the big figure there would drop the genuine one.
 ///
 /// Why corroboration and nothing else: in every agreed scale error the big
 /// figure sat in exactly one amount field (one slip in one field), while the
@@ -2887,7 +2892,7 @@ impl<'a> ScalePartners<'a> {
 
     /// Whether an amount of the head, published as `cents` in `currency` under
     /// `field` and worth `eur_cents`, is refused: at or above
-    /// [`SCALE_ERROR_MIN_EUR_CENTS`], with a partner, and not corroborated by a
+    /// [`SCALE_ERROR_MIN_EUR_CENTS`] (EUR 1 bn), with a partner, and not corroborated by a
     /// different field of the head. The ONE predicate: the fold's election and
     /// the read layer's per-lot pick both call it.
     pub fn refuses_amount(&self, field: &str, currency: &str, cents: i64, eur_cents: i64) -> bool {
@@ -31934,7 +31939,8 @@ mod tests {
             Some(5_000_000_000_001)
         );
 
-        // The band gate (unit 4(a) review). Below EUR 10 bn the rule refuses
+        // The EUR gate (unit 4(a) review; EUR 1 bn since the below-band
+        // measurement of 2026-10-06). Below EUR 1 bn the rule refuses
         // nothing, because there the slip often runs the other way and the
         // sample says nothing about it: a EUR 5 m estimate beside a lot result
         // the publisher typed in thousands (EUR 5,000), and a EUR 1 m ceiling
@@ -31945,7 +31951,7 @@ mod tests {
                 vec![lot("LOT-0001", vec![amt("result_value", 500_000)])],
             )),
             Some(500_000_000),
-            "a EUR 5 m figure over a EUR 5,000 one is below the band and kept"
+            "a EUR 5 m figure over a EUR 5,000 one is below the gate and kept"
         );
         assert_eq!(
             one(with_awards(
@@ -31953,18 +31959,25 @@ mod tests {
                 vec![award("LOT-0001", 100_000)],
             )),
             Some(100_000_000),
-            "a EUR 1 m ceiling over a 1,000.00 award is below the band and kept"
+            "a EUR 1 m ceiling over a 1,000.00 award is below the gate and kept"
         );
         // The floor itself is inclusive, one exact step under it is not reached.
         assert_eq!(
-            one(version(vec![amt("result_value", SCALE_ERROR_MIN_EUR_CENTS), amt("estimated_value", 1_000_000_000)], Vec::new())),
-            Some(1_000_000_000),
-            "exactly EUR 10 bn is in the band"
+            one(version(vec![amt("result_value", SCALE_ERROR_MIN_EUR_CENTS), amt("estimated_value", 100_000_000)], Vec::new())),
+            Some(100_000_000),
+            "exactly EUR 1 bn is reached"
         );
         assert_eq!(
-            one(version(vec![amt("result_value", 999_999_000_000), amt("estimated_value", 999_999_000)], Vec::new())),
-            Some(999_999_000_000),
-            "EUR 9,999,990,000 is below the band"
+            one(version(vec![amt("result_value", 99_999_900_000), amt("estimated_value", 99_999_900)], Vec::new())),
+            Some(99_999_900_000),
+            "EUR 999,999,000 is below the gate"
+        );
+        // The below-band measurement's shape (6681865, EUR 9.7 bn result
+        // beside a EUR 9.7 m one): in the EUR 1-10 bn decade, refused.
+        assert_eq!(
+            one(version(vec![amt("result_value", 970_000_000_000), amt("estimated_value", 970_000_000)], Vec::new())),
+            Some(970_000_000),
+            "a EUR 9.7 bn figure exactly 10^3 over a EUR 9.7 m one falls"
         );
 
         // The predicate the read layer calls, fed by hand: the same answers.
@@ -31972,7 +31985,8 @@ mod tests {
         rule.add_partner("EUR", 1_000_000_000);
         rule.add_head_amount("result_value", "EUR", 1_000_000_000_000);
         assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000));
-        assert!(!rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 999_999_999_999), "below the band");
+        assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, SCALE_ERROR_MIN_EUR_CENTS), "at the gate");
+        assert!(!rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, SCALE_ERROR_MIN_EUR_CENTS - 1), "below the gate");
         rule.add_head_amount("result_value", "EUR", 1_000_000_000_000);
         assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000), "same field twice");
         rule.add_head_amount("estimated_value", "EUR", 1_000_000_000_000);
