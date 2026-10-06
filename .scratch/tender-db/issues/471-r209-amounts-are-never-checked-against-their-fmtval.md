@@ -1,6 +1,6 @@
 # 471 — r209 amounts are never checked against their `@FMTVAL`, and nothing adjudicates the €10–100 bn head-value band (366 units 5 and 6, dropped when 366 closed)
 
-Status: ready-for-agent — UNIT 3 DEPLOYED + RE-PARSED 2026-10-06 (`25b0d10`; reparse 2021 over fetches 178–182, 172,281 notices; fold 2022; 4490098 result_value €49,700). NEXT: unit 4. Was: UNIT 3 LANDED + OWNER DECISION APPLIED 2026-10-06 (uncommitted, not deployed, not re-parsed; see "Unit 3 — decision (2026-10-06)"): an amount whose `@FMTVAL` was its text × an exact even 10^k (k ≥ 2) stores the TEXT as an ORDINARY amount — no `quality` marker, electable and served (4490098's fixture head = 4,970,000 cents, €49,700); the raw attribute stays in the parse layer as `.FMTVAL_MISMATCH`; `QUALITY_FMTVAL_MISMATCH` removed, `quality` is only 'withheld' again. NEXT: `ops/check.sh` → commit → deploy → reparse r208 2011-04…08 per docs/operations.md (one job, packages = 5) → `project` → re-read `/v1/tenders/4490098` and section 16 of the data-quality report; then count `.FMTVAL_TEXT` rows in those months; then unit 4. Was: ready-for-agent — UNIT 3 CODE LANDED IN THE TREE 2026-10-06, REVIEW FIXES APPLIED THE SAME DAY (uncommitted, not deployed, not re-parsed; see "Unit 3 — landed" and "Unit 3 — review fixes"): `@FMTVAL` checked against its text in the shared TED_EXPORT walk; ONLY the measured shape (attribute = text × an exact EVEN 10^k, k ≥ 2, compared in i128) adopts the text and marks `fmtval_mismatch`; every other disagreement keeps the attribute UNMARKED with the text filed beside it as `.FMTVAL_TEXT`. NEXT: decide whether an adopted text stays unelectable (today it does: 4490098's head goes NULL on the fixture), `ops/check.sh`, commit, deploy, re-parse r208 2011-04…08 per docs/operations.md (one job, packages = 5), then count `.FMTVAL_TEXT` rows in the re-parsed months before ever marking that class, then unit 4. Was: ready-for-agent — UNIT 3 CODE LANDED IN THE TREE 2026-10-06 (uncommitted, not deployed): exact-10^k mismatch adopts the text, every mismatch marked. Was: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); UNIT 2 READ DONE (r208: @FMTVAL disagrees with text — 4490098; r209: no FMTVAL, publisher text errors incl. a dropped decimal point); UNIT 3 MEASURED (the r208 @FMTVAL defect is TED July 2011: ~5.9 % of value elements in 17 daily packages, exact even 10^k; text is right); NEXT: unit 3 code (adopt text on an exact-10^k mismatch, mark fmtval_mismatch) + reparse 2011-04…08, then unit 4. Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
+Status: ready-for-agent — UNIT 4 ADJUDICATED 2026-10-06 (see "Unit 4 — adjudication (2026-10-06)": 22 rows with an exact 10^k partner, 20 agreed SCALE_ERROR (2 already drained by unit 3), 1 agreed GENUINE (8400892), 1 split (6803400); rule decided: refuse a figure exactly 10^k (k ≥ 3) above a same-currency partner of the Tender (any version, amounts or lot awards, > 10.00) UNLESS the same figure is also carried by a different canonical amount field of the head version — 0 false positives on the sample, 19/19). NEXT: implement the decided 4(a) rule with `a_figure_exactly_ten_to_the_k_above_a_sibling_is_not_elected`; then the 554082-2023 member read for 6721266; then 4(b), 5, 6. Was: ready-for-agent — UNIT 3 DEPLOYED + RE-PARSED 2026-10-06 (`25b0d10`; reparse 2021 over fetches 178–182, 172,281 notices; fold 2022; 4490098 result_value €49,700). NEXT: unit 4. Was: UNIT 3 LANDED + OWNER DECISION APPLIED 2026-10-06 (uncommitted, not deployed, not re-parsed; see "Unit 3 — decision (2026-10-06)"): an amount whose `@FMTVAL` was its text × an exact even 10^k (k ≥ 2) stores the TEXT as an ORDINARY amount — no `quality` marker, electable and served (4490098's fixture head = 4,970,000 cents, €49,700); the raw attribute stays in the parse layer as `.FMTVAL_MISMATCH`; `QUALITY_FMTVAL_MISMATCH` removed, `quality` is only 'withheld' again. NEXT: `ops/check.sh` → commit → deploy → reparse r208 2011-04…08 per docs/operations.md (one job, packages = 5) → `project` → re-read `/v1/tenders/4490098` and section 16 of the data-quality report; then count `.FMTVAL_TEXT` rows in those months; then unit 4. Was: ready-for-agent — UNIT 3 CODE LANDED IN THE TREE 2026-10-06, REVIEW FIXES APPLIED THE SAME DAY (uncommitted, not deployed, not re-parsed; see "Unit 3 — landed" and "Unit 3 — review fixes"): `@FMTVAL` checked against its text in the shared TED_EXPORT walk; ONLY the measured shape (attribute = text × an exact EVEN 10^k, k ≥ 2, compared in i128) adopts the text and marks `fmtval_mismatch`; every other disagreement keeps the attribute UNMARKED with the text filed beside it as `.FMTVAL_TEXT`. NEXT: decide whether an adopted text stays unelectable (today it does: 4490098's head goes NULL on the fixture), `ops/check.sh`, commit, deploy, re-parse r208 2011-04…08 per docs/operations.md (one job, packages = 5), then count `.FMTVAL_TEXT` rows in the re-parsed months before ever marking that class, then unit 4. Was: ready-for-agent — UNIT 3 CODE LANDED IN THE TREE 2026-10-06 (uncommitted, not deployed): exact-10^k mismatch adopts the text, every mismatch marked. Was: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); UNIT 2 READ DONE (r208: @FMTVAL disagrees with text — 4490098; r209: no FMTVAL, publisher text errors incl. a dropped decimal point); UNIT 3 MEASURED (the r208 @FMTVAL defect is TED July 2011: ~5.9 % of value elements in 17 daily packages, exact even 10^k; text is right); NEXT: unit 3 code (adopt text on an exact-10^k mismatch, mark fmtval_mismatch) + reparse 2011-04…08, then unit 4. Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
 Kind: data quality (amount plausibility: the legacy parse layer and the head election)
 Relates to: 366 (promised units 5 and 6, closed 2026-09-12 without them), 380 (its sweep still points at "the open half of
 issue 366"), 267 (the plausibility measure), 372 (the `quality` marker on `Fact::Amount`), 385 (F14 corrigendum dates:
@@ -500,3 +500,130 @@ projection no longer marks it.
   - Re-read section 16 after the next data-quality run. The July-2011 figures were mostly below the band, so a small
     change is expected.
   - Unit 4: the in-tender signals (exact 10^k sibling, the dropped decimal point, F14 value supersession).
+
+## Unit 4 — adjudication (2026-10-06)
+
+**Input.** These are the 22 section-16 rows (data-quality job 2019) that have an exact 10^k partner. Each row got two
+independent verdicts (SCALE_ERROR / GENUINE / UNSURE), and each judge read `/v1/tenders/{id}` and the notices'
+`/content`. On the same day, each row's served `amounts` and `lot_results` were re-read from `/v1/tenders/{id}`.
+"×1" in the last column means the big figure sits in one canonical amount field; "×2" means it sits in two different
+fields.
+
+| tender | k | head field (the big figure) | partner field | verdict 1 | verdict 2 | agreed? | big figure in amounts |
+|---|---|---|---|---|---|---|---|
+| 6941544 | 3 | `result_value` (RES-1 VAL_TOTAL, CAN 548977-2021) | `estimated_value` (VAL_ESTIMATED_TOTAL, CN + CAN), same notice | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 4972513 | 3 | `result_value` (CAN 425454-2014 VALUE/VALUE_COST) | `estimated_value` | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 8452561 | 3 | `result_value`, procedure VAL_TOTAL (VEAT 129760-2020) | `result_value` RES-1 + lot award, same notice | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| **8400892** | 3 | `estimated_value` (procedure, CAN 231141-2017; also PIN, CN, every RES VAL_ESTIMATED_TOTAL) | `result_value` RES-1..3 VAL_TOTAL, same notice | **GENUINE** | **GENUINE** | yes | **×2** (`estimated_value` + `result_value`, procedure VAL_TOTAL) |
+| 6803400 | 3 | `result_value`, procedure TED-VALUE (CAN 634169-2020) | lot estimates/awards, LOT-4..7 £10 M | UNSURE | SCALE_ERROR | **no** (both say the head is wrong; the real total is the CN's ~£500 M, not the partner) | ×1 |
+| 5592948 | 3 | `result_value` (CAN 295406-2016; corrected by F14 071343-2017) | `estimated_value` LOT-1..6 | SCALE_ERROR | SCALE_ERROR | yes | ×1 (also every lot award; lot results are not counted) |
+| 6988280 | 4 | `result_value`, procedure VAL_TOTAL (CAN 291034-2021) | RES-3 lot award €10 M | SCALE_ERROR | SCALE_ERROR | yes (real value UNKNOWN: every lot value is a power-of-ten placeholder) | ×1 |
+| 577127 | 3 | `framework_maximum` BT-271-Lot LOT-0001 | `estimated_value` BT-27-Lot LOT-0001, same notice | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 6581010 | 4 | `result_value`, procedure (CAN 026682-2020) | `estimated_value` (CN 382778-2019) | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 4685893 | 3 | `result_value`, procedure GLOBAL (CAN 011602-2012) | lot award RES-1, same notice | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 8822396 | 3 | `result_value` BT-161 / BT-720 LOT-0001 | `estimated_value` BT-27-Lot LOT-0001, same notice | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 5094790 | 3 | `estimated_value` (CN 374171-2013) | `result_value` (CAN 171786-2014) | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 224156 | 3 | `framework_maximum` BT-271-Lot LOT-0002 | `framework_maximum` BT-271-Lot LOT-0001 (a sibling lot) | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 568960 | 3 | `framework_maximum` BT-271-Lot LOT-0000 (the only lot) | `estimated_value` + `framework_maximum`, procedure | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 404296 | 3 | `estimated_value` BT-27-Procedure | `result_value` BT-161 (+ 3× BT-720, 3 contracts), same notice | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 4578779 | 6 | r208 `@FMTVAL` (CN 222050-2011) | VALUE/VALUE_COST text, CN + CAN | SCALE_ERROR | SCALE_ERROR | yes, **already drained by unit 3** (serves €20,000) | — |
+| 4785037 | 3 | `result_value`, GLOBAL (CAN 284708-2013) | `estimated_value` (CN 189251-2012) + 2 lot estimates | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 6577862 | 3 | `estimated_value` (CN 375960-2019) | `result_value` (CAN 374021-2020) + RES-1 | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 4581663 | 4 | r208 `@FMTVAL` (CN 226981-2011) | VALUE/VALUE_COST text, CN + CAN | SCALE_ERROR | SCALE_ERROR | yes, **already drained by unit 3** (serves €1,500,000) | — |
+| 6721266 | 3 | `estimated_value` (head: modification 554082-2023) | CN 062874-2020 VAL_ESTIMATED_TOTAL, **an earlier version only** | SCALE_ERROR | SCALE_ERROR | yes (verdict 2: neither notice it read carries the ×1000 figure; origin not read) | ×1 |
+| 6852637 | 3 | `estimated_value` (RES-6 VAL_ESTIMATED_TOTAL, CAN 613978-2020) | the same field in RES-1..5 + procedure total | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+| 1163733 | 3 | `estimated_value` LOT-0001 (the only lot) | `estimated_value`, procedure | SCALE_ERROR | SCALE_ERROR | yes | ×1 |
+
+**Counts.**
+- 22 rows: 21 have both verdicts the same, and 1 is split.
+- Agreed SCALE_ERROR: 20. Two of them (4578779, 4581663) were already corrected by the unit-3 re-parse, so 18 are
+  still in the band.
+- Agreed GENUINE: 1 (8400892, a £10.8 bn London-wide housing framework ceiling).
+- Split: 1 (6803400, UNSURE against SCALE_ERROR). Both judges say the £10 bn head is wrong. They disagree only because
+  the 10³ partner is one lot's figure and not the real total.
+- 18 of the 22 have k = 3, 3 have k = 4 and 1 has k = 6.
+
+**Separators that do NOT work (checked against the table).**
+- **k.** The GENUINE row has k = 3, like 17 of the scale errors.
+- **Field kind ("estimated total over a result").** 6577862, 5094790 and 404296 are the same shape as 8400892: a big
+  procedure estimate over a small award total. All three are agreed scale errors.
+- **Same notice against a different notice.** 8400892's pair is in one notice, and so are 6941544, 8452561, 577127,
+  224156, 404296, 6852637 and others.
+- **Scope ("a procedure figure over one of several lots or results").** This would exempt 8400892, but it also exempts
+  5592948, whose partners are only the six lot estimates. It also exempts 6988280 and 6803400.
+- **"The big figure is the only one at its scope across notices."** 6577862's 18 bn also repeats from the CN into the
+  CAN's RES-1 estimate, so it would be exempt too.
+
+**What does separate them: corroboration.**
+- In 8400892, the big figure is the only one published in two different canonical amount fields of the tender. They are
+  `estimated_value` (procedure VAL_ESTIMATED_TOTAL) and `result_value` (procedure VAL_TOTAL = 10.8 bn). The 10.8 m is
+  the odd one out, as both GENUINE verdicts argue.
+- In every agreed scale error, the big figure sits in exactly ONE canonical amount field. The publisher made one slip in
+  one field.
+- Lot results do not count as corroboration. `lot_results.awarded` is derived from the same RES VAL_TOTAL / BT-720
+  element as `result_value`, so it is not an independent declaration. 5592948's five £9 bn lot awards and 8822396's
+  LOT-0001 award would otherwise exempt them.
+
+**Decision: the rule for 4(a).**
+
+A positive `Fact::Amount` F in currency C is **refused from the head election** when both of these hold:
+
+1. There is a positive figure P of the same Tender in currency C with F = P × 10^k exactly, where k ≥ 3, compared in
+   i128 cents.
+   - P can come from any version's `tender_version_amounts` or `tender_version_lot_results.awarded_cents`. This is the
+     partner search section 16 measured and that these 22 rows were judged on.
+   - P must be above `SENTINEL_AMOUNT_CEILING` (10.00 as published).
+2. F's exact cents value in C is NOT also carried by a canonical amount with a different `field`
+   (`estimated_value` / `result_value` / `framework_maximum` / …) in the head version. Lot-result awards do not count.
+
+The rule applies to every amount, not only the current head, so a second scaled figure falls too. Example: 6988280's
+€10 bn `result_value` also has the €10 M partner, so its head falls to €1 bn, which is still a placeholder. Refusal goes
+through the same `head_value_eur_cents` skip as `withheld`. Whether it is a stored `quality` value or computed at
+election time is the implementer's call. The unit-3 decision kept the `quality` vocabulary at `'withheld'` only, so
+adding to it needs that decision revisited.
+
+- **Why the any-version partner.** Only 6721266 needs it, because its 458,962,965.47 partner is superseded in the head
+  version. A same-version rule leaves it in the band. Verdict 2 suspects our side made the ×1000. The member read of
+  554082-2023 is still owed, but the rule should not wait on it.
+- **The round-mantissa case the pin was asked to rule on** ("a €2 bn framework over a €2 M lot") is **refused unless
+  corroborated**.
+  - In this sample every uncorroborated round ceiling was an error: 224156, 577127 and 568960 (`framework_maximum`),
+    and 6803400 and 6988280.
+  - The only genuine ceiling, 8400892, was corroborated.
+- **Pin.** `a_figure_exactly_ten_to_the_k_above_a_sibling_is_not_elected` (canonical tests) covers these cases:
+  - 224156's sibling-lot `framework_maximum` is refused.
+  - 577127's same-lot `framework_maximum` over `estimated_value` (a round mantissa) is refused.
+  - 8400892's shape (`estimated_value` = `result_value` = 10.8 bn over a 10.8 m `result_value`) stays elected.
+  - 5592948's shape (a big `result_value` and big lot awards over lot estimates) is refused, and the head falls to
+    £9 M. That is the Verify's "done".
+  - The superseded-partner case (6721266's shape) is refused.
+  - k = 2 (10²) is NOT refused.
+  - A 1.00 placeholder is no partner.
+
+**Precision on this sample.**
+- **As written in 4(a)** (no corroboration exemption): it refuses all 20 rows still in the band. There is 1 false
+  positive (8400892), so precision is 18/19 on the agreed rows, or 19/20 counting 6803400, whose head both judges call
+  wrong.
+- **The decided rule:** it refuses 19 and keeps 8400892. False positives: **0**. Every refused head is wrong per both
+  judges, so precision is 19/19, or 18/18 on agreed rows. Recall on the agreed scale errors still in the band is 18/18.
+- **Caveat on n.** One genuine row decides the exemption. A genuine framework ceiling that is published in one field
+  only would be a false positive, and this sample cannot show how common that is. Unit 6's re-read lists every row the
+  rule removes, so a reviewer can catch one.
+- **Refused is not the same as corrected.**
+  - 6988280's head falls to a €1 bn placeholder. Both judges say the real value is unknown.
+  - 6803400 falls to £50 M, not the CN's ~£500 M, because that figure was superseded.
+  - 8822396's lot awards for lots 2–4 (about 10³ over their estimates, but not exactly) stay as they are.
+
+**The dropped-decimal signal (unit 2, 010347).** It does **not** appear among these rows.
+- None of the 44 verdicts reports an integer element text beside sibling figures that carry decimals.
+- The members read in unit 2 for 6941544 and 6581010 both print `.00`.
+- The exhibit 6843260 is below the band (£3.1 bn), so it is not in section 16.
+- The only row whose source text has not been read is 6721266 (the ×1000 of a `,47` figure). Its member read decides
+  whether it belongs to this class or is a parse defect of ours.
+- So the signal stays recorded, with no band row to decide it on. It should not be built under 4(a).
+
+**4(b) is unchanged by this.** 4(a) already refuses 5592948, so the Verify no longer depends on (b). Whether (b) stays
+here is still open.
+
+**Next.** Implement 4(a) as decided above, with the pin. Then read the 554082-2023 member for 6721266. Then 4(b),
+5 and 6.
