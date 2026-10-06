@@ -2729,14 +2729,15 @@ fn f14_target_suffix(t: &ingest::project::F14TargetGate) -> String {
         String::new()
     } else {
         format!(
-            "; issue-489 F14 value corrections: {} admitted (estimated {}, result {}), {} unread, \
-             {} ambiguous field(s), {} lot/contract refused",
-            t.value_estimated + t.value_result,
+            "; issue-489 F14 value corrections: {} admitted (estimated {}, result {}, lot {}), {} unread, \
+             {} ambiguous, {} contract refused",
+            t.value_estimated + t.value_result + t.value_lot,
             t.value_estimated,
             t.value_result,
+            t.value_lot,
             t.value_unread,
             t.value_ambiguous,
-            t.value_lot_or_award,
+            t.value_contract,
         )
     };
     if t.admitted() == 0 && t.refused() == 0 {
@@ -16832,12 +16833,13 @@ mod tests {
             value_result: 16,
             value_unread: 9,
             value_ambiguous: 1,
-            value_lot_or_award: 97,
+            value_lot: 35,
+            value_contract: 17,
             ..Default::default()
         };
         let s = f14_target_suffix(&values);
-        assert!(s.starts_with("; issue-489 F14 value corrections: 48 admitted (estimated 32, result 16), 9 unread"), "{s}");
-        assert!(s.contains("97 lot/contract refused"), "{s}");
+        assert!(s.starts_with("; issue-489 F14 value corrections: 83 admitted (estimated 32, result 16, lot 35), 9 unread"), "{s}");
+        assert!(s.contains("17 contract refused"), "{s}");
         assert!(!s.contains("issue-385"), "{s}");
         let both = project::F14TargetGate { to_deadline: 3, ..values };
         let s = f14_target_suffix(&both);

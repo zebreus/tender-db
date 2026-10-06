@@ -1873,11 +1873,13 @@ async fn an_f14_value_correction_supersedes_the_figure_it_corrects() {
         "000001-2020",
         R209,
         Parsed {
-            sections: vec![sec("PROCEDURE", "Notice", None)],
+            sections: vec![sec("PROCEDURE", "Notice", None), sec("LOT-1", "Lot", Some("PROCEDURE"))],
             values: vec![
                 ted_text("PROCEDURE", "TED-TITLE", "Servizi di pulizia"),
                 ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 5 * 86_400),
                 ted_amount("PROCEDURE", "TED-VAL_ESTIMATED_TOTAL", 2_528_025_600_000),
+                // The lot's II.2.6, as wrong as the total (6891632's shape).
+                ted_amount("LOT-1", "TED-VAL_ESTIMATED_TOTAL", 2_520_000_000_000),
             ],
         },
     );
@@ -1914,18 +1916,24 @@ async fn an_f14_value_correction_supersedes_the_figure_it_corrects() {
             query_text(
                 db,
                 &format!(
-                    "SELECT group_concat(v, ';') FROM (SELECT field || ' ' || cents || ' ' || currency AS v \
-                       FROM tender_version_amounts WHERE tender_id = 1 AND seq = {seq} ORDER BY field, cents)"
+                    "SELECT group_concat(v, ';') FROM (SELECT field || ' ' || cents || ' ' || currency \
+                       || CASE WHEN lot_id IS NULL THEN '' ELSE ' (lot)' END AS v \
+                       FROM tender_version_amounts WHERE tender_id = 1 AND seq = {seq} ORDER BY lot_id IS NOT NULL, field, cents)"
                 ),
             )
             .await
         }
     };
-    assert_eq!(estimates(1).await.as_deref(), Some("estimated_value 2528025600000 EUR"), "the CN's figure");
+    assert_eq!(
+        estimates(1).await.as_deref(),
+        Some("estimated_value 2528025600000 EUR;estimated_value 2520000000000 EUR (lot)"),
+        "the CN's figures"
+    );
     assert_eq!(
         estimates(2).await.as_deref(),
-        Some("estimated_value 8553600000 EUR"),
-        "the F14 replaced it, and neither the II.2.6 nor the II.2.7 block became an amount"
+        Some("estimated_value 8553600000 EUR;estimated_value 528000000 EUR (lot)"),
+        "II.1.5 replaced the total, II.2.6 replaced the ONE lot carrying its old figure (unit 3), \
+         and the II.2.7 prose became nothing"
     );
     assert_eq!(
         scalar(&db, "SELECT current_value_eur_cents FROM tenders WHERE id = 1").await,
@@ -1937,7 +1945,11 @@ async fn an_f14_value_correction_supersedes_the_figure_it_corrects() {
     let (n2, p2) = f14("000200-2020", 30, vec![("CHG-1", "II.1.5", "85 536 000,00", "25 280 256 000,00 EUR")]);
     db.record_notice(&n2, &p2).await.expect("second f14");
     project::project(&db, false).await.expect("project");
-    assert_eq!(estimates(3).await.as_deref(), Some("estimated_value 2528025600000 EUR"), "the later restatement wins");
+    assert_eq!(
+        estimates(3).await.as_deref(),
+        Some("estimated_value 2528025600000 EUR;estimated_value 528000000 EUR (lot)"),
+        "the later restatement wins"
+    );
 
     // A late F14 that names a figure the chain no longer carries (it corrects an
     // OLDER notice's estimate) must not overwrite the current one.
@@ -1946,7 +1958,7 @@ async fn an_f14_value_correction_supersedes_the_figure_it_corrects() {
     project::project(&db, false).await.expect("project");
     assert_eq!(
         estimates(4).await.as_deref(),
-        Some("estimated_value 2528025600000 EUR"),
+        Some("estimated_value 2528025600000 EUR;estimated_value 528000000 EUR (lot)"),
         "a correction of a figure no longer carried is not applied"
     );
 

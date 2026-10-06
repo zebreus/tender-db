@@ -417,13 +417,21 @@ const F14_OLD_VALUE_FIELD: &str = "TED-OLD_VALUE.TEXT";
 /// contract's value) carries the initial estimate AND the final value as two
 /// blocks of one coordinate in the Polish form; mapping either would mean
 /// guessing, so both stay in the notice layer and are counted
-/// ([`F14TargetGate::value_lot_or_award`]). Same direction as 385: a missing
+/// ([`F14TargetGate::value_contract`]). Same direction as 385: a missing
 /// correction is visible as a stale figure, an invented one is not.
+///
+/// Unit 3 lifted II.2.6 out of that list: since a correction carries the figure
+/// it replaces ([`ValueCorrection`]), the lot is the ONE lot of the chain carrying
+/// that old estimate — found by value, not guessed by position ([`F14_LOT_TARGET`]).
 const F14_TARGET_AMOUNTS: &[(&str, &str)] = &[("II.1.5", "estimated_value"), ("II.1.7", "result_value")];
 
+/// A lot's estimated value (issue 489 unit 3), applied to the single lot whose
+/// carried `estimated_value` is the block's OLD figure.
+const F14_LOT_TARGET: &str = "II.2.6";
+
 /// The value coordinates measured carrying a `NEW_VALUE.TEXT` that are refused
-/// on purpose (see [`F14_TARGET_AMOUNTS`]).
-const F14_REFUSED_VALUE_TARGETS: &[&str] = &["II.2.6", "V.2.4"];
+/// on purpose: V.2.4 (see [`F14_TARGET_AMOUNTS`]).
+const F14_REFUSED_VALUE_TARGETS: &[&str] = &["V.2.4"];
 
 /// The canonical amount a corrigendum's `TED-SECTION` coordinate corrects, if
 /// it is one this layer maps.
@@ -492,6 +500,9 @@ struct ValueCorrection {
     old_cents: i64,
     /// `None` when the OLD text states no currency; then cents alone must match.
     old_currency: Option<String>,
+    /// Unit 3: a LOT's figure (II.2.6), applied to the one lot carrying the old
+    /// figure; `false` is the Tender's own (II.1.5 / II.1.7).
+    lot: bool,
 }
 
 impl ValueCorrection {
@@ -526,22 +537,46 @@ fn f14_value_corrections(
         .collect();
     // field -> Some(correction) while every block agrees, None once one does not.
     let mut found: BTreeMap<&'static str, Option<ValueCorrection>> = BTreeMap::new();
+    // Unit 3: lot corrections keyed by the old figure they name.
+    let mut lot_found: BTreeMap<(i64, Option<String>), Option<ValueCorrection>> = BTreeMap::new();
     for v in &parsed.values {
         let NoticeValue::Text { value, .. } = &v.value else { continue };
         if v.field_id != F14_VALUE_FIELD {
             continue;
         }
         let Some(target) = targets.get(v.section_id.as_str()) else { continue };
+        let read = |field: &str, lot: bool| {
+            f14_new_value_amount(value).and_then(|(cents, currency)| {
+                let (old_cents, old_currency) = f14_value_text(olds.get(v.section_id.as_str())?)?;
+                Some(ValueCorrection { field: field.to_owned(), cents, currency, old_cents, old_currency, lot })
+            })
+        };
+        if f14_coordinate(target) == F14_LOT_TARGET {
+            // Unit 3: one block per lot, so blocks do not have to agree with each
+            // other — only two blocks naming the SAME old figure must. An
+            // unreadable block costs only its own lot.
+            match read("estimated_value", true) {
+                None => gate.value_unread += 1,
+                Some(c) => {
+                    lot_found
+                        .entry((c.old_cents, c.old_currency.clone()))
+                        .and_modify(|seen| {
+                            if seen.as_ref() != Some(&c) {
+                                *seen = None;
+                            }
+                        })
+                        .or_insert(Some(c));
+                }
+            }
+            continue;
+        }
         let Some(field) = f14_target_amount(target) else {
             if F14_REFUSED_VALUE_TARGETS.contains(&f14_coordinate(target)) {
-                gate.value_lot_or_award += 1;
+                gate.value_contract += 1;
             }
             continue;
         };
-        let read = f14_new_value_amount(value).and_then(|(cents, currency)| {
-            let (old_cents, old_currency) = f14_value_text(olds.get(v.section_id.as_str())?)?;
-            Some(ValueCorrection { field: field.to_owned(), cents, currency, old_cents, old_currency })
-        });
+        let read = read(field, false);
         match read {
             None => {
                 gate.value_unread += 1;
@@ -564,6 +599,15 @@ fn f14_value_corrections(
                     "estimated_value" => gate.value_estimated += 1,
                     _ => gate.value_result += 1,
                 }
+                admitted.push(c);
+            }
+            None => gate.value_ambiguous += 1,
+        }
+    }
+    for c in lot_found.into_values() {
+        match c {
+            Some(c) => {
+                gate.value_lot += 1;
                 admitted.push(c);
             }
             None => gate.value_ambiguous += 1,
@@ -4919,9 +4963,12 @@ pub struct F14TargetGate {
     /// Issue 489: a field whose blocks in one notice disagree or include an
     /// unreadable one — the whole field refused.
     pub value_ambiguous: u64,
-    /// Issue 489: a lot (II.2.6) or contract (V.2.4) value correction — refused
-    /// by design, counted so its volume stays visible.
-    pub value_lot_or_award: u64,
+    /// Issue 489 unit 3: lot (II.2.6) corrections admitted — one per distinct
+    /// old figure named; the fold applies each to the single lot carrying it.
+    pub value_lot: u64,
+    /// Issue 489: a contract (V.2.4) value correction — refused by design,
+    /// counted so its volume stays visible.
+    pub value_contract: u64,
 }
 
 impl F14TargetGate {
@@ -4952,12 +4999,13 @@ impl F14TargetGate {
         self.value_result += other.value_result;
         self.value_unread += other.value_unread;
         self.value_ambiguous += other.value_ambiguous;
-        self.value_lot_or_award += other.value_lot_or_award;
+        self.value_lot += other.value_lot;
+        self.value_contract += other.value_contract;
     }
 
     /// Every value-correction block this tally saw (issue 489).
     pub fn values_seen(&self) -> u64 {
-        self.value_estimated + self.value_result + self.value_unread + self.value_lot_or_award
+        self.value_estimated + self.value_result + self.value_lot + self.value_unread + self.value_contract
     }
 
     /// Count one corrigendum date by the coordinate its own block named, or
@@ -5324,7 +5372,7 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
         // Issue 489: an F14 value correction replaces its field only when the
         // Tender carries the figure the block names as replaced. Per-field like
         // `supersede`, so every carried figure of the field goes.
-        for c in &state.value_corrections {
+        for c in state.value_corrections.iter().filter(|c| !c.lot) {
             if facts.iter().any(|f| c.corrects(f)) {
                 facts.retain(|f| !matches!(f, Fact::Amount { field, .. } if *field == c.field));
                 facts.insert(Fact::Amount {
@@ -5348,6 +5396,22 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             }
         }
         lots.sort_by(|a, b| a.key.cmp(&b.key));
+        // Issue 489 unit 3: a lot's corrected estimate goes to the ONE lot that
+        // carries the figure the block names as replaced. None, or two lots with
+        // that same figure, and nothing moves — the block names no lot key.
+        for c in state.value_corrections.iter().filter(|c| c.lot) {
+            let mut carriers = lots.iter_mut().filter(|l| l.facts.iter().any(|f| c.corrects(f)));
+            if let (Some(lot), None) = (carriers.next(), carriers.next()) {
+                lot.facts.retain(|f| !matches!(f, Fact::Amount { field, .. } if *field == c.field));
+                lot.facts.insert(Fact::Amount {
+                    field: c.field.clone(),
+                    cents: c.cents,
+                    currency: c.currency.clone(),
+                    tax_basis: None,
+                    quality: None,
+                });
+            }
+        }
 
         // Results accumulate: a framework/DPS round or a tranche CAN adds its
         // round and never deletes an earlier one (ted-empirical-checks.md §1:
@@ -9099,6 +9163,7 @@ mod tests {
                 currency: "EUR".into(),
                 old_cents: 2_528_025_600_000,
                 old_currency: None,
+                lot: false,
             }],
             round: Some(round),
             // Issue 237: carried through the frame, so the round-trip covers it.

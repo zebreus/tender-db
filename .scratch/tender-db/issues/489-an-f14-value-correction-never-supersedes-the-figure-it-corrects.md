@@ -1,6 +1,6 @@
 # 489 — an F14 value correction never supersedes the figure it corrects
 
-Status: ready-for-agent — UNIT 2 LANDED 2026-10-06 (see "Unit 2 — landed"; gate, deploy, then the drain). Was: filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
+Status: ready-for-agent — UNIT 2 DEPLOYED (`39bd8d1`), UNIT 3 LANDED 2026-10-06 (II.2.6 by old-figure match, see "Unit 3"); NEXT: gate → deploy unit 3 → the ONE drain (refold-fields sizing → wet) covers both. Was: UNIT 2 LANDED 2026-10-06 (see "Unit 2 — landed"; gate, deploy, then the drain). Was: filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
 "whether (b) stays here or becomes its own issue" decision: it is a different mechanism — free-text
 amount parsing plus same-field supersession in the version state — and inside 471's band it moves
 one row). UNIT 1 MEASURED on a window (see "Unit 1 — window measurement (2026-10-06)"); scope decided: II.1.5 / II.1.7 (tender scope) only. NEXT: unit 2 — read how a corrigendum version inherits amounts, then the strict reader + supersession with the pin.
@@ -104,7 +104,7 @@ anything else (prose, two figures, malformed grouping like `224,425,00`) is refu
   shape, the II.2.6 / II.2.7 blocks stay out, 4871119's flip-flop resolves by publication) and
   `an_f14_new_value_text_is_read_only_when_it_is_one_figure_and_one_currency` (project.rs unit).
 
-**Known limit, recorded:** 6891632 itself will NOT leave the band through this unit — its F14 also
+**Known limit, recorded (lifted by unit 3 below):** 6891632 itself will NOT leave the band through this unit — its F14 also
 corrects the lot's II.2.6 (€25.2 bn → €5.28 m), which stays unmapped, and the head is the MAX over
 tender and lot amounts. A single-lot II.2.6 mapping is the natural unit 3.
 
@@ -136,3 +136,18 @@ Recorded, not fixed: **an upward ×10ᵏ correction to ≥ €1 bn is refused by
 is deliberate for 6721266). It needs the publisher to RAISE a figure exactly 1000× to ≥ €1 bn —
 the opposite of every band case read so far; the drain's before/after will show whether it occurs.
 
+
+## Unit 3 — II.2.6 by old-figure match (2026-10-06, landed)
+
+The review fix made every correction carry the figure it replaces, which removes the reason II.2.6
+was refused: the block names no lot KEY, but it names the lot's old VALUE. So II.2.6 →
+`estimated_value` of the ONE lot of the chain whose carried `estimated_value` is the block's OLD
+figure (currency compared when stated); no lot, or two lots carrying that same figure, and nothing
+moves. Blocks need not agree with each other (one block per lot), only two blocks naming the same old
+figure must; an unreadable block costs only its own lot. V.2.4 stays refused (two figures per
+coordinate in the Polish form, and its target is an award, not a lot estimate).
+
+Tally: `value_lot` (admitted lot corrections), `value_contract` (V.2.4 refused; was
+`value_lot_or_award`); the project line reads `… N admitted (estimated …, result …, lot …), … unread,
+… ambiguous, … contract refused`. The integration pin now carries 6891632's lot: after the F14 the
+lot reads €5,280,000 and the head is the corrected €85,536,000.
