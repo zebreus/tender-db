@@ -3901,8 +3901,10 @@ fn lots_query_banded(filter: &Filter, scope: Scope, band_end: Option<i64>) -> Qu
 ///   * value and currency — `MAX(cents)` and `ORDER BY cents DESC LIMIT 1` resolve
 ///     to the SAME row, so one max-cents row serves both. Over the CANDIDATES,
 ///     which since issue 389 are the rows the fold would also have accepted: not
-///     withheld (issue 372), not a sentinel, and under the ceiling where a EUR
-///     conversion exists to measure it against.
+///     withheld (issue 372), not a sentinel, under the ceiling where a EUR
+///     conversion exists to measure it against, and not refused by the
+///     exact-10ᵏ scale-error rule (issue 471 unit 4(a), the fold's own
+///     `ScalePartners::refuses_amount`, read over the chain up to the version).
 ///   * deadline — the three columns were three subqueries sharing
 ///     `ORDER BY utc_seconds DESC LIMIT 1`, so one max-utc row serves all three.
 async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -> turso::Result<()> {
@@ -3990,12 +3992,15 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
                 // lot whose ONLY amount is withheld would show -0.01 as its
                 // headline value: -100 outranks the NULL default below, so it
                 // wins by being the only row rather than by being a figure.
-                "SELECT s.lot_id, s.cents, s.currency, s.eur_cents FROM tender_version_amounts s
+                "SELECT s.lot_id, s.cents, s.currency, s.eur_cents, s.field FROM tender_version_amounts s
                   WHERE s.tender_id = ? AND s.seq = ? AND s.lot_id IS NOT NULL
                     AND s.quality IS NULL",
                 key.clone(),
             )
             .await?;
+        // The lot candidates that pass the per-row skips below, held until the
+        // Tender-wide exact-10^k rule has been consulted (issue 471 unit 4(a)).
+        let mut candidates: Vec<(usize, Option<i64>, Option<String>, Option<i64>, Option<String>)> = Vec::new();
         while let Some(row) = got.next().await? {
             let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
             let cents = opt_int_of(&row, 1);
@@ -4023,8 +4028,58 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
             // EUR figure and so has nothing to say without a rate, the lot row
             // serves the PUBLISHED figure, and blanking a published amount for
             // want of a rate would be a new defect rather than this one's fix.
-            if opt_int_of(&row, 3).is_some_and(|eur| eur > crate::canonical::IMPLAUSIBLE_EUR_CENTS) {
+            let eur = opt_int_of(&row, 3);
+            if eur.is_some_and(|eur| eur > crate::canonical::IMPLAUSIBLE_EUR_CENTS) {
                 continue;
+            }
+            candidates.push((i, cents, opt_text_of(&row, 2), eur, opt_text_of(&row, 4)));
+        }
+
+        // Issue 471 unit 4(a): the fold's exact-10^k scale-error rule, CALLED
+        // (`ScalePartners::refuses_amount`) like the sentinel test above, so a
+        // lot figure the head election refuses is not served as that lot's
+        // value while `/v1/lots?min_value=` reads the head column that refused
+        // it (the issue-389 unit-1 incoherence, for this rule). The rule reads
+        // the Tender's chain up to this version, so its inputs are loaded only
+        // when some candidate is in the band it is gated to — nearly never.
+        let reached = candidates
+            .iter()
+            .any(|c| c.3.is_some_and(|eur| eur >= crate::canonical::SCALE_ERROR_MIN_EUR_CENTS));
+        let mut figures: Vec<(i64, Option<String>, Option<String>, Option<i64>)> = Vec::new();
+        if reached {
+            // Every amount (any field, any quality, tender or lot scope) and
+            // every lot award of versions 1..=seq: `ScalePartners::of_chain`'s
+            // inputs, as the fold stored them. Both seeks are prefix ranges on
+            // the `(tender_id, seq)` key.
+            let mut got = conn
+                .query(
+                    "SELECT seq, field, cents, currency FROM tender_version_amounts
+                      WHERE tender_id = ? AND seq <= ?
+                     UNION ALL
+                     SELECT seq, NULL, awarded_cents, awarded_currency FROM tender_version_lot_results
+                      WHERE tender_id = ? AND seq <= ?
+                        AND awarded_cents IS NOT NULL AND awarded_currency IS NOT NULL",
+                    [Value::Integer(tender_id), Value::Integer(seq), Value::Integer(tender_id), Value::Integer(seq)],
+                )
+                .await?;
+            while let Some(row) = got.next().await? {
+                figures.push((opt_int_of(&row, 0).unwrap_or(0), opt_text_of(&row, 1), opt_text_of(&row, 3), opt_int_of(&row, 2)));
+            }
+        }
+        let mut rule = crate::canonical::ScalePartners::new();
+        for (at_seq, field, currency, cents) in &figures {
+            let (Some(currency), Some(cents)) = (currency.as_deref(), *cents) else { continue };
+            rule.add_partner(currency, cents);
+            // Lot awards carry no field: they are partners, never corroboration.
+            if let (true, Some(field)) = (*at_seq == seq, field.as_deref()) {
+                rule.add_head_amount(field, currency, cents);
+            }
+        }
+        for (i, cents, currency, eur, field) in candidates {
+            if let (Some(c), Some(cur), Some(e), Some(f)) = (cents, currency.as_deref(), eur, field.as_deref()) {
+                if rule.refuses_amount(f, cur, c, e) {
+                    continue;
+                }
             }
             // A NULL sorts last under `cents DESC` and is ignored by `MAX`, so it
             // ranks below every real amount rather than above them.
@@ -4032,7 +4087,7 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
             if best_value[i].is_none_or(|best| rank > best) {
                 best_value[i] = Some(rank);
                 rows[i].value_cents = cents;
-                rows[i].currency = opt_text_of(&row, 2);
+                rows[i].currency = currency;
             }
         }
 

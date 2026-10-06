@@ -1,6 +1,6 @@
 # 471 — r209 amounts are never checked against their `@FMTVAL`, and nothing adjudicates the €10–100 bn head-value band (366 units 5 and 6, dropped when 366 closed)
 
-Status: ready-for-agent — UNIT 4 ADJUDICATED 2026-10-06 (see "Unit 4 — adjudication (2026-10-06)": 22 rows with an exact 10^k partner, 20 agreed SCALE_ERROR (2 already drained by unit 3), 1 agreed GENUINE (8400892), 1 split (6803400); rule decided: refuse a figure exactly 10^k (k ≥ 3) above a same-currency partner of the Tender (any version, amounts or lot awards, > 10.00) UNLESS the same figure is also carried by a different canonical amount field of the head version — 0 false positives on the sample, 19/19). NEXT: implement the decided 4(a) rule with `a_figure_exactly_ten_to_the_k_above_a_sibling_is_not_elected`; then the 554082-2023 member read for 6721266; then 4(b), 5, 6. Was: ready-for-agent — UNIT 3 DEPLOYED + RE-PARSED 2026-10-06 (`25b0d10`; reparse 2021 over fetches 178–182, 172,281 notices; fold 2022; 4490098 result_value €49,700). NEXT: unit 4. Was: UNIT 3 LANDED + OWNER DECISION APPLIED 2026-10-06 (uncommitted, not deployed, not re-parsed; see "Unit 3 — decision (2026-10-06)"): an amount whose `@FMTVAL` was its text × an exact even 10^k (k ≥ 2) stores the TEXT as an ORDINARY amount — no `quality` marker, electable and served (4490098's fixture head = 4,970,000 cents, €49,700); the raw attribute stays in the parse layer as `.FMTVAL_MISMATCH`; `QUALITY_FMTVAL_MISMATCH` removed, `quality` is only 'withheld' again. NEXT: `ops/check.sh` → commit → deploy → reparse r208 2011-04…08 per docs/operations.md (one job, packages = 5) → `project` → re-read `/v1/tenders/4490098` and section 16 of the data-quality report; then count `.FMTVAL_TEXT` rows in those months; then unit 4. Was: ready-for-agent — UNIT 3 CODE LANDED IN THE TREE 2026-10-06, REVIEW FIXES APPLIED THE SAME DAY (uncommitted, not deployed, not re-parsed; see "Unit 3 — landed" and "Unit 3 — review fixes"): `@FMTVAL` checked against its text in the shared TED_EXPORT walk; ONLY the measured shape (attribute = text × an exact EVEN 10^k, k ≥ 2, compared in i128) adopts the text and marks `fmtval_mismatch`; every other disagreement keeps the attribute UNMARKED with the text filed beside it as `.FMTVAL_TEXT`. NEXT: decide whether an adopted text stays unelectable (today it does: 4490098's head goes NULL on the fixture), `ops/check.sh`, commit, deploy, re-parse r208 2011-04…08 per docs/operations.md (one job, packages = 5), then count `.FMTVAL_TEXT` rows in the re-parsed months before ever marking that class, then unit 4. Was: ready-for-agent — UNIT 3 CODE LANDED IN THE TREE 2026-10-06 (uncommitted, not deployed): exact-10^k mismatch adopts the text, every mismatch marked. Was: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); UNIT 2 READ DONE (r208: @FMTVAL disagrees with text — 4490098; r209: no FMTVAL, publisher text errors incl. a dropped decimal point); UNIT 3 MEASURED (the r208 @FMTVAL defect is TED July 2011: ~5.9 % of value elements in 17 daily packages, exact even 10^k; text is right); NEXT: unit 3 code (adopt text on an exact-10^k mismatch, mark fmtval_mismatch) + reparse 2011-04…08, then unit 4. Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
+Status: ready-for-agent — UNIT 4(a) LANDED + REVIEW FIXES APPLIED 2026-10-06 (uncommitted, not deployed, not drained; see "Unit 4(a) — review fixes (2026-10-06)": the rule is now GATED to the band (a refused figure must convert to ≥ €10 bn, `SCALE_ERROR_MIN_EUR_CENTS` = the data-quality `BAND_FLOOR_EUR_CENTS`), so it can move only band Tenders and only down; the per-lot pick in `summarise` calls the same `ScalePartners::refuses_amount`; corroboration is an O(1) map; two fold-path pins in head_election_agreement.rs). NEXT: `ops/check.sh` → commit → deploy → drain the band with `refold-notices` + `project` per docs/operations.md ("The exact-10ᵏ election rule") → expect 19 rows out, 8400892 in; then the BELOW-BAND MEASUREMENT (before ever lowering the gate: section 16's partner subqueries without the band predicate, plus "no other head field carries it", windowed by `t.id`, bucketed by value decade and k, a sample adjudicated); then the 554082-2023 member read for 6721266; then 4(b), 5, 6. Was: ready-for-agent — UNIT 4(a) LANDED IN THE TREE 2026-10-06 (uncommitted, not deployed, not drained; see "Unit 4(a) — landed (2026-10-06)": the decided rule is computed in the head election (`ScalePartners`, canonical.rs), pinned by `a_figure_exactly_ten_to_the_k_above_a_sibling_is_not_elected`). NEXT: `ops/check.sh` → commit → deploy → drain the band with `refold-notices` + `project` per docs/operations.md ("The exact-10ᵏ election rule") → expect 19 rows out, 8400892 in; then the 554082-2023 member read for 6721266; then 4(b), 5, 6. Was: ready-for-agent — UNIT 4 ADJUDICATED 2026-10-06 (see "Unit 4 — adjudication (2026-10-06)": 22 rows with an exact 10^k partner, 20 agreed SCALE_ERROR (2 already drained by unit 3), 1 agreed GENUINE (8400892), 1 split (6803400); rule decided: refuse a figure exactly 10^k (k ≥ 3) above a same-currency partner of the Tender (any version, amounts or lot awards, > 10.00) UNLESS the same figure is also carried by a different canonical amount field of the head version — 0 false positives on the sample, 19/19). NEXT: implement the decided 4(a) rule with `a_figure_exactly_ten_to_the_k_above_a_sibling_is_not_elected`; then the 554082-2023 member read for 6721266; then 4(b), 5, 6. Was: ready-for-agent — UNIT 3 DEPLOYED + RE-PARSED 2026-10-06 (`25b0d10`; reparse 2021 over fetches 178–182, 172,281 notices; fold 2022; 4490098 result_value €49,700). NEXT: unit 4. Was: UNIT 3 LANDED + OWNER DECISION APPLIED 2026-10-06 (uncommitted, not deployed, not re-parsed; see "Unit 3 — decision (2026-10-06)"): an amount whose `@FMTVAL` was its text × an exact even 10^k (k ≥ 2) stores the TEXT as an ORDINARY amount — no `quality` marker, electable and served (4490098's fixture head = 4,970,000 cents, €49,700); the raw attribute stays in the parse layer as `.FMTVAL_MISMATCH`; `QUALITY_FMTVAL_MISMATCH` removed, `quality` is only 'withheld' again. NEXT: `ops/check.sh` → commit → deploy → reparse r208 2011-04…08 per docs/operations.md (one job, packages = 5) → `project` → re-read `/v1/tenders/4490098` and section 16 of the data-quality report; then count `.FMTVAL_TEXT` rows in those months; then unit 4. Was: ready-for-agent — UNIT 3 CODE LANDED IN THE TREE 2026-10-06, REVIEW FIXES APPLIED THE SAME DAY (uncommitted, not deployed, not re-parsed; see "Unit 3 — landed" and "Unit 3 — review fixes"): `@FMTVAL` checked against its text in the shared TED_EXPORT walk; ONLY the measured shape (attribute = text × an exact EVEN 10^k, k ≥ 2, compared in i128) adopts the text and marks `fmtval_mismatch`; every other disagreement keeps the attribute UNMARKED with the text filed beside it as `.FMTVAL_TEXT`. NEXT: decide whether an adopted text stays unelectable (today it does: 4490098's head goes NULL on the fixture), `ops/check.sh`, commit, deploy, re-parse r208 2011-04…08 per docs/operations.md (one job, packages = 5), then count `.FMTVAL_TEXT` rows in the re-parsed months before ever marking that class, then unit 4. Was: ready-for-agent — UNIT 3 CODE LANDED IN THE TREE 2026-10-06 (uncommitted, not deployed): exact-10^k mismatch adopts the text, every mismatch marked. Was: ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); UNIT 2 READ DONE (r208: @FMTVAL disagrees with text — 4490098; r209: no FMTVAL, publisher text errors incl. a dropped decimal point); UNIT 3 MEASURED (the r208 @FMTVAL defect is TED July 2011: ~5.9 % of value elements in 17 daily packages, exact even 10^k; text is right); NEXT: unit 3 code (adopt text on an exact-10^k mismatch, mark fmtval_mismatch) + reparse 2011-04…08, then unit 4. Was: ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read. Was: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
 Kind: data quality (amount plausibility: the legacy parse layer and the head election)
 Relates to: 366 (promised units 5 and 6, closed 2026-09-12 without them), 380 (its sweep still points at "the open half of
 issue 366"), 267 (the plausibility measure), 372 (the `quality` marker on `Fact::Amount`), 385 (F14 corrigendum dates:
@@ -627,3 +627,128 @@ here is still open.
 
 **Next.** Implement 4(a) as decided above, with the pin. Then read the 554082-2023 member for 6721266. Then 4(b),
 5 and 6.
+
+## Unit 4(a) — landed (2026-10-06, in the tree: not committed, not deployed, not drained)
+
+**Where the rule lives: in the election, not in a stored `quality` marker.**
+- `head_value_eur_cents` now takes the Tender's whole chain (`&p.versions` at the one fold call
+  site, `write_tender`'s head update) and elects from its last version as before. It skips every
+  amount `ScalePartners::refuses`, beside the existing `withheld` / `sentinel_amount` /
+  ceiling / zero-conversion skips.
+- Why not a marker set in the fold's projection: the rule's input is the WHOLE chain (6721266's
+  partner is superseded at the head), while a `Fact` belongs to one version. A marker on version n
+  that flips when version n+1 brings a partner would change a kept version's content without the
+  stored chain (the fold's state key) changing, so either it goes stale or every arrival rewrites
+  the prefix and emits change rows for nothing the publisher changed. It would also reopen the
+  unit-3 decision that `quality` holds only what the SOURCE declared (`'withheld'`); this is our
+  inference.
+- One place still decides (366 unit 4): the read layer's `elected` pick finds the served row by
+  `eur_cents = t.current_value_eur_cents`, so it follows with no edit; a refused and an elected row
+  never share `(cents, currency)` (equal figures in a different field are corroboration, and equal
+  figures in the same field share the partner and fall together).
+- Section 16 shares the constants: `band_listing_sql` reads `SCALE_PARTNER_FLOOR_CENTS` (10.00)
+  and `SCALE_ERROR_MIN_EXPONENT` (3) from canonical; `the_band_partner_floor_is_the_elections`
+  pins them equal to `SENTINEL_AMOUNT_CEILING`.
+- Poll budgets (issue 467): the rule is a synchronous call evaluated before the head update's
+  `.await`, so its `HashSet` lives on the ordinary stack, not in `run_project`'s future; no local
+  was added to `run_project` / `project_incremental_chunked_observed`.
+
+**The rule as implemented** (exactly the adjudication's): F > 0 is refused when some P > 1000
+cents of the same Tender and currency (any version's amounts at tender or lot scope, or any
+round's `awarded_cents`) has F = P × 10ᵏ, k ∈ 3..18, by exact integer division; UNLESS an amount
+of the head version (tender or lot scope) with a different `field` carries the same cents and
+currency. Lot awards never corroborate. Every figure is tested on its own, so a refused figure is
+still a partner of a bigger one.
+
+**Pin.** `a_figure_exactly_ten_to_the_k_above_a_sibling_is_not_elected` (canonical tests), cases:
+6941544 (×1000 result over its estimate → estimate elected); 8400892 (10.8 bn in
+`estimated_value` AND `result_value` over a 10.8 m lot result + lot award → 10.8 bn stays);
+5592948 (9 bn result + 9 bn lot awards over six 9 m lot estimates → 9 m: a lot award does not
+corroborate); k = 2 kept; the round mantissa (€2 bn `framework_maximum` over a €2 m lot → refused;
+the same ceiling also in `estimated_value` → kept); 577127 (same-lot ceiling over estimate);
+224156 (sibling-lot `framework_maximum`); 6721266 (partner only in an earlier version: elected
+alone, refused with the chain); 6988280 (two scaled figures both fall, the 10² one stays); 1.00
+and 10.00 are no partner, 10.01 is; another currency and a near-miss are no partner.
+
+**Not covered, recorded.** The per-lot value `summarise` serves (read.rs, the lot pick that calls
+`sentinel_amount`) does not apply the rule: 224156's LOT-0002 keeps its refused ceiling as that
+lot's value. Applying it there needs the Tender's partner set at read time; left for unit 6's
+re-read to size. Below the band the rule lands lazily (no epoch bump), on an unmeasured
+population.
+
+**Drain** (docs/operations.md, "The exact-10ᵏ election rule"): `refold-notices` over every band
+Tender's head notice (~330, under the cap; bounded `/v1/sql` range seek on
+`tenders_current_value_eur`), then `project`. Expected: the 18 agreed scale errors still in the
+band plus 6803400 leave it (19); 8400892 stays; `/v1/tenders/5592948` serves £9,000,000.
+
+
+**Tests (focused, gate flags and package set, 2026-10-06).** `a_figure_exactly_ten_to_the_k_above_a_sibling_is_not_elected`
+alone: GATE-EXIT=0, 1 passed. Then the filters `head value band sentinel run_spec_futures_stay_inside elect amount`:
+GATE-EXIT=0, 112 passed, 0 failed, including `the_band_partner_floor_is_the_elections`,
+`the_band_listing_shows_a_head_that_repeats_nowhere`, the `head_election_agreement` read/fold pins,
+`an_fmtval_scaled_by_ten_to_the_k_yields_to_its_text_and_is_elected` and
+`run_spec_futures_stay_inside_their_size_budgets`. The full `ops/check.sh` has NOT been run: owed before the commit.
+
+## Unit 4(a) — review fixes (2026-10-06, in the tree: not committed, not deployed, not drained)
+
+A nine-finding review of the uncommitted 4(a) change. Outcomes:
+
+1. **The rule reached every Tender, on evidence drawn from the band only (high + medium,
+   two findings, one fix).** The 22 adjudicated rows came from heads ≥ €10 bn, where the big
+   figure is suspect by selection. Below the band the slip often runs the other way (the SMALL
+   figure typed in thousands, or a 1,000.00 / 10,000.00 placeholder beside a genuine ceiling), so
+   the ungated rule would drop a genuine €5 M estimate beside a €5,000 lot result, or a €1 M
+   `framework_maximum` beside a 1,000.00 award, and it would roll out lazily and unattributed
+   through any later refold, rederive or epoch bump. **Fixed by a third condition**: F's EUR
+   conversion must be ≥ `SCALE_ERROR_MIN_EUR_CENTS` (€10 bn), and the data-quality report's
+   `BAND_FLOOR_EUR_CENTS` is now that constant (pinned in `the_band_partner_floor_is_the_elections`).
+   Since the election only removes candidates and takes the max, the rule can now move ONLY a
+   Tender whose elected value is in the €10–100 bn band, and only down — exactly the ~330 rows the
+   documented drain re-elects. This narrows the adjudication's rule to the population it was
+   measured on; the adjudication's own ruling on the round mantissa ("a €2 bn framework over a
+   €2 M lot is refused") now holds at band scale (€20 bn over €20 M) and is deferred below it.
+   It was decided here rather than waiting, per the triage convention, because the measurement
+   needs the box and this session must not touch it. **Widening it is a decision owed to the
+   below-band measurement** (NEXT in the status line): run section 16's `pow10_amount` /
+   `pow10_award` partner subqueries (same floor and powers) without the band predicate, add
+   `NOT EXISTS` (head-seq amount, same cents and currency, different field), window by `t.id`
+   (bounded `/v1/sql` chunks or a windowed data-quality section), count the Tenders whose elected
+   row would be refused by value decade and k (and how many of those rows are lot-scoped), and
+   adjudicate a sample. Then either lower the gate with an explicit drain of the whole cohort
+   (stamping tender ids, ≤ 1,000 per chunk) or keep it at the band.
+2. **Cross-currency twin escapes (low): rejected as a code change, recorded.** The decided rule
+   fixes the partner and the corroboration as same-currency. A twin in another currency keeps
+   the head in the band (no false positive, a miss). Unit 6's re-read checks for a refused
+   figure whose other-currency twin is still elected.
+3. **Per-lot value in `summarise` (low + medium, two findings, one fix).** Fixed: the lot pick
+   collects its candidates, and when any is in the band it loads the chain up to the version
+   (`tender_version_amounts` + `tender_version_lot_results`, prefix seeks on `(tender_id, seq)`)
+   into `ScalePartners` and skips what `refuses_amount` refuses — the fold's predicate called,
+   not transcribed (389 unit 1's pattern). 224156's LOT-0002 now serves no value instead of its
+   refused ceiling, so `/v1/lots?min_value=` and the served lot value agree again. Outside the
+   band no query is added.
+4. **No fold-path test (low): fixed.** `head_election_agreement.rs` gains
+   `a_scale_slip_partnered_only_by_an_earlier_version_is_refused_by_the_fold_and_the_row`
+   (6721266's two-version shape through `apply_tenders`: stored column = the smaller figure, the
+   list row and `tender_detail` serve it, `?min_value` at/above it agrees; it fails if the call
+   site passes only the head) and `a_refused_lot_figure_is_not_served_as_the_lots_value`
+   (224156's shape through `read::lots`, plus the same shape below the band kept).
+5. **Quadratic corroboration scan (low): fixed.** `ScalePartners` builds a
+   `(currency, cents) → Some(field) | None (≥ 2 fields)` map of the head once; each check is
+   O(1). The API is now `new` / `add_partner` / `add_head_amount` / `of_chain` /
+   `refuses_amount(field, currency, cents, eur_cents)`, so the read layer feeds it from rows.
+6. **Ops note understated exposure (low): fixed.** docs/operations.md now states the band gate,
+   that the rule can move only band Tenders, and warns that `rederive-eur`, `reparse`,
+   `refold-*` jobs and any epoch bump re-elect band Tenders they touch under the rule until the
+   drain has run, with how to attribute such drops.
+7. **Stack budgets / single decider (info): no change.** `ScalePartners` is still built inside a
+   synchronous call evaluated before the head update's `.await`; nothing was added to
+   `run_project` / `project_incremental_chunked_observed`. The read-side additions are in
+   `summarise` (read path, not the fold's futures). `amounts` still lists a refused figure
+   unmarked, by the decision not to grow the `quality` vocabulary.
+
+**Tests (focused, gate flags and package set, 2026-10-06).** The four new/changed pins:
+GATE-EXIT=0, 5 passed. Filters `head value band sentinel run_spec_futures_stay_inside elect amount
+lot summar`: GATE-EXIT=0, 163 passed, 0 failed (incl. `run_spec_futures_stay_inside_their_size_budgets`).
+Filters `window written_once reuses_the_election data_quality`: GATE-EXIT=0, 84 passed, 0 failed.
+The full `ops/check.sh` has NOT been run: owed before the commit.

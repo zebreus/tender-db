@@ -1560,8 +1560,11 @@ pub const CPV_SHAPES_SQL: &str = "\
 /// The floor of the head-value band listing, in EUR cents: €10 bn (issue 471 unit 1,
 /// 366 unit 6). [`store::canonical::IMPLAUSIBLE_EUR_CENTS`] (€100 bn) caps the band from
 /// above, because the election refuses anything past it, so the listing is exactly the
-/// €10–100 bn region nothing adjudicates.
-pub const BAND_FLOOR_EUR_CENTS: i64 = 1_000_000_000_000;
+/// €10–100 bn region nothing adjudicates. It is the election's own
+/// [`store::canonical::SCALE_ERROR_MIN_EUR_CENTS`] (issue 471 unit 4(a)): the
+/// exact-10ᵏ rule refuses only figures at or above it, so this listing covers the
+/// whole population that rule can move.
+pub const BAND_FLOOR_EUR_CENTS: i64 = store::canonical::SCALE_ERROR_MIN_EUR_CENTS;
 
 /// At most this many band TENDERS. NOT a ranking cap — the issue asks for every row,
 /// and 2026-10-01 read 324–330 of them — but a safety valve three times the measured
@@ -1593,7 +1596,9 @@ pub const BAND_VALUE_CORRIGENDUM_SECTIONS: [&str; 4] = ["II.1.5", "II.1.7", "II.
 /// be the exact-power-of-ten signal. k ≥ 3 because a factor of 10 or 100 between a
 /// framework and its lot is ordinary; 10¹⁸ is the last power an `i64` holds.
 fn band_powers_of_ten() -> String {
-    (3..=18).map(|k| 10i64.pow(k).to_string()).collect::<Vec<_>>().join(", ")
+    // The election's own exponent floor (issue 471 unit 4(a)), so the listing's
+    // partner column names exactly the pairs `ScalePartners` refuses on.
+    (store::canonical::SCALE_ERROR_MIN_EXPONENT..=18).map(|k| 10i64.pow(k).to_string()).collect::<Vec<_>>().join(", ")
 }
 
 /// The €10–100 bn head-value band, row by row (issue 471 unit 1, 366 unit 6).
@@ -1650,7 +1655,9 @@ pub fn band_listing_sql() -> String {
         .map(|s| format!("'{s}'"))
         .collect::<Vec<_>>()
         .join(", ");
-    let low = SENTINEL_AMOUNT_CEILING;
+    // The election's partner floor, the same 10.00 as `SENTINEL_AMOUNT_CEILING`
+    // (pinned equal in `the_band_partner_floor_is_the_elections`).
+    let low = store::canonical::SCALE_PARTNER_FLOOR_CENTS;
     format!(
         "SELECT t.id AS tender_id, t.source AS source, t.current_value_eur_cents AS eur_cents, \
                 h.currency AS currency, h.cents AS cents, \
@@ -4550,6 +4557,22 @@ fn group(n: u64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 471 unit 4(a): the band listing's partner search and the head
+    /// election's scale-error rule must agree on what a partner is, or the
+    /// listing would name pairs the election ignores (or the reverse).
+    #[test]
+    fn the_band_partner_floor_is_the_elections() {
+        assert_eq!(SENTINEL_AMOUNT_CEILING, store::canonical::SCALE_PARTNER_FLOOR_CENTS);
+        let sql = band_listing_sql();
+        assert!(sql.contains(&format!("a.cents > {SENTINEL_AMOUNT_CEILING} ")));
+        assert!(band_powers_of_ten().starts_with("1000, "));
+        assert_eq!(store::canonical::SCALE_ERROR_MIN_EXPONENT, 3);
+        // The rule's EUR gate is the band's floor: the listing (and the drain
+        // built on it) reaches every Tender the rule can move.
+        assert_eq!(BAND_FLOOR_EUR_CENTS, store::canonical::SCALE_ERROR_MIN_EUR_CENTS);
+        assert_eq!(BAND_FLOOR_EUR_CENTS, 1_000_000_000_000);
+    }
 
     #[test]
     fn era_labels_cover_every_profile_family() {

@@ -524,6 +524,67 @@ summary line, not the header, which also prints when the query failed:
 `/root/aj.sh /admin/reports/data-quality | jq -r .body | grep -cE 'Tender\(s\) in [0-9]+ currenc'`
 must print `1`, and the same with `grep -c 'UNMEASURED — the .band_listing'` must print `0`.
 
+**The exact-10ᵏ election rule (issue 471 unit 4(a)).** The head election
+(`head_value_eur_cents`, through `ScalePartners` in `crates/store/src/canonical.rs`) now refuses a
+positive amount F when (1) some positive figure P of the same Tender and currency, above 10.00 as
+published, has F = P × 10ᵏ exactly with k ≥ 3 — P may sit in ANY version, in its amounts or in a
+results round's lot award — and (2) no amount of the head version with a DIFFERENT `field` carries
+the same figure (lot awards never corroborate: they are the same RES / BT-720 element as
+`result_value`), and (3) F's EUR conversion is at least €10 bn (`SCALE_ERROR_MIN_EUR_CENTS`, the
+band floor; the data-quality report's `BAND_FLOOR_EUR_CENTS` is that constant). The head falls to
+the next admitted figure, which is not a correction: 6988280
+falls to a €1 bn placeholder, 6803400 to £50 M. The rule is computed in the election, not stored
+as a `quality` marker (the marker vocabulary stays `'withheld'`), so nothing in the parsed or
+version layers changes and the read layer's elected row follows by `eur_cents` with no edit of its
+own. Section 16's partner column uses the same floor and exponent (`SCALE_PARTNER_FLOOR_CENTS`,
+`SCALE_ERROR_MIN_EXPONENT`). The per-LOT value `summarise` serves on a lot row calls the same
+predicate (`ScalePartners::refuses_amount`, fed the chain up to the version from
+`tender_version_amounts` + `tender_version_lot_results`, loaded only when a lot candidate is in the
+band), so 224156's LOT-0002 serves no value rather than its refused ceiling.
+
+**Who changes, and when.** No `PROJECTION_EPOCH` bump: a Tender is re-elected the next time the
+fold rewrites it. Because of (3), and because the election only removes candidates and takes the
+max, the rule can move ONLY a Tender whose elected value is already in the €10–100 bn band, and
+only downwards — the ~330 rows the drain below re-elects. Nothing below the band moves, ever,
+under this rule: the adjudication's evidence (22 rows drawn from the band, where the big figure
+was suspect by selection) says nothing about it, and below the band the slip often runs the other
+way (a small figure typed in thousands, a 1,000.00 placeholder beside a genuine €1 M ceiling).
+Lowering the gate is owed to a below-band measurement first (issue 471, unit 4(a) review).
+
+**Other jobs will apply it to band Tenders they touch.** Until the drain below has run, any
+`rederive-eur`, `reparse`, `refold-*` job or `PROJECTION_EPOCH` bump that rewrites a band Tender
+re-elects it under this rule, so that job's before/after can show band value DROPS its own issue
+never caused. Attribute them here: a band Tender that fell, whose old head figure has an exact
+10ᵏ (k ≥ 3) same-currency partner in section 16, is this rule's, not that job's. Run the drain
+first and the question does not arise.
+
+```sh
+# 1. Deploy in a queue gap (never under a running project).
+/root/aj.sh /admin/jobs | jq '.recent[:5], .queued'
+# 2. The cohort: every band Tender's head notice. A range seek on tenders_current_value_eur
+#    plus a PK join, ~330 rows (bounded /v1/sql, on the team lead's word, never retry a 408):
+#    SELECT t.id, v.caused_by_notice_id FROM tenders t
+#      JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq
+#     WHERE t.current_value_eur_cents >= 1000000000000
+#    Refolding the WHOLE band is deliberate: it is under the 1,000-id cap, a Tender the rule does
+#    not touch re-elects the same head, and it needs no second copy of the rule to pick rows.
+# 3. Re-queue them (one job; the ids are notices.id, not publication numbers), then fold:
+/root/aj.sh /admin/jobs '{"kind":"refold-notices","notices":[<the caused_by_notice_id column>]}'
+/root/aj.sh /admin/jobs '{"kind":"project"}'
+#    The refold-notices message must say re-queued N, stamped N tender(s) with N the cohort size.
+```
+
+**Expected effect** (the 22 adjudicated rows, 2026-10-06): the 18 agreed scale errors still in
+the band leave it (6941544, 4972513, 8452561, 5592948, 6988280, 577127, 6581010, 4685893, 8822396,
+5094790, 224156, 568960, 404296, 4785037, 6577862, 6721266, 6852637, 1163733), and so does the
+split row 6803400 — 19 rows. **8400892 stays** at £10.8 bn (corroborated: `estimated_value` and
+`result_value` both carry it). 4578779 and 4581663 were already drained by unit 3. Verify:
+`/v1/tenders/5592948` serves £9,000,000 (the corrigendum's figure, reached without 4(b)),
+`/v1/tenders/8400892` is unchanged, and in the next data-quality run's section 16 the only one of
+job 2019's 22 partner rows still listed is 8400892. A band row with a partner that IS still listed
+is corroborated, so read it; a row that leaves the band and is not one of the 19 is a finding too,
+because unit 6's re-read is where a false positive the sample could not show would surface.
+
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|
 refold-notices|refold-sections|reparse|data-quality|backfill-titles|mark-skipped-siblings|clear-rebuild-flag,

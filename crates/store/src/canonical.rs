@@ -2641,8 +2641,16 @@ pub fn head_title(head: &TenderVersion) -> Option<String> {
 /// version's publication date. `None` when no amount converts — an
 /// unconvertible or amount-less head is "not in the value ordering", the same
 /// honesty as [`head_deadline`]'s `None`.
-pub fn head_value_eur_cents(head: &TenderVersion, rates: &crate::rates::RatesLookup) -> Option<i64> {
+///
+/// `chain` is the Tender's WHOLE version chain, oldest first; the head is its
+/// last version. The earlier versions are read for one thing only: the
+/// partner figures of the exact-10ᵏ scale-error rule ([`ScalePartners`],
+/// issue 471 unit 4(a)), which looks for a partner in any version. An empty
+/// chain elects nothing.
+pub fn head_value_eur_cents(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> Option<i64> {
+    let head = chain.last()?;
     let date = crate::rates::civil_date(head.published_at);
+    let partners = ScalePartners::of_chain(chain);
     head.facts
         .iter()
         .chain(head.lots.iter().flat_map(|l| l.facts.iter()))
@@ -2656,10 +2664,20 @@ pub fn head_value_eur_cents(head: &TenderVersion, rates: &crate::rates::RatesLoo
             // already refuses the SDK's -1 placeholder, so this arm changes no
             // election today -- and it is the one that states the reason, which
             // matters the moment a publisher withholds a field without writing -1.
-            Fact::Amount { cents, currency, quality, .. }
+            Fact::Amount { field, cents, currency, quality, .. }
                 if quality.is_none() && !sentinel_amount(*cents) =>
             {
-                rates.eur_cents(*cents, currency, &date)
+                let eur = rates.eur_cents(*cents, currency, &date)?;
+                // Issue 471 unit 4(a): a figure exactly 10^k (k >= 3) above
+                // another figure of the same Tender and currency, published in
+                // only one amount field of the head and worth at least the band
+                // floor, is a scale slip, not a value. Refused here, beside the
+                // withheld and sentinel skips, so the fold's election stays the
+                // one place that decides which amounts count; the read layer
+                // finds the row this elects by `eur_cents` and follows with no
+                // edit (366 unit 3), and its per-lot pick calls the same
+                // [`ScalePartners::refuses_amount`].
+                (!partners.refuses_amount(field, currency, *cents, eur)).then_some(eur)
             }
             _ => None,
         })
@@ -2702,8 +2720,197 @@ pub fn head_value_eur_cents(head: &TenderVersion, rates: &crate::rates::RatesLoo
 /// mixes NHS England's €10.6 bn commissioning contract and the Île-de-France
 /// transport contract with a €10.5 bn homecare notice for an island of 140,000,
 /// and no threshold separates those. That needs the tender-versus-lot-sum ratio,
-/// not a bigger constant.
+/// not a bigger constant. Issue 471 unit 4(a) reaches the part of the band that
+/// carries an exact-10^k sibling, by a rule rather than a constant
+/// ([`ScalePartners`]).
 pub const IMPLAUSIBLE_EUR_CENTS: i64 = 10_000_000_000_000;
+
+/// The smallest power of ten that marks a scale slip (issue 471 unit 4(a)):
+/// a figure exactly 10^k above a partner, k >= 3. A factor of 10 or 100
+/// between a framework and its lot is ordinary procurement; on the 22 band rows
+/// adjudicated 2026-10-06 every exact partner sat at k = 3, 4 or 6.
+pub const SCALE_ERROR_MIN_EXPONENT: u32 = 3;
+
+/// A partner of the exact-10^k rule must be ABOVE this, in cents as published
+/// (10.00). The 0.01 / 1.00 placeholders (issue 379) would otherwise hand
+/// every round figure a "sharp" partner. The same floor as the band listing's
+/// sibling search (`data_quality.rs`, `SENTINEL_AMOUNT_CEILING`, issue 380),
+/// which reads this constant, so the listing and the election agree on what a
+/// partner is.
+pub const SCALE_PARTNER_FLOOR_CENTS: i64 = 1_000;
+
+/// The exact-10^k rule refuses a figure only when its EUR conversion is at
+/// least this: EUR 10 bn, the floor of the head-value band (issue 471; the
+/// data-quality report's `BAND_FLOOR_EUR_CENTS` is this constant).
+///
+/// The rule was decided on 22 rows drawn FROM the band, where the big figure
+/// was suspect by selection. Below it the slip can run the other way (the
+/// SMALL figure typed in thousands, or a power-of-ten placeholder such as
+/// 1,000.00 beside a genuine EUR 1 m ceiling), and refusing the big figure
+/// there drops the genuine one: that population is unmeasured (issue 471,
+/// unit 4(a) review, 2026-10-06). Gated here, the rule can only move a Tender
+/// whose elected value is already in the band (the election only removes
+/// candidates and takes the max), so its whole reach is the ~330 rows the
+/// band drain re-elects, and no later refold, rederive or epoch bump can
+/// carry an unattributed change below it. Lowering this is a decision owed to
+/// the below-band measurement, not a tuning knob.
+pub const SCALE_ERROR_MIN_EUR_CENTS: i64 = 1_000_000_000_000;
+
+/// The exact-10^k scale-error rule of the head election (issue 471 unit 4(a),
+/// decided on the 22 adjudicated band rows, 2026-10-06).
+///
+/// A positive amount F in currency C is refused from the head election when
+/// ALL three hold:
+///
+/// 1. **A partner exists.** Some positive figure P of the same Tender in C,
+///    above [`SCALE_PARTNER_FLOOR_CENTS`], has F = P x 10^k exactly for some
+///    k >= [`SCALE_ERROR_MIN_EXPONENT`]. P may come from ANY version of the
+///    chain, from its amounts (tender or lot scope) or from a results round's
+///    lot award. That is the search section 16 of the data-quality report
+///    measured and the 22 rows were judged on; the any-version reach is what
+///    catches 6721266, whose partner is superseded in the head version.
+/// 2. **F is not corroborated.** No amount of the HEAD version with a
+///    DIFFERENT `field` carries the same cents in C. Lot awards do not
+///    corroborate: `lot_results.awarded` is derived from the same RES
+///    VAL_TOTAL / BT-720 element as `result_value`, so it is the same
+///    declaration twice, not a second one (5592948's five GBP 9 bn lot awards
+///    would otherwise exempt its GBP 9 bn `result_value`).
+/// 3. **F is in the band.** Its EUR conversion is at least
+///    [`SCALE_ERROR_MIN_EUR_CENTS`] (EUR 10 bn). The adjudicated sample was
+///    drawn from the band, so the rule is applied where it was measured and
+///    nowhere else until the below-band population is counted (unit 4(a)
+///    review: below the band the slip often runs the other way, and refusing
+///    the big figure there would drop the genuine one).
+///
+/// Why corroboration and nothing else: in every agreed scale error the big
+/// figure sat in exactly one amount field (one slip in one field), while the
+/// one GENUINE row, 8400892's GBP 10.8 bn housing framework, publishes it as
+/// both `estimated_value` and `result_value`. The separators that were tried
+/// and failed (k, field kind, same notice, scope) are recorded in the issue.
+/// A round mantissa gets no exemption: a EUR 20 bn framework over a EUR 20 m
+/// lot is refused unless corroborated, because every uncorroborated round ceiling
+/// in the sample (224156, 577127, 568960, 6803400, 6988280) was an error.
+///
+/// Every figure is tested on its own, so a second scaled figure falls too, and
+/// a refused figure still counts as a partner of a bigger one. Refused is not
+/// corrected: the head falls to the next admitted figure, which may itself be
+/// a placeholder (6988280 falls to a EUR 1 bn one).
+///
+/// Computed at election time rather than stored as a `quality` marker, for
+/// two reasons. The rule's input is the whole chain, while a `Fact` belongs
+/// to one version whose content must not change when a LATER notice arrives
+/// (the stored chain is the fold's state key, and a flipped marker would
+/// rewrite kept versions and emit change rows for nothing the publisher
+/// changed). And the unit-3 decision keeps the `quality` vocabulary at
+/// `'withheld'`, a statement the SOURCE made; this is our inference. The one
+/// place that decides is still the fold: the read layer looks the elected row
+/// up by `eur_cents` and has no rule of its own to drift.
+pub struct ScalePartners<'a> {
+    /// Every partner candidate (currency, cents) of the chain above the floor.
+    figures: std::collections::HashSet<(&'a str, i64)>,
+    /// The head version's amounts (tender and lot scope) by (currency, cents):
+    /// `Some(field)` while one field carries the figure, `None` once a second
+    /// field does. Built once so each corroboration test is O(1) rather than a
+    /// rescan of the head (a multi-lot framework would otherwise be quadratic).
+    head: std::collections::HashMap<(&'a str, i64), Option<&'a str>>,
+}
+
+impl<'a> ScalePartners<'a> {
+    /// An empty rule: no partner, no head amount. Filled with
+    /// [`Self::add_partner`] / [`Self::add_head_amount`] by a caller that does
+    /// not hold the chain as `TenderVersion`s (the read layer's per-lot pick).
+    pub fn new() -> Self {
+        ScalePartners { figures: Default::default(), head: Default::default() }
+    }
+
+    /// A figure of ANY version of the chain, amount or lot award, that may be
+    /// a partner. Figures at or below the floor are ignored here.
+    pub fn add_partner(&mut self, currency: &'a str, cents: i64) {
+        if cents > SCALE_PARTNER_FLOOR_CENTS {
+            self.figures.insert((currency, cents));
+        }
+    }
+
+    /// An amount of the HEAD version (tender or lot scope), for corroboration.
+    /// Lot awards never go here: they are not a second declaration.
+    pub fn add_head_amount(&mut self, field: &'a str, currency: &'a str, cents: i64) {
+        self.head
+            .entry((currency, cents))
+            .and_modify(|seen| {
+                if seen.is_some_and(|f| f != field) {
+                    *seen = None;
+                }
+            })
+            .or_insert(Some(field));
+    }
+
+    /// The rule over a whole chain, oldest first; the head is its last version.
+    pub fn of_chain(chain: &'a [TenderVersion]) -> Self {
+        let mut rule = Self::new();
+        let amounts = |v: &'a TenderVersion| {
+            v.facts.iter().chain(v.lots.iter().flat_map(|l| l.facts.iter())).filter_map(|f| match f {
+                Fact::Amount { field, cents, currency, .. } => Some((field.as_str(), currency.as_str(), *cents)),
+                _ => None,
+            })
+        };
+        for v in chain {
+            for (_, currency, cents) in amounts(v) {
+                rule.add_partner(currency, cents);
+            }
+            for r in v.rounds.iter().flat_map(|r| r.lot_results.iter()) {
+                if let (Some(cents), Some(currency)) = (r.awarded_cents, r.awarded_currency.as_deref()) {
+                    rule.add_partner(currency, cents);
+                }
+            }
+        }
+        if let Some(head) = chain.last() {
+            for (field, currency, cents) in amounts(head) {
+                rule.add_head_amount(field, currency, cents);
+            }
+        }
+        rule
+    }
+
+    /// The largest partner `F / 10^k` of `cents` in `currency`, if any. Exact
+    /// integer arithmetic: `cents % 10^k == 0`, so no rounding can make a pair.
+    pub fn partner(&self, currency: &str, cents: i64) -> Option<i64> {
+        if cents <= 0 {
+            return None;
+        }
+        (SCALE_ERROR_MIN_EXPONENT..=18)
+            .map(|k| 10i64.pow(k))
+            .take_while(|p| cents / p > SCALE_PARTNER_FLOOR_CENTS)
+            .filter(|p| cents % p == 0)
+            .map(|p| cents / p)
+            .find(|q| self.figures.contains(&(currency, *q)))
+    }
+
+    /// Whether an amount of the head, published as `cents` in `currency` under
+    /// `field` and worth `eur_cents`, is refused: at or above
+    /// [`SCALE_ERROR_MIN_EUR_CENTS`], with a partner, and not corroborated by a
+    /// different field of the head. The ONE predicate: the fold's election and
+    /// the read layer's per-lot pick both call it.
+    pub fn refuses_amount(&self, field: &str, currency: &str, cents: i64, eur_cents: i64) -> bool {
+        if eur_cents < SCALE_ERROR_MIN_EUR_CENTS || self.partner(currency, cents).is_none() {
+            return false;
+        }
+        // Corroborated when another field carries it: the entry is `None`
+        // (two fields seen), or names a field other than this one (a caller
+        // asking about a figure it did not register).
+        let corroborated = match self.head.get(&(currency, cents)) {
+            Some(Some(only)) => *only != field,
+            Some(None) => true,
+            None => false,
+        };
+        !corroborated
+    }
+}
+
+impl Default for ScalePartners<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 /// How far past its own publication a submission deadline may sit before it is
 /// read as a typo rather than a date (issue 366). Ten years is extravagant — a
@@ -15067,7 +15274,7 @@ impl Db {
                     Value::Integer(PROJECTION_EPOCH),
                     head_deadline(head).map(Value::Integer).unwrap_or(Value::Null),
                     head_title(head).map(Value::Text).unwrap_or(Value::Null),
-                    head_value_eur_cents(head, &self.rates_lookup())
+                    head_value_eur_cents(&p.versions, &self.rates_lookup())
                         .map(Value::Integer)
                         .unwrap_or(Value::Null),
                     Value::Integer(tender_id),
@@ -31389,7 +31596,7 @@ mod tests {
         // EUR short-circuits to rate 1.0 without consulting the table, so an
         // empty lookup is exactly right for a EUR-only election test.
         let rates = crate::rates::RatesLookup::default();
-        let value = |facts: Vec<Fact>| head_value_eur_cents(&head(facts, Vec::new()), &rates);
+        let value = |facts: Vec<Fact>| head_value_eur_cents(std::slice::from_ref(&head(facts, Vec::new())), &rates);
 
         // The −1.00 publisher sentinel — 15,529 Tenders — was served as the row's
         // value and satisfied `?max_value=100`. A real sibling now wins instead.
@@ -31502,7 +31709,7 @@ mod tests {
             quality: None,
         };
         let rates = crate::rates::RatesLookup::default();
-        let value = |facts: Vec<Fact>| head_value_eur_cents(&head(facts, Vec::new()), &rates);
+        let value = |facts: Vec<Fact>| head_value_eur_cents(std::slice::from_ref(&head(facts, Vec::new())), &rates);
         // A tender whose only figure is 0 serves NO KNOWN VALUE, not €0 — the
         // 24,034 rows where 0 is the only figure.
         assert_eq!(value(vec![amount(0)]), None);
@@ -31528,6 +31735,250 @@ mod tests {
         assert_eq!(value(vec![amount(200)]), Some(200));
     }
 
+    /// Issue 471 unit 4(a), decided 2026-10-06 on the 22 adjudicated band rows:
+    /// a figure exactly 10^k (k >= 3) above a positive partner of the same
+    /// Tender and currency (any version; amounts or lot awards; above 10.00) is
+    /// refused from the head election UNLESS a different amount field of the
+    /// head version carries the same figure. Each case is a row shape from the
+    /// adjudication table, in EUR so the empty rates lookup converts at 1.0.
+    #[test]
+    fn a_figure_exactly_ten_to_the_k_above_a_sibling_is_not_elected() {
+        use super::{LotResultState, Round, SCALE_ERROR_MIN_EUR_CENTS, ScalePartners};
+        let rates = crate::rates::RatesLookup::default();
+        let amt = |field: &str, cents: i64| Fact::Amount {
+            field: field.into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let lot = |key: &str, facts: Vec<Fact>| LotState {
+            key: key.into(),
+            kind: "Lot".into(),
+            facts: facts.into_iter().collect(),
+        };
+        let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion {
+            lots,
+            ..head(facts, Vec::new())
+        };
+        let award = |lot_key: &str, cents: i64| LotResultState {
+            key: format!("RES-{lot_key}"),
+            lot_key: Some(lot_key.into()),
+            decision: None,
+            reason: None,
+            awarded_cents: Some(cents),
+            awarded_currency: Some("EUR".into()),
+            decided: None,
+            winners: Vec::new(),
+            buyer_winners: Vec::new(),
+            statistics: Vec::new(),
+        };
+        let with_awards = |mut v: TenderVersion, awards: Vec<LotResultState>| {
+            v.rounds = vec![Round {
+                notice_id: 1,
+                logical_notice_id: None,
+                lot_results: awards,
+                bids: Vec::new(),
+                contracts: Vec::new(),
+            }];
+            v
+        };
+        let elect = |chain: &[TenderVersion]| head_value_eur_cents(chain, &rates);
+        let one = |v: TenderVersion| head_value_eur_cents(std::slice::from_ref(&v), &rates);
+
+        // 6941544: a result exactly 10^3 over its own estimate, in one field only.
+        // Refused, and the estimate is elected instead.
+        assert_eq!(
+            one(version(
+                vec![amt("result_value", 8_000_000_000_000), amt("estimated_value", 8_000_000_000)],
+                Vec::new(),
+            )),
+            Some(8_000_000_000),
+            "an uncorroborated x1000 result over its estimate is refused"
+        );
+
+        // 8400892, the one GENUINE row: GBP 10.8 bn published as BOTH the
+        // procedure estimate and the procedure award total, over a 10.8 m lot
+        // result. Corroborated, so it stays elected.
+        let genuine = version(
+            vec![amt("estimated_value", 1_080_000_000_000), amt("result_value", 1_080_000_000_000)],
+            vec![lot("LOT-0001", vec![amt("result_value", 1_080_000_000)])],
+        );
+        assert_eq!(
+            one(with_awards(genuine, vec![award("LOT-0001", 1_080_000_000)])),
+            Some(1_080_000_000_000),
+            "a figure carried by two different amount fields of the head is corroborated"
+        );
+
+        // 5592948: the GBP 9 bn result (about EUR 10.4 bn, so in the band; the
+        // EUR fixture uses 12 bn) is also every lot's award, over six 12 m lot
+        // estimates. A lot award is the same RES element as `result_value`, so
+        // it corroborates nothing; the head falls to the 12 m (the Verify's
+        // "done").
+        let vending = version(
+            vec![amt("result_value", 1_200_000_000_000)],
+            (1..=6).map(|i| lot(&format!("LOT-{i}"), vec![amt("estimated_value", 1_200_000_000)])).collect(),
+        );
+        assert_eq!(
+            one(with_awards(
+                vending,
+                (1..=6).map(|i| award(&format!("LOT-{i}"), 1_200_000_000_000)).collect(),
+            )),
+            Some(1_200_000_000),
+            "a lot award alone does not corroborate"
+        );
+
+        // k = 2 is ordinary: a framework one hundred times its lot is kept.
+        assert_eq!(
+            one(version(
+                vec![amt("framework_maximum", 2_000_000_000_000)],
+                vec![lot("LOT-0001", vec![amt("estimated_value", 20_000_000_000)])],
+            )),
+            Some(2_000_000_000_000),
+            "10^2 is not refused"
+        );
+
+        // The round-mantissa false positive the pin was asked to rule on, at
+        // band scale: a EUR 20 bn framework over a EUR 20 m lot. Decided:
+        // refused unless corroborated (224156, 577127, 568960, 6803400 and
+        // 6988280 were all uncorroborated round ceilings, and all errors).
+        assert_eq!(
+            one(version(
+                vec![amt("framework_maximum", 2_000_000_000_000)],
+                vec![lot("LOT-0001", vec![amt("estimated_value", 2_000_000_000)])],
+            )),
+            Some(2_000_000_000),
+            "an uncorroborated round-mantissa ceiling is refused"
+        );
+        assert_eq!(
+            one(version(
+                vec![amt("framework_maximum", 2_000_000_000_000), amt("estimated_value", 2_000_000_000_000)],
+                vec![lot("LOT-0001", vec![amt("estimated_value", 2_000_000_000)])],
+            )),
+            Some(2_000_000_000_000),
+            "the same ceiling, corroborated by a second field, is kept"
+        );
+
+        // 577127: a lot's `framework_maximum` 10^3 over the SAME lot's estimate.
+        assert_eq!(
+            one(version(
+                Vec::new(),
+                vec![lot(
+                    "LOT-0001",
+                    vec![amt("framework_maximum", 1_500_000_000_000), amt("estimated_value", 1_500_000_000)],
+                )],
+            )),
+            Some(1_500_000_000)
+        );
+
+        // 224156: a sibling lot's `framework_maximum`. The same field on another
+        // lot is the same declaration, not a corroboration.
+        assert_eq!(
+            one(version(
+                Vec::new(),
+                vec![
+                    lot("LOT-0001", vec![amt("framework_maximum", 3_000_000_000)]),
+                    lot("LOT-0002", vec![amt("framework_maximum", 3_000_000_000_000)]),
+                ],
+            )),
+            Some(3_000_000_000)
+        );
+
+        // 6721266: the partner sits only in an EARLIER version (superseded at
+        // the head). Alone, the head elects its figure; with its chain, the
+        // figure is refused. 458,962,965.47 x 1000 is past the EUR 100 bn
+        // ceiling, so the shape is kept with a band-sized figure.
+        let earlier = version(vec![amt("estimated_value", 1_234_567_891)], Vec::new());
+        let mut later = version(vec![amt("estimated_value", 1_234_567_891_000)], Vec::new());
+        later.caused_by_notice_id = 2;
+        assert_eq!(one(later.clone()), Some(1_234_567_891_000));
+        assert_eq!(elect(&[earlier, later]), None, "a partner in any version counts");
+
+        // 6988280: every figure is tested on its own, so a second scaled figure
+        // falls too and a refused figure is still a partner of a bigger one.
+        // EUR 100 bn and 10 bn over a 10 m lot award fall; the 1 bn (10^2) stays.
+        let placeholders = version(
+            vec![amt("result_value", 10_000_000_000_000), amt("estimated_value", 1_000_000_000_000)],
+            vec![lot("LOT-0001", vec![amt("estimated_value", 100_000_000_000)])],
+        );
+        assert_eq!(
+            one(with_awards(placeholders, vec![award("LOT-0001", 1_000_000_000)])),
+            Some(100_000_000_000)
+        );
+
+        // A placeholder is no partner: 1.00 and 10.00 (issue 379/380's
+        // bottom-of-range tokens) leave a round figure alone; 10.01 is a figure.
+        for floor in [100, 1_000] {
+            assert_eq!(
+                one(version(vec![amt("framework_maximum", floor * 10_000_000_000), amt("estimated_value", floor)], Vec::new())),
+                Some(floor * 10_000_000_000),
+                "{floor} cents is no partner"
+            );
+        }
+        assert_eq!(
+            one(version(vec![amt("framework_maximum", 1_001_000_000_000), amt("estimated_value", 1_001)], Vec::new())),
+            Some(1_001)
+        );
+
+        // Another currency is no partner, and a near miss is not exact.
+        let mut gbp = amt("estimated_value", 5_000_000_000);
+        if let Fact::Amount { currency, .. } = &mut gbp {
+            *currency = "GBP".into();
+        }
+        assert_eq!(
+            one(version(vec![amt("result_value", 5_000_000_000_000), gbp], Vec::new())),
+            Some(5_000_000_000_000)
+        );
+        assert_eq!(
+            one(version(vec![amt("result_value", 5_000_000_000_001), amt("estimated_value", 5_000_000_000)], Vec::new())),
+            Some(5_000_000_000_001)
+        );
+
+        // The band gate (unit 4(a) review). Below EUR 10 bn the rule refuses
+        // nothing, because there the slip often runs the other way and the
+        // sample says nothing about it: a EUR 5 m estimate beside a lot result
+        // the publisher typed in thousands (EUR 5,000), and a EUR 1 m ceiling
+        // beside a 1,000.00 placeholder award, both keep the big figure.
+        assert_eq!(
+            one(version(
+                vec![amt("estimated_value", 500_000_000)],
+                vec![lot("LOT-0001", vec![amt("result_value", 500_000)])],
+            )),
+            Some(500_000_000),
+            "a EUR 5 m figure over a EUR 5,000 one is below the band and kept"
+        );
+        assert_eq!(
+            one(with_awards(
+                version(vec![amt("framework_maximum", 100_000_000)], vec![lot("LOT-0001", Vec::new())]),
+                vec![award("LOT-0001", 100_000)],
+            )),
+            Some(100_000_000),
+            "a EUR 1 m ceiling over a 1,000.00 award is below the band and kept"
+        );
+        // The floor itself is inclusive, one exact step under it is not reached.
+        assert_eq!(
+            one(version(vec![amt("result_value", SCALE_ERROR_MIN_EUR_CENTS), amt("estimated_value", 1_000_000_000)], Vec::new())),
+            Some(1_000_000_000),
+            "exactly EUR 10 bn is in the band"
+        );
+        assert_eq!(
+            one(version(vec![amt("result_value", 999_999_000_000), amt("estimated_value", 999_999_000)], Vec::new())),
+            Some(999_999_000_000),
+            "EUR 9,999,990,000 is below the band"
+        );
+
+        // The predicate the read layer calls, fed by hand: the same answers.
+        let mut rule = ScalePartners::new();
+        rule.add_partner("EUR", 1_000_000_000);
+        rule.add_head_amount("result_value", "EUR", 1_000_000_000_000);
+        assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000));
+        assert!(!rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 999_999_999_999), "below the band");
+        rule.add_head_amount("result_value", "EUR", 1_000_000_000_000);
+        assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000), "same field twice");
+        rule.add_head_amount("estimated_value", "EUR", 1_000_000_000_000);
+        assert!(!rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000), "corroborated");
+    }
+
     /// Issue 378, decided 2026-09-11: a conversion that lands on zero is
     /// declined, so the derived column's 0 has exactly one meaning.
     ///
@@ -31551,7 +32002,7 @@ mod tests {
         let mut version = head(vec![amount(148, "HUF")], Vec::new());
         version.published_at = 1_704_067_200; // 2024-01-01
         assert_eq!(
-            head_value_eur_cents(&version, &rates),
+            head_value_eur_cents(std::slice::from_ref(&version), &rates),
             None,
             "HUF 1.48 is a real figure, and EUR 0.00 is not what it is worth"
         );
@@ -31559,7 +32010,7 @@ mod tests {
         // output value 0, not about smallness.
         let mut version = head(vec![amount(400, "HUF")], Vec::new());
         version.published_at = 1_704_067_200;
-        assert_eq!(head_value_eur_cents(&version, &rates), Some(1));
+        assert_eq!(head_value_eur_cents(std::slice::from_ref(&version), &rates), Some(1));
     }
 
     /// Issue 379: a published 0.01 or 1.00 is a typed token, and 112,244
@@ -31599,7 +32050,7 @@ mod tests {
             quality: None,
         };
         let rates = crate::rates::RatesLookup::default();
-        let value = |facts: Vec<Fact>| head_value_eur_cents(&head(facts, Vec::new()), &rates);
+        let value = |facts: Vec<Fact>| head_value_eur_cents(std::slice::from_ref(&head(facts, Vec::new())), &rates);
         assert_eq!(value(vec![amount(100, "EUR")]), None);
         // A real figure beside the token still elects — this refuses the 1.00,
         // not the Tender.

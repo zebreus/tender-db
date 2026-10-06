@@ -175,6 +175,91 @@ async fn a_tender_whose_only_amount_is_refused_serves_no_value() {
     assert_eq!(row.currency, None, "and no currency comes with a value that is not there");
 }
 
+/// Issue 471 unit 4(a), through the FOLD's path: the exact-10^k rule reads the
+/// whole chain at the one call site (`write_tender`'s head update), so a
+/// partner that only an EARLIER version carries (6721266's shape) still
+/// refuses the head's figure. The read layer has no rule of its own for the
+/// tender value: it finds the fold's row by `eur_cents`, so the served
+/// `value`, `?min_value` and the stored column must all name the same row,
+/// with the refused figure BIGGER than the elected one.
+#[tokio::test]
+async fn a_scale_slip_partnered_only_by_an_earlier_version_is_refused_by_the_fold_and_the_row() {
+    let (db, conn) = open("scale-chain").await;
+    // EUR 12.3 bn in the head, exactly 10^3 over the earlier version's
+    // estimate, and published in one field only; a real EUR 5 m beside it.
+    let partner = 1_234_567_891;
+    let slip = partner * 1_000;
+    let real = 500_000_000;
+    let mut p = projection(1, vec![amount("estimated_value", partner)]);
+    let mut head_version = p.versions[0].clone();
+    head_version.caused_by_notice_id = 2;
+    head_version.publication_id = "2-2005".into();
+    head_version.published_at = PUBLISHED_AT + 86_400;
+    head_version.facts = [amount("estimated_value", slip), amount("result_value", real)].into_iter().collect();
+    p.versions.push(head_version);
+    db.apply_tenders(&[p], PUBLISHED_AT + 86_400, false).await.unwrap();
+
+    let (want_value, _) = head(&conn, 1).await;
+    assert_eq!(want_value, Some(real), "the fold must read the earlier version's partner");
+
+    let row = only_row(&conn).await;
+    assert_eq!(row.value_cents, want_value, "the row serves the fold's row, not the refused bigger one");
+    assert_eq!(row.currency.as_deref(), Some("EUR"));
+    let detail = read::tender_detail(&conn, 1, None).await.unwrap().expect("the tender");
+    assert_eq!(detail.tender.value_cents, want_value, "the detail payload serves the same row");
+
+    let at_least = |min: i64| Filter { min_value: Some(min), ..Filter::default() };
+    let n = |f: Filter| {
+        let conn = &conn;
+        async move { read::tenders(conn, &f, Scope::Page { after: 0, limit: 10 }).await.unwrap().len() }
+    };
+    assert_eq!(n(at_least(real)).await, 1, "?min_value at the elected figure finds it");
+    assert_eq!(n(at_least(real + 1)).await, 0, "?min_value above it does not, whatever the refused figure says");
+}
+
+/// Issue 471 unit 4(a), the lot half (224156's shape): a lot's
+/// `framework_maximum` 10^3 over a SIBLING lot's is refused by the head
+/// election, and the per-lot pick in `summarise` calls the same predicate, so
+/// the refused figure is not served as that lot's value while `/v1/lots`'
+/// value filter reads the head column that refused it.
+#[tokio::test]
+async fn a_refused_lot_figure_is_not_served_as_the_lots_value() {
+    use store::canonical::LotState;
+    let (db, conn) = open("scale-lot").await;
+    let small = 3_000_000_000; // EUR 30 m
+    let slip = small * 1_000; // EUR 30 bn, in the band
+    let lot = |key: &str, cents: i64| LotState {
+        key: key.into(),
+        kind: "Lot".into(),
+        facts: [amount("framework_maximum", cents)].into_iter().collect(),
+    };
+    let mut p = projection(1, Vec::new());
+    p.versions[0].lots = vec![lot("LOT-0001", small), lot("LOT-0002", slip)];
+    db.apply_tenders(&[p], PUBLISHED_AT, false).await.unwrap();
+
+    assert_eq!(head(&conn, 1).await.0, Some(small), "the head election refuses the sibling-lot slip");
+
+    let lots = read::lots(&conn, &Filter { tender: Some(1), ..Filter::default() }, Scope::Page { after: 0, limit: 10 })
+        .await
+        .unwrap();
+    let value = |key: &str| lots.iter().find(|l| l.lot_key == key).map(|l| l.value_cents).expect(key);
+    assert_eq!(value("LOT-0001"), Some(small));
+    assert_eq!(value("LOT-0002"), None, "the refused ceiling is not served as LOT-0002's value");
+
+    // Below the band nothing changes: the same shape at EUR 30 m over 30,000
+    // keeps both lots' figures (the rule is gated to the band it was measured on).
+    let (db2, conn2) = open("scale-lot-below").await;
+    let mut p = projection(1, Vec::new());
+    p.versions[0].lots = vec![lot("LOT-0001", 3_000_000), lot("LOT-0002", 3_000_000_000)];
+    db2.apply_tenders(&[p], PUBLISHED_AT, false).await.unwrap();
+    assert_eq!(head(&conn2, 1).await.0, Some(3_000_000_000));
+    let lots = read::lots(&conn2, &Filter { tender: Some(1), ..Filter::default() }, Scope::Page { after: 0, limit: 10 })
+        .await
+        .unwrap();
+    let value = |key: &str| lots.iter().find(|l| l.lot_key == key).map(|l| l.value_cents).expect(key);
+    assert_eq!(value("LOT-0002"), Some(3_000_000_000));
+}
+
 /// Issue 171 (rule 12): the near side of the same window. Prod served five head
 /// deadlines before 1990 on 2026-09-26 — 5671586's year 0016 (a two-digit
 /// year), 1466977's `1970-01-01` in a 2024 notice — and every one of them was
