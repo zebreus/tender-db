@@ -1,6 +1,6 @@
 # 488 — the DB file is 90 million extents, and the fold spends three quarters of its time in the kernel
 
-Status: ready-for-agent — filed 2026-10-05 from a `perf` sample of fold 2002 (issue 479's refold). The first step needs
+Status: ready-for-agent — DEFRAG DONE 2026-10-06 (90.9M → 1.95M extents; see "Defrag run"); NEXT: time the next fold, and decide the snapshot strategy before 2026-10-11. Filed 2026-10-05 from a `perf` sample of fold 2002 (issue 479's refold). The first step needs
 Lennart's word, because it removes the last snapshot and takes downtime. After the fold, decide the snapshot strategy,
 then defragment the DB once (see the proposed fix below).
 Kind: performance / ops
@@ -47,3 +47,25 @@ Relates to: 269 (the reflink snapshots), 479 (the refold that surfaced it), 475 
 
 `xfs_io -r -c stat /data/db/tender-db.db | grep nextents` reads a small number (thousands, not millions). A `perf`
 sample of the next fold shows the kernel share below ~20 %, and the next corpus-wide fold beats job 1616's 7.4 h.
+
+## Defrag run (2026-10-06, Lennart's go-ahead: "downtime and losing the one snapshot is fine")
+
+- **Preconditions.** Fold 2002 had finished (`ok`, 8,776,591 tenders). The 2026-10-04 snapshot was deleted;
+  `/data` free went 640 → 814 GiB once xfs had reclaimed it. The free space was still fragmented: about 210 GiB in
+  runs of 1 GiB or more, the rest in small runs, average free extent 12 blocks.
+- **Run.** `ops/defrag-db.sh run` as transient unit `tender-db-defrag`. Service stopped at 01:34 UTC. Copied 649 GiB
+  with `cp --reflink=never` in 1,855 s (~350 MB/s). `cmp` reported the copy identical, the files were swapped by
+  rename, and the service was healthy again at about 02:25 UTC. About 50 min of API downtime.
+- **Result.** 90,930,280 extents became 1,946,893 (47× fewer). The original `.pre-defrag` was deleted after the API
+  checked out: tender 8576017 serves `["open"]`, `?procedure_type=open` answers, `/v1/tenders?country=DE` returns
+  in 0.6 s, and the queue is idle. `/health/deep` showed 503 only on `disk` (both copies present) until the
+  deletion.
+- **Hint.** `xfs_io -c "cowextsize 16m"` was set on the live file (was 4096).
+- **Still open:**
+  1. Time the next daily fold, and the next large one, against job 1616 and fold 2002. Take a `perf` sample to
+     confirm that the kernel share fell.
+  2. The weekly reflink snapshot timer (Sunday 05:23 CEST) is still enabled. With `cowextsize` at 16m it fragments
+     far less, but it still un-shares, which costs disk. Decide before 2026-10-11 whether to keep reflink snapshots,
+     move them off-volume, or switch to a backup-API copy.
+  3. A second copy pass now has better free space (the 649 GiB original was freed whole), if 1.95M extents still
+     show in the profile.

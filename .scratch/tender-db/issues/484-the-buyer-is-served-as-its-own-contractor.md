@@ -1,6 +1,6 @@
 # 484 — the buyer is served as its own contractor (the winner slot repeats the authority)
 
-Status: ready-for-agent — UNIT 3 LANDED 2026-10-05, NOT DEPLOYED, UNCOMMITTED (see "Unit 3 — landed"; review fixes applied, focused runs GATE-EXIT=0). NEXT: `ops/check.sh` (gate from the current target; no dependency change), commit only the unit-3 files, deploy in a queue gap AFTER 479's 2002 finishes and its Verify is read, then the daily spot-check; BACKFILL PENDING: the flag is inert on the ~8.7M existing tenders until the next all-profile refold (listed under the 479 runbook's "batched with"; no job of its own) — then the Verify. Was: UNIT 3 DESIGNED 2026-10-05. ready-for-agent — UNIT 3 DESIGNED 2026-10-05 (see "Unit 3 design"; NEXT: build it — fold flag + `is_buyer` column + `winner=` exclusion + echo — gate, deploy after 2002, backfill rides the next all-profile refold). Was: UNIT 2 DONE 2026-10-05 (deployed `14df8b4`, text + FTS re-parsed, re-projected; Verify done below). NEXT: unit 3 (projection flags a buyer-equal winner `is_buyer`, excluded from supplier statistics). Was: ready-for-agent — NEXT: unit 2 LANDED, NOT DEPLOYED (uncommitted; see "Unit 2 — landed"): gate
+Status: ready-for-agent — UNIT 3 DEPLOYED 2026-10-06 (`b7d627a`); BACKFILL PENDING (rides the next all-profile refold), then the Verify. Was: UNIT 3 LANDED 2026-10-05, NOT DEPLOYED, UNCOMMITTED (see "Unit 3 — landed"; review fixes applied, focused runs GATE-EXIT=0). NEXT: `ops/check.sh` (gate from the current target; no dependency change), commit only the unit-3 files, deploy in a queue gap AFTER 479's 2002 finishes and its Verify is read, then the daily spot-check; BACKFILL PENDING: the flag is inert on the ~8.7M existing tenders until the next all-profile refold (listed under the 479 runbook's "batched with"; no job of its own) — then the Verify. Was: UNIT 3 DESIGNED 2026-10-05. ready-for-agent — UNIT 3 DESIGNED 2026-10-05 (see "Unit 3 design"; NEXT: build it — fold flag + `is_buyer` column + `winner=` exclusion + echo — gate, deploy after 2002, backfill rides the next all-profile refold). Was: UNIT 2 DONE 2026-10-05 (deployed `14df8b4`, text + FTS re-parsed, re-projected; Verify done below). NEXT: unit 3 (projection flags a buyer-equal winner `is_buyer`, excluded from supplier statistics). Was: ready-for-agent — NEXT: unit 2 LANDED, NOT DEPLOYED (uncommitted; see "Unit 2 — landed"): gate
 (`ops/check.sh`), commit with 485, deploy, then the re-parse runbook in that section — probe one text package
 holding 2002406 and re-read `/v1/notices/2002406/content` (expect `Montte`), wet `text` + `fts:ocds-1.1` re-parse with
 `reclaim_only`, ONE `project`, re-run `buyer-role-census` at stride 10 against job 1942, then the Verify. No dry
@@ -631,3 +631,12 @@ Deviations from the design:
 
 NEXT: `ops/check.sh`; commit the unit-3 files only (`git diff` each first — shared worktree); deploy after 2002 in a
 queue gap; daily spot-check (Rollout 2); the backfill rides the next all-profile refold (Rollout 3); then the Verify.
+
+## Unit 3 deployed (2026-10-06)
+
+- **Deployed.** `b7d627a` (unit 3 is `176a11a`) at 02:5x UTC, gated green on that exact revision.
+- **Migration.** `SELECT is_buyer FROM tender_version_result_winners …` answers through `/v1/sql`, so the column
+  exists.
+- **New folds.** The daily from 2026-10-06 judges every winner it rewrites.
+- **Backfill.** Rides the next all-profile refold. The one that just finished (2002, issue 479) ran on code without
+  this unit.
