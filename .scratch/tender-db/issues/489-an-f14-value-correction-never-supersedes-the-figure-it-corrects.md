@@ -110,5 +110,29 @@ tender and lot amounts. A single-lot II.2.6 mapping is the natural unit 3.
 
 **Drain (after deploy, queue idle):** size, then refold, as 385 did:
 `{"kind":"refold-fields","profiles":["TED-NEW_VALUE.TEXT"],"tables":["notice_texts"],"expect":1}`
-(aborts and prints the carrier count), then the same with `expect` set to that count, then
-`{"kind":"project"}`. The `issue-489` clause of that project line is the corpus-wide measurement.
+(aborts and prints the carrier count), then the same with `expect` set to that count. The
+refold-fields handler queues its OWN paired `project` (rebuild false) — do not queue another; the
+`issue-489` clause of THAT project's line is the corpus-wide measurement.
+
+## Unit 2 — review fixes (2026-10-06)
+
+Adversarial review (workflow wf_09336786-528: 3 lenses, each finding refuted-or-confirmed by a
+skeptic) confirmed seven minor findings; fixed:
+
+- **A late F14 correcting an OLDER notice overwrote the newer figure** (PIN → CN → F14 of the PIN;
+  CAN1 → CAN2 → F14 of CAN1). Corrections now travel beside the facts as `ValueCorrection`
+  {field, new, OLD} (the block's `TED-OLD_VALUE.TEXT`, currency optional) and the fold applies one
+  only when the chain carries the old figure in that field. Pinned in the integration test (a stale
+  correction is not applied).
+- **An unreadable sibling block did not poison its field** (a currency-less ex-VAT block beside a
+  readable VAT-inclusive one mapped the latter). Any unreadable block now refuses the field.
+- **"N mapped" overcounted** (per block, before agreement): now per notice and field, labelled
+  "admitted"; the fold's old-value check can still decline one, which a plan-time tally cannot see.
+- **The drain doc queued a second, empty project** — corrected above.
+- **A doc comment was split** by the new unit test — restored.
+
+Recorded, not fixed: **an upward ×10ᵏ correction to ≥ €1 bn is refused by issue 471's
+`ScalePartners`**, because the superseded figure stays a partner in the chain (any-version reach
+is deliberate for 6721266). It needs the publisher to RAISE a figure exactly 1000× to ≥ €1 bn —
+the opposite of every band case read so far; the drain's before/after will show whether it occurs.
+

@@ -1881,16 +1881,17 @@ async fn an_f14_value_correction_supersedes_the_figure_it_corrects() {
             ],
         },
     );
-    let f14 = |pub_id: &str, day: i64, chg: Vec<(&str, &str, &str)>| {
+    let f14 = |pub_id: &str, day: i64, chg: Vec<(&str, &str, &str, &str)>| {
         let mut sections = vec![sec("PROCEDURE", "Notice", None)];
         let mut values = vec![
             ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", day * 86_400),
             ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", "000001-2020"),
         ];
-        for (chg_id, target, text) in chg {
+        for (chg_id, target, old, new) in chg {
             sections.push(sec(chg_id, "Change", Some("PROCEDURE")));
             values.push(ted_text(chg_id, "TED-SECTION", target));
-            values.push(ted_text(chg_id, "TED-NEW_VALUE.TEXT", text));
+            values.push(ted_text(chg_id, "TED-OLD_VALUE.TEXT", old));
+            values.push(ted_text(chg_id, "TED-NEW_VALUE.TEXT", new));
         }
         legacy_record(fetch_id, pub_id, R209, Parsed { sections, values })
     };
@@ -1898,9 +1899,9 @@ async fn an_f14_value_correction_supersedes_the_figure_it_corrects() {
         "000119-2020",
         20,
         vec![
-            ("CHG-1", "II.1.5)", "Valore, IVA esclusa: 85 536 000,00 EUR"),
-            ("CHG-2", "II.2.6)", "Valore, IVA esclusa: 5 280 000,00 EUR"),
-            ("CHG-3", "II.2.7)", "per un importo massimo di 5 280 000,00 EUR, IVA"),
+            ("CHG-1", "II.1.5)", "Valore, IVA esclusa: 25 280 256 000,00 EUR", "Valore, IVA esclusa: 85 536 000,00 EUR"),
+            ("CHG-2", "II.2.6)", "Valore, IVA esclusa: 25 200 000 000,00 EUR", "Valore, IVA esclusa: 5 280 000,00 EUR"),
+            ("CHG-3", "II.2.7)", "per un importo massimo di 25 200 000 000,00 EUR", "per un importo massimo di 5 280 000,00 EUR, IVA"),
         ],
     );
     db.record_notice(&cn, &pc).await.expect("cn");
@@ -1933,10 +1934,21 @@ async fn an_f14_value_correction_supersedes_the_figure_it_corrects() {
     );
 
     // A second F14 corrects it back: publication order decides.
-    let (n2, p2) = f14("000200-2020", 30, vec![("CHG-1", "II.1.5", "25 280 256 000,00 EUR")]);
+    let (n2, p2) = f14("000200-2020", 30, vec![("CHG-1", "II.1.5", "85 536 000,00", "25 280 256 000,00 EUR")]);
     db.record_notice(&n2, &p2).await.expect("second f14");
     project::project(&db, false).await.expect("project");
     assert_eq!(estimates(3).await.as_deref(), Some("estimated_value 2528025600000 EUR"), "the later restatement wins");
+
+    // A late F14 that names a figure the chain no longer carries (it corrects an
+    // OLDER notice's estimate) must not overwrite the current one.
+    let (n3, p3) = f14("000300-2020", 40, vec![("CHG-1", "II.1.5", "85 536 000,00 EUR", "90 000 000,00 EUR")]);
+    db.record_notice(&n3, &p3).await.expect("stale f14");
+    project::project(&db, false).await.expect("project");
+    assert_eq!(
+        estimates(4).await.as_deref(),
+        Some("estimated_value 2528025600000 EUR"),
+        "a correction of a figure no longer carried is not applied"
+    );
 
     let _ = std::fs::remove_file(&path);
 }

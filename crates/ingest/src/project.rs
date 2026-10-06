@@ -403,8 +403,10 @@ fn f14_refusal_class(target: &str) -> &'static str {
     F14_REFUSED_TARGETS.iter().find(|(coord, _)| *coord == key).map(|(_, class)| *class).unwrap_or("other")
 }
 
-/// An F14 corrigendum's new VALUE, as published text (issue 489).
+/// An F14 corrigendum's new VALUE, as published text (issue 489), and the old one
+/// it replaces, in the same `CHG-n` block.
 const F14_VALUE_FIELD: &str = "TED-NEW_VALUE.TEXT";
+const F14_OLD_VALUE_FIELD: &str = "TED-OLD_VALUE.TEXT";
 
 /// What a corrigendum's new value MEANS, by the form section it corrects
 /// (issue 489 unit 2). Tender scope only: II.1.5 is the procedure's total
@@ -446,6 +448,17 @@ fn f14_target_amount(target: &str) -> Option<&'static str> {
 /// see), anything after the code (`769 309,88 EUR bez DPH.`), prose and second
 /// figures, zero.
 fn f14_new_value_amount(text: &str) -> Option<(i64, String)> {
+    match f14_value_text(text)? {
+        (cents, Some(currency)) => Some((cents, currency)),
+        (_, None) => None,
+    }
+}
+
+/// The figure a `NEW_VALUE.TEXT` / `OLD_VALUE.TEXT` states, and its currency if it
+/// states one — the shared half of [`f14_new_value_amount`]. The OLD side is
+/// compared, not stored, so a currency-less `25 000 000 000.00` still identifies
+/// the figure it names.
+fn f14_value_text(text: &str) -> Option<(i64, Option<String>)> {
     let text = text.trim().trim_end_matches('.').trim();
     let figure = match text.rsplit_once(':') {
         Some((label, figure)) if !label.bytes().any(|b| b.is_ascii_digit()) => figure.trim(),
@@ -453,25 +466,66 @@ fn f14_new_value_amount(text: &str) -> Option<(i64, String)> {
         None => text,
     };
     let bytes = figure.as_bytes();
-    if bytes.len() < 4 || !bytes[bytes.len() - 3..].iter().all(u8::is_ascii_uppercase) {
-        return None;
-    }
-    // The last three bytes are ASCII, so this is a char boundary.
-    let (number, currency) = figure.split_at(figure.len() - 3);
+    let (number, currency) =
+        if bytes.len() >= 4 && bytes[bytes.len() - 3..].iter().all(u8::is_ascii_uppercase) {
+            // The last three bytes are ASCII, so this is a char boundary.
+            let (number, code) = figure.split_at(figure.len() - 3);
+            (number, Some(code.to_owned()))
+        } else {
+            (figure, None)
+        };
     let cents = crate::r209::value::display_cents(number.trim_end_matches([' ', '\u{a0}', '\u{202f}']))?;
-    (cents > 0).then(|| (cents, currency.to_owned()))
+    (cents > 0).then_some((cents, currency))
 }
 
-/// This notice's admitted value corrections, one per canonical field, and the
-/// tally of what was read (issue 489 unit 2). A field corrected to two DIFFERENT
-/// figures in one notice is ambiguous and yields nothing; the same figure twice
-/// is one correction.
-fn f14_value_corrections<'a>(
-    parsed: &'a Parsed,
+/// One admitted F14 value correction (issue 489 unit 2): the field it corrects,
+/// the new figure, and the figure the block says it REPLACES. The fold applies it
+/// only when the Tender currently carries that old figure in that field — a late
+/// F14 correcting an OLDER notice (a PIN's estimate after the CN restated it, round
+/// one's total after round two) names a figure the chain no longer carries, and
+/// must not overwrite the newer one (review finding, 2026-10-06).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct ValueCorrection {
+    field: String,
+    cents: i64,
+    currency: String,
+    old_cents: i64,
+    /// `None` when the OLD text states no currency; then cents alone must match.
+    old_currency: Option<String>,
+}
+
+impl ValueCorrection {
+    /// Whether `fact` is the figure this correction names as replaced.
+    fn corrects(&self, fact: &Fact) -> bool {
+        matches!(fact, Fact::Amount { field, cents, currency, .. }
+            if *field == self.field
+                && *cents == self.old_cents
+                && self.old_currency.as_deref().is_none_or(|c| c == currency))
+    }
+}
+
+/// This notice's admitted value corrections, and the tally of what was read
+/// (issue 489 unit 2). Per field, STRICT: every block of a mapped coordinate must
+/// read (an unreadable sibling — a currency-less ex-VAT figure beside a readable
+/// VAT-inclusive one — leaves the field uncorrected), and all of them must agree
+/// on the (new, old) pair; anything else is ambiguous and yields nothing.
+fn f14_value_corrections(
+    parsed: &Parsed,
     targets: &BTreeMap<&str, &str>,
-) -> (BTreeMap<&'static str, Option<(i64, String)>>, F14TargetGate) {
+) -> (Vec<ValueCorrection>, F14TargetGate) {
     let mut gate = F14TargetGate::default();
-    let mut found: BTreeMap<&'static str, Option<(i64, String)>> = BTreeMap::new();
+    let olds: BTreeMap<&str, &str> = parsed
+        .values
+        .iter()
+        .filter_map(|v| match &v.value {
+            NoticeValue::Text { value, .. } if v.field_id == F14_OLD_VALUE_FIELD => {
+                Some((v.section_id.as_str(), value.as_str()))
+            }
+            _ => None,
+        })
+        .collect();
+    // field -> Some(correction) while every block agrees, None once one does not.
+    let mut found: BTreeMap<&'static str, Option<ValueCorrection>> = BTreeMap::new();
     for v in &parsed.values {
         let NoticeValue::Text { value, .. } = &v.value else { continue };
         if v.field_id != F14_VALUE_FIELD {
@@ -484,27 +538,38 @@ fn f14_value_corrections<'a>(
             }
             continue;
         };
-        match f14_new_value_amount(value) {
-            None => gate.value_unread += 1,
-            Some(read) => {
+        let read = f14_new_value_amount(value).and_then(|(cents, currency)| {
+            let (old_cents, old_currency) = f14_value_text(olds.get(v.section_id.as_str())?)?;
+            Some(ValueCorrection { field: field.to_owned(), cents, currency, old_cents, old_currency })
+        });
+        match read {
+            None => {
+                gate.value_unread += 1;
+                found.insert(field, None);
+            }
+            Some(c) => {
+                found.entry(field).and_modify(|seen| {
+                    if seen.as_ref() != Some(&c) {
+                        *seen = None;
+                    }
+                }).or_insert(Some(c));
+            }
+        }
+    }
+    let mut admitted = Vec::new();
+    for (field, c) in found {
+        match c {
+            Some(c) => {
                 match field {
                     "estimated_value" => gate.value_estimated += 1,
                     _ => gate.value_result += 1,
                 }
-                found
-                    .entry(field)
-                    .and_modify(|seen| {
-                        if seen.as_ref() != Some(&read) {
-                            *seen = None;
-                        }
-                    })
-                    .or_insert(Some(read));
+                admitted.push(c);
             }
+            None => gate.value_ambiguous += 1,
         }
     }
-    let ambiguous = found.values().filter(|v| v.is_none()).count() as u64;
-    gate.value_ambiguous += ambiguous;
-    (found, gate)
+    (admitted, gate)
 }
 
 /// The grafted `UBL-*` ids that stay PARSE-LAYER-ONLY, each with its reason
@@ -3813,6 +3878,8 @@ struct BucketRow {
     is_correction: bool,
     facts: BTreeSet<Fact>,
     lots: Vec<LotState>,
+    /// Issue 489 (same lifecycle note as `group_members` below).
+    value_corrections: Vec<ValueCorrection>,
     round: Option<Round>,
     /// Issue 237's lots-group membership.
     ///
@@ -3847,6 +3914,7 @@ impl BucketRow {
             is_correction: state.is_correction,
             facts: state.facts,
             lots: state.lots,
+            value_corrections: state.value_corrections,
             round: state.round,
             group_members: state.group_members,
         }
@@ -3877,6 +3945,7 @@ impl BucketRow {
             is_correction: self.is_correction,
             facts: self.facts.clone(),
             lots: self.lots.clone(),
+            value_corrections: self.value_corrections.clone(),
             roles: Vec::new(),
             raw_results: RawResults::default(),
             round: self.round.clone(),
@@ -3905,6 +3974,8 @@ struct NoticeState {
     /// Tender-scoped facts, and one bucket per lot the notice published.
     facts: BTreeSet<Fact>,
     lots: Vec<LotState>,
+    /// Issue 489: this notice's F14 value corrections, applied by [`fold`].
+    value_corrections: Vec<ValueCorrection>,
     /// Role references awaiting their canonical organization id: (scope,
     /// role, ORG section id).
     roles: Vec<(Scope, String, String)>,
@@ -4329,19 +4400,11 @@ impl NoticeState {
             }
         }
 
-        // Issue 489 unit 2: an F14 corrigendum's new II.1.5 / II.1.7 value is the
-        // Tender's estimated / result value as of this notice. Tender scope, and
-        // the fold's per-field `supersede` does the rest: the carried figure of
-        // that field is replaced, exactly as 385's corrected deadline replaces
-        // the old one. The notice publishes no other amount (an F14 has no value
-        // elements), so nothing here competes with it.
-        if !change_targets.is_empty() {
-            for (field, read) in f14_value_corrections(parsed, &change_targets).0 {
-                if let Some((cents, currency)) = read {
-                    facts.insert(Fact::Amount { field: field.to_owned(), cents, currency, tax_basis: None, quality: None });
-                }
-            }
-        }
+        // Issue 489 unit 2: an F14 corrigendum's II.1.5 / II.1.7 correction, held
+        // beside the facts rather than in them — the fold applies it only when the
+        // chain carries the figure it names as replaced ([`ValueCorrection`]).
+        let value_corrections =
+            if change_targets.is_empty() { Vec::new() } else { f14_value_corrections(parsed, &change_targets).0 };
 
         // Issue 233: the OJ heading as a LAST-RESORT title.
         //
@@ -4442,6 +4505,7 @@ impl NoticeState {
             is_correction: parsed.sections.iter().any(|s| s.kind == "Change"),
             facts,
             lots: lots.into_values().collect(),
+            value_corrections,
             roles,
             raw_results,
             round: None,
@@ -4845,15 +4909,15 @@ pub struct F14TargetGate {
     /// Measured 0 of 5,234 on prod (unit 1), so a non-zero value here is a shape
     /// the corpus has never produced, not a tail.
     pub untargeted: u64,
-    /// Issue 489: `NEW_VALUE.TEXT` blocks read as the tender's new estimated
-    /// value (II.1.5) / result value (II.1.7).
+    /// Issue 489: notices whose II.1.5 (estimated) / II.1.7 (result) correction
+    /// was admitted — every block of the field read, with its OLD value, and agreed.
     pub value_estimated: u64,
     pub value_result: u64,
-    /// Issue 489: a II.1.5 / II.1.7 block whose text is not exactly one figure
-    /// and one currency — refused, the old figure stays.
+    /// Issue 489: a II.1.5 / II.1.7 block whose NEW text is not exactly one figure
+    /// and one currency, or whose OLD text is not one figure — refused.
     pub value_unread: u64,
-    /// Issue 489: a field one notice corrects to two different figures — both
-    /// refused.
+    /// Issue 489: a field whose blocks in one notice disagree or include an
+    /// unreadable one — the whole field refused.
     pub value_ambiguous: u64,
     /// Issue 489: a lot (II.2.6) or contract (V.2.4) value correction — refused
     /// by design, counted so its volume stays visible.
@@ -5257,6 +5321,21 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
         let previous = versions.last();
         let mut facts = previous.map(|p| p.facts.clone()).unwrap_or_default();
         supersede(&mut facts, &state.facts);
+        // Issue 489: an F14 value correction replaces its field only when the
+        // Tender carries the figure the block names as replaced. Per-field like
+        // `supersede`, so every carried figure of the field goes.
+        for c in &state.value_corrections {
+            if facts.iter().any(|f| c.corrects(f)) {
+                facts.retain(|f| !matches!(f, Fact::Amount { field, .. } if *field == c.field));
+                facts.insert(Fact::Amount {
+                    field: c.field.clone(),
+                    cents: c.cents,
+                    currency: c.currency.clone(),
+                    tax_basis: None,
+                    quality: None,
+                });
+            }
+        }
 
         let mut lots: Vec<LotState> = previous.map(|p| p.lots.clone()).unwrap_or_default();
         for published in &state.lots {
@@ -9013,6 +9092,14 @@ mod tests {
             is_correction: true,
             facts,
             lots: vec![LotState { key: "LOT-1".into(), kind: "Lot".into(), facts: lot_facts }],
+            // Issue 489: carried through the frame too.
+            value_corrections: vec![ValueCorrection {
+                field: "estimated_value".into(),
+                cents: 8_553_600_000,
+                currency: "EUR".into(),
+                old_cents: 2_528_025_600_000,
+                old_currency: None,
+            }],
             round: Some(round),
             // Issue 237: carried through the frame, so the round-trip covers it.
             group_members: vec![("GLO-1".into(), "LOT-1".into())],
@@ -10003,6 +10090,7 @@ mod tests {
             is_correction: false,
             facts: BTreeSet::new(),
             lots: Vec::new(),
+            value_corrections: Vec::new(),
             roles: Vec::new(),
             raw_results: RawResults::default(),
             round: None,
@@ -10111,8 +10199,6 @@ mod tests {
         assert!(table_reads("notice_dates", F14_DATE_FIELD));
     }
 
-    /// Issue 385 unit 2: the tally cannot disagree with the mapping.
-    ///
     /// Issue 489 unit 2: the strict `NEW_VALUE.TEXT` reader, on the shapes
     /// measured in 385's window (2026-10-06).
     #[test]
@@ -10149,8 +10235,13 @@ mod tests {
         assert_eq!(f14_target_amount(" II.1.7 "), Some("result_value"));
         assert_eq!(f14_target_amount("II.2.6"), None);
         assert_eq!(f14_target_amount("V.2.4)"), None);
+        // The OLD side may omit its currency: it is compared, not stored.
+        assert_eq!(f14_value_text("25 000 000 000.00"), Some((2_500_000_000_000, None)));
+        assert_eq!(f14_value_text("Value excluding VAT: 25 000 000 000.00 GBP"), Some((2_500_000_000_000, Some("GBP".into()))));
     }
 
+    /// Issue 385 unit 2: the tally cannot disagree with the mapping.
+    ///
     /// [`F14TargetGate::to_other`] exists only as a tripwire for a destination
     /// added to [`F14_TARGET_DATES`] without a slot here; this is the assertion
     /// that keeps it provably zero in the field. A run reporting `to_other`

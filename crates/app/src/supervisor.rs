@@ -2722,12 +2722,14 @@ fn uuid_hub_suffix(h: &store::UuidHubTally) -> String {
 /// because nothing happened to it.
 fn f14_target_suffix(t: &ingest::project::F14TargetGate) -> String {
     // Issue 489: the value corrections, on their own clause and under the same
-    // "silent when none was seen" rule.
+    // "silent when none was seen" rule. "admitted" is per notice and field (every
+    // block read and agreed); the fold still applies one only where the chain
+    // carries the figure it names as replaced, which this plan-time tally cannot see.
     let values = if t.values_seen() == 0 {
         String::new()
     } else {
         format!(
-            "; issue-489 F14 value corrections: {} mapped (estimated {}, result {}), {} unread, \
+            "; issue-489 F14 value corrections: {} admitted (estimated {}, result {}), {} unread, \
              {} ambiguous field(s), {} lot/contract refused",
             t.value_estimated + t.value_result,
             t.value_estimated,
@@ -16834,7 +16836,7 @@ mod tests {
             ..Default::default()
         };
         let s = f14_target_suffix(&values);
-        assert!(s.starts_with("; issue-489 F14 value corrections: 48 mapped (estimated 32, result 16), 9 unread"), "{s}");
+        assert!(s.starts_with("; issue-489 F14 value corrections: 48 admitted (estimated 32, result 16), 9 unread"), "{s}");
         assert!(s.contains("97 lot/contract refused"), "{s}");
         assert!(!s.contains("issue-385"), "{s}");
         let both = project::F14TargetGate { to_deadline: 3, ..values };
