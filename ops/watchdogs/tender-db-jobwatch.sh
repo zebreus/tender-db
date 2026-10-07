@@ -16,7 +16,12 @@
 # A failed daily is a .recent entry whose outcome != "ok" that finished inside the
 # lookback window. A wedged job is a .current that has been running longer than the
 # wedged threshold — set above the ~5 h a full `project rebuild=true` legitimately
-# takes (id 697 ran 5.1 h), so a healthy rebuild does not trip it. A clean run
+# takes (id 697 ran 5.1 h), so a healthy rebuild does not trip it — AND whose progress
+# record (`.current.phase.updated_at`) is older than the stall threshold, or absent.
+# Runtime alone was the old rule, and the all-profile refold of 2026-10-07 (project
+# 2044, 8.78M Tenders rewritten) tripped it at 8.8 h while folding ~1M Tenders an hour;
+# a job that keeps reporting progress is slow, not wedged. Past the hard cap (24 h) a
+# job warns even while it reports progress: no job here is meant to run that long. A clean run
 # exits 0 with one OK summary line; any finding exits non-zero so it also shows in
 # `systemctl --failed`.
 #
@@ -38,6 +43,8 @@ base=${TENDER_ADMIN_URL:-http://localhost:8080}
 secret_file=${TENDER_ADMIN_SECRET_FILE:-/root/tender-admin-secret}
 lookback=${TENDER_JOB_FAIL_LOOKBACK_SECS:-93600}   # 26 h — one daily cycle + slack
 wedged=${TENDER_JOB_WEDGED_SECS:-28800}            # 8 h — clears the ~5 h full rebuild
+stall=${TENDER_JOB_STALL_SECS:-7200}               # 2 h without a phase update — wedged
+hard=${TENDER_JOB_HARD_WEDGED_SECS:-86400}         # 24 h — wedged even while progressing
 # How deep to read the job log. This MUST be asked for explicitly: `GET
 # /admin/jobs` with no `limit` returns the newest 20 runs, and a 26 h lookback
 # over a 20-entry window is only a 26 h check on a quiet box. Measured 2026-09-09
@@ -130,10 +137,16 @@ if [ -n "$oldest" ] && [ "$returned" -ge "$depth" ] && [ "$oldest" -gt "$((now -
     status=1
 fi
 
-wedged_line=$(printf '%s' "$json" | jq -r --argjson now "$now" --argjson w "$wedged" '
+wedged_line=$(printf '%s' "$json" | jq -r --argjson now "$now" --argjson w "$wedged" \
+        --argjson st "$stall" --argjson hard "$hard" '
     (.current // empty)
     | select(.started_at <= ($now - $w))
-    | "\(.kind) #\(.id) [\(.params)] running \($now - .started_at)s"')
+    | (.phase.updated_at? // null) as $u
+    | select(.started_at <= ($now - $hard)
+             or ($u | type) != "number"
+             or $u <= ($now - $st))
+    | "\(.kind) #\(.id) [\(.params)] running \($now - .started_at)s"
+      + (if ($u | type) == "number" then ", last progress \($now - $u)s ago" else ", no progress record" end)')
 if [ -n "$wedged_line" ]; then
     echo "WARN jobwatch: wedged job (threshold $((wedged / 3600))h): $wedged_line"
     status=1

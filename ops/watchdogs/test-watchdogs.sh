@@ -383,6 +383,37 @@ json.dump(d, open(path + ".tmp", "w")); os.replace(path + ".tmp", path)
 PY
 }
 
+# The wedged check (jobwatch): runtime past the threshold is wedged only when the
+# job's progress record is stale or absent, or past the hard cap.
+set_current_job() {  # <age_secs> <phase_age_secs|none>
+    python3 - "$work/state.json" "$1" "$2" <<'PY'
+import json, sys, time, os
+path, age, phase_age = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+now = int(time.time())
+d = json.load(open(path))
+cur = {"id": 2044, "kind": "project", "params": "rebuild=false", "started_at": now - age}
+if phase_age != "none":
+    cur["phase"] = {"name": "folding", "done": 1, "total": 2, "detail": "", "updated_at": now - int(phase_age)}
+d["current"] = cur
+json.dump(d, open(path + ".tmp", "w")); os.replace(path + ".tmp", path)
+PY
+}
+set_current_job 32000 60
+out=$(run_jobwatch); rc=$?
+check "a long job that keeps reporting progress is not wedged" 0 "ok jobwatch: running project #2044" "$out" "$rc"
+set_current_job 32000 9000
+out=$(run_jobwatch); rc=$?
+check "a long job whose progress went stale is wedged" 1 "wedged job (threshold 8h): project #2044 [rebuild=false] running 32000s, last progress 9000s ago" "$out" "$rc"
+set_current_job 32000 none
+out=$(run_jobwatch); rc=$?
+check "a long job with no progress record is wedged" 1 "no progress record" "$out" "$rc"
+set_current_job 90000 60
+out=$(run_jobwatch); rc=$?
+check "past the hard cap a job is wedged even while progressing" 1 "wedged job" "$out" "$rc"
+set_current_job 600 none
+out=$(run_jobwatch); rc=$?
+check "a short job is never wedged" 0 "ok jobwatch" "$out" "$rc"
+
 set_current_full
 run_probe
 check "the probe reads an idle queue as idle" 0 "idle" "$probe_out" "$probe_rc"
