@@ -524,6 +524,23 @@ summary line, not the header, which also prints when the query failed:
 `/root/aj.sh /admin/reports/data-quality | jq -r .body | grep -cE 'Tender\(s\) in [0-9]+ currenc'`
 must print `1`, and the same with `grep -c 'UNMEASURED — the .band_listing'` must print `0`.
 
+**F14 value corrections (issue 489).** A TED F14 corrigendum block whose `TED-SECTION` is II.1.5
+(the total estimated value), II.1.7 (the total awarded value) or II.2.6 (a lot's estimated value)
+now moves that figure, the way 385's `NEW_VALUE.DATE` moves the deadline. The block's
+`TED-NEW_VALUE.TEXT` must read as exactly one figure plus an ISO currency code (any EU grouping, a
+label ending in `:` skipped when it holds no digit), and its `TED-OLD_VALUE.TEXT` as one figure. The fold
+applies it ONLY where the chain carries that old figure in that field: at tender scope for
+II.1.5 / II.1.7, and for II.2.6 on the one lot carrying it (no lot, or two lots with the same figure,
+and nothing moves). A late F14 that names a figure the chain no longer carries is dropped. V.2.4
+(a contract's value) is not mapped. The project line counts it as
+`; issue-489 F14 value corrections: N admitted (estimated …, result …, lot …), … unread, … ambiguous,
+… contract refused`. "Admitted" is counted at plan time; the fold's old-figure check can still drop one.
+To re-apply after a change, size first, then run it for real (the handler queues its own `project`;
+do not queue a second one):
+`{"kind":"refold-fields","profiles":["TED-NEW_VALUE.TEXT"],"tables":["notice_texts"],"expect":1}`
+aborts and prints the carrier count (191,493 on 2026-10-06), then send the same with that count as
+`expect`. 156,263 Tenders, routed to the whole-corpus bucketed path.
+
 **The exact-10ᵏ election rule (issue 471 unit 4(a)).** The head election
 (`head_value_eur_cents`, through `ScalePartners` in `crates/store/src/canonical.rs`) now refuses a
 positive amount F when (1) some positive figure P of the same Tender and currency, above 10.00 as
