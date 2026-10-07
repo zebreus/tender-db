@@ -1,6 +1,6 @@
 # 489 — an F14 value correction never supersedes the figure it corrects
 
-Status: ready-for-agent — UNIT 4 DEPLOYED 2026-10-07 (`a292f07`). RUNNING: the all-profile `refold` 2043/2044 (07:50 UTC) is its re-drain; NEXT: read its `issue-489` clause. Was NEXT: its re-drain rides the all-profile `refold` planned after today's daily (batched with 484's `is_buyer` backfill, one fold for both); then read the new `issue-489` clause against unit 2's (12,738 admitted / 17,108 unread). Was: UNITS 2+3 DEPLOYED AND DRAINED 2026-10-07 (see "Drain — result"): 12,738 corrections admitted corpus-wide; 6891632 €25.28 bn → €85.5 m, 7257797 → €12.42 bn, 4871119 unchanged (its flip-flop), ≥ €1 bn 3,822 → 3,817. NEXT: measure the unread (17,108) and ambiguous (5,191) classes on a window — the currency-less NEW_VALUE share decides whether a unit 4 (take the currency of the matched old figure) is worth it. Was: DRAIN RUNNING: sizing job 2937 counted 191,493 carrier notices (aborted, nothing written), wet refold-fields enqueued as jobs 2030/2031 (`expect` 191,493) with its paired project. Before: 3,822 Tenders ≥ €1 bn; 6891632 €25,280,256,000.00, 7257797 €12,545,764,416.17, 4871119 £25 bn. NEXT: read the paired project's `issue-489` clause, re-read those three and the ≥ €1 bn count. Was: UNIT 2 LANDED 2026-10-06 (see "Unit 2 — landed"; gate, deploy, then the drain). Was: filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
+Status: ready-for-agent — UNIT 4 DEPLOYED AND DRAINED 2026-10-07 (project 2953: 18,939 admitted, was 12,738; unread 8,845, was 17,108 — see "Unit 4 — drained"). NEXT: decide whether this issue is done (the residual is no-OLD blocks and prose) — a window read of the remaining unread, then close or file the next unit. Was RUNNING: the all-profile `refold` 2043/2044 (07:50 UTC) is its re-drain; NEXT: read its `issue-489` clause. Was NEXT: its re-drain rides the all-profile `refold` planned after today's daily (batched with 484's `is_buyer` backfill, one fold for both); then read the new `issue-489` clause against unit 2's (12,738 admitted / 17,108 unread). Was: UNITS 2+3 DEPLOYED AND DRAINED 2026-10-07 (see "Drain — result"): 12,738 corrections admitted corpus-wide; 6891632 €25.28 bn → €85.5 m, 7257797 → €12.42 bn, 4871119 unchanged (its flip-flop), ≥ €1 bn 3,822 → 3,817. NEXT: measure the unread (17,108) and ambiguous (5,191) classes on a window — the currency-less NEW_VALUE share decides whether a unit 4 (take the currency of the matched old figure) is worth it. Was: DRAIN RUNNING: sizing job 2937 counted 191,493 carrier notices (aborted, nothing written), wet refold-fields enqueued as jobs 2030/2031 (`expect` 191,493) with its paired project. Before: 3,822 Tenders ≥ €1 bn; 6891632 €25,280,256,000.00, 7257797 €12,545,764,416.17, 4871119 £25 bn. NEXT: read the paired project's `issue-489` clause, re-read those three and the ≥ €1 bn count. Was: UNIT 2 LANDED 2026-10-06 (see "Unit 2 — landed"; gate, deploy, then the drain). Was: filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
 "whether (b) stays here or becomes its own issue" decision: it is a different mechanism — free-text
 amount parsing plus same-field supersession in the version state — and inside 471's band it moves
 one row). UNIT 1 MEASURED on a window (see "Unit 1 — window measurement (2026-10-06)"); scope decided: II.1.5 / II.1.7 (tender scope) only. NEXT: unit 2 — read how a corrigendum version inherits amounts, then the strict reader + supersession with the pin.
@@ -194,3 +194,14 @@ guessing.
 
 Pinned in `a_value_correction_applies_only_to_the_one_carrier_of_its_old_figure` (a bare correction
 over a GBP figure lands in GBP) and the reader test.
+
+## Unit 4 — drained (2026-10-07)
+
+The all-profile refold (project 2953, every Tender rewritten) carried unit 4:
+
+`issue-489 F14 value corrections: 18939 admitted (estimated 6092, result 1096, lot 11751), 8845 unread,
+2832 ambiguous, 5158 contract refused`
+
+against unit 2+3's 12,738 / 17,108 / 5,191 / 5,474: admitted +49 % (estimates 3,826 → 6,092, lots
+7,836 → 11,751), unread nearly halved, ambiguous down 45 % (the label-only blocks no longer spoil a field).
+The remaining unread are, per the window read, chiefly blocks with no `OLD_VALUE.TEXT` and prose.
