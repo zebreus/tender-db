@@ -1,6 +1,6 @@
 # 489 — an F14 value correction never supersedes the figure it corrects
 
-Status: ready-for-agent — UNITS 2+3 DEPLOYED AND DRAINED 2026-10-07 (see "Drain — result"): 12,738 corrections admitted corpus-wide; 6891632 €25.28 bn → €85.5 m, 7257797 → €12.42 bn, 4871119 unchanged (its flip-flop), ≥ €1 bn 3,822 → 3,817. NEXT: measure the unread (17,108) and ambiguous (5,191) classes on a window — the currency-less NEW_VALUE share decides whether a unit 4 (take the currency of the matched old figure) is worth it. Was: DRAIN RUNNING: sizing job 2937 counted 191,493 carrier notices (aborted, nothing written), wet refold-fields enqueued as jobs 2030/2031 (`expect` 191,493) with its paired project. Before: 3,822 Tenders ≥ €1 bn; 6891632 €25,280,256,000.00, 7257797 €12,545,764,416.17, 4871119 £25 bn. NEXT: read the paired project's `issue-489` clause, re-read those three and the ≥ €1 bn count. Was: UNIT 2 LANDED 2026-10-06 (see "Unit 2 — landed"; gate, deploy, then the drain). Was: filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
+Status: ready-for-agent — UNIT 4 LANDED 2026-10-07 (currency-less values + label blocks, see "Unit 4"; gate → deploy → re-drain). Was: UNITS 2+3 DEPLOYED AND DRAINED 2026-10-07 (see "Drain — result"): 12,738 corrections admitted corpus-wide; 6891632 €25.28 bn → €85.5 m, 7257797 → €12.42 bn, 4871119 unchanged (its flip-flop), ≥ €1 bn 3,822 → 3,817. NEXT: measure the unread (17,108) and ambiguous (5,191) classes on a window — the currency-less NEW_VALUE share decides whether a unit 4 (take the currency of the matched old figure) is worth it. Was: DRAIN RUNNING: sizing job 2937 counted 191,493 carrier notices (aborted, nothing written), wet refold-fields enqueued as jobs 2030/2031 (`expect` 191,493) with its paired project. Before: 3,822 Tenders ≥ €1 bn; 6891632 €25,280,256,000.00, 7257797 €12,545,764,416.17, 4871119 £25 bn. NEXT: read the paired project's `issue-489` clause, re-read those three and the ≥ €1 bn count. Was: UNIT 2 LANDED 2026-10-06 (see "Unit 2 — landed"; gate, deploy, then the drain). Was: filed 2026-10-06, split out of issue 471 unit 4(b) (the issue's own
 "whether (b) stays here or becomes its own issue" decision: it is a different mechanism — free-text
 amount parsing plus same-field supersession in the version state — and inside 471's band it moves
 one row). UNIT 1 MEASURED on a window (see "Unit 1 — window measurement (2026-10-06)"); scope decided: II.1.5 / II.1.7 (tender scope) only. NEXT: unit 2 — read how a corrigendum version inherits amounts, then the strict reader + supersession with the pin.
@@ -176,3 +176,21 @@ Tenders ≥ €1 bn: 3,822 → 3,817; ≥ €10 bn (section 16's band): 305 → 
 currency-less NEW_VALUE (`4 500 000,00`); since the fold now matches the OLD figure, a currency-less
 new value could take the matched figure's currency safely. That is unit 4, after a window measurement of
 the unread shapes.
+
+## Unit 4 — currency-less values and label blocks (2026-10-07, landed)
+
+Window read of OLD beside NEW (`489-values/window-21000000-old-new.json`, 129 II.1.5/II.1.7/II.2.6
+blocks): the unread are (a) a currency-less NEW (`4 500 000,00`, ~15 % of blocks; usually a
+currency-less OLD too), (b) label-only blocks (`Munt: EUR`, `Valeur totale estimée:`) that spoil
+their field's agreement, (c) blocks with no OLD at all (the French two-line form) — unfixable without
+guessing.
+
+- (a) the reader takes a figure with no code; the pair's currency is the NEW's, else the OLD's
+  (two that differ refuse the block); with neither, the fold takes the currency of the carried
+  figure the correction matched (`ValueCorrection::applied`) — the same figure restated, which the
+  old-figure match already establishes.
+- (b) a NEW block with no digit is skipped as a label, not counted unread.
+- (c) unchanged.
+
+Pinned in `a_value_correction_applies_only_to_the_one_carrier_of_its_old_figure` (a bare correction
+over a GBP figure lands in GBP) and the reader test.

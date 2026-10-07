@@ -440,32 +440,21 @@ fn f14_target_amount(target: &str) -> Option<&'static str> {
     F14_TARGET_AMOUNTS.iter().find(|(coord, _)| *coord == key).map(|(_, field)| *field)
 }
 
-/// A corrigendum's `NEW_VALUE.TEXT` as one (cents, currency), STRICTLY (issue
-/// 489 unit 2): `None` unless the text is exactly one figure and one currency.
+/// A corrigendum's `NEW_VALUE.TEXT` / `OLD_VALUE.TEXT` as one figure and its
+/// currency if it states one, STRICTLY (issue 489): `None` unless the text is
+/// exactly one figure, optionally followed by an ISO code.
 ///
 /// Accepted, all measured: `379 502,40 EUR`, `Wartość bez VAT: 1 703 480,12 PLN`
 /// (a label ending in `:` is skipped when it holds no digit — the guard
 /// `read_value_item` uses, so a second figure in the "label" is never skipped
 /// past), `12.409.218.269,80 EUR`, `58 903,50EUR.` (a glued code, a closing
-/// period). The number goes through [`crate::r209::value::display_cents`], which
-/// refuses every spelling that does not say where the decimal point is
-/// (`1.234`, the malformed `224,425,00`).
+/// period), `4 500 000,00` (no code: unit 4 takes the currency of the figure the
+/// correction is matched to, see [`ValueCorrection`]). The number goes through
+/// [`crate::r209::value::display_cents`], which refuses every spelling that does
+/// not say where the decimal point is (`1.234`, the malformed `224,425,00`).
 ///
-/// Refused: no currency (`4 500 000,00` — about a fifth of the sample; the
-/// currency would have to come from the figure it corrects, which a notice cannot
-/// see), anything after the code (`769 309,88 EUR bez DPH.`), prose and second
+/// Refused: anything after the code (`769 309,88 EUR bez DPH.`), prose and second
 /// figures, zero.
-fn f14_new_value_amount(text: &str) -> Option<(i64, String)> {
-    match f14_value_text(text)? {
-        (cents, Some(currency)) => Some((cents, currency)),
-        (_, None) => None,
-    }
-}
-
-/// The figure a `NEW_VALUE.TEXT` / `OLD_VALUE.TEXT` states, and its currency if it
-/// states one — the shared half of [`f14_new_value_amount`]. The OLD side is
-/// compared, not stored, so a currency-less `25 000 000 000.00` still identifies
-/// the figure it names.
 fn f14_value_text(text: &str) -> Option<(i64, Option<String>)> {
     let text = text.trim().trim_end_matches('.').trim();
     let figure = match text.rsplit_once(':') {
@@ -496,7 +485,10 @@ fn f14_value_text(text: &str) -> Option<(i64, Option<String>)> {
 struct ValueCorrection {
     field: String,
     cents: i64,
-    currency: String,
+    /// `None` when neither the NEW nor the OLD text states a currency (unit 4,
+    /// about a fifth of the measured blocks): the fold then takes the currency of
+    /// the carried figure the correction matched — the same figure, restated.
+    currency: Option<String>,
     old_cents: i64,
     /// `None` when the OLD text states no currency; then cents alone must match.
     old_currency: Option<String>,
@@ -512,6 +504,17 @@ impl ValueCorrection {
             if *field == self.field
                 && *cents == self.old_cents
                 && self.old_currency.as_deref().is_none_or(|c| c == currency))
+    }
+
+    /// The corrected fact, given the carried figure `matched` it replaces (one
+    /// [`Self::corrects`] accepted): its currency when the block stated none.
+    fn applied(&self, matched: &Fact) -> Fact {
+        let currency = match (&self.currency, matched) {
+            (Some(c), _) => c.clone(),
+            (None, Fact::Amount { currency, .. }) => currency.clone(),
+            (None, _) => unreachable!("corrects() matched an amount"),
+        };
+        Fact::Amount { field: self.field.clone(), cents: self.cents, currency, tax_basis: None, quality: None }
     }
 }
 
@@ -545,9 +548,22 @@ fn f14_value_corrections(
             continue;
         }
         let Some(target) = targets.get(v.section_id.as_str()) else { continue };
+        // Unit 4: a block with no digit at all is a LABEL, not a value — the Dutch
+        // `Munt: EUR` beside `Waarde zonder btw: 2 000 000,00`, the French
+        // `Valeur totale estimée:` line before its figure. Skipped, so it no longer
+        // spoils its field's agreement.
+        if !value.bytes().any(|b| b.is_ascii_digit()) {
+            continue;
+        }
         let read = |field: &str, lot: bool| {
-            f14_new_value_amount(value).and_then(|(cents, currency)| {
+            f14_value_text(value).and_then(|(cents, currency)| {
                 let (old_cents, old_currency) = f14_value_text(olds.get(v.section_id.as_str())?)?;
+                // A currency on either side names the pair's; two that differ do not
+                // describe one restated figure.
+                let currency = match (currency, &old_currency) {
+                    (Some(n), Some(o)) if n != *o => return None,
+                    (n, o) => n.or_else(|| o.clone()),
+                };
                 Some(ValueCorrection { field: field.to_owned(), cents, currency, old_cents, old_currency, lot })
             })
         };
@@ -5373,15 +5389,9 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
         // Tender carries the figure the block names as replaced. Per-field like
         // `supersede`, so every carried figure of the field goes.
         for c in state.value_corrections.iter().filter(|c| !c.lot) {
-            if facts.iter().any(|f| c.corrects(f)) {
+            if let Some(matched) = facts.iter().find(|f| c.corrects(f)).cloned() {
                 facts.retain(|f| !matches!(f, Fact::Amount { field, .. } if *field == c.field));
-                facts.insert(Fact::Amount {
-                    field: c.field.clone(),
-                    cents: c.cents,
-                    currency: c.currency.clone(),
-                    tax_basis: None,
-                    quality: None,
-                });
+                facts.insert(c.applied(&matched));
             }
         }
 
@@ -5402,14 +5412,9 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
         for c in state.value_corrections.iter().filter(|c| c.lot) {
             let mut carriers = lots.iter_mut().filter(|l| l.facts.iter().any(|f| c.corrects(f)));
             if let (Some(lot), None) = (carriers.next(), carriers.next()) {
+                let matched = lot.facts.iter().find(|f| c.corrects(f)).cloned().expect("a carrier carries it");
                 lot.facts.retain(|f| !matches!(f, Fact::Amount { field, .. } if *field == c.field));
-                lot.facts.insert(Fact::Amount {
-                    field: c.field.clone(),
-                    cents: c.cents,
-                    currency: c.currency.clone(),
-                    tax_basis: None,
-                    quality: None,
-                });
+                lot.facts.insert(c.applied(&matched));
             }
         }
 
@@ -9160,7 +9165,7 @@ mod tests {
             value_corrections: vec![ValueCorrection {
                 field: "estimated_value".into(),
                 cents: 8_553_600_000,
-                currency: "EUR".into(),
+                currency: None,
                 old_cents: 2_528_025_600_000,
                 old_currency: None,
                 lot: false,
@@ -10180,7 +10185,7 @@ mod tests {
         let fix = |old: i64, new: i64, lot: bool| ValueCorrection {
             field: "estimated_value".into(),
             cents: new,
-            currency: "EUR".into(),
+            currency: Some("EUR".into()),
             old_cents: old,
             old_currency: Some("EUR".into()),
             lot,
@@ -10214,6 +10219,23 @@ mod tests {
         let versions = fold(&[&twins, &ambiguous]);
         assert_eq!(lot_cents(&versions[1], "LOT-1"), vec![5_000]);
         assert_eq!(lot_cents(&versions[1], "LOT-2"), vec![5_000]);
+
+        // Unit 4: a correction that states no currency takes the matched figure's.
+        let gbp = Fact::Amount {
+            field: "estimated_value".into(),
+            cents: 9_000,
+            currency: "GBP".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let cn = state(1, vec![gbp], vec![], vec![]);
+        let bare = ValueCorrection { currency: None, old_currency: None, ..fix(9_000, 900, false) };
+        let versions = fold(&[&cn, &state(2, vec![], vec![], vec![bare])]);
+        assert!(
+            versions[1].facts.iter().any(|f| matches!(f, Fact::Amount { cents: 900, currency, .. } if currency == "GBP")),
+            "{:?}",
+            versions[1].facts
+        );
     }
 
     #[test]
@@ -10338,11 +10360,12 @@ mod tests {
         assert!(table_reads("notice_dates", F14_DATE_FIELD));
     }
 
-    /// Issue 489 unit 2: the strict `NEW_VALUE.TEXT` reader, on the shapes
-    /// measured in 385's window (2026-10-06).
+    /// Issue 489: the strict value-text reader, on the shapes measured in 385's
+    /// window (2026-10-06). Unit 4 reads a currency-less figure (its currency
+    /// comes from the matched old figure at fold time).
     #[test]
     fn an_f14_new_value_text_is_read_only_when_it_is_one_figure_and_one_currency() {
-        let read = |t: &str| f14_new_value_amount(t);
+        let read = |t: &str| f14_value_text(t).and_then(|(c, cur)| Some((c, cur?)));
         let eur = |c: i64| Some((c, "EUR".to_owned()));
         assert_eq!(read("379 502,40 EUR"), eur(37_950_240));
         assert_eq!(read("Valore, IVA esclusa: 85 536 000,00 EUR"), eur(8_553_600_000));
@@ -10353,11 +10376,12 @@ mod tests {
         assert_eq!(read("Value excluding VAT: 250 000 000.00 GBP"), Some((25_000_000_000, "GBP".to_owned())));
         assert_eq!(read("130 000 EUR"), eur(13_000_000));
         assert_eq!(read("1\u{a0}957\u{a0}950\u{a0}RON"), Some((195_795_000, "RON".to_owned())));
-        // Refused: no currency, malformed grouping, trailing words, prose, a digit
-        // in the skipped label, a lone placeholder, a three-digit fraction.
+        // Unit 4: a figure with no code is read, currency-less.
+        assert_eq!(f14_value_text("4 500 000,00"), Some((450_000_000, None)));
+        assert_eq!(f14_value_text("5000000"), Some((500_000_000, None)));
+        // Refused: malformed grouping, trailing words, prose, a digit in the
+        // skipped label, a zero, an ambiguous mark, a label or code alone.
         for refused in [
-            "4 500 000,00",
-            "5000000",
             "Valore, IVA esclusa: 224,425,00 EUR",
             "769 309,88 EUR bez DPH.",
             "Per il lotto n. 17, provincia di Napoli: valore, IVA esclusa: 68 847 509,46 EUR, inclusivi di 254 362,50 EUR",
@@ -10368,7 +10392,7 @@ mod tests {
             "Munt: EUR",
             "zł",
         ] {
-            assert_eq!(read(refused), None, "{refused:?}");
+            assert_eq!(f14_value_text(refused), None, "{refused:?}");
         }
         assert_eq!(f14_target_amount("II.1.5)"), Some("estimated_value"));
         assert_eq!(f14_target_amount(" II.1.7 "), Some("result_value"));
