@@ -179,3 +179,6 @@ when the check failed, so the commit is still marked red. A cancelled run (super
 issue. The `uptime-check.yml` pattern, which issue 24 drilled. The red path is not drilled on main on
 purpose: pushing garbage to main to test it would be the very escape this guards against; the YAML was
 parsed with `python3 -c 'import yaml…'` and the green path runs on this commit's own push.
+
+Green path verified 2026-10-07: run 37596451815 on `3ae5238` (the commit that added the step) concluded
+`success` in 45 s; with no open `main-red` issue the step exits without writing.
