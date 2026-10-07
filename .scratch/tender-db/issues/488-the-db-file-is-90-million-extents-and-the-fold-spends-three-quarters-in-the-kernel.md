@@ -1,6 +1,6 @@
 # 488 — the DB file is 90 million extents, and the fold spends three quarters of its time in the kernel
 
-Status: ready-for-agent — DEFRAG DONE 2026-10-06 (90.9M → 1.95M extents; see "Defrag run"); snapshot decision made (timer off, see "Decision"); NEXT: time the next corpus-wide fold against ~4.7 h. Filed 2026-10-05 from a `perf` sample of fold 2002 (issue 479's refold). The first step needs
+Status: ready-for-agent — DEFRAG DONE 2026-10-06 (90.9M → 1.95M extents; see "Defrag run"); snapshot decision made (timer off, see "Decision"); NEXT: time the next corpus-wide fold against ~4.7 h — IN PROGRESS: job 2031 (issue 489's drain, 156,263 Tenders stamped, routed to the whole-corpus bucketed path) started 2026-10-06 23:48:11 UTC; planning read 11.16M of 14.89M notices by 01:49 UTC (~1.55k notices/s). Filed 2026-10-05 from a `perf` sample of fold 2002 (issue 479's refold). The first step needs
 Lennart's word, because it removes the last snapshot and takes downtime. After the fold, decide the snapshot strategy,
 then defragment the DB once (see the proposed fix below).
 Kind: performance / ops
