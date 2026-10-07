@@ -27,6 +27,12 @@
 # `claude/**` or `ci-drill/**` branch and expect red with the error in supervisor.rs; push the clean
 # tree and expect green. A workflow that lost `--features tender-db/server` passes
 # that drill green, so the drill pins the footgun itself.
+#
+# A red `main` is made visible (468's "Make a red run visible"): on refs/heads/main a
+# failed check opens one `main-red` issue naming the commit and the run, unless one is
+# already open, and the next green run on main closes it — `uptime-check.yml`'s
+# open/close step, which issue 24 drilled. Other branches only mark their commit; a
+# cancelled run (superseded by a newer push) touches no issue.
 name: compile
 
 on:
@@ -39,6 +45,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: compile-${{ github.ref }}
@@ -62,4 +69,38 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: cargo check (gate package set, server feature, all targets)
+        id: check
+        continue-on-error: true
         run: cargo check --locked --all-targets -p model -p store -p ingest -p tender-db --features tender-db/server
+
+      - name: Open, keep, or close the main-red issue
+        if: github.ref == 'refs/heads/main' && (steps.check.outcome == 'success' || steps.check.outcome == 'failure')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ steps.check.outcome }}
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          short=$(echo "$GITHUB_SHA" | cut -c1-7)
+          run="$GITHUB_SERVER_URL/$repo/actions/runs/$GITHUB_RUN_ID"
+          gh label create main-red --repo "$repo" --color B60205 \
+            --description 'main does not compile (issue 468)' >/dev/null 2>&1 || true
+          open=$(gh issue list --repo "$repo" --label main-red --state open --json number --jq '.[0].number // empty')
+          if [ "$OUTCOME" = success ]; then
+            if [ -n "$open" ]; then
+              gh issue close "$open" --repo "$repo" --comment "Green again at $now on \`$short\` ([run]($run))."
+            fi
+            exit 0
+          fi
+          if [ -z "$open" ]; then
+            gh issue create --repo "$repo" --label main-red \
+              --title "main does not compile at $short ($now)" \
+              --body "\`cargo check --all-targets --features tender-db/server\` failed on \`$GITHUB_SHA\` ([run]($run)). The operating session (routine \"tender-db hourly ownership check-in\") owns the repair; the next green run on main closes this issue."
+          else
+            gh issue comment "$open" --repo "$repo" --body "Still red at $now on \`$short\` ([run]($run))."
+          fi
+
+      - name: Fail the run when the check failed
+        if: steps.check.outcome == 'failure'
+        run: exit 1

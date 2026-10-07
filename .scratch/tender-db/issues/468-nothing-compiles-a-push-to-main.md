@@ -1,6 +1,6 @@
 # 468 — nothing compiles a push to main: issue 254 deferred CI until a second committer, and main now has three
 
-Status: done (unit 1, drilled 2026-10-05; the main-red issue step stays open) — Unit 1 landed 2026-10-05 (`.github/workflows/compile.yml`, uncommitted at the time of writing; see "Unit 1 — landed" below). NEXT: the owner's red/green drill on a `ci-drill/468` branch, then record its run ids and wall times here. The `main-red` issue open/close step is not yet in the workflow. (Filed 2026-10-01 from the owner's board survey, workflow wf_4eac8781-4d0, verified by an adversarial pass.)
+Status: done (unit 1, drilled 2026-10-05; the main-red issue step LANDED 2026-10-07 — its green path runs on every push to main; the red path is drilled by the next real red, or by a `ci-drill` red merged to main never) — Unit 1 landed 2026-10-05 (`.github/workflows/compile.yml`, uncommitted at the time of writing; see "Unit 1 — landed" below). NEXT: the owner's red/green drill on a `ci-drill/468` branch, then record its run ids and wall times here. The `main-red` issue open/close step is not yet in the workflow. (Filed 2026-10-01 from the owner's board survey, workflow wf_4eac8781-4d0, verified by an adversarial pass.)
 Kind: risk (process: a non-compiling `main` reaches every other agent; prod stays gated)
 Relates to: 254 (chose the deploy gate over a workflow until "a second committer"), 300 (the 2026-08-30 escape),
 260 (the gate's flags and its single feature resolution), 414 (what the gate compiles), 24 (the repo's only
@@ -169,3 +169,13 @@ The issue closes when the drill is recorded and the Verify block's `done` line h
   after that run finished; this workflow's `cancel-in-progress` would otherwise have cancelled it.
 - **Open.** The `main-red` issue open/close step needs `issues: write`.
 - **Done.** `actions/checkout` bumped to `@v5` (Node 24).
+
+## The main-red step — landed (2026-10-07)
+
+`compile.yml` gains `issues: write`; the check step is `continue-on-error` with an id, a step on
+`refs/heads/main` opens one `main-red` issue (naming the commit and the run) unless one is open —
+commenting "still red" on it otherwise — and a green run on main closes it; a last step fails the run
+when the check failed, so the commit is still marked red. A cancelled run (superseded push) touches no
+issue. The `uptime-check.yml` pattern, which issue 24 drilled. The red path is not drilled on main on
+purpose: pushing garbage to main to test it would be the very escape this guards against; the YAML was
+parsed with `python3 -c 'import yaml…'` and the green path runs on this commit's own push.
