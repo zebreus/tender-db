@@ -1,6 +1,6 @@
 # 491 — a text-era minimum/maximum range is read as one run-together figure
 
-Status: ready-for-agent — UNIT 2 DEPLOYED + MOSTLY DRAINED 2026-10-08 (`f71802e`, then `ab879bc`; see "Drain (2026-10-08)"). The 12-fetch reparse (jobs 2046–2057, all with 0 unmatched, re-keyed or failing) and project 2058 cleared 22 of the 25 notices. All 5 exhibits now serve `value: null`. The other 3 restate the pair UNSPACED in V.4, so the rule now tests the number rather than its groups (`ab879bc`). NEXT: reparse 2059–2061 (fetches 223, 229, 232) and project 2062 are queued. Then confirm 0 run-together `VAL_TOTAL` rows on the 25 notices, re-run data-quality, and re-read section 16 (expect the 19 text rows out).
+Status: ready-for-agent — UNIT 2 DEPLOYED + DRAINED 2026-10-08 (`f71802e`, then `ab879bc`): 0 of the 25 notices keep a run-together `VAL_TOTAL`. Reparses 2046–2061 all ran with 0 unmatched, re-keyed or failing; projects 2058 and 2062 are done. NEXT: read section 16 of data-quality job 2063 (enqueued 2026-10-08, which also serves as issue 490's head-band before-image) and expect the 19 text rows out; then units 3 (b) and 4 (c).
 text-era rows in the €10 bn band were errors, and 5 of the 8 have this mechanism. NEXT: unit 1,
 measure the shape corpus-wide by currency (a window read, not a full scan) before changing
 `parse_money`.
@@ -162,4 +162,7 @@ the text era's Tenders (incremental path, under the 500k-notice line).
   The rule now tests the integer (X = units / 10⁶, Y = units mod 10⁶, Y ≥ 100,000) instead of its groups
   (`ab879bc`, gate green, deployed). Unit 1's measurement already read the number, spaced or not, so the
   measured match set is unchanged at the same 25 notices. Reparse 2059–2061 and project 2062 follow.
+- **Final residual drain.** Reparse jobs 2059–2061 re-parsed fetches 223, 229 and 232: 78,490 notices, all
+  with 0 unmatched, re-keyed or failing. Project 2062 then rewrote 92,206 Tenders in 1,827 s.
+  **0 `TED-VAL_TOTAL` rows remain on the 25 notices** (bounded read 2026-10-08).
 
