@@ -1,6 +1,6 @@
 # 491 — a text-era minimum/maximum range is read as one run-together figure
 
-Status: ready-for-agent — UNIT 1 MEASURED 2026-10-08 (see "Unit 1 — measurement (2026-10-08)"): the shape is a 2005–2008 EUR phenomenon. 26 EUR hits in notice ids 2.4M–3.7M, 0 in sampled windows on either side, and 5 non-EUR hits (HUF ×3, ITL ×2) that are non-round genuine-looking figures. Gate decided: X < Y ≤ 4X AND (Y = 4X OR X and Y both whole thousands) AND Y's leading group is not 0-led. It matches all 19 text band rows and 25 of the 26 EUR hits, and none of the non-EUR ones. NEXT: unit 2, build it in `parse_money` (refuse as a range), then re-parse the 2005–2008 text fetches and re-read section 16.
+Status: ready-for-agent — UNIT 2 LANDED 2026-10-08 (`f71802e`, gate green, deploying; see "Unit 2 — landed (2026-10-08)"): `parse_money`'s new `run_together_range` refuses the tight shape. NEXT: the drain is a `reparse text` of the 12 fetches, one package each (`after` = fetch − 1, `reclaim_only`), then ONE `project` (about 310k notices, incremental). Read the counts (0 unmatched, re-keyed, now failing), check the 5 exhibits below, then re-run data-quality and re-read section 16 (expect the 19 text rows out).
 text-era rows in the €10 bn band were errors, and 5 of the 8 have this mechanism. NEXT: unit 1,
 measure the shape corpus-wide by currency (a window read, not a full scan) before changing
 `parse_money`.
@@ -119,3 +119,31 @@ So the gate's corpus-wide match set is exactly the 25 EUR notices in the 2005–
 `reparse text` of just those packages (each `packages:1, after:<fetch−1>, reclaim_only:true`) and then one `project`
 stays incremental. Unlike issue 484, this does not need a from-the-floor run, because no other package carries the
 shape.
+
+## Unit 2 — landed (2026-10-08)
+
+`crates/ingest/src/text/parse.rs`: `parse_money` keeps its digit groups as written, and the new
+`run_together_range(groups, fraction)` refuses the value as a range under the unit-1 gate. The gate is
+X = the groups before the last two, Y = the last two, Y not 0-led, a zero or absent fraction,
+X < Y ≤ 4X, and (Y = 4X or X ≡ Y ≡ 0 mod 1000). The test
+`a_minimum_and_maximum_run_together_are_refused_as_a_range` pins three prod shapes as refused
+(60 000 220 000, 87 250 349 000, 62 709 250 836). It pins as still claimed: the non-round
+LIT/HUF figures, round figures (Y = 0), Y > 4X, a 0-led Y, a plain two-group figure, and a non-zero
+fraction. Gate on the tree: `GATE-EXIT=0`, 145 suites.
+
+**Before** (served `value` on 2026-10-08, from `/v1/tenders/{id}`). Expect each to fall to its next
+admitted figure or to none:
+
+| Tender | value now |
+|---|---|
+| 3450659 | 87,250,349,000.00 EUR |
+| 3916175 | 60,000,220,000.00 EUR |
+| 3303961 | 62,709,250,836.00 EUR |
+| 3420171 | 50,000,110,000.00 EUR |
+| 3365047 | 25,000,100,000.00 EUR |
+
+**Drain.** Fetches 214, 223, 226, 229, 232, 235, 239, 240, 241, 245, 246 and 248 each need
+`{"kind":"reparse","profiles":["text"],"packages":1,"after":<fetch−1>,"reclaim_only":true}`, then ONE
+`project`. `reparse` stamps every text Tender epoch-stale by profile, so expect the project to rewrite
+the text era's Tenders (incremental path, under the 500k-notice line).
+
