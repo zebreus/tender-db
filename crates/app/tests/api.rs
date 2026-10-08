@@ -4350,6 +4350,15 @@ async fn a_lot_priced_at_zero_is_served_as_no_value_and_agrees_with_the_filter()
         )
         .await
         .expect("clear the head value");
+        // And the lot values, as the fold stores them since issue 490: a zero is a
+        // sentinel, so `elect_lot_value` elects nothing and the columns are NULL.
+        conn.execute(
+            "UPDATE tender_version_lots SET value_cents = NULL, value_currency = NULL, value_eur_cents = NULL
+              WHERE tender_id = ?1 AND seq = (SELECT current_seq FROM tenders WHERE id = ?1)",
+            (store::turso::Value::Integer(id),),
+        )
+        .await
+        .expect("clear the stored lot values");
     }
 
     // The list row.
