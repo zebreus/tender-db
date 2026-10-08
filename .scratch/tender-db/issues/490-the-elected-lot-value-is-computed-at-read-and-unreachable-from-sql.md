@@ -1,10 +1,6 @@
 # 490 — the elected lot value is computed at read time and unreachable from /v1/sql
 
-Status: ready-for-agent — filed 2026-10-08 from the owner's question about issue 471's scale
-rule ("do we do extra calculation on each lookup? Does that work with the sql endpoint? … it needs
-to be blazingly fast"). NEXT: unit 1, measure. How many current lots does a naive SQL
-`MAX(eur_cents)` serve a figure the REST pick refuses? Use a window read, never a full scan of
-`tender_version_amounts`.
+Status: ready-for-agent — UNIT 1 MEASURED + UNIT 2 DECIDED 2026-10-08 (workflow `wf_7527ea9b-9b3`; see "Unit 1 — measured" and "Unit 2 — decision"). A naive SQL per-lot max disagrees with REST on 4.2 % of the lots that carry a lot amount (53 of 1,267 in 5 windows, mostly one-unit and zero placeholders plus one ×1000 scale refusal). Decision: three nullable columns on `tender_version_lots`, written by the fold through ONE shared `elect_lot_value`; a `PROJECTION_EPOCH` bump as the completeness check; two deploys around an all-profile refold. NEXT: unit 3a, deploy A.
 Kind: SQL surface / performance / coherence
 Relates to: 471 (the exact-10ᵏ rule, unit 4(a)), 389 (lot-level election made coherent with the
 tender head, on the REST surface only), 372 (`quality = 'withheld'`), 50 (the analyst views)
@@ -67,3 +63,88 @@ so a later version would rewrite kept ones). Check before building:
 2. Decide the storage shape against the checklist above. Record the decision here.
 3. Build it with tests (fold writes it, the view exposes it, `summarise` reads it, and REST and
    SQL agree on a refused-figure fixture). Then gate, deploy, backfill, and do a closing read.
+
+## Unit 1 — measured (2026-10-08)
+
+The reader's full report is in `490-values/reader-measure-2026-10-08.md`. The raw rows and scripts are in
+`490-values/m490/` (JSON gzipped). The scripts rebuild `summarise`'s pick from the SQL rows; it matched the
+served REST value on **6,297 of 6,297** lots.
+
+| window (tender ids) | era | lots | with a lot amount | naive SQL ≠ REST |
+|---|---|---|---|---|
+| 224000–224499 | eForms 2025 | 1,222 | 539 | 8 (zero 6, one-unit 1, scale rule 1: 224156 LOT-0002 €40 bn) |
+| 1000000–1000499 | eForms | 1,245 | 333 | 8 (zero 6, one-unit 2) |
+| 8784500–8784999 | FTS 2026 | 1,046 | 350 | 37 (one-unit £1.00 on 4 tenders) |
+| 6941300–6941799 | TED r209 2021 | 1,783 | **0** | 0 |
+| 6290000–6290499 | TED r209 2018–19 | 1,001 | 45 | 0 |
+| **all** | | 6,297 | 1,267 | **53 (4.2 %); 41 remain even after `quality IS NULL AND cents > 0`** |
+
+Also found:
+
+- REST never falls back to a tender-scope figure for a lot. 3,176 of the 6,297 lots have no lot amount
+  while their tender has one, which is why `/v1/lots?min_value=` stays on the tender head (decided below).
+- The 2021 r209 era projects no lot-scope amounts at all. Its lot figures exist only as
+  `tender_version_lot_results.awarded_cents`, which is never elected. 6941544's £80 bn ×1000 award is still
+  served raw by `v_lot_results` / `v_awards`. That is a separate gap, not covered by a `v_lots` column.
+- Read cost today: 6 of 515 Tenders whose current version has lot amounts reach the €1 bn gate that makes
+  `summarise` load the chain on every read.
+
+## Unit 2 — decision (2026-10-08)
+
+The design is `490-values/design-2026-10-08.md`. It was adversarially reviewed for correctness
+(`review-0`) and for operations (`review-1`); the reader reports sit beside it. Both reviews confirm the
+election maps one-to-one onto `summarise` (ties in Fact order, unconvertible winners kept, no tender
+fallback, LotsGroup/Part, later chain changes). Their findings are about rollout. Decided:
+
+1. **Storage.** `tender_version_lots.value_cents`, `value_currency` and `value_eur_cents`, all nullable.
+   They are stored per version because SSE `Scope::At` serves non-head versions, and version N's pick
+   reads only versions 1..=N, so kept versions stay valid. The fold is the only writer.
+2. **One rule.** `canonical::elect_lot_value`, beside `head_value_eur_cents`. `ScalePartners` gains
+   `add_version_figures` / `set_head`, so the fold builds a running partner set (`of_chain` is rebuilt from
+   them, and a test pins running == `of_chain` per prefix). `summarise` calls the same function in deploy A
+   and reads the columns in deploy B.
+3. **`PROJECTION_EPOCH` bumps** (ops review #3). The all-profile refold rewrites every Tender anyway, and
+   epoch 4 then means "written by 490 code". A bounded primary-key window read of `projection_epoch <> 4`
+   is the completeness check. That covers a stopped refold, a rollback, and a restored backup. Cost: every
+   whole-corpus walk until the backfill completes becomes that backfill.
+4. **Two deploys.**
+   - **Deploy A** ships the columns, the fold write, the epoch bump, and `summarise` routed through
+     `elect_lot_value` with no output change.
+   - **Then:** an all-profile refold, sized by a fresh profile list (correctness review F1), with no deploy
+     in its window.
+   - **Deploy B** ships `summarise` reading the columns, the `v_lots` columns (not in A: ops #8), and a
+     deferred PARTIAL index `tender_version_lots(value_eur_cents, tender_id, seq, lot_id) WHERE
+     value_eur_cents IS NOT NULL`. turso 0.7.2 uses it only with the literal term, so the documented recipe
+     carries it (ops #7).
+5. **Preconditions for deploy B:**
+   - `rederive-eur` also requeues the causing notices of the Tenders it changed (F2; today it only stamps,
+     and nothing re-folds a stamped Tender).
+   - The completeness check reads 0.
+   - The section-16 head band is unchanged against a before-image saved ahead of deploy A (ops #5).
+   - The m490 windows compare stored == REST.
+6. **`/v1/lots?min_value=` stays on the tender head.** A lot-level bound would drop the 50 % of lots that
+   carry no lot figure. That would be a contract change, which nobody has asked for.
+7. **Sizing** comes from `sqlite_stat1` for `tender_version_lots`, not from `MAX(rowid)`. The table holds a
+   row per lot per version, so 13.2 M (the lots count) is only a floor (ops #1). Record `df` before and
+   after the refold.
+8. **Runbook additions** for `docs/operations.md`:
+   - The refold's `expect:1` sizing call queues a real project (ops #4).
+   - Pass conditions must hold across a stopped or resumed refold (ops #2).
+   - After a rollback below deploy A, redo the refold before deploy B (ops #9).
+   - A future change to `sentinel_amount`, `IMPLAUSIBLE_EUR_CENTS` or `ScalePartners` needs a stamping
+     refold (F4; add them to the `PROJECTION_EPOCH` contract text).
+
+## Units (revised)
+
+- **3a, deploy A.** `ScalePartners` refactor, `elect_lot_value`, the fold write, the migration, the epoch
+  bump, and `summarise` routed through the shared function. Tests:
+  - running partners == `of_chain`;
+  - the fold writes the columns;
+  - REST is unchanged on the fixtures (sentinel, ceiling, ×1000 partner, withheld, unconvertible, tie);
+  - head election is unchanged.
+- **3b, backfill.** Save the section-16 before-image, size the refold, run the all-profile refold, then do
+  the completeness read and the m490 compare.
+- **3c, `rederive-eur`.** Requeue the changed Tenders' notices.
+- **3d, deploy B.** `summarise` reads the columns, the `v_lots` columns, the partial index, `/docs` and the
+  SQL recipe, and `operations.md`.
+

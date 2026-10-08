@@ -1,0 +1,33 @@
+== eforms window [224000, 224499]
+  lots: 1222
+  compared: 1222
+  no_lot_amount: 683
+  with_lot_amount: 539
+  no_lot_amount_but_tender_amount: 486
+  disagree_maxcents: 8
+  disagree_maxeur: 8
+  disagree_lessnaive_eur(quality IS NULL AND cents>0): 2
+  causes MAX(cents): {'sentinel:zero': 6, 'scale-rule': 1, 'sentinel:one-unit': 1}
+  causes MAX(eur_cents): {'sentinel:zero': 6, 'scale-rule': 1, 'sentinel:one-unit': 1}
+  distinct tenders MAX(cents): {'sentinel:zero': 6, 'scale-rule': 1, 'sentinel:one-unit': 1}
+  distinct tenders MAX(eur): {'sentinel:zero': 6, 'scale-rule': 1, 'sentinel:one-unit': 1}
+  causes less-naive: {'scale-rule': 1, 'sentinel:one-unit': 1} {'scale-rule': 1, 'sentinel:one-unit': 1}
+  replication mismatches (my REST rebuild != served): 0
+  ex maxcents:sentinel:zero (6):
+     (224024, 'LOT-0001', 611799, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (224120, 'LOT-0001', 612048, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (224138, 'LOT-0001', 612075, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (224144, 'LOT-0001', 612086, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+  ex maxeur:sentinel:zero (6):
+     (224024, 'LOT-0001', 611799, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (224120, 'LOT-0001', 612048, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (224138, 'LOT-0001', 612075, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (224144, 'LOT-0001', 612086, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+  ex maxcents:scale-rule (1):
+     (224156, 'LOT-0002', 612131, 'ted', [('framework_maximum', 4000000000000, 'EUR', 4000000000000, None)], None)
+  ex maxeur:scale-rule (1):
+     (224156, 'LOT-0002', 612131, 'ted', [('framework_maximum', 4000000000000, 'EUR', 4000000000000, None)], None)
+  ex maxcents:sentinel:one-unit (1):
+     (224476, 'LOT-0001', 612945, 'ted', [('estimated_value', 100, 'EUR', 100, None), ('framework_maximum', 100, 'EUR', 100, None)], None)
+  ex maxeur:sentinel:one-unit (1):
+     (224476, 'LOT-0001', 612945, 'ted', [('estimated_value', 100, 'EUR', 100, None), ('framework_maximum', 100, 'EUR', 100, None)], None)

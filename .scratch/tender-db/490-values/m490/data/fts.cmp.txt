@@ -1,0 +1,25 @@
+== fts window [8784500, 8784999]
+  lots: 1046
+  compared: 1046
+  no_lot_amount: 696
+  with_lot_amount: 350
+  no_lot_amount_but_tender_amount: 118
+  disagree_maxcents: 37
+  disagree_lessnaive_eur(quality IS NULL AND cents>0): 37
+  disagree_maxeur: 37
+  causes MAX(cents): {'sentinel:one-unit': 37}
+  causes MAX(eur_cents): {'sentinel:one-unit': 37}
+  distinct tenders MAX(cents): {'sentinel:one-unit': 4}
+  distinct tenders MAX(eur): {'sentinel:one-unit': 4}
+  causes less-naive: {'sentinel:one-unit': 37} {'sentinel:one-unit': 4}
+  replication mismatches (my REST rebuild != served): 0
+  ex maxcents:sentinel:one-unit (37):
+     (8784625, '1', 14541985, 'fts', [('estimated_value', 100, 'GBP', 120, None)], None)
+     (8784625, '10', 14541986, 'fts', [('estimated_value', 100, 'GBP', 120, None)], None)
+     (8784625, '11', 14541987, 'fts', [('estimated_value', 100, 'GBP', 120, None)], None)
+     (8784625, '12', 14541988, 'fts', [('estimated_value', 100, 'GBP', 120, None)], None)
+  ex maxeur:sentinel:one-unit (37):
+     (8784625, '1', 14541985, 'fts', [('estimated_value', 100, 'GBP', 120, None)], None)
+     (8784625, '10', 14541986, 'fts', [('estimated_value', 100, 'GBP', 120, None)], None)
+     (8784625, '11', 14541987, 'fts', [('estimated_value', 100, 'GBP', 120, None)], None)
+     (8784625, '12', 14541988, 'fts', [('estimated_value', 100, 'GBP', 120, None)], None)

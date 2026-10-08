@@ -1,0 +1,31 @@
+== eforms2 window [1000000, 1000499]
+  lots: 1245
+  compared: 1245
+  with_lot_amount: 333
+  no_lot_amount: 912
+  no_lot_amount_but_tender_amount: 380
+  disagree_maxcents: 8
+  disagree_lessnaive_eur(quality IS NULL AND cents>0): 2
+  disagree_maxeur: 8
+  causes MAX(cents): {'sentinel:one-unit': 2, 'sentinel:zero': 6}
+  causes MAX(eur_cents): {'sentinel:one-unit': 2, 'sentinel:zero': 6}
+  distinct tenders MAX(cents): {'sentinel:one-unit': 2, 'sentinel:zero': 4}
+  distinct tenders MAX(eur): {'sentinel:one-unit': 2, 'sentinel:zero': 4}
+  causes less-naive: {'sentinel:one-unit': 2} {'sentinel:one-unit': 2}
+  replication mismatches (my REST rebuild != served): 0
+  ex maxcents:sentinel:one-unit (2):
+     (1000081, 'LOT-0001', 2724502, 'ted', [('estimated_value', 100, 'EUR', 100, None), ('framework_maximum', 100, 'EUR', 100, None)], None)
+     (1000316, 'LOT-0001', 2725037, 'ted', [('estimated_value', 100, 'EUR', 100, None)], None)
+  ex maxeur:sentinel:one-unit (2):
+     (1000081, 'LOT-0001', 2724502, 'ted', [('estimated_value', 100, 'EUR', 100, None), ('framework_maximum', 100, 'EUR', 100, None)], None)
+     (1000316, 'LOT-0001', 2725037, 'ted', [('estimated_value', 100, 'EUR', 100, None)], None)
+  ex maxcents:sentinel:zero (6):
+     (1000082, 'LOT-0001', 2724503, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (1000082, 'LOT-0002', 2724504, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (1000082, 'LOT-0003', 2724505, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (1000093, 'LOT-0001', 2724521, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+  ex maxeur:sentinel:zero (6):
+     (1000082, 'LOT-0001', 2724503, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (1000082, 'LOT-0002', 2724504, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (1000082, 'LOT-0003', 2724505, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)
+     (1000093, 'LOT-0001', 2724521, 'ted', [('estimated_value', 0, 'EUR', 0, None)], None)

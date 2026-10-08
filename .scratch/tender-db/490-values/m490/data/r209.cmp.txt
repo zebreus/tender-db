@@ -1,0 +1,11 @@
+== r209 window [6941300, 6941799]
+  lots: 1783
+  compared: 1783
+  no_lot_amount: 1783
+  no_lot_amount_but_tender_amount: 1479
+  causes MAX(cents): {}
+  causes MAX(eur_cents): {}
+  distinct tenders MAX(cents): {}
+  distinct tenders MAX(eur): {}
+  causes less-naive: {} {}
+  replication mismatches (my REST rebuild != served): 0
