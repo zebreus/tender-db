@@ -15489,6 +15489,9 @@ impl Db {
         stmts: &mut TenderInserts,
         pending: &mut Pending,
     ) -> turso::Result<(Applied, Option<i64>)> {
+        // Issue 495 unit 2: the identity cache is per Tender. Reset FIRST, so no error
+        // path of an earlier Tender can leave its ids behind.
+        stmts.ids.reset();
         let mut applied = Applied::default();
         let (tender_id, created, stored_epoch) =
             self.tender_identity(conn, p, now, rebuild, stmts).await?;
@@ -29519,25 +29522,43 @@ impl Db {
         // re-planned per call. It is load-bearing even on a rebuild — it dedupes a
         // result across a tender's re-published rounds. The INSERT stays a
         // dynamic-table statement (low volume, miss-only).
-        let lookup = match table {
-            "lot_results" => &mut stmts.lot_result_lookup,
-            "bids" => &mut stmts.bid_lookup,
-            "contracts" => &mut stmts.contract_lookup,
+        let (lookup, slot) = match table {
+            "lot_results" => (&mut stmts.lot_result_lookup, 0),
+            "bids" => (&mut stmts.bid_lookup, 1),
+            "contracts" => (&mut stmts.contract_lookup, 2),
             _ => unreachable!("a results entity is one of the three fixed shapes"),
         };
+        stmts.ids.enter(tender_id);
+        let cached = stmts.ids.results[slot].get(&notice_id).and_then(|keys| keys.get(key)).copied();
+        if let Some(id) = cached {
+            #[cfg(debug_assertions)]
+            {
+                let mut rows = lookup
+                    .query((Value::Integer(tender_id), Value::Integer(notice_id), t(key)))
+                    .await?;
+                let stored = rows.next().await?.map(|row| int(&row, 0));
+                assert_eq!(stored, Some(id), "identity cache: {table} ({tender_id}, {notice_id}, {key})");
+            }
+            return Ok(id);
+        }
         let mut rows = lookup
             .query((Value::Integer(tender_id), Value::Integer(notice_id), t(key)))
             .await?;
-        if let Some(row) = rows.next().await? {
-            return Ok(int(&row, 0));
-        }
+        let found = rows.next().await?.map(|row| int(&row, 0));
         drop(rows);
-        conn.execute(
-            &format!("INSERT INTO {table}(tender_id, notice_id, {key_column}) VALUES(?, ?, ?)"),
-            (Value::Integer(tender_id), Value::Integer(notice_id), t(key)),
-        )
-        .await?;
-        last_insert_rowid(conn).await
+        let id = match found {
+            Some(id) => id,
+            None => {
+                conn.execute(
+                    &format!("INSERT INTO {table}(tender_id, notice_id, {key_column}) VALUES(?, ?, ?)"),
+                    (Value::Integer(tender_id), Value::Integer(notice_id), t(key)),
+                )
+                .await?;
+                last_insert_rowid(conn).await?
+            }
+        };
+        stmts.ids.results[slot].entry(notice_id).or_default().insert(key.to_owned(), id);
+        Ok(id)
     }
 
     /// Resolve a result's published lot reference to a Lot row — creating the
@@ -29632,16 +29653,31 @@ impl Db {
         key: &str,
         stmts: &mut TenderInserts,
     ) -> turso::Result<i64> {
+        stmts.ids.enter(tender_id);
+        if let Some(&id) = stmts.ids.lots.get(key) {
+            #[cfg(debug_assertions)]
+            {
+                let mut rows = stmts.lot_lookup.query((Value::Integer(tender_id), t(key))).await?;
+                let stored = rows.next().await?.map(|row| int(&row, 0));
+                assert_eq!(stored, Some(id), "identity cache: lots ({tender_id}, {key})");
+            }
+            return Ok(id);
+        }
         let mut rows = stmts
             .lot_lookup
             .query((Value::Integer(tender_id), t(key)))
             .await?;
-        if let Some(row) = rows.next().await? {
-            return Ok(int(&row, 0));
-        }
+        let found = rows.next().await?.map(|row| int(&row, 0));
         drop(rows);
-        stmts.lots.execute((Value::Integer(tender_id), t(key))).await?;
-        last_insert_rowid(conn).await
+        let id = match found {
+            Some(id) => id,
+            None => {
+                stmts.lots.execute((Value::Integer(tender_id), t(key))).await?;
+                last_insert_rowid(conn).await?
+            }
+        };
+        stmts.ids.lots.insert(key.to_owned(), id);
+        Ok(id)
     }
 
     /// The diff-based change scoping of ADR-0001's amendment: what this version
@@ -31314,6 +31350,54 @@ struct TenderInserts {
     stored_chain: Statement,
     /// The fold's change rows ([`APPEND_CHANGE_SQL`]).
     change: Statement,
+    /// The current Tender's entity ids, so a long chain resolves each lot or result
+    /// once instead of once per version (and again in its change diff).
+    ids: IdentityCache,
+}
+
+/// The entity ids `lot_identity` and `result_identity` have resolved for ONE Tender
+/// (issue 495 unit 2). Valid from `apply_tender_tx`'s first statement to its orphan
+/// sweep, under the writer guard: in between, nothing deletes or updates an entity
+/// row (`delete_version` touches leaf rows only, `tender_identity` updates only the
+/// Tender's source and kind, the sweep runs after the last lookup), so a hit returns
+/// exactly what the SELECT would. A miss runs today's SELECT and INSERT unchanged, so
+/// INSERT order and AUTOINCREMENT ids are identical. Debug builds re-run the SELECT on
+/// every hit and assert it agrees. Never iterated: only point lookups, so no map order
+/// can reach the output.
+#[derive(Default)]
+struct IdentityCache {
+    tender: i64,
+    lots: std::collections::HashMap<String, i64>,
+    /// `[lot_results, bids, contracts]`: origin notice → section key → id.
+    results: [std::collections::HashMap<i64, std::collections::HashMap<String, i64>>; 3],
+}
+
+impl IdentityCache {
+    /// Forget everything. A map that grew past a few dozen entries (a mega-chain) is
+    /// replaced rather than cleared: `HashMap::clear` costs its capacity, which every
+    /// later Tender would pay.
+    fn reset(&mut self) {
+        fn empty<K, V>(map: &mut std::collections::HashMap<K, V>) {
+            if map.capacity() > 64 {
+                *map = std::collections::HashMap::new();
+            } else {
+                map.clear();
+            }
+        }
+        self.tender = 0;
+        empty(&mut self.lots);
+        for slot in &mut self.results {
+            empty(slot);
+        }
+    }
+
+    /// Scope the cache to `tender_id`, resetting it if a different Tender asks.
+    fn enter(&mut self, tender_id: i64) {
+        if self.tender != tender_id {
+            self.reset();
+            self.tender = tender_id;
+        }
+    }
 }
 
 impl TenderInserts {
@@ -31336,6 +31420,7 @@ impl TenderInserts {
                 .prepare("SELECT caused_by_notice_id FROM tender_versions WHERE tender_id = ? ORDER BY seq")
                 .await?,
             change: conn.prepare(APPEND_CHANGE_SQL).await?,
+            ids: IdentityCache::default(),
             tenders: conn
                 .prepare(
                     "INSERT INTO tenders(source, procedure_key, island_notice_id, kind, created_at)
