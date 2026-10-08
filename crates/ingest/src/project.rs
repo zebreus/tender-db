@@ -1442,6 +1442,61 @@ const PLAN_CHECKPOINT_EVERY: usize = 1;
 /// (~160k notices) traces the WAL trend without flooding.
 const PLAN_DIAG_EVERY: usize = 16;
 
+/// Issue 497 P0: where phase 1's wall time goes, half by half. Phase 1 is a producer
+/// thread (read the parsed layer, decode it into plan rows and mentions) feeding the
+/// writer through a rendezvous channel, and its time grew from about 5.3k s to
+/// 10.1k s with no way to say which half it went to. The busy-every-chunk
+/// checkpoint is an inference, not a measurement: job 2044's last checkpoint,
+/// taken after the producer had finished, was busy too. So each half's time is
+/// clocked here.
+///
+/// The producer's half is atomics (its thread adds, the writer reads for the log
+/// lines); the writer's half is plain [`std::time::Duration`]s on the writer.
+#[derive(Default)]
+struct SweepClock {
+    /// `parsed_chunk_on`: the parsed-layer read.
+    read_ns: std::sync::atomic::AtomicU64,
+    /// `normalise_de1` plus `Ident::read`, mentions and plan rows: pure CPU.
+    decode_ns: std::sync::atomic::AtomicU64,
+    /// Parked in `send`, waiting for the writer to take the chunk.
+    send_wait_ns: std::sync::atomic::AtomicU64,
+}
+
+impl SweepClock {
+    fn add(counter: &std::sync::atomic::AtomicU64, since: std::time::Instant) {
+        let nanos = since.elapsed().as_nanos().min(u64::MAX as u128) as u64;
+        counter.fetch_add(nanos, std::sync::atomic::Ordering::Relaxed);
+    }
+}
+
+#[derive(Default)]
+struct WriterClock {
+    /// Parked in `recv`, waiting for the producer's next chunk.
+    recv_wait: std::time::Duration,
+    resolve: std::time::Duration,
+    /// The buyer tokens and `insert_plan`.
+    insert: std::time::Duration,
+    checkpoint: std::time::Duration,
+}
+
+/// One line for both halves' totals so far, in seconds. A half that waits on
+/// the other most of the time is NOT the bottleneck: `send_wait` large ⇒ writer-
+/// bound, `recv_wait` large ⇒ producer-bound.
+fn plan_halves_line(sweep: &SweepClock, writer: &WriterClock) -> String {
+    let secs = |c: &std::sync::atomic::AtomicU64| c.load(std::sync::atomic::Ordering::Relaxed) as f64 / 1e9;
+    format!(
+        "producer read={:.1}s decode={:.1}s send_wait={:.1}s | writer recv_wait={:.1}s resolve={:.1}s \
+         insert={:.1}s checkpoint={:.1}s",
+        secs(&sweep.read_ns),
+        secs(&sweep.decode_ns),
+        secs(&sweep.send_wait_ns),
+        writer.recv_wait.as_secs_f64(),
+        writer.resolve.as_secs_f64(),
+        writer.insert.as_secs_f64(),
+        writer.checkpoint.as_secs_f64(),
+    )
+}
+
 /// How often Phase 1 logs a heartbeat. A full-corpus plan build streams millions
 /// of notices over many minutes; without a heartbeat the run looks dead from the
 /// outside, which made the issue-57 incident far harder to diagnose (issue 59).
@@ -1958,7 +2013,9 @@ async fn build_plan(
     }
     let (tx, rx) = std::sync::mpsc::sync_channel::<turso::Result<PlanChunk>>(0);
     let readers = db.readers(1)?;
+    let sweep_clock = std::sync::Arc::new(SweepClock::default());
     let producer = {
+        let clock = std::sync::Arc::clone(&sweep_clock);
         std::thread::spawn(move || {
             // Its own current-thread runtime and its own reader connection, the
             // pre-pass workers' pattern: the decode is CPU-bound, so a real
@@ -1979,6 +2036,7 @@ async fn build_plan(
                 };
                 let mut after_id = 0i64;
                 loop {
+                    let read = std::time::Instant::now();
                     let mut chunk =
                         match Db::parsed_chunk_on(&conn, after_id, i64::MAX, READ_CHUNK).await {
                             Ok(chunk) => chunk,
@@ -1987,6 +2045,8 @@ async fn build_plan(
                                 return;
                             }
                         };
+                    SweepClock::add(&clock.read_ns, read);
+                    let decode = std::time::Instant::now();
                     normalise_de1(&mut chunk);
                     let Some((last, _)) = chunk.last() else { break };
                     after_id = last.id;
@@ -2006,9 +2066,12 @@ async fn build_plan(
                         rows.push(row);
                         guard_sections.push(sections);
                     }
+                    SweepClock::add(&clock.decode_ns, decode);
+                    let send = std::time::Instant::now();
                     if tx.send(Ok(PlanChunk { rows, guard_sections, mentions, citations, f14, procedure })).is_err() {
                         return; // the writer half bailed on an error
                     }
+                    SweepClock::add(&clock.send_wait_ns, send);
                 }
             });
         })
@@ -2025,7 +2088,10 @@ async fn build_plan(
     let mut max_planned = 0i64;
     let mut plan_err: Option<turso::Error> = None;
     let mut stopped = false;
+    let mut writer_clock = WriterClock::default();
+    let mut waiting = std::time::Instant::now();
     while let Ok(sent) = rx.recv() {
+        writer_clock.recv_wait += waiting.elapsed();
         // Cooperative stop (issue 256), between chunks — the same clean point the
         // WAL checkpoint uses. Everything inserted so far is committed; the reader
         // thread ends when its next send finds the receiver gone.
@@ -2045,6 +2111,7 @@ async fn build_plan(
         f14.add(chunk.f14);
         procedure.add(chunk.procedure);
         max_planned = chunk.rows.iter().map(|r| r.notice_id).fold(max_planned, i64::max);
+        let resolving = std::time::Instant::now();
         let resolved = match db.resolve_mentions(&mut resolver, &chunk.mentions, now).await {
             Ok(resolved) => resolved,
             Err(e) => {
@@ -2052,6 +2119,8 @@ async fn build_plan(
                 break;
             }
         };
+        writer_clock.resolve += resolving.elapsed();
+        let inserting = std::time::Instant::now();
         mentions_total += resolved.len() as u64;
         // Issue 481 unit 2c: the resolver's answer is the organization each buyer-side
         // mention now has, before the rows that carry it are written.
@@ -2063,6 +2132,7 @@ async fn build_plan(
             plan_err = Some(e);
             break;
         }
+        writer_clock.insert += inserting.elapsed();
         // Heartbeat so a many-minute plan build is visibly alive (issue 59).
         on_progress(Progress::Planning { notices, total });
         // Keep the WAL bounded through the plan build too (issue 42/59): the
@@ -2074,6 +2144,7 @@ async fn build_plan(
         // `checkpointed` means the checkpoint could not keep up (throughput
         // divergence). Silence = healthy; the first line tells us which failure
         // mode a ballooning WAL is, in the first minute, not at OOM (issue 63).
+        let checkpointing = std::time::Instant::now();
         if chunks.is_multiple_of(PLAN_CHECKPOINT_EVERY) {
             match db.checkpoint_gated(store::CheckpointMode::Truncate).await {
                 Ok(c) => {
@@ -2084,11 +2155,16 @@ async fn build_plan(
                     // reader-gate) vs a climbing WAL at busy=false (throughput).
                     if unreclaimed || chunks.is_multiple_of(PLAN_DIAG_EVERY) {
                         db.log_diag(&format!(
-                            "phase1 chunk={chunks} notices={notices} wal={}MB ckpt_busy={} wal_frames={} checkpointed={}",
+                            "phase1 chunk={chunks} notices={notices} wal={}MB ckpt_busy={} wal_frames={} checkpointed={}{}",
                             db.wal_bytes().unwrap_or(0) / 1_048_576,
                             c.busy,
                             c.wal_frames,
-                            c.checkpointed
+                            c.checkpointed,
+                            if chunks.is_multiple_of(PLAN_DIAG_EVERY) {
+                                format!(" {}", plan_halves_line(&sweep_clock, &writer_clock))
+                            } else {
+                                String::new()
+                            }
                         ));
                     }
                     if unreclaimed {
@@ -2105,6 +2181,8 @@ async fn build_plan(
                 }
             }
         }
+        writer_clock.checkpoint += checkpointing.elapsed();
+        waiting = std::time::Instant::now();
     }
     // Dropping the receiver unblocks a producer parked in `send` on the error
     // path; joining surfaces a producer panic instead of letting it read as a
@@ -2113,6 +2191,7 @@ async fn build_plan(
     if let Err(panic) = producer.join() {
         std::panic::resume_unwind(panic);
     }
+    eprintln!("[project] plan halves (issue 497): {}", plan_halves_line(&sweep_clock, &writer_clock));
     if let Some(e) = plan_err {
         return Err(e);
     }
@@ -11798,6 +11877,29 @@ mod tests {
         // The long-run disjunct earns its place here: seven distinct characters,
         // so the entropy arm alone would let this through.
         assert!(is_placeholder_key("abcdefab-1111-4111-9111-111111111111"));
+    }
+
+    /// Issue 497 P0: the phase-1 halves line carries each half's own clock, in
+    /// seconds, so the journal can say which half the plan waits on.
+    #[test]
+    fn the_plan_halves_line_reports_each_halfs_clock() {
+        use std::sync::atomic::Ordering;
+        use std::time::Duration;
+        let sweep = SweepClock::default();
+        sweep.read_ns.store(7_250_000_000, Ordering::Relaxed);
+        sweep.decode_ns.store(1_500_000_000, Ordering::Relaxed);
+        sweep.send_wait_ns.store(40_000_000, Ordering::Relaxed);
+        let writer = WriterClock {
+            recv_wait: Duration::from_millis(6_100),
+            resolve: Duration::from_millis(900),
+            insert: Duration::from_millis(1_800),
+            checkpoint: Duration::from_millis(50),
+        };
+        assert_eq!(
+            plan_halves_line(&sweep, &writer),
+            "producer read=7.2s decode=1.5s send_wait=0.0s | writer recv_wait=6.1s resolve=0.9s \
+             insert=1.8s checkpoint=0.1s"
+        );
     }
 
     #[test]

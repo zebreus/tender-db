@@ -3,7 +3,7 @@
 Status: ready-for-agent — GROUPING HALF ATTRIBUTED AND BUILT 2026-10-08 (`wf_21089c8e-de5`, adversarially
 verified; see "Grouping: attributed" below). Fix built with tests, rides with issue 490's deploy B; acceptance is
 the next full fallback's journal showing `keyed/island` ≤ ~90 s and a new `refused-labels` line. PLANNING HALF
-attributed and checked (see "Planning: the check"); NEXT there is unit P0 (per-half timers), then P1 (shard the producer).
+attributed and checked (see "Planning: the check"); unit P0 (per-half timers) BUILT 2026-10-08, rides with deploy B; NEXT read its `plan halves` line on the next full fallback, then P1 (shard the producer, chunk-interleaved).
 Kind: performance / projection planning (`crates/ingest/src/project.rs`)
 Relates to: 58 / 179 (the planning half of the full fallback, deliberately left open), 192, 305 (the
 closure cap), 495, 496
@@ -180,3 +180,23 @@ The direction holds. These corrections take precedence over the section above:
 - **Side finding.** `plancapture.conf` (issue 429 step 0) is still enabled on the box, though its own comment
   says "Remove after the 2026-10-04 snapshot diff". Its cost lands on the phase-2 WRITER, the fold's
   bottleneck thread: a mutex and a hash per `Preparing:` event, with the writer re-preparing per row. → issue 496.
+
+## P0 built (2026-10-08)
+
+`build_plan` clocks each half. The producer uses atomics: `read` (`parsed_chunk_on`), `decode`
+(`normalise_de1`, `Ident::read`, mentions, plan rows) and `send_wait`. The writer uses durations: `recv_wait`,
+`resolve`, `insert` (buyer tokens plus `insert_plan`) and `checkpoint`.
+
+Where the numbers appear:
+
+- The journal prints `[project] plan halves (issue 497): producer read=… decode=… send_wait=… | writer
+  recv_wait=… resolve=… insert=… checkpoint=…` once per plan build, before the `plan:` line.
+- The every-16-chunks `.diag.log` line carries the running totals.
+
+How to read it:
+
+- A large `send_wait` means phase 1 is writer-bound.
+- A large `recv_wait` means it is producer-bound.
+- `read` against `decode` decides between P1 and P3.
+
+Test: `the_plan_halves_line_reports_each_halfs_clock`.
