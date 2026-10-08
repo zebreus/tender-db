@@ -1,6 +1,6 @@
 # 471 — r209 amounts are never checked against their `@FMTVAL`, and nothing adjudicates the €10–100 bn head-value band (366 units 5 and 6, dropped when 366 closed)
 
-Status: ready-for-agent — €1 bn GATE DEPLOYED + DRAINED 2026-10-06 (`5401035`; jobs 2934/2935: 65 re-queued, 65 stamped; 56 now < €1 bn, 6 with no head value, 3 still ≥ €1 bn: 514188, 355258, 591121 — see "€1 bn drain — result"). NEXT: 4(c) (dropped-decimal signal), 5 (now incl. the whole-notice ×1000 CANs 355258/591121), 6 (re-read section 16 after the next data-quality run — RUNNING: job 2045 enqueued 2026-10-07 22:49 UTC, after the all-profile refold 2953 rewrote every Tender). 4(b) and the no-head fallback question MOVED to issue 489 (see "4(b) — split out"); 489 units 2+3 deployed and draining 2026-10-07.
+Status: ready-for-agent — €1 bn GATE DEPLOYED + DRAINED 2026-10-06 (`5401035`; jobs 2934/2935: 65 re-queued, 65 stamped; 56 now < €1 bn, 6 with no head value, 3 still ≥ €1 bn: 514188, 355258, 591121 — see "€1 bn drain — result"). NEXT: 4(c) (dropped-decimal signal), 5 (now incl. the whole-notice ×1000 CANs 355258/591121), 6 DONE 2026-10-08 (data-quality 2954: band 332 → 305, every departure attributed, only 8400892 still carries a partner — see "Unit 6 — the re-read"). 4(b) and the no-head fallback question MOVED to issue 489 (see "4(b) — split out"); 489 units 2+3 deployed and draining 2026-10-07.
 Kind: data quality (amount plausibility: the legacy parse layer and the head election)
 Relates to: 366 (promised units 5 and 6, closed 2026-09-12 without them), 380 (its sweep still points at "the open half of
 issue 366"), 267 (the plausibility measure), 372 (the `quality` marker on `Fact::Amount`), 385 (F14 corrigendum dates:
@@ -852,3 +852,26 @@ Earlier status lines, newest first (moved out of the Status line 2026-10-07):
 - ready-for-agent — UNIT 1 DEPLOYED + MEASURED 2026-10-06 (`b1fcb29`, dq 2019: 332 Tenders ≥ €10 bn in 9 currencies, 22 with an exact 10^k partner); UNIT 2 READ DONE (r208: @FMTVAL disagrees with text — 4490098; r209: no FMTVAL, publisher text errors incl. a dropped decimal point); UNIT 3 MEASURED (the r208 @FMTVAL defect is TED July 2011: ~5.9 % of value elements in 17 daily packages, exact even 10^k; text is right); NEXT: unit 3 code (adopt text on an exact-10^k mismatch, mark fmtval_mismatch) + reparse 2011-04…08, then unit 4.
 - ready-for-agent — UNIT 1 LANDED IN THE TREE 2026-10-06, review fixes applied the same day (uncommitted, not deployed): section 16 of the data-quality report lists the band; see "Unit 1 — landed (2026-10-06)". NEXT: `ops/check.sh`, commit, deploy; then BEFORE issue 429's weekly `analyze` schedule goes live, a plan-probe of `band_listing_sql()` on an analyzed prod snapshot (the fixture-ANALYZE pin is not prod's stats, and `measure_rows` has no deadline); then the stored report's Done check (the section's summary line present, no `UNMEASURED — the \`band_listing\``), then unit 2's gated archive read.
 - ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is 366's unit 6: a weekly-report section that lists every elected head value at or above €10 bn, grouped by published currency, with each row's signals beside it, read off the `tenders_current_value_eur` index.
+
+## Unit 6 — the re-read (2026-10-08)
+
+Data-quality job 2954 (enqueued as 2045, after the all-profile refold 2953 rewrote every Tender; 4,882 s,
+0 labels unmeasured). Section 16 saved as `471-values/section16-dq2954-2026-10-08.txt`, compared row by
+row with job 2019's (`section16-dq2019-2026-10-06.txt`): **332 → 305 Tenders; 29 left, 2 entered.**
+
+Every departure is attributed:
+
+| cause | Tenders |
+|---|---|
+| unit 4(a), the exact-10ᵏ rule (the predicted 19) | 6941544, 4972513, 8452561, 5592948, 6988280, 577127, 6581010, 4685893, 8822396, 5094790, 224156, 568960, 404296, 4785037, 6577862, 6721266, 6852637, 1163733, 6803400 |
+| unit 3, the July 2011 `@FMTVAL` fix (r2.0.8, drops by an even 10ᵏ) | 4578779, 4581663 (named at unit 3), and 4449756 (€12 bn → €1.2 m), 4580833 (€30 bn → €30 k), 4583254 (€60 bn → €60 k), 4587738 (€40 bn → €4 m), 4589686 (€25.5 bn → €2.55 m), 4589688 (€16 bn → €1.6 m) — 2011-chain Tenders whose 2012 head notice inherited the corrected figure and that the full rewrite of 2953 re-elected |
+| issue 489, the F14 value correction | 6891632 (€25.28 bn → €85.5 m) |
+| re-keyed, not a value change | 8654927 → 8831875 (same notice 043150-2026, same £26 bn; the Tender id moved in the full refold) |
+
+Entered: 8831875 (the re-key above) and 8831662 (FTS 094087-2026, £20 bn, no partner, no corrigendum —
+unit 5's class, one figure with nothing inside the Tender to test it against).
+
+**Partner column:** of the 305, exactly ONE row still shows an exact 10ᵏ partner — 8400892, the
+£10.8 bn housing framework kept on purpose (corroborated by two fields). So within the band the rule
+has removed everything it can see, and its one survivor is the adjudicated genuine row. What remains in
+the band is unit 5's class (single figures with no in-tender signal) and 4(c) (dropped decimal).
