@@ -1,6 +1,6 @@
 # 490 — the elected lot value is computed at read time and unreachable from /v1/sql
 
-Status: ready-for-agent — UNIT 1 MEASURED + UNIT 2 DECIDED 2026-10-08 (workflow `wf_7527ea9b-9b3`; see "Unit 1 — measured" and "Unit 2 — decision"). A naive SQL per-lot max disagrees with REST on 4.2 % of the lots that carry a lot amount (53 of 1,267 in 5 windows, mostly one-unit and zero placeholders plus one ×1000 scale refusal). Decision: three nullable columns on `tender_version_lots`, written by the fold through ONE shared `elect_lot_value`; a `PROJECTION_EPOCH` bump as the completeness check; two deploys around an all-profile refold. NEXT: unit 3a, deploy A.
+Status: ready-for-agent — DEPLOY A LIVE 2026-10-08 (`9e2e80d`, 05:3x UTC; epoch 4); BACKFILL RUNNING. All-profile refold 2066 (24 profiles, 14,896,923 notices) and project 2067 were enqueued at 05:37:58Z; expect about 10.5 h. NO DEPLOY in that window. NEXT: the completeness read (100k windows over `projection_epoch <> 4`), the m490 compare, and the section-16 band against dq 2954. Unit 3c (`rederive-eur` requeue) is in the tree. Then deploy B (3d).
 Kind: SQL surface / performance / coherence
 Relates to: 471 (the exact-10ᵏ rule, unit 4(a)), 389 (lot-level election made coherent with the
 tender head, on the REST surface only), 372 (`quality = 'withheld'`), 50 (the analyst views)
@@ -147,4 +147,24 @@ fallback, LotsGroup/Part, later chain changes). Their findings are about rollout
 - **3c, `rederive-eur`.** Requeue the changed Tenders' notices.
 - **3d, deploy B.** `summarise` reads the columns, the `v_lots` columns, the partial index, `/docs` and the
   SQL recipe, and `operations.md`.
+
+## Unit 3a — deployed; 3b — backfill started (2026-10-08)
+
+- **Commits.** `a929893` (fold write, shared `elect_lot_value`, running rule, epoch 4), `f895fd9` (golden
+  re-blessed) and `92a6c9c` (review fixes). The review workflow `wf_b8d81d38-d7c` found the blocker
+  already fixed by `f895fd9`. Its one major, the untested kept-prefix seed and post-loop `set_head`, is
+  fixed: each new test fails with its target line removed. The golden capture showed only the epoch
+  line moving before the digest was widened. `value_eur_cents` stores NULL for a conversion that rounds
+  to 0 (decided: issue 378's rule).
+- **Gate.** `GATE-EXIT=0`, 145 suites, on `92a6c9c`. **Deploy A** shipped `9e2e80d`: tree-equal outside
+  `.scratch`, built on the box from the pushed rev.
+- **Before-images.**
+  - The head band: data-quality job 2063 was a DRY RUN (it needs `dry_run:false`), so the band
+    before-image is dq 2954's section 16 (`471-values/section16-dq2954-2026-10-08.txt`). It predates
+    issue 491's drain, so its expected departures are 491's text rows plus daily drift.
+  - REST lot values: m490, captured before deploy A.
+  - Disk: `/data` 850 G used, 809 G free.
+- **Pre-flight.** 0 unprojected notices. The profile list, walked fresh, is the same 24 profiles as job
+  2952. Sizing call 2064 aborted at 14,896,923 notices; its trailing project 2065 was a no-op.
+- **Refold 2066 + project 2067** were enqueued at 05:37:58Z.
 
