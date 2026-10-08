@@ -5795,6 +5795,7 @@ impl Supervisor {
                     eprintln!("[rederive-eur] resuming past tender id {resumed}");
                 }
                 let mut restamped = 0u64;
+                let mut requeued = 0u64;
                 loop {
                     let (t, rows, changed, changed_tenders, next) = self
                         .db
@@ -5819,6 +5820,19 @@ impl Supervisor {
                         .stamp_stale_for_tenders(&changed_tenders)
                         .await
                         .map_err(|e| e.to_string())?;
+                    // Issue 490 unit 3c: a stale stamp alone re-folds NOTHING -- the
+                    // fold's rewrite set is `projected = 0`, never the epoch -- so the
+                    // "run `project` to apply" below was untrue, and since issue 490 the
+                    // stored lot values (elected over these `eur_cents`) would lag a
+                    // rate correction indefinitely. Re-queue the changed Tenders'
+                    // causing notices, so the next `project` re-elects both the head
+                    // and the lot values from the corrected rates.
+                    requeued += self
+                        .db
+                        .requeue_tender_notices(&changed_tenders, false)
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .1;
                     watermark = next;
                     if let Err(e) = self.db.set_rederive_watermark(watermark).await {
                         eprintln!("supervisor: rederive watermark write: {e}");
@@ -5839,8 +5853,8 @@ impl Supervisor {
                 Ok(format!(
                     "eur_cents re-derived from {cached} cached rates over {tenders} tenders{}: \
                      {updated} of {scanned} money rows changed, {restamped} tender(s) stamped \
-                     epoch-stale for the fold to re-elect their head value (issue 375) — run \
-                     `project` to apply",
+                     epoch-stale and {requeued} of their notice(s) re-queued for the fold to \
+                     re-elect their head and lot values (issues 375, 490) — run `project` to apply",
                     if resumed > 0 {
                         format!(" (resumed past tender id {resumed})")
                     } else {
@@ -17461,6 +17475,54 @@ mod tests {
         sup.run_spec(&job(Spec::MarkSkippedSiblings { dry_run: true, expect: None, expect_gaps: None }))
             .await
             .expect("a dry run needs no expectation");
+    }
+
+    /// Issue 490 unit 3c: `rederive-eur` re-queues the causing notices of exactly the
+    /// Tenders whose `eur_cents` it moved. A stale stamp alone re-folds nothing (the
+    /// fold's rewrite set is `projected = 0`), so without the re-queue the stored lot
+    /// values -- elected over those `eur_cents` -- would lag a rate correction
+    /// until some unrelated notice happened to touch the Tender.
+    #[tokio::test]
+    async fn rederive_eur_requeues_the_notices_of_the_tenders_it_changed() {
+        let path = format!("/tmp/tender-db-sup-rederive-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        // Published 2010-02-16. Tender 1's USD figure carries a wrong derivation
+        // (stored 7777, true 5000 at the 2.0 rate below); tender 2's EUR figure is right.
+        for sql in [
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at, parse_state, projected) \
+             VALUES (7, 'ted', 'OJ-7', 'h7', 'text', 1, 'a', 0, 'parsed', 1)",
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at, parse_state, projected) \
+             VALUES (8, 'ted', 'OJ-8', 'h8', 'text', 1, 'b', 0, 'parsed', 1)",
+            "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at) \
+             VALUES (1, 'ted', 'p1', 'procedure', 1, 1266278400, 0)",
+            "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at) \
+             VALUES (2, 'ted', 'p2', 'procedure', 1, 1266278400, 0)",
+            "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id) \
+             VALUES (1, 1, 1266278400, 'OJ-7', 7)",
+            "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id) \
+             VALUES (2, 1, 1266278400, 'OJ-8', 8)",
+            "INSERT INTO tender_version_amounts (tender_id, seq, field, cents, currency, eur_cents) \
+             VALUES (1, 1, 'estimated_value', 10000, 'USD', 7777)",
+            "INSERT INTO tender_version_amounts (tender_id, seq, field, cents, currency, eur_cents) \
+             VALUES (2, 1, 'estimated_value', 5000, 'EUR', 5000)",
+        ] {
+            conn.execute(sql, ()).await.unwrap();
+        }
+        db.upsert_currency_rates(&[("USD".into(), "2010-02-12".into(), 2.0, "ecb".into())]).await.unwrap();
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+
+        let msg = sup.run_spec(&job(Spec::RederiveEur)).await.expect("rederive-eur");
+        assert!(msg.contains("1 tender(s) stamped epoch-stale and 1 of their notice(s) re-queued"), "got: {msg}");
+        let projected = |id: i64| {
+            let db = db.clone();
+            async move { db.scalar(&format!("SELECT projected FROM notices WHERE id = {id}")).await.unwrap() }
+        };
+        assert_eq!(projected(7).await, Some(store::turso::Value::Integer(0)), "the changed tender's notice is re-queued");
+        assert_eq!(projected(8).await, Some(store::turso::Value::Integer(1)), "an unchanged tender's notice is left alone");
+        remove_db(&path);
     }
 
     /// Poll `make()`'s future ONCE on a fresh thread whose whole stack is `stack`
