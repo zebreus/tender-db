@@ -741,11 +741,19 @@ rates and the quarantine resolution ledger.</p>
   and is what <code>min_value</code>/<code>max_value</code> compare against &mdash;
   see the filter table and CHANGELOG.md in the repository.</li>
   <li>Only amounts that overflow the stored integer are refused at ingestion, so
-  a Tender's <code>value</code> is the figure its notice published, however
-  implausible &mdash; 257 trillion PLN on one row whose own lot results award
-  181.5 million.</li>
-  <li><strong>But <code>min_value</code>/<code>max_value</code> do not compare
-  that figure.</strong> They compare a derived EUR column that skips five
+  <code>amounts</code> carries every figure a notice published, however
+  implausible. A Tender's <code>value</code> is the ONE figure elected from
+  them, and it is still the publisher's own &mdash; never a corrected one. One
+  scale slip is refused when the Tender itself holds the evidence: a figure worth
+  &euro;1bn or more that is exactly 1,000&times; (or 10,000&times;, a
+  million&times;&hellip;) another figure of the same Tender, in the same
+  currency. The refused figure stays in <code>amounts</code> and the election
+  falls to the next one. A figure with no such partner is served as published,
+  so a very large single value can still be a typo: in a sample of the residual
+  &euro;10bn-and-up band (issue 471, October 2026) roughly a third were. Check
+  the notice before quoting one.</li>
+  <li><strong><code>min_value</code>/<code>max_value</code> compare that elected
+  figure</strong>, as its derived EUR value. The election skips five
   classes: negative amounts (mostly the SDK's withheld marker, ~15,500 rows &mdash;
   but see above, a few are revenue-side contracts and this bound loses them too),
   exactly zero (an absence, not a price &mdash; see the zero bullet above), exactly
@@ -753,11 +761,9 @@ rates and the quarantine resolution ledger.</p>
   above), a run of
   nine or more identical digits, which is a form-width maximum rather than a
   figure (&euro;999,999,999.99 on street cleaning in a town of 47,000), and
-  anything above &euro;100bn EUR-equivalent. Two consequences worth planning
-  for: a Tender whose only published amount falls in one of those classes has
-  <em>no known value</em> and is returned by NEITHER bound, and the
-  <code>value</code> in its payload can therefore be a figure the value filters
-  ignore (issue 366).</li>
+  anything above &euro;100bn EUR-equivalent. A Tender whose only published
+  amounts fall in those classes has <em>no known value</em>: its
+  <code>value</code> is null and NEITHER bound returns it (issue 366).</li>
 </ul>
 
 <h3>Dates</h3>
