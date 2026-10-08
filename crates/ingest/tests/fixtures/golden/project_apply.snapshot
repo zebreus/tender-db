@@ -1,5 +1,5 @@
 --- projection epoch ---
-3
+4
 --- tenders ---
 1|1af86e3c-411f-4c2e-aacc-ecac61717472|-1|procedure|ted|2
 2|32c34097-960e-4d02-b04d-3ceac32cf020|-1|procedure|ted|4
@@ -19,17 +19,17 @@
 5|1|5|00497689-2026|X01|1784246400|1784199584
 6|1|6|00496860-2026|4|1784246400|1784211228
 --- tender_version_lots ---
-1|1|1|Lot
-1|1|2|Lot
-1|2|1|Lot
-1|2|2|Lot
-2|1|3|Lot
-2|2|3|Lot
-2|3|3|Lot
-2|4|3|Lot
-3|1|4|Lot
-4|1|5|Lot
-6|1|6|Part
+1|1|1|Lot|-1||-1
+1|1|2|Lot|-1||-1
+1|2|1|Lot|-1||-1
+1|2|2|Lot|-1||-1
+2|1|3|Lot|81686300|EUR|81686300
+2|2|3|Lot|81686300|EUR|81686300
+2|3|3|Lot|81686300|EUR|81686300
+2|4|3|Lot|81686300|EUR|81686300
+3|1|4|Lot|-1||-1
+4|1|5|Lot|-1||-1
+6|1|6|Part|-1||-1
 --- tender_version_texts ---
 1|1|description|DEU|Die folgenden Beschreibungen geben einen kurzen Überblick der auszuführenden
 Leistungen. Herzustellen ist Los 2" Grundinstandsetzung der Helling am Bauhof 
