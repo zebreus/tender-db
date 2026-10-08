@@ -111,7 +111,7 @@ X < Y ≤ 4X, by currency.
 
 **Whole-profile completion (same day).** The remaining windows were scanned the same way (`491-values/windows-rest-2026-10-08.txt`):
 0–2.4M, 3.7M–4.4M, and 27.0M–28.1M, which together with the windows above cover all 3,786,955 text notices. They add only 9 hits, all
-lira: LIT ×5 (1993–1996) and ITL ×4 (1997). All are non-round (e.g. LIT 57,157,228,327) and **none matches the tight gate**.
+lira: LIT ×5 (1993–1996) and ITL ×4 (1997–2000). All are non-round (e.g. LIT 57,157,228,327) and **none matches the tight gate**.
 So the gate's corpus-wide match set is exactly the 25 EUR notices in the 2005–2008 windows (12 fetches: 214, 223, 226, 229, 232,
 235, 239, 240, 241, 245, 246, 248).
 
