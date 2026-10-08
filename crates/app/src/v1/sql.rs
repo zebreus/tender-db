@@ -1013,6 +1013,30 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         IS_BUYER_NOTE,
     ),
     ("*", "winner_is_buyer", IS_BUYER_NOTE),
+    // Issue 490: each version's elected lot value, visible through PRAGMA the moment
+    // the migration lands -- so the note lands with it, transitional clause included.
+    (
+        "tender_version_lots",
+        "value_cents",
+        "The lot's elected value in this version, as published (pair with value_currency): \
+         the figure the REST lot row serves, chosen by the fold (issue 490) from the lot's own \
+         amounts -- withheld, placeholder (0, one unit, all-nines), over-EUR-100bn and exact \
+         10^k scale slips skipped; the largest remaining figure wins. NULL = no lot-scoped \
+         figure survives (a lot never falls back to its Tender's figure) OR the row predates \
+         the issue-490 backfill refold. Unindexed until that backfill completes.",
+    ),
+    (
+        "tender_version_lots",
+        "value_currency",
+        "Currency of value_cents (ISO 4217 as published); NULL exactly when value_cents is.",
+    ),
+    (
+        "tender_version_lots",
+        "value_eur_cents",
+        "value_cents in EUR at the version's publication date, as of the fold (ADR-0014). \
+         NULL = no value, no official rate, a conversion that rounds to 0, or the row predates \
+         the issue-490 backfill refold.",
+    ),
     (
         "*",
         "provisional",

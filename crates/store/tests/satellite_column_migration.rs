@@ -148,3 +148,62 @@ async fn an_existing_database_gains_the_winner_is_buyer_column() {
         let _ = std::fs::remove_file(format!("{path}{suffix}"));
     }
 }
+
+/// Issue 490, the same trap for the stored lot value: a prod-shaped
+/// `tender_version_lots` (no `value_*`) gains the three columns at open, the
+/// pre-existing row reads NULL in all three (the epoch-4 refold fills it), and the
+/// fold's seven-column INSERT then lands on the migrated table.
+#[tokio::test]
+async fn an_existing_database_gains_the_lot_value_columns() {
+    let path = format!("/tmp/tender-db-satcol-lotvalue-{}.db", std::process::id());
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
+    {
+        let raw = turso::Builder::new_local(&path).build().await.unwrap();
+        let c = raw.connect().unwrap();
+        c.execute(
+            "CREATE TABLE tender_version_lots (
+                 tender_id INTEGER NOT NULL, seq INTEGER NOT NULL,
+                 lot_id INTEGER NOT NULL, kind TEXT NOT NULL,
+                 PRIMARY KEY (tender_id, seq, lot_id)
+             ) STRICT",
+            (),
+        )
+        .await
+        .unwrap();
+        c.execute("INSERT INTO tender_version_lots VALUES (1, 1, 10, 'Lot')", ()).await.unwrap();
+    }
+
+    let db = Db::open(&path).await.unwrap();
+    let sql = match db
+        .scalar("SELECT sql FROM sqlite_master WHERE type='table' AND name='tender_version_lots'")
+        .await
+        .unwrap()
+    {
+        Some(turso::Value::Text(s)) => s,
+        other => panic!("no table sql: {other:?}"),
+    };
+    assert!(!sql.contains("Issue 490"), "precondition: still the pre-column table:\n{sql}");
+    assert_eq!(
+        db.scalar(
+            "SELECT COUNT(*) FROM tender_version_lots
+              WHERE value_cents IS NULL AND value_currency IS NULL AND value_eur_cents IS NULL"
+        )
+        .await
+        .unwrap(),
+        Some(turso::Value::Integer(1)),
+        "the pre-existing row reads NULL until the refold reaches it"
+    );
+    db.scalar(
+        "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind, value_cents, value_currency, value_eur_cents)
+         VALUES (1, 2, 10, 'Lot', 500, 'EUR', 500) RETURNING value_eur_cents",
+    )
+    .await
+    .expect("the fold's seven-column insert lands on the migrated table");
+    db.scalar("SELECT title FROM v_lots LIMIT 1").await.expect("v_lots still answers on the migrated table");
+
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
+}

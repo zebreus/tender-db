@@ -914,24 +914,36 @@ slow answer means the crossover is wrong for this shape, and the 408 band still 
 
 Since issue 490 the fold stores each version's lot value in `tender_version_lots.value_cents`,
 `value_currency` and `value_eur_cents`. It is elected by `canonical::elect_lot_value`, the same
-function the REST lot row runs. **Deploy A** (the fold write plus `PROJECTION_EPOCH` = 4) leaves every
-existing row NULL. REST still derives the value at read time, so nothing served changes. The
-columns are filled by one all-profile refold; **deploy B** then switches `summarise` to read them and
-exposes them on `v_lots`. Deploy B must not ship before every check below is green.
+function the REST lot row runs.
+
+**Deploy A** (the fold write plus `PROJECTION_EPOCH` = 4) leaves every existing row NULL.
+- REST still derives the value at read time, so nothing REST serves changes.
+- `/v1/sql` does show the three columns at once. They are mostly NULL, and their column notes say
+  why.
+
+The columns are filled by one all-profile refold. **Deploy B** then switches `summarise` to read
+them, exposes them on `v_lots`, and adds their index. Do not ship deploy B before every check below
+is green.
+
+**What the bump costs until the refold has run.** Every Tender is epoch-stale.
+- Each Tender the daily fold touches is rewritten in full (`keep = 0`) and re-emits its history to
+  `/v1/changes`. That is the accepted issue-179 cost.
+- Any whole-corpus walk (the bucketed fallback at 100k+ planned notices, a large reparse or refold)
+  rewrites all ~8.8 M Tenders. If one is due anyway, let it BE the backfill and run the completeness
+  check after it. Otherwise hold it until the refold.
 
 ```sh
-# 0. Before-images, taken ahead of the refold:
-#    - df -h /data;
-#    - the latest data-quality section 16 (the head band; deploy A re-elects every head
-#      through head_value_eur_cents_with);
-#    - the table's size: the one-row stat read. tender_version_lots holds a row per lot per
-#      VERSION, so the lots count (13.2 M) is only a floor. MAX(rowid) is a high-water mark,
-#      not a count.
-echo "SELECT stat FROM sqlite_stat1 WHERE tbl = 'tender_version_lots' LIMIT 1" | /root/sq.sh
+# 0. Before-images, taken BEFORE deploy A. Deploy A re-elects the head of every Tender the daily
+#    fold touches, through head_value_eur_cents_with.
+#    - df -h /data
+#    - The latest data-quality section 16 (the head band).
+#    - The table size. tender_version_lots holds a row per lot per VERSION, so the lots count
+#      (13.2 M) is only a floor. MAX(rowid) is a high-water mark, and sqlite_stat1 is refused by
+#      /v1/sql. Sample primary-key windows and scale up:
+echo "SELECT COUNT(*) FROM tender_version_lots WHERE tender_id BETWEEN 4000000 AND 4099999" | /root/sq.sh
 # 1. The queue idle by hand, with NOTHING unprojected. The `expect:1` sizing call below queues
 #    a real `project` behind its own abort (jobs 2041/2042 in issue 484). If notices are
-#    unprojected, that project folds them first: on the whole-corpus bucketed path at 100k+
-#    notices, that is hours before the real refold starts.
+#    unprojected, that project folds them first, which can be hours on the bucketed path.
 /root/aj.sh /admin/jobs | jq '.current, .queued, .recent[:3]'
 # 2. The profile list, built fresh. A profile ingested since the last list is otherwise missed
 #    (correctness review F1). Walk `SELECT profile FROM notices WHERE profile > ? ORDER BY profile
@@ -943,12 +955,17 @@ echo "SELECT stat FROM sqlite_stat1 WHERE tbl = 'tender_version_lots' LIMIT 1" |
 ```
 
 **Completeness is the epoch, not the counts line.** A stopped or restarted `project rebuild=false`
-cannot resume its plan: the next run re-plans and reports a large `unchanged` count. So "written ==
-stamped" is not a pass condition. The check is a bounded primary-key window read repeated over
-the id range until every window answers 0 (each window is a PK range seek):
+cannot resume its plan. The next run re-plans and reports a large `unchanged` count, so "written ==
+stamped" is not a pass condition. Instead:
+
+- Take the top of the range with `SELECT MAX(id) FROM tenders`.
+- Read 100k-id windows (issue 397's measured size; `COUNT(*)` does not yield, and a 408 is never
+  retried) until every window answers 0.
+- For a window that does not answer 0, list its stale ids and refold just those Tenders.
 
 ```sh
-echo "SELECT COUNT(*) FROM tenders WHERE id BETWEEN 1 AND 500000 AND projection_epoch <> 4" | /root/sq.sh
+echo "SELECT COUNT(*) FROM tenders WHERE id BETWEEN 1 AND 100000 AND projection_epoch <> 4" | /root/sq.sh
+echo "SELECT id, current_seq FROM tenders WHERE id BETWEEN 1 AND 100000 AND projection_epoch <> 4 LIMIT 20" | /root/sq.sh
 ```
 
 Any job that stamps Tenders epoch-stale (`rederive-eur`, the resolver) stamps 0. So `<> 4`
@@ -963,15 +980,22 @@ over-reports and never under-reports.
   then a rate correction moves the stored value only at the Tender's next fold. Do not let the
   compare straddle a `fetch-rates` or a `rederive-eur`.
 
-**After a rollback below deploy A** once the refold has run, an old binary writes NULL lot values on
-every version it rewrites. Re-deploying A does not refill them, because kept versions early-return.
-Redo the refold, or at least a refold scoped to the affected Tenders, before deploy B.
+**A rollback below deploy A** after the refold has run:
+
+- The epoch-3 binary reads every stored epoch 4 as stale. Each Tender it folds is rewritten in full
+  with NULL lot values and stamped 3.
+- After deploy A returns, those Tenders are stale again and rewrite on their next fold. The ones
+  nothing touches stay NULL.
+- The epoch check above lists exactly them. Refold them before deploy B.
+- Never run a whole-corpus walk on the rolled-back binary: it would rewrite the whole corpus to
+  NULL.
 
 **A future change to the election** (`sentinel_amount`, `IMPLAUSIBLE_EUR_CENTS`, `ScalePartners`)
 reaches stored lot values only through a stamping refold, as it already did for the head column.
-The 471-style drain picks Tenders by the head band, and that covers every lot a rule that refuses
-MORE can move. It does not cover a rule that admits more, or the stored values of older versions,
-which SSE `Scope::At` serves.
+- The 471-style drain picks Tenders by the head band. That covers every lot a rule that refuses
+  MORE can move.
+- It does not cover a rule that admits more.
+- It does not cover the stored values of older versions, which SSE `Scope::At` serves.
 
 ### The Tender-link ledger and `backfill-tender-links` (issue 481)
 

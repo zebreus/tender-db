@@ -223,8 +223,9 @@ pub(crate) const SCHEMA: &str = "
         -- figure the REST lot row serves. NULL (all three) when no lot-scoped figure
         -- survives the election -- a lot never falls back to the tender's figure.
         -- `value_eur_cents` is `value_cents` in EUR at the version's publication date,
-        -- as of the fold; NULL when no rate resolves. Version rows written before
-        -- epoch 4 read NULL until the backfill refold reaches them.
+        -- as of the fold; NULL when no rate resolves or the conversion rounds to 0
+        -- (issue 378's rule, `LotAmount::stored_eur_cents`). Version rows written
+        -- before epoch 4 read NULL until the backfill refold reaches them.
         value_cents     INTEGER,
         value_currency  TEXT,
         value_eur_cents INTEGER,
@@ -2748,6 +2749,19 @@ pub struct LotAmount<'a> {
     pub currency: &'a str,
     pub eur_cents: Option<i64>,
     pub quality: Option<&'a str>,
+}
+
+impl LotAmount<'_> {
+    /// The EUR figure STORED for an elected lot value (`value_eur_cents`): the
+    /// conversion, except that a conversion landing on zero is stored as NULL.
+    /// That is issue 378's column-vocabulary rule for the head column, applied to
+    /// its lot twin: CZK 0.10 or HUF 1.48 rounds to 0 EUR cents, and a derived
+    /// column asserting EUR 0.00 for them would be a wrong number where NULL says
+    /// "no value this column can express". The published figure survives in
+    /// `value_cents` / `value_currency`, which is what the REST row serves.
+    pub fn stored_eur_cents(&self) -> Option<i64> {
+        self.eur_cents.filter(|eur| *eur != 0)
+    }
 }
 
 /// Issue 490: THE elected value of one lot of one version -- the figure the fold
@@ -29150,7 +29164,7 @@ impl Db {
                 t(&lot.kind),
                 opt_int(value.map(|a| a.cents)),
                 opt_text(value.map(|a| a.currency)),
-                opt_int(value.and_then(|a| a.eur_cents)),
+                opt_int(value.and_then(|a| a.stored_eur_cents())),
             ]);
             self.write_facts(tender_id, seq, Some(lot_id), &lot.facts, pending, &eur);
         }
@@ -31890,12 +31904,6 @@ mod tests {
         assert_eq!(value(vec![amount(200)]), Some(200));
     }
 
-    /// Issue 471 unit 4(a), decided 2026-10-06 on the 22 adjudicated band rows:
-    /// a figure exactly 10^k (k >= 3) above a positive partner of the same
-    /// Tender and currency (any version; amounts or lot awards; above 10.00) is
-    /// refused from the head election UNLESS a different amount field of the
-    /// head version carries the same figure. Each case is a row shape from the
-    /// adjudication table, in EUR so the empty rates lookup converts at 1.0.
     /// Issue 490: the fold keeps ONE running scale rule per Tender, adding each
     /// version's figures and moving the head forward, so version N's lot values
     /// are elected under exactly `ScalePartners::of_chain(&chain[..=N])`. If the
@@ -31973,8 +31981,22 @@ mod tests {
             "an exact 10^3 slip over a partner is refused"
         );
         assert_eq!(pick(vec![a("framework_maximum", slip, "XYZ", None, None)], &rule), Some(("framework_maximum", slip, "XYZ")), "the rule needs a conversion");
+
+        // A sub-half-cent conversion is still ELECTED (the published HUF 1.48 is a
+        // figure), but its stored EUR is NULL rather than EUR 0.00 (issue 378's rule).
+        let huf = a("estimated_value", 148, "HUF", Some(0), None);
+        assert_eq!(pick(vec![huf], &none), Some(("estimated_value", 148, "HUF")));
+        assert_eq!(huf.stored_eur_cents(), None);
+        assert_eq!(a("estimated_value", 500, "EUR", Some(500), None).stored_eur_cents(), Some(500));
+        assert_eq!(a("estimated_value", 500, "XYZ", None, None).stored_eur_cents(), None);
     }
 
+    /// Issue 471 unit 4(a), decided 2026-10-06 on the 22 adjudicated band rows:
+    /// a figure exactly 10^k (k >= 3) above a positive partner of the same
+    /// Tender and currency (any version; amounts or lot awards; above 10.00) is
+    /// refused from the head election UNLESS a different amount field of the
+    /// head version carries the same figure. Each case is a row shape from the
+    /// adjudication table, in EUR so the empty rates lookup converts at 1.0.
     #[test]
     fn a_figure_exactly_ten_to_the_k_above_a_sibling_is_not_elected() {
         use super::{LotResultState, Round, SCALE_ERROR_MIN_EUR_CENTS, ScalePartners};

@@ -301,30 +301,6 @@ async fn the_stored_lot_value_is_the_value_the_lot_row_serves() {
     p.versions.push(v2);
     db.apply_tenders(&[p], PUBLISHED_AT + 86_400, false).await.unwrap();
 
-    let stored = |seq: i64| {
-        let conn = &conn;
-        async move {
-            let mut rows = conn
-                .query(
-                    "SELECT l.lot_key, vl.value_cents, vl.value_currency, vl.value_eur_cents
-                       FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id
-                      WHERE vl.tender_id = 1 AND vl.seq = ? ORDER BY l.lot_key",
-                    [Value::Integer(seq)],
-                )
-                .await
-                .unwrap();
-            let mut out = Vec::new();
-            while let Some(row) = rows.next().await.unwrap() {
-                out.push((
-                    row.get_value(0).unwrap().as_text().unwrap().to_owned(),
-                    row.get_value(1).unwrap().as_integer().copied(),
-                    row.get_value(2).unwrap().as_text().map(|s| s.to_owned()),
-                    row.get_value(3).unwrap().as_integer().copied(),
-                ));
-            }
-            out
-        }
-    };
     let eur = |c: i64| (Some(c), Some("EUR".to_owned()), Some(c));
     let none = (None, None, None);
     let want: Vec<(&str, (Option<i64>, Option<String>, Option<i64>))> = vec![
@@ -336,13 +312,13 @@ async fn the_stored_lot_value_is_the_value_the_lot_row_serves() {
         ("LOT-F", (Some(7_000_000), Some("XYZ".to_owned()), None)),
         ("LOT-G", eur(4_000_000)),
     ];
-    let got = stored(2).await;
+    let got = stored_lots(&conn, 2).await;
     assert_eq!(
         got.iter().map(|(k, c, cur, e)| (k.as_str(), (*c, cur.clone(), *e))).collect::<Vec<_>>(),
         want,
         "the fold's stored lot values"
     );
-    assert_eq!(stored(1).await, vec![("LOT-A".to_owned(), Some(small), Some("EUR".to_owned()), Some(small))], "version 1 keeps its own");
+    assert_eq!(stored_lots(&conn, 1).await, vec![("LOT-A".to_owned(), Some(small), Some("EUR".to_owned()), Some(small))], "version 1 keeps its own");
 
     // The REST lot rows serve exactly what is stored.
     let lots = read::lots(&conn, &Filter { tender: Some(1), ..Filter::default() }, Scope::Page { after: 0, limit: 100 })
@@ -353,6 +329,110 @@ async fn the_stored_lot_value_is_the_value_the_lot_row_serves() {
         let (_, c, cur, _) = got.iter().find(|(k, ..)| *k == row.lot_key).expect("stored row");
         assert_eq!((&row.value_cents, &row.currency), (c, cur), "lot {}: REST serves the stored value", row.lot_key);
     }
+}
+
+/// A chain of versions for tender `pk-1`, one per facts list, notices 1.., a day apart.
+fn chain(versions: Vec<(Vec<Fact>, Vec<store::canonical::LotState>)>) -> TenderProjection {
+    let mut p = projection(1, Vec::new());
+    let first = p.versions.remove(0);
+    p.versions = versions
+        .into_iter()
+        .enumerate()
+        .map(|(i, (facts, lots))| TenderVersion {
+            caused_by_notice_id: i as i64 + 1,
+            published_at: PUBLISHED_AT + i as i64 * 86_400,
+            publication_id: format!("{}-2005", i + 1),
+            facts: facts.into_iter().collect(),
+            lots,
+            ..first.clone()
+        })
+        .collect();
+    p
+}
+
+/// The stored lot values of one version, by lot key.
+async fn stored_lots(conn: &turso::Connection, seq: i64) -> Vec<(String, Option<i64>, Option<String>, Option<i64>)> {
+    let mut rows = conn
+        .query(
+            "SELECT l.lot_key, vl.value_cents, vl.value_currency, vl.value_eur_cents
+               FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id
+              WHERE vl.tender_id = 1 AND vl.seq = ? ORDER BY l.lot_key",
+            [Value::Integer(seq)],
+        )
+        .await
+        .unwrap();
+    let mut out = Vec::new();
+    while let Some(row) = rows.next().await.unwrap() {
+        out.push((
+            row.get_value(0).unwrap().as_text().unwrap().to_owned(),
+            row.get_value(1).unwrap().as_integer().copied(),
+            row.get_value(2).unwrap().as_text().map(|s| s.to_owned()),
+            row.get_value(3).unwrap().as_integer().copied(),
+        ));
+    }
+    out
+}
+
+/// Issue 490: on the daily path a Tender is APPENDED to (`keep > 0`), and the
+/// fold seeds its running scale rule from the kept versions. A slip whose only
+/// partner sits in a KEPT version must still be refused -- by the head election
+/// and by the appended version's stored lot value -- exactly as a one-shot fold
+/// of the same chain refuses it (6721266's shape, on the incremental path).
+#[tokio::test]
+async fn a_slip_partnered_only_by_a_kept_version_is_refused_on_the_append_path() {
+    use store::canonical::LotState;
+    let x = 3_000_000_000; // EUR 30 m, published in version 1 only
+    let v1 = (vec![amount("estimated_value", x)], Vec::new());
+    let v2 = (
+        // The slip is published ONCE (the lot's framework_maximum): the same figure
+        // under a second field would be corroborated and rightly kept.
+        vec![amount("estimated_value", 5_000_000)],
+        vec![LotState {
+            key: "LOT-A".into(),
+            kind: "Lot".into(),
+            facts: [amount("framework_maximum", x * 1_000), amount("estimated_value", 2_000_000)].into_iter().collect(),
+        }],
+    );
+
+    let (db, conn) = open("append").await;
+    db.apply_tenders(&[chain(vec![v1.clone()])], PUBLISHED_AT, false).await.unwrap();
+    let appended = db.apply_tenders(&[chain(vec![v1.clone(), v2.clone()])], PUBLISHED_AT + 86_400, false).await.unwrap();
+    assert_eq!(appended.versions_written, 1, "an append, not a rewrite: version 1 was kept");
+
+    let (fresh_db, fresh) = open("append-oneshot").await;
+    fresh_db.apply_tenders(&[chain(vec![v1.clone(), v2.clone()])], PUBLISHED_AT + 86_400, false).await.unwrap();
+
+    assert_eq!(head(&conn, 1).await.0, Some(5_000_000), "the kept version's partner refuses the head slip");
+    assert_eq!(head(&conn, 1).await.0, head(&fresh, 1).await.0, "append == one-shot, head");
+    assert_eq!(
+        stored_lots(&conn, 2).await,
+        vec![("LOT-A".to_owned(), Some(2_000_000), Some("EUR".to_owned()), Some(2_000_000))],
+        "the kept version's partner refuses the lot slip"
+    );
+    assert_eq!(stored_lots(&conn, 2).await, stored_lots(&fresh, 2).await, "append == one-shot, lot values");
+
+    let again = db.apply_tenders(&[chain(vec![v1, v2])], PUBLISHED_AT + 2 * 86_400, false).await.unwrap();
+    assert_eq!(again.tenders_unchanged, 1, "the stored chain is still the state key");
+}
+
+/// Issue 490: a chain that SHRINKS can leave the write loop with nothing to
+/// write (`keep == p.versions.len()`), and the head election must still see the
+/// surviving head's fields. Version 2 publishes a EUR 30 bn figure under TWO
+/// fields -- corroborated, so the exact-10^k rule keeps it although version 1
+/// carries its 10^3 partner. If the running rule's head were left empty, the
+/// figure would be refused.
+#[tokio::test]
+async fn a_shrunk_chain_still_elects_a_corroborated_figure_of_its_new_head() {
+    let x = 3_000_000_000;
+    let v1 = (vec![amount("estimated_value", x)], Vec::new());
+    let v2 = (vec![amount("estimated_value", x * 1_000), amount("result_value", x * 1_000)], Vec::new());
+    let v3 = (vec![amount("estimated_value", 7_000)], Vec::new());
+    let (db, conn) = open("shrink").await;
+    db.apply_tenders(&[chain(vec![v1.clone(), v2.clone(), v3])], PUBLISHED_AT + 2 * 86_400, false).await.unwrap();
+    assert_eq!(head(&conn, 1).await.0, Some(7_000));
+    let shrunk = db.apply_tenders(&[chain(vec![v1, v2])], PUBLISHED_AT + 3 * 86_400, false).await.unwrap();
+    assert_eq!((shrunk.versions_written, shrunk.versions_removed), (0, 1), "nothing to write, one version removed");
+    assert_eq!(head(&conn, 1).await.0, Some(x * 1_000), "the corroborated figure of the new head is elected");
 }
 
 /// Issue 171 (rule 12): the near side of the same window. Prod served five head
