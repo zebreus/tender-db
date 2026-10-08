@@ -27,7 +27,7 @@ set -uo pipefail
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 work=$(mktemp -d) && [ -n "$work" ] && [ -d "$work" ] || { echo "FAIL mktemp -d gave no directory"; exit 1; }
 
-planned=67
+planned=78
 ran=0
 failures=0
 finished=0
@@ -209,6 +209,8 @@ printf '[package]\nname = "a"\n' >"$R/crates/a/Cargo.toml"
 if [ -n "$h4" ] && [ "$h4" != "$h1" ]; then pass "…and when a member Cargo.toml changes"; else fail "…and when a member Cargo.toml changes"; fi
 h5=$(cd "$R" && CARGO_PROFILE_TEST_DEBUG=2 gate_disk_inputs_hash) || h5=
 if [ -n "$h5" ] && [ "$h5" != "$h1" ]; then pass "…and when the CARGO_* environment changes"; else fail "…and when the CARGO_* environment changes"; fi
+h6=$(cd "$R" && RUST_BACKTRACE=1 RUST_LOG=debug CARGO_TERM_COLOR=always gate_disk_inputs_hash) || h6=
+if [ -n "$h6" ] && [ "$h6" = "$h1" ]; then pass "…but NOT when only RUST_BACKTRACE/RUST_LOG/CARGO_TERM_COLOR change (they build nothing)"; else fail "…but NOT when only RUST_BACKTRACE/RUST_LOG/CARGO_TERM_COLOR change ('$h6' vs '$h1')"; fi
 rm -f "$work/rustc.out"
 if (cd "$R" && gate_disk_inputs_hash >/dev/null); then fail "…and fails (no credit) when rustc -vV fails"; else pass "…and fails (no credit) when rustc -vV fails"; fi
 echo 'rustc 1.90.0 (stub)' >"$work/rustc.out"
@@ -238,6 +240,40 @@ GATE_DISK_INPUTS=$h1 gate_disk_record_inputs "$T"
 if [ "$(cat "$T/.gate-inputs")" = "$h1" ]; then pass "gate_disk_record_inputs replaces, never appends (one line after two writes)"; else fail "gate_disk_record_inputs replaces, never appends: $(cat "$T/.gate-inputs")"; fi
 rm -rf "$T/debug" "$T/.gate-inputs"
 
+# --- unit 2: cargo clean when the recorded family was built from other inputs --------------
+cat >"$work/bin/cargo" <<STUB
+#!/bin/sh
+echo "\$*" >>"$work/cargo.calls"
+STUB
+chmod +x "$work/bin/cargo"
+cleaned() { rm -f "$work/cargo.calls"; out=$( (cd "$R" && gate_disk_clean_on_rehash "$T") 2>&1 ); [ -f "$work/cargo.calls" ] && grep -qx clean "$work/cargo.calls"; }
+record_now() { (cd "$R" && GATE_DISK_MANIFEST=$(gate_disk_inputs_manifest) GATE_DISK_INPUTS=$(gate_disk_inputs_hash) gate_disk_record_inputs "$T"); }
+mkdir -p "$T/debug/deps"
+record_now
+rm -f "$T/.gate-inputs.manifest"
+printf 'version = 5\n' >"$R/Cargo.lock"
+if cleaned; then fail "a record from before unit 2 (no manifest) never triggers a clean"; else pass "a record from before unit 2 (no manifest) never triggers a clean"; fi
+printf 'version = 4\n' >"$R/Cargo.lock"
+record_now
+if cleaned; then fail "unchanged inputs: no clean"; else pass "unchanged inputs: no clean"; fi
+if (cd "$R" && export RUST_BACKTRACE=1 && rm -f "$work/cargo.calls" && gate_disk_clean_on_rehash "$T" 2>/dev/null) && [ ! -f "$work/cargo.calls" ]; then
+    pass "only RUST_BACKTRACE differs: no clean"
+else
+    fail "only RUST_BACKTRACE differs: no clean"
+fi
+printf 'version = 5\n' >"$R/Cargo.lock"
+if cleaned; then pass "a changed Cargo.lock with a family in target/: cargo clean runs"; else fail "a changed Cargo.lock with a family in target/: cargo clean runs — $out"; fi
+says "…and the line names the input that moved" "(Cargo.lock)"
+if (cd "$R" && export GATE_NO_AUTO_CLEAN=1 && rm -f "$work/cargo.calls" && gate_disk_clean_on_rehash "$T" 2>/dev/null) && [ ! -f "$work/cargo.calls" ]; then
+    pass "GATE_NO_AUTO_CLEAN=1 skips the clean"
+else
+    fail "GATE_NO_AUTO_CLEAN=1 skips the clean"
+fi
+rm -rf "$T/debug"
+if cleaned; then fail "no target/debug/deps (nothing to supersede): no clean"; else pass "no target/debug/deps (nothing to supersede): no clean"; fi
+printf 'version = 4\n' >"$R/Cargo.lock"
+rm -f "$work/bin/cargo" "$T/.gate-inputs" "$T/.gate-inputs.manifest"
+
 # --- fail closed: a df that cannot answer refuses -----------------------------------------
 df_mode fail
 refuses "df exits non-zero: refuses"
@@ -263,7 +299,8 @@ exit "\$(cat "$work/selftest.rc")"
 STUB
 cat >"$work/sbin/cargo" <<STUB
 #!/bin/sh
-echo "\$*" >"$work/cargo.ran"
+echo "\$*" >>"$work/cargo.ran"
+[ "\$1" = clean ] && exit 0
 exit "\$(cat "$work/cargo.rc")"
 STUB
 cat >"$work/sbin/python3" <<'STUB'
@@ -307,6 +344,11 @@ if [ -s "$S/target/.gate-inputs" ]; then pass "…and the green run records targ
 mkdir -p "$S/target/debug/deps"
 one_fs $((12255784))
 gate; expect 0 yes "check.sh: the next gate at 11.7 GiB credits the recorded family and runs"
+if [ -s "$S/target/.gate-inputs.manifest" ]; then pass "…and the green run recorded the manifest beside the hash"; else fail "…and the green run recorded the manifest beside the hash"; fi
+printf 'version = 9\n' >"$S/Cargo.lock"
+one_fs "$KIB13"
+gate; expect 0 yes "check.sh: after a Cargo.lock change the gate runs (from a clean target/)"
+if [ "$(head -1 "$work/cargo.ran")" = clean ]; then pass "…and its first cargo call is \`cargo clean\`, before the build"; else fail "…and its first cargo call is cargo clean: $(cat "$work/cargo.ran")"; fi
 # CARGO_TARGET_DIR and TMPDIR: the preflight reads the filesystems cargo and the tests use.
 df_mode table
 printf '%s %s /\n%s %s /small /dev/small\n' "$work" $((50 * 1024 * 1024)) "$work/elsewhere" 1024 >"$work/df.table"

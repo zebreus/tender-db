@@ -16,8 +16,11 @@ It fills even THROUGH the gate when a change re-hashes a low crate: the 2026-09-
 `[patch.crates-io] turso` (issue 425) gave `turso` and everything above it (store,
 ingest, app) a second artifact family mid-run, and `cargo test -p ingest` died with
 `No space left on device` after store's suites had passed — GATE-EXIT=101 with no
-FAILED line. The prune only runs at the gate's start. After a dependency/patch
-change, `cargo clean` first (23.5 GiB freed that day) and gate from clean (~35 min).
+FAILED line. The prune only runs at the gate's start. Since issue 475 unit 2 the gate
+cleans for you: when the build inputs re-hash (Cargo.lock, a Cargo.toml, `[patch]`, a
+profile, the toolchain, a build-affecting env var) `ops/check.sh` runs `cargo clean`
+first and names what changed, then gates from clean (~35 min). `GATE_NO_AUTO_CLEAN=1`
+skips it.
 For a single focused test mid-iteration, run it with the gate's flags AND the gate's package set:
 `CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p model -p store -p ingest -p tender-db --features tender-db/server <name>`
 (0 crates compiled after a gate, well under a second to start). Both halves matter.

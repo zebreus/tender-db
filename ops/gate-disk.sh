@@ -31,10 +31,11 @@
 #
 # The inputs hash (gate_disk_inputs_hash) covers what sets every crate's metadata hash:
 # Cargo.lock, every Cargo.toml (features, `[patch]`, `[profile]`), .cargo/config(.toml),
-# rust-toolchain(.toml), `rustc -vV` and the CARGO_*/RUST* environment. When any of them
-# differs from the last green run's, the build writes a new family beside the old one,
-# so no credit is given. When the hash cannot be computed (no rustc, no sha256sum), no
-# credit either. Unit 2 of 475 adds the `cargo clean` on a mismatch.
+# rust-toolchain(.toml), `rustc -vV` and the build-affecting environment
+# (GATE_DISK_BUILD_ENV). When any of them differs from the last green run's, the build
+# writes a new family beside the old one, so no credit is given -- and, since unit 2 of
+# 475, gate_disk_clean_on_rehash has already run `cargo clean` before the preflight
+# reads free space. When the hash cannot be computed (no rustc, no sha256sum), no credit.
 #
 # Byte counts are digits only, at most 15 of them (999 TB) after leading zeros are
 # stripped, so the sums below cannot wrap 64-bit arithmetic and "08" is decimal 8, not
@@ -81,31 +82,77 @@ _gate_disk_free() {
 
 _gate_disk_gib() { awk -v b="$1" 'BEGIN { printf "%.1f GiB", b / 1073741824 }'; }
 
-# gate_disk_inputs_hash: the sha256 of what sets the build's metadata hashes, read from
-# the current directory (the repository root, where check.sh stands). Fails when it
-# cannot read one of them, so a failure means "no credit", never "unchanged".
-gate_disk_inputs_hash() {
+# The environment variables that change what cargo builds (issue 475 unit 2): a profile
+# override, a build flag, the rustc in use. NOT every CARGO_*/RUST*: RUST_BACKTRACE,
+# RUST_LOG or RUST_MIN_STACK in a caller's shell change no artifact, and counting them
+# would turn a stray `export RUST_BACKTRACE=1` into a 35-minute gate from clean.
+GATE_DISK_BUILD_ENV='^(CARGO_(PROFILE_|BUILD_|ENCODED_RUSTFLAGS|INCREMENTAL|TARGET_DIR|FEATURE)|RUSTFLAGS=|RUSTDOCFLAGS=|RUSTC=|RUSTC_WRAPPER=|RUSTC_WORKSPACE_WRAPPER=|RUSTC_BOOTSTRAP=|RUSTC_LINKER=)'
+
+# gate_disk_inputs_manifest: one line per input that sets the build's metadata hashes,
+# read from the current directory (the repository root, where check.sh stands) -- a
+# file and its sha256, the `rustc -vV` lines, the build environment. Fails when it
+# cannot read one of them, so a failure means "no credit", never "unchanged". Kept as
+# text beside the hash so a re-hash can say WHICH input moved.
+gate_disk_inputs_manifest() {
     local f rv
     rv=$(rustc -vV 2>/dev/null) && [ -n "$rv" ] || return 1
-    {
-        for f in Cargo.lock .cargo/config.toml .cargo/config rust-toolchain rust-toolchain.toml; do
-            if [ -e "$f" ]; then printf '%s %s\n' "$f" "$(sha256sum <"$f" | cut -d' ' -f1)"; else printf '%s absent\n' "$f"; fi
-        done
-        find . \( -path ./target -o -path ./.git -o -path ./.scratch \) -prune -o -name Cargo.toml -type f -print \
-            | LC_ALL=C sort | while read -r f; do printf '%s %s\n' "$f" "$(sha256sum <"$f" | cut -d' ' -f1)"; done
-        printf '%s\n' "$rv"
-        env | LC_ALL=C grep -E '^(CARGO_|RUST)' | LC_ALL=C sort
-    } | sha256sum | cut -d' ' -f1 | grep -xE '[0-9a-f]{64}'
+    for f in Cargo.lock .cargo/config.toml .cargo/config rust-toolchain rust-toolchain.toml; do
+        if [ -e "$f" ]; then printf '%s %s\n' "$f" "$(sha256sum <"$f" | cut -d' ' -f1)"; else printf '%s absent\n' "$f"; fi
+    done
+    find . \( -path ./target -o -path ./.git -o -path ./.scratch \) -prune -o -name Cargo.toml -type f -print \
+        | LC_ALL=C sort | while read -r f; do printf '%s %s\n' "$f" "$(sha256sum <"$f" | cut -d' ' -f1)"; done
+    printf '%s\n' "$rv" | sed 's/^/rustc-vV /'
+    # No matching variable is a valid answer (grep's 1), not a failure -- under a
+    # caller's `pipefail` it would otherwise fail the whole manifest.
+    { env | LC_ALL=C grep -E "$GATE_DISK_BUILD_ENV" || true; } | LC_ALL=C sort
+}
+
+# gate_disk_inputs_hash: the sha256 of the manifest above.
+gate_disk_inputs_hash() {
+    local m
+    m=$(gate_disk_inputs_manifest) || return 1
+    printf '%s\n' "$m" | sha256sum | cut -d' ' -f1 | grep -xE '[0-9a-f]{64}'
 }
 
 # gate_disk_record_inputs [target_dir]: after a GREEN run, record the inputs hash the
-# preflight computed (GATE_DISK_INPUTS) in target/.gate-inputs, replacing the old one
-# (a temp file and a rename — never an append). No hash, no record.
+# preflight computed (GATE_DISK_INPUTS) in target/.gate-inputs, and the manifest it was
+# taken over in target/.gate-inputs.manifest, each replacing the old one (a temp file
+# and a rename — never an append). No hash, no record.
 gate_disk_record_inputs() {
     local target=${1:-target}
     [ -n "${GATE_DISK_INPUTS:-}" ] && [ -d "$target" ] || return 1
     printf '%s\n' "$GATE_DISK_INPUTS" >"$target/.gate-inputs.tmp.$$" \
-        && mv -f "$target/.gate-inputs.tmp.$$" "$target/.gate-inputs"
+        && mv -f "$target/.gate-inputs.tmp.$$" "$target/.gate-inputs" || return 1
+    if [ -n "${GATE_DISK_MANIFEST:-}" ]; then
+        printf '%s\n' "$GATE_DISK_MANIFEST" >"$target/.gate-inputs.manifest.tmp.$$" \
+            && mv -f "$target/.gate-inputs.manifest.tmp.$$" "$target/.gate-inputs.manifest"
+    fi
+}
+
+# gate_disk_clean_on_rehash [target_dir]: issue 475 unit 2. When the last green gate's
+# record says target/ holds a family built from DIFFERENT inputs, that family is
+# superseded -- and the prune cannot know it until the new one exists, so the peak would
+# be two families (the 2026-09-27 fill). So `cargo clean` first, naming what changed.
+# This is CLAUDE.md's old manual step ("after a dependency/patch change, cargo clean
+# first"), done by the gate.
+#
+# Cleans ONLY when all of these hold: the current manifest can be read; a recorded
+# manifest exists (a record written before this unit has none, and an unproven re-hash
+# is not worth a 35-minute rebuild); the two differ; target/debug/deps exists (there is
+# a family to supersede); and GATE_NO_AUTO_CLEAN is unset (an operator who knows the
+# family is still wanted, e.g. a second worktree sharing target/). Returns non-zero only
+# when `cargo clean` itself fails.
+gate_disk_clean_on_rehash() {
+    local target=${1:-${CARGO_TARGET_DIR:-target}} now old changed
+    [ -z "${GATE_NO_AUTO_CLEAN:-}" ] || return 0
+    [ -d "$target/debug/deps" ] && [ -r "$target/.gate-inputs.manifest" ] || return 0
+    now=$(gate_disk_inputs_manifest) || return 0
+    old=$(cat "$target/.gate-inputs.manifest")
+    [ "$now" != "$old" ] || return 0
+    changed=$(diff <(printf '%s\n' "$old") <(printf '%s\n' "$now") | sed -n 's/^[<>] //p' \
+        | awk '{print $1}' | cut -d= -f1 | LC_ALL=C sort -u | tr '\n' ' ')
+    echo "==> gate: the build inputs changed since the last green gate (${changed% }); running cargo clean first so the old build family does not sit beside the new one (issue 475; GATE_NO_AUTO_CLEAN=1 skips this)" >&2
+    cargo clean >&2
 }
 
 # gate_disk_preflight [target_dir] [tmp_dir]
@@ -117,6 +164,7 @@ gate_disk_preflight() {
     local family scratch relink need source probe recorded
     local t_free t_dev t_mount p_free p_dev p_mount
 
+    GATE_DISK_MANIFEST=$(gate_disk_inputs_manifest) || GATE_DISK_MANIFEST=
     GATE_DISK_INPUTS=$(gate_disk_inputs_hash) || GATE_DISK_INPUTS=
 
     scratch=$(_gate_disk_int "${GATE_DISK_SCRATCH_BYTES:-$GATE_DISK_GIB}") || {

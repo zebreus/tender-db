@@ -1,6 +1,6 @@
 # 475 — the gate has no disk preflight and leaves stale artifact families
 
-Status: ready-for-agent — unit 1 (the free-space preflight) landed 2026-10-05 and was revised the same day after review, uncommitted in the worktree (`ops/gate-disk.sh`, `ops/test-gate-disk.sh`, `ops/check.sh`; see "Unit 1 — landed" and "Unit 1 — review"). It also carries unit 2's inputs hash and its record (`target/.gate-inputs`), used to credit a reusable family. Next step: unit 2's remainder (`cargo clean` on a re-hash), then 3–5. NOTE: this container reads 11.7 GiB free with no `target/.gate-inputs` yet, so the next `ops/check.sh` here refuses; run it once with `GATE_DISK_NEED_BYTES=3221225472` (target/ holds the current family: 14G, no input changed since) or `cargo clean` first. That green run records the hash, and later gates need ~3 GiB until an input changes.
+Status: ready-for-agent — UNITS 1 AND 2 LANDED. Unit 1 (the free-space preflight) is committed as `42843f6`; the old "uncommitted in the worktree" line was stale. Unit 2 was completed 2026-10-08: `gate_disk_clean_on_rehash` runs `cargo clean` before the preflight when a recorded manifest proves the inputs changed and target/ holds a family. The hash's environment part is narrowed to build-affecting variables, and CLAUDE.md's manual step is replaced (unit 5's CLAUDE.md half). See "Unit 2 — landed". NEXT: units 3 (prune by cargo's list) and 4 (one probe binary per crate).
 Kind: operational / build hygiene (the gate's disk)
 Relates to: 260 (reads closed; this is its open remainder), 254 (why `ops/check.sh` exists), 425 (the turso
 `[patch]` whose re-hash filled the disk on 2026-09-27), 457 (the turso 0.8.1 bump, the next re-hash), 459
@@ -203,3 +203,33 @@ unit 4 (the probe files leave the top level of `tests/`) and unit 5, the last (C
   an `#[ignore]` (the 17 probe files plus `crates/store/tests/lots_filter_fixture.rs`, which has 3 live tests
   beside its 1 ignored), and CLAUDE.md:20 still prescribes the manual clean.
 - **done**: `3` or more, `1` (only `lots_filter_fixture.rs`) and `0`.
+
+## Unit 2 — landed (2026-10-08)
+
+- **`gate_disk_inputs_manifest`.** It writes one line per input: the files with their sha256, the
+  `rustc -vV` lines and the build environment. `gate_disk_inputs_hash` is the sha256 of that manifest.
+  The hash's environment part is narrowed to `GATE_DISK_BUILD_ENV`: `CARGO_PROFILE_*`, `CARGO_BUILD_*`,
+  `CARGO_INCREMENTAL`, `CARGO_TARGET_DIR`, `CARGO_FEATURE*`, `CARGO_ENCODED_RUSTFLAGS`, `RUSTFLAGS`,
+  `RUSTDOCFLAGS` and the `RUSTC*` wrappers. Before, every `CARGO_*`/`RUST*` counted, so a stray
+  `RUST_BACKTRACE=1` cost the reusable-family credit, and it would now have cost a clean rebuild.
+- **`gate_disk_record_inputs`** also writes `target/.gate-inputs.manifest`.
+- **`gate_disk_clean_on_rehash`** is called by `check.sh` BEFORE the preflight reads free space. It runs
+  `cargo clean` only when all of these hold: a recorded manifest exists (a pre-unit-2 record has none,
+  so it never triggers a surprise rebuild); the manifest differs from the current one; `target/debug/deps`
+  exists; and `GATE_NO_AUTO_CLEAN` is unset. It prints
+  `==> gate: the build inputs changed since the last green gate (<inputs>); running cargo clean …`.
+- **Pinned by `ops/test-gate-disk.sh`.** It runs 78 cases (from 67), all passing. Function level:
+  - no manifest, no clean;
+  - unchanged inputs, no clean;
+  - only RUST_BACKTRACE changed, no clean;
+  - Cargo.lock changed, clean, and the line names `Cargo.lock`;
+  - GATE_NO_AUTO_CLEAN set, no clean;
+  - no `debug/deps`, no clean.
+
+  The sandboxed `check.sh` case changes Cargo.lock after a green run, and its first cargo call is
+  `cargo clean`.
+- **One-time cost in this container.** The hash formula changed, so the existing `.gate-inputs` no longer
+  matches. The next gate gets no reusable-family credit and needs the 13 GiB floor (about 13 GB is free).
+  If it refuses, run it once with `GATE_DISK_NEED_BYTES=3221225472`: target/ holds the current family,
+  since only the formula moved. That green run records the new hash and the manifest.
+

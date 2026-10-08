@@ -115,6 +115,13 @@ if ! disk_selftest=$(bash ops/test-gate-disk.sh 2>&1); then
 fi
 # shellcheck source=ops/gate-disk.sh
 . ops/gate-disk.sh
+# Issue 475 unit 2: a re-hash (lockfile, [patch], profile, features, toolchain) makes
+# target/'s family superseded; clean it BEFORE the preflight reads free space, so the
+# run needs one family's room rather than two.
+gate_disk_clean_on_rehash "${CARGO_TARGET_DIR:-target}" || {
+    echo "==> GATE REFUSED: disk — cargo clean failed after the build inputs changed; cargo test was NOT started" >&2
+    exit 3
+}
 gate_disk_preflight "${CARGO_TARGET_DIR:-target}" "${TMPDIR:-/tmp}" || exit 3
 
 # The two-hour rule alone let a SESSION's runs pile up: on 2026-09-29 /tmp held 6,573
