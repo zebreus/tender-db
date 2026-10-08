@@ -1,7 +1,8 @@
 # 492 — a ×100 scale slip (k = 2) is below the exact-10ᵏ rule
 
-Status: ready-for-agent — filed 2026-10-08 from issue 471 unit 5. NEXT: unit 1, measure k = 2's
-precision; extend nothing until that is done.
+Status: ready-for-agent — filed 2026-10-08 from issue 471 unit 5. Band count done (5 of 306 rows at ×100; see
+"Unit 1 — first count"). NEXT: the €1–10 bn range, as a windowed read AFTER issue 490's backfill project
+(a direct partner probe 408s while the fold runs), then adjudicate.
 Kind: data quality / head election (`ScalePartners`, `crates/store/src/canonical.rs`)
 Relates to: 471 (unit 4(a), which set `SCALE_ERROR_MIN_EXPONENT` = 3; unit 5's sample)
 
@@ -32,3 +33,27 @@ false-positive rate was never measured, and the €1 bn gate alone does not boun
    the sum check of 8784848 holds), add a narrower structural signal ("a lot estimate above its own
    procedure total"), or caveat-only.
 3. Build, gate, drain and re-read section 16, if step 2 says so.
+
+## Unit 1 — first count (2026-10-08)
+
+Read off section 16 of dq 2954 (`471-values/section16-dq2954-2026-10-08.txt`). Its "x smallest" column
+gives the head figure's ratio to the Tender's smallest figure. **5 of the 306 band rows sit at exactly
+×100:**
+
+- 8595426 (FTS, £38.3 bn)
+- 4871119 (TED, £25 bn)
+- 8618327 (FTS, £10 bn)
+- 8810872 (FTS, £10 bn)
+- 6640498 (TED, €14 bn)
+
+The other band ratios: ×10 on 6 rows and ×1,000 on 2. "×smallest" is not the same as an exact partner:
+the smallest figure can sit in a different field or version, and the rule also wants a single-field head.
+
+4871119 is issue 489's flip-flop case: an F14 corrects £25 bn to £250 m, then a second F14 corrects it back
+to £25 bn. A ×100 rule would refuse a figure the publisher restated twice. That is one reason k = 2 needs
+its own adjudication before it is extended.
+
+Two attempts at a direct partner probe over heads of €1 bn or more, and then €10 bn or more, both answered
+408 during project 2067 and were not retried. The €1–10 bn range waits for a quiet box: a windowed
+`tenders_current_value_eur` read with the partner test per window, sized like section 16's.
+
