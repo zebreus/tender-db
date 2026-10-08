@@ -15614,6 +15614,10 @@ impl Db {
             applied.entities_swept += swept;
             applied.changes += sweep_changes;
         }
+        // The sweep may have deleted entities the identity cache still names; nothing
+        // looks one up past this point today, and the reset keeps it that way (review of
+        // issue 495 unit 2's B4).
+        stmts.ids.reset();
 
         // Record the new head (issue 25): the current version is the last of the
         // chain, its `published_at` the date the "newest Tenders" list orders by.
