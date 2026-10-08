@@ -209,3 +209,18 @@ it runs only after an acquisition.
 Deployed 2026-09-03 10:21 UTC (`b02a222`, health ok) — the drop guard and the ≥ 10 s
 wait line are both live. The line earned its keep the same morning: six
 13–38 s waits behind the 340 backfill's batches, timestamped, no request cut.
+
+## 2026-10-08 — the slow-wait line now names its waiter
+
+The line said WHO HELD the writer only by timestamp, never WHO WAITED. During project 2067 (issue 490's
+epoch-4 refold) it logged 18 waits in 6 h, 23 s to 1,588 s, always "1 caller(s) still queued", and the
+refold diagnosis (issue 495) recorded "I don't know which writer that is". Attribution by hand: each wait
+STARTED almost exactly 300 s after the previous one ended (14:03:13 → queued 14:08:14, 14:08:37 →
+14:13:36, 14:14:11 → 14:19:11 CEST), which is the presence observer (`spawn_presence_observer`,
+`PRESENCE_INTERVAL_SECS` = 300) running `touch_layer_presence`'s one-row UPDATE behind the fold's
+per-bucket writer hold. Harmless: `LAYER_STALE_SECS` is 6 h, the UPDATE takes milliseconds, and the fold
+pays one tiny write per bucket.
+
+Landed (rides with issue 490's deploy B): `Db::conn` is a `#[track_caller]` fn returning the future, so the
+line reads `[store] writer acquired after a N s wait by crates/store/src/canonical.rs:L (K caller(s) still
+queued)`. Test `a_slow_writer_wait_line_names_the_call_site_that_waited` pins the format.

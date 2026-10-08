@@ -567,6 +567,21 @@ pub struct WriterContention {
 /// is microseconds) and below the shortest stall worth investigating.
 pub const SLOW_WRITER_WAIT: std::time::Duration = std::time::Duration::from_secs(10);
 
+/// The journal line for a writer wait of at least [`SLOW_WRITER_WAIT`]: how long,
+/// who waited (the `Db` method's call site), and how many are still queued.
+fn slow_writer_wait_line(
+    elapsed: std::time::Duration,
+    still_queued: u64,
+    caller: &std::panic::Location<'_>,
+) -> String {
+    format!(
+        "[store] writer acquired after a {:.1} s wait by {}:{} ({still_queued} caller(s) still queued)",
+        elapsed.as_secs_f64(),
+        caller.file(),
+        caller.line()
+    )
+}
+
 /// One caller's place in the writer queue (issue 241), released on drop.
 ///
 /// The depth was a `fetch_add` before the lock and a `fetch_sub` after it — which
@@ -1160,7 +1175,20 @@ impl Db {
         *self.rates.write().expect("rates lock poisoned") = std::sync::Arc::new(lookup);
     }
 
-    async fn conn(&self) -> MutexGuard<'_, Connection> {
+    /// `#[track_caller]` on a plain fn returning the future (an `async fn` cannot
+    /// carry it on stable) so a slow wait names its WAITER. The line used to say
+    /// only how long: on 2026-10-08 a refold's diagnosis logged waits of 23 s to
+    /// 26 min with "I don't know which writer that is" — it was the presence
+    /// observer's 5-minute touch (`touch_layer_presence`) queued behind the
+    /// fold's per-bucket hold, found by lining the waits' start times up against
+    /// every 300 s timer in the tree.
+    #[track_caller]
+    fn conn(&self) -> impl std::future::Future<Output = MutexGuard<'_, Connection>> + '_ {
+        let caller = std::panic::Location::caller();
+        async move { self.conn_for(caller).await }
+    }
+
+    async fn conn_for(&self, caller: &'static std::panic::Location<'static>) -> MutexGuard<'_, Connection> {
         // Issue 241: the wait itself is the measurement. Nothing else in the
         // process can see "a request is queued behind the writer" — the fast path
         // (uncontended) adds one `try_lock` and two relaxed adds.
@@ -1188,10 +1216,7 @@ impl Db {
             // attribution: whichever job the journal shows around it held the
             // writer. Rare by construction — at the 7.2M-acquisition scale, waits
             // this long numbered one.
-            eprintln!(
-                "[store] writer acquired after a {:.1} s wait ({still_queued} caller(s) still queued)",
-                elapsed.as_secs_f64()
-            );
+            eprintln!("{}", slow_writer_wait_line(elapsed, still_queued, caller));
         }
         guard
     }
@@ -5799,6 +5824,29 @@ tmpfs /data/ramcache tmpfs rw 0 0
         drop(held);
 
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// The slow-wait journal line names its waiter (2026-10-08): the call site
+    /// `#[track_caller]` hands `conn` is in the line, beside the wait and the
+    /// queue, so the next 26-minute wait reads `by crates/store/src/canonical.rs:N`
+    /// instead of sending someone to line timestamps up against timers.
+    #[test]
+    fn a_slow_writer_wait_line_names_the_call_site_that_waited() {
+        #[track_caller]
+        fn site() -> &'static std::panic::Location<'static> {
+            std::panic::Location::caller()
+        }
+        let here = site();
+        let line = slow_writer_wait_line(std::time::Duration::from_millis(1_588_300), 1, here);
+        assert_eq!(
+            line,
+            format!(
+                "[store] writer acquired after a 1588.3 s wait by {}:{} (1 caller(s) still queued)",
+                file!(),
+                here.line()
+            ),
+        );
+        assert!(line.contains("crates/store/src/lib.rs:"), "the site is a repo path: {line}");
     }
 
     /// Issue 20 (reopened): the coverage query must aggregate `notices` in a
