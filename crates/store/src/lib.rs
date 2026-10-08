@@ -7055,6 +7055,113 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
+    /// Issue 499: a lot that ONLY the kept prefix references, through a result naming a
+    /// lot no section declares, must survive a partial rewrite. `result_lot` mints such a
+    /// lot without a `tender_version_lots` row, and `extend_keep_with_kept_prefix` seeded
+    /// the keep-set for lots from `tender_version_lots` alone, so the orphan sweep deleted
+    /// the lot from under the kept version (and announced a `removed` for it).
+    ///
+    /// The shape: v1 (notice 10) carries a result on the undeclared LOT-0099; v2 (notice 20)
+    /// carries nothing. Then a notice 15 arrives between them: keep = 1, v2 is rewritten
+    /// as seq 3, and the sweep runs with v1 kept.
+    #[tokio::test]
+    async fn a_lot_only_the_kept_prefix_references_survives_a_partial_rewrite() {
+        let path = format!("/tmp/tender-db-sweep-kept-lot-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+
+        let round = canonical::Round {
+            notice_id: 10,
+            logical_notice_id: None,
+            lot_results: vec![canonical::LotResultState {
+                key: "RES-0001".into(),
+                lot_key: Some("LOT-0099".into()),
+                decision: None,
+                reason: None,
+                awarded_cents: None,
+                awarded_currency: None,
+                decided: None,
+                winners: Vec::new(),
+                buyer_winners: Vec::new(),
+                statistics: Vec::new(),
+            }],
+            bids: Vec::new(),
+            contracts: Vec::new(),
+        };
+        let version = |notice: i64, rounds: Vec<canonical::Round>| canonical::TenderVersion {
+            caused_by_notice_id: notice,
+            published_at: 100 + notice,
+            dispatched_at: None,
+            notice_subtype: None,
+            original_lang: None,
+            publication_id: format!("{notice}-2024"),
+            facts: Default::default(),
+            lots: Vec::new(),
+            rounds,
+            group_members: Vec::new(),
+        };
+        let projection = |versions: Vec<canonical::TenderVersion>| canonical::TenderProjection {
+            source: "ted".into(),
+            procedure_key: Some("key:kept-lot".into()),
+            island_notice_id: None,
+            kind: "procedure".into(),
+            versions,
+        };
+        async fn count(db: &Db, sql: &str) -> i64 {
+            match db.scalar(sql).await.unwrap() {
+                Some(turso::Value::Integer(n)) => n,
+                other => panic!("expected a count, got {other:?}"),
+            }
+        }
+
+        db.apply_tenders(&[projection(vec![version(10, vec![round.clone()]), version(20, Vec::new())])], 0, false)
+            .await
+            .expect("the first chain applies");
+        assert_eq!(count(&db, "SELECT COUNT(*) FROM lots WHERE lot_key = 'LOT-0099'").await, 1, "the undeclared lot was minted");
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM tender_version_lots").await,
+            0,
+            "precondition: no section declares it, so only the result row references it"
+        );
+
+        let applied = db
+            .apply_tenders(
+                &[projection(vec![version(10, vec![round.clone()]), version(15, Vec::new()), version(20, Vec::new())])],
+                0,
+                false,
+            )
+            .await
+            .expect("the repaired chain applies");
+        assert!(applied.versions_removed >= 1, "a partial rewrite ran: {applied:?}");
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM lots WHERE lot_key = 'LOT-0099'").await,
+            1,
+            "the lot the kept v1's result names must survive the sweep"
+        );
+        assert_eq!(
+            count(
+                &db,
+                "SELECT COUNT(*) FROM tender_version_lot_results r WHERE r.lot_id IS NOT NULL \
+                   AND NOT EXISTS (SELECT 1 FROM lots l WHERE l.id = r.lot_id)"
+            )
+            .await,
+            0,
+            "no result row may point at a deleted lot"
+        );
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'lot' AND op = 'removed'").await,
+            0,
+            "and no `removed` is announced for a lot that still exists"
+        );
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// Issue 103, both gates in one place: a forced rewrite that produces FEWER
     /// entities than the stored chain had must sweep the strays — and one that
     /// produces the SAME entities must delete nothing, because issue 99's

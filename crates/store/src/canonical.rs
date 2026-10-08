@@ -15811,8 +15811,9 @@ impl Db {
     /// is empty and a sweep against it would delete the whole Tender.
     ///
     /// `lots` accumulate and are keyed by `(tender_id, lot_key)`, not by notice, so
-    /// a surviving `tender_version_lots` reference — kept prefix OR freshly written —
-    /// is the ground truth for which lots are still valid. `lot_results`/`bids`/
+    /// a surviving lot reference in any leaf table (issue 499: not only
+    /// `tender_version_lots`), kept prefix OR freshly written, is the ground truth for
+    /// which lots are still valid. `lot_results`/`bids`/
     /// `contracts` are keyed by their origin notice, so the kept prefix's are exactly
     /// those under a kept notice (the prefix's content is unchanged — that is why the
     /// chain-as-state-key match kept it).
@@ -15823,15 +15824,32 @@ impl Db {
         kept_notices: &[i64],
         written: &mut WrittenEntities,
     ) -> turso::Result<()> {
-        {
-            let mut rows = conn
-                .query(
-                    "SELECT DISTINCT lot_id FROM tender_version_lots WHERE tender_id = ?",
-                    (Value::Integer(tender_id),),
-                )
-                .await?;
-            while let Some(row) = rows.next().await? {
-                written.lots.insert(int(&row, 0));
+        // Issue 499: EVERY lot reference the surviving versions hold, not only
+        // `tender_version_lots`. A result or bid naming a lot no section declares makes
+        // `result_lot` mint the lot with no `tender_version_lots` row, so seeding from that
+        // table alone let the sweep delete a lot a kept version still names (and announce
+        // a `removed` for it). The descriptor says which leaf columns name a lot. The
+        // rewritten versions' rows are still in `Pending`, not in these tables: `written`
+        // already holds their lots.
+        for table in LEAF_TABLES {
+            let columns: &[&str] = match &table.lot {
+                LotScope::Column(c) => std::slice::from_ref(c),
+                LotScope::Pair(a, b) => &[*a, *b],
+                LotScope::Tender | LotScope::ViaLotResult(_) | LotScope::ViaBid(_) => &[],
+            };
+            for column in columns {
+                let mut rows = conn
+                    .query(
+                        &format!(
+                            "SELECT DISTINCT {column} FROM {} WHERE tender_id = ? AND {column} IS NOT NULL",
+                            table.name
+                        ),
+                        (Value::Integer(tender_id),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    written.lots.insert(int(&row, 0));
+                }
             }
         }
         for &notice in kept_notices {

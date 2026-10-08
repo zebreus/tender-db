@@ -1,8 +1,16 @@
 # 499 — a partial rewrite can sweep a lot that only the kept prefix's results or bids reference
 
-Status: needs-triage — SUSPECTED, not reproduced. Filed 2026-10-08 from a code reading by the issue 495 unit 2
-golden's author (the store fold-writer golden avoided the shape on purpose so as not to pin it). NEXT: unit 1,
-reproduce it in a store test.
+Status: ready-for-agent — REPRODUCED AND FIXED 2026-10-08. The store test
+`a_lot_only_the_kept_prefix_references_survives_a_partial_rewrite` fails on the old code: the sweep deleted
+the undeclared lot that the kept v1's result names (count 1 → 0, with a spurious `removed`). The fix:
+`extend_keep_with_kept_prefix` seeds `written.lots` from every lot-naming leaf column the descriptor records
+(`LotScope::Column` and `Pair`, which covers results, bids, group members and lot-scoped facts), not only
+`tender_version_lots`. Goldens unchanged.
+
+Prod: 0 dangling references in five 100k windows after the epoch-4 refold and today's daily fold. One window
+(224k) answered 408 and was not retried.
+
+NEXT: gate, deploy; re-read the dangling windows after a week of daily folds.
 Kind: correctness / the orphan sweep (`crates/store/src/canonical.rs`)
 Relates to: 103 (the orphan sweep), 279 (`extend_keep_with_kept_prefix`), 495 (unit 2's identity cache reads the
 same sets)
