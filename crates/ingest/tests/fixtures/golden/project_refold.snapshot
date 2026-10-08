@@ -450,17 +450,17 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 2|2|1|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
 3|2|2|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
 4|2|2|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
-9|2|3|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
-10|2|3|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
-11|2|4|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
-12|2|4|NULL|'result_value'|23968954|'EUR'|NULL|23968954|NULL
-13|2|4|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
-8|3|1|NULL|'result_value'|607480963|'EUR'|NULL|607480963|NULL
+5|2|3|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+6|2|3|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+7|2|4|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+8|2|4|NULL|'result_value'|23968954|'EUR'|NULL|23968954|NULL
+9|2|4|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+10|3|1|NULL|'result_value'|607480963|'EUR'|NULL|607480963|NULL
 --- tender_version_bid_parties (2 rows; tender_id,seq,bid_id,role,organization_id,mention_notice_id,mention_section_id) ---
-3|2|4|1|'tenderer'|4|3|'ORG-0002'
+1|2|4|1|'tenderer'|4|3|'ORG-0002'
 2|3|1|2|'tenderer'|14|9|'ORG-0003'
 --- tender_version_bids (2 rows; tender_id,seq,bid_id,lot_id,cents,currency,eur_cents,quality) ---
-3|2|4|1|3|23968954|'EUR'|23968954|NULL
+1|2|4|1|3|23968954|'EUR'|23968954|NULL
 2|3|1|2|4|7333289|'EUR'|7333289|NULL
 --- tender_version_classifications (85 rows; tender_id,seq,lot_id,field,scheme,code) ---
 1|1|1|NULL|'additional'|'cpv'|'44212410'
@@ -513,43 +513,43 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 48|2|2|3|'main'|'cpv'|'33693100'
 49|2|2|3|'nature'|'nature'|'supplies'
 50|2|2|3|'place'|'nuts'|'MT001'
-79|2|3|NULL|'main'|'cpv'|'33693100'
-80|2|3|NULL|'nature'|'nature'|'supplies'
-81|2|3|NULL|'place'|'nuts'|'MT001'
-82|2|3|NULL|'procedure'|'procedure'|'open'
-83|2|3|3|'main'|'cpv'|'33693100'
-84|2|3|3|'nature'|'nature'|'supplies'
-85|2|3|3|'place'|'nuts'|'MT001'
-86|2|4|NULL|'main'|'cpv'|'33693100'
-87|2|4|NULL|'nature'|'nature'|'supplies'
-88|2|4|NULL|'place'|'nuts'|'MT001'
-89|2|4|NULL|'procedure'|'procedure'|'open'
-90|2|4|3|'main'|'cpv'|'33693100'
-91|2|4|3|'nature'|'nature'|'supplies'
-92|2|4|3|'place'|'nuts'|'MT001'
-58|3|1|NULL|'additional'|'cpv'|'45261410'
-59|3|1|NULL|'main'|'cpv'|'45000000'
-60|3|1|NULL|'place'|'nuts'|'DE212'
-61|3|1|4|'additional'|'cpv'|'45260000'
-62|3|1|4|'additional'|'cpv'|'45261200'
-63|3|1|4|'additional'|'cpv'|'45261300'
-64|3|1|4|'additional'|'cpv'|'45261320'
-65|3|1|4|'additional'|'cpv'|'45261410'
-66|3|1|4|'main'|'cpv'|'45000000'
-67|3|1|4|'place'|'nuts'|'DE212'
-68|4|1|NULL|'main'|'cpv'|'45310000'
-69|4|1|NULL|'place'|'nuts'|'DED2D'
-70|4|1|NULL|'procedure'|'procedure'|'open'
-71|4|1|5|'main'|'cpv'|'45310000'
-72|4|1|5|'place'|'nuts'|'DED2D'
-73|6|1|NULL|'main'|'cpv'|'33000000'
-74|6|1|NULL|'nature'|'nature'|'supplies'
-75|6|1|NULL|'place'|'nuts'|'LV00A'
-76|6|1|6|'main'|'cpv'|'33000000'
-77|6|1|6|'nature'|'nature'|'supplies'
-78|6|1|6|'place'|'nuts'|'LV00A'
+51|2|3|NULL|'main'|'cpv'|'33693100'
+52|2|3|NULL|'nature'|'nature'|'supplies'
+53|2|3|NULL|'place'|'nuts'|'MT001'
+54|2|3|NULL|'procedure'|'procedure'|'open'
+55|2|3|3|'main'|'cpv'|'33693100'
+56|2|3|3|'nature'|'nature'|'supplies'
+57|2|3|3|'place'|'nuts'|'MT001'
+58|2|4|NULL|'main'|'cpv'|'33693100'
+59|2|4|NULL|'nature'|'nature'|'supplies'
+60|2|4|NULL|'place'|'nuts'|'MT001'
+61|2|4|NULL|'procedure'|'procedure'|'open'
+62|2|4|3|'main'|'cpv'|'33693100'
+63|2|4|3|'nature'|'nature'|'supplies'
+64|2|4|3|'place'|'nuts'|'MT001'
+65|3|1|NULL|'additional'|'cpv'|'45261410'
+66|3|1|NULL|'main'|'cpv'|'45000000'
+67|3|1|NULL|'place'|'nuts'|'DE212'
+68|3|1|4|'additional'|'cpv'|'45260000'
+69|3|1|4|'additional'|'cpv'|'45261200'
+70|3|1|4|'additional'|'cpv'|'45261300'
+71|3|1|4|'additional'|'cpv'|'45261320'
+72|3|1|4|'additional'|'cpv'|'45261410'
+73|3|1|4|'main'|'cpv'|'45000000'
+74|3|1|4|'place'|'nuts'|'DE212'
+75|4|1|NULL|'main'|'cpv'|'45310000'
+76|4|1|NULL|'place'|'nuts'|'DED2D'
+77|4|1|NULL|'procedure'|'procedure'|'open'
+78|4|1|5|'main'|'cpv'|'45310000'
+79|4|1|5|'place'|'nuts'|'DED2D'
+80|6|1|NULL|'main'|'cpv'|'33000000'
+81|6|1|NULL|'nature'|'nature'|'supplies'
+82|6|1|NULL|'place'|'nuts'|'LV00A'
+83|6|1|6|'main'|'cpv'|'33000000'
+84|6|1|6|'nature'|'nature'|'supplies'
+85|6|1|6|'place'|'nuts'|'LV00A'
 --- tender_version_contracts (2 rows; tender_id,seq,contract_id,buyer_contract_id,concluded_utc,concluded_offset,concluded_has_time,decided_utc,decided_offset,decided_has_time,cents,currency,eur_cents) ---
-3|2|4|1|'127804511'|1779228000|120|0|NULL|NULL|NULL|23968954|'EUR'|23968954
+1|2|4|1|'127804511'|1779228000|120|0|NULL|NULL|NULL|23968954|'EUR'|23968954
 2|3|1|2|'NA 26a +b'|1712527200|120|0|NULL|NULL|NULL|7333289|'EUR'|7333289
 --- tender_version_dates (32 rows; tender_id,seq,lot_id,field,utc_seconds,offset_minutes,has_time) ---
 1|1|1|1|'additional_information_deadline'|1782723540|120|1
@@ -576,18 +576,18 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 22|2|1|3|'submission_deadline'|1768984200|60|1
 23|2|2|3|'opening_date'|1769504400|60|1
 24|2|2|3|'submission_deadline'|1769502600|60|1
-31|2|3|3|'opening_date'|1770282000|60|1
-32|2|3|3|'submission_deadline'|1770280200|60|1
-33|2|4|3|'opening_date'|1770282000|60|1
-34|2|4|3|'submission_deadline'|1770280200|60|1
-27|3|1|4|'duration_end'|1722376800|120|0
-28|3|1|4|'duration_start'|1715551200|120|0
-29|4|1|5|'opening_date'|1712044800|120|1
-30|4|1|5|'submission_deadline'|1712044800|120|1
+25|2|3|3|'opening_date'|1770282000|60|1
+26|2|3|3|'submission_deadline'|1770280200|60|1
+27|2|4|3|'opening_date'|1770282000|60|1
+28|2|4|3|'submission_deadline'|1770280200|60|1
+29|3|1|4|'duration_end'|1722376800|120|0
+30|3|1|4|'duration_start'|1715551200|120|0
+31|4|1|5|'opening_date'|1712044800|120|1
+32|4|1|5|'submission_deadline'|1712044800|120|1
 --- tender_version_lot_group_members (0 rows; tender_id,seq,group_lot_id,member_lot_id) ---
 
 --- tender_version_lot_results (2 rows; tender_id,seq,lot_result_id,lot_id,decision,reason,awarded_cents,awarded_currency,decided_utc,decided_offset,decided_has_time,awarded_eur_cents) ---
-3|2|4|1|3|'selec-w'|NULL|23968954|'EUR'|NULL|NULL|NULL|23968954
+1|2|4|1|3|'selec-w'|NULL|23968954|'EUR'|NULL|NULL|NULL|23968954
 2|3|1|2|4|NULL|NULL|7333289|'EUR'|NULL|NULL|NULL|7333289
 --- tender_version_lots (11 rows; tender_id,seq,lot_id,kind,value_cents,value_currency,value_eur_cents) ---
 1|1|1|1|'Lot'|NULL|NULL|NULL
@@ -596,11 +596,11 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 4|1|2|2|'Lot'|NULL|NULL|NULL
 5|2|1|3|'Lot'|81686300|'EUR'|81686300
 6|2|2|3|'Lot'|81686300|'EUR'|81686300
-11|2|3|3|'Lot'|81686300|'EUR'|81686300
-12|2|4|3|'Lot'|81686300|'EUR'|81686300
-8|3|1|4|'Lot'|NULL|NULL|NULL
-9|4|1|5|'Lot'|NULL|NULL|NULL
-10|6|1|6|'Part'|NULL|NULL|NULL
+7|2|3|3|'Lot'|81686300|'EUR'|81686300
+8|2|4|3|'Lot'|81686300|'EUR'|81686300
+9|3|1|4|'Lot'|NULL|NULL|NULL
+10|4|1|5|'Lot'|NULL|NULL|NULL
+11|6|1|6|'Part'|NULL|NULL|NULL
 --- tender_version_parties (78 rows; tender_id,seq,lot_id,role,organization_id,mention_notice_id,mention_section_id) ---
 1|1|1|NULL|'Procedure-Buyer'|8|6|'ORG-0001'
 2|1|1|1|'Lot-AddInfo'|8|6|'ORG-0001'
@@ -649,41 +649,41 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 45|2|2|3|'Lot-ReviewOrg'|2|2|'ORG-0002'
 46|2|2|3|'Lot-TenderEval'|1|2|'ORG-0001'
 47|2|2|3|'Lot-TenderReceipt'|1|2|'ORG-0001'
-72|2|3|NULL|'Procedure-Buyer'|1|10|'ORG-0001'
-73|2|3|NULL|'Procedure-SProvider'|3|10|'ORG-0003'
-74|2|3|3|'Lot-DocProvider'|1|10|'ORG-0001'
-75|2|3|3|'Lot-ReviewInfo'|1|10|'ORG-0001'
-76|2|3|3|'Lot-ReviewOrg'|2|10|'ORG-0002'
-77|2|3|3|'Lot-TenderEval'|1|10|'ORG-0001'
-78|2|3|3|'Lot-TenderReceipt'|1|10|'ORG-0001'
-79|2|4|NULL|'Procedure-Buyer'|1|3|'ORG-0001'
-80|2|4|NULL|'Procedure-SProvider'|3|3|'ORG-0004'
-81|2|4|3|'Lot-DocProvider'|1|3|'ORG-0001'
-82|2|4|3|'Lot-ReviewInfo'|1|10|'ORG-0001'
-83|2|4|3|'Lot-ReviewOrg'|2|3|'ORG-0003'
-84|2|4|3|'Lot-TenderEval'|1|10|'ORG-0001'
-85|2|4|3|'Lot-TenderReceipt'|1|10|'ORG-0001'
-86|2|4|3|'Tenderer'|4|3|'ORG-0002'
-56|3|1|NULL|'Procedure-Buyer'|12|9|'ORG-0001'
-57|3|1|NULL|'Procedure-SProvider'|13|9|'ORG-0002'
-58|3|1|4|'Contract-Signatory'|12|9|'ORG-0001'
-59|3|1|4|'Lot-ReviewOrg'|15|9|'ORG-0004'
-60|3|1|4|'LotResult-Financing'|12|9|'ORG-0001'
-61|3|1|4|'LotResult-Paying'|13|9|'ORG-0002'
-62|3|1|4|'Tenderer'|14|9|'ORG-0003'
-63|4|1|NULL|'Procedure-Buyer'|10|8|'ORG-7001'
-64|4|1|5|'Lot-ReviewOrg'|11|8|'ORG-7004'
-65|4|1|5|'Lot-TenderReceipt'|10|8|'ORG-7001'
-66|6|1|NULL|'Procedure-Buyer'|5|5|'ORG-0001'
-67|6|1|6|'Part-AddInfo'|5|5|'ORG-0001'
-68|6|1|6|'Part-EmployLegis'|5|5|'ORG-0001'
-69|6|1|6|'Part-EnvironLegis'|5|5|'ORG-0001'
-70|6|1|6|'Part-FiscalLegis'|5|5|'ORG-0001'
-71|6|1|6|'Part-ReviewOrg'|6|5|'ORG-0002'
+48|2|3|NULL|'Procedure-Buyer'|1|10|'ORG-0001'
+49|2|3|NULL|'Procedure-SProvider'|3|10|'ORG-0003'
+50|2|3|3|'Lot-DocProvider'|1|10|'ORG-0001'
+51|2|3|3|'Lot-ReviewInfo'|1|10|'ORG-0001'
+52|2|3|3|'Lot-ReviewOrg'|2|10|'ORG-0002'
+53|2|3|3|'Lot-TenderEval'|1|10|'ORG-0001'
+54|2|3|3|'Lot-TenderReceipt'|1|10|'ORG-0001'
+55|2|4|NULL|'Procedure-Buyer'|1|3|'ORG-0001'
+56|2|4|NULL|'Procedure-SProvider'|3|3|'ORG-0004'
+57|2|4|3|'Lot-DocProvider'|1|3|'ORG-0001'
+58|2|4|3|'Lot-ReviewInfo'|1|10|'ORG-0001'
+59|2|4|3|'Lot-ReviewOrg'|2|3|'ORG-0003'
+60|2|4|3|'Lot-TenderEval'|1|10|'ORG-0001'
+61|2|4|3|'Lot-TenderReceipt'|1|10|'ORG-0001'
+62|2|4|3|'Tenderer'|4|3|'ORG-0002'
+63|3|1|NULL|'Procedure-Buyer'|12|9|'ORG-0001'
+64|3|1|NULL|'Procedure-SProvider'|13|9|'ORG-0002'
+65|3|1|4|'Contract-Signatory'|12|9|'ORG-0001'
+66|3|1|4|'Lot-ReviewOrg'|15|9|'ORG-0004'
+67|3|1|4|'LotResult-Financing'|12|9|'ORG-0001'
+68|3|1|4|'LotResult-Paying'|13|9|'ORG-0002'
+69|3|1|4|'Tenderer'|14|9|'ORG-0003'
+70|4|1|NULL|'Procedure-Buyer'|10|8|'ORG-7001'
+71|4|1|5|'Lot-ReviewOrg'|11|8|'ORG-7004'
+72|4|1|5|'Lot-TenderReceipt'|10|8|'ORG-7001'
+73|6|1|NULL|'Procedure-Buyer'|5|5|'ORG-0001'
+74|6|1|6|'Part-AddInfo'|5|5|'ORG-0001'
+75|6|1|6|'Part-EmployLegis'|5|5|'ORG-0001'
+76|6|1|6|'Part-EnvironLegis'|5|5|'ORG-0001'
+77|6|1|6|'Part-FiscalLegis'|5|5|'ORG-0001'
+78|6|1|6|'Part-ReviewOrg'|6|5|'ORG-0002'
 --- tender_version_result_stats (1 rows; tender_id,seq,lot_result_id,kind,count,quality) ---
 1|2|4|1|'tenders'|11|NULL
 --- tender_version_result_winners (2 rows; tender_id,seq,lot_result_id,organization_id,is_buyer) ---
-3|2|4|1|4|NULL
+1|2|4|1|4|NULL
 2|3|1|2|14|NULL
 --- tender_version_texts (41 rows; tender_id,seq,lot_id,field,lang,value) ---
 1|1|1|NULL|'description'|'DEU'|'Im Zuge der Grundinstandsetzung soll das Hafenbecken mittels vorgebohrter Spundwand zum Teil trockengelegt werden (LOS 1) sodass die Grundinstandsetzungsarbeiten im trockenen stattfinden können (LOS 2). 
@@ -760,17 +760,17 @@ Würzburg." Die auszuführende Leistung gliedert sich in folgende Baubereiche:
 18|2|2|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
 19|2|2|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
 20|2|2|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
-38|2|3|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
-39|2|3|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
-40|2|3|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
-41|2|3|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
-42|2|4|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
-43|2|4|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
-44|2|4|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
-45|2|4|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
-25|3|1|NULL|'description'|'DEU'|'Austausch Attikableche auf den Lernhäusern B/C/G/H/J des BCR'
-26|3|1|NULL|'title'|'DEU'|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'
-27|3|1|4|'description'|'DEU'|'Beschreibung der Beschaffung vor der Änderung:
+21|2|3|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+22|2|3|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+23|2|3|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+24|2|3|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+25|2|4|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+26|2|4|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+27|2|4|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+28|2|4|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+29|3|1|NULL|'description'|'DEU'|'Austausch Attikableche auf den Lernhäusern B/C/G/H/J des BCR'
+30|3|1|NULL|'title'|'DEU'|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'
+31|3|1|4|'description'|'DEU'|'Beschreibung der Beschaffung vor der Änderung:
 Dachabdichtungs- und Spenglerarbeiten, Gründach,
 2 Teillose:
 — Folienabdichtung FPO auf Wärmedämmung EPS – 10 976 m²,
@@ -791,28 +791,28 @@ Los 2: Dächer über Obergeschosse:
 — Fallrohr, Titanzink– 960 lfm.
 Beschaffung nach der Änderung:
 Austausch der Attikableche auf den Lernhäusern B/C/G/H/J des BCR'
-28|3|1|4|'title'|'DEU'|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten, Gründach'
-29|4|1|NULL|'description'|'DEU'|'Erschließung Starkstrom'
-30|4|1|NULL|'title'|'DEU'|'Erschließung Starkstrom'
-31|4|1|5|'description'|'DEU'|'Liefern und Verlegen von ca. 3.550 lfm Starkstrom-Kunststoffkabel
+32|3|1|4|'title'|'DEU'|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten, Gründach'
+33|4|1|NULL|'description'|'DEU'|'Erschließung Starkstrom'
+34|4|1|NULL|'title'|'DEU'|'Erschließung Starkstrom'
+35|4|1|5|'description'|'DEU'|'Liefern und Verlegen von ca. 3.550 lfm Starkstrom-Kunststoffkabel
 NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel A-2Y(L)2Y 4 x 2 x 0,8 mm sowie Herstellen von 3 St. Hauseinführungen'
-32|4|1|5|'tenderer_requirement'|'DEU'|'siehe Formblatt 216'
-33|4|1|5|'title'|'DEU'|'Erschließung Starkstrom'
-34|6|1|NULL|'description'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
-35|6|1|NULL|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
-36|6|1|6|'description'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
-37|6|1|6|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+36|4|1|5|'tenderer_requirement'|'DEU'|'siehe Formblatt 216'
+37|4|1|5|'title'|'DEU'|'Erschließung Starkstrom'
+38|6|1|NULL|'description'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+39|6|1|NULL|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+40|6|1|6|'description'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+41|6|1|6|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
 --- tender_versions (10 rows; tender_id,seq,caused_by_notice_id,published_at,dispatched_at,notice_subtype,original_lang,publication_id) ---
 1|1|1|6|1780272000|1778661993|'16'|'DEU'|'ebb72363-832d-4cea-8db6-04999414ea8c-01'
 2|1|2|7|1780272000|1778661993|'16'|'DEU'|'00373130-2026'
 3|2|1|1|1765756800|1765472418|'16'|'ENG'|'00831374-2025'
 4|2|2|2|1767744000|1767705463|'16'|'ENG'|'00006281-2026'
-10|2|3|10|1768262400|1768045538|'16'|'ENG'|'00018902-2026'
-11|2|4|3|1780444800|1780391852|'29'|'ENG'|'00380868-2026'
-6|3|1|9|1714608000|1714341600|'38'|'DEU'|'799811c4-2454-414e-b3cc-1d5d55c69690-01'
-7|4|1|8|1709164800|1709186986|'16'|'DEU'|'7d69b0f7-2605-448f-9495-676458dcddc2-01'
-8|5|1|4|1784246400|1784199584|'X01'|'DEU'|'00497689-2026'
-9|6|1|5|1784246400|1784211228|'4'|'LAV'|'00496860-2026'
+5|2|3|10|1768262400|1768045538|'16'|'ENG'|'00018902-2026'
+6|2|4|3|1780444800|1780391852|'29'|'ENG'|'00380868-2026'
+7|3|1|9|1714608000|1714341600|'38'|'DEU'|'799811c4-2454-414e-b3cc-1d5d55c69690-01'
+8|4|1|8|1709164800|1709186986|'16'|'DEU'|'7d69b0f7-2605-448f-9495-676458dcddc2-01'
+9|5|1|4|1784246400|1784199584|'X01'|'DEU'|'00497689-2026'
+10|6|1|5|1784246400|1784211228|'4'|'LAV'|'00496860-2026'
 --- tenders (6 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,projection_epoch) ---
 1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|4
 2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|4
@@ -838,7 +838,7 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 2|2|3|9|'CON-0001'
 --- tender_currency_presence (1 rows; currency) ---
 1|'EUR'
---- changes (47 rows; cursor,entity_kind,entity_id,version_seq,op,changed_at) ---
+--- changes (74 rows; cursor,entity_kind,entity_id,version_seq,op,changed_at) ---
 1|1|'organization'|1|NULL|'added'
 2|2|'organization'|2|NULL|'added'
 3|3|'organization'|3|NULL|'added'
@@ -886,3 +886,30 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 45|45|'lot_result'|1|4|'added'
 46|46|'bid'|1|4|'added'
 47|47|'contract'|1|4|'added'
+48|48|'tender'|1|1|'added'
+49|49|'lot'|1|1|'added'
+50|50|'lot'|2|1|'added'
+51|51|'tender'|1|2|'changed'
+52|52|'lot'|1|2|'changed'
+53|53|'lot'|2|2|'changed'
+54|54|'tender'|2|1|'added'
+55|55|'lot'|3|1|'added'
+56|56|'tender'|2|2|'changed'
+57|57|'lot'|3|2|'changed'
+58|58|'tender'|2|3|'changed'
+59|59|'lot'|3|3|'changed'
+60|60|'tender'|2|4|'changed'
+61|61|'lot'|3|4|'changed'
+62|62|'lot_result'|1|4|'added'
+63|63|'bid'|1|4|'added'
+64|64|'contract'|1|4|'added'
+65|65|'tender'|3|1|'added'
+66|66|'lot'|4|1|'added'
+67|67|'lot_result'|2|1|'added'
+68|68|'bid'|2|1|'added'
+69|69|'contract'|2|1|'added'
+70|70|'tender'|4|1|'added'
+71|71|'lot'|5|1|'added'
+72|72|'tender'|5|1|'added'
+73|73|'tender'|6|1|'added'
+74|74|'lot'|6|1|'added'

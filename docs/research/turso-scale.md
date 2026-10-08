@@ -296,6 +296,30 @@ there (`Db::refused_key_labels`). The `l.tender_id IN (…)` seeds in `read.rs`
 are measured fast because there the planner drives the outer loop from the
 subquery and never tests a miss.
 
+### A partly-read `pragma_*` table-valued function leaves its snapshot open [measured, 2026-10-08]
+
+Take a `pragma_*` table-valued function, for example `SELECT … FROM pragma_table_info('t')`, and
+drop its statement before it returns Done. turso 0.7.2 then keeps that read snapshot open on the
+connection. `is_autocommit()` still reads true, so `Reader`'s drop check returns the connection to
+the pool. Everything read on that connection afterwards sees the old snapshot, and the snapshot pins
+the WAL: a TRUNCATE checkpoint answers `busy`.
+
+These do NOT leak, all reproduced in the same harness:
+
+- the same function read to its end;
+- the `PRAGMA table_info(…)` statement form, drained or not;
+- `generate_series`, `json_each`, a join with a table-valued function;
+- an ordinary multi-row SELECT read to its first row.
+
+Production does not hit it today:
+
+- `/v1/sql` refuses every `pragma_*` function before it runs (issue 204).
+- The app reads `PRAGMA table_info` in its statement form.
+
+Where it did hit was the issue-495 test goldens. They read the function through `Db::scalar` and
+captured a stale snapshot. Rule: drain anything you read from a `pragma_*` function, or use the
+statement form.
+
 ### Memory ceilings observed (10 GB db)
 
 Steady-state serving needs tens of MB: open ~21 MB, point queries ~28 MB,

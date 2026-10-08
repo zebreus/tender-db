@@ -280,11 +280,31 @@ async fn text_of(db: &Db, sql: &str) -> String {
 
 /// One table's rows, every column `quote()`d (NULL stays distinguishable from '' and 0), rowid
 /// first, in `order`. `skip` names columns that hold the wall clock.
+///
+/// The column list comes from the `PRAGMA table_info` STATEMENT, drained on a connection of its
+/// own. Not the `pragma_table_info()` table-valued function through `Db::scalar`: turso 0.7.2
+/// leaves the read snapshot of a `pragma_*` function open when its statement is dropped before
+/// it finishes (`scalar` reads one row), and the pooled reader goes back to the pool still
+/// holding it, `is_autocommit()` notwithstanding. Every later `scalar` then read that frozen
+/// snapshot, and the first capture of this golden recorded phase A twice. See
+/// docs/research/turso-scale.md.
 async fn table_digest(db: &Db, table: &str, order: &str, skip: &[&str]) -> String {
-    let cols = text_of(db, &format!("SELECT group_concat(name, ',') FROM pragma_table_info('{table}')")).await;
-    assert!(!cols.is_empty(), "{table}: pragma_table_info named no columns");
+    let pool = db.readers(1).expect("a reader of its own");
+    let conn = pool.get().await.expect("reader connection");
+    let mut info = conn.query(&format!("PRAGMA table_info(\"{table}\")"), ()).await.expect("table_info");
+    let mut names = Vec::new();
+    while let Some(row) = info.next().await.expect("table_info row") {
+        match row.get_value(1) {
+            Ok(turso::Value::Text(name)) => names.push(name),
+            other => panic!("{table}: table_info name is {other:?}"),
+        }
+    }
+    drop(info);
+    drop(conn);
+    assert!(!names.is_empty(), "{table}: table_info named no columns");
+    let cols = names.join(",");
     let mut expr = String::from("quote(rowid)");
-    for col in cols.split(',').filter(|c| !skip.contains(c)) {
+    for col in names.iter().filter(|c| !skip.contains(&c.as_str())) {
         expr.push_str(&format!("||'|'||quote(\"{col}\")"));
     }
     let rows = text_of(db, &format!("SELECT group_concat(r, x'0a') FROM (SELECT {expr} AS r FROM \"{table}\" ORDER BY {order})")).await;
