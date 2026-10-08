@@ -1,6 +1,6 @@
 # 457 — turso 0.8.1 is out (2026-09-29): upgrade later, after the plan hardening that 0.7.2 wants anyway
 
-Status: ready-for-agent — units 1 (R2) and 2 (R3) DEPLOYED 2026-10-02 at `08c3dd9`: the list pages read `t.current_seq` (equivalence proven by `head_pointer_equivalence.rs` and a prod sample), and the IS NULL walks, the provisional echo walk and the country-less probe are pinned with unary `+`. The echo walk's keyset was also rewritten so it seeks without a sorter on 0.7.2 today. NEXT: unit 3 (the /v1/sql R4 surface canaries), then wait for 429's capture diff (2026-10-04) before the bump. Also refresh `.scratch/tender-db/428/captured-statements.sql` with the pinned statements before Phase R.
+Status: ready-for-agent — units 1 (R2) and 2 (R3) DEPLOYED 2026-10-02 at `08c3dd9`: the list pages read `t.current_seq` (equivalence proven by `head_pointer_equivalence.rs` and a prod sample), and the IS NULL walks, the provisional echo walk and the country-less probe are pinned with unary `+`. The echo walk's keyset was also rewritten so it seeks without a sorter on 0.7.2 today. UNIT 3 BUILT 2026-10-08 (`classify` refuses WITH RECURSIVE, self/forward-referencing CTEs and EXCLUDE frames; engine canaries pin the 13 functions 0.8.1 adds, decided ALLOW on the bump; rides with issue 490's deploy B). NEXT: then wait for 429's capture diff (2026-10-04) before the bump. Also refresh `.scratch/tender-db/428/captured-statements.sql` with the pinned statements before Phase R.
 Was status: ready-for-agent — EVALUATED 2026-10-01 (workflow `wf_1f19977e-497`: 4 readers over the published 0.7.2 and
 0.8.1 crate sources, 13 risky claims re-checked by challengers; report `.scratch/tender-db/457-turso-0.8/evaluation-2026-10-01.md`).
 Verdict: upgrade LATER. The durability gain is taken now with a pragma (issue 458). NEXT: unit 1 (R2, below) on 0.7.2.
@@ -65,3 +65,26 @@ bump.
 
 - **open** (2026-10-01): `44:turso = "=0.7.2"`.
 - **done:** `44:turso = "=0.8.1"` (or later), deployed, through one Sunday cycle.
+
+## Unit 3 — built (2026-10-08)
+
+R4 decided:
+- **Refused by `classify`, whatever the engine supports:**
+  - `WITH RECURSIVE`;
+  - any CTE whose body reads its own name or a LATER sibling's. The check is keyed on the reference,
+    not the keyword, because 0.8.1 ignores `with.recursive`;
+  - `EXCLUDE` window frames, which rescan the frame per row.
+
+  Pinned by `recursion_and_exclude_frames_are_refused_whatever_the_engine_supports` (sql.rs) and
+  `recursion_and_exclude_frames_are_refused` (tests/sql.rs).
+- **Allowed on the bump:**
+  - rank, dense_rank, percent_rank, cume_dist, ntile, lag, lead, first_value, last_value and nth_value;
+  - get_byte, set_byte and subtype.
+
+  These keep fixed-size state per row and do not amplify output (the evaluation). Today 0.7.2's engine
+  refuses each of them. `engine_canary_functions_new_in_turso_0_8_are_not_yet_available` pins that, so
+  the bump's gate goes red and the person bumping moves them into `the_dialect_canary_shapes_all_run`.
+- **CHANGELOG:** the keyword-less self-reference (`WITH tenders AS (… FROM tenders)`) used to read the
+  base table and now answers 400.
+- **Not deployed:** it rides with issue 490's deploy B (session branch `claude/cool-sagan-5bk0rc`).
+
