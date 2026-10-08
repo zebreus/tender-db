@@ -949,6 +949,9 @@ unit 3 made untrue: `value` is the elected row.
    525252 (every figure in the notice ×100) and 6640498. None leaves a signal inside the notice. A lone
    figure has nothing to compare with, and a notice scaled as a whole agrees with itself. **4(c) is
    closed as caveat-only: there is no signal to build.**
+   The same goes for the whole-notice ×1000 CANs that the €1 bn drain left at ≥ €1 bn (355258, 591121;
+   status line of 2026-10-06): every figure in the notice is scaled alike, so they stay as published
+   under the caveat.
 5. **The rest are publisher-side.** A total-of-all-buyers ceiling filed under one buyer (8434466). Per-lot
    quantities summed over 37 identical lots (909191). An exact €10¹⁰ result over a €2 m estimate
    (535069); round powers are deliberately not sentinels. Typos whose real figure exists only in prose
