@@ -169,7 +169,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot &mdash; excluding awards where the winner is the tender's own buyer (<code>is_buyer</code>, see the <a href="#tender-detail-buyer">tender detail</a>).</td></tr>
   <tr><td class="ep">bidder</td><td>Organization id that submitted a bid on at least one Lot — won or not, a superset of <code>winner</code>.</td></tr>
   <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline). On <code>/v1/lots</code> the deadline may be the procedure's rather than the lot's &mdash; see <a href="#caveats">caveats &rarr; Dates</a>.</td></tr>
-  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the tender's highest amount converted to EUR at its publication date (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount never matches a value bound.</td></tr>
+  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the TENDER's elected headline figure converted to EUR at its publication date (on <code>/v1/lots</code> too: the bound reads the Tender's figure, not the lot's own <code>value</code>) (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount never matches a value bound.</td></tr>
   <tr><td class="ep">currency</td><td>ISO&nbsp;4217 code, case-insensitive (e.g. <code>EUR</code>, <code>sek</code>) — Tenders/Lots whose current version publishes at least one amount in that currency, <em>as published</em>.</td></tr>
   <tr><td class="ep">procedure_type</td><td>The <strong>procedure type</strong> (eForms BT-105, <code>procurement-procedure-type</code>): one or more codes, comma-separated, case-insensitive, at most 10 &mdash; <code>open</code>, <code>restricted</code>, <code>neg-w-call</code>, <code>neg-wo-call</code>, <code>comp-dial</code>, <code>innovation</code>, <code>oth-single</code>, <code>oth-mult</code>, and the German national codes as published (eForms-DE&rsquo;s below-threshold <code>us-*</code>, DÖE sdk-0.1&rsquo;s <code>de-*</code>; not cross-walked onto the EU list). Exact match on the current version&rsquo;s procedure type &mdash; the latest <em>mapped</em> type a notice of the Tender stated; lots inherit their Tender&rsquo;s. The pre-eForms TED eras fold the form&rsquo;s own procedure checkbox where it names one type, else the <code>PR</code> code through a closed table (1 open, 2/3 restricted, 4 neg-w-call, T neg-wo-call); any other value or a silent notice folds nothing, so the earlier type stays in place (it can predate the latest notice), and a Tender no notice typed matches no code. E.g. <code>procedure_type=neg-wo-call</code> for awards without a prior call &mdash; complete for eForms, <em>not</em> before it: a legacy award is typed only when its form ticked a without-call box, and FTS&rsquo;s Procurement Act routes (<em>Direct award</em>, <em>Competitive flexible procedure</em>, &hellip;) are not mapped. Tenders/Lots.</td></tr>
   <tr><td class="ep">lang</td><td>Preferred language for the <em>picked</em> text values (the <code>title</code> on tenders, lots and the detail header): ISO&nbsp;639 code, case-insensitive (<code>de</code> and <code>DEU</code> both work). Fallback chain: requested &rarr; English &rarr; the notice's original language &rarr; any labelled &rarr; unlabelled. A <em>selector</em>, not a filter &mdash; it changes which title a row serves, never which rows match, so it is never reported in <code>ignored_filters</code>. The detail's <code>texts</code> array always carries every stored language variant regardless.</td></tr>
@@ -493,14 +493,23 @@ on <code>tender_version_lots</code> &mdash; <code>value_cents</code>,
 <code>/v1/lots</code> serves, chosen by the same rule (issue 490). The raw
 <code>tender_version_amounts</code> rows carry every published figure, including the
 placeholders and scale slips that rule refuses, so a <code>MAX()</code> over them is
-not the lot's value. For a range or a top-N over lot values, keep
-<code>value_eur_cents IS NOT NULL</code> in the <code>WHERE</code> literally: the index
-serves only that form.</p>
+not the lot's value. For a range or a top-N over lot values, query the base table
+(<code>v_lots</code> carries the columns but, like every view, cannot be filtered),
+keep <code>value_eur_cents IS NOT NULL</code> in the <code>WHERE</code> literally (the
+index serves only that form), and put the lot table FIRST with a
+<code>CROSS JOIN</code> &mdash; the one join on this page where the version table
+drives, because its value index is what narrows the read:</p>
 <pre><code>SELECT vl.tender_id, vl.lot_id, vl.value_cents, vl.value_currency
   FROM tender_version_lots vl
-  JOIN tenders t ON t.id = vl.tender_id AND t.current_seq = vl.seq
+  CROSS JOIN tenders t ON t.id = vl.tender_id AND t.current_seq = vl.seq
  WHERE vl.value_eur_cents IS NOT NULL AND vl.value_eur_cents &gt;= 1000000000
  ORDER BY vl.value_eur_cents DESC LIMIT 20</code></pre>
+<p>Two things the lot value is not. It is chosen by the largest PUBLISHED figure, so on
+a lot published in two currencies <code>value_eur_cents</code> is the EUR of that figure,
+not necessarily the lot's largest EUR amount. And it is chosen from the lot's own
+amounts, never from award results: a lot whose only figure is an awarded value (most of
+TED's 2021 r2.0.9 era) has no lot value &mdash; its award is in
+<code>v_lot_results.awarded_cents</code>.</p>
 <p>Rules:</p>
 <ul>
   <li>Exactly one statement, and it must be a bare <code>SELECT</code> — no writes, PRAGMA, ATTACH, EXPLAIN, CTE-wrapped writes or multi-statement bodies.</li>
@@ -907,6 +916,63 @@ running server offers the source of its exact revision at
 #[cfg(test)]
 mod tests {
     use super::PAGE;
+
+    /// Issue 490: the lot-value recipe /docs publishes must drive from the partial
+    /// value index and seek `tenders` by primary key -- a plain JOIN let turso's cost
+    /// model reorder it into a scan of `tenders` once the lot table outgrew ~2.8x
+    /// the tenders (it does on prod). The SQL is read off the page itself, so the
+    /// documented text and the pinned plan cannot drift apart.
+    #[tokio::test]
+    async fn the_lot_value_recipe_drives_from_the_partial_index() {
+        let at = PAGE.find("<strong>Values.</strong>").expect("/docs has the Values paragraph");
+        let block = &PAGE[at..];
+        let open = block.find("<pre><code>").expect("a recipe") + "<pre><code>".len();
+        let close = block[open..].find("</code></pre>").expect("recipe end");
+        let sql = block[open..open + close].replace("&gt;", ">").replace("&lt;", "<");
+        assert!(sql.contains("CROSS JOIN tenders t"), "the recipe pins its join order: {sql}");
+
+        let path = format!("/tmp/tender-db-490-recipe-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = store::Db::open(&path).await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let plan = |sql: String| {
+            let db = &db;
+            async move {
+                db.measure_rows(&format!("EXPLAIN QUERY PLAN {sql}"))
+                    .await
+                    .unwrap()
+                    .iter()
+                    .map(|r| format!("{r:?}"))
+                    .collect::<Vec<_>>()
+            }
+        };
+
+        let got = plan(sql.clone()).await;
+        let lots = got.iter().position(|l| l.contains("SEARCH vl USING") && l.contains("tender_version_lots_value_eur"));
+        let tenders = got.iter().position(|l| l.contains("SEARCH t USING INTEGER PRIMARY KEY"));
+        assert!(
+            matches!((lots, tenders), (Some(a), Some(b)) if a < b),
+            "the value index must drive and tenders be sought by rowid; plan:\n{}",
+            got.join("\n")
+        );
+        assert!(!got.iter().any(|l| l.contains("SCAN t")), "tenders must not be scanned; plan:\n{}", got.join("\n"));
+
+        // Without the literal term the partial index is out of reach -- which is why
+        // the page says "literally".
+        let bare = sql.replace("vl.value_eur_cents IS NOT NULL AND ", "");
+        assert_ne!(bare, sql, "the negative case must actually drop the term");
+        let got = plan(bare).await;
+        assert!(
+            !got.iter().any(|l| l.contains("tender_version_lots_value_eur")),
+            "turso 0.7.2 matched the partial index without its WHERE term; plan:\n{}",
+            got.join("\n")
+        );
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
     use crate::v1::DATA_SOURCES;
     use crate::v1::openapi::SPEC;
 

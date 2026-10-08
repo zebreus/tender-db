@@ -556,10 +556,11 @@ falls to a €1 bn placeholder, 6803400 to £50 M. The rule is computed in the e
 as a `quality` marker (the marker vocabulary stays `'withheld'`), so nothing in the parsed or
 version layers changes and the read layer's elected row follows by `eur_cents` with no edit of its
 own. Section 16's partner column uses the same floor and exponent (`SCALE_PARTNER_FLOOR_CENTS`,
-`SCALE_ERROR_MIN_EXPONENT`). The per-LOT value `summarise` serves on a lot row calls the same
-predicate (`ScalePartners::refuses_amount`, fed the chain up to the version from
-`tender_version_amounts` + `tender_version_lot_results`, loaded only when a lot candidate is in the
-band), so 224156's LOT-0002 serves no value rather than its refused ceiling.
+`SCALE_ERROR_MIN_EXPONENT`). The per-LOT value goes through the same predicate. Since issue 490 the
+fold elects it (`canonical::elect_lot_value`, with the running rule over the chain up to the version)
+and stores it in `tender_version_lots.value_*`, which the lot row reads. So 224156's LOT-0002 serves no
+value rather than its refused ceiling, and a rule change reaches stored lot values only through a
+stamping refold (see "The elected lot value and its epoch-4 backfill").
 
 **Who changes, and when.** No `PROJECTION_EPOCH` bump: a Tender is re-elected the next time the
 fold rewrites it. Because of (3), and because the election only removes candidates and takes the
@@ -968,8 +969,18 @@ echo "SELECT COUNT(*) FROM tenders WHERE id BETWEEN 1 AND 100000 AND projection_
 echo "SELECT id, current_seq FROM tenders WHERE id BETWEEN 1 AND 100000 AND projection_epoch <> 4 LIMIT 20" | /root/sq.sh
 ```
 
-Any job that stamps Tenders epoch-stale (`rederive-eur`, the resolver) stamps 0. So `<> 4`
-over-reports and never under-reports.
+Any job that stamps Tenders epoch-stale (`rederive-eur`, the resolver, `refold-notices`) stamps 0. So
+`<> 4` over-reports and never under-reports. Triage a residue by epoch:
+
+- **3** means untouched since deploy A. Refold it.
+- **0** is one of two cases:
+  - Re-stamped after its 490 write, so its values are present and a requeued notice is in flight.
+  - **Stuck**: every causing notice is no longer `parse_state = 'parsed'` (quarantined on a reparse,
+    or pending). The stamp joins notices by profile with no parse-state filter, but the requeue takes
+    only parsed ones. If the trailing project took the INCREMENTAL path, such a Tender keeps its
+    pre-490 rows. The project's log line `INCREMENTAL → FULL fallback BEFORE identity pass` says
+    which path it took. Probe a stuck Tender's lot rows for a NULL value beside an admissible lot
+    amount.
 
 **Before deploy B, also:**
 
@@ -982,9 +993,12 @@ over-reports and never under-reports.
 
 **After deploy B:**
 
-1. Wait for the boot-time Reindex to build the partial index. Confirm it with
-   `SELECT name FROM sqlite_master WHERE name = 'tender_version_lots_value_eur'` before timing any
-   value query. Until it exists, a lot value range is a scan of the table.
+1. Wait for the boot-time Reindex to build the partial index before timing any value query. Until it
+   exists, a lot value range is a scan of the table. `/v1/sql` refuses `sqlite_master`, so confirm it
+   another way:
+   - the `reindex` job in `/root/aj.sh /admin/jobs` finished `ok` after the deploy; or
+   - the boot line `supervisor: N deferred index(es) missing (...)` no longer names
+     `tender_version_lots_value_eur` (`journalctl -u tender-db`).
 2. Time the `/docs` recipe (top 20 lots at or above EUR 10 m) and a narrow band with a LIMIT.
 3. Do not compare a lot `COUNT(*)` over a wide band with the tenders' 56–66 ms. Every index entry
    of every version probes `tenders`, so it is not index-only.

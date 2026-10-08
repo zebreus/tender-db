@@ -1096,9 +1096,9 @@ pub(crate) const SCHEMA: &str = "
     DROP VIEW IF EXISTS v_lots;
     -- Issue 490: the lot's elected value (the REST lot row's `value`), stored by the
     -- fold on the version row and appended here so `SELECT *` keeps its positions.
-    -- Filter on `value_eur_cents` with a literal `value_eur_cents IS NOT NULL` beside
-    -- the range: that is what lets the partial index serve it (turso matches the
-    -- index's WHERE syntactically).
+    -- Like every v_* view this one cannot be filtered (issue 239): a range or top-N
+    -- over the value goes to `tender_version_lots` itself, driving from its partial
+    -- index (the /docs recipe, pinned by `the_lot_value_recipe_drives_from_the_partial_index`).
     CREATE VIEW v_lots AS
     SELECT l.id, l.tender_id, l.lot_key, vl.kind, vl.seq,
            (SELECT x.value FROM tender_version_texts x
@@ -10581,18 +10581,18 @@ impl Db {
         // `lots`-sized partition — single digits — makes its sort free, which is why
         // `1830d50` got away with it and why nothing else should copy it.
         ("tenders_source_id", "tenders(source, id)"),
-        // Issue 490: `/v1/sql`'s lot value range and top-N (`v_lots.value_eur_cents`).
-        // Covering, so a range seek probes `tenders` only by primary key to keep the
-        // current version. PARTIAL: most lots carry no lot-scoped figure, so a full
-        // index would be ~80 % NULL entries every future fold must maintain at random
-        // positions. turso 0.7.2 uses a partial index only for a query that repeats
-        // its WHERE literally, so the documented recipe carries
-        // `value_eur_cents IS NOT NULL` (and `v_lots`' own comment says so). Built by
-        // the boot-time Reindex AFTER the backfill refold, never maintained through it.
-        (
-            "tender_version_lots_value_eur",
-            "tender_version_lots(value_eur_cents, tender_id, seq, lot_id) WHERE value_eur_cents IS NOT NULL",
-        ),
+        // Issue 490: `/v1/sql`'s lot value range and top-N on `tender_version_lots`. The
+        // key carries the version, so the seek checks "is this the current version"
+        // by a `tenders` primary-key probe; the rows it returns still fetch
+        // value_cents/value_currency from the table. PARTIAL: most lots carry no
+        // lot-scoped figure, so a full index would be ~80 % NULL entries every future
+        // fold must maintain at random positions. turso 0.7.2 uses a partial index
+        // only for a query that repeats its WHERE literally, so the /docs recipe
+        // carries `value_eur_cents IS NOT NULL` (pinned, with its plan, by
+        // `the_lot_value_recipe_drives_from_the_partial_index`). Built by the
+        // boot-time Reindex AFTER the backfill refold, never maintained through it.
+        // ONE line: `hot_read_plans.sh` reads these tuples line by line.
+        ("tender_version_lots_value_eur", "tender_version_lots(value_eur_cents, tender_id, seq, lot_id) WHERE value_eur_cents IS NOT NULL"),
     ];
 
     /// DROP+recreate `table` from its own captured DDL (table + any named indexes),

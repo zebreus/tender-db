@@ -201,7 +201,11 @@ async fn an_existing_database_gains_the_lot_value_columns() {
     )
     .await
     .expect("the fold's seven-column insert lands on the migrated table");
-    db.scalar("SELECT title FROM v_lots LIMIT 1").await.expect("v_lots still answers on the migrated table");
+    // The view is created by the schema batch BEFORE the ALTERs run; its value columns
+    // must still resolve once the migration has added them.
+    db.scalar("SELECT value_cents, value_currency, value_eur_cents, title FROM v_lots LIMIT 1")
+        .await
+        .expect("v_lots and its value columns answer on the migrated table");
 
     for suffix in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{suffix}"));

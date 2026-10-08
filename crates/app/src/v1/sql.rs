@@ -819,7 +819,9 @@ const TABLE_NOTES: &[(&str, &str)] = &[
       'LotsGroup'."),
     ("v_lots", "Current Lots — subdivisions of a Tender. NOT FILTERABLE, same as v_tenders \
       (measured: `WHERE tender_id = ?` exceeds the time limit); join `lots` to \
-      `tender_version_lots` instead."),
+      `tender_version_lots` instead. Its value_* columns are the lot's elected value \
+      (issue 490); for a range or top-N over them use the /docs recipe on \
+      `tender_version_lots` (CROSS JOIN tenders, a literal `value_eur_cents IS NOT NULL`)."),
     ("v_organizations", "Canonical Organizations (buyers, bidders, winners) with a mention count. NOT FILTERABLE, like every `v_*` view — a WHERE is applied after the view is \
       built, so a filtered query reads the whole corpus (issue 239); join `organizations` (and `organization_mentions` for the count) instead."),
     ("v_lot_results", "Current award decisions: one row per (result, winning organization); \
@@ -1029,13 +1031,27 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         "value_currency",
         "Currency of value_cents (ISO 4217 as published); NULL exactly when value_cents is.",
     ),
+    // On the view the "*" notes would point at a WHERE the view refuses (issue 239),
+    // so v_lots' own notes -- an exact match wins -- send ranges to the base table.
+    (
+        "v_lots",
+        "value_eur_cents",
+        "value_cents in EUR (ADR-0014), as stored on tender_version_lots. v_lots cannot be \
+         filtered or usefully sorted (the whole view is built first): for a range or top-N use \
+         the /docs recipe on tender_version_lots (CROSS JOIN tenders, literal \
+         `value_eur_cents IS NOT NULL`). Ranked by the PUBLISHED figure: on a two-currency lot \
+         this is not necessarily its largest EUR amount.",
+    ),
     (
         "*",
         "value_eur_cents",
         "value_cents in EUR at the version's publication date, as of the fold (ADR-0014). \
-         NULL = no value, no official rate, or a conversion that rounds to 0. Indexed for \
-         ranges and top-N only together with a literal `value_eur_cents IS NOT NULL` in the \
-         WHERE (a partial index).",
+         NULL = no value, no official rate, or a conversion that rounds to 0. Indexed (a \
+         partial index) for ranges and top-N only with a literal `value_eur_cents IS NOT NULL` \
+         in the WHERE and the lot table driving (CROSS JOIN tenders; the /docs recipe). The \
+         winner is the largest PUBLISHED figure, so on a two-currency lot this is not \
+         necessarily its largest EUR amount; award results are never elected (see \
+         v_lot_results.awarded_cents).",
     ),
     (
         "*",

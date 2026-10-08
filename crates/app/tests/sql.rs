@@ -618,6 +618,10 @@ async fn the_schema_documents_time_format_and_enums() {
     assert_eq!(col_type("v_fetches", "bytes"), "INTEGER", "a bare-column view over one source");
     assert_eq!(col_type("v_organizations", "mentions"), "INTEGER", "COUNT(*) is an integer");
     assert_eq!(col_type("v_lots", "title"), "TEXT", "a scalar subquery follows the column it projects");
+    // Issue 490: the stored lot value, through the view.
+    assert_eq!(col_type("v_lots", "value_cents"), "INTEGER");
+    assert_eq!(col_type("v_lots", "value_currency"), "TEXT");
+    assert_eq!(col_type("v_lots", "value_eur_cents"), "INTEGER");
     assert_eq!(col_type("v_awards", "winner_name"), "TEXT", "a view over a view over a view resolves through");
     assert_eq!(col_type("v_awards", "awarded_cents"), "INTEGER");
     // Every integer key of every view resolves to INTEGER — no view column that is a
