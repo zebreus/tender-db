@@ -298,7 +298,6 @@ fn parse_money(value: &str) -> Option<(i64, String, Option<&'static str>)> {
     let mut fraction: Option<i64> = None; // the cents, once a decimal group is seen
     let mut currency: Option<String> = None;
     let mut basis: Option<&'static str> = None;
-    let mut groups: Vec<&str> = Vec::new(); // the digit groups as written, for `run_together_range`
     for token in value.split(' ').filter(|t| !t.is_empty()) {
         // Tax markers are tested BEFORE currency codes, because `TTC` is three
         // upper-case letters and would otherwise read as a second currency and refuse
@@ -330,10 +329,9 @@ fn parse_money(value: &str) -> Option<(i64, String, Option<&'static str>)> {
             Some(n) => n.checked_mul(1000)?.checked_add(group)?,
             None => group,
         });
-        groups.push(digits);
         fraction = group_fraction;
     }
-    if run_together_range(&groups, fraction) {
+    if whole.is_some_and(|units| run_together_range(units, fraction)) {
         return None; // a minimum and a maximum, not one figure (issue 491)
     }
     match (whole, currency) {
@@ -345,38 +343,35 @@ fn parse_money(value: &str) -> Option<(i64, String, Option<&'static str>)> {
     }
 }
 
-/// Whether a correctly grouped figure is really a purchase-order framework's minimum and
-/// maximum printed side by side (issue 491).
+/// Whether a figure is really a purchase-order framework's minimum and maximum printed
+/// side by side (issue 491).
 ///
-/// French award notices of 2005–2008 write a bons-de-commande range as two space-grouped
-/// numbers in one V.4 value, and the grouping rule above cannot tell them from one figure:
+/// French award notices of 2005–2008 write a bons-de-commande range as two numbers in one
+/// value. The grouping rule above cannot tell them from one figure, and the same body's
+/// V.4 restates the pair with the spaces gone:
 ///
 /// ```text
-///     Value: 60 000 220 000 EUR.     min 60 000, max 220 000      was claimed as €60 bn
-///     Value: 87 250 349 000 EUR.     min 87 250, max 349 000      was claimed as €87 bn
-///     Value: 5 500 22 000. EUR       `22` is not a thousands group  already refused
+///     II.2.1) … Value: 40 000 120 000 EUR.   min 40 000, max 120 000   was claimed as €40 bn
+///     V.4)    … Value: 40000120000 EUR.      the same pair, unspaced  (CAN 26854-2007)
+///     Value: 87 250 349 000 EUR.             min 87 250, max 349 000   was claimed as €87 bn
+///     Value: 5 500 22 000. EUR               `22` is not a thousands group  already refused
 /// ```
 ///
-/// French law (CMP 2001/2004) caps the maximum at four times the minimum. So the
-/// figure is a range when its last two groups (Y, the maximum, not 0-led) and the groups
-/// before them (X) satisfy X < Y ≤ 4X, and the print is the range's own: Y exactly 4X,
-/// or X and Y both whole thousands. Y ≥ 100 000 and Y ≤ 4X force X ≥ 25 000, so every
-/// figure this matches is at least 25 000 100 000 units. The rule therefore cannot touch
-/// an ordinary-sized figure. Measured over all 3,786,955 text notices: 25 EUR notices,
-/// all 2005–2008. The 12 non-round lira and forint figures of the same raw shape
+/// So the test reads the NUMBER, not its spacing: Y = the last six digits (the maximum,
+/// at least 100 000), X = the digits before them (the minimum). French law (CMP 2001/2004)
+/// caps the maximum at four times the minimum, so the figure is a range when X < Y ≤ 4X
+/// and the print is the range's own: Y exactly 4X, or X and Y both whole thousands. Y ≥
+/// 100 000 and Y ≤ 4X force X ≥ 25 000, so every figure this matches is at least
+/// 25 000 100 000 units, and an ordinary-sized figure can never match. Measured on the
+/// number over all 3,786,955 text notices (spaced or not): 25 EUR notices, all from
+/// 2005–2008. The 12 non-round lira and forint figures with the same raw arithmetic
 /// (e.g. LIT 57 157 228 327) are ordinary published figures and stay claimed.
-fn run_together_range(groups: &[&str], fraction: Option<i64>) -> bool {
-    if groups.len() < 3 || fraction.is_some_and(|cents| cents != 0) {
+fn run_together_range(units: i64, fraction: Option<i64>) -> bool {
+    if fraction.is_some_and(|cents| cents != 0) {
         return false;
     }
-    let (min, max) = groups.split_at(groups.len() - 2);
-    if max[0].starts_with('0') {
-        return false;
-    }
-    let (Ok(x), Ok(y)) = (min.concat().parse::<i64>(), max.concat().parse::<i64>()) else {
-        return false;
-    };
-    x < y && y <= 4 * x && (y == 4 * x || (x % 1000 == 0 && y % 1000 == 0))
+    let (x, y) = (units / 1_000_000, units % 1_000_000);
+    y >= 100_000 && x < y && y <= 4 * x && (y == 4 * x || (x % 1000 == 0 && y % 1000 == 0))
 }
 
 /// A standalone token that states whether the figure beside it includes tax.
@@ -3155,6 +3150,8 @@ mod tests {
         assert_eq!(parse_money("87 250 349 000 EUR"), None, "min 87 250, max 349 000 = 4x");
         assert_eq!(parse_money("62 709 250 836 EUR"), None, "non-round, but exactly 4x");
         assert_eq!(parse_money("25 000 100 000,00 EUR"), None, "a zero fraction is still the print");
+        // CAN 26854-2007's V.4 restates its II.2.1 pair with the spaces gone.
+        assert_eq!(parse_money("40000120000 EUR."), None, "the same pair, unspaced");
         // The same procedure's other award: already refused by the grouping rule.
         assert_eq!(parse_money("5 500 22 000. EUR"), None);
         // Ordinary figures of the same raw shape stay claimed: non-round lira and forint
