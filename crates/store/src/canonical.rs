@@ -1230,6 +1230,155 @@ pub(crate) const SCHEMA: &str = "
       FROM fetches;
 ";
 
+/// How many version-keyed leaf tables the fold writes: every table keyed by `(tender_id, seq)`.
+pub const LEAF_COUNT: usize = 14;
+
+/// One of the fold's version-keyed leaf tables (issue 495 unit 2), an index into
+/// [`LEAF_TABLES`]. The discriminants are TEARDOWN order, children first, which is the
+/// order `delete_version`, `RETIRE_TABLES`, `reset_tender_layer` and `clear_canonical`
+/// walk; [`LEAF_FLUSH_ORDER`] is the insert order.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(usize)]
+pub enum Leaf {
+    ResultWinners,
+    ResultStats,
+    LotResults,
+    BidParties,
+    Bids,
+    Contracts,
+    Parties,
+    Texts,
+    Dates,
+    Amounts,
+    Classifications,
+    LotGroupMembers,
+    VersionLots,
+    Versions,
+}
+
+/// Which lot a leaf row belongs to: ADR-0017 D3's rule L reads it from issue 495 unit 3 on.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LotScope {
+    /// The Tender's own row, never a lot's.
+    Tender,
+    /// A nullable `lot_id` column; NULL is the Tender's own row.
+    Column(&'static str),
+    /// `tender_version_lot_group_members`: the group lot and its member lot.
+    Pair(&'static str, &'static str),
+    /// The lot of the same-seq `tender_version_lot_results` row the column names.
+    ViaLotResult(&'static str),
+    /// The lot of the same-seq `tender_version_bids` row the column names.
+    ViaBid(&'static str),
+}
+
+/// A leaf table as the fold writes it: one source for its INSERT, its per-version DELETE,
+/// and the compare SELECT of ADR-0017 D1.
+pub struct LeafTable {
+    pub leaf: Leaf,
+    pub name: &'static str,
+    /// INSERT columns in bind order. Copied verbatim from the pre-495 INSERT prefixes and
+    /// pinned by `leaf_sql_is_the_pre_495_literal_text`. Never reorder to schema order: on
+    /// a migrated database the ALTER-added columns sit at the end.
+    pub cols: &'static [&'static str],
+    pub lot: LotScope,
+}
+
+/// Every leaf table, in [`Leaf`] (teardown) order. A column added to a leaf table's
+/// `CREATE TABLE` must be added here and to `MIGRATIONS`; `leaf_tables_match_the_schema_
+/// fresh_and_migrated` fails until all three agree.
+pub const LEAF_TABLES: [&LeafTable; LEAF_COUNT] = [
+    &LeafTable { leaf: Leaf::ResultWinners, name: "tender_version_result_winners", cols: &["tender_id", "seq", "lot_result_id", "organization_id", "is_buyer"], lot: LotScope::ViaLotResult("lot_result_id") },
+    &LeafTable { leaf: Leaf::ResultStats, name: "tender_version_result_stats", cols: &["tender_id", "seq", "lot_result_id", "kind", "count", "quality"], lot: LotScope::ViaLotResult("lot_result_id") },
+    &LeafTable { leaf: Leaf::LotResults, name: "tender_version_lot_results", cols: &["tender_id", "seq", "lot_result_id", "lot_id", "decision", "reason", "awarded_cents", "awarded_currency", "decided_utc", "decided_offset", "decided_has_time", "awarded_eur_cents"], lot: LotScope::Column("lot_id") },
+    &LeafTable { leaf: Leaf::BidParties, name: "tender_version_bid_parties", cols: &["tender_id", "seq", "bid_id", "role", "organization_id", "mention_notice_id", "mention_section_id"], lot: LotScope::ViaBid("bid_id") },
+    &LeafTable { leaf: Leaf::Bids, name: "tender_version_bids", cols: &["tender_id", "seq", "bid_id", "lot_id", "cents", "currency", "eur_cents", "quality"], lot: LotScope::Column("lot_id") },
+    &LeafTable { leaf: Leaf::Contracts, name: "tender_version_contracts", cols: &["tender_id", "seq", "contract_id", "buyer_contract_id", "concluded_utc", "concluded_offset", "concluded_has_time", "decided_utc", "decided_offset", "decided_has_time", "cents", "currency", "eur_cents"], lot: LotScope::Tender },
+    &LeafTable { leaf: Leaf::Parties, name: "tender_version_parties", cols: &["tender_id", "seq", "lot_id", "role", "organization_id", "mention_notice_id", "mention_section_id"], lot: LotScope::Column("lot_id") },
+    &LeafTable { leaf: Leaf::Texts, name: "tender_version_texts", cols: &["tender_id", "seq", "lot_id", "field", "lang", "value"], lot: LotScope::Column("lot_id") },
+    &LeafTable { leaf: Leaf::Dates, name: "tender_version_dates", cols: &["tender_id", "seq", "lot_id", "field", "utc_seconds", "offset_minutes", "has_time"], lot: LotScope::Column("lot_id") },
+    &LeafTable { leaf: Leaf::Amounts, name: "tender_version_amounts", cols: &["tender_id", "seq", "lot_id", "field", "cents", "currency", "tax_basis", "eur_cents", "quality"], lot: LotScope::Column("lot_id") },
+    &LeafTable { leaf: Leaf::Classifications, name: "tender_version_classifications", cols: &["tender_id", "seq", "lot_id", "field", "scheme", "code"], lot: LotScope::Column("lot_id") },
+    &LeafTable { leaf: Leaf::LotGroupMembers, name: "tender_version_lot_group_members", cols: &["tender_id", "seq", "group_lot_id", "member_lot_id"], lot: LotScope::Pair("group_lot_id", "member_lot_id") },
+    &LeafTable { leaf: Leaf::VersionLots, name: "tender_version_lots", cols: &["tender_id", "seq", "lot_id", "kind", "value_cents", "value_currency", "value_eur_cents"], lot: LotScope::Column("lot_id") },
+    &LeafTable { leaf: Leaf::Versions, name: "tender_versions", cols: &["tender_id", "seq", "caused_by_notice_id", "published_at", "dispatched_at", "notice_subtype", "original_lang", "publication_id"], lot: LotScope::Tender },
+];
+const _: () = {
+    let mut i = 0;
+    while i < LEAF_COUNT {
+        assert!(LEAF_TABLES[i].leaf as usize == i, "LEAF_TABLES is indexed by Leaf");
+        i += 1;
+    }
+};
+
+/// The order the fold INSERTs leaf rows: parents before children, so a foreign-keys-ON
+/// caller finds each referenced `(tender_id, seq)` present. The currency present-set is
+/// written right after [`Leaf::Amounts`].
+pub const LEAF_FLUSH_ORDER: [Leaf; LEAF_COUNT] = [
+    Leaf::Versions,
+    Leaf::VersionLots,
+    Leaf::LotGroupMembers,
+    Leaf::Texts,
+    Leaf::Amounts,
+    Leaf::Classifications,
+    Leaf::Dates,
+    Leaf::Parties,
+    Leaf::LotResults,
+    Leaf::ResultWinners,
+    Leaf::ResultStats,
+    Leaf::Bids,
+    Leaf::BidParties,
+    Leaf::Contracts,
+];
+
+/// The per-Tender identity tables, in teardown order after the leaves.
+pub const ENTITY_TABLES: [&str; 4] = ["lot_results", "bids", "contracts", "lots"];
+
+/// Every content table of the tender layer in teardown order: the leaves, then the identity
+/// tables. `RETIRE_TABLES` and `reset_tender_layer` walk it; `clear_canonical` appends
+/// `tenders`.
+pub const CONTENT_TABLES: [&str; LEAF_COUNT + 4] = {
+    let mut out = [""; LEAF_COUNT + 4];
+    let mut i = 0;
+    while i < LEAF_COUNT {
+        out[i] = LEAF_TABLES[i].name;
+        i += 1;
+    }
+    let mut j = 0;
+    while j < 4 {
+        out[LEAF_COUNT + j] = ENTITY_TABLES[j];
+        j += 1;
+    }
+    out
+};
+
+impl Leaf {
+    pub fn table(self) -> &'static LeafTable {
+        LEAF_TABLES[self as usize]
+    }
+}
+
+impl LeafTable {
+    pub const fn ncols(&self) -> usize {
+        self.cols.len()
+    }
+
+    /// The prefix of the batched multi-row INSERT, `INSERT INTO t(cols) VALUES `.
+    pub fn insert_prefix(&self) -> String {
+        format!("INSERT INTO {}({}) VALUES ", self.name, self.cols.join(", "))
+    }
+
+    /// One version's rows, deleted.
+    pub fn delete_version_sql(&self) -> String {
+        format!("DELETE FROM {} WHERE tender_id = ? AND seq = ?", self.name)
+    }
+
+    /// One version's stored rows with their rowids, in the INSERT's column order: ADR-0017
+    /// D1's compare read (issue 495 unit 3).
+    pub fn compare_select_sql(&self) -> String {
+        format!("SELECT rowid, {} FROM {} WHERE tender_id = ? AND seq = ?", self.cols.join(", "), self.name)
+    }
+}
+
 /// How many Tenders (or Organization mentions) a single projection write
 /// transaction covers (issue 19). Batching amortises per-transaction overhead —
 /// the projection bottleneck — while keeping each batch small enough that its
@@ -8748,27 +8897,8 @@ impl Db {
     /// Clearing them here was pure redundant work in front of the DROP.
     pub async fn clear_canonical(&self) -> turso::Result<()> {
         let conn = self.conn().await;
-        for table in [
-            "tender_version_result_winners",
-            "tender_version_result_stats",
-            "tender_version_lot_results",
-            "tender_version_bid_parties",
-            "tender_version_bids",
-            "tender_version_contracts",
-            "tender_version_parties",
-            "tender_version_texts",
-            "tender_version_dates",
-            "tender_version_amounts",
-            "tender_version_classifications",
-            "tender_version_lot_group_members",
-        "tender_version_lots",
-            "tender_versions",
-            "lot_results",
-            "bids",
-            "contracts",
-            "lots",
-            "tenders",
-        ] {
+        // Issue 495 unit 2: the descriptor's teardown list, then `tenders`.
+        for table in CONTENT_TABLES.into_iter().chain(["tenders"]) {
             // DROP+recreate, NOT DELETE (issue 63): over the tens-of-millions-of-row
             // tender-content tables a per-row DELETE balloons the WAL to OOM. Same
             // fix as reset_tender_layer; the fresh path must not balloon either.
@@ -10663,26 +10793,8 @@ impl Db {
             (),
         )
         .await?;
-        for table in [
-            "tender_version_result_winners",
-            "tender_version_result_stats",
-            "tender_version_lot_results",
-            "tender_version_bid_parties",
-            "tender_version_bids",
-            "tender_version_contracts",
-            "tender_version_parties",
-            "tender_version_texts",
-            "tender_version_dates",
-            "tender_version_amounts",
-            "tender_version_classifications",
-            "tender_version_lot_group_members",
-        "tender_version_lots",
-            "tender_versions",
-            "lot_results",
-            "bids",
-            "contracts",
-            "lots",
-        ] {
+        // Issue 495 unit 2: the descriptor's teardown list.
+        for table in CONTENT_TABLES {
             // DROP+recreate, NOT DELETE: these tables are still full from the prior
             // build (each attempt's per-row DELETE ballooned the WAL and was rolled
             // back on kill, so they never cleared — the deadlock, issue 63).
@@ -29676,26 +29788,8 @@ impl Db {
 
     /// Every content table a retired Tender's rows must be deleted from, in
     /// dependency order (satellites before the entities they reference).
-    const RETIRE_TABLES: [&'static str; 18] = [
-        "tender_version_result_winners",
-        "tender_version_result_stats",
-        "tender_version_lot_results",
-        "tender_version_bid_parties",
-        "tender_version_bids",
-        "tender_version_contracts",
-        "tender_version_parties",
-        "tender_version_texts",
-        "tender_version_dates",
-        "tender_version_amounts",
-        "tender_version_classifications",
-        "tender_version_lot_group_members",
-        "tender_version_lots",
-        "tender_versions",
-        "lot_results",
-        "bids",
-        "contracts",
-        "lots",
-    ];
+    /// Issue 495 unit 2: the descriptor's teardown list.
+    const RETIRE_TABLES: [&'static str; 18] = CONTENT_TABLES;
 
     /// Retire `ids` in BOUNDED chunks — the shared body of both retirement paths
     /// (issue 93).
@@ -33192,6 +33286,86 @@ mod tests {
         let path = format!("/tmp/tender-db-{name}-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
         (Db::open(&path).await.expect("open scratch db"), path)
+    }
+
+    /// Issue 495 unit 2: every string the descriptor generates is, byte for byte, the
+    /// literal text the fold executed before it. Frozen copies of the pre-495 INSERT
+    /// prefixes, the per-version DELETE, the teardown list and the flush order. If this
+    /// fails, the descriptor changed what the writer runs: the goldens will move too.
+    #[test]
+    fn leaf_sql_is_the_pre_495_literal_text() {
+        use super::{CONTENT_TABLES, ENTITY_TABLES, LEAF_COUNT, LEAF_FLUSH_ORDER, LEAF_TABLES, Leaf, LotScope};
+        const PREFIXES: [(&str, usize); LEAF_COUNT] = [
+            ("INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, original_lang, publication_id) VALUES ", 8),
+            ("INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind, value_cents, value_currency, value_eur_cents) VALUES ", 7),
+            ("INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4),
+            ("INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6),
+            ("INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis, eur_cents, quality) VALUES ", 9),
+            ("INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field, scheme, code) VALUES ", 6),
+            ("INSERT INTO tender_version_dates(tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time) VALUES ", 7),
+            ("INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7),
+            ("INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency, decided_utc, decided_offset, decided_has_time, awarded_eur_cents) VALUES ", 12),
+            ("INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id, is_buyer) VALUES ", 5),
+            ("INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count, quality) VALUES ", 6),
+            ("INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency, eur_cents, quality) VALUES ", 8),
+            ("INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7),
+            ("INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency, eur_cents) VALUES ", 13),
+        ];
+        // The flush order IS the order of the frozen prefixes above.
+        for (leaf, (prefix, ncols)) in LEAF_FLUSH_ORDER.iter().zip(PREFIXES) {
+            assert_eq!(leaf.table().insert_prefix(), prefix, "{leaf:?}'s INSERT prefix");
+            assert_eq!(leaf.table().ncols(), ncols, "{leaf:?}'s column count");
+        }
+        const TEARDOWN: [&str; LEAF_COUNT] = [
+            "tender_version_result_winners",
+            "tender_version_result_stats",
+            "tender_version_lot_results",
+            "tender_version_bid_parties",
+            "tender_version_bids",
+            "tender_version_contracts",
+            "tender_version_parties",
+            "tender_version_texts",
+            "tender_version_dates",
+            "tender_version_amounts",
+            "tender_version_classifications",
+            "tender_version_lot_group_members",
+            "tender_version_lots",
+            "tender_versions",
+        ];
+        assert_eq!(LEAF_TABLES.map(|t| t.name), TEARDOWN, "LEAF_TABLES is delete_version's teardown order");
+        for t in LEAF_TABLES {
+            assert_eq!(
+                t.delete_version_sql(),
+                format!("DELETE FROM {} WHERE tender_id = ? AND seq = ?", t.name),
+                "{}'s per-version DELETE",
+                t.name
+            );
+            assert_eq!(&t.cols[..2], ["tender_id", "seq"], "{} is keyed by (tender_id, seq)", t.name);
+            let mut sorted = t.cols.to_vec();
+            sorted.sort_unstable();
+            sorted.dedup();
+            assert_eq!(sorted.len(), t.cols.len(), "{} names a column twice", t.name);
+            let named: Vec<&str> = match t.lot {
+                LotScope::Tender => vec![],
+                LotScope::Column(c) | LotScope::ViaLotResult(c) | LotScope::ViaBid(c) => vec![c],
+                LotScope::Pair(a, b) => vec![a, b],
+            };
+            for c in named {
+                assert!(t.cols.contains(&c), "{}'s lot scope names {c}, which it does not write", t.name);
+            }
+        }
+        assert_eq!(LEAF_FLUSH_ORDER[0], Leaf::Versions, "the version row flushes first (FK-on callers)");
+        assert_eq!(LEAF_TABLES[LEAF_COUNT - 1].leaf, Leaf::Versions, "and is deleted last");
+        let mut flushed = LEAF_FLUSH_ORDER.to_vec();
+        flushed.sort_by_key(|l| *l as usize);
+        assert_eq!(flushed, LEAF_TABLES.map(|t| t.leaf), "every leaf flushes exactly once");
+        assert_eq!(
+            CONTENT_TABLES[..LEAF_COUNT],
+            TEARDOWN,
+            "RETIRE_TABLES / reset_tender_layer / clear_canonical walk the leaves in teardown order"
+        );
+        assert_eq!(CONTENT_TABLES[LEAF_COUNT..], ENTITY_TABLES, "then the identity tables");
+        assert_eq!(ENTITY_TABLES, ["lot_results", "bids", "contracts", "lots"]);
     }
 
     /// Issue 495 unit 2's anchor for the batched leaf write: `flush_rows` splits a buffer into
