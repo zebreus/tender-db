@@ -3927,7 +3927,6 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
     // Best key seen so far per row, `None` until the first candidate — kept beside
     // the rows rather than in them because it is the ORDER BY's key, not output.
     let mut best_title: Vec<Option<u8>> = vec![None; rows.len()];
-    let mut best_value: Vec<Option<i64>> = vec![None; rows.len()];
     let mut best_deadline: Vec<Option<i64>> = vec![None; rows.len()];
 
     for (tender_id, seq) in versions {
@@ -3998,50 +3997,28 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
                 key.clone(),
             )
             .await?;
-        // The lot candidates that pass the per-row skips below, held until the
-        // Tender-wide exact-10^k rule has been consulted (issue 471 unit 4(a)).
-        let mut candidates: Vec<(usize, Option<i64>, Option<String>, Option<i64>, Option<String>)> = Vec::new();
+        // Every lot candidate of this version, in scan order, held until the
+        // Tender-wide exact-10^k rule has been built (issue 471 unit 4(a)). The skips
+        // themselves are the fold's: issue 490 moved them into
+        // `canonical::elect_lot_value`, which the fold calls to STORE this value, so
+        // the read and the stored column run one function. Issue 389 unit 1 is why
+        // that matters -- tender 25773 served `value: null` (the head refuses an exact
+        // zero) beside a lot priced `{cents: 0}` from the same figure, because this
+        // pick had transcribed the rule rather than called it.
+        let mut candidates: Vec<(usize, i64, String, Option<i64>, String)> = Vec::new();
         while let Some(row) = got.next().await? {
             let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
-            let cents = opt_int_of(&row, 1);
-            // Issue 389 unit 1: the fold's own predicate, CALLED rather than
-            // transcribed. `tender_select_head` warns that walking the digits in
-            // SQL would be the second implementation this whole class of bug is
-            // made of, and solves it by looking up the row the fold chose via
-            // `eur_cents = t.current_value_eur_cents`. That trick is unavailable
-            // here — the head column is tender-scoped and no per-LOT twin exists
-            // — but `summarise` is Rust, so the function itself is in reach and
-            // there is still only one rule.
-            //
-            // What it fixes: tender 25773 served `value: null` (the head refuses
-            // an exact zero since issue 366's `55d239d`) in the same response
-            // that priced its only lot at `{cents: 0, currency: "GBP"}`, from the
-            // same published figure — and `?tender=25773&max_value=0` returned
-            // nothing, because the FILTER reads the head column while this pick
-            // re-derived. 1,280 lots over ids 1–100,000 were served that way.
-            if cents.is_some_and(crate::canonical::sentinel_amount) {
+            // `cents`, `currency` and `field` are NOT NULL in the schema.
+            let (Some(cents), Some(currency), Some(field)) = (opt_int_of(&row, 1), opt_text_of(&row, 2), opt_text_of(&row, 4))
+            else {
                 continue;
-            }
-            // The ceiling is defined on the EUR conversion, so it is applied
-            // where that conversion exists and nowhere else. An unconvertible
-            // amount is NOT refused: unlike the tender head column, which is a
-            // EUR figure and so has nothing to say without a rate, the lot row
-            // serves the PUBLISHED figure, and blanking a published amount for
-            // want of a rate would be a new defect rather than this one's fix.
-            let eur = opt_int_of(&row, 3);
-            if eur.is_some_and(|eur| eur > crate::canonical::IMPLAUSIBLE_EUR_CENTS) {
-                continue;
-            }
-            candidates.push((i, cents, opt_text_of(&row, 2), eur, opt_text_of(&row, 4)));
+            };
+            candidates.push((i, cents, currency, opt_int_of(&row, 3), field));
         }
 
-        // Issue 471 unit 4(a): the fold's exact-10^k scale-error rule, CALLED
-        // (`ScalePartners::refuses_amount`) like the sentinel test above, so a
-        // lot figure the head election refuses is not served as that lot's
-        // value while `/v1/lots?min_value=` reads the head column that refused
-        // it (the issue-389 unit-1 incoherence, for this rule). The rule reads
-        // the Tender's chain up to this version, so its inputs are loaded only
-        // when some candidate reaches the rule's EUR 1 bn gate — rarely.
+        // Over every candidate, not only the admissible ones: a sentinel or an
+        // over-ceiling figure past the gate loads the chain for nothing, which is
+        // rare, and filtering here would be a second copy of the skips.
         let reached = candidates
             .iter()
             .any(|c| c.3.is_some_and(|eur| eur >= crate::canonical::SCALE_ERROR_MIN_EUR_CENTS));
@@ -4075,19 +4052,20 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
                 rule.add_head_amount(field, currency, cents);
             }
         }
-        for (i, cents, currency, eur, field) in candidates {
-            if let (Some(c), Some(cur), Some(e), Some(f)) = (cents, currency.as_deref(), eur, field.as_deref()) {
-                if rule.refuses_amount(f, cur, c, e) {
-                    continue;
-                }
-            }
-            // A NULL sorts last under `cents DESC` and is ignored by `MAX`, so it
-            // ranks below every real amount rather than above them.
-            let rank = cents.unwrap_or(i64::MIN);
-            if best_value[i].is_none_or(|best| rank > best) {
-                best_value[i] = Some(rank);
-                rows[i].value_cents = cents;
-                rows[i].currency = currency;
+        let mut by_row: std::collections::BTreeMap<usize, Vec<crate::canonical::LotAmount<'_>>> = Default::default();
+        for (i, cents, currency, eur_cents, field) in &candidates {
+            by_row.entry(*i).or_default().push(crate::canonical::LotAmount {
+                field,
+                cents: *cents,
+                currency,
+                eur_cents: *eur_cents,
+                quality: None, // the SELECT already dropped withheld rows
+            });
+        }
+        for (i, amounts) in by_row {
+            if let Some(won) = crate::canonical::elect_lot_value(amounts, &rule) {
+                rows[i].value_cents = Some(won.cents);
+                rows[i].currency = Some(won.currency.to_owned());
             }
         }
 

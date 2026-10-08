@@ -260,6 +260,101 @@ async fn a_refused_lot_figure_is_not_served_as_the_lots_value() {
     assert_eq!(value("LOT-0002"), Some(3_000_000_000));
 }
 
+/// Issue 490: the fold STORES each lot's elected value in `tender_version_lots`,
+/// and it is the value the REST lot row serves -- one function
+/// (`canonical::elect_lot_value`) decides both. Every skip is exercised, plus
+/// the two things a stored per-version value must get right: a scale partner
+/// that sits in an EARLIER version, and the tie order.
+#[tokio::test]
+async fn the_stored_lot_value_is_the_value_the_lot_row_serves() {
+    use store::canonical::LotState;
+    let (db, conn) = open("stored-lot-value").await;
+    let fig = |field: &str, cents: i64, currency: &str, quality: Option<&str>| Fact::Amount {
+        field: field.into(),
+        cents,
+        currency: currency.into(),
+        tax_basis: None,
+        quality: quality.map(Into::into),
+    };
+    let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+
+    let small = 3_000_000_000; // EUR 30 m, published in version 1 only
+    let mut p = projection(1, Vec::new());
+    p.versions[0].lots = vec![lot("LOT-A", vec![fig("estimated_value", small, "EUR", None)])];
+    let mut v2 = p.versions[0].clone();
+    v2.caused_by_notice_id = 2;
+    v2.published_at = PUBLISHED_AT + 86_400;
+    v2.publication_id = "2-2005".into();
+    v2.lots = vec![
+        // x1000 the EARLIER version's figure: refused, the next figure wins.
+        lot("LOT-A", vec![fig("framework_maximum", small * 1_000, "EUR", None), fig("estimated_value", 2_000_000, "EUR", None)]),
+        lot("LOT-B", vec![fig("estimated_value", 100, "EUR", None)]), // one unit: a token
+        lot("LOT-C", vec![fig("estimated_value", 0, "EUR", None)]),   // zero: an absence
+        lot("LOT-D", vec![fig("estimated_value", -100, "EUR", Some("withheld"))]),
+        // Over the EUR 100 bn ceiling, beside a real figure.
+        lot("LOT-E", vec![fig("result_value", 20_000_000_000_000_000, "EUR", None), fig("estimated_value", 5_000_000, "EUR", None)]),
+        // No rate for the currency: still served, as published, with no EUR.
+        lot("LOT-F", vec![fig("estimated_value", 7_000_000, "XYZ", None)]),
+        // A tie on published cents: the first in Fact order (field, then cents, then currency) keeps it.
+        lot("LOT-G", vec![fig("framework_maximum", 4_000_000, "XYZ", None), fig("estimated_value", 4_000_000, "EUR", None)]),
+    ];
+    p.versions.push(v2);
+    db.apply_tenders(&[p], PUBLISHED_AT + 86_400, false).await.unwrap();
+
+    let stored = |seq: i64| {
+        let conn = &conn;
+        async move {
+            let mut rows = conn
+                .query(
+                    "SELECT l.lot_key, vl.value_cents, vl.value_currency, vl.value_eur_cents
+                       FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id
+                      WHERE vl.tender_id = 1 AND vl.seq = ? ORDER BY l.lot_key",
+                    [Value::Integer(seq)],
+                )
+                .await
+                .unwrap();
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                out.push((
+                    row.get_value(0).unwrap().as_text().unwrap().to_owned(),
+                    row.get_value(1).unwrap().as_integer().copied(),
+                    row.get_value(2).unwrap().as_text().map(|s| s.to_owned()),
+                    row.get_value(3).unwrap().as_integer().copied(),
+                ));
+            }
+            out
+        }
+    };
+    let eur = |c: i64| (Some(c), Some("EUR".to_owned()), Some(c));
+    let none = (None, None, None);
+    let want: Vec<(&str, (Option<i64>, Option<String>, Option<i64>))> = vec![
+        ("LOT-A", eur(2_000_000)),
+        ("LOT-B", none.clone()),
+        ("LOT-C", none.clone()),
+        ("LOT-D", none.clone()),
+        ("LOT-E", eur(5_000_000)),
+        ("LOT-F", (Some(7_000_000), Some("XYZ".to_owned()), None)),
+        ("LOT-G", eur(4_000_000)),
+    ];
+    let got = stored(2).await;
+    assert_eq!(
+        got.iter().map(|(k, c, cur, e)| (k.as_str(), (*c, cur.clone(), *e))).collect::<Vec<_>>(),
+        want,
+        "the fold's stored lot values"
+    );
+    assert_eq!(stored(1).await, vec![("LOT-A".to_owned(), Some(small), Some("EUR".to_owned()), Some(small))], "version 1 keeps its own");
+
+    // The REST lot rows serve exactly what is stored.
+    let lots = read::lots(&conn, &Filter { tender: Some(1), ..Filter::default() }, Scope::Page { after: 0, limit: 100 })
+        .await
+        .unwrap();
+    assert_eq!(lots.len(), want.len());
+    for row in &lots {
+        let (_, c, cur, _) = got.iter().find(|(k, ..)| *k == row.lot_key).expect("stored row");
+        assert_eq!((&row.value_cents, &row.currency), (c, cur), "lot {}: REST serves the stored value", row.lot_key);
+    }
+}
+
 /// Issue 171 (rule 12): the near side of the same window. Prod served five head
 /// deadlines before 1990 on 2026-09-26 — 5671586's year 0016 (a two-digit
 /// year), 1466977's `1970-01-01` in a 2024 notice — and every one of them was

@@ -688,7 +688,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 30] = [
+const MIGRATIONS: [&str; 33] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -769,6 +769,12 @@ const MIGRATIONS: [&str; 30] = [
     // is served and counted exactly as before; the next fold of a tender judges it.
     // In the SAME commit as canonical.rs's CREATE TABLE column (the issue-372 lesson).
     "ALTER TABLE tender_version_result_winners ADD COLUMN is_buyer INTEGER",
+    // Issue 490: each version's lots carry their elected value. Nullable, no default,
+    // so metadata-only like `is_buyer` above; existing rows read NULL until the
+    // epoch-4 refold rewrites them. Same commit as canonical.rs's CREATE TABLE columns.
+    "ALTER TABLE tender_version_lots ADD COLUMN value_cents INTEGER",
+    "ALTER TABLE tender_version_lots ADD COLUMN value_currency TEXT",
+    "ALTER TABLE tender_version_lots ADD COLUMN value_eur_cents INTEGER",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {

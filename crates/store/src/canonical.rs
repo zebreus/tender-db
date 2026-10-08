@@ -219,6 +219,15 @@ pub(crate) const SCHEMA: &str = "
         seq       INTEGER NOT NULL,
         lot_id    INTEGER NOT NULL REFERENCES lots(id),
         kind      TEXT NOT NULL, -- Lot | LotsGroup | Part
+        -- Issue 490: the lot's elected value in this version (`elect_lot_value`), the
+        -- figure the REST lot row serves. NULL (all three) when no lot-scoped figure
+        -- survives the election -- a lot never falls back to the tender's figure.
+        -- `value_eur_cents` is `value_cents` in EUR at the version's publication date,
+        -- as of the fold; NULL when no rate resolves. Version rows written before
+        -- epoch 4 read NULL until the backfill refold reaches them.
+        value_cents     INTEGER,
+        value_currency  TEXT,
+        value_eur_cents INTEGER,
         PRIMARY KEY (tender_id, seq, lot_id),
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
@@ -1279,6 +1288,7 @@ pub const NOTICE_VALUE_TABLES: &[&str] = &[
 /// | 1 | issue 98 — DE-1.x organization references (`is_ref` + 25 role aliases) |
 /// | 2 | issue 174 — r208 `RECEIPT_LIMIT_DATE` maps to `submission_deadline`, so the 2011–2016 era re-folds with deadlines |
 /// | 3 | issue 177 — r208 `VALUE_COST` routes by context (CN estimate / award value / CAN final total), so the era re-folds with `estimated_value`/`result_value` |
+/// | 4 | issue 490 — every version's lots carry their elected value (`tender_version_lots.value_*`), every profile |
 ///
 /// **Bump this ONLY for a logic change that crosses profiles** (issue 179). A
 /// profile-scoped mapping fix — the 174/177 class, historically every bump —
@@ -1288,6 +1298,16 @@ pub const NOTICE_VALUE_TABLES: &[&str] = &[
 /// early-return. A global bump declares 7.9M tenders stale to fix one era and
 /// owes the whole corpus a rewrite on the next full walk — measured at
 /// 6h02m / 14.2M version writes for a 2.69M-notice cohort (issue 179).
+///
+/// Bumped for issue 490 because that change DOES cross every profile: a stored
+/// version written before it has NULL lot values, so its chain stopped being a
+/// state key for the `value_*` columns everywhere at once. The epoch is also its
+/// completeness check -- `projection_epoch <> 4` on a bounded `tenders` window
+/// names the Tenders the backfill (an all-profile refold) has not reached yet.
+/// The election functions the stored value depends on are fold logic from then
+/// on: a change to [`sentinel_amount`], [`IMPLAUSIBLE_EUR_CENTS`] or
+/// [`ScalePartners`] reaches a stored lot value only through a stamping refold,
+/// exactly like [`head_value_eur_cents`] reaches the head column.
 ///
 /// NOT bumped for issue 234's identifier-less mention merge, and the reasoning
 /// is worth keeping because the bump was made and then REVERTED after its first
@@ -1299,7 +1319,7 @@ pub const NOTICE_VALUE_TABLES: &[&str] = &[
 /// (fresh ingests, re-parses — which is also why the fresh-DB golden legitimately
 /// changed). Collapsing the EXISTING provisional rows is a separate backfill
 /// concern on issue 234, not a fold concern.
-pub const PROJECTION_EPOCH: i64 = 3;
+pub const PROJECTION_EPOCH: i64 = 4;
 
 const NODE_WRITE_BATCH: usize = 20_000;
 
@@ -2648,9 +2668,19 @@ pub fn head_title(head: &TenderVersion) -> Option<String> {
 /// issue 471 unit 4(a)), which looks for a partner in any version. An empty
 /// chain elects nothing.
 pub fn head_value_eur_cents(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> Option<i64> {
-    let head = chain.last()?;
+    head_value_eur_cents_with(chain.last()?, &ScalePartners::of_chain(chain), rates)
+}
+
+/// [`head_value_eur_cents`] with the scale rule already built: `partners` must
+/// be [`ScalePartners::of_chain`] of the chain whose last version is `head`.
+/// The fold calls this with the running rule it keeps for the lot values
+/// (issue 490), so the head election does not walk the chain a second time.
+pub fn head_value_eur_cents_with(
+    head: &TenderVersion,
+    partners: &ScalePartners<'_>,
+    rates: &crate::rates::RatesLookup,
+) -> Option<i64> {
     let date = crate::rates::civil_date(head.published_at);
-    let partners = ScalePartners::of_chain(chain);
     head.facts
         .iter()
         .chain(head.lots.iter().flat_map(|l| l.facts.iter()))
@@ -2706,6 +2736,57 @@ pub fn head_value_eur_cents(chain: &[TenderVersion], rates: &crate::rates::Rates
         // a sub-half-cent amount converts to zero.
         .filter(|eur| *eur != 0)
         .max()
+}
+
+/// One lot-scoped amount offered to [`elect_lot_value`]: the published figure,
+/// its EUR conversion at the version's publication date (`None` without a
+/// rate), and the issue-372 `quality` marker.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct LotAmount<'a> {
+    pub field: &'a str,
+    pub cents: i64,
+    pub currency: &'a str,
+    pub eur_cents: Option<i64>,
+    pub quality: Option<&'a str>,
+}
+
+/// Issue 490: THE elected value of one lot of one version -- the figure the fold
+/// stores in `tender_version_lots.value_*` and the REST lot row serves.
+///
+/// The candidates are the lot's own amounts, in the order the fold writes them
+/// (`Fact` order, which is the row order the read layer scans). Skipped: a
+/// withheld figure (issue 372), a sentinel (issue 366, read on the PUBLISHED
+/// figure), a figure over [`IMPLAUSIBLE_EUR_CENTS`] where a conversion exists to
+/// measure it, and a figure the exact-10^k rule refuses (issue 471 unit 4(a);
+/// `refuses_amount` is false below its EUR 1 bn gate, so no separate gate). An
+/// unconvertible figure is NOT skipped: unlike the tender head, which is a EUR
+/// column, the lot serves the published figure. The winner is the largest
+/// PUBLISHED cents, and the first of a tie keeps it. A lot never falls back to a
+/// tender-scoped figure.
+///
+/// `partners` must be [`ScalePartners::of_chain`] of the chain up to and
+/// including this version: the value of version N depends on versions 1..=N
+/// only, which is what lets a kept version keep its stored value.
+pub fn elect_lot_value<'a>(
+    amounts: impl IntoIterator<Item = LotAmount<'a>>,
+    partners: &ScalePartners<'_>,
+) -> Option<LotAmount<'a>> {
+    let mut best: Option<LotAmount<'a>> = None;
+    for a in amounts {
+        if a.quality.is_some() || sentinel_amount(a.cents) {
+            continue;
+        }
+        if a.eur_cents.is_some_and(|eur| eur > IMPLAUSIBLE_EUR_CENTS) {
+            continue;
+        }
+        if a.eur_cents.is_some_and(|eur| partners.refuses_amount(a.field, a.currency, a.cents, eur)) {
+            continue;
+        }
+        if best.is_none_or(|b| a.cents > b.cents) {
+            best = Some(a);
+        }
+    }
+    best
 }
 
 /// The EUR-cent ceiling above which a head value is not a figure (issue 366,
@@ -2810,6 +2891,7 @@ pub const SCALE_ERROR_MIN_EUR_CENTS: i64 = 100_000_000_000;
 /// `'withheld'`, a statement the SOURCE made; this is our inference. The one
 /// place that decides is still the fold: the read layer looks the elected row
 /// up by `eur_cents` and has no rule of its own to drift.
+#[derive(Debug, PartialEq)]
 pub struct ScalePartners<'a> {
     /// Every partner candidate (currency, cents) of the chain above the floor.
     figures: std::collections::HashSet<(&'a str, i64)>,
@@ -2849,29 +2931,53 @@ impl<'a> ScalePartners<'a> {
             .or_insert(Some(field));
     }
 
+    /// The partner figures ONE version contributes: every amount it publishes
+    /// (tender and lot scope, any field, any quality) and every lot award that
+    /// states both cents and currency.
+    ///
+    /// Issue 490: [`Self::of_chain`] is this over every version plus
+    /// [`Self::set_head`], and the fold calls the two pieces itself to keep ONE
+    /// running rule per Tender as it writes versions in order -- version N's lot
+    /// values need the rule over versions 1..=N, and rebuilding it per version
+    /// would be quadratic on the long legacy chains.
+    pub fn add_version_figures(&mut self, v: &'a TenderVersion) {
+        for (_, currency, cents) in Self::amounts(v) {
+            self.add_partner(currency, cents);
+        }
+        for r in v.rounds.iter().flat_map(|r| r.lot_results.iter()) {
+            if let (Some(cents), Some(currency)) = (r.awarded_cents, r.awarded_currency.as_deref()) {
+                self.add_partner(currency, cents);
+            }
+        }
+    }
+
+    /// Make `head` the version whose fields corroborate a figure, replacing any
+    /// earlier head (issue 490: the fold's running rule moves its head forward
+    /// one version at a time).
+    pub fn set_head(&mut self, head: &'a TenderVersion) {
+        self.head.clear();
+        for (field, currency, cents) in Self::amounts(head) {
+            self.add_head_amount(field, currency, cents);
+        }
+    }
+
+    /// Every amount of one version, tender scope then each lot's, as
+    /// `(field, currency, cents)`.
+    fn amounts(v: &'a TenderVersion) -> impl Iterator<Item = (&'a str, &'a str, i64)> {
+        v.facts.iter().chain(v.lots.iter().flat_map(|l| l.facts.iter())).filter_map(|f| match f {
+            Fact::Amount { field, cents, currency, .. } => Some((field.as_str(), currency.as_str(), *cents)),
+            _ => None,
+        })
+    }
+
     /// The rule over a whole chain, oldest first; the head is its last version.
     pub fn of_chain(chain: &'a [TenderVersion]) -> Self {
         let mut rule = Self::new();
-        let amounts = |v: &'a TenderVersion| {
-            v.facts.iter().chain(v.lots.iter().flat_map(|l| l.facts.iter())).filter_map(|f| match f {
-                Fact::Amount { field, cents, currency, .. } => Some((field.as_str(), currency.as_str(), *cents)),
-                _ => None,
-            })
-        };
         for v in chain {
-            for (_, currency, cents) in amounts(v) {
-                rule.add_partner(currency, cents);
-            }
-            for r in v.rounds.iter().flat_map(|r| r.lot_results.iter()) {
-                if let (Some(cents), Some(currency)) = (r.awarded_cents, r.awarded_currency.as_deref()) {
-                    rule.add_partner(currency, cents);
-                }
-            }
+            rule.add_version_figures(v);
         }
         if let Some(head) = chain.last() {
-            for (field, currency, cents) in amounts(head) {
-                rule.add_head_amount(field, currency, cents);
-            }
+            rule.set_head(head);
         }
         rule
     }
@@ -3226,8 +3332,12 @@ struct EurContext {
 }
 
 impl EurContext {
+    fn eur(&self, cents: i64, currency: &str) -> Option<i64> {
+        self.rates.eur_cents(cents, currency, &self.date)
+    }
+
     fn cents(&self, cents: i64, currency: &str) -> Value {
-        opt_int(self.rates.eur_cents(cents, currency, &self.date))
+        opt_int(self.eur(cents, currency))
     }
 
     fn opt(&self, cents: Option<i64>, currency: Option<&str>) -> Value {
@@ -15222,10 +15332,22 @@ impl Db {
         }
 
         let mut written = WrittenEntities::default();
+        // Issue 490: ONE scale rule per Tender, carried forward version by version,
+        // so each written version's lot values see exactly versions 1..=seq (what
+        // `ScalePartners::of_chain` of that prefix would build, pinned by
+        // `the_running_scale_rule_is_of_chain_of_each_prefix`). The kept prefix
+        // only seeds it: its stored values were elected over the same notices
+        // under the same epoch, so they stand.
+        let mut partners = ScalePartners::new();
+        for version in &p.versions[..keep] {
+            partners.add_version_figures(version);
+        }
         for (i, version) in p.versions.iter().enumerate().skip(keep) {
             let seq = i as i64 + 1;
             let previous = i.checked_sub(1).map(|j| &p.versions[j]);
-            self.write_version(conn, tender_id, seq, version, stmts, pending, &mut written).await?;
+            partners.add_version_figures(version);
+            partners.set_head(version);
+            self.write_version(conn, tender_id, seq, version, &partners, stmts, pending, &mut written).await?;
             applied.versions_written += 1;
             applied.changes += self
                 .append_version_changes(conn, tender_id, seq, version, previous, now, stmts)
@@ -15271,6 +15393,9 @@ impl Db {
         // leaves an already-correct pointer (set when those versions were written,
         // or by the one-time backfill at open for pre-issue-25 rows).
         if let Some(head) = p.versions.last() {
+            // A chain that SHRANK can leave the write loop with nothing to do
+            // (`keep == p.versions.len()`), so the rule's head is set here as well.
+            partners.set_head(head);
             stmts
                 .head_update
                 .execute((
@@ -15279,7 +15404,7 @@ impl Db {
                     Value::Integer(PROJECTION_EPOCH),
                     head_deadline(head).map(Value::Integer).unwrap_or(Value::Null),
                     head_title(head).map(Value::Text).unwrap_or(Value::Null),
-                    head_value_eur_cents(&p.versions, &self.rates_lookup())
+                    head_value_eur_cents_with(head, &partners, &self.rates_lookup())
                         .map(Value::Integer)
                         .unwrap_or(Value::Null),
                     Value::Integer(tender_id),
@@ -28977,6 +29102,7 @@ impl Db {
         tender_id: i64,
         seq: i64,
         v: &TenderVersion,
+        partners: &ScalePartners<'_>,
         stmts: &mut TenderInserts,
         pending: &mut Pending,
         written: &mut WrittenEntities,
@@ -29002,11 +29128,29 @@ impl Db {
         for lot in &v.lots {
             let lot_id = self.lot_identity(conn, tender_id, &lot.key, stmts).await?;
             written.lots.insert(lot_id);
+            // Issue 490: the lot's elected value, stored so `/v1/sql` reads the
+            // figure the REST lot row serves instead of re-deriving it.
+            let value = elect_lot_value(
+                lot.facts.iter().filter_map(|f| match f {
+                    Fact::Amount { field, cents, currency, quality, .. } => Some(LotAmount {
+                        field,
+                        cents: *cents,
+                        currency,
+                        eur_cents: eur.eur(*cents, currency),
+                        quality: quality.as_deref(),
+                    }),
+                    _ => None,
+                }),
+                partners,
+            );
             pending.version_lots.extend([
                 Value::Integer(tender_id),
                 Value::Integer(seq),
                 Value::Integer(lot_id),
                 t(&lot.kind),
+                opt_int(value.map(|a| a.cents)),
+                opt_text(value.map(|a| a.currency)),
+                opt_int(value.and_then(|a| a.eur_cents)),
             ]);
             self.write_facts(tender_id, seq, Some(lot_id), &lot.facts, pending, &eur);
         }
@@ -31052,7 +31196,13 @@ impl Pending {
     async fn flush(&mut self, conn: &Connection) -> turso::Result<u64> {
         let mut n = 0u64;
         n += flush_rows(conn, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, original_lang, publication_id) VALUES ", 8, &mut self.versions).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind) VALUES ", 4, &mut self.version_lots).await?;
+        n += flush_rows(
+            conn,
+            "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind, value_cents, value_currency, value_eur_cents) VALUES ",
+            7,
+            &mut self.version_lots,
+        )
+        .await?;
         n += flush_rows(conn, "INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4, &mut self.lot_group_members).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis, eur_cents, quality) VALUES ", 9, &mut self.amounts).await?;
@@ -31746,6 +31896,85 @@ mod tests {
     /// refused from the head election UNLESS a different amount field of the
     /// head version carries the same figure. Each case is a row shape from the
     /// adjudication table, in EUR so the empty rates lookup converts at 1.0.
+    /// Issue 490: the fold keeps ONE running scale rule per Tender, adding each
+    /// version's figures and moving the head forward, so version N's lot values
+    /// are elected under exactly `ScalePartners::of_chain(&chain[..=N])`. If the
+    /// running rule kept a stale head (corroboration from an older version) or
+    /// missed a version's partners, a stored lot value would disagree with what
+    /// the same chain elects from scratch.
+    #[test]
+    fn the_running_scale_rule_is_of_chain_of_each_prefix() {
+        use super::ScalePartners;
+        let amt = |field: &str, cents: i64| Fact::Amount {
+            field: field.into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let mut chain = vec![
+            head(vec![amt("estimated_value", 3_000_000_000)], vec![amt("estimated_value", 1_000_000)]),
+            head(vec![amt("result_value", 3_000_000_000_000)], vec![amt("framework_maximum", 7_000)]),
+            // The same figure under two fields: corroborated in THIS head only.
+            head(vec![amt("estimated_value", 5_000_000), amt("result_value", 5_000_000)], Vec::new()),
+            head(vec![amt("estimated_value", 5_000_000)], vec![amt("estimated_value", 3_000_000_000_000)]),
+        ];
+        for (i, v) in chain.iter_mut().enumerate() {
+            v.caused_by_notice_id = i as i64 + 1;
+        }
+        let mut running = ScalePartners::new();
+        for n in 0..chain.len() {
+            running.add_version_figures(&chain[n]);
+            running.set_head(&chain[n]);
+            assert_eq!(running, ScalePartners::of_chain(&chain[..=n]), "prefix 1..={}", n + 1);
+        }
+    }
+
+    /// Issue 490: `elect_lot_value` is the lot pick the REST row served before it
+    /// was stored -- every skip, the tie order, and the unconvertible figure.
+    #[test]
+    fn the_lot_election_skips_what_the_head_skips_and_keeps_the_published_figure() {
+        use super::{LotAmount, ScalePartners, elect_lot_value};
+        let a = |field: &'static str, cents: i64, currency: &'static str, eur: Option<i64>, quality: Option<&'static str>| {
+            LotAmount { field, cents, currency, eur_cents: eur, quality }
+        };
+        let none = ScalePartners::new();
+        let pick = |xs: Vec<LotAmount<'static>>, rule: &ScalePartners<'_>| elect_lot_value(xs, rule).map(|w| (w.field, w.cents, w.currency));
+        assert_eq!(pick(vec![], &none), None, "no figure, no value");
+        assert_eq!(pick(vec![a("estimated_value", -100, "EUR", Some(-100), Some("withheld"))], &none), None, "withheld");
+        assert_eq!(pick(vec![a("estimated_value", 100, "GBP", Some(117), None)], &none), None, "one unit is a token");
+        assert_eq!(pick(vec![a("estimated_value", 0, "EUR", Some(0), None)], &none), None, "zero is an absence");
+        assert_eq!(
+            pick(vec![a("result_value", 20_000_000_000_000_000, "EUR", Some(20_000_000_000_000_000), None), a("estimated_value", 5, "EUR", Some(5), None)], &none),
+            Some(("estimated_value", 5, "EUR")),
+            "over the ceiling where a conversion exists"
+        );
+        assert_eq!(
+            pick(vec![a("result_value", 20_000_000_000_000_000, "XYZ", None, None)], &none),
+            Some(("result_value", 20_000_000_000_000_000, "XYZ")),
+            "no rate, no ceiling to measure against: the published figure stands"
+        );
+        assert_eq!(
+            pick(vec![a("framework_maximum", 4_000_000, "XYZ", None, None), a("estimated_value", 4_000_000, "EUR", Some(4_000_000), None)], &none),
+            Some(("framework_maximum", 4_000_000, "XYZ")),
+            "a tie on published cents keeps the first"
+        );
+        assert_eq!(
+            pick(vec![a("estimated_value", 2_000, "HUF", Some(5), None), a("estimated_value", 1_500, "EUR", Some(1_500), None)], &none),
+            Some(("estimated_value", 2_000, "HUF")),
+            "ranked by PUBLISHED cents, as the read pick always was"
+        );
+        let mut rule = ScalePartners::new();
+        rule.add_partner("EUR", 3_000_000_000);
+        let slip = 3_000_000_000_000;
+        assert_eq!(
+            pick(vec![a("framework_maximum", slip, "EUR", Some(slip), None), a("estimated_value", 7, "EUR", Some(7), None)], &rule),
+            Some(("estimated_value", 7, "EUR")),
+            "an exact 10^3 slip over a partner is refused"
+        );
+        assert_eq!(pick(vec![a("framework_maximum", slip, "XYZ", None, None)], &rule), Some(("framework_maximum", slip, "XYZ")), "the rule needs a conversion");
+    }
+
     #[test]
     fn a_figure_exactly_ten_to_the_k_above_a_sibling_is_not_elected() {
         use super::{LotResultState, Round, SCALE_ERROR_MIN_EUR_CENTS, ScalePartners};
