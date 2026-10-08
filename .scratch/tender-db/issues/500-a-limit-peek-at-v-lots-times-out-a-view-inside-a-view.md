@@ -1,7 +1,9 @@
 # 500 — `SELECT * FROM v_lots LIMIT 5` times out: a view joined inside a view scans every Tender per row
 
-Status: ready-for-agent — FIX BUILT 2026-10-08 with a plan test. NEXT: gate, deploy, and re-time the three
-peeks on prod (each expected well under 1 s).
+Status: done — DEPLOYED 2026-10-08 (`7fa6074`, health ok). Re-timed on prod through /v1/sql right after: `v_lots
+LIMIT 5`, `v_lot_results LIMIT 2`, `v_awards LIMIT 2` and `v_awards LIMIT 100` all answered, the slowest in
+133 ms server-side (issue 494's gauge: p50 1.2 ms, max 0.133 s, 0 timeouts) — against 15 s/408, 9.3 s and 9.3 s
+before. Unit 2 (the /docs wording) stays optional: the slow log will say whether consumers need it.
 Kind: performance / the SQL surface (the main consumption path)
 Relates to: 494 (its slow-query log found this the day it shipped), 239 (views are not filterable), 25
 (`v_tender_current`)
