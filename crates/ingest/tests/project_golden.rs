@@ -27,8 +27,10 @@ use store::{Db, Notice, Parse};
 
 const SOURCE: &str = "ted";
 
-async fn scratch() -> (Db, i64, String) {
-    let path = format!("/tmp/tender-db-projgolden-{}.db", std::process::id());
+/// `name` keeps each test on its own file: the tests in this binary run in parallel threads of
+/// ONE process, so a pid-only path would put two folds into one database.
+async fn scratch(name: &str) -> (Db, i64, String) {
+    let path = format!("/tmp/tender-db-projgolden-{name}-{}.db", std::process::id());
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
@@ -151,7 +153,7 @@ fn fold_apply_output_matches_the_committed_golden() {
 }
 
 async fn run() {
-    let (db, fetch_id, path) = scratch().await;
+    let (db, fetch_id, path) = scratch("apply").await;
     for (source, fixture) in [
         ("ted", "eforms-chain/1-cn-16-831374-2025.xml"),
         ("ted", "eforms-chain/2-change-16-6281-2026.xml"),
@@ -312,7 +314,7 @@ async fn full_digest(db: &Db) -> String {
 }
 
 async fn run_refold() {
-    let (db, fetch_id, path) = scratch().await;
+    let (db, fetch_id, path) = scratch("refold").await;
     const LATE: &str = "eforms-chain/3-change-16-18902-2026.xml";
     let corpus = [
         ("ted", "eforms-chain/1-cn-16-831374-2025.xml"),
