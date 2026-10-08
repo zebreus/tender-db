@@ -1,8 +1,9 @@
 # 494 — /v1/sql's latency and outcomes are unmeasured
 
-Status: ready-for-agent — filed 2026-10-08 (the owner, 2026-10-08: "the sql endpoint is the main way to
-consume our data and it needs to be blazingly fast"). NEXT: unit 1, build the rolling-window gauges and
-the slow-query log line.
+Status: ready-for-agent — UNIT 1 BUILT 2026-10-08 (gate green on `8e7c404`, the session branch; rides with issue 490's
+deploy B). Filed the same day from the owner's "the sql endpoint is the main way to consume our data and it needs
+to be blazingly fast". NEXT: deploy with 490 B, then unit 2 (read the gauges for a day and file whatever the
+slow log names).
 Kind: observability / the SQL surface
 Relates to: 417 / 425 (the pinned-computation gauges, the only /v1/sql series today), 241 (writer
 contention, the precedent for measuring what "felt fine")
