@@ -1,0 +1,367 @@
+2026-10-07T08:38:36+00:00 tender-db server[1314764]: [project] INCREMENTAL → FULL fallback BEFORE identity pass: 11003672 un-projected legacy notices exceed the closure cap (500000) (issue 305); re-projecting the whole corpus
+2026-10-07T08:39:52+00:00 tender-db server[1314764]: [project] phase 1: 500000/14896923 notices planned
+2026-10-07T11:26:42+00:00 tender-db server[1314764]: [project] plan: 14896923 notices, 49187092 mentions resolved (0 recorded mention(s) refreshed, 0 re-bound — issue 434) in 10085.0s
+2026-10-07T11:26:42+00:00 tender-db server[1314764]: [project] WAL after Phase-1 (build_plan): 2199 MB (peak RSS 7622 MB)
+2026-10-07T11:51:20+00:00 tender-db server[1314764]: [project] WAL after grouping (build_plan_groups): 0 MB (peak RSS 7622 MB)
+2026-10-07T11:51:24+00:00 tender-db server[1314764]: [project] phase 2: folding 8780780 tenders (686577 islands)
+2026-10-07T11:51:24+00:00 tender-db server[1314764]: [project] group: 8780780 tenders in 1482.2s
+2026-10-07T11:52:46+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 31 shard(s) over notice ids (0, 47371695] (100% of the id space)
+2026-10-07T11:53:02+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 275000 notices swept into buckets
+2026-10-07T11:53:16+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 554000 notices swept into buckets
+2026-10-07T11:53:30+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 814000 notices swept into buckets
+2026-10-07T11:53:42+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 1068000 notices swept into buckets
+2026-10-07T11:53:56+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 1351000 notices swept into buckets
+2026-10-07T11:54:10+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 1628000 notices swept into buckets
+2026-10-07T11:54:24+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 1902000 notices swept into buckets
+2026-10-07T11:54:38+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 2169000 notices swept into buckets
+2026-10-07T11:54:52+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 2444000 notices swept into buckets
+2026-10-07T11:55:06+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 2695000 notices swept into buckets
+2026-10-07T11:55:22+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 2982000 notices swept into buckets
+2026-10-07T11:55:38+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 3256000 notices swept into buckets
+2026-10-07T11:55:56+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 3532545 notices swept into buckets
+2026-10-07T11:56:12+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 3800545 notices swept into buckets
+2026-10-07T11:56:28+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 4051545 notices swept into buckets
+2026-10-07T11:56:46+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 4321090 notices swept into buckets
+2026-10-07T11:57:04+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 4588090 notices swept into buckets
+2026-10-07T11:57:24+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 4854635 notices swept into buckets
+2026-10-07T11:57:44+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 5111635 notices swept into buckets
+2026-10-07T11:58:04+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 5376635 notices swept into buckets
+2026-10-07T11:58:26+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 5636180 notices swept into buckets
+2026-10-07T11:58:48+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 5898180 notices swept into buckets
+2026-10-07T11:59:12+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 6168725 notices swept into buckets
+2026-10-07T11:59:36+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 6429725 notices swept into buckets
+2026-10-07T12:00:00+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 6680270 notices swept into buckets
+2026-10-07T12:00:26+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 6934270 notices swept into buckets
+2026-10-07T12:00:54+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 7195815 notices swept into buckets
+2026-10-07T12:01:26+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 7459360 notices swept into buckets
+2026-10-07T12:01:58+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 7712360 notices swept into buckets
+2026-10-07T12:02:30+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 7973360 notices swept into buckets
+2026-10-07T12:03:02+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 8228360 notices swept into buckets
+2026-10-07T12:03:34+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 8485360 notices swept into buckets
+2026-10-07T12:04:06+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 8745360 notices swept into buckets
+2026-10-07T12:04:38+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 9008360 notices swept into buckets
+2026-10-07T12:05:10+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 9263360 notices swept into buckets
+2026-10-07T12:05:42+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 9526360 notices swept into buckets
+2026-10-07T12:06:14+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 9783360 notices swept into buckets
+2026-10-07T12:06:46+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 10037360 notices swept into buckets
+2026-10-07T12:07:18+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 10299360 notices swept into buckets
+2026-10-07T12:07:50+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 10561360 notices swept into buckets
+2026-10-07T12:08:22+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 10827360 notices swept into buckets
+2026-10-07T12:08:54+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 11090360 notices swept into buckets
+2026-10-07T12:09:26+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 11349360 notices swept into buckets
+2026-10-07T12:09:58+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 11612360 notices swept into buckets
+2026-10-07T12:10:30+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 11862905 notices swept into buckets
+2026-10-07T12:11:02+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 12112905 notices swept into buckets
+2026-10-07T12:11:36+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 12371905 notices swept into buckets
+2026-10-07T12:12:08+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 12621905 notices swept into buckets
+2026-10-07T12:12:42+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 12876450 notices swept into buckets
+2026-10-07T12:13:16+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 13132450 notices swept into buckets
+2026-10-07T12:13:54+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 13390630 notices swept into buckets
+2026-10-07T12:14:36+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 13651630 notices swept into buckets
+2026-10-07T12:15:22+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 13912265 notices swept into buckets
+2026-10-07T12:16:14+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 14170900 notices swept into buckets
+2026-10-07T12:17:14+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 14427445 notices swept into buckets
+2026-10-07T12:18:32+00:00 tender-db server[1314764]: [project] phase 2 pre-pass: 14678198 notices swept into buckets
+2026-10-07T12:20:47+00:00 tender-db server[1314764]: [project] phase 2: 0/8780780 tenders folded, 0 versions written, 0 leaf rows
+2026-10-07T12:22:44+00:00 tender-db server[1314764]: [project] phase 2: 18928/8780780 tenders folded, 50001 versions written, 4210002 leaf rows
+2026-10-07T12:27:47+00:00 tender-db server[1314764]: [project] phase 2: 40231/8780780 tenders folded, 100001 versions written, 22879725 leaf rows
+2026-10-07T12:33:38+00:00 tender-db server[1314764]: [project] phase 2: 61770/8780780 tenders folded, 150003 versions written, 43703519 leaf rows
+2026-10-07T12:36:06+00:00 tender-db server[1314764]: [project] phase 2: 83494/8780780 tenders folded, 200012 versions written, 51338927 leaf rows
+2026-10-07T12:38:26+00:00 tender-db server[1314764]: [project] phase 2: 104896/8780780 tenders folded, 250013 versions written, 58648142 leaf rows
+2026-10-07T12:41:27+00:00 tender-db server[1314764]: [project] phase 2: 126433/8780780 tenders folded, 300022 versions written, 69217333 leaf rows
+2026-10-07T12:43:25+00:00 tender-db server[1314764]: [project] phase 2: 148408/8780780 tenders folded, 350023 versions written, 75526330 leaf rows
+2026-10-07T12:45:14+00:00 tender-db server[1314764]: [project] phase 2: 170280/8780780 tenders folded, 400023 versions written, 80935551 leaf rows
+2026-10-07T12:52:55+00:00 tender-db server[1314764]: [project] phase 2: 191814/8780780 tenders folded, 450024 versions written, 107376481 leaf rows
+2026-10-07T12:55:52+00:00 tender-db server[1314764]: [project] phase 2: 213489/8780780 tenders folded, 500026 versions written, 116738789 leaf rows
+2026-10-07T12:58:14+00:00 tender-db server[1314764]: [project] phase 2: 235168/8780780 tenders folded, 550026 versions written, 123918490 leaf rows
+2026-10-07T13:00:19+00:00 tender-db server[1314764]: [project] phase 2: 256962/8780780 tenders folded, 600027 versions written, 130559588 leaf rows
+2026-10-07T13:07:00+00:00 tender-db server[1314764]: [project] phase 2: 278325/8780780 tenders folded, 650029 versions written, 152461984 leaf rows
+2026-10-07T13:09:10+00:00 tender-db server[1314764]: [project] phase 2: 300248/8780780 tenders folded, 700029 versions written, 159223902 leaf rows
+2026-10-07T13:11:30+00:00 tender-db server[1314764]: [project] phase 2: 321502/8780780 tenders folded, 750029 versions written, 166916558 leaf rows
+2026-10-07T13:13:50+00:00 tender-db server[1314764]: [project] phase 2: 343595/8780780 tenders folded, 800030 versions written, 174548866 leaf rows
+2026-10-07T13:16:09+00:00 tender-db server[1314764]: [project] phase 2: 365264/8780780 tenders folded, 850032 versions written, 182957330 leaf rows
+2026-10-07T13:18:33+00:00 tender-db server[1314764]: [project] phase 2: 387094/8780780 tenders folded, 900032 versions written, 191164970 leaf rows
+2026-10-07T13:21:02+00:00 tender-db server[1314764]: [project] phase 2: 408717/8780780 tenders folded, 950036 versions written, 200092168 leaf rows
+2026-10-07T13:25:45+00:00 tender-db server[1314764]: [project] phase 2: 430451/8780780 tenders folded, 1000036 versions written, 216212087 leaf rows
+2026-10-07T13:37:03+00:00 tender-db server[1314764]: [project] phase 2: 451633/8780780 tenders folded, 1050037 versions written, 251697875 leaf rows
+2026-10-07T13:38:56+00:00 tender-db server[1314764]: [project] phase 2: 473584/8780780 tenders folded, 1100037 versions written, 256962738 leaf rows
+2026-10-07T13:41:15+00:00 tender-db server[1314764]: [project] phase 2: 494877/8780780 tenders folded, 1150037 versions written, 264753744 leaf rows
+2026-10-07T13:43:40+00:00 tender-db server[1314764]: [project] phase 2: 516396/8780780 tenders folded, 1200038 versions written, 273774049 leaf rows
+2026-10-07T13:45:43+00:00 tender-db server[1314764]: [project] phase 2: 537667/8780780 tenders folded, 1250038 versions written, 280395431 leaf rows
+2026-10-07T13:48:12+00:00 tender-db server[1314764]: [project] phase 2: 559589/8780780 tenders folded, 1300038 versions written, 288690557 leaf rows
+2026-10-07T13:50:58+00:00 tender-db server[1314764]: [project] phase 2: 581433/8780780 tenders folded, 1350040 versions written, 298412674 leaf rows
+2026-10-07T13:52:59+00:00 tender-db server[1314764]: [project] phase 2: 602903/8780780 tenders folded, 1400041 versions written, 305145345 leaf rows
+2026-10-07T13:54:36+00:00 tender-db server[1314764]: [project] phase 2: 624601/8780780 tenders folded, 1450044 versions written, 310059948 leaf rows
+2026-10-07T13:56:28+00:00 tender-db server[1314764]: [project] phase 2: 646541/8780780 tenders folded, 1500044 versions written, 315887343 leaf rows
+2026-10-07T13:59:33+00:00 tender-db server[1314764]: [project] phase 2: 668087/8780780 tenders folded, 1550044 versions written, 326536671 leaf rows
+2026-10-07T14:01:26+00:00 tender-db server[1314764]: [project] phase 2: 689594/8780780 tenders folded, 1600044 versions written, 332537186 leaf rows
+2026-10-07T14:03:11+00:00 tender-db server[1314764]: [project] phase 2: 711451/8780780 tenders folded, 1650046 versions written, 337934689 leaf rows
+2026-10-07T14:05:31+00:00 tender-db server[1314764]: [project] phase 2: 732952/8780780 tenders folded, 1700048 versions written, 346640978 leaf rows
+2026-10-07T14:08:34+00:00 tender-db server[1314764]: [project] phase 2: 754373/8780780 tenders folded, 1750048 versions written, 357472629 leaf rows
+2026-10-07T14:10:58+00:00 tender-db server[1314764]: [project] phase 2: 776025/8780780 tenders folded, 1800049 versions written, 365705603 leaf rows
+2026-10-07T14:13:00+00:00 tender-db server[1314764]: [project] phase 2: 797710/8780780 tenders folded, 1850049 versions written, 372190135 leaf rows
+2026-10-07T14:14:47+00:00 tender-db server[1314764]: [project] phase 2: 819458/8780780 tenders folded, 1900052 versions written, 377929644 leaf rows
+2026-10-07T14:16:34+00:00 tender-db server[1314764]: [project] phase 2: 841189/8780780 tenders folded, 1950052 versions written, 383601820 leaf rows
+2026-10-07T14:18:15+00:00 tender-db server[1314764]: [project] phase 2: 861954/8780780 tenders folded, 2000052 versions written, 388997982 leaf rows
+2026-10-07T14:20:05+00:00 tender-db server[1314764]: [project] phase 2: 883400/8780780 tenders folded, 2050053 versions written, 395040613 leaf rows
+2026-10-07T14:21:45+00:00 tender-db server[1314764]: [project] phase 2: 904992/8780780 tenders folded, 2100053 versions written, 400290123 leaf rows
+2026-10-07T14:23:25+00:00 tender-db server[1314764]: [project] phase 2: 926692/8780780 tenders folded, 2150053 versions written, 405516533 leaf rows
+2026-10-07T14:25:36+00:00 tender-db server[1314764]: [project] phase 2: 948476/8780780 tenders folded, 2200055 versions written, 413092200 leaf rows
+2026-10-07T14:27:41+00:00 tender-db server[1314764]: [project] phase 2: 970073/8780780 tenders folded, 2250056 versions written, 420299935 leaf rows
+2026-10-07T14:29:42+00:00 tender-db server[1314764]: [project] phase 2: 991690/8780780 tenders folded, 2300056 versions written, 427135875 leaf rows
+2026-10-07T14:31:58+00:00 tender-db server[1314764]: [project] phase 2: 1013368/8780780 tenders folded, 2350057 versions written, 434506285 leaf rows
+2026-10-07T15:03:38+00:00 tender-db server[1314764]: [project] phase 2: 1035210/8780780 tenders folded, 2400057 versions written, 482219593 leaf rows
+2026-10-07T15:05:42+00:00 tender-db server[1314764]: [project] phase 2: 1056912/8780780 tenders folded, 2450058 versions written, 489021638 leaf rows
+2026-10-07T15:07:54+00:00 tender-db server[1314764]: [project] phase 2: 1078166/8780780 tenders folded, 2500060 versions written, 496234810 leaf rows
+2026-10-07T15:09:42+00:00 tender-db server[1314764]: [project] phase 2: 1099798/8780780 tenders folded, 2550060 versions written, 501878344 leaf rows
+2026-10-07T15:11:40+00:00 tender-db server[1314764]: [project] phase 2: 1121556/8780780 tenders folded, 2600062 versions written, 508137054 leaf rows
+2026-10-07T15:13:27+00:00 tender-db server[1314764]: [project] phase 2: 1143371/8780780 tenders folded, 2650088 versions written, 513610861 leaf rows
+2026-10-07T15:15:30+00:00 tender-db server[1314764]: [project] phase 2: 1164960/8780780 tenders folded, 2700088 versions written, 520539584 leaf rows
+2026-10-07T15:17:44+00:00 tender-db server[1314764]: [project] phase 2: 1186740/8780780 tenders folded, 2750089 versions written, 528011989 leaf rows
+2026-10-07T15:19:36+00:00 tender-db server[1314764]: [project] phase 2: 1208624/8780780 tenders folded, 2800091 versions written, 534137126 leaf rows
+2026-10-07T15:21:46+00:00 tender-db server[1314764]: [project] phase 2: 1230208/8780780 tenders folded, 2850091 versions written, 541600368 leaf rows
+2026-10-07T15:23:14+00:00 tender-db server[1314764]: [project] phase 2: 1269438/8780780 tenders folded, 2900091 versions written, 545926865 leaf rows
+2026-10-07T15:23:49+00:00 tender-db server[1314764]: [project] phase 2: 1318276/8780780 tenders folded, 2950091 versions written, 546874924 leaf rows
+2026-10-07T15:24:20+00:00 tender-db server[1314764]: [project] phase 2: 1368276/8780780 tenders folded, 3000091 versions written, 547706799 leaf rows
+2026-10-07T15:24:50+00:00 tender-db server[1314764]: [project] phase 2: 1418276/8780780 tenders folded, 3050091 versions written, 548533099 leaf rows
+2026-10-07T15:25:20+00:00 tender-db server[1314764]: [project] phase 2: 1468276/8780780 tenders folded, 3100091 versions written, 549345166 leaf rows
+2026-10-07T15:25:50+00:00 tender-db server[1314764]: [project] phase 2: 1518276/8780780 tenders folded, 3150091 versions written, 550198646 leaf rows
+2026-10-07T15:26:19+00:00 tender-db server[1314764]: [project] phase 2: 1568276/8780780 tenders folded, 3200091 versions written, 551038297 leaf rows
+2026-10-07T15:26:47+00:00 tender-db server[1314764]: [project] phase 2: 1618276/8780780 tenders folded, 3250091 versions written, 551869461 leaf rows
+2026-10-07T15:27:16+00:00 tender-db server[1314764]: [project] phase 2: 1668276/8780780 tenders folded, 3300091 versions written, 552700666 leaf rows
+2026-10-07T15:27:45+00:00 tender-db server[1314764]: [project] phase 2: 1718276/8780780 tenders folded, 3350091 versions written, 553525283 leaf rows
+2026-10-07T15:28:14+00:00 tender-db server[1314764]: [project] phase 2: 1768276/8780780 tenders folded, 3400091 versions written, 554353868 leaf rows
+2026-10-07T15:28:45+00:00 tender-db server[1314764]: [project] phase 2: 1817855/8780780 tenders folded, 3450091 versions written, 555245524 leaf rows
+2026-10-07T15:29:15+00:00 tender-db server[1314764]: [project] phase 2: 1867706/8780780 tenders folded, 3500091 versions written, 556141975 leaf rows
+2026-10-07T15:29:45+00:00 tender-db server[1314764]: [project] phase 2: 1917706/8780780 tenders folded, 3550091 versions written, 556973106 leaf rows
+2026-10-07T15:31:22+00:00 tender-db server[1314764]: [project] phase 2: 1953926/8780780 tenders folded, 3600091 versions written, 562204120 leaf rows
+2026-10-07T15:32:16+00:00 tender-db server[1314764]: [project] phase 2: 1988322/8780780 tenders folded, 3650093 versions written, 564128241 leaf rows
+2026-10-07T15:33:02+00:00 tender-db server[1314764]: [project] phase 2: 2021656/8780780 tenders folded, 3700093 versions written, 565628778 leaf rows
+2026-10-07T15:34:52+00:00 tender-db server[1314764]: [project] phase 2: 2050308/8780780 tenders folded, 3750093 versions written, 572197044 leaf rows
+2026-10-07T15:35:31+00:00 tender-db server[1314764]: [project] phase 2: 2081535/8780780 tenders folded, 3800095 versions written, 573411570 leaf rows
+2026-10-07T15:36:08+00:00 tender-db server[1314764]: [project] phase 2: 2115804/8780780 tenders folded, 3850095 versions written, 574642948 leaf rows
+2026-10-07T15:36:40+00:00 tender-db server[1314764]: [project] phase 2: 2155551/8780780 tenders folded, 3900095 versions written, 575343004 leaf rows
+2026-10-07T15:37:07+00:00 tender-db server[1314764]: [project] phase 2: 2194591/8780780 tenders folded, 3950096 versions written, 575934743 leaf rows
+2026-10-07T15:37:35+00:00 tender-db server[1314764]: [project] phase 2: 2234028/8780780 tenders folded, 4000096 versions written, 576514020 leaf rows
+2026-10-07T15:38:03+00:00 tender-db server[1314764]: [project] phase 2: 2274175/8780780 tenders folded, 4050102 versions written, 577108116 leaf rows
+2026-10-07T15:38:32+00:00 tender-db server[1314764]: [project] phase 2: 2314697/8780780 tenders folded, 4100102 versions written, 577766897 leaf rows
+2026-10-07T15:39:00+00:00 tender-db server[1314764]: [project] phase 2: 2354270/8780780 tenders folded, 4150102 versions written, 578439143 leaf rows
+2026-10-07T15:39:28+00:00 tender-db server[1314764]: [project] phase 2: 2393826/8780780 tenders folded, 4200102 versions written, 579107979 leaf rows
+2026-10-07T15:39:57+00:00 tender-db server[1314764]: [project] phase 2: 2433122/8780780 tenders folded, 4250102 versions written, 579785994 leaf rows
+2026-10-07T15:40:25+00:00 tender-db server[1314764]: [project] phase 2: 2472366/8780780 tenders folded, 4300103 versions written, 580465911 leaf rows
+2026-10-07T15:40:54+00:00 tender-db server[1314764]: [project] phase 2: 2511613/8780780 tenders folded, 4350103 versions written, 581148227 leaf rows
+2026-10-07T15:41:23+00:00 tender-db server[1314764]: [project] phase 2: 2551909/8780780 tenders folded, 4400103 versions written, 581831361 leaf rows
+2026-10-07T15:41:52+00:00 tender-db server[1314764]: [project] phase 2: 2592730/8780780 tenders folded, 4450103 versions written, 582521948 leaf rows
+2026-10-07T15:42:22+00:00 tender-db server[1314764]: [project] phase 2: 2634143/8780780 tenders folded, 4500103 versions written, 583257620 leaf rows
+2026-10-07T15:42:51+00:00 tender-db server[1314764]: [project] phase 2: 2675287/8780780 tenders folded, 4550103 versions written, 583968051 leaf rows
+2026-10-07T15:43:20+00:00 tender-db server[1314764]: [project] phase 2: 2717044/8780780 tenders folded, 4600103 versions written, 584654586 leaf rows
+2026-10-07T15:43:50+00:00 tender-db server[1314764]: [project] phase 2: 2759414/8780780 tenders folded, 4650103 versions written, 585304696 leaf rows
+2026-10-07T15:44:18+00:00 tender-db server[1314764]: [project] phase 2: 2802047/8780780 tenders folded, 4700103 versions written, 585905602 leaf rows
+2026-10-07T15:44:45+00:00 tender-db server[1314764]: [project] phase 2: 2844936/8780780 tenders folded, 4750103 versions written, 586510719 leaf rows
+2026-10-07T15:45:14+00:00 tender-db server[1314764]: [project] phase 2: 2888695/8780780 tenders folded, 4800103 versions written, 587145280 leaf rows
+2026-10-07T15:45:42+00:00 tender-db server[1314764]: [project] phase 2: 2931854/8780780 tenders folded, 4850103 versions written, 587753919 leaf rows
+2026-10-07T15:46:09+00:00 tender-db server[1314764]: [project] phase 2: 2974604/8780780 tenders folded, 4900103 versions written, 588362872 leaf rows
+2026-10-07T15:46:37+00:00 tender-db server[1314764]: [project] phase 2: 3017268/8780780 tenders folded, 4950103 versions written, 588971927 leaf rows
+2026-10-07T15:47:06+00:00 tender-db server[1314764]: [project] phase 2: 3059757/8780780 tenders folded, 5000103 versions written, 589593468 leaf rows
+2026-10-07T15:47:34+00:00 tender-db server[1314764]: [project] phase 2: 3101062/8780780 tenders folded, 5050103 versions written, 590213834 leaf rows
+2026-10-07T15:48:02+00:00 tender-db server[1314764]: [project] phase 2: 3141747/8780780 tenders folded, 5100103 versions written, 590840019 leaf rows
+2026-10-07T15:48:30+00:00 tender-db server[1314764]: [project] phase 2: 3182619/8780780 tenders folded, 5150103 versions written, 591465463 leaf rows
+2026-10-07T15:48:59+00:00 tender-db server[1314764]: [project] phase 2: 3222468/8780780 tenders folded, 5200103 versions written, 592086615 leaf rows
+2026-10-07T15:49:27+00:00 tender-db server[1314764]: [project] phase 2: 3261349/8780780 tenders folded, 5250104 versions written, 592703502 leaf rows
+2026-10-07T15:49:55+00:00 tender-db server[1314764]: [project] phase 2: 3299568/8780780 tenders folded, 5300104 versions written, 593343983 leaf rows
+2026-10-07T15:50:24+00:00 tender-db server[1314764]: [project] phase 2: 3338224/8780780 tenders folded, 5350104 versions written, 593982029 leaf rows
+2026-10-07T15:50:54+00:00 tender-db server[1314764]: [project] phase 2: 3376535/8780780 tenders folded, 5400104 versions written, 594643281 leaf rows
+2026-10-07T15:51:23+00:00 tender-db server[1314764]: [project] phase 2: 3413676/8780780 tenders folded, 5450104 versions written, 595305579 leaf rows
+2026-10-07T15:51:54+00:00 tender-db server[1314764]: [project] phase 2: 3450593/8780780 tenders folded, 5500104 versions written, 596002789 leaf rows
+2026-10-07T15:52:24+00:00 tender-db server[1314764]: [project] phase 2: 3487500/8780780 tenders folded, 5550104 versions written, 596691313 leaf rows
+2026-10-07T15:52:54+00:00 tender-db server[1314764]: [project] phase 2: 3525153/8780780 tenders folded, 5600105 versions written, 597367835 leaf rows
+2026-10-07T15:53:25+00:00 tender-db server[1314764]: [project] phase 2: 3561442/8780780 tenders folded, 5650105 versions written, 598051337 leaf rows
+2026-10-07T15:53:55+00:00 tender-db server[1314764]: [project] phase 2: 3596939/8780780 tenders folded, 5700105 versions written, 598747807 leaf rows
+2026-10-07T15:54:27+00:00 tender-db server[1314764]: [project] phase 2: 3632059/8780780 tenders folded, 5750105 versions written, 599483286 leaf rows
+2026-10-07T15:54:57+00:00 tender-db server[1314764]: [project] phase 2: 3666998/8780780 tenders folded, 5800105 versions written, 600160798 leaf rows
+2026-10-07T15:55:28+00:00 tender-db server[1314764]: [project] phase 2: 3703587/8780780 tenders folded, 5850111 versions written, 600830810 leaf rows
+2026-10-07T15:55:58+00:00 tender-db server[1314764]: [project] phase 2: 3739038/8780780 tenders folded, 5900112 versions written, 601500223 leaf rows
+2026-10-07T15:56:28+00:00 tender-db server[1314764]: [project] phase 2: 3774078/8780780 tenders folded, 5950113 versions written, 602166188 leaf rows
+2026-10-07T15:56:57+00:00 tender-db server[1314764]: [project] phase 2: 3809226/8780780 tenders folded, 6000113 versions written, 602839881 leaf rows
+2026-10-07T15:57:28+00:00 tender-db server[1314764]: [project] phase 2: 3845096/8780780 tenders folded, 6050113 versions written, 603498918 leaf rows
+2026-10-07T15:58:00+00:00 tender-db server[1314764]: [project] phase 2: 3880897/8780780 tenders folded, 6100113 versions written, 604177591 leaf rows
+2026-10-07T15:58:31+00:00 tender-db server[1314764]: [project] phase 2: 3915080/8780780 tenders folded, 6150113 versions written, 604858564 leaf rows
+2026-10-07T15:59:03+00:00 tender-db server[1314764]: [project] phase 2: 3948883/8780780 tenders folded, 6200113 versions written, 605531500 leaf rows
+2026-10-07T15:59:34+00:00 tender-db server[1314764]: [project] phase 2: 3982928/8780780 tenders folded, 6250114 versions written, 606228284 leaf rows
+2026-10-07T16:00:06+00:00 tender-db server[1314764]: [project] phase 2: 4016960/8780780 tenders folded, 6300114 versions written, 606911528 leaf rows
+2026-10-07T16:00:38+00:00 tender-db server[1314764]: [project] phase 2: 4052071/8780780 tenders folded, 6350115 versions written, 607591040 leaf rows
+2026-10-07T16:01:09+00:00 tender-db server[1314764]: [project] phase 2: 4087285/8780780 tenders folded, 6400116 versions written, 608278053 leaf rows
+2026-10-07T16:01:41+00:00 tender-db server[1314764]: [project] phase 2: 4122008/8780780 tenders folded, 6450117 versions written, 608961118 leaf rows
+2026-10-07T16:02:13+00:00 tender-db server[1314764]: [project] phase 2: 4156968/8780780 tenders folded, 6500129 versions written, 609650576 leaf rows
+2026-10-07T16:02:45+00:00 tender-db server[1314764]: [project] phase 2: 4191452/8780780 tenders folded, 6550129 versions written, 610374586 leaf rows
+2026-10-07T16:03:18+00:00 tender-db server[1314764]: [project] phase 2: 4226251/8780780 tenders folded, 6600131 versions written, 611084746 leaf rows
+2026-10-07T16:03:51+00:00 tender-db server[1314764]: [project] phase 2: 4261974/8780780 tenders folded, 6650131 versions written, 611794958 leaf rows
+2026-10-07T16:04:24+00:00 tender-db server[1314764]: [project] phase 2: 4297000/8780780 tenders folded, 6700131 versions written, 612502149 leaf rows
+2026-10-07T16:04:57+00:00 tender-db server[1314764]: [project] phase 2: 4330723/8780780 tenders folded, 6750131 versions written, 613204140 leaf rows
+2026-10-07T16:05:29+00:00 tender-db server[1314764]: [project] phase 2: 4364202/8780780 tenders folded, 6800132 versions written, 613907931 leaf rows
+2026-10-07T16:06:00+00:00 tender-db server[1314764]: [project] phase 2: 4397523/8780780 tenders folded, 6850132 versions written, 614600287 leaf rows
+2026-10-07T16:06:33+00:00 tender-db server[1314764]: [project] phase 2: 4430308/8780780 tenders folded, 6900133 versions written, 615307940 leaf rows
+2026-10-07T16:07:06+00:00 tender-db server[1314764]: [project] phase 2: 4462742/8780780 tenders folded, 6950133 versions written, 616047792 leaf rows
+2026-10-07T16:07:38+00:00 tender-db server[1314764]: [project] phase 2: 4497009/8780780 tenders folded, 7000133 versions written, 616765304 leaf rows
+2026-10-07T16:08:10+00:00 tender-db server[1314764]: [project] phase 2: 4530860/8780780 tenders folded, 7050134 versions written, 617456827 leaf rows
+2026-10-07T16:08:41+00:00 tender-db server[1314764]: [project] phase 2: 4563573/8780780 tenders folded, 7100135 versions written, 618148101 leaf rows
+2026-10-07T16:09:12+00:00 tender-db server[1314764]: [project] phase 2: 4596205/8780780 tenders folded, 7150135 versions written, 618818299 leaf rows
+2026-10-07T16:09:43+00:00 tender-db server[1314764]: [project] phase 2: 4628439/8780780 tenders folded, 7200136 versions written, 619478844 leaf rows
+2026-10-07T16:10:12+00:00 tender-db server[1314764]: [project] phase 2: 4661138/8780780 tenders folded, 7250136 versions written, 620105131 leaf rows
+2026-10-07T16:10:41+00:00 tender-db server[1314764]: [project] phase 2: 4692735/8780780 tenders folded, 7300136 versions written, 620715124 leaf rows
+2026-10-07T16:11:08+00:00 tender-db server[1314764]: [project] phase 2: 4724600/8780780 tenders folded, 7350136 versions written, 621295005 leaf rows
+2026-10-07T16:11:36+00:00 tender-db server[1314764]: [project] phase 2: 4757598/8780780 tenders folded, 7400136 versions written, 621861141 leaf rows
+2026-10-07T16:12:04+00:00 tender-db server[1314764]: [project] phase 2: 4788975/8780780 tenders folded, 7450136 versions written, 622459824 leaf rows
+2026-10-07T16:12:33+00:00 tender-db server[1314764]: [project] phase 2: 4819587/8780780 tenders folded, 7500136 versions written, 623075237 leaf rows
+2026-10-07T16:13:02+00:00 tender-db server[1314764]: [project] phase 2: 4849918/8780780 tenders folded, 7550136 versions written, 623717660 leaf rows
+2026-10-07T16:13:44+00:00 tender-db server[1314764]: [project] phase 2: 4879649/8780780 tenders folded, 7600136 versions written, 625284217 leaf rows
+2026-10-07T16:14:16+00:00 tender-db server[1314764]: [project] phase 2: 4909575/8780780 tenders folded, 7650136 versions written, 625995749 leaf rows
+2026-10-07T16:14:49+00:00 tender-db server[1314764]: [project] phase 2: 4939821/8780780 tenders folded, 7700137 versions written, 626746444 leaf rows
+2026-10-07T16:15:24+00:00 tender-db server[1314764]: [project] phase 2: 4970733/8780780 tenders folded, 7750137 versions written, 627576301 leaf rows
+2026-10-07T16:16:07+00:00 tender-db server[1314764]: [project] phase 2: 5002799/8780780 tenders folded, 7800137 versions written, 629131239 leaf rows
+2026-10-07T16:16:51+00:00 tender-db server[1314764]: [project] phase 2: 5033378/8780780 tenders folded, 7850137 versions written, 630825487 leaf rows
+2026-10-07T16:17:36+00:00 tender-db server[1314764]: [project] phase 2: 5063651/8780780 tenders folded, 7900138 versions written, 632554780 leaf rows
+2026-10-07T16:18:25+00:00 tender-db server[1314764]: [project] phase 2: 5093609/8780780 tenders folded, 7950138 versions written, 634410648 leaf rows
+2026-10-07T16:19:15+00:00 tender-db server[1314764]: [project] phase 2: 5123588/8780780 tenders folded, 8000139 versions written, 636286693 leaf rows
+2026-10-07T16:20:05+00:00 tender-db server[1314764]: [project] phase 2: 5153512/8780780 tenders folded, 8050140 versions written, 638139820 leaf rows
+2026-10-07T16:20:54+00:00 tender-db server[1314764]: [project] phase 2: 5183208/8780780 tenders folded, 8100141 versions written, 639970106 leaf rows
+2026-10-07T16:21:42+00:00 tender-db server[1314764]: [project] phase 2: 5213935/8780780 tenders folded, 8150141 versions written, 641758323 leaf rows
+2026-10-07T16:22:26+00:00 tender-db server[1314764]: [project] phase 2: 5245305/8780780 tenders folded, 8200141 versions written, 643395255 leaf rows
+2026-10-07T16:23:12+00:00 tender-db server[1314764]: [project] phase 2: 5275641/8780780 tenders folded, 8250141 versions written, 645263455 leaf rows
+2026-10-07T16:24:03+00:00 tender-db server[1314764]: [project] phase 2: 5305380/8780780 tenders folded, 8300143 versions written, 647645045 leaf rows
+2026-10-07T16:24:52+00:00 tender-db server[1314764]: [project] phase 2: 5335356/8780780 tenders folded, 8350143 versions written, 649456436 leaf rows
+2026-10-07T16:25:43+00:00 tender-db server[1314764]: [project] phase 2: 5365219/8780780 tenders folded, 8400143 versions written, 651361319 leaf rows
+2026-10-07T16:26:34+00:00 tender-db server[1314764]: [project] phase 2: 5394909/8780780 tenders folded, 8450146 versions written, 653357836 leaf rows
+2026-10-07T16:27:24+00:00 tender-db server[1314764]: [project] phase 2: 5424059/8780780 tenders folded, 8500146 versions written, 655266897 leaf rows
+2026-10-07T16:28:14+00:00 tender-db server[1314764]: [project] phase 2: 5453891/8780780 tenders folded, 8550148 versions written, 657119952 leaf rows
+2026-10-07T16:29:03+00:00 tender-db server[1314764]: [project] phase 2: 5484645/8780780 tenders folded, 8600148 versions written, 658948429 leaf rows
+2026-10-07T16:29:51+00:00 tender-db server[1314764]: [project] phase 2: 5513818/8780780 tenders folded, 8650148 versions written, 660825236 leaf rows
+2026-10-07T16:30:40+00:00 tender-db server[1314764]: [project] phase 2: 5542276/8780780 tenders folded, 8700149 versions written, 662769773 leaf rows
+2026-10-07T16:31:30+00:00 tender-db server[1314764]: [project] phase 2: 5570592/8780780 tenders folded, 8750149 versions written, 664674552 leaf rows
+2026-10-07T16:32:20+00:00 tender-db server[1314764]: [project] phase 2: 5599123/8780780 tenders folded, 8800150 versions written, 666641500 leaf rows
+2026-10-07T16:33:10+00:00 tender-db server[1314764]: [project] phase 2: 5628007/8780780 tenders folded, 8850150 versions written, 668584758 leaf rows
+2026-10-07T16:34:03+00:00 tender-db server[1314764]: [project] phase 2: 5655911/8780780 tenders folded, 8900150 versions written, 670858913 leaf rows
+2026-10-07T16:34:55+00:00 tender-db server[1314764]: [project] phase 2: 5683959/8780780 tenders folded, 8950151 versions written, 672968339 leaf rows
+2026-10-07T16:35:44+00:00 tender-db server[1314764]: [project] phase 2: 5712755/8780780 tenders folded, 9000151 versions written, 675035253 leaf rows
+2026-10-07T16:36:33+00:00 tender-db server[1314764]: [project] phase 2: 5742344/8780780 tenders folded, 9050151 versions written, 677161095 leaf rows
+2026-10-07T16:37:19+00:00 tender-db server[1314764]: [project] phase 2: 5772105/8780780 tenders folded, 9100157 versions written, 679044008 leaf rows
+2026-10-07T16:38:09+00:00 tender-db server[1314764]: [project] phase 2: 5801775/8780780 tenders folded, 9150158 versions written, 681045476 leaf rows
+2026-10-07T16:38:59+00:00 tender-db server[1314764]: [project] phase 2: 5830265/8780780 tenders folded, 9200158 versions written, 682999710 leaf rows
+2026-10-07T16:39:50+00:00 tender-db server[1314764]: [project] phase 2: 5858783/8780780 tenders folded, 9250160 versions written, 685072772 leaf rows
+2026-10-07T16:40:41+00:00 tender-db server[1314764]: [project] phase 2: 5886944/8780780 tenders folded, 9300163 versions written, 687045999 leaf rows
+2026-10-07T16:41:30+00:00 tender-db server[1314764]: [project] phase 2: 5915043/8780780 tenders folded, 9350163 versions written, 688993166 leaf rows
+2026-10-07T16:42:16+00:00 tender-db server[1314764]: [project] phase 2: 5942408/8780780 tenders folded, 9400163 versions written, 691015026 leaf rows
+2026-10-07T16:43:03+00:00 tender-db server[1314764]: [project] phase 2: 5970977/8780780 tenders folded, 9450164 versions written, 693002831 leaf rows
+2026-10-07T16:43:50+00:00 tender-db server[1314764]: [project] phase 2: 6000280/8780780 tenders folded, 9500164 versions written, 694927062 leaf rows
+2026-10-07T16:44:37+00:00 tender-db server[1314764]: [project] phase 2: 6028834/8780780 tenders folded, 9550165 versions written, 696905328 leaf rows
+2026-10-07T16:45:23+00:00 tender-db server[1314764]: [project] phase 2: 6056753/8780780 tenders folded, 9600165 versions written, 698884512 leaf rows
+2026-10-07T16:46:10+00:00 tender-db server[1314764]: [project] phase 2: 6083985/8780780 tenders folded, 9650165 versions written, 700924976 leaf rows
+2026-10-07T16:46:58+00:00 tender-db server[1314764]: [project] phase 2: 6111227/8780780 tenders folded, 9700165 versions written, 703056249 leaf rows
+2026-10-07T16:47:45+00:00 tender-db server[1314764]: [project] phase 2: 6138824/8780780 tenders folded, 9750165 versions written, 705034459 leaf rows
+2026-10-07T16:48:44+00:00 tender-db server[1314764]: [project] phase 2: 6166054/8780780 tenders folded, 9800165 versions written, 708034736 leaf rows
+2026-10-07T16:49:34+00:00 tender-db server[1314764]: [project] phase 2: 6193507/8780780 tenders folded, 9850165 versions written, 710268142 leaf rows
+2026-10-07T16:50:25+00:00 tender-db server[1314764]: [project] phase 2: 6221026/8780780 tenders folded, 9900166 versions written, 712576045 leaf rows
+2026-10-07T16:51:17+00:00 tender-db server[1314764]: [project] phase 2: 6249897/8780780 tenders folded, 9950172 versions written, 714890322 leaf rows
+2026-10-07T16:52:28+00:00 tender-db server[1314764]: [project] phase 2: 6278037/8780780 tenders folded, 10000172 versions written, 718641828 leaf rows
+2026-10-07T16:53:19+00:00 tender-db server[1314764]: [project] phase 2: 6306004/8780780 tenders folded, 10050175 versions written, 720903394 leaf rows
+2026-10-07T16:54:14+00:00 tender-db server[1314764]: [project] phase 2: 6332939/8780780 tenders folded, 10100177 versions written, 723527830 leaf rows
+2026-10-07T16:55:05+00:00 tender-db server[1314764]: [project] phase 2: 6360193/8780780 tenders folded, 10150177 versions written, 725832389 leaf rows
+2026-10-07T16:55:58+00:00 tender-db server[1314764]: [project] phase 2: 6388537/8780780 tenders folded, 10200177 versions written, 727951078 leaf rows
+2026-10-07T16:57:04+00:00 tender-db server[1314764]: [project] phase 2: 6415870/8780780 tenders folded, 10250181 versions written, 731015930 leaf rows
+2026-10-07T16:58:01+00:00 tender-db server[1314764]: [project] phase 2: 6443718/8780780 tenders folded, 10300181 versions written, 733493592 leaf rows
+2026-10-07T16:59:11+00:00 tender-db server[1314764]: [project] phase 2: 6468757/8780780 tenders folded, 10350181 versions written, 736886157 leaf rows
+2026-10-07T17:00:24+00:00 tender-db server[1314764]: [project] phase 2: 6495759/8780780 tenders folded, 10400185 versions written, 740288088 leaf rows
+2026-10-07T17:01:18+00:00 tender-db server[1314764]: [project] phase 2: 6523067/8780780 tenders folded, 10450185 versions written, 742704498 leaf rows
+2026-10-07T17:02:12+00:00 tender-db server[1314764]: [project] phase 2: 6550961/8780780 tenders folded, 10500186 versions written, 745130092 leaf rows
+2026-10-07T17:03:38+00:00 tender-db server[1314764]: [project] phase 2: 6577010/8780780 tenders folded, 10550187 versions written, 750389855 leaf rows
+2026-10-07T17:04:38+00:00 tender-db server[1314764]: [project] phase 2: 6603522/8780780 tenders folded, 10600187 versions written, 753310469 leaf rows
+2026-10-07T17:05:40+00:00 tender-db server[1314764]: [project] phase 2: 6629310/8780780 tenders folded, 10650188 versions written, 756331948 leaf rows
+2026-10-07T17:06:56+00:00 tender-db server[1314764]: [project] phase 2: 6654932/8780780 tenders folded, 10700188 versions written, 760036934 leaf rows
+2026-10-07T17:08:08+00:00 tender-db server[1314764]: [project] phase 2: 6680825/8780780 tenders folded, 10750188 versions written, 763635085 leaf rows
+2026-10-07T17:09:21+00:00 tender-db server[1314764]: [project] phase 2: 6706284/8780780 tenders folded, 10800188 versions written, 767149037 leaf rows
+2026-10-07T17:10:51+00:00 tender-db server[1314764]: [project] phase 2: 6731334/8780780 tenders folded, 10850188 versions written, 772140018 leaf rows
+2026-10-07T17:11:56+00:00 tender-db server[1314764]: [project] phase 2: 6757029/8780780 tenders folded, 10900196 versions written, 775044596 leaf rows
+2026-10-07T17:12:57+00:00 tender-db server[1314764]: [project] phase 2: 6783012/8780780 tenders folded, 10950196 versions written, 777962107 leaf rows
+2026-10-07T17:13:59+00:00 tender-db server[1314764]: [project] phase 2: 6808518/8780780 tenders folded, 11000196 versions written, 781067019 leaf rows
+2026-10-07T17:14:59+00:00 tender-db server[1314764]: [project] phase 2: 6835128/8780780 tenders folded, 11050196 versions written, 784000662 leaf rows
+2026-10-07T17:16:01+00:00 tender-db server[1314764]: [project] phase 2: 6860843/8780780 tenders folded, 11100211 versions written, 787126872 leaf rows
+2026-10-07T17:17:01+00:00 tender-db server[1314764]: [project] phase 2: 6886488/8780780 tenders folded, 11150211 versions written, 790080032 leaf rows
+2026-10-07T17:18:09+00:00 tender-db server[1314764]: [project] phase 2: 6910818/8780780 tenders folded, 11200212 versions written, 793815928 leaf rows
+2026-10-07T17:19:15+00:00 tender-db server[1314764]: [project] phase 2: 6936820/8780780 tenders folded, 11250214 versions written, 797183733 leaf rows
+2026-10-07T17:20:20+00:00 tender-db server[1314764]: [project] phase 2: 6962833/8780780 tenders folded, 11300214 versions written, 800532338 leaf rows
+2026-10-07T17:22:06+00:00 tender-db server[1314764]: [project] phase 2: 6988605/8780780 tenders folded, 11350215 versions written, 807690297 leaf rows
+2026-10-07T17:23:26+00:00 tender-db server[1314764]: [project] phase 2: 7014667/8780780 tenders folded, 11400216 versions written, 812226305 leaf rows
+2026-10-07T17:25:11+00:00 tender-db server[1314764]: [project] phase 2: 7040003/8780780 tenders folded, 11450217 versions written, 818725692 leaf rows
+2026-10-07T17:26:34+00:00 tender-db server[1314764]: [project] phase 2: 7064298/8780780 tenders folded, 11500224 versions written, 823667694 leaf rows
+2026-10-07T17:28:04+00:00 tender-db server[1314764]: [project] phase 2: 7089790/8780780 tenders folded, 11550242 versions written, 828994049 leaf rows
+2026-10-07T17:29:22+00:00 tender-db server[1314764]: [project] phase 2: 7115085/8780780 tenders folded, 11600245 versions written, 833202183 leaf rows
+2026-10-07T17:30:41+00:00 tender-db server[1314764]: [project] phase 2: 7141104/8780780 tenders folded, 11650246 versions written, 837605670 leaf rows
+2026-10-07T17:33:15+00:00 tender-db server[1314764]: [project] phase 2: 7166886/8780780 tenders folded, 11700247 versions written, 847218325 leaf rows
+2026-10-07T17:34:51+00:00 tender-db server[1314764]: [project] phase 2: 7191803/8780780 tenders folded, 11750249 versions written, 852999701 leaf rows
+2026-10-07T17:37:48+00:00 tender-db server[1314764]: [project] phase 2: 7216745/8780780 tenders folded, 11800249 versions written, 865542123 leaf rows
+2026-10-07T17:38:57+00:00 tender-db server[1314764]: [project] phase 2: 7241936/8780780 tenders folded, 11850250 versions written, 869140098 leaf rows
+2026-10-07T17:40:24+00:00 tender-db server[1314764]: [project] phase 2: 7266555/8780780 tenders folded, 11900250 versions written, 874217839 leaf rows
+2026-10-07T17:42:36+00:00 tender-db server[1314764]: [project] phase 2: 7290273/8780780 tenders folded, 11950250 versions written, 883404623 leaf rows
+2026-10-07T17:43:53+00:00 tender-db server[1314764]: [project] phase 2: 7315002/8780780 tenders folded, 12000250 versions written, 887570628 leaf rows
+2026-10-07T17:45:26+00:00 tender-db server[1314764]: [project] phase 2: 7339588/8780780 tenders folded, 12050250 versions written, 893165059 leaf rows
+2026-10-07T17:46:50+00:00 tender-db server[1314764]: [project] phase 2: 7363633/8780780 tenders folded, 12100250 versions written, 898091920 leaf rows
+2026-10-07T17:48:21+00:00 tender-db server[1314764]: [project] phase 2: 7388048/8780780 tenders folded, 12150250 versions written, 903477414 leaf rows
+2026-10-07T17:50:18+00:00 tender-db server[1314764]: [project] phase 2: 7411801/8780780 tenders folded, 12200251 versions written, 910914836 leaf rows
+2026-10-07T17:51:36+00:00 tender-db server[1314764]: [project] phase 2: 7436431/8780780 tenders folded, 12250251 versions written, 915111447 leaf rows
+2026-10-07T17:52:51+00:00 tender-db server[1314764]: [project] phase 2: 7461120/8780780 tenders folded, 12300251 versions written, 919133848 leaf rows
+2026-10-07T17:54:04+00:00 tender-db server[1314764]: [project] phase 2: 7484673/8780780 tenders folded, 12350251 versions written, 923060632 leaf rows
+2026-10-07T17:55:36+00:00 tender-db server[1314764]: [project] phase 2: 7505688/8780780 tenders folded, 12400254 versions written, 928802099 leaf rows
+2026-10-07T17:57:07+00:00 tender-db server[1314764]: [project] phase 2: 7527582/8780780 tenders folded, 12450255 versions written, 934274534 leaf rows
+2026-10-07T17:58:42+00:00 tender-db server[1314764]: [project] phase 2: 7550385/8780780 tenders folded, 12500284 versions written, 939752320 leaf rows
+2026-10-07T17:59:54+00:00 tender-db server[1314764]: [project] phase 2: 7574015/8780780 tenders folded, 12550284 versions written, 943538479 leaf rows
+2026-10-07T18:01:09+00:00 tender-db server[1314764]: [project] phase 2: 7597212/8780780 tenders folded, 12600284 versions written, 947615681 leaf rows
+2026-10-07T18:02:20+00:00 tender-db server[1314764]: [project] phase 2: 7621067/8780780 tenders folded, 12650285 versions written, 951375992 leaf rows
+2026-10-07T18:04:03+00:00 tender-db server[1314764]: [project] phase 2: 7644663/8780780 tenders folded, 12700286 versions written, 957819423 leaf rows
+2026-10-07T18:05:29+00:00 tender-db server[1314764]: [project] phase 2: 7668169/8780780 tenders folded, 12750287 versions written, 962772888 leaf rows
+2026-10-07T18:06:39+00:00 tender-db server[1314764]: [project] phase 2: 7692027/8780780 tenders folded, 12800289 versions written, 966388979 leaf rows
+2026-10-07T18:07:54+00:00 tender-db server[1314764]: [project] phase 2: 7716755/8780780 tenders folded, 12850316 versions written, 970420638 leaf rows
+2026-10-07T18:09:37+00:00 tender-db server[1314764]: [project] phase 2: 7740984/8780780 tenders folded, 12900317 versions written, 976777526 leaf rows
+2026-10-07T18:11:17+00:00 tender-db server[1314764]: [project] phase 2: 7763733/8780780 tenders folded, 12950317 versions written, 982855345 leaf rows
+2026-10-07T18:12:47+00:00 tender-db server[1314764]: [project] phase 2: 7788936/8780780 tenders folded, 13000317 versions written, 988201583 leaf rows
+2026-10-07T18:14:04+00:00 tender-db server[1314764]: [project] phase 2: 7813587/8780780 tenders folded, 13050317 versions written, 992351854 leaf rows
+2026-10-07T18:15:23+00:00 tender-db server[1314764]: [project] phase 2: 7837775/8780780 tenders folded, 13100318 versions written, 996701308 leaf rows
+2026-10-07T18:16:27+00:00 tender-db server[1314764]: [project] phase 2: 7861955/8780780 tenders folded, 13150318 versions written, 999916080 leaf rows
+2026-10-07T18:17:41+00:00 tender-db server[1314764]: [project] phase 2: 7885788/8780780 tenders folded, 13200318 versions written, 1004009364 leaf rows
+2026-10-07T18:18:50+00:00 tender-db server[1314764]: [project] phase 2: 7909813/8780780 tenders folded, 13250319 versions written, 1007672242 leaf rows
+2026-10-07T18:20:40+00:00 tender-db server[1314764]: [project] phase 2: 7933381/8780780 tenders folded, 13300319 versions written, 1014579416 leaf rows
+2026-10-07T18:21:45+00:00 tender-db server[1314764]: [project] phase 2: 7956942/8780780 tenders folded, 13350319 versions written, 1017825985 leaf rows
+2026-10-07T18:22:50+00:00 tender-db server[1314764]: [project] phase 2: 7980470/8780780 tenders folded, 13400320 versions written, 1021174925 leaf rows
+2026-10-07T18:24:03+00:00 tender-db server[1314764]: [project] phase 2: 8003977/8780780 tenders folded, 13450320 versions written, 1025007711 leaf rows
+2026-10-07T18:25:31+00:00 tender-db server[1314764]: [project] phase 2: 8026071/8780780 tenders folded, 13500320 versions written, 1030068160 leaf rows
+2026-10-07T18:26:36+00:00 tender-db server[1314764]: [project] phase 2: 8050275/8780780 tenders folded, 13550320 versions written, 1033355872 leaf rows
+2026-10-07T18:27:43+00:00 tender-db server[1314764]: [project] phase 2: 8074010/8780780 tenders folded, 13600320 versions written, 1036785308 leaf rows
+2026-10-07T18:28:51+00:00 tender-db server[1314764]: [project] phase 2: 8099050/8780780 tenders folded, 13650321 versions written, 1040379765 leaf rows
+2026-10-07T18:29:55+00:00 tender-db server[1314764]: [project] phase 2: 8123515/8780780 tenders folded, 13700321 versions written, 1043622637 leaf rows
+2026-10-07T18:31:06+00:00 tender-db server[1314764]: [project] phase 2: 8148166/8780780 tenders folded, 13750321 versions written, 1047351739 leaf rows
+2026-10-07T18:32:05+00:00 tender-db server[1314764]: [project] phase 2: 8172356/8780780 tenders folded, 13800321 versions written, 1050184461 leaf rows
+2026-10-07T18:33:08+00:00 tender-db server[1314764]: [project] phase 2: 8197120/8780780 tenders folded, 13850322 versions written, 1053274470 leaf rows
+2026-10-07T18:34:10+00:00 tender-db server[1314764]: [project] phase 2: 8221937/8780780 tenders folded, 13900323 versions written, 1056326715 leaf rows
+2026-10-07T18:35:30+00:00 tender-db server[1314764]: [project] phase 2: 8246539/8780780 tenders folded, 13950324 versions written, 1060842666 leaf rows
+2026-10-07T18:36:27+00:00 tender-db server[1314764]: [project] phase 2: 8271569/8780780 tenders folded, 14000328 versions written, 1063502098 leaf rows
+2026-10-07T18:37:25+00:00 tender-db server[1314764]: [project] phase 2: 8296265/8780780 tenders folded, 14050328 versions written, 1066209149 leaf rows
+2026-10-07T18:38:22+00:00 tender-db server[1314764]: [project] phase 2: 8321323/8780780 tenders folded, 14100328 versions written, 1068863437 leaf rows
+2026-10-07T18:39:21+00:00 tender-db server[1314764]: [project] phase 2: 8346316/8780780 tenders folded, 14150329 versions written, 1071613986 leaf rows
+2026-10-07T18:40:20+00:00 tender-db server[1314764]: [project] phase 2: 8371712/8780780 tenders folded, 14200329 versions written, 1074354417 leaf rows
+2026-10-07T18:41:17+00:00 tender-db server[1314764]: [project] phase 2: 8397590/8780780 tenders folded, 14250329 versions written, 1076819596 leaf rows
+2026-10-07T18:42:17+00:00 tender-db server[1314764]: [project] phase 2: 8423742/8780780 tenders folded, 14300329 versions written, 1079529816 leaf rows
+2026-10-07T18:43:12+00:00 tender-db server[1314764]: [project] phase 2: 8450890/8780780 tenders folded, 14350330 versions written, 1081928376 leaf rows
+2026-10-07T18:44:08+00:00 tender-db server[1314764]: [project] phase 2: 8477486/8780780 tenders folded, 14400330 versions written, 1084272913 leaf rows
+2026-10-07T18:45:04+00:00 tender-db server[1314764]: [project] phase 2: 8503912/8780780 tenders folded, 14450331 versions written, 1086740925 leaf rows
+2026-10-07T18:45:59+00:00 tender-db server[1314764]: [project] phase 2: 8530787/8780780 tenders folded, 14500331 versions written, 1089100417 leaf rows
+2026-10-07T18:46:54+00:00 tender-db server[1314764]: [project] phase 2: 8557987/8780780 tenders folded, 14550331 versions written, 1091439094 leaf rows
+2026-10-07T18:47:48+00:00 tender-db server[1314764]: [project] phase 2: 8585923/8780780 tenders folded, 14600332 versions written, 1093692876 leaf rows
+2026-10-07T18:48:41+00:00 tender-db server[1314764]: [project] phase 2: 8614926/8780780 tenders folded, 14650333 versions written, 1095917461 leaf rows
+2026-10-07T18:49:34+00:00 tender-db server[1314764]: [project] phase 2: 8645032/8780780 tenders folded, 14700333 versions written, 1098192804 leaf rows
+2026-10-07T18:50:27+00:00 tender-db server[1314764]: [project] phase 2: 8676770/8780780 tenders folded, 14750333 versions written, 1100321132 leaf rows
+2026-10-07T18:51:20+00:00 tender-db server[1314764]: [project] phase 2: 8711064/8780780 tenders folded, 14800335 versions written, 1102530415 leaf rows
+2026-10-07T18:52:13+00:00 tender-db server[1314764]: [project] phase 2: 8749457/8780780 tenders folded, 14850335 versions written, 1104646752 leaf rows
+2026-10-07T18:55:21+00:00 tender-db server[1314764]: [project] phase 2: 8780780/8780780 tenders folded, 14896923 versions written, 1117908878 leaf rows
+2026-10-07T18:56:23+00:00 tender-db server[1314764]: [project] WAL after end-of-run index builds: 0 MB (peak RSS 30990 MB)
+2026-10-07T18:56:23+00:00 tender-db server[1314764]: [project] apply: 8780780 tenders in 25498.9s
+2026-10-07T18:56:23+00:00 tender-db server[1314764]: [project] done: 14896923 notices → 8780780 tenders (686577 islands), 14896923 versions, 0 entities swept, 70643598 change rows in 37066.9s
+2026-10-07T11:26:41+00:00 tender-db server[1314764]: [project] phase 1: 14896923/14896923 notices planned
