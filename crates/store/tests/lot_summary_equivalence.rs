@@ -11,19 +11,26 @@
 //! awkward data, and requires the new code to agree with it row for row. If the
 //! two ever diverge the test names the field and the lot.
 //!
-//! TWO picks have since diverged from the oracle ON PURPOSE, and this fixture
-//! carries no row that triggers either, which is why it still passes unchanged:
+//! The VALUE and its currency are no longer compared at all. Since issue 490
+//! `summarise` reads them from `tender_version_lots.value_*`, which the FOLD
+//! stores (`canonical::elect_lot_value`), so a hand-built fixture has nothing for
+//! the reader to derive. The pick is pinned through the fold instead:
+//! `head_election_agreement.rs` (stored == served, including the
+//! current-version-not-the-stale-one case this oracle used to spot-check) and
+//! `lot_value_election.rs` (issue 389's refusals). The oracle's two value
+//! subqueries stay in its SQL, verbatim, so the column positions it reads do not
+//! move.
 //!
-//!   * value — issue 389 unit 1 refuses a candidate the FOLD would refuse (a
-//!     withheld marker, a sentinel, an amount over the ceiling). Pinned in
-//!     `lot_value_election.rs`.
+//! One pick has since diverged from the oracle ON PURPOSE, and this fixture
+//! carries no row that triggers it, which is why it still passes unchanged:
+//!
 //!   * deadline — issue 389 unit 2 falls back to the procedure's deadline when the
 //!     lot publishes none. Pinned in `lot_deadline_scope.rs`.
 //!
-//! Both are cases where agreeing with the pre-115 SQL would mean keeping a defect,
-//! so they are pinned in their own files rather than by weakening this oracle. If
-//! a future fixture row here starts tripping one, that is the signal to split it
-//! out — not to relax the assertion.
+//! That is a case where agreeing with the pre-115 SQL would mean keeping a defect,
+//! so it is pinned in its own file rather than by weakening this oracle. If a
+//! future fixture row here starts tripping it, that is the signal to split it out
+//! — not to relax the assertion.
 
 use store::read::{self, Filter, Scope};
 use store::turso::{self, Value};
@@ -80,8 +87,6 @@ struct Summary {
     lot_key: String,
     kind: String,
     title: Option<String>,
-    value_cents: Option<i64>,
-    currency: Option<String>,
     deadline: Option<(i64, i64, bool)>,
 }
 
@@ -92,8 +97,6 @@ fn summary(r: read::LotRow) -> Summary {
         lot_key: r.lot_key,
         kind: r.kind,
         title: r.title,
-        value_cents: r.value_cents,
-        currency: r.currency,
         deadline: r.deadline.map(|d| (d.utc_seconds, d.offset_minutes, d.has_time)),
     }
 }
@@ -119,8 +122,7 @@ async fn oracle(conn: &turso::Connection, tail: &str, params: Vec<Value>) -> Vec
             lot_key: opt_s(&row, 2).unwrap(),
             kind: opt_s(&row, 3).unwrap(),
             title: opt_s(&row, 5),
-            value_cents: opt_i(&row, 6),
-            currency: opt_s(&row, 7),
+            // Columns 6 and 7 are the pre-fix value pick, no longer compared (issue 490).
             deadline: opt_i(&row, 8).map(|utc| {
                 (utc, opt_i(&row, 9).unwrap_or(0), opt_i(&row, 10).unwrap_or(0) != 0)
             }),
@@ -426,12 +428,10 @@ async fn set_based_lot_summary_agrees_with_the_correlated_subqueries() {
     assert_eq!(expected[0].title.as_deref(), Some("eins-en"), "first ENG title wins");
     assert_eq!(expected[1].title.as_deref(), Some("zwei-fr"), "a labelled language beats NULL");
     assert_eq!(expected[2].title, None, "a description is not a title");
-    assert_eq!(expected[3].value_cents, Some(500));
-    assert_eq!(expected[3].currency.as_deref(), Some("GBP"), "first of the tied maxima");
     assert_eq!(expected[4].deadline, Some((1_800_009_000, 120, false)), "latest deadline, its own offset");
     assert_eq!(expected[6], Summary {
         tender_id: TENDER, lot_key: "LOT-7".into(), kind: "Lot".into(),
-        title: None, value_cents: None, currency: None, deadline: None,
+        title: None, deadline: None,
     });
     assert_eq!(expected[7].title.as_deref(), Some("acht-sv"), "a Tender-level title is not a lot's");
     // ADR-0013 D3: a requested language outranks the ENG default in the same
@@ -598,8 +598,6 @@ async fn the_unfiltered_list_agrees_across_many_versions_in_one_page() {
     assert_eq!(all.len(), 6, "the oracle must see all six lots");
     assert_eq!(all[0].title.as_deref(), Some("a1-en"), "the current version's ENG title");
     assert_eq!(all[0].deadline, None, "a superseded version supplies no deadline");
-    assert_eq!(all[1].value_cents, Some(500), "the current version's amount, not the stale one");
-    assert_eq!(all[1].currency.as_deref(), Some("GBP"), "first of the tied maxima");
     assert_eq!(all[2].title.as_deref(), Some("b1-fr"), "B is read at its own seq");
     assert_eq!(all[2].deadline, Some((1_800_009_000, 120, false)), "the latest deadline");
     assert_eq!(
@@ -609,8 +607,6 @@ async fn the_unfiltered_list_agrees_across_many_versions_in_one_page() {
             lot_key: "LOT-2".into(),
             kind: "Part".into(),
             title: None,
-            value_cents: None,
-            currency: None,
             deadline: None,
         },
         "another Tender's satellite slice decorated this lot — `summarise` matched a \

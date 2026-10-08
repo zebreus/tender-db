@@ -486,6 +486,21 @@ against a view that cannot answer it at all.</p>
             JOIN tender_versions v
               ON v.tender_id = t.id AND v.seq = t.current_seq
            WHERE t.id = 12345'</code></pre>
+<p><strong>Values.</strong> A Tender's headline value is
+<code>tenders.current_value_eur_cents</code> (indexed). A lot's is stored per version
+on <code>tender_version_lots</code> &mdash; <code>value_cents</code>,
+<code>value_currency</code>, <code>value_eur_cents</code> &mdash; and it is the figure
+<code>/v1/lots</code> serves, chosen by the same rule (issue 490). The raw
+<code>tender_version_amounts</code> rows carry every published figure, including the
+placeholders and scale slips that rule refuses, so a <code>MAX()</code> over them is
+not the lot's value. For a range or a top-N over lot values, keep
+<code>value_eur_cents IS NOT NULL</code> in the <code>WHERE</code> literally: the index
+serves only that form.</p>
+<pre><code>SELECT vl.tender_id, vl.lot_id, vl.value_cents, vl.value_currency
+  FROM tender_version_lots vl
+  JOIN tenders t ON t.id = vl.tender_id AND t.current_seq = vl.seq
+ WHERE vl.value_eur_cents IS NOT NULL AND vl.value_eur_cents &gt;= 1000000000
+ ORDER BY vl.value_eur_cents DESC LIMIT 20</code></pre>
 <p>Rules:</p>
 <ul>
   <li>Exactly one statement, and it must be a bare <code>SELECT</code> — no writes, PRAGMA, ATTACH, EXPLAIN, CTE-wrapped writes or multi-statement bodies.</li>

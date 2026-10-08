@@ -1094,12 +1094,18 @@ pub(crate) const SCHEMA: &str = "
       JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq;
 
     DROP VIEW IF EXISTS v_lots;
+    -- Issue 490: the lot's elected value (the REST lot row's `value`), stored by the
+    -- fold on the version row and appended here so `SELECT *` keeps its positions.
+    -- Filter on `value_eur_cents` with a literal `value_eur_cents IS NOT NULL` beside
+    -- the range: that is what lets the partial index serve it (turso matches the
+    -- index's WHERE syntactically).
     CREATE VIEW v_lots AS
     SELECT l.id, l.tender_id, l.lot_key, vl.kind, vl.seq,
            (SELECT x.value FROM tender_version_texts x
              WHERE x.tender_id = l.tender_id AND x.seq = vl.seq
                AND x.lot_id = l.id AND x.field = 'title'
-             ORDER BY (x.lang = 'ENG') DESC LIMIT 1) AS title
+             ORDER BY (x.lang = 'ENG') DESC LIMIT 1) AS title,
+           vl.value_cents, vl.value_currency, vl.value_eur_cents
       FROM lots l
       JOIN v_tender_current c ON c.tender_id = l.tender_id
       JOIN tender_version_lots vl
@@ -10448,7 +10454,7 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 19] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 20] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         // Issue 217-A: `/v1/tenders?publication_id=` seeds its FROM with "the
@@ -10575,6 +10581,18 @@ impl Db {
         // `lots`-sized partition — single digits — makes its sort free, which is why
         // `1830d50` got away with it and why nothing else should copy it.
         ("tenders_source_id", "tenders(source, id)"),
+        // Issue 490: `/v1/sql`'s lot value range and top-N (`v_lots.value_eur_cents`).
+        // Covering, so a range seek probes `tenders` only by primary key to keep the
+        // current version. PARTIAL: most lots carry no lot-scoped figure, so a full
+        // index would be ~80 % NULL entries every future fold must maintain at random
+        // positions. turso 0.7.2 uses a partial index only for a query that repeats
+        // its WHERE literally, so the documented recipe carries
+        // `value_eur_cents IS NOT NULL` (and `v_lots`' own comment says so). Built by
+        // the boot-time Reindex AFTER the backfill refold, never maintained through it.
+        (
+            "tender_version_lots_value_eur",
+            "tender_version_lots(value_eur_cents, tender_id, seq, lot_id) WHERE value_eur_cents IS NOT NULL",
+        ),
     ];
 
     /// DROP+recreate `table` from its own captured DDL (table + any named indexes),

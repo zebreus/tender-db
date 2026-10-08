@@ -980,6 +980,15 @@ over-reports and never under-reports.
   then a rate correction moves the stored value only at the Tender's next fold. Do not let the
   compare straddle a `fetch-rates` or a `rederive-eur`.
 
+**After deploy B:**
+
+1. Wait for the boot-time Reindex to build the partial index. Confirm it with
+   `SELECT name FROM sqlite_master WHERE name = 'tender_version_lots_value_eur'` before timing any
+   value query. Until it exists, a lot value range is a scan of the table.
+2. Time the `/docs` recipe (top 20 lots at or above EUR 10 m) and a narrow band with a LIMIT.
+3. Do not compare a lot `COUNT(*)` over a wide band with the tenders' 56–66 ms. Every index entry
+   of every version probes `tenders`, so it is not index-only.
+
 **A rollback below deploy A** after the refold has run:
 
 - The epoch-3 binary reads every stored epoch 4 as stale. Each Tender it folds is rewritten in full

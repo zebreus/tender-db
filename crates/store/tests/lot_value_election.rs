@@ -15,89 +15,66 @@
 //! These are not oracle tests: `lot_summary_equivalence.rs` pins `summarise`
 //! against the pre-115 SQL, and this is exactly where the two are MEANT to
 //! diverge. What is pinned here is that the lot pick refuses what
-//! `sentinel_amount` refuses, and refuses nothing else.
+//! `sentinel_amount` refuses, and refuses nothing else. Since issue 490 the pick
+//! is the fold's (`canonical::elect_lot_value`, stored on `tender_version_lots`),
+//! so every fixture here is written by `apply_tenders`.
 
+use store::canonical::{Fact, LotState, TenderProjection, TenderVersion};
 use store::read::{self, Filter, Scope};
-use store::turso::{self, Value};
+use store::turso;
 
 const TENDER: i64 = 1;
 
-async fn drain(conn: &turso::Connection, sql: &str) {
-    let mut rows = conn.query(sql, ()).await.unwrap();
-    while rows.next().await.unwrap().is_some() {}
-}
-
-/// A Tender with one version, no head value — the shape the issue measured: the
-/// fold already refused every figure on it, so `current_value_eur_cents` is NULL.
-async fn fixture(name: &str) -> turso::Connection {
+/// One Tender, one version, the given lots -- written by the FOLD (`apply_tenders`).
+/// Since issue 490 the lot row serves the value the fold stored, so a fixture that
+/// hand-inserted amounts would test nothing the reader still does.
+async fn fold(name: &str, lots: Vec<(&str, Vec<Fact>)>) -> turso::Connection {
     // One file per test: these run concurrently in one process, and a shared path
     // is `Busy("database is locked")`, not a failed assertion.
     let path = format!("/tmp/tender-db-lotvalue-{name}-{}.db", std::process::id());
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
-    store::Db::open(&path).await.unwrap();
-    let db = turso::Builder::new_local(&path).build().await.unwrap();
-    let conn = db.connect().unwrap();
-    drain(&conn, "PRAGMA journal_mode = WAL").await;
-    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
-    conn.execute(
-        "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at)
-         VALUES (?, 'ted', 'pk', 'procedure', 1, 1700000000, 1700000000)",
-        (Value::Integer(TENDER),),
-    )
-    .await
-    .unwrap();
-    conn.execute(
-        "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id)
-         VALUES (?, 1, 1700000000, 'pub', 1)",
-        (Value::Integer(TENDER),),
-    )
-    .await
-    .unwrap();
-    conn
+    let db = store::Db::open(&path).await.unwrap();
+    db.set_foreign_keys(false).await.unwrap();
+    let version = TenderVersion {
+        caused_by_notice_id: 1,
+        published_at: 1_700_000_000,
+        dispatched_at: None,
+        notice_subtype: None,
+        original_lang: None,
+        publication_id: "pub".into(),
+        facts: Default::default(),
+        lots: lots
+            .into_iter()
+            .map(|(key, facts)| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() })
+            .collect(),
+        rounds: Vec::new(),
+        group_members: Vec::new(),
+    };
+    let p = TenderProjection {
+        source: "ted".into(),
+        procedure_key: Some("pk".into()),
+        island_notice_id: None,
+        kind: "procedure".into(),
+        versions: vec![version],
+    };
+    db.apply_tenders(&[p], 1_700_000_000, false).await.unwrap();
+    turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap()
 }
 
-async fn lot(conn: &turso::Connection, id: i64, key: &str) {
-    conn.execute(
-        "INSERT INTO lots (id, tender_id, lot_key) VALUES (?, ?, ?)",
-        (Value::Integer(id), Value::Integer(TENDER), Value::Text(key.to_owned())),
-    )
-    .await
-    .unwrap();
-    conn.execute(
-        "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (?, 1, ?, 'Lot')",
-        (Value::Integer(TENDER), Value::Integer(id)),
-    )
-    .await
-    .unwrap();
-}
-
-/// An amount as the projection stores it: published `cents` and `currency`, the
-/// derived `eur_cents` beside them (ADR-0014), and `quality` NULL unless the
-/// notice declared the field withheld (issue 372).
-async fn amount(
-    conn: &turso::Connection,
-    lot: i64,
-    cents: i64,
-    currency: &str,
-    eur_cents: Option<i64>,
-    quality: Option<&str>,
-) {
-    conn.execute(
-        "INSERT INTO tender_version_amounts (tender_id, seq, lot_id, field, cents, currency, eur_cents, quality)
-         VALUES (?, 1, ?, 'estimated_value', ?, ?, ?, ?)",
-        (
-            Value::Integer(TENDER),
-            Value::Integer(lot),
-            Value::Integer(cents),
-            Value::Text(currency.to_owned()),
-            eur_cents.map_or(Value::Null, Value::Integer),
-            quality.map_or(Value::Null, |q| Value::Text(q.to_owned())),
-        ),
-    )
-    .await
-    .unwrap();
+/// An amount as a notice publishes it: `cents` and `currency`, and `quality` set
+/// only when the notice declared the field withheld (issue 372). The EUR sibling
+/// is the fold's to derive (EUR converts 1:1 under the test's empty rates lookup;
+/// other codes do not convert).
+fn amount(cents: i64, currency: &str, quality: Option<&str>) -> Fact {
+    Fact::Amount {
+        field: "estimated_value".into(),
+        cents,
+        currency: currency.into(),
+        tax_basis: None,
+        quality: quality.map(Into::into),
+    }
 }
 
 async fn served(conn: &turso::Connection) -> Vec<(String, Option<i64>, Option<String>)> {
@@ -120,42 +97,31 @@ async fn serve(
 /// the refusal and the non-refusals are read off the same page.
 #[tokio::test]
 async fn a_lot_whose_only_figure_is_an_exact_zero_serves_no_value() {
-    let conn = fixture("zero").await;
-
-    // 1: the issue's case. One unflagged amount, exactly 0, under a NULL head.
-    lot(&conn, 1, "LOT-0000").await;
-    amount(&conn, 1, 0, "GBP", Some(0), None).await;
-
-    // 2: a zero AND a real figure. The zero must not win, and must not take the
-    //    real one down with it — this is the regression the naive fix makes.
-    lot(&conn, 2, "LOT-0001").await;
-    amount(&conn, 2, 0, "GBP", Some(0), None).await;
-    amount(&conn, 2, 50_000, "GBP", Some(58_000), None).await;
-
-    // 3: the control. An ordinary figure is untouched.
-    lot(&conn, 3, "LOT-0002").await;
-    amount(&conn, 3, 1_234, "EUR", Some(1_234), None).await;
-
-    // 4: a negative — `sentinel_amount`'s oldest leg, and the eForms SDK's -1
-    //    placeholder when a publisher writes it without the withheld marker.
-    lot(&conn, 4, "LOT-0003").await;
-    amount(&conn, 4, -1, "EUR", None, None).await;
-
-    // 5: over the ceiling. €100 bn is not a procurement (issue 366); the row is
-    //    refused only because its EUR conversion EXISTS to measure.
-    lot(&conn, 5, "LOT-0004").await;
-    amount(&conn, 5, 99_999_999_999_999_999, "EUR", Some(99_999_999_999_999_999), None).await;
-
-    // 6: an unconvertible figure of ordinary size. No `eur_cents`, so the
-    //    ceiling has nothing to say — and the published figure is still served,
-    //    because the lot row carries what the publisher wrote, not a conversion.
-    lot(&conn, 6, "LOT-0005").await;
-    amount(&conn, 6, 900_000, "XXX", None, None).await;
-
-    // 7: withheld (issue 372). Already refused before this change; pinned here so
-    //    the new `continue`s cannot be written in a way that drops the old one.
-    lot(&conn, 7, "LOT-0006").await;
-    amount(&conn, 7, -1, "EUR", None, Some("withheld")).await;
+    let conn = fold(
+        "zero",
+        vec![
+            // 1: the issue's case. One unflagged amount, exactly 0, under a NULL head.
+            ("LOT-0000", vec![amount(0, "GBP", None)]),
+            // 2: a zero AND a real figure. The zero must not win, and must not take
+            //    the real one down with it -- the regression the naive fix makes.
+            ("LOT-0001", vec![amount(0, "GBP", None), amount(50_000, "GBP", None)]),
+            // 3: the control. An ordinary figure is untouched.
+            ("LOT-0002", vec![amount(1_234, "EUR", None)]),
+            // 4: a negative -- `sentinel_amount`'s oldest leg, and the eForms SDK's -1
+            //    placeholder when a publisher writes it without the withheld marker.
+            ("LOT-0003", vec![amount(-1, "EUR", None)]),
+            // 5: over the ceiling. EUR 100 bn is not a procurement (issue 366); the row
+            //    is refused only because its EUR conversion EXISTS to measure.
+            ("LOT-0004", vec![amount(99_999_999_999_999_999, "EUR", None)]),
+            // 6: an unconvertible figure of ordinary size. No conversion, so the
+            //    ceiling has nothing to say -- and the published figure is still
+            //    served, because the lot row carries what the publisher wrote.
+            ("LOT-0005", vec![amount(900_000, "XXX", None)]),
+            // 7: withheld (issue 372).
+            ("LOT-0006", vec![amount(-1, "EUR", Some("withheld"))]),
+        ],
+    )
+    .await;
 
     let got = served(&conn).await;
     let value = |key: &str| {
@@ -186,13 +152,11 @@ async fn a_lot_whose_only_figure_is_an_exact_zero_serves_no_value() {
 /// The payload and the filter are the same endpoint, and issue 389's sharpest
 /// form is that they disagreed on one lot. `max_value` compares the TENDER's head
 /// column, so with a NULL head the filter returns nothing whatever the lot rows
-/// say; the point is that the payload now agrees with that instead of offering a
+/// say; the point is that the payload agrees with that instead of offering a
 /// `0` the filter will not match.
 #[tokio::test]
 async fn the_lot_payload_and_the_value_filter_agree_about_a_zero() {
-    let conn = fixture("filter").await;
-    lot(&conn, 1, "LOT-0000").await;
-    amount(&conn, 1, 0, "GBP", Some(0), None).await;
+    let conn = fold("filter", vec![("LOT-0000", vec![amount(0, "GBP", None)])]).await;
 
     let by_max =
         serve(&conn, Filter { tender: Some(TENDER), max_value: Some(0), ..Filter::default() })

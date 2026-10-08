@@ -77,9 +77,12 @@ async fn seed(conn: &turso::Connection, tender: i64, lots: i64) {
 
         let t = Value::Integer(tender);
         let l = Value::Integer(lot);
+        // The lot row as the fold writes it since issue 490: the elected value
+        // (this lot's one amount, below) stored on the version row.
         conn.execute(
-            "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (?, 1, ?, 'Lot')",
-            (t.clone(), l.clone()),
+            "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind, value_cents, value_currency, value_eur_cents)
+             VALUES (?, 1, ?, 'Lot', ?, 'EUR', ?)",
+            (t.clone(), l.clone(), Value::Integer(1000 + lot), Value::Integer(1000 + lot)),
         )
         .await
         .unwrap();

@@ -3898,13 +3898,10 @@ fn lots_query_banded(filter: &Filter, scope: Scope, band_end: Option<i64>) -> Qu
 ///     version's original language (ADR-0013 D3), then any other language, then an
 ///     unlabelled row; ties keep the first in scan order. SQLite sorts NULL below
 ///     both 0 and 1 under DESC, which is what puts unlabelled last.
-///   * value and currency — `MAX(cents)` and `ORDER BY cents DESC LIMIT 1` resolve
-///     to the SAME row, so one max-cents row serves both. Over the CANDIDATES,
-///     which since issue 389 are the rows the fold would also have accepted: not
-///     withheld (issue 372), not a sentinel, under the ceiling where a EUR
-///     conversion exists to measure it against, and not refused by the
-///     exact-10ᵏ scale-error rule (issue 471 unit 4(a), the fold's own
-///     `ScalePartners::refuses_amount`, read over the chain up to the version).
+///   * value and currency — READ from `tender_version_lots.value_*`, which the fold
+///     stores per version (issue 490, `canonical::elect_lot_value`). Until then this
+///     re-derived the pick here (issues 389 and 471 unit 4(a)) on every read, from
+///     the same rule; storing it is what lets `/v1/sql` serve the same figure.
 ///   * deadline — the three columns were three subqueries sharing
 ///     `ORDER BY utc_seconds DESC LIMIT 1`, so one max-utc row serves all three.
 async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -> turso::Result<()> {
@@ -3985,88 +3982,22 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
             }
         }
 
+        // Issue 490: the value is READ, not re-derived. The fold elects it once per
+        // version (`canonical::elect_lot_value`: withheld, sentinel, over-ceiling and
+        // exact-10^k slips skipped, the largest published figure wins) and stores it
+        // on `tender_version_lots`, so this is one primary-key prefix seek per version
+        // and the REST row and `/v1/sql`'s `v_lots.value_*` cannot disagree.
         let mut got = conn
             .query(
-                // Issue 372: a withheld figure is not a candidate. Without this a
-                // lot whose ONLY amount is withheld would show -0.01 as its
-                // headline value: -100 outranks the NULL default below, so it
-                // wins by being the only row rather than by being a figure.
-                "SELECT s.lot_id, s.cents, s.currency, s.eur_cents, s.field FROM tender_version_amounts s
-                  WHERE s.tender_id = ? AND s.seq = ? AND s.lot_id IS NOT NULL
-                    AND s.quality IS NULL",
+                "SELECT lot_id, value_cents, value_currency FROM tender_version_lots
+                  WHERE tender_id = ? AND seq = ?",
                 key.clone(),
             )
             .await?;
-        // Every lot candidate of this version, in scan order, held until the
-        // Tender-wide exact-10^k rule has been built (issue 471 unit 4(a)). The skips
-        // themselves are the fold's: issue 490 moved them into
-        // `canonical::elect_lot_value`, which the fold calls to STORE this value, so
-        // the read and the stored column run one function. Issue 389 unit 1 is why
-        // that matters -- tender 25773 served `value: null` (the head refuses an exact
-        // zero) beside a lot priced `{cents: 0}` from the same figure, because this
-        // pick had transcribed the rule rather than called it.
-        let mut candidates: Vec<(usize, i64, String, Option<i64>, String)> = Vec::new();
         while let Some(row) = got.next().await? {
             let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
-            // `cents`, `currency` and `field` are NOT NULL in the schema.
-            let (Some(cents), Some(currency), Some(field)) = (opt_int_of(&row, 1), opt_text_of(&row, 2), opt_text_of(&row, 4))
-            else {
-                continue;
-            };
-            candidates.push((i, cents, currency, opt_int_of(&row, 3), field));
-        }
-
-        // Over every candidate, not only the admissible ones: a sentinel or an
-        // over-ceiling figure past the gate loads the chain for nothing, which is
-        // rare, and filtering here would be a second copy of the skips.
-        let reached = candidates
-            .iter()
-            .any(|c| c.3.is_some_and(|eur| eur >= crate::canonical::SCALE_ERROR_MIN_EUR_CENTS));
-        let mut figures: Vec<(i64, Option<String>, Option<String>, Option<i64>)> = Vec::new();
-        if reached {
-            // Every amount (any field, any quality, tender or lot scope) and
-            // every lot award of versions 1..=seq: `ScalePartners::of_chain`'s
-            // inputs, as the fold stored them. Both seeks are prefix ranges on
-            // the `(tender_id, seq)` key.
-            let mut got = conn
-                .query(
-                    "SELECT seq, field, cents, currency FROM tender_version_amounts
-                      WHERE tender_id = ? AND seq <= ?
-                     UNION ALL
-                     SELECT seq, NULL, awarded_cents, awarded_currency FROM tender_version_lot_results
-                      WHERE tender_id = ? AND seq <= ?
-                        AND awarded_cents IS NOT NULL AND awarded_currency IS NOT NULL",
-                    [Value::Integer(tender_id), Value::Integer(seq), Value::Integer(tender_id), Value::Integer(seq)],
-                )
-                .await?;
-            while let Some(row) = got.next().await? {
-                figures.push((opt_int_of(&row, 0).unwrap_or(0), opt_text_of(&row, 1), opt_text_of(&row, 3), opt_int_of(&row, 2)));
-            }
-        }
-        let mut rule = crate::canonical::ScalePartners::new();
-        for (at_seq, field, currency, cents) in &figures {
-            let (Some(currency), Some(cents)) = (currency.as_deref(), *cents) else { continue };
-            rule.add_partner(currency, cents);
-            // Lot awards carry no field: they are partners, never corroboration.
-            if let (true, Some(field)) = (*at_seq == seq, field.as_deref()) {
-                rule.add_head_amount(field, currency, cents);
-            }
-        }
-        let mut by_row: std::collections::BTreeMap<usize, Vec<crate::canonical::LotAmount<'_>>> = Default::default();
-        for (i, cents, currency, eur_cents, field) in &candidates {
-            by_row.entry(*i).or_default().push(crate::canonical::LotAmount {
-                field,
-                cents: *cents,
-                currency,
-                eur_cents: *eur_cents,
-                quality: None, // the SELECT already dropped withheld rows
-            });
-        }
-        for (i, amounts) in by_row {
-            if let Some(won) = crate::canonical::elect_lot_value(amounts, &rule) {
-                rows[i].value_cents = Some(won.cents);
-                rows[i].currency = Some(won.currency.to_owned());
-            }
+            rows[i].value_cents = opt_int_of(&row, 1);
+            rows[i].currency = opt_text_of(&row, 2);
         }
 
         // Issue 389 unit 2: a LOT-scoped deadline still wins, and a tender-scoped
