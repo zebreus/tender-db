@@ -792,6 +792,33 @@ async fn the_dialect_canary_shapes_all_run() {
     }
 }
 
+/// Issue 494, end to end: the latency window behind `/metrics` sees real requests,
+/// classified by how they answered, with the quantile series built from the 200s.
+#[tokio::test(flavor = "multi_thread")]
+async fn sql_latency_reaches_the_metrics_page() {
+    let server = Server::start("sql-latency-metrics").await;
+    let metrics = || async {
+        server.http.get(format!("{}/metrics", server.base)).send().await.expect("metrics").text().await.expect("body")
+    };
+    assert!(!metrics().await.contains("tender_db_sql_recent_requests"), "absent before any request finishes");
+
+    assert_eq!(server.sql("SELECT 1").await.status(), 200);
+    assert_eq!(server.sql("SELECT 2").await.status(), 200);
+    assert_eq!(server.sql("SELECT nonsense FROM").await.status(), 400);
+    let page = metrics().await;
+    for line in [
+        "tender_db_sql_recent_requests{outcome=\"ok\"} 2",
+        "tender_db_sql_recent_requests{outcome=\"bad_request\"} 1",
+        "tender_db_sql_recent_requests{outcome=\"timeout\"} 0",
+    ] {
+        assert!(page.contains(line), "missing {line:?} in:\n{page}");
+    }
+    for q in ["0.5", "0.95", "0.99", "1"] {
+        assert!(page.contains(&format!("tender_db_sql_recent_ok_seconds{{quantile=\"{q}\"}}")), "quantile {q} in:\n{page}");
+    }
+    assert!(page.contains("tender_db_sql_recent_window_seconds"), "the window span in:\n{page}");
+}
+
 /// Issue 457 unit 3, end to end: recursion (keyword or self-reference) and EXCLUDE
 /// frames are refused with a 400 that names the reason, on any engine.
 #[tokio::test(flavor = "multi_thread")]

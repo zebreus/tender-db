@@ -292,6 +292,91 @@ pub struct SqlState {
     /// blocking threads are burning for nobody, and since when. Admission refuses
     /// at [`ABANDONED_CAP`], and `/metrics` serves both numbers.
     pinned: Arc<Pinned>,
+    /// The last [`RECENT_CAP`] finished requests (issue 494): when each finished,
+    /// how long it took, and how it answered -- the window `/metrics` reads.
+    recent: Mutex<Recent>,
+}
+
+/// How many finished requests the latency window holds (issue 494).
+const RECENT_CAP: usize = 1000;
+
+/// A request at or past this, or any 408, gets a `[sql] slow` log line (issue 494).
+const SLOW_LOG: Duration = Duration::from_secs(1);
+
+/// How a `/v1/sql` request answered, read off its status (issue 494).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Outcome {
+    Ok,
+    BadRequest,
+    Timeout,
+    RateLimited,
+    Busy,
+    Error,
+}
+
+impl Outcome {
+    pub const ALL: [Outcome; 6] =
+        [Outcome::Ok, Outcome::BadRequest, Outcome::Timeout, Outcome::RateLimited, Outcome::Busy, Outcome::Error];
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Outcome::Ok => "ok",
+            Outcome::BadRequest => "bad_request",
+            Outcome::Timeout => "timeout",
+            Outcome::RateLimited => "rate_limited",
+            Outcome::Busy => "busy",
+            Outcome::Error => "error",
+        }
+    }
+
+    fn of(status: StatusCode) -> Outcome {
+        match status.as_u16() {
+            200 => Outcome::Ok,
+            400 => Outcome::BadRequest,
+            408 => Outcome::Timeout,
+            429 => Outcome::RateLimited,
+            503 => Outcome::Busy,
+            _ => Outcome::Error,
+        }
+    }
+}
+
+type Recent = std::collections::VecDeque<(Instant, Duration, Outcome)>;
+
+/// Append one finished request, dropping the oldest once the window is full.
+fn push_recent(recent: &mut Recent, at: Instant, took: Duration, outcome: Outcome) {
+    if recent.len() == RECENT_CAP {
+        recent.pop_front();
+    }
+    recent.push_back((at, took, outcome));
+}
+
+/// The window's counts and quantiles; `None` when it is empty.
+fn stats_of(recent: &Recent) -> Option<RecentStats> {
+    let (first, last) = (recent.front()?.0, recent.back()?.0);
+    let counts = Outcome::ALL
+        .iter()
+        .map(|o| (*o, recent.iter().filter(|(_, _, got)| got == o).count()))
+        .collect();
+    let mut ok: Vec<f64> =
+        recent.iter().filter(|(_, _, o)| *o == Outcome::Ok).map(|(_, d, _)| d.as_secs_f64()).collect();
+    ok.sort_by(|a, b| a.total_cmp(b));
+    // Nearest rank: the smallest value with at least q of the sample at or below it.
+    let rank = |q: f64| ok[((q * ok.len() as f64).ceil() as usize).clamp(1, ok.len()) - 1];
+    let ok_quantiles = (!ok.is_empty()).then(|| [rank(0.5), rank(0.95), rank(0.99), rank(1.0)]);
+    Some(RecentStats { counts, ok_quantiles, window_secs: last.duration_since(first).as_secs_f64() })
+}
+
+/// The latency window as `/metrics` serves it (issue 494).
+#[derive(Debug, PartialEq)]
+pub struct RecentStats {
+    /// Requests per outcome over the window, in [`Outcome::ALL`] order.
+    pub counts: Vec<(Outcome, usize)>,
+    /// Seconds at the 0.5 / 0.95 / 0.99 / 1.0 quantiles of the window's 200s
+    /// (nearest rank); `None` when the window holds no 200.
+    pub ok_quantiles: Option<[f64; 4]>,
+    /// Wall time from the oldest to the newest finish in the window.
+    pub window_secs: f64,
 }
 
 impl SqlState {
@@ -313,7 +398,19 @@ impl SqlState {
             timeout,
             in_flight: Arc::new(AtomicUsize::new(0)),
             pinned: Arc::new(Pinned::default()),
+            recent: Mutex::new(std::collections::VecDeque::with_capacity(RECENT_CAP)),
         }
+    }
+
+    /// Record one finished request in the latency window (issue 494).
+    fn record(&self, took: Duration, outcome: Outcome) {
+        push_recent(&mut self.recent.lock().expect("sql recent lock"), Instant::now(), took, outcome);
+    }
+
+    /// The latency window, or `None` before the first request finishes -- a fresh
+    /// process has nothing to report, and an absent series says so honestly.
+    pub fn recent_stats(&self) -> Option<RecentStats> {
+        stats_of(&self.recent.lock().expect("sql recent lock"))
     }
 
     /// Computations currently occupying a blocking thread — live and abandoned
@@ -350,7 +447,31 @@ pub fn routes() -> Router<AppState> {
 
 // ------------------------------------------------------------------ handler
 
+/// Issue 494: every request is timed and classified into the latency window, and
+/// a slow one (or a 408) is logged with the start of its SQL, so the main
+/// consumption path's speed is a gauge rather than a guess.
 async fn run(
+    State(state): State<AppState>,
+    user: crate::v1::AuthUser,
+    sql: String,
+) -> Result<Response, ApiError> {
+    let started = Instant::now();
+    let user_id = user.id();
+    let head: String = sql.split_whitespace().collect::<Vec<_>>().join(" ").chars().take(300).collect();
+    let result = answer(State(state.clone()), user, sql).await;
+    let took = started.elapsed();
+    let status = match &result {
+        Ok(response) => response.status(),
+        Err(ApiError(code, _)) => *code,
+    };
+    state.sql.record(took, Outcome::of(status));
+    if took >= SLOW_LOG || status == StatusCode::REQUEST_TIMEOUT {
+        eprintln!("[sql] slow: {:.3}s status {} user {user_id}: {head}", took.as_secs_f64(), status.as_u16());
+    }
+    result
+}
+
+async fn answer(
     State(state): State<AppState>,
     user: crate::v1::AuthUser,
     sql: String,
@@ -2957,6 +3078,43 @@ mod tests {
         ] {
             assert!(classify(sql).is_ok(), "a legitimate CTE query must classify OK: {sql:?}");
         }
+    }
+
+    /// Issue 494: the latency window holds the last RECENT_CAP requests, counts
+    /// every outcome, and takes its quantiles from the 200s only -- a burst of fast
+    /// 400s (a malformed query answers in microseconds) must not make the endpoint
+    /// look fast, and a 408 must not make it look slow twice.
+    #[test]
+    fn the_latency_window_caps_and_reads_quantiles_from_the_200s() {
+        let mut recent = Recent::new();
+        assert_eq!(stats_of(&recent), None, "an empty window serves nothing");
+        let t0 = Instant::now();
+        // 100 answers at 1..=100 ms, then fast 400s, a 408 and a 429.
+        for ms in 1..=100u64 {
+            push_recent(&mut recent, t0 + Duration::from_millis(ms), Duration::from_millis(ms), Outcome::Ok);
+        }
+        for _ in 0..50 {
+            push_recent(&mut recent, t0 + Duration::from_millis(200), Duration::from_micros(50), Outcome::BadRequest);
+        }
+        push_recent(&mut recent, t0 + Duration::from_secs(16), Duration::from_secs(15), Outcome::Timeout);
+        push_recent(&mut recent, t0 + Duration::from_secs(17), Duration::ZERO, Outcome::RateLimited);
+        let s = stats_of(&recent).expect("non-empty");
+        let count = |o: Outcome| s.counts.iter().find(|(got, _)| *got == o).unwrap().1;
+        assert_eq!((count(Outcome::Ok), count(Outcome::BadRequest), count(Outcome::Timeout), count(Outcome::RateLimited)), (100, 50, 1, 1));
+        assert_eq!(count(Outcome::Busy) + count(Outcome::Error), 0);
+        assert_eq!(s.ok_quantiles, Some([0.05, 0.095, 0.099, 0.1]), "nearest-rank over the 200s alone");
+        assert!((s.window_secs - 16.999).abs() < 1e-9, "oldest to newest finish: {}", s.window_secs);
+
+        // The cap: the oldest fall off.
+        for _ in 0..RECENT_CAP {
+            push_recent(&mut recent, t0 + Duration::from_secs(20), Duration::from_millis(7), Outcome::Ok);
+        }
+        let s = stats_of(&recent).unwrap();
+        assert_eq!(s.counts.iter().map(|(_, n)| n).sum::<usize>(), RECENT_CAP);
+        assert_eq!(s.ok_quantiles, Some([0.007; 4]), "only the newest RECENT_CAP remain");
+        assert_eq!(Outcome::of(StatusCode::REQUEST_TIMEOUT), Outcome::Timeout);
+        assert_eq!(Outcome::of(StatusCode::SERVICE_UNAVAILABLE), Outcome::Busy);
+        assert_eq!(Outcome::of(StatusCode::INTERNAL_SERVER_ERROR), Outcome::Error);
     }
 
     /// Issue 457 unit 3: recursion and EXCLUDE frames are refused by `classify`

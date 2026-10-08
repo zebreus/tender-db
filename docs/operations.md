@@ -2108,6 +2108,7 @@ because nothing here accumulates in-process):
 | `tender_db_change_cursor`, `tender_db_sse_streams`, `tender_db_rss_bytes` | in-process, O(1) |
 | `tender_db_disk_{used_fraction,free_bytes,total_bytes}`, `tender_db_wal_bytes` | one `statvfs` + the `-wal` stat (same as `/health/deep`) |
 | `tender_db_job_last_{duration_seconds,finished_timestamp_seconds,ok}{kind=…}` | newest run per kind in the bounded job-log window |
+| `tender_db_sql_recent_requests{outcome=…}`, `tender_db_sql_recent_ok_seconds{quantile=…}`, `tender_db_sql_recent_window_seconds` | issue 494: an in-process window of the last 1,000 `/v1/sql` requests. It holds outcome counts (ok, bad_request, timeout, rate_limited, busy, error), nearest-rank 0.5/0.95/0.99/1 latency of its 200s, and the wall time it spans. It is a level of the window, not a counter: a restart empties it and the series are absent until a request finishes. Every request at 1 s or more, and every 408, also logs `[sql] slow: …` with the start of its SQL (`journalctl -u tender-db \| grep '\[sql\] slow'`). |
 | `tender_db_ingest_last_success_timestamp_seconds`, `tender_db_ingest_{fetch,notice}_age_seconds` | the freshness clock (`probe`/`process` only, from the whole job log) + import lag |
 | `tender_db_canonical_rows{table=…}`, `tender_db_quarantine_*` | dashboard cache (absent until measured) |
 | `tender_db_legacy_adjacency_watermark` | one-row point read on the reader pool |

@@ -93,6 +93,24 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
     sample(&mut out, "tender_db_sql_pinned_since_seconds", &[], since as f64);
     header(&mut out, "tender_db_sql_in_flight", "/v1/sql computations occupying a thread, live or abandoned.");
     sample(&mut out, "tender_db_sql_in_flight", &[], state.sql.in_flight() as f64);
+    // Issue 494: the main consumption path's speed, over a rolling window of the
+    // last 1,000 requests -- a level of the window, not a counter, so a restart
+    // empties it honestly instead of resetting a series. Absent until a request
+    // has finished.
+    if let Some(recent) = state.sql.recent_stats() {
+        header(&mut out, "tender_db_sql_recent_requests", "/v1/sql requests in the latency window (the last 1,000), by outcome.");
+        for (outcome, n) in &recent.counts {
+            sample(&mut out, "tender_db_sql_recent_requests", &[("outcome", outcome.label())], *n as f64);
+        }
+        if let Some(q) = recent.ok_quantiles {
+            header(&mut out, "tender_db_sql_recent_ok_seconds", "Latency of the window's 200 answers, nearest-rank quantiles.");
+            for (label, v) in [("0.5", q[0]), ("0.95", q[1]), ("0.99", q[2]), ("1", q[3])] {
+                sample(&mut out, "tender_db_sql_recent_ok_seconds", &[("quantile", label)], v);
+            }
+        }
+        header(&mut out, "tender_db_sql_recent_window_seconds", "Wall time the latency window spans, oldest to newest finish.");
+        sample(&mut out, "tender_db_sql_recent_window_seconds", &[], recent.window_secs);
+    }
 
     // Issue 430: the REST walks' isolation and the read deadline issue 120 put on
     // them. Before, the pool's occupancy and its sheds were visible only as 503s in
