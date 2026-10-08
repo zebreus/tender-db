@@ -1,0 +1,888 @@
+=== A: the late notice's mid-chain repair ===
+--- projection epoch ---
+4
+--- tender_version_amounts (10 rows; tender_id,seq,lot_id,field,cents,currency,tax_basis,eur_cents,quality) ---
+1|2|1|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+2|2|1|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+3|2|2|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+4|2|2|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+9|2|3|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+10|2|3|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+11|2|4|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+12|2|4|NULL|'result_value'|23968954|'EUR'|NULL|23968954|NULL
+13|2|4|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+8|3|1|NULL|'result_value'|607480963|'EUR'|NULL|607480963|NULL
+--- tender_version_bid_parties (2 rows; tender_id,seq,bid_id,role,organization_id,mention_notice_id,mention_section_id) ---
+3|2|4|1|'tenderer'|4|3|'ORG-0002'
+2|3|1|2|'tenderer'|14|9|'ORG-0003'
+--- tender_version_bids (2 rows; tender_id,seq,bid_id,lot_id,cents,currency,eur_cents,quality) ---
+3|2|4|1|3|23968954|'EUR'|23968954|NULL
+2|3|1|2|4|7333289|'EUR'|7333289|NULL
+--- tender_version_classifications (85 rows; tender_id,seq,lot_id,field,scheme,code) ---
+1|1|1|NULL|'additional'|'cpv'|'44212410'
+2|1|1|NULL|'additional'|'cpv'|'45110000'
+3|1|1|NULL|'additional'|'cpv'|'45223210'
+4|1|1|NULL|'additional'|'cpv'|'45262310'
+5|1|1|NULL|'main'|'cpv'|'45241500'
+6|1|1|NULL|'nature'|'nature'|'works'
+7|1|1|NULL|'place'|'nuts'|'DE263'
+8|1|1|NULL|'procedure'|'procedure'|'open'
+9|1|1|1|'additional'|'cpv'|'44212410'
+10|1|1|1|'main'|'cpv'|'45241500'
+11|1|1|1|'nature'|'nature'|'works'
+12|1|1|1|'place'|'nuts'|'DE263'
+13|1|1|2|'additional'|'cpv'|'45110000'
+14|1|1|2|'additional'|'cpv'|'45223210'
+15|1|1|2|'additional'|'cpv'|'45262310'
+16|1|1|2|'main'|'cpv'|'45241500'
+17|1|1|2|'nature'|'nature'|'works'
+18|1|1|2|'place'|'nuts'|'DE263'
+19|1|2|NULL|'additional'|'cpv'|'44212410'
+20|1|2|NULL|'additional'|'cpv'|'45110000'
+21|1|2|NULL|'additional'|'cpv'|'45223210'
+22|1|2|NULL|'additional'|'cpv'|'45262310'
+23|1|2|NULL|'main'|'cpv'|'45241500'
+24|1|2|NULL|'nature'|'nature'|'works'
+25|1|2|NULL|'place'|'nuts'|'DE263'
+26|1|2|NULL|'procedure'|'procedure'|'open'
+27|1|2|1|'additional'|'cpv'|'44212410'
+28|1|2|1|'main'|'cpv'|'45241500'
+29|1|2|1|'nature'|'nature'|'works'
+30|1|2|1|'place'|'nuts'|'DE263'
+31|1|2|2|'additional'|'cpv'|'45110000'
+32|1|2|2|'additional'|'cpv'|'45223210'
+33|1|2|2|'additional'|'cpv'|'45262310'
+34|1|2|2|'main'|'cpv'|'45241500'
+35|1|2|2|'nature'|'nature'|'works'
+36|1|2|2|'place'|'nuts'|'DE263'
+37|2|1|NULL|'main'|'cpv'|'33693100'
+38|2|1|NULL|'nature'|'nature'|'supplies'
+39|2|1|NULL|'place'|'nuts'|'MT001'
+40|2|1|NULL|'procedure'|'procedure'|'open'
+41|2|1|3|'main'|'cpv'|'33693100'
+42|2|1|3|'nature'|'nature'|'supplies'
+43|2|1|3|'place'|'nuts'|'MT001'
+44|2|2|NULL|'main'|'cpv'|'33693100'
+45|2|2|NULL|'nature'|'nature'|'supplies'
+46|2|2|NULL|'place'|'nuts'|'MT001'
+47|2|2|NULL|'procedure'|'procedure'|'open'
+48|2|2|3|'main'|'cpv'|'33693100'
+49|2|2|3|'nature'|'nature'|'supplies'
+50|2|2|3|'place'|'nuts'|'MT001'
+79|2|3|NULL|'main'|'cpv'|'33693100'
+80|2|3|NULL|'nature'|'nature'|'supplies'
+81|2|3|NULL|'place'|'nuts'|'MT001'
+82|2|3|NULL|'procedure'|'procedure'|'open'
+83|2|3|3|'main'|'cpv'|'33693100'
+84|2|3|3|'nature'|'nature'|'supplies'
+85|2|3|3|'place'|'nuts'|'MT001'
+86|2|4|NULL|'main'|'cpv'|'33693100'
+87|2|4|NULL|'nature'|'nature'|'supplies'
+88|2|4|NULL|'place'|'nuts'|'MT001'
+89|2|4|NULL|'procedure'|'procedure'|'open'
+90|2|4|3|'main'|'cpv'|'33693100'
+91|2|4|3|'nature'|'nature'|'supplies'
+92|2|4|3|'place'|'nuts'|'MT001'
+58|3|1|NULL|'additional'|'cpv'|'45261410'
+59|3|1|NULL|'main'|'cpv'|'45000000'
+60|3|1|NULL|'place'|'nuts'|'DE212'
+61|3|1|4|'additional'|'cpv'|'45260000'
+62|3|1|4|'additional'|'cpv'|'45261200'
+63|3|1|4|'additional'|'cpv'|'45261300'
+64|3|1|4|'additional'|'cpv'|'45261320'
+65|3|1|4|'additional'|'cpv'|'45261410'
+66|3|1|4|'main'|'cpv'|'45000000'
+67|3|1|4|'place'|'nuts'|'DE212'
+68|4|1|NULL|'main'|'cpv'|'45310000'
+69|4|1|NULL|'place'|'nuts'|'DED2D'
+70|4|1|NULL|'procedure'|'procedure'|'open'
+71|4|1|5|'main'|'cpv'|'45310000'
+72|4|1|5|'place'|'nuts'|'DED2D'
+73|6|1|NULL|'main'|'cpv'|'33000000'
+74|6|1|NULL|'nature'|'nature'|'supplies'
+75|6|1|NULL|'place'|'nuts'|'LV00A'
+76|6|1|6|'main'|'cpv'|'33000000'
+77|6|1|6|'nature'|'nature'|'supplies'
+78|6|1|6|'place'|'nuts'|'LV00A'
+--- tender_version_contracts (2 rows; tender_id,seq,contract_id,buyer_contract_id,concluded_utc,concluded_offset,concluded_has_time,decided_utc,decided_offset,decided_has_time,cents,currency,eur_cents) ---
+3|2|4|1|'127804511'|1779228000|120|0|NULL|NULL|NULL|23968954|'EUR'|23968954
+2|3|1|2|'NA 26a +b'|1712527200|120|0|NULL|NULL|NULL|7333289|'EUR'|7333289
+--- tender_version_dates (32 rows; tender_id,seq,lot_id,field,utc_seconds,offset_minutes,has_time) ---
+1|1|1|1|'additional_information_deadline'|1782723540|120|1
+2|1|1|1|'duration_end'|1801350000|60|0
+3|1|1|1|'duration_start'|1788472800|120|0
+4|1|1|1|'opening_date'|1783328400|120|1
+5|1|1|1|'submission_deadline'|1783328340|120|1
+6|1|1|2|'additional_information_deadline'|1782723540|120|1
+7|1|1|2|'duration_end'|1827615600|60|0
+8|1|1|2|'duration_start'|1801436400|60|0
+9|1|1|2|'opening_date'|1783328400|120|1
+10|1|1|2|'submission_deadline'|1783328340|120|1
+11|1|2|1|'additional_information_deadline'|1782723540|120|1
+12|1|2|1|'duration_end'|1801350000|60|0
+13|1|2|1|'duration_start'|1788472800|120|0
+14|1|2|1|'opening_date'|1783328400|120|1
+15|1|2|1|'submission_deadline'|1783328340|120|1
+16|1|2|2|'additional_information_deadline'|1782723540|120|1
+17|1|2|2|'duration_end'|1827615600|60|0
+18|1|2|2|'duration_start'|1801436400|60|0
+19|1|2|2|'opening_date'|1783328400|120|1
+20|1|2|2|'submission_deadline'|1783328340|120|1
+21|2|1|3|'opening_date'|1768986000|60|1
+22|2|1|3|'submission_deadline'|1768984200|60|1
+23|2|2|3|'opening_date'|1769504400|60|1
+24|2|2|3|'submission_deadline'|1769502600|60|1
+31|2|3|3|'opening_date'|1770282000|60|1
+32|2|3|3|'submission_deadline'|1770280200|60|1
+33|2|4|3|'opening_date'|1770282000|60|1
+34|2|4|3|'submission_deadline'|1770280200|60|1
+27|3|1|4|'duration_end'|1722376800|120|0
+28|3|1|4|'duration_start'|1715551200|120|0
+29|4|1|5|'opening_date'|1712044800|120|1
+30|4|1|5|'submission_deadline'|1712044800|120|1
+--- tender_version_lot_group_members (0 rows; tender_id,seq,group_lot_id,member_lot_id) ---
+
+--- tender_version_lot_results (2 rows; tender_id,seq,lot_result_id,lot_id,decision,reason,awarded_cents,awarded_currency,decided_utc,decided_offset,decided_has_time,awarded_eur_cents) ---
+3|2|4|1|3|'selec-w'|NULL|23968954|'EUR'|NULL|NULL|NULL|23968954
+2|3|1|2|4|NULL|NULL|7333289|'EUR'|NULL|NULL|NULL|7333289
+--- tender_version_lots (11 rows; tender_id,seq,lot_id,kind,value_cents,value_currency,value_eur_cents) ---
+1|1|1|1|'Lot'|NULL|NULL|NULL
+2|1|1|2|'Lot'|NULL|NULL|NULL
+3|1|2|1|'Lot'|NULL|NULL|NULL
+4|1|2|2|'Lot'|NULL|NULL|NULL
+5|2|1|3|'Lot'|81686300|'EUR'|81686300
+6|2|2|3|'Lot'|81686300|'EUR'|81686300
+11|2|3|3|'Lot'|81686300|'EUR'|81686300
+12|2|4|3|'Lot'|81686300|'EUR'|81686300
+8|3|1|4|'Lot'|NULL|NULL|NULL
+9|4|1|5|'Lot'|NULL|NULL|NULL
+10|6|1|6|'Part'|NULL|NULL|NULL
+--- tender_version_parties (78 rows; tender_id,seq,lot_id,role,organization_id,mention_notice_id,mention_section_id) ---
+1|1|1|NULL|'Procedure-Buyer'|8|6|'ORG-0001'
+2|1|1|1|'Lot-AddInfo'|8|6|'ORG-0001'
+3|1|1|1|'Lot-DocProvider'|8|6|'ORG-0001'
+4|1|1|1|'Lot-FiscalLegis'|8|6|'ORG-0001'
+5|1|1|1|'Lot-ReviewOrg'|7|6|'ORG-0000'
+6|1|1|1|'Lot-TenderEval'|8|6|'ORG-0001'
+7|1|1|1|'Lot-TenderReceipt'|8|6|'ORG-0001'
+8|1|1|2|'Lot-AddInfo'|8|6|'ORG-0001'
+9|1|1|2|'Lot-DocProvider'|8|6|'ORG-0001'
+10|1|1|2|'Lot-EmployLegis'|8|6|'ORG-0001'
+11|1|1|2|'Lot-EnvironLegis'|8|6|'ORG-0001'
+12|1|1|2|'Lot-FiscalLegis'|8|6|'ORG-0001'
+13|1|1|2|'Lot-Mediator'|7|6|'ORG-0000'
+14|1|1|2|'Lot-ReviewOrg'|7|6|'ORG-0000'
+15|1|1|2|'Lot-TenderEval'|8|6|'ORG-0001'
+16|1|1|2|'Lot-TenderReceipt'|8|6|'ORG-0001'
+17|1|2|NULL|'Procedure-Buyer'|8|7|'ORG-0001'
+18|1|2|NULL|'Procedure-SProvider'|9|7|'ORG-0002'
+19|1|2|1|'Lot-AddInfo'|8|7|'ORG-0001'
+20|1|2|1|'Lot-DocProvider'|8|7|'ORG-0001'
+21|1|2|1|'Lot-FiscalLegis'|8|7|'ORG-0001'
+22|1|2|1|'Lot-ReviewOrg'|7|7|'ORG-0000'
+23|1|2|1|'Lot-TenderEval'|8|7|'ORG-0001'
+24|1|2|1|'Lot-TenderReceipt'|8|7|'ORG-0001'
+25|1|2|2|'Lot-AddInfo'|8|7|'ORG-0001'
+26|1|2|2|'Lot-DocProvider'|8|7|'ORG-0001'
+27|1|2|2|'Lot-EmployLegis'|8|7|'ORG-0001'
+28|1|2|2|'Lot-EnvironLegis'|8|7|'ORG-0001'
+29|1|2|2|'Lot-FiscalLegis'|8|7|'ORG-0001'
+30|1|2|2|'Lot-Mediator'|7|7|'ORG-0000'
+31|1|2|2|'Lot-ReviewOrg'|7|7|'ORG-0000'
+32|1|2|2|'Lot-TenderEval'|8|7|'ORG-0001'
+33|1|2|2|'Lot-TenderReceipt'|8|7|'ORG-0001'
+34|2|1|NULL|'Procedure-Buyer'|1|1|'ORG-0001'
+35|2|1|NULL|'Procedure-SProvider'|3|1|'ORG-0003'
+36|2|1|3|'Lot-DocProvider'|1|1|'ORG-0001'
+37|2|1|3|'Lot-ReviewInfo'|1|1|'ORG-0001'
+38|2|1|3|'Lot-ReviewOrg'|2|1|'ORG-0002'
+39|2|1|3|'Lot-TenderEval'|1|1|'ORG-0001'
+40|2|1|3|'Lot-TenderReceipt'|1|1|'ORG-0001'
+41|2|2|NULL|'Procedure-Buyer'|1|2|'ORG-0001'
+42|2|2|NULL|'Procedure-SProvider'|3|2|'ORG-0003'
+43|2|2|3|'Lot-DocProvider'|1|2|'ORG-0001'
+44|2|2|3|'Lot-ReviewInfo'|1|2|'ORG-0001'
+45|2|2|3|'Lot-ReviewOrg'|2|2|'ORG-0002'
+46|2|2|3|'Lot-TenderEval'|1|2|'ORG-0001'
+47|2|2|3|'Lot-TenderReceipt'|1|2|'ORG-0001'
+72|2|3|NULL|'Procedure-Buyer'|1|10|'ORG-0001'
+73|2|3|NULL|'Procedure-SProvider'|3|10|'ORG-0003'
+74|2|3|3|'Lot-DocProvider'|1|10|'ORG-0001'
+75|2|3|3|'Lot-ReviewInfo'|1|10|'ORG-0001'
+76|2|3|3|'Lot-ReviewOrg'|2|10|'ORG-0002'
+77|2|3|3|'Lot-TenderEval'|1|10|'ORG-0001'
+78|2|3|3|'Lot-TenderReceipt'|1|10|'ORG-0001'
+79|2|4|NULL|'Procedure-Buyer'|1|3|'ORG-0001'
+80|2|4|NULL|'Procedure-SProvider'|3|3|'ORG-0004'
+81|2|4|3|'Lot-DocProvider'|1|3|'ORG-0001'
+82|2|4|3|'Lot-ReviewInfo'|1|10|'ORG-0001'
+83|2|4|3|'Lot-ReviewOrg'|2|3|'ORG-0003'
+84|2|4|3|'Lot-TenderEval'|1|10|'ORG-0001'
+85|2|4|3|'Lot-TenderReceipt'|1|10|'ORG-0001'
+86|2|4|3|'Tenderer'|4|3|'ORG-0002'
+56|3|1|NULL|'Procedure-Buyer'|12|9|'ORG-0001'
+57|3|1|NULL|'Procedure-SProvider'|13|9|'ORG-0002'
+58|3|1|4|'Contract-Signatory'|12|9|'ORG-0001'
+59|3|1|4|'Lot-ReviewOrg'|15|9|'ORG-0004'
+60|3|1|4|'LotResult-Financing'|12|9|'ORG-0001'
+61|3|1|4|'LotResult-Paying'|13|9|'ORG-0002'
+62|3|1|4|'Tenderer'|14|9|'ORG-0003'
+63|4|1|NULL|'Procedure-Buyer'|10|8|'ORG-7001'
+64|4|1|5|'Lot-ReviewOrg'|11|8|'ORG-7004'
+65|4|1|5|'Lot-TenderReceipt'|10|8|'ORG-7001'
+66|6|1|NULL|'Procedure-Buyer'|5|5|'ORG-0001'
+67|6|1|6|'Part-AddInfo'|5|5|'ORG-0001'
+68|6|1|6|'Part-EmployLegis'|5|5|'ORG-0001'
+69|6|1|6|'Part-EnvironLegis'|5|5|'ORG-0001'
+70|6|1|6|'Part-FiscalLegis'|5|5|'ORG-0001'
+71|6|1|6|'Part-ReviewOrg'|6|5|'ORG-0002'
+--- tender_version_result_stats (1 rows; tender_id,seq,lot_result_id,kind,count,quality) ---
+1|2|4|1|'tenders'|11|NULL
+--- tender_version_result_winners (2 rows; tender_id,seq,lot_result_id,organization_id,is_buyer) ---
+3|2|4|1|4|NULL
+2|3|1|2|14|NULL
+--- tender_version_texts (41 rows; tender_id,seq,lot_id,field,lang,value) ---
+1|1|1|NULL|'description'|'DEU'|'Im Zuge der Grundinstandsetzung soll das Hafenbecken mittels vorgebohrter Spundwand zum Teil trockengelegt werden (LOS 1) sodass die Grundinstandsetzungsarbeiten im trockenen stattfinden können (LOS 2). 
+LOS1:
+- Erstellen einer vorgebohrten, verpressten Spundwand (Ca. 60m)
+LOS 2:
+- Rückbau der vorhandenen Anlage und Entsorgung des Abraums
+- Gleisanlage mit 6 asymmetrisch angeordneten Gleisen (je ca. 75m)
+- Hellingswägen mit 120to Tragfähigkeit und FU-geregelten Einzelantrieben 
+- Ebene Arbeitsfläche von ca. 12m Breite mit Entwässerungsgraben, Pumpensumpf und Sandfang
+- überfahrbare Gleise im OW-Bereich der Helling 
+- geschlossene Betondecke, fugenlos ausgebildet (keine Wartungsfugen)
+- Streifenfundamente im UW-Bereich mit aufgestellten Gleisen mit vollverklammerten Wasserbausteinen zwischen den Fundamenten
+- Probebetrieb'
+2|1|1|NULL|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'
+3|1|1|1|'description'|'DEU'|'Herzustellen ist die Trockenlegung des Baubereiches als 
+Vorabmaßnahme für die Grundinstandsetzung der Helling am Bauhof Würzburg (LOS 2). Die 
+auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Herstellen der Entlastungsbrunnen
+- Herstellen der Grundwassermessstellen
+- Herstellen der Spundwand mit zugehörigen Bodenaustauschbohrungen zur
+  Trockenlegung
+- Begleitung des Leerpumpen des Baubereiches'
+4|1|1|1|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 1 Trockenlegung des Baubereiches'
+5|1|1|2|'description'|'DEU'|'Die folgenden Beschreibungen geben einen kurzen Überblick der auszuführenden
+Leistungen. Herzustellen ist Los 2" Grundinstandsetzung der Helling am Bauhof 
+Würzburg." Die auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Demontage der vorhandenen Hellingwägen einschl. zugehörigem
+  Maschinenbau und Elektrotechnik
+- Abbruch der Betonfläche der vorhandenen Helling
+- Neubau der Hellingfläche aus Stahlbeton
+- Montage der neuen Ausrüstung und Hellingwägen einschl. zugehörigen
+  Maschinenbau und Elektrotechnik
+ Böschungssicherung aus teilvergossenen Wasserbausteinen'
+6|1|1|2|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 2 Grundinstandsetzung der Helling'
+7|1|2|NULL|'description'|'DEU'|'Im Zuge der Grundinstandsetzung soll das Hafenbecken mittels vorgebohrter Spundwand zum Teil trockengelegt werden (LOS 1) sodass die Grundinstandsetzungsarbeiten im trockenen stattfinden können (LOS 2). 
+LOS1:
+- Erstellen einer vorgebohrten, verpressten Spundwand (Ca. 60m)
+LOS 2:
+- Rückbau der vorhandenen Anlage und Entsorgung des Abraums
+- Gleisanlage mit 6 asymmetrisch angeordneten Gleisen (je ca. 75m)
+- Hellingswägen mit 120to Tragfähigkeit und FU-geregelten Einzelantrieben 
+- Ebene Arbeitsfläche von ca. 12m Breite mit Entwässerungsgraben, Pumpensumpf und Sandfang
+- überfahrbare Gleise im OW-Bereich der Helling 
+- geschlossene Betondecke, fugenlos ausgebildet (keine Wartungsfugen)
+- Streifenfundamente im UW-Bereich mit aufgestellten Gleisen mit vollverklammerten Wasserbausteinen zwischen den Fundamenten
+- Probebetrieb'
+8|1|2|NULL|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'
+9|1|2|1|'description'|'DEU'|'Herzustellen ist die Trockenlegung des Baubereiches als 
+Vorabmaßnahme für die Grundinstandsetzung der Helling am Bauhof Würzburg (LOS 2). Die 
+auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Herstellen der Entlastungsbrunnen
+- Herstellen der Grundwassermessstellen
+- Herstellen der Spundwand mit zugehörigen Bodenaustauschbohrungen zur
+  Trockenlegung
+- Begleitung des Leerpumpen des Baubereiches'
+10|1|2|1|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 1 Trockenlegung des Baubereiches'
+11|1|2|2|'description'|'DEU'|'Die folgenden Beschreibungen geben einen kurzen Überblick der auszuführenden
+Leistungen. Herzustellen ist Los 2" Grundinstandsetzung der Helling am Bauhof 
+Würzburg." Die auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Demontage der vorhandenen Hellingwägen einschl. zugehörigem
+  Maschinenbau und Elektrotechnik
+- Abbruch der Betonfläche der vorhandenen Helling
+- Neubau der Hellingfläche aus Stahlbeton
+- Montage der neuen Ausrüstung und Hellingwägen einschl. zugehörigen
+  Maschinenbau und Elektrotechnik
+ Böschungssicherung aus teilvergossenen Wasserbausteinen'
+12|1|2|2|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 2 Grundinstandsetzung der Helling'
+13|2|1|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+14|2|1|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+15|2|1|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+16|2|1|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+17|2|2|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+18|2|2|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+19|2|2|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+20|2|2|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+38|2|3|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+39|2|3|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+40|2|3|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+41|2|3|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+42|2|4|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+43|2|4|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+44|2|4|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+45|2|4|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+25|3|1|NULL|'description'|'DEU'|'Austausch Attikableche auf den Lernhäusern B/C/G/H/J des BCR'
+26|3|1|NULL|'title'|'DEU'|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'
+27|3|1|4|'description'|'DEU'|'Beschreibung der Beschaffung vor der Änderung:
+Dachabdichtungs- und Spenglerarbeiten, Gründach,
+2 Teillose:
+— Folienabdichtung FPO auf Wärmedämmung EPS – 10 976 m²,
+— Folienabdichtung FPO auf Wärmedämmung Schaumglas – 280 m²,
+— Folienabdichtung FPO auf Wärmedämmung Mineralwolle – 5 542 m²,
+— Attikakonstruktionen samt Abdichtungs- und Spenglerarbeiten – 2 350 lfm,
+— Fallrohre Titanzink – 960 lfm.
+Los 1: Dächer über Erdgeschoß:
+— Folienabdichtung FPO auf Wärmedämmung EPS – 90,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Schaumglas – 125,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Mineralwolle – 5 202,00 m²,
+— Attikakonstruktionen samt Abdichtungs- und Spenglerarbeiten – 610,00 lfm.
+Los 2: Dächer über Obergeschosse:
+— Folienabdichtung FPO auf Wärmedämmung EPS – 10 886,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Schaumglas – 155,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Mineralwolle – 340,00 m²,
+— Attikakonstruktionen samt Abdichtungs- und Spenglerarbeiten – 1 740,00 lfm,
+— Fallrohr, Titanzink– 960 lfm.
+Beschaffung nach der Änderung:
+Austausch der Attikableche auf den Lernhäusern B/C/G/H/J des BCR'
+28|3|1|4|'title'|'DEU'|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten, Gründach'
+29|4|1|NULL|'description'|'DEU'|'Erschließung Starkstrom'
+30|4|1|NULL|'title'|'DEU'|'Erschließung Starkstrom'
+31|4|1|5|'description'|'DEU'|'Liefern und Verlegen von ca. 3.550 lfm Starkstrom-Kunststoffkabel
+NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel A-2Y(L)2Y 4 x 2 x 0,8 mm sowie Herstellen von 3 St. Hauseinführungen'
+32|4|1|5|'tenderer_requirement'|'DEU'|'siehe Formblatt 216'
+33|4|1|5|'title'|'DEU'|'Erschließung Starkstrom'
+34|6|1|NULL|'description'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+35|6|1|NULL|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+36|6|1|6|'description'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+37|6|1|6|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+--- tender_versions (10 rows; tender_id,seq,caused_by_notice_id,published_at,dispatched_at,notice_subtype,original_lang,publication_id) ---
+1|1|1|6|1780272000|1778661993|'16'|'DEU'|'ebb72363-832d-4cea-8db6-04999414ea8c-01'
+2|1|2|7|1780272000|1778661993|'16'|'DEU'|'00373130-2026'
+3|2|1|1|1765756800|1765472418|'16'|'ENG'|'00831374-2025'
+4|2|2|2|1767744000|1767705463|'16'|'ENG'|'00006281-2026'
+10|2|3|10|1768262400|1768045538|'16'|'ENG'|'00018902-2026'
+11|2|4|3|1780444800|1780391852|'29'|'ENG'|'00380868-2026'
+6|3|1|9|1714608000|1714341600|'38'|'DEU'|'799811c4-2454-414e-b3cc-1d5d55c69690-01'
+7|4|1|8|1709164800|1709186986|'16'|'DEU'|'7d69b0f7-2605-448f-9495-676458dcddc2-01'
+8|5|1|4|1784246400|1784199584|'X01'|'DEU'|'00497689-2026'
+9|6|1|5|1784246400|1784211228|'4'|'LAV'|'00496860-2026'
+--- tenders (6 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,projection_epoch) ---
+1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|4
+2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|4
+3|3|'doe'|'469efb81-40de-4d7e-817f-8dd45659eaee'|NULL|'procedure'|1|1714608000|NULL|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'|607480963|4
+4|4|'doe'|'990acec0-88c0-48e2-86d5-92abb2293542'|NULL|'procedure'|1|1709164800|1712044800|'Erschließung Starkstrom'|NULL|4
+5|5|'ted'|NULL|4|'registration'|1|1784246400|NULL|NULL|NULL|4
+6|6|'ted'|NULL|5|'procedure'|1|1784246400|NULL|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'|NULL|4
+--- lots (6 rows; id,tender_id,lot_key) ---
+1|1|1|'LOT-0001'
+2|2|1|'LOT-0002'
+3|3|2|'LOT-0001'
+4|4|3|'LOT-0001'
+5|5|4|'LOT-0000'
+6|6|6|'PAR-0000'
+--- lot_results (2 rows; id,tender_id,notice_id,result_key) ---
+1|1|2|3|'RES-0001'
+2|2|3|9|'RES-0001'
+--- bids (2 rows; id,tender_id,notice_id,bid_key) ---
+1|1|2|3|'TEN-0001'
+2|2|3|9|'TEN-0001'
+--- contracts (2 rows; id,tender_id,notice_id,contract_key) ---
+1|1|2|3|'CON-0001'
+2|2|3|9|'CON-0001'
+--- tender_currency_presence (1 rows; currency) ---
+1|'EUR'
+--- changes (47 rows; cursor,entity_kind,entity_id,version_seq,op,changed_at) ---
+1|1|'organization'|1|NULL|'added'
+2|2|'organization'|2|NULL|'added'
+3|3|'organization'|3|NULL|'added'
+4|4|'organization'|4|NULL|'added'
+5|5|'organization'|5|NULL|'added'
+6|6|'organization'|6|NULL|'added'
+7|7|'organization'|7|NULL|'added'
+8|8|'organization'|8|NULL|'added'
+9|9|'organization'|9|NULL|'added'
+10|10|'organization'|10|NULL|'added'
+11|11|'organization'|11|NULL|'added'
+12|12|'organization'|12|NULL|'added'
+13|13|'organization'|13|NULL|'added'
+14|14|'organization'|14|NULL|'added'
+15|15|'organization'|15|NULL|'added'
+16|16|'tender'|1|1|'added'
+17|17|'lot'|1|1|'added'
+18|18|'lot'|2|1|'added'
+19|19|'tender'|1|2|'changed'
+20|20|'lot'|1|2|'changed'
+21|21|'lot'|2|2|'changed'
+22|22|'tender'|2|1|'added'
+23|23|'lot'|3|1|'added'
+24|24|'tender'|2|2|'changed'
+25|25|'lot'|3|2|'changed'
+26|26|'tender'|2|3|'changed'
+27|27|'lot'|3|3|'changed'
+28|28|'lot_result'|1|3|'added'
+29|29|'bid'|1|3|'added'
+30|30|'contract'|1|3|'added'
+31|31|'tender'|3|1|'added'
+32|32|'lot'|4|1|'added'
+33|33|'lot_result'|2|1|'added'
+34|34|'bid'|2|1|'added'
+35|35|'contract'|2|1|'added'
+36|36|'tender'|4|1|'added'
+37|37|'lot'|5|1|'added'
+38|38|'tender'|5|1|'added'
+39|39|'tender'|6|1|'added'
+40|40|'lot'|6|1|'added'
+41|41|'tender'|2|3|'changed'
+42|42|'lot'|3|3|'changed'
+43|43|'tender'|2|4|'changed'
+44|44|'lot'|3|4|'changed'
+45|45|'lot_result'|1|4|'added'
+46|46|'bid'|1|4|'added'
+47|47|'contract'|1|4|'added'
+=== B: the keep = 0 refold of everything ===
+--- projection epoch ---
+4
+--- tender_version_amounts (10 rows; tender_id,seq,lot_id,field,cents,currency,tax_basis,eur_cents,quality) ---
+1|2|1|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+2|2|1|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+3|2|2|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+4|2|2|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+9|2|3|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+10|2|3|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+11|2|4|NULL|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+12|2|4|NULL|'result_value'|23968954|'EUR'|NULL|23968954|NULL
+13|2|4|3|'estimated_value'|81686300|'EUR'|NULL|81686300|NULL
+8|3|1|NULL|'result_value'|607480963|'EUR'|NULL|607480963|NULL
+--- tender_version_bid_parties (2 rows; tender_id,seq,bid_id,role,organization_id,mention_notice_id,mention_section_id) ---
+3|2|4|1|'tenderer'|4|3|'ORG-0002'
+2|3|1|2|'tenderer'|14|9|'ORG-0003'
+--- tender_version_bids (2 rows; tender_id,seq,bid_id,lot_id,cents,currency,eur_cents,quality) ---
+3|2|4|1|3|23968954|'EUR'|23968954|NULL
+2|3|1|2|4|7333289|'EUR'|7333289|NULL
+--- tender_version_classifications (85 rows; tender_id,seq,lot_id,field,scheme,code) ---
+1|1|1|NULL|'additional'|'cpv'|'44212410'
+2|1|1|NULL|'additional'|'cpv'|'45110000'
+3|1|1|NULL|'additional'|'cpv'|'45223210'
+4|1|1|NULL|'additional'|'cpv'|'45262310'
+5|1|1|NULL|'main'|'cpv'|'45241500'
+6|1|1|NULL|'nature'|'nature'|'works'
+7|1|1|NULL|'place'|'nuts'|'DE263'
+8|1|1|NULL|'procedure'|'procedure'|'open'
+9|1|1|1|'additional'|'cpv'|'44212410'
+10|1|1|1|'main'|'cpv'|'45241500'
+11|1|1|1|'nature'|'nature'|'works'
+12|1|1|1|'place'|'nuts'|'DE263'
+13|1|1|2|'additional'|'cpv'|'45110000'
+14|1|1|2|'additional'|'cpv'|'45223210'
+15|1|1|2|'additional'|'cpv'|'45262310'
+16|1|1|2|'main'|'cpv'|'45241500'
+17|1|1|2|'nature'|'nature'|'works'
+18|1|1|2|'place'|'nuts'|'DE263'
+19|1|2|NULL|'additional'|'cpv'|'44212410'
+20|1|2|NULL|'additional'|'cpv'|'45110000'
+21|1|2|NULL|'additional'|'cpv'|'45223210'
+22|1|2|NULL|'additional'|'cpv'|'45262310'
+23|1|2|NULL|'main'|'cpv'|'45241500'
+24|1|2|NULL|'nature'|'nature'|'works'
+25|1|2|NULL|'place'|'nuts'|'DE263'
+26|1|2|NULL|'procedure'|'procedure'|'open'
+27|1|2|1|'additional'|'cpv'|'44212410'
+28|1|2|1|'main'|'cpv'|'45241500'
+29|1|2|1|'nature'|'nature'|'works'
+30|1|2|1|'place'|'nuts'|'DE263'
+31|1|2|2|'additional'|'cpv'|'45110000'
+32|1|2|2|'additional'|'cpv'|'45223210'
+33|1|2|2|'additional'|'cpv'|'45262310'
+34|1|2|2|'main'|'cpv'|'45241500'
+35|1|2|2|'nature'|'nature'|'works'
+36|1|2|2|'place'|'nuts'|'DE263'
+37|2|1|NULL|'main'|'cpv'|'33693100'
+38|2|1|NULL|'nature'|'nature'|'supplies'
+39|2|1|NULL|'place'|'nuts'|'MT001'
+40|2|1|NULL|'procedure'|'procedure'|'open'
+41|2|1|3|'main'|'cpv'|'33693100'
+42|2|1|3|'nature'|'nature'|'supplies'
+43|2|1|3|'place'|'nuts'|'MT001'
+44|2|2|NULL|'main'|'cpv'|'33693100'
+45|2|2|NULL|'nature'|'nature'|'supplies'
+46|2|2|NULL|'place'|'nuts'|'MT001'
+47|2|2|NULL|'procedure'|'procedure'|'open'
+48|2|2|3|'main'|'cpv'|'33693100'
+49|2|2|3|'nature'|'nature'|'supplies'
+50|2|2|3|'place'|'nuts'|'MT001'
+79|2|3|NULL|'main'|'cpv'|'33693100'
+80|2|3|NULL|'nature'|'nature'|'supplies'
+81|2|3|NULL|'place'|'nuts'|'MT001'
+82|2|3|NULL|'procedure'|'procedure'|'open'
+83|2|3|3|'main'|'cpv'|'33693100'
+84|2|3|3|'nature'|'nature'|'supplies'
+85|2|3|3|'place'|'nuts'|'MT001'
+86|2|4|NULL|'main'|'cpv'|'33693100'
+87|2|4|NULL|'nature'|'nature'|'supplies'
+88|2|4|NULL|'place'|'nuts'|'MT001'
+89|2|4|NULL|'procedure'|'procedure'|'open'
+90|2|4|3|'main'|'cpv'|'33693100'
+91|2|4|3|'nature'|'nature'|'supplies'
+92|2|4|3|'place'|'nuts'|'MT001'
+58|3|1|NULL|'additional'|'cpv'|'45261410'
+59|3|1|NULL|'main'|'cpv'|'45000000'
+60|3|1|NULL|'place'|'nuts'|'DE212'
+61|3|1|4|'additional'|'cpv'|'45260000'
+62|3|1|4|'additional'|'cpv'|'45261200'
+63|3|1|4|'additional'|'cpv'|'45261300'
+64|3|1|4|'additional'|'cpv'|'45261320'
+65|3|1|4|'additional'|'cpv'|'45261410'
+66|3|1|4|'main'|'cpv'|'45000000'
+67|3|1|4|'place'|'nuts'|'DE212'
+68|4|1|NULL|'main'|'cpv'|'45310000'
+69|4|1|NULL|'place'|'nuts'|'DED2D'
+70|4|1|NULL|'procedure'|'procedure'|'open'
+71|4|1|5|'main'|'cpv'|'45310000'
+72|4|1|5|'place'|'nuts'|'DED2D'
+73|6|1|NULL|'main'|'cpv'|'33000000'
+74|6|1|NULL|'nature'|'nature'|'supplies'
+75|6|1|NULL|'place'|'nuts'|'LV00A'
+76|6|1|6|'main'|'cpv'|'33000000'
+77|6|1|6|'nature'|'nature'|'supplies'
+78|6|1|6|'place'|'nuts'|'LV00A'
+--- tender_version_contracts (2 rows; tender_id,seq,contract_id,buyer_contract_id,concluded_utc,concluded_offset,concluded_has_time,decided_utc,decided_offset,decided_has_time,cents,currency,eur_cents) ---
+3|2|4|1|'127804511'|1779228000|120|0|NULL|NULL|NULL|23968954|'EUR'|23968954
+2|3|1|2|'NA 26a +b'|1712527200|120|0|NULL|NULL|NULL|7333289|'EUR'|7333289
+--- tender_version_dates (32 rows; tender_id,seq,lot_id,field,utc_seconds,offset_minutes,has_time) ---
+1|1|1|1|'additional_information_deadline'|1782723540|120|1
+2|1|1|1|'duration_end'|1801350000|60|0
+3|1|1|1|'duration_start'|1788472800|120|0
+4|1|1|1|'opening_date'|1783328400|120|1
+5|1|1|1|'submission_deadline'|1783328340|120|1
+6|1|1|2|'additional_information_deadline'|1782723540|120|1
+7|1|1|2|'duration_end'|1827615600|60|0
+8|1|1|2|'duration_start'|1801436400|60|0
+9|1|1|2|'opening_date'|1783328400|120|1
+10|1|1|2|'submission_deadline'|1783328340|120|1
+11|1|2|1|'additional_information_deadline'|1782723540|120|1
+12|1|2|1|'duration_end'|1801350000|60|0
+13|1|2|1|'duration_start'|1788472800|120|0
+14|1|2|1|'opening_date'|1783328400|120|1
+15|1|2|1|'submission_deadline'|1783328340|120|1
+16|1|2|2|'additional_information_deadline'|1782723540|120|1
+17|1|2|2|'duration_end'|1827615600|60|0
+18|1|2|2|'duration_start'|1801436400|60|0
+19|1|2|2|'opening_date'|1783328400|120|1
+20|1|2|2|'submission_deadline'|1783328340|120|1
+21|2|1|3|'opening_date'|1768986000|60|1
+22|2|1|3|'submission_deadline'|1768984200|60|1
+23|2|2|3|'opening_date'|1769504400|60|1
+24|2|2|3|'submission_deadline'|1769502600|60|1
+31|2|3|3|'opening_date'|1770282000|60|1
+32|2|3|3|'submission_deadline'|1770280200|60|1
+33|2|4|3|'opening_date'|1770282000|60|1
+34|2|4|3|'submission_deadline'|1770280200|60|1
+27|3|1|4|'duration_end'|1722376800|120|0
+28|3|1|4|'duration_start'|1715551200|120|0
+29|4|1|5|'opening_date'|1712044800|120|1
+30|4|1|5|'submission_deadline'|1712044800|120|1
+--- tender_version_lot_group_members (0 rows; tender_id,seq,group_lot_id,member_lot_id) ---
+
+--- tender_version_lot_results (2 rows; tender_id,seq,lot_result_id,lot_id,decision,reason,awarded_cents,awarded_currency,decided_utc,decided_offset,decided_has_time,awarded_eur_cents) ---
+3|2|4|1|3|'selec-w'|NULL|23968954|'EUR'|NULL|NULL|NULL|23968954
+2|3|1|2|4|NULL|NULL|7333289|'EUR'|NULL|NULL|NULL|7333289
+--- tender_version_lots (11 rows; tender_id,seq,lot_id,kind,value_cents,value_currency,value_eur_cents) ---
+1|1|1|1|'Lot'|NULL|NULL|NULL
+2|1|1|2|'Lot'|NULL|NULL|NULL
+3|1|2|1|'Lot'|NULL|NULL|NULL
+4|1|2|2|'Lot'|NULL|NULL|NULL
+5|2|1|3|'Lot'|81686300|'EUR'|81686300
+6|2|2|3|'Lot'|81686300|'EUR'|81686300
+11|2|3|3|'Lot'|81686300|'EUR'|81686300
+12|2|4|3|'Lot'|81686300|'EUR'|81686300
+8|3|1|4|'Lot'|NULL|NULL|NULL
+9|4|1|5|'Lot'|NULL|NULL|NULL
+10|6|1|6|'Part'|NULL|NULL|NULL
+--- tender_version_parties (78 rows; tender_id,seq,lot_id,role,organization_id,mention_notice_id,mention_section_id) ---
+1|1|1|NULL|'Procedure-Buyer'|8|6|'ORG-0001'
+2|1|1|1|'Lot-AddInfo'|8|6|'ORG-0001'
+3|1|1|1|'Lot-DocProvider'|8|6|'ORG-0001'
+4|1|1|1|'Lot-FiscalLegis'|8|6|'ORG-0001'
+5|1|1|1|'Lot-ReviewOrg'|7|6|'ORG-0000'
+6|1|1|1|'Lot-TenderEval'|8|6|'ORG-0001'
+7|1|1|1|'Lot-TenderReceipt'|8|6|'ORG-0001'
+8|1|1|2|'Lot-AddInfo'|8|6|'ORG-0001'
+9|1|1|2|'Lot-DocProvider'|8|6|'ORG-0001'
+10|1|1|2|'Lot-EmployLegis'|8|6|'ORG-0001'
+11|1|1|2|'Lot-EnvironLegis'|8|6|'ORG-0001'
+12|1|1|2|'Lot-FiscalLegis'|8|6|'ORG-0001'
+13|1|1|2|'Lot-Mediator'|7|6|'ORG-0000'
+14|1|1|2|'Lot-ReviewOrg'|7|6|'ORG-0000'
+15|1|1|2|'Lot-TenderEval'|8|6|'ORG-0001'
+16|1|1|2|'Lot-TenderReceipt'|8|6|'ORG-0001'
+17|1|2|NULL|'Procedure-Buyer'|8|7|'ORG-0001'
+18|1|2|NULL|'Procedure-SProvider'|9|7|'ORG-0002'
+19|1|2|1|'Lot-AddInfo'|8|7|'ORG-0001'
+20|1|2|1|'Lot-DocProvider'|8|7|'ORG-0001'
+21|1|2|1|'Lot-FiscalLegis'|8|7|'ORG-0001'
+22|1|2|1|'Lot-ReviewOrg'|7|7|'ORG-0000'
+23|1|2|1|'Lot-TenderEval'|8|7|'ORG-0001'
+24|1|2|1|'Lot-TenderReceipt'|8|7|'ORG-0001'
+25|1|2|2|'Lot-AddInfo'|8|7|'ORG-0001'
+26|1|2|2|'Lot-DocProvider'|8|7|'ORG-0001'
+27|1|2|2|'Lot-EmployLegis'|8|7|'ORG-0001'
+28|1|2|2|'Lot-EnvironLegis'|8|7|'ORG-0001'
+29|1|2|2|'Lot-FiscalLegis'|8|7|'ORG-0001'
+30|1|2|2|'Lot-Mediator'|7|7|'ORG-0000'
+31|1|2|2|'Lot-ReviewOrg'|7|7|'ORG-0000'
+32|1|2|2|'Lot-TenderEval'|8|7|'ORG-0001'
+33|1|2|2|'Lot-TenderReceipt'|8|7|'ORG-0001'
+34|2|1|NULL|'Procedure-Buyer'|1|1|'ORG-0001'
+35|2|1|NULL|'Procedure-SProvider'|3|1|'ORG-0003'
+36|2|1|3|'Lot-DocProvider'|1|1|'ORG-0001'
+37|2|1|3|'Lot-ReviewInfo'|1|1|'ORG-0001'
+38|2|1|3|'Lot-ReviewOrg'|2|1|'ORG-0002'
+39|2|1|3|'Lot-TenderEval'|1|1|'ORG-0001'
+40|2|1|3|'Lot-TenderReceipt'|1|1|'ORG-0001'
+41|2|2|NULL|'Procedure-Buyer'|1|2|'ORG-0001'
+42|2|2|NULL|'Procedure-SProvider'|3|2|'ORG-0003'
+43|2|2|3|'Lot-DocProvider'|1|2|'ORG-0001'
+44|2|2|3|'Lot-ReviewInfo'|1|2|'ORG-0001'
+45|2|2|3|'Lot-ReviewOrg'|2|2|'ORG-0002'
+46|2|2|3|'Lot-TenderEval'|1|2|'ORG-0001'
+47|2|2|3|'Lot-TenderReceipt'|1|2|'ORG-0001'
+72|2|3|NULL|'Procedure-Buyer'|1|10|'ORG-0001'
+73|2|3|NULL|'Procedure-SProvider'|3|10|'ORG-0003'
+74|2|3|3|'Lot-DocProvider'|1|10|'ORG-0001'
+75|2|3|3|'Lot-ReviewInfo'|1|10|'ORG-0001'
+76|2|3|3|'Lot-ReviewOrg'|2|10|'ORG-0002'
+77|2|3|3|'Lot-TenderEval'|1|10|'ORG-0001'
+78|2|3|3|'Lot-TenderReceipt'|1|10|'ORG-0001'
+79|2|4|NULL|'Procedure-Buyer'|1|3|'ORG-0001'
+80|2|4|NULL|'Procedure-SProvider'|3|3|'ORG-0004'
+81|2|4|3|'Lot-DocProvider'|1|3|'ORG-0001'
+82|2|4|3|'Lot-ReviewInfo'|1|10|'ORG-0001'
+83|2|4|3|'Lot-ReviewOrg'|2|3|'ORG-0003'
+84|2|4|3|'Lot-TenderEval'|1|10|'ORG-0001'
+85|2|4|3|'Lot-TenderReceipt'|1|10|'ORG-0001'
+86|2|4|3|'Tenderer'|4|3|'ORG-0002'
+56|3|1|NULL|'Procedure-Buyer'|12|9|'ORG-0001'
+57|3|1|NULL|'Procedure-SProvider'|13|9|'ORG-0002'
+58|3|1|4|'Contract-Signatory'|12|9|'ORG-0001'
+59|3|1|4|'Lot-ReviewOrg'|15|9|'ORG-0004'
+60|3|1|4|'LotResult-Financing'|12|9|'ORG-0001'
+61|3|1|4|'LotResult-Paying'|13|9|'ORG-0002'
+62|3|1|4|'Tenderer'|14|9|'ORG-0003'
+63|4|1|NULL|'Procedure-Buyer'|10|8|'ORG-7001'
+64|4|1|5|'Lot-ReviewOrg'|11|8|'ORG-7004'
+65|4|1|5|'Lot-TenderReceipt'|10|8|'ORG-7001'
+66|6|1|NULL|'Procedure-Buyer'|5|5|'ORG-0001'
+67|6|1|6|'Part-AddInfo'|5|5|'ORG-0001'
+68|6|1|6|'Part-EmployLegis'|5|5|'ORG-0001'
+69|6|1|6|'Part-EnvironLegis'|5|5|'ORG-0001'
+70|6|1|6|'Part-FiscalLegis'|5|5|'ORG-0001'
+71|6|1|6|'Part-ReviewOrg'|6|5|'ORG-0002'
+--- tender_version_result_stats (1 rows; tender_id,seq,lot_result_id,kind,count,quality) ---
+1|2|4|1|'tenders'|11|NULL
+--- tender_version_result_winners (2 rows; tender_id,seq,lot_result_id,organization_id,is_buyer) ---
+3|2|4|1|4|NULL
+2|3|1|2|14|NULL
+--- tender_version_texts (41 rows; tender_id,seq,lot_id,field,lang,value) ---
+1|1|1|NULL|'description'|'DEU'|'Im Zuge der Grundinstandsetzung soll das Hafenbecken mittels vorgebohrter Spundwand zum Teil trockengelegt werden (LOS 1) sodass die Grundinstandsetzungsarbeiten im trockenen stattfinden können (LOS 2). 
+LOS1:
+- Erstellen einer vorgebohrten, verpressten Spundwand (Ca. 60m)
+LOS 2:
+- Rückbau der vorhandenen Anlage und Entsorgung des Abraums
+- Gleisanlage mit 6 asymmetrisch angeordneten Gleisen (je ca. 75m)
+- Hellingswägen mit 120to Tragfähigkeit und FU-geregelten Einzelantrieben 
+- Ebene Arbeitsfläche von ca. 12m Breite mit Entwässerungsgraben, Pumpensumpf und Sandfang
+- überfahrbare Gleise im OW-Bereich der Helling 
+- geschlossene Betondecke, fugenlos ausgebildet (keine Wartungsfugen)
+- Streifenfundamente im UW-Bereich mit aufgestellten Gleisen mit vollverklammerten Wasserbausteinen zwischen den Fundamenten
+- Probebetrieb'
+2|1|1|NULL|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'
+3|1|1|1|'description'|'DEU'|'Herzustellen ist die Trockenlegung des Baubereiches als 
+Vorabmaßnahme für die Grundinstandsetzung der Helling am Bauhof Würzburg (LOS 2). Die 
+auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Herstellen der Entlastungsbrunnen
+- Herstellen der Grundwassermessstellen
+- Herstellen der Spundwand mit zugehörigen Bodenaustauschbohrungen zur
+  Trockenlegung
+- Begleitung des Leerpumpen des Baubereiches'
+4|1|1|1|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 1 Trockenlegung des Baubereiches'
+5|1|1|2|'description'|'DEU'|'Die folgenden Beschreibungen geben einen kurzen Überblick der auszuführenden
+Leistungen. Herzustellen ist Los 2" Grundinstandsetzung der Helling am Bauhof 
+Würzburg." Die auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Demontage der vorhandenen Hellingwägen einschl. zugehörigem
+  Maschinenbau und Elektrotechnik
+- Abbruch der Betonfläche der vorhandenen Helling
+- Neubau der Hellingfläche aus Stahlbeton
+- Montage der neuen Ausrüstung und Hellingwägen einschl. zugehörigen
+  Maschinenbau und Elektrotechnik
+ Böschungssicherung aus teilvergossenen Wasserbausteinen'
+6|1|1|2|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 2 Grundinstandsetzung der Helling'
+7|1|2|NULL|'description'|'DEU'|'Im Zuge der Grundinstandsetzung soll das Hafenbecken mittels vorgebohrter Spundwand zum Teil trockengelegt werden (LOS 1) sodass die Grundinstandsetzungsarbeiten im trockenen stattfinden können (LOS 2). 
+LOS1:
+- Erstellen einer vorgebohrten, verpressten Spundwand (Ca. 60m)
+LOS 2:
+- Rückbau der vorhandenen Anlage und Entsorgung des Abraums
+- Gleisanlage mit 6 asymmetrisch angeordneten Gleisen (je ca. 75m)
+- Hellingswägen mit 120to Tragfähigkeit und FU-geregelten Einzelantrieben 
+- Ebene Arbeitsfläche von ca. 12m Breite mit Entwässerungsgraben, Pumpensumpf und Sandfang
+- überfahrbare Gleise im OW-Bereich der Helling 
+- geschlossene Betondecke, fugenlos ausgebildet (keine Wartungsfugen)
+- Streifenfundamente im UW-Bereich mit aufgestellten Gleisen mit vollverklammerten Wasserbausteinen zwischen den Fundamenten
+- Probebetrieb'
+8|1|2|NULL|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'
+9|1|2|1|'description'|'DEU'|'Herzustellen ist die Trockenlegung des Baubereiches als 
+Vorabmaßnahme für die Grundinstandsetzung der Helling am Bauhof Würzburg (LOS 2). Die 
+auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Herstellen der Entlastungsbrunnen
+- Herstellen der Grundwassermessstellen
+- Herstellen der Spundwand mit zugehörigen Bodenaustauschbohrungen zur
+  Trockenlegung
+- Begleitung des Leerpumpen des Baubereiches'
+10|1|2|1|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 1 Trockenlegung des Baubereiches'
+11|1|2|2|'description'|'DEU'|'Die folgenden Beschreibungen geben einen kurzen Überblick der auszuführenden
+Leistungen. Herzustellen ist Los 2" Grundinstandsetzung der Helling am Bauhof 
+Würzburg." Die auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Demontage der vorhandenen Hellingwägen einschl. zugehörigem
+  Maschinenbau und Elektrotechnik
+- Abbruch der Betonfläche der vorhandenen Helling
+- Neubau der Hellingfläche aus Stahlbeton
+- Montage der neuen Ausrüstung und Hellingwägen einschl. zugehörigen
+  Maschinenbau und Elektrotechnik
+ Böschungssicherung aus teilvergossenen Wasserbausteinen'
+12|1|2|2|'title'|'DEU'|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 2 Grundinstandsetzung der Helling'
+13|2|1|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+14|2|1|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+15|2|1|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+16|2|1|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+17|2|2|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+18|2|2|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+19|2|2|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+20|2|2|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+38|2|3|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+39|2|3|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+40|2|3|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+41|2|3|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+42|2|4|NULL|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+43|2|4|NULL|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+44|2|4|3|'description'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+45|2|4|3|'title'|'ENG'|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'
+25|3|1|NULL|'description'|'DEU'|'Austausch Attikableche auf den Lernhäusern B/C/G/H/J des BCR'
+26|3|1|NULL|'title'|'DEU'|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'
+27|3|1|4|'description'|'DEU'|'Beschreibung der Beschaffung vor der Änderung:
+Dachabdichtungs- und Spenglerarbeiten, Gründach,
+2 Teillose:
+— Folienabdichtung FPO auf Wärmedämmung EPS – 10 976 m²,
+— Folienabdichtung FPO auf Wärmedämmung Schaumglas – 280 m²,
+— Folienabdichtung FPO auf Wärmedämmung Mineralwolle – 5 542 m²,
+— Attikakonstruktionen samt Abdichtungs- und Spenglerarbeiten – 2 350 lfm,
+— Fallrohre Titanzink – 960 lfm.
+Los 1: Dächer über Erdgeschoß:
+— Folienabdichtung FPO auf Wärmedämmung EPS – 90,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Schaumglas – 125,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Mineralwolle – 5 202,00 m²,
+— Attikakonstruktionen samt Abdichtungs- und Spenglerarbeiten – 610,00 lfm.
+Los 2: Dächer über Obergeschosse:
+— Folienabdichtung FPO auf Wärmedämmung EPS – 10 886,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Schaumglas – 155,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Mineralwolle – 340,00 m²,
+— Attikakonstruktionen samt Abdichtungs- und Spenglerarbeiten – 1 740,00 lfm,
+— Fallrohr, Titanzink– 960 lfm.
+Beschaffung nach der Änderung:
+Austausch der Attikableche auf den Lernhäusern B/C/G/H/J des BCR'
+28|3|1|4|'title'|'DEU'|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten, Gründach'
+29|4|1|NULL|'description'|'DEU'|'Erschließung Starkstrom'
+30|4|1|NULL|'title'|'DEU'|'Erschließung Starkstrom'
+31|4|1|5|'description'|'DEU'|'Liefern und Verlegen von ca. 3.550 lfm Starkstrom-Kunststoffkabel
+NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel A-2Y(L)2Y 4 x 2 x 0,8 mm sowie Herstellen von 3 St. Hauseinführungen'
+32|4|1|5|'tenderer_requirement'|'DEU'|'siehe Formblatt 216'
+33|4|1|5|'title'|'DEU'|'Erschließung Starkstrom'
+34|6|1|NULL|'description'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+35|6|1|NULL|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+36|6|1|6|'description'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+37|6|1|6|'title'|'LAV'|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'
+--- tender_versions (10 rows; tender_id,seq,caused_by_notice_id,published_at,dispatched_at,notice_subtype,original_lang,publication_id) ---
+1|1|1|6|1780272000|1778661993|'16'|'DEU'|'ebb72363-832d-4cea-8db6-04999414ea8c-01'
+2|1|2|7|1780272000|1778661993|'16'|'DEU'|'00373130-2026'
+3|2|1|1|1765756800|1765472418|'16'|'ENG'|'00831374-2025'
+4|2|2|2|1767744000|1767705463|'16'|'ENG'|'00006281-2026'
+10|2|3|10|1768262400|1768045538|'16'|'ENG'|'00018902-2026'
+11|2|4|3|1780444800|1780391852|'29'|'ENG'|'00380868-2026'
+6|3|1|9|1714608000|1714341600|'38'|'DEU'|'799811c4-2454-414e-b3cc-1d5d55c69690-01'
+7|4|1|8|1709164800|1709186986|'16'|'DEU'|'7d69b0f7-2605-448f-9495-676458dcddc2-01'
+8|5|1|4|1784246400|1784199584|'X01'|'DEU'|'00497689-2026'
+9|6|1|5|1784246400|1784211228|'4'|'LAV'|'00496860-2026'
+--- tenders (6 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,projection_epoch) ---
+1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|4
+2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|4
+3|3|'doe'|'469efb81-40de-4d7e-817f-8dd45659eaee'|NULL|'procedure'|1|1714608000|NULL|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'|607480963|4
+4|4|'doe'|'990acec0-88c0-48e2-86d5-92abb2293542'|NULL|'procedure'|1|1709164800|1712044800|'Erschließung Starkstrom'|NULL|4
+5|5|'ted'|NULL|4|'registration'|1|1784246400|NULL|NULL|NULL|4
+6|6|'ted'|NULL|5|'procedure'|1|1784246400|NULL|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'|NULL|4
+--- lots (6 rows; id,tender_id,lot_key) ---
+1|1|1|'LOT-0001'
+2|2|1|'LOT-0002'
+3|3|2|'LOT-0001'
+4|4|3|'LOT-0001'
+5|5|4|'LOT-0000'
+6|6|6|'PAR-0000'
+--- lot_results (2 rows; id,tender_id,notice_id,result_key) ---
+1|1|2|3|'RES-0001'
+2|2|3|9|'RES-0001'
+--- bids (2 rows; id,tender_id,notice_id,bid_key) ---
+1|1|2|3|'TEN-0001'
+2|2|3|9|'TEN-0001'
+--- contracts (2 rows; id,tender_id,notice_id,contract_key) ---
+1|1|2|3|'CON-0001'
+2|2|3|9|'CON-0001'
+--- tender_currency_presence (1 rows; currency) ---
+1|'EUR'
+--- changes (47 rows; cursor,entity_kind,entity_id,version_seq,op,changed_at) ---
+1|1|'organization'|1|NULL|'added'
+2|2|'organization'|2|NULL|'added'
+3|3|'organization'|3|NULL|'added'
+4|4|'organization'|4|NULL|'added'
+5|5|'organization'|5|NULL|'added'
+6|6|'organization'|6|NULL|'added'
+7|7|'organization'|7|NULL|'added'
+8|8|'organization'|8|NULL|'added'
+9|9|'organization'|9|NULL|'added'
+10|10|'organization'|10|NULL|'added'
+11|11|'organization'|11|NULL|'added'
+12|12|'organization'|12|NULL|'added'
+13|13|'organization'|13|NULL|'added'
+14|14|'organization'|14|NULL|'added'
+15|15|'organization'|15|NULL|'added'
+16|16|'tender'|1|1|'added'
+17|17|'lot'|1|1|'added'
+18|18|'lot'|2|1|'added'
+19|19|'tender'|1|2|'changed'
+20|20|'lot'|1|2|'changed'
+21|21|'lot'|2|2|'changed'
+22|22|'tender'|2|1|'added'
+23|23|'lot'|3|1|'added'
+24|24|'tender'|2|2|'changed'
+25|25|'lot'|3|2|'changed'
+26|26|'tender'|2|3|'changed'
+27|27|'lot'|3|3|'changed'
+28|28|'lot_result'|1|3|'added'
+29|29|'bid'|1|3|'added'
+30|30|'contract'|1|3|'added'
+31|31|'tender'|3|1|'added'
+32|32|'lot'|4|1|'added'
+33|33|'lot_result'|2|1|'added'
+34|34|'bid'|2|1|'added'
+35|35|'contract'|2|1|'added'
+36|36|'tender'|4|1|'added'
+37|37|'lot'|5|1|'added'
+38|38|'tender'|5|1|'added'
+39|39|'tender'|6|1|'added'
+40|40|'lot'|6|1|'added'
+41|41|'tender'|2|3|'changed'
+42|42|'lot'|3|3|'changed'
+43|43|'tender'|2|4|'changed'
+44|44|'lot'|3|4|'changed'
+45|45|'lot_result'|1|4|'added'
+46|46|'bid'|1|4|'added'
+47|47|'contract'|1|4|'added'

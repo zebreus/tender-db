@@ -232,3 +232,143 @@ async fn run() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// Issue 495 unit 2's cross-commit anchor for the paths `fold_apply_output_matches_the_committed_golden`
+/// never runs. That test folds with `rebuild = true`, so `stored_chain`, `delete_version` and the
+/// orphan sweep are skipped; it orders leaf rows by content rather than rowid; and it leaves out
+/// whole tables and columns. Unit 2 rewrites exactly those paths (prepared DELETEs, a widened
+/// `stored_chain`, a leaf-indexed `Pending`, an identity cache), so this golden pins what they
+/// produce TODAY, captured on the commit before unit 2 touched them:
+///
+/// 1. a non-rebuild fold of the corpus WITHOUT the chain's third notice;
+/// 2. the third notice arrives late: a mid-chain repair with keep = 2 that deletes and rewrites
+///    the tail (`versions_removed >= 1`) — snapshot A;
+/// 3. every Tender aged to epoch 0 and every notice re-queued: a keep = 0 rewrite of everything,
+///    the all-profile refold's path — snapshot B.
+///
+/// The digest is every column of every leaf table, rowid included, in (tender_id, seq, rowid)
+/// order, with the column lists read from the schema rather than written here, so a column the
+/// fold writes cannot escape it. It also covers the entity tables, the head columns, the currency
+/// presence and the change log. Read at RUN TIME and captured only with `GOLDEN_CAPTURE_495=1`, so
+/// a broad `GOLDEN_CAPTURE` can never rewrite it. Like its sibling, it must not be regenerated to
+/// make a change pass.
+#[test]
+fn fold_refold_output_matches_the_committed_golden() {
+    std::thread::Builder::new()
+        .stack_size(64 * 1024 * 1024)
+        .spawn(|| {
+            tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("runtime")
+                .block_on(run_refold())
+        })
+        .expect("spawn")
+        .join()
+        .expect("join");
+}
+
+async fn text_of(db: &Db, sql: &str) -> String {
+    match db.scalar(sql).await.expect("digest query") {
+        Some(turso::Value::Text(s)) => s,
+        Some(turso::Value::Null) | None => String::new(),
+        other => panic!("{sql}: expected text, got {other:?}"),
+    }
+}
+
+/// One table's rows, every column `quote()`d (NULL stays distinguishable from '' and 0), rowid
+/// first, in `order`. `skip` names columns that hold the wall clock.
+async fn table_digest(db: &Db, table: &str, order: &str, skip: &[&str]) -> String {
+    let cols = text_of(db, &format!("SELECT group_concat(name, ',') FROM pragma_table_info('{table}')")).await;
+    assert!(!cols.is_empty(), "{table}: pragma_table_info named no columns");
+    let mut expr = String::from("quote(rowid)");
+    for col in cols.split(',').filter(|c| !skip.contains(c)) {
+        expr.push_str(&format!("||'|'||quote(\"{col}\")"));
+    }
+    let rows = text_of(db, &format!("SELECT group_concat(r, x'0a') FROM (SELECT {expr} AS r FROM \"{table}\" ORDER BY {order})")).await;
+    let count = text_of(db, &format!("SELECT CAST(COUNT(*) AS TEXT) FROM \"{table}\"")).await;
+    format!("--- {table} ({count} rows; {cols}) ---\n{rows}\n")
+}
+
+async fn full_digest(db: &Db) -> String {
+    let leaves = text_of(
+        db,
+        "SELECT group_concat(name, ',') FROM (SELECT name FROM sqlite_master WHERE type = 'table' \
+           AND (name = 'tender_versions' OR name GLOB 'tender_version_*') ORDER BY name)",
+    )
+    .await;
+    assert_eq!(leaves.split(',').count(), 14, "the fold's version-keyed tables: {leaves}");
+    let mut out = format!("--- projection epoch ---\n{}\n", store::canonical::PROJECTION_EPOCH);
+    for table in leaves.split(',') {
+        out.push_str(&table_digest(db, table, "tender_id, seq, rowid", &[]).await);
+    }
+    out.push_str(&table_digest(db, "tenders", "id", &["created_at"]).await);
+    for table in ["lots", "lot_results", "bids", "contracts"] {
+        out.push_str(&table_digest(db, table, "id", &[]).await);
+    }
+    out.push_str(&table_digest(db, "tender_currency_presence", "rowid", &[]).await);
+    out.push_str(&table_digest(db, "changes", "cursor", &["changed_at"]).await);
+    out
+}
+
+async fn run_refold() {
+    let (db, fetch_id, path) = scratch().await;
+    const LATE: &str = "eforms-chain/3-change-16-18902-2026.xml";
+    let corpus = [
+        ("ted", "eforms-chain/1-cn-16-831374-2025.xml"),
+        ("ted", "eforms-chain/2-change-16-6281-2026.xml"),
+        ("ted", "eforms-chain/4-can-29-380868-2026.xml"),
+        ("ted", "eforms/brin-x01-00497689-2026.xml"),
+        ("ted", "eforms/pin-4-00496860-2026.xml"),
+        ("doe", "doe-ted-pair/doe-cn-ebb72363-832d-4cea-8db6-04999414ea8c-01.xml"),
+        ("ted", "doe-ted-pair/ted-cn-00373130-2026.xml"),
+        ("doe", "doe/eforms-de-1.1-cn-7d69b0f7.xml"),
+        ("doe", "doe/eforms-de-1.2-can-799811c4.xml"),
+    ];
+    for (source, fixture) in corpus {
+        ingest(&db, fetch_id, source, fixture).await;
+    }
+    project::project(&db, false).await.expect("first fold");
+
+    ingest(&db, fetch_id, "ted", LATE).await;
+    let repair = project::project_incremental(&db).await.expect("late-notice repair");
+    assert!(
+        repair.applied.versions_removed >= 1,
+        "the late notice must repair mid-chain (delete_version and the sweep run): {:?}",
+        repair.applied
+    );
+    let mut got = String::from("=== A: the late notice's mid-chain repair ===\n");
+    got.push_str(&full_digest(&db).await);
+
+    db.set_projection_epoch_for_test(0).await.expect("age every Tender");
+    let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
+    let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
+    db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
+    let refold = project::project_incremental(&db).await.expect("epoch-stale refold");
+    assert!(
+        refold.applied.versions_written > 0 && refold.applied.versions_removed == refold.applied.versions_written,
+        "every stale Tender must be rewritten from keep = 0: {:?}",
+        refold.applied
+    );
+    got.push_str("=== B: the keep = 0 refold of everything ===\n");
+    got.push_str(&full_digest(&db).await);
+
+    let file = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/golden/project_refold.snapshot");
+    if std::env::var_os("GOLDEN_CAPTURE_495").is_some() {
+        std::fs::write(file, &got).expect("write golden");
+    }
+    let golden = std::fs::read_to_string(file).expect(
+        "fixtures/golden/project_refold.snapshot is missing — it is captured once, with \
+         GOLDEN_CAPTURE_495=1, on a commit that changes no production code",
+    );
+    assert_eq!(
+        got, golden,
+        "the non-rebuild fold paths (stored_chain, delete_version, the sweep, keep = 0) diverged \
+         from the committed golden (fixtures/golden/project_refold.snapshot). Do NOT regenerate \
+         it to make this pass."
+    );
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}

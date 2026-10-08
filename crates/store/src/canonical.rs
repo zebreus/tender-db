@@ -33194,6 +33194,85 @@ mod tests {
         (Db::open(&path).await.expect("open scratch db"), path)
     }
 
+    /// Issue 495 unit 2's anchor for the batched leaf write: `flush_rows` splits a buffer into
+    /// statements of at most `MAX_BATCH_BIND / cols` rows, and every value must land in its own
+    /// column, in push order, with NULLs intact — across the statement boundaries, which the
+    /// fold goldens' small corpus never reaches (its largest table is 116 texts rows, under one
+    /// statement's 150). Called directly with today's literal prefixes, so unit 2's move of
+    /// `Pending` onto a leaf descriptor cannot rewrite the test that pins it.
+    #[tokio::test]
+    async fn flush_rows_chunks_and_moves_every_value_in_order() {
+        use turso::{Connection, Value};
+        let (db, path) = scratch_db("flush-rows-chunks").await;
+        // Before taking the writer below: `set_foreign_keys` takes it too.
+        db.set_foreign_keys(false).await.expect("fk off");
+        let conn = db.conn().await;
+
+        let mut texts = Vec::new();
+        for i in 0..301i64 {
+            texts.extend([
+                Value::Integer(7),
+                Value::Integer(1 + i % 3),
+                if i % 4 == 0 { Value::Null } else { Value::Integer(i) },
+                Value::Text(format!("field-{}", i % 5)),
+                if i % 3 == 0 { Value::Null } else { Value::Text("de".into()) },
+                Value::Text(format!("Ausschreibung Nr. {i} — Straßenbau, Łódź, 東京 {}", "x".repeat((i % 7) as usize * 40))),
+            ]);
+        }
+        let mut contracts = Vec::new();
+        for i in 0..139i64 {
+            contracts.extend([
+                Value::Integer(7),
+                Value::Integer(1),
+                Value::Integer(1000 + i),
+                if i % 2 == 0 { Value::Null } else { Value::Text(format!("K-{i}")) },
+                Value::Integer(1_700_000_000 + i),
+                Value::Integer(60),
+                Value::Integer(i % 2),
+                if i % 5 == 0 { Value::Null } else { Value::Integer(1_700_100_000 + i) },
+                Value::Integer(120),
+                Value::Integer(1),
+                Value::Integer(i * 1_000),
+                Value::Text(if i % 2 == 0 { "EUR".into() } else { "PLN".into() }),
+                if i % 3 == 0 { Value::Null } else { Value::Integer(i * 230) },
+            ]);
+        }
+        let (want_texts, want_contracts) = (texts.clone(), contracts.clone());
+        let n = super::flush_rows(&conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut texts)
+            .await
+            .expect("flush texts");
+        assert_eq!((n, texts.len()), (301, 0), "301 rows in three statements of at most 150, buffer drained");
+        let n = super::flush_rows(&conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency, eur_cents) VALUES ", 13, &mut contracts)
+            .await
+            .expect("flush contracts");
+        assert_eq!((n, contracts.len()), (139, 0), "139 rows in three statements of at most 69, buffer drained");
+
+        async fn read_back(conn: &Connection, sql: &str, cols: usize) -> Vec<Value> {
+            let mut rows = conn.query(sql, ()).await.expect("read back");
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await.expect("row") {
+                for c in 0..cols {
+                    out.push(row.get_value(c).expect("value"));
+                }
+            }
+            out
+        }
+        assert_eq!(
+            read_back(&conn, "SELECT tender_id, seq, lot_id, field, lang, value FROM tender_version_texts ORDER BY rowid", 6).await,
+            want_texts,
+            "every texts value in its own column, in push order, across the statement boundaries"
+        );
+        assert_eq!(
+            read_back(&conn, "SELECT tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency, eur_cents FROM tender_version_contracts ORDER BY rowid", 13).await,
+            want_contracts,
+            "every contracts value in its own column, in push order, across the statement boundaries"
+        );
+        drop(conn);
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
     /// Issue 404's repair plan, on the two shapes the real cohort has: a KEYED
     /// pair whose twins share one Tender, and an ISLAND pair whose twin minted a
     /// Tender of its own. The plan must tell them apart, because the first ends
