@@ -1,6 +1,6 @@
 # 471 — r209 amounts are never checked against their `@FMTVAL`, and nothing adjudicates the €10–100 bn head-value band (366 units 5 and 6, dropped when 366 closed)
 
-Status: ready-for-agent — €1 bn GATE DEPLOYED + DRAINED 2026-10-06 (`5401035`; jobs 2934/2935: 65 re-queued, 65 stamped; 56 now < €1 bn, 6 with no head value, 3 still ≥ €1 bn: 514188, 355258, 591121 — see "€1 bn drain — result"). NEXT: 4(c) (dropped-decimal signal), 5 (now incl. the whole-notice ×1000 CANs 355258/591121), 6 DONE 2026-10-08 (data-quality 2954: band 332 → 305, every departure attributed, only 8400892 still carries a partner — see "Unit 6 — the re-read"). 4(b) and the no-head fallback question MOVED to issue 489 (see "4(b) — split out"); 489 units 2+3 deployed and draining 2026-10-07.
+Status: ready-for-agent — 2026-10-08: unit 5 DECIDED (no outside signal: buyer history catches 6 of 20 sample errors at zero false flags and fails structurally; single figures with no in-Tender partner are served as published under a /docs caveat; see "Unit 5 — decision (2026-10-08)"). 4(c) closed caveat-only (dropped decimals leave no in-notice signal). Unit 6 done (band 332 → 305). The mechanisms the sample exposed moved: the text-era min/max run-together, the unread V.4 partner and the free-text corrigendum to issue 491; the ×100 (k = 2) slip to issue 492. NEXT: gate and deploy the docs caveat, then done.
 Kind: data quality (amount plausibility: the legacy parse layer and the head election)
 Relates to: 366 (promised units 5 and 6, closed 2026-09-12 without them), 380 (its sweep still points at "the open half of
 issue 366"), 267 (the plausibility measure), 372 (the `quality` marker on `Fact::Amount`), 385 (F14 corrigendum dates:
@@ -840,6 +840,7 @@ small restatements, 4871119's second F14 corrects £250 m BACK to £25 bn, and o
 
 Earlier status lines, newest first (moved out of the Status line 2026-10-07):
 
+- ready-for-agent — €1 bn GATE DEPLOYED + DRAINED 2026-10-06 (`5401035`; jobs 2934/2935: 65 re-queued, 65 stamped; 56 now < €1 bn, 6 with no head value, 3 still ≥ €1 bn: 514188, 355258, 591121 — see "€1 bn drain — result"). NEXT: 4(c) (dropped-decimal signal), 5 (now incl. the whole-notice ×1000 CANs 355258/591121), 6 DONE 2026-10-08 (data-quality 2954: band 332 → 305, every departure attributed, only 8400892 still carries a partner — see "Unit 6 — the re-read"). 4(b) and the no-head fallback question MOVED to issue 489 (see "4(b) — split out"); 489 units 2+3 deployed and draining 2026-10-07.
 - BELOW-BAND MEASURED + GATE LOWERED TO €1 bn 2026-10-06 (see "Below-band measurement (2026-10-06)"; €1–10 bn: 3,579 Tenders, 65 refused heads, adjudicated 64 error / 1 genuine (8287294); `SCALE_ERROR_MIN_EUR_CENTS` = €1 bn, `BAND_FLOOR_EUR_CENTS` decoupled at €10 bn). NEXT: gate → commit → deploy → drain the 65 per docs/operations.md ("The €1 bn extension's drain") → re-run below-band-query.sh; then 4(b), 4(c), 5, 6.
 - UNIT 4(a) DEPLOYED + DRAINED 2026-10-06 (`900b13b`; band 324 → 305, the predicted 19 out, 8400892 kept). NEXT: below-band measurement, 4(b), 4(c), 5, 6.
 - UNIT 4(a) LANDED + REVIEW FIXES APPLIED 2026-10-06 (uncommitted, not deployed, not drained; see "Unit 4(a) — review fixes (2026-10-06)": the rule is now GATED to the band (a refused figure must convert to ≥ €10 bn, `SCALE_ERROR_MIN_EUR_CENTS` = the data-quality `BAND_FLOOR_EUR_CENTS`), so it can move only band Tenders and only down; the per-lot pick in `summarise` calls the same `ScalePartners::refuses_amount`; corroboration is an O(1) map; two fold-path pins in head_election_agreement.rs). NEXT: `ops/check.sh` → commit → deploy → drain the band with `refold-notices` + `project` per docs/operations.md ("The exact-10ᵏ election rule") → expect 19 rows out, 8400892 in; then the BELOW-BAND MEASUREMENT (before ever lowering the gate: section 16's partner subqueries without the band predicate, plus "no other head field carries it", windowed by `t.id`, bucketed by value decade and k, a sample adjudicated); then the 554082-2023 member read for 6721266; then 4(b), 5, 6.
@@ -875,3 +876,80 @@ unit 5's class, one figure with nothing inside the Tender to test it against).
 £10.8 bn housing framework kept on purpose (corroborated by two fields). So within the band the rule
 has removed everything it can see, and its one survivor is the adjudicated genuine row. What remains in
 the band is unit 5's class (single figures with no in-tender signal) and 4(c) (dropped decimal).
+
+## Unit 5 — decision (2026-10-08): no outside signal; serve as published with a caveat
+
+**Sample.** 48 of the 305 section-16 rows (job 2954), stratified by source: FTS 16 of 104, TED 16 of
+124, text 8 of 27, eForms 8 of 50. 8400892 is excluded. Each row was adjudicated from three sources:
+`/v1/tenders/{id}`, the buyer's other Tenders (`/v1/tenders?buyer=<org>&limit=100`) and the notice text.
+Workflow `wf_f00023ee-530`; every verdict and its evidence is in
+`471-values/unit5-sample-verdicts-2026-10-08.json`.
+
+| stratum | genuine | error | unclear | weighted errors in the band |
+|---|---|---|---|---|
+| FTS | 13 | 1 | 2 | ≈ 7 of 104 |
+| TED | 10 | 6 | 0 | ≈ 47 of 124 |
+| text (1993–2010) | 0 | 8 | 0 | ≈ 27 of 27 |
+| eForms | 3 | 5 | 0 | ≈ 31 of 50 |
+| **all** | 26 | 20 | 2 | **≈ 111 of 305 (≈ 36 %, wide: n = 48)** |
+
+The genuine rows are national framework ceilings and programmes, internally consistent and usually
+repeated across notices. Examples: CCS CWAS 3 at £80 bn (7958277), PSSV at £26.5 bn with nine lots that
+sum exactly (7955574), National Grid HVDC at £24.6 bn beside sibling frameworks (8681166), and the GB
+Nuclear SMR partner at £20 bn (8749111).
+
+**The outside signal is rejected.** The tested rule compares the head with the buyer's largest OTHER
+value. Scored on the 46 decided rows:
+
+| rule | errors flagged (of 20) | genuine rows flagged (of 26) |
+|---|---|---|
+| ratio ≥ 10, any history | 12 | 6 |
+| ratio ≥ 20, ≥ 3 other values | 11 | 3 |
+| ratio ≥ 100, ≥ 3 other values | 7 | 2 |
+| ratio ≥ 1000, ≥ 3 other values | 6 | 0 |
+
+At zero false flags it catches under a third of the errors. Each way it fails is structural, so more
+data would not fix it:
+
+- **A young buyer's first programme reads as a slip.** 8749111 (GB Nuclear's SMR partner, £20 bn) has
+  one other value, a €1.5 m pension scheme, so the ratio is 15,800.
+- **Same-class sibling errors poison the buyer's max.** OPAM (3420171) has six more min/max run-together
+  awards up to €80 bn, so its ratio is 0.6. Corse-du-Sud (3450659) is the same case.
+- **One procurement split across Tenders compares a row with itself.** 8811221 and 8811222 are both the
+  Pagabo framework; 8681166 and 514891 are both National Grid HVDC.
+- **A median rule flags national frameworks.** CCS (7958277, ratio 255 to the median) and 8649015
+  (ratio 29,509) look like slips because their buyers mostly publish small call-offs.
+- **The history itself is not served.** `/v1/tenders?buyer=` pages by id, so an old buyer's first page
+  is its 1990s notices: 8784848's default page held 1 value in 100. A usable signal needs a per-buyer
+  value aggregate, which nothing keeps today.
+
+Refusing a genuine national figure is worse than serving a publisher's typo under a caveat. Election
+stays as is: **a single figure with no in-Tender partner is served as published.**
+
+**The caveat** is now on `/docs` (`crates/app/src/v1/docs.rs`, the Amounts list). The stale bullet
+claimed `value` is the raw published figure ("257 trillion PLN"). It is replaced by the election, the
+exact-10ᵏ rule and the "roughly a third of the €10 bn-and-up residue were typos" warning. The value-filter
+bullet loses its "the payload `value` can be a figure the filters ignore" sentence, which issue 366
+unit 3 made untrue: `value` is the elected row.
+
+**What the sample found instead.** These are in-notice mechanisms, outside unit 5's class:
+
+1. **Text era, a min/max range read as one number** (5 of the 8 text rows). Published V.4 values such
+   as `Value: 60 000 220 000 EUR` are a French bons-de-commande minimum and maximum (CMP 2001/2004:
+   maximum ≤ 4 × minimum). `parse_money` accepts them as one correctly grouped figure. On all 27 text
+   band rows, 19 split at a group boundary into X < Y ≤ 4X. → **issue 491**.
+2. **Text era, a partner and a corrigendum that are never read.** 3427333: II.2.1 prints €35,076,200,000,
+   and the same notice's V.4 prints €35,076,200, but V.4 is not stored when II.2.1 is present. 4179951:
+   the head notice's free-text "Instead of: … 15 000 000 000 GBP. Read: … 150 000 000 GBP" is not
+   applied. → **issue 491** (b) and (c).
+3. **A ×100 slip (k = 2) below the k ≥ 3 rule.** 6640498 (section 16 shows ×100) and 8784848 (lot 1 at
+   £60 bn; at £600 m the three lots sum exactly to the procedure's £1 bn). → **issue 492**, which must
+   measure k = 2 precision first, because round hundreds are common.
+4. **Dropped decimals (4(c))** do occur: 5265429 (×10⁴), 355006 (€35,000,094,166 ≈ €350,000,941.66),
+   525252 (every figure in the notice ×100) and 6640498. None leaves a signal inside the notice. A lone
+   figure has nothing to compare with, and a notice scaled as a whole agrees with itself. **4(c) is
+   closed as caveat-only: there is no signal to build.**
+5. **The rest are publisher-side.** A total-of-all-buyers ceiling filed under one buyer (8434466). Per-lot
+   quantities summed over 37 identical lots (909191). An exact €10¹⁰ result over a €2 m estimate
+   (535069); round powers are deliberately not sentinels. Typos whose real figure exists only in prose
+   (7226190, 4785789, 578884). One garbled total (4722400).

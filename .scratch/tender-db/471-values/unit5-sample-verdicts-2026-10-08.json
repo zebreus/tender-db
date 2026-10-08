@@ -1,0 +1,850 @@
+{
+ "workflow": "wf_f00023ee-530",
+ "date": "2026-10-08",
+ "source": "section16-dq2954-2026-10-08.txt",
+ "strata": {
+  "FTS": [
+   16,
+   104
+  ],
+  "TED": [
+   16,
+   124
+  ],
+  "text": [
+   8,
+   27
+  ],
+  "eforms": [
+   8,
+   50
+  ]
+ },
+ "excluded": [
+  "8400892"
+ ],
+ "sample": [
+  {
+   "tender": "7958277",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "7958277 FTS OCDS 032171-2025 80,000,000,000.00 94,062,316,284.54 — — —"
+  },
+  {
+   "tender": "8784848",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8784848 FTS OCDS 004793-2022 60,000,000,000.00 72,030,540,949.36 — x400 —"
+  },
+  {
+   "tender": "8811221",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8811221 FTS OCDS 017463-2025 47,000,000,000.00 55,307,131,089.67 — x4,700 —"
+  },
+  {
+   "tender": "7955574",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "7955574 FTS OCDS 094174-2026 26,500,000,000.00 31,220,546,654.10 — x44 —"
+  },
+  {
+   "tender": "8681166",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8681166 FTS OCDS 009131-2025 24,600,000,000.00 29,363,317,338.68 — — —"
+  },
+  {
+   "tender": "8584825",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8584825 FTS OCDS 090116-2026 20,000,000,000.00 23,269,342,641.07 — — —"
+  },
+  {
+   "tender": "8749111",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8749111 FTS OCDS 020640-2023 20,000,000,000.00 23,299,704,093.76 — — —"
+  },
+  {
+   "tender": "8811222",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8811222 FTS OCDS 065617-2025 19,000,000,000.00 21,826,536,473.29 — x542 —"
+  },
+  {
+   "tender": "8811216",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8811216 FTS OCDS 007948-2025 15,400,000,000.00 18,443,113,772.46 — — —"
+  },
+  {
+   "tender": "8596038",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8596038 FTS OCDS 020158-2026 13,500,000,000.00 15,526,164,462.33 — x1 —"
+  },
+  {
+   "tender": "8649015",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8649015 FTS OCDS 031878-2026 12,000,000,000.00 13,810,088,269.48 — — —"
+  },
+  {
+   "tender": "8696808",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8696808 FTS OCDS 007574-2025 12,000,000,000.00 14,526,438,117.37 — x40 —"
+  },
+  {
+   "tender": "8678342",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8678342 FTS OCDS 073051-2026 10,500,000,000.00 12,261,628,110.66 — — —"
+  },
+  {
+   "tender": "8640220",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8640220 FTS OCDS 044047-2026 10,000,000,000.00 11,532,296,195.50 — — —"
+  },
+  {
+   "tender": "8755535",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8755535 FTS OCDS 022398-2022 10,000,000,000.00 11,851,851,851.85 — — —"
+  },
+  {
+   "tender": "8808497",
+   "src": "FTS",
+   "currency": "GBP",
+   "line": "8808497 FTS OCDS 021972-2024 10,000,000,000.00 11,916,820,592.27 — — —"
+  },
+  {
+   "tender": "4722400",
+   "src": "TED",
+   "currency": "GBP",
+   "line": "4722400 TED_EXPORT r2.0.8 078237-2012 72,100,000,000.00 86,249,177,582.39 — x2,096,509 —"
+  },
+  {
+   "tender": "6119830",
+   "src": "TED",
+   "currency": "GBP",
+   "line": "6119830 TED_EXPORT r2.0.9 052306-2018 30,000,000,000.00 33,751,476,627.10 — — —"
+  },
+  {
+   "tender": "5909599",
+   "src": "TED",
+   "currency": "GBP",
+   "line": "5909599 TED_EXPORT r2.0.9 260811-2017 20,000,000,000.00 22,601,934,725.61 — — —"
+  },
+  {
+   "tender": "5682171",
+   "src": "TED",
+   "currency": "GBP",
+   "line": "5682171 TED_EXPORT r2.0.9 190316-2016 15,000,000,000.00 19,408,682,150.48 — — —"
+  },
+  {
+   "tender": "8422381",
+   "src": "TED",
+   "currency": "GBP",
+   "line": "8422381 TED_EXPORT r2.0.9 353645-2018 12,000,000,000.00 13,381,655,979.93 — — —"
+  },
+  {
+   "tender": "6846621",
+   "src": "TED",
+   "currency": "GBP",
+   "line": "6846621 TED_EXPORT r2.0.9 348120-2020 11,000,000,000.00 12,062,064,806.18 — — —"
+  },
+  {
+   "tender": "6057662",
+   "src": "TED",
+   "currency": "GBP",
+   "line": "6057662 TED_EXPORT r2.0.9 451319-2017 10,000,000,000.00 11,316,057,485.57 — — —"
+  },
+  {
+   "tender": "8434466",
+   "src": "TED",
+   "currency": "GBP",
+   "line": "8434466 TED_EXPORT r2.0.9 035109-2021 10,000,000,000.00 11,230,276,826.32 — — —"
+  },
+  {
+   "tender": "8285265",
+   "src": "TED",
+   "currency": "GBP",
+   "line": "8285265 TED_EXPORT r2.0.8 201522-2014 8,900,000,000.00 11,133,350,012.51 — — —"
+  },
+  {
+   "tender": "7226190",
+   "src": "TED",
+   "currency": "EUR",
+   "line": "7226190 TED_EXPORT r2.0.9 571699-2021 25,000,000,000.00 25,000,000,000.00 — — —"
+  },
+  {
+   "tender": "7575840",
+   "src": "TED",
+   "currency": "EUR",
+   "line": "7575840 TED_EXPORT r2.0.9 687775-2022 20,000,000,000.00 20,000,000,000.00 — — —"
+  },
+  {
+   "tender": "4785789",
+   "src": "TED",
+   "currency": "EUR",
+   "line": "4785789 TED_EXPORT r2.0.8 346784-2013 15,000,000,000.00 15,000,000,000.00 — — —"
+  },
+  {
+   "tender": "6640498",
+   "src": "TED",
+   "currency": "EUR",
+   "line": "6640498 TED_EXPORT r2.0.9 337801-2020 14,000,000,000.00 14,000,000,000.00 — x100 —"
+  },
+  {
+   "tender": "5265429",
+   "src": "TED",
+   "currency": "EUR",
+   "line": "5265429 TED_EXPORT r2.0.8 273242-2014 11,529,034,600.00 11,529,034,600.00 — — —"
+  },
+  {
+   "tender": "5863603",
+   "src": "TED",
+   "currency": "EUR",
+   "line": "5863603 TED_EXPORT r2.0.9 076386-2017 10,000,000,000.00 10,000,000,000.00 — — —"
+  },
+  {
+   "tender": "7646860",
+   "src": "TED",
+   "currency": "EUR",
+   "line": "7646860 TED_EXPORT r2.0.9 323714-2023 10,000,000,000.00 10,000,000,000.00 — x10 —"
+  },
+  {
+   "tender": "4179951",
+   "src": "text",
+   "currency": "GBP",
+   "line": "4179951 text 1993–2010 91132-2010 15,000,000,000.00 16,791,671,331.02 — — —"
+  },
+  {
+   "tender": "3450659",
+   "src": "text",
+   "currency": "EUR",
+   "line": "3450659 text 1993–2010 128539-2006 87,250,349,000.00 87,250,349,000.00 — — —"
+  },
+  {
+   "tender": "8161499",
+   "src": "text",
+   "currency": "EUR",
+   "line": "8161499 text 1993–2010 233432-2005 77,526,000,000.00 77,526,000,000.00 — — —"
+  },
+  {
+   "tender": "3916175",
+   "src": "text",
+   "currency": "EUR",
+   "line": "3916175 text 1993–2010 199890-2008 60,000,220,000.00 60,000,220,000.00 — — —"
+  },
+  {
+   "tender": "3420171",
+   "src": "text",
+   "currency": "EUR",
+   "line": "3420171 text 1993–2010 99130-2006 50,000,110,000.00 50,000,110,000.00 — — —"
+  },
+  {
+   "tender": "3432959",
+   "src": "text",
+   "currency": "EUR",
+   "line": "3432959 text 1993–2010 102297-2006 42,000,150,000.00 42,000,150,000.00 — — —"
+  },
+  {
+   "tender": "3427333",
+   "src": "text",
+   "currency": "EUR",
+   "line": "3427333 text 1993–2010 143891-2008 35,076,200,000.00 35,076,200,000.00 — — —"
+  },
+  {
+   "tender": "3428706",
+   "src": "text",
+   "currency": "EUR",
+   "line": "3428706 text 1993–2010 13132-2006 30,000,120,000.00 30,000,120,000.00 — — —"
+  },
+  {
+   "tender": "514891",
+   "src": "eforms",
+   "currency": "GBP",
+   "line": "514891 eforms-sdk-1.12 00168604-2025 24,600,000,000.00 29,222,051,958.23 — — —"
+  },
+  {
+   "tender": "355006",
+   "src": "eforms",
+   "currency": "EUR",
+   "line": "355006 eforms-sdk-1.13 00627087-2026 35,000,094,166.00 35,000,094,166.00 — x1 —"
+  },
+  {
+   "tender": "578884",
+   "src": "eforms",
+   "currency": "EUR",
+   "line": "578884 eforms-sdk-1.12 00387248-2025 22,200,000,000.00 22,200,000,000.00 — x58,041 —"
+  },
+  {
+   "tender": "910889",
+   "src": "eforms",
+   "currency": "EUR",
+   "line": "910889 eforms-sdk-1.13 00350795-2026 19,000,000,000.00 19,000,000,000.00 — x1 —"
+  },
+  {
+   "tender": "525252",
+   "src": "eforms",
+   "currency": "EUR",
+   "line": "525252 eforms-sdk-1.7 00679723-2024 13,800,000,000.00 13,800,000,000.00 — x1 —"
+  },
+  {
+   "tender": "448846",
+   "src": "eforms",
+   "currency": "EUR",
+   "line": "448846 eforms-sdk-1.12 00829605-2025 11,000,000,000.00 11,000,000,000.00 — — —"
+  },
+  {
+   "tender": "535069",
+   "src": "eforms",
+   "currency": "EUR",
+   "line": "535069 eforms-sdk-1.13 00229259-2026 10,000,000,000.00 10,000,000,000.00 — x5,000 —"
+  },
+  {
+   "tender": "909191",
+   "src": "eforms",
+   "currency": "RON",
+   "line": "909191 eforms-sdk-1.13 00298320-2026 177,930,419,250.00 34,334,256,845.42 — x37 —"
+  }
+ ],
+ "tally": {
+  "genuine": 26,
+  "error": 20,
+  "unclear": 2
+ },
+ "rows": [
+  {
+   "tender": "7958277",
+   "verdict": "genuine",
+   "buyer_org": 4674312,
+   "buyer_other_count": 68,
+   "buyer_other_max_eur": 35100000000,
+   "buyer_other_median_eur": 368550000,
+   "head_eur": 94062316284.54,
+   "error_kind": "",
+   "evidence": "Crown Commercial Service planning notice (032171-2025, single version) for a pan-government framework that merges Construction Works and Associated Services, the NHS ProCure P24 health-capital framework and offsite construction. It covers all UK public bodies plus overseas. One estimated_value of GBP 80 bn and no lots priced yet. Its predecessor, CWAS 6386980 (2018), was GBP 30 bn and is this buyer's largest other value (EUR 35.1 bn), so 80 bn is 2.7x a framework it absorbs and adds to. That fits a national framework ceiling, not a slip. The later tender for the same procurement (7955871, 'CWAS 3 including ProCure24') is in the DB with value null. Buyer signal: head/max 2.7x, head/median 255x. The median is dominated by small call-offs, so a median rule would flag this genuine row."
+  },
+  {
+   "tender": "8784848",
+   "verdict": "error",
+   "buyer_org": 1183879,
+   "buyer_other_count": 50,
+   "buyer_other_max_eur": 2340000000,
+   "buyer_other_median_eur": 3880305,
+   "head_eur": 72030540949.36,
+   "error_kind": "x100 typo (k=2, below the 10^3 rule), with an in-tender arithmetic partner",
+   "evidence": "Essex County Council's Integrated Residential and Nursing (care homes) framework refresh, 004793-2022. Procedure estimated_value is GBP 1 bn. Lots: lot1 GBP 60 bn, lot2 150 m, lot3 250 m. If lot1 is GBP 600 m the lots sum exactly to the procedure's 1 bn (600+150+250), so lot1 is x100. The lot text backs this: about GBP 140 m a year across lots 1+2. Buyer history agrees: 'OPR005 IRN Refresh 2024 - New Suppliers' (8730855) is GBP 600 m and 'A017PC IRN 2026' (8641737) is GBP 1.57 bn. The head election took the lot-1 figure, 60x above the procedure's own total, and a lot estimate above its procedure total is itself a structural in-tender signal that section 16's 'no partner' misses. Buyer signal: the default page (sorted by id ascending) holds 100 tenders from 1993-98 with just 1 value (UKL), so it is useless. The numbers here come from a published_after=2017 page: 50 values, max EUR 2.34 bn (pension private-equity allocators), median EUR 3.9 m. Head is 31x max and 18,600x median. Other buyers on the notice are 6 Essex CCGs; not measured."
+  },
+  {
+   "tender": "8811221",
+   "verdict": "genuine",
+   "buyer_org": 30916541,
+   "buyer_other_count": 1,
+   "buyer_other_max_eur": 22230000000,
+   "buyer_other_median_eur": 22230000000,
+   "head_eur": 55307131089.67,
+   "error_kind": "",
+   "evidence": "Pagabo (as agent of the Cumbria, Northumberland, Tyne and Wear NHS FT) National Framework for Developer Led Schemes 2026, UK3 017463-2025. It is a UK-wide framework sized on gross development value (lots for SPV/LLP and development-agreement schemes of GBP 100 m+ / 50 m+). The lots are at the same scale: 10 m, 10 m, 5 bn, 1 bn, 7 bn, 24.7 bn and 100 m, summing to GBP 37.8 bn. So the 47 bn head has no scale slip, though it is a loose ceiling about 9 bn above its lots. The superseding notice 8811222 cut it to GBP 19 bn after re-lotting, and 8831875 (May 2026, PAGABO LIMITED 31557760) gives GBP 26 bn. Buyer signal: the trust's only other value is 8811222, the SAME framework, which is a self-duplicate. Without it there are 0 comparators. The second buyer, 'Pagabo' org 31648640, has no other values. PAGABO LIMITED 31557760 holds the same family (19 bn, 26 bn) plus Major Works 2026 (GBP 5 bn). The signal mostly compares this row with copies of itself."
+  },
+  {
+   "tender": "7955574",
+   "verdict": "genuine",
+   "buyer_org": 30914406,
+   "buyer_other_count": 70,
+   "buyer_other_max_eur": 58500000000,
+   "buyer_other_median_eur": 1886040000,
+   "head_eur": 31220546654.1,
+   "error_kind": "",
+   "evidence": "CCS Purchase of Standard and Specialist Vehicles (PSSV) national framework. 11 versions from UK1 (2025-04) to the UK6 award 094174-2026, 207 parties. The nine lot estimates (15 bn, 3 bn, 0.6 bn, 2.5 bn, 2 bn, 1 bn, 0.75 bn, 0.75 bn, 0.9 bn) sum exactly to the GBP 26.5 bn procedure value, and the award's lot_results repeat them as per-lot framework ceilings. This is an internally consistent national framework ceiling for all UK public-sector vehicles. Buyer signal: CCS (30914406) has 70 other values, max EUR 58.5 bn (Energy and Decarbonisation), median EUR 1.89 bn. Head is 0.53x max and 16.6x median, well inside the history."
+  },
+  {
+   "tender": "8681166",
+   "verdict": "genuine",
+   "buyer_org": 13563914,
+   "buyer_other_count": 39,
+   "buyer_other_max_eur": 28782000000,
+   "buyer_other_median_eur": 56160000,
+   "head_eur": 29363317338.68,
+   "error_kind": "",
+   "evidence": "National Grid UK HVDC Converter Systems Framework, award 009131-2025 (CN 035470-2023). It is a multi-year, multi-supplier framework for supplying and installing HVDC converter stations, turnkey, for NGUK, its affiliates and JV SPVs. Sibling frameworks from the same buyer: HVDC Cable GBP 21.3 bn and HVDC Major Works and Civils GBP 12.77 bn. Together with this row's 24.6 bn they make about GBP 58.7 bn, which matches National Grid's roughly GBP 59 bn HVDC supply-chain programme. Buyer signal: the max other (EUR 28.8 bn) is the same framework duplicated as 7905068 (FTS 2023) and 514891 (TED 2025). The largest non-duplicate is the sibling Cable framework at EUR 24.9 bn (head 1.18x). Median EUR 56 m gives 523x, so a median rule would flag a genuine row."
+  },
+  {
+   "tender": "8584825",
+   "verdict": "genuine",
+   "buyer_org": 30914406,
+   "buyer_other_count": 70,
+   "buyer_other_max_eur": 58500000000,
+   "buyer_other_median_eur": 1886040000,
+   "head_eur": 23269342641.07,
+   "error_kind": "",
+   "evidence": "CCS Technology Products and Associated Services 3 (TePAS 3): a pan-government framework for COTS hardware, software and associated services (end-user devices, infrastructure, MFDs, tactical comms, assistive tech). 57 CPVs. GBP 20 bn in all 7 UK2 versions, and again in two other Tenders for the same procurement (7959065 UK1, 8831662). It is consistently published across separate notices. Its predecessor at GPS (8287294, hardware only, about 2012) was GBP 4 bn, so 20 bn with software added fits as a national ceiling. Buyer signal: CCS has 70 other values, max EUR 58.5 bn, median EUR 1.89 bn. Head is 0.40x max and 12x median. Two of the comparators (EUR 23.4 bn each) are its own duplicates."
+  },
+  {
+   "tender": "8749111",
+   "verdict": "genuine",
+   "buyer_org": 31611238,
+   "buyer_other_count": 1,
+   "buyer_other_max_eur": 1471252,
+   "buyer_other_median_eur": 1471252,
+   "head_eur": 23299704093.76,
+   "error_kind": "",
+   "evidence": "Great British Nuclear: Small Modular Reactor Technology Partner, 020640-2023, competitive negotiation, up to four awards. Scope is design, manufacture, supply, installation and commissioning of SMR key plant (reactor, steam, turbine, generation), with up to 50% co-funding and two-stage site-specific contracts. GBP 20 bn is a national new-nuclear programme figure, published as both the procedure and the single lot's estimated_value. Buyer signal: GBN has one other valued tender, the GBN Workplace Pension Scheme at about EUR 1.47 m. Head is 15,800x the buyer's max, so a buyer-history rule would wrongly flag this genuine row unless it abstains when the buyer has too few comparators. A CPV prior (42151000 nuclear reactors) would clear it."
+  },
+  {
+   "tender": "8811222",
+   "verdict": "genuine",
+   "buyer_org": 30916541,
+   "buyer_other_count": 1,
+   "buyer_other_max_eur": 54990000000,
+   "buyer_other_median_eur": 54990000000,
+   "head_eur": 21826536473.29,
+   "error_kind": "",
+   "evidence": "The same Pagabo / CNTW National Framework for Developer Led schemes. UK3 065617-2025 explicitly supersedes 017463-2025 (= Tender 8811221) after re-lotting. Lots are 35 m, 35 m, 1.6 bn, 3.2 bn, 2 bn, 12.095 bn and 35 m, summing to GBP 18.995 bn, roughly the 19 bn head. The same 19 bn appears in 8612398 (PAGABO LIMITED), and the later 8831875 gives 26 bn, so it is consistent across notices. Note: 8811221, 8811222, 8612398, 8831875 and 8831876 are one procurement split across several Tenders, a separate dedupe concern. Buyer signal: the trust's only other value is 8811221 (EUR 55 bn), its own superseded predecessor, so head/max is 0.40x against itself. PAGABO LIMITED 31557760 has 5 others: max EUR 30.4 bn (same framework), median EUR 5.85 bn."
+  },
+  {
+   "tender": "8811216",
+   "verdict": "genuine",
+   "buyer_org": 30913735,
+   "buyer_other_count": 43,
+   "buyer_other_max_eur": 1033929000,
+   "buyer_other_median_eur": 2574000,
+   "head_eur": 18443113772.46,
+   "error_kind": "",
+   "evidence": "Department for Education, 'Construction Framework 2025' (UK2 preliminary market engagement 007948-2025). This is the national design-and-build schools framework replacing CF21. The term is 6 years plus 1+1, running 2025-12-01 to 2031-12-01. The description states the figure in words: 'The overall estimated value of the Construction Framework ... is approximately £15,400,000,000'. BT-27-Procedure carries the same £15.4bn. It is a national framework ceiling, and the figure is deliberate. Buyer history (page 1, 43 valued tenders, 57 null): the largest is 8609291 PE and School Sport Partnership Network at £883.7m (EUR 1.03bn); the median is EUR 2.57m. The head is 17.8x the buyer's largest, so a buyer-history outlier rule would flag a genuine row (false positive)."
+  },
+  {
+   "tender": "8596038",
+   "verdict": "genuine",
+   "buyer_org": 30914406,
+   "buyer_other_count": 70,
+   "buyer_other_max_eur": 58500000000,
+   "buyer_other_median_eur": 1886040000,
+   "head_eur": 15526164462.33,
+   "error_kind": "",
+   "evidence": "Crown Commercial Service, 'Payment Solutions 3'. This is a pan-government agreement (procurement cards, prepaid cards, vouchers) for all UK public sector bodies. There are 6 UK1 versions. Version 1 (015486-2025, 2025-04-16) published £12bn with a term of 2026-08-05 to 2030-08-04. Later versions raised it to £13.5bn: a deliberate revision of x1.125, not a 10^k slip. The separate tender 8579938 (089169-2026, the same procurement) also carries £13.5bn. Buyer history (page 1, 70 valued tenders excluding self): the largest is £50bn Energy and Decarbonisation; CCS routinely publishes £5-50bn ceilings (TePAS 3 £20bn, G-Cloud 15 £14bn, DOS7 £12bn). The median is EUR 1.89bn. The head is 0.27x the buyer's largest, which is ordinary for this buyer. Note: one of the 70 'other' tenders is the same procurement at the same value."
+  },
+  {
+   "tender": "8649015",
+   "verdict": "genuine",
+   "buyer_org": 30915971,
+   "buyer_other_count": 51,
+   "buyer_other_max_eur": 14040000000,
+   "buyer_other_median_eur": 468000,
+   "head_eur": 13810088269.48,
+   "error_kind": "",
+   "evidence": "Wirral Council, 'National Developer Framework' (UK1 031878-2026). It is open to all English public bodies (councils, combined authorities, NHS, universities, housing associations). It has regional lots by NUTS region for Development Agreements and JV/SPV, with value bands up to '£100m+'. The term is 2026-10-01 to 2030-09-30. BT-27-Procedure is £12bn. The same £12bn is restated 5 days later in a second tender, 8649016 (033399-2026). Wirral also has a 'Delivery and Management Partner - National Construction Framework' at £192m. Reads as a deliberate national framework ceiling covering gross development value across England. Moderate confidence: no text states the figure in words. Buyer history (page 1, 51 valued tenders): the strict max is that £12bn duplicate, 8649016, so the ratio is 0.98x. Excluding the duplicate, the max is £507.5m (EUR 593.8m, Choice Independence and Community Living Framework), so the ratio is 23x. The median is EUR 468k. Lesson for Unit 5: a buyer-history signal must de-duplicate re-noticed copies of the same procurement, or they mask the outlier."
+  },
+  {
+   "tender": "8696808",
+   "verdict": "genuine",
+   "buyer_org": 4975351,
+   "buyer_other_count": 34,
+   "buyer_other_max_eur": 14040000000,
+   "buyer_other_median_eur": 389025000,
+   "head_eur": 14526438117.37,
+   "error_kind": "",
+   "evidence": "CCS 'Technology Products and Associated Services 2' (TePAS 2, award 007574-2025). It replaces RM6068 TePAS and RM6147 TOPC. The procedure estimate of £12bn equals the sum of the 8 lot estimates exactly: 2.4+2.8+4.0+1.0+0.5+0.6+0.3+0.4 = £12.0bn. That is internal corroboration, and the x40 ratio is total over Lot 7's £300m. The successor TePAS 3 (FTS-era CCS org 30914406, tenders 7959065/8584825/8831662) is published at £20bn, so £12bn is in family. Buyer history for this TED/FTS-era CCS org (page 1 = 2014-2017 notices, 34 valued tenders): the max is FM Services £12bn (EUR 14.04bn) and the median is EUR 389m. The head is 1.03x the buyer's max, so it is not flagged."
+  },
+  {
+   "tender": "8678342",
+   "verdict": "unclear",
+   "buyer_org": 9675450,
+   "buyer_other_count": 61,
+   "buyer_other_max_eur": 1965600000,
+   "buyer_other_median_eur": 4492800,
+   "head_eur": 12261628110.66,
+   "error_kind": "possible x10 slip of GBP 1.05bn (unconfirmed)",
+   "evidence": "Northern Ireland Water, 'IF109 Integrated Partnerships Framework' (UK2 preliminary market engagement 073051-2026). It has four multi-party lots for 'proposed water and sewerage capital investments'. The notice's only figure is BT-27-Procedure £10.5bn. No text states it in words. The framework term is just 4 years (BT-536/537: 2028-05-01 to 2032-04-30). The predecessors IF104 (6138694, 8417408) and IF105 (6431005) were each £1.68bn. NI Water's entire capital programme runs at roughly a few hundred million to about £0.6bn a year, so £10.5bn over 4 years is about 6x its predecessor and several times the whole capex. £1.05bn would sit naturally beside IF104/105. However, 10.5 is not a placeholder-shaped number, and call-offs can outlive the framework, so the head cannot be called an error without the source. Buyer history (page 1, 61 valued tenders): the max is IF104/IF105 at £1.68bn (EUR 1.97bn) and the median is EUR 4.49m. The head is 6.2x the buyer's max, which is a weaker outlier than the genuine DfE (17.8x), Countess of Chester (986x) and NHS England (2,824x) rows."
+  },
+  {
+   "tender": "8640220",
+   "verdict": "genuine",
+   "buyer_org": 1615245,
+   "buyer_other_count": 29,
+   "buyer_other_max_eur": 11700000,
+   "buyer_other_median_eur": 386100,
+   "head_eur": 11532296195.5,
+   "error_kind": "",
+   "evidence": "Countess of Chester Hospital NHS FT (its Commercial Procurement Service), 'National Framework for the Provision of Digital Enablement and Transformation Solutions'. It is a single-supplier framework awarded to Fortrus Ltd for use by the NHS and the wider public sector. The figure is declared deliberately and repeatedly: £10bn BT-27-Procedure in the 2021 tender (026195-2021), a £10bn contract value in the 2022 award (003799-2022), and a contract value RAISED to £12bn in the 2026 award/contract update (044047-2026). A placeholder or typo would not be carried for 5 years and then bumped 20%. So it is genuine as a declared national framework ceiling, although economically it is a headroom figure far above any plausible spend through one SME supplier. Buyer history (page 1, 29 valued tenders, 71 null): the max is £10m (medicine dispensing) and the median is EUR 386k. The head is about 986x the buyer's max: the strongest buyer-history outlier in this set, and it is on a non-error row. The served head is £10bn (estimated_value); the £12bn contract value from the head notice is not in amounts."
+  },
+  {
+   "tender": "8755535",
+   "verdict": "genuine",
+   "buyer_org": 8194846,
+   "buyer_other_count": 1,
+   "buyer_other_max_eur": 4196790,
+   "buyer_other_median_eur": 4196790,
+   "head_eur": 11851851851.85,
+   "error_kind": "",
+   "evidence": "NHS England, 'Increasing Capacity Framework Agreement - Refresh' (award 022398-2022, 55 parties). This is the national light-touch-regime framework for independent-sector elective, cancer and non-elective inpatient/outpatient capacity. It is accessible to NHS England, all ICBs and all NHS Trusts/FTs. Version 1 (012554-2022) published £10bn at both procedure and lot level, with a term to 2024-11-20, matching the original Nov 2020 4-year ICF, which was publicly reported as a roughly £10bn framework. The figure is consistent across all 3 versions, and it is genuine as a national framework ceiling. Buyer history: this NHS England org id has only 5 tenders, 1 valued (8531170 Severe Intestinal Failure, £3.6m = EUR 4.20m). The head is 2,824x the buyer's max: a buyer-history false positive, and n=1 is too thin to judge. NHS England's activity is spread over several org ids."
+  },
+  {
+   "tender": "8808497",
+   "verdict": "unclear",
+   "buyer_org": 4975351,
+   "buyer_other_count": 34,
+   "buyer_other_max_eur": 14040000000,
+   "buyer_other_median_eur": 389025000,
+   "head_eur": 11916820592.27,
+   "error_kind": "possible placeholder/headroom ceiling (unconfirmed)",
+   "evidence": "CCS, 'Extension of existing Dynamic Purchasing System for Automation Marketplace DPS' (021972-2024). It is the 4th extension (24 months, after 18+12+8+12). £10bn appears in both BT-27-Procedure and BT-27-Lot. The previous extension notice, separate tender 8810435 (034351-2023), carries the identical £10bn at procedure and lot level, so the figure is carried forward, not a one-off typo. Against it: £10bn is an exact power of ten. CCS's own predecessor PIN 'Automation Services DPS' (6597907/6617649, 2019) was £80m, and the 2022 'AI and Automation' PIN (8763062) was £200m, so the DPS figure is 125x its predecessor. It also exceeds CCS's Cyber Security 4 (£3bn) and Digital and IT Professional Services 2 (£2.4bn). As a CCS DPS ceiling it is in family with G-Cloud 15 £14bn and DOS7 £12bn, so it may be CCS's declared headroom. The original 2020 DPS notice was not found under this org, so whether £10bn was the founding figure is unread. Buyer history (page 1 of this TED/FTS-era CCS org = 2014-2017 notices, 34 valued tenders): the max is FM Services £12bn (EUR 14.04bn) and the median is EUR 389m. The head is 0.85x the buyer's max, so a buyer-history rule would pass it. The signal cannot see this case, because CCS's ceilings span £14m to £12bn."
+  },
+  {
+   "tender": "4722400",
+   "verdict": "error",
+   "error_kind": "x10^5-ish inflated typo/garbled total with no partner (true total ~GBP 0.71 m)",
+   "head_eur": 86249177582.39,
+   "buyer_org": 1184434,
+   "buyer_other_count": 11,
+   "buyer_other_max_eur": 9793873,
+   "buyer_other_median_eur": 579150,
+   "evidence": "Oxfordshire CC 'Provision of School Transport - Zone 3 West', 19 school bus routes around Witney/Burford (CPV 60130000), single CAN 078237-2012, result_value GBP 72.1 bn in ONE field. The same notice's 10 RES awards are GBP 34,390.50-163,894 and sum to ~GBP 710,182, so the real contract total is ~GBP 0.7 m. Ratio to smallest RES is x2,096,509 (not exact 10^k, so 4(a) cannot see it). March 2012, outside unit 3's July 2011 r2.0.8 @FMTVAL window, so the publisher's figure. Buyer signal flags it hard: head/max ~8,800x, head/median ~149,000x. Caveat: page 1 (id-ascending) holds 1993-2003 notices, with only 11 non-null values (UKL counted as GBP). CPV plausibility (county school transport at EUR 86 bn) flags it too."
+  },
+  {
+   "tender": "6119830",
+   "verdict": "genuine",
+   "head_eur": 33751476627.1,
+   "buyer_org": 4975351,
+   "buyer_other_count": 34,
+   "buyer_other_max_eur": 14040000000,
+   "buyer_other_median_eur": 389025000,
+   "evidence": "Crown Commercial Service PIN 052306-2018 'Construction Works Contractors': a pan-government collaborative agreement for all UK public sector bodies (central government, local authorities, health, police, fire, education, devolved administrations), 48 months + 3 years, 40 CPVs. estimated_value GBP 30 bn. This is the RM6088 Construction Works and Associated Services framework, publicly reported as ~GBP 30 bn. A deliberate national ceiling. Buyer signal: head/max 2.4x, head/median 87x. A 'max x2' rule would wrongly flag it, a 'max x10' rule would not. CCS page 2 (2017-2021) shows many GBP 1-6.5 bn frameworks, but none at GBP 30 bn."
+  },
+  {
+   "tender": "5909599",
+   "verdict": "genuine",
+   "head_eur": 22601934725.61,
+   "buyer_org": 7626061,
+   "buyer_other_count": 10,
+   "buyer_other_max_eur": 23400000000,
+   "buyer_other_median_eur": 982800000,
+   "evidence": "Genesis Housing Association 'Aggregated Goods, Works and Services': a single-supplier 'Aggregator' framework for 'the whole of the public sector' plus private firms (broad CPVs: supplies, works, travel, telecoms). estimated_value GBP 20 bn is repeated in all 3 versions (162813-2017, 205542-2017, 260811-2017). The same buyer's sibling tender 5980911 'Aggregator Partner' (298953-2017) also says GBP 20 bn. So it is deliberate, a total-of-all-users ceiling that is aspirational but intended, not a typo. Buyer signal does not flag it: head/max 0.97, because the max IS the sibling GBP 20 bn. Head/median ~23x. This buyer publishes other big ceilings (GBP 5 bn development DPS twice, GBP 1.2 bn energy DPS)."
+  },
+  {
+   "tender": "5682171",
+   "verdict": "genuine",
+   "head_eur": 19408682150.48,
+   "buyer_org": 1268781,
+   "buyer_other_count": 7,
+   "buyer_other_max_eur": 58500000000,
+   "buyer_other_median_eur": 8190000,
+   "evidence": "Genesis HA, with The Monarch Partnership as agent: electricity and gas supply framework, CAN 190316-2016, 10 Ofgem suppliers. INFO_ADD opens it to essentially the entire UK public sector: central government, all local authorities, NHS, schools/universities, police, fire, housing associations, charities, Scottish bodies. result_value GBP 15 bn, with the same GBP 15 bn on each of the 4 lot awards (full ceiling per lot). The same buyer's CN for this framework (5623235, 154690-2016, a separate tender) also says GBP 15 bn. Deliberate whole-public-sector ceiling. Buyer signal: head/max 0.33, but the max is 8411011's GBP 50 bn 'DPS for Development' supplementary notice, itself likely x10 of the buyer's GBP 5 bn DPS siblings. The 2nd largest is the matching GBP 15 bn CN. Head/median ~2,370x: a median-based rule would wrongly flag it."
+  },
+  {
+   "tender": "8422381",
+   "verdict": "genuine",
+   "head_eur": 13381655979.93,
+   "buyer_org": 4975351,
+   "buyer_other_count": 34,
+   "buyer_other_max_eur": 14040000000,
+   "buyer_other_median_eur": 389025000,
+   "evidence": "CCS 'Facilities Management Marketplace' CAN 353645-2018 (RM3830, replacing RM1056, open to the public sector and wider public sector). result_value GBP 12 bn = RES-1 award (derived from the same element, so not independent). Corroborated OUTSIDE the tender: CCS's CN for the same framework, tender 5920383 'Facilities Management Services' (183935-2017), carries exactly GBP 12 bn. That CN is the buyer's page-1 max. CCS FM successors also sit at GBP 6-6.5 bn (6134675, 6893891). Buyer signal does not flag it: head/max 0.95. An exact-equal figure on another tender of the same buyer is a strong genuine signal."
+  },
+  {
+   "tender": "6846621",
+   "verdict": "genuine",
+   "head_eur": 12062064806.18,
+   "buyer_org": 8356253,
+   "buyer_other_count": 4,
+   "buyer_other_max_eur": 2340000000,
+   "buyer_other_median_eur": 12051000,
+   "evidence": "Scape Group (a public-sector-owned central purchasing body) 'National Construction Framework' PIN 348120-2020 (market engagement). 7 lots across England, Wales and NI, by project band up to 'Principal GBP 75 million plus'. All public-sector building types. estimated_value GBP 11 bn, one field, one version, in line with Scape's publicly reported ~GBP 11 bn national construction framework. Buyer signal: head/max 5.2x (max = Scape's GBP 2 bn civils framework 6058128), head/median ~1,000x. It would be wrongly flagged by any median rule or a 'max x2' rule, but not by 'max x10'. Only 4 valued siblings."
+  },
+  {
+   "tender": "6057662",
+   "verdict": "genuine",
+   "head_eur": 11316057485.57,
+   "buyer_org": 4975351,
+   "buyer_other_count": 34,
+   "buyer_other_max_eur": 14040000000,
+   "buyer_other_median_eur": 389025000,
+   "evidence": "CCS PIN 451319-2017 'Payment Solutions': a government-wide commercial agreement for payment cards (cash-back procurement card, travel cards, prepaid accounts), 3 lots. estimated_value GBP 10 bn, one field, single version, round. A spend-throughput ceiling for card transactions across the public sector. Plausible for a CCS pan-government agreement and in line with CCS's portfolio of GBP 1-12 bn frameworks (page 1 max GBP 12 bn; page 2 has GBP 5-6.5 bn). No partner or sibling at the same figure was found, so confidence is moderate, but nothing suggests a slip. Buyer signal does not flag it: head/max 0.81, head/median 29x."
+  },
+  {
+   "tender": "8434466",
+   "verdict": "error",
+   "error_kind": "total-of-all-buyers framework ceiling misattributed to one buyer's call-off (CCS RM6011 GBP 10 bn chained into MoJ's EDF call-off)",
+   "head_eur": 11230276826.32,
+   "buyer_org": 1178141,
+   "buyer_other_count": 30,
+   "buyer_other_max_eur": 11700000000,
+   "buyer_other_median_eur": 2925000,
+   "evidence": "The chain mixes two procurements. Versions 1-2 are CCS's RM6011 'Supply of Energy and Ancillary Services' framework: CN 168075-2019 (ORG-1 = Crown Commercial Service, ~12.5 TWh electricity / 15.5 TWh gas for ~840 customers, 'value in II.1.5 is only an estimate') and CAN 205692-2020 (GBP 10 bn estimate and GBP 10 bn per lot award). Version 3 (head, 035109-2021) is the Ministry of Justice's 'HH Electricty MoJ - EDF Contract', 'Call-off from CCS RM6011', whose own result_value is EUR 260 m. The head still elects the framework's GBP 10 bn estimated_value, now served with MoJ as sole buyer (CCS appears only as review-body). GBP 10 bn is genuine for CCS's framework but wrong as MoJ's call-off value; the right head is the call-off's ~260 m. Buyer signal FAILS here: head/max 0.96, because MoJ's page 1 (2007-2016) holds 4671850 'Application development framework' at GBP 10 bn (2011), itself suspect. Head/median ~3,800x."
+  },
+  {
+   "tender": "8285265",
+   "verdict": "genuine",
+   "head_eur": 11133350012.51,
+   "buyer_org": 1462144,
+   "buyer_other_count": 36,
+   "buyer_other_median_eur": 2258543,
+   "buyer_other_max_eur": 6669000000,
+   "error_kind": "",
+   "evidence": "Department for Transport, CAN for the Thameslink, Southern and Great Northern (TSGN) rail franchise awarded to Govia Thameslink Railway (CPV 60210000). The only figure is result_value GBP 8.9 bn. That matches the widely reported ~GBP 8.9 bn value of the 7-year GTR franchise, so it is a real national rail programme. Buyer history (1 page of 100, more=true): 36 other valued tenders, median EUR 2.26 M, but DfT has other genuine multi-billion awards: 3850401 Thameslink Rolling Stock (EUR 6.67 bn) and 3629709 IEP (EUR 5.73 bn). Head/median is about 4,900x, head/max about 1.7x."
+  },
+  {
+   "tender": "7226190",
+   "verdict": "error",
+   "head_eur": 25000000000,
+   "buyer_org": 1694418,
+   "buyer_other_count": 4,
+   "buyer_other_median_eur": 2315162,
+   "buyer_other_max_eur": 15000000000,
+   "error_kind": "x10 typo (text states the real ceiling), no in-tender partner",
+   "evidence": "ERAFP (a French public pension fund) selecting 4 managers for a USD SRI credit bond mandate. The head notice 571699-2021 (v2) says in TED-INFO_ADD: 'accord-cadre est conclu avec un montant maximum fixé à 2,5 milliards d'euros', with an indicative EUR 1.2 bn over the whole term. So the EUR 25 bn estimated_value is the EUR 2.5 bn maximum times 10. Buyer history (52 items, not paged): only 4 others carry a value, median EUR 2.3 M. The max is the sibling EUR-credit mandate 7332962 at EUR 15 bn, very likely the same x10 slip (1.5 bn). So buyer-max is fooled by this buyer's habit; head/median is about 10,800x."
+  },
+  {
+   "tender": "7575840",
+   "verdict": "genuine",
+   "head_eur": 20000000000,
+   "buyer_org": 14910830,
+   "buyer_other_count": 69,
+   "buyer_other_median_eur": 27247680,
+   "buyer_other_max_eur": 20000000000,
+   "error_kind": "",
+   "evidence": "So.Re.Sa., the Campania regional central purchasing body: a 72-month dynamic purchasing system (DPS) for pharmaceuticals (drugs, blood derivatives, vaccines) for all Campania health authorities, 'eventualmente di altre regioni'. EUR 20 bn over 6 years is about 2x Campania's likely direct pharma spend (~EUR 1.6-2 bn/yr): a generous but deliberate DPS ceiling, not a typo. The buyer republished the same DPS in 2023 (tender 7810361) with the same EUR 20 bn. Cross-buyer check: Intercent-ER's 96-month pharma DPS is EUR 10 bn (5863603). Buyer history: 69 other valued tenders, median EUR 27 M. The max (EUR 20 bn) is the 2023 relaunch; the buyer's PINs run EUR 1-15 bn. Head/median is about 730x. It is a ceiling, not expected spend; the caveat applies."
+  },
+  {
+   "tender": "4785789",
+   "verdict": "error",
+   "head_eur": 15000000000,
+   "buyer_org": 1229185,
+   "buyer_other_count": 10,
+   "buyer_other_median_eur": 30000000,
+   "buyer_other_max_eur": 20000000000,
+   "error_kind": "x1000-scale typo with no exact partner (CN states EUR 25-30 M)",
+   "evidence": "Poste Immo regional works framework (Alsace/Lorraine/Champagne-Ardenne, 'sans montant minimum ni maximum'). The CAN 346784-2013 TED-VALUE = VALUE_COST = EUR 15 bn. The CN 190558-2012 (v1) gives TOTAL_ESTIMATED EUR 25 M-30 M and says 'volume annuel de 130 opérations, estimé à 6 000 000 EUR/an' over 60 months. So the real total is about EUR 30 M and 15 bn is a slip (probably 15,000,000 with three extra zeros). The CN range is about 500-600x below, not an exact 10^k, so the rule cannot see it. Buyer history: 10 others, median EUR 30 M; the sibling regional frameworks are 30 M, 30 M, 32.1 M and 45 M. The max (EUR 20 bn, 4783373, a maîtrise d'oeuvre framework) is very likely the same error. Head/median is 500x."
+  },
+  {
+   "tender": "6640498",
+   "verdict": "error",
+   "head_eur": 14000000000,
+   "buyer_org": 14185404,
+   "buyer_other_count": 0,
+   "buyer_other_median_eur": null,
+   "buyer_other_max_eur": null,
+   "error_kind": "x100 / dropped decimal (k=2 partner, below the k>=3 rule)",
+   "evidence": "Youth residential care ('Verblijf Jeugd') for 11 municipalities of the Centraal Gelderland region (Arnhem and others, about 700k people). The CN 505928-2019 estimated_value is EUR 140,000,000. The CAN 337801-2020 procedure VALUE/VAL_TOTAL and RES-1 = EUR 14,000,000,000, exactly 100x, the ',00' cents swallowed into the integer. RES-2..5 are EUR 0.01 placeholders. EUR 14 bn exceeds the region's entire municipal budget. Buyer history: only 3 tenders, none of the other 2 has a value, so there is no buyer signal at all. The in-tender x100 partner is the separator, but k=2 is outside the rule."
+  },
+  {
+   "tender": "5265429",
+   "verdict": "error",
+   "head_eur": 11529034600,
+   "buyer_org": 1308334,
+   "buyer_other_count": 69,
+   "buyer_other_median_eur": 812100,
+   "buyer_other_max_eur": 234166670,
+   "error_kind": "dropped decimal (x10^4 of EUR 1,152,903.46)",
+   "evidence": "Università di Catania, ANNUAL security/surveillance service for the S. Sofia campus and city-centre buildings. The CN 268255-2014 VALUE = VALUE_COST = 11,529,034,600.00. TOTAL_QUANTITY_OR_SCOPE reads '345 871 038.', which is EUR 3,458,710.38 (3 x 1,152,903.46, 36 months), itself with its decimal lost. So the real annual value is EUR 1,152,903.46 and the head is that figure x10^4 with the decimals absorbed. The text figure is not a parsed amount, so there is no partner. Strong buyer signal: the same service re-tendered in 2015 (5472540, 'Affidamento annuale del servizio di vigilanza') is EUR 791,721.91, and in 2021 (7220417, 3-year) EUR 3.12 M. 69 others, median EUR 0.81 M, max EUR 234 M. Head/median is about 14,000x, head/max about 49x."
+  },
+  {
+   "tender": "5863603",
+   "verdict": "genuine",
+   "head_eur": 10000000000,
+   "buyer_org": 9408953,
+   "buyer_other_count": 97,
+   "buyer_other_median_eur": 13332093,
+   "buyer_other_max_eur": 15000000000,
+   "error_kind": "",
+   "evidence": "Intercent-ER (the Emilia-Romagna regional central purchasing body) DPS for pharmaceuticals for the agency and all regional health authorities, duration 96 months (TED-DURATION and INFO_ADD 'durata di validità (96 mesi)'). EUR 10 bn over 8 years is about EUR 1.25 bn/yr, in line with the region's direct pharma purchasing. VAL_ESTIMATED_TOTAL = VAL_OBJECT = EUR 10 bn. Buyer history (1 page, more=true): 97 others, median EUR 13.3 M. The max is the 2025 successor pharma DPS 937182 at EUR 15 bn, which corroborates the scale; other DPS run EUR 280-570 M. Head/median is 750x, head/max 0.67x."
+  },
+  {
+   "tender": "7646860",
+   "verdict": "genuine",
+   "head_eur": 10000000000,
+   "buyer_org": 15522,
+   "buyer_other_count": 73,
+   "buyer_other_median_eur": 5000000,
+   "buyer_other_max_eur": 22000000000,
+   "error_kind": "",
+   "evidence": "SIPPEREC (a large Île-de-France electricity purchasing group) framework for electricity supply 2024-2026 with 3 lots. The CN 124548-2023 gives lot maxima LOT-1 (Enedis area) EUR 8 bn, LOT-2 (ELD) EUR 1 bn and LOT-3 (vert premium) EUR 1 bn, but a procedure VAL_ESTIMATED_TOTAL of EUR 1 bn. The CAN 323714-2023 VAL_TOTAL of EUR 10 bn = 8+1+1, with every RES repeating its lot maximum (multi-award). So the head is the sum of the published framework maxima, and the CN's EUR 1 bn total is the inconsistent figure (the x10 sibling in section 16). A ceiling of several times the expected spend (~EUR 2 bn for ~3 TWh/yr at 2023 forward prices) is typical of French frameworks set just after the 2022 price spike. The 2026 relaunch 'Vert Premium 2027-2028' (27444) again carries EUR 1 bn, which corroborates the lot scale. Buyer history (1 page, more=true): 73 others, median EUR 5 M; max EUR 22 bn (1112939, an electricity distribution concession). Head/median is 2,000x. This is a ceiling, not expected spend; the caveat applies; moderate confidence."
+  },
+  {
+   "tender": "4179951",
+   "verdict": "error",
+   "error_kind": "value corrigendum not applied (text era): the head notice itself says Instead of 15 000 000 000 GBP, Read 150 000 000 GBP",
+   "head_eur": 16791671331.02,
+   "buyer_org": 1206292,
+   "buyer_other_count": 11,
+   "buyer_other_median_eur": 522990,
+   "buyer_other_max_eur": 3276000,
+   "evidence": "Hertfordshire County Council pension fund: a property investment management service won by CB Richard Ellis Investors. Both CANs, 62654-2010 and 62655-2010, print V.4 'Value: 15 000 000 000 GBP'. The head notice 91132-2010 is a corrigendum. Its served description reads 'Instead of: ... Total final value of the contract: 15 000 000 000 GBP. Read: ... 150 000 000 GBP.' So the publisher withdrew the elected figure in the head notice, yet we still serve it. Section 16's corrigendum column shows nothing because free-text Instead of/Read is not parsed (issue 489's class, text era). Even GBP 150 m looks like the mandate's assets under management, not the contract value. CN 285185-2009 II.2.1 gives an estimated range of GBP 1,125,000 to 2,250,000 over 60 months (the fee), and that range is not stored as an amount, so there is no partner. Buyer signal: head is 32,000x the buyer median and 5,100x its max (GBP+UKL, n=11 on page 1 of 100+)."
+  },
+  {
+   "tender": "3450659",
+   "verdict": "error",
+   "error_kind": "two figures run together: the French bons-de-commande minimum 87,250 and maximum 349,000 EUR published as one number",
+   "head_eur": 87250349000,
+   "buyer_org": 31135024,
+   "buyer_other_count": 2,
+   "buyer_other_median_eur": 23125134845,
+   "buyer_other_max_eur": 46250185000,
+   "evidence": "Conseil général de Corse-du-Sud, road-maintenance materials, CAN 128539-2006, V.4 'Value: 87 250 349 000 EUR'. Read as 87 250 / 349 000, the max/min ratio is exactly 4.0, which fits the CMP 2001/2004 bons-de-commande cap (max at most 4x min). The same procedure's other award, v2 126383-2006 (contract 2006-023, Industries Sartenaises), prints 'Value: 5 500 22 000. EUR', the same shape (5,500 / 22,000, ratio 4). The buyer's other road-maintenance award, 3495825, is EUR 46,250,185,000 = 46,250 / 185,000, ratio 4.0. So the buyer-history signal FAILS here. Of the 2 other valued tenders, one is a same-class error, so the median (23.1 bn) and max (46.25 bn) are contaminated. Excluding it, the only clean comparable is EUR 84,689 (motor vehicles). Real value: a supply framework of about EUR 87k to 349k."
+  },
+  {
+   "tender": "8161499",
+   "verdict": "error",
+   "error_kind": "x1000 typo with no partner (most likely EUR 77.526 m)",
+   "head_eur": 77526000000,
+   "buyer_org": 31150275,
+   "buyer_other_count": 1,
+   "buyer_other_median_eur": 83345,
+   "buyer_other_max_eur": 83345,
+   "evidence": "Railway tunnel works awarded to Wayss+Freytag Ingenieurbau, CAN 233432-2005, 'Value: 77 526 000 000 EUR'. CN 114613-2005 names the client: DB Netz AG und DB Station & Service AG, represented by the Freistaat Sachsen, acting through DEGES Bereich PK. That is the City-Tunnel Leipzig set-up. The whole City-Tunnel project cost under EUR 1 bn, and EUR 77.5 bn is several times Germany's entire annual federal transport investment, so a single tunnel contract cannot be this size. No other figure appears in either notice (the CN abstract has no value), so there is no partner. The likely real value is EUR 77.526 m. Buyer signal: only 1 valued tender on page 1 of 100+ (EUR 83,345, road and bridge works), so the ratio is 930,000x on n=1. The signal is strong but rests on a thin history."
+  },
+  {
+   "tender": "3916175",
+   "verdict": "error",
+   "error_kind": "two figures run together: bons-de-commande minimum 60,000 and maximum 220,000 EUR published as one number",
+   "head_eur": 60000220000,
+   "buyer_org": 1245217,
+   "buyer_other_count": 4,
+   "buyer_other_median_eur": 4025900,
+   "buyer_other_max_eur": 4655477,
+   "evidence": "Ville du Robert (Martinique, about 20k inhabitants), ready-mixed concrete supply from Colas Martinique, CAN 199890-2008, the only version, V.4 'Value: 60 000 220 000 EUR'. It reads as min 60 000 / max 220 000 (ratio 3.67), the same shape as the Corse-du-Sud, OPAM, Levallois and Puy-de-Dôme rows. EUR 60 bn is far more than all of Martinique's yearly public spending. Buyer signal: 4 other valued tenders (a primary school 3.95 m, school buses 4.10 m, a médiathèque 4.66 m, sanitaires 0.90 m). Head is 14,900x the median and 12,900x the max, so the signal is clear even at n=4."
+  },
+  {
+   "tender": "3420171",
+   "verdict": "error",
+   "error_kind": "two figures run together: bons-de-commande minimum 50,000 and maximum 110,000 EUR published as one number",
+   "head_eur": 50000110000,
+   "buyer_org": 31039964,
+   "buyer_other_count": 21,
+   "buyer_other_median_eur": 369736,
+   "buyer_other_max_eur": 80000200000,
+   "evidence": "OPAM (the Nice social-housing office), furniture-removal transport by Le Gars Déménagement, CAN 99130-2006, V.4 'Value: 50 000 110 000 EUR', i.e. min 50 000 / max 110 000. The same buyer has SIX more awards of exactly this shape on page 1: 3365047 25,000,100,000 (ratio 4), 3377764 80,000,200,000 (diesel fuel), 3391114 30,000,120,000 (plants), 3424626 50,000,150,000, 3437324 40,000,120,000 and 3449983 35,000,140,000 (letterboxes). All have max at most 4x min. Buyer signal: the median of 21 (EUR 369,736) separates cleanly at 135,000x. The buyer MAX does not: it is a same-class sibling error (EUR 80 bn), so head/max = 0.6. A max-based outside signal fails for this buyer, and a median-based one works."
+  },
+  {
+   "tender": "3432959",
+   "verdict": "error",
+   "error_kind": "two figures run together: bons-de-commande minimum 42,000 and maximum 150,000 EUR published as one number",
+   "head_eur": 42000150000,
+   "buyer_org": 1201368,
+   "buyer_other_count": 77,
+   "buyer_other_median_eur": 969232,
+   "buyer_other_max_eur": 75400000,
+   "evidence": "Ville de Levallois(-Perret), installation, maintenance and supply of terminals awarded to A.M.A Paris Nord, CAN 102297-2006, V.4 'Value: 42 000 150 000 EUR'. It reads as min 42 000 / max 150 000 (ratio 3.57), the same shape as the other French 2005-2008 rows. EUR 42 bn is far beyond the yearly budget of a town of about 65k. Buyer signal: the strongest history in this set, n=77 on page 1 of 100+. Median EUR 969k, max EUR 75.4 m (a multi-year building maintenance framework). Head is 43,000x the median and 557x the max."
+  },
+  {
+   "tender": "3427333",
+   "verdict": "error",
+   "error_kind": "x1000 typo in II.2.1, with the true figure in the same notice's V.4 text, which the legacy parser does not extract",
+   "head_eur": 35076200000,
+   "buyer_org": 1190678,
+   "buyer_other_count": 7,
+   "buyer_other_median_eur": 495000,
+   "buyer_other_max_eur": 8681273,
+   "evidence": "Cyprus Ministry of the Interior, waste-treatment plant and landfill (design, build, operate), CAN 143891-2008. II.2.1 prints 'Total final value of contract(s): Value: 35 076 200 000 EUR'. In the SAME notice, V.4 prints 'Initial estimated total value of the contract: Value: 35 076 200 EUR' and 'Total final value of the contract: Value: 35 076 200 EUR'. So there is an exact 10^3 partner inside the notice. Served amounts hold only the one II.2.1 result_value, so section 16 shows no partner: the text-era parser does not read V.4 when II.2.1 is present. EUR 35 m fits a Cypriot integrated waste facility, while EUR 35 bn is about twice Cyprus's GDP at the time. Buyer signal: n=7, median EUR 495k, max EUR 8.68 m (construction works; a waste transfer station at 6.63 m). Head is 70,000x the median and 4,000x the max."
+  },
+  {
+   "tender": "3428706",
+   "verdict": "error",
+   "error_kind": "two figures run together: bons-de-commande minimum 30,000 and maximum 120,000 EUR published as one number",
+   "head_eur": 30000120000,
+   "buyer_org": 30980023,
+   "buyer_other_count": 5,
+   "buyer_other_median_eur": 372425,
+   "buyer_other_max_eur": 2389192,
+   "evidence": "Conseil général du Puy-de-Dôme, telecom equipment maintenance awarded to Nextiraone France, CAN 13132-2006, the only version, V.4 'Value: 30 000 120 000 EUR'. It reads as min 30 000 / max 120 000, a ratio of exactly 4.0 (the bons-de-commande cap). EUR 30 bn for one département's PBX maintenance is not possible. Buyer signal: 5 valued tenders on page 1 of 100+ (EUR and FRF). Median EUR 372k, max EUR 2.39 m (road surfacing). Head is 80,000x the median and 12,600x the max."
+  },
+  {
+   "tender": "514891",
+   "verdict": "genuine",
+   "buyer_org": 13563914,
+   "buyer_other_count": 39,
+   "buyer_other_max_eur": 29222094000,
+   "buyer_other_median_eur": 57018720,
+   "head_eur": 29222051958.23,
+   "error_kind": "",
+   "evidence": "National Grid UK, 'HVDC Converter Systems Framework' (eForms subtype 30, utilities award; CPV 45000000 + 31200000/31600000). A multi-year, multi-supplier framework for HVDC converter stations (ABB/Hitachi, Siemens, GE/UK Grid Solutions, Mitsubishi) that NGUK, its affiliates and project partners can call off. GBP 24.6 bn appears in both the procedure and LOT-0000 estimated_value. Buyer history is consistent with it: the sibling 'HVDC Cable Framework' is GBP 21.3 bn (115293/7905052/8593458) and 'HVDC Major Works & Civils' is GBP 12.77 bn (8593457). Converter + cable + civils comes to about GBP 58.7 bn, which matches National Grid's publicly reported ~GBP 59 bn HVDC supply-chain programme. Buyer signal: head/median 512x. head/max 1.00 because 8681166 and 7905068 are copies of this same framework. Without those copies, max = the cable framework (~EUR 25.3 bn), so head/max is about 1.15. A buyer-history rule would pass this row only on max, not on median."
+  },
+  {
+   "tender": "355006",
+   "verdict": "error",
+   "buyer_org": 1359776,
+   "buyer_other_count": 93,
+   "buyer_other_max_eur": 18321499,
+   "buyer_other_median_eur": 509744,
+   "head_eur": 35000094166,
+   "error_kind": "dropped decimal (x100: 35,000,094,166.00 is 350,000,941.66 with the decimal point lost)",
+   "evidence": "FNsP F.D. Roosevelta Banska Bystrica: design-and-build reconstruction of one regional hospital campus (CPV 45215140). The estimated_value 35,000,094,166.00 is identical in all 4 versions (CN 747164-2023, CN 019103-2024, CAN 370293-2024, modification 627087-2026). Inside the tender, the lot award and contract CON-0001 are EUR 297,457,413.13, which is 117.7x below the head: no exact 10^k partner, so 4(a) cannot see it. The CN's selection criterion asks for cumulative 3-year turnover of at least EUR 250,000,000 (written out in words) and reference works of EUR 20 M / 60 M. So the real estimate is EUR 350,000,941.66: the mantissa 35000094166 with the decimal dropped. Buyer history: 93 valued tenders, max EUR 18.3 M (heat supply), median EUR 0.51 M. head/median 68,662x, head/max 1,910x. The buyer signal flags it strongly. The in-tender award ratio (~118x) also flags it."
+  },
+  {
+   "tender": "578884",
+   "verdict": "error",
+   "buyer_org": 22144388,
+   "buyer_other_count": 43,
+   "buyer_other_max_eur": 756302500,
+   "buyer_other_median_eur": 915200,
+   "head_eur": 22200000000,
+   "error_kind": "typo / misplaced digits, no exact partner (lot estimate ~x10^5 of a plausible ~EUR 0.2-0.4 M figure; the tender's own figures disagree with each other)",
+   "evidence": "Hamburg Behoerde fuer Justiz und Verbraucherschutz: framework for washing textiles for Hamburg's prisons (CPV 98312000). Four versions all carry LOT-0001 estimated_value EUR 22,200,000,000 and procedure estimated_value EUR 220,000,000. The CAN result_value is EUR 382,486.23, but the lot award and contract say EUR 38,248,623.00, so even the award is x100 inconsistent. One tenderer (Wilhelm Wulff). A prison laundry contract worth EUR 22 bn, or even 220 M, is impossible; the real value is the ~EUR 0.38 M result. Mantissas 222 / 220 / 38248623 are not exact 10^k of each other, hence ratio x58,041 with no partner. Buyer history: median EUR 0.92 M, head/median 24,257x. The max (EUR 756 M, 7931999 'Waschen und Reinigen von Textilien der Feuerwehr') is itself almost certainly a x1000 error; the next is EUR 66.6 M. So head/max 29x understates the gap, and buyer max is contaminated by the buyer's other errors."
+  },
+  {
+   "tender": "910889",
+   "verdict": "genuine",
+   "buyer_org": 10711,
+   "buyer_other_count": 35,
+   "buyer_other_max_eur": 100000000,
+   "buyer_other_median_eur": 1840000,
+   "head_eur": 19000000000,
+   "error_kind": "",
+   "evidence": "Ville de Paris: 25-year concession for the Paris district-heating network (production and distribution of heat), awarded to a SEMOP with Dalkia (CPV 45251140 / 65000000; subtype 32, concession award). In a concession the value is total concessionaire revenue over the term: CPCU-scale heat sales of several hundred EUR M a year over 25 years gives EUR 15-19 bn. The tender is internally consistent at that scale. Version 1 (314504-2026) has estimated_value = result_value = EUR 15 bn. Version 2 (350795-2026, a corrected award) keeps the EUR 15 bn estimate and raises result_value and the award to EUR 19 bn, so two fields at the same scale, not equal. Buyer signal gives a FALSE POSITIVE here: Ville de Paris page 1 (100 items, 35 valued, more=true) has max EUR 100 M and median EUR 1.84 M, so head/median 10,326x and head/max 190x. That is higher than the error rows 525252 (7,482x) and Limoges (5,714x with the real buyer). Buyer history cannot tell a once-in-25-years concession from a typo."
+  },
+  {
+   "tender": "525252",
+   "verdict": "error",
+   "buyer_org": 4827464,
+   "buyer_other_count": 84,
+   "buyer_other_max_eur": 600000000,
+   "buyer_other_median_eur": 1844472,
+   "head_eur": 13800000000,
+   "error_kind": "dropped decimal across the whole notice (x100: estimate 13.8 bn and result 13.4 bn stand for ~EUR 138 M / 134 M)",
+   "evidence": "Metropolitano de Lisboa: rolling stock, 24 traction units plus an option for 12 more (CPV 34622200). Single result notice 679723-2024: estimated_value EUR 13.8 bn, result_value EUR 13.4 bn, no award amounts or contracts. Both figures are scaled, so nothing inside the tender can contradict them (ratio x1). 36 metro units at roughly EUR 3.5-4 M each is about EUR 130-140 M; EUR 13.8 bn is more than 2x Lisbon Metro's entire expansion programme. The buyer's own earlier procurement 6311875, 'Aquisicao de material circulante e de sistema de controlo automatico' (trains plus CBTC), is EUR 136.5 M, which puts the real figure at ~EUR 138 M / 134 M, a x100 slip. Buyer history: max EUR 600 M (a design-build line extension with vehicles), median EUR 1.84 M. head/median 7,482x, head/max 23x. Only an outside signal catches this row, but its head/median is LOWER than genuine 910889's (10,326x)."
+  },
+  {
+   "tender": "448846",
+   "verdict": "genuine",
+   "buyer_org": 3221,
+   "buyer_other_count": 98,
+   "buyer_other_max_eur": 483778002,
+   "buyer_other_median_eur": 6485958,
+   "head_eur": 11000000000,
+   "error_kind": "",
+   "evidence": "SCR Piemonte (the Piedmont regional central purchasing body): 'Bando V SDA farmaci', a dynamic purchasing system (art. 32 D.Lgs. 36/2023) for medicines and blood products for hospital use, direct distribution and DPC for every ASL/AO of the regional health service (CPV 33690000; CN 829605-2025, one lot). EUR 11 bn is in both the procedure and LOT-0001 estimated_value. A DPS ceiling is a notional multi-year maximum. Piedmont's SSR drug purchasing is on the order of EUR 1.5-2 bn a year, and Italian regional drug DPSs routinely carry EUR 10 bn+ ceilings. The buyer's specific contracts under the previous SDA farmaci are EUR 139 M (9th, 165271), EUR 268 M (10th, 965235) and EUR 288 M (8th, 1122756; these last two from page 2), so a new multi-year DPS at EUR 11 bn fits. Moderate confidence: a round figure with no partner. Buyer history page 1: median EUR 6.49 M, max EUR 484 M (a regional tender). head/median 1,696x, head/max 22.7x, almost the same head/max as error 525252 (23.0x)."
+  },
+  {
+   "tender": "535069",
+   "verdict": "error",
+   "buyer_org": 1165156,
+   "buyer_other_count": 0,
+   "buyer_other_max_eur": null,
+   "buyer_other_median_eur": null,
+   "head_eur": 10000000000,
+   "error_kind": "placeholder (exact 10^10 = EUR 10,000,000,000.00 result_value over a EUR 2,000,000 award; ratio 5,000, not exact 10^k)",
+   "evidence": "Insurance services for the hospitals of the GHT du Limousin (CPV 66510000), CAN 229259-2026. The head result_value is exactly EUR 10,000,000,000.00, while the only lot award and contract (PCN012025AssurancesOFFRE) are EUR 2,000,000.00. The ratio is 5,000, not 10^k, so 4(a) cannot see it. Hospital insurance for one GHT costs a few EUR M at most; 10^10 is a filler value. The parties are mis-tagged: 'Tribunal administratif de Limoges' (the review body) is the Procedure-Buyer and CHU Dupuytren is listed as Tenderer. So the buyer-history signal is EMPTY for this row: org 1165156 has 1 tender, itself. Using the real buyer CHU Dupuytren (org 13877826) for context: 22 valued, median EUR 1.75 M, max EUR 60 M, head/median 5,714x. A buyer-history rule silently cannot reach rows whose party mapping is wrong. The in-tender award ratio (5,000x) flags it."
+  },
+  {
+   "tender": "909191",
+   "verdict": "error",
+   "buyer_org": 13307746,
+   "buyer_other_count": 40,
+   "buyer_other_max_eur": 34333453698,
+   "buyer_other_median_eur": 445056,
+   "head_eur": 34334256845.42,
+   "error_kind": "other: per-lot quantity multiplier x500, summed over 37 identical lots (not 10^k)",
+   "evidence": "Centrul National Clinic de Recuperare Neuropsihomotorie Copii 'Dr. Nicolae Robanescu' (Bucharest children's rehab centre): 48-month framework for onasemnogene abeparvovec (Zolgensma, SMA gene therapy), 37 lots, one per vial-kit configuration (CPV 33632000). Each lot's estimated_value and framework_maximum is RON 4,808,930,250.00, which is exactly 500 x RON 9,617,860.50. RON 9,617,860.50 (~EUR 1.86 M) is the per-patient Zolgensma price. Head = 37 x 500 x price = RON 177.93 bn (~EUR 34 bn), more than half of Romania's yearly national health-insurance budget, for one hospital. The awards are worse: every lot award and contract 2764 is RON 532,194,179,575. Plausible real ceiling: 37 x RON 9.62 M = RON 355.9 M (~EUR 68.7 M), which matches the buyer's earlier musculo-skeletal (Zolgensma) framework 178483 at RON 365.7 M (~EUR 70.6 M); other priors 6861776 RON 202.7 M and 7517357. Buyer history: median EUR 0.45 M, head/median 77,146x. head/max is 1.00 because 7890586 (RON 177.93 bn) and 7666741 'ZOLGENSMA' (RON 175.5 bn) carry the same inflated figure. Excluding them, max is ~EUR 70.6 M and head/max ~486x. Buyer max is again contaminated by the buyer repeating its own error."
+  }
+ ],
+ "caveat_draft": {
+  "file": "/home/user/tender-db/crates/app/src/v1/docs.rs (the public /docs page is one HTML string in this file. `<h2 id=\"caveats\">Data caveats</h2>` is at line 643, and the value caveats are the `<h3>Amounts</h3>` list at lines 677-761. The filter table links to it at line 172. crates/app/data/openapi.json only links to #caveats.)",
+  "existing_value_caveats": "The Amounts list (docs.rs 677-761) has these bullets:\n(1) Amounts are integer cents plus a currency code. Anything past 2 fraction digits is rounded half-away-from-zero.\n(2) The `quality: \"withheld\"` key means `value` is null and the stored number is the eForms -1 placeholder. Filter on `quality IS NULL` in /v1/sql.\n(3) The 10^k rule (line 689): a legacy FMTVAL attribute that equals the printed text times an exact even power of ten is read from the text (the 2011 4.97x10^16 vs \"49 700\" case). Any other disagreement keeps the attribute.\n(4) Negative amounts are kept: about 15,500 are the -1.00 withheld marker, and a few are revenue-side contracts.\n(5) Zero usually means \"no value given\". The derived EUR column treats 0 as absent and also refuses a conversion that rounds to zero.\n(6) Very small values may be per-unit rates. They are not filtered.\n(7) A published 0.01 or 1.00 is a placeholder token (about 112k Tenders) and is not elected.\n(8) `tax_basis` can be incl, excl or NULL, and the mix depends on the era.\n(9) Values are served in the published currency (26 codes). `eur_cents` is a derived EUR value at the publication date, using ECB/ECU rates and the fixed euro conversion rates; `min_value`/`max_value` compare against it.\n(10) Lines 743-746: \"Only amounts that overflow the stored integer are refused at ingestion, so a Tender's `value` is the figure its notice published, however implausible — 257 trillion PLN…\".\n(11) Lines 747-760: `min_value`/`max_value` skip five classes: negatives, zero, the one-unit tokens, runs of 9+ identical digits (form-width placeholders), and anything over €100bn. The bullet ends by saying the payload `value` \"can therefore be a figure the value filters ignore (issue 366)\".\n\nThe page does not mention the exact-10^k / €1 bn scale-slip rule (issue 471 unit 4(a)) anywhere.\n\nTwo things to be aware of before inserting:\n- **The rule is broader than \"exactly 1,000x\".** In crates/store/src/canonical.rs (~2671-2760) it refuses a figure that is exactly 10^k times another figure of the same Tender, with k >= 3, so 1,000x, 10,000x, 1,000,000x and up. The partner must be in the same currency, sit in only one head amount field, be above 10.00 as published, and the refused figure must convert to at least €1 bn (`SCALE_ERROR_MIN_EUR_CENTS`). One known false positive is recorded: tender 8287294.\n- **Bullets (10) and (11) look out of date.** Since issue 366 unit 3, the headline `value` is no longer the raw maximum (crates/store/src/read.rs ~1997-2048). It is the row the fold elected, matched on `current_value_eur_cents`, and it is null when nothing is elected. So the 257-trillion-PLN example and the \"value the filters ignore\" sentence no longer describe what is served. The new paragraph would contradict bullet (10) unless that bullet is reworded or replaced too.",
+  "draft": "Headline values are the publisher's own figures. tender-db refuses an obvious scale slip only when the tender itself holds the evidence: a figure worth EUR 1 bn or more that is exactly 1,000 times (or 10,000, a million...) another figure of the same tender, in the same currency. That figure stays in amounts but is not the headline value. A figure with no such partner is served as published, so a very large single value (EUR 10 bn and up) can still be a publisher typo: check the notice.\n\n(87 words. For docs.rs it would go in as an <li> in the Amounts list, written with &euro;, <code>amounts</code> and <code>value</code>. It belongs best in place of the stale bullet at lines 743-746.)"
+ }
+}
