@@ -1068,8 +1068,9 @@ pub(crate) const SCHEMA: &str = "
 
     -- The current-version pointer, read from the maintained head column instead
     -- of `MAX(seq) GROUP BY tender_id` over every version (issue 25). Same
-    -- `(tender_id, seq)` shape, so v_lots/v_lot_results and the public `/v1/sql`
-    -- queries that join it are unchanged — just O(tenders), not O(all versions).
+    -- `(tender_id, seq)` shape for the public `/v1/sql` queries that read it — just
+    -- O(tenders), not O(all versions). No view joins it any more (issue 500): turso does
+    -- not flatten a view inside a view, so joining it scanned every Tender per row.
     DROP VIEW IF EXISTS v_tender_current;
     CREATE VIEW v_tender_current AS
     SELECT id AS tender_id, current_seq AS seq FROM tenders WHERE current_seq IS NOT NULL;
@@ -1099,6 +1100,11 @@ pub(crate) const SCHEMA: &str = "
     -- Like every v_* view this one cannot be filtered (issue 239): a range or top-N
     -- over the value goes to `tender_version_lots` itself, driving from its partial
     -- index (the /docs recipe, pinned by `the_lot_value_recipe_drives_from_the_partial_index`).
+    -- Issue 500: the head comes from `tenders.current_seq` by key, NOT by joining the
+    -- `v_tender_current` view. turso does not flatten a view inside a view, so that join
+    -- scanned every Tender once per lot, and `SELECT * FROM v_lots LIMIT 5` hit the 15 s
+    -- limit on prod. The inner join on `vl.seq = t.current_seq` drops a NULL head exactly
+    -- as the view's `WHERE current_seq IS NOT NULL` did.
     CREATE VIEW v_lots AS
     SELECT l.id, l.tender_id, l.lot_key, vl.kind, vl.seq,
            (SELECT x.value FROM tender_version_texts x
@@ -1107,9 +1113,9 @@ pub(crate) const SCHEMA: &str = "
              ORDER BY (x.lang = 'ENG') DESC LIMIT 1) AS title,
            vl.value_cents, vl.value_currency, vl.value_eur_cents
       FROM lots l
-      JOIN v_tender_current c ON c.tender_id = l.tender_id
+      JOIN tenders t ON t.id = l.tender_id
       JOIN tender_version_lots vl
-        ON vl.tender_id = l.tender_id AND vl.seq = c.seq AND vl.lot_id = l.id;
+        ON vl.tender_id = l.tender_id AND vl.seq = t.current_seq AND vl.lot_id = l.id;
 
     DROP VIEW IF EXISTS v_organizations;
     CREATE VIEW v_organizations AS
@@ -1134,11 +1140,12 @@ pub(crate) const SCHEMA: &str = "
            o.name AS winner_name, o.provisional AS winner_provisional,
            w.is_buyer AS winner_is_buyer
       FROM lot_results r
-      JOIN v_tender_current c ON c.tender_id = r.tender_id
+      -- Issue 500: by key from `tenders`, not the `v_tender_current` view (see v_lots).
+      JOIN tenders t ON t.id = r.tender_id
       JOIN tender_version_lot_results s
-        ON s.tender_id = r.tender_id AND s.seq = c.seq AND s.lot_result_id = r.id
+        ON s.tender_id = r.tender_id AND s.seq = t.current_seq AND s.lot_result_id = r.id
       LEFT JOIN tender_version_result_winners w
-        ON w.tender_id = r.tender_id AND w.seq = c.seq AND w.lot_result_id = r.id
+        ON w.tender_id = r.tender_id AND w.seq = t.current_seq AND w.lot_result_id = r.id
       LEFT JOIN organizations o ON o.id = w.organization_id;
 
     -- ----------------------------------------------------- analyst views
@@ -1173,10 +1180,21 @@ pub(crate) const SCHEMA: &str = "
            r.decision, r.reason, r.awarded_cents, r.awarded_currency,
            r.decided_utc, r.decided_offset, r.decided_has_time,
            r.winner_organization_id, r.winner_name,
-           (SELECT b.buyer_organization_id FROM v_tender_buyers b
-             WHERE b.tender_id = r.tender_id LIMIT 1) AS buyer_organization_id,
-           (SELECT b.buyer_name FROM v_tender_buyers b
-             WHERE b.tender_id = r.tender_id LIMIT 1) AS buyer_name,
+           -- Issue 500: v_tender_buyers' body with the Tender pushed in by key. A
+           -- subquery over the view itself scanned every party row per award (turso
+           -- does not push a predicate into a view); this seeks the head version's
+           -- parties through `tender_version_parties_version`, whose (tender_id, seq,
+           -- rowid) order yields the same first buyer the view's rowid scan did.
+           (SELECT p.organization_id FROM tenders bt
+              JOIN tender_version_parties p
+                ON p.tender_id = bt.id AND p.seq = bt.current_seq AND p.role LIKE '%uyer%'
+              JOIN organizations o ON o.id = p.organization_id
+             WHERE bt.id = r.tender_id LIMIT 1) AS buyer_organization_id,
+           (SELECT o.name FROM tenders bt
+              JOIN tender_version_parties p
+                ON p.tender_id = bt.id AND p.seq = bt.current_seq AND p.role LIKE '%uyer%'
+              JOIN organizations o ON o.id = p.organization_id
+             WHERE bt.id = r.tender_id LIMIT 1) AS buyer_name,
            r.winner_is_buyer
       FROM v_lot_results r;
 

@@ -84,3 +84,47 @@ async fn base_table_point_read_still_seeks() {
     let defeated = plan_of(&conn, "SELECT current_seq FROM tenders WHERE id + 0 = 42").await;
     assert!(defeated.contains("SCAN"), "the control cannot distinguish a seek from a scan: {defeated}");
 }
+
+/// Issue 500: `SELECT * FROM v_lots LIMIT 5`, a consumer's first look at the view, timed out
+/// at 15 s on prod on 2026-10-08 (issue 494's slow log, users 17 and 18), and
+/// `v_lot_results LIMIT 2` / `v_awards LIMIT 2` took 9.3 s. Both views joined the
+/// `v_tender_current` view, and turso does not flatten a view inside a view: the plan
+/// scanned all of `tenders` once PER LOT (`SCAN c` / `SCAN tenders` under the lot loop).
+/// They now read `tenders.current_seq` directly, so an unfiltered peek at any view drives
+/// one base table and seeks everything else. Filtering a view is still refused
+/// (`turso_still_pushes_no_predicate_into_views` above); reading its first rows must not be.
+#[tokio::test]
+async fn an_unfiltered_peek_at_any_view_scans_one_base_table() {
+    let (_db, conn) = open("peek").await;
+    let mut tables = std::collections::BTreeSet::new();
+    let mut views = Vec::new();
+    {
+        let mut rows = conn.query("SELECT type, name FROM sqlite_master WHERE type IN ('table', 'view')", ()).await.unwrap();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let (Ok(turso::Value::Text(kind)), Ok(turso::Value::Text(name))) = (row.get_value(0), row.get_value(1)) {
+                if kind == "table" {
+                    tables.insert(name);
+                } else {
+                    views.push(name);
+                }
+            }
+        }
+    }
+    assert!(views.len() >= 10, "the public views exist: {views:?}");
+    for view in views {
+        let plan = plan_of(&conn, &format!("SELECT * FROM {view} LIMIT 3")).await;
+        let scanned: Vec<&str> = plan
+            .lines()
+            .filter_map(|line| line.strip_prefix("SCAN "))
+            .map(|rest| rest.split_whitespace().next().unwrap_or(""))
+            .filter(|name| tables.contains(*name))
+            .collect();
+        assert!(
+            scanned.len() <= 1,
+            "an unfiltered peek at {view} scans {} base tables ({scanned:?}): every row after the \
+             first pays a full scan of the others. Join base tables by key in the view, not other \
+             views (issue 500).\n{plan}",
+            scanned.len()
+        );
+    }
+}
