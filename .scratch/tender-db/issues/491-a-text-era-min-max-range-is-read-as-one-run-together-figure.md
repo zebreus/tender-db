@@ -1,6 +1,6 @@
 # 491 — a text-era minimum/maximum range is read as one run-together figure
 
-Status: ready-for-agent — UNIT 2 LANDED 2026-10-08 (`f71802e`, gate green, deploying; see "Unit 2 — landed (2026-10-08)"): `parse_money`'s new `run_together_range` refuses the tight shape. NEXT: the drain is a `reparse text` of the 12 fetches, one package each (`after` = fetch − 1, `reclaim_only`), then ONE `project` (about 310k notices, incremental). Read the counts (0 unmatched, re-keyed, now failing), check the 5 exhibits below, then re-run data-quality and re-read section 16 (expect the 19 text rows out).
+Status: ready-for-agent — UNIT 2 DEPLOYED + MOSTLY DRAINED 2026-10-08 (`f71802e`, then `ab879bc`; see "Drain (2026-10-08)"). The 12-fetch reparse (jobs 2046–2057, all with 0 unmatched, re-keyed or failing) and project 2058 cleared 22 of the 25 notices. All 5 exhibits now serve `value: null`. The other 3 restate the pair UNSPACED in V.4, so the rule now tests the number rather than its groups (`ab879bc`). NEXT: reparse 2059–2061 (fetches 223, 229, 232) and project 2062 are queued. Then confirm 0 run-together `VAL_TOTAL` rows on the 25 notices, re-run data-quality, and re-read section 16 (expect the 19 text rows out).
 text-era rows in the €10 bn band were errors, and 5 of the 8 have this mechanism. NEXT: unit 1,
 measure the shape corpus-wide by currency (a window read, not a full scan) before changing
 `parse_money`.
@@ -146,4 +146,20 @@ admitted figure or to none:
 `{"kind":"reparse","profiles":["text"],"packages":1,"after":<fetch−1>,"reclaim_only":true}`, then ONE
 `project`. `reparse` stamps every text Tender epoch-stale by profile, so expect the project to rewrite
 the text era's Tenders (incremental path, under the 500k-notice line).
+
+## Drain (2026-10-08)
+
+- **Deploy `f71802e`** (unit 2, group-based rule). **Probe** reparse 2955 (`text after 240`, 1 package): 25,624
+  notices, 0 unmatched, 0 re-keyed, 0 now failing. Fetch 241's 8 target notices lost their `TED-VAL_TOTAL`.
+- **The other 11 fetches**, jobs 2047–2057, one package each: about 275k notices, all with 0 unmatched, re-keyed
+  or failing. **Project 2058**: 283,134 notices → 298,411 Tenders written, incremental path, 2,161 s.
+- **Exhibits after 2058.** 3450659, 3916175, 3303961, 3420171 and 3365047 all serve `value: null`. The
+  run-together figure was each one's only figure, so nothing else is elected. That is correct: the notice
+  states a range, not a total.
+- **Residual: 3 of the 25 kept the figure.** 3006685 (26854-2007), 3093522 (113691-2007) and 3238462
+  (258631-2007). Their body prints the pair spaced at II.2.1 (`Valeur: 40 000 120 000 EUR`) and UNSPACED at
+  V.4 (`Value: 40000120000 EUR.`). Once the aggregate was refused, the parser claimed the single-token V.4.
+  The rule now tests the integer (X = units / 10⁶, Y = units mod 10⁶, Y ≥ 100,000) instead of its groups
+  (`ab879bc`, gate green, deployed). Unit 1's measurement already read the number, spaced or not, so the
+  measured match set is unchanged at the same 25 notices. Reparse 2059–2061 and project 2062 follow.
 
