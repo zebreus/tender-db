@@ -792,6 +792,61 @@ async fn the_dialect_canary_shapes_all_run() {
     }
 }
 
+/// Issue 457 unit 3, end to end: recursion (keyword or self-reference) and EXCLUDE
+/// frames are refused with a 400 that names the reason, on any engine.
+#[tokio::test(flavor = "multi_thread")]
+async fn recursion_and_exclude_frames_are_refused() {
+    let server = Server::start("unbounded-constructs").await;
+    for query in [
+        "WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 5) SELECT n FROM c",
+        "WITH tenders AS (SELECT id FROM tenders UNION ALL SELECT id + 1 FROM tenders) SELECT COUNT(*) FROM tenders",
+        "SELECT id, count(*) OVER (ORDER BY id ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE CURRENT ROW) FROM lots",
+    ] {
+        let resp = server.sql(query).await;
+        let status = resp.status().as_u16();
+        let body = resp.text().await.unwrap_or_default();
+        assert_eq!(status, 400, "must refuse: {query:?} (body {body})");
+        assert!(body.contains("issue 457"), "the 400 must name the reason: {query:?} → {body}");
+    }
+}
+
+/// Issue 457 unit 3, the ENGINE canary: functions turso 0.7.2 does not have and
+/// 0.8.1 does. Each is refused today by the engine, not by `classify`. DECIDED
+/// (2026-10-08): on the bump they are ALLOWED -- the window functions keep
+/// fixed-size state per row (nothing beyond the `OVER ()` buffering 0.7.2 already
+/// does) and the three scalars do not amplify output (the 457 evaluation). So when
+/// this turns red on the bump, move each shape into `the_dialect_canary_shapes_all_run`
+/// and update the "dialect gaps" schema note -- do not add them to BANNED_FUNCTIONS.
+#[tokio::test(flavor = "multi_thread")]
+async fn engine_canary_functions_new_in_turso_0_8_are_not_yet_available() {
+    let server = Server::start("engine-canary-0-8").await;
+    for query in [
+        "SELECT rank() OVER (ORDER BY id) FROM tenders LIMIT 1",
+        "SELECT dense_rank() OVER (ORDER BY id) FROM tenders LIMIT 1",
+        "SELECT percent_rank() OVER (ORDER BY id) FROM tenders LIMIT 1",
+        "SELECT cume_dist() OVER (ORDER BY id) FROM tenders LIMIT 1",
+        "SELECT ntile(4) OVER (ORDER BY id) FROM tenders LIMIT 1",
+        "SELECT lag(id) OVER (ORDER BY id) FROM tenders LIMIT 1",
+        "SELECT lead(id) OVER (ORDER BY id) FROM tenders LIMIT 1",
+        "SELECT first_value(id) OVER (ORDER BY id) FROM tenders LIMIT 1",
+        "SELECT last_value(id) OVER (ORDER BY id) FROM tenders LIMIT 1",
+        "SELECT nth_value(id, 1) OVER (ORDER BY id) FROM tenders LIMIT 1",
+        "SELECT get_byte(x'0102', 0)",
+        "SELECT set_byte(x'0102', 0, 9)",
+        "SELECT subtype(1)",
+    ] {
+        let resp = server.sql(query).await;
+        let status = resp.status().as_u16();
+        let body = resp.text().await.unwrap_or_default();
+        assert_ne!(
+            status, 200,
+            "ENGINE CANARY (issue 457): {query:?} now runs -- the engine widened the /v1/sql \
+             surface. Decided: allow; move it into the dialect canary and update the schema note."
+        );
+        assert!(!body.contains("issue 457"), "refused by the engine, not by classify: {query:?} → {body}");
+    }
+}
+
 /// Issue 426: two classes of function let a single `/v1/sql` query grow the engine's
 /// memory without bound and ABORT the whole server (measured: 2.7 GiB from
 /// `json_group_array` over one text column inside the 10 s deadline, 6.3 GiB from a

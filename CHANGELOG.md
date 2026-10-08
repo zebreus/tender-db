@@ -4,6 +4,20 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 457 unit 3) — `/v1/sql` refuses recursion and EXCLUDE frames
+
+`/v1/sql` now answers `400` to three constructs, naming the reason:
+
+- `WITH RECURSIVE`;
+- any CTE whose body reads its own name or the name of a CTE declared after it;
+- an `EXCLUDE` window frame.
+
+The engine already refused `WITH RECURSIVE` and `EXCLUDE`. The change a client can see is the
+self-reference without the keyword: `WITH tenders AS (SELECT … FROM tenders) …` used to read the
+base table and now answers `400`. Name the CTE something else. The next turso release executes such
+a CTE recursively, so its meaning was about to change silently. These constructs are refused
+because their work grows with the data's fan-out, which the time limit bounds but memory does not.
+
 ## Unreleased (issue 484 unit 3) — `?winner=` no longer counts a buyer as its own winner
 
 `?winner=<org>` on `/v1/tenders`, `/v1/lots`, the SSE subscriptions and webhook

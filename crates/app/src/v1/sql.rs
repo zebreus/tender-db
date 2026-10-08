@@ -1160,9 +1160,10 @@ const SCHEMA_NOTES: &[&str] = &[
      whenever the query filters one of its columns (scheme, field, role), \
      and a range of Tenders then reads the whole table — measured >10 s for \
      2,000 Tenders against 0.04–0.08 s (issue 421).",
-    "Turso SQL dialect gaps: no WITH RECURSIVE; window functions are \
-     partial (row_number and aggregate OVER work; rank/lead/lag and \
-     custom frames do not).",
+    "Turso SQL dialect gaps: window functions are partial (row_number and \
+     aggregate OVER work; rank/lead/lag and custom frames do not). Refused \
+     outright, whatever the engine supports (issue 457): WITH RECURSIVE, any \
+     CTE that reads its own name or a later sibling, and EXCLUDE frames.",
 ];
 
 /// The two notes that interpolate runtime limits, so they cannot be `const`.
@@ -1329,6 +1330,12 @@ fn classify(sql: &str) -> Result<(), ApiError> {
         // abort the whole server. It is refused up front rather than run.
         return Err(bad(format!(
             "the {name}() function is not allowed here: it can build a result larger than              this endpoint's memory bound. Aggregate with count/sum/avg/min/max and page              with LIMIT instead"
+        )));
+    }
+    if let Some(what) = unbounded_construct(&select) {
+        return Err(bad(format!(
+            "{what} is not allowed here: its work grows with the data's fan-out rather than \
+             with the query (issue 457). Use joins, GROUP BY and LIMIT instead"
         )));
     }
     if let Some(hit) = filtered_view(&select) {
@@ -1509,6 +1516,9 @@ struct Tables {
     /// The refusals (issue 239, see [`filtered_view`]): a SELECT whose FROM
     /// reads a view and which filters or joins it. First one wins.
     filtered_views: Vec<FilteredView>,
+    /// Constructs whose work or memory is unbounded by the query's size (issue 457
+    /// unit 3, see [`unbounded_construct`]), described for the refusal. First wins.
+    unbounded: Vec<String>,
 }
 
 /// The CTE names visible at one point in the walk — a stack of `WITH` frames,
@@ -1599,6 +1609,23 @@ fn banned_function(select: &turso_parser::ast::Select) -> Option<String> {
     tables.functions.into_iter().find(|name| BANNED_FUNCTIONS.contains(&name.as_str()))
 }
 
+/// Issue 457 unit 3: the first construct whose cost is unbounded by the query's
+/// size -- recursion (keyword OR self/forward reference) and EXCLUDE frames. Pinned
+/// engine-independently here because turso 0.8.1 starts accepting all of them and
+/// `classify` is otherwise a deny-list for constructs: without this, the engine
+/// bump would widen the public surface silently.
+fn unbounded_construct(select: &turso_parser::ast::Select) -> Option<String> {
+    let mut tables = Tables::default();
+    let empty = std::collections::HashSet::new();
+    let no_views = std::collections::HashMap::new();
+    walk_select(
+        select,
+        &Scope { names: &empty, view_ctes: &no_views, parent: None },
+        &mut tables,
+    );
+    tables.unbounded.into_iter().next()
+}
+
 fn norm(name: &turso_parser::ast::Name) -> String {
     name.as_str().to_ascii_lowercase()
 }
@@ -1617,8 +1644,18 @@ fn walk_select(s: &turso_parser::ast::Select, scope: &Scope, t: &mut Tables) {
     let mut siblings: std::collections::HashSet<String> = std::collections::HashSet::new();
     let mut view_siblings: std::collections::HashMap<String, String> =
         std::collections::HashMap::new();
-    for cte in &with.ctes {
-        let name = norm(&cte.tbl_name);
+    // Issue 457 unit 3: recursion is refused outright -- its work queue grows with
+    // the fan-out, which the deadline bounds in time but not in memory (issue 426's
+    // class). turso 0.7.2 refuses `WITH RECURSIVE` itself, but 0.8.1 never reads the
+    // keyword: ANY CTE whose body names itself (or a sibling declared after it) is
+    // executed recursively there. So the ban is on the reference, not the keyword.
+    if with.recursive {
+        t.unbounded.push("WITH RECURSIVE".to_owned());
+    }
+    let names: Vec<String> = with.ctes.iter().map(|c| norm(&c.tbl_name)).collect();
+    for (i, cte) in with.ctes.iter().enumerate() {
+        let name = names[i].clone();
+        let refs_before = t.refs.len();
         // The body sees earlier siblings, and itself only if the WITH is RECURSIVE.
         let mut visible = siblings.clone();
         if with.recursive {
@@ -1632,6 +1669,14 @@ fn walk_select(s: &turso_parser::ast::Select, scope: &Scope, t: &mut Tables) {
         walk_select(&cte.select, &inner, t);
         if let Some((view, _)) = t.view_reads.get(before) {
             view_siblings.insert(name.clone(), view.clone());
+        }
+        // A reference to itself or to a LATER sibling, from anywhere in the body.
+        // (A nested WITH inside the body that reuses one of those names is refused
+        // too: an under-approximation, the safe direction for an allow-list.)
+        if let Some((hit, _)) = t.refs[refs_before..].iter().find(|(r, _)| names[i..].contains(r)) {
+            t.unbounded.push(format!(
+                "a CTE that reads its own name or a later sibling (`{name}` reads `{hit}`)"
+            ));
         }
         siblings.insert(name);
     }
@@ -1797,6 +1842,11 @@ fn walk_window(w: &turso_parser::ast::Window, scope: &Scope, t: &mut Tables) {
         walk_expr(&sc.expr, scope, t);
     }
     if let Some(frame) = &w.frame_clause {
+        // Issue 457 unit 3: an EXCLUDE frame rescans the frame for every row (turso
+        // 0.8.1 `execute.rs`); 0.7.2 refuses custom frames itself.
+        if frame.exclude.is_some() {
+            t.unbounded.push("an EXCLUDE window frame".to_owned());
+        }
         for bound in [Some(&frame.start), frame.end.as_ref()].into_iter().flatten() {
             match bound {
                 FrameBound::Following(e) | FrameBound::Preceding(e) => walk_expr(e, scope, t),
@@ -2901,13 +2951,47 @@ mod tests {
             // refused since issue 239, which is a different property from scoping.)
             "WITH a AS (SELECT id FROM lots) \
              SELECT id FROM a WHERE id IN (WITH b AS (SELECT id FROM a) SELECT id FROM b)",
-            // Recursive self-reference is legal and reads no base table.
-            "WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 5) SELECT n FROM c",
             // A CTE named after a credential table is fine when it fully shadows it
             // in every position the name is used (turso reads the CTE, not the table).
             "WITH api_tokens AS (SELECT 1 AS n) SELECT n FROM api_tokens",
         ] {
             assert!(classify(sql).is_ok(), "a legitimate CTE query must classify OK: {sql:?}");
+        }
+    }
+
+    /// Issue 457 unit 3: recursion and EXCLUDE frames are refused by `classify`
+    /// itself, whatever the engine supports. turso 0.8.1 executes ANY CTE that
+    /// names itself recursively, keyword or not, so the self-reference forms are
+    /// pinned beside the keyword -- including the one that reads like a plain
+    /// base-table read.
+    #[test]
+    fn recursion_and_exclude_frames_are_refused_whatever_the_engine_supports() {
+        for (sql, what) in [
+            ("WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 5) SELECT n FROM c", "WITH RECURSIVE"),
+            // No keyword: 0.7.2 reads `tenders` as the base table, 0.8.1 recurses.
+            ("WITH tenders AS (SELECT id FROM tenders UNION ALL SELECT id + 1 FROM tenders) SELECT COUNT(*) FROM tenders", "reads its own name"),
+            // A forward reference to a later sibling that shadows a public table:
+            // 0.7.2 reads the base table, 0.8.1 can resolve it to the sibling and
+            // recurse (`a` -> `lots` -> `a`). An unknown name is refused earlier
+            // by the allow-list anyway.
+            ("WITH a AS (SELECT id FROM lots), lots AS (SELECT id FROM a) SELECT id FROM a", "later sibling"),
+            // Hidden in a subquery of the body. (Only a CTE named after a public
+            // table gets this far: an unknown self-name is refused by the
+            // allow-list before this check, which is the same answer.)
+            ("WITH tenders AS (SELECT id FROM notices WHERE id IN (SELECT id FROM tenders)) SELECT id FROM tenders", "reads its own name"),
+            ("SELECT id, count(*) OVER (ORDER BY id ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE CURRENT ROW) FROM lots", "EXCLUDE"),
+        ] {
+            let msg = classify(sql).expect_err(sql).1;
+            assert!(msg.contains(what) && msg.contains("issue 457"), "{sql:?} must be refused naming {what:?}: {msg}");
+        }
+        // Not recursion: an earlier sibling, an enclosing CTE, and a CTE shadowing a
+        // table it never reads in its own body.
+        for sql in [
+            "WITH a AS (SELECT id FROM lots), b AS (SELECT id FROM a) SELECT id FROM b",
+            "WITH api_tokens AS (SELECT 1 AS n) SELECT n FROM api_tokens",
+            "SELECT id, row_number() OVER (ORDER BY id) FROM lots",
+        ] {
+            assert!(classify(sql).is_ok(), "{sql:?} is not recursion and must classify");
         }
     }
 
