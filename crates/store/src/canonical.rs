@@ -29332,7 +29332,7 @@ impl Db {
         pending: &mut Pending,
         written: &mut WrittenEntities,
     ) -> turso::Result<()> {
-        pending.versions.extend([
+        pending.push(Leaf::Versions, [
             Value::Integer(tender_id),
             Value::Integer(seq),
             Value::Integer(v.caused_by_notice_id),
@@ -29368,7 +29368,7 @@ impl Db {
                 }),
                 partners,
             );
-            pending.version_lots.extend([
+            pending.push(Leaf::VersionLots, [
                 Value::Integer(tender_id),
                 Value::Integer(seq),
                 Value::Integer(lot_id),
@@ -29390,7 +29390,7 @@ impl Db {
             let member_lot_id = self.lot_identity(conn, tender_id, member_key, stmts).await?;
             written.lots.insert(group_lot_id);
             written.lots.insert(member_lot_id);
-            pending.lot_group_members.extend([
+            pending.push(Leaf::LotGroupMembers, [
                 Value::Integer(tender_id),
                 Value::Integer(seq),
                 Value::Integer(group_lot_id),
@@ -29423,7 +29423,7 @@ impl Db {
             written.lot_results.insert(id);
             written.lots.extend(lot_id);
             let (a, b) = scope();
-            pending.lot_results.extend([
+            pending.push(Leaf::LotResults, [
                 a,
                 b,
                 Value::Integer(id),
@@ -29446,13 +29446,11 @@ impl Db {
                 } else {
                     Value::Null
                 };
-                pending
-                    .result_winners
-                    .extend([a, b, Value::Integer(id), Value::Integer(*organization_id), is_buyer]);
+                pending.push(Leaf::ResultWinners, [a, b, Value::Integer(id), Value::Integer(*organization_id), is_buyer]);
             }
             for (kind, count, quality) in &result.statistics {
                 let (a, b) = scope();
-                pending.result_stats.extend([
+                pending.push(Leaf::ResultStats, [
                     a,
                     b,
                     Value::Integer(id),
@@ -29470,7 +29468,7 @@ impl Db {
             written.bids.insert(id);
             written.lots.extend(lot_id);
             let (a, b) = scope();
-            pending.bids.extend([
+            pending.push(Leaf::Bids, [
                 a,
                 b,
                 Value::Integer(id),
@@ -29482,7 +29480,7 @@ impl Db {
             ]);
             for party in &bid.parties {
                 let (a, b) = scope();
-                pending.bid_parties.extend([
+                pending.push(Leaf::BidParties, [
                     a,
                     b,
                     Value::Integer(id),
@@ -29507,7 +29505,7 @@ impl Db {
             };
             let (utc, offset, has_time) = stamp(contract.concluded);
             let (d_utc, d_offset, d_has_time) = stamp(contract.decided);
-            pending.contracts.extend([
+            pending.push(Leaf::Contracts, [
                 a,
                 b,
                 Value::Integer(id),
@@ -29597,7 +29595,7 @@ impl Db {
             let (a, b, c) = scope();
             match fact {
                 Fact::Text { field, lang, value } => {
-                    pending.texts.extend([a, b, c, t(field), opt_text(lang.as_deref()), t(value)]);
+                    pending.push(Leaf::Texts, [a, b, c, t(field), opt_text(lang.as_deref()), t(value)]);
                 }
                 Fact::Amount { field, cents, currency, tax_basis, quality } => {
                     // Issue 371: note the code for the present-set. Same buffer, same
@@ -29607,7 +29605,7 @@ impl Db {
                     if !pending.currencies.contains(currency) {
                         pending.currencies.insert(currency.clone());
                     }
-                    pending.amounts.extend([
+                    pending.push(Leaf::Amounts, [
                         a,
                         b,
                         c,
@@ -29620,10 +29618,10 @@ impl Db {
                     ]);
                 }
                 Fact::Classification { field, scheme, code } => {
-                    pending.classifications.extend([a, b, c, t(field), t(scheme), t(code)]);
+                    pending.push(Leaf::Classifications, [a, b, c, t(field), t(scheme), t(code)]);
                 }
                 Fact::Date { field, utc_seconds, offset_minutes, has_time } => {
-                    pending.dates.extend([
+                    pending.push(Leaf::Dates, [
                         a,
                         b,
                         c,
@@ -29634,7 +29632,7 @@ impl Db {
                     ]);
                 }
                 Fact::Party { role, organization_id, notice_id, section_id } => {
-                    pending.parties.extend([
+                    pending.push(Leaf::Parties, [
                         a,
                         b,
                         c,
@@ -31359,80 +31357,66 @@ impl TenderInserts {
 
 /// Accumulated rows of the batchable leaf/satellite tables for one WRITE_BATCH
 /// transaction (issue 67), flushed as chunked multi-row INSERTs just before
-/// COMMIT. Each `Vec<Value>` is row-major (`cols` values per row). Only tables
-/// whose row order is unobservable belong here — no emitted or referenced
-/// surrogate id (their implicit rowid is never joined on, and every snapshot
-/// digest ORDERs BY content columns), so collapsing N per-row INSERTs into one
-/// N-row INSERT is byte-identical while cutting the serial writer's per-statement
-/// floor ~N-fold. The identity tables (`tenders`/`lots`/`lot_results`/`bids`/
-/// `contracts`) and `changes` are NOT here: their AUTOINCREMENT id/cursor is
-/// emitted or observed, so they keep inserting in place, in fold order.
+/// COMMIT: one row-major buffer per [`Leaf`] (`ncols` values per row), indexed by
+/// the leaf (issue 495 unit 2). Collapsing N per-row INSERTs into one N-row INSERT
+/// keeps each table's rows in push order, so their rowids come out exactly as N
+/// single INSERTs would assign them, while cutting the serial writer's per-statement
+/// floor ~N-fold. Rowid order is NOT unobservable: `PARTIES_SQL`, `BID_PARTIES_SQL`
+/// and the result-stats read serve rows in (tender_id, seq, rowid) order (ADR-0017),
+/// which is why push order is part of the fold's output and the goldens pin it. The
+/// identity tables (`tenders`/`lots`/`lot_results`/`bids`/`contracts`) and `changes`
+/// are NOT here: their AUTOINCREMENT id/cursor is emitted or observed, so they keep
+/// inserting in place, in fold order.
 ///
 /// Bounded by WRITE_BATCH (~512 tenders × ~30 facts ≈ 15k rows), so peak RAM is
 /// flat vs corpus size.
 #[derive(Default)]
 struct Pending {
-    versions: Vec<Value>,
-    version_lots: Vec<Value>,
-    /// Issue 237: `(tender_id, seq, group_lot_id, member_lot_id)` quadruples.
-    lot_group_members: Vec<Value>,
-    texts: Vec<Value>,
-    amounts: Vec<Value>,
+    rows: [Vec<Value>; LEAF_COUNT],
     /// Issue 371: the distinct currency codes of `amounts` in THIS batch, for the
     /// present-set the read's reachability guard seeks. A set rather than a
     /// per-row write: a batch of ~512 tenders carries one or two distinct codes,
     /// so the whole cost of maintaining it is one or two `INSERT OR IGNORE`s per
     /// ~15k-row batch — which is why this is not an index on the column.
     currencies: BTreeSet<String>,
-    classifications: Vec<Value>,
-    dates: Vec<Value>,
-    parties: Vec<Value>,
-    lot_results: Vec<Value>,
-    result_winners: Vec<Value>,
-    result_stats: Vec<Value>,
-    bids: Vec<Value>,
-    bid_parties: Vec<Value>,
-    contracts: Vec<Value>,
 }
 
+/// The batched INSERT prefix of every leaf, built once from [`LEAF_TABLES`].
+static INSERT_PREFIXES: std::sync::LazyLock<[String; LEAF_COUNT]> =
+    std::sync::LazyLock::new(|| LEAF_TABLES.map(LeafTable::insert_prefix));
+
 impl Pending {
+    /// Buffer one row of `leaf`. The array's length is the row's arity, checked
+    /// against the descriptor in debug builds; a wrong `Leaf` of the same arity is
+    /// caught by the goldens, not here.
+    fn push<const N: usize>(&mut self, leaf: Leaf, row: [Value; N]) {
+        debug_assert_eq!(N, leaf.table().ncols(), "{leaf:?} row arity");
+        self.rows[leaf as usize].extend(row);
+    }
+
     /// Flush every buffered table as chunked multi-row INSERTs, then clear.
-    /// Parents before children so a foreign-keys-ON caller (some store unit tests)
-    /// still finds each referenced `(tender_id, seq)` present at insert time; the
-    /// projection itself runs with FK off.
+    /// Parents before children ([`LEAF_FLUSH_ORDER`]) so a foreign-keys-ON caller
+    /// (some store unit tests) still finds each referenced `(tender_id, seq)` present
+    /// at insert time; the projection itself runs with FK off.
     async fn flush(&mut self, conn: &Connection) -> turso::Result<u64> {
         let mut n = 0u64;
-        n += flush_rows(conn, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, original_lang, publication_id) VALUES ", 8, &mut self.versions).await?;
-        n += flush_rows(
-            conn,
-            "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind, value_cents, value_currency, value_eur_cents) VALUES ",
-            7,
-            &mut self.version_lots,
-        )
-        .await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4, &mut self.lot_group_members).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis, eur_cents, quality) VALUES ", 9, &mut self.amounts).await?;
-        // Issue 371's present-set, written in the SAME transaction as the amount rows
-        // just above so the two can never disagree in the unsafe direction. Not counted
-        // in `n`: that is the satellite ROW count the fold reports and snapshots, and a
-        // derived dimension row is not a fact row.
-        for currency in std::mem::take(&mut self.currencies) {
-            conn.execute(
-                "INSERT OR IGNORE INTO tender_currency_presence(currency) VALUES(?)",
-                (t(&currency),),
-            )
-            .await?;
+        for leaf in LEAF_FLUSH_ORDER {
+            let i = leaf as usize;
+            n += flush_rows(conn, &INSERT_PREFIXES[i], leaf.table().ncols(), &mut self.rows[i]).await?;
+            if leaf == Leaf::Amounts {
+                // Issue 371's present-set, written in the SAME transaction as the amount
+                // rows just above so the two can never disagree in the unsafe direction.
+                // Not counted in `n`: that is the satellite ROW count the fold reports and
+                // snapshots, and a derived dimension row is not a fact row.
+                for currency in std::mem::take(&mut self.currencies) {
+                    conn.execute(
+                        "INSERT OR IGNORE INTO tender_currency_presence(currency) VALUES(?)",
+                        (t(&currency),),
+                    )
+                    .await?;
+                }
+            }
         }
-        n += flush_rows(conn, "INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field, scheme, code) VALUES ", 6, &mut self.classifications).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_dates(tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time) VALUES ", 7, &mut self.dates).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.parties).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency, decided_utc, decided_offset, decided_has_time, awarded_eur_cents) VALUES ", 12, &mut self.lot_results).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id, is_buyer) VALUES ", 5, &mut self.result_winners).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count, quality) VALUES ", 6, &mut self.result_stats).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency, eur_cents, quality) VALUES ", 8, &mut self.bids).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.bid_parties).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency, eur_cents) VALUES ", 13, &mut self.contracts).await?;
         Ok(n)
     }
 }
@@ -31449,8 +31433,15 @@ async fn flush_rows(conn: &Connection, prefix: &str, cols: usize, rows: &mut Vec
     if rows.is_empty() {
         return Ok(0);
     }
+    debug_assert_eq!(rows.len() % cols, 0, "{prefix}: a partial row");
     let per_stmt = (MAX_BATCH_BIND / cols).max(1);
     let total = rows.len() / cols;
+    // Issue 495 unit 2: the values MOVE into each statement's parameters, in push order,
+    // instead of being cloned out of the buffer (one heap copy per text value, ~1.1 B
+    // values on a corpus refold). One `drain(..)` for the whole buffer, not one per
+    // chunk, which would shift the tail every time. On an error the rest is dropped with
+    // the drain; both callers abandon the buffer then anyway.
+    let mut values = rows.drain(..);
     let mut done = 0;
     while done < total {
         let n = (total - done).min(per_stmt);
@@ -31469,11 +31460,10 @@ async fn flush_rows(conn: &Connection, prefix: &str, cols: usize, rows: &mut Vec
             }
             sql.push(')');
         }
-        let params: Vec<Value> = rows[done * cols..(done + n) * cols].to_vec();
+        let params: Vec<Value> = values.by_ref().take(n * cols).collect();
         conn.execute(&sql, params).await?;
         done += n;
     }
-    rows.clear();
     Ok(total as u64)
 }
 
