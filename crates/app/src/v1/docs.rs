@@ -455,10 +455,15 @@ batches, so you can move between transports without reparsing:</p>
   "op":      "added|changed|removed",
   "entity":  "tender|lot|organization",
   "id":       14327,             // entity id
-  "version":  3,                 // canonical version seq (null for notices)
+  "version":  3,                 // the version seq it is at; null if no version moved
   "changed_at": "2026-07-19T22:21:32Z"   // poll only
   // "data": { … }               // only with ?include_data=true on SSE
 }</code></pre>
+<p><strong><code>version: null</code></strong> marks a change that is not a version
+transition: every <code>organization</code> event; an entity <code>removed</code>
+because it left its Tender; and a <code>tender</code> <code>changed</code> whose
+existing versions were rewritten in place (an organization merge re-pointing its
+parties). Re-read the entity by id and upsert it &mdash; you may not hold it yet.</p>
 
 <h2 id="sql">SQL endpoint</h2>
 <p><code class="ep">POST /v1/sql</code> (token required) runs <strong>one
@@ -1134,6 +1139,26 @@ mod tests {
             );
             for reason in &reasons {
                 assert!(text.contains(reason), "{surface} must name the `reset` reason {reason}:\n{text}");
+            }
+        }
+    }
+
+    /// ADR-0017 D4's truth-up (issue 495 unit 1): a null `version` has meant "no
+    /// version moved" since the org merges (issue 286) and the sweep wrote seq-less
+    /// rows; both published surfaces said "null for notices", and notices are not
+    /// even an event entity. A client reading that would drop every in-place row.
+    #[test]
+    fn the_docs_say_what_a_null_version_means() {
+        let start = PAGE.find("<h2 id=\"event\">").expect("/docs has an event-schema section");
+        let docs = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows it")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["schemas"]["ChangeEvent"]["properties"]["version"]["description"]
+            .as_str()
+            .expect("ChangeEvent.version is described");
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi)] {
+            assert!(!text.contains("null for notices"), "{surface} still says the old wording:\n{text}");
+            for must in ["organization", "removed", "rewritten in place", "upsert"] {
+                assert!(text.contains(must), "{surface} must say `{must}` about a null version:\n{text}");
             }
         }
     }

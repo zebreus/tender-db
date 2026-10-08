@@ -789,6 +789,46 @@ component` is the biggest component the step built, in group keys: the check for
 welded through previous-notice links, which have no cap — a jump from single digits is the thing
 to look at. The line is absent when nothing joined, was refused or deferred.
 
+### Routing a re-derivation: the cheapest complete route first (ADR-0017 D6/D7)
+
+Before reaching for a refold, take the FIRST route that applies. Issue 490's epoch-4 refold took 11 h
+and 70.6 M change rows; its value could have been an in-place backfill (issue 495).
+
+- **R0, deploy only.** The read path, serialization or performance changed.
+- **R1, requeue only.** The fix moves grouping or chain membership; the chain compare catches it.
+- **R2, in-place backfill** (no fold, no planning). Only when ALL hold:
+  - E1: the value is a pure function of the stored canonical rows, reference tables
+    (`currency_rates`) and the causing notice's own value rows. No resolver, section or mention
+    state (484's `is_buyer` fails this).
+  - E2: one implementation. The walk calls the fold's own function, injected across the crate
+    seam as 340's `normalize_lang` is, and a fixture pins fold(new) == fold(old) + backfill.
+  - E3: no entity or version is minted or removed.
+  - E4: every stored value derived from the moved one is re-derived too, or its Tenders are stamped
+    and requeued (as `rederive-eur` does).
+  - E5: version N depends only on versions 1..=N.
+  - E6: the fold writes the same value from the deploy on.
+
+  Mechanics: tender-PK windows, one `BEGIN IMMEDIATE` and one checkpoint per window, a
+  `projection_state` watermark and a completion flag. Precedents: 340, 306/375, 371; 490's lot value
+  would have qualified.
+- **R3, scoped-stale refold** (requeue + stamp 0, no epoch bump): the fold output changes for a cohort
+  a finder can enumerate (`refold` by profile, `refold-fields`, `refold-sections`, `refold-notices`,
+  tender ids). 479 and 484 were this.
+- **R4, epoch bump + all-profile refold.** Only when no finder can enumerate the cohort, or
+  completeness must survive a rollback below the deploy or a restore from an older backup (the epoch
+  is the one marker that lives in code). Batch corpus-wide fixes into one fold.
+
+**Completeness by route.**
+
+- **R4:** the epoch in bounded 100k-id windows (as in 490's runbook below).
+- **R3:** the stale-0 residue in the same windows. Not restore- or rollback-proof: after either,
+  re-run the scoped refold.
+- **R2:** the watermark at `MAX(id)` plus the completion flag, which the read path gates on. After a
+  rollback below the deploy, clear the flag and re-walk.
+
+Until ADR-0017 unit 4 lands, R3 and R4 still rewrite stale Tenders in full and replay their history on
+`/v1/changes` (the issue-179 cost below).
+
 ### The procedure type and its backfill (issue 479)
 
 Every Tender version carries at most one `procedure` classification (scheme `procedure`, field

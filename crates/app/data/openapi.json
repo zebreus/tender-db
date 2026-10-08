@@ -1122,7 +1122,7 @@
           "op": { "type": "string", "enum": ["added", "changed", "removed"] },
           "entity": { "type": "string", "enum": ["tender", "lot", "organization"] },
           "id": { "type": "integer", "format": "int64" },
-          "version": { "type": "integer", "nullable": true, "description": "Canonical version seq (null for notices)." },
+          "version": { "type": "integer", "nullable": true, "description": "The canonical version seq the change is at. Null when no version moved: an organization event, an entity removed because it left its Tender, or a tender whose existing versions were rewritten in place (an organization merge re-pointing its parties). Re-read the entity by id and upsert it." },
           "changed_at": { "type": "string", "description": "ISO 8601. Poll only." },
           "data": { "type": "object", "additionalProperties": true, "description": "Only with ?include_data=true on SSE." }
         }

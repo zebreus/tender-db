@@ -4,8 +4,10 @@ Status: ready-for-agent — UNIT 1 DESIGNED 2026-10-08 (`wf_21089c8e-de5`: three
 their claims against the code and refuted the ones that did not hold). Decision: option (b), compare with the
 stored rows at version × table grain, plus "changed versus stored" feed rows. Recorded as
 `docs/adr/0017-a-re-derivation-compares-before-it-writes.md`, PROPOSED: its consumer-visible part (D1–D5) flips
-with unit 4, unless Lennart objects first. NEXT: the docs truth-up for unit 1, then unit 2 (prepared statements
-and the leaf-table descriptor, byte-identical).
+with unit 4, unless Lennart objects first. UNIT 1 DONE 2026-10-08: the ADR, the null-version wording
+(docs.rs and openapi.json, pinned by `the_docs_say_what_a_null_version_means`), docs/architecture.md,
+and docs/operations.md "Routing a re-derivation" (D6/D7). NEXT: unit 2 (prepared statements and the
+leaf-table descriptor, byte-identical).
 Kind: performance / projection (`apply_tender_tx`, `crates/store/src/canonical.rs`)
 Relates to: 179 (scoped staleness; it rejected rebuild=true), 488 (the defrag, which was not the cause),
 496 (writer per-row cost), 497 (planning and grouping regressions), 340 (the in-place backfill precedent),
