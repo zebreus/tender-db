@@ -15414,7 +15414,7 @@ impl Db {
         // the fold's uniform inserts. The handles outlive the per-batch
         // BEGIN/COMMIT and the between-batch checkpoints (they carry their own
         // connection clone) and no DDL runs during the fold, so no plan goes stale.
-        let mut stmts = TenderInserts::prepare(&conn).await?;
+        let mut stmts = Box::pin(TenderInserts::prepare(&conn)).await?;
         let mut total = Applied::default();
         let mut changed_any = false;
         for (batch, chunk) in projections.chunks(WRITE_BATCH).enumerate() {
@@ -15503,7 +15503,7 @@ impl Db {
         // fast-path, so its version chain is empty by construction — skip the
         // SELECT (issue 67, ~one per tender). keep stays 0 and every version is
         // written: byte-identical to today's empty-`stored` path.
-        let stored = if rebuild { Vec::new() } else { self.stored_chain(conn, tender_id).await? };
+        let stored = if rebuild { Vec::new() } else { Self::stored_chain(stmts, tender_id).await? };
         // A stored epoch from older projection LOGIC makes the chain meaningless as a
         // state key: the same notices now fold to different content (issue 99). Force
         // a full rewrite by keeping nothing — which re-uses the repair path below
@@ -15552,7 +15552,7 @@ impl Db {
         // spilled it; see issue 105) — and it means the grouping moved. Treat it as a
         // stop, not as expected growth.
         for seq in (keep + 1..=stored.len()).rev() {
-            self.delete_version(conn, tender_id, seq as i64).await?;
+            Self::delete_version(stmts, tender_id, seq as i64).await?;
             applied.versions_removed += 1;
         }
 
@@ -15607,7 +15607,7 @@ impl Db {
                     .await?;
             }
             let (swept, sweep_changes) =
-                self.sweep_orphaned_entities(conn, tender_id, &written, now).await?;
+                self.sweep_orphaned_entities(conn, stmts, tender_id, &written, now).await?;
             applied.entities_swept += swept;
             applied.changes += sweep_changes;
         }
@@ -15779,13 +15779,8 @@ impl Db {
         Ok((last_insert_rowid(conn).await?, true, PROJECTION_EPOCH))
     }
 
-    async fn stored_chain(&self, conn: &Connection, tender_id: i64) -> turso::Result<Vec<i64>> {
-        let mut rows = conn
-            .query(
-                "SELECT caused_by_notice_id FROM tender_versions WHERE tender_id = ? ORDER BY seq",
-                (Value::Integer(tender_id),),
-            )
-            .await?;
+    async fn stored_chain(stmts: &mut TenderInserts, tender_id: i64) -> turso::Result<Vec<i64>> {
+        let mut rows = stmts.stored_chain.query((Value::Integer(tender_id),)).await?;
         let mut out = Vec::new();
         while let Some(row) = rows.next().await? {
             out.push(int(&row, 0));
@@ -15793,28 +15788,11 @@ impl Db {
         Ok(out)
     }
 
-    async fn delete_version(&self, conn: &Connection, tender_id: i64, seq: i64) -> turso::Result<()> {
-        for table in [
-            "tender_version_result_winners",
-            "tender_version_result_stats",
-            "tender_version_lot_results",
-            "tender_version_bid_parties",
-            "tender_version_bids",
-            "tender_version_contracts",
-            "tender_version_parties",
-            "tender_version_texts",
-            "tender_version_dates",
-            "tender_version_amounts",
-            "tender_version_classifications",
-            "tender_version_lot_group_members",
-        "tender_version_lots",
-            "tender_versions",
-        ] {
-            conn.execute(
-                &format!("DELETE FROM {table} WHERE tender_id = ? AND seq = ?"),
-                (Value::Integer(tender_id), Value::Integer(seq)),
-            )
-            .await?;
+    /// One version's rows out of every leaf table, through the prepared handles, in
+    /// teardown order (`tender_versions` last, so a foreign-keys-ON caller is safe).
+    async fn delete_version(stmts: &mut TenderInserts, tender_id: i64, seq: i64) -> turso::Result<()> {
+        for statement in stmts.delete.iter_mut() {
+            statement.execute((Value::Integer(tender_id), Value::Integer(seq))).await?;
         }
         Ok(())
     }
@@ -15882,6 +15860,7 @@ impl Db {
     async fn sweep_orphaned_entities(
         &self,
         conn: &Connection,
+        stmts: &mut TenderInserts,
         tender_id: i64,
         written: &WrittenEntities,
         now: i64,
@@ -15913,7 +15892,7 @@ impl Db {
                     (Value::Integer(id),),
                 )
                 .await?;
-                append_change(conn, kind, id, None, "removed", now).await?;
+                stmts.append_change(kind, id, None, "removed", now).await?;
                 swept += 1;
                 changes += 1;
             }
@@ -29680,7 +29659,7 @@ impl Db {
         let mut count = 0;
         match previous {
             None => {
-                append_change(conn, "tender", tender_id, Some(seq), "added", now).await?;
+                stmts.append_change("tender", tender_id, Some(seq), "added", now).await?;
                 count += 1;
             }
             // group_members too (issue 283): a version whose only delta is
@@ -29694,7 +29673,7 @@ impl Db {
                     || prev.rounds != v.rounds
                     || prev.group_members != v.group_members =>
             {
-                append_change(conn, "tender", tender_id, Some(seq), "changed", now).await?;
+                stmts.append_change("tender", tender_id, Some(seq), "changed", now).await?;
                 count += 1;
             }
             Some(_) => {}
@@ -29708,12 +29687,12 @@ impl Db {
                 Some(before) if before.facts != lot.facts || before.kind != lot.kind => "changed",
                 Some(_) => continue,
             };
-            append_change(conn, "lot", lot_id, Some(seq), op, now).await?;
+            stmts.append_change("lot", lot_id, Some(seq), op, now).await?;
             count += 1;
         }
         for gone in previous_lots.iter().filter(|l| !v.lots.iter().any(|n| n.key == l.key)) {
             let lot_id = self.lot_identity(conn, tender_id, &gone.key, stmts).await?;
-            append_change(conn, "lot", lot_id, Some(seq), "removed", now).await?;
+            stmts.append_change("lot", lot_id, Some(seq), "removed", now).await?;
             count += 1;
         }
 
@@ -29753,7 +29732,7 @@ impl Db {
                     Some(_) => continue,
                 };
                 let id = self.result_identity(conn, table, column, tender_id, *notice_id, key, stmts).await?;
-                append_change(conn, kind, id, Some(seq), op, now).await?;
+                stmts.append_change(kind, id, Some(seq), op, now).await?;
                 count += 1;
             }
             for (notice_id, key, _) in &prev {
@@ -29761,7 +29740,7 @@ impl Db {
                     continue;
                 }
                 let id = self.result_identity(conn, table, column, tender_id, *notice_id, key, stmts).await?;
-                append_change(conn, kind, id, Some(seq), "removed", now).await?;
+                stmts.append_change(kind, id, Some(seq), "removed", now).await?;
                 count += 1;
             }
         }
@@ -31267,6 +31246,11 @@ fn flatten<'a>(rounds: &'a [Round], kind: &str) -> Vec<(i64, &'a str, RoundEntit
     out
 }
 
+/// The one change-row INSERT, shared by [`append_change`] and the fold's prepared
+/// handle ([`TenderInserts::append_change`]).
+const APPEND_CHANGE_SQL: &str = "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at)
+         VALUES(?, ?, ?, ?, ?)";
+
 async fn append_change(
     conn: &Connection,
     entity_kind: &str,
@@ -31276,8 +31260,7 @@ async fn append_change(
     now: i64,
 ) -> turso::Result<()> {
     conn.execute(
-        "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at)
-         VALUES(?, ?, ?, ?, ?)",
+        APPEND_CHANGE_SQL,
         (
             t(entity_kind),
             Value::Integer(entity_id),
@@ -31308,12 +31291,14 @@ async fn last_insert_rowid(conn: &Connection) -> turso::Result<i64> {
 /// BEGIN/COMMIT and the between-batch checkpoints; no DDL runs during the fold, so
 /// no compiled plan goes stale.
 ///
-/// Only the id-then-use tables live here: `tenders`/`lots` inserts (whose
-/// AUTOINCREMENT id is captured and referenced), their dedup lookups, the head
-/// pointer UPDATE, and the three fixed result-identity dedup SELECTs. The
-/// order-independent leaf/satellite tables are batched instead (see [`Pending`]),
-/// so they need no single-row handle; the dynamic-table result-identity INSERT
-/// (miss-only, low volume) stays on `conn.execute`.
+/// Here: the `tenders`/`lots` inserts (whose AUTOINCREMENT id is captured and
+/// referenced), their dedup lookups, the head pointer UPDATE, the three fixed
+/// result-identity dedup SELECTs, and (issue 495 unit 2) the per-version leaf
+/// DELETEs, the stored-chain read and the fold's change-row INSERT, which a
+/// corpus refold ran ~209M, ~8.8M and ~70M times as freshly parsed SQL. The leaf
+/// INSERTs are batched instead (see [`Pending`]); the dynamic-table result-identity
+/// INSERT (miss-only, low volume) and the sweep's per-orphan DELETE stay on
+/// `conn.execute`.
 struct TenderInserts {
     tenders: Statement,
     lots: Statement,
@@ -31322,11 +31307,35 @@ struct TenderInserts {
     lot_result_lookup: Statement,
     bid_lookup: Statement,
     contract_lookup: Statement,
+    /// Issue 495 unit 2: one version's rows deleted from each leaf table, in
+    /// [`LEAF_TABLES`] (teardown) order, `tender_versions` last.
+    delete: Vec<Statement>,
+    /// The stored chain's causing notices in seq order (the fold's state key).
+    stored_chain: Statement,
+    /// The fold's change rows ([`APPEND_CHANGE_SQL`]).
+    change: Statement,
 }
 
 impl TenderInserts {
-    async fn prepare(conn: &Connection) -> turso::Result<Self> {
-        Ok(Self {
+    /// Boxed, and awaited through `Box::pin` by its caller: the handles are built
+    /// across awaits, so an inline future would carry all of them in the fold's
+    /// frame (CLAUDE.md, the run_project poll budget).
+    ///
+    /// The handles hold their own connection clone, so the borrow checker does not
+    /// tie them to the `Db::conn` guard. Keep the box a local declared AFTER that
+    /// guard: a dropped handle resets and aborts against the shared connection, which
+    /// must happen while this caller still holds the writer.
+    async fn prepare(conn: &Connection) -> turso::Result<Box<Self>> {
+        let mut delete = Vec::with_capacity(LEAF_COUNT);
+        for table in LEAF_TABLES {
+            delete.push(conn.prepare(&table.delete_version_sql()).await?);
+        }
+        Ok(Box::new(Self {
+            delete,
+            stored_chain: conn
+                .prepare("SELECT caused_by_notice_id FROM tender_versions WHERE tender_id = ? ORDER BY seq")
+                .await?,
+            change: conn.prepare(APPEND_CHANGE_SQL).await?,
             tenders: conn
                 .prepare(
                     "INSERT INTO tenders(source, procedure_key, island_notice_id, kind, created_at)
@@ -31351,7 +31360,23 @@ impl TenderInserts {
             contract_lookup: conn
                 .prepare("SELECT id FROM contracts WHERE tender_id = ? AND notice_id = ? AND contract_key = ?")
                 .await?,
-        })
+        }))
+    }
+
+    /// One change row through the prepared handle: the same five values, in the same
+    /// call order, as [`append_change`], so the cursors come out identical.
+    async fn append_change(
+        &mut self,
+        entity_kind: &str,
+        entity_id: i64,
+        version_seq: Option<i64>,
+        op: &str,
+        now: i64,
+    ) -> turso::Result<()> {
+        self.change
+            .execute((t(entity_kind), Value::Integer(entity_id), opt_int(version_seq), t(op), Value::Integer(now)))
+            .await?;
+        Ok(())
     }
 }
 
