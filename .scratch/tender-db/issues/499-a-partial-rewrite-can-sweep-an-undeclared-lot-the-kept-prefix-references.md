@@ -10,7 +10,8 @@ the undeclared lot that the kept v1's result names (count 1 → 0, with a spurio
 Prod: 0 dangling references in five 100k windows after the epoch-4 refold and today's daily fold. One window
 (224k) answered 408 and was not retried.
 
-NEXT: gate, deploy; re-read the dangling windows after a week of daily folds.
+DEPLOYED 2026-10-08 ~23:45 UTC (`85bca61`, health ok). NEXT: re-read the dangling windows after a week of daily
+folds (2026-10-15), then close.
 Kind: correctness / the orphan sweep (`crates/store/src/canonical.rs`)
 Relates to: 103 (the orphan sweep), 279 (`extend_keep_with_kept_prefix`), 495 (unit 2's identity cache reads the
 same sets)
