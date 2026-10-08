@@ -306,3 +306,7 @@ CORRECTIONS:
 GAIN: the feed costs about 15-40 min per all-profile fold (70.6M rows become 0, or about 10-16M for a 490-type fix). The routing gain is larger: R2 would have turned 490's 11 h job into about 1-2 h with zero change rows.
 
 COST: about 2.5 agent-days for the docs, the emission and the D5 helper. Exact emission is built as part of the compare.
+
+## 2026-10-08 — project 2067 reproduced 2044 to the second
+
+Epoch-4 refold: 37,062.1 s and 70,643,598 change rows (2044: 37,066.9 s, 70,643,598). The cost this issue removes is deterministic, so unit 6 can measure against either.

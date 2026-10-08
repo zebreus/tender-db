@@ -224,3 +224,5 @@ pays one tiny write per bucket.
 Landed (rides with issue 490's deploy B): `Db::conn` is a `#[track_caller]` fn returning the future, so the
 line reads `[store] writer acquired after a N s wait by crates/store/src/canonical.rs:L (K caller(s) still
 queued)`. Test `a_slow_writer_wait_line_names_the_call_site_that_waited` pins the format.
+
+Deployed 2026-10-08 20:21 UTC (`0dc59d3`): the next slow wait names its call site.

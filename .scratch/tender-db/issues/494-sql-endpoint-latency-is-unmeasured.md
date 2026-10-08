@@ -1,6 +1,6 @@
 # 494 — /v1/sql's latency and outcomes are unmeasured
 
-Status: ready-for-agent — UNIT 1 BUILT 2026-10-08 (gate green on `8e7c404`, the session branch; rides with issue 490's
+Status: ready-for-agent — UNIT 1 DEPLOYED 2026-10-08 20:21 UTC (`0dc59d3`); the gauges read live on /metrics at once (p50 1.6 ms, max 306 ms over the first 3 requests). NEXT: unit 2, read the window and the `[sql] slow` lines after a day of traffic and file what they name. Was: ready-for-agent — UNIT 1 BUILT 2026-10-08 (gate green on `8e7c404`, the session branch; rides with issue 490's
 deploy B). Filed the same day from the owner's "the sql endpoint is the main way to consume our data and it needs
 to be blazingly fast". NEXT: deploy with 490 B, then unit 2 (read the gauges for a day and file whatever the
 slow log names).

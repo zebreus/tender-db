@@ -1,6 +1,6 @@
 # 497 — full-fallback planning grew 90 % since August and grouping 5×, against 4.6 % more notices
 
-Status: ready-for-agent — GROUPING HALF ATTRIBUTED AND BUILT 2026-10-08 (`wf_21089c8e-de5`, adversarially
+Status: ready-for-agent — GROUPING FIX AND P0 TIMERS DEPLOYED 2026-10-08 20:21 UTC (`0dc59d3`). NEXT: on the next full fallback, read `group step keyed/island` (expect ≤ ~90 s), the new `refused-labels` line and the `plan halves` line; then P1. Was: ready-for-agent — GROUPING HALF ATTRIBUTED AND BUILT 2026-10-08 (`wf_21089c8e-de5`, adversarially
 verified; see "Grouping: attributed" below). Fix built with tests, rides with issue 490's deploy B; acceptance is
 the next full fallback's journal showing `keyed/island` ≤ ~90 s and a new `refused-labels` line. PLANNING HALF
 attributed and checked (see "Planning: the check"); unit P0 (per-half timers) BUILT 2026-10-08, rides with deploy B; NEXT read its `plan halves` line on the next full fallback, then P1 (shard the producer, chunk-interleaved).

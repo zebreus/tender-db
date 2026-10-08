@@ -1,6 +1,6 @@
 # 429 — ANALYZE the read-path tables weekly (minus `organizations`), as issue 428 decided
 
-Status: ready-for-agent — steps 1, 2 and 5 BUILT 2026-09-29 (below): `store::ANALYZE_TABLES`, the `analyze` job, and the plan test. Deploys unscheduled. Step 3 (the weekly schedule) and step 6 wait on step 0's capture diff, which needs the 2026-10-04 Sunday jobs and that day's snapshot.
+Status: ready-for-agent — the step-0 capture is OFF since 2026-10-08 20:21 UTC: `plancapture.conf` moved to `/root/plancapture.conf.removed-2026-10-08` before deploy B's restart; `/data/tmp/plan-capture-429.sql` kept for the diff. NEXT: that diff (steps 3 and 6 wait on it). Was: ready-for-agent — steps 1, 2 and 5 BUILT 2026-09-29 (below): `store::ANALYZE_TABLES`, the `analyze` job, and the plan test. Deploys unscheduled. Step 3 (the weekly schedule) and step 6 wait on step 0's capture diff, which needs the 2026-10-04 Sunday jobs and that day's snapshot.
 Was status (before 2026-09-29): ready-for-agent — filed 2026-09-27 01:00 UTC from issue 428's measurement. Mine; the decision is taken
 (428 § Decision), this is the build. Step 0's capture is LIVE on prod since 2026-09-27 03:12 UTC (`d7657a3`, drop-in
 `/etc/systemd/system/tender-db.service.d/plancapture.conf` → `/data/tmp/plan-capture-429.sql`; 83 statements in the

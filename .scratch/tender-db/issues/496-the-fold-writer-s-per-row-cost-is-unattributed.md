@@ -83,3 +83,5 @@ minutes per refold. Unmeasured, small next to the fold, but pure waste.
 
 **Action:** remove the drop-in at issue 490's deploy-B restart (`systemctl daemon-reload` before the
 restart). The capture file stays in place for 429's diff.
+
+**Done 2026-10-08 20:21 UTC:** the drop-in is off (moved to `/root/plancapture.conf.removed-2026-10-08`); deploy B restarted without it.
