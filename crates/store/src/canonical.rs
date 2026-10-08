@@ -12210,33 +12210,14 @@ impl Db {
                 let hi = lo.saturating_add(GROUP_KEY_UPDATE_BATCH - 1).min(max_id);
                 conn.execute(
                     "UPDATE plan_notice SET group_key = CASE
-                         WHEN procedure_key IS NOT NULL
-                              AND procedure_key NOT IN (SELECT procedure_key FROM plan_refused_key)
-                              THEN procedure_key
-                         -- issue 369 unit 5: a REFUSED key splits per BUYER, not per notice.
-                         -- The island fallback was correct but over-split: it turned 82802's
-                         -- ~7 real procurements into 42 Tenders and lost the cross-source
-                         -- doe/ted merges inside them. Grouping the refused notices by the
-                         -- buyer they name recovers that structure while still separating the
-                         -- procurements the weld had fused.
-                         --
-                         -- `procedure_key IS NOT NULL` is load-bearing, not redundant with the
-                         -- arm above: without it a notice with NO key and any buyer would group
-                         -- by buyer alone, welding every one of that buyer's procurements into a
-                         -- single Tender — a far larger weld than the one this issue fixes. The
-                         -- explicit `IN` keeps that true even if the arms are ever reordered.
-                         --
-                         -- Legacy closure still wins: same `NOT (legacy = 1 AND ojs_self ...)`
-                         -- guard as the island arm, so an OJS chain remains the stronger identity
-                         -- signal and a refused legacy notice falls through to it as designed.
-                         WHEN procedure_key IS NOT NULL
-                              AND procedure_key IN (SELECT procedure_key FROM plan_refused_key)
-                              AND buyer_key IS NOT NULL
-                              AND NOT (legacy = 1 AND ojs_self IS NOT NULL)
-                              THEN 'refused:' || procedure_key || ':' || buyer_key
-                         -- A refused notice naming NO buyer stays an island: grouping every
-                         -- buyer-less notice of a key together would be a new weld, smaller but
-                         -- the same kind.
+                         -- A REFUSED key's notices take this arm too, and are re-labelled
+                         -- right after the loop ([`Db::refused_key_labels`], issue 497):
+                         -- per buyer (issue 369 unit 5), an island when buyerless, NULL
+                         -- for a legacy chain. They used to be two arms testing
+                         -- `procedure_key [NOT] IN (SELECT procedure_key FROM
+                         -- plan_refused_key)`, which turso answers per MISS with a walk of
+                         -- the whole refused set.
+                         WHEN procedure_key IS NOT NULL THEN procedure_key
                          WHEN NOT (legacy = 1 AND ojs_self IS NOT NULL) THEN 'island:' || notice_id
                          ELSE NULL END
                      WHERE notice_id BETWEEN ? AND ?",
@@ -12248,6 +12229,31 @@ impl Db {
             }
         }
         eprintln!("[project] group step keyed/island: {:.1}s", t.elapsed().as_secs_f64());
+        // Issue 497: the refused keys' labels, point-written over the CASE's
+        // `procedure_key`, BEFORE the uuid-hub labels below so a hub's per-cluster label
+        // still wins, as it did over the CASE's arms.
+        {
+            let t = std::time::Instant::now();
+            let (refused_keys, labels) = Box::pin(Self::refused_key_labels(&conn)).await?;
+            for chunk in labels.chunks(NODE_WRITE_BATCH) {
+                conn.execute("BEGIN IMMEDIATE", ()).await?;
+                for (notice_id, group_key) in chunk {
+                    let group_key = group_key.clone().map_or(Value::Null, Value::Text);
+                    conn.execute(
+                        "UPDATE plan_notice SET group_key = ? WHERE notice_id = ?",
+                        (group_key, Value::Integer(*notice_id)),
+                    )
+                    .await?;
+                }
+                conn.execute("COMMIT", ()).await?;
+                let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+            }
+            eprintln!(
+                "[project] group step refused-labels: {} notice(s) under {refused_keys} refused key(s), {:.1}s",
+                labels.len(),
+                t.elapsed().as_secs_f64()
+            );
+        }
         // Issue 482 unit 2: each notice of a refused UUID hub to its buyer cluster's group,
         // over the CASE's `refused:<key>:<buyer_key>`/island — by notice id, a point write
         // each (a few thousand rows on a full plan).
@@ -12562,6 +12568,63 @@ impl Db {
     /// key's `refused:<key>:` Tenders (and the keys a link merged them into) by the prefix,
     /// and a Tender a hub cluster was merged into by `ingest::project`'s refused-sibling
     /// closure ([`Db::refused_keys_of_tenders`]).
+    /// The group key of every notice under a REFUSED key (`plan_refused_key`: issue
+    /// 369's placeholder keys, 386's FTS ocids, 482's UUID hubs), with the count of
+    /// refused keys. A notice that names a buyer groups per buyer,
+    /// `refused:<key>:<buyer_key>` (issue 369 unit 5: grouping by buyer recovers the
+    /// real procurements a weld fused, where islands over-split them). A buyerless one
+    /// stays an island, because grouping every buyerless notice of a key would be a new
+    /// weld. A legacy OJS chain gets NULL, so the legacy closure that runs next still
+    /// decides it. `procedure_key IS NOT NULL` keeps a keyless notice out of the
+    /// per-buyer arm: grouping by buyer alone would weld all of a buyer's procurements.
+    ///
+    /// Issue 497: these were two arms of the batched CASE, `procedure_key [NOT] IN
+    /// (SELECT procedure_key FROM plan_refused_key)`. turso (0.7.2, and 0.8.1 unchanged)
+    /// answers every MISS of an IN-subquery by walking the whole materialised set
+    /// looking for a NULL. So each keyed notice that was not refused, about 3.1M on a
+    /// full plan, paid O(|plan_refused_key|). The FTS backfill took that set from 44
+    /// keys to about 7,050, and the keyed/island step went from 44 s to 1,350 s
+    /// (jobs 1616 → 1974) with no code change. A `HashSet` answers the same
+    /// membership in O(1); both columns are STRICT TEXT, so its equality is the IN's
+    /// BINARY one.
+    async fn refused_key_labels(conn: &Connection) -> turso::Result<(usize, Vec<(i64, Option<String>)>)> {
+        let mut refused: std::collections::HashSet<String> = std::collections::HashSet::new();
+        {
+            let mut rows = conn.query("SELECT procedure_key FROM plan_refused_key", ()).await?;
+            while let Some(row) = rows.next().await? {
+                refused.insert(text(&row, 0));
+            }
+        }
+        let mut labels = Vec::new();
+        if refused.is_empty() {
+            return Ok((0, labels));
+        }
+        let mut rows = conn
+            .query(
+                "SELECT notice_id, procedure_key, buyer_key, (legacy = 1 AND ojs_self IS NOT NULL) \
+                   FROM plan_notice WHERE procedure_key IS NOT NULL",
+                (),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            let key = text(&row, 1);
+            if !refused.contains(&key) {
+                continue;
+            }
+            let notice_id = int(&row, 0);
+            let label = if int(&row, 3) != 0 {
+                None
+            } else {
+                Some(match opt_text_of(&row, 2) {
+                    Some(buyer) => format!("refused:{key}:{buyer}"),
+                    None => format!("island:{notice_id}"),
+                })
+            };
+            labels.push((notice_id, label));
+        }
+        Ok((refused.len(), labels))
+    }
+
     async fn refuse_uuid_hubs(conn: &Connection) -> turso::Result<(UuidHubTally, Vec<(i64, String)>)> {
         let started = std::time::Instant::now();
         let mut tally = UuidHubTally::default();
@@ -32661,6 +32724,94 @@ mod tests {
         assert!(
             matches!(refused, Some(turso::Value::Integer(1))),
             "exactly one key refused, got {refused:?}"
+        );
+
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// Issue 497: the refused labels moved out of the batched CASE into a HashSet
+    /// pass (turso walks the whole refused set on every IN-subquery miss). The
+    /// arms must still come out exactly as the CASE's did, including the two
+    /// the 369 test above never reaches: a LEGACY CHAIN on a refused key, and one
+    /// on a key that is not refused, both of which the legacy closure must name
+    /// (a refused one is not split per buyer, and a kept one is not left on its
+    /// key). Keyless notices of both kinds ride along.
+    #[tokio::test]
+    async fn a_refused_key_labels_every_arm_the_batched_case_did() {
+        let (db, path) = scratch_db("plan-refused-arms").await;
+        db.reset_plan().await.expect("plan tables");
+
+        let row = |notice_id: i64, key: Option<&str>, buyer: Option<&str>| super::PlanRow {
+            notice_id,
+            procedure_key: key.map(str::to_owned),
+            legacy: false,
+            ojs_self: None,
+            source: "ted".to_owned(),
+            source_rank: 1,
+            publication_id: format!("{notice_id:08}-2026"),
+            published_at: 1_700_000_000 + notice_id,
+            subtype: None,
+            ojs_edges: Vec::new(),
+            links: Vec::new(),
+            key_shaped: true,
+            buyer_key: buyer.map(str::to_owned),
+            shared_kind: None,
+            buyer_tokens: Vec::new(),
+        };
+        let chain = |notice_id: i64, key: Option<&str>, ojs_self: i64| super::PlanRow {
+            legacy: true,
+            ojs_self: Some(ojs_self),
+            ..row(notice_id, key, Some("DE:national:133517778"))
+        };
+        const WELDED: &str = "11111111-2222-4000-8111-123412341235";
+        const KEPT: &str = "11111111-2222-4aaa-8333-444444444444";
+        db.insert_plan(&[
+            row(1, Some(WELDED), Some("DE:national:133517778")),
+            row(2, Some(WELDED), Some("DE:national:811245646")),
+            row(3, Some(WELDED), Some("DE:national:811188162")),
+            row(4, Some(WELDED), None),
+            chain(5, Some(WELDED), 2024_000_000_555),
+            row(6, Some(KEPT), Some("DE:national:999000111")),
+            chain(7, Some(KEPT), 2024_000_000_666),
+            row(8, None, Some("DE:national:133517778")),
+            chain(9, None, 2024_000_000_777),
+        ])
+        .await
+        .expect("insert plan");
+
+        db.build_plan_groups(PlanScope::Full).await.expect("group");
+
+        let mut keys = Vec::new();
+        for n in 1..=9 {
+            keys.push(
+                match db
+                    .scalar(&format!("SELECT group_key FROM plan_notice WHERE notice_id = {n}"))
+                    .await
+                    .expect("group_key")
+                {
+                    Some(turso::Value::Text(t)) => t,
+                    other => panic!("notice {n}: no group_key ({other:?})"),
+                },
+            );
+        }
+        assert_eq!(
+            keys,
+            [
+                format!("refused:{WELDED}:DE:national:133517778"),
+                format!("refused:{WELDED}:DE:national:811245646"),
+                format!("refused:{WELDED}:DE:national:811188162"),
+                "island:4".to_owned(),
+                "ojs:2024-000555".to_owned(),
+                KEPT.to_owned(),
+                "ojs:2024-000666".to_owned(),
+                "island:8".to_owned(),
+                "ojs:2024-000777".to_owned(),
+            ],
+            "per buyer on the refused key, an island without a buyer, the legacy closure for \
+             every OJS chain whatever its key, the key itself where it is kept, and an island \
+             for a keyless non-chain notice (never grouped by its buyer alone)"
         );
 
         for suffix in ["", "-wal", "-shm"] {

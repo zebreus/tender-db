@@ -278,6 +278,24 @@ and 0.7.0. ~19k changed lines in `turso_core`. Relevant to us:
   copy) **and** compare `count(*)` of the biggest tables against the source;
   integrity_check alone passed on a known-bad vacuum output [measured].
 
+### `x [NOT] IN (SELECT …)` costs O(|subquery|) per miss [measured, issue 497]
+
+turso 0.7.2 materialises the subquery once into an ephemeral index, which is
+cheap. Then, on every MISS, it rewinds that index and walks all of it looking
+for a NULL tuple (`translate/expr/translator.rs`, the `label_null_rewind`
+loop; 0.8.1 is unchanged). A hit, or a NULL left side, exits early. A predicate
+evaluated per row over a mostly-missing set therefore costs rows × set size:
+
+- On prod the grouping step's `procedure_key NOT IN (SELECT procedure_key
+  FROM plan_refused_key)` went from 44 s to 1,350 s when the set grew from 44
+  to about 7,050 keys over about 3.1M keyed rows.
+- That is about 55–65 ns per (row × entry).
+
+When the set can grow, load it into a Rust `HashSet` and test membership
+there (`Db::refused_key_labels`). The `l.tender_id IN (…)` seeds in `read.rs`
+are measured fast because there the planner drives the outer loop from the
+subquery and never tests a miss.
+
 ### Memory ceilings observed (10 GB db)
 
 Steady-state serving needs tens of MB: open ~21 MB, point queries ~28 MB,
