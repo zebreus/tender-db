@@ -3,7 +3,7 @@
 Status: ready-for-agent — GROUPING HALF ATTRIBUTED AND BUILT 2026-10-08 (`wf_21089c8e-de5`, adversarially
 verified; see "Grouping: attributed" below). Fix built with tests, rides with issue 490's deploy B; acceptance is
 the next full fallback's journal showing `keyed/island` ≤ ~90 s and a new `refused-labels` line. PLANNING HALF
-attributed, check pending (see "Planning: attributed"); NEXT there is unit P0 (per-half timers), then P1 (shard the producer).
+attributed and checked (see "Planning: the check"); NEXT there is unit P0 (per-half timers), then P1 (shard the producer).
 Kind: performance / projection planning (`crates/ingest/src/project.rs`)
 Relates to: 58 / 179 (the planning half of the full fallback, deliberately left open), 192, 305 (the
 closure cap), 495, 496
@@ -95,7 +95,7 @@ in `docs/research/turso-scale.md`.
 the FTS population (41 → 6,440 against about 15k → 314k notices). Some may be over-splits from buyer-id drift
 between releases of one ocid rather than real welds. Worth a sample: file it if a read confirms it.
 
-## Planning: attributed (2026-10-08; its adversarial check was still running when this was written)
+## Planning: attributed (2026-10-08; checked, corrections in "Planning: the check" below)
 
 The regression is a staircase confined to the legacy bands. Comparing 2067 with Aug 14 by notice-id band:
 
@@ -138,3 +138,45 @@ Units:
   wanted (issue 63), pause the producers at a size barrier and run one TRUNCATE.
 - **P3 (only if P0 shows decode dominates).** A filtered parsed read for phase 1 that skips the 24-language
   description and title rows that `Ident::read` and the mentions never use. Needs an equivalence test.
+
+## Planning: the check (2026-10-08, adversarial pass)
+
+The direction holds. These corrections take precedence over the section above:
+
+- **Only one step is proven.** d416104's 24-language policy, applied by re-parses 609/611, added about
+  +208 s per 1M × 7M ≈ +1,450 s. That is about 30 % of the +4,858 s, not most of it.
+  - The band slowed +47 %. That tracks issue 304's text BYTES (+52.5 %) more than its row count (2.26×), which
+    is weak evidence that the read is I/O-bound rather than decode-bound.
+  - Job 1616's +1,000 s is the 434 refresh WAL. An Aug 15 run with a 12.7 GB WAL was +8 % on its own, so a large
+    WAL slows the producer by itself.
+- **"A re-parse rewrites the band's layout and slows it" is refuted.**
+  - Job 302 re-parsed all of r208 and caused no slowdown.
+  - Job 305 re-parsed r209 only, and the r208 positions slowed too.
+  - Steps 1 and 3, plus about +1.1k s of text-era and tail drift, are UNATTRIBUTED. A global I/O or page-cache
+    effect fits as well as anything: the DB grew from 526 to 709 GB, and MemoryHigh=54G has been in place
+    since Oct 1.
+- **"Busy every chunk ⇒ producer-bound" is not proof.** Job 2044's final checkpoint, taken after the producer
+  had finished, was busy too, so another reader sometimes holds the WAL. P0's per-half timers have to settle it.
+  Add the producer thread's `/proc/<pid>/task/<tid>/{io,schedstat}`.
+- **Phase 1's WAL is reclaimed INSIDE `build_plan_groups`** ("WAL after grouping … 0 MB" is logged before the
+  post-grouping TRUNCATE), not by the TRUNCATE at project.rs:1772.
+- **P1 as written would stall.** With count-balanced contiguous stripes feeding an in-order writer, the writer
+  waits for stripe 0, and the workers fill the reorder window. Use chunk-granular interleaving instead:
+  - precompute today's exact 10,000-notice chunk boundaries with one id-only scan;
+  - workers take the next chunk index from an atomic counter;
+  - the writer consumes in sequence from a window of about 2K chunks.
+  - RAM: add K × 512 MiB of turso page cache.
+  - Budget 2.5–4k s at K = 8 (the pre-pass shards show shared contention), not 1.5k. Expose K through an env
+    valve and measure K = 4, 8 and 16.
+  - Tests: make READ_CHUNK and K parameters (today every fixture is one chunk, so K = 1 against K = N proves
+    nothing). Add a phase-1 analogue of `sharded_prepass_matches_the_serial_prepass` over the organizations,
+    mentions, names, plan_notice (with buyer_guard), legacy keys, OJS and link edges, the ledger, the Report
+    tallies and the post-phase-2 layer. Also cover stopping mid-plan and an error or panic in one worker.
+- **P2 condition.** Keep one TRUNCATE after the producers are joined. Any WAL-ceiling barrier must park all K
+  readers and go through `checkpoint_gated`.
+- **P3.** If turso tests `field_id` off the index before the table lookup, the filtered read also saves
+  table-page I/O. Check with EXPLAIN. Prefer a deny-list of the heavy translated title and description fields,
+  so a newly read field is included by default.
+- **Side finding.** `plancapture.conf` (issue 429 step 0) is still enabled on the box, though its own comment
+  says "Remove after the 2026-10-04 snapshot diff". Its cost lands on the phase-2 WRITER, the fold's
+  bottleneck thread: a mutex and a hash per `Preparing:` event, with the writer re-preparing per row. → issue 496.

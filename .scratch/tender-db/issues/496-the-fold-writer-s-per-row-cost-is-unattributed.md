@@ -63,3 +63,23 @@ The bulk INSERTs and the head UPDATE are already prepared once.
    - Move values instead of cloning them in `flush_rows`.
    - The output must stay byte-identical; the golden test (`project_golden.rs`) and the store suites
      check it.
+
+## 2026-10-08 — the statement capture is still on, and it sits on the fold's writer
+
+`/etc/systemd/system/tender-db.service.d/plancapture.conf` (issue 429 step 0) was meant to run "for one
+week" from 2026-09-27. It is still live: `/data/tmp/plan-capture-429.sql` was 70 MB / 298,586 lines at
+14:07 UTC today and still being appended to.
+
+Its layer (`crates/app/src/plan_capture.rs`) runs this on EVERY turso `Preparing:` event, in this order:
+
+1. a `format!("{value:?}")` of the whole SQL message;
+2. a mutex;
+3. a `HashSet` lookup.
+
+The format runs BEFORE the `full` check, so the 20k-statement cap does not stop the cost. In phase 2 the
+writer re-prepares about 40 statements per Tender (the 14 `format!` DELETEs per version among them), so a
+corpus refold pays it about 340M times, on the bottleneck thread. That is an estimated 1–5 µs each, so
+minutes per refold. Unmeasured, small next to the fold, but pure waste.
+
+**Action:** remove the drop-in at issue 490's deploy-B restart (`systemctl daemon-reload` before the
+restart). The capture file stays in place for 429's diff.

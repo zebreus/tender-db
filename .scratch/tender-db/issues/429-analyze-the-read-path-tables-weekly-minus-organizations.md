@@ -84,3 +84,10 @@ why the resolver cannot take an `INDEXED BY`)
 Next: deploy it with the next bundle (running it by hand is allowed but not planned). After 2026-10-04, diff step 0's
 capture on two copies of that day's snapshot, then schedule it (step 3) and update the gates (step 6).
 
+
+## 2026-10-08 — the capture comes off with issue 490's deploy B
+
+Step 0's capture ran 11 days, not one week. The plan: delete `plancapture.conf` at the deploy-B restart.
+`/data/tmp/plan-capture-429.sql` (70 MB, every process's first 20k distinct statements since 2026-09-27)
+stays for the diff, which steps 3 and 6 still wait on. The capture's per-prepare cost lands on the fold's
+writer thread (issue 496), which is why it should not stay on indefinitely.
