@@ -1,6 +1,6 @@
 # 490 — the elected lot value is computed at read time and unreachable from /v1/sql
 
-Status: ready-for-agent — DEPLOY A LIVE 2026-10-08 (`9e2e80d`, 05:3x UTC; epoch 4); BACKFILL RUNNING. All-profile refold 2066 (24 profiles, 14,896,923 notices) and project 2067 were enqueued at 05:37:58Z; expect about 10.5 h. NO DEPLOY in that window. NEXT: the completeness read (100k windows over `projection_epoch <> 4`), the m490 compare, and the section-16 band against dq 2954. Unit 3c (`rederive-eur` requeue) is in the tree. Then deploy B (3d).
+Status: ready-for-agent — DEPLOY A LIVE (`9e2e80d`); BACKFILL RUNNING (refold 2066 done, project 2067 planning at 07:2x UTC); unit 3c on main (`d68ff16`, gate green); DEPLOY B READY ON `claude/cool-sagan-5bk0rc` ONLY (`960272c`, gate green, reviewed). Keep deploy B OFF main until the backfill checks pass. NEXT, after project 2067: (1) the completeness read (`projection_epoch <> 4` in 100k windows; triage 3 vs 0); (2) the m490 compare (stored `value_*` == REST, 0 differences); (3) data-quality `{"kind":"data-quality","dry_run":false}` and section 16 against dq 2954 (expect issue 491's text rows out, nothing else). Then push deploy B to main and deploy it, and confirm the partial index built and the /docs recipe's timing.
 Kind: SQL surface / performance / coherence
 Relates to: 471 (the exact-10ᵏ rule, unit 4(a)), 389 (lot-level election made coherent with the
 tender head, on the REST surface only), 372 (`quality = 'withheld'`), 50 (the analyst views)
@@ -167,4 +167,23 @@ fallback, LotsGroup/Part, later chain changes). Their findings are about rollout
 - **Pre-flight.** 0 unprojected notices. The profile list, walked fresh, is the same 24 profiles as job
   2952. Sizing call 2064 aborted at 14,896,923 notices; its trailing project 2065 was a no-op.
 - **Refold 2066 + project 2067** were enqueued at 05:37:58Z.
+
+## Units 3c and 3d — built (2026-10-08)
+
+- **3c: `rederive-eur` re-queues the causing notices of the Tenders it changed.** Commit `d68ff16`,
+  tested by `rederive_eur_requeues_the_notices_of_the_tenders_it_changed`, gate green, on main. Not
+  deployed yet; it rides with deploy B.
+- **3d (deploy B): `summarise` reads `tender_version_lots.value_*`** with one PK-prefix seek per version.
+  - `v_lots` appends the three columns.
+  - A deferred PARTIAL index `tender_version_lots_value_eur`.
+  - A `/docs` recipe (CROSS JOIN, lot table first, literal `IS NOT NULL`), pinned by its plan in
+    `the_lot_value_recipe_drives_from_the_partial_index`.
+  - Column notes, including exact `v_lots` notes that send ranges to the base table.
+  - `openapi` `Lot.value`, and the runbook's deploy-B steps.
+  - Tests that hand-built amounts for the reader now go through the fold, or store the value as the
+    fold would.
+  - Commits `8f71775`, `160f65c` and `960272c`, reviewed by `wf_a689b740-7c8`. The review's blocker was
+    already fixed by `160f65c`; its major (a plain JOIN in the recipe) is fixed and pinned. Gate:
+    `GATE-EXIT=0`, 145 suites.
+- **Follow-up filed:** issue 493. A lot whose elected value moves emits no lot change. This predates 490.
 
