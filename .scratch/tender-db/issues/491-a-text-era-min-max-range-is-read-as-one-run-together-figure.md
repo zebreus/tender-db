@@ -1,6 +1,6 @@
 # 491 — a text-era minimum/maximum range is read as one run-together figure
 
-Status: ready-for-agent — filed 2026-10-08 from issue 471 unit 5. In 471's stratified sample all 8
+Status: ready-for-agent — UNIT 1 MEASURED 2026-10-08 (see "Unit 1 — measurement (2026-10-08)"): the shape is a 2005–2008 EUR phenomenon. 26 EUR hits in notice ids 2.4M–3.7M, 0 in sampled windows on either side, and 5 non-EUR hits (HUF ×3, ITL ×2) that are non-round genuine-looking figures. Gate decided: X < Y ≤ 4X AND (Y = 4X OR X and Y both whole thousands) AND Y's leading group is not 0-led. It matches all 19 text band rows and 25 of the 26 EUR hits, and none of the non-EUR ones. NEXT: unit 2, build it in `parse_money` (refuse as a range), then re-parse the 2005–2008 text fetches and re-read section 16.
 text-era rows in the €10 bn band were errors, and 5 of the 8 have this mechanism. NEXT: unit 1,
 measure the shape corpus-wide by currency (a window read, not a full scan) before changing
 `parse_money`.
@@ -80,3 +80,31 @@ semi-round one might.
 4. **(c)** Measure how often text-era corrigenda carry an "Instead of / Read" value pair before
    deciding whether to map them (issue 489's coordinate approach does not transfer as is: the text
    era has no structured blocks).
+
+## Unit 1 — measurement (2026-10-08)
+
+Read off the parse layer with `491-values/shape-window.sh <from> <to>`. It is a bounded window over
+`notice_amounts ⋈ notices` (`profile = 'text'`, prefix range on the PK, about 5 s per 100k notice ids)
+that counts amounts whose units split as X = units / 10⁶, Y = units mod 10⁶ with Y ≥ 100,000 and
+X < Y ≤ 4X, by currency.
+
+- **Where.** The 13 windows covering notice ids 2,400,000–3,699,999 (2005–2008, about 260k text-era
+  amounts) hold 29 hits: 26 EUR and 3 HUF (`491-values/windows-2400000-3699999-2026-10-08.txt`). Sampled
+  windows at 1.5M, 2.0M, 2.2M, 3.7M and 3.9M hold 0. The 1.0M window (1997) holds 2 ITL hits. Every hit
+  is a `PROCEDURE` `TED-VAL_TOTAL`, the V.4 value.
+- **Which.** Each hit is listed in `491-values/hits-2026-10-08.tsv`. 25 of the 26 EUR hits are round
+  (X and Y both whole thousands, mostly whole ten-thousands) or exactly Y = 4X (62709/250836,
+  46250/185000, 87250/349000), which is the CMP cap. That is the French bons-de-commande print. The 5
+  non-EUR hits are non-round, e.g. HUF 266,854,708,381 (≈ €1.06 bn) and ITL 76,995,264,650 (≈ €40 m).
+  They read like ordinary published figures, not min/max pairs. EUR 247,110,402,110 (X = 247110,
+  Y = 402110) is non-round too. It sits above the €100 bn ceiling, so it is never elected, and it is
+  left alone.
+- **Gate.** X < Y ≤ 4X, AND (Y = 4X, OR X ≡ Y ≡ 0 mod 1000), AND Y's first group is not 0-led (a
+  min/max print has no leading zero). It matches all 19 text band rows, 25 of the 26 EUR hits (all but
+  the 247 bn one), and none of the HUF or ITL hits. Every match is ≥ 25,000,100,000 units, so the rule
+  cannot touch an ordinary-sized figure. 6 of the 25 (≥ €100 bn) are already above the ceiling and
+  never elected; refusing them still removes them from `amounts`.
+- **Blast radius.** About 25 notices corpus-wide. Expected effect: the 19 band rows (and the ≥ €25 bn
+  EUR rows outside section 16's head list) lose the run-together figure, and each head falls to its
+  next figure or to none.
+
