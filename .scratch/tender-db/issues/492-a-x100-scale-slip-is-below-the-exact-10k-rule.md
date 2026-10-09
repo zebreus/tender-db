@@ -1,8 +1,17 @@
 # 492 — a ×100 scale slip (k = 2) is below the exact-10ᵏ rule
 
-Status: ready-for-agent — filed 2026-10-08 from issue 471 unit 5. Band count done (5 of 306 rows at ×100; see
-"Unit 1 — first count"). NEXT: the €1–10 bn range, as a windowed read AFTER issue 490's backfill project
-(a direct partner probe 408s while the fold runs), then adjudicate.
+Status: ready-for-agent — UNIT 1 MEASURED 2026-10-09 over the €1–10 bn range. NEXT: unit 2 (decide) from the adjudication
+`wf_b250dc41-ad9` of the 56 hits.
+- The read was bounded `/v1/sql`: the band in keyset pages off `tenders_current_value_eur`, then a partner test in
+  batches of 200 ids.
+- **56 of the 3,510 heads in €1–10 bn** (49 TED, 7 FTS) have an exact ×100 same-currency partner amount, where the
+  partner is any version and any field of the same Tender. The list, with the head field and the partner's
+  field:lot:seq, is in `.scratch/tender-db/492-x100/x100-partner-hits-2026-10-09.json`.
+- Many partners are the same field in an earlier version, so a corrigendum is restating a value ×100 one way or
+  the other. Some hits are placeholder ladders: 6988280's result values are €100k, €10m, €100m and €1bn.
+Was: ready-for-agent — filed 2026-10-08 from issue 471 unit 5. Band count done (5 of 306 rows at ×100; see
+"Unit 1 — first count"). The €1–10 bn range was to be a windowed read after issue 490's backfill project (a
+direct partner probe 408s while the fold runs), then adjudicated.
 Kind: data quality / head election (`ScalePartners`, `crates/store/src/canonical.rs`)
 Relates to: 471 (unit 4(a), which set `SCALE_ERROR_MIN_EXPONENT` = 3; unit 5's sample)
 
