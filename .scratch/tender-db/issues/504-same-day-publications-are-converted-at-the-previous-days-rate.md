@@ -1,7 +1,9 @@
 # 504 — same-day publications are converted at the previous day's rate, and nothing re-derives them
 
-Status: ready-for-agent — UNITS 1+2 DEPLOYED 2026-10-09 (`b27e7c5`); UNIT 3 (the narrowing) BUILT. NEXT: gate and deploy
-unit 3, re-run `rederive-eur-recent` on prod to read its cost, then read the 2026-10-10 daily's line (prediction below).
+Status: ready-for-agent — UNITS 1–3 DEPLOYED 2026-10-09 (`192e1de`, gate green). Prod job 2103 (unit 3): **11 s, 4.18M
+money rows** over 25,267 recent heads, 0 moved, against 169 s and 79.3M rows before the narrowing (job 2102). NEXT: read
+the 2026-10-10 daily's `rederive-eur-recent` line, then close if it moved about the non-EUR share of 10-09's
+publications and the `project` after it corrected them (prediction below).
 - **Review** `wf_0ebff4ba-876` confirmed one minor, fixed in `b27e7c5`: the daily pushes `rederive-eur-recent` UNGUARDED
   after its own fetch-rates. A pending one, such as an operator's queued behind a refold, could otherwise run first,
   against the old rates.
