@@ -256,6 +256,38 @@ async fn run() {
 /// make a change pass.
 #[test]
 fn fold_refold_output_matches_the_committed_golden() {
+    on_a_big_stack(|| run_refold(store::RefoldCompare::Off));
+}
+
+/// Issue 495 unit 3: the shadow compare only reads. The same refold with it on writes the
+/// committed golden byte for byte, and, with no logic change between the two folds, every
+/// stale Tender compares identical: nothing to rewrite, nothing to announce.
+#[test]
+fn a_shadow_refold_writes_the_golden_and_verifies_every_tender() {
+    on_a_big_stack(|| run_refold(store::RefoldCompare::Shadow));
+}
+
+/// Issue 495 unit 3: the shadow compare counts exactly the split the flip would act on.
+/// One stored row is edited at a time, every Tender is aged and re-folded in shadow, and
+/// the one corrected Tender, its one rewritten table and its planned correction rows
+/// (rule T, plus rule L's lots) are pinned. The rewrite then restores the edited row.
+#[test]
+fn the_shadow_compare_counts_what_the_flip_would_rewrite_and_announce() {
+    on_a_big_stack(run_shadow_split);
+}
+
+/// Issue 495 unit 3: a notice that arrives while its Tender is stale appends a version past
+/// the stored chain. That version is written and announced by its own transition rows, as
+/// today: the shadow compare verifies the prefix, counts the appended version's tables as
+/// written, and plans no correction.
+#[test]
+fn a_version_appended_to_a_stale_chain_is_not_a_correction() {
+    on_a_big_stack(run_shadow_append);
+}
+
+/// Run `f`'s future on an explicit 64 MiB stack: turso's debug-build query execution (the wide
+/// `group_concat` digests in particular) overflows libtest's default worker stack.
+fn on_a_big_stack<F: std::future::Future<Output = ()>>(f: impl FnOnce() -> F + Send + 'static) {
     std::thread::Builder::new()
         .stack_size(64 * 1024 * 1024)
         .spawn(|| {
@@ -263,7 +295,7 @@ fn fold_refold_output_matches_the_committed_golden() {
                 .enable_all()
                 .build()
                 .expect("runtime")
-                .block_on(run_refold())
+                .block_on(f())
         })
         .expect("spawn")
         .join()
@@ -333,8 +365,9 @@ async fn full_digest(db: &Db) -> String {
     out
 }
 
-async fn run_refold() {
-    let (db, fetch_id, path) = scratch("refold").await;
+async fn run_refold(compare: store::RefoldCompare) {
+    let (db, fetch_id, path) = scratch(&format!("refold-{compare:?}")).await;
+    db.set_refold_compare(compare);
     const LATE: &str = "eforms-chain/3-change-16-18902-2026.xml";
     let corpus = [
         ("ted", "eforms-chain/1-cn-16-831374-2025.xml"),
@@ -359,9 +392,13 @@ async fn run_refold() {
         "the late notice must repair mid-chain (delete_version and the sweep run): {:?}",
         repair.applied
     );
+    assert_eq!(repair.applied.compare_rows, 0, "a current-epoch repair is never compared: {:?}", repair.applied);
     let mut got = String::from("=== A: the late notice's mid-chain repair ===\n");
     got.push_str(&full_digest(&db).await);
 
+    // The compare refuses to run without `tender_version_bid_parties_version` (a rebuild
+    // defers it). Indexes are not in the digest, so both arms build them.
+    db.build_tender_indexes().await.expect("the by-version indexes");
     db.set_projection_epoch_for_test(0).await.expect("age every Tender");
     let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
     let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
@@ -374,6 +411,24 @@ async fn run_refold() {
     );
     got.push_str("=== B: the keep = 0 refold of everything ===\n");
     got.push_str(&full_digest(&db).await);
+    let a = refold.applied;
+    match compare {
+        store::RefoldCompare::Off => {
+            assert_eq!((a.tenders_verified, a.tenders_corrected, a.compare_rows), (0, 0, 0), "{a:?}");
+        }
+        store::RefoldCompare::Shadow => {
+            assert!(a.tenders_written > 0, "{a:?}");
+            assert_eq!(a.tenders_verified, a.tenders_written, "every stale Tender compares identical: {a:?}");
+            assert_eq!(
+                (a.tenders_corrected, a.tables_rewritten, a.rows_rewritten, a.correction_rows_planned),
+                (0, 0, 0, 0),
+                "nothing differs, so nothing would be rewritten or announced: {a:?}"
+            );
+            assert!(a.tables_skipped > 0, "{a:?}");
+            assert_eq!(a.compare_rows, a.rows_skipped, "every stored row read back matched a fresh one: {a:?}");
+            assert!(a.compare_line().is_some());
+        }
+    }
 
     let file = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/golden/project_refold.snapshot");
     if std::env::var_os("GOLDEN_CAPTURE_495").is_some() {
@@ -390,6 +445,117 @@ async fn run_refold() {
          it to make this pass."
     );
 
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+async fn int_of(db: &Db, sql: &str) -> i64 {
+    match db.scalar(sql).await.expect("query") {
+        Some(turso::Value::Integer(n)) => n,
+        other => panic!("{sql}: expected an integer, got {other:?}"),
+    }
+}
+
+async fn run_shadow_split() {
+    let (db, fetch_id, path) = scratch("shadow-split").await;
+    db.set_refold_compare(store::RefoldCompare::Shadow);
+    for (source, fixture) in [
+        ("ted", "eforms-chain/1-cn-16-831374-2025.xml"),
+        ("ted", "eforms-chain/2-change-16-6281-2026.xml"),
+        ("ted", "eforms-chain/3-change-16-18902-2026.xml"),
+        ("ted", "eforms-chain/4-can-29-380868-2026.xml"),
+        ("ted", "eforms/pin-4-00496860-2026.xml"),
+    ] {
+        ingest(&db, fetch_id, source, fixture).await;
+    }
+    project::project(&db, false).await.expect("first fold");
+    db.build_tender_indexes().await.expect("the by-version indexes the compare needs");
+    let chain = int_of(
+        &db,
+        "SELECT tender_id FROM tender_versions GROUP BY tender_id ORDER BY COUNT(*) DESC, tender_id LIMIT 1",
+    )
+    .await;
+    let head = int_of(&db, &format!("SELECT MAX(seq) FROM tender_versions WHERE tender_id = {chain}")).await;
+    assert!(head >= 3, "the chain fixture folds to a multi-version Tender");
+    let head_lots = int_of(
+        &db,
+        &format!("SELECT COUNT(DISTINCT lot_id) FROM tender_version_lots WHERE tender_id = {chain} AND seq = {head}"),
+    )
+    .await;
+    assert!(head_lots > 0, "the head version declares lots");
+    // A lot-scoped text below the head: the lowest seq that has one.
+    let lot_seq = int_of(
+        &db,
+        &format!(
+            "SELECT MIN(seq) FROM tender_version_texts WHERE tender_id = {chain} AND seq < {head} AND lot_id IS NOT NULL"
+        ),
+    )
+    .await;
+
+    // (what, seq, which text row, correction rows planned)
+    let cases = [
+        ("a Tender-level text below the head", 1, "lot_id IS NULL", 1),
+        ("a lot's text below the head", lot_seq, "lot_id IS NOT NULL", 2),
+        ("a Tender-level text at the head", head, "lot_id IS NULL", 1 + head_lots),
+    ];
+    for (what, seq, which, planned) in cases {
+        let rows = int_of(
+            &db,
+            &format!("SELECT COUNT(*) FROM tender_version_texts WHERE tender_id = {chain} AND seq = {seq}"),
+        )
+        .await;
+        let edited = db
+            .execute_for_test(&format!(
+                "UPDATE tender_version_texts SET value = value || ' (edited)' WHERE rowid = \
+                   (SELECT MIN(rowid) FROM tender_version_texts WHERE tender_id = {chain} AND seq = {seq} AND {which})"
+            ))
+            .await
+            .expect("edit one stored row");
+        assert_eq!(edited, 1, "{what}: one row to edit");
+        db.set_projection_epoch_for_test(0).await.expect("age every Tender");
+        let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
+        let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
+        db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
+        let a = project::project_incremental(&db).await.expect("shadow refold").applied;
+        assert_eq!(a.tenders_corrected, 1, "{what}: one corrected Tender: {a:?}");
+        assert_eq!(a.tenders_verified, a.tenders_written - 1, "{what}: every other Tender verified: {a:?}");
+        assert_eq!((a.tables_rewritten, a.rows_rewritten), (1, rows as u64), "{what}: that version's texts, whole: {a:?}");
+        assert_eq!(a.correction_rows_planned, planned as u64, "{what}: rule T plus rule L: {a:?}");
+        assert_eq!(
+            int_of(&db, "SELECT COUNT(*) FROM tender_version_texts WHERE value LIKE '% (edited)'").await,
+            0,
+            "{what}: the shadow fold still rewrites everything, so the edit is gone"
+        );
+    }
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+async fn run_shadow_append() {
+    let (db, fetch_id, path) = scratch("shadow-append").await;
+    db.set_refold_compare(store::RefoldCompare::Shadow);
+    for fixture in [
+        "eforms-chain/1-cn-16-831374-2025.xml",
+        "eforms-chain/2-change-16-6281-2026.xml",
+        "eforms-chain/3-change-16-18902-2026.xml",
+    ] {
+        ingest(&db, fetch_id, "ted", fixture).await;
+    }
+    project::project(&db, false).await.expect("first fold");
+    db.build_tender_indexes().await.expect("the by-version indexes the compare needs");
+    db.set_projection_epoch_for_test(0).await.expect("age every Tender");
+    ingest(&db, fetch_id, "ted", "eforms-chain/4-can-29-380868-2026.xml").await;
+    let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
+    let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
+    db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
+    let a = project::project_incremental(&db).await.expect("shadow refold with an appended notice").applied;
+    assert_eq!(a.versions_written, 4, "the three stored versions rewritten and the fourth appended: {a:?}");
+    assert_eq!((a.tenders_verified, a.tenders_corrected, a.correction_rows_planned), (1, 0, 0), "{a:?}");
+    assert!(a.tables_rewritten > 0 && a.rows_rewritten > 0, "the appended version's tables are written: {a:?}");
+    assert_eq!(a.compare_rows, a.rows_skipped, "the stored prefix compared identical: {a:?}");
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }

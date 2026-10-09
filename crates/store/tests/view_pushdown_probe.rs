@@ -128,3 +128,22 @@ async fn an_unfiltered_peek_at_any_view_scans_one_base_table() {
         );
     }
 }
+
+/// Issue 495 unit 3: the shadow compare reads one version of each leaf table per call,
+/// millions of times on a refold, so each read must SEEK by `(tender_id, seq)`: a PRIMARY KEY
+/// or a by-version index, never a scan and never the code or organization index (which
+/// classifications and parties also carry).
+#[tokio::test]
+async fn the_compare_reads_seek_each_leaf_table_by_version() {
+    let (db, conn) = open("compare").await;
+    db.build_tender_indexes().await.unwrap();
+    for table in store::canonical::LEAF_TABLES {
+        let sql = table.compare_select_sql().replace("tender_id = ? AND seq = ?", "tender_id = 7 AND seq = 2");
+        let plan = plan_of(&conn, &sql).await;
+        assert!(!plan.lines().any(|l| l.trim_start().starts_with("SCAN")), "{}: a scan:\n{plan}", table.name);
+        assert!(plan.contains("SEARCH"), "{}: no seek:\n{plan}", table.name);
+        for wrong in ["_code", "_org"] {
+            assert!(!plan.contains(wrong), "{}: seeks a {wrong} index:\n{plan}", table.name);
+        }
+    }
+}

@@ -25,7 +25,7 @@ pub use accounts::{CreateUser, TokenRecord, User};
 pub use analyze::ANALYZE_TABLES;
 pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
-    Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
+    Applied, BidParty, RefoldCompare, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
     register_jurisdiction, org_name_norm,
     LotResultState, LotState, Mention, MentionRefresh, MentionResolver, NestedOrgRepair, NoticeRef, OrgDissolve, OrgMergeBatch, OrgNameBackfill, OrphanOrgSweep,
     CaseApplyReport, CaseBacklogReport, CaseBacklogRow, CaseReview, CaseUnapplyReport,
@@ -684,6 +684,9 @@ pub struct Db {
     /// streams wake on it and read the log themselves. It carries only the
     /// cursor — never a payload — so a slow subscriber cannot lose an event.
     cursor: watch::Sender<i64>,
+    /// The refold compare mode (issue 495 unit 3, [`canonical::RefoldCompare`]): 0 off,
+    /// 1 shadow. `TENDER_REFOLD_COMPARE` at open; [`Db::set_refold_compare`] overrides it.
+    refold_compare: std::sync::atomic::AtomicU8,
 }
 
 static DB: OnceCell<Arc<Db>> = OnceCell::const_new();
@@ -1153,7 +1156,7 @@ impl Db {
         // shared-lock acquire to every read, so the default leaves it off (None).
         let wal_gate: read::WalGate = gate_on.then(|| Arc::new(tokio::sync::RwLock::new(())));
         let read_pool = Readers::open(database.clone(), READ_POOL, wal_gate.clone())?;
-        Ok(Db {
+        let db = Db {
             auto_index_row_cap: std::sync::atomic::AtomicI64::new(Self::MAX_AUTO_INDEX_ROWS),
             database,
             conn: Mutex::new(conn),
@@ -1164,7 +1167,10 @@ impl Db {
             read_pool,
             wal_gate,
             cursor,
-        })
+            refold_compare: std::sync::atomic::AtomicU8::new(0),
+        };
+        db.set_refold_compare(canonical::RefoldCompare::parse(std::env::var("TENDER_REFOLD_COMPARE").ok().as_deref()));
+        Ok(db)
     }
 
     /// The current rates lookup (cheap Arc clone; empty until first reloaded).

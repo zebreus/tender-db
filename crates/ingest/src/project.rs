@@ -1531,7 +1531,9 @@ pub enum Progress {
     /// signal that a projection-logic re-fold (issue 99's epoch) is really
     /// rewriting rather than silently skipping.
     /// `leaf_rows` is the satellite rows those versions carried (issue 96).
-    Applying { tenders: u64, total: u64, versions: u64, leaf_rows: u64 },
+    /// `verified`/`corrected` are the shadow compare's stale-Tender verdicts (issue 495
+    /// unit 3), both 0 with the compare off.
+    Applying { tenders: u64, total: u64, versions: u64, leaf_rows: u64, verified: u64, corrected: u64 },
     /// Phase 2 pre-pass: `notices` read and spilled to buckets so far, summed
     /// across all shard workers (issue 65). No total: the sweep's bound is an id
     /// RANGE, not a row count, and counting the rows in it up front would cost a
@@ -1577,6 +1579,16 @@ pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> 
     project_with_progress(db, rebuild, notice_batch, stderr_progress_sink()).await
 }
 
+/// The heartbeat's shadow-compare suffix (issue 495 unit 3): empty until a stale Tender
+/// was compared.
+fn compare_tail(verified: u64, corrected: u64) -> String {
+    if verified + corrected == 0 {
+        String::new()
+    } else {
+        format!("; compare (shadow): {verified} verified, {corrected} corrected")
+    }
+}
+
 /// The default progress sink: heartbeats to stderr (the journal), the per-event
 /// phases throttled so a multi-hour run logs steadily rather than floods.
 /// Extracted (issue 65) so the supervisor can COMPOSE with it — journal lines
@@ -1600,9 +1612,10 @@ pub fn stderr_progress_sink() -> impl FnMut(Progress) {
         Progress::Grouped { tenders, islands } => {
             eprintln!("[project] phase 2: folding {tenders} tenders ({islands} islands)");
         }
-        Progress::Applying { tenders, total, versions, leaf_rows } => {
+        Progress::Applying { tenders, total, versions, leaf_rows, verified, corrected } => {
             eprintln!(
-                "[project] phase 2: {tenders}/{total} tenders folded, {versions} versions written, {leaf_rows} leaf rows"
+                "[project] phase 2: {tenders}/{total} tenders folded, {versions} versions written, {leaf_rows} leaf rows{}",
+                compare_tail(verified, corrected)
             );
         }
         // Aggregate line beside the per-shard heartbeats `write_shard` already
@@ -1859,6 +1872,8 @@ pub async fn project_with_progress_phase2_stoppable(
                     total: report.tenders,
                     versions: report.applied.versions_written,
                     leaf_rows: report.applied.leaf_rows,
+                    verified: report.applied.tenders_verified,
+                    corrected: report.applied.tenders_corrected,
                 });
                 batches_done += 1;
                 if batches_done.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
@@ -1930,6 +1945,9 @@ pub async fn project_with_progress_phase2_stoppable(
         report.applied.changes,
         t0.elapsed().as_secs_f64()
     );
+    if let Some(line) = report.applied.compare_line() {
+        eprintln!("[project] {line}");
+    }
     Ok(report)
 }
 
@@ -3382,6 +3400,8 @@ pub async fn project_incremental_chunked_observed(
                     total: tenders,
                     versions: report.applied.versions_written,
                     leaf_rows: report.applied.leaf_rows,
+                    verified: report.applied.tenders_verified,
+                    corrected: report.applied.tenders_corrected,
                 });
                 // Heartbeat per batch: without it a wedged fold is indistinguishable
                 // from a slow one (issue 90).
@@ -3401,12 +3421,13 @@ pub async fn project_incremental_chunked_observed(
                 false,
                 &mut report,
                 |p| {
-                    if let Progress::Applying { tenders, total, versions, leaf_rows } = p {
+                    if let Progress::Applying { tenders, total, versions, leaf_rows, verified, corrected } = p {
                         // `versions` is the load-bearing number: `tenders` climbs to
                         // completion even if every fold early-returns (issue 99).
                         eprintln!(
                             "[project] incremental fold: {tenders}/{total} Tenders folded, \
-                             {versions} versions written, {leaf_rows} leaf rows"
+                             {versions} versions written, {leaf_rows} leaf rows{}",
+                            compare_tail(verified, corrected)
                         );
                     }
                     on_progress(p);
@@ -3587,7 +3608,14 @@ async fn bucketed_fold(
     // and the record names the stage the moment it begins. (A bucket is one
     // `apply_tenders` transaction by design, so this does not try to tick
     // inside it.)
-    on_progress(Progress::Applying { tenders: 0, total: report.tenders, versions: report.applied.versions_written, leaf_rows: report.applied.leaf_rows });
+    on_progress(Progress::Applying {
+        tenders: 0,
+        total: report.tenders,
+        versions: report.applied.versions_written,
+        leaf_rows: report.applied.leaf_rows,
+        verified: report.applied.tenders_verified,
+        corrected: report.applied.tenders_corrected,
+    });
     let mut tenders_done = 0u64;
     let mut fold_err: Option<turso::Error> = None;
     for b in 0..n_buckets {
@@ -3621,6 +3649,8 @@ async fn bucketed_fold(
             total: report.tenders,
             versions: report.applied.versions_written,
             leaf_rows: report.applied.leaf_rows,
+            verified: report.applied.tenders_verified,
+            corrected: report.applied.tenders_corrected,
         });
         if (b + 1).is_multiple_of(CHECKPOINT_EVERY_BATCHES)
             && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await

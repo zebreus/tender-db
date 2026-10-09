@@ -3648,12 +3648,17 @@ impl Supervisor {
                     format!("plan grouped: {tenders} tenders, {islands} single-notice islands"),
                 );
             }
-            Progress::Applying { tenders, total, versions, leaf_rows } => {
+            Progress::Applying { tenders, total, versions, leaf_rows, verified, corrected } => {
+                let compare = if verified + corrected == 0 {
+                    String::new()
+                } else {
+                    format!("; compare (shadow): {verified} verified, {corrected} corrected")
+                };
                 self.set_phase(
                     "folding",
                     Some(tenders),
                     Some(total),
-                    format!("{versions} version rows written, {leaf_rows} leaf rows"),
+                    format!("{versions} version rows written, {leaf_rows} leaf rows{compare}"),
                 );
             }
         }
@@ -4455,8 +4460,10 @@ impl Supervisor {
         } else {
             String::new()
         };
+        // Issue 495 unit 3: the shadow compare's tally, when a stale Tender was compared.
+        let compare = report.applied.compare_line().map(|line| format!("; {line}")).unwrap_or_default();
         Ok(format!(
-            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}{alias}{refreshed}{sweep}{citations}",
+            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{compare}{wall}{alias}{refreshed}{sweep}{citations}",
             report.notices,
             report.tenders,
             report.islands,

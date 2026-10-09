@@ -1,6 +1,26 @@
 # 495 — a stale refold deletes and re-inserts the whole corpus, though more than 95 % of it is byte-identical
 
-Status: ready-for-agent — UNIT 2 DONE AND DEPLOYED 2026-10-08 ~22:20 UTC (`79b1212`): A1/A2 goldens, B1 descriptor, B2 leaf-indexed Pending + moved values, B3 prepared DELETEs/stored chain/change INSERT, B4 per-Tender identity cache (adversarially reviewed: no refutation; its one hardening point, a reset after the sweep, landed). Every commit byte-identical against the goldens. NEXT: (1) read the next daily fold's time against 2075's 271 s (5,395 notices) and record it here; (2) unit 3, the compare engine in shadow mode (the plan is in the "Design decision" section; LEAF_TABLES/compare_select_sql are ready for it). Was: ready-for-agent — UNIT 2 commits A1/A2 (goldens), B1 (descriptor), B2 (leaf-indexed Pending, moved values), B3 (prepared DELETEs / stored chain / change INSERT) DEPLOYED 2026-10-08 21:3x UTC (`fc1b3dc`), all byte-identical against the goldens. Baseline for the timing record: daily project 2075 (2026-10-08) took 271 s for 5,395 notices → 5,245 tenders written. NEXT: B4 (the per-Tender identity cache, plan step 9; review it adversarially before deploying), then read the next daily fold's time against 2075. Was: ready-for-agent — UNIT 1 DESIGNED 2026-10-08 (`wf_21089c8e-de5`: three designs, a judge that verified
+Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (the shadow compare, `TENDER_REFOLD_COMPARE=off|shadow`, default off).
+- Each version a stale Tender's rewrite writes over a stored one is read with 14 prepared SELECTs (`LeafTable::compare_select_sql`,
+  pinned to seek by version), then deleted, then written into a scratch `Pending`. The scratch is compared positionally (count
+  first, reals by bits) and moved into the batch `Pending` in push order, so the writes are unchanged.
+- The head is compared through `tender_identity`'s widened SELECT.
+- `CompareTally` and `count_compare` give the verified/corrected split and ADR-0017 D3's planned correction rows: rule T, plus
+  rule L = head lots when the head differs, plus lots whose own rows differ (multiset difference, Via scopes through the same
+  version's results and bids), plus minted lots, minus swept lots. Appended versions are transitions, not corrections.
+- The counts show on the heartbeat (`Progress::Applying` verified/corrected), the `[project] done` line and the job summary
+  (`Applied::compare_line`).
+- Refused when `tender_version_bid_parties_version` is missing.
+- Tests:
+  - `a_shadow_refold_writes_the_golden_and_verifies_every_tender`: the refold golden byte-for-byte in shadow, 6 of 6
+    verified, no false differences.
+  - `the_shadow_compare_counts_what_the_flip_would_rewrite_and_announce`: three single-row edits, exact corrected / tables /
+    rows / planned.
+  - `a_version_appended_to_a_stale_chain_is_not_a_correction`.
+  - `the_compare_reads_seek_each_leaf_table_by_version`.
+- NEXT: review, gate, deploy. Then the prod measurement: a systemd drop-in sets `TENDER_REFOLD_COMPARE=shadow`, then a
+  stratified `refold-notices` cohort of about 50k. Record us/row, the identical share and the planned correction rows here.
+- Was: UNIT 2 DONE AND DEPLOYED 2026-10-08 ~22:20 UTC (`79b1212`): A1/A2 goldens, B1 descriptor, B2 leaf-indexed Pending + moved values, B3 prepared DELETEs/stored chain/change INSERT, B4 per-Tender identity cache (adversarially reviewed: no refutation; its one hardening point, a reset after the sweep, landed). Every commit byte-identical against the goldens. NEXT: (1) read the next daily fold's time against 2075's 271 s (5,395 notices) and record it here; (2) unit 3, the compare engine in shadow mode (the plan is in the "Design decision" section; LEAF_TABLES/compare_select_sql are ready for it). Was: ready-for-agent — UNIT 2 commits A1/A2 (goldens), B1 (descriptor), B2 (leaf-indexed Pending, moved values), B3 (prepared DELETEs / stored chain / change INSERT) DEPLOYED 2026-10-08 21:3x UTC (`fc1b3dc`), all byte-identical against the goldens. Baseline for the timing record: daily project 2075 (2026-10-08) took 271 s for 5,395 notices → 5,245 tenders written. NEXT: B4 (the per-Tender identity cache, plan step 9; review it adversarially before deploying), then read the next daily fold's time against 2075. Was: ready-for-agent — UNIT 1 DESIGNED 2026-10-08 (`wf_21089c8e-de5`: three designs, a judge that verified
 their claims against the code and refuted the ones that did not hold). Decision: option (b), compare with the
 stored rows at version × table grain, plus "changed versus stored" feed rows. Recorded as
 `docs/adr/0017-a-re-derivation-compares-before-it-writes.md`, PROPOSED: its consumer-visible part (D1–D5) flips

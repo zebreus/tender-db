@@ -1396,6 +1396,238 @@ impl LeafTable {
     pub fn compare_select_sql(&self) -> String {
         format!("SELECT rowid, {} FROM {} WHERE tender_id = ? AND seq = ?", self.cols.join(", "), self.name)
     }
+
+    /// The position of `column` in [`Self::cols`].
+    fn col(&self, column: &str) -> usize {
+        self.cols.iter().position(|c| *c == column).unwrap_or_else(|| panic!("{}: no column {column}", self.name))
+    }
+}
+
+/// ADR-0017 D1's compare (issue 495 unit 3): what a stale Tender's rewrite does with the rows
+/// it is about to replace. Read from `TENDER_REFOLD_COMPARE` at open, `off` unless set;
+/// [`Db::set_refold_compare`] overrides it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum RefoldCompare {
+    /// Rewrite every version and compare nothing: the fold as it was before issue 495.
+    #[default]
+    Off,
+    /// Rewrite exactly as `Off` does, but first compare what each version would insert
+    /// against what is stored, and count what the flip (unit 4) would skip, rewrite and
+    /// announce ([`Applied::compare_line`]).
+    Shadow,
+}
+
+impl RefoldCompare {
+    /// `TENDER_REFOLD_COMPARE`'s value. Anything but `shadow` is `off`, and says so unless it
+    /// is empty or `off`: `on` arrives with issue 495 unit 4.
+    pub fn parse(value: Option<&str>) -> Self {
+        match value.map(str::trim) {
+            None | Some("" | "off") => Self::Off,
+            Some("shadow") => Self::Shadow,
+            Some(other) => {
+                eprintln!(
+                    "[store] TENDER_REFOLD_COMPARE={other:?} is not off|shadow (on arrives with issue 495 \
+                     unit 4); the compare stays off"
+                );
+                Self::Off
+            }
+        }
+    }
+}
+
+/// Whether two stored values are the same value: same variant, same content, a real by its
+/// bit pattern (ADR-0017 D1).
+fn same_value(a: &Value, b: &Value) -> bool {
+    match (a, b) {
+        (Value::Null, Value::Null) => true,
+        (Value::Integer(x), Value::Integer(y)) => x == y,
+        (Value::Real(x), Value::Real(y)) => x.to_bits() == y.to_bits(),
+        (Value::Text(x), Value::Text(y)) => x == y,
+        (Value::Blob(x), Value::Blob(y)) => x == y,
+        _ => false,
+    }
+}
+
+/// A value as a hash key, a real by its bits: the multiset difference of two tables' rows.
+#[derive(PartialEq, Eq, Hash)]
+enum CellKey {
+    Null,
+    Integer(i64),
+    Real(u64),
+    Text(String),
+    Blob(Vec<u8>),
+}
+
+fn row_key(row: &[Value]) -> Vec<CellKey> {
+    row.iter()
+        .map(|v| match v {
+            Value::Null => CellKey::Null,
+            Value::Integer(i) => CellKey::Integer(*i),
+            Value::Real(r) => CellKey::Real(r.to_bits()),
+            Value::Text(t) => CellKey::Text(t.clone()),
+            Value::Blob(b) => CellKey::Blob(b.clone()),
+        })
+        .collect()
+}
+
+/// One version's stored leaf rows (issue 495 unit 3): per leaf, row-major in the INSERT's
+/// column order, in rowid order (the order a fresh fold's flush assigns), rowid dropped.
+#[derive(Default)]
+struct StoredVersion {
+    rows: [Vec<Value>; LEAF_COUNT],
+}
+
+/// A Tender's head columns, as stored and as the fold would write them: the shadow compare's
+/// head verdict (issue 495 unit 3). The epoch is not here: a stale Tender's always moves.
+#[derive(Debug, PartialEq)]
+struct StoredHead {
+    seq: Option<i64>,
+    published_at: Option<i64>,
+    deadline: Option<i64>,
+    title: Option<String>,
+    value_eur_cents: Option<i64>,
+}
+
+/// One stale Tender's shadow compare (issue 495 unit 3), folded into [`Applied`] when the
+/// Tender is done.
+#[derive(Default)]
+struct CompareTally {
+    tables_skipped: u64,
+    tables_rewritten: u64,
+    rows_skipped: u64,
+    rows_rewritten: u64,
+    /// A compared table differed, the chain got shorter, or (with nothing appended) a head
+    /// column differs.
+    differs: bool,
+    /// Something at the head differs: one of its tables, the chain's length, or a head column.
+    head_differs: bool,
+    /// The fold wrote versions past the stored chain. Those are announced by their own
+    /// transition rows, as today, never as corrections (ADR-0017 D3).
+    appended: bool,
+    /// Lots whose own rows differ: rule L's second set.
+    lots: BTreeSet<i64>,
+    /// The new head version's lots: rule L's first set, taken when `head_differs`.
+    head_lots: BTreeSet<i64>,
+}
+
+impl CompareTally {
+    /// Compare the version the fold just produced (`fresh`) against the rows stored at its
+    /// seq (`stored`, `None` past the stored chain). Positional, count first: a table whose
+    /// rows are the same values in the same order is skipped, any other is rewritten whole,
+    /// so relative row order always matches a full rewrite (ADR-0017 D1).
+    fn version(&mut self, fresh: &Pending, stored: Option<&StoredVersion>, is_head: bool) {
+        let Some(stored) = stored else {
+            self.appended = true;
+            for table in LEAF_TABLES {
+                let rows = (fresh.rows[table.leaf as usize].len() / table.ncols()) as u64;
+                if rows > 0 {
+                    self.tables_rewritten += 1;
+                    self.rows_rewritten += rows;
+                }
+            }
+            return;
+        };
+        let mut via: Option<LotsVia> = None;
+        for table in LEAF_TABLES {
+            let i = table.leaf as usize;
+            let n = table.ncols();
+            let new = &fresh.rows[i];
+            let old = &stored.rows[i];
+            if is_head && table.leaf == Leaf::VersionLots {
+                let c = table.col("lot_id");
+                for row in new.chunks(n) {
+                    if let Value::Integer(lot) = row[c] {
+                        self.head_lots.insert(lot);
+                    }
+                }
+            }
+            if new.is_empty() && old.is_empty() {
+                continue;
+            }
+            let fresh_rows = (new.len() / n) as u64;
+            if old.len() == new.len() && old.iter().zip(new).all(|(a, b)| same_value(a, b)) {
+                self.tables_skipped += 1;
+                self.rows_skipped += fresh_rows;
+                continue;
+            }
+            self.tables_rewritten += 1;
+            self.rows_rewritten += fresh_rows;
+            self.differs = true;
+            if is_head {
+                self.head_differs = true;
+            }
+            let via = via.get_or_insert_with(|| LotsVia::of(fresh, stored));
+            for row in differing_rows(old, new, n) {
+                via.lots_of(table, row, &mut self.lots);
+            }
+        }
+    }
+}
+
+/// The rows of `old` and `new` (row-major, `n` values per row) that the other side does not
+/// match one for one: the multiset difference both ways. A pure reordering yields none.
+fn differing_rows<'a>(old: &'a [Value], new: &'a [Value], n: usize) -> Vec<&'a [Value]> {
+    let mut balance: std::collections::HashMap<Vec<CellKey>, i64> = std::collections::HashMap::new();
+    for row in old.chunks(n) {
+        *balance.entry(row_key(row)).or_default() += 1;
+    }
+    for row in new.chunks(n) {
+        *balance.entry(row_key(row)).or_default() -= 1;
+    }
+    old.chunks(n).chain(new.chunks(n)).filter(|row| balance.get(&row_key(row)).is_some_and(|b| *b != 0)).collect()
+}
+
+/// The lot of a result-scoped or bid-scoped row, through the same version's
+/// `tender_version_lot_results` and `tender_version_bids` rows, fresh and stored.
+struct LotsVia {
+    result: std::collections::HashMap<i64, i64>,
+    bid: std::collections::HashMap<i64, i64>,
+}
+
+impl LotsVia {
+    fn of(fresh: &Pending, stored: &StoredVersion) -> Self {
+        let mut via = LotsVia { result: Default::default(), bid: Default::default() };
+        for (leaf, key, map) in
+            [(Leaf::LotResults, "lot_result_id", &mut via.result), (Leaf::Bids, "bid_id", &mut via.bid)]
+        {
+            let table = leaf.table();
+            let (k, l, n) = (table.col(key), table.col("lot_id"), table.ncols());
+            for row in fresh.rows[leaf as usize].chunks(n).chain(stored.rows[leaf as usize].chunks(n)) {
+                if let (Value::Integer(id), Value::Integer(lot)) = (&row[k], &row[l]) {
+                    map.entry(*id).or_insert(*lot);
+                }
+            }
+        }
+        via
+    }
+
+    /// Add the lot(s) `row` of `table` belongs to (its [`LotScope`]) to `out`.
+    fn lots_of(&self, table: &LeafTable, row: &[Value], out: &mut BTreeSet<i64>) {
+        let mut add = |value: &Value, through: Option<&std::collections::HashMap<i64, i64>>| {
+            if let Value::Integer(id) = value {
+                match through {
+                    None => {
+                        out.insert(*id);
+                    }
+                    Some(map) => {
+                        if let Some(lot) = map.get(id) {
+                            out.insert(*lot);
+                        }
+                    }
+                }
+            }
+        };
+        match table.lot {
+            LotScope::Tender => {}
+            LotScope::Column(c) => add(&row[table.col(c)], None),
+            LotScope::Pair(a, b) => {
+                add(&row[table.col(a)], None);
+                add(&row[table.col(b)], None);
+            }
+            LotScope::ViaLotResult(c) => add(&row[table.col(c)], Some(&self.result)),
+            LotScope::ViaBid(c) => add(&row[table.col(c)], Some(&self.bid)),
+        }
+    }
 }
 
 /// How many Tenders (or Organization mentions) a single projection write
@@ -8197,6 +8429,26 @@ pub struct Applied {
     /// Tenders verified current by the unchanged-chain early return (same
     /// epoch, same causing-notice sequence) — considered, decided, zero writes.
     pub tenders_unchanged: u64,
+    /// Issue 495 unit 3, [`RefoldCompare::Shadow`] only: stale Tenders whose every compared
+    /// version came out identical, whose chain did not get shorter, and whose head (unless a
+    /// version was appended) is unchanged. The flip (unit 4) would write only their epoch,
+    /// plus any version appended past the stored chain, which is announced as today.
+    pub tenders_verified: u64,
+    /// Stale Tenders with any difference: the flip would rewrite what differs and announce it.
+    pub tenders_corrected: u64,
+    /// (version, leaf table) pairs with rows on either side that compared identical, and
+    /// those that differ or belong to a version appended past the stored chain.
+    pub tables_skipped: u64,
+    pub tables_rewritten: u64,
+    /// The rows the fold produced in those identical and those rewritten tables.
+    pub rows_skipped: u64,
+    pub rows_rewritten: u64,
+    /// ADR-0017 D3's correction rows the flip would write: one seq-less `tender changed`
+    /// (rule T) plus one seq-less `lot changed` per rule-L lot, per corrected Tender.
+    pub correction_rows_planned: u64,
+    /// Stored rows the compare read back, and the time it spent reading and comparing.
+    pub compare_rows: u64,
+    pub compare_nanos: u64,
 }
 
 impl Applied {
@@ -8211,6 +8463,37 @@ impl Applied {
         self.tenders_written += other.tenders_written;
         self.tenders_unchanged += other.tenders_unchanged;
         self.entities_swept += other.entities_swept;
+        self.tenders_verified += other.tenders_verified;
+        self.tenders_corrected += other.tenders_corrected;
+        self.tables_skipped += other.tables_skipped;
+        self.tables_rewritten += other.tables_rewritten;
+        self.rows_skipped += other.rows_skipped;
+        self.rows_rewritten += other.rows_rewritten;
+        self.correction_rows_planned += other.correction_rows_planned;
+        self.compare_rows += other.compare_rows;
+        self.compare_nanos += other.compare_nanos;
+    }
+
+    /// The shadow compare's tally for the counts line (issue 495 unit 3), or `None` when no
+    /// Tender was compared.
+    pub fn compare_line(&self) -> Option<String> {
+        if self.tenders_verified + self.tenders_corrected == 0 {
+            return None;
+        }
+        Some(format!(
+            "compare (shadow, issue 495): {} tenders verified, {} corrected; tables {} skipped / {} \
+             rewritten; rows {} skipped / {} rewritten; {} correction rows planned; {} stored rows \
+             read, {:.2} us per row",
+            self.tenders_verified,
+            self.tenders_corrected,
+            self.tables_skipped,
+            self.tables_rewritten,
+            self.rows_skipped,
+            self.rows_rewritten,
+            self.correction_rows_planned,
+            self.compare_rows,
+            self.compare_nanos as f64 / 1000.0 / self.compare_rows.max(1) as f64
+        ))
     }
 }
 
@@ -15390,6 +15673,49 @@ impl Db {
         Ok((org_id, created))
     }
 
+    /// The compare mode later folds run under (issue 495 unit 3), overriding
+    /// `TENDER_REFOLD_COMPARE`.
+    pub fn set_refold_compare(&self, mode: RefoldCompare) {
+        let v = match mode {
+            RefoldCompare::Off => 0,
+            RefoldCompare::Shadow => 1,
+        };
+        self.refold_compare.store(v, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub fn refold_compare(&self) -> RefoldCompare {
+        match self.refold_compare.load(std::sync::atomic::Ordering::Relaxed) {
+            1 => RefoldCompare::Shadow,
+            _ => RefoldCompare::Off,
+        }
+    }
+
+    /// The compare mode this fold runs under: [`Db::refold_compare`], unless
+    /// `tender_version_bid_parties_version` is missing (a rebuild defers it), when every
+    /// compare read of that table would scan it whole.
+    async fn refold_compare_for_fold(&self, conn: &Connection) -> turso::Result<RefoldCompare> {
+        let mode = self.refold_compare();
+        if mode == RefoldCompare::Off {
+            return Ok(mode);
+        }
+        let mut rows = conn
+            .query(
+                "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'tender_version_bid_parties_version'",
+                (),
+            )
+            .await?;
+        let present = rows.next().await?.is_some();
+        drop(rows);
+        if !present {
+            eprintln!(
+                "[project] compare refused (issue 495): tender_version_bid_parties_version is missing, \
+                 so its compare reads would scan; folding with the compare off"
+            );
+            return Ok(RefoldCompare::Off);
+        }
+        Ok(mode)
+    }
+
     /// Reconcile many Tenders, batching [`WRITE_BATCH`] of them per write
     /// transaction (issue 19) instead of one transaction each — a month's ~90k
     /// per-Tender BEGIN/COMMIT round-trips were the projection bottleneck. The
@@ -15407,7 +15733,8 @@ impl Db {
         // the fold's uniform inserts. The handles outlive the per-batch
         // BEGIN/COMMIT and the between-batch checkpoints (they carry their own
         // connection clone) and no DDL runs during the fold, so no plan goes stale.
-        let mut stmts = Box::pin(TenderInserts::prepare(&conn)).await?;
+        let compare = self.refold_compare_for_fold(&conn).await?;
+        let mut stmts = Box::pin(TenderInserts::prepare(&conn, compare)).await?;
         let mut total = Applied::default();
         let mut changed_any = false;
         for (batch, chunk) in projections.chunks(WRITE_BATCH).enumerate() {
@@ -15474,8 +15801,12 @@ impl Db {
         // Issue 495 unit 2: the identity cache is per Tender. Reset FIRST, so no error
         // path of an earlier Tender can leave its ids behind.
         stmts.ids.reset();
+        if let Some(shadow) = stmts.shadow.as_mut() {
+            shadow.minted_lots.clear();
+            shadow.swept_lots.clear();
+        }
         let mut applied = Applied::default();
-        let (tender_id, created, stored_epoch) =
+        let (tender_id, created, stored_epoch, stored_head) =
             self.tender_identity(conn, p, now, rebuild, stmts).await?;
         applied.tenders_created += u64::from(created);
 
@@ -15536,7 +15867,21 @@ impl Db {
         // the fold chain (`parse_state` no longer 'parsed', so the pre-pass never
         // spilled it; see issue 105) — and it means the grouping moved. Treat it as a
         // stop, not as expected growth.
-        for seq in (keep + 1..=stored.len()).rev() {
+        //
+        // Issue 495 unit 3: in shadow, each version the write loop rewrites over a stored
+        // one is read, then deleted, right before it is written: its first `compared` seqs
+        // are deleted there, the rest of the old chain here. Only a stale Tender (a
+        // re-derivation, keep = 0) is compared: a current-epoch repair rewrites a tail
+        // whose notices moved, so its seqs hold other versions. The writes are the same
+        // as with the compare off: every DELETE still precedes the batch's flush, which
+        // is where every leaf row is inserted, so content and rowids come out identical
+        // (`a_shadow_refold_writes_the_golden_and_verifies_every_tender`).
+        let shadow = stale && !stored.is_empty() && stmts.shadow.is_some();
+        debug_assert!(!shadow || keep == 0, "a stale Tender keeps nothing");
+        let compared = if shadow { stored.len().min(p.versions.len()) } else { 0 };
+        let mut tally = CompareTally::default();
+        let mut scratch = Pending::default();
+        for seq in (keep + compared + 1..=stored.len()).rev() {
             Self::delete_version(stmts, tender_id, seq as i64).await?;
             applied.versions_removed += 1;
         }
@@ -15557,7 +15902,27 @@ impl Db {
             let previous = i.checked_sub(1).map(|j| &p.versions[j]);
             partners.add_version_figures(version);
             partners.set_head(version);
-            self.write_version(conn, tender_id, seq, version, &partners, stmts, pending, &mut written).await?;
+            let prior = if i < compared {
+                let started = std::time::Instant::now();
+                let (stored_rows, read) = Self::stored_version(stmts, tender_id, seq).await?;
+                applied.compare_rows += read;
+                applied.compare_nanos += started.elapsed().as_nanos() as u64;
+                Self::delete_version(stmts, tender_id, seq).await?;
+                applied.versions_removed += 1;
+                Some(stored_rows)
+            } else {
+                None
+            };
+            // In shadow each version is written into `scratch`, compared, and moved on into
+            // `pending` in push order, so the batch flushes exactly the same rows.
+            let target: &mut Pending = if shadow { &mut scratch } else { &mut *pending };
+            self.write_version(conn, tender_id, seq, version, &partners, stmts, target, &mut written).await?;
+            if shadow {
+                let started = std::time::Instant::now();
+                tally.version(&scratch, prior.as_ref(), i + 1 == p.versions.len());
+                scratch.move_into(pending);
+                applied.compare_nanos += started.elapsed().as_nanos() as u64;
+            }
             applied.versions_written += 1;
             applied.changes += self
                 .append_version_changes(conn, tender_id, seq, version, previous, now, stmts)
@@ -15610,20 +15975,40 @@ impl Db {
             // A chain that SHRANK can leave the write loop with nothing to do
             // (`keep == p.versions.len()`), so the rule's head is set here as well.
             partners.set_head(head);
+            let fresh = StoredHead {
+                seq: Some(p.versions.len() as i64),
+                published_at: Some(head.published_at),
+                deadline: head_deadline(head),
+                title: head_title(head),
+                value_eur_cents: head_value_eur_cents_with(head, &partners, &self.rates_lookup()),
+            };
+            // An appended head is announced by its transition rows; otherwise a head column
+            // that moved while every version compared identical is a correction.
+            if shadow && !tally.appended && stored_head.as_ref() != Some(&fresh) {
+                tally.differs = true;
+                tally.head_differs = true;
+            }
             stmts
                 .head_update
                 .execute((
-                    Value::Integer(p.versions.len() as i64),
-                    Value::Integer(head.published_at),
+                    opt_int(fresh.seq),
+                    opt_int(fresh.published_at),
                     Value::Integer(PROJECTION_EPOCH),
-                    head_deadline(head).map(Value::Integer).unwrap_or(Value::Null),
-                    head_title(head).map(Value::Text).unwrap_or(Value::Null),
-                    head_value_eur_cents_with(head, &partners, &self.rates_lookup())
-                        .map(Value::Integer)
-                        .unwrap_or(Value::Null),
+                    opt_int(fresh.deadline),
+                    opt_text(fresh.title.as_deref()),
+                    opt_int(fresh.value_eur_cents),
                     Value::Integer(tender_id),
                 ))
                 .await?;
+        }
+        if shadow {
+            // A shorter chain moves the head back: a correction at the head.
+            if p.versions.len() < stored.len() {
+                tally.differs = true;
+                tally.head_differs = true;
+            }
+            let shadow = stmts.shadow.as_ref().expect("shadow statements");
+            Self::count_compare(&mut applied, tally, shadow);
         }
         // The chain changed, so this run owns this Tender's head pointer — the
         // batch checks it before committing (see `assert_heads_match`).
@@ -15704,7 +16089,7 @@ impl Db {
         now: i64,
         rebuild: bool,
         stmts: &mut TenderInserts,
-    ) -> turso::Result<(i64, bool, i64)> {
+    ) -> turso::Result<(i64, bool, i64, Option<StoredHead>)> {
         // On a rebuild the tender-content layer was just emptied by
         // [`Db::reset_tender_layer`] and every group_key is distinct, so identity is
         // ALWAYS a fresh insert — skip the random-position probe into the (now
@@ -15721,15 +16106,18 @@ impl Db {
             let mut rows = match (&p.procedure_key, p.island_notice_id) {
                 (Some(key), _) => {
                     conn.query(
-                        "SELECT id, source, projection_epoch, kind FROM tenders WHERE procedure_key = ?",
+                        "SELECT id, source, projection_epoch, kind, current_seq, current_published_at,
+                                current_deadline, current_title, current_value_eur_cents
+                           FROM tenders WHERE procedure_key = ?",
                         (t(key),),
                     )
                     .await?
                 }
                 (None, Some(notice_id)) => {
                     conn.query(
-                        "SELECT id, source, projection_epoch, kind FROM tenders
-                          WHERE source = ? AND island_notice_id = ?",
+                        "SELECT id, source, projection_epoch, kind, current_seq, current_published_at,
+                                current_deadline, current_title, current_value_eur_cents
+                           FROM tenders WHERE source = ? AND island_notice_id = ?",
                         (t(&p.source), Value::Integer(notice_id)),
                     )
                     .await?
@@ -15752,7 +16140,16 @@ impl Db {
                     conn.execute("UPDATE tenders SET kind = ? WHERE id = ?", (t(&p.kind), Value::Integer(id)))
                         .await?;
                 }
-                return Ok((id, false, int(&row, 2)));
+                // The head as stored, for the shadow compare (issue 495 unit 3): read here,
+                // on the row this SELECT already seeks.
+                let head = StoredHead {
+                    seq: opt_int_of(&row, 4),
+                    published_at: opt_int_of(&row, 5),
+                    deadline: opt_int_of(&row, 6),
+                    title: opt_text_of(&row, 7),
+                    value_eur_cents: opt_int_of(&row, 8),
+                };
+                return Ok((id, false, int(&row, 2), Some(head)));
             }
         }
         stmts
@@ -15765,7 +16162,7 @@ impl Db {
                 Value::Integer(now),
             ))
             .await?;
-        Ok((last_insert_rowid(conn).await?, true, PROJECTION_EPOCH))
+        Ok((last_insert_rowid(conn).await?, true, PROJECTION_EPOCH, None))
     }
 
     async fn stored_chain(stmts: &mut TenderInserts, tender_id: i64) -> turso::Result<Vec<i64>> {
@@ -15775,6 +16172,56 @@ impl Db {
             out.push(int(&row, 0));
         }
         Ok(out)
+    }
+
+    /// Issue 495 unit 3: one version's stored leaf rows ([`StoredVersion`]) and how many
+    /// there were. The SELECTs carry no ORDER BY; the rows are drained, then sorted by rowid.
+    async fn stored_version(stmts: &mut TenderInserts, tender_id: i64, seq: i64) -> turso::Result<(StoredVersion, u64)> {
+        let shadow = stmts.shadow.as_mut().expect("shadow statements");
+        let mut out = StoredVersion::default();
+        let mut read = 0u64;
+        for (table, statement) in LEAF_TABLES.iter().zip(shadow.select.iter_mut()) {
+            let n = table.ncols();
+            let mut keyed: Vec<(i64, Vec<Value>)> = Vec::new();
+            let mut rows = statement.query((Value::Integer(tender_id), Value::Integer(seq))).await?;
+            while let Some(row) = rows.next().await? {
+                let mut values = Vec::with_capacity(n);
+                for c in 1..=n {
+                    values.push(row.get_value(c)?);
+                }
+                keyed.push((int(&row, 0), values));
+            }
+            drop(rows);
+            keyed.sort_unstable_by_key(|(rowid, _)| *rowid);
+            read += keyed.len() as u64;
+            out.rows[table.leaf as usize] = keyed.into_iter().flat_map(|(_, values)| values).collect();
+        }
+        Ok((out, read))
+    }
+
+    /// Fold one stale Tender's [`CompareTally`] into `applied`: verified when nothing differs,
+    /// otherwise corrected, with ADR-0017 D3's planned correction rows. Rule T is one `tender
+    /// changed`; rule L is the head version's lots when anything at the head differs, plus the
+    /// lots whose own rows differ, plus the lots this fold minted, minus the lots it swept.
+    fn count_compare(applied: &mut Applied, tally: CompareTally, shadow: &ShadowState) {
+        applied.tables_skipped += tally.tables_skipped;
+        applied.tables_rewritten += tally.tables_rewritten;
+        applied.rows_skipped += tally.rows_skipped;
+        applied.rows_rewritten += tally.rows_rewritten;
+        if !tally.differs && shadow.minted_lots.is_empty() && shadow.swept_lots.is_empty() {
+            applied.tenders_verified += 1;
+            return;
+        }
+        let mut lots = tally.lots;
+        if tally.head_differs {
+            lots.extend(tally.head_lots);
+        }
+        lots.extend(shadow.minted_lots.iter().copied());
+        for lot in &shadow.swept_lots {
+            lots.remove(lot);
+        }
+        applied.tenders_corrected += 1;
+        applied.correction_rows_planned += 1 + lots.len() as u64;
     }
 
     /// One version's rows out of every leaf table, through the prepared handles, in
@@ -15899,6 +16346,11 @@ impl Db {
                     (Value::Integer(id),),
                 )
                 .await?;
+                if table == "lots"
+                    && let Some(shadow) = stmts.shadow.as_mut()
+                {
+                    shadow.swept_lots.push(id);
+                }
                 stmts.append_change(kind, id, None, "removed", now).await?;
                 swept += 1;
                 changes += 1;
@@ -29663,7 +30115,11 @@ impl Db {
             Some(id) => id,
             None => {
                 stmts.lots.execute((Value::Integer(tender_id), t(key))).await?;
-                last_insert_rowid(conn).await?
+                let id = last_insert_rowid(conn).await?;
+                if let Some(shadow) = stmts.shadow.as_mut() {
+                    shadow.minted_lots.push(id);
+                }
+                id
             }
         };
         stmts.ids.lots.insert(key.to_owned(), id);
@@ -31329,6 +31785,20 @@ struct TenderInserts {
     /// The current Tender's entity ids, so a long chain resolves each lot or result
     /// once instead of once per version (and again in its change diff).
     ids: IdentityCache,
+    /// [`RefoldCompare::Shadow`]'s compare reads and per-Tender sets; `None` with the
+    /// compare off.
+    shadow: Option<ShadowState>,
+}
+
+/// The shadow compare's statements and per-Tender bookkeeping (issue 495 unit 3).
+struct ShadowState {
+    /// One version's stored rows of each leaf table, rowid first, in [`LEAF_TABLES`] order
+    /// ([`LeafTable::compare_select_sql`]).
+    select: Vec<Statement>,
+    /// The lots `lot_identity` minted and the lots the orphan sweep deleted for the current
+    /// Tender: rule L's added and removed sets. Cleared per Tender.
+    minted_lots: Vec<i64>,
+    swept_lots: Vec<i64>,
 }
 
 /// The entity ids `lot_identity` and `result_identity` have resolved for ONE Tender
@@ -31385,12 +31855,23 @@ impl TenderInserts {
     /// tie them to the `Db::conn` guard. Keep the box a local declared AFTER that
     /// guard: a dropped handle resets and aborts against the shared connection, which
     /// must happen while this caller still holds the writer.
-    async fn prepare(conn: &Connection) -> turso::Result<Box<Self>> {
+    async fn prepare(conn: &Connection, compare: RefoldCompare) -> turso::Result<Box<Self>> {
         let mut delete = Vec::with_capacity(LEAF_COUNT);
         for table in LEAF_TABLES {
             delete.push(conn.prepare(&table.delete_version_sql()).await?);
         }
+        let shadow = match compare {
+            RefoldCompare::Off => None,
+            RefoldCompare::Shadow => {
+                let mut select = Vec::with_capacity(LEAF_COUNT);
+                for table in LEAF_TABLES {
+                    select.push(conn.prepare(&table.compare_select_sql()).await?);
+                }
+                Some(ShadowState { select, minted_lots: Vec::new(), swept_lots: Vec::new() })
+            }
+        };
         Ok(Box::new(Self {
+            shadow,
             delete,
             stored_chain: conn
                 .prepare("SELECT caused_by_notice_id FROM tender_versions WHERE tender_id = ? ORDER BY seq")
@@ -31478,6 +31959,16 @@ impl Pending {
     fn push<const N: usize>(&mut self, leaf: Leaf, row: [Value; N]) {
         debug_assert_eq!(N, leaf.table().ncols(), "{leaf:?} row arity");
         self.rows[leaf as usize].extend(row);
+    }
+
+    /// Append this buffer's rows to `into`'s, table by table in push order, and its
+    /// currencies, leaving this one empty with its capacity: the shadow compare's
+    /// per-version scratch (issue 495 unit 3).
+    fn move_into(&mut self, into: &mut Pending) {
+        for (from, to) in self.rows.iter_mut().zip(into.rows.iter_mut()) {
+            to.append(from);
+        }
+        into.currencies.append(&mut self.currencies);
     }
 
     /// Flush every buffered table as chunked multi-row INSERTs, then clear.
