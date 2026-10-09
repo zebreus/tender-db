@@ -320,6 +320,26 @@ Where it did hit was the issue-495 test goldens. They read the function through 
 captured a stale snapshot. Rule: drain anything you read from a `pragma_*` function, or use the
 statement form.
 
+### Whether an error ends the transaction depends on the error [measured, issues 498 / 501, 2026-10-09]
+
+Inside an explicit `BEGIN`, a failed statement in turso 0.7.2 does one of two things, depending on the error:
+
+| Error | What turso does | Connection afterwards |
+|---|---|---|
+| A constraint error; any error in a journaled write (multi-row, REPLACE); a failed `COMMIT`, e.g. a deferred FK | Aborts only the statement | Still inside the transaction |
+| A generic runtime error from a read or an unjournaled write | Rolls back the whole transaction (`Program::abort`, `TxnCleanup::None` arm), e.g. `SELECT abs(-9223372036854775807 - 1)` while stepping | Back in autocommit, the transaction's writes gone |
+| `RAISE(ROLLBACK)` | Rolls back the whole transaction | Back in autocommit |
+
+So a caller cannot assume either outcome. Two rules follow:
+
+- After any error between `BEGIN` and `COMMIT`, roll back unless `is_autocommit()` is already true. That is
+  `Db::immediate` in `crates/store/src/tx.rs`.
+- Never swallow an error mid-transaction and carry on writing, unless the transaction is checked to have
+  survived it. The writes would autocommit one by one, on top of rows the engine just rolled back. See
+  `transaction_ended_under` in `canonical.rs`.
+
+Both are pinned by tests: `tx::tests` and `a_runtime_read_error_ends_the_transaction_and_the_guard_sees_it`.
+
 ### Memory ceilings observed (10 GB db)
 
 Steady-state serving needs tens of MB: open ~21 MB, point queries ~28 MB,
