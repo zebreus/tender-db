@@ -1,6 +1,7 @@
 # 498 — a failed flush or COMMIT leaves the shared writer connection inside its transaction
 
-Status: ready-for-agent — filed 2026-10-08 from the issue 495 unit 2 planning review (`wf_da3c04cf-2f7`, step 12),
+Status: done (watch) — units 0, 1, 2 and 3 DEPLOYED 2026-10-09 (`ad4fddd`, health ok). NEXT: on 2026-10-16, grep the
+journal for `INSIDE an open transaction`, then close. Filed 2026-10-08 from the issue 495 unit 2 planning review (`wf_da3c04cf-2f7`, step 12),
 confirmed against the code.
 - Unit 1 (census) DONE 2026-10-09: 22 confirmed leaking sites, ranked, plus the helper design —
   `.scratch/tender-db/498-tx/census-2026-10-09.{md,json}`.
@@ -13,9 +14,16 @@ confirmed against the code.
   sites, and `finish`, which replaces canonical.rs's `finish_tx`), with five tests: a failing body, a failing
   COMMIT (deferred FK), an engine-ended transaction (`RAISE(ROLLBACK)`), a failing BEGIN, and success. All 22
   census sites are converted; the goldens are unchanged, so the success path is byte-identical.
-- NEXT: gate and deploy units 2–3, then a journal grep for `INSIDE an open transaction` after a week. A hit means
-  a panic or a cancelled future, the only leaks left. The census's already-safe hand-written sites (about 30) may
-  follow for uniformity; they carry no risk.
+- Review `wf_a128d5c8-b83` (four lenses with adversarial verification). Success-path identity was confirmed
+  literal by literal, and all 22 sites are complete. It found that an `async fn` helper held an unboxed body
+  about 3× in every caller's future (a 4.4 KB body made a 13.6 KB future and a ~70 KB O0 poll chain). That
+  threatened issue 467's budgets on `run_project`'s chain, so `ad4fddd` makes `within` a plain fn that boxes the
+  body (one allocation per transaction). The same review found the resolver's lenient probes, filed as
+  issue 501.
+- DEPLOYED 2026-10-09 ~01:20 UTC (`ad4fddd`, gate green with the size-budget test, health ok).
+- NEXT: a journal grep for `INSIDE an open transaction` on 2026-10-16. A hit means a panic or a cancelled future,
+  the only leaks left. The census's already-safe hand-written sites (about 30) may follow for uniformity; they
+  carry no risk.
 Kind: robustness / the single writer (`Db::conn`)
 Relates to: 241 / 256 (the writer queue), 323 (`checkpoint_on` inside a transaction), 495 (unit 2 rewrites the
 same batch loop, but must stay byte-identical, so the fix is not part of it)
