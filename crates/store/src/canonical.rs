@@ -1643,6 +1643,20 @@ impl LinkReads {
     }
 }
 
+/// Whether `conn` is inside an explicit transaction (issue 501).
+fn in_transaction(conn: &Connection) -> bool {
+    !conn.is_autocommit().unwrap_or(true)
+}
+
+/// Issue 501: whether the transaction `conn` was in (`was_in_tx`) is gone. turso ends the
+/// WHOLE transaction on a generic error from a read inside one (`Program::abort`, the
+/// `TxnCleanup::None` arm), so a probe error that would otherwise be swallowed as "lenient"
+/// must propagate when this holds: the caller would go on writing in autocommit, on top
+/// of rows the engine just rolled back.
+fn transaction_ended_under(conn: &Connection, was_in_tx: bool) -> bool {
+    was_in_tx && conn.is_autocommit().unwrap_or(true)
+}
+
 /// Whether `rule` is ADR-0011's previous-notice edge: directed (its target must be
 /// strictly earlier) and allowed to join two keyed components. Every other rule — a
 /// same-notice identity or a measured match — has no direction and is weld-guarded.
@@ -14141,6 +14155,7 @@ impl Db {
         wall: bool,
         stoplist_cap: usize,
     ) -> turso::Result<Option<i64>> {
+        let in_tx = in_transaction(conn);
         let rules = alias.rules;
         // The planner harvests GB parties only, and the ledger holds GB keys.
         if m.country.as_deref().map(register_jurisdiction) != Some("GB") {
@@ -14221,8 +14236,12 @@ impl Db {
                                 g
                             }
                             // An unavailable wall must not stop ingestion:
-                            // lenient, as an unseen key is, and counted.
+                            // lenient, as an unseen key is, and counted —
+                            // unless the error took the transaction with it.
                             Err(e) => {
+                                if transaction_ended_under(conn, in_tx) {
+                                    return Err(e);
+                                }
                                 self.log_diag(&format!(
                                     "[issue 448] alias genericness probe failed, binding \
                                      leniently: {e}"
@@ -14344,6 +14363,14 @@ impl Db {
                     let rebound_before = resolver.mentions_rebound;
                     let (id, created) =
                         self.resolve_one_mention(&conn, m, now, resolver, &mut mention_of).await?;
+                    // Issue 501: a step that swallowed an error which ended the chunk's
+                    // transaction must not let the rest of the chunk write in autocommit.
+                    if transaction_ended_under(&conn, true) {
+                        return Err(turso::Error::Error(format!(
+                            "[issue 501] the resolver's chunk transaction ended underneath it at notice {}",
+                            m.notice_id
+                        )));
+                    }
                     chunk_ids.push(id);
                     resolver.created_any |= created;
                     if resolver.mentions_rebound > rebound_before {
@@ -14492,6 +14519,7 @@ impl Db {
         resolver: &mut MentionResolver,
         mention_of: &mut std::collections::HashMap<(i64, String), RecordedMention>,
     ) -> turso::Result<(i64, bool)> {
+        let in_tx = in_transaction(conn);
         let org_of = &mut resolver.org_of;
         let name_of = &mut resolver.name_of;
         // Issue 318's wall tally. A local rather than a field bump, because
@@ -14690,6 +14718,9 @@ impl Db {
                                             g
                                         }
                                         Err(e) => {
+                                            if transaction_ended_under(conn, in_tx) {
+                                                return Err(e);
+                                            }
                                             self.log_diag(&format!(
                                                 "[issue 470] fold genericness probe failed, binding \
                                                  leniently: {e}"
@@ -14903,6 +14934,9 @@ impl Db {
                                                             // prevention stops
                                                             // preventing.
                                                             Err(e) => {
+                                                                if transaction_ended_under(conn, in_tx) {
+                                                                    return Err(e);
+                                                                }
                                                                 errored_generic += 1;
                                                                 self.log_diag(&format!(
                                                                     "[issue 318] \
@@ -15168,6 +15202,9 @@ impl Db {
                                 g
                             }
                             Err(e) => {
+                                if transaction_ended_under(conn, in_tx) {
+                                    return Err(e);
+                                }
                                 errored_generic += 1;
                                 self.log_diag(&format!(
                                     "[issue 351] tier probe failed, minting a \
@@ -31798,8 +31835,58 @@ async fn write_candidate_edges(
 mod tests {
     use super::{
         Fact, LotState, MinUnionFind, PlanScope, TenderVersion, head_deadline, head_title,
-        head_value_eur_cents, sentinel_amount,
+        head_value_eur_cents, in_transaction, sentinel_amount, transaction_ended_under,
     };
+
+    /// Issue 501: turso 0.7.2 ends the WHOLE transaction on a generic runtime error from a
+    /// read inside it (`Program::abort`, the `TxnCleanup::None` arm), so a probe error the
+    /// resolver swallows "leniently" would leave it writing in autocommit. This pins that
+    /// premise and the guard that reads it. If turso stops ending the transaction, the
+    /// `is_autocommit` assertion fails here and the guard becomes dead code, not wrong.
+    #[tokio::test]
+    async fn a_runtime_read_error_ends_the_transaction_and_the_guard_sees_it() {
+        let path = format!("/tmp/tender-db-501-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = crate::Db::open(&path).await.unwrap();
+        let conn = db.conn().await;
+        conn.execute("CREATE TABLE t501(x INTEGER PRIMARY KEY)", ()).await.unwrap();
+        assert!(!transaction_ended_under(&conn, in_transaction(&conn)), "outside a transaction nothing can end");
+
+        conn.execute("BEGIN IMMEDIATE", ()).await.unwrap();
+        let in_tx = in_transaction(&conn);
+        assert!(in_tx);
+        conn.execute("INSERT INTO t501 VALUES (1)", ()).await.unwrap();
+        // A read that prepares fine and fails while stepping.
+        let failed: turso::Result<()> = async {
+            let mut rows = conn.query(RUNTIME_ERROR_SQL, ()).await?;
+            while rows.next().await?.is_some() {}
+            Ok(())
+        }
+        .await;
+        assert!(failed.is_err(), "{RUNTIME_ERROR_SQL} fails at runtime");
+        assert!(conn.is_autocommit().unwrap(), "turso ended the transaction itself");
+        assert!(transaction_ended_under(&conn, in_tx), "and the guard sees it");
+        let mut rows = conn.query("SELECT COUNT(*) FROM t501", ()).await.unwrap();
+        let n = rows.next().await.unwrap().unwrap().get_value(0).unwrap();
+        assert_eq!(n, turso::Value::Integer(0), "the transaction's write is gone with it");
+        drop(rows);
+
+        // A transaction that survives (a read that succeeds) reads as not ended.
+        conn.execute("BEGIN IMMEDIATE", ()).await.unwrap();
+        let mut rows = conn.query("SELECT COUNT(*) FROM t501", ()).await.unwrap();
+        while rows.next().await.unwrap().is_some() {}
+        drop(rows);
+        assert!(!transaction_ended_under(&conn, in_transaction(&conn)));
+        conn.execute("ROLLBACK", ()).await.unwrap();
+        drop(conn);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    const RUNTIME_ERROR_SQL: &str = "SELECT abs(-9223372036854775807 - 1)";
 
     /// Issue 482 unit 2 review: the per-digest clustering is exactly the connected
     /// components of the pairwise [`super::buyer_tokens_disjoint`] graph — checked against
