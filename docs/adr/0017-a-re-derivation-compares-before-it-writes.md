@@ -4,7 +4,9 @@ Status: ACCEPTED 2026-10-09 with issue 495 unit 4 (the flip); proposed 2026-10-0
 from three competing designs and a judge, `wf_21089c8e-de5`).
 - D1–D4 take effect with unit 4. A stale Tender's prefix is compared, only what differs is written, and a corrected
   Tender is announced by seq-less correction rows instead of a history replay.
-- D5 (in-place walks announce the same corrections) takes effect with unit 5.
+- D5 (in-place walks announce the same corrections) took effect with unit 5 (2026-10-09): the shared rows
+  live in `crates/store/src/inplace.rs`, whose module doc is D6's R2 template, and `rederive-eur` is its
+  worked example.
 - D6 and D7 have applied as runbook guidance since 2026-10-08.
 - The decision rested on unit 3's shadow measurement: 33,236 stale Tenders across two prod cohorts compared
   identical, and the compare costs about 384 us per version plus 0.8 us per row.

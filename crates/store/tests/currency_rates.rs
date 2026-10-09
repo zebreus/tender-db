@@ -210,8 +210,9 @@ async fn rederive_walks_all_four_loci_by_rowid_and_only_writes_changes() {
         loop {
             // batch=1 (one tender per window) forces the watermark loop to
             // iterate; the fixture's single tender means one full window.
-            let (tenders, scanned, updated, changed_tenders, next) =
-                db.rederive_eur_window(&rates, 1, watermark).await.expect("window");
+            let store::rates::RederiveWindow {
+                tenders, scanned, updated, changed_tenders, watermark: next, ..
+            } = db.rederive_eur_window(&rates, 1, watermark).await.expect("window");
             if tenders == 0 {
                 break;
             }
@@ -253,7 +254,10 @@ async fn rederive_walks_all_four_loci_by_rowid_and_only_writes_changes() {
         assert_eq!(got, want, "{table} WHERE {cond}");
     }
 
-    // The persisted resume point (issue 306): survives round-trips, clears to 0.
+    // The persisted resume point (issue 306): each window writes its own, inside its
+    // transaction (issue 495 unit 5), and the caller clears it to 0 at the end.
+    assert_eq!(db.rederive_watermark().await.unwrap(), 1, "the last window's watermark");
+    db.set_rederive_watermark(0).await.unwrap();
     assert_eq!(db.rederive_watermark().await.unwrap(), 0, "no walk in flight");
     db.set_rederive_watermark(42).await.unwrap();
     assert_eq!(db.rederive_watermark().await.unwrap(), 42);
@@ -265,7 +269,7 @@ async fn rederive_walks_all_four_loci_by_rowid_and_only_writes_changes() {
     {
         let mut watermark = 0i64;
         loop {
-            let (tenders, _, updated, changed_tenders, next) =
+            let store::rates::RederiveWindow { tenders, updated, changed_tenders, watermark: next, .. } =
                 db.rederive_eur_window(&rates, 100, watermark).await.expect("window");
             if tenders == 0 {
                 break;
@@ -349,4 +353,176 @@ async fn stamping_stale_is_scoped_to_the_tenders_whose_value_moved() {
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
+}
+
+/// Issue 495 unit 5 (ADR-0017 D5): a moved `eur_cents` is served, so `rederive-eur`
+/// announces it, and each window commits the moved values together with their
+/// correction rows, the stale stamp, the re-queue and the watermark.
+///
+/// Rule L per moved row: the row's own lot; every lot of the head version when the
+/// row sits in the head; nothing more for a contract, which has no lot. A window that
+/// moved nothing writes no change row, and a second walk writes nothing at all.
+#[tokio::test]
+async fn a_rederive_window_announces_what_it_moved_and_nothing_else() {
+    let (db, path) = open("rederive-announces").await;
+    let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    // Every version is published 2010-02-16; USD's fixing below is 2.0, so 10000 USD
+    // cents are 5000 EUR cents. A stored 7777 is wrong, a stored 5000 is right.
+    let mut sql: Vec<String> = Vec::new();
+    for (tender, seqs) in [(1, 2), (2, 1), (3, 1), (4, 2), (5, 1)] {
+        sql.push(format!(
+            "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, \
+             created_at, projection_epoch) VALUES ({tender}, 'ted', 'p{tender}', 'procedure', {seqs}, \
+             1266278400, 0, 7)"
+        ));
+        for seq in 1..=seqs {
+            let notice = tender * 10 + seq;
+            sql.push(format!(
+                "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, \
+                 ingested_at, parse_state, projected) VALUES ({notice}, 'ted', 'OJ-{notice}', 'h{notice}', 'text', \
+                 1, 'm{notice}', 0, 'parsed', 1)"
+            ));
+            sql.push(format!(
+                "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id) \
+                 VALUES ({tender}, {seq}, 1266278400, 'OJ-{notice}', {notice})"
+            ));
+        }
+    }
+    for (tender, seq, lot) in [(1, 2, 11), (1, 2, 12), (1, 1, 13), (2, 1, 21), (2, 1, 22), (5, 1, 51), (5, 1, 52)] {
+        sql.push(format!(
+            "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES ({tender}, {seq}, {lot}, 'Lot')"
+        ));
+    }
+    sql.extend(
+        [
+            // Tender 1: a lot result of lot 13, in a version that is not the head, moved.
+            "INSERT INTO tender_version_lot_results (tender_id, seq, lot_result_id, lot_id, decision, awarded_cents, \
+             awarded_currency, awarded_eur_cents) VALUES (1, 1, 1, 13, 'awarded', 10000, 'USD', 7777)",
+            "INSERT INTO tender_version_lot_results (tender_id, seq, lot_result_id, lot_id, decision, awarded_cents, \
+             awarded_currency, awarded_eur_cents) VALUES (1, 2, 1, 13, 'awarded', 10000, 'USD', 5000)",
+            // Tender 2: the Tender's own amount at the head moved.
+            "INSERT INTO tender_version_amounts (tender_id, seq, field, cents, currency, eur_cents) \
+             VALUES (2, 1, 'estimated_value', 10000, 'USD', 7777)",
+            // Tender 3: right already.
+            "INSERT INTO tender_version_amounts (tender_id, seq, field, cents, currency, eur_cents) \
+             VALUES (3, 1, 'estimated_value', 10000, 'USD', 5000)",
+            // Tender 4: a contract, which has no lot, moved below the head; the head's bid is right.
+            "INSERT INTO tender_version_contracts (tender_id, seq, contract_id, cents, currency, eur_cents) \
+             VALUES (4, 1, 1, 10000, 'USD', 7777)",
+            "INSERT INTO tender_version_bids (tender_id, seq, bid_id, lot_id, cents, currency, eur_cents) \
+             VALUES (4, 2, 1, 41, 10000, 'USD', 5000)",
+            // Tender 5: a bid of lot 51 at the head moved.
+            "INSERT INTO tender_version_bids (tender_id, seq, bid_id, lot_id, cents, currency, eur_cents) \
+             VALUES (5, 1, 1, 51, 10000, 'USD', NULL)",
+        ]
+        .map(str::to_owned),
+    );
+    for statement in &sql {
+        conn.execute(statement, ()).await.unwrap_or_else(|e| panic!("{statement}: {e}"));
+    }
+    db.upsert_currency_rates(&[("USD".into(), "2010-02-12".into(), 2.0, "ecb".into())]).await.unwrap();
+    db.reload_rates_lookup().await.unwrap();
+    let rates = db.rates_lookup();
+    let cursor_before = db.current_cursor();
+
+    // One Tender per window, so each window's own outcome is visible.
+    let mut windows = Vec::new();
+    let mut watermark = 0;
+    loop {
+        let window = db.rederive_eur_window(&rates, 1, watermark).await.expect("window");
+        if window.tenders == 0 {
+            assert_eq!(window.watermark, watermark, "an empty window leaves the watermark where it was");
+            break;
+        }
+        watermark = window.watermark;
+        assert_eq!(db.rederive_watermark().await.unwrap(), watermark, "the window committed its watermark");
+        windows.push(window);
+    }
+    let outcome: Vec<(i64, Vec<i64>, i64, u64, u64, u64)> = windows
+        .iter()
+        .map(|w| (w.watermark, w.changed_tenders.clone(), w.updated, w.corrections, w.restamped, w.requeued))
+        .collect();
+    assert_eq!(
+        outcome,
+        vec![
+            (1, vec![1], 1, 2, 1, 2),
+            (2, vec![2], 1, 3, 1, 1),
+            (3, vec![], 0, 0, 0, 0),
+            (4, vec![4], 1, 1, 1, 2),
+            (5, vec![5], 1, 3, 1, 1),
+        ],
+        "(watermark, moved tenders, rows updated, correction rows, stamped, re-queued) per window"
+    );
+
+    let changes = rows_of(
+        &conn,
+        "SELECT entity_kind || ' ' || entity_id || ' ' || coalesce(version_seq, 'null') || ' ' || op \
+           FROM changes ORDER BY cursor",
+    )
+    .await;
+    assert_eq!(
+        changes,
+        [
+            "tender 1 null changed",
+            "lot 13 null changed",
+            "tender 2 null changed",
+            "lot 21 null changed",
+            "lot 22 null changed",
+            "tender 4 null changed",
+            "tender 5 null changed",
+            "lot 51 null changed",
+            "lot 52 null changed",
+        ],
+        "rule T per moved Tender, then rule L ascending: the moved row's lot, and the head's lots for a \
+         head row; a contract has no lot; tender 3 moved nothing"
+    );
+    assert!(db.current_cursor() > cursor_before, "the doorbell rang for the correction rows");
+    assert_eq!(
+        rows_of(&conn, "SELECT id || ':' || projection_epoch FROM tenders ORDER BY id").await,
+        ["1:0", "2:0", "3:7", "4:0", "5:0"],
+        "exactly the moved Tenders are stamped stale"
+    );
+    assert_eq!(
+        rows_of(&conn, "SELECT id FROM notices WHERE projected = 0 ORDER BY id").await,
+        ["11", "12", "21", "41", "42", "51"],
+        "every causing notice of a moved Tender is re-queued, and only those"
+    );
+
+    // Run 1001's shape: nothing moves, so nothing is written or announced.
+    let mut watermark = 0;
+    loop {
+        let window = db.rederive_eur_window(&rates, 100, watermark).await.expect("window");
+        if window.tenders == 0 {
+            break;
+        }
+        assert_eq!((window.updated, window.corrections, window.requeued), (0, 0, 0), "a second walk is quiet");
+        watermark = window.watermark;
+    }
+    assert_eq!(
+        rows_of(&conn, "SELECT COUNT(*) FROM changes").await,
+        ["9"],
+        "the second walk announced nothing"
+    );
+
+    drop(conn);
+    drop(db);
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// Every row of a one-column query, as text.
+async fn rows_of(conn: &store::turso::Connection, sql: &str) -> Vec<String> {
+    let mut rows = conn.query(sql, ()).await.unwrap_or_else(|e| panic!("{sql}: {e}"));
+    let mut out = Vec::new();
+    while let Some(row) = rows.next().await.unwrap() {
+        out.push(match row.get_value(0).unwrap() {
+            store::turso::Value::Text(s) => s,
+            store::turso::Value::Integer(i) => i.to_string(),
+            other => panic!("{sql}: unexpected {other:?}"),
+        });
+    }
+    out
 }

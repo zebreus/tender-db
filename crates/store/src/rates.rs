@@ -394,25 +394,6 @@ impl Db {
         Ok(removed)
     }
 
-    /// One window of the issue-306 repair walk: re-derive ALL FOUR money
-    /// loci's EUR siblings for the next `batch` tenders past the id watermark,
-    /// from (cents, currency, version publication date) via the in-memory
-    /// lookup — the exact `EurContext` derivation the fold itself uses, so a
-    /// re-run after repair writes nothing. Only rows whose derived value
-    /// CHANGES are updated: garbage-rate values corrected, newly convertible
-    /// NULLs filled, no-longer-derivable values honestly NULLed. Deliberately
-    /// quiet on the change feed — the derived-beside layer moved, the corpus
-    /// did not.
-    ///
-    /// The window drives on the `tenders` PK and each locus filters
-    /// `a.tender_id > ? AND a.tender_id <= ?` — a PK/`*_version`-index prefix
-    /// range, the walk shape every backfill already proved on turso. The first
-    /// cut windowed on `a.rowid > ? ORDER BY a.rowid LIMIT ?` instead, and on
-    /// prod that shape COLLAPSED ~55M rows in: from ~30k rows/s to a 100%-CPU
-    /// zero-IO spin (the issue-274 seek lesson resurfacing on a bare rowid
-    /// range). Updates stay rowid-addressed; only the WINDOWING changed.
-    /// Returns `(tenders, rows_scanned, updated, watermark)`; `tenders == 0`
-    /// ends the walk.
     /// The rederive walk's persisted resume point (issue 306): the last
     /// COMPLETED window's tender-id watermark, 0 when no walk is in flight.
     pub async fn rederive_watermark(&self) -> turso::Result<i64> {
@@ -423,9 +404,9 @@ impl Db {
         Ok(rows.next().await?.map_or(0, |row| crate::int(&row, 0)))
     }
 
-    /// Persist the walk's resume point; write 0 on completion. Written AFTER a
-    /// window's updates commit, so a crash between the two redoes at most one
-    /// window (idempotent writes make the redo harmless).
+    /// Persist the walk's resume point; write 0 on completion. Each window
+    /// writes its own watermark inside its transaction (issue 495 unit 5), so
+    /// this is for the completion and for tests.
     pub async fn set_rederive_watermark(&self, watermark: i64) -> turso::Result<()> {
         let conn = self.conn().await;
         conn.execute(
@@ -436,127 +417,190 @@ impl Db {
         Ok(())
     }
 
-    /// Re-derive one window's `eur_cents` from the current rates, returning
-    /// `(tenders, scanned, updated, changed_tender_ids, watermark)`.
+    /// One window of the issue-306 repair walk, the worked example of ADR-0017's
+    /// R2 template (`crate::inplace`). It re-derives ALL FOUR money loci's EUR
+    /// siblings for the next `batch` tenders past the id watermark, from
+    /// (cents, currency, version publication date) via the in-memory lookup.
+    /// That is the exact `EurContext` derivation the fold itself uses, so a
+    /// re-run after repair writes nothing. Only rows whose derived value
+    /// CHANGES are updated: garbage-rate values corrected, newly convertible
+    /// NULLs filled, no-longer-derivable values honestly NULLed.
     ///
-    /// **`changed_tender_ids` exists because moving `eur_cents` silently
-    /// invalidates the head value column** (issue 375). `current_value_eur_cents`
-    /// is elected FROM these values, so a rate correction that changes them
-    /// leaves the head stale — and the successor that used to fix it,
-    /// `backfill-values`, re-elected with an unfiltered `MAX` and undid issue
-    /// 366's sentinel/ceiling filtering. Reporting the affected tenders lets the
-    /// caller stamp exactly those epoch-stale so the FOLD re-elects them, which
-    /// is the one implementation allowed to decide this.
+    /// The window drives on the `tenders` PK and each locus filters
+    /// `a.tender_id > ? AND a.tender_id <= ?` — a PK/`*_version`-index prefix
+    /// range, the walk shape every backfill already proved on turso. The first
+    /// cut windowed on `a.rowid > ? ORDER BY a.rowid LIMIT ?` instead, and on
+    /// prod that shape COLLAPSED ~55M rows in: from ~30k rows/s to a 100%-CPU
+    /// zero-IO spin (the issue-274 seek lesson resurfacing on a bare rowid
+    /// range). Updates stay rowid-addressed; only the WINDOWING changed.
     ///
-    /// Only tenders whose stored value actually moved are reported — a rate
-    /// correction usually touches one currency-day, so this is a handful of rows
-    /// rather than the corpus, which is the whole reason it beats an epoch bump.
+    /// **The window is one `BEGIN IMMEDIATE`** (issue 495 unit 5). Inside it, after the
+    /// updates:
+    /// - **ADR-0017 D5's correction rows.** A moved `eur_cents` is served, so the walk
+    ///   is no longer quiet: each moved Tender gets a seq-less `tender changed`, and
+    ///   rule L's lots a seq-less `lot changed` ([`crate::inplace::Moved::announce`]).
+    /// - **The stamp and the re-queue** of the moved Tenders (E4). Moving `eur_cents`
+    ///   invalidates the head value column (issue 375): `current_value_eur_cents` is
+    ///   elected FROM these values, and since issue 490 so are the stored lot values.
+    ///   The FOLD is the one implementation allowed to elect them, so the moved Tenders
+    ///   are stamped epoch-stale and their causing notices re-queued (a stamp alone
+    ///   re-folds nothing: the fold's rewrite set is `projected = 0`). The fold that
+    ///   follows compares (ADR-0017 D1) and announces what its election moved.
+    /// - **The watermark.**
+    ///
+    /// Before, these ran as separate statements after the updates had autocommitted
+    /// one by one. A crash in between kept the moved values and lost the re-queue,
+    /// and the re-run could not find it again: the values it would have to compare
+    /// against were already right.
+    ///
+    /// Only Tenders whose stored value actually moved are announced, stamped and
+    /// re-queued. A rate correction usually touches one currency-day, so this is a
+    /// handful of rows rather than the corpus, which is the whole reason it beats
+    /// an epoch bump. A window that moved nothing writes nothing but its watermark.
     pub async fn rederive_eur_window(
         &self,
         rates: &RatesLookup,
         batch: i64,
         after: i64,
-    ) -> turso::Result<(i64, i64, i64, Vec<i64>, i64)> {
+    ) -> turso::Result<RederiveWindow> {
         let conn = self.conn().await;
-        let mut rows = conn
-            .query(
-                "SELECT COUNT(*), MAX(id) FROM
-                   (SELECT id FROM tenders WHERE id > ? ORDER BY id LIMIT ?)",
-                (Value::Integer(after), Value::Integer(batch)),
+        let now = crate::now_unix();
+        let window = Db::immediate(&conn, async {
+            let (tenders, watermark) = crate::inplace::tender_window(&conn, after, batch).await?;
+            if tenders == 0 {
+                return Ok(RederiveWindow { watermark: after, ..RederiveWindow::default() });
+            }
+            // The versions' publication dates, joined IN RUST: the SQL join
+            // (`JOIN tender_versions ON (tender_id, seq)`) is what wedged BOTH
+            // prod repair runs at the same window — a legacy mega-chain
+            // (2,983 versions) whose additive result rounds put 8.9M
+            // lot_result rows in one 10k-tender window, and turso's evaluation
+            // of the join at that volume spun at 100% CPU indefinitely, while
+            // the bare PK-range scan of the same rows returns in seconds. Two
+            // indexed range scans + an O(1) map lookup replace it.
+            let mut date_of: std::collections::HashMap<(i64, i64), String> =
+                std::collections::HashMap::new();
+            {
+                let mut rows = conn
+                    .query(
+                        "SELECT tender_id, seq, published_at FROM tender_versions \
+                          WHERE tender_id > ? AND tender_id <= ?",
+                        (Value::Integer(after), Value::Integer(watermark)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    date_of.insert(
+                        (crate::int(&row, 0), crate::int(&row, 1)),
+                        civil_date(crate::int(&row, 2)),
+                    );
+                }
+            }
+            let mut scanned = 0i64;
+            let mut updated = 0i64;
+            let mut moved = crate::inplace::Moved::default();
+            for (table, cents_col, currency_col, eur_col, lot_col) in EUR_LOCI {
+                let lot = lot_col.map_or_else(|| "NULL".to_owned(), |c| format!("a.{c}"));
+                let mut rows = conn
+                    .query(
+                        &format!(
+                            "SELECT a.rowid, a.{cents_col}, a.{currency_col}, a.{eur_col}, \
+                                    a.tender_id, a.seq, {lot} \
+                               FROM {table} a \
+                              WHERE a.tender_id > ? AND a.tender_id <= ?"
+                        ),
+                        (Value::Integer(after), Value::Integer(watermark)),
+                    )
+                    .await?;
+                let mut pending: Vec<(i64, Option<i64>)> = Vec::new();
+                while let Some(row) = rows.next().await? {
+                    scanned += 1;
+                    let stored = crate::opt_int_of(&row, 3);
+                    let (tender_id, seq) = (crate::int(&row, 4), crate::int(&row, 5));
+                    let date = date_of.get(&(tender_id, seq));
+                    let derived =
+                        match (crate::opt_int_of(&row, 1), crate::opt_text_of(&row, 2), date) {
+                            (Some(cents), Some(currency), Some(date)) => {
+                                rates.eur_cents(cents, &currency, date)
+                            }
+                            _ => None,
+                        };
+                    if derived != stored {
+                        pending.push((crate::int(&row, 0), derived));
+                        moved.row(tender_id, seq, crate::opt_int_of(&row, 6));
+                    }
+                }
+                drop(rows);
+                updated += pending.len() as i64;
+                if !pending.is_empty() {
+                    let mut stmt = conn
+                        .prepare(&format!("UPDATE {table} SET {eur_col} = ? WHERE rowid = ?"))
+                        .await?;
+                    for (rowid, value) in pending {
+                        stmt.execute((crate::opt_int(value), Value::Integer(rowid))).await?;
+                    }
+                }
+            }
+            let changed_tenders = moved.tender_ids();
+            let (mut corrections, mut restamped, mut requeued) = (0, 0, 0);
+            if !changed_tenders.is_empty() {
+                corrections = moved.announce(&conn, now).await?;
+                restamped = Db::stamp_tenders_stale(&conn, changed_tenders.clone()).await?;
+                let notices = Db::notice_ids_of_tenders(&conn, &changed_tenders).await?;
+                requeued = Db::requeue_notice_ids(&conn, &notices, false).await?;
+            }
+            conn.execute(
+                "UPDATE projection_state SET rederive_eur_watermark = ? WHERE id = 0",
+                (Value::Integer(watermark),),
             )
             .await?;
-        let (tenders, watermark) = match rows.next().await? {
-            Some(row) => (crate::int(&row, 0), crate::opt_int_of(&row, 1).unwrap_or(after)),
-            None => (0, after),
-        };
-        drop(rows);
-        if tenders == 0 {
-            return Ok((0, 0, 0, Vec::new(), after));
+            Ok(RederiveWindow {
+                tenders,
+                scanned,
+                updated,
+                changed_tenders,
+                corrections,
+                restamped,
+                requeued,
+                watermark,
+            })
+        })
+        .await?;
+        if window.corrections > 0 {
+            self.publish_cursor(&conn).await?;
         }
-        // The versions' publication dates, joined IN RUST: the SQL join
-        // (`JOIN tender_versions ON (tender_id, seq)`) is what wedged BOTH
-        // prod repair runs at the same window — a legacy mega-chain
-        // (2,983 versions) whose additive result rounds put 8.9M
-        // lot_result rows in one 10k-tender window, and turso's evaluation
-        // of the join at that volume spun at 100% CPU indefinitely, while
-        // the bare PK-range scan of the same rows returns in seconds. Two
-        // indexed range scans + an O(1) map lookup replace it.
-        let mut date_of: std::collections::HashMap<(i64, i64), String> =
-            std::collections::HashMap::new();
-        {
-            let mut rows = conn
-                .query(
-                    "SELECT tender_id, seq, published_at FROM tender_versions \
-                      WHERE tender_id > ? AND tender_id <= ?",
-                    (Value::Integer(after), Value::Integer(watermark)),
-                )
-                .await?;
-            while let Some(row) = rows.next().await? {
-                date_of.insert(
-                    (crate::int(&row, 0), crate::int(&row, 1)),
-                    civil_date(crate::int(&row, 2)),
-                );
-            }
-        }
-        let mut scanned = 0i64;
-        let mut updated = 0i64;
-        // Deduped at the end rather than per row: the four loci can each report
-        // the same tender, and a BTreeSet per window would allocate for the
-        // common case (nothing changed) as well as the rare one.
-        let mut changed: Vec<i64> = Vec::new();
-        for (table, cents_col, currency_col, eur_col) in EUR_LOCI {
-            let mut rows = conn
-                .query(
-                    &format!(
-                        "SELECT a.rowid, a.{cents_col}, a.{currency_col}, a.{eur_col}, \
-                                a.tender_id, a.seq \
-                           FROM {table} a \
-                          WHERE a.tender_id > ? AND a.tender_id <= ?"
-                    ),
-                    (Value::Integer(after), Value::Integer(watermark)),
-                )
-                .await?;
-            let mut pending: Vec<(i64, Option<i64>)> = Vec::new();
-            while let Some(row) = rows.next().await? {
-                scanned += 1;
-                let stored = crate::opt_int_of(&row, 3);
-                let date = date_of.get(&(crate::int(&row, 4), crate::int(&row, 5)));
-                let derived = match (crate::opt_int_of(&row, 1), crate::opt_text_of(&row, 2), date)
-                {
-                    (Some(cents), Some(currency), Some(date)) => {
-                        rates.eur_cents(cents, &currency, date)
-                    }
-                    _ => None,
-                };
-                if derived != stored {
-                    pending.push((crate::int(&row, 0), derived));
-                    changed.push(crate::int(&row, 4));
-                }
-            }
-            drop(rows);
-            updated += pending.len() as i64;
-            if !pending.is_empty() {
-                let mut stmt = conn
-                    .prepare(&format!("UPDATE {table} SET {eur_col} = ? WHERE rowid = ?"))
-                    .await?;
-                for (rowid, value) in pending {
-                    stmt.execute((crate::opt_int(value), Value::Integer(rowid))).await?;
-                }
-            }
-        }
-        changed.sort_unstable();
-        changed.dedup();
-        Ok((tenders, scanned, updated, changed, watermark))
+        Ok(window)
     }
 }
 
+/// One window of [`Db::rederive_eur_window`].
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct RederiveWindow {
+    /// Tenders in the window; 0 ends the walk.
+    pub tenders: i64,
+    /// Money rows read.
+    pub scanned: i64,
+    /// Money rows whose derived EUR value moved, and was rewritten.
+    pub updated: i64,
+    /// The Tenders a moved row belongs to, ascending.
+    pub changed_tenders: Vec<i64>,
+    /// ADR-0017 D3's seq-less correction rows written for them (D5).
+    pub corrections: u64,
+    /// How many of them were stamped epoch-stale.
+    pub restamped: u64,
+    /// How many of their causing notices were re-queued for the fold.
+    pub requeued: u64,
+    /// The window's last Tender id, the walk's resume point.
+    pub watermark: i64,
+}
+
 /// The four ADR-0014 money loci: (table, cents column, currency column,
-/// derived-EUR column). The order is the rederive walk's locus index.
-pub const EUR_LOCI: [(&str, &str, &str, &str); 4] = [
-    ("tender_version_amounts", "cents", "currency", "eur_cents"),
-    ("tender_version_lot_results", "awarded_cents", "awarded_currency", "awarded_eur_cents"),
-    ("tender_version_bids", "cents", "currency", "eur_cents"),
-    ("tender_version_contracts", "cents", "currency", "eur_cents"),
+/// derived-EUR column, the lot column rule L reads, if the table has one). The order is
+/// the rederive walk's locus index.
+pub const EUR_LOCI: [(&str, &str, &str, &str, Option<&str>); 4] = [
+    ("tender_version_amounts", "cents", "currency", "eur_cents", Some("lot_id")),
+    ("tender_version_lot_results", "awarded_cents", "awarded_currency", "awarded_eur_cents", Some("lot_id")),
+    ("tender_version_bids", "cents", "currency", "eur_cents", Some("lot_id")),
+    ("tender_version_contracts", "cents", "currency", "eur_cents", None),
 ];
 
 /// `'YYYY-MM-DD'` (UTC) for an epoch-seconds instant — the fetch job's period
@@ -608,6 +652,26 @@ fn day_number(date: &str) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Rule L reads a moved money row's lot through `EUR_LOCI`'s lot column (issue 495
+    /// unit 5). It must say what the fold's compare says about the same table, or a
+    /// walk would announce a different lot than a refold for the same move.
+    #[test]
+    fn eur_loci_name_the_lot_column_the_fold_attributes_rows_by() {
+        use crate::canonical::{LEAF_TABLES, LotScope};
+        for (table, cents, currency, eur, lot) in EUR_LOCI {
+            let leaf = LEAF_TABLES.iter().find(|t| t.name == table).unwrap_or_else(|| panic!("{table} is a leaf"));
+            for col in [cents, currency, eur] {
+                assert!(leaf.cols.contains(&col), "{table}.{col}");
+            }
+            let fold = match leaf.lot {
+                LotScope::Column(c) => Some(c),
+                LotScope::Tender => None,
+                other => panic!("{table}: the walk reads no {other:?}"),
+            };
+            assert_eq!(lot, fold, "{table}'s lot column");
+        }
+    }
 
     #[test]
     fn eurostat_sdmx_csv_parses_both_dataset_flavours_and_skips_confidential_cells() {

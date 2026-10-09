@@ -10,6 +10,7 @@ pub mod accounts;
 pub mod analyze;
 pub mod canonical;
 pub mod checkpoint;
+mod inplace;
 pub mod jobs;
 pub mod publication_audit;
 pub mod rates;

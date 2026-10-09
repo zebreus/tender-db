@@ -9541,7 +9541,7 @@ impl Db {
     /// through `tender_versions`' `UNIQUE (tender_id, caused_by_notice_id)`,
     /// which is a seek and never was the problem here. Deduped, because a
     /// notice that caused two of these tenders is one notice to re-queue.
-    async fn notice_ids_of_tenders(
+    pub(crate) async fn notice_ids_of_tenders(
         conn: &Connection,
         tender_ids: &[i64],
     ) -> turso::Result<Vec<i64>> {
@@ -9571,7 +9571,7 @@ impl Db {
     /// The ids are deduped before chunking. `projected <> 0` already makes a
     /// repeat within one chunk a no-op, but a repeat that straddles two chunks
     /// would otherwise cost a second pointless statement.
-    async fn requeue_notice_ids(
+    pub(crate) async fn requeue_notice_ids(
         conn: &Connection,
         ids: &[i64],
         dry_run: bool,
@@ -9601,7 +9601,7 @@ impl Db {
     /// The shared batched stamp: `projection_epoch = 0` over a deduped tender-id
     /// list, checkpointed per the issue-63 WAL discipline. Callers differ only in
     /// how they derive the cohort (profile join, notice-id join).
-    async fn stamp_tenders_stale(conn: &Connection, mut ids: Vec<i64>) -> turso::Result<u64> {
+    pub(crate) async fn stamp_tenders_stale(conn: &Connection, mut ids: Vec<i64>) -> turso::Result<u64> {
         ids.sort_unstable();
         ids.dedup();
         const STAMP_BATCH: usize = 500;
@@ -16212,9 +16212,8 @@ impl Db {
                 // ADR-0017 D3: rule T, then rule L's lots in id order, all seq-less, after the
                 // sweep's `removed` rows. Correction rows for lot_result, bid and contract are
                 // not written: they are not public kinds.
-                stmts.append_change("tender", tender_id, None, "changed", now).await?;
-                for lot in &lots {
-                    stmts.append_change("lot", *lot, None, "changed", now).await?;
+                for (kind, id) in crate::inplace::correction_rows(tender_id, &lots) {
+                    stmts.append_change(kind, id, None, "changed", now).await?;
                 }
                 applied.changes += 1 + lots.len() as u64;
             }
@@ -31996,7 +31995,7 @@ fn flatten<'a>(rounds: &'a [Round], kind: &str) -> Vec<(i64, &'a str, RoundEntit
 const APPEND_CHANGE_SQL: &str = "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at)
          VALUES(?, ?, ?, ?, ?)";
 
-async fn append_change(
+pub(crate) async fn append_change(
     conn: &Connection,
     entity_kind: &str,
     entity_id: i64,

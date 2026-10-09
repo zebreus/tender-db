@@ -4,6 +4,14 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 495 unit 5) — a rate correction is announced
+
+A corrected exchange rate re-derives stored EUR values in place (`eur_cents` on amounts, lot results, bids and
+contracts). That used to be silent on the change feed. Now each Tender whose EUR values moved gets one
+`tender` `changed` with `version: null`. Each lot whose own values moved also gets a `lot` `changed`, and when
+the Tender's current version moved, so does every lot of that version. The values elected from them (the
+Tender's and the lots' headline EUR value) follow at the next fold, which announces them the same way.
+
 ## Unreleased (issue 495 unit 4) — a re-derivation announces corrections, not a history replay
 
 When a fold re-derives a Tender, for example after a fix to how notices are read, the change feed (`/v1/changes`,

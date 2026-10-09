@@ -970,3 +970,145 @@ async fn run_moved_chains() {
         }
     }
 }
+
+/// Issue 495 unit 5: ADR-0017 E2's mandatory fixture for the R2 template's worked example,
+/// `rederive-eur`. A corpus folded under old rates, walked under new ones, then folded again
+/// for what the walk re-queued, must be byte-identical to the same corpus folded under the new
+/// rates from the start.
+/// - E2 (one implementation): right after the walk, the four money loci already equal the
+///   fresh fold's.
+/// - E4 (derived values follow): after the re-queued fold, every leaf table and the head
+///   columns do too, the elected lot and head values included.
+/// - D5: the walk announces exactly the Tenders whose money moved; EUR-only Tenders stay
+///   quiet.
+#[test]
+fn a_rederive_eur_walk_then_its_fold_equals_a_fold_under_the_new_rates() {
+    on_a_big_stack(run_rederive_e2);
+}
+
+async fn run_rederive_e2() {
+    const CORPUS: [(&str, &str); 9] = [
+        // Norwegian and Danish awards: money in NOK and DKK.
+        ("ted", "eforms/can-29-00495054-2026.xml"),
+        ("ted", "eforms/can-pat-social-00250633-2024.xml"),
+        ("ted", "eforms/can-inline-org-00530983-2024.xml"),
+        ("ted", "eforms/can-cvd-legacy-00412845-2025.xml"),
+        ("ted", "eforms/can-cvd-legacy-00381774-2025.xml"),
+        // A Maltese chain in EUR, which no rate moves.
+        ("ted", "eforms-chain/1-cn-16-831374-2025.xml"),
+        ("ted", "eforms-chain/2-change-16-6281-2026.xml"),
+        ("ted", "eforms-chain/3-change-16-18902-2026.xml"),
+        ("ted", "eforms-chain/4-can-29-380868-2026.xml"),
+    ];
+    const OLD: [(&str, f64); 2] = [("NOK", 11.0), ("DKK", 7.40)];
+    const NEW: [(&str, f64); 2] = [("NOK", 11.7), ("DKK", 7.46)];
+    /// One rate per currency for every day of 2024–2026, the fixtures' publication years.
+    async fn set_rates(db: &Db, rates: [(&str, f64); 2]) {
+        let mut rows = Vec::new();
+        let mut day = 1_704_067_200; // 2024-01-01
+        while day < 1_798_761_600 {
+            // 2027-01-01
+            for (currency, rate) in rates {
+                rows.push((currency.to_owned(), store::rates::civil_date(day), rate, "ecb".to_owned()));
+            }
+            day += 86_400;
+        }
+        db.upsert_currency_rates(&rows).await.expect("rates");
+    }
+    async fn fold(name: &str, rates: [(&str, f64); 2]) -> (Db, String) {
+        let (db, fetch_id, path) = scratch(name).await;
+        for (source, fixture) in CORPUS {
+            ingest(&db, fetch_id, source, fixture).await;
+        }
+        set_rates(&db, rates).await;
+        project::project(&db, false).await.expect("fold");
+        db.build_tender_indexes().await.expect("the by-version indexes the compare needs");
+        (db, path)
+    }
+    /// The four ADR-0014 money loci, rowids dropped.
+    async fn loci(db: &Db) -> String {
+        let mut out = String::new();
+        for (table, ..) in store::rates::EUR_LOCI {
+            for line in table_digest(db, table, "tender_id, seq, rowid", &[]).await.lines() {
+                out.push_str(if line.starts_with("---") { line } else { line.splitn(2, '|').nth(1).unwrap_or("") });
+                out.push('\n');
+            }
+        }
+        out
+    }
+
+    let (fresh, fresh_path) = fold("rederive-fresh", NEW).await;
+    let (db, path) = fold("rederive-walked", OLD).await;
+    assert_ne!(loci(&db).await, loci(&fresh).await, "the fixture's money moves with the rates");
+    let moving = text_of(
+        &db,
+        "SELECT group_concat(tender_id, ',') FROM (SELECT DISTINCT tender_id FROM ( \
+           SELECT tender_id FROM tender_version_amounts WHERE currency IN ('NOK', 'DKK') \
+           UNION SELECT tender_id FROM tender_version_lot_results WHERE awarded_currency IN ('NOK', 'DKK') \
+           UNION SELECT tender_id FROM tender_version_bids WHERE currency IN ('NOK', 'DKK') \
+           UNION SELECT tender_id FROM tender_version_contracts WHERE currency IN ('NOK', 'DKK')) \
+         ORDER BY tender_id)",
+    )
+    .await;
+    let euro_only = int_of(
+        &db,
+        "SELECT COUNT(*) FROM tenders WHERE id NOT IN (SELECT tender_id FROM tender_version_amounts WHERE currency <> 'EUR')",
+    )
+    .await;
+    assert!(euro_only > 0, "the corpus keeps a Tender no rate moves");
+    let cursor = int_of(&db, "SELECT COALESCE(MAX(cursor), 0) FROM changes").await;
+
+    set_rates(&db, NEW).await;
+    db.reload_rates_lookup().await.expect("reload");
+    let rates = db.rates_lookup();
+    let (mut watermark, mut updated, mut corrections, mut moved) = (0, 0, 0, Vec::new());
+    loop {
+        // Two Tenders a window, so the walk crosses several windows.
+        let window = db.rederive_eur_window(&rates, 2, watermark).await.expect("window");
+        if window.tenders == 0 {
+            break;
+        }
+        watermark = window.watermark;
+        updated += window.updated;
+        corrections += window.corrections;
+        moved.extend(window.changed_tenders);
+    }
+    assert!(updated > 0, "the walk moved money");
+    let moved = moved.iter().map(i64::to_string).collect::<Vec<_>>().join(",");
+    assert_eq!(moved, moving, "the walk moves exactly the Tenders holding NOK or DKK");
+    assert_eq!(loci(&db).await, loci(&fresh).await, "E2: the walk derives what the fold derives");
+    let announced = text_of(
+        &db,
+        &format!(
+            "SELECT group_concat(entity_id, ',') FROM (SELECT entity_id FROM changes \
+              WHERE cursor > {cursor} AND entity_kind = 'tender' ORDER BY cursor)"
+        ),
+    )
+    .await;
+    assert_eq!(announced, moving, "D5: one seq-less `tender changed` per moved Tender, and no other");
+    assert_eq!(
+        int_of(&db, &format!("SELECT COUNT(*) FROM changes WHERE cursor > {cursor}")).await,
+        corrections as i64,
+        "every change row the walk wrote is a correction it counted"
+    );
+    assert_eq!(
+        int_of(&db, &format!("SELECT COUNT(*) FROM changes WHERE cursor > {cursor} AND (version_seq IS NOT NULL OR op <> 'changed')"))
+            .await,
+        0,
+        "all of them seq-less `changed` rows"
+    );
+
+    // The incremental fold, as the daily `project` job runs it: it folds only what the walk
+    // re-queued (the full projection would refold everything and hide a missing re-queue).
+    let report = project::project_incremental(&db).await.expect("the fold the walk re-queued");
+    assert!(report.applied.tenders_written > 0, "the walk re-queued work for the fold: {:?}", report.applied);
+    assert_eq!(content_digest(&db).await, content_digest(&fresh).await, "E4: the re-queued fold finishes the job");
+
+    drop(db);
+    drop(fresh);
+    for p in [path, fresh_path] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}

@@ -5803,47 +5803,29 @@ impl Supervisor {
                 }
                 let mut restamped = 0u64;
                 let mut requeued = 0u64;
+                let mut corrections = 0u64;
                 loop {
-                    let (t, rows, changed, changed_tenders, next) = self
+                    // One transaction per window (issue 495 unit 5, ADR-0017's R2
+                    // template): the moved `eur_cents`, D5's correction rows for the
+                    // Tenders and lots they moved, the stale stamp and the re-queue that
+                    // hand the head and lot values back to the fold (issues 375, 490),
+                    // and the watermark (issue 306) all commit together, so a crash
+                    // redoes at most one window and never loses a re-queue.
+                    let window = self
                         .db
                         .rederive_eur_window(&rates, BACKFILL_BATCH, watermark)
                         .await
                         .map_err(|e| e.to_string())?;
-                    if t == 0 {
+                    if window.tenders == 0 {
                         break;
                     }
-                    tenders += t;
-                    scanned += rows;
-                    updated += changed;
-                    // Issue 375: a moved `eur_cents` invalidates the head value
-                    // elected from it. Stamp exactly those tenders epoch-stale so
-                    // the FOLD re-elects them on the next `project` — the job that
-                    // used to follow this one, `backfill-values`, recomputed the
-                    // head with an unfiltered MAX and undid issue 366's drain.
-                    // Stamped per window rather than accumulated, so a crash
-                    // mid-walk leaves the windows already done correctly marked.
-                    restamped += self
-                        .db
-                        .stamp_stale_for_tenders(&changed_tenders)
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    // Issue 490 unit 3c: a stale stamp alone re-folds NOTHING -- the
-                    // fold's rewrite set is `projected = 0`, never the epoch -- so the
-                    // "run `project` to apply" below was untrue, and since issue 490 the
-                    // stored lot values (elected over these `eur_cents`) would lag a
-                    // rate correction indefinitely. Re-queue the changed Tenders'
-                    // causing notices, so the next `project` re-elects both the head
-                    // and the lot values from the corrected rates.
-                    requeued += self
-                        .db
-                        .requeue_tender_notices(&changed_tenders, false)
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .1;
-                    watermark = next;
-                    if let Err(e) = self.db.set_rederive_watermark(watermark).await {
-                        eprintln!("supervisor: rederive watermark write: {e}");
-                    }
+                    tenders += window.tenders;
+                    scanned += window.scanned;
+                    updated += window.updated;
+                    restamped += window.restamped;
+                    requeued += window.requeued;
+                    corrections += window.corrections;
+                    watermark = window.watermark;
                     self.set_phase(
                         "walking",
                         Some(tenders as u64),
@@ -5859,9 +5841,10 @@ impl Supervisor {
                 self.db.set_rederive_watermark(0).await.map_err(|e| e.to_string())?;
                 Ok(format!(
                     "eur_cents re-derived from {cached} cached rates over {tenders} tenders{}: \
-                     {updated} of {scanned} money rows changed, {restamped} tender(s) stamped \
-                     epoch-stale and {requeued} of their notice(s) re-queued for the fold to \
-                     re-elect their head and lot values (issues 375, 490) — run `project` to apply",
+                     {updated} of {scanned} money rows changed, {corrections} correction row(s) \
+                     announced (ADR-0017 D5), {restamped} tender(s) stamped epoch-stale and \
+                     {requeued} of their notice(s) re-queued for the fold to re-elect their head \
+                     and lot values (issues 375, 490) — run `project` to apply",
                     if resumed > 0 {
                         format!(" (resumed past tender id {resumed})")
                     } else {
@@ -17523,6 +17506,16 @@ mod tests {
 
         let msg = sup.run_spec(&job(Spec::RederiveEur)).await.expect("rederive-eur");
         assert!(msg.contains("1 tender(s) stamped epoch-stale and 1 of their notice(s) re-queued"), "got: {msg}");
+        // Issue 495 unit 5 (ADR-0017 D5): the moved Tender is announced, the other is not.
+        assert!(msg.contains("1 correction row(s) announced"), "got: {msg}");
+        assert_eq!(
+            db.scalar("SELECT group_concat(entity_kind || ' ' || entity_id || ' ' || coalesce(version_seq, 'null'), ',') FROM changes")
+                .await
+                .unwrap(),
+            Some(store::turso::Value::Text("tender 1 null".into())),
+            "one seq-less correction for the one moved Tender"
+        );
+        assert_eq!(db.rederive_watermark().await.unwrap(), 0, "the finished walk clears its watermark");
         let projected = |id: i64| {
             let db = db.clone();
             async move { db.scalar(&format!("SELECT projected FROM notices WHERE id = {id}")).await.unwrap() }

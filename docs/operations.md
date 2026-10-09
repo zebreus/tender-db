@@ -809,8 +809,11 @@ and 70.6 M change rows; its value could have been an in-place backfill (issue 49
   - E6: the fold writes the same value from the deploy on.
 
   Mechanics: tender-PK windows, one `BEGIN IMMEDIATE` and one checkpoint per window, a
-  `projection_state` watermark and a completion flag. Precedents: 340, 306/375, 371; 490's lot value
-  would have qualified.
+  `projection_state` watermark and a completion flag. A walk that moves a served value writes ADR-0017
+  D5's correction rows in its window transaction. The template, with its checklist, is the module doc
+  of `crates/store/src/inplace.rs`. Its worked example is `rederive-eur` (issue 495 unit 5), whose E2
+  fixture is `a_rederive_eur_walk_then_its_fold_equals_a_fold_under_the_new_rates`. Precedents: 340,
+  306/375, 371; 490's lot value would have qualified.
 - **R3, scoped-stale refold** (requeue + stamp 0, no epoch bump): the fold output changes for a cohort
   a finder can enumerate (`refold` by profile, `refold-fields`, `refold-sections`, `refold-notices`,
   tender ids). 479 and 484 were this.
@@ -1058,6 +1061,10 @@ Any job that stamps Tenders epoch-stale (`rederive-eur`, the resolver, `refold-n
 - `rederive-eur` requeues the causing notices of the Tenders it changed (issue 490 unit 3c). Until
   then a rate correction moves the stored value only at the Tender's next fold. Do not let the
   compare straddle a `fetch-rates` or a `rederive-eur`.
+- Since issue 495 unit 5, each `rederive-eur` window commits its moved `eur_cents`, the stamp, the
+  re-queue, the watermark and ADR-0017 D5's correction rows together. The job summary counts the
+  correction rows it announced; run `project` afterwards, and the fold announces whatever its election
+  then moves.
 
 **After deploy B:**
 
