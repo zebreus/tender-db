@@ -267,13 +267,29 @@ fn a_shadow_refold_writes_the_golden_and_verifies_every_tender() {
     on_a_big_stack(|| run_refold(store::RefoldCompare::Shadow));
 }
 
+/// Issue 495 unit 4: with the compare on (the default), the same refold rewrites nothing,
+/// writes no change row, keeps every leaf rowid, and restamps the epoch.
+#[test]
+fn an_on_refold_with_no_logic_change_leaves_the_database_as_it_was() {
+    on_a_big_stack(|| run_refold(store::RefoldCompare::On));
+}
+
+/// Issue 495 unit 4: with the compare on, the same single-row edits are repaired by rewriting
+/// just that table of that version, and announced by exactly the correction rows the shadow
+/// compare planned: one seq-less `tender changed`, then each rule-L lot's seq-less `lot
+/// changed`, and no history replay.
+#[test]
+fn an_on_refold_rewrites_only_what_differs_and_announces_it() {
+    on_a_big_stack(|| run_split(store::RefoldCompare::On));
+}
+
 /// Issue 495 unit 3: the shadow compare counts exactly the split the flip would act on.
 /// One stored row is edited at a time, every Tender is aged and re-folded in shadow, and
 /// the one corrected Tender, its one rewritten table and its planned correction rows
 /// (rule T, plus rule L's lots) are pinned. The rewrite then restores the edited row.
 #[test]
 fn the_shadow_compare_counts_what_the_flip_would_rewrite_and_announce() {
-    on_a_big_stack(run_shadow_split);
+    on_a_big_stack(|| run_split(store::RefoldCompare::Shadow));
 }
 
 /// Issue 495 unit 3: a notice that arrives while its Tender is stale appends a version past
@@ -282,7 +298,14 @@ fn the_shadow_compare_counts_what_the_flip_would_rewrite_and_announce() {
 /// written, and plans no correction.
 #[test]
 fn a_version_appended_to_a_stale_chain_is_not_a_correction() {
-    on_a_big_stack(run_shadow_append);
+    on_a_big_stack(|| run_append(store::RefoldCompare::Shadow));
+}
+
+/// Issue 495 unit 4: with the compare on, a stale chain that gains a notice keeps its verified
+/// prefix untouched and writes only the appended version, announced by its transition rows.
+#[test]
+fn an_on_refold_writes_only_the_appended_version() {
+    on_a_big_stack(|| run_append(store::RefoldCompare::On));
 }
 
 /// Issue 495 unit 3 review: off and shadow write the same database for every chain shape a
@@ -404,7 +427,8 @@ async fn run_refold(compare: store::RefoldCompare) {
     );
     assert_eq!(repair.applied.compare_rows, 0, "a current-epoch repair is never compared: {:?}", repair.applied);
     let mut got = String::from("=== A: the late notice's mid-chain repair ===\n");
-    got.push_str(&full_digest(&db).await);
+    let before = full_digest(&db).await;
+    got.push_str(&before);
 
     // The compare refuses to run without `tender_version_bid_parties_version` (a rebuild
     // defers it). Indexes are not in the digest, so both arms build them.
@@ -414,15 +438,34 @@ async fn run_refold(compare: store::RefoldCompare) {
     let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
     db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
     let refold = project::project_incremental(&db).await.expect("epoch-stale refold");
-    assert!(
-        refold.applied.versions_written > 0 && refold.applied.versions_removed == refold.applied.versions_written,
-        "every stale Tender must be rewritten from keep = 0: {:?}",
-        refold.applied
-    );
+    if compare != store::RefoldCompare::On {
+        assert!(
+            refold.applied.versions_written > 0 && refold.applied.versions_removed == refold.applied.versions_written,
+            "every stale Tender must be rewritten from keep = 0: {:?}",
+            refold.applied
+        );
+    }
     got.push_str("=== B: the keep = 0 refold of everything ===\n");
-    got.push_str(&full_digest(&db).await);
+    let after = full_digest(&db).await;
+    got.push_str(&after);
     let a = refold.applied;
     match compare {
+        store::RefoldCompare::On => {
+            // Issue 495 unit 4: a refold with no logic change rewrites nothing, announces
+            // nothing, keeps every leaf rowid and restamps the epoch, so the database is
+            // byte-for-byte what it was before the Tenders were aged.
+            assert!(a.tenders_written > 0 && a.tenders_verified == a.tenders_written, "{a:?}");
+            assert_eq!(
+                (a.tenders_corrected, a.versions_written, a.versions_removed, a.leaf_rows, a.changes),
+                (0, 0, 0, 0, 0),
+                "nothing rewritten, nothing announced: {a:?}"
+            );
+            assert_eq!(after, before, "the verified refold left the database exactly as it found it");
+            for s in ["", "-wal", "-shm"] {
+                let _ = std::fs::remove_file(format!("{path}{s}"));
+            }
+            return;
+        }
         store::RefoldCompare::Off => {
             assert_eq!((a.tenders_verified, a.tenders_corrected, a.compare_rows), (0, 0, 0), "{a:?}");
         }
@@ -467,9 +510,9 @@ async fn int_of(db: &Db, sql: &str) -> i64 {
     }
 }
 
-async fn run_shadow_split() {
-    let (db, fetch_id, path) = scratch("shadow-split").await;
-    db.set_refold_compare(store::RefoldCompare::Shadow);
+async fn run_split(compare: store::RefoldCompare) {
+    let (db, fetch_id, path) = scratch(&format!("split-{compare:?}")).await;
+    db.set_refold_compare(compare);
     for (source, fixture) in [
         ("ted", "eforms-chain/1-cn-16-831374-2025.xml"),
         ("ted", "eforms-chain/2-change-16-6281-2026.xml"),
@@ -527,8 +570,14 @@ async fn run_shadow_split() {
         let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
         let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
         db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
+        let cursor = int_of(&db, "SELECT COALESCE(MAX(cursor), 0) FROM changes").await;
         let a = project::project_incremental(&db).await.expect("shadow refold").applied;
         assert_eq!(a.tenders_corrected, 1, "{what}: one corrected Tender: {a:?}");
+        if compare == store::RefoldCompare::On {
+            assert_corrections(&db, cursor, chain, planned as u64, what).await;
+            assert_eq!(a.changes, planned as u64, "{what}: the corrections are the only change rows: {a:?}");
+            assert_eq!((a.versions_removed, a.versions_written), (0, 1), "{what}: one version touched, none whole: {a:?}");
+        }
         assert_eq!(a.tenders_verified, a.tenders_written - 1, "{what}: every other Tender verified: {a:?}");
         assert_eq!((a.tables_rewritten, a.rows_rewritten), (1, rows as u64), "{what}: that version's texts, whole: {a:?}");
         assert_eq!(a.correction_rows_planned, planned as u64, "{what}: rule T plus rule L: {a:?}");
@@ -551,12 +600,17 @@ async fn run_shadow_split() {
         let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
         let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
         db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
+        let cursor = int_of(&db, "SELECT COALESCE(MAX(cursor), 0) FROM changes").await;
         let a = project::project_incremental(&db).await.expect("shadow refold").applied;
         assert_eq!(
             (a.tenders_corrected, a.tables_rewritten, a.correction_rows_planned),
             (1, 0, 1 + head_lots as u64),
             "{what}: a head difference with no table rewritten: {a:?}"
         );
+        if compare == store::RefoldCompare::On {
+            assert_corrections(&db, cursor, chain, 1 + head_lots as u64, what).await;
+            assert_eq!((a.versions_removed, a.versions_written, a.leaf_rows), (0, 0, 0), "{what}: {a:?}");
+        }
         assert_eq!(text_of(&db, &format!("SELECT {column} FROM tenders WHERE id = {chain}")).await, before, "{what}");
     }
 
@@ -565,9 +619,9 @@ async fn run_shadow_split() {
     }
 }
 
-async fn run_shadow_append() {
-    let (db, fetch_id, path) = scratch("shadow-append").await;
-    db.set_refold_compare(store::RefoldCompare::Shadow);
+async fn run_append(compare: store::RefoldCompare) {
+    let (db, fetch_id, path) = scratch(&format!("append-{compare:?}")).await;
+    db.set_refold_compare(compare);
     for fixture in [
         "eforms-chain/1-cn-16-831374-2025.xml",
         "eforms-chain/2-change-16-6281-2026.xml",
@@ -583,7 +637,12 @@ async fn run_shadow_append() {
     let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
     db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
     let a = project::project_incremental(&db).await.expect("shadow refold with an appended notice").applied;
-    assert_eq!(a.versions_written, 4, "the three stored versions rewritten and the fourth appended: {a:?}");
+    if compare == store::RefoldCompare::On {
+        assert_eq!((a.versions_written, a.versions_removed), (1, 0), "only the appended version is written: {a:?}");
+        assert!(a.changes > 0, "the appended version is announced by its transition rows: {a:?}");
+    } else {
+        assert_eq!(a.versions_written, 4, "the three stored versions rewritten and the fourth appended: {a:?}");
+    }
     assert_eq!((a.tenders_verified, a.tenders_corrected, a.correction_rows_planned), (1, 0, 0), "{a:?}");
     assert!(a.tables_rewritten > 0 && a.rows_rewritten > 0, "the appended version's tables are written: {a:?}");
     assert_eq!(a.compare_rows, a.rows_skipped, "the stored prefix compared identical: {a:?}");
@@ -593,7 +652,7 @@ async fn run_shadow_append() {
 }
 
 /// One stale-chain shape under one compare mode: the full digest after the refold, and its tally.
-async fn stale_shape(compare: store::RefoldCompare, shape: &str) -> (String, store::Applied) {
+async fn stale_shape(compare: store::RefoldCompare, shape: &str) -> (String, String, store::Applied) {
     const CHAIN: [&str; 4] = [
         "eforms-chain/1-cn-16-831374-2025.xml",
         "eforms-chain/2-change-16-6281-2026.xml",
@@ -648,17 +707,25 @@ async fn stale_shape(compare: store::RefoldCompare, shape: &str) -> (String, sto
     db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
     let applied = project::project_incremental(&db).await.expect("stale refold").applied;
     let digest = full_digest(&db).await;
+    let content = content_digest(&db).await;
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
-    (digest, applied)
+    (digest, content, applied)
 }
 
 async fn run_shapes() {
     for shape in ["equal", "append", "move", "cut"] {
-        let (off, a_off) = stale_shape(store::RefoldCompare::Off, shape).await;
-        let (shadow, a) = stale_shape(store::RefoldCompare::Shadow, shape).await;
+        let (off, off_content, a_off) = stale_shape(store::RefoldCompare::Off, shape).await;
+        let (shadow, _, a) = stale_shape(store::RefoldCompare::Shadow, shape).await;
+        let (_, on_content, a_on) = stale_shape(store::RefoldCompare::On, shape).await;
         assert_eq!(off, shadow, "{shape}: shadow wrote something off did not");
+        assert_eq!(off_content, on_content, "{shape}: on left different content than off");
+        assert_eq!(
+            (a_on.tenders_corrected, a_on.correction_rows_planned),
+            (a.tenders_corrected, a.correction_rows_planned),
+            "{shape}: on corrected what shadow planned"
+        );
         assert_eq!(
             (a_off.versions_written, a_off.versions_removed, a_off.changes, a_off.entities_swept),
             (a.versions_written, a.versions_removed, a.changes, a.entities_swept),
@@ -677,4 +744,64 @@ async fn run_shapes() {
             }
         }
     }
+}
+
+/// The change rows a corrected Tender's `On` refold wrote after `cursor`: rule T's seq-less
+/// `tender changed` first, then rule L's seq-less `lot changed` rows in lot id order, and
+/// nothing else (issue 495 unit 4).
+async fn assert_corrections(db: &Db, cursor: i64, tender: i64, rows: u64, what: &str) {
+    let got = text_of(
+        db,
+        &format!(
+            "SELECT group_concat(r, ';') FROM (SELECT entity_kind||'|'||op||'|'||coalesce(version_seq, -1) AS r \
+               FROM changes WHERE cursor > {cursor} ORDER BY cursor)"
+        ),
+    )
+    .await;
+    let mut want = vec!["tender|changed|-1".to_owned()];
+    want.extend((1..rows).map(|_| "lot|changed|-1".to_owned()));
+    assert_eq!(got, want.join(";"), "{what}: the correction rows");
+    let first = int_of(db, &format!("SELECT entity_id FROM changes WHERE cursor > {cursor} ORDER BY cursor LIMIT 1")).await;
+    assert_eq!(first, tender, "{what}: rule T names the corrected Tender");
+    let lots = text_of(
+        db,
+        &format!(
+            "SELECT group_concat(entity_id, ',') FROM (SELECT entity_id FROM changes WHERE cursor > {cursor} \
+               AND entity_kind = 'lot' ORDER BY cursor)"
+        ),
+    )
+    .await;
+    let ids: Vec<i64> = lots.split(',').filter(|s| !s.is_empty()).map(|s| s.parse().expect("lot id")).collect();
+    let mut sorted = ids.clone();
+    sorted.sort_unstable();
+    assert_eq!(ids, sorted, "{what}: rule L's lots come in id order");
+}
+
+/// [`full_digest`] without the rowids and the change log: what `On` must agree with `Off` on.
+/// `On` keeps identical tables in place and re-inserts only differing ones (so their rowids
+/// move, but their order within a version does not), and it announces corrections instead
+/// of replaying history.
+async fn content_digest(db: &Db) -> String {
+    let leaves = text_of(
+        db,
+        "SELECT group_concat(name, ',') FROM (SELECT name FROM sqlite_master WHERE type = 'table' \
+           AND (name = 'tender_versions' OR name GLOB 'tender_version_*') ORDER BY name)",
+    )
+    .await;
+    let mut out = String::new();
+    for table in leaves.split(',') {
+        let digest = table_digest(db, table, "tender_id, seq, rowid", &[]).await;
+        // Drop each row's leading `quote(rowid)|`.
+        let stripped: Vec<String> = digest
+            .lines()
+            .map(|line| if line.starts_with("---") { line.to_owned() } else { line.splitn(2, '|').nth(1).unwrap_or("").to_owned() })
+            .collect();
+        out.push_str(&stripped.join("\n"));
+        out.push('\n');
+    }
+    out.push_str(&table_digest(db, "tenders", "id", &["created_at"]).await);
+    for table in ["lots", "lot_results", "bids", "contracts"] {
+        out.push_str(&table_digest(db, table, "id", &[]).await);
+    }
+    out
 }

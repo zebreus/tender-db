@@ -637,6 +637,14 @@ fn fold_writer_output_holds_in_shadow_and_its_stale_refold_verifies() {
     on_a_big_stack(store::RefoldCompare::Shadow);
 }
 
+/// Issue 495 unit 4: with the compare on (the default), phases 1-4 write the golden (none of
+/// them is stale), and the epoch-stale refold of unchanged projections writes nothing at all:
+/// the database after phase 5 is byte-for-byte the database after phase 4.
+#[test]
+fn fold_writer_stale_refold_with_the_compare_on_writes_nothing() {
+    on_a_big_stack(store::RefoldCompare::On);
+}
+
 fn on_a_big_stack(compare: store::RefoldCompare) {
     std::thread::Builder::new()
         .stack_size(64 * 1024 * 1024)
@@ -705,7 +713,25 @@ async fn run(compare: store::RefoldCompare) {
         "dropping the seq-23 result notice sweeps its lot result, bid, contract and lot: {a:?}"
     );
 
+    let before_refold = full_digest(&db).await;
     db.set_projection_epoch_for_test(-1).await.expect("age every Tender");
+    if compare == store::RefoldCompare::On {
+        let a = db.apply_tenders(&with(mega_chain(shrunk())), 1_800_000_005, false).await.expect("stale refold");
+        assert_eq!(
+            (a.tenders_verified, a.tenders_corrected, a.versions_written, a.versions_removed, a.leaf_rows, a.changes),
+            (3, 0, 0, 0, 0, 0),
+            "the stale refold of unchanged projections writes nothing: {a:?}"
+        );
+        assert_eq!(full_digest(&db).await, before_refold, "phase 5 left the database exactly as phase 4 did");
+        let golden = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/golden/fold_writer.snapshot"))
+            .expect("the golden");
+        let phase5 = golden.find("=== 5:").expect("the golden's phase 5");
+        assert_eq!(got, golden[..phase5], "phases 1-4 write the golden with the compare on");
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        return;
+    }
     let a = phase(&db, &mut got, "5: epoch-stale refold (keep = 0)", &with(mega_chain(shrunk())), 1_800_000_005).await;
     assert!(
         a.tenders_written == 3 && a.versions_written == 34 && a.versions_removed == a.versions_written && a.entities_swept == 0,

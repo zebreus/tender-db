@@ -1403,32 +1403,34 @@ impl LeafTable {
     }
 }
 
-/// ADR-0017 D1's compare (issue 495 unit 3): what a stale Tender's rewrite does with the rows
-/// it is about to replace. Read from `TENDER_REFOLD_COMPARE` at open, `off` unless set;
+/// ADR-0017 D1's compare (issue 495): what a stale Tender's rewrite does with the rows it is
+/// about to replace. Read from `TENDER_REFOLD_COMPARE` at open, `on` unless set;
 /// [`Db::set_refold_compare`] overrides it.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum RefoldCompare {
-    /// Rewrite every version and compare nothing: the fold as it was before issue 495.
-    #[default]
+    /// Rewrite every version and compare nothing: the fold as it was before issue 495, and
+    /// the kill switch (ADR-0017 keeps it for at least one release).
     Off,
     /// Rewrite exactly as `Off` does, but first compare what each version would insert
-    /// against what is stored, and count what the flip (unit 4) would skip, rewrite and
-    /// announce ([`Applied::compare_line`]).
+    /// against what is stored, and count what `On` would skip, rewrite and announce
+    /// ([`Applied::compare_line`]). Issue 495 unit 3's measurement mode.
     Shadow,
+    /// Compare, then rewrite only what differs and announce it with ADR-0017 D3's correction
+    /// rows instead of replaying the chain's history (issue 495 unit 4).
+    #[default]
+    On,
 }
 
 impl RefoldCompare {
-    /// `TENDER_REFOLD_COMPARE`'s value. Anything but `shadow` is `off`, and says so unless it
-    /// is empty or `off`: `on` arrives with issue 495 unit 4.
+    /// `TENDER_REFOLD_COMPARE`'s value: unset or empty is `on`. Anything but `on`, `shadow`
+    /// or `off` is `off`, and says so: an unreadable kill switch errs towards the old path.
     pub fn parse(value: Option<&str>) -> Self {
         match value.map(str::trim) {
-            None | Some("" | "off") => Self::Off,
+            None | Some("" | "on") => Self::On,
             Some("shadow") => Self::Shadow,
+            Some("off") => Self::Off,
             Some(other) => {
-                eprintln!(
-                    "[store] TENDER_REFOLD_COMPARE={other:?} is not off|shadow (on arrives with issue 495 \
-                     unit 4); the compare stays off"
-                );
+                eprintln!("[store] TENDER_REFOLD_COMPARE={other:?} is not on|shadow|off; the compare is off");
                 Self::Off
             }
         }
@@ -1531,7 +1533,11 @@ impl CompareTally {
     /// seq (`stored`, `None` past the stored chain). Positional, count first: a table whose
     /// rows are the same values in the same order is skipped, any other is rewritten whole,
     /// so relative row order always matches a full rewrite (ADR-0017 D1).
-    fn version(&mut self, fresh: &Pending, stored: Option<&StoredVersion>, is_head: bool) {
+    ///
+    /// Returns what `On` writes for this version: per leaf table whether it is (re)written,
+    /// and whether the whole version is (a differing `tender_versions` row, or no stored
+    /// version at this seq).
+    fn version(&mut self, fresh: &Pending, stored: Option<&StoredVersion>, is_head: bool) -> Rewrite {
         let Some(stored) = stored else {
             self.appended = true;
             for table in LEAF_TABLES {
@@ -1540,7 +1546,7 @@ impl CompareTally {
                     self.rewrite(table.leaf, rows);
                 }
             }
-            return;
+            return Rewrite { tables: [true; LEAF_COUNT], whole: true };
         };
         let equal: [bool; LEAF_COUNT] = std::array::from_fn(|i| {
             let (old, new) = (&stored.rows[i], &fresh.rows[i]);
@@ -1549,6 +1555,7 @@ impl CompareTally {
         // A differing `tender_versions` row rewrites the whole version (ADR-0017 D1.4): its
         // child rows go with the FK parent.
         let whole = !equal[Leaf::Versions as usize];
+        let mut tables = [false; LEAF_COUNT];
         let mut via: Option<LotsVia> = None;
         for table in LEAF_TABLES {
             let i = table.leaf as usize;
@@ -1573,6 +1580,7 @@ impl CompareTally {
                 self.rows_skipped += fresh_rows;
                 continue;
             }
+            tables[i] = true;
             self.rewrite(table.leaf, fresh_rows);
             if equal[i] {
                 continue; // rewritten only because the version row differs: no lot of its own moved
@@ -1592,6 +1600,7 @@ impl CompareTally {
                 via.lots_of(table, row, &mut self.lots);
             }
         }
+        Rewrite { tables, whole }
     }
 
     fn rewrite(&mut self, leaf: Leaf, rows: u64) {
@@ -1599,6 +1608,21 @@ impl CompareTally {
         self.rewritten_by_leaf[leaf as usize] += 1;
         self.rows_rewritten += rows;
     }
+}
+
+/// Whether a compared stale Tender's chain changed shape (issue 495 unit 4): versions past the
+/// compared prefix were written, or the stored chain was cut back.
+fn tally_moved_chain(compared: usize, stored: usize, fresh: usize) -> bool {
+    compared < stored || compared < fresh
+}
+
+/// What `RefoldCompare::On` writes for one compared version (issue 495 unit 4).
+struct Rewrite {
+    /// Per leaf table, in [`LEAF_TABLES`] order: deleted for this version and re-inserted
+    /// from the fresh rows. A table holding no rows on either side is never marked.
+    tables: [bool; LEAF_COUNT],
+    /// The whole version is rewritten: `delete_version`, then every fresh row.
+    whole: bool,
 }
 
 /// The rows of `old` and `new` (row-major, `n` values per row) that the other side does not
@@ -15747,6 +15771,7 @@ impl Db {
         let v = match mode {
             RefoldCompare::Off => 0,
             RefoldCompare::Shadow => 1,
+            RefoldCompare::On => 2,
         };
         self.refold_compare.store(v, std::sync::atomic::Ordering::Relaxed);
     }
@@ -15754,6 +15779,7 @@ impl Db {
     pub fn refold_compare(&self) -> RefoldCompare {
         match self.refold_compare.load(std::sync::atomic::Ordering::Relaxed) {
             1 => RefoldCompare::Shadow,
+            2 => RefoldCompare::On,
             _ => RefoldCompare::Off,
         }
     }
@@ -15874,9 +15900,9 @@ impl Db {
         // Issue 495 unit 2: the identity cache is per Tender. Reset FIRST, so no error
         // path of an earlier Tender can leave its ids behind.
         stmts.ids.reset();
-        if let Some(shadow) = stmts.shadow.as_mut() {
-            shadow.minted_lots.clear();
-            shadow.swept_lots.clear();
+        if let Some(state) = stmts.compare.as_mut() {
+            state.minted_lots.clear();
+            state.swept_lots.clear();
         }
         let mut applied = Applied::default();
         let (tender_id, created, stored_epoch, stored_identity) =
@@ -15957,7 +15983,17 @@ impl Db {
         //   kept-prefix read of issue 279 runs only when keep > 0, which a stale Tender
         //   never is.
         // `off_and_shadow_write_the_same_for_every_stale_chain_shape` pins both.
-        let shadow = stale && !stored.is_empty() && stmts.shadow.is_some();
+        //
+        // Issue 495 unit 4: `On` ACTS on the compare. A prefix version is read, re-derived
+        // into `scratch` and compared, then only what differs is written: each differing
+        // table is deleted for that version and its fresh rows go to `pending`; a differing
+        // `tender_versions` row rewrites the whole version; identical tables are not touched,
+        // so their rows and rowids stay. The prefix's history is not replayed on the change
+        // feed: a corrected Tender gets ADR-0017 D3's seq-less correction rows instead, after
+        // the sweep. Versions past the prefix are written and announced as today.
+        let shadow = stale && !stored.is_empty() && stmts.compare.is_some();
+        let acting = shadow && stmts.compare.as_ref().is_some_and(|c| c.mode == RefoldCompare::On);
+        let mut chain_moved = false;
         debug_assert!(!shadow || keep == 0, "a stale Tender keeps nothing");
         let compared = if shadow {
             stored.iter().zip(&p.versions).take_while(|(a, b)| **a == b.caused_by_notice_id).count()
@@ -15993,28 +16029,46 @@ impl Db {
                 applied.compare_rows += read;
                 applied.compare_versions += 1;
                 applied.compare_nanos += started.elapsed().as_nanos() as u64;
-                Self::delete_version(stmts, tender_id, seq).await?;
-                applied.versions_removed += 1;
+                if !acting {
+                    Self::delete_version(stmts, tender_id, seq).await?;
+                    applied.versions_removed += 1;
+                }
                 Some(stored_rows)
             } else {
                 None
             };
             // In shadow each version is written into `scratch`, compared, and moved on into
-            // `pending` in push order, so the batch flushes exactly the same rows.
+            // `pending` in push order, so the batch flushes exactly the same rows. `On` moves
+            // only what differs.
             let target: &mut Pending = if shadow { &mut scratch } else { &mut *pending };
             self.write_version(conn, tender_id, seq, version, &partners, stmts, target, &mut written).await?;
+            let mut wrote = true;
             if shadow {
                 let started = std::time::Instant::now();
-                tally.version(&scratch, prior.as_ref(), i + 1 == p.versions.len());
-                scratch.move_into(pending);
+                let plan = tally.version(&scratch, prior.as_ref(), i + 1 == p.versions.len());
                 applied.compare_nanos += started.elapsed().as_nanos() as u64;
+                if acting && prior.is_some() {
+                    wrote = Self::write_what_differs(stmts, tender_id, seq, &plan, &mut scratch, pending).await?;
+                    if plan.whole {
+                        applied.versions_removed += 1;
+                    }
+                    chain_moved |= plan.whole;
+                } else {
+                    scratch.move_into(pending);
+                }
             }
-            applied.versions_written += 1;
-            applied.changes += self
-                .append_version_changes(conn, tender_id, seq, version, previous, now, stmts)
-                .await?;
+            if wrote {
+                applied.versions_written += 1;
+            }
+            // `On` replays no history for the prefix (ADR-0017 D3): its corrections come after
+            // the sweep. Every other version is announced by its transition rows, as today.
+            if !(acting && i < compared) {
+                applied.changes += self
+                    .append_version_changes(conn, tender_id, seq, version, previous, now, stmts)
+                    .await?;
+            }
             if shadow && i + 1 == compared {
-                tally.prefix_minted = stmts.shadow.as_ref().map_or(0, |s| s.minted_lots.len());
+                tally.prefix_minted = stmts.compare.as_ref().map_or(0, |s| s.minted_lots.len());
             }
         }
 
@@ -16073,22 +16127,40 @@ impl Db {
             };
             // An appended head is announced by its transition rows; otherwise a head column
             // that moved while every version compared identical is a correction.
-            if shadow && !tally.appended && stored_identity.as_ref().map(|s| &s.head) != Some(&fresh) {
+            let head_equal = stored_identity.as_ref().map(|s| &s.head) == Some(&fresh);
+            if shadow && !tally.appended && !head_equal {
                 tally.differs = true;
                 tally.head_differs = true;
             }
-            stmts
-                .head_update
-                .execute((
-                    opt_int(fresh.seq),
-                    opt_int(fresh.published_at),
-                    Value::Integer(PROJECTION_EPOCH),
-                    opt_int(fresh.deadline),
-                    opt_text(fresh.title.as_deref()),
-                    opt_int(fresh.value_eur_cents),
-                    Value::Integer(tender_id),
-                ))
-                .await?;
+            if acting && head_equal {
+                // ADR-0017 D1.5: every head column is already right; stamp the epoch alone,
+                // so the three head indexes are not churned.
+                let state = stmts.compare.as_mut().expect("compare statements");
+                state
+                    .epoch_update
+                    .execute((Value::Integer(PROJECTION_EPOCH), Value::Integer(tender_id)))
+                    .await?;
+            } else {
+                chain_moved = true;
+                stmts
+                    .head_update
+                    .execute((
+                        opt_int(fresh.seq),
+                        opt_int(fresh.published_at),
+                        Value::Integer(PROJECTION_EPOCH),
+                        opt_int(fresh.deadline),
+                        opt_text(fresh.title.as_deref()),
+                        opt_int(fresh.value_eur_cents),
+                        Value::Integer(tender_id),
+                    ))
+                    .await?;
+            }
+        } else if acting {
+            // An empty new chain keeps the head UPDATE skipped (issue 27's NULL case), but
+            // the epoch is still stamped: it is the completeness marker (ADR-0017 D1.6).
+            let state = stmts.compare.as_mut().expect("compare statements");
+            state.epoch_update.execute((Value::Integer(PROJECTION_EPOCH), Value::Integer(tender_id))).await?;
+            chain_moved = true;
         }
         if shadow {
             // A chain cut back with nothing written past the prefix moves the head back: a
@@ -16105,12 +16177,61 @@ impl Db {
                 tally.differs = true;
                 tally.head_differs = true;
             }
-            let shadow = stmts.shadow.as_ref().expect("shadow statements");
-            Self::count_compare(&mut applied, tally, shadow);
+            let differs = tally.differs;
+            let state = stmts.compare.as_ref().expect("compare statements");
+            let lots = Self::count_compare(&mut applied, tally, state);
+            if acting && differs {
+                // ADR-0017 D3: rule T, then rule L's lots in id order, all seq-less, after the
+                // sweep's `removed` rows. Correction rows for lot_result, bid and contract are
+                // not written: they are not public kinds.
+                stmts.append_change("tender", tender_id, None, "changed", now).await?;
+                for lot in &lots {
+                    stmts.append_change("lot", *lot, None, "changed", now).await?;
+                }
+                applied.changes += 1 + lots.len() as u64;
+            }
+            if acting {
+                // Past-prefix versions, a cut chain or a whole-version rewrite moved what the
+                // head points at; otherwise the head is untouched and needs no re-check.
+                chain_moved |= tally_moved_chain(compared, stored.len(), p.versions.len());
+                return Ok((applied, chain_moved.then_some(tender_id)));
+            }
         }
         // The chain changed, so this run owns this Tender's head pointer — the
         // batch checks it before committing (see `assert_heads_match`).
         Ok((applied, Some(tender_id)))
+    }
+
+    /// Issue 495 unit 4: write one compared version's differing tables (the [`Rewrite`]
+    /// plan): `delete_version` and every fresh row for a whole-version rewrite, otherwise a
+    /// prepared per-table DELETE and that table's fresh rows. Identical tables' fresh rows
+    /// are dropped. The currency present-set is always carried over (ADR-0017 D1.6). Returns
+    /// whether anything of the version was written.
+    async fn write_what_differs(
+        stmts: &mut TenderInserts,
+        tender_id: i64,
+        seq: i64,
+        plan: &Rewrite,
+        scratch: &mut Pending,
+        pending: &mut Pending,
+    ) -> turso::Result<bool> {
+        if plan.whole {
+            Self::delete_version(stmts, tender_id, seq).await?;
+            scratch.move_into(pending);
+            return Ok(true);
+        }
+        let mut wrote = false;
+        for (i, table) in LEAF_TABLES.iter().enumerate() {
+            if plan.tables[i] {
+                stmts.delete[table.leaf as usize].execute((Value::Integer(tender_id), Value::Integer(seq))).await?;
+                pending.rows[i].append(&mut scratch.rows[i]);
+                wrote = true;
+            } else {
+                scratch.rows[i].clear();
+            }
+        }
+        pending.currencies.append(&mut scratch.currencies);
+        Ok(wrote)
     }
 
     /// Issue 27 / task #27. Every Tender this batch rewrote must leave
@@ -16276,10 +16397,10 @@ impl Db {
     /// Issue 495 unit 3: one version's stored leaf rows ([`StoredVersion`]) and how many
     /// there were. The SELECTs carry no ORDER BY; the rows are drained, then sorted by rowid.
     async fn stored_version(stmts: &mut TenderInserts, tender_id: i64, seq: i64) -> turso::Result<(StoredVersion, u64)> {
-        let shadow = stmts.shadow.as_mut().expect("shadow statements");
+        let state = stmts.compare.as_mut().expect("compare statements");
         let mut out = StoredVersion::default();
         let mut read = 0u64;
-        for (table, statement) in LEAF_TABLES.iter().zip(shadow.select.iter_mut()) {
+        for (table, statement) in LEAF_TABLES.iter().zip(state.select.iter_mut()) {
             let n = table.ncols();
             let flat = &mut out.rows[table.leaf as usize];
             let mut rowids: Vec<i64> = Vec::new();
@@ -16309,10 +16430,11 @@ impl Db {
     }
 
     /// Fold one stale Tender's [`CompareTally`] into `applied`: verified when nothing differs,
-    /// otherwise corrected, with ADR-0017 D3's planned correction rows. Rule T is one `tender
+    /// otherwise corrected, with ADR-0017 D3's correction rows. Rule T is one `tender
     /// changed`; rule L is the head version's lots when anything at the head differs, plus the
     /// lots whose own rows differ, plus the lots this fold minted, minus the lots it swept.
-    fn count_compare(applied: &mut Applied, tally: CompareTally, shadow: &ShadowState) {
+    /// Returns rule L's lots, ascending (empty for a verified Tender).
+    fn count_compare(applied: &mut Applied, tally: CompareTally, state: &CompareState) -> BTreeSet<i64> {
         applied.tables_skipped += tally.tables_skipped;
         applied.tables_rewritten += tally.tables_rewritten;
         applied.rows_skipped += tally.rows_skipped;
@@ -16326,18 +16448,19 @@ impl Db {
         // leaf difference (its id is new), so `differs` alone decides.
         if !tally.differs {
             applied.tenders_verified += 1;
-            return;
+            return BTreeSet::new();
         }
         let mut lots = tally.lots;
         if tally.head_differs {
             lots.extend(tally.head_lots);
         }
-        lots.extend(shadow.minted_lots[..tally.prefix_minted.min(shadow.minted_lots.len())].iter().copied());
-        for lot in &shadow.swept_lots {
+        lots.extend(state.minted_lots[..tally.prefix_minted.min(state.minted_lots.len())].iter().copied());
+        for lot in &state.swept_lots {
             lots.remove(lot);
         }
         applied.tenders_corrected += 1;
         applied.correction_rows_planned += 1 + lots.len() as u64;
+        lots
     }
 
     /// One version's rows out of every leaf table, through the prepared handles, in
@@ -16463,9 +16586,9 @@ impl Db {
                 )
                 .await?;
                 if table == "lots"
-                    && let Some(shadow) = stmts.shadow.as_mut()
+                    && let Some(state) = stmts.compare.as_mut()
                 {
-                    shadow.swept_lots.push(id);
+                    state.swept_lots.push(id);
                 }
                 stmts.append_change(kind, id, None, "removed", now).await?;
                 swept += 1;
@@ -30232,8 +30355,8 @@ impl Db {
             None => {
                 stmts.lots.execute((Value::Integer(tender_id), t(key))).await?;
                 let id = last_insert_rowid(conn).await?;
-                if let Some(shadow) = stmts.shadow.as_mut() {
-                    shadow.minted_lots.push(id);
+                if let Some(state) = stmts.compare.as_mut() {
+                    state.minted_lots.push(id);
                 }
                 id
             }
@@ -31901,16 +32024,21 @@ struct TenderInserts {
     /// The current Tender's entity ids, so a long chain resolves each lot or result
     /// once instead of once per version (and again in its change diff).
     ids: IdentityCache,
-    /// [`RefoldCompare::Shadow`]'s compare reads and per-Tender sets; `None` with the
-    /// compare off.
-    shadow: Option<ShadowState>,
+    /// The refold compare's reads and per-Tender sets ([`RefoldCompare::Shadow`] or
+    /// [`RefoldCompare::On`]); `None` with the compare off.
+    compare: Option<CompareState>,
 }
 
-/// The shadow compare's statements and per-Tender bookkeeping (issue 495 unit 3).
-struct ShadowState {
+/// The refold compare's statements and per-Tender bookkeeping (issue 495 units 3 and 4).
+struct CompareState {
+    /// `Shadow` (compare, count, rewrite everything) or `On` (rewrite only what differs).
+    mode: RefoldCompare,
     /// One version's stored rows of each leaf table, rowid first, in [`LEAF_TABLES`] order
     /// ([`LeafTable::compare_select_sql`]).
     select: Vec<Statement>,
+    /// `On`'s head write when every head column compared equal: the epoch alone, so the
+    /// three head indexes are not churned (ADR-0017 D1.5).
+    epoch_update: Statement,
     /// The lots `lot_identity` minted and the lots the orphan sweep deleted for the current
     /// Tender: rule L's added and removed sets. Cleared per Tender.
     minted_lots: Vec<i64>,
@@ -31976,18 +32104,19 @@ impl TenderInserts {
         for table in LEAF_TABLES {
             delete.push(conn.prepare(&table.delete_version_sql()).await?);
         }
-        let shadow = match compare {
+        let compare = match compare {
             RefoldCompare::Off => None,
-            RefoldCompare::Shadow => {
+            mode @ (RefoldCompare::Shadow | RefoldCompare::On) => {
                 let mut select = Vec::with_capacity(LEAF_COUNT);
                 for table in LEAF_TABLES {
                     select.push(conn.prepare(&table.compare_select_sql()).await?);
                 }
-                Some(ShadowState { select, minted_lots: Vec::new(), swept_lots: Vec::new() })
+                let epoch_update = conn.prepare("UPDATE tenders SET projection_epoch = ? WHERE id = ?").await?;
+                Some(CompareState { mode, select, epoch_update, minted_lots: Vec::new(), swept_lots: Vec::new() })
             }
         };
         Ok(Box::new(Self {
-            shadow,
+            compare,
             delete,
             stored_chain: conn
                 .prepare("SELECT caused_by_notice_id FROM tender_versions WHERE tender_id = ? ORDER BY seq")
