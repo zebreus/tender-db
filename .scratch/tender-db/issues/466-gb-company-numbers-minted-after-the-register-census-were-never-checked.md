@@ -1,6 +1,26 @@
 # 466 — GB company numbers minted after 452's register census were never checked, and the census cannot be re-run
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the tooling: commit the snapshot join-and-classify script beside `page_orgs.sh`, prove that it reproduces `counts.json` from 452's own inputs, and only then run it over the orgs above the census watermark (org id 31,590,759) once chunk 9's project 1809 has landed.
+Status: ready-for-agent — UNIT 1 DONE 2026-10-10 (tooling). NEXT: unit 3, the incremental run over the orgs above
+the watermark against the 2026-10-01 snapshot; unit 2, decide the 83 `related` numbers.
+- **Unit 1.** `452-census/census.py` is committed. It imports 448's matcher (`core`, `matches`) from
+  `448-campaign/altid_cases.py`. Its inputs are committed beside it: `gb-orgs-2026-09-30.jsonl` (the box's
+  `/root/gb-orgs.jsonl`, 58,938 rows) and `watermark.json` (`max_org_id` 31,590,759, snapshot 2026-09-01). Both
+  snapshots, 2026-09-01 and 2026-10-01, are in the box's `/data/archive/companies-house/`. The script runs on the box
+  in 18 s.
+  - **Reconstructed and pinned.** Over the 2026-09-01 snapshot and the 09-30 input, the script reproduces
+    `counts.json` exactly: 28,545 / 1,303 / 1,009, from 30,857 orgs and 30,844 numbers. Its 1,009 absent rows equal
+    `absent-from-live-register-2026-09-01.json` row for row.
+  - The company-number shape had to be recovered from the totals: `GBCOH` plus any 8 of [A-Z0-9], or a bare 8 digits,
+    or a bare 2 letters + 6 digits. It is the only tried rule that gives both 30,857 and 30,844. It also admits the
+    `0C415849` and `X338EBHC` 452 named.
+  - **Live-name-disjoint: 355 against 452's 354.** 452 left no rule, so its split was reconstructed by sweeping
+    variants. The best has 2 more and 1 fewer:
+    - extra: Reef Cleaning Solutions under GSO LIMITED, and Milestone Infrastructure under M GROUP (SERVICES). Their
+      heads share nothing with the register, so 452 most likely judged them on mention names, which the census input
+      does not carry;
+    - missing: DRPG (UK) under DRP (UK), a 3-letter prefix the rule counts as a spelling.
+    - For a list of review candidates this is close enough, and the rule is now written down (`related_spelling`).
+Was: ready-for-agent — filed 2026-10-01
 Kind: data quality (identifiers)
 Relates to: 452 (the census and its 685 verdicts), 453 (the rekey arm, `wrong` verdicts only), 454 (name-denial review),
 342 (the FTS backfill chunks that minted the new orgs), 448 (the matcher and `ch_fetch.py`; its delta review covers

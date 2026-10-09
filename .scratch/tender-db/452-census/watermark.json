@@ -1,0 +1,23 @@
+{
+ "max_org_id": 31590759,
+ "orgs_input": "gb-orgs-2026-09-30.jsonl",
+ "rows": 58938,
+ "snapshot": "BasicCompanyDataAsOneFile-2026-09-01.zip",
+ "snapshot_path_on_box": "/data/archive/companies-house/",
+ "census_commit": "9f68699",
+ "cohort": "452-census-2026-09-30",
+ "reproduced_2026_10_10": {
+  "orgs": 30857,
+  "numbers": 30844,
+  "match": 28545,
+  "mismatch": 1303,
+  "absent": 1009,
+  "absent_rows_identical": true,
+  "disjoint": 355,
+  "disjoint_vs_452": {
+   "452": 354,
+   "extra": 2,
+   "missing": 1
+  }
+ }
+}
