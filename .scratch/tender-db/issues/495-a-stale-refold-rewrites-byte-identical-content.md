@@ -63,9 +63,23 @@ Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (the shadow compare, `TENDER
 - **The daily-fold timing against 2075, unit 2's record.** Daily project 2095 (2026-10-09, `9724ce4`, compare off)
   took **132 s for 5,336 notices** (5,536 Tenders, 6,049 versions; phase 2 fold + apply 45.1 s). 2075 (2026-10-08,
   before unit 2) took 271 s for 5,395 notices: **about 2.05× faster** for the same size of delta.
-- UNIT 4 BUILT 2026-10-09 (`d4f5558`, `a9534d8`, gate green): `RefoldCompare::On` is the default, and ADR-0017 is
-  ACCEPTED. NEXT: the adversarial review (`wf_2d3e6fbc-68f`), then deploy in a queue gap and watch the next
-  stale fold's counts line.
+- **UNIT 4 DONE: DEPLOYED 2026-10-09 ~08:45 UTC (`74cec22`, gate green).** `RefoldCompare::On` is the default and
+  ADR-0017 is ACCEPTED (D1–D4 now, D5 with unit 5).
+  - Built in `d4f5558` and `a9534d8`, with review fixes in `74cec22`. The review (`wf_2d3e6fbc-68f`) confirmed two
+    feed under-deliveries, both fixed and pinned by `an_on_refold_announces_a_chain_that_moved_past_its_prefix`,
+    which fails without the fix:
+    - stored versions dropped uncompared now get a head correction whose rule L is every surviving lot;
+    - a differing prefix with versions appended past it now announces every lot of the new head.
+  - The tests the refusal hid now run On explicitly. The issue-99 epoch test is pinned Off, with an On twin.
+  - Validated on prod: `refold eforms:eforms-de-1.0` (job 2098, 3 s). 22 stale Tenders, **22 verified, 0
+    corrected, 0 versions written**, 832 tables and 4,624 rows identical, **0 correction rows**; the change cursor
+    stayed at 928,105,894. Off would have replayed 107 versions' history.
+  - Review minors left open, recorded rather than fixed:
+    - rule L can name a lot minted by a result or bid that no lot row serves (over-delivery, harmless);
+    - a silent refusal is one stderr line per process, and the job row does not say which mode ran;
+    - the stop rule cannot catch a false "identical", because shadow and on share the compare.
+- NEXT: unit 5 (D5, in-place walks announce; the R2 template); unit 6 (measure on the next all-profile refold or
+  the largest scoped one; close if the fold is 3 h or less); unit 7's follow-ups as unit 6 decides.
 - Was: UNIT 2 DONE AND DEPLOYED 2026-10-08 ~22:20 UTC (`79b1212`): A1/A2 goldens, B1 descriptor, B2 leaf-indexed Pending + moved values, B3 prepared DELETEs/stored chain/change INSERT, B4 per-Tender identity cache (adversarially reviewed: no refutation; its one hardening point, a reset after the sweep, landed). Every commit byte-identical against the goldens. NEXT: (1) read the next daily fold's time against 2075's 271 s (5,395 notices) and record it here; (2) unit 3, the compare engine in shadow mode (the plan is in the "Design decision" section; LEAF_TABLES/compare_select_sql are ready for it). Was: ready-for-agent — UNIT 2 commits A1/A2 (goldens), B1 (descriptor), B2 (leaf-indexed Pending, moved values), B3 (prepared DELETEs / stored chain / change INSERT) DEPLOYED 2026-10-08 21:3x UTC (`fc1b3dc`), all byte-identical against the goldens. Baseline for the timing record: daily project 2075 (2026-10-08) took 271 s for 5,395 notices → 5,245 tenders written. NEXT: B4 (the per-Tender identity cache, plan step 9; review it adversarially before deploying), then read the next daily fold's time against 2075. Was: ready-for-agent — UNIT 1 DESIGNED 2026-10-08 (`wf_21089c8e-de5`: three designs, a judge that verified
 their claims against the code and refuted the ones that did not hold). Decision: option (b), compare with the
 stored rows at version × table grain, plus "changed versus stored" feed rows. Recorded as
