@@ -3471,6 +3471,9 @@ pub struct ScalePartners<'a> {
     head_lot_fields: std::collections::HashMap<(&'a str, &'a str), std::collections::BTreeMap<&'a str, i64>>,
     /// Issue 505: how many Lots (kind `Lot`) the head version names.
     head_lot_count: usize,
+    /// Issue 505: each counted lot's contribution to [`Self::head_lot_sums`], by (lot key,
+    /// currency), so the residual rule can judge a total with the tested lot replaced.
+    head_lot_max: std::collections::HashMap<(&'a str, &'a str), i64>,
     /// Every partner candidate (currency, cents) of the chain above the floor.
     figures: std::collections::HashSet<(&'a str, i64)>,
     /// Issue 492: per partner figure, whether EVERY occurrence in the chain so far is a
@@ -3503,6 +3506,7 @@ impl<'a> ScalePartners<'a> {
             head_procedure: Vec::new(),
             head_lot_fields: Default::default(),
             head_lot_count: 0,
+            head_lot_max: Default::default(),
             figures: Default::default(),
             lot_only: Default::default(),
             head: Default::default(),
@@ -3651,10 +3655,11 @@ impl<'a> ScalePartners<'a> {
         }
         self.head_lots = keys.len();
         self.head_lot_sums.clear();
-        for ((_, currency), cents) in per_lot {
+        for (&(_, currency), &cents) in &per_lot {
             let sum = self.head_lot_sums.entry(currency).or_insert(0);
             *sum = sum.saturating_add(cents);
         }
+        self.head_lot_max = per_lot;
         // Issue 505: each Lot's figure per field, for the residual rule.
         self.head_lot_count = head.lots.iter().filter(|l| l.kind == "Lot").count();
         self.head_lot_fields.clear();
@@ -3744,10 +3749,13 @@ impl<'a> ScalePartners<'a> {
     /// only ever a lot figure, and the head's lot figures in the currency sum to between
     /// F / 10 and F. On the 56 adjudicated EUR 1-10 bn heads this kept all nine genuine
     /// frameworks (lots summing to between 1x and 6.1x below F) and none of the 45 slips.
-    fn framework_total(&self, currency: &str, cents: i64, partner: i64) -> bool {
+    ///
+    /// `lot_sum` replaces the head's lot sum in the currency when given (issue 505's
+    /// residual rule judges a total with the lot under test at its residual).
+    fn framework_total(&self, currency: &str, cents: i64, partner: i64, lot_sum: Option<i64>) -> bool {
         self.head_lots >= 2
             && self.lot_only.get(&(currency, partner)).copied().unwrap_or(false)
-            && self.head_lot_sums.get(currency).is_some_and(|&sum| sum >= cents / 10 && sum <= cents)
+            && lot_sum.or_else(|| self.head_lot_sums.get(currency).copied()).is_some_and(|sum| sum >= cents / 10 && sum <= cents)
     }
 
     /// Issue 492's sibling-lot exemption for a x100 figure of the lot `key`, worth
@@ -3768,17 +3776,18 @@ impl<'a> ScalePartners<'a> {
                 .and_then(|keys| keys.as_ref())
                 .is_some_and(|keys| !keys.is_empty() && !keys.contains(key))
             && self.head_procedure.iter().any(|&(field, c, procedure)| {
-                c == currency && procedure >= cents && self.admits_procedure(field, c, procedure, cents, eur_cents)
+                c == currency && procedure >= cents && self.admits_procedure(field, c, procedure, cents, eur_cents, None)
             })
     }
 
     /// Whether the head election admits the procedure figure `procedure` (field `field`,
     /// currency `currency`): not over [`IMPLAUSIBLE_EUR_CENTS`] and not refused. Its EUR
     /// value is `eur_cents` (the worth of a figure of `cents` in the same currency and
-    /// version) scaled by the cents ratio, since the same rate converts both.
-    fn admits_procedure(&self, field: &str, currency: &str, procedure: i64, cents: i64, eur_cents: i64) -> bool {
+    /// version) scaled by the cents ratio, since the same rate converts both. `lot_sum`
+    /// overrides the lot sum its framework exemption reads (see [`Self::framework_total`]).
+    fn admits_procedure(&self, field: &str, currency: &str, procedure: i64, cents: i64, eur_cents: i64, lot_sum: Option<i64>) -> bool {
         let eur = (i128::from(eur_cents) * i128::from(procedure) / i128::from(cents)).min(i128::from(i64::MAX)) as i64;
-        eur <= IMPLAUSIBLE_EUR_CENTS && !self.refuses_amount(field, currency, procedure, eur, FigureScope::Procedure)
+        eur <= IMPLAUSIBLE_EUR_CENTS && !self.refuses(field, currency, procedure, eur, FigureScope::Procedure, lot_sum)
     }
 
     /// Issue 505's residual rule: a figure of the Lot `key` (field `field`, currency
@@ -3792,21 +3801,63 @@ impl<'a> ScalePartners<'a> {
     /// their procedure figure (18 slips, 5 genuine): no ratio separated them, and this
     /// shape alone had no false positive. Run over every version holding a stored lot value
     /// of EUR 1 bn or more (1,815 versions), it fires on 5 Tenders, all slips.
+    ///
+    /// Bounds (review of the rule): at least one OTHER Lot states a figure in the field and
+    /// currency, so the test stays a sum residual and never becomes a bare "lot = P x 10^k"
+    /// ratio (471 and 492 own those, with their floor and exemptions); the residual is
+    /// above [`SCALE_PARTNER_FLOOR_CENTS`] and at least P / 100 (the five hits sit at 23-60%
+    /// of P), so a rounding remainder vouches for nothing; and k runs 2..=6, the measured
+    /// range of every scale rule so far. P's admission judges its framework exemption with
+    /// this lot at its residual: the slip itself must not push the lot sum past P and so
+    /// refuse the very total that exposes it.
     fn residual_slip(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, key: &str) -> bool {
-        let Some(lots) = self.head_lot_fields.get(&(field, currency)) else {
-            return false;
-        };
-        if self.head_lot_count < 2 || !lots.contains_key(key) {
-            return false;
-        }
-        let siblings: i64 = lots.iter().filter(|(k, _)| **k != key).map(|(_, c)| *c).fold(0i64, i64::saturating_add);
         self.head_procedure.iter().any(|&(f, c, procedure)| {
-            let residual = procedure - siblings;
             f == field
                 && c == currency
-                && residual > 0
-                && (2..=18).any(|k| residual.checked_mul(10i64.pow(k)) == Some(cents))
-                && self.admits_procedure(f, c, procedure, cents, eur_cents)
+                && self.residual_of(f, c, procedure, key, cents).is_some_and(|residual| {
+                    let lot_sum = self.lot_sum_at_residual(c, key, residual);
+                    self.admits_procedure(f, c, procedure, cents, eur_cents, lot_sum)
+                })
+        })
+    }
+
+    /// The residual the procedure figure `procedure` leaves for the Lot `key` after the
+    /// other Lots' figures in `field` and `currency`, when `figure` (a figure of that lot)
+    /// is exactly 10^k times it within [`Self::residual_slip`]'s bounds; `None` otherwise.
+    fn residual_of(&self, field: &str, currency: &str, procedure: i64, key: &str, figure: i64) -> Option<i64> {
+        let lots = self.head_lot_fields.get(&(field, currency))?;
+        if self.head_lot_count < 2 || lots.len() < 2 || !lots.contains_key(key) {
+            return None;
+        }
+        let siblings: i64 = lots.iter().filter(|(k, _)| **k != key).map(|(_, c)| *c).fold(0i64, i64::saturating_add);
+        let residual = procedure - siblings;
+        (residual > SCALE_PARTNER_FLOOR_CENTS
+            && residual >= procedure / 100
+            && (2..=6).any(|k| residual.checked_mul(10i64.pow(k)) == Some(figure)))
+        .then_some(residual)
+    }
+
+    /// The head's lot sum in `currency` with the Lot `key` counted at `residual` instead of
+    /// its own largest figure.
+    fn lot_sum_at_residual(&self, currency: &str, key: &str, residual: i64) -> Option<i64> {
+        self.head_lot_sums.get(currency).map(|&sum| {
+            let own = self.head_lot_max.get(&(key, currency)).copied().unwrap_or(0);
+            sum.saturating_sub(own).saturating_add(residual)
+        })
+    }
+
+    /// For a procedure figure `procedure` (worth `eur_cents`) judged by its framework
+    /// exemption: the lot sum with a Lot the residual rule refuses against it counted at its
+    /// residual, so the head and the lot election agree on what that total is. A slipped lot
+    /// under the EUR 1 bn gate is not refused, so it stays in.
+    fn residual_lot_sum(&self, field: &str, currency: &str, procedure: i64, eur_cents: i64) -> Option<i64> {
+        let lots = self.head_lot_fields.get(&(field, currency))?;
+        lots.iter().find_map(|(&key, &own)| {
+            let own_eur = (i128::from(eur_cents) * i128::from(own) / i128::from(procedure)).min(i128::from(i64::MAX)) as i64;
+            (own_eur >= SCALE_ERROR_MIN_EUR_CENTS)
+                .then(|| self.residual_of(field, currency, procedure, key, own))
+                .flatten()
+                .and_then(|residual| self.lot_sum_at_residual(currency, key, residual))
         })
     }
 
@@ -3817,6 +3868,12 @@ impl<'a> ScalePartners<'a> {
     /// exemption for its `scope`. The ONE predicate: the fold's head and lot
     /// elections both call it.
     pub fn refuses_amount(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, scope: FigureScope<'_>) -> bool {
+        self.refuses(field, currency, cents, eur_cents, scope, None)
+    }
+
+    /// [`Self::refuses_amount`] with an optional override of the lot sum the framework
+    /// exemption reads (issue 505's residual rule; `None` everywhere else).
+    fn refuses(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, scope: FigureScope<'_>, lot_sum: Option<i64>) -> bool {
         if eur_cents < SCALE_ERROR_MIN_EUR_CENTS {
             return false;
         }
@@ -3831,7 +3888,10 @@ impl<'a> ScalePartners<'a> {
             // lot. No corroboration exemption here: in the sample it protected no
             // genuine figure and kept the slips one notice copied into two slots.
             return self.partner_x100(currency, cents).is_some_and(|p| match scope {
-                FigureScope::Procedure => !self.framework_total(currency, cents, p),
+                FigureScope::Procedure => {
+                    let lot_sum = lot_sum.or_else(|| self.residual_lot_sum(field, currency, cents, eur_cents));
+                    !self.framework_total(currency, cents, p, lot_sum)
+                }
                 FigureScope::Lot(Some(key)) => !self.sibling_lot(currency, cents, eur_cents, key, p),
                 FigureScope::Lot(None) | FigureScope::HeadLot(_) => true,
             });
@@ -34256,10 +34316,57 @@ mod tests {
             vec![lot("LOT-1", vec![amt("estimated_value", 60_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 400_000_000)])],
         );
         assert_eq!(lot_value(&small, "LOT-1"), Some(60_000_000_000), "EUR 600 m is under the gate");
-        // A sentinel or withheld sibling is no figure of its lot.
+        // A sentinel or withheld sibling figure in the residual's own field is no figure of
+        // its lot: LOT-3 still counts at GBP 250 m.
         let mut sentinel = essex.clone();
-        sentinel.lots[2].facts.insert(amt("framework_maximum", 9_999_999_999_999));
-        assert_eq!(lot_value(&sentinel, "LOT-1"), None, "a sibling's sentinel in another field changes nothing");
+        sentinel.lots[2].facts.insert(amt("estimated_value", 9_999_999_999_999));
+        sentinel.lots[2].facts.insert(Fact::Amount {
+            field: "estimated_value".into(),
+            cents: 90_000_000_000,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: Some("withheld".into()),
+        });
+        assert_eq!(lot_value(&sentinel, "LOT-1"), None, "a sentinel or withheld sibling does not count");
+
+        // Review of the rule. The slip must not refuse the total that exposes it: here a
+        // sibling sits at exactly P / 100, so P is admitted only by 492's framework exemption,
+        // whose lot sum would include the GBP 60 bn slip. Judged with lot 1 at its residual,
+        // P is a framework total and the slip falls.
+        let circular = version(
+            vec![amt("estimated_value", 100_000_000_000)],
+            vec![
+                lot("LOT-1", vec![amt("estimated_value", 6_000_000_000_000)]),
+                lot("LOT-2", vec![amt("estimated_value", 1_000_000_000)]),
+                lot("LOT-3", vec![amt("estimated_value", 39_000_000_000)]),
+            ],
+        );
+        assert_eq!(lot_value(&circular, "LOT-1"), None, "the slip does not shield itself");
+        assert_eq!(one(&circular), Some(100_000_000_000));
+        // No other Lot states the field: no sum residual, so the rule is silent (a bare
+        // "lot = P x 10^k" ratio is 471's and 492's, with their floor and exemptions). Here
+        // 471 keeps the EUR 1 bn, corroborated by the procedure's framework maximum.
+        let alone = version(
+            vec![amt("estimated_value", 100_000_000), amt("framework_maximum", 100_000_000_000)],
+            vec![lot("LOT-1", vec![amt("estimated_value", 100_000_000_000)]), lot("LOT-2", vec![amt("framework_maximum", 5_000_000)])],
+        );
+        assert_eq!(lot_value(&alone, "LOT-1"), Some(100_000_000_000), "no sibling figure in the field");
+        // A remainder far below the procedure figure vouches for nothing: EUR 1,234,567.89 less
+        // a sibling of EUR 1,233,567.89 leaves EUR 1,000, and EUR 1 bn is exactly 10^6 of it,
+        // but EUR 1,000 is under P / 100. (No other rule touches these figures.) Within the
+        // k <= 6 cap, this relative floor is the one that binds for a lot of EUR 1 bn or more.
+        let crumbs = version(
+            vec![amt("estimated_value", 123_456_789)],
+            vec![lot("LOT-1", vec![amt("estimated_value", 100_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 123_356_789)])],
+        );
+        assert_eq!(lot_value(&crumbs, "LOT-1"), Some(100_000_000_000), "a residual under P / 100 is no residual");
+        // k = 7 is past the measured range: EUR 250 less EUR 150 leaves EUR 100, and EUR 1 bn
+        // is 10^7 of it.
+        let far = version(
+            vec![amt("estimated_value", 25_000)],
+            vec![lot("LOT-1", vec![amt("estimated_value", 100_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 15_000)])],
+        );
+        assert_eq!(lot_value(&far, "LOT-1"), Some(100_000_000_000), "k = 7 is not reached");
     }
 
     /// Issue 378, decided 2026-09-11: a conversion that lands on zero is

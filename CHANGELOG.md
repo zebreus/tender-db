@@ -7,8 +7,8 @@ answers; this file exists for the rare case where one does.
 ## Unreleased (issue 505) — a lot figure that is a scaled residual of its procedure total is refused
 
 A lot's figure of €1 bn or more is no longer served, nor elected as the Tender's `value`, when it is exactly 100×
-(or 1,000×, 10,000×…) what the notice's procedure total leaves after the notice's other lots in the same field and
-currency. Example: a £60 bn lot beside lots of £150 m and £250 m under a £1 bn procedure total. The figure stays in
+(or 1,000×, 10,000×…) what the notice's procedure total leaves after the notice's other lots that state a figure in
+the same field and currency. Example: a £60 bn lot beside lots of £150 m and £250 m under a £1 bn procedure total. The figure stays in
 `amounts`; the affected Tenders are re-folded and announced as corrections.
 
 ## Unreleased (issue 492) — a x100 scale slip is refused unless it is a framework total

@@ -666,7 +666,8 @@ Verify, in order:
 **The residual rule (issue 505, 2026-10-09).** A Lot's figure of €1 bn or more is refused, with no
 partner needed, when it is exactly 10ᵏ (k ≥ 2) times what an admitted procedure figure of its
 version leaves after the OTHER Lots' figures in the same field and currency (`ScalePartners`'
-`residual_slip`). It catches a lot slip whose true value appears nowhere in the chain: 8784848's
+`residual_slip`; at least one other Lot must state that field, the residual must be at least P/100,
+and k ≤ 6; P is judged with the slipped lot at its residual). It catches a lot slip whose true value appears nowhere in the chain: 8784848's
 £60 bn lot 1 is 100× the £600 m its £1 bn procedure leaves after lots of £150 m and £250 m. A ratio
 alone was no signal (23 heads at ≥ 10× adjudicated: 18 slips, 5 genuine, no ratio band separates
 them); this shape had no false positive, and over every version holding a stored lot value of

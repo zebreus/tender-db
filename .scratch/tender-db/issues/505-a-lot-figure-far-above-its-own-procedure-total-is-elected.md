@@ -2,6 +2,16 @@
 
 Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (the residual rule, `ScalePartners::residual_slip`). NEXT: gate,
 review, deploy, drain (`refold-value-band`), re-read the 5 expected Tenders.
+- **Review** `wf_2fa9e2a1-a79` of `78f70f7`: 5 confirmed (all minor), 0 refuted. Fixed:
+  - **Circular admission.** P's admission judged its ×100 framework exemption against a lot sum that included the slip,
+    so a slip beside a sibling at exactly P/100 kept itself. Both elections now count a lot the rule refuses at its
+    residual when judging P (`lot_sum_at_residual`, `residual_lot_sum`).
+  - **No sibling figure.** With no other Lot stating a figure in the field, the rule became a bare "lot = P × 10ᵏ"
+    ratio that overrode 471's corroboration and floor. It now needs at least one sibling figure in the field.
+  - **Bounds.** The residual must be above the partner floor and at least P/100 (the 5 hits sit at 23–60 % of P),
+    and k is capped at 2..=6.
+  - **Test.** The sentinel/withheld pin now sits in the residual's own field.
+  - Pinned: the circular shape, a lone lot, a residual under P/100, and k = 7.
 - **Unit 2, decided** from adjudication `wf_368978c8-198` (two readers per Tender, who agreed on every refuse/keep
   call; `505-lot-over-procedure/adjudication-*`). Of the 23 Tenders at ≥ 10×:
   - Verdicts: 16 LOT_SLIP and 2 BOTH_JUNK (refusing the lot is right), 3 PROCEDURE_JUNK and 2 LOT_GENUINE (refusing
