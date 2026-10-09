@@ -1,6 +1,17 @@
 # 479 — a Tender carries no procedure type (BT-105), in any source: the filter procurement analysis reaches for first is missing
 
-Status: ready-for-agent — UNIT 1 LANDED + REVIEW FIXES 2026-10-05, NOT DEPLOYED, uncommitted (see "Unit 1 — landed" and "Review fixes" below). NEXT: ops/check.sh → commit → deploy → the bounded legacy census (docs/operations.md, "Census before the backfill": PR/PROC code × procedure marker per profile, /v1/sql PK windows, team lead's word per read) → settle the PR 4 gate and any unmapped code's row, and if the table changes, gate + deploy again → `df` → ONE `refold` over every profile (expect=1 first), batched with any other corpus-wide fold change, off the daily tick (~7.5 h full fallback) → read the trailing project's `issue-479` line → the Verify, plus a timed rare code. Was: UNIT 1 LANDED 2026-10-05 (census deferred to the backfill fold — reversed by the review). Was: ready-for-agent — filed 2026-10-01 15:5x UTC from closing 465, which called it "a separate model question … out of scope". Nothing owns it. The first unit is the decision and the census: which code list, which scope (procedure, and whether per lot), how every era maps onto it, and what the backfill costs. Measure before building.
+Status: done — VERIFIED ON PROD 2026-10-09 (hourly audit, live rev `88eb7c5`). The 2026-10-05 line ("NOT DEPLOYED,
+uncommitted") was stale: unit 1 deployed as `f8b776d`, and the all-profile refold 2001→2002 folded it, as did the
+two all-profile refolds after it (2044, 2067). The runbook's Verify list, read on the box:
+- `/v1/tenders/8576017`: `procedure_type: open`, classifications `["open"]`.
+- `/v1/tenders?procedure_type=open&limit=1`: 1 item, `ignored_filters: []`.
+- One per era: TED eForms tender 2 `neg-w-call`; r209 100002-2019 (tender 6438227) `open`; r208 100002-2014 (5173448)
+  `open`; internal-ojs 115165-2008 (3862531) `open`; text-era 100002-2003 (3037956) null (an honest empty); DÖE
+  1542904 null (a free-text label).
+- A rare code, `?procedure_type=innovation&limit=10`: 200 in 0.29 s (the seed path).
+- Every project's counts line carries the `issue-479 procedure type` suffix (job 2106 today: eforms 2551 folded / 0
+  unmapped / 314 none, r209 3874 / 678 / 0, …).
+Was: ready-for-agent — UNIT 1 LANDED + REVIEW FIXES 2026-10-05, NOT DEPLOYED, uncommitted (see "Unit 1 — landed" and "Review fixes" below). NEXT: ops/check.sh → commit → deploy → the bounded legacy census (docs/operations.md, "Census before the backfill": PR/PROC code × procedure marker per profile, /v1/sql PK windows, team lead's word per read) → settle the PR 4 gate and any unmapped code's row, and if the table changes, gate + deploy again → `df` → ONE `refold` over every profile (expect=1 first), batched with any other corpus-wide fold change, off the daily tick (~7.5 h full fallback) → read the trailing project's `issue-479` line → the Verify, plus a timed rare code. Was: UNIT 1 LANDED 2026-10-05 (census deferred to the backfill fold — reversed by the review). Was: ready-for-agent — filed 2026-10-01 15:5x UTC from closing 465, which called it "a separate model question … out of scope". Nothing owns it. The first unit is the decision and the census: which code list, which scope (procedure, and whether per lot), how every era maps onto it, and what the backfill costs. Measure before building.
 Kind: data model / API (a core attribute that is parsed and then dropped)
 Relates to: 465 (FTS now parses BT-105 into the notice layer), 397 (contract nature, folded from every era: the
 template), `.scratch/tender-db/api-dq-review-2026-09-15.md` (row dq-eforms: "BT-105, BT-23, BT-01, BT-36, BT-765/766,
