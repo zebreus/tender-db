@@ -36,6 +36,13 @@ k = 2 rule with the framework exemption, plus `refold-value-band`. NEXT: gate, d
     - A Part's or a LotsGroup's figure is no sibling partner. A PIN's PAR-0001 may be the CN's LOT-0001.
     - Only a `result_value` award copy is excluded from the bound; an `estimated_value` total stays.
     - Docs: 474292 and 8819939 added to the expected lot moves; /docs and the CHANGELOG state the full condition.
+  - **Review** `wf_963404e4-a92` of the fix (`36101c6`): 7 confirmed, all minor, fixed:
+    - The bound and the head election disagreed on what an award copy is, so a total the head refuses could still
+      vouch for a lot. Both now use the head's test (any field equal to a head lot award). An estimated total that
+      happens to equal an award is lost as a bound, which only refuses.
+    - A carried PIN Part's own figure got the exemption against the CN lot it may be. A Part is now elected with no
+      key and gets no exemption. A LotsGroup keeps it.
+    - The operations.md and CHANGELOG wording now matches the code.
   - Left, conservative direction (a genuine lot refused, never a slip kept): a legacy F03's V.2.4 lot estimate is
     folded at tender scope as `estimated_value`. When it differs from the lot's award it registers as a procedure
     figure and poisons that figure as a sibling partner. Attributing RES-section amounts to the award's lot needs a

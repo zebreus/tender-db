@@ -3273,11 +3273,13 @@ impl LotAmount<'_> {
 /// `partners` must be [`ScalePartners::of_chain`] of the chain up to and
 /// including this version: the value of version N depends on versions 1..=N
 /// only, which is what lets a kept version keep its stored value. `lot_key` is
-/// the lot's key, for the x100 rule's sibling-lot exemption (issue 492).
+/// the lot's key, for the x100 rule's sibling-lot exemption (issue 492), or `None`
+/// for a lot of unknown identity -- a Part, which a PIN numbers PAR-0001 where the CN
+/// may call the same lot LOT-0001 -- which gets no exemption.
 pub fn elect_lot_value<'a>(
     amounts: impl IntoIterator<Item = LotAmount<'a>>,
     partners: &ScalePartners<'_>,
-    lot_key: &str,
+    lot_key: Option<&str>,
 ) -> Option<LotAmount<'a>> {
     let mut best: Option<LotAmount<'a>> = None;
     for a in amounts {
@@ -3287,7 +3289,7 @@ pub fn elect_lot_value<'a>(
         if a.eur_cents.is_some_and(|eur| eur > IMPLAUSIBLE_EUR_CENTS) {
             continue;
         }
-        if a.eur_cents.is_some_and(|eur| partners.refuses_amount(a.field, a.currency, a.cents, eur, FigureScope::Lot(Some(lot_key)))) {
+        if a.eur_cents.is_some_and(|eur| partners.refuses_amount(a.field, a.currency, a.cents, eur, FigureScope::Lot(lot_key))) {
             continue;
         }
         if best.is_none_or(|b| a.cents > b.cents) {
@@ -3446,9 +3448,11 @@ pub struct ScalePartners<'a> {
     /// partner to belong to other lots only.
     lot_keys: std::collections::HashMap<(&'a str, i64), Option<std::collections::BTreeSet<&'a str>>>,
     /// Issue 492: the head version's procedure figures as (field, currency, cents): its
-    /// tender-scope amounts that are no withheld figure, no sentinel and no lot award's
-    /// `result_value` copy. The sibling-lot exemption needs one at least as large that the
-    /// election admits.
+    /// tender-scope amounts that are no withheld figure, no sentinel and no copy of a lot
+    /// award ([`Self::is_head_award`], the test the head election applies, so the two agree
+    /// on what a procedure figure is). The sibling-lot exemption needs one at least as
+    /// large that the election admits. An estimated total that happens to equal an award
+    /// is lost as a bound: that can only refuse a genuine lot, never keep a slip.
     head_procedure: Vec<(&'a str, &'a str, i64)>,
     /// Every partner candidate (currency, cents) of the chain above the floor.
     figures: std::collections::HashSet<(&'a str, i64)>,
@@ -3583,7 +3587,7 @@ impl<'a> ScalePartners<'a> {
             if let Fact::Amount { field, cents, currency, quality, .. } = f
                 && quality.is_none()
                 && !sentinel_amount(*cents)
-                && !(field == "result_value" && self.head_awards.contains(&(currency.as_str(), *cents)))
+                && !self.head_awards.contains(&(currency.as_str(), *cents))
             {
                 self.head_procedure.push((field.as_str(), currency.as_str(), *cents));
             }
@@ -30357,7 +30361,7 @@ impl Db {
                     _ => None,
                 }),
                 partners,
-                &lot.key,
+                (lot.kind != "Part").then_some(lot.key.as_str()),
             );
             pending.push(Leaf::VersionLots, [
                 Value::Integer(tender_id),
@@ -33449,7 +33453,7 @@ mod tests {
             LotAmount { field, cents, currency, eur_cents: eur, quality }
         };
         let none = ScalePartners::new();
-        let pick = |xs: Vec<LotAmount<'static>>, rule: &ScalePartners<'_>| elect_lot_value(xs, rule, "LOT-1").map(|w| (w.field, w.cents, w.currency));
+        let pick = |xs: Vec<LotAmount<'static>>, rule: &ScalePartners<'_>| elect_lot_value(xs, rule, Some("LOT-1")).map(|w| (w.field, w.cents, w.currency));
         assert_eq!(pick(vec![], &none), None, "no figure, no value");
         assert_eq!(pick(vec![a("estimated_value", -100, "EUR", Some(-100), Some("withheld"))], &none), None, "withheld");
         assert_eq!(pick(vec![a("estimated_value", 100, "GBP", Some(117), None)], &none), None, "one unit is a token");
@@ -33951,7 +33955,7 @@ mod tests {
                     _ => None,
                 }),
                 &rule,
-                key,
+                (l.kind != "Part").then_some(key),
             )
             .map(|a| a.cents)
         };
@@ -34027,6 +34031,43 @@ mod tests {
         cn.lots.push(pin.lots[0].clone());
         cn.caused_by_notice_id = 2;
         assert_eq!(lot_value(&[pin, cn], "LOT-0001"), None, "a part's figure is no sibling lot's");
+        // The mirror: the slip on the PIN part, its true value on the CN lot. The part's
+        // own figure gets no exemption either.
+        let pin = version(Vec::new(), vec![LotState { key: "PAR-0001".into(), kind: "Part".into(), facts: [amt("estimated_value", big)].into_iter().collect() }]);
+        let mut cn = version(
+            vec![amt("estimated_value", 150_000_000_000)],
+            vec![lot("LOT-0001", vec![amt("estimated_value", small)]), lot("LOT-0002", vec![amt("estimated_value", 149_000_000_000)])],
+        );
+        cn.lots.push(pin.lots[0].clone());
+        cn.caused_by_notice_id = 2;
+        assert_eq!(lot_value(&[pin, cn], "PAR-0001"), None, "a part's own x100 figure is not kept against a lot");
+        // A bound the head election scores as a lot award's copy (a keyless award equal to
+        // the estimated total, a legacy F03's V.2.4 shape) vouches for nothing: the head
+        // refuses it, so the lot must not keep a figure above the head.
+        let mut keyless = version(
+            vec![amt("estimated_value", 300_000_000_000)],
+            vec![lot("LOT-1", vec![amt("estimated_value", big)]), lot("LOT-2", vec![amt("estimated_value", small)]), lot("LOT-3", vec![amt("estimated_value", 3_000_000_000)])],
+        );
+        keyless.rounds = vec![super::Round {
+            notice_id: 1,
+            logical_notice_id: None,
+            lot_results: vec![super::LotResultState {
+                key: "RES-1".into(),
+                lot_key: None,
+                decision: None,
+                reason: None,
+                awarded_cents: Some(300_000_000_000),
+                awarded_currency: Some("EUR".into()),
+                decided: None,
+                winners: Vec::new(),
+                buyer_winners: Vec::new(),
+                statistics: Vec::new(),
+            }],
+            bids: Vec::new(),
+            contracts: Vec::new(),
+        }];
+        assert_eq!(head_value_eur_cents(std::slice::from_ref(&keyless), &rates), Some(3_000_000_000));
+        assert_eq!(lot_value(std::slice::from_ref(&keyless), "LOT-1"), None, "an award copy is no bound");
 
         // A LotsGroup's total over its lots, with a lot at 1/100 of it: kept like a lot.
         let mut grouped = version(

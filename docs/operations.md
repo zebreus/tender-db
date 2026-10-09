@@ -637,12 +637,12 @@ identical (ADR-0017) and costs a compare:
 Only lots count toward (b) and (d): a LotsGroup's figure is a total over lots it groups, and a
 PIN's parts carried in the head beside the CN's lots count only in a head with no Lot at all. A
 withheld figure or a sentinel is no figure of its lot. A tender-scope figure equal to a lot award of
-the head is that award's copy, a lot figure. A LOT value (the lot election, and the head's lot
-candidates) has its own exemption, the sibling lot: kept when the version has two or more lots,
+the head is that award's copy, a lot figure. A stored LOT value has its own exemption, the sibling lot: kept when the version has two or more lots,
 its ×100 partner is only ever a figure of OTHER Lots (never procedure-level, never this lot's own,
 never a Part's or a LotsGroup's), and the version has a procedure figure in the currency at least
-as large that the election admits. It applies to the stored lot value only: the head election's
-lot candidates never get it, since that procedure figure already outranks them. It was decided on the 11 stored lot values of €1 bn or more with
+as large that the election admits (a lot award's copy is no procedure figure). It applies to the
+stored lot value of a Lot or a LotsGroup only: a Part's own figure never gets it, and neither do
+the head election's lot candidates, since that procedure figure already outranks them. It was decided on the 11 stored lot values of €1 bn or more with
 a ×100 partner (2026-10-09; `.scratch/tender-db/492-x100/lot-adjudication-*`): 9 slips, 2 genuine
 (8748271, 8811221, both kept by it). The fold elects version N's lot value over versions 1..=N,
 so a slip whose partner first appears in a LATER version stays on the earlier version's row
