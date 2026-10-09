@@ -5880,7 +5880,8 @@ impl Supervisor {
                     let ids = self.db.recent_head_tenders(since).await.map_err(|e| e.to_string())?;
                     let mut total = store::rates::RederiveWindow::default();
                     for chunk in ids.chunks(REDERIVE_RECENT_WINDOW) {
-                        let window = self.db.rederive_eur_tenders(&rates, chunk).await.map_err(|e| e.to_string())?;
+                        let window =
+                            self.db.rederive_eur_tenders(&rates, chunk, since).await.map_err(|e| e.to_string())?;
                         total.tenders += window.tenders;
                         total.scanned += window.scanned;
                         total.updated += window.updated;

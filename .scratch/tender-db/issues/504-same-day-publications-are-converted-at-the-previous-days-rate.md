@@ -1,7 +1,19 @@
 # 504 — same-day publications are converted at the previous day's rate, and nothing re-derives them
 
-Status: ready-for-agent — UNITS 1+2 BUILT 2026-10-09 (option 1). NEXT: gate, review, deploy, then read the 2026-10-10
-daily's `rederive-eur-recent` line (prediction below).
+Status: ready-for-agent — UNITS 1+2 DEPLOYED 2026-10-09 (`b27e7c5`); UNIT 3 (the narrowing) BUILT. NEXT: gate and deploy
+unit 3, re-run `rederive-eur-recent` on prod to read its cost, then read the 2026-10-10 daily's line (prediction below).
+- **Review** `wf_0ebff4ba-876` confirmed one minor, fixed in `b27e7c5`: the daily pushes `rederive-eur-recent` UNGUARDED
+  after its own fetch-rates. A pending one, such as an operator's queued behind a refold, could otherwise run first,
+  against the old rates.
+- **Prod run 2102** (deployed `b27e7c5`) was correct but costly: 25,295 recent-head Tenders, **79.3M money rows in
+  169 s**, 0 moved. 0 is expected: 2099 had already corrected 10-08 and earlier, and 10-09 waits for its fixing.
+  Recent heads include long chains, such as frameworks with thousands of versions, and the walk read each one's
+  whole history.
+- **Unit 3, the narrowing:** `Scope::Recent { ids, since }`. It loads the Tenders' version dates (IN list), finds
+  each Tender's first version published at or after `since`, and reads each money table with a prepared
+  `tender_id = ? AND seq >= ?` seek. Only those versions can have missed their day's fixing.
+  `the_recent_walk_rederives_only_the_recent_versions_of_the_tenders_it_is_given` pins it: an old version of a
+  recent Tender stays at 7777, and both reads seek.
 - **Unit 1, the diagnosis checked against the job history.** Of job 2099's 845 moved Tenders, 803 have heads
   published on 2026-10-07, 25 on 10-08 and 17 on 10-09. The job log explains the split:
   - The two all-profile refolds re-derived the whole corpus: 2044 on 10-07, 08:38 UTC, and 2067 on 10-08,

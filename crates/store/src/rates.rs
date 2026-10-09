@@ -486,18 +486,25 @@ impl Db {
     }
 
     /// Issue 504: one window of the same walk over an explicit set of Tenders, the
-    /// daily `rederive-eur-recent`'s unit. The same transaction holds the moved
+    /// daily `rederive-eur-recent`'s unit, reading each Tender's versions from the first
+    /// one published at or after `since`. The same transaction holds the moved
     /// `eur_cents`, D5's correction rows, the stamp and the re-queue. There is no
     /// watermark: the set is recomputed from scratch on every run. The caller keeps
-    /// `ids` to a few hundred, because each statement carries them as an `IN` list.
-    pub async fn rederive_eur_tenders(&self, rates: &RatesLookup, ids: &[i64]) -> turso::Result<RederiveWindow> {
+    /// `ids` to a few hundred, because the version-date read carries them as an `IN`
+    /// list.
+    pub async fn rederive_eur_tenders(
+        &self,
+        rates: &RatesLookup,
+        ids: &[i64],
+        since: i64,
+    ) -> turso::Result<RederiveWindow> {
         if ids.is_empty() {
             return Ok(RederiveWindow::default());
         }
         let conn = self.conn().await;
         let now = crate::now_unix();
         let window = Db::immediate(&conn, async {
-            let mut window = rederive_scope(&conn, rates, &Scope::Ids(ids), now).await?;
+            let mut window = rederive_scope(&conn, rates, &Scope::Recent { ids, since }, now).await?;
             window.tenders = ids.len() as i64;
             window.watermark = ids.iter().copied().max().unwrap_or(0);
             Ok(window)
@@ -540,24 +547,12 @@ impl Db {
 /// set (issue 504's recent walk).
 enum Scope<'a> {
     Range { after: i64, watermark: i64 },
-    Ids(&'a [i64]),
-}
-
-impl Scope<'_> {
-    /// The predicate on `col` (a `tender_id` column) and its parameters. Either form is
-    /// a seek on the `(tender_id, …)` prefix of each table's primary key or by-version
-    /// index.
-    fn predicate(&self, col: &str) -> (String, Vec<Value>) {
-        match self {
-            Scope::Range { after, watermark } => {
-                (format!("{col} > ? AND {col} <= ?"), vec![Value::Integer(*after), Value::Integer(*watermark)])
-            }
-            Scope::Ids(ids) => (
-                format!("{col} IN ({})", vec!["?"; ids.len()].join(", ")),
-                ids.iter().map(|&id| Value::Integer(id)).collect(),
-            ),
-        }
-    }
+    /// Issue 504's recent walk: these Tenders' versions from the first one published
+    /// at or after `since`. Only a version published within days of its fold can have
+    /// been converted at a rate that was not fixed yet; reading a long chain's whole
+    /// history every day (a framework of thousands of versions) cost the first prod
+    /// run 250M rows for nothing.
+    Recent { ids: &'a [i64], since: i64 },
 }
 
 /// The body of a rederive window, inside the caller's transaction: re-derive the four
@@ -578,46 +573,69 @@ async fn rederive_scope(
     // of the join at that volume spun at 100% CPU indefinitely, while
     // the bare PK-range scan of the same rows returns in seconds. Two
     // indexed range scans + an O(1) map lookup replace it.
+    let (pred, params) = match scope {
+        Scope::Range { after, watermark } => {
+            ("tender_id > ? AND tender_id <= ?".to_owned(), vec![Value::Integer(*after), Value::Integer(*watermark)])
+        }
+        Scope::Recent { ids, .. } => (
+            format!("tender_id IN ({})", vec!["?"; ids.len()].join(", ")),
+            ids.iter().map(|&id| Value::Integer(id)).collect(),
+        ),
+    };
     let mut date_of: std::collections::HashMap<(i64, i64), String> = std::collections::HashMap::new();
+    // Recent only: each Tender's first version published at or after `since`.
+    let mut first_recent: std::collections::BTreeMap<i64, i64> = std::collections::BTreeMap::new();
     {
-        let (pred, params) = scope.predicate("tender_id");
         let mut rows =
             conn.query(&format!("SELECT tender_id, seq, published_at FROM tender_versions WHERE {pred}"), params).await?;
         while let Some(row) = rows.next().await? {
-            date_of.insert((crate::int(&row, 0), crate::int(&row, 1)), civil_date(crate::int(&row, 2)));
+            let (tender_id, seq, published_at) = (crate::int(&row, 0), crate::int(&row, 1), crate::int(&row, 2));
+            date_of.insert((tender_id, seq), civil_date(published_at));
+            if let Scope::Recent { since, .. } = scope
+                && published_at >= *since
+            {
+                first_recent.entry(tender_id).and_modify(|s| *s = (*s).min(seq)).or_insert(seq);
+            }
         }
     }
     let mut scanned = 0i64;
-    let mut updated = 0i64;
     let mut moved = crate::inplace::Moved::default();
+    let mut pending_by_locus: Vec<Vec<(i64, Option<i64>)>> = Vec::new();
     for (table, cents_col, currency_col, eur_col, lot_col) in EUR_LOCI {
         let lot = lot_col.map_or_else(|| "NULL".to_owned(), |c| format!("a.{c}"));
-        let (pred, params) = scope.predicate("a.tender_id");
-        let mut rows = conn
-            .query(
-                &format!(
-                    "SELECT a.rowid, a.{cents_col}, a.{currency_col}, a.{eur_col}, a.tender_id, a.seq, {lot} \
-                       FROM {table} a WHERE {pred}"
-                ),
-                params,
-            )
-            .await?;
+        let select = format!(
+            "SELECT a.rowid, a.{cents_col}, a.{currency_col}, a.{eur_col}, a.tender_id, a.seq, {lot} FROM {table} a"
+        );
         let mut pending: Vec<(i64, Option<i64>)> = Vec::new();
-        while let Some(row) = rows.next().await? {
-            scanned += 1;
-            let stored = crate::opt_int_of(&row, 3);
-            let (tender_id, seq) = (crate::int(&row, 4), crate::int(&row, 5));
-            let date = date_of.get(&(tender_id, seq));
-            let derived = match (crate::opt_int_of(&row, 1), crate::opt_text_of(&row, 2), date) {
-                (Some(cents), Some(currency), Some(date)) => rates.eur_cents(cents, &currency, date),
-                _ => None,
-            };
-            if derived != stored {
-                pending.push((crate::int(&row, 0), derived));
-                moved.row(tender_id, seq, crate::opt_int_of(&row, 6));
+        match scope {
+            Scope::Range { after, watermark } => {
+                let mut rows = conn
+                    .query(
+                        &format!("{select} WHERE a.tender_id > ? AND a.tender_id <= ?"),
+                        (Value::Integer(*after), Value::Integer(*watermark)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    scanned += 1;
+                    consider(&row, rates, &date_of, &mut pending, &mut moved);
+                }
+            }
+            Scope::Recent { .. } => {
+                // A seek on the `(tender_id, seq)` prefix per Tender: its recent versions only.
+                let mut stmt = conn.prepare(&format!("{select} WHERE a.tender_id = ? AND a.seq >= ?")).await?;
+                for (&tender_id, &seq) in &first_recent {
+                    let mut rows = stmt.query((Value::Integer(tender_id), Value::Integer(seq))).await?;
+                    while let Some(row) = rows.next().await? {
+                        scanned += 1;
+                        consider(&row, rates, &date_of, &mut pending, &mut moved);
+                    }
+                }
             }
         }
-        drop(rows);
+        pending_by_locus.push(pending);
+    }
+    let mut updated = 0i64;
+    for ((table, _, _, eur_col, _), pending) in EUR_LOCI.iter().zip(pending_by_locus) {
         updated += pending.len() as i64;
         if !pending.is_empty() {
             let mut stmt = conn.prepare(&format!("UPDATE {table} SET {eur_col} = ? WHERE rowid = ?")).await?;
@@ -635,6 +653,28 @@ async fn rederive_scope(
         requeued = Db::requeue_notice_ids(conn, &notices, false).await?;
     }
     Ok(RederiveWindow { scanned, updated, changed_tenders, corrections, restamped, requeued, ..RederiveWindow::default() })
+}
+
+/// One money row of a rederive window: derive its EUR sibling from (cents, currency, the
+/// version's publication date) and, if that differs from what is stored, queue the
+/// rowid's rewrite and record the move for D5's correction rows.
+fn consider(
+    row: &turso::Row,
+    rates: &RatesLookup,
+    date_of: &std::collections::HashMap<(i64, i64), String>,
+    pending: &mut Vec<(i64, Option<i64>)>,
+    moved: &mut crate::inplace::Moved,
+) {
+    let stored = crate::opt_int_of(row, 3);
+    let (tender_id, seq) = (crate::int(row, 4), crate::int(row, 5));
+    let derived = match (crate::opt_int_of(row, 1), crate::opt_text_of(row, 2), date_of.get(&(tender_id, seq))) {
+        (Some(cents), Some(currency), Some(date)) => rates.eur_cents(cents, &currency, date),
+        _ => None,
+    };
+    if derived != stored {
+        pending.push((crate::int(row, 0), derived));
+        moved.row(tender_id, seq, crate::opt_int_of(row, 6));
+    }
 }
 
 /// One window of [`Db::rederive_eur_window`].

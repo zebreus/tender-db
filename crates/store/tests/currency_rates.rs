@@ -529,37 +529,44 @@ async fn rows_of(conn: &store::turso::Connection, sql: &str) -> Vec<String> {
 
 /// Issue 504: the daily `rederive-eur-recent` walks only the Tenders whose head was
 /// published in the last days, by id set, through the same window transaction as the
-/// full walk: the named Tenders are re-derived, announced, stamped and re-queued, and
-/// nothing else is touched (no watermark either: the set is recomputed every run).
+/// full walk: the named Tenders' RECENT versions are re-derived, announced, stamped and
+/// re-queued, and nothing else is touched (no watermark either: the set is recomputed
+/// every run). An old version of a recent Tender is the full walk's business.
 #[tokio::test]
-async fn the_recent_walk_rederives_only_the_tenders_it_is_given() {
+async fn the_recent_walk_rederives_only_the_recent_versions_of_the_tenders_it_is_given() {
     let (db, path) = open("rederive-recent").await;
     let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
     let conn = raw.connect().unwrap();
     conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
     let now = store::now_unix() / 86_400 * 86_400;
-    // Tender 1 published two days ago, tender 2 a month ago, tender 3 yesterday. Each
+    let since = now - 8 * 86_400;
+    // (tender, seq, published): tender 1 has an old version and a head two days old,
+    // tender 2 only a month-old head, tender 3 a head from yesterday. Every version
     // carries 10000 USD cents stored at a wrong 7777; USD is 2.0 on each of those days.
-    let published = [(1, now - 2 * 86_400), (2, now - 30 * 86_400), (3, now - 86_400)];
+    let versions =
+        [(1, 1, now - 40 * 86_400), (1, 2, now - 2 * 86_400), (2, 1, now - 30 * 86_400), (3, 1, now - 86_400)];
     let mut rates = Vec::new();
-    for (tender, at) in published {
+    for (tender, seq, at) in versions {
+        let notice = tender * 10 + seq;
         for sql in [
             format!(
                 "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at, \
-                 projection_epoch) VALUES ({tender}, 'ted', 'p{tender}', 'procedure', 1, {at}, 0, 7)"
+                 projection_epoch) VALUES ({tender}, 'ted', 'p{tender}', 'procedure', {seq}, {at}, 0, 7) \
+                 ON CONFLICT(id) DO UPDATE SET current_seq = excluded.current_seq, \
+                 current_published_at = excluded.current_published_at"
             ),
             format!(
                 "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, \
-                 ingested_at, parse_state, projected) VALUES ({tender}, 'ted', 'OJ-{tender}', 'h{tender}', 'text', 1, \
-                 'm{tender}', 0, 'parsed', 1)"
+                 ingested_at, parse_state, projected) VALUES ({notice}, 'ted', 'OJ-{notice}', 'h{notice}', 'text', 1, \
+                 'm{notice}', 0, 'parsed', 1)"
             ),
             format!(
                 "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id) \
-                 VALUES ({tender}, 1, {at}, 'OJ-{tender}', {tender})"
+                 VALUES ({tender}, {seq}, {at}, 'OJ-{notice}', {notice})"
             ),
             format!(
                 "INSERT INTO tender_version_amounts (tender_id, seq, field, cents, currency, eur_cents) \
-                 VALUES ({tender}, 1, 'estimated_value', 10000, 'USD', 7777)"
+                 VALUES ({tender}, {seq}, 'estimated_value', 10000, 'USD', 7777)"
             ),
         ] {
             conn.execute(&sql, ()).await.unwrap_or_else(|e| panic!("{sql}: {e}"));
@@ -570,14 +577,18 @@ async fn the_recent_walk_rederives_only_the_tenders_it_is_given() {
     db.reload_rates_lookup().await.unwrap();
     let lookup = db.rates_lookup();
 
-    assert_eq!(db.recent_head_tenders(now - 8 * 86_400).await.unwrap(), vec![1, 3], "the heads of the last 8 days");
+    assert_eq!(db.recent_head_tenders(since).await.unwrap(), vec![1, 3], "the heads of the last 8 days");
 
-    // The id list seeks each table by its `tender_id` prefix rather than scanning it.
-    for table in ["tender_versions", "tender_version_amounts", "tender_version_lot_results"] {
-        let mut rows = conn
-            .query(&format!("EXPLAIN QUERY PLAN SELECT a.rowid FROM {table} a WHERE a.tender_id IN (1, 3)"), ())
-            .await
-            .unwrap();
+    // Both reads seek: the version dates by an IN list on the primary key, the money rows
+    // by `(tender_id, seq)` from the first recent version.
+    for sql in [
+        "SELECT tender_id FROM tender_versions WHERE tender_id IN (1, 3)",
+        "SELECT a.rowid FROM tender_version_amounts a WHERE a.tender_id = 1 AND a.seq >= 2",
+        "SELECT a.rowid FROM tender_version_lot_results a WHERE a.tender_id = 1 AND a.seq >= 2",
+        "SELECT a.rowid FROM tender_version_bids a WHERE a.tender_id = 1 AND a.seq >= 2",
+        "SELECT a.rowid FROM tender_version_contracts a WHERE a.tender_id = 1 AND a.seq >= 2",
+    ] {
+        let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), ()).await.unwrap();
         let mut plan = String::new();
         while let Some(row) = rows.next().await.unwrap() {
             if let Ok(store::turso::Value::Text(detail)) = row.get_value(3) {
@@ -585,33 +596,35 @@ async fn the_recent_walk_rederives_only_the_tenders_it_is_given() {
                 plan.push('\n');
             }
         }
-        assert!(plan.contains("SEARCH"), "{table}: an IN list must seek, not scan:\n{plan}");
+        assert!(plan.contains("SEARCH"), "{sql}: must seek, not scan:\n{plan}");
     }
 
-    let window = db.rederive_eur_tenders(&lookup, &[1, 3]).await.expect("window");
+    let window = db.rederive_eur_tenders(&lookup, &[1, 3], since).await.expect("window");
     assert_eq!(
-        (window.tenders, window.updated, window.changed_tenders.clone(), window.corrections, window.restamped, window.requeued),
-        (2, 2, vec![1, 3], 2, 2, 2),
-        "(tenders, rows updated, moved, correction rows, stamped, re-queued)"
+        (window.tenders, window.scanned, window.updated, window.changed_tenders.clone(), window.corrections),
+        (2, 2, 2, vec![1, 3], 2),
+        "(tenders, rows read, rows updated, moved, correction rows): the recent versions only"
     );
+    assert_eq!((window.restamped, window.requeued), (2, 3), "both Tenders stamped, all three of their notices re-queued");
     assert_eq!(
-        rows_of(&conn, "SELECT tender_id || ':' || eur_cents FROM tender_version_amounts ORDER BY tender_id").await,
-        ["1:5000", "2:7777", "3:5000"],
-        "only the named Tenders are re-derived"
+        rows_of(
+            &conn,
+            "SELECT tender_id || '/' || seq || ':' || eur_cents FROM tender_version_amounts ORDER BY tender_id, seq"
+        )
+        .await,
+        ["1/1:7777", "1/2:5000", "2/1:7777", "3/1:5000"],
+        "the recent versions of the named Tenders are re-derived; an old version and an old Tender are not"
     );
     assert_eq!(
         rows_of(&conn, "SELECT entity_kind || ' ' || entity_id FROM changes ORDER BY cursor").await,
         ["tender 1", "tender 3"],
-        "and only they are announced"
+        "and only the moved Tenders are announced"
     );
-    assert_eq!(
-        rows_of(&conn, "SELECT id || ':' || projection_epoch FROM tenders ORDER BY id").await,
-        ["1:0", "2:7", "3:0"]
-    );
-    assert_eq!(rows_of(&conn, "SELECT id FROM notices WHERE projected = 0 ORDER BY id").await, ["1", "3"]);
+    assert_eq!(rows_of(&conn, "SELECT id || ':' || projection_epoch FROM tenders ORDER BY id").await, ["1:0", "2:7", "3:0"]);
+    assert_eq!(rows_of(&conn, "SELECT id FROM notices WHERE projected = 0 ORDER BY id").await, ["11", "12", "31"]);
     assert_eq!(db.rederive_watermark().await.unwrap(), 0, "the recent walk keeps no watermark");
-    assert_eq!(db.rederive_eur_tenders(&lookup, &[]).await.unwrap().tenders, 0, "an empty set is a no-op");
-    let again = db.rederive_eur_tenders(&lookup, &[1, 3]).await.unwrap();
+    assert_eq!(db.rederive_eur_tenders(&lookup, &[], since).await.unwrap().tenders, 0, "an empty set is a no-op");
+    let again = db.rederive_eur_tenders(&lookup, &[1, 3], since).await.unwrap();
     assert_eq!((again.updated, again.corrections), (0, 0), "a second run is quiet");
 
     drop(conn);
