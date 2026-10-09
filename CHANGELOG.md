@@ -4,6 +4,15 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 492) — a x100 scale slip is refused unless it is a framework total
+
+A Tender's `value` (and what `min_value` / `max_value` compare) no longer elects a figure of €1 bn or more that is
+exactly 100× another figure of the same Tender in the same currency, unless it is a framework total: a
+procedure-level figure over two or more lots, whose smaller partner is a lot figure, and whose lots add up to
+between a tenth of it and all of it. The same holds for each lot's served value, with no framework exemption.
+×1,000 and up was already refused (issue 471). The refused figure stays in `amounts`. Affected Tenders are
+re-folded and announced on the change feed as corrections.
+
 ## Unreleased (issue 495 unit 5) — a rate correction is announced
 
 A corrected exchange rate re-derives stored EUR values in place (`eur_cents` on amounts, lot results, bids and

@@ -556,8 +556,8 @@ the same figure (lot awards never corroborate: they are the same RES / BT-720 el
 the €10 bn band floor until the below-band measurement of 2026-10-06 adjudicated the €1–10 bn
 decade whole — 65 refused heads, 64 scale errors, one genuine: 8287294's GBP 4 bn framework, the
 recorded false positive; the data-quality report's `BAND_FLOOR_EUR_CENTS` stays €10 bn). The head falls to
-the next admitted figure, which is not a correction: 6988280
-falls to a €1 bn placeholder, 6803400 to £50 M. The rule is computed in the election, not stored
+the next admitted figure, which is not a correction: under 471 alone 6988280
+fell to a €1 bn placeholder (since issue 492's ×100 rule that lot figure falls too), 6803400 to £50 M. The rule is computed in the election, not stored
 as a `quality` marker (the marker vocabulary stays `'withheld'`), so nothing in the parsed or
 version layers changes and the read layer's elected row follows by `eur_cents` with no edit of its
 own. Section 16's partner column uses the same floor and exponent (`SCALE_PARTNER_FLOOR_CENTS`,
@@ -609,6 +609,17 @@ first and the question does not arise.
 #    The refold-notices message must say re-queued N, stamped N tender(s) with N the cohort size.
 ```
 
+**Expected effect** (the 22 adjudicated rows, 2026-10-06): the 18 agreed scale errors still in
+the band leave it (6941544, 4972513, 8452561, 5592948, 6988280, 577127, 6581010, 4685893, 8822396,
+5094790, 224156, 568960, 404296, 4785037, 6577862, 6721266, 6852637, 1163733), and so does the
+split row 6803400 — 19 rows. **8400892 stays** at £10.8 bn (corroborated: `estimated_value` and
+`result_value` both carry it). 4578779 and 4581663 were already drained by unit 3. Verify:
+`/v1/tenders/5592948` serves £9,000,000 (the corrigendum's figure, reached without 4(b)),
+`/v1/tenders/8400892` is unchanged, and in the next data-quality run's section 16 the only one of
+job 2019's 22 partner rows still listed is 8400892. A band row with a partner that IS still listed
+is corroborated, so read it; a row that leaves the band and is not one of the 19 is a finding too,
+because unit 6's re-read is where a false positive the sample could not show would surface.
+
 **The ×100 extension (issue 492, 2026-10-09).** k = 2 is refused too, under the same €1 bn gate,
 unless the figure is a framework total. That means: a procedure figure, over a head version of
 two or more lots, whose ×100 partner is only ever a lot figure, and whose lots sum to between F/10
@@ -623,20 +634,24 @@ identical (ADR-0017) and costs a compare:
 /root/aj.sh /admin/jobs '{"kind":"project"}'
 ```
 
-The fold's counts line shows how many Tenders were corrected. Re-read the adjudicated ids in
-`.scratch/tender-db/492-x100/`: the 45 slips fall, the 9 frameworks stay, and 8819939 falls (the
-recorded wrong refusal).
+Only lots count toward (b) and (d): a LotsGroup's figure is a total over lots it groups, and a
+PIN's parts carried in the head beside the CN's lots count only in a head with no Lot at all. A
+withheld figure or a sentinel is no figure of its lot. A tender-scope figure equal to a lot award of
+the head is that award's copy, a lot figure. A LOT value (the lot election, and the head's lot
+candidates) never gets the exemption, so a lot of €1 bn or more with an exact ×100 partner is
+refused whatever its siblings: decision (b) was measured on heads, not lot rows, so read the lot
+moves this drain announces (below).
 
-**Expected effect** (the 22 adjudicated rows, 2026-10-06): the 18 agreed scale errors still in
-the band leave it (6941544, 4972513, 8452561, 5592948, 6988280, 577127, 6581010, 4685893, 8822396,
-5094790, 224156, 568960, 404296, 4785037, 6577862, 6721266, 6852637, 1163733), and so does the
-split row 6803400 — 19 rows. **8400892 stays** at £10.8 bn (corroborated: `estimated_value` and
-`result_value` both carry it). 4578779 and 4581663 were already drained by unit 3. Verify:
-`/v1/tenders/5592948` serves £9,000,000 (the corrigendum's figure, reached without 4(b)),
-`/v1/tenders/8400892` is unchanged, and in the next data-quality run's section 16 the only one of
-job 2019's 22 partner rows still listed is 8400892. A band row with a partner that IS still listed
-is corroborated, so read it; a row that leaves the band and is not one of the 19 is a finding too,
-because unit 6's re-read is where a false positive the sample could not show would surface.
+Verify, in order:
+- The `refold-value-band` message: `stamped N` with N the dry run's Tender count.
+- The `project` message's `compare: N verified, M corrected`: ADR-0017 D7's R3 completeness,
+  N + M equal to the stamped count (more if other Tenders were pending).
+- Re-read the adjudicated ids in `.scratch/tender-db/492-x100/`. Of the €1–10 bn 56, the 45 slips
+  fall, the 9 frameworks stay, and 8819939 falls (the recorded wrong refusal). Of the €10 bn and
+  over nine, the 6 slips fall (751664, 5545591, 6409799, 6640498, 7490161, 8810872), 8595426 and
+  8618327 stay, and 4871119 falls to no head (contested, recorded on issue 492).
+- The lot rows that moved: the `lot changed` correction rows of the cohort's Tenders. A lot that
+  fell from €1 bn or more is this rule's, and each one is a read against its notice.
 
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|

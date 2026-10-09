@@ -3166,7 +3166,9 @@ pub fn head_value_eur_cents_with(
     let date = crate::rates::civil_date(head.published_at);
     head.facts
         .iter()
-        .map(|f| (f, false))
+        // Issue 492: a tender-scope figure equal to a lot award of the head is that
+        // award's copy, a lot figure, and so gets no framework exemption.
+        .map(|f| (f, matches!(f, Fact::Amount { cents, currency, .. } if partners.is_head_award(currency, *cents))))
         .chain(head.lots.iter().flat_map(|l| l.facts.iter()).map(|f| (f, true)))
         .filter_map(|(f, lot)| match f {
             // The sentinel test reads the PUBLISHED figure, not its conversion: a
@@ -3388,7 +3390,12 @@ pub const SCALE_ERROR_MIN_EUR_CENTS: i64 = 100_000_000_000;
 /// Every figure is tested on its own, so a second scaled figure falls too, and
 /// a refused figure still counts as a partner of a bigger one. Refused is not
 /// corrected: the head falls to the next admitted figure, which may itself be
-/// a placeholder (6988280 falls to a EUR 1 bn one).
+/// a placeholder (under 471 alone 6988280 fell to a EUR 1 bn one; since 492 that lot
+/// figure, 100x a EUR 10 m award, falls too).
+///
+/// A figure with a k >= 3 partner is judged by the k >= 3 test alone, corroboration
+/// included; the x100 test is reached only without one. No measured head has both
+/// partners (the 56 x100 heads had none at k >= 3).
 ///
 /// Computed at election time rather than stored as a `quality` marker, for
 /// two reasons. The rule's input is the whole chain, while a `Fact` belongs
@@ -3418,6 +3425,9 @@ pub struct ScalePartners<'a> {
     /// Issue 492: per currency, the sum over the head version's lots of each lot's
     /// largest figure in that currency (lot-scope amounts and lot awards).
     head_lot_sums: std::collections::HashMap<&'a str, i64>,
+    /// Issue 492: the head version's lot awards by (currency, cents). A tender-scope
+    /// amount equal to one is that award's lot-null copy, a lot figure (decision (c)).
+    head_awards: std::collections::HashSet<(&'a str, i64)>,
 }
 
 impl<'a> ScalePartners<'a> {
@@ -3431,6 +3441,7 @@ impl<'a> ScalePartners<'a> {
             head: Default::default(),
             head_lots: 0,
             head_lot_sums: Default::default(),
+            head_awards: Default::default(),
         }
     }
 
@@ -3498,15 +3509,30 @@ impl<'a> ScalePartners<'a> {
         for (field, currency, cents) in Self::amounts(head) {
             self.add_head_amount(field, currency, cents);
         }
+        self.head_awards = Self::awards(head).map(|(_, currency, cents)| (currency, cents)).collect();
         // Issue 492: the head's lot structure, for the x100 rule's framework exemption.
         // Each lot counts once, by key, whether it is a lot of the version or only the
         // lot of an award; its figure in a currency is the largest it states there.
+        //
+        // Only lots count. A LotsGroup's figure is a total over lots it groups, so adding
+        // it would count them twice; and a PIN's parts stay in the head beside the CN's
+        // lots (the fold never drops a lot), so parts count only in a head with no Lot
+        // at all. A withheld figure or a sentinel is no figure of its lot: the lot
+        // election skips both, so the sum does too. A lot figure the scale rule itself
+        // refuses stays in: it can only push the sum over F and refuse the total, the
+        // direction the rule already errs in.
+        let unit = if head.lots.iter().any(|l| l.kind == "Lot") { "Lot" } else { "Part" };
+        let not_lots: std::collections::HashSet<&'a str> =
+            head.lots.iter().filter(|l| l.kind != unit).map(|l| l.key.as_str()).collect();
         let mut per_lot: std::collections::HashMap<(&'a str, &'a str), i64> = std::collections::HashMap::new();
-        let mut keys: std::collections::HashSet<&'a str> = head.lots.iter().map(|l| l.key.as_str()).collect();
-        for lot in &head.lots {
+        let mut keys: std::collections::HashSet<&'a str> =
+            head.lots.iter().filter(|l| l.kind == unit).map(|l| l.key.as_str()).collect();
+        for lot in head.lots.iter().filter(|l| l.kind == unit) {
             for f in &lot.facts {
-                if let Fact::Amount { cents, currency, .. } = f
+                if let Fact::Amount { cents, currency, quality, .. } = f
                     && *cents > SCALE_PARTNER_FLOOR_CENTS
+                    && quality.is_none()
+                    && !sentinel_amount(*cents)
                 {
                     let best = per_lot.entry((lot.key.as_str(), currency.as_str())).or_insert(0);
                     *best = (*best).max(*cents);
@@ -3514,9 +3540,9 @@ impl<'a> ScalePartners<'a> {
             }
         }
         for (lot, currency, cents) in Self::awards(head) {
-            if let Some(lot) = lot {
+            if let Some(lot) = lot.filter(|key| !not_lots.contains(key)) {
                 keys.insert(lot);
-                if cents > SCALE_PARTNER_FLOOR_CENTS {
+                if cents > SCALE_PARTNER_FLOOR_CENTS && !sentinel_amount(cents) {
                     let best = per_lot.entry((lot, currency)).or_insert(0);
                     *best = (*best).max(cents);
                 }
@@ -3582,6 +3608,14 @@ impl<'a> ScalePartners<'a> {
         (cents > 0 && cents % 100 == 0 && cents / 100 > SCALE_PARTNER_FLOOR_CENTS)
             .then_some(cents / 100)
             .filter(|q| self.figures.contains(&(currency, *q)))
+    }
+
+    /// Issue 492: whether a TENDER-scope amount of the head is a lot figure all the same:
+    /// the lot-null copy of one of the head's lot awards, which pre-eForms award notices
+    /// (and eForms LotResults) publish at tender scope. The test
+    /// [`Self::add_version_figures`] applies to partners, applied to the figure itself.
+    pub fn is_head_award(&self, currency: &str, cents: i64) -> bool {
+        self.head_awards.contains(&(currency, cents))
     }
 
     /// Issue 492's framework exemption for a x100 figure F with partner `partner`: F is a
@@ -9891,16 +9925,6 @@ impl Db {
         Self::stamp_tenders_stale(&conn, ids).await
     }
 
-    /// Stamp a TENDER-ID cohort epoch-stale — the third caller
-    /// [`Db::stamp_tenders_stale`]'s doc anticipated, beside the profile join and
-    /// the notice-id join.
-    ///
-    /// Its caller is `rederive-eur` (issue 375): moving `eur_cents` invalidates
-    /// the head value elected from it, and the tenders affected are known
-    /// directly rather than through a notice cohort. Stamping them stale hands
-    /// the re-election to the FOLD, which is the point — the successor that used
-    /// to do this job, `backfill-values`, recomputed the head with an unfiltered
-    /// `MAX` and undid issue 366's sentinel and ceiling filtering.
     /// The Tenders whose stored head value, or any stored lot value of any version, is at
     /// least `floor_eur_cents`, ascending: the cohort a value-election rule that can only
     /// LOWER figures at or above that floor can move (issue 492's x100 rule, issue 471's
@@ -9921,6 +9945,17 @@ impl Db {
         Ok(ids.into_iter().collect())
     }
 
+    /// Stamp a TENDER-ID cohort epoch-stale — the third caller
+    /// [`Db::stamp_tenders_stale`]'s doc anticipated, beside the profile join and
+    /// the notice-id join.
+    ///
+    /// Its callers are `refold-value-band` (issue 492) and `rederive-eur` (issue 375).
+    /// For the latter, moving `eur_cents` invalidates
+    /// the head value elected from it, and the tenders affected are known
+    /// directly rather than through a notice cohort. Stamping them stale hands
+    /// the re-election to the FOLD, which is the point — the successor that used
+    /// to do this job, `backfill-values`, recomputed the head with an unfiltered
+    /// `MAX` and undid issue 366's sentinel and ceiling filtering.
     pub async fn stamp_stale_for_tenders(&self, ids: &[i64]) -> turso::Result<u64> {
         if ids.is_empty() {
             return Ok(0);
@@ -33722,6 +33757,52 @@ mod tests {
         // Below the EUR 1 bn gate nothing changes: a EUR 10 m framework over a EUR 100,000 lot.
         let small = version(vec![amt("estimated_value", 1_000_000_000)], vec![lot("LOT-1", vec![amt("estimated_value", 10_000_000)])]);
         assert_eq!(one(small), Some(1_000_000_000), "below the gate the x100 figure stays");
+
+        // Review of unit 3: only LOTS count and sum. A LotsGroup carrying the total (an
+        // eForms BT-271-LotsGroup over all three lots) would double the sum to 2F; a PIN's
+        // part carried in the head beside the CN's lots (the fold never drops a lot) would
+        // add its figure again. Both kept.
+        let typed = |key: &str, kind: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: kind.into(), facts: facts.into_iter().collect() };
+        let mut grouped = framework.clone();
+        grouped.lots.push(typed("GLO-1", "LotsGroup", vec![amt("framework_maximum", f)]));
+        assert_eq!(one(grouped.clone()), Some(f), "a lots group's total is not a lot of the sum");
+        assert_eq!(ScalePartners::of_chain(std::slice::from_ref(&grouped)).head_lots, 3, "the group is not counted");
+        let mut carried = framework.clone();
+        carried.lots.push(typed("PAR-1", "Part", vec![amt("estimated_value", 110_000_000_000)]));
+        assert_eq!(one(carried), Some(f), "a carried PIN part is not a lot beside the CN's lots");
+        // A head with no Lot at all (a PIN) sums its parts.
+        let pin = version(
+            vec![amt("estimated_value", f)],
+            vec![typed("PAR-1", "Part", vec![amt("estimated_value", 118_800_000_000)]), typed("PAR-2", "Part", vec![amt("estimated_value", p)])],
+        );
+        assert_eq!(one(pin), Some(f), "a PIN's parts are its lots");
+        // An award naming a group or a part is not a lot either.
+        let group_award = with_awards(grouped, vec![award("GLO-1", 50_000_000_000)]);
+        assert_eq!(one(group_award), Some(f), "an award on the group does not add to the lot sum");
+
+        // A withheld figure or a sentinel is no figure of its lot, so it does not push the
+        // sum past F (here a form-width 99,999,999,999.99 maximum on LOT-1).
+        let mut sentinel = framework.clone();
+        sentinel.lots[0].facts.insert(amt("framework_maximum", 9_999_999_999_999));
+        assert_eq!(one(sentinel), Some(f), "a sentinel does not count toward the lot sum");
+        let mut withheld = framework.clone();
+        withheld.lots[1].facts.insert(Fact::Amount {
+            field: "framework_maximum".into(),
+            cents: 900_000_000_000,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: Some("withheld".into()),
+        });
+        assert_eq!(one(withheld), Some(f), "a withheld figure does not count toward the lot sum");
+
+        // Decision (c) for F itself: a tender-scope figure equal to a lot award of the head
+        // is that award's lot-null copy, a LOT figure, so it gets no exemption even where
+        // the lot sum would allow it (one awarded lot at the x100 slip, one unvalued lot).
+        let copy = with_awards(
+            version(vec![amt("result_value", f)], vec![lot("LOT-1", vec![amt("estimated_value", p)]), lot("LOT-2", Vec::new())]),
+            vec![award("LOT-1", f)],
+        );
+        assert_eq!(one(copy), Some(p), "an award's tender-scope copy is a lot figure");
     }
 
     /// Issue 378, decided 2026-09-11: a conversion that lands on zero is

@@ -1595,10 +1595,13 @@ pub const BAND_VALUE_CORRIGENDUM_SECTIONS: [&str; 4] = ["II.1.5", "II.1.7", "II.
 
 /// The `10ᵏ` (k = 3…18) a band figure may sit above a sibling figure for the pair to
 /// be the exact-power-of-ten signal. k ≥ 3 because a factor of 10 or 100 between a
-/// framework and its lot is ordinary; 10¹⁸ is the last power an `i64` holds.
+/// framework and its lot is ordinary; 10¹⁸ is the last power an `i64` holds. The
+/// election refuses x100 too since issue 492, but only outside a framework exemption
+/// that reads the head's lot structure, which this listing does not compute; so a x100
+/// pair is not listed, and a band head the x100 rule keeps or refuses shows `—` here.
 fn band_powers_of_ten() -> String {
     // The election's own exponent floor (issue 471 unit 4(a)), so the listing's
-    // partner column names exactly the pairs `ScalePartners` refuses on.
+    // partner column names exactly the k >= 3 pairs `ScalePartners` refuses on.
     (store::canonical::SCALE_ERROR_MIN_EXPONENT..=18).map(|k| 10i64.pow(k).to_string()).collect::<Vec<_>>().join(", ")
 }
 
@@ -2190,7 +2193,8 @@ pub struct BandRow {
     pub profile: String,
     pub head_notice: String,
     /// The largest positive figure of the same Tender and currency that the head is
-    /// exactly 10ᵏ (k ≥ 3) above — the sharp signal. `None` when there is none.
+    /// exactly 10ᵏ (k ≥ 3) above — the sharp signal. `None` when there is none. A x100
+    /// partner (issue 492's k = 2 rule) is not listed: see [`band_powers_of_ten`].
     pub pow10_partner: Option<i64>,
     /// The smallest positive figure of the same Tender and currency below the head, for
     /// the ratio column. For reading only: a plain ratio is NOT a signal (issue 471).
@@ -3968,7 +3972,8 @@ fn render_band(out: &mut String, report: &Report) {
          seek); EUR {} (`IMPLAUSIBLE_EUR_CENTS`) caps the band from above because the election \
          refuses past it. `exact 10^k partner` is the largest figure of the same Tender and \
          currency, in any version, that the head is exactly 10^k (k >= 3) above — the sharp \
-         scale-error signal; figures at or below 10.00 as published (issue 380's bottom-of-range \
+         scale-error signal (the election also refuses an exact x100, issue 492, unless the head \
+         is a framework total over its lots; that pair is not listed here); figures at or below 10.00 as published (issue 380's bottom-of-range \
          placeholders) are never partners or siblings. `x smallest` is the head over the smallest \
          such sibling, for reading only: a plain ratio is not a signal (a GBP 19 bn framework over \
          its lots reads x540 too). `value corrigendum` names the newest F14 in the chain correcting \
@@ -4560,8 +4565,10 @@ mod tests {
     use super::*;
 
     /// Issue 471 unit 4(a): the band listing's partner search and the head
-    /// election's scale-error rule must agree on what a partner is, or the
-    /// listing would name pairs the election ignores (or the reverse).
+    /// election's scale-error rule must agree on what a k >= 3 partner is, or the
+    /// listing would name pairs the election ignores (or the reverse). The x100
+    /// pairs of issue 492 are the election's alone: their framework exemption reads
+    /// the head's lots, and the listing says it does not show them.
     #[test]
     fn the_band_partner_floor_is_the_elections() {
         assert_eq!(SENTINEL_AMOUNT_CEILING, store::canonical::SCALE_PARTNER_FLOOR_CENTS);

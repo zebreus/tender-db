@@ -779,7 +779,10 @@ rates and the quarantine resolution ledger.</p>
   scale slip is refused when the Tender itself holds the evidence: a figure worth
   &euro;1bn or more that is exactly 1,000&times; (or 10,000&times;, a
   million&times;&hellip;) another figure of the same Tender, in the same
-  currency. The refused figure stays in <code>amounts</code> and the election
+  currency. Exactly 100&times; another figure is refused too, unless the big
+  figure is a framework total: a procedure-level figure over two or more lots,
+  whose smaller partner is a lot figure, and whose lots add up to between a tenth
+  of it and all of it. The refused figure stays in <code>amounts</code> and the election
   falls to the next one. A figure with no such partner is served as published,
   so a very large single value can still be a typo: in a sample of the residual
   &euro;10bn-and-up band (issue 471, October 2026) roughly a third were. Check

@@ -13564,6 +13564,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-tender-links"
             | "requeue-uuid-hubs"
             | "refold-buyer-roles"
+            | "refold-value-band"
             | "rederive-eur"
             | "rederive-eur-recent"
             | "repair-nested-orgs"
