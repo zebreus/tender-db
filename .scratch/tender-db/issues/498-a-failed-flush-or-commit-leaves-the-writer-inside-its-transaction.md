@@ -8,7 +8,7 @@ confirmed against the code.
   `try_lock` (the one acquisition outside it) pass the guard through `end_dangling_transaction`, which rolls back a
   transaction a previous holder left open and logs `[store] the writer was handed to <file:line> INSIDE an open
   transaction`. It is the only fix for the panic and cancelled-future cases. Test:
-  `the_writer_is_never_handed_over_inside_a_transaction`.
+  `the_writer_is_never_handed_over_inside_a_transaction`. DEPLOYED 2026-10-09 00:34 UTC (`90fb19d`, gate green, health ok).
 - NEXT: unit 2 (the `Db::immediate` helper in `tx.rs`), then unit 3 in the census's rank order. A journal grep
   for `INSIDE an open transaction` after deploy says whether any leak fires in prod.
 Kind: robustness / the single writer (`Db::conn`)
