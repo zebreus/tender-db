@@ -1,6 +1,25 @@
 # 503 — a `source` filter on the ordered Tender list sorts the whole source
 
-Status: ready-for-agent — UNITS 1+2 DONE 2026-10-09: DEPLOYED (`b568c10`, gate green). The boot detector queued
+Status: done — UNIT 3 DEPLOYED 2026-10-09 (`3c80925`, gate green; review `wf_acae9505-1b8`, its one finding fixed). `source_pin`
+picks the index that bounds the read: `status=open` → the deadline index (first, whatever comes with it); a closed range
+on the other date column → that column's index; a one-sided other bound or a value band → the planner; otherwise the
+ordering column's own index. Re-timed on prod, warm, TED, limit 50:
+
+| Request | Before | After |
+|---|---|---|
+| `sort=published_at&status=closed` | 17.2 s | **7 ms** |
+| `sort=deadline&status=closed` | 11.7 s | **134 ms** |
+| `sort=published_at&status=open` | 4.7 s | **78 ms** |
+| `sort=deadline&status=open` | 85 ms | **6 ms** |
+| `sort=published_at&deadline_after=2026-11-01&deadline_before=2026-12-01` | 4.7 s | **24 ms** |
+| `sort=deadline&published_after=2026-09-01&published_before=2026-10-01` | 4.6 s | **111 ms** |
+| `sort=deadline&status=open&published_after=2025-10-01&published_before=2026-10-01` | — | **6 ms** |
+
+Residual, left on purpose: a one-sided bound on the OTHER column (`sort=deadline&published_after=2026-01-01`) stays
+with the planner at about 4.9 s. An open-ended range has no known size, and pinning either index can read most of TED.
+It would need a size estimate before choosing; reopen if a consumer hits it.
+
+Units 1+2 DONE 2026-10-09: DEPLOYED (`b568c10`, gate green). The boot detector queued
 Reindex 2101, which built both indexes in 41 s.
 - **Re-timed on prod**, warm (cold):
 
@@ -18,7 +37,7 @@ Reindex 2101, which built both indexes in 41 s.
 - **Review** `wf_133db53c-649` confirmed two findings, both fixed in `b568c10`:
   - The pin is skipped when the other date column, a value band or a status could drive the read.
   - A rebuild-time "no such index" reruns the read unpinned.
-- NEXT: **unit 3**. The combinations left to the planner still cost about 4.7 s:
+- Unit 3 (now done, above) was filed for the combinations left to the planner, about 4.7 s each:
   - `source=ted&sort=deadline&published_after=2026-09-01&published_before=2026-10-01`: 4.6 s;
   - `source=ted&sort=published_at&status=open`: 4.7 s.
 
