@@ -3167,10 +3167,13 @@ pub fn head_value_eur_cents_with(
     head.facts
         .iter()
         // Issue 492: a tender-scope figure equal to a lot award of the head is that
-        // award's copy, a lot figure, and so gets no framework exemption.
-        .map(|f| (f, matches!(f, Fact::Amount { cents, currency, .. } if partners.is_head_award(currency, *cents))))
-        .chain(head.lots.iter().flat_map(|l| l.facts.iter()).map(|f| (f, true)))
-        .filter_map(|(f, lot)| match f {
+        // award's copy, a lot figure of no known lot, and so gets no x100 exemption.
+        .map(|f| {
+            let copy = matches!(f, Fact::Amount { cents, currency, .. } if partners.is_head_award(currency, *cents));
+            (f, if copy { FigureScope::Lot(None) } else { FigureScope::Procedure })
+        })
+        .chain(head.lots.iter().flat_map(|l| l.facts.iter().map(move |f| (f, FigureScope::Lot(Some(l.key.as_str()))))))
+        .filter_map(|(f, scope)| match f {
             // The sentinel test reads the PUBLISHED figure, not its conversion: a
             // form-width maximum is a fact about what the publisher's field
             // allowed, and converting it first would turn one currency's sentinel
@@ -3193,7 +3196,7 @@ pub fn head_value_eur_cents_with(
                 // finds the row this elects by `eur_cents` and follows with no
                 // edit (366 unit 3), and its per-lot pick calls the same
                 // [`ScalePartners::refuses_amount`].
-                (!partners.refuses_amount(field, currency, *cents, eur, lot)).then_some(eur)
+                (!partners.refuses_amount(field, currency, *cents, eur, scope)).then_some(eur)
             }
             _ => None,
         })
@@ -3265,10 +3268,12 @@ impl LotAmount<'_> {
 ///
 /// `partners` must be [`ScalePartners::of_chain`] of the chain up to and
 /// including this version: the value of version N depends on versions 1..=N
-/// only, which is what lets a kept version keep its stored value.
+/// only, which is what lets a kept version keep its stored value. `lot_key` is
+/// the lot's key, for the x100 rule's sibling-lot exemption (issue 492).
 pub fn elect_lot_value<'a>(
     amounts: impl IntoIterator<Item = LotAmount<'a>>,
     partners: &ScalePartners<'_>,
+    lot_key: &str,
 ) -> Option<LotAmount<'a>> {
     let mut best: Option<LotAmount<'a>> = None;
     for a in amounts {
@@ -3278,7 +3283,7 @@ pub fn elect_lot_value<'a>(
         if a.eur_cents.is_some_and(|eur| eur > IMPLAUSIBLE_EUR_CENTS) {
             continue;
         }
-        if a.eur_cents.is_some_and(|eur| partners.refuses_amount(a.field, a.currency, a.cents, eur, true)) {
+        if a.eur_cents.is_some_and(|eur| partners.refuses_amount(a.field, a.currency, a.cents, eur, FigureScope::Lot(Some(lot_key)))) {
             continue;
         }
         if best.is_none_or(|b| a.cents > b.cents) {
@@ -3343,6 +3348,17 @@ pub const SCALE_PARTNER_FLOOR_CENTS: i64 = 1_000;
 /// (`data_quality.rs`, `BAND_FLOOR_EUR_CENTS`); it is no longer this constant.
 pub const SCALE_ERROR_MIN_EUR_CENTS: i64 = 100_000_000_000;
 
+/// Which kind of figure [`ScalePartners::refuses_amount`] is asked about, for the x100
+/// rule's exemptions (issue 492).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FigureScope<'k> {
+    /// A procedure (tender-scope) figure: the framework-total exemption may keep it.
+    Procedure,
+    /// A lot figure, of the lot with this key where known: the sibling-lot exemption may
+    /// keep it. `None` (a lot award's tender-scope copy) gets no exemption.
+    Lot(Option<&'k str>),
+}
+
 /// The exact-10^k scale-error rule of the head election (issue 471 unit 4(a),
 /// decided on the 22 adjudicated band rows, 2026-10-06).
 ///
@@ -3387,6 +3403,15 @@ pub const SCALE_ERROR_MIN_EUR_CENTS: i64 = 100_000_000_000;
 /// the 56 wrongly; this one refuses 45 of 45 slips with one recorded wrong refusal (8819939,
 /// a single-lot concession whose earlier PIN understated it).
 ///
+/// A x100 LOT figure has its own exemption, the sibling lot (the unit 3 review's
+/// adjudication of the 11 stored lot values of EUR 1 bn or more with a x100 partner,
+/// 2026-10-09: 9 slips, 2 genuine). It is kept when the version has two or more lots, its
+/// x100 partner is only ever a figure of OTHER lots (never a procedure figure, never this
+/// lot's own), and the version has a procedure figure in the currency at least as large.
+/// That keeps 8748271's GBP 1 bn laundry lot beside its GBP 10 m consultancy lot and
+/// 8811221's "SPV's/LLP's £100m+" lot, and refuses every reached slip: each was a single
+/// lot 100x its own procedure total (292242, 627800, 1003919, 8715174).
+///
 /// Every figure is tested on its own, so a second scaled figure falls too, and
 /// a refused figure still counts as a partner of a bigger one. Refused is not
 /// corrected: the head falls to the next admitted figure, which may itself be
@@ -3408,6 +3433,15 @@ pub const SCALE_ERROR_MIN_EUR_CENTS: i64 = 100_000_000_000;
 /// up by `eur_cents` and has no rule of its own to drift.
 #[derive(Debug, PartialEq)]
 pub struct ScalePartners<'a> {
+    /// Issue 492: per partner figure, the keys of the lots it is a figure of, while every
+    /// occurrence is a lot figure of a known lot; `None` once one is not (a procedure
+    /// figure, or a lot award with no lot key). The sibling-lot exemption needs its
+    /// partner to belong to other lots only.
+    lot_keys: std::collections::HashMap<(&'a str, i64), Option<std::collections::BTreeSet<&'a str>>>,
+    /// Issue 492: per currency, the head version's largest procedure figure: a
+    /// tender-scope amount that is no withheld figure, no sentinel and no lot award's
+    /// copy. A x100 lot figure above it gets no sibling-lot exemption.
+    head_procedure_max: std::collections::HashMap<&'a str, i64>,
     /// Every partner candidate (currency, cents) of the chain above the floor.
     figures: std::collections::HashSet<(&'a str, i64)>,
     /// Issue 492: per partner figure, whether EVERY occurrence in the chain so far is a
@@ -3436,6 +3470,8 @@ impl<'a> ScalePartners<'a> {
     /// not hold the chain as `TenderVersion`s (the read layer's per-lot pick).
     pub fn new() -> Self {
         ScalePartners {
+            lot_keys: Default::default(),
+            head_procedure_max: Default::default(),
             figures: Default::default(),
             lot_only: Default::default(),
             head: Default::default(),
@@ -3448,16 +3484,26 @@ impl<'a> ScalePartners<'a> {
     /// A figure of ANY version of the chain, amount or lot award, that may be
     /// a partner. Figures at or below the floor are ignored here.
     pub fn add_partner(&mut self, currency: &'a str, cents: i64) {
-        self.add_figure(currency, cents, false);
+        self.add_figure(currency, cents, FigureScope::Procedure);
     }
 
-    /// [`Self::add_partner`] with the figure's scope: `lot` when it is a lot figure (a
-    /// lot-scope amount, a lot award, or a lot-null amount equal to a lot award of its
-    /// version). A figure seen once outside a lot is no lot-only partner (issue 492).
-    fn add_figure(&mut self, currency: &'a str, cents: i64, lot: bool) {
+    /// [`Self::add_partner`] with the figure's scope: a lot figure is a lot-scope amount,
+    /// a lot award, or a lot-null amount equal to a lot award of its version. A figure
+    /// seen once outside a lot is no lot-only partner, and one seen once without a lot
+    /// key is no sibling-lot partner (issue 492).
+    fn add_figure(&mut self, currency: &'a str, cents: i64, scope: FigureScope<'a>) {
         if cents > SCALE_PARTNER_FLOOR_CENTS {
             self.figures.insert((currency, cents));
+            let lot = matches!(scope, FigureScope::Lot(_));
             self.lot_only.entry((currency, cents)).and_modify(|only| *only &= lot).or_insert(lot);
+            let keys = self.lot_keys.entry((currency, cents)).or_insert_with(|| Some(Default::default()));
+            match (scope, keys.as_mut()) {
+                (FigureScope::Lot(Some(key)), Some(set)) => {
+                    set.insert(key);
+                }
+                (FigureScope::Lot(Some(_)), None) => {}
+                _ => *keys = None,
+            }
         }
     }
 
@@ -3484,12 +3530,20 @@ impl<'a> ScalePartners<'a> {
     /// values need the rule over versions 1..=N, and rebuilding it per version
     /// would be quadratic on the long legacy chains.
     pub fn add_version_figures(&mut self, v: &'a TenderVersion) {
-        let awards: std::collections::HashSet<(&str, i64)> = Self::awards(v).map(|(_, c, cents)| (c, cents)).collect();
-        for (_, currency, cents, in_lot) in Self::scoped_amounts(v) {
-            self.add_figure(currency, cents, in_lot || awards.contains(&(currency, cents)));
+        // A lot-null amount equal to a lot award is that award's copy: a figure of the
+        // award's lot. The award itself registers every lot key it carries below.
+        let awards: std::collections::HashMap<(&str, i64), Option<&str>> =
+            Self::awards(v).map(|(lot, c, cents)| ((c, cents), lot)).collect();
+        for (_, currency, cents, lot) in Self::scoped_amounts(v) {
+            let scope = match (lot, awards.get(&(currency, cents))) {
+                (Some(key), _) => FigureScope::Lot(Some(key)),
+                (None, Some(award_lot)) => FigureScope::Lot(*award_lot),
+                (None, None) => FigureScope::Procedure,
+            };
+            self.add_figure(currency, cents, scope);
         }
-        for (_, currency, cents) in Self::awards(v) {
-            self.add_figure(currency, cents, true);
+        for (lot, currency, cents) in Self::awards(v) {
+            self.add_figure(currency, cents, FigureScope::Lot(lot));
         }
     }
 
@@ -3510,6 +3564,17 @@ impl<'a> ScalePartners<'a> {
             self.add_head_amount(field, currency, cents);
         }
         self.head_awards = Self::awards(head).map(|(_, currency, cents)| (currency, cents)).collect();
+        self.head_procedure_max.clear();
+        for f in &head.facts {
+            if let Fact::Amount { cents, currency, quality, .. } = f
+                && quality.is_none()
+                && !sentinel_amount(*cents)
+                && !self.head_awards.contains(&(currency.as_str(), *cents))
+            {
+                let max = self.head_procedure_max.entry(currency.as_str()).or_insert(0);
+                *max = (*max).max(*cents);
+            }
+        }
         // Issue 492: the head's lot structure, for the x100 rule's framework exemption.
         // Each lot counts once, by key, whether it is a lot of the version or only the
         // lot of an award; its figure in a currency is the largest it states there.
@@ -3556,16 +3621,17 @@ impl<'a> ScalePartners<'a> {
         }
     }
 
-    /// [`Self::amounts`] with each amount's scope: `true` for a lot's own amount.
-    fn scoped_amounts(v: &'a TenderVersion) -> impl Iterator<Item = (&'a str, &'a str, i64, bool)> {
+    /// [`Self::amounts`] with each amount's scope: the lot's key for a lot's own amount.
+    fn scoped_amounts(v: &'a TenderVersion) -> impl Iterator<Item = (&'a str, &'a str, i64, Option<&'a str>)> {
         let amount = |f: &'a Fact| match f {
             Fact::Amount { field, cents, currency, .. } => Some((field.as_str(), currency.as_str(), *cents)),
             _ => None,
         };
-        v.facts
-            .iter()
-            .filter_map(move |f| amount(f).map(|(field, c, cents)| (field, c, cents, false)))
-            .chain(v.lots.iter().flat_map(|l| l.facts.iter()).filter_map(move |f| amount(f).map(|(field, c, cents)| (field, c, cents, true))))
+        v.facts.iter().filter_map(move |f| amount(f).map(|(field, c, cents)| (field, c, cents, None))).chain(
+            v.lots.iter().flat_map(move |l| {
+                l.facts.iter().filter_map(move |f| amount(f).map(|(field, c, cents)| (field, c, cents, Some(l.key.as_str()))))
+            }),
+        )
     }
 
     /// Every amount of one version, tender scope then each lot's, as
@@ -3618,33 +3684,52 @@ impl<'a> ScalePartners<'a> {
         self.head_awards.contains(&(currency, cents))
     }
 
-    /// Issue 492's framework exemption for a x100 figure F with partner `partner`: F is a
-    /// procedure figure (not `lot`), the head version has two or more lots, the partner is
+    /// Issue 492's framework exemption for a x100 procedure figure F with partner
+    /// `partner`: the head version has two or more lots, the partner is
     /// only ever a lot figure, and the head's lot figures in the currency sum to between
     /// F / 10 and F. On the 56 adjudicated EUR 1-10 bn heads this kept all nine genuine
     /// frameworks (lots summing to between 1x and 6.1x below F) and none of the 45 slips.
-    fn framework_total(&self, currency: &str, cents: i64, lot: bool, partner: i64) -> bool {
-        !lot
-            && self.head_lots >= 2
+    fn framework_total(&self, currency: &str, cents: i64, partner: i64) -> bool {
+        self.head_lots >= 2
             && self.lot_only.get(&(currency, partner)).copied().unwrap_or(false)
             && self.head_lot_sums.get(currency).is_some_and(|&sum| sum >= cents / 10 && sum <= cents)
+    }
+
+    /// Issue 492's sibling-lot exemption for a x100 figure of the lot `key` with partner
+    /// `partner`: the head version has two or more lots, the partner is only ever a
+    /// figure of OTHER lots, and the head has a procedure figure in the currency at least
+    /// as large. On the 11 adjudicated lot values this kept both genuine lots (8748271,
+    /// 8811221) and none of the reached slips.
+    fn sibling_lot(&self, currency: &str, cents: i64, key: &str, partner: i64) -> bool {
+        self.head_lots >= 2
+            && self
+                .lot_keys
+                .get(&(currency, partner))
+                .and_then(|keys| keys.as_ref())
+                .is_some_and(|keys| !keys.is_empty() && !keys.contains(key))
+            && self.head_procedure_max.get(currency).is_some_and(|&max| cents <= max)
     }
 
     /// Whether an amount of the head, published as `cents` in `currency` under
     /// `field` and worth `eur_cents`, is refused: at or above
     /// [`SCALE_ERROR_MIN_EUR_CENTS`] (EUR 1 bn), with a partner, and not corroborated by a
-    /// different field of the head. The ONE predicate: the fold's election and
-    /// the read layer's per-lot pick both call it.
-    pub fn refuses_amount(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, lot: bool) -> bool {
+    /// different field of the head; or, without one, with a x100 partner and no
+    /// exemption for its `scope`. The ONE predicate: the fold's head and lot
+    /// elections both call it.
+    pub fn refuses_amount(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, scope: FigureScope<'_>) -> bool {
         if eur_cents < SCALE_ERROR_MIN_EUR_CENTS {
             return false;
         }
         if self.partner(currency, cents).is_none() {
             // Issue 492: a x100 partner (k = 2) refuses too, unless the figure is a
-            // framework total over its lots. No corroboration exemption here: in the
-            // sample it protected no genuine figure and kept the slips one notice copied
-            // into two slots.
-            return self.partner_x100(currency, cents).is_some_and(|p| !self.framework_total(currency, cents, lot, p));
+            // framework total over its lots, or a lot figure whose partner is a sibling
+            // lot. No corroboration exemption here: in the sample it protected no
+            // genuine figure and kept the slips one notice copied into two slots.
+            return self.partner_x100(currency, cents).is_some_and(|p| match scope {
+                FigureScope::Procedure => !self.framework_total(currency, cents, p),
+                FigureScope::Lot(Some(key)) => !self.sibling_lot(currency, cents, key, p),
+                FigureScope::Lot(None) => true,
+            });
         }
         // Corroborated when another field carries it: the entry is `None`
         // (two fields seen), or names a field other than this one (a caller
@@ -30248,6 +30333,7 @@ impl Db {
                     _ => None,
                 }),
                 partners,
+                &lot.key,
             );
             pending.push(Leaf::VersionLots, [
                 Value::Integer(tender_id),
@@ -32795,7 +32881,7 @@ async fn write_candidate_edges(
 #[cfg(test)]
 mod tests {
     use super::{
-        CompareTally, Fact, Leaf, LotState, MinUnionFind, Pending, PlanScope, StoredVersion, TenderVersion,
+        CompareTally, Fact, FigureScope, Leaf, LotState, MinUnionFind, Pending, PlanScope, StoredVersion, TenderVersion,
         head_deadline, head_title, head_value_eur_cents, in_transaction, sentinel_amount,
         transaction_ended_under,
     };
@@ -33339,7 +33425,7 @@ mod tests {
             LotAmount { field, cents, currency, eur_cents: eur, quality }
         };
         let none = ScalePartners::new();
-        let pick = |xs: Vec<LotAmount<'static>>, rule: &ScalePartners<'_>| elect_lot_value(xs, rule).map(|w| (w.field, w.cents, w.currency));
+        let pick = |xs: Vec<LotAmount<'static>>, rule: &ScalePartners<'_>| elect_lot_value(xs, rule, "LOT-1").map(|w| (w.field, w.cents, w.currency));
         assert_eq!(pick(vec![], &none), None, "no figure, no value");
         assert_eq!(pick(vec![a("estimated_value", -100, "EUR", Some(-100), Some("withheld"))], &none), None, "withheld");
         assert_eq!(pick(vec![a("estimated_value", 100, "GBP", Some(117), None)], &none), None, "one unit is a token");
@@ -33639,13 +33725,13 @@ mod tests {
         let mut rule = ScalePartners::new();
         rule.add_partner("EUR", 1_000_000_000);
         rule.add_head_amount("result_value", "EUR", 1_000_000_000_000);
-        assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000, false));
-        assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, SCALE_ERROR_MIN_EUR_CENTS, false), "at the gate");
-        assert!(!rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, SCALE_ERROR_MIN_EUR_CENTS - 1, false), "below the gate");
+        assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000, FigureScope::Procedure));
+        assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, SCALE_ERROR_MIN_EUR_CENTS, FigureScope::Procedure), "at the gate");
+        assert!(!rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, SCALE_ERROR_MIN_EUR_CENTS - 1, FigureScope::Procedure), "below the gate");
         rule.add_head_amount("result_value", "EUR", 1_000_000_000_000);
-        assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000, false), "same field twice");
+        assert!(rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000, FigureScope::Procedure), "same field twice");
         rule.add_head_amount("estimated_value", "EUR", 1_000_000_000_000);
-        assert!(!rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000, false), "corroborated");
+        assert!(!rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000, FigureScope::Procedure), "corroborated");
     }
 
     /// Issue 492 unit 3, decided 2026-10-09 on the 56 adjudicated EUR 1-10 bn heads with
@@ -33744,10 +33830,12 @@ mod tests {
         assert_eq!(one(over), Some(119_000_000_000), "lots summing past F do not exempt it");
 
         // A x100 LOT figure (the lot election and the head's lot candidates) is never a
-        // framework total.
+        // framework total; its own exemption is the sibling lot (below).
         let mut rule = ScalePartners::of_chain(std::slice::from_ref(&framework));
-        assert!(!rule.refuses_amount("estimated_value", "EUR", f, f, false), "the framework total, as the head asks");
-        assert!(rule.refuses_amount("estimated_value", "EUR", f, f, true), "the same figure asked as a lot figure");
+        assert!(!rule.refuses_amount("estimated_value", "EUR", f, f, FigureScope::Procedure), "the framework total, as the head asks");
+        assert!(rule.refuses_amount("estimated_value", "EUR", f, f, FigureScope::Lot(None)), "a lot figure of no known lot");
+        assert!(rule.refuses_amount("estimated_value", "EUR", f, f, FigureScope::Lot(Some("LOT-3"))), "the partner is this lot's own figure");
+        assert!(!rule.refuses_amount("estimated_value", "EUR", f, f, FigureScope::Lot(Some("LOT-1"))), "the partner is a sibling lot's");
         // No corroboration exemption at k = 2: the same figure under a second field of the
         // head still falls when the exemption does not hold.
         rule.add_head_amount("result_value", "EUR", f);
@@ -33803,6 +33891,102 @@ mod tests {
             vec![award("LOT-1", f)],
         );
         assert_eq!(one(copy), Some(p), "an award's tender-scope copy is a lot figure");
+    }
+
+    /// Issue 492, the unit 3 review: a x100 LOT figure is kept when its partner is a
+    /// SIBLING lot's figure only, the version has two or more lots, and it has a procedure
+    /// figure in the currency at least as large. Decided on the 11 stored lot values of EUR 1
+    /// bn or more with a x100 partner (2026-10-09): 9 slips, 2 genuine. Each case is an
+    /// adjudicated shape, in EUR so the empty lookup converts at 1.0.
+    #[test]
+    fn a_x100_lot_figure_is_kept_only_beside_a_sibling_lot_partner() {
+        use super::{LotAmount, ScalePartners, elect_lot_value, head_value_eur_cents};
+        let rates = crate::rates::RatesLookup::default();
+        let amt = |field: &str, cents: i64| Fact::Amount {
+            field: field.into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
+        // The lot value the fold stores for `key` in the LAST version of `chain`.
+        let lot_value = |chain: &[TenderVersion], key: &str| {
+            let rule = ScalePartners::of_chain(chain);
+            let l = chain.last().unwrap().lots.iter().find(|l| l.key == key).unwrap();
+            elect_lot_value(
+                l.facts.iter().filter_map(|f| match f {
+                    Fact::Amount { field, cents, currency, quality, .. } => Some(LotAmount {
+                        field,
+                        cents: *cents,
+                        currency,
+                        eur_cents: Some(*cents),
+                        quality: quality.as_deref(),
+                    }),
+                    _ => None,
+                }),
+                &rule,
+                key,
+            )
+            .map(|a| a.cents)
+        };
+        let (big, small) = (100_000_000_000, 1_000_000_000); // EUR 1 bn and its x100, EUR 10 m
+
+        // 8748271: eight lots summing to the procedure total (here three, EUR 2.71 bn);
+        // lot 1 is EUR 1 bn beside lot 4's EUR 10 m consultancy. Kept.
+        let laundry = version(
+            vec![amt("estimated_value", 271_000_000_000)],
+            vec![
+                lot("LOT-1", vec![amt("estimated_value", big)]),
+                lot("LOT-2", vec![amt("estimated_value", 170_000_000_000)]),
+                lot("LOT-4", vec![amt("estimated_value", small)]),
+            ],
+        );
+        assert_eq!(lot_value(std::slice::from_ref(&laundry), "LOT-1"), Some(big), "a sibling lot's EUR 10 m does not refuse it");
+        // 8811221: two EUR 10 m lots and an EUR 1 bn one under a EUR 47 bn procedure. Kept.
+        let spv = version(
+            vec![amt("estimated_value", 4_700_000_000_000)],
+            vec![lot("LOT-1", vec![amt("estimated_value", small)]), lot("LOT-2", vec![amt("estimated_value", small)]), lot("LOT-3b", vec![amt("estimated_value", big)])],
+        );
+        assert_eq!(lot_value(std::slice::from_ref(&spv), "LOT-3b"), Some(big), "partners on two sibling lots");
+
+        // 292242 / 627800 / 1003919 / 8715174: a single lot 100x its own procedure total.
+        // Refused, and the Tender's head falls to the procedure figure.
+        let single = version(vec![amt("estimated_value", small)], vec![lot("LOT-1", vec![amt("estimated_value", big)])]);
+        assert_eq!(lot_value(std::slice::from_ref(&single), "LOT-1"), None, "one lot: a procedure partner refuses it");
+        assert_eq!(head_value_eur_cents(std::slice::from_ref(&single), &rates), Some(small));
+
+        // The partner is THIS lot's figure in an earlier version (524394's shape, in a
+        // multi-lot Tender): refused.
+        let earlier = version(vec![amt("estimated_value", 200_000_000_000)], vec![lot("LOT-1", vec![amt("estimated_value", small)]), lot("LOT-2", vec![amt("estimated_value", 500_000_000)])]);
+        let mut later = version(vec![amt("estimated_value", 200_000_000_000)], vec![lot("LOT-1", vec![amt("estimated_value", big)]), lot("LOT-2", vec![amt("estimated_value", 500_000_000)])]);
+        later.caused_by_notice_id = 2;
+        assert_eq!(lot_value(&[earlier, later], "LOT-1"), None, "its own earlier figure is no sibling");
+
+        // An equal split with one lot typed 100x: three EUR 10 m lots under a EUR 30 m
+        // procedure, lot 1 at EUR 1 bn. Its partner is a sibling's, but it is above the
+        // procedure figure. Refused.
+        let split = version(
+            vec![amt("estimated_value", 3_000_000_000)],
+            vec![lot("LOT-1", vec![amt("estimated_value", big)]), lot("LOT-2", vec![amt("estimated_value", small)]), lot("LOT-3", vec![amt("estimated_value", small)])],
+        );
+        assert_eq!(lot_value(std::slice::from_ref(&split), "LOT-1"), None, "a lot above its procedure total gets no exemption");
+        // No procedure figure to bound it: refused.
+        let unbounded = version(Vec::new(), vec![lot("LOT-1", vec![amt("estimated_value", big)]), lot("LOT-2", vec![amt("estimated_value", small)])]);
+        assert_eq!(lot_value(std::slice::from_ref(&unbounded), "LOT-1"), None, "no procedure figure, no exemption");
+        // The partner also appears at procedure scope: refused.
+        let mut procedure_too = laundry.clone();
+        procedure_too.facts.insert(amt("result_value", small));
+        assert_eq!(lot_value(std::slice::from_ref(&procedure_too), "LOT-1"), None, "a partner seen at procedure scope is no sibling");
+        // A LotsGroup's total over its lots, with a lot at 1/100 of it: kept like a lot.
+        let mut grouped = version(
+            vec![amt("estimated_value", 271_000_000_000)],
+            vec![lot("LOT-1", vec![amt("estimated_value", 268_290_000_000)]), lot("LOT-2", vec![amt("estimated_value", 2_710_000_000)])],
+        );
+        grouped.lots.push(LotState { key: "GLO-1".into(), kind: "LotsGroup".into(), facts: [amt("framework_maximum", 271_000_000_000)].into_iter().collect() });
+        assert_eq!(lot_value(std::slice::from_ref(&grouped), "GLO-1"), Some(271_000_000_000), "a group total over a sibling lot");
+        assert_eq!(head_value_eur_cents(std::slice::from_ref(&grouped), &rates), Some(271_000_000_000));
     }
 
     /// Issue 378, decided 2026-09-11: a conversion that lands on zero is

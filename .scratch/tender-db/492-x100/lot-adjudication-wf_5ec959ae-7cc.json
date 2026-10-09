@@ -1,0 +1,183 @@
+{
+ "workflow": "wf_5ec959ae-7cc",
+ "date": "2026-10-09",
+ "query": "tender_version_lots value_eur_cents >= 1e11, value_cents % 100 = 0, an amount or lot award of the same Tender and currency = value_cents/100 (any version): 13 (tender, value) pairs; 474292 and 8819939 already adjudicated as heads",
+ "verdicts": [
+  {
+   "id": 292242,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "Two partners, both at procedure scope in v1, the only version (eForms subtype 29, 00155020-2024): estimated_value EUR 36,000,000 and result_value EUR 36,000,000.",
+   "falls_to": "Lot: none (NULL). The lot's only own amount is this EUR 3.6 bn estimate, and its award (EUR 1.00, a placeholder) is in lot_results, not in the lot's amounts. HEAD changes: from EUR 3,600,000,000 (elected from this lot figure) to EUR 36,000,000.",
+   "evidence": "Marktgemeinde Rum (Tyrol, about 9.5k inhabitants), negotiated without call, award to TIGEWOSI for 'Ortsteilzentrum Neu Rum'. The notice has a single lot, LOT-8643. Its BT-27-Lot is EUR 3.6 bn (360000000000 cents), exactly 100 times the procedure estimate and the procedure result, which both say EUR 36 m. With one lot, the lot should equal the procedure. Two independent procedure fields agree on EUR 36 m, while EUR 3.6 bn for a district centre in a 9.5k-person municipality is implausible. The award, contract and bid values are EUR 1.00 placeholders. The ratio is exactly 100, so this is a typo or scale slip in the lot field. Refusing it is right."
+  },
+  {
+   "id": 524394,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v2 (change notice 00038978-2024): lot-scope estimated_value of LOT-0001 (lot_id 1436186) = EUR 15,359,000. This is also the stored v2/head lot value.",
+   "falls_to": "If refused, the v1 lot falls to none, because v1's lot has no other amount (its awards are 0 cents). Caveat: the built fold elects version N's lot value with partners from versions 1..=N only. The x100 partner exists only in v2, and v1 holds just EUR 1,535,900,000 twice (procedure and lot), so the built rule does NOT actually refuse this stored v1 row. The head lot row (v2) stays EUR 15,359,000. HEAD does change, from EUR 1,535,900,000 to EUR 15,359,000, but because of the separate refusal of the stale v2 procedure estimate (single lot, so no framework exemption), not because of this row.",
+   "evidence": "\u017dilina self-governing region, natural-gas framework for 24 months, one lot, won by SPP. v1 (00722990-2023) puts the procedure estimate and the lot estimate both at EUR 1,535,900,000. v2, a cor-buy change notice published two months later, moves the lot estimate to EUR 15,359,000 (exactly 1/100). Only the stored procedure estimate was left at EUR 1.5359 bn. The corrigendum's purpose (correcting the wrongly stated estimate) and plausibility (EUR 1.5 bn of gas for one regional authority's sites is absurd; about EUR 15 m is ordinary) both mark the v1 figure as the slip. Refusing it is right in principle, but see the caveat in falls_to."
+  },
+  {
+   "id": 627800,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v1, the only version (eForms subtype 30, 00202229-2024): procedure-scope estimated_value EUR 39,940,000. The procedure result_value of EUR 39,744,011.60 (not an exact x100) corroborates it.",
+   "falls_to": "Lot: none (NULL). The lot's only own amount is this estimate, and its lot result has a NULL award. HEAD changes: from EUR 3,994,000,000 (elected from this lot figure) to EUR 39,940,000 (the procedure estimate, which beats the result's EUR 39.74 m).",
+   "evidence": "HERAtech buys the civil works and balance of plant for the Padova waste-to-energy plant; Carron won it, single lot LOT-0001. BT-27-Lot is EUR 3,994,000,000, exactly 100 times BT-27-Procedure (EUR 39,940,000) in the same notice. The awarded notice result of EUR 39,744,011.60 sits about 0.5% under the EUR 39.94 m estimate, which fits a real works award. EUR 4 bn for the civil works and BOP of one WTE plant is implausible. This matches the Italian single-lot eForms pattern where BT-27-Lot is 100 times BT-27-Procedure. Refusing it is right."
+  },
+  {
+   "id": 952611,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v2 (00775330-2025, a re-publication of the subtype-16 notice dispatched 2025-11-20, about a day after v1): procedure-scope estimated_value EUR 17,000,000 and LOT-0001 (lot_id 2591485) estimated_value EUR 17,000,000.",
+   "falls_to": "If refused, the v1 lot falls to none (v1's lot has no other amount). Caveat: the built fold elects v1's lot value with partners from v1 only, and v1 holds EUR 1,700,000,000 at both procedure and lot scope with no x100 partner, so the built rule does NOT actually refuse this stored v1 row. The head lot row (v2) is EUR 17,000,000 and does not change. HEAD does not change: it is EUR 17,000,000 at v2, below the EUR 1 bn gate.",
+   "evidence": "Leitrim County Council, Shannonside Recreational Campus and Peace Arena: a pitch, a pavilion and sports hall, an athletics track, a 4G pitch, car parking and an access road, restricted works procedure, one lot. v1 (00772308-2025) states EUR 1.7 bn at both procedure and lot scope. v2, published the next day with identical texts, states EUR 17 m at both scopes, exactly 1/100. This looks like a publisher correcting two extra zeros. EUR 1.7 bn for a county sports campus in Ireland's smallest-population county is absurd; EUR 17 m is plausible. The x100 lot figure is the error. Refusing it is right in principle, but see the caveat in falls_to."
+  },
+  {
+   "id": 292242,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v1, the only version (TED 00155020-2024). Two procedure-scope figures: estimated_value EUR 36,000,000 (BT-27-Procedure) and result_value EUR 36,000,000 (BT-161). Both are exactly 1/100 of the lot's EUR 3,600,000,000.",
+   "evidence": "Marktgemeinde Rum (Tyrol, about 9.5k inhabitants) awarded the 'Ortsteilzentrum Neu Rum' district-centre project to TIGEWOSI by negotiated procedure without a call (subtype 29). The procedure has one lot, LOT-8643, so its lot estimate should equal the procedure estimate. Instead BT-27-Lot is EUR 3.6 bn, exactly 100x. The TED API confirms the figures: estimated-value-lot 3600000000, estimated-value-proc 36000000, total-value 36000000. Two independent procedure fields agree on EUR 36 m, which is plausible for a district centre. EUR 3.6 bn for a town of 9.5k is not credible. The bid and contract values are EUR 1.00 placeholders. Refusing the lot figure is right.",
+   "falls_to": "Lot: NULL. The lot's only own amount is this one. The EUR 1 award is a lot result, not a lot amount, and elect_lot_value never falls back to a tender-scope figure. HEAD changes: from EUR 3.6 bn (this lot figure) to EUR 36 m (the procedure estimated_value and result_value)."
+  },
+  {
+   "id": 524394,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v2 (TED 00038978-2024, buyer corrigendum): lot-scope estimated_value EUR 15,359,000 on the same lot, LOT-0001 (lot id 1436186). v1 itself has no x100 partner. Its only amounts are EUR 1,535,900,000 at procedure scope and the same figure at lot scope.",
+   "evidence": "\u017dilinsk\u00fd samospr\u00e1vny kraj (\u017dilina region) bought natural gas for 24 months under one lot, won by SPP. The v1 result notice (722990-2023) puts the lot and procedure estimates and BT-660 at 1,535,900,000. The v2 change notice's BT-141 text reads 'Opraven\u00e1 predpokladan\u00e1 hodnota (BT-27-Procedure): 15 359 000.00', and BT-660 and BT-709 are corrected to 15 359 000.00 as well. So the buyer itself corrected the figure down 100x. EUR 1.5 bn of gas for one region's facilities over 2 years is not credible. CAVEAT: the fold elects version N's lot values under ScalePartners of versions 1..=N only (write_version with the running rule; the_running_scale_rule_is_of_chain_of_each_prefix). The EUR 15.359 m partner first appears in v2, so the built rule will NOT refuse this v1 row. The row list's any-version partner test over-counts it. No served value depends on it: the REST lot row is the head v2 lot, already EUR 15.359 m.",
+   "falls_to": "As built: no change, the v1 lot row stays EUR 1.5359 bn because v1 has no partner in 1..=1. Under any-version semantics it would fall to NULL, since the v1 lot has no other own amount. The head v2 lot row stays EUR 15.359 m. HEAD changes, but through a different figure. The head is v2's stale structured BT-27-Procedure of EUR 1.5359 bn, and its x100 partner is the v2 lot (EUR 15.359 m). The head version has 1 lot, so the framework exemption fails and the head is refused. It falls to EUR 15.359 m (the v2 lot estimated_value)."
+  },
+  {
+   "id": 627800,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v1, the only version (TED 00202229-2024): procedure-scope estimated_value EUR 39,940,000 (BT-27-Procedure). This is exactly 1/100 of the lot's EUR 3,994,000,000. Corroborating but not an exact partner: procedure result_value EUR 39,744,011.60 (BT-161).",
+   "evidence": "HERAtech awarded the detailed design and lump-sum civil and BOP works for the Padova waste-to-energy plant to Carron Cav. Angelo SpA (subtype 30, single lot). BT-27-Lot is EUR 3.994 bn, while BT-27-Procedure is EUR 39.94 m. The TED API confirms the figures: estimated-value-lot 3994000000, estimated-value-proc 39940000.00, total-value 39744011.6. The awarded total sits 0.5% under the EUR 39.94 m estimate, which fits a works award, and about EUR 40 m fits the civil works of one WtE line. EUR 4 bn does not. This is the single-lot Italian eForms pattern of lot = 100x procedure. Refusing the lot figure is right.",
+   "falls_to": "Lot: NULL. The lot's only own amount is this one, and its lot result has no awarded figure. HEAD changes: from EUR 3.994 bn to EUR 39.94 m (the procedure estimated_value, the larger of 39.94 m and the 39.744 m result_value)."
+  },
+  {
+   "id": 952611,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v2 (TED 00775330-2025, a re-published subtype-16 notice two days later) carries both partners: procedure-scope estimated_value EUR 17,000,000 and lot-scope estimated_value EUR 17,000,000 on the same lot, LOT-0001 (lot id 2591485). v1 has no x100 partner. Its only amounts are EUR 1.7 bn at procedure scope and the same at lot scope.",
+   "evidence": "The project is the Shannonside Recreational Campus and Peace Arena in Ireland (IE041, restricted works competition): a pitch, a pavilion and sports hall, an athletics track and similar. The TED API gives 772308-2025 as estimated-value-proc and -lot 1700000000, and 775330-2025 as 17000000 for both. So the publisher re-issued the notice with the value 100x smaller. EUR 17 m fits a regional sports campus; EUR 1.7 bn is absurd. CAVEAT: as for 524394, the fold elects v1's lot value under partners of v1 only, and the EUR 17 m partners first appear in v2. So the built rule will NOT refuse this v1 row. The served head lot row (v2) is already EUR 17 m.",
+   "falls_to": "As built: no change, the v1 lot row stays EUR 1.7 bn because v1 has no partner in 1..=1. Under any-version semantics it would fall to NULL, since the v1 lot has no other own amount. The head v2 lot row stays EUR 17 m. HEAD is unchanged at EUR 17 m (v2)."
+  },
+  {
+   "id": 1003919,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v1, the only version (eForms CN 00157829-2026): tender-scope estimated_value (BT-27-Procedure) EUR 27,838,963.70.",
+   "evidence": "The TED XML has BT-27-Procedure at 27838963.7 and BT-27-Lot for LOT-0001, the only lot, at 2783896370. The digits are identical, and the procedure figure has non-zero cents (.70), so the lot figure is the same number with its decimal point dropped. This is one lot, so the lot should equal the procedure. EUR 2.78 bn of food over 5 years for SUMAR, a Catalan social-services operator, is implausible. The rule refuses it: the partner is in v1, and lot=true means no exemption.",
+   "falls_to": "Lot: none. The lot has no other amount and no award, and a lot never falls back to a tender-scope figure, so v1 value_cents becomes NULL. Head: yes, it changes from EUR 2.78 bn to EUR 27,838,963.70, the same refusal the head adjudication counted as SLIP_HEAD."
+  },
+  {
+   "id": 8591463,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v2 (corrigendum 00674730-2026, two days later): estimated_value EUR 25,276,449.32, at both tender scope and LOT-0001 scope. In v1 the same field at both scopes read EUR 2,527,644,932.",
+   "evidence": "The v1 TED XML (00667920-2026) has EstimatedOverallContractAmount 2527644932. The v2 corrigendum's ChangeDescription states that the decimal separator was missing from BT-27-Procedure and BT-27-Lot, corrected to 25 276 449,32 EUR, reason cor-buy. So the publisher confirms the slip. CAVEAT: the fold elects version N's lot value over versions 1..=N only (running ScalePartners, canonical.rs ~16211-16225; elect_lot_value doc). The v1 prefix holds only 2527644932 EUR, and the x100 partner first appears in v2. So the new rule as built will NOT refuse this stored v1 row, and refold-value-band will leave EUR 2.53 bn in v1. Refusing it would be right.",
+   "falls_to": "If it were refused, the v1 lot would fall to none (NULL), since v1 has no other lot figure. As built, the row stays at EUR 2.53 bn. Head: no change. The head is v2, EUR 25,276,449.32, already correct."
+  },
+  {
+   "id": 8715174,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "Tender-scope estimated_value GBP 25,000,000, in both v1 (tender notice 007104-2021) and v2 (award notice 033512-2023).",
+   "evidence": "Choice Housing, PRN1501 Land, Design and Build Greater Belfast. The procedure estimate is GBP 25 m while the only lot (lot 1) is GBP 2.5 bn in both versions, and a one-lot procedure should have lot = procedure. The only contract awarded is to H J Martin Ltd at GBP 13,985,000, consistent with GBP 25 m. GBP 2.5 bn of housing land and build for one NI housing association is implausible. There are no k>=3 partners. The x100 partner sits in the same version, and lot=true means no framework exemption, so both v1 and v2 lot rows are refused.",
+   "falls_to": "Lot: none at both v1 and v2. There is no other lot amount, the lot award has no awarded value, and the contract value is not a lot amount, so the lot becomes NULL. Head: yes, it changes from GBP 2.5 bn (about EUR 2.87 bn) to the procedure GBP 25 m."
+  },
+  {
+   "id": 8730855,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "Lot 1's own estimated_value GBP 600,000,000 in v3 (FTS 006764-2024, the IRN Refresh 2024 tender notice). v1 (006053-2023) and v2 (016857-2023) carry GBP 60 bn for the same lot.",
+   "evidence": "This is the Essex County Council Integrated Residential and Nursing framework, with the same template as 8784848, where lot 1 is also GBP 60 bn. The lots are GBP 60 bn / 150 m / 250 m in v1 and v2, and GBP 600 m / 150 m / 250 m in v3. The lot text gives about GBP 140 m a year for lots 1 and 2 together, so GBP 600 m over the term is plausible and GBP 60 bn (more than ten times Essex's whole budget) is not. With lot 1 at GBP 600 m the three lots sum to GBP 1 bn. CAVEAT: under the fold's 1..=N prefix rule, the v1 and v2 prefixes hold only GBP 60 bn, 150 m and 250 m. There is no x100 or 10^k partner there, and the GBP 600 m first appears in v3. So the rule as built will NOT refuse these stored v1/v2 rows, and they stay at GBP 60 bn (about EUR 68-70 bn in value_eur_cents, which can top /v1/sql lot rankings). Refusing them would be right.",
+   "falls_to": "If refused, lot 1 at v1 and v2 would fall to none (NULL), since it has no other figure there and no award has a value. As built, the rows stay at GBP 60 bn. Head: no change. The head is v3, where the largest lot is GBP 600 m and there is no procedure figure."
+  },
+  {
+   "id": 1003919,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v1 (TED 00157829-2026, the only version), tender-scope estimated_value of EUR 27,838,963.70 (BT-27-Procedure)",
+   "falls_to": "none: the lot value becomes NULL. LOT-0001 has no other lot-scope amount, and a lot never falls back to a tender-scope figure.",
+   "evidence": "This is a single-lot DPS for food supplies to SUMAR, a Catalan social-services company, running 5 years. The TED search API gives BT-27-Procedure \"27838963.7\" and BT-27-Lot \"2783896370\". The lot figure is the same digits with the decimal point dropped (cents typed as units). EUR 27.8 m is plausible here and EUR 2.78 bn is not. The HEAD changes too: the head is currently this lot figure (EUR 2,783,896,370) and falls to the EUR 27,838,963.70 procedure estimate, refused by the same predicate."
+  },
+  {
+   "id": 8591463,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v2 (corrigendum TED 00674730-2026, cor-buy): tender-scope estimated_value and LOT-0001 estimated_value, both EUR 25,276,449.32",
+   "falls_to": "none if it is refused: the v1 lot becomes NULL, because it has no other lot-scope figure. However, the fold elects version N's lot value under ScalePartners of versions 1..=N only. In v1 the procedure and lot figures are both EUR 2,527,644,932, with no x100 partner in that prefix. So the built rule will probably NOT change this stored v1 row at the refold. The any-version scan overstates this row.",
+   "evidence": "In v1 (00667920-2026), BT-27-Procedure and BT-27-Lot are both 2527644932. The buyer's corrigendum in v2 says, in BT-141 / change-description, that it fixes an obvious clerical error: the decimal separator was missing in BT-27-Procedure and BT-27-Lot, and the correct value is EUR 25,276,449.32. The project is data-centre modernisation for CVTI SR. The HEAD is unchanged: it sits at v2 at EUR 25,276,449.32, and the REST lot row already serves v2's EUR 25.28 m."
+  },
+  {
+   "id": 8715174,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "tender-scope estimated_value of GBP 25,000,000 in v1 (FTS 007104-2021), carried into v2 (award 033512-2023)",
+   "falls_to": "none: lot 1 becomes NULL in both v1 and v2. It has no other lot-scope amount, and its lot result has no awarded cents.",
+   "evidence": "The FTS OCDS for 007104-2021 gives tender value 25000000.0 GBP and lot 1 value 2500000000.0 GBP. This is Choice Housing's single-lot 'Land, Design and Build Greater Belfast', so the lot should equal the procedure. The award's contract value, GBP 13,985,000 to H J Martin Ltd, fits the GBP 25 m estimate. GBP 2.5 bn is implausible for one NI housing association. The partner sits in the same notice (v1), so the prefix rule refuses both versions. The HEAD changes too: the head is currently this GBP 2.5 bn lot figure and falls to the GBP 25 m procedure estimate in v2."
+  },
+  {
+   "id": 8730855,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "v3 (FTS 006764-2024, 'IRN Refresh 2024'), lot 1 estimated_value of GBP 600,000,000: the same lot in a later version",
+   "falls_to": "none if it is refused: lot 1 becomes NULL in v1 and v2, since there is no other lot-1 amount and the awards carry no cents. However, under the fold's prefix rule (versions 1..=N), the v1 and v2 prefixes hold only GBP 60 bn, 150 m and 250 m, with no GBP 600 m partner. So the built rule will probably NOT change these stored rows at the refold.",
+   "evidence": "The FTS OCDS for 006053-2023 gives lot 1 amount 60000000000. The 2024 refresh for the same Essex County Council IRN framework gives lot 1 amount 600000000, with lots 2 and 3 unchanged at GBP 150 m and 250 m. With GBP 600 m the lots sum to exactly GBP 1 bn. The notice text gives about GBP 140 m a year for lots 1 and 2 together, against a council budget of about GBP 1 bn, so GBP 60 bn is absurd. It is the same slip as sibling 8784848 (FTS 004793-2022). The HEAD is unchanged: it sits at v3 at GBP 600 m."
+  },
+  {
+   "id": 8748271,
+   "verdict": "GENUINE_DISTINCT",
+   "confidence": "high",
+   "partner": "Lot 4 'Provision of Laundry Consultancy Services' estimated_value GBP 10,000,000 (1000000000 cents, lot_id 14482857), at lot scope in both seq 1 (FTS 036031-2022) and seq 2 (019955-2023). That is the 2 amount partners.",
+   "evidence": "This is the NOE CPC Laundry and Linen framework, 8 lots. Lot 1 (General Patient Laundry and Linen, the core service lot) is GBP 1,000,000,000 in both versions. The lot estimates are 1000 + 500 + 600 + 10 + 250 + 100 + 150 + 100 = GBP 2,710m, exactly the procedure estimated_value of GBP 2.71bn (271000000000 cents). So Lot 1 at GBP 1bn is internally consistent. If it were really GBP 10m, the lots would sum to about GBP 1.72bn and not match the procedure total. The partner is a small consultancy lot worth GBP 10m, and the 100x ratio between the two is a coincidence of round numbers. Refusing it is WRONG. After refusal: Lot 1 has no other figure (no lot award values, contract values null), so its lot value falls to none in both versions. HEAD: unchanged. The procedure value of GBP 2.71bn is not refused, because 2.71bn/100 and 2.71bn/1000 match no stored figure.",
+   "falls_to": "none: Lot 1 has no other figure in either version"
+  },
+  {
+   "id": 8811221,
+   "verdict": "GENUINE_DISTINCT",
+   "confidence": "high",
+   "partner": "Two lot-scope estimated_value figures of GBP 10,000,000 (1000000000 cents) in seq 1 (FTS 017463-2025, the only version): LOT-0001 'Lot 1 - Development Consultants' and LOT-0002 'Lot 2 - Development Legal Providers'.",
+   "evidence": "This is Pagabo's National Framework for Developer Led Schemes 2026, 7 lots, procedure estimate GBP 47bn. The refused lot is LOT-0004 'Lot 3b - SPV's/LLP's GBP 100m+', which covers joint-venture development schemes each with a GDV over GBP 100m. Its GBP 1bn is plausible and is the same order as its siblings: 3a is GBP 5bn, 4a GBP 7bn, 4b GBP 24.7bn. A true value of GBP 10m would be smaller than one scheme in a lot defined as GBP 100m-plus schemes, so the slip reading fails. The partners are professional-services lots (consultants, legal) where GBP 10m each is ordinary. The lots sum to GBP 37.82bn against the GBP 47bn total. That mismatch is not explained by a 100x slip on Lot 3b. Refusing it is WRONG. After refusal: LOT-0004 has no other figure (one version, no awards), so it falls to none. HEAD: unchanged. 4700000000000/100 and /1000 match no stored figure.",
+   "falls_to": "none: LOT-0004 has no other figure"
+  },
+  {
+   "id": 8821990,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "estimated_value EUR 14,653,165.41 (1465316541 cents) at procedure scope and lot scope (LOT-0001, lot_id 14619769) in seq 3, 4 and 5. That is the 6 amount partners: TED 00139534-2024, 00454198-2024 and 00454058-2026.",
+   "evidence": "This is a single-lot works contract: refurbishing the Quinta de Vista Alegre buildings into a residence for 71 users (32 double rooms, 7 single), buyer Agencia Madrilena de Atencion Social, NextGenerationEU-funded. In seq 1 (00096481-2024) and seq 2 (00119299-2024) both the procedure and lot estimates are stored as 146531654100 cents, i.e. EUR 1,465,316,541.00. Seq 3 (the corrigendum 00139534-2024) onwards carries 1465316541 cents, i.e. EUR 14,653,165.41: the same digits with the decimal dropped (cents read as units). The award confirms the smaller scale: winner UTE CEVIAM EPC/GEOXA at EUR 11,897,051.53 out of 21 bids, and result_value EUR 11.9m / 12.4m. EUR 1.47bn is absurd for a 71-bed residence refurbishment. Refusing it is RIGHT. After refusal: v1 and v2 hold no other admissible lot figure (the only other figure there is the procedure-scope copy of the same 1.465bn slip), so the lot value in those versions falls to none. HEAD: unchanged. Head is seq 5, whose lot row and tender value are already EUR 14,653,165.41.",
+   "falls_to": "none in seq 1 and 2 (their only other figure is the procedure-scope copy of the same slip); seq 3 to 5 already hold EUR 14,653,165.41"
+  },
+  {
+   "id": 8748271,
+   "verdict": "GENUINE_DISTINCT",
+   "confidence": "high",
+   "partner": "Lot 4 (lot_id 14482857, 'Provision of Laundry Consultancy Services') estimated_value GBP 10,000,000 at lot scope in seq 1 (FTS 036031-2022, tender notice) and seq 2 (FTS 019955-2023, award, head). These are the 2 amount partners. There are no award partners: the award notice carries no values.",
+   "evidence": "NOE CPC Laundry and Linen framework, FTS, 8 lots. Lot 1 (General Patient Laundry and Linen) is GBP 1,000,000,000 in both versions. The other lots are L2 500m, L3 600m, L4 10m, L5 250m, L6a 100m, L6b 150m and L7 100m. Together they sum to exactly GBP 2,710,000,000, which is the procedure estimated_value in both versions. A GBP 10m consultancy lot next to a GBP 1bn NHS patient-laundry lot is plausible, and the exact lot sum proves both figures are real. Refusing it is WRONG; this is the same framework-lot shape the head exemption protects, and the lot rule has no exemption. After refusal Lot 1 falls to none (NULL) in both seq 1 and seq 2: its only figure is the GBP 1bn estimate and there are no lot awards. So the served head lot row loses its value. The Tender's head is unchanged at GBP 2.71bn (procedure estimated_value, no 10^k partner).",
+   "falls_to": "none (NULL) in seq 1 and seq 2; the head lot row loses its value. The Tender's head is unchanged at GBP 2.71bn."
+  },
+  {
+   "id": 8811221,
+   "verdict": "GENUINE_DISTINCT",
+   "confidence": "high",
+   "partner": "LOT-0001 'Lot 1 - Development Consultants' and LOT-0002 'Lot 2 - Development Legal Providers', each estimated_value GBP 10,000,000 at lot scope in seq 1, the only and head version (FTS 017463-2025, UK3). These are the 2 amount partners.",
+   "evidence": "Pagabo National Framework for Developer Led Schemes 2026, 7 lots. The refused lot is LOT-0004 'Lot 3b - SPV's/LLP's GBP 100m+' at GBP 1,000,000,000. By its own title and description (GDV of contract GBP 100m+) this lot cannot be worth GBP 10m. The GBP 10m partners are consultancy and legal-services lots, plausible on their own. The other lots are 3a 5bn, 4a 7bn, 4b 24.7bn and 5 100m. The lots sum to GBP 37.82bn against a GBP 47bn procedure estimate, inside the F/10..F band. 3b being smaller than 3a is odd, but even if 3b were itself wrong, it is not a x100 slip of the GBP 10m consultancy and legal lots. Refusing it is WRONG. After refusal LOT-0004 falls to none: there is one version, one figure and no results. The Tender's head is unchanged at GBP 47bn (procedure estimated_value; no GBP 470m, 4.7bn or 47m partner).",
+   "falls_to": "none (NULL); the head lot row for Lot 3b loses its value. The Tender's head is unchanged at GBP 47bn."
+  },
+  {
+   "id": 8821990,
+   "verdict": "SLIP_LOT",
+   "confidence": "high",
+   "partner": "estimated_value EUR 14,653,165.41 at both procedure scope and LOT-0001 scope (lot_id 14619769) in seq 3 (00139534-2024, subtype 16), seq 4 (00454198-2024, award) and seq 5 (00454058-2026, modification, head). These are the 6 amount partners.",
+   "evidence": "Madrid residence refurbishment (Quinta de Vista Alegre, CO Fray Bernardino): a home for 71 residents, 32 double and 7 single rooms, CPV 45000000, NextGenerationEU-funded. Seq 1 (00096481-2024) and seq 2 (00119299-2024) store EUR 1,465,316,541.00 at both procedure and lot scope, exactly 100x EUR 14,653,165.41. That is the classic cents-as-units or dropped-decimal error. Seq 3, nine days later, restates EUR 14,653,165.41, and every later version keeps it. The award to UTE CEVIAM/GEOXA is EUR 11,897,051.53 (about 81% of EUR 14.65m, typical for works). The modification's result_value is EUR 12,433,322.41. A EUR 1.47bn figure for one 71-bed building is impossible. Refusing it is RIGHT. Only the stale seq 1 and seq 2 lot rows are affected. Each falls to none, because the only figures in those versions are the same EUR 1.465bn estimate at procedure and lot scope, both x100 of the later partners. The head lot row (seq 5) and the Tender's head both stay at EUR 14,653,165.41, unchanged.",
+   "falls_to": "none (NULL) for the seq 1 and seq 2 lot rows. The head lot row (seq 5) stays at EUR 14,653,165.41, and the Tender's head is unchanged."
+  }
+ ]
+}

@@ -638,9 +638,14 @@ Only lots count toward (b) and (d): a LotsGroup's figure is a total over lots it
 PIN's parts carried in the head beside the CN's lots count only in a head with no Lot at all. A
 withheld figure or a sentinel is no figure of its lot. A tender-scope figure equal to a lot award of
 the head is that award's copy, a lot figure. A LOT value (the lot election, and the head's lot
-candidates) never gets the exemption, so a lot of €1 bn or more with an exact ×100 partner is
-refused whatever its siblings: decision (b) was measured on heads, not lot rows, so read the lot
-moves this drain announces (below).
+candidates) has its own exemption, the sibling lot: kept when the version has two or more lots,
+its ×100 partner is only ever a figure of OTHER lots, and the version has a procedure figure in
+the currency at least as large. It was decided on the 11 stored lot values of €1 bn or more with
+a ×100 partner (2026-10-09; `.scratch/tender-db/492-x100/lot-adjudication-*`): 9 slips, 2 genuine
+(8748271, 8811221, both kept by it). The fold elects version N's lot value over versions 1..=N,
+so a slip whose partner first appears in a LATER version stays on the earlier version's row
+(524394, 952611, 8591463, 8730855, 8821990): a lot ranking over `tender_version_lots` filters to
+the head version.
 
 Verify, in order:
 - The `refold-value-band` message: `stamped N` with N the dry run's Tender count.
@@ -650,8 +655,10 @@ Verify, in order:
   fall, the 9 frameworks stay, and 8819939 falls (the recorded wrong refusal). Of the €10 bn and
   over nine, the 6 slips fall (751664, 5545591, 6409799, 6640498, 7490161, 8810872), 8595426 and
   8618327 stay, and 4871119 falls to no head (contested, recorded on issue 492).
-- The lot rows that moved: the `lot changed` correction rows of the cohort's Tenders. A lot that
-  fell from €1 bn or more is this rule's, and each one is a read against its notice.
+- The lot rows that moved: the `lot changed` correction rows of the cohort's Tenders. Expected:
+  292242, 627800, 1003919 and 8715174 lose their lot value (NULL) and their heads fall to the
+  procedure figure; 8748271 and 8811221 keep theirs. Any other lot that fell from €1 bn or more
+  is a finding, a read against its notice.
 
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|

@@ -1,8 +1,34 @@
 # 492 — a ×100 scale slip (k = 2) is below the exact-10ᵏ rule
 
-Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (`3aa9272`): the k = 2 rule with the framework exemption, plus
-`refold-value-band`. NEXT: gate, review, deploy, then the drain (`refold-value-band` dry, then wet, then `project`), then
-re-read the adjudicated ids.
+Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (`3aa9272`, review fixes `10fea11`, sibling-lot exemption on top): the
+k = 2 rule with the framework exemption, plus `refold-value-band`. NEXT: gate, deploy, then the drain
+(`refold-value-band` dry, then wet, then `project`), then re-read the adjudicated ids and the lot moves (operations.md,
+"The ×100 extension").
+- **Review** `wf_45a636e0-ec3`: 12 findings, 10 confirmed, 2 refuted (the k ≥ 3 corroboration shielding a ×100 figure:
+  no measured head has both partners; the drain precondition: the ≥ €10 bn adjudication was already done). Fixed in
+  `10fea11`:
+  - `set_head` counted LotsGroups and carried PIN parts as lots, so a group ceiling doubled the lot sum. Only Lots
+    count now; parts only in a head with no Lot.
+  - Sentinels and withheld figures are out of the lot sum.
+  - A tender-scope copy of a head lot award is a lot figure (decision (c)).
+  - Docs: /docs, the data-quality partner column, operations.md, the misplaced doc comment, the 6988280 sentences;
+    `refold-value-band` joins `heavy_write_kind`.
+- **Lot values, measured and adjudicated** (`wf_5ec959ae-7cc`; `.scratch/tender-db/492-x100/lot-adjudication-*`). The
+  review's open point: decision (b) was measured on heads, and a ×100 LOT figure had no exemption.
+  - 4,974 stored lot rows are at ≥ €1 bn (862 Tenders, any version).
+  - 13 (Tender, value) pairs of those have an exact ×100 partner. 474292 and 8819939 were already adjudicated as heads;
+    the other 11 were read by two independent readers each, who agreed on all 11.
+  - Result: 9 slips, 2 genuine (8748271's £1 bn laundry lot beside a £10 m consultancy lot; 8811221's "SPV's/LLP's
+    £100m+" lot beside two £10 m lots).
+  - As built (no lot exemption) the fold refuses 6 of the 11: 4 right (292242, 627800, 1003919, 8715174, each a single
+    lot 100× its own procedure total) and 2 wrong. That is 2 wrong in 6, against 1 in 56 for the head rule.
+  - The other 5 slips (524394, 952611, 8591463, 8730855, 8821990) are unreachable. The fold elects version N's lot
+    value over versions 1..=N, and their partner arrives in a later version, so they stay on earlier-version rows. No
+    head lot row carries one.
+  - **Built: the sibling-lot exemption.** A ×100 lot figure is kept when all three hold: the version has ≥ 2 lots; its
+    partner is only ever a figure of OTHER lots; the version has a same-currency procedure figure at least as large.
+    It keeps both genuine lots and refuses all 4 reached slips. Pinned by
+    `a_x100_lot_figure_is_kept_only_beside_a_sibling_lot_partner`.
 - **≥ €10 bn adjudication** (`wf_fd3e7a72-62a`; files `.scratch/tender-db/492-x100/adjudication-over-10bn-*`): 9 heads
   have a ×100 partner: 6 slips, 2 firm genuine and 1 contested.
   - Slips: 751664, 5545591, 6409799, 6640498, 7490161, 8810872.

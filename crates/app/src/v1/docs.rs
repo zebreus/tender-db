@@ -782,7 +782,9 @@ rates and the quarantine resolution ledger.</p>
   currency. Exactly 100&times; another figure is refused too, unless the big
   figure is a framework total: a procedure-level figure over two or more lots,
   whose smaller partner is a lot figure, and whose lots add up to between a tenth
-  of it and all of it. The refused figure stays in <code>amounts</code> and the election
+  of it and all of it. A lot's own figure 100&times; another is kept only when that
+  other figure belongs to a different lot of the same notice and the notice states a
+  procedure total at least as large. The refused figure stays in <code>amounts</code> and the election
   falls to the next one. A figure with no such partner is served as published,
   so a very large single value can still be a typo: in a sample of the residual
   &euro;10bn-and-up band (issue 471, October 2026) roughly a third were. Check
