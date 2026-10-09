@@ -167,6 +167,22 @@ async fn a_source_companion_on_the_ordered_list_reads_an_index_range_not_a_sort(
     let (sql, _) = tenders_ordered_statement_pinned(&seeded, HeadOrder::PublishedAt, true, None, 51);
     assert!(!sql.contains("INDEXED BY"), "a seeded read is not pinned: {sql}");
 
+    // Anything that could drive the window from another range keeps the planner's choice:
+    // the other date column's bounds, a value band, a status (a `current_deadline` range).
+    // The ordering column's own bounds are the pinned index's range, so they stay pinned.
+    let ted = || Filter { source: Some("ted".into()), ..Filter::default() };
+    for (order, filter, pinned, what) in [
+        (HeadOrder::Deadline, Filter { published_after: Some(1), published_before: Some(2), ..ted() }, false, "published range under sort=deadline"),
+        (HeadOrder::PublishedAt, Filter { deadline_after: Some(1), ..ted() }, false, "deadline bound under sort=published_at"),
+        (HeadOrder::PublishedAt, Filter { min_value: Some(1), ..ted() }, false, "value bound"),
+        (HeadOrder::PublishedAt, Filter { status: Some(store::read::Status::Open), now: 1, ..ted() }, false, "status"),
+        (HeadOrder::PublishedAt, Filter { published_after: Some(1), published_before: Some(2), ..ted() }, true, "own range under sort=published_at"),
+        (HeadOrder::Deadline, Filter { deadline_before: Some(2), kind: Some("procedure".into()), ..ted() }, true, "own bound and kind under sort=deadline"),
+    ] {
+        let (sql, _) = tenders_ordered_statement_pinned(&filter, order, true, None, 51);
+        assert_eq!(sql.contains("INDEXED BY"), pinned, "{what}: {sql}");
+    }
+
     // Before the Reindex job builds the pinned index (issue 111), the read is unpinned and
     // still answers, identically.
     conn.execute("DROP INDEX tenders_source_published", ()).await.unwrap();

@@ -1877,14 +1877,42 @@ pub async fn tenders_ordered(
         return Ok(Vec::new());
     }
     let filter = &with_country_seed(conn, filter).await?;
-    let pin = match &filter.source {
-        Some(_) if index_present(conn, order.source_index()).await? => Some(order.source_index()),
+    let pin = match source_pin(filter, order) {
+        Some(index) if index_present(conn, index).await? => Some(index),
         _ => None,
     };
     let q = tenders_ordered_query(filter, order, desc, cursor, limit, pin);
-    let mut rows = q.rows(conn, tender_row).await?;
+    let mut rows = match q.rows(conn, tender_row).await {
+        // A rebuild can drop `tenders` with its indexes between the presence check and
+        // this statement; the unpinned statement answers as it did before issue 503.
+        Err(e) if pin.is_some() && e.to_string().contains("no such index") => {
+            tenders_ordered_query(filter, order, desc, cursor, limit, None).rows(conn, tender_row).await?
+        }
+        rows => rows?,
+    };
     retain_publication_companions(&mut rows, filter);
     Ok(rows)
+}
+
+/// The `(source, key, id)` index an ordered Tender read should pin (issue 503), or `None`
+/// to leave the plan to the planner.
+///
+/// Pinned only when the filter names a `source` and nothing else could drive the window
+/// more selectively than the source's slice in key order. `INDEXED BY` removes every other
+/// access path for `t`, so a bound on the OTHER date column, a value band or a status (a
+/// `current_deadline` range) keeps the planner's range seek, as before 503. Pinned, such a
+/// read would walk the source in key order testing the bound per row: the review's case
+/// was `source=ted&sort=deadline&published_after=…&published_before=…`, a one-month seek
+/// before and a walk of most of TED after.
+fn source_pin(filter: &Filter, order: HeadOrder) -> Option<&'static str> {
+    filter.source.as_ref()?;
+    let other_column_bound = match order {
+        HeadOrder::PublishedAt => filter.deadline_after.is_some() || filter.deadline_before.is_some(),
+        HeadOrder::Deadline => filter.published_after.is_some() || filter.published_before.is_some(),
+    };
+    let elsewhere =
+        other_column_bound || filter.status.is_some() || filter.min_value.is_some() || filter.max_value.is_some();
+    (!elsewhere).then(|| order.source_index())
 }
 
 /// Is the index `name` in this database? One `sqlite_master` lookup, which holds a row
@@ -1913,7 +1941,7 @@ pub fn tenders_ordered_statement(
 }
 
 /// [`tenders_ordered_statement`] with the issue-503 pin [`tenders_ordered`] applies when
-/// the filter names a `source` and `order`'s [`HeadOrder::source_index`] exists.
+/// `source_pin` asks for one and the index exists (assumed here).
 #[doc(hidden)]
 pub fn tenders_ordered_statement_pinned(
     filter: &Filter,
@@ -1922,8 +1950,7 @@ pub fn tenders_ordered_statement_pinned(
     cursor: Option<(i64, i64)>,
     limit: i64,
 ) -> (String, Vec<Value>) {
-    let pin = filter.source.as_ref().map(|_| order.source_index());
-    let q = tenders_ordered_query(filter, order, desc, cursor, limit, pin);
+    let q = tenders_ordered_query(filter, order, desc, cursor, limit, source_pin(filter, order));
     (q.sql, q.params)
 }
 
