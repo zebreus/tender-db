@@ -787,7 +787,9 @@ rates and the quarantine resolution ledger.</p>
   notice states an accepted procedure total at least as large. A lot's figure is also
   refused when it is exactly 100&times; to 1,000,000&times; what the notice's accepted
   procedure total leaves after its other lots that state the same field, where that
-  remainder is at least a hundredth of the total. The refused figure stays in <code>amounts</code> and the election
+  remainder is at least a hundredth of the total. A part carried from a prior
+  information notice into a contract notice with lots is not elected while the
+  notice has any other accepted figure; it stays on the part's own row. The refused figure stays in <code>amounts</code> and the election
   falls to the next one. A figure with no such partner is served as published,
   so a very large single value can still be a typo: in a sample of the residual
   &euro;10bn-and-up band (issue 471, October 2026) roughly a third were. Check

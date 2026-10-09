@@ -4,6 +4,12 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 507) — a carried prior-information part no longer outranks the contract notice's figures
+
+When a prior information notice's parts carry into a later contract notice that has lots, a part's figure is no longer
+elected as the Tender's `value` while the notice states any other figure the election accepts. It is still served on
+the part's own row, and it is still the value when nothing else is accepted.
+
 ## Unreleased (issue 505) — a lot figure that is a scaled residual of its procedure total is refused
 
 A lot's figure of €1 bn or more is no longer served, nor elected as the Tender's `value`, when it is exactly 100× to

@@ -3166,85 +3166,85 @@ pub fn head_value_eur_cents_with(
     let date = crate::rates::civil_date(head.published_at);
     // Issue 507: a PIN's Parts stay in every later version beside the CN's Lots (the fold
     // never drops a lot), and a Part's figure is the planning-stage one the CN restates
-    // under its own keys. So in a version with Lots, a Part's figure is no head candidate
-    // once the version states any other figure: 6 heads of EUR 100 m or more were elected
-    // from such a Part, and 5 were stale or garbled (8818621's EUR 1.12 bn beside a CN of
-    // EUR 1.19 m). A Part that is the version's only figure (8819870) stays a candidate,
-    // and the Part's own stored lot value is untouched.
-    let states_figure = |f: &Fact| matches!(f, Fact::Amount { cents, quality, .. } if quality.is_none() && !sentinel_amount(*cents));
-    let skip_parts = head.lots.iter().any(|l| l.kind == "Lot")
-        && (head.facts.iter().any(states_figure)
-            || head.lots.iter().filter(|l| l.kind != "Part").flat_map(|l| l.facts.iter()).any(states_figure));
-    head.facts
-        .iter()
-        // Issue 492: a tender-scope figure equal to a lot award of the head is that
-        // award's copy, a lot figure of no known lot, and so gets no x100 exemption.
-        .map(|f| {
-            let copy = matches!(f, Fact::Amount { cents, currency, .. } if partners.is_head_award(currency, *cents));
-            (f, if copy { FigureScope::Lot(None) } else { FigureScope::Procedure })
-        })
-        // A lot candidate gets no sibling-lot exemption here: that exemption needs an
-        // admitted procedure figure at least as large, which already wins this max, so it
-        // could only ever raise a head through a figure the election refused (review of
-        // the exemption). It keeps the stored LOT value, `elect_lot_value`.
-        .chain(
-            head.lots
-                .iter()
-                .filter(|l| !(skip_parts && l.kind == "Part"))
-                .flat_map(|l| l.facts.iter().map(move |f| (f, FigureScope::HeadLot(Some(l.key.as_str()))))),
-        )
-        .filter_map(|(f, scope)| match f {
-            // The sentinel test reads the PUBLISHED figure, not its conversion: a
-            // form-width maximum is a fact about what the publisher's field
-            // allowed, and converting it first would turn one currency's sentinel
-            // into another's ordinary number.
-            // Issue 372: a withheld figure is refused because the notice SAID so,
-            // not because of what its number happens to be. `sentinel_amount`
-            // already refuses the SDK's -1 placeholder, so this arm changes no
-            // election today -- and it is the one that states the reason, which
-            // matters the moment a publisher withholds a field without writing -1.
-            Fact::Amount { field, cents, currency, quality, .. }
-                if quality.is_none() && !sentinel_amount(*cents) =>
-            {
-                let eur = rates.eur_cents(*cents, currency, &date)?;
-                // Issue 471 unit 4(a): a figure exactly 10^k (k >= 3) above
-                // another figure of the same Tender and currency, published in
-                // only one amount field of the head and worth at least the band
-                // floor, is a scale slip, not a value. Refused here, beside the
-                // withheld and sentinel skips, so the fold's election stays the
-                // one place that decides which amounts count; the read layer
-                // finds the row this elects by `eur_cents` and follows with no
-                // edit (366 unit 3), and its per-lot pick calls the same
-                // [`ScalePartners::refuses_amount`].
-                (!partners.refuses_amount(field, currency, *cents, eur, scope)).then_some(eur)
-            }
-            _ => None,
-        })
-        .filter(|eur| *eur <= IMPLAUSIBLE_EUR_CENTS)
-        // A conversion that lands on ZERO is declined (issue 378, decided
-        // 2026-09-11 on the measured residue of six Tenders).
-        //
-        // This is NOT a sentinel test and deliberately does not live in
-        // `sentinel_amount`, which reads the PUBLISHED figure by design. The
-        // published figures here are fine: CZK 0.10, CZK 0.12, HUF 0.79,
-        // HUF 1.48, LIT 2.89. They are simply smaller than half a euro cent, so
-        // ADR-0010's half-away-from-zero rounding puts them on 0 — and 0 is the
-        // one output value that already means something else in this column,
-        // namely "the election found nothing" (issues 366, 379).
-        //
-        // So the rule is about the COLUMN's vocabulary rather than the
-        // publisher's: a derived zero would be the column asserting €0.00 for a
-        // HUF 1.48 procurement, which is a wrong number, where declining says
-        // "no value this column can express", which is the true one. Every
-        // published figure survives in `amounts` either way (ADR-0004).
-        //
-        // Six Tenders today. The alternative on the table was a floor of one cent
-        // in the conversion itself (issue 378's fix 1), and it was declined:
-        // it touches every conversion in the corpus to repair six rows, where
-        // this touches one election and cannot reach anything else — nothing but
-        // a sub-half-cent amount converts to zero.
-        .filter(|eur| *eur != 0)
-        .max()
+    // under its own keys. So in a version with Lots, the election runs first WITHOUT the
+    // Parts, and falls back to them only when nothing else is admitted: 6 heads of EUR
+    // 100 m or more were elected from such a Part, and 5 were stale or garbled (8818621's
+    // EUR 1.12 bn beside a CN of EUR 1.19 m). A Part that is the only admitted figure
+    // stays the head (8819870's only figure; 8819939's EUR 12 m beside the x100 slips its
+    // CN refuses), and the Part's own stored lot value is untouched.
+    let elect = |with_parts: bool| -> Option<i64> {
+        head.facts
+            .iter()
+            // Issue 492: a tender-scope figure equal to a lot award of the head is that
+            // award's copy, a lot figure of no known lot, and so gets no x100 exemption.
+            .map(|f| {
+                let copy = matches!(f, Fact::Amount { cents, currency, .. } if partners.is_head_award(currency, *cents));
+                (f, if copy { FigureScope::Lot(None) } else { FigureScope::Procedure })
+            })
+            // A lot candidate gets no sibling-lot exemption here: that exemption needs an
+            // admitted procedure figure at least as large, which already wins this max, so it
+            // could only ever raise a head through a figure the election refused (review of
+            // the exemption). It keeps the stored LOT value, `elect_lot_value`.
+            .chain(
+                head.lots
+                    .iter()
+                    .filter(move |l| with_parts || l.kind != "Part")
+                    .flat_map(|l| l.facts.iter().map(move |f| (f, FigureScope::HeadLot(Some(l.key.as_str()))))),
+            )
+            .filter_map(|(f, scope)| match f {
+                // The sentinel test reads the PUBLISHED figure, not its conversion: a
+                // form-width maximum is a fact about what the publisher's field
+                // allowed, and converting it first would turn one currency's sentinel
+                // into another's ordinary number.
+                // Issue 372: a withheld figure is refused because the notice SAID so,
+                // not because of what its number happens to be. `sentinel_amount`
+                // already refuses the SDK's -1 placeholder, so this arm changes no
+                // election today -- and it is the one that states the reason, which
+                // matters the moment a publisher withholds a field without writing -1.
+                Fact::Amount { field, cents, currency, quality, .. }
+                    if quality.is_none() && !sentinel_amount(*cents) =>
+                {
+                    let eur = rates.eur_cents(*cents, currency, &date)?;
+                    // Issue 471 unit 4(a): a figure exactly 10^k (k >= 3) above
+                    // another figure of the same Tender and currency, published in
+                    // only one amount field of the head and worth at least the band
+                    // floor, is a scale slip, not a value. Refused here, beside the
+                    // withheld and sentinel skips, so the fold's election stays the
+                    // one place that decides which amounts count; the read layer
+                    // finds the row this elects by `eur_cents` and follows with no
+                    // edit (366 unit 3), and its per-lot pick calls the same
+                    // [`ScalePartners::refuses_amount`].
+                    (!partners.refuses_amount(field, currency, *cents, eur, scope)).then_some(eur)
+                }
+                _ => None,
+            })
+            .filter(|eur| *eur <= IMPLAUSIBLE_EUR_CENTS)
+            // A conversion that lands on ZERO is declined (issue 378, decided
+            // 2026-09-11 on the measured residue of six Tenders).
+            //
+            // This is NOT a sentinel test and deliberately does not live in
+            // `sentinel_amount`, which reads the PUBLISHED figure by design. The
+            // published figures here are fine: CZK 0.10, CZK 0.12, HUF 0.79,
+            // HUF 1.48, LIT 2.89. They are simply smaller than half a euro cent, so
+            // ADR-0010's half-away-from-zero rounding puts them on 0 — and 0 is the
+            // one output value that already means something else in this column,
+            // namely "the election found nothing" (issues 366, 379).
+            //
+            // So the rule is about the COLUMN's vocabulary rather than the
+            // publisher's: a derived zero would be the column asserting €0.00 for a
+            // HUF 1.48 procurement, which is a wrong number, where declining says
+            // "no value this column can express", which is the true one. Every
+            // published figure survives in `amounts` either way (ADR-0004).
+            //
+            // Six Tenders today. The alternative on the table was a floor of one cent
+            // in the conversion itself (issue 378's fix 1), and it was declined:
+            // it touches every conversion in the corpus to repair six rows, where
+            // this touches one election and cannot reach anything else — nothing but
+            // a sub-half-cent amount converts to zero.
+            .filter(|eur| *eur != 0)
+            .max()
+    };
+    if head.lots.iter().any(|l| l.kind == "Lot") { elect(false).or_else(|| elect(true)) } else { elect(true) }
 }
 
 /// One lot-scoped amount offered to [`elect_lot_value`]: the published figure,
@@ -34481,6 +34481,29 @@ mod tests {
             vec![typed("PAR-0001", "Part", vec![amt("estimated_value", 7_000_000)]), typed("LOT-0001", "Lot", vec![amt("estimated_value", 99_999_999_999)])],
         );
         assert_eq!(one(withheld), Some(7_000_000), "no other admissible figure: the part stays");
+        // Review of the rule: "admissible" is the election's own test. 8819939's CN states
+        // EUR 1.2 bn twice, both refused as 100x its PIN part's EUR 12 m (one Lot, so no
+        // framework exemption): the part is the only admitted figure and stays the head.
+        let pin_v = version(
+            vec![amt("estimated_value", 1_200_000_000)],
+            vec![typed("PAR-0000", "Part", vec![amt("estimated_value", 1_200_000_000)])],
+        );
+        let mut cn_v = version(
+            vec![amt("estimated_value", 120_000_000_000)],
+            vec![
+                typed("PAR-0000", "Part", vec![amt("estimated_value", 1_200_000_000)]),
+                typed("LOT-0000", "Lot", vec![amt("estimated_value", 120_000_000_000)]),
+            ],
+        );
+        cn_v.caused_by_notice_id = 2;
+        assert_eq!(head_value_eur_cents(&[pin_v, cn_v], &rates), Some(1_200_000_000), "refused CN figures do not set the part aside");
+        // A CN figure with no rate is no admitted figure either.
+        let mut xyz = amt("estimated_value", 900_000_000);
+        if let Fact::Amount { currency, .. } = &mut xyz {
+            *currency = "XYZ".into();
+        }
+        let unconvertible = version(vec![xyz], vec![typed("PAR-0001", "Part", vec![amt("estimated_value", 4_000_000)]), typed("LOT-0001", "Lot", Vec::new())]);
+        assert_eq!(one(unconvertible), Some(4_000_000), "an unconvertible CN figure does not set the part aside");
     }
 
     /// Issue 378, decided 2026-09-11: a conversion that lands on zero is

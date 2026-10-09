@@ -12,9 +12,15 @@ the whole id space for heads elected from a Part beside Lots), re-read.
   - 8819552 is a stale PIN figure far above the CN's total.
   - 8813624 is an EUR PIN part outranking the CN's DKK total.
   - The sixth, 8819870, has the Part as the version's only figure, and it should stay.
-- **Built (option 1, refined).** In a version with Lots, a Part's figure is not a head candidate once the version
-  states any other admissible figure (a procedure figure, or a Lot's or LotsGroup's). The Part's own stored lot value
-  is untouched. Pinned by `a_carried_part_is_no_head_candidate_beside_lots_that_state_a_figure`.
+- **Built (option 1, refined).** In a version with Lots, the head election runs first without the Parts. It falls
+  back to including them only when nothing else is admitted. The Part's own stored lot value is untouched. Pinned by
+  `a_carried_part_is_no_head_candidate_beside_lots_that_state_a_figure`.
+- **Review** `wf_290409c2-315`: 2 confirmed.
+  - (major) The first build (`5b94f9c`) skipped Parts whenever another figure merely existed, even one the election
+    refuses. 8819939 (CN €1.2 bn ×2, refused as ×100 its PIN part's €12 m) would have dropped from €12 m to no value.
+    Fixed: "admitted" is now the election's own test, so it elects without Parts first and falls back to them.
+    Pinned: the 8819939 shape, and an unconvertible CN figure.
+  - (minor) /docs and the CHANGELOG had no entry; both now do.
 Was: needs-triage — filed 2026-10-09 from issue 505's adjudication (8818621).
 Kind: correctness / the head election (`head_value_eur_cents_with`)
 Relates to: 492 (since its review, the framework exemption counts Parts as lots only in a head with no Lot, because the
