@@ -609,6 +609,24 @@ first and the question does not arise.
 #    The refold-notices message must say re-queued N, stamped N tender(s) with N the cohort size.
 ```
 
+**The ×100 extension (issue 492, 2026-10-09).** k = 2 is refused too, under the same €1 bn gate,
+unless the figure is a framework total. That means: a procedure figure, over a head version of
+two or more lots, whose ×100 partner is only ever a lot figure, and whose lots sum to between F/10
+and F. There is no corroboration exemption at k = 2. Its drain is a finder job, not a typed
+id list. It re-queues every Tender whose stored head value, or any stored lot value of any version,
+is at least €1 bn. The rule can lower only those, and a Tender it does not touch compares
+identical (ADR-0017) and costs a compare:
+
+```sh
+/root/aj.sh /admin/jobs '{"kind":"refold-value-band"}'                  # dry: counts Tenders and notices
+/root/aj.sh /admin/jobs '{"kind":"refold-value-band","dry_run":false}'  # stamps and re-queues them
+/root/aj.sh /admin/jobs '{"kind":"project"}'
+```
+
+The fold's counts line shows how many Tenders were corrected. Re-read the adjudicated ids in
+`.scratch/tender-db/492-x100/`: the 45 slips fall, the 9 frameworks stay, and 8819939 falls (the
+recorded wrong refusal).
+
 **Expected effect** (the 22 adjudicated rows, 2026-10-06): the 18 agreed scale errors still in
 the band leave it (6941544, 4972513, 8452561, 5592948, 6988280, 577127, 6581010, 4685893, 8822396,
 5094790, 224156, 568960, 404296, 4785037, 6577862, 6721266, 6852637, 1163733), and so does the

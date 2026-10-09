@@ -600,6 +600,12 @@ enum Spec {
     /// structural rather than statistical (`expect`-style slack is meaningless for
     /// a list you typed): the list is capped, and a list over the cap is refused.
     RefoldNotices { notices: Vec<i64> },
+    /// Issue 492: stamp stale and re-queue every Tender whose stored head value, or any
+    /// stored lot value, is at least EUR 1 bn (`SCALE_ERROR_MIN_EUR_CENTS`): the cohort a
+    /// value-election rule that can only lower such figures can move (ADR-0017 D6's route
+    /// R3). Run `project` after it; the fold compares and announces only what moved.
+    /// `dry_run` (the default) counts and writes nothing.
+    RefoldValueBand { dry_run: bool },
     /// Issue 365 unit 6: re-queue every notice carrying a mention under one of
     /// `schemes`.
     ///
@@ -2182,6 +2188,12 @@ impl Supervisor {
                     self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
                         .await,
                 ])
+            }
+            // Issue 492: the value-band cohort, dry by default like every census.
+            "refold-value-band" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run { "refold-value-band dry-run" } else { "refold-value-band" }.to_owned();
+                Ok(vec![self.push("refold-value-band", params, Spec::RefoldValueBand { dry_run }).await])
             }
             "refold-notices" => {
                 let notices = req.notices.clone().unwrap_or_default();
@@ -4964,6 +4976,7 @@ impl Supervisor {
             | Spec::RefoldSections { .. }
             | Spec::RefoldDeniedSchemes { .. }
             | Spec::RefoldNotices { .. }
+            | Spec::RefoldValueBand { .. }
             | Spec::RefoldFields { .. } => off_frame(|| self.run_maintenance_spec(job)).await,
             Spec::BackfillOrgNames
             | Spec::BackfillLegacyAdjacency
@@ -5507,6 +5520,27 @@ impl Supervisor {
                      re-queued {requeued}, stamped {stamped} tender(s) epoch-stale",
                     if *dry_run { " DRY RUN — nothing written" } else { "" },
                     schemes.join(","),
+                ))
+            })
+            .await,
+            Spec::RefoldValueBand { dry_run } => Box::pin(async move {
+                let floor = store::canonical::SCALE_ERROR_MIN_EUR_CENTS;
+                self.set_phase("finding", None, None, format!("Tenders with a stored value of at least {} EUR cents", floor));
+                let ids = self.db.value_band_tender_ids(floor).await.map_err(|e| e.to_string())?;
+                let (stamped, (notices, requeued)) = if *dry_run {
+                    (0, self.db.requeue_tender_notices(&ids, true).await.map_err(|e| e.to_string())?)
+                } else {
+                    let stamped = self.db.stamp_stale_for_tenders(&ids).await.map_err(|e| e.to_string())?;
+                    (stamped, self.db.requeue_tender_notices(&ids, false).await.map_err(|e| e.to_string())?)
+                };
+                Ok(format!(
+                    "refold-value-band (issue 492){}: {} Tender(s) with a stored head or lot value of at least \
+                     EUR {} m, {notices} notice(s); {} {requeued}, stamped {stamped} epoch-stale — run `project` \
+                     to apply",
+                    if *dry_run { " DRY RUN — nothing written" } else { "" },
+                    ids.len(),
+                    floor / 100_000_000,
+                    if *dry_run { "would re-queue" } else { "re-queued" },
                 ))
             })
             .await,
@@ -17619,6 +17653,66 @@ mod tests {
         };
         assert_eq!(projected(7).await, Some(store::turso::Value::Integer(0)), "the changed tender's notice is re-queued");
         assert_eq!(projected(8).await, Some(store::turso::Value::Integer(1)), "an unchanged tender's notice is left alone");
+        remove_db(&path);
+    }
+
+    /// Issue 492: `refold-value-band` finds the Tenders a value rule that can only lower
+    /// figures of at least EUR 1 bn can move (a head at or over the floor, or any lot value
+    /// at or over it), dry by default, and a wet run stamps and re-queues exactly those.
+    #[tokio::test]
+    async fn refold_value_band_requeues_the_tenders_with_a_stored_value_over_the_floor() {
+        let path = format!("/tmp/tender-db-sup-value-band-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        let floor = store::canonical::SCALE_ERROR_MIN_EUR_CENTS;
+        // Tender 1: head at the floor. Tender 2: a small head, one lot value over the
+        // floor in an OLD version. Tender 3: nothing near it.
+        for (id, head) in [(1, floor), (2, 5_000), (3, 5_000)] {
+            for sql in [
+                format!(
+                    "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, \
+                     ingested_at, parse_state, projected) VALUES ({id}, 'ted', 'OJ-{id}', 'h{id}', 'text', 1, 'm{id}', 0, \
+                     'parsed', 1)"
+                ),
+                format!(
+                    "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at, \
+                     projection_epoch, current_value_eur_cents) VALUES ({id}, 'ted', 'p{id}', 'procedure', 2, 100, 0, 4, {head})"
+                ),
+                format!(
+                    "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id) \
+                     VALUES ({id}, 1, 100, 'OJ-{id}', {id})"
+                ),
+            ] {
+                conn.execute(&sql, ()).await.unwrap();
+            }
+        }
+        conn.execute(
+            &format!("INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind, value_cents, value_currency, value_eur_cents) VALUES (2, 1, 21, 'Lot', {floor}, 'EUR', {floor})"),
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute("INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind, value_cents, value_currency, value_eur_cents) VALUES (3, 1, 31, 'Lot', 900, 'EUR', 900)", ())
+            .await
+            .unwrap();
+        assert_eq!(db.value_band_tender_ids(floor).await.unwrap(), vec![1, 2]);
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+
+        let dry = sup.run_spec(&job(Spec::RefoldValueBand { dry_run: true })).await.expect("dry run");
+        assert!(dry.contains("DRY RUN") && dry.contains("2 Tender(s)") && dry.contains("would re-queue 2"), "got: {dry}");
+        let projected = |id: i64| {
+            let db = db.clone();
+            async move { db.scalar(&format!("SELECT projected FROM notices WHERE id = {id}")).await.unwrap() }
+        };
+        assert_eq!(projected(1).await, Some(store::turso::Value::Integer(1)), "a dry run writes nothing");
+
+        let wet = sup.run_spec(&job(Spec::RefoldValueBand { dry_run: false })).await.expect("wet run");
+        assert!(wet.contains("re-queued 2, stamped 2"), "got: {wet}");
+        assert_eq!(projected(1).await, Some(store::turso::Value::Integer(0)));
+        assert_eq!(projected(2).await, Some(store::turso::Value::Integer(0)), "a lot value in an old version counts");
+        assert_eq!(projected(3).await, Some(store::turso::Value::Integer(1)), "below the floor is left alone");
         remove_db(&path);
     }
 
