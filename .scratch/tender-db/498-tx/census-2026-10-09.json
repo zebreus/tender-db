@@ -1,0 +1,791 @@
+{
+ "census": [
+  {
+   "file_line": "crates/store/src/canonical.rs:15421",
+   "function": "Db::apply_tenders",
+   "leaks": true,
+   "leaking_paths": [
+    "crates/store/src/canonical.rs:15448 `applied.leaf_rows += pending.flush(&conn).await?;` - any error in the batched multi-row leaf INSERTs (Pending::flush, defined at :31533) returns through `?` with BEGIN IMMEDIATE still open",
+    "crates/store/src/canonical.rs:15455 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "The hottest site. Called from crates/ingest/src/project.rs:3496 (incremental fold) and :3605 (full/rebuild fold). Runs once per WRITE_BATCH chunk of every Phase-2 fold batch, on every projection: the daily 09:35 incremental `project` job, the `project` chained after reparse, refold and the other admin chains, and full rebuilds.",
+   "notes": "Covered: apply_tender_tx errors (Some(e) arm, :15458-15461) and assert_heads_match errors (:15451-15453). Not covered: flush and COMMIT. This matches what issue 498 describes. publish_cursor runs after the loop, outside the transaction."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:14362",
+   "function": "Db::resolve_mentions",
+   "leaks": true,
+   "leaking_paths": [
+    "crates/store/src/canonical.rs:14407 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "Called from crates/ingest/src/project.rs:2115 (full Phase-1 path) and :3293 (incremental). Runs once per WRITE_BATCH chunk of mentions in every Phase-1 batch, on every projection (daily incremental plus chained and full runs).",
+   "notes": "Every body error is caught. resolve_one_mention errors go to `error` and break. stamp_tenders_of_notices_stale errors also go to `error`. The Some(e) arm does `let _ = ROLLBACK; return Err(e)`. Only the COMMIT failure escapes."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:11241",
+   "function": "Db::insert_plan",
+   "leaks": true,
+   "leaking_paths": [
+    "crates/store/src/canonical.rs:11245 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "Called from crates/ingest/src/project.rs:2131 (full/rebuild plan build) and :3308 (incremental plan build). Runs once per Phase-1 plan batch on every projection.",
+   "notes": "Body errors from insert_plan_tx (:11456) are rolled back by the Err arm. Only COMMIT leaks. Outside the list but adjacent: insert_legacy_ojs_keys (:11351) opens a plain deferred `BEGIN`. Its per-row INSERT `?` (:11353-11358) and its COMMIT `?` (:11360) both leak with no ROLLBACK at all. Called from project.rs:2361 (legacy adjacency backfill batches)."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:12369",
+   "function": "Db::build_plan_groups (issue 497 refused-key labels loop)",
+   "leaks": true,
+   "leaking_paths": [
+    "crates/store/src/canonical.rs:12372-12376 per-row `UPDATE plan_notice SET group_key = ? WHERE notice_id = ?` `.await?` - no ROLLBACK",
+    "crates/store/src/canonical.rs:12378 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "build_plan_groups is called once per projection run, from crates/ingest/src/project.rs:1819 (Full) and :3338 (Incremental): the daily incremental project, chained projects and rebuilds. This loop runs one transaction per NODE_WRITE_BATCH chunk of refused-key labels.",
+   "notes": "There is no error handling at all: bare BEGIN, `?` statements, then COMMIT. It writes only the scratch plan_notice table, but it is still the shared writer connection."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:12393",
+   "function": "Db::build_plan_groups (issue 482 uuid-hub labels loop)",
+   "leaks": true,
+   "leaking_paths": [
+    "crates/store/src/canonical.rs:12395-12399 per-row `UPDATE plan_notice SET group_key = ?` `.await?` - no ROLLBACK",
+    "crates/store/src/canonical.rs:12401 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "Once per projection run (project.rs:1819 Full, :3338 Incremental), but only when uuid_hub_labels is non-empty. One transaction per NODE_WRITE_BATCH chunk.",
+   "notes": "Same bare BEGIN/`?`/COMMIT shape as :12369."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:12561",
+   "function": "Db::build_plan_groups (legacy OJS component group_key update loop)",
+   "leaks": true,
+   "leaking_paths": [
+    "crates/store/src/canonical.rs:12571-12575 per-row `UPDATE plan_notice SET group_key = ? WHERE notice_id = ?` `.await?` - no ROLLBACK",
+    "crates/store/src/canonical.rs:12577 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "Once per projection run (project.rs:1819 Full, :3338 Incremental). One transaction per NODE_WRITE_BATCH chunk of legacy notices, which comes to millions of rows on a full rebuild.",
+   "notes": "Bare BEGIN/`?`/COMMIT, with no error handling."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:13465",
+   "function": "Db::link_step (plan_group_merge write, called from build_plan_groups at :12583)",
+   "leaks": true,
+   "leaking_paths": [
+    "crates/store/src/canonical.rs:13467-13471 per-row `INSERT OR REPLACE INTO plan_group_merge` `.await?` - no ROLLBACK",
+    "crates/store/src/canonical.rs:13473 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "Once per projection run, via build_plan_groups, only when the link union produced merges. One transaction per NODE_WRITE_BATCH chunk of merges.",
+   "notes": "Bare BEGIN/`?`/COMMIT. record_key_merges, called just before it at :13462, is safe (see :13589)."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:16017",
+   "function": "Db::merge_provisional_organizations_batch",
+   "leaks": true,
+   "leaking_paths": [
+    "crates/store/src/canonical.rs:16040 touched-tenders UNION query `.await?`",
+    "crates/store/src/canonical.rs:16041 `trows.next().await?`",
+    "crates/store/src/canonical.rs:16045 `repoint_org_references(&conn, *keep, loser, \"provisional-merge\").await?` (any `?` inside the helper)",
+    "crates/store/src/canonical.rs:16051-16052 `DELETE FROM organizations WHERE id = ?` `.await?`",
+    "crates/store/src/canonical.rs:16053 `append_change(... loser ... \"removed\").await?`",
+    "crates/store/src/canonical.rs:16062 `append_change(... keep ... \"changed\").await?`",
+    "crates/store/src/canonical.rs:16070 `append_change(\"tender\", tid, ...).await?`",
+    "crates/store/src/canonical.rs:16073 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "Admin-queued `merge-provisional-orgs` job only. It is called once per ORG_MERGE_BATCH batch from crates/app/src/supervisor.rs:7333 (Spec::MergeProvisionalOrgs, parsed at :2338). Wet runs only, because dry_run returns before BEGIN. Also called from tests (lib.rs, app/tests/api.rs).",
+   "notes": "There is no ROLLBACK anywhere in this transaction. Every fallible statement between BEGIN and COMMIT escapes with the transaction open. It writes durable tables (organizations, mentions and party repoints, changes), so a dangling transaction here could later be committed half-done by another holder's COMMIT. publish_cursor at :16077 runs after COMMIT."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:10976",
+   "function": "Db::clear_plan",
+   "leaks": true,
+   "leaking_paths": [
+    "crates/store/src/canonical.rs:10984 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "Once or twice per projection run, at the end and again on a stop. Callers: crates/ingest/src/project.rs:1898 (full), :3321, :3424 and :3429 (incremental stop and normal end). Also the admin clear-stale-rebuild-flag path at crates/app/src/supervisor.rs:5367.",
+   "notes": "Body errors (the UPDATE projection_state and clear_plan_on's DROP/CREATE `?`s) are rolled back by the Err arm. Only COMMIT leaks."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:9571",
+   "function": "Db::build_org_match_keys_batch",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Admin `build-org-match-keys` job, once per window from crates/app/src/supervisor.rs:11540. Wet runs only, because dry_run returns before BEGIN. Also called from tests (store/tests/org_match_keys_build.rs).",
+   "notes": "The body (flush_rows plus the watermark UPDATE) is an async block whose result is matched. On Err it does ROLLBACK then return. A failed COMMIT does ROLLBACK then return. Safe."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:10104",
+   "function": "Db::scan_org_match_keys (write phase)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Admin org-edge-scan job (crates/app/src/supervisor.rs:11743), once per EDGE_WRITE_BATCH chunk of edges on wet runs. Also called from tests (store/tests/org_candidate_edges.rs).",
+   "notes": "The write_candidate_edges result is matched: Err leads to ROLLBACK, and a COMMIT failure also leads to ROLLBACK. Safe. The `before` COUNT query runs before BEGIN, and the after-count runs after COMMIT."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:11598",
+   "function": "Db::write_matched_links",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Test-only today: ingest/tests/project.rs and project_incremental.rs. No production caller yet; it is the intended sink for issue 481 unit 3's reviewed matcher. One transaction per LINK_WRITE_BATCH.",
+   "notes": "The body is an async block passed to finish_tx (:1647), which rolls back on a body error and on a COMMIT failure. Safe."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:11651",
+   "function": "Db::delete_matched_links",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Test-only today (ingest/tests/project_incremental.rs); no production caller. One transaction per LINK_WRITE_BATCH.",
+   "notes": "Uses finish_tx. Safe."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:11991",
+   "function": "Db::backfill_declared_window",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Issue 481 tender-link ledger backfill (admin job). Called once per window via crates/ingest/src/project.rs:2495 (declared_window_boxed, from backfill_tender_links_windowed). Wet runs only.",
+   "notes": "apply_declared_diff and requeue_notice_ids run in an async block that is passed to finish_tx. Safe."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:13589",
+   "function": "Db::record_key_merges (called from link_step at :13462)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Once per projection run, via build_plan_groups and then link_step (daily incremental, chained and full).",
+   "notes": "All DELETEs, prepares and INSERTs run in an async block that is passed to finish_tx. Safe. The read-only plan_notice queries run before BEGIN."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:16188",
+   "function": "Db::backfill_merged_window (one window of backfill_merged_identifiers)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Admin `backfill-merged-identifiers` job (crates/app/src/supervisor.rs:4487, Spec arm at :4908), once per ledger window. BEGIN runs only when not dry_run.",
+   "notes": "Every `?` in the body is inside the async block, including merged_survivor, the queries, the INSERT and append_change. The result is matched: Err leads to ROLLBACK, and a COMMIT failure leads to ROLLBACK then return. Safe. The dry_run early return happens when no BEGIN was issued. One side effect: in-memory state.seen and state.held are mutated even when the window rolls back. That does not leak a transaction."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:17081",
+   "function": "Db::match_org_identifiers_r2 (wet merge loop, one txn per MERGE_TXN_GROUPS chunk)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Operator-submitted `match-org-identifiers` job, wet runs only (dry returns at 17062 before any BEGIN): supervisor.rs:7847 (Spec::MatchOrgIdentifiersR2) and supervisor.rs:8090 (Spec::MatchOrgIdentifiersE0). Admin-only and campaign-driven, but it runs many transactions per wet run (one per chunk). Also exercised by the store tests e0_merge, r2_merge, r2_name_gate, merged_org and identifier_verdicts.",
+   "notes": "The whole body runs in an `async {}` block whose result is matched at 17201. Every `?` inside it falls through to that match: the tender_id query, repoint_org_references, the DELETE, the INSERT into org_merge_log, append_change, and the org_merge_verdicts UPDATE. Err does ROLLBACK at 17217. A failed COMMIT does ROLLBACK at 17207-17208. Two `.expect()` calls at 17094 and 17099 sit inside the open transaction. A panic there would drop the guard with the transaction still open, but both rest on the invariant that a group is non-empty, so this is not an error path."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:18245",
+   "function": "Db::apply_orphan_drops",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Called only from Db::drop_orphan_satellites (canonical.rs:18204), and only on a wet run that has a plan. That is reached from supervisor.rs:6925 (Spec::DropOrphanSatellites), an operator-submitted job. Rare. The store test satellite_drops calls it directly.",
+   "notes": "The body is an `async {}` block (18246-18382), including the rehoming_head(&conn, ..) calls at 18274 and 18313. Err does ROLLBACK at 18395. A failed COMMIT does ROLLBACK at 18389-18390. A stop() break commits the work done so far, which is intended. publish_cursor at 18402 runs after the COMMIT."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:18500",
+   "function": "Db::restore_dropped_satellites",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "supervisor.rs:7013 (Spec::RestoreDroppedSatellites), an operator-submitted undo job, wet only (BEGIN is skipped when dry_run is set). Rare. Store test: satellite_drops.",
+   "notes": "BEGIN runs only when !dry_run. The body is an `async {}` block. When !dry_run, Err does ROLLBACK at 18584 and a failed COMMIT does ROLLBACK at 18578-18579. The `outcome?` at 18589 runs only on the dry path, where no transaction was opened."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:19151",
+   "function": "Db::fold_org_countries",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "supervisor.rs:9043 (Spec::FoldOrgCountries), an operator-submitted job, wet only. One transaction for the whole plan. Rare. Store test: country_fold.",
+   "notes": "The body is an `async {}` block (19152-19191): the SELECT, the UPDATE and append_change. Err does ROLLBACK at 19200. A failed COMMIT does ROLLBACK at 19194-19195. The parity abort at 19129 returns before BEGIN."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:19809",
+   "function": "Db::match_org_null_country_r3 (wet merge loop, one txn per MERGE_TXN_GROUPS chunk)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "supervisor.rs:8336 (Spec::MatchOrgIdentifiersR3), the operator-submitted `match-org-identifiers` job with rule r3, wet only. Many transactions per wet run. Campaign-driven and rare. Store test: r3_merge.",
+   "notes": "The body is an `async {}` block (19814-19892): the query, repoint_org_references, the DELETE, the INSERT, and append_change. Err does ROLLBACK at 19905. A failed COMMIT does ROLLBACK at 19895-19896. checkpoint_on at 19912 runs after the commit."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:20913",
+   "function": "Db::altid_wet (merge loop, one txn per ALTID_MERGE_TXN_PAIRS chunk)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Called only from Db::match_org_altid_pairs on a wet run, from supervisor.rs:8724 (Spec::MatchOrgIdentifiersAltId), the operator-submitted `match-org-identifiers` job with rule altid. Many transactions per wet run. Rare. Tests: store altid_merge and ingest fts.",
+   "notes": "The body is an `async {}` block (20915-21014): repoint_org_references, the DELETE, the INSERT, append_change, and both UPDATEs. Err does ROLLBACK at 21030. A failed COMMIT does ROLLBACK at 21020-21021. The parity abort at 20864 returns before any BEGIN."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:21102",
+   "function": "Db::altid_wet (candidate-edge batches, one txn per EDGE_WRITE_BATCH)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "The same altid wet job (supervisor.rs:8724), after the merges. One transaction per EDGE_WRITE_BATCH of denied pairs, about one batch at prod scale. Rare.",
+   "notes": "BEGIN runs inside the `written` async block. If BEGIN itself fails, no transaction was opened. When write_candidate_edges returns Err, ROLLBACK runs at 21112. A failed COMMIT does ROLLBACK at 21105-21106. The error is then reported in report.edges_error rather than raised."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:21138",
+   "function": "Db::record_name_verdicts",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "admin.rs:565, the POST /admin/name-verdicts handler. Admin-only, once per upload request. Rare.",
+   "notes": "Each upsert runs inside an async block. Err does ROLLBACK at 21165. A failed COMMIT does ROLLBACK at 21158-21159."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:21192",
+   "function": "Db::record_case_reviews",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "admin.rs:610, the POST /admin/case-reviews handler. Admin-only, once per upload request. Rare.",
+   "notes": "Each upsert runs inside an async block. Err does ROLLBACK at 21231. A failed COMMIT does ROLLBACK at 21224-21225."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:21252",
+   "function": "Db::record_rehoming",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "admin.rs:151, the POST /admin/rehoming handler. Admin-only, once per upload request. Rare.",
+   "notes": "Each upsert runs inside an async block. Err does ROLLBACK at 21307. A failed COMMIT does ROLLBACK at 21300-21301."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:21532",
+   "function": "Db::apply_rehoming",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "supervisor.rs:9219 (Spec::ApplyRehoming), an operator-submitted job, wet only. One transaction. Rare. Store test: rehoming.",
+   "notes": "The body is an `async {}` block (21533-21596), including the in-transaction helpers notice_ids_of_tenders, requeue_notice_ids and stamp_tenders_stale (21583-21586) and append_change. Err does ROLLBACK at 21605. A failed COMMIT does ROLLBACK at 21599-21600. The tuple-parity abort at 21522 returns before BEGIN. requeue_notice_ids and stamp_tenders_stale call checkpoint_on inside the open transaction. checkpoint.rs:76 short-circuits that when the connection is not in autocommit, so it is harmless."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:21668",
+   "function": "Db::record_country_verdicts",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "admin.rs:317, the POST /admin/country-verdicts handler. Admin-only, once per upload request. Rare.",
+   "notes": "The validation returns at 21636-21663 come before BEGIN. Each upsert runs inside an async block. Err does ROLLBACK at 21713. A failed COMMIT does ROLLBACK at 21706-21707."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:21896",
+   "function": "Db::apply_country_verdicts",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "supervisor.rs:9136 (Spec::ApplyCountryVerdicts), an operator-submitted job, wet only. One transaction. Rare. Store test: country_verdicts.",
+   "notes": "The body is an `async {}` block: the UPDATE, append_change and both verdict-stamp UPDATEs. Err does ROLLBACK at 21947. A failed COMMIT does ROLLBACK at 21941-21942. The parity abort at 21886 returns before BEGIN."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:21991",
+   "function": "Db::record_merge_verdicts",
+   "leaks": true,
+   "leaking_paths": [
+    "canonical.rs:22028 `conn.execute(\"COMMIT\", ()).await?;`: a failed COMMIT returns through `?` with no ROLLBACK, so the shared writer stays inside BEGIN IMMEDIATE"
+   ],
+   "callers_and_frequency": "admin.rs:407, the POST /admin/merge-verdicts handler. Admin-only, once per upload request. Rare. Store tests: r2_merge, r2_name_gate, altid_merge and rekey.",
+   "notes": "Body errors are covered: the async block's Err branch does ROLLBACK at 22032. Only the COMMIT failure leaks, for example SQLITE_FULL or an I/O error at commit. The fix is the `if let Err(e) = COMMIT { let _ = ROLLBACK; return Err(e) }` shape that the sibling record_* functions already use."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:22106",
+   "function": "Db::record_identifier_verdicts",
+   "leaks": true,
+   "leaking_paths": [
+    "canonical.rs:22180 `conn.execute(\"COMMIT\", ()).await?;`: a failed COMMIT returns through `?` with no ROLLBACK, so the shared writer stays inside BEGIN IMMEDIATE"
+   ],
+   "callers_and_frequency": "admin.rs:497, the POST /admin/identifier-verdicts handler. Admin-only, once per upload request. Rare. Store tests: identifier_verdicts, merged_org, r3_merge, rekey and altid_merge.",
+   "notes": "Body errors are covered. The async block (22107-22177) holds both SELECTs, the upsert, orgs_with_triple and append_change, and its Err branch does ROLLBACK at 22187. Only the COMMIT failure leaks. The `self.publish_cursor(&conn).await?` at 22182 runs after a successful COMMIT, so it does not leak a transaction. It does return Err for data that was already committed."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:22555",
+   "function": "Db::match_org_rekey (wet loop, one txn per REKEY_TXN chunk)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "supervisor.rs:8508 (Spec::MatchOrgIdentifiersRekey), the operator-submitted `match-org-identifiers` job with rule rekey, wet only (dry uses a reader and returns at 22512). Rare. Store tests: rekey and merged_org.",
+   "notes": "The body is an `async {}` block (22558-22670): the query, repoint_org_references, drop_merged_spellings, the DELETE, the INSERT, append_change and the UPDATEs. The `continue` at 22639 stays inside the block. Err does ROLLBACK at 22684. A failed COMMIT does ROLLBACK at 22673-22674. The parity abort at 22523 returns before any BEGIN."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:23025",
+   "function": "Db::apply_case_reviews",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "supervisor.rs:11417 (Spec::ApplyCaseReviews), the operator-submitted `apply-case-reviews` job, wet only (dry returns at 23022). One transaction. Rare. Store test: case_reviews.",
+   "notes": "The body is an `async {}` block (23026-23092): the SELECT, the UPDATE, append_change and the stamp UPDATE. Err does ROLLBACK at 23101. A failed COMMIT does ROLLBACK at 23095-23096."
+  },
+  {
+   "file_line": "crates/store/src/lib.rs:1741",
+   "function": "Db::record_notice",
+   "leaks": true,
+   "leaking_paths": [
+    "lib.rs:1747 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT returns through `?` with no ROLLBACK"
+   ],
+   "callers_and_frequency": "HOTTEST. ingest/src/process.rs:385 process_package calls it once per notice of every package, on every daily/backfill ingest. Other callers are tests (app supervisor.rs/coverage.rs #[cfg(test)]).",
+   "notes": "Body errors are safe: every `?` inside record_notice_tx (insert_notice_row, moved_identity_twin, ...) lands in `result`, and the Err arm rolls back (lines 1750-1752). Only the COMMIT failure leaks."
+  },
+  {
+   "file_line": "crates/store/src/lib.rs:2284",
+   "function": "Db::reclaim_notice",
+   "leaks": true,
+   "leaking_paths": [
+    "lib.rs:2288 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "ingest/src/process.rs:524 reclaim_package calls it once per held (quarantined) member during reclaim jobs. Per notice, but only on the reclaim program's runs, not the daily path.",
+   "notes": "Body (reclaim_notice_tx) is fully covered by the Err arm ROLLBACK. Same shape as record_notice."
+  },
+  {
+   "file_line": "crates/store/src/lib.rs:2533",
+   "function": "Db::reparse_notice",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "ingest/src/process.rs:655 reparse_package calls it once per notice in re-parse cohort jobs. Per notice during reparse runs.",
+   "notes": "Safe. The body is an async block (reparse_target, clear_parsed, insert_parsed, STAMP_PARSED_SQL, the publication_id UPDATE all go through `?` into `result`). The early `return Ok(Reparsed::Unmatched)` goes to COMMIT. A failed COMMIT is caught at 2602-2611: eprintln, ROLLBACK, return Err. The Err arm rolls back at 2614."
+  },
+  {
+   "file_line": "crates/store/src/lib.rs:3969",
+   "function": "Db::backfill_original_lang",
+   "leaks": true,
+   "leaking_paths": [
+    "lib.rs:3982 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "app supervisor.rs:5693 Spec::BackfillOriginalLang. Once per BACKFILL_BATCH window of a one-off admin backfill walk.",
+   "notes": "Each per-row UPDATE error is rolled back explicitly (3971-3980). Only COMMIT leaks. OUTSIDE THE CENSUS but same class: the sibling backfill_org_name_norm uses a plain `BEGIN` at lib.rs:4018 and leaks on BOTH the per-row UPDATE `?` (lib.rs:4026) and COMMIT `?` (lib.rs:4028). canonical.rs:11352 insert_legacy_ojs_keys also uses a plain `BEGIN`, with an INSERT `?` inside the loop and a COMMIT `?`, and leaks on both. Neither is a \"BEGIN IMMEDIATE\" site, so the issue's 59-site count misses them."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:29874",
+   "function": "Db::retire_tenders_chunked",
+   "leaks": true,
+   "leaking_paths": [
+    "canonical.rs:29876 `Ok(()) => conn.execute(\"COMMIT\", ()).await?,` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "HOT. It runs on the fold path, once per NODE_WRITE_BATCH chunk of orphaned Tenders. Callers: retire_regrouped_tenders(_chunked) (canonical.rs:30165), called from ingest/src/project.rs:3350 project_incremental_chunked_observed, so every incremental fold that leaves a touched Tender orphaned. Also retire_absorbed_legacy_tenders (29837) and retire_regrouped_nonlegacy_tenders (30223), both from project.rs:1889/1896 on the full-projection path.",
+   "notes": "Body errors from retire_chunk_tx are rolled back (29877-29880). Only the COMMIT leaks. A later chunk's BEGIN on the same conn would then fail."
+  },
+  {
+   "file_line": "crates/store/src/accounts.rs:266",
+   "function": "Db::delete_user",
+   "leaks": true,
+   "leaking_paths": [
+    "accounts.rs:279 `Ok(()) => conn.execute(\"COMMIT\", ()).await.map(|_| ())` - a COMMIT error is returned with no ROLLBACK"
+   ],
+   "callers_and_frequency": "app/src/accounts.rs:271 delete_account. Per user request to delete their account. Rare.",
+   "notes": "The body's three DELETE `?`s are inside an async block, and the Err arm rolls back (280-284). Only COMMIT leaks."
+  },
+  {
+   "file_line": "crates/store/src/rates.rs:67",
+   "function": "Db::upsert_currency_rates",
+   "leaks": true,
+   "leaking_paths": [
+    "rates.rs:74 `.await?;` on the per-row INSERT OR REPLACE inside the loop - returns with the transaction open, no ROLLBACK",
+    "rates.rs:76 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "Scheduled daily: Spec::FetchRates (supervisor.rs:5948, auto-queued daily at 13408) once per chunk of rates. Also Spec::FetchRatesEcu (6041, admin), and seed_irrevocable_euro_rates (5943) through rates.rs:86.",
+   "notes": "The ONLY site in the list with no error handling at all. Any statement error leaves the writer inside BEGIN IMMEDIATE."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:28364",
+   "function": "Db::repair_placeholder_orgs_batch",
+   "leaks": true,
+   "leaking_paths": [
+    "canonical.rs:28449 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "app supervisor.rs:6129 Spec::RepairPlaceholderOrgs. Once per BACKFILL_BATCH window of an admin repair walk (wet runs only).",
+   "notes": "Every body error is rolled back: dissolve_condemned (28387), notice_ids_of_tenders (28412), requeue_notice_ids (28421), stamp_tenders_stale (28429), and the append_change loops (28437, 28445). The `!dry_run` guards match the conditional BEGIN. Only COMMIT leaks."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:27762",
+   "function": "Db::repair_nested_org_mentions_batch",
+   "leaks": true,
+   "leaking_paths": [
+    "canonical.rs:27787 `conn.execute(\"COMMIT\", ()).await?;` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "app supervisor.rs:6086 Spec::RepairNestedOrgs. Once per BACKFILL_BATCH window of an admin repair walk (wet runs only).",
+   "notes": "repair_nested_losers errors are rolled back (27774), and so are the tender append_change loop errors (27783). Only COMMIT leaks."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:30474",
+   "function": "Db::twin_repair_writes (via apply_member_twin_repair)",
+   "leaks": true,
+   "leaking_paths": [
+    "canonical.rs:30476 `Ok(()) => conn.execute(\"COMMIT\", ()).await?,` - a failed COMMIT is not rolled back"
+   ],
+   "callers_and_frequency": "app supervisor.rs:4845 run_repair_member_twins (Spec::RepairMemberTwins). One admin job, one transaction per run.",
+   "notes": "twin_repair_tx errors (including the nested retire_chunk_tx) are rolled back (30477-30480). Extra hazard: apply_member_twin_repair turns foreign_keys OFF before and ON after (canonical.rs:30453-30461). If COMMIT fails, `PRAGMA foreign_keys=ON` runs inside the dangling transaction, where SQLite treats it as a no-op. The writer could then stay FK-OFF as well as mid-transaction."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:23203",
+   "function": "Db::unapply_case_reviews",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "app supervisor.rs:11458 Spec::UnapplyCaseReviews. One admin job, one transaction.",
+   "notes": "Safe. The body is an async block. Err leads to ROLLBACK. A failed COMMIT leads to ROLLBACK and then return. publish_cursor runs after the transaction."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:23725",
+   "function": "Db::repair_notice_instants (plan slices)",
+   "leaks": false,
+   "leaking_paths": [
+    "(none in the transaction) the `?` at checkpoint is discarded with `let _`, after COMMIT"
+   ],
+   "callers_and_frequency": "app supervisor.rs:6348 Spec::RepairNoticeInstants. Admin job, one transaction per 20k-row SLICE.",
+   "notes": "Safe: an async block plus a match. The COMMIT error is rolled back (23779-23782), and so is the Err arm (23788-23790)."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:23807",
+   "function": "Db::stamp_instant_pairs",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Called from repair_notice_instants (canonical.rs:23697) on its wet run, streamed once per read window. Spec::RepairNoticeInstants admin job, one transaction per 20k-row slice.",
+   "notes": "Safe: an async block, and both the COMMIT-failure and Err arms roll back."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:24008",
+   "function": "Db::walk_version_instants (write pass)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "repair_version_instants (canonical.rs:23905), from supervisor.rs:6482 Spec::RepairVersionInstants. Admin job, one transaction per 20k-row slice per 25k-tender band.",
+   "notes": "Safe: an async block, and both the COMMIT-failure and Err arms roll back. `stop()` returns before BEGIN."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:24251",
+   "function": "Db::repair_label_prefixes",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "app supervisor.rs:6667 Spec::RepairLabelPrefixes. Admin job, one transaction.",
+   "notes": "Safe: an async block, and both the COMMIT-failure and Err arms roll back. A `stop()` break commits the prefix by design."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:24471",
+   "function": "Db::repair_renormalised_identifiers",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "app supervisor.rs:6565 Spec::RepairRenormalisedIdentifiers. Admin job, one transaction.",
+   "notes": "Safe: same async-block plus match pattern as repair_label_prefixes."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:24673",
+   "function": "Db::repair_country_typos",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "app supervisor.rs:6770 Spec::RepairCountryTypos. Admin job, one transaction.",
+   "notes": "Safe: an async block, and both the COMMIT-failure and Err arms roll back."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:25696",
+   "function": "Db::fold_provisional_plan",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "fold_provisional_echoes (canonical.rs:25656, supervisor.rs:7076 Spec::FoldProvisionalEchoes) and apply_provisional_name_norm (26147, Spec::RepairProvisionalNameNorm). Admin jobs, one transaction per 50-group chunk.",
+   "notes": "Safe: an async block. repoint_org_references, the DELETE, the merge-log INSERT and append_change all go through `?` into `result`. The COMMIT-failure arm rolls back, then does a best-effort publish_cursor. The Err arm rolls back too."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:26170",
+   "function": "Db::apply_provisional_name_norm (verdict moves)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "repair_provisional_name_norm (canonical.rs:26105), Spec::RepairProvisionalNameNorm. Admin job, one small transaction.",
+   "notes": "Safe: an async block, and both the COMMIT-failure and Err arms roll back."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:26217",
+   "function": "Db::apply_provisional_name_norm (bulk rewrite slices)",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "Same admin job (Spec::RepairProvisionalNameNorm), uncapped runs only. One transaction per `slice` rows.",
+   "notes": "Safe: an async block, and both the COMMIT-failure and Err arms roll back. The checkpoint after COMMIT is discarded."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:27407",
+   "function": "Db::repair_minted_countries",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "app supervisor.rs:6237 Spec::RepairMintedCountries. Admin job, one transaction.",
+   "notes": "Safe: an async block, and both the COMMIT-failure and Err arms roll back."
+  },
+  {
+   "file_line": "crates/store/src/canonical.rs:29203",
+   "function": "Db::sweep_orphan_orgs_batch",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "app supervisor.rs:4296 sweep_orphan_walk, from run_sweep_orphan_orgs. Spec::SweepOrphanOrgs is admin. Spec::SweepOrphanOrgsAuto is auto-queued after any fold that re-binds mentions (supervisor.rs:4444-4452). One transaction per BACKFILL_BATCH window.",
+   "notes": "Safe. A sweep_orphans_tx error (including its explicit `return Err` guards) leads to ROLLBACK. A COMMIT error leads to ROLLBACK and then return. publish_cursor runs after COMMIT."
+  },
+  {
+   "file_line": "crates/store/src/lib.rs:5403",
+   "function": "tests::import_lag_reads_the_newest_notice_in_o1_not_a_full_scan",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "test-only (#[tokio::test]); runs in the gate",
+   "notes": "Test-only. Every step `.unwrap()`s, so an error panics rather than returning. The Db is a per-test temp file dropped with the test, so no shared production writer is involved. Strictly, a panic does leave the transaction open on a connection that dies with the test. No conversion needed."
+  },
+  {
+   "file_line": "crates/store/src/lib.rs:5721",
+   "function": "tests::dashboard_reads_do_not_block_on_a_held_writer",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "test-only (#[tokio::test])",
+   "notes": "Test-only. It holds the transaction open on purpose, to prove reads don't queue behind the writer. An unwrap or assert failure panics. The Db is per-test. No conversion needed."
+  },
+  {
+   "file_line": "crates/store/src/lib.rs:5871",
+   "function": "tests::coverage_query_is_single_pass_over_notices",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "test-only (#[tokio::test])",
+   "notes": "Test-only bulk seed, unwrap-on-error, per-test Db. No conversion needed."
+  },
+  {
+   "file_line": "crates/store/src/jobs.rs:560",
+   "function": "tests::reads_do_not_block_on_a_held_writer",
+   "leaks": false,
+   "leaking_paths": [],
+   "callers_and_frequency": "test-only (#[tokio::test])",
+   "notes": "Test-only. It holds the writer transaction open on purpose (issue 20 regression). An unwrap or assert failure panics. The Db is per-test. No conversion needed."
+  }
+ ],
+ "ranked": {
+  "confirmed": [
+   {
+    "file_line": "crates/store/src/canonical.rs:15421",
+    "function": "Db::apply_tenders",
+    "leaking_paths": [
+     "canonical.rs:15448 `applied.leaf_rows += pending.flush(&conn).await?;`: Pending::flush (canonical.rs:31533) runs multi-row INSERTs. In turso 0.7.2 those get a statement journal, so any error (constraint, I/O, SQLITE_FULL) rolls back only that statement (vdbe/mod.rs abort, TxnCleanup::RollbackSavepoint arm). BEGIN IMMEDIATE stays open and nothing issues a ROLLBACK.",
+     "canonical.rs:15455 `conn.execute(\"COMMIT\", ()).await?;`: a failed COMMIT gets no ROLLBACK"
+    ],
+    "frequency": "Once per WRITE_BATCH chunk of every Phase-2 fold, on every projection: the daily 09:35 incremental `project`, every chained project and full rebuilds (callers ingest/src/project.rs:3496 and :3605).",
+    "rank": 1,
+    "why": "Confirmed by re-reading. It is the hottest site whose leak is on a BODY path, so a constraint or disk error during the leaf flush is enough to trigger it. Blast radius is the largest in the list. The half-written batch (tender layer plus `changes` rows) sits in the dangling transaction, and a later holder's COMMIT can commit it without assert_heads_match ever running. The next fold chunk's BEGIN fails, and the daily presence-observer UPDATE joins the transaction. Issue 495 unit 2 has landed and deployed (78f7544), so this site can be converted now."
+   },
+   {
+    "file_line": "crates/store/src/lib.rs:1741",
+    "function": "Db::record_notice",
+    "leaking_paths": [
+     "lib.rs:1747 `conn.execute(\"COMMIT\", ()).await?;`: a failed COMMIT gets no ROLLBACK. The body is covered: record_notice_tx errors go through the Err arm at 1750-1752."
+    ],
+    "frequency": "Once per notice of every ingest package (ingest/src/process.rs:385). This site runs more transactions than any other, on the daily fetch/process and on backfills.",
+    "rank": 2,
+    "why": "Confirmed, COMMIT only. It runs the most often, and a wedge here stops the daily chain before the fold even starts. It ranks below apply_tenders because the only gap is COMMIT. The schema has no DEFERRABLE foreign keys, so a COMMIT that fails AND leaves turso's transaction open is narrow: StatementsInProgress, or a check before turso flips auto_commit. On an I/O failure inside commit_txn, turso has already set auto_commit=true (execute.rs op_auto_commit)."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:14362",
+    "function": "Db::resolve_mentions",
+    "leaking_paths": [
+     "canonical.rs:14407 `conn.execute(\"COMMIT\", ()).await?;`: a failed COMMIT gets no ROLLBACK. Errors from resolve_one_mention and stamp_tenders_of_notices_stale are captured into `error` and rolled back at 14413."
+    ],
+    "frequency": "Once per WRITE_BATCH chunk of mentions in every Phase-1 batch, on every projection (project.rs:2115 full, :3293 incremental).",
+    "rank": 3,
+    "why": "Confirmed. It sits on the fold's Phase 1 on every run, and it writes durable organizations, mentions and changes."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:11241",
+    "function": "Db::insert_plan",
+    "leaking_paths": [
+     "canonical.rs:11245 `conn.execute(\"COMMIT\", ()).await?;`: a failed COMMIT gets no ROLLBACK. insert_plan_tx errors are rolled back at 11249."
+    ],
+    "frequency": "Once per Phase-1 plan batch on every projection (project.rs:2131 full, :3308 incremental).",
+    "rank": 4,
+    "why": "Confirmed. It runs every fold. It writes the scratch plan tables, but on the shared writer."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:12561",
+    "function": "Db::build_plan_groups (legacy OJS group_key UPDATE loop)",
+    "leaking_paths": [
+     "canonical.rs:12571-12575 per-row `UPDATE plan_notice SET group_key = ? WHERE notice_id = ?` `.await?`, with no ROLLBACK",
+     "canonical.rs:12577 `conn.execute(\"COMMIT\", ()).await?;`"
+    ],
+    "frequency": "Once per projection run (project.rs:1819 full, :3338 incremental), with one transaction per NODE_WRITE_BATCH. On a full rebuild that is millions of rows.",
+    "rank": 5,
+    "why": "Confirmed. A bare BEGIN, `?` on every statement, then COMMIT, with no error handling at all. Every fold reaches it. It writes scratch data only, but it wedges the writer."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:12369",
+    "function": "Db::build_plan_groups (issue 497 refused-key labels loop)",
+    "leaking_paths": [
+     "canonical.rs:12372-12376 per-row UPDATE plan_notice `.await?`, with no ROLLBACK",
+     "canonical.rs:12378 `conn.execute(\"COMMIT\", ()).await?;`"
+    ],
+    "frequency": "Once per projection run (project.rs:1819 and :3338), one transaction per NODE_WRITE_BATCH of refused-key labels.",
+    "rank": 6,
+    "why": "Confirmed. Same bare shape as :12561, and it runs on every fold."
+   },
+   {
+    "file_line": "crates/store/src/rates.rs:67",
+    "function": "Db::upsert_currency_rates",
+    "leaking_paths": [
+     "rates.rs:68-74 per-row `INSERT OR REPLACE INTO currency_rates` `.await?`, with no ROLLBACK. OR REPLACE makes it a multi-write statement in turso, so even an I/O error leaves the transaction open.",
+     "rates.rs:76 `conn.execute(\"COMMIT\", ()).await?;`"
+    ],
+    "frequency": "Scheduled daily: `fetch-rates` is auto-queued at supervisor.rs:13408, writing 50k-row chunks (supervisor.rs:5946, so a few transactions per day). Also FetchRatesEcu (admin) and seed_irrevocable_euro_rates on every fetch-rates run.",
+    "rank": 7,
+    "why": "Confirmed, with no error handling at all. It runs every day, immediately before the daily `project` is queued, so a leak here poisons that day's fold."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:29874",
+    "function": "Db::retire_tenders_chunked",
+    "leaking_paths": [
+     "canonical.rs:29876 `Ok(()) => conn.execute(\"COMMIT\", ()).await?,`: a failed COMMIT gets no ROLLBACK. retire_chunk_tx errors are rolled back at 29878."
+    ],
+    "frequency": "Every incremental fold that orphans a touched Tender (retire_regrouped_tenders, project.rs:3350 \u2192 canonical.rs:30165), plus the full-projection paths (project.rs:1889/1896 \u2192 canonical.rs:29837 and 30223). One transaction per chunk.",
+    "rank": 8,
+    "why": "Confirmed. It is on the fold path and deletes durable tender rows and emits `removed` events, which is a large blast radius. It only runs when there is something to retire."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:12393",
+    "function": "Db::build_plan_groups (issue 482 uuid-hub labels loop)",
+    "leaking_paths": [
+     "canonical.rs:12395-12399 per-row UPDATE plan_notice `.await?`",
+     "canonical.rs:12401 `conn.execute(\"COMMIT\", ()).await?;`"
+    ],
+    "frequency": "Once per projection, only when uuid_hub_labels is non-empty. One transaction per NODE_WRITE_BATCH.",
+    "rank": 9,
+    "why": "Confirmed. Bare shape, on the fold path, but conditional."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:13465",
+    "function": "Db::link_step (plan_group_merge write)",
+    "leaking_paths": [
+     "canonical.rs:13467-13471 per-row `INSERT OR REPLACE INTO plan_group_merge` `.await?`",
+     "canonical.rs:13473 `conn.execute(\"COMMIT\", ()).await?;`"
+    ],
+    "frequency": "Once per projection via build_plan_groups (canonical.rs:12588), only when the link union produced merges.",
+    "rank": 10,
+    "why": "Confirmed. Bare shape. record_key_merges (13589), just before it, uses finish_tx and is safe."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:10976",
+    "function": "Db::clear_plan",
+    "leaking_paths": [
+     "canonical.rs:10984 `conn.execute(\"COMMIT\", ()).await?;`: a failed COMMIT gets no ROLLBACK. The body's errors are rolled back at 10988."
+    ],
+    "frequency": "One or two times per projection (project.rs:1898, 3321, 3424, 3429), plus the admin clear-rebuild-flag path (supervisor.rs:5367).",
+    "rank": 11,
+    "why": "Confirmed. COMMIT only, a few times per run. It carries the rebuild_in_progress flag, so a dangling transaction here also holds the salvage-relevant flag write."
+   },
+   {
+    "file_line": "crates/store/src/lib.rs:2284",
+    "function": "Db::reclaim_notice",
+    "leaking_paths": [
+     "lib.rs:2288 `conn.execute(\"COMMIT\", ()).await?;`"
+    ],
+    "frequency": "Once per held member, during reclaim jobs only (process.rs:524). Admin-driven.",
+    "rank": 12,
+    "why": "Confirmed. COMMIT only. Same shape as record_notice, but not on the daily path."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:16017",
+    "function": "Db::merge_provisional_organizations_batch",
+    "leaking_paths": [
+     "canonical.rs:16029-16040 touched-tenders UNION query `.await?`",
+     "canonical.rs:16041 `trows.next().await?`",
+     "canonical.rs:16045 `repoint_org_references(..).await?`",
+     "canonical.rs:16051-16052 `DELETE FROM organizations` `.await?`",
+     "canonical.rs:16053, 16062, 16070 `append_change(..).await?`",
+     "canonical.rs:16073 `conn.execute(\"COMMIT\", ()).await?;`"
+    ],
+    "frequency": "The admin `merge-provisional-orgs` job only (supervisor.rs:7333), wet runs, one transaction per ORG_MERGE_BATCH.",
+    "rank": 13,
+    "why": "Confirmed. There is no ROLLBACK anywhere in this function. It has the largest blast radius of the admin sites: org deletes, mention and party repoints, and change rows. A dangling half-merge could be committed by the next holder. It is admin-only, so it ranks below the daily sites."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:28364",
+    "function": "Db::repair_placeholder_orgs_batch",
+    "leaking_paths": [
+     "canonical.rs:28449 `conn.execute(\"COMMIT\", ()).await?;`. Every body step has an explicit ROLLBACK (28387, 28412, 28421, 28429, 28437, 28445)."
+    ],
+    "frequency": "Admin RepairPlaceholderOrgs (supervisor.rs:6129), one transaction per BACKFILL_BATCH window, wet runs.",
+    "rank": 14,
+    "why": "Confirmed, COMMIT only, admin."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:27762",
+    "function": "Db::repair_nested_org_mentions_batch",
+    "leaking_paths": [
+     "canonical.rs:27787 `conn.execute(\"COMMIT\", ()).await?;`. Body errors are rolled back at 27774 and 27783."
+    ],
+    "frequency": "Admin RepairNestedOrgs (supervisor.rs:6086), one transaction per window, wet runs.",
+    "rank": 15,
+    "why": "Confirmed, COMMIT only, admin."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:11352",
+    "function": "Db::insert_legacy_ojs_keys (missed by the census as a site; it is a plain `BEGIN`)",
+    "leaking_paths": [
+     "canonical.rs:11353-11358 per-row `INSERT OR IGNORE INTO legacy_ojs_keys` `.await?`, with no ROLLBACK",
+     "canonical.rs:11360 `conn.execute(\"COMMIT\", ()).await?;`"
+    ],
+    "frequency": "Admin `backfill-legacy-adjacency` (supervisor.rs:5597 \u2192 ingest/src/project.rs:2361), one transaction per batch.",
+    "rank": 16,
+    "why": "Confirmed. No error handling at all. A deferred BEGIN leaks the same way: autocommit is off from the BEGIN on, whether or not the first INSERT took the write lock."
+   },
+   {
+    "file_line": "crates/store/src/lib.rs:3969",
+    "function": "Db::backfill_original_lang",
+    "leaking_paths": [
+     "lib.rs:3982 `conn.execute(\"COMMIT\", ()).await?;`. Per-row UPDATE errors are rolled back at 3978."
+    ],
+    "frequency": "Admin BackfillOriginalLang (supervisor.rs:5693), once per BACKFILL_BATCH window.",
+    "rank": 17,
+    "why": "Confirmed, COMMIT only, a one-off admin walk."
+   },
+   {
+    "file_line": "crates/store/src/lib.rs:4018",
+    "function": "Db::backfill_org_name_norm (missed by the census as a site; it is a plain `BEGIN`)",
+    "leaking_paths": [
+     "lib.rs:4022-4026 per-row `UPDATE organizations SET name_norm` `.await?`, with no ROLLBACK",
+     "lib.rs:4028 `conn.execute(\"COMMIT\", ()).await?;`"
+    ],
+    "frequency": "Admin backfill (supervisor.rs:5582), once per batch.",
+    "rank": 18,
+    "why": "Confirmed. No error handling at all, admin-only."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:30474",
+    "function": "Db::twin_repair_writes (via apply_member_twin_repair)",
+    "leaking_paths": [
+     "canonical.rs:30476 `Ok(()) => conn.execute(\"COMMIT\", ()).await?,`. twin_repair_tx errors are rolled back at 30478."
+    ],
+    "frequency": "Admin RepairMemberTwins (supervisor.rs:4845), one transaction per run.",
+    "rank": 19,
+    "why": "Confirmed, COMMIT only. The census's extra hazard ('the writer stays FK-OFF') does not hold on turso 0.7.2. `PRAGMA foreign_keys=ON` sets a connection flag unconditionally at translate time (turso_core translate/pragma.rs:701-704, connection.rs:1811). It is not SQLite's no-op inside a transaction, so set_foreign_keys(true) at canonical.rs:30460 still restores FK=ON. Only the open transaction remains."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:21991",
+    "function": "Db::record_merge_verdicts",
+    "leaking_paths": [
+     "canonical.rs:22028 `conn.execute(\"COMMIT\", ()).await?;`. Body errors are rolled back at 22032."
+    ],
+    "frequency": "POST /admin/merge-verdicts (admin.rs:407), once per upload.",
+    "rank": 20,
+    "why": "Confirmed, COMMIT only. It runs inline in the HTTP request future."
+   },
+   {
+    "file_line": "crates/store/src/canonical.rs:22106",
+    "function": "Db::record_identifier_verdicts",
+    "leaking_paths": [
+     "canonical.rs:22180 `conn.execute(\"COMMIT\", ()).await?;`. Body errors are rolled back at 22187. The publish_cursor `?` at 22182 runs after COMMIT and does not leak."
+    ],
+    "frequency": "POST /admin/identifier-verdicts (admin.rs:497), once per upload.",
+    "rank": 21,
+    "why": "Confirmed, COMMIT only, admin."
+   },
+   {
+    "file_line": "crates/store/src/accounts.rs:266",
+    "function": "Db::delete_user",
+    "leaking_paths": [
+     "accounts.rs:279 `Ok(()) => conn.execute(\"COMMIT\", ()).await.map(|_| ())`: the COMMIT error is returned with no ROLLBACK"
+    ],
+    "frequency": "Once per user account deletion (app/src/accounts.rs:271). Rare.",
+    "rank": 22,
+    "why": "Confirmed, COMMIT only. Lowest frequency in the list."
+   }
+  ],
+  "refuted": [
+   {
+    "file_line": "crates/store/src/canonical.rs:30474 (only the census note's 'writer could stay FK-OFF' hazard)",
+    "why": "The leak itself stands. The FK-OFF consequence does not: turso_core 0.7.2 translate/pragma.rs:701-704 calls connection.set_foreign_keys_enabled(enabled) whether or not a transaction is open, so `PRAGMA foreign_keys=ON` at canonical.rs:30460 still takes effect inside a dangling transaction."
+   },
+   {
+    "file_line": "(general qualifier on every COMMIT-only leak, none fully refuted)",
+    "why": "No leaks=true site turns out safe: each one really issues no ROLLBACK on the path named. How reachable the COMMIT-only leaks are depends on the engine, though. In op_auto_commit, turso sets auto_commit=true before commit_txn, so an I/O or disk-full error during the actual commit leaves is_autocommit()==true, and a ROLLBACK then answers 'cannot rollback - no transaction is active'. The open-transaction outcome on COMMIT needs check_deferred_fk_on_commit (the schema has no DEFERRABLE FKs, so this cannot happen today), StatementsInProgress, or a poisoned transaction, which turso rolls back itself. Body-path leaks are more reachable: apply_tenders flush, the build_plan_groups/link_step loops, rates, merge_provisional, insert_legacy_ojs_keys and backfill_org_name_norm. Constraint and FK errors, and any error in a multi-row or REPLACE write, roll back only the statement (vdbe/mod.rs abort). A generic error on a single-row write or a read inside BEGIN, by contrast, makes turso roll back the WHOLE transaction (the TxnCleanup::None arm). So the issue's 'turso aborts only the failing statement' is true for constraint errors and journaled writes, but not universally."
+   },
+   {
+    "file_line": "spot-checks of leaks=false (no refutation)",
+    "why": "I re-read 9571, 10104, 11598, 11651, 11991, 13589, 16188, 17081, 18245, 18500, 21102, 23203, 29203 and lib.rs:2533, and checked the head of every other BEGIN site (19151, 19809, 20913, 21138, 21192, 21252, 21532, 21668, 21896, 23025, 23725, 23807, 24008, 24251, 24471, 24673, 25696, 26170, 26217, 27407, 22555). All are safe as the census says. Every `?` sits inside the async block or a finish_tx body, and every early return (dry_run, parity aborts, stop()) comes before BEGIN or exits through the commit. A heuristic scan for top-level `?`/`return` between each BEGIN and its COMMIT found nothing new."
+   }
+  ],
+  "missed": [
+   "crates/store/src/canonical.rs:11352 insert_legacy_ojs_keys: plain `BEGIN` (not the literal \"BEGIN IMMEDIATE\", so the 59-site count misses it). It leaks on the per-row INSERT `?` at 11358 and on COMMIT at 11360. Admin backfill-legacy-adjacency (supervisor.rs:5597 \u2192 project.rs:2361). The census mentioned it in notes but never listed it as a site.",
+   "crates/store/src/lib.rs:4018 backfill_org_name_norm: plain `BEGIN`. It leaks on the per-row UPDATE `?` at 4026 and on COMMIT at 4028. Admin (supervisor.rs:5582). Mentioned in notes only.",
+   "crates/store/src/canonical.rs:1647 finish_tx: an existing COMMIT-or-ROLLBACK tail helper, used at 11637, 11670, 12000 and 13632. It is the seed of the issue's helper; the issue's claim that there is 'no shared transaction helper' is not quite right.",
+   "Not a BEGIN literal, but the same wedge: a PANIC between BEGIN and COMMIT drops the MutexGuard with the transaction open. Examples are the `.expect()` calls at canonical.rs:17094/17099 and any unwrap inside a body. Async Drop does not exist, so no helper can ROLLBACK here.",
+   "Not a BEGIN literal, but the same wedge: a dropped future can leave the transaction open. If a writer future is cancelled while it holds the guard mid-transaction, turso marks the transaction poisoned but leaves it open. The request-scoped callers run inline in HTTP handler futures: admin.rs:151/317/407/497/565/610 (record_*) and the account delete (accounts.rs:271). The /v1 deadline layer (v1/mod.rs:681, REQUEST_DEADLINE 30s) does not wrap /admin (main.rs:81-82). Exposure is therefore a client disconnect or HTTP/2 reset, not the timeout. supervisor.rs:1200 persist_queued wraps a job-row persist in a 30s timeout, but that persist is an autocommit write with no BEGIN.",
+   "Test, probe and example only, not production: plain `BEGIN` in crates/store/tests/*.rs (about 25 files, e.g. r2_merge.rs:114, r3_merge.rs:75, placeholder_dissolve.rs:27), the BEGIN IMMEDIATE in mention_fk_probe.rs:169 and turso_temp_db_leak.rs:110/122/128, crates/store/examples/crash_probe.rs:83, and reader BEGINs in checkpoint.rs:236/305 (#[cfg(test)]). There are no SAVEPOINTs, no `.transaction()` API use, and no BEGIN in execute_batch schema strings. crates/app and crates/ingest have no BEGIN/COMMIT literals."
+  ],
+  "helper_design": "PLACEMENT AND SIGNATURE. Add a new module crates/store/src/tx.rs (`mod tx;` in lib.rs). Move finish_tx out of canonical.rs:1647 into it, and add an associated function on Db. That makes it 'Db-level' and keeps call sites in the existing `Self::assert_heads_match(&conn, ..)` style:\n\n```rust\nimpl Db {\n    /// BEGIN IMMEDIATE, run `body`, COMMIT. On ANY error from the body or the COMMIT: best-effort ROLLBACK and return the ORIGINAL error (issue 498).\n    /// `body` must be a lazy future (an `async {}` block or an `async fn` call); it is first polled AFTER the BEGIN succeeds.\n    pub(crate) async fn immediate<T>(conn: &Connection, body: impl Future<Output = turso::Result<T>>) -> turso::Result<T> {\n        Self::within(conn, \"BEGIN IMMEDIATE\", body).await\n    }\n    /// The same with an explicit BEGIN form, so the two plain-`BEGIN` sites (canonical.rs:11352, lib.rs:4018) convert byte-identically.\n    pub(crate) async fn within<T>(conn: &Connection, begin: &'static str, body: impl Future<Output = turso::Result<T>>) -> turso::Result<T> {\n        conn.execute(begin, ()).await?; // nothing opened: no ROLLBACK, and never end a transaction this call did not open\n        finish(conn, body.await).await\n    }\n}\npub(crate) async fn finish<T>(conn: &Connection, result: turso::Result<T>) -> turso::Result<T> {\n    let err = match result {\n        Ok(v) => match conn.execute(\"COMMIT\", ()).await { Ok(_) => return Ok(v), Err(e) => e },\n        Err(e) => e,\n    };\n    rollback_best_effort(conn).await;\n    Err(err)\n}\nasync fn rollback_best_effort(conn: &Connection) {\n    // turso has sometimes already ended the transaction itself: RAISE(ROLLBACK), a poisoned transaction at COMMIT, a generic error on a single-row write or a read, or an I/O failure after op_auto_commit flipped auto_commit.\n    if conn.is_autocommit().unwrap_or(false) { return; }\n    let _ = conn.execute(\"ROLLBACK\", ()).await; // its error never replaces the original\n    if !conn.is_autocommit().unwrap_or(true) { eprintln!(\"[store] ROLLBACK left the shared writer inside its transaction (issue 498)\"); }\n}\n```\n\nWhy take a future rather than a closure? It is exactly how sites are already written: `let result = async {..}.await; finish_tx(&conn, result)`. Futures are lazy, so BEGIN still runs first. The body can borrow `&conn`, `&mut stmts`, `&mut pending`, `resolver: &mut _` and `&mut report` without higher-ranked lifetime trouble, and those borrows end when immediate returns. The alternative is `F: AsyncFnOnce() -> turso::Result<T>`, which edition 2024 allows; it removes the 'lazy future' caveat at the cost of a novel idiom in this codebase. Box::pin the big bodies at the call site (apply_tenders, twin_repair, repair_placeholder). The helper is generic and holds the body inline, so a large body enlarges the caller's future, and CLAUDE.md records that this has already overflowed the stack once.\n\nFIT WITH THE GUARD STYLE. The caller keeps `let conn = self.conn().await;` (the MutexGuard) and passes `&conn`; the guard derefs to &Connection. Nothing in the helper touches the mutex. Checkpoints, publish_cursor and counters stay outside the call, after Ok, exactly where they sit today.\n\nOPTIONAL DEFENSE IN DEPTH (recommended, separate unit). This is the only fix for the panic and cancellation cases above. In Db::conn_for (lib.rs:1191), after taking the guard: `if !guard.is_autocommit().unwrap_or(true) { eprintln!(\\\"[store] writer handed over INSIDE a transaction (waiter {caller}); rolling it back (issue 498)\\\"); let _ = guard.execute(\\\"ROLLBACK\\\", ()).await; }`. It mirrors the reader pool's is_autocommit check at read.rs:150. Precondition: no code spans one transaction across two conn() acquisitions. Every BEGIN..COMMIT in the 61 sites sits inside one guard, and nested acquisition would deadlock on the tokio mutex anyway.\n\nTESTS. Put them in tx.rs `#[cfg(test)] mod tests`. The tests are in-crate, so the private `db.conn()` is reachable. Use the `Db::open(\\\"/tmp/tender-db-tx498-<case>-{pid}.db\\\")` convention, removing -wal/-shm first. Do not call db.foreign_keys_enabled() while holding the guard, because it re-acquires the guard and deadlocks; query `PRAGMA foreign_keys` on the guard instead.\n(1) A failing body. Run CREATE TABLE t498(x INTEGER PRIMARY KEY). First run a CONTROL without the helper: BEGIN IMMEDIATE, INSERT 1, INSERT 1 (Err), then assert `!conn.is_autocommit()`. This proves turso left the transaction open, so the test is not vacuous. Then ROLLBACK. Next, `Db::immediate(&conn, async { INSERT 1?; INSERT 1?; Ok(()) })`. Assert: the error is the UNIQUE error, `conn.is_autocommit()`, a fresh BEGIN IMMEDIATE + COMMIT succeeds, and COUNT(t498)==0. Add a variant whose body INSERTs, then returns `Err(turso::Error::Error(\\\"boom\\\".into()))`, and assert the returned error is exactly \\\"boom\\\".\n(2) A failing COMMIT, using a deferred FK. A RAISE in a temp trigger fires at STATEMENT time, so it fails the body, not the COMMIT; it cannot be the COMMIT lever. Db::open sets foreign_keys=ON (lib.rs:98). Create `p498(id INTEGER PRIMARY KEY)` and `c498(id INTEGER PRIMARY KEY, p INTEGER REFERENCES p498(id) DEFERRABLE INITIALLY DEFERRED)`. turso 0.7.2 has no defer_foreign_keys pragma, but it does honour DEFERRABLE (schema.rs:4459-4468, fkeys.rs:884). At COMMIT, check_deferred_fk_on_commit fails with 'deferred foreign key constraint failed on commit' and deliberately leaves the transaction open (execute.rs op_auto_commit). CONTROL first: BEGIN, INSERT c498(1,42), assert COMMIT is_err and `!is_autocommit()`, then ROLLBACK. Then call immediate with the same INSERT. Assert: Err contains 'deferred foreign key', is_autocommit, and a following BEGIN IMMEDIATE + COMMIT succeeds. That last check also proves the ROLLBACK cleared the deferred-violation counter, or this COMMIT would fail again. Finally assert COUNT(c498)==0. If DEFERRABLE ever stops being enforced, the control's is_err assertion fails loudly.\n(3) The engine already rolled back. Create a trigger `CREATE TRIGGER r498 BEFORE INSERT ON t WHEN NEW.x=2 BEGIN SELECT RAISE(ROLLBACK,'r498 refused'); END`. The body inserts 1, then 2. turso ends the transaction itself (ResolveType::Rollback arm), so the helper's ROLLBACK is skipped or fails. Assert the returned error is 'r498 refused', is_autocommit, and count 0.\n(4) A failing BEGIN. Open a manual BEGIN IMMEDIATE, then call `immediate(&conn, async { ran = true; Ok(()) })`. Assert Err 'cannot start a transaction within a transaction', `!ran`, and `!conn.is_autocommit()`: the outer transaction is not the helper's to end. Then ROLLBACK.\n(5) The success path returns the value, the rows are visible, and is_autocommit holds.\nRun a single test with the gate's flags and package set: `CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p model -p store -p ingest -p tender-db --features tender-db/server tx::`. Then run ops/check.sh, redirect the output to a file, and read GATE-EXIT.\n\nMECHANICAL ADOPTION. Each conversion is byte-identical on the success path: the same statements run in the same order between the same BEGIN and COMMIT.\n(a) Pure tail swaps (`BEGIN?; let r = X.await; match r {Ok\u2192COMMIT?, Err\u2192ROLLBACK}` becomes `Self::immediate(&conn, X).await`): record_notice lib.rs:1741, reclaim_notice lib.rs:2284, insert_plan 11241, clear_plan 10976, retire_tenders_chunked 29874, twin_repair_writes 30474 (Box::pin body), record_merge_verdicts 21991, record_identifier_verdicts 22106 (publish_cursor stays after Ok), delete_user accounts.rs:266, and the four finish_tx users 11598, 11651, 11991, 13589.\n(b) Bare loops wrapped in an async block: build_plan_groups 12369, 12393 and 12561, link_step 13465, upsert_currency_rates rates.rs:67, merge_provisional_organizations_batch 16017 (publish_cursor after Ok), backfill_original_lang lib.rs:3969 (its explicit per-row ROLLBACK collapses into `?`), and insert_legacy_ojs_keys 11352 and backfill_org_name_norm lib.rs:4018 via `Self::within(&conn, \\\"BEGIN\\\", ..)`.\n(c) Small restructure, still byte-identical. In apply_tenders 15421 the body becomes `for p in chunk { let (a, head) = self.apply_tender_tx(..)?; .. } applied.leaf_rows += pending.flush(&conn).await?; Self::assert_heads_match(&conn, &rewrote).await?; Ok((applied, rewrote))`; changed_any, total and the checkpoint stay outside. In resolve_mentions 14362, the error/break pattern becomes `?`, and the stamp call goes inside the body.\n(d) Conditional BEGIN on dry_run: repair_nested 27762, repair_placeholder 28364, backfill_merged_window 16188, restore_dropped_satellites 18500. Build the body once, then `let r = if dry_run { body.await } else { Self::immediate(&conn, body).await };`.\n(e) Leave hand-written, or convert with care, because they act on the COMMIT error specifically: reparse_notice lib.rs:2533 times and logs COMMIT. match_org_identifiers_r2 17081, fold_provisional_plan 25696 and similar do a best-effort publish_cursor on failure; this can move to an `Err(e) =>` arm after immediate. The already-safe hand-written sites (about 30) can follow for uniformity, but carry no risk."
+ }
+}

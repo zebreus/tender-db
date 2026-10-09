@@ -1194,7 +1194,7 @@ impl Db {
         // (uncontended) adds one `try_lock` and two relaxed adds.
         if let Ok(guard) = self.conn.try_lock() {
             self.writer.acquisitions.fetch_add(1, Ordering::Relaxed);
-            return guard;
+            return Self::end_dangling_transaction(guard, caller).await;
         }
         // Held by a guard, not an add/sub pair, so a caller that gives up mid-wait
         // (a `timeout` around this future) is un-counted on drop — see [`Queued`].
@@ -1217,6 +1217,36 @@ impl Db {
             // writer. Rare by construction — at the 7.2M-acquisition scale, waits
             // this long numbered one.
             eprintln!("{}", slow_writer_wait_line(elapsed, still_queued, caller));
+        }
+        Self::end_dangling_transaction(guard, caller).await
+    }
+
+    /// Issue 498: the writer is ONE connection, so a holder that returned an error
+    /// between its `BEGIN` and its `COMMIT` without a `ROLLBACK` (22 sites did, on some
+    /// path, at the 2026-10-09 census), or panicked or was cancelled mid-transaction,
+    /// hands the next holder an open transaction. turso aborts only the failing
+    /// statement. The next holder's `BEGIN` would then fail, and its autocommit writes
+    /// would join the dangling transaction and commit, or vanish, with it.
+    ///
+    /// So the handover itself checks: a guard that arrives inside a transaction rolls
+    /// it back first and says so. No code holds one transaction across two writer
+    /// acquisitions (re-acquiring inside one would deadlock on this mutex), so a
+    /// transaction found here is always a leak, never someone's live work. The
+    /// reader pool makes the same check on return (`read.rs`, issue 53).
+    pub(crate) async fn end_dangling_transaction<'a>(
+        guard: MutexGuard<'a, Connection>,
+        caller: &'static std::panic::Location<'static>,
+    ) -> MutexGuard<'a, Connection> {
+        if !guard.is_autocommit().unwrap_or(true) {
+            eprintln!(
+                "[store] the writer was handed to {}:{} INSIDE an open transaction: a previous \
+                 holder left it without a ROLLBACK (issue 498); rolling it back",
+                caller.file(),
+                caller.line()
+            );
+            if let Err(e) = guard.execute("ROLLBACK", ()).await {
+                eprintln!("[store] the issue-498 ROLLBACK failed: {e}");
+            }
         }
         guard
     }
@@ -5824,6 +5854,44 @@ tmpfs /data/ramcache tmpfs rw 0 0
         drop(held);
 
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 498: a holder that leaves the writer inside a transaction (an error between
+    /// BEGIN and COMMIT with no ROLLBACK, a panic, a cancelled future) must not hand that
+    /// transaction to the next holder. The next acquisition rolls it back: the leaked
+    /// write is gone, the connection is in autocommit, and a fresh BEGIN works.
+    #[tokio::test]
+    async fn the_writer_is_never_handed_over_inside_a_transaction() {
+        let path = format!("/tmp/tender-db-dangling-tx-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.execute_for_test("CREATE TABLE t498(x INTEGER PRIMARY KEY)").await.unwrap();
+        {
+            // The leak: BEGIN, a write, then the guard goes away without COMMIT or ROLLBACK,
+            // as a `?` between BEGIN and COMMIT does.
+            let conn = db.conn().await;
+            conn.execute("BEGIN IMMEDIATE", ()).await.unwrap();
+            conn.execute("INSERT INTO t498 VALUES (1)", ()).await.unwrap();
+            assert!(!conn.is_autocommit().unwrap(), "precondition: the transaction is open");
+        }
+        {
+            let conn = db.conn().await;
+            assert!(conn.is_autocommit().unwrap(), "the next holder gets the writer in autocommit");
+            conn.execute("BEGIN IMMEDIATE", ()).await.expect("a fresh BEGIN works");
+            conn.execute("INSERT INTO t498 VALUES (2)", ()).await.unwrap();
+            conn.execute("COMMIT", ()).await.unwrap();
+        }
+        let rows = db.scalar("SELECT group_concat(x) FROM (SELECT x FROM t498 ORDER BY x)").await.unwrap();
+        assert_eq!(
+            rows,
+            Some(turso::Value::Text("2".into())),
+            "the leaked write was rolled back, the next holder's committed"
+        );
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
     }
 
     /// The slow-wait journal line names its waiter (2026-10-08): the call site

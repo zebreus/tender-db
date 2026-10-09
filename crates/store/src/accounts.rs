@@ -442,6 +442,9 @@ impl Db {
             User { id: int(&row, 0), username: text(&row, 1), created_at: int(&row, 2) };
         drop(rows);
         if let Ok(conn) = self.conn.try_lock() {
+            // The one writer acquisition outside `conn_for`, so it makes the same issue-498
+            // check: an autocommit UPDATE here would otherwise join a leaked transaction.
+            let conn = Self::end_dangling_transaction(conn, std::panic::Location::caller()).await;
             let _ = conn
                 .execute(
                     "UPDATE api_tokens SET last_used_at = ? WHERE token_hash = ?",

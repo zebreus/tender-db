@@ -1,7 +1,16 @@
 # 498 — a failed flush or COMMIT leaves the shared writer connection inside its transaction
 
 Status: ready-for-agent — filed 2026-10-08 from the issue 495 unit 2 planning review (`wf_da3c04cf-2f7`, step 12),
-confirmed against the code. NEXT: unit 1, the census.
+confirmed against the code.
+- Unit 1 (census) DONE 2026-10-09: 22 confirmed leaking sites, ranked, plus the helper design —
+  `.scratch/tender-db/498-tx/census-2026-10-09.{md,json}`.
+- Unit 0 (defense in depth, the census's recommendation) BUILT 2026-10-09: `Db::conn_for` and the token touch's
+  `try_lock` (the one acquisition outside it) pass the guard through `end_dangling_transaction`, which rolls back a
+  transaction a previous holder left open and logs `[store] the writer was handed to <file:line> INSIDE an open
+  transaction`. It is the only fix for the panic and cancelled-future cases. Test:
+  `the_writer_is_never_handed_over_inside_a_transaction`.
+- NEXT: unit 2 (the `Db::immediate` helper in `tx.rs`), then unit 3 in the census's rank order. A journal grep
+  for `INSIDE an open transaction` after deploy says whether any leak fires in prod.
 Kind: robustness / the single writer (`Db::conn`)
 Relates to: 241 / 256 (the writer queue), 323 (`checkpoint_on` inside a transaction), 495 (unit 2 rewrites the
 same batch loop, but must stay byte-identical, so the fix is not part of it)
