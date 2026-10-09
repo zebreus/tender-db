@@ -3652,7 +3652,7 @@ impl Supervisor {
                 let compare = if verified + corrected == 0 {
                     String::new()
                 } else {
-                    format!("; compare (shadow): {verified} verified, {corrected} corrected")
+                    format!("; compare: {verified} verified, {corrected} corrected")
                 };
                 self.set_phase(
                     "folding",

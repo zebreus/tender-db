@@ -461,9 +461,11 @@ batches, so you can move between transports without reparsing:</p>
 }</code></pre>
 <p><strong><code>version: null</code></strong> marks a change that is not a version
 transition: every <code>organization</code> event; an entity <code>removed</code>
-because it left its Tender; and a <code>tender</code> <code>changed</code> whose
-existing versions were rewritten in place (an organization merge re-pointing its
-parties). Re-read the entity by id and upsert it &mdash; you may not hold it yet.</p>
+because it left its Tender; and a <code>tender</code> or <code>lot</code>
+<code>changed</code> whose existing versions were rewritten in place (an organization
+merge re-pointing its parties, or a re-derivation correcting what the fold stored, which
+announces only the Tenders and lots whose reading moved). Re-read the entity by id and
+upsert it &mdash; you may not hold it yet.</p>
 
 <h2 id="sql">SQL endpoint</h2>
 <p><code class="ep">POST /v1/sql</code> (token required) runs <strong>one

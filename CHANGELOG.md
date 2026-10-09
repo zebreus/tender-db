@@ -4,6 +4,22 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 495 unit 4) — a re-derivation announces corrections, not a history replay
+
+When a fold re-derives a Tender, for example after a fix to how notices are read, the change feed (`/v1/changes`,
+SSE, webhooks) used to re-emit every version of that Tender under new cursors. A large refold wrote tens of
+millions of change rows that changed nothing.
+
+The fold now compares the re-derived Tender with what is stored and writes only what differs. A Tender whose
+served reading moved gets two kinds of row, both with `version: null`:
+- one `tender` `changed`;
+- one `lot` `changed` for each lot whose reading moved.
+A Tender that did not move gets no row at all.
+
+Treat a `version: null` `changed` the way the docs already say: re-read the entity by id and upsert it. A client
+that ignored such rows also missed every correction from now on, and no longer receives the replay that used to
+carry them. Notices arriving as usual are announced exactly as before.
+
 ## Unreleased (issue 457 unit 3) — `/v1/sql` refuses recursion and EXCLUDE frames
 
 `/v1/sql` now answers `400` to three constructs, naming the reason:

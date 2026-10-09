@@ -1,10 +1,14 @@
 # ADR-0017 — A re-derivation compares before it writes; the feed announces what differs from what was stored
 
-Status: PROPOSED 2026-10-08 (issue 495 unit 1; drafted from three competing designs and a judge,
-`wf_21089c8e-de5`). D6 and D7 apply now as runbook guidance: they add a route, and nothing a consumer sees
-changes. D1–D5 change what `/v1/changes` and SSE emit after a refold. They become ACCEPTED, and take effect,
-with issue 495 unit 4 (the flip), after unit 3's shadow measurement, unless Lennart objects first. Until then
-the fold rewrites stale Tenders in full and replays their history as before.
+Status: ACCEPTED 2026-10-09 with issue 495 unit 4 (the flip); proposed 2026-10-08 (issue 495 unit 1, drafted
+from three competing designs and a judge, `wf_21089c8e-de5`).
+- D1–D4 take effect with unit 4. A stale Tender's prefix is compared, only what differs is written, and a corrected
+  Tender is announced by seq-less correction rows instead of a history replay.
+- D5 (in-place walks announce the same corrections) takes effect with unit 5.
+- D6 and D7 have applied as runbook guidance since 2026-10-08.
+- The decision rested on unit 3's shadow measurement: 33,236 stale Tenders across two prod cohorts compared
+  identical, and the compare costs about 384 us per version plus 0.8 us per row.
+- `TENDER_REFOLD_COMPARE=off` restores the full rewrite and replay, as the kill switch, for at least one release.
 
 ## Context
 

@@ -1777,6 +1777,12 @@ pub const NOTICE_VALUE_TABLES: &[&str] = &[
 /// [`ScalePartners`] reaches a stored lot value only through a stamping refold,
 /// exactly like [`head_value_eur_cents`] reaches the head column.
 ///
+/// Since issue 495 unit 4 (ADR-0017) a bump no longer costs a full rewrite and replay.
+/// Every stale Tender is compared with what is stored, and only what differs is
+/// rewritten and announced, so a bump with no effect on a Tender costs that Tender a
+/// compare and an epoch stamp. The epoch's job as the completeness marker is
+/// unchanged: it is stamped on every stale Tender the fold considers.
+///
 /// NOT bumped for issue 234's identifier-less mention merge, and the reasoning
 /// is worth keeping because the bump was made and then REVERTED after its first
 /// live no-op: the resolver's `(notice, section)` idempotency preload returns
@@ -8504,8 +8510,9 @@ pub struct Applied {
     /// The rows the fold produced in those identical and those rewritten tables.
     pub rows_skipped: u64,
     pub rows_rewritten: u64,
-    /// ADR-0017 D3's correction rows the flip would write: one seq-less `tender changed`
-    /// (rule T) plus one seq-less `lot changed` per rule-L lot, per corrected Tender.
+    /// ADR-0017 D3's correction rows, written (`On`) or planned (`Shadow`): one seq-less
+    /// `tender changed` (rule T) plus one seq-less `lot changed` per rule-L lot, per
+    /// corrected Tender.
     pub correction_rows_planned: u64,
     /// Stored rows the compare read back, the versions it read them for (one prepared
     /// SELECT per leaf table each), and the time it spent reading and comparing.
@@ -8560,7 +8567,7 @@ impl Applied {
                 (skipped + rewritten > 0).then(|| format!("{} {skipped}/{}", table.name, skipped + rewritten))
             })
             .collect();
-        Some(format!("compare (shadow, issue 495) tables identical/compared: {}", parts.join(", ")))
+        Some(format!("compare (issue 495) tables identical/compared: {}", parts.join(", ")))
     }
 
     /// The shadow compare's tally for the counts line (issue 495 unit 3), or `None` when no
@@ -8570,8 +8577,8 @@ impl Applied {
             return None;
         }
         Some(format!(
-            "compare (shadow, issue 495): {} tenders verified, {} corrected; tables {} skipped / {} \
-             rewritten; rows {} skipped / {} rewritten; {} correction rows planned; {} stored rows \
+            "compare (issue 495): {} tenders verified, {} corrected; tables {} skipped / {} \
+             rewritten; rows {} skipped / {} rewritten; {} correction rows; {} stored rows \
              of {} versions read in {:.1}s: {:.2} us per row, {:.1} us per version",
             self.tenders_verified,
             self.tenders_corrected,

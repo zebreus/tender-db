@@ -588,6 +588,72 @@ async fn run_split(compare: store::RefoldCompare) {
         );
     }
 
+    // Two more shapes below the head, each Tender-scoped (rule T only):
+    // - a stored text row gone missing (what a re-parse's deletes leave behind): the version's
+    //   texts are rewritten whole and the row comes back;
+    // - the version row itself differs: the whole version is rewritten (ADR-0017 D1.4), every
+    //   one of its tables, children first, with foreign keys on.
+    for (what, sql, whole) in [
+        (
+            "a stored text row gone missing",
+            format!(
+                "DELETE FROM tender_version_texts WHERE rowid = \
+                   (SELECT MIN(rowid) FROM tender_version_texts WHERE tender_id = {chain} AND seq = 1 AND lot_id IS NULL)"
+            ),
+            false,
+        ),
+        (
+            "a differing version row",
+            format!("UPDATE tender_versions SET publication_id = 'edited' WHERE tender_id = {chain} AND seq = 1"),
+            true,
+        ),
+    ] {
+        let tables = int_of(
+            &db,
+            &format!(
+                "SELECT (SELECT COUNT(*) > 0 FROM tender_versions WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_lots WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_texts WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_dates WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_amounts WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_classifications WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_parties WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_lot_group_members WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_lot_results WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_result_winners WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_result_stats WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_bids WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_bid_parties WHERE tender_id = {chain} AND seq = 1) + \
+                        (SELECT COUNT(*) > 0 FROM tender_version_contracts WHERE tender_id = {chain} AND seq = 1)"
+            ),
+        )
+        .await;
+        let content = text_of(&db, &format!("SELECT group_concat(value, '|') FROM (SELECT value FROM tender_version_texts WHERE tender_id = {chain} ORDER BY seq, rowid)")).await;
+        assert_eq!(db.execute_for_test(&sql).await.expect("edit the stored rows"), 1, "{what}");
+        db.set_projection_epoch_for_test(0).await.expect("age every Tender");
+        let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
+        let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
+        db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
+        let cursor = int_of(&db, "SELECT COALESCE(MAX(cursor), 0) FROM changes").await;
+        let a = project::project_incremental(&db).await.expect("refold").applied;
+        assert_eq!((a.tenders_corrected, a.correction_rows_planned), (1, 1), "{what}: rule T only: {a:?}");
+        assert_eq!(a.tables_rewritten, if whole { tables as u64 } else { 1 }, "{what}: {a:?}");
+        if compare == store::RefoldCompare::On {
+            assert_corrections(&db, cursor, chain, 1, what).await;
+            assert_eq!(a.versions_removed, u64::from(whole), "{what}: {a:?}");
+        }
+        assert_eq!(
+            text_of(&db, &format!("SELECT group_concat(value, '|') FROM (SELECT value FROM tender_version_texts WHERE tender_id = {chain} ORDER BY seq, rowid)")).await,
+            content,
+            "{what}: the texts read as a fresh fold writes them"
+        );
+        assert_eq!(
+            text_of(&db, &format!("SELECT publication_id FROM tender_versions WHERE tender_id = {chain} AND seq = 1")).await == "edited",
+            false,
+            "{what}: the version row is the fold's again"
+        );
+    }
+
     // Changes outside the leaf tables, each announced as a head difference (rule T plus the
     // head version's lots) with no table rewritten: `tender_identity` moving a stored `kind`
     // back in place, and a head column that moved while every version stayed the same.

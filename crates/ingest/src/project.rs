@@ -1585,7 +1585,7 @@ fn compare_tail(verified: u64, corrected: u64) -> String {
     if verified + corrected == 0 {
         String::new()
     } else {
-        format!("; compare (shadow): {verified} verified, {corrected} corrected")
+        format!("; compare: {verified} verified, {corrected} corrected")
     }
 }
 

@@ -1016,9 +1016,14 @@ async fn retirement_is_identical_however_it_is_chunked() {
 /// Staleness is simulated by writing an impossible stored epoch rather than by
 /// making `PROJECTION_EPOCH` injectable — the production constant stays a constant,
 /// and the test drives the exact condition the code branches on.
+///
+/// Pinned with the compare OFF (`TENDER_REFOLD_COMPARE=off`, the kill switch): the full
+/// rewrite this test was written for. `an_epoch_stale_refold_with_the_compare_on_verifies_and_writes_nothing`
+/// is its twin under the default (issue 495 unit 4).
 #[tokio::test]
 async fn an_epoch_forced_rewrite_reproduces_identical_content() {
     let (db, fetch, path) = scratch("epoch-noop").await;
+    db.set_refold_compare(store::RefoldCompare::Off);
     establish(&db, fetch).await;
     for p in 0..4u64 {
         record(&db, fetch, &format!("E{p}-cn"), keyed(&format!("bt04-e{p:03}"), 1, "Epoch")).await;
@@ -1082,6 +1087,55 @@ async fn an_epoch_forced_rewrite_reproduces_identical_content() {
         "every rewritten Tender must be stamped with the current epoch"
     );
 
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// Issue 495 unit 4, the twin of `an_epoch_forced_rewrite_reproduces_identical_content` under
+/// the default compare: the same aged epoch, the same unchanged chains, and now every stale
+/// Tender compares identical, so the fold writes no version and no change row, keeps the
+/// content byte-identical, and still stamps the epoch on every Tender it considered.
+#[tokio::test]
+async fn an_epoch_stale_refold_with_the_compare_on_verifies_and_writes_nothing() {
+    let (db, fetch, path) = scratch("epoch-on").await;
+    assert_eq!(db.refold_compare(), store::RefoldCompare::On, "the compare is on by default");
+    establish(&db, fetch).await;
+    for p in 0..4u64 {
+        record(&db, fetch, &format!("E{p}-cn"), keyed(&format!("bt04-e{p:03}"), 1, "Epoch")).await;
+        record(&db, fetch, &format!("E{p}-corr"), keyed(&format!("bt04-e{p:03}"), 2, "Epoch corr")).await;
+    }
+    project::project(&db, false).await.expect("establish");
+    // The compare refuses to run without `tender_version_bid_parties_version`.
+    db.build_tender_indexes().await.expect("the by-version indexes");
+    let before = snapshot_content(&db).await;
+    let cursor = count(&db, "SELECT COALESCE(MAX(cursor), 0) FROM changes").await;
+
+    db.set_projection_epoch_for_test(-1).await.expect("age the stored epoch");
+    db.unmark_projected_for_profiles(&["eforms:eforms-sdk-1.13"]).await.expect("re-mark");
+    let refold = project::project_incremental(&db).await.expect("re-fold, epoch stale");
+    let a = refold.applied;
+    assert_eq!(
+        (a.tenders_written, a.tenders_verified, a.tenders_corrected),
+        (refold.tenders, refold.tenders, 0),
+        "every stale Tender considered, every one verified: {a:?}"
+    );
+    assert_eq!((a.versions_written, a.versions_removed, a.leaf_rows, a.changes), (0, 0, 0, 0), "{a:?}");
+    assert_eq!(before, snapshot_content(&db).await, "the content is byte-identical");
+    assert_eq!(
+        count(&db, &format!("SELECT COUNT(*) FROM changes WHERE cursor > {cursor}")).await,
+        0,
+        "no history replay, no correction: nothing moved"
+    );
+    assert_eq!(
+        count(
+            &db,
+            &format!("SELECT COUNT(*) FROM tenders WHERE projection_epoch <> {}", store::canonical::PROJECTION_EPOCH),
+        )
+        .await,
+        0,
+        "every considered Tender is stamped with the current epoch"
+    );
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }

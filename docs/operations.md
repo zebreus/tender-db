@@ -826,8 +826,28 @@ and 70.6 M change rows; its value could have been an in-place backfill (issue 49
 - **R2:** the watermark at `MAX(id)` plus the completion flag, which the read path gates on. After a
   rollback below the deploy, clear the flag and re-walk.
 
-Until ADR-0017 unit 4 lands, R3 and R4 still rewrite stale Tenders in full and replay their history on
-`/v1/changes` (the issue-179 cost below).
+Since ADR-0017 unit 4 (issue 495, 2026-10-09), R3 and R4 **compare before they write**. Each stale Tender's
+prefix of unchanged causing notices is re-derived and compared table by table with what is stored.
+- Only what differs is written. Identical tables keep their rows and rowids.
+- An unchanged head gets its epoch stamped alone.
+- A corrected Tender is announced by ADR-0017 D3's seq-less correction rows: one `tender changed`, then a `lot
+  changed` per rule-L lot. Its history is not replayed.
+- Versions past the prefix are written and announced as before.
+
+**Reading the compare on the counts line.** The `project` job's counts carry `compare (issue 495): N tenders
+verified, M corrected; tables … skipped / … rewritten; rows …; K correction rows; … us per row` (in shadow, K
+is planned rather than written).
+The fold's `[project] done` line prints it too, with a per-table `identical/compared` split. `verified` Tenders
+were stamped and nothing else. `corrected` ones got exactly `K` correction rows in total.
+
+**Stop rule.** Before a refold, run its cohort in shadow on a sample (a `refold` of one small profile with a
+runtime drop-in `Environment=TENDER_REFOLD_COMPARE=shadow`) and read the planned correction rows. If the real run's
+correction rows land outside 0.5×–2× of that prediction per Tender, stop and investigate before the next one: the
+compare and the logic change disagree about what moved.
+
+**Kill switch.** `TENDER_REFOLD_COMPARE=off` (a drop-in, then a restart) restores the full rewrite and the history
+replay (the issue-179 cost below). `shadow` compares and counts but still rewrites everything. The compare refuses
+itself, and logs it once, when `tender_version_bid_parties_version` is missing (a rebuild defers it).
 
 ### The procedure type and its backfill (issue 479)
 
@@ -967,8 +987,9 @@ them, exposes them on `v_lots`, and adds their index. Do not ship deploy B befor
 is green.
 
 **What the bump costs until the refold has run.** Every Tender is epoch-stale.
-- Each Tender the daily fold touches is rewritten in full (`keep = 0`) and re-emits its history to
-  `/v1/changes`. That is the accepted issue-179 cost.
+- Each Tender the daily fold touches is compared and rewritten only where it differs (ADR-0017 D1). Before
+  issue 495 unit 4 it was rewritten in full (`keep = 0`) and re-emitted its history to `/v1/changes`, the
+  issue-179 cost.
 - Any whole-corpus walk (the bucketed fallback at 100k+ planned notices, a large reparse or refold)
   rewrites all ~8.8 M Tenders. If one is due anyway, let it BE the backfill and run the completeness
   check after it. Otherwise hold it until the refold.
