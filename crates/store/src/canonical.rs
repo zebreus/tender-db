@@ -30449,6 +30449,13 @@ impl Db {
         let previous_lots = previous.map(|p| p.lots.as_slice()).unwrap_or_default();
         for lot in &v.lots {
             let lot_id = self.lot_identity(conn, tender_id, &lot.key, stmts).await?;
+            // Issue 493: a lot's served `value` (issue 490's `elect_lot_value`) also depends on
+            // things outside its own facts, such as the scale rule's tender-level partners and the
+            // version's rate date, so it can in principle move while the facts stay equal, and no
+            // lot row is written. Measured 2026-10-09 over ten 10–20k-Tender windows of prod: 0 of
+            // 14,480 consecutive-version value moves lacked a lot `changed` row at their seq. The
+            // gap is documented rather than closed, because emitting on every value move would
+            // cost each daily append a row per lot.
             let op = match previous_lots.iter().find(|l| l.key == lot.key) {
                 None => "added",
                 Some(before) if before.facts != lot.facts || before.kind != lot.kind => "changed",

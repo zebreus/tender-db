@@ -1,8 +1,20 @@
 # 493 — a lot whose elected value moves emits no lot change
 
-Status: ready-for-agent — filed 2026-10-08 from issue 490's deploy-B review (`wf_a689b740-7c8`, verified
-against the code). This predates issue 490: the read-time pick had the same dependence. NEXT: unit 1,
-measure how often it happens before changing the change feed.
+Status: done — MEASURED AND DOCUMENTED 2026-10-09 (unit 2's "document the gap" branch).
+- Unit 1 used bounded `/v1/sql` reads over ten Tender-id windows of 10k–20k ids each: 8.70M, 0.5M, 1.0M, 2.0M,
+  4.0M, 6.0M, 7.5M, 8.2M, 8.6M, 8.75M and 8.8M. They found **14,480 consecutive-version lot value moves**
+  (`tender_version_lots.value_*` differing between seq N and N+1).
+- **0 of them lack a lot `changed` row at their seq.** In practice a lot's elected value moves only when its own
+  facts move too.
+- Control, so the check is not vacuous: of 8,267 steady pairs in one window, 3,178 have no lot row. The probe
+  does see absence.
+- So the theoretical path (a tender-level scale partner or the rate date moving the value with the facts
+  equal) is not observed. Emitting on every value move would cost each daily append a row per lot.
+- A comment at the lot arm of `append_version_changes` records the gap and the measurement.
+- Refolds are covered separately: ADR-0017 D3's rule L announces a lot whose `tender_version_lots` row (value
+  included) differs.
+Was: ready-for-agent — filed 2026-10-08 from issue 490's deploy-B review (`wf_a689b740-7c8`, verified
+against the code). This predates issue 490: the read-time pick had the same dependence.
 Kind: change feed / SSE coherence
 Relates to: 490 (the stored lot value), 471 (the exact-10ᵏ rule), 389
 
