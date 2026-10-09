@@ -263,8 +263,9 @@ impl Db {
     /// the storage layer implements.
     pub async fn delete_user(&self, id: i64) -> turso::Result<()> {
         let conn = self.conn().await;
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let result = async {
+        // turso 0.7.0 poisons the transaction if a write future is abandoned, so the
+        // rollback is unconditional on the error path, the COMMIT's included (issue 498).
+        Self::immediate(&conn, async {
             for sql in [
                 "DELETE FROM api_tokens WHERE user_id = ?",
                 "DELETE FROM sessions WHERE user_id = ?",
@@ -272,18 +273,9 @@ impl Db {
             ] {
                 conn.execute(sql, (Value::Integer(id),)).await?;
             }
-            turso::Result::Ok(())
-        }
-        .await;
-        match result {
-            Ok(()) => conn.execute("COMMIT", ()).await.map(|_| ()),
-            Err(e) => {
-                // turso 0.7.0 poisons the transaction if a write future is
-                // abandoned, so the rollback is unconditional on the error path.
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        }
+            Ok(())
+        })
+        .await
     }
 
     // ------------------------------------------------------------- sessions

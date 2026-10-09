@@ -64,16 +64,18 @@ impl Db {
         rows: &[(String, String, f64, String)],
     ) -> turso::Result<u64> {
         let conn = self.conn().await;
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        for (currency, date, rate, source) in rows {
-            conn.execute(
-                "INSERT OR REPLACE INTO currency_rates(currency, rate_date, rate_to_eur, source)
+        Self::immediate(&conn, async {
+            for (currency, date, rate, source) in rows {
+                conn.execute(
+                    "INSERT OR REPLACE INTO currency_rates(currency, rate_date, rate_to_eur, source)
                  VALUES (?, ?, ?, ?)",
-                (t(currency), t(date), Value::Real(*rate), t(source)),
-            )
-            .await?;
-        }
-        conn.execute("COMMIT", ()).await?;
+                    (t(currency), t(date), Value::Real(*rate), t(source)),
+                )
+                .await?;
+            }
+            Ok(())
+        })
+        .await?;
         Ok(rows.len() as u64)
     }
 

@@ -14,6 +14,7 @@ pub mod jobs;
 pub mod publication_audit;
 pub mod rates;
 pub mod read;
+mod tx;
 pub mod webhooks;
 
 /// Re-exported so callers can name `Error`/`Connection`/`Value` without taking
@@ -1768,20 +1769,10 @@ impl Db {
     /// `publication_id` — see [`Recorded`] for why that is not a new notice.
     pub async fn record_notice(&self, n: &Notice, parse: &Parse) -> turso::Result<Recorded> {
         let conn = self.conn().await;
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let result = self.record_notice_tx(&conn, n, parse).await;
         // turso 0.7.0 poisons the open transaction if a write future is
-        // abandoned, so the rollback is unconditional on the error path.
-        match result {
-            Ok(inserted) => {
-                conn.execute("COMMIT", ()).await?;
-                Ok(inserted)
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        }
+        // abandoned, so the rollback is unconditional on the error path — the
+        // COMMIT's included (issue 498).
+        Self::immediate(&conn, self.record_notice_tx(&conn, n, parse)).await
     }
 
     async fn record_notice_tx(
@@ -2311,18 +2302,7 @@ impl Db {
     /// byte-identical to a fresh ingest of the member.
     pub async fn reclaim_notice(&self, n: &Notice, parse: &Parse) -> turso::Result<Reclaim> {
         let conn = self.conn().await;
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let result = self.reclaim_notice_tx(&conn, n, parse).await;
-        match result {
-            Ok(outcome) => {
-                conn.execute("COMMIT", ()).await?;
-                Ok(outcome)
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        }
+        Self::immediate(&conn, self.reclaim_notice_tx(&conn, n, parse)).await
     }
 
     /// Every table [`Db::insert_parsed`] writes — the notice's whole parsed layer.
@@ -3996,20 +3976,17 @@ impl Db {
         // backfills are one statement per batch for the same reason; this one cannot
         // be (the 639-2/T map is Rust), so the rows share a commit instead.
         if !stamps.is_empty() {
-            conn.execute("BEGIN IMMEDIATE", ()).await?;
-            for (tender_id, seq, lang) in stamps {
-                if let Err(e) = conn
-                    .execute(
+            Self::immediate(&conn, async {
+                for (tender_id, seq, lang) in stamps {
+                    conn.execute(
                         "UPDATE tender_versions SET original_lang = ? WHERE tender_id = ? AND seq = ?",
                         (Value::Text(lang), Value::Integer(tender_id), Value::Integer(seq)),
                     )
-                    .await
-                {
-                    let _ = conn.execute("ROLLBACK", ()).await;
-                    return Err(e);
+                    .await?;
                 }
-            }
-            conn.execute("COMMIT", ()).await?;
+                Ok(())
+            })
+            .await?;
         }
         // Like `backfill_current_deadline`: the count is the WINDOW's tenders, so
         // a window whose versions were all stamped already (or all NULL-by-era)
@@ -4045,17 +4022,19 @@ impl Db {
         drop(rows);
         let Some(&(last, _)) = pending.last() else { return Ok((0, after)) };
         let count = pending.len() as i64;
-        conn.execute("BEGIN", ()).await?;
-        for (id, name) in pending {
-            // Issue 432: the column's one derivation, so a backfilled row
-            // keys exactly as a freshly minted one would.
-            conn.execute(
-                "UPDATE organizations SET name_norm = ? WHERE id = ?",
-                (Value::Text(canonical::org_name_norm(&name)), Value::Integer(id)),
-            )
-            .await?;
-        }
-        conn.execute("COMMIT", ()).await?;
+        Self::within(&conn, "BEGIN", async {
+            for (id, name) in pending {
+                // Issue 432: the column's one derivation, so a backfilled row
+                // keys exactly as a freshly minted one would.
+                conn.execute(
+                    "UPDATE organizations SET name_norm = ? WHERE id = ?",
+                    (Value::Text(canonical::org_name_norm(&name)), Value::Integer(id)),
+                )
+                .await?;
+            }
+            Ok(())
+        })
+        .await?;
         Ok((count, last))
     }
 

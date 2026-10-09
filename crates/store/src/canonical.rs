@@ -28,6 +28,7 @@
 //! notices).
 
 use crate::checkpoint::{CheckpointMode, checkpoint_on};
+use crate::tx::finish as finish_tx;
 use crate::{
     Db, Parsed, Section, Stamp, ValueRow, int, opt_int, opt_int_of, opt_text, opt_text_of,
     stamp_has_time, stamp_offset, stamp_utc, t, text,
@@ -1639,24 +1640,6 @@ impl LinkReads {
             held.push((int(&row, 0), (text(&row, 1), text(&row, 2), text(&row, 3), opt_int_of(&row, 4))));
         }
         Ok(held)
-    }
-}
-
-/// COMMIT `conn`'s open transaction when `result` is `Ok`, ROLLBACK it otherwise, and
-/// hand `result` back.
-async fn finish_tx<T>(conn: &Connection, result: turso::Result<T>) -> turso::Result<T> {
-    match result {
-        Ok(value) => match conn.execute("COMMIT", ()).await {
-            Ok(_) => Ok(value),
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        },
-        Err(e) => {
-            let _ = conn.execute("ROLLBACK", ()).await;
-            Err(e)
-        }
     }
 }
 
@@ -10972,23 +10955,13 @@ impl Db {
         // of crash timing. A no-op on the incremental path (flag already 0). Kept out
         // of `clear_plan_on`, which the START-of-run `reset_plan` uses and must NOT
         // touch the flag. Per the turso ROLLBACK-on-dropped-write discipline
-        // (CONTEXT.md), any failure rolls back before propagating.
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let result = async {
+        // (CONTEXT.md), any failure rolls back before propagating — the COMMIT's too
+        // (issue 498).
+        Self::immediate(&conn, async {
             conn.execute("UPDATE projection_state SET rebuild_in_progress = 0 WHERE id = 0", ()).await?;
             self.clear_plan_on(&conn).await
-        }
-        .await;
-        match result {
-            Ok(()) => {
-                conn.execute("COMMIT", ()).await?;
-                Ok(())
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        }
+        })
+        .await
     }
 
     /// Mark that a full rebuild's Phase-2 is mid-flight (salvage-loop fix). Set the
@@ -11238,18 +11211,7 @@ impl Db {
             return Ok(());
         }
         let conn = self.conn().await;
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let result = self.insert_plan_tx(&conn, rows).await;
-        match result {
-            Ok(()) => {
-                conn.execute("COMMIT", ()).await?;
-                Ok(())
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        }
+        Self::immediate(&conn, self.insert_plan_tx(&conn, rows)).await
     }
 
     /// The legacy-adjacency coverage attestation (issue 58 v2): every parsed
@@ -11349,16 +11311,17 @@ impl Db {
             return Ok(());
         }
         let conn = self.conn().await;
-        conn.execute("BEGIN", ()).await?;
-        for &(key, notice_id) in rows {
-            conn.execute(
-                "INSERT OR IGNORE INTO legacy_ojs_keys(ojs_key, notice_id) VALUES(?, ?)",
-                (Value::Integer(key), Value::Integer(notice_id)),
-            )
-            .await?;
-        }
-        conn.execute("COMMIT", ()).await?;
-        Ok(())
+        Self::within(&conn, "BEGIN", async {
+            for &(key, notice_id) in rows {
+                conn.execute(
+                    "INSERT OR IGNORE INTO legacy_ojs_keys(ojs_key, notice_id) VALUES(?, ?)",
+                    (Value::Integer(key), Value::Integer(notice_id)),
+                )
+                .await?;
+            }
+            Ok(())
+        })
+        .await
     }
 
     /// One key→notices hop of the legacy closure walk (issue 58 v2, step 3):
@@ -12366,16 +12329,18 @@ impl Db {
             let t = std::time::Instant::now();
             let (refused_keys, labels) = Box::pin(Self::refused_key_labels(&conn)).await?;
             for chunk in labels.chunks(NODE_WRITE_BATCH) {
-                conn.execute("BEGIN IMMEDIATE", ()).await?;
-                for (notice_id, group_key) in chunk {
-                    let group_key = group_key.clone().map_or(Value::Null, Value::Text);
-                    conn.execute(
-                        "UPDATE plan_notice SET group_key = ? WHERE notice_id = ?",
-                        (group_key, Value::Integer(*notice_id)),
-                    )
-                    .await?;
-                }
-                conn.execute("COMMIT", ()).await?;
+                Self::immediate(&conn, async {
+                    for (notice_id, group_key) in chunk {
+                        let group_key = group_key.clone().map_or(Value::Null, Value::Text);
+                        conn.execute(
+                            "UPDATE plan_notice SET group_key = ? WHERE notice_id = ?",
+                            (group_key, Value::Integer(*notice_id)),
+                        )
+                        .await?;
+                    }
+                    Ok(())
+                })
+                .await?;
                 let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
             }
             eprintln!(
@@ -12390,15 +12355,17 @@ impl Db {
         if !uuid_hub_labels.is_empty() {
             let t = std::time::Instant::now();
             for chunk in uuid_hub_labels.chunks(NODE_WRITE_BATCH) {
-                conn.execute("BEGIN IMMEDIATE", ()).await?;
-                for (notice_id, group_key) in chunk {
-                    conn.execute(
-                        "UPDATE plan_notice SET group_key = ? WHERE notice_id = ?",
-                        (Value::Text(group_key.clone()), Value::Integer(*notice_id)),
-                    )
-                    .await?;
-                }
-                conn.execute("COMMIT", ()).await?;
+                Self::immediate(&conn, async {
+                    for (notice_id, group_key) in chunk {
+                        conn.execute(
+                            "UPDATE plan_notice SET group_key = ? WHERE notice_id = ?",
+                            (Value::Text(group_key.clone()), Value::Integer(*notice_id)),
+                        )
+                        .await?;
+                    }
+                    Ok(())
+                })
+                .await?;
                 let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
             }
             eprintln!(
@@ -12558,23 +12525,25 @@ impl Db {
         // rows across all chunks) don't balloon the WAL as one un-checkpointed run
         // (issue 63) — the per-chunk BEGIN/COMMIT alone never reclaimed it.
         for chunk in legacy.chunks(NODE_WRITE_BATCH) {
-            conn.execute("BEGIN IMMEDIATE", ()).await?;
-            for (notice_id, ojs_self) in chunk {
-                let root = uf.find(*ojs_self);
-                // The earliest EXISTING number, falling back to the root. The fallback
-                // is unreachable by construction — every component holds at least the
-                // ojs_self of the notice being labelled — and is kept so a future
-                // change to the node set degrades to the old behaviour rather than
-                // panicking on a missing key.
-                let rep = named_by.get(&root).copied().unwrap_or(root);
-                let group_key = format!("ojs:{}-{:06}", rep / 1_000_000_000, rep % 1_000_000_000);
-                conn.execute(
-                    "UPDATE plan_notice SET group_key = ? WHERE notice_id = ?",
-                    (Value::Text(group_key), Value::Integer(*notice_id)),
-                )
-                .await?;
-            }
-            conn.execute("COMMIT", ()).await?;
+            Self::immediate(&conn, async {
+                for (notice_id, ojs_self) in chunk {
+                    let root = uf.find(*ojs_self);
+                    // The earliest EXISTING number, falling back to the root. The fallback
+                    // is unreachable by construction — every component holds at least the
+                    // ojs_self of the notice being labelled — and is kept so a future
+                    // change to the node set degrades to the old behaviour rather than
+                    // panicking on a missing key.
+                    let rep = named_by.get(&root).copied().unwrap_or(root);
+                    let group_key = format!("ojs:{}-{:06}", rep / 1_000_000_000, rep % 1_000_000_000);
+                    conn.execute(
+                        "UPDATE plan_notice SET group_key = ? WHERE notice_id = ?",
+                        (Value::Text(group_key), Value::Integer(*notice_id)),
+                    )
+                    .await?;
+                }
+                Ok(())
+            })
+            .await?;
             let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         }
         eprintln!("[project] group step legacy-update: {:.1}s ({} legacy)", t.elapsed().as_secs_f64(), legacy.len());
@@ -13462,15 +13431,17 @@ impl Db {
         if !merges.is_empty() {
             let t_write = std::time::Instant::now();
             for chunk in merges.chunks(NODE_WRITE_BATCH) {
-                conn.execute("BEGIN IMMEDIATE", ()).await?;
-                for (from, to) in chunk {
-                    conn.execute(
-                        "INSERT OR REPLACE INTO plan_group_merge(from_key, to_key) VALUES(?, ?)",
-                        (Value::Text(from.clone()), Value::Text(to.clone())),
-                    )
-                    .await?;
-                }
-                conn.execute("COMMIT", ()).await?;
+                Self::immediate(conn, async {
+                    for (from, to) in chunk {
+                        conn.execute(
+                            "INSERT OR REPLACE INTO plan_group_merge(from_key, to_key) VALUES(?, ?)",
+                            (Value::Text(from.clone()), Value::Text(to.clone())),
+                        )
+                        .await?;
+                    }
+                    Ok(())
+                })
+                .await?;
             }
             eprintln!(
                 "[project] group step links merge-write: {:.1}s",
@@ -14359,61 +14330,46 @@ impl Db {
 
         let mut ids = Vec::with_capacity(mentions.len());
         for chunk in mentions.chunks(WRITE_BATCH) {
-            conn.execute("BEGIN IMMEDIATE", ()).await?;
-            let mut chunk_ids = Vec::with_capacity(chunk.len());
-            // Issue 434: the notices whose refreshed mention moved to another
-            // organization in this chunk — their Tenders are stamped stale below.
-            let mut rebound_notices: Vec<i64> = Vec::new();
-            let mut error = None;
-            for m in chunk {
-                // The maps are updated as we go, so a later mention in the same
-                // chunk reuses an Organization an earlier one just created.
-                let rebound_before = resolver.mentions_rebound;
-                match self.resolve_one_mention(&conn, m, now, resolver, &mut mention_of).await {
-                    Ok((id, created)) => {
-                        chunk_ids.push(id);
-                        resolver.created_any |= created;
-                        if resolver.mentions_rebound > rebound_before {
-                            rebound_notices.push(m.notice_id);
-                        }
-                    }
-                    Err(e) => {
-                        error = Some(e);
-                        break;
+            // Issue 498: any error, the COMMIT's included, rolls the chunk back. The
+            // in-memory maps may then hold rolled-back entries, but the run aborts on
+            // error, so they are never read again.
+            let chunk_ids = Self::immediate(&conn, async {
+                let mut chunk_ids = Vec::with_capacity(chunk.len());
+                // Issue 434: the notices whose refreshed mention moved to another
+                // organization in this chunk — their Tenders are stamped stale below.
+                let mut rebound_notices: Vec<i64> = Vec::new();
+                for m in chunk {
+                    // The maps are updated as we go, so a later mention in the same
+                    // chunk reuses an Organization an earlier one just created.
+                    let rebound_before = resolver.mentions_rebound;
+                    let (id, created) =
+                        self.resolve_one_mention(&conn, m, now, resolver, &mut mention_of).await?;
+                    chunk_ids.push(id);
+                    resolver.created_any |= created;
+                    if resolver.mentions_rebound > rebound_before {
+                        rebound_notices.push(m.notice_id);
                     }
                 }
-            }
-            // Issue 434: a re-bound mention must take its party rows with it, and
-            // the fold will not rewrite them on its own. Its early return keys on
-            // the chain of causing notices plus `projection_epoch`, and a refresh
-            // changes neither — so without this the mention would say one
-            // organization and the Tender's party, bid-party and winner rows
-            // another, for good (the next fold finds the mention equal and keeps
-            // it). The `reparse` job's profile stamp happens to cover its own
-            // cohort; a fold that refreshes WITHOUT one (a mapping fix reaching a
-            // full fallback fold, a `refold` of a different cohort) would not be.
-            // So the resolver stamps, here, in the SAME transaction as the
-            // rewrite: committed together or not at all, so a crash between
-            // cannot leave a refreshed mention whose Tender nothing will revisit.
-            // Phase 2 of this same run then rewrites those Tenders whole.
-            if error.is_none() && !rebound_notices.is_empty() {
-                match stamp_tenders_of_notices_stale(&conn, rebound_notices).await {
-                    Ok(stamped) => resolver.tenders_stamped += stamped,
-                    Err(e) => error = Some(e),
+                // Issue 434: a re-bound mention must take its party rows with it, and
+                // the fold will not rewrite them on its own. Its early return keys on
+                // the chain of causing notices plus `projection_epoch`, and a refresh
+                // changes neither — so without this the mention would say one
+                // organization and the Tender's party, bid-party and winner rows
+                // another, for good (the next fold finds the mention equal and keeps
+                // it). The `reparse` job's profile stamp happens to cover its own
+                // cohort; a fold that refreshes WITHOUT one (a mapping fix reaching a
+                // full fallback fold, a `refold` of a different cohort) would not be.
+                // So the resolver stamps, here, in the SAME transaction as the
+                // rewrite: committed together or not at all, so a crash between
+                // cannot leave a refreshed mention whose Tender nothing will revisit.
+                // Phase 2 of this same run then rewrites those Tenders whole.
+                if !rebound_notices.is_empty() {
+                    resolver.tenders_stamped += stamp_tenders_of_notices_stale(&conn, rebound_notices).await?;
                 }
-            }
-            match error {
-                None => {
-                    conn.execute("COMMIT", ()).await?;
-                    ids.extend(chunk_ids);
-                }
-                Some(e) => {
-                    // The in-memory maps may now hold rolled-back entries, but
-                    // the run aborts on error, so they are never read again.
-                    let _ = conn.execute("ROLLBACK", ()).await;
-                    return Err(e);
-                }
-            }
+                Ok(chunk_ids)
+            })
+            .await?;
+            ids.extend(chunk_ids);
         }
         Ok(ids)
     }
@@ -15418,7 +15374,6 @@ impl Db {
         let mut total = Applied::default();
         let mut changed_any = false;
         for (batch, chunk) in projections.chunks(WRITE_BATCH).enumerate() {
-            conn.execute("BEGIN IMMEDIATE", ()).await?;
             // Accumulate the batchable leaf/satellite rows of the whole
             // transaction (issue 67) and flush them as chunked multi-row INSERTs
             // just before COMMIT — one statement per ~150 rows instead of one per
@@ -15426,41 +15381,31 @@ impl Db {
             // or referenced surrogate id); the identity tables and `changes` keep
             // inserting in place, so their ids/cursor stay in fold order.
             let mut pending = Pending::default();
-            let mut applied = Applied::default();
-            let mut error = None;
-            // The Tenders whose version chain this batch rewrote — the set whose
-            // head pointer this run is answerable for (see `assert_heads_match`).
-            let mut rewrote = Vec::new();
-            for p in chunk {
-                match self.apply_tender_tx(&conn, p, now, rebuild, &mut stmts, &mut pending).await {
-                    Ok((a, head)) => {
+            // Issue 498: any error — a Tender's reconcile, the flush, the head gate or
+            // the COMMIT — rolls the batch back. Boxed: the body is the fold's heaviest.
+            let applied = Self::immediate(
+                &conn,
+                Box::pin(async {
+                    let mut applied = Applied::default();
+                    // The Tenders whose version chain this batch rewrote — the set whose
+                    // head pointer this run is answerable for (see `assert_heads_match`).
+                    let mut rewrote = Vec::new();
+                    for p in chunk {
+                        let (a, head) =
+                            self.apply_tender_tx(&conn, p, now, rebuild, &mut stmts, &mut pending).await?;
                         applied.add(a);
                         rewrote.extend(head);
                     }
-                    Err(e) => {
-                        error = Some(e);
-                        break;
-                    }
-                }
-            }
-            match error {
-                None => {
                     applied.leaf_rows += pending.flush(&conn).await?;
                     // Integrity gate (task #27), inside the transaction: a head
                     // that is not the last version never reaches disk.
-                    if let Err(e) = Self::assert_heads_match(&conn, &rewrote).await {
-                        let _ = conn.execute("ROLLBACK", ()).await;
-                        return Err(e);
-                    }
-                    conn.execute("COMMIT", ()).await?;
-                    changed_any |= applied.changes > 0;
-                    total.add(applied);
-                }
-                Some(e) => {
-                    let _ = conn.execute("ROLLBACK", ()).await;
-                    return Err(e);
-                }
-            }
+                    Self::assert_heads_match(&conn, &rewrote).await?;
+                    turso::Result::Ok(applied)
+                }),
+            )
+            .await?;
+            changed_any |= applied.changes > 0;
+            total.add(applied);
             // Bound the WAL during the projection burst (issue 42): turso
             // autocheckpoints PASSIVE but reuses the -wal file in place (never
             // shrinks it) and stalls behind any long reader snapshot, so a
@@ -16014,63 +15959,66 @@ impl Db {
             return Ok(report);
         }
 
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        // Tenders whose party/bid/winner rows this batch repoints — collected so the
-        // change feed learns of the in-place rewrite (issue 286). A BTreeSet across
-        // the whole batch dedups a Tender referenced by several losers of one group.
-        let mut touched: BTreeSet<i64> = BTreeSet::new();
-        for (keep, losers) in &groups {
-            for &loser in losers {
-                // BEFORE the repoints, while these rows still point at the loser:
-                // which Tenders does it touch? Each leg is an index probe on the
-                // loser's `*_org` index (bounded by the loser's few references), never
-                // a table scan — so this stays cheap on the batched merge path.
-                {
-                    let mut trows = conn
-                        .query(
-                            "SELECT tender_id FROM tender_version_parties WHERE organization_id = ? \
-                       UNION SELECT tender_id FROM tender_version_bid_parties WHERE organization_id = ? \
-                       UNION SELECT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
-                            (
-                                Value::Integer(loser),
-                                Value::Integer(loser),
-                                Value::Integer(loser),
-                            ),
-                        )
-                        .await?;
-                    while let Some(row) = trows.next().await? {
-                        touched.insert(int(&row, 0));
+        // Issue 498: any error, the COMMIT's included, rolls the batch back.
+        Self::immediate(&conn, async {
+            // Tenders whose party/bid/winner rows this batch repoints — collected so the
+            // change feed learns of the in-place rewrite (issue 286). A BTreeSet across
+            // the whole batch dedups a Tender referenced by several losers of one group.
+            let mut touched: BTreeSet<i64> = BTreeSet::new();
+            for (keep, losers) in &groups {
+                for &loser in losers {
+                    // BEFORE the repoints, while these rows still point at the loser:
+                    // which Tenders does it touch? Each leg is an index probe on the
+                    // loser's `*_org` index (bounded by the loser's few references), never
+                    // a table scan — so this stays cheap on the batched merge path.
+                    {
+                        let mut trows = conn
+                            .query(
+                                "SELECT tender_id FROM tender_version_parties WHERE organization_id = ? \
+                           UNION SELECT tender_id FROM tender_version_bid_parties WHERE organization_id = ? \
+                           UNION SELECT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
+                                (
+                                    Value::Integer(loser),
+                                    Value::Integer(loser),
+                                    Value::Integer(loser),
+                                ),
+                            )
+                            .await?;
+                        while let Some(row) = trows.next().await? {
+                            touched.insert(int(&row, 0));
+                        }
                     }
+                    let moved = repoint_org_references(&conn, *keep, loser, "provisional-merge").await?;
+                    report.mentions += moved.mentions;
+                    report.parties += moved.parties;
+                    report.bid_parties += moved.bid_parties;
+                    report.winner_dups += moved.winner_dups;
+                    report.winners += moved.winners;
+                    conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),))
+                        .await?;
+                    append_change(&conn, "organization", loser, None, "removed", now).await?;
                 }
-                let moved = repoint_org_references(&conn, *keep, loser, "provisional-merge").await?;
-                report.mentions += moved.mentions;
-                report.parties += moved.parties;
-                report.bid_parties += moved.bid_parties;
-                report.winner_dups += moved.winner_dups;
-                report.winners += moved.winners;
-                conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),))
-                    .await?;
-                append_change(&conn, "organization", loser, None, "removed", now).await?;
+                // Issue 285: the survivor's mention set grew, which is a `changed` — NOT
+                // "updated", an op outside the documented `added | changed | removed` enum
+                // (schema comment above; docs.rs public contract). SSE reclassifies by
+                // match-state so it was unaffected, but /v1/changes poll and webhooks pass
+                // the raw op through, so an "updated" reached those two transports while SSE
+                // showed "added" — three feeds disagreeing on one event. `changed` is the
+                // documented, correct value and makes all three agree.
+                append_change(&conn, "organization", *keep, None, "changed", now).await?;
             }
-            // Issue 285: the survivor's mention set grew, which is a `changed` — NOT
-            // "updated", an op outside the documented `added | changed | removed` enum
-            // (schema comment above; docs.rs public contract). SSE reclassifies by
-            // match-state so it was unaffected, but /v1/changes poll and webhooks pass
-            // the raw op through, so an "updated" reached those two transports while SSE
-            // showed "added" — three feeds disagreeing on one event. `changed` is the
-            // documented, correct value and makes all three agree.
-            append_change(&conn, "organization", *keep, None, "changed", now).await?;
-        }
-        // The Tender-side events (issue 286): one `changed` per touched Tender, seq
-        // NULL like the retirement path's in-place tender change — it is not tied to a
-        // new version, it re-points existing ones. It tells a `buyer`/`winner`/`bidder`
-        // subscriber to re-evaluate the Tender (add it if it now matches the survivor,
-        // drop it if it no longer matches the deleted loser).
-        for &tid in &touched {
-            append_change(&conn, "tender", tid, None, "changed", now).await?;
-        }
-        report.tender_changes = touched.len() as u64;
-        conn.execute("COMMIT", ()).await?;
+            // The Tender-side events (issue 286): one `changed` per touched Tender, seq
+            // NULL like the retirement path's in-place tender change — it is not tied to a
+            // new version, it re-points existing ones. It tells a `buyer`/`winner`/`bidder`
+            // subscriber to re-evaluate the Tender (add it if it now matches the survivor,
+            // drop it if it no longer matches the deleted loser).
+            for &tid in &touched {
+                append_change(&conn, "tender", tid, None, "changed", now).await?;
+            }
+            report.tender_changes = touched.len() as u64;
+            Ok(())
+        })
+        .await?;
         // Ring the doorbell for the just-committed change rows (issue 287): without
         // it an SSE subscriber only learns of the merge's events when some LATER
         // write publishes — retirement's `publish_cursor` after-COMMIT pattern.
@@ -22023,16 +21971,7 @@ impl Db {
             Ok(n)
         }
         .await;
-        match result {
-            Ok(n) => {
-                conn.execute("COMMIT", ()).await?;
-                Ok(n)
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        }
+        finish_tx(&conn, result).await
     }
 
     /// The verdict the R2 planner honours for one group (issue 362): a `keep`
@@ -22175,19 +22114,11 @@ impl Db {
             Ok(report)
         }
         .await;
-        match result {
-            Ok(report) => {
-                conn.execute("COMMIT", ()).await?;
-                if report.changed > 0 {
-                    self.publish_cursor(&conn).await?;
-                }
-                Ok(report)
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
+        let report = finish_tx(&conn, result).await?;
+        if report.changed > 0 {
+            self.publish_cursor(&conn).await?;
         }
+        Ok(report)
     }
 
     /// Issue 453: re-key the organizations a reviewer found under a wrong
@@ -27784,7 +27715,7 @@ impl Db {
                     return Err(e);
                 }
             }
-            conn.execute("COMMIT", ()).await?;
+            finish_tx(&conn, Ok(())).await?; // a failed COMMIT rolls back too (issue 498)
             if report.repaired > 0 {
                 self.publish_cursor(&conn).await?;
             }
@@ -28446,7 +28377,7 @@ impl Db {
                         return Err(e);
                     }
                 }
-                conn.execute("COMMIT", ()).await?;
+                finish_tx(&conn, Ok(())).await?; // a failed COMMIT rolls back too (issue 498)
                 if report.dissolved > 0 {
                     self.publish_cursor(&conn).await?;
                 }
@@ -29871,14 +29802,7 @@ impl Db {
         let total = ids.len();
         let mut done = 0usize;
         for chunk in ids.chunks(batch.max(1)) {
-            conn.execute("BEGIN IMMEDIATE", ()).await?;
-            match self.retire_chunk_tx(conn, chunk, now).await {
-                Ok(()) => conn.execute("COMMIT", ()).await?,
-                Err(e) => {
-                    let _ = conn.execute("ROLLBACK", ()).await;
-                    return Err(e);
-                }
-            };
+            Self::immediate(conn, self.retire_chunk_tx(conn, chunk, now)).await?;
             let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
             done += chunk.len();
             eprintln!("[project] retire {what}: {done}/{total} Tenders retired");
@@ -30471,14 +30395,7 @@ impl Db {
         out: &mut TwinRepairOutcome,
     ) -> turso::Result<()> {
         let conn = self.conn().await;
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        match Box::pin(self.twin_repair_tx(&conn, plan, drops, now, out)).await {
-            Ok(()) => conn.execute("COMMIT", ()).await?,
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                return Err(e);
-            }
-        };
+        Self::immediate(&conn, Box::pin(self.twin_repair_tx(&conn, plan, drops, now, out))).await?;
         let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         Ok(())
     }

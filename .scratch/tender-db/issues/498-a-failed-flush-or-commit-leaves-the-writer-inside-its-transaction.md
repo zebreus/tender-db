@@ -9,8 +9,13 @@ confirmed against the code.
   transaction a previous holder left open and logs `[store] the writer was handed to <file:line> INSIDE an open
   transaction`. It is the only fix for the panic and cancelled-future cases. Test:
   `the_writer_is_never_handed_over_inside_a_transaction`. DEPLOYED 2026-10-09 00:34 UTC (`90fb19d`, gate green, health ok).
-- NEXT: unit 2 (the `Db::immediate` helper in `tx.rs`), then unit 3 in the census's rank order. A journal grep
-  for `INSIDE an open transaction` after deploy says whether any leak fires in prod.
+- Units 2 and 3 BUILT 2026-10-09: `crates/store/src/tx.rs` (`Db::immediate`, `Db::within` for the two plain-`BEGIN`
+  sites, and `finish`, which replaces canonical.rs's `finish_tx`), with five tests: a failing body, a failing
+  COMMIT (deferred FK), an engine-ended transaction (`RAISE(ROLLBACK)`), a failing BEGIN, and success. All 22
+  census sites are converted; the goldens are unchanged, so the success path is byte-identical.
+- NEXT: gate and deploy units 2–3, then a journal grep for `INSIDE an open transaction` after a week. A hit means
+  a panic or a cancelled future, the only leaks left. The census's already-safe hand-written sites (about 30) may
+  follow for uniformity; they carry no risk.
 Kind: robustness / the single writer (`Db::conn`)
 Relates to: 241 / 256 (the writer queue), 323 (`checkpoint_on` inside a transaction), 495 (unit 2 rewrites the
 same batch loop, but must stay byte-identical, so the fix is not part of it)
