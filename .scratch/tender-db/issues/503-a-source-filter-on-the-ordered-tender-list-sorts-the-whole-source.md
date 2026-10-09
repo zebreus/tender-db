@@ -1,6 +1,28 @@
 # 503 — a `source` filter on the ordered Tender list sorts the whole source
 
-Status: ready-for-agent — filed 2026-10-09 from the hourly audit (issue 494 unit 2's read of the access log).
+Status: ready-for-agent — UNITS 1+2 BUILT 2026-10-09: option 1 with an explicit pin. NEXT: gate, deploy, let the
+boot-time Reindex build the two indexes, then re-time the six requests on prod (done when `source=ted` is under 100 ms
+warm on both orderings and `source=nope` stays fast).
+- **Confirmed on prod first** through `/v1/sql`, on the API's exact window. Plain `t.source = 'ted'` hit the 15 s
+  limit (408). `+t.source` answered in 0.30 s.
+- **An index alone does not steer turso.** On a fresh DB the planner walks `tenders_current_published` for this
+  window, with or without ANALYZE, and with `(source, key, id)` present. Prod's planner takes `tenders_source_id`
+  and sorts. Neither picks the composite index on its own once `tender_versions` is joined. It does pick it on a
+  bare `tenders` query.
+- **The fix:**
+  - `DEFERRED_TENDER_INDEXES` gains `tenders_source_published (source, current_published_at, id)` and
+    `tenders_source_deadline (source, current_deadline, id)`.
+  - `read::tenders_ordered` pins one with `INDEXED BY` when the filter names a source, the FROM is the plain
+    `tenders t` (seeded reads drive from their `hits` set) and the index exists. That is one `sqlite_master`
+    lookup per request: `INDEXED BY` errors on a missing index, and a deploy builds none (issue 111).
+- **Test** `ordered_source_plan.rs`:
+  - The window seeks the pinned index on `source=?` with no sorter, for ted, doe and nope, both directions,
+    first and cursor pages, both orderings.
+  - Every page through the real `tenders_ordered` equals the source's rows in `(key, id)` order: 4 sources ×
+    2 orders × 2 directions, with ties and NULL deadlines.
+  - A seeded read is not pinned.
+  - With the index dropped the read falls back and answers identically.
+Was: ready-for-agent — filed 2026-10-09 from the hourly audit (issue 494 unit 2's read of the access log).
 Kind: performance / the REST read path (`crates/store/src/read.rs` `tenders_ordered_query`)
 Relates to: 216 (the ordered list), 117 / 120 (isolation routing), 273 (the ids-only window), 494 (the
 latency gauges; nginx's `rt=` field is what found this)

@@ -1817,6 +1817,14 @@ impl HeadOrder {
         }
     }
 
+    /// The `(source, column, id)` index a `source` companion pins (issue 503).
+    pub fn source_index(self) -> &'static str {
+        match self {
+            HeadOrder::PublishedAt => "tenders_source_published",
+            HeadOrder::Deadline => "tenders_source_deadline",
+        }
+    }
+
     /// The bounds this ordering SERVES on its own index — the caller strips
     /// exactly these from the filter before consulting `walks()`, because the
     /// OTHER column's bounds (and every version predicate) still filter the
@@ -1869,10 +1877,25 @@ pub async fn tenders_ordered(
         return Ok(Vec::new());
     }
     let filter = &with_country_seed(conn, filter).await?;
-    let q = tenders_ordered_query(filter, order, desc, cursor, limit);
+    let pin = match &filter.source {
+        Some(_) if index_present(conn, order.source_index()).await? => Some(order.source_index()),
+        _ => None,
+    };
+    let q = tenders_ordered_query(filter, order, desc, cursor, limit, pin);
     let mut rows = q.rows(conn, tender_row).await?;
     retain_publication_companions(&mut rows, filter);
     Ok(rows)
+}
+
+/// Is the index `name` in this database? One `sqlite_master` lookup, which holds a row
+/// per schema object, not per row of data. Asked per request rather than cached: a
+/// rebuild drops `tenders` with its indexes and recreates them at its end, and the
+/// deferred indexes appear only when the `Reindex` job builds them (issue 111).
+async fn index_present(conn: &Connection, name: &str) -> turso::Result<bool> {
+    let mut rows = conn.query("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?", [t(name)]).await?;
+    let present = rows.next().await?.is_some();
+    while rows.next().await?.is_some() {}
+    Ok(present)
 }
 
 /// The statement [`tenders_ordered`] builds — the same test seam every other
@@ -1885,7 +1908,22 @@ pub fn tenders_ordered_statement(
     cursor: Option<(i64, i64)>,
     limit: i64,
 ) -> (String, Vec<Value>) {
-    let q = tenders_ordered_query(filter, order, desc, cursor, limit);
+    let q = tenders_ordered_query(filter, order, desc, cursor, limit, None);
+    (q.sql, q.params)
+}
+
+/// [`tenders_ordered_statement`] with the issue-503 pin [`tenders_ordered`] applies when
+/// the filter names a `source` and `order`'s [`HeadOrder::source_index`] exists.
+#[doc(hidden)]
+pub fn tenders_ordered_statement_pinned(
+    filter: &Filter,
+    order: HeadOrder,
+    desc: bool,
+    cursor: Option<(i64, i64)>,
+    limit: i64,
+) -> (String, Vec<Value>) {
+    let pin = filter.source.as_ref().map(|_| order.source_index());
+    let q = tenders_ordered_query(filter, order, desc, cursor, limit, pin);
     (q.sql, q.params)
 }
 
@@ -1895,6 +1933,7 @@ fn tenders_ordered_query(
     desc: bool,
     cursor: Option<(i64, i64)>,
     limit: i64,
+    pin: Option<&str>,
 ) -> Query {
     let key = order.column();
     let dir = if desc { "DESC" } else { "ASC" };
@@ -1905,7 +1944,20 @@ fn tenders_ordered_query(
     // `status=open&country=LU` spent 3 of its 3.6s on prod — wrapped, the same
     // page reads in 0.46s (issue 273, measured 2026-08-24).
     let mut inner = Query::default();
-    let (from, seed_param) = tender_from(filter);
+    let (mut from, seed_param) = tender_from(filter);
+    // Issue 503: a `source` companion pins `(source, key, id)`, which serves the equality,
+    // the order and the keyset cursor as one range at every density. Left to the planner,
+    // prod's took `tenders_source_id` and SORTED the whole source before the LIMIT (17.5 s
+    // for `source=ted&sort=published_at`, a 408 on the bare window), while a fresh
+    // database's walks `tenders_current_published` instead, which an absent or sparse
+    // source turns into a full walk. Only the plain FROM is pinned: a seeded read drives
+    // from its `hits` set, which bounds it already. `INDEXED BY` fails when the index is
+    // missing, so the caller passes `pin` only after checking it exists.
+    if let Some(index) = pin
+        && from == "tenders t"
+    {
+        from = format!("tenders t INDEXED BY {index}");
+    }
     inner.push(
         &format!(
             "SELECT t.id AS wid, v.seq AS wseq, {key} AS wkey
