@@ -1,6 +1,13 @@
 # 506 — result-level value fields (BT-709, BT-1118, BT-660) are not stored as amounts
 
 Status: needs-triage — filed 2026-10-09 from issue 505's adjudication (`.scratch/tender-db/505-lot-over-procedure/`).
+Read 2026-10-09:
+- The fold's `AMOUNTS` table (`project.rs`) maps only BT-27, BT-271 and BT-161 among the eForms money BTs, plus the
+  legacy and DÖE spellings. BT-709, BT-660, BT-118/BT-1118 and BT-156/157 reach the notice layer (the all-BT claim)
+  and go no further.
+- Mapping any of them adds head and partner candidates to every eForms award notice. So unit 1 needs a per-field
+  census of `notice_amounts`. That table has no `field_id` index, so the census is a windowed job (the
+  `procedure-key-census` shape), not a bounded `/v1/sql` read.
 Kind: data model (eForms result-level money that the fold drops)
 Relates to: 505 (the residual rule), 492 / 471 (the partner rules, which can only see figures stored in `tender_version_amounts`
 or lot awards)
