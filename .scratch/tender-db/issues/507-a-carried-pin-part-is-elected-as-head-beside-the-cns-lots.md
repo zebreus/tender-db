@@ -1,16 +1,16 @@
 # 507 — a carried PIN Part's figure is elected as the head beside the CN's Lots
 
-Status: done — DEPLOYED AND DRAINED 2026-10-09 (, gate green).
+Status: done — DEPLOYED AND DRAINED 2026-10-09 (`5b7ef55`, gate green).
 - **Cohort.** A scan of the whole id space (884 windows of 10k ids, all answered) found 179 Tenders whose head equals
-  a Part's figure in a version with a Lot. Their head notices went to  (jobs 2109 and 2110).
+  a Part's figure in a version with a Lot. Their head notices went to `refold-notices` (jobs 2109 and 2110).
 - **Fold.** 179 written: 134 verified, **45 corrected**, 415 correction rows.
-- **Re-read** ():
+- **Re-read** (`507-carried-part/drain-2026-10-09.json`):
   - All 45 moved down, none to no value. The median move is 1.1× (a PIN estimate slightly above the CN's own); the
     largest is 1,078×.
   - 8818621 → €1.19 m; 8819392 → €649 k; 8819552 → €44.6 m (RON 238.6 m); 8821187 → €3.31 m (RON 17.3 m);
     8813624 → €107 m (DKK 800 m).
   - 8819870 kept its only figure; 8819939 stayed at €12 m (the review's case).
-History: UNIT 1 MEASURED, UNIT 2 BUILT 2026-10-09 (, review fix ).
+History: UNIT 1 MEASURED, UNIT 2 BUILT 2026-10-09 (`5b94f9c`, review fix `5b7ef55`).
 - **Measured.**
   - Heads ≥ €1 bn: 3 elected from a Part, 1 of them beside Lots (8818621).
   - Heads €100 m–1 bn (31,094): 19 from a Part, 5 beside Lots (8819392, 8819552, 8819870, 8821187, 8813624).
