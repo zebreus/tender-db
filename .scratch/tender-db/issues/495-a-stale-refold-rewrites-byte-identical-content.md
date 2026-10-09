@@ -36,8 +36,17 @@ Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (the shadow compare, `TENDER
   - It recurred with the compare off, so it is not the shadow compare. Issue 502 has the incident and the fix
     (bound the incremental ParsedFold batch).
   - The shadow drop-in is removed; prod runs with the compare off.
-- NEXT: issue 502 first. Then adjunct 2 (per-Tender compare reads) and a re-measure (a second, eForms-heavy cohort
-  through the bounded batch). Then unit 4.
+- The eForms-SDK-1.6 cohort, re-folded with the compare off once 502 was deployed (job 2085, 04:58–06:04 UTC), is
+  this issue's cost in miniature. 17,332 stale Tenders and 63,298 versions carried **about 200M leaf rows, roughly
+  3,200 per version**. Phase 2 took 3,367 s to rewrite them byte-identically: 56 minutes for one profile.
+  - At about 3,200 rows per version, the per-row term dominates and the 14-statement floor is noise. The second
+    measurement must be eForms-heavy to settle us/row on rich versions; run 1's 10.1 us/row is the
+    statement-heavy end (about 41 rows per version).
+  - A per-Tender read (adjunct 2) would hold a rich Tender's whole stored chain in memory. That is the wrong trade
+    here; keep per-version reads.
+- NEXT: a small eForms-only shadow cohort (e.g. `eforms:eforms-sdk-1.3`, 4,834 notices) through the bounded batch, in
+  a queue gap with the RSS watchdog. Read us/row on rich versions, then project the corpus compare cost (1.12B
+  rows) and decide unit 4.
 - Was: UNIT 2 DONE AND DEPLOYED 2026-10-08 ~22:20 UTC (`79b1212`): A1/A2 goldens, B1 descriptor, B2 leaf-indexed Pending + moved values, B3 prepared DELETEs/stored chain/change INSERT, B4 per-Tender identity cache (adversarially reviewed: no refutation; its one hardening point, a reset after the sweep, landed). Every commit byte-identical against the goldens. NEXT: (1) read the next daily fold's time against 2075's 271 s (5,395 notices) and record it here; (2) unit 3, the compare engine in shadow mode (the plan is in the "Design decision" section; LEAF_TABLES/compare_select_sql are ready for it). Was: ready-for-agent — UNIT 2 commits A1/A2 (goldens), B1 (descriptor), B2 (leaf-indexed Pending, moved values), B3 (prepared DELETEs / stored chain / change INSERT) DEPLOYED 2026-10-08 21:3x UTC (`fc1b3dc`), all byte-identical against the goldens. Baseline for the timing record: daily project 2075 (2026-10-08) took 271 s for 5,395 notices → 5,245 tenders written. NEXT: B4 (the per-Tender identity cache, plan step 9; review it adversarially before deploying), then read the next daily fold's time against 2075. Was: ready-for-agent — UNIT 1 DESIGNED 2026-10-08 (`wf_21089c8e-de5`: three designs, a judge that verified
 their claims against the code and refuted the ones that did not hold). Decision: option (b), compare with the
 stored rows at version × table grain, plus "changed versus stored" feed rows. Recorded as

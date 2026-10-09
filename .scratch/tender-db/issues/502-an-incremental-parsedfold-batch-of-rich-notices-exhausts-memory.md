@@ -1,7 +1,14 @@
 # 502 — an incremental ParsedFold batch of 50k rich eForms notices exhausts the server's memory
 
-Status: ready-for-agent. INCIDENT 2026-10-09 ~04:00–04:36 UTC, mitigated. Unit 1 (the bounded batch) is built.
-NEXT: gate, deploy, then fold the left-over cohort under a memory watch before the 07:35 UTC daily.
+Status: ready-for-agent. INCIDENT 2026-10-09 ~04:00–04:36 UTC, resolved.
+- Unit 1 DEPLOYED 05:00 UTC (`9724ce4`, gate green at `21e88f6`).
+- Unit 2 DONE: the left-over cohort was folded by job 2085 (re-enqueued, the same id reused), 04:58–06:04 UTC, with an
+  RSS watchdog armed to cancel at 35 GB.
+  - Peak RSS about 20 GB in one heavy batch, 2–6 GB between batches; `/health` answered throughout.
+  - Result: `37669 notices → 20045 tenders, 63298 versions; 17332 tenders written, 2713 verified unchanged`,
+    3,978 s (phase 2 3,367 s, about 200M leaf rows rewritten byte-identically).
+  - Queue idle before the 07:35 UTC daily.
+- NEXT: unit 3 (measure the full-project and bucketed batch sizes on today's corpus).
 Kind: operations / the incremental fold (`crates/ingest/src/project.rs`)
 Relates to: 495 (its unit-3 shadow measurement ran the re-fold that hit this), 91 / 62 (ParsedFold vs buckets),
 57 (`APPLY_NOTICE_BATCH`), 175 (the 512 MiB page cache per connection, `cache.conf`)
