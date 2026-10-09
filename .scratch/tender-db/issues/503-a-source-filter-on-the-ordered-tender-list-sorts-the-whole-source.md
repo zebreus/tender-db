@@ -1,8 +1,31 @@
 # 503 — a `source` filter on the ordered Tender list sorts the whole source
 
-Status: ready-for-agent — UNITS 1+2 BUILT 2026-10-09: option 1 with an explicit pin. NEXT: gate, deploy, let the
-boot-time Reindex build the two indexes, then re-time the six requests on prod (done when `source=ted` is under 100 ms
-warm on both orderings and `source=nope` stays fast).
+Status: ready-for-agent — UNITS 1+2 DONE 2026-10-09: DEPLOYED (`b568c10`, gate green). The boot detector queued
+Reindex 2101, which built both indexes in 41 s.
+- **Re-timed on prod**, warm (cold):
+
+  | Request | Before | After |
+  |---|---|---|
+  | `source=ted&sort=published_at` | 17.5 s | **8 ms** (24 ms) |
+  | `source=ted&sort=deadline` | 11.4 s | **142 ms** (193 ms) |
+  | `source=doe&sort=published_at` | 1.1 s | **6 ms** |
+  | `source=fts&sort=deadline` | 1.0 s | **27 ms** |
+  | `source=nope` | 34 ms | **1 ms** |
+  | `source=ted&sort=published_at&published_before=2020-01-01` | — | 15 ms |
+
+  The deadline ordering sits at the unfiltered deadline list's own level (`sort=deadline&order=asc`, 115 ms):
+  its remaining cost is the per-row satellite reads on old Tenders, not the source.
+- **Review** `wf_133db53c-649` confirmed two findings, both fixed in `b568c10`:
+  - The pin is skipped when the other date column, a value band or a status could drive the read.
+  - A rebuild-time "no such index" reruns the read unpinned.
+- NEXT: **unit 3**. The combinations left to the planner still cost about 4.7 s:
+  - `source=ted&sort=deadline&published_after=2026-09-01&published_before=2026-10-01`: 4.6 s;
+  - `source=ted&sort=published_at&status=open`: 4.7 s.
+
+  Both have a bounded range on the OTHER column's new composite index: `(source, current_published_at, id)`
+  for a published range, and `(source, current_deadline, id)` for `status=open`, which is `current_deadline >
+  now`. Pin that index instead: a range seek, then a sort of the range. Keep `status=closed` (an OR) and value
+  bands unpinned. Re-time both and add them to `ordered_source_plan.rs`.
 - **Confirmed on prod first** through `/v1/sql`, on the API's exact window. Plain `t.source = 'ted'` hit the 15 s
   limit (408). `+t.source` answered in 0.30 s.
 - **An index alone does not steer turso.** On a fresh DB the planner walks `tenders_current_published` for this
@@ -22,7 +45,7 @@ warm on both orderings and `source=nope` stays fast).
     2 orders × 2 directions, with ties and NULL deadlines.
   - A seeded read is not pinned.
   - With the index dropped the read falls back and answers identically.
-Was: ready-for-agent — filed 2026-10-09 from the hourly audit (issue 494 unit 2's read of the access log).
+Built as option 1 with an explicit pin (unit 1+2 notes):
 Kind: performance / the REST read path (`crates/store/src/read.rs` `tenders_ordered_query`)
 Relates to: 216 (the ordered list), 117 / 120 (isolation routing), 273 (the ids-only window), 494 (the
 latency gauges; nginx's `rt=` field is what found this)
