@@ -3164,6 +3164,17 @@ pub fn head_value_eur_cents_with(
     rates: &crate::rates::RatesLookup,
 ) -> Option<i64> {
     let date = crate::rates::civil_date(head.published_at);
+    // Issue 507: a PIN's Parts stay in every later version beside the CN's Lots (the fold
+    // never drops a lot), and a Part's figure is the planning-stage one the CN restates
+    // under its own keys. So in a version with Lots, a Part's figure is no head candidate
+    // once the version states any other figure: 6 heads of EUR 100 m or more were elected
+    // from such a Part, and 5 were stale or garbled (8818621's EUR 1.12 bn beside a CN of
+    // EUR 1.19 m). A Part that is the version's only figure (8819870) stays a candidate,
+    // and the Part's own stored lot value is untouched.
+    let states_figure = |f: &Fact| matches!(f, Fact::Amount { cents, quality, .. } if quality.is_none() && !sentinel_amount(*cents));
+    let skip_parts = head.lots.iter().any(|l| l.kind == "Lot")
+        && (head.facts.iter().any(states_figure)
+            || head.lots.iter().filter(|l| l.kind != "Part").flat_map(|l| l.facts.iter()).any(states_figure));
     head.facts
         .iter()
         // Issue 492: a tender-scope figure equal to a lot award of the head is that
@@ -3176,7 +3187,12 @@ pub fn head_value_eur_cents_with(
         // admitted procedure figure at least as large, which already wins this max, so it
         // could only ever raise a head through a figure the election refused (review of
         // the exemption). It keeps the stored LOT value, `elect_lot_value`.
-        .chain(head.lots.iter().flat_map(|l| l.facts.iter().map(move |f| (f, FigureScope::HeadLot(Some(l.key.as_str()))))))
+        .chain(
+            head.lots
+                .iter()
+                .filter(|l| !(skip_parts && l.kind == "Part"))
+                .flat_map(|l| l.facts.iter().map(move |f| (f, FigureScope::HeadLot(Some(l.key.as_str()))))),
+        )
         .filter_map(|(f, scope)| match f {
             // The sentinel test reads the PUBLISHED figure, not its conversion: a
             // form-width maximum is a fact about what the publisher's field
@@ -34414,6 +34430,57 @@ mod tests {
             vec![lot("LOT-1", vec![amt("estimated_value", 100_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 15_000)])],
         );
         assert_eq!(lot_value(&far, "LOT-1"), Some(100_000_000_000), "k = 7 is not reached");
+    }
+
+    /// Issue 507, measured 2026-10-09: in a version with Lots, a carried PIN Part's figure is
+    /// no head candidate once the version states any other figure. Each case is a measured
+    /// shape, in EUR so the empty lookup converts at 1.0.
+    #[test]
+    fn a_carried_part_is_no_head_candidate_beside_lots_that_state_a_figure() {
+        use super::head_value_eur_cents;
+        let rates = crate::rates::RatesLookup::default();
+        let amt = |field: &str, cents: i64| Fact::Amount {
+            field: field.into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let typed = |key: &str, kind: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: kind.into(), facts: facts.into_iter().collect() };
+        let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
+        let one = |v: TenderVersion| head_value_eur_cents(std::slice::from_ref(&v), &rates);
+
+        // 8818621: the PIN's PAR-0001 says EUR 1.12 bn (garbled); the CN states EUR 1,187,620.
+        let cn = version(
+            vec![amt("estimated_value", 118_762_000)],
+            vec![
+                typed("PAR-0001", "Part", vec![amt("estimated_value", 111_876_200_000)]),
+                typed("LOT-0001", "Lot", vec![amt("estimated_value", 28_288_000)]),
+                typed("LOT-0002", "Lot", vec![amt("estimated_value", 77_217_400)]),
+            ],
+        );
+        assert_eq!(one(cn), Some(118_762_000), "the CN's figure, not the carried part's");
+        // A Lot's figure alone is enough to set the part aside.
+        let lots_only = version(
+            Vec::new(),
+            vec![typed("PAR-0001", "Part", vec![amt("estimated_value", 70_000_000_000)]), typed("LOT-0001", "Lot", vec![amt("estimated_value", 64_949_755)])],
+        );
+        assert_eq!(one(lots_only), Some(64_949_755));
+        // 8819870: the part is the version's only figure, so it stays.
+        let only_part = version(
+            Vec::new(),
+            vec![typed("PAR-0001", "Part", vec![amt("estimated_value", 12_675_030_400)]), typed("LOT-0001", "Lot", Vec::new())],
+        );
+        assert_eq!(one(only_part), Some(12_675_030_400), "a part that is the only figure stays");
+        // A PIN head (no Lot) elects its parts as before.
+        let pin = version(Vec::new(), vec![typed("PAR-0001", "Part", vec![amt("estimated_value", 5_000_000)])]);
+        assert_eq!(one(pin), Some(5_000_000));
+        // A withheld or sentinel figure states nothing, so it does not set the part aside.
+        let withheld = version(
+            vec![Fact::Amount { field: "estimated_value".into(), cents: -1, currency: "EUR".into(), tax_basis: None, quality: Some("withheld".into()) }],
+            vec![typed("PAR-0001", "Part", vec![amt("estimated_value", 7_000_000)]), typed("LOT-0001", "Lot", vec![amt("estimated_value", 99_999_999_999)])],
+        );
+        assert_eq!(one(withheld), Some(7_000_000), "no other admissible figure: the part stays");
     }
 
     /// Issue 378, decided 2026-09-11: a conversion that lands on zero is
