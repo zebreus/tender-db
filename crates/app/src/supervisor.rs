@@ -13463,11 +13463,13 @@ impl Supervisor {
         // Tenders now that yesterday's fixing has landed. What moved is announced and
         // re-queued for the projection right after. Seconds, not minutes: a few days of
         // heads, off `tenders_current_published`.
-        if self.already_pending("rederive-eur-recent") {
-            eprintln!("[schedule] rederive-eur-recent already queued or running, skipping today");
-        } else {
-            ids.push(self.push("rederive-eur-recent", REDERIVE_RECENT_PARAMS.into(), Spec::RederiveEurRecent).await);
-        }
+        //
+        // Pushed UNGUARDED (review `wf_0ebff4ba-876`): one already pending, for example an
+        // operator's queued behind a long refold, can sit AHEAD of today's fetch-rates. It
+        // would then run against the old rates and move nothing, and skipping today's on
+        // its account would leave the day's rows a day late. A second run is idempotent:
+        // it moves nothing and announces nothing.
+        ids.push(self.push("rederive-eur-recent", REDERIVE_RECENT_PARAMS.into(), Spec::RederiveEurRecent).await);
         // One projection folds whatever the fetch+process just landed.
         ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false }).await);
         // D5 reveal recheck rides the daily chain — issue 274's design intent
@@ -14600,6 +14602,22 @@ mod tests {
         let recent =
             queued.iter().position(|j| j.kind == "rederive-eur-recent").expect("rederive-eur-recent rides the chain");
         assert!(rates < recent && recent < project, "{queued:?}");
+    }
+
+    /// Issue 504, review `wf_0ebff4ba-876`: a `rederive-eur-recent` already queued (an
+    /// operator's, behind a long job) does not stand in for today's. The daily still
+    /// queues one AFTER its own fetch-rates, so the day's fixing is re-derived the same
+    /// morning.
+    #[tokio::test]
+    async fn a_queued_recent_rederive_does_not_replace_the_one_after_todays_rates() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        sup.push("rederive-eur-recent", REDERIVE_RECENT_PARAMS.into(), Spec::RederiveEurRecent).await;
+        sup.enqueue_daily(true).await;
+        let queued = sup.queued();
+        let rates = queued.iter().position(|j| j.kind == "fetch-rates").expect("fetch-rates rides the chain");
+        let last = queued.iter().rposition(|j| j.kind == "rederive-eur-recent").expect("a recent rederive");
+        let project = queued.iter().rposition(|j| j.kind == "project").expect("a projection");
+        assert!(rates < last && last < project, "{queued:?}");
     }
 
     /// Issue 342: an FTS backfill fans every month since 2021-01 (or the given
