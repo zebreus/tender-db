@@ -1,6 +1,33 @@
 # 495 — a stale refold deletes and re-inserts the whole corpus, though more than 95 % of it is byte-identical
 
-Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (the shadow compare, `TENDER_REFOLD_COMPARE=off|shadow`, default off).
+Status: ready-for-agent — UNIT 5 DONE 2026-10-09: DEPLOYED (`6c15075`, gate green at `361a638`) and validated on prod.
+- `crates/store/src/inplace.rs` carries ADR-0017 D6's R2 template as its module doc, plus:
+  - `correction_rows`, now shared with the fold's correction write;
+  - `Moved::announce`: rule T, then rule L. Rule L is each moved row's lot, plus the head version's lots when
+    the row sits in the head;
+  - `tender_window`.
+- `rederive-eur` is the worked example. Each window is one `BEGIN IMMEDIATE` holding the moved `eur_cents`,
+  D5's correction rows, the stale stamp, the re-queue and the watermark. The doorbell rings after COMMIT, and
+  since review fix `3a4634e` a failure to ring is logged rather than failing the job.
+- Tests:
+  - `a_rederive_window_announces_what_it_moved_and_nothing_else`;
+  - the E2 fixture `a_rederive_eur_walk_then_its_fold_equals_a_fold_under_the_new_rates`: a NOK/DKK corpus
+    with an incremental trailing fold. A dropped re-queue fails it, which was checked by mutation;
+  - `eur_loci_name_the_lot_column_the_fold_attributes_rows_by`.
+- Reviewed by `wf_cfbda26a-ca2` (three lenses, then verify): nothing confirmed; the one transaction-lens minor
+  (the doorbell) is fixed.
+- **PROD: job 2099 `rederive-eur`**, 598 s:
+  - 73,139 of 260,656,611 money rows moved, on 845 Tenders;
+  - 4,985 correction rows announced; 5,241 notices re-queued.
+- **Trailing `project` 2100**, 52 s: 828 Tenders corrected and 17 verified, with 4,867 correction rows.
+  - Every money table compared identical (amounts 4878/4878, lot results 3904/3904, bids and contracts
+    3879/3879), so E2 holds on prod data. Only the elected lot values (569 `tender_version_lots` tables) and
+    the heads moved.
+  - The moves themselves are issue 504: same-day publications are converted at the previous day's rate.
+- NEXT: unit 6 (measure on the next all-profile refold or the largest scoped one; close if the fold is 3 h or
+  less), then unit 7's follow-ups as unit 6 decides. Review minors still open: unserved minted lots in rule L;
+  refusal visibility; the stop rule's shared compare.
+Was: ready-for-agent — UNIT 3 BUILT 2026-10-09 (the shadow compare, `TENDER_REFOLD_COMPARE=off|shadow`, default off).
 - Each version a stale Tender's rewrite writes over a stored one is read with 14 prepared SELECTs (`LeafTable::compare_select_sql`,
   pinned to seek by version), then deleted, then written into a scratch `Pending`. The scratch is compared positionally (count
   first, reals by bits) and moved into the batch `Pending` in push order, so the writes are unchanged.

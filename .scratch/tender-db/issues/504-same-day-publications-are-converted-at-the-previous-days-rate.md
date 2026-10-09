@@ -7,9 +7,13 @@ re-queue), ADR-0014 D5 (missing days resolve to the nearest PREVIOUS business da
 
 ## What was seen
 
-Job 2099 was the first `rederive-eur` in at least the last 400 jobs. It moved about 6% of the money rows it
-scanned in its first windows: 19,489 of 55.3M rows by tender id 327,138, on track for roughly half a million
-corpus-wide. The moved rows sit on RECENT versions, including versions of old Tender ids.
+Job 2099 was the first `rederive-eur` in at least the last 400 jobs. It took 598 s and moved **73,139 of
+260,656,611 money rows (0.028%) on 845 Tenders**. It announced them with 4,985 correction rows and re-queued
+5,241 notices. The trailing fold (job 2100, 52 s) corrected 828 of those Tenders with 4,867 more rows. Every
+money table compared identical there: the walk derives what the fold derives. Only the elected lot values
+(569 `tender_version_lots` tables) and heads moved. The moved rows sit on RECENT versions, including versions
+of old Tender ids. (A mid-walk extrapolation of "about 6%" was wrong: the low Tender ids carry many recent
+versions.)
 
 Example, tender 2793:
 - seq 2, published 2026-10-01: 845,557,750 RON cents. After the walk it reads 160,052,574 EUR cents, which is
@@ -23,7 +27,7 @@ Example, tender 2793:
   before today's rate exists, and ADR-0014's lookup resolves it to the nearest previous day (yesterday).
 - The next day's `fetch-rates` loads the real fixing, but nothing re-derives the rows already written.
   `rederive-eur` is manual, and before issue 495 unit 5 it was silent too.
-- So every daily publication carries the previous day's rate, off by the day's move, roughly 0.1–0.5%.
+- So a daily publication can carry the previous day's rate, off by the day's move, roughly 0.1–0.5%.
   The Tender's elected head value and the stored lot values inherit it.
 
 ## Fix options
