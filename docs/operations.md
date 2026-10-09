@@ -675,7 +675,9 @@ them); this shape had no false positive, and over every version holding a stored
 Drain as for the ×100 extension (`refold-value-band` dry, wet, `project`). Expected: 8784848's head
 falls from €72 bn to £1 bn, 553044's to €26.958 m, 5748163's and 1120720's to their procedure
 figures; 915781's lot 5 loses its stored value (its head is already the procedure figure). Nothing
-else moves; a sixth Tender is a finding.
+else moves; a sixth Tender is a finding. The rule never raises a value outside this cohort: the
+slip it counts at its residual when judging P is one that survived the election before, so its
+Tender held a value of €1 bn or more.
 
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|

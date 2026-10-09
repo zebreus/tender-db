@@ -3425,8 +3425,11 @@ pub enum FigureScope<'k> {
 /// lot 100x its own procedure total (292242, 627800, 1003919, 8715174).
 ///
 /// **The residual rule (issue 505, decided 2026-10-09).** A Lot's figure is refused, with no
-/// partner needed, when it is exactly 10^k (k >= 2) times what an admitted procedure figure
-/// of its version leaves after the OTHER Lots' figures in the same field and currency.
+/// partner needed, when it is exactly 10^k (2 <= k <= 6) times what an admitted procedure
+/// figure P of its version leaves after the OTHER Lots' figures in the same field and
+/// currency (at least one other Lot states that field; the residual is at least P / 100).
+/// P is judged with that slip at its residual, so the slip cannot refuse the total that
+/// exposes it -- but only a slip that would otherwise survive, so no head rises.
 /// 8784848 had no partner anywhere in its chain: its GBP 60 bn lot 1 is 100x the GBP 600 m
 /// its GBP 1 bn procedure leaves after lots of GBP 150 m and 250 m. Of 23 adjudicated heads
 /// elected from a lot 10x or more above the procedure figure, no ratio separated the 18
@@ -3469,6 +3472,9 @@ pub struct ScalePartners<'a> {
     /// (Lots of kind `Lot` only; no withheld figure, no sentinel), by lot key. The
     /// residual rule sums a lot's siblings from it.
     head_lot_fields: std::collections::HashMap<(&'a str, &'a str), std::collections::BTreeMap<&'a str, i64>>,
+    /// Issue 505: every such figure, not only each Lot's largest, as (lot key, cents): a
+    /// slip need not be its lot's largest figure in the field.
+    head_lot_field_figures: std::collections::HashMap<(&'a str, &'a str), Vec<(&'a str, i64)>>,
     /// Issue 505: how many Lots (kind `Lot`) the head version names.
     head_lot_count: usize,
     /// Issue 505: each counted lot's contribution to [`Self::head_lot_sums`], by (lot key,
@@ -3505,6 +3511,7 @@ impl<'a> ScalePartners<'a> {
             lot_keys: Default::default(),
             head_procedure: Vec::new(),
             head_lot_fields: Default::default(),
+            head_lot_field_figures: Default::default(),
             head_lot_count: 0,
             head_lot_max: Default::default(),
             figures: Default::default(),
@@ -3663,6 +3670,7 @@ impl<'a> ScalePartners<'a> {
         // Issue 505: each Lot's figure per field, for the residual rule.
         self.head_lot_count = head.lots.iter().filter(|l| l.kind == "Lot").count();
         self.head_lot_fields.clear();
+        self.head_lot_field_figures.clear();
         for lot in head.lots.iter().filter(|l| l.kind == "Lot") {
             for f in &lot.facts {
                 if let Fact::Amount { field, cents, currency, quality, .. } = f
@@ -3676,6 +3684,10 @@ impl<'a> ScalePartners<'a> {
                         .entry(lot.key.as_str())
                         .or_insert(0);
                     *best = (*best).max(*cents);
+                    self.head_lot_field_figures
+                        .entry((field.as_str(), currency.as_str()))
+                        .or_default()
+                        .push((lot.key.as_str(), *cents));
                 }
             }
         }
@@ -3850,14 +3862,23 @@ impl<'a> ScalePartners<'a> {
     /// exemption: the lot sum with a Lot the residual rule refuses against it counted at its
     /// residual, so the head and the lot election agree on what that total is. A slipped lot
     /// under the EUR 1 bn gate is not refused, so it stays in.
+    ///
+    /// Only a slip that would otherwise SURVIVE the head election counts (not over
+    /// [`IMPLAUSIBLE_EUR_CENTS`], not refused by the partner rules): that slip held a stored
+    /// value of EUR 1 bn or more before this rule, so its Tender is in `refold-value-band`'s
+    /// cohort, and admitting P in its place only lowers the head. A slip refused anyway
+    /// keeps nothing, and counting it at its residual could RAISE a head outside the cohort
+    /// (review of the rule).
     fn residual_lot_sum(&self, field: &str, currency: &str, procedure: i64, eur_cents: i64) -> Option<i64> {
-        let lots = self.head_lot_fields.get(&(field, currency))?;
-        lots.iter().find_map(|(&key, &own)| {
-            let own_eur = (i128::from(eur_cents) * i128::from(own) / i128::from(procedure)).min(i128::from(i64::MAX)) as i64;
-            (own_eur >= SCALE_ERROR_MIN_EUR_CENTS)
-                .then(|| self.residual_of(field, currency, procedure, key, own))
-                .flatten()
-                .and_then(|residual| self.lot_sum_at_residual(currency, key, residual))
+        let figures = self.head_lot_field_figures.get(&(field, currency))?;
+        figures.iter().find_map(|&(key, figure)| {
+            let figure_eur = (i128::from(eur_cents) * i128::from(figure) / i128::from(procedure)).min(i128::from(i64::MAX)) as i64;
+            if !(SCALE_ERROR_MIN_EUR_CENTS..=IMPLAUSIBLE_EUR_CENTS).contains(&figure_eur)
+                || self.refuses_by_partner(field, currency, figure, figure_eur, FigureScope::HeadLot(Some(key)), None)
+            {
+                return None;
+            }
+            self.residual_of(field, currency, procedure, key, figure).and_then(|residual| self.lot_sum_at_residual(currency, key, residual))
         })
     }
 
@@ -3882,6 +3903,12 @@ impl<'a> ScalePartners<'a> {
         {
             return true;
         }
+        self.refuses_by_partner(field, currency, cents, eur_cents, scope, lot_sum)
+    }
+
+    /// The partner rules of [`Self::refuses`] (471's k >= 3, 492's x100 and their
+    /// exemptions), without the gate and without issue 505's residual rule.
+    fn refuses_by_partner(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, scope: FigureScope<'_>, lot_sum: Option<i64>) -> bool {
         if self.partner(currency, cents).is_none() {
             // Issue 492: a x100 partner (k = 2) refuses too, unless the figure is a
             // framework total over its lots, or a lot figure whose partner is a sibling
@@ -10178,7 +10205,8 @@ impl Db {
     /// The Tenders whose stored head value, or any stored lot value of any version, is at
     /// least `floor_eur_cents`, ascending: the cohort a value-election rule that can only
     /// LOWER figures at or above that floor can move (issue 492's x100 rule, issue 471's
-    /// before it). Two index range reads: `tenders_current_value_eur` and the partial
+    /// before it, issue 505's residual rule, which admits a procedure total in a slip's place
+    /// only where that slip held such a value). Two index range reads: `tenders_current_value_eur` and the partial
     /// `tender_version_lots_value_eur`, whose WHERE the second read repeats so turso uses it.
     pub async fn value_band_tender_ids(&self, floor_eur_cents: i64) -> turso::Result<Vec<i64>> {
         let conn = self.reader().await?;
@@ -34343,6 +34371,25 @@ mod tests {
         );
         assert_eq!(lot_value(&circular, "LOT-1"), None, "the slip does not shield itself");
         assert_eq!(one(&circular), Some(100_000_000_000));
+        // The slip need not be its lot's largest figure in the field: a second, implausible
+        // figure on LOT-1 must not hide it from the head's judgement of P.
+        let mut doubled = circular.clone();
+        doubled.lots[0].facts.insert(amt("estimated_value", 20_000_000_000_000));
+        assert_eq!(lot_value(&doubled, "LOT-1"), None);
+        assert_eq!(one(&doubled), Some(100_000_000_000), "the head judges P as the lot election did");
+        // But a slip refused or filtered anyway counts in full: counting it at its residual
+        // would RAISE the head of a Tender that never held a value of EUR 1 bn or more, which
+        // `refold-value-band` does not re-fold. Here LOT-1 is EUR 1 tn (over the ceiling) and
+        // P stays refused under 492, as before this rule.
+        let filtered = version(
+            vec![amt("estimated_value", 200_000_000_000)],
+            vec![
+                lot("LOT-1", vec![amt("estimated_value", 100_000_000_000_000)]),
+                lot("LOT-2", vec![amt("estimated_value", 2_000_000_000)]),
+                lot("LOT-3", vec![amt("estimated_value", 98_000_000_000)]),
+            ],
+        );
+        assert_eq!(one(&filtered), Some(98_000_000_000), "no head rises outside the drain's cohort");
         // No other Lot states the field: no sum residual, so the rule is silent (a bare
         // "lot = P x 10^k" ratio is 471's and 492's, with their floor and exemptions). Here
         // 471 keeps the EUR 1 bn, corroborated by the procedure's framework maximum.

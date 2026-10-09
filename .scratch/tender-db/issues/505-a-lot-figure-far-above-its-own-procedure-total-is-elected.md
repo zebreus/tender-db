@@ -2,6 +2,15 @@
 
 Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (the residual rule, `ScalePartners::residual_slip`). NEXT: gate,
 review, deploy, drain (`refold-value-band`), re-read the 5 expected Tenders.
+- **Review** `wf_b4a46acf-264` of the fixes (`9e87a4f`): 4 confirmed (minor), 1 refuted. Fixed:
+  - **Raised heads outside the cohort.** Counting a slip at its residual could admit a P that 492 refused, for a
+    Tender that never held a value ≥ €1 bn, because its slip was over the ceiling or already partner-refused. Such a
+    Tender is outside `refold-value-band`'s cohort, so its stored head would silently drift. The override now counts
+    only a slip that would otherwise survive the head election, which means its Tender held a value ≥ €1 bn and the
+    head only falls.
+  - **Largest figure only.** The head's override tested only each Lot's largest figure in the field. It now tests
+    every figure (`head_lot_field_figures`).
+  - **Docs.** /docs, the CHANGELOG and the struct doc now state the bounds.
 - **Review** `wf_2fa9e2a1-a79` of `78f70f7`: 5 confirmed (all minor), 0 refuted. Fixed:
   - **Circular admission.** P's admission judged its ×100 framework exemption against a lot sum that included the slip,
     so a slip beside a sibling at exactly P/100 kept itself. Both elections now count a lot the rule refuses at its
