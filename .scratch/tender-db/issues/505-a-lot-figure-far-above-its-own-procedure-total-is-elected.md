@@ -1,6 +1,13 @@
 # 505 — a lot figure far above its own procedure total is elected
 
-Status: ready-for-agent — filed 2026-10-09 from issue 492's drain re-read.
+Status: ready-for-agent — UNIT 1 MEASURED 2026-10-09 (`505-lot-over-procedure/heads-2026-10-09.json`); adjudication
+`wf_368978c8-198` running over the 23 Tenders at ≥ 10×.
+- Of 3,736 heads at ≥ €1 bn (after 492's drain), 3,621 are elected from a procedure figure and 115 from a lot figure only.
+  - 72 of the 115 have no smaller procedure figure in the head version.
+  - 43 have one. By the ratio head / procedure figure: under 2×, 10; 2–10×, 10; 10–50×, 6; 50–100×, 1 (8784848);
+    100–1000×, 9; ≥ 1000×, 7.
+- So the population a rule could touch is small: 23 Tenders at ≥ 10×.
+Was: ready-for-agent — filed 2026-10-09 from issue 492's drain re-read.
 Kind: correctness / the head and lot value elections (`canonical.rs`, `ScalePartners`, `head_value_eur_cents_with`,
 `elect_lot_value`)
 Relates to: 492 (the ×100 rule; its unit 2 named this signal as an option and did not take it), 471 (k ≥ 3; "a plain ratio
