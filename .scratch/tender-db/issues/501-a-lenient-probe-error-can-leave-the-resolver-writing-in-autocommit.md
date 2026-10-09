@@ -1,6 +1,6 @@
 # 501 — a lenient probe error can leave the resolver writing in autocommit
 
-Status: ready-for-agent — filed 2026-10-09 from the issue 498 conversion review (`wf_a128d5c8-b83`, error-path
+Status: done — DEPLOYED 2026-10-09 (`652f5c3`, gate green, health ok). Filed 2026-10-09 from the issue 498 conversion review (`wf_a128d5c8-b83`, error-path
 lens), confirmed against turso_core 0.7.2's `abort`.
 - Units 1 and 2 BUILT 2026-10-09.
 - The pin `a_runtime_read_error_ends_the_transaction_and_the_guard_sees_it` passes. Inside `BEGIN IMMEDIATE`,
@@ -12,7 +12,7 @@ lens), confirmed against turso_core 0.7.2's `abort`.
   - `resolve_mentions` also checks after every mention, so a future lenient arm cannot slip through.
 - An end-to-end resolver test was not written. A probe cannot be made to fail at runtime without replacing
   `org_match_keys`, and the resolver writes that table first.
-- NEXT: gate, deploy, close.
+- Deployed and closed. The `[issue 501]` error line in the journal would mean a probe hit it.
 Kind: correctness / the Phase-1 resolver (`crates/store/src/canonical.rs`)
 Relates to: 498 (the transaction helper; this is the one hole it cannot close), 448 / 470 / 318 / 351 (the four
 lenient probes)
