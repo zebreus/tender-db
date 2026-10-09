@@ -1,0 +1,394 @@
+[
+ {
+  "id": 5803269,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Staffordshire Police, 'Vehicle Recovery Operators', TED, one lot. v1 CN 424406-2016 gives estimated_value GBP 10,000,000 (II.1.5 VAL_ESTIMATED_TOTAL and the lot's VAL_OBJECT, 36 months). v2 award 181841-2017 gives GBP 1,000,000,000 in all four value slots (VALUE, VAL_TOTAL, RES-1 VAL_ESTIMATED_TOTAL, VAL_TOTAL). The head is v2's GBP 1 bn and the partner is v1's GBP 10 m in the same field.",
+  "signals": "Buyer size against value: GBP 1 bn for a 3-year vehicle recovery framework is several times a county police force's whole annual budget, while GBP 10 m is plausible. The award figure is an exact round 10^9 copied into every slot, so it may be a 1,000,000,000 placeholder rather than a typo. Either way the head is false and the CN's GBP 10 m is a real-looking estimate. No corrigendum."
+ },
+ {
+  "id": 6572976,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "Procurement for Housing, 'PFH Renewables and Energy Efficiency Works and Associated Consultancy Services', a UK-wide framework with 22 lots open to every PfH member (2+1+1 years). v2 award 063338-2020: II.1.7 total GBP 1,000,000,000. Lot awards: 11 works lots at GBP 40 m each (lot 1J not awarded) and 10 consultancy lots at GBP 10 m each. The x100 partner is a consultancy lot's GBP 10 m. In v1 CN 366072-2019 every one of the 22 lots carried a VAL_OBJECT of GBP 40 m.",
+  "signals": "The lots sum to GBP 540 m in the award (and 22 x GBP 40 m = GBP 880 m in the CN), the same order as the GBP 1 bn ceiling and below it. A GBP 10 m procedure total would be smaller than its own lots. A national multi-lot framework of a housing consortium makes a GBP 1 bn ceiling plausible. The x100 relation is a coincidence between the framework ceiling and a small lot."
+ },
+ {
+  "id": 7393314,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Socialstyrelsen, VISO counselling for deafblind children and young people, one lot, TED. v1 CN 272055-2022 gives estimated_value DKK 91,600,000 (II.1.5 and the lot's VAL_OBJECT). v2 is a date-only corrigendum (IV.2.2), so the estimate carries forward. v3 award 661330-2023 (winner Region Nordjylland) gives DKK 9,160,000,000 in II.1.7, V.2.3 and V.2.4.",
+  "signals": "The CN text says the estimated value covers up to 8 years (2023-2024 plus three 2-year extensions). DKK 91.6 m over 8 years (about DKK 11 m a year) fits a niche counselling service. DKK 9.16 bn (about EUR 1.2 bn) for one counselling contract is implausible. The digits '916' are identical in both figures, so a scale slip shifted the award by two places. No value corrigendum."
+ },
+ {
+  "id": 8819939,
+  "verdict": "SLIP_PARTNER",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Gemeente Amsterdam, 'Collectieve Zorgverzekering Minima Amsterdam', a services concession (CZMA), eForms. v1 PIN 00703776-2024 (subtype 4, market consultation) gives BT-27 EUR 12,000,000 at both procedure and part level for 2026-01-01 to 2032-12-31. v2 concession notice 00042144-2025 (subtype 19) gives BT-27 EUR 1,200,000,000 at procedure and lot level for 3 years plus 2x2 option years, which is the same 7-year span. Head: v2's EUR 1.2 bn. Partner: the PIN's EUR 12 m, also kept on the stale PAR-0000 part row in v2.",
+  "signals": "Plausibility of the concession turnover: the text says about 62,000 premium-paying adults and 18,000 co-insured children. At roughly EUR 2,000 a year in premiums per payer that is about EUR 125-145 m a year, or about EUR 1 bn over 7 years, so EUR 1.2 bn is the concessionaire's genuine turnover (the concession-directive value basis). The PIN's EUR 12 m understates the same scope and period by x100. It may be a typo or a different basis, such as the municipality's own contribution (that reading would make it GENUINE_DISTINCT). Either way the head is genuine and a x100 rule would wrongly refuse it. The later notice restated the value upward."
+ },
+ {
+  "id": 602396,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "Gruppo Torinese Trasporti S.p.A. (GTT, Turin), 'PA n 156/2024 - Fornitura di gasolio' diesel for 12 months (2024-11-01 to 2025-10-31), one lot, one tender received. Single eForms version 00158925-2026 (subtype 30). BT-27 procedure and lot estimate: EUR 12,560,325.00. BT-161 notice result and BT-720 tender value (Eredi Campidonico): EUR 1,256,032,500.00. The head is result_value and the partner is estimated_value in the same notice.",
+  "signals": "Cents-as-units: the head's euro amount 1,256,032,500 is exactly the estimate's cent count, so the decimal comma of '12.560.325,00' was dropped. A city bus operator's diesel for one year is about EUR 12 m, and EUR 1.26 bn is implausible. The estimate's digits are non-round (8 significant digits) and match the head exactly, a very strong slip signature."
+ },
+ {
+  "id": 6123331,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "Autostrade per l'Italia, Direzione 7th tronco Pescara, mechanised snow clearing and anti-icing services, 4 lots, 36 months, TED. v1 CN 058975-2018: estimated total EUR 12,669,524.06. v2 award 005209-2019: II.1.7 total value EUR 1,265,685,450.00, but RES-1's V.2.4 total is EUR 12,656,854.50 (V.2.3 estimate EUR 12,669,524.06). The head is the II.1.7 figure and the partner is V.2.4 of the same award notice.",
+  "signals": "Lots sum to the procedure estimate: 4,018,674.65 + 3,137,959.32 + 3,196,675.23 + 2,316,214.86 = 12,669,524.06. The genuine award of EUR 12,656,854.50 sits just under that estimate. II.1.7 repeats the same 9 significant digits with the decimal dropped. A 3-year snow-clearing contract on one motorway section at EUR 1.27 bn is implausible."
+ },
+ {
+  "id": 8413585,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "Gemeente Meierijstad (about 80k inhabitants), 'Inzameling afval c.a.' waste collection, 3 lots, TED. v1 CN carries no values and v2 is a date-only corrigendum. v3 award 224337-2018: II.1.7 total EUR 1,313,166,752.00. Lot awards: lot 1 Meierijstad EUR 13,131,667.52 (estimate EUR 16 m), lot 3 Schijndel EUR 33,647,804.00, lot 2 Veghel EUR 550,337.00 (estimate EUR 550,000). The head is the procedure total and the partner is lot 1's award.",
+  "signals": "The head is lot 1's own 10-digit figure with the decimal dropped (13131667,52 read as 1313166752), not the lots' sum of EUR 47,329,808.52. So the true procedure total is about EUR 47.3 m, and the partner is the true value of the figure the buyer mistyped. A procedure total about 28x its lot sum is impossible, and EUR 1.3 bn of waste collection for a mid-size municipality is implausible."
+ },
+ {
+  "id": 6988280,
+  "verdict": "PLACEHOLDER",
+  "partner_relation": "sibling_lot",
+  "evidence": "SA Mon Logis (Troyes social landlord) multi-supplier energy-works framework 2021-2024, 5 lots. The CAN (291034-2021) gives a procedure VAL_TOTAL of EUR 100 bn and lot VAL_TOTALs of RES-1 EUR 1 bn, RES-2 EUR 10 bn, RES-3 EUR 10 M, RES-4 EUR 1 bn and RES-5 EUR 10 bn, all powers of ten. The CN (029815-2021) carries no value at all. The head (EUR 1 bn, the LOT-1/LOT-4 award) is 100x the LOT-3 award (EUR 10 M). Neither figure is real. Issue 471 unit 4 already judged this Tender 'real value UNKNOWN'. Refusing at k=2 would only drop the head to the EUR 10 M placeholder.",
+  "signals": "Pure 10^n ladder (10 M / 1 bn / 10 bn / 100 bn). The lots sum to 22.01 bn, not the 100 bn procedure total. No estimate anywhere. In amounts every value is result_value with lot=null, so the lot awards look procedure-scoped."
+ },
+ {
+  "id": 8332921,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "CPO LT (Lithuanian central purchasing body), dynamic purchasing system (DPS) for medical devices, 1st call. The CN 099172-2014 VALUE/VALUE_COST is parsed as LTL 3,500,000,000.00, but the same CN's TOTAL_QUANTITY_OR_SCOPE text says 'planuojama pirkimu verte 35 000 000,00 LTL (be PVM)', i.e. a planned DPS value of LTL 35 M. The CAN 188138-2014 states LTL 35 M for the procedure GLOBAL value and for both RES-1 and RES-2 (DPS lots 5 and 6). The head is the CN estimate carried forward into v2 as estimated_value. The partner is v2 result_value LTL 35 M. Looks like '35 000 000,00' turned into 3500000000: a dropped decimal or cents read as units. The member text was not read, so it is not settled whether the slip is the publisher's or our parse.",
+  "signals": "The CN's own prose restates the value as LTL 35 M. The CAN agrees in three places. LTL 3.5 bn (about EUR 1 bn) for a single DPS call for niche implants (oxygenators, heart valves, stents, ear prostheses) is implausible for Lithuania."
+ },
+ {
+  "id": 1177887,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "PIN (preliminary market consultation, eForms 00360405-2024) from Sluzby rozvoja budov BBSK (Banska Bystrica region building company): reconstruction of the former Gymnazium Mateja Bela building in Zvolen. BT-27-Part PAR-0001 = EUR 10,499,776.69 and BT-27-Procedure = EUR 1,049,977,669.00. Same digits with the decimal point dropped: cents typed as units. Same notice, same field, only one version.",
+  "signals": "Single part, so the procedure total should equal the part estimate. The partner has non-round cents (,69), which is typical of a dropped-decimal head. EUR 1.05 bn for refurbishing one school building is absurd. EUR 10.5 M is plausible."
+ },
+ {
+  "id": 8396822,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "NHS England North West award to University Hospitals of Morecambe Bay FT for prescribed specialised services (adult chemotherapy, ICD/CRT, cochlear implants, neonatal critical care). Negotiated without call, single CAN 120670-2017, one lot. Procedure VAL_TOTAL is GBP 937,900,000 and RES-1 (LOT-1) VAL_TOTAL is GBP 9,379,000. The head is result_value at procedure scope, the partner result_value at the lot, in the same notice and version.",
+  "signals": "One lot and one result, so the procedure total should equal the lot award, but it is exactly 100x. GBP 937.9 M is roughly three times the whole trust's annual income (about GBP 300-350 M in 2016/17), which is implausible for four specialised service lines. GBP 9.4 M is plausible. No corrigendum."
+ },
+ {
+  "id": 8713680,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "CCS RM6157 Building Materials & Equipment national framework, 9 lots. The procedure estimate is GBP 900 M. The lots are 360 + 45 + 60 + 9 + 90 + 45 + 225 + 21 + 45 = 900 exactly. The partner is lot 4 (Paints and Solvents) at GBP 9 M. The GBP 900 M figure appears in all three versions (CN 004774-2021, CAN 021220-2021, award update 022030-2024) and as the 2024 RM6157 contract value. Lot 4's GBP 9 M is repeated as the paints suppliers' contract values (Crown Paints, ICI, etc.).",
+  "signals": "Lots sum exactly to the procedure total. Both figures repeat across versions and in contracts. Both figures sit in estimated_value only (contracts are not amounts), so 471's head-version corroboration exemption would NOT save the head. A k=2 rule would refuse a genuine head here (false positive)."
+ },
+ {
+  "id": 8423121,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "SEWSCAP 3 (Cardiff Council), the South East & Mid Wales collaborative construction framework: 48 months, 11 lots, open to all Welsh public bodies. The CN 373744-2018 VAL_ESTIMATED_TOTAL is GBP 1 bn and the CAN 257924-2019 procedure VAL_TOTAL is GBP 1 bn. Each lot's RES VAL_TOTAL is the upper end of that lot's call-off value band, which is named in the lot title: GBP 1.5 M, 3 M, 5 M, 10 M, 25 M, 100 M. The partner GBP 10 M is RES-8 (the GBP 5-10 M band) and RES-11.",
+  "signals": "GBP 1 bn is stated in two versions and two fields (CN estimate, CAN total). In the head version, however, only result_value carries it; the v2 estimated_value is RES-3's GBP 1.5 M. So 471's head-version corroboration exemption would NOT protect it, and a k=2 rule would refuse a genuine GBP 1 bn framework (false positive). Lot figures are band ceilings, not shares of the total."
+ },
+ {
+  "id": 8804016,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "Somerset Council 'Specialist Adults Support in Somerset' DPS, FTS 005900-2024, runs to 2029-03-31, 6 lots. The procedure estimate is GBP 980 M. The lots are 235.2 + 490 + 98 + 98 + 9.8 + 49 = 980 exactly, i.e. shares of 24%, 50%, 10%, 10%, 1% and 5%. The partner is lot 5 (Employment Support) at GBP 9.8 M, 1% of the total. Single version.",
+  "signals": "Lots sum exactly to the procedure total. The 100x arises because one lot is allocated a 1% share. About GBP 196 M a year over 5 years for specialist adult social care is plausible for Somerset. Only estimated_value is present, so the 471 exemption would not apply and a k=2 rule would refuse a genuine head (false positive)."
+ },
+ {
+  "id": 5820191,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "Award notice 331762-2017 (F03, seq 2). II.1.7 VAL_TOTAL is EUR 13,531,903.39 and the lot's V.2.4 VAL_TOTAL is EUR 1,353,190,339.00, the same digits with the decimal dropped. The lot figure is the head (lot_results awarded 135319033900). The contract notice estimate is EUR 13,000,000 (seq 1 and 2), and the award is 4% over it. The buyer is South Dublin County Council; the scope is a 71-unit (+19 option) rapid-build housing scheme in Tallaght, which works out to about EUR 190k per unit at 13.5 m. EUR 1.35 bn is about EUR 19 m per house, which is not plausible.",
+  "signals": "Estimate EUR 13 m vs award EUR 13.53 m (a consistent ratio). Single lot, so II.1.7 must equal V.2.4. The digits are identical, so this is a dropped decimal separator. Buyer size and scope (71 houses) make EUR 1.35 bn impossible."
+ },
+ {
+  "id": 5923251,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "Award notice 468410-2018 (F03, seq 3), MOPAC waste management framework, 48 months. For lot 1 (Biffa), V.2.3 VAL_ESTIMATED_TOTAL is GBP 1,230,951,866.00 (the head, folded as procedure estimated_value) and V.2.4 VAL_TOTAL is GBP 12,309,518.66: the same digits with the decimal dropped. In the contract notice 189228-2017 the lot 1 estimate was GBP 17.5 m, lot 2 GBP 2 m, total GBP 19.5 m. II.1.7 total is GBP 13,417,895.12, which is about the sum of lot 1 at 12,309,518.66 and lot 2 at about 1.108 m.",
+  "signals": "The lots approximately sum to the II.1.7 total (13.42 m; off by under GBP 500 because lot 2's estimate 1,108,385.92 and award 1,108,835.92 differ by a digit transposition, showing sloppy keying). The original estimate of GBP 19.5 m bounds the value. A police authority's waste contract at GBP 1.2 bn is implausible."
+ },
+ {
+  "id": 524394,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "\u017dilinsk\u00fd samospr\u00e1vny kraj (\u017dilina self-governing region) natural gas supply framework, 24 months, one lot, won by SPP. Result notice v1 (00722990-2023) puts BT-27-Procedure, BT-27-Lot, BT-660 and BT-709 all at EUR 1,535,900,000.00. Change notice v2 (00038978-2024) is BT-140 cor-buy, reason 'Nespr\u00e1vne uveden\u00e1 PHZ a hodnota zmluvy' (wrongly stated estimate and contract value). Its BT-141 text reads 'Opraven\u00e1 predpokladan\u00e1 hodnota (BT-27-Procedure): 15 359 000.00', with BT-660 and BT-709 also corrected to 15 359 000.00. The structured BT-27-Lot, BT-660 and BT-709 in v2 are 15,359,000.00, but the structured BT-27-Procedure was left at 1,535,900,000.00, and that stale figure is the head.",
+  "signals": "An explicit corrigendum (BT-141 free text) restates the procedure value at 1/100; only the procedure-level field was not updated in the structured data. With a single lot, the lot must equal the procedure. Plausibility: EUR 1.5 bn of gas for one region over 2 years is not credible (it would be a large share of national consumption)."
+ },
+ {
+  "id": 7459482,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "MIMS Provveditorato Lazio, PNRR works at the Corte di Cassazione building in Rome (CIG 9347450FBF). F02 v1 has II.1.5 and II.2.6 at EUR 1,524,668,357.00. F14 v2 (431279-2022) CHG-1 II.1.5 and CHG-2 II.2.6: OLD_VALUE.TEXT 'EUR 1524668357.00', NEW_VALUE.TEXT 'valore totale stimato IVA esclusa EUR 15246683.57'. F03 v3 (149083-2023) text reads 'IMPORTO A BASE DI GARA: EUR 15.246.683,57' (13,054,227.04 works + 1,887,864.78 safety + 304,591.75 design). II.1.7 in v3 is EUR 15,246,683.57 and the award to Fratelli Navarra is EUR 13,031,791.41. The head is still the uncorrected EUR 1.52 bn estimate carried into v3.",
+  "signals": "An F14 value corrigendum under II.1.5 and II.2.6 restates the figure at 1/100 (the 471 unit 4(b) corrigendum signal is present, but the head still elects the old figure). The award notice text itemises the true base amount; the components sum exactly to 15,246,683.57. The award is 85% of the corrected estimate."
+ },
+ {
+  "id": 8519968,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "other",
+  "evidence": "Ministero della Difesa (Army 'Platform Type V' supplies). F17 v1 (239092-2023): lot A EUR 10,950,000 plus lot B EUR 3,750,000 equals the procedure total EUR 14,700,000, and the description says 'importo complessivo di Euro 14.700.000,00 (IVA esente)'. F18 award notice v2 (334924-2023) says 'GARA DESERTA' (no award; the lot result has no winner or amount), yet its II.1.7 VALUE_COST is EUR 1,470,000,000.00. That figure is the head result_value. The partner is the v1 procedure estimate, carried into v2 by the fold.",
+  "signals": "The lots sum exactly to the EUR 14.7 m estimate. The description text states EUR 14.7 m. The award notice is a deserted tender, so its 'total value' carries no award at all, and EUR 1.47 bn is 100 times the published ceiling."
+ },
+ {
+  "id": 190734,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "ARTE Genova (Ligurian public-housing agency), energy-efficiency project finance, lot C1.1, 192 months, one lot. The cn-standard v1 has BT-27-Procedure and BT-27-Lot at EUR 16,109,827.00. The can-standard v2 (00141660-2026) repeats BT-27 at EUR 16,109,827.00, with a single tender TEN-0001 BT-720 of EUR 16,109,827.00 (IREN Smart Solutions, 1 submission). Its BT-161-NoticeResult is EUR 1,610,982,700.00, which is the head.",
+  "signals": "With one lot and one tender, BT-161 should equal BT-720 (16.11 m). The same digits appear with the decimal dropped (cents-as-units). The buyer is a provincial housing agency, so EUR 1.6 bn is implausible."
+ },
+ {
+  "id": 5864294,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "other",
+  "evidence": "ASIA Napoli SpA (waste company) insurance services, 3 lots. F02 v1 (077686-2017): lot 1 EUR 13,384,436.52 plus lot 2 EUR 2,871,360.47 plus lot 3 EUR 153,000.00 equals EUR 16,408,796.99, which is exactly the II.1.5 total. F03 v2 (238471-2017): total VALUE_COST EUR 1,640,879,699.00 (the head), lot 1 EUR 1,338,443,652.00, lot 2 EUR 287,136,047.00 and lot 3 EUR 153,000.00. Every non-round figure reappears with its decimal separator dropped, and only the round lot 3 survives. The partner is the v1 II.1.5 estimate, carried into v2.",
+  "signals": "The contract notice lots sum exactly to the procedure estimate. The award restates each estimate's digits to the cent, without the decimal (sibling lot 3 is round, so it is unchanged). The lot awards are also x100 (1.34 bn and 287 m) and would be refused at k = 2. A municipal waste company's insurance programme at EUR 1.64 bn is implausible; EUR 16.4 m fits."
+ },
+ {
+  "id": 6181847,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "The award notice 389787-2018 (notice 20035062, v4) has a procedure VAL_TOTAL of HRK 11,958,742,416.00. Its only lot RES-1 has a VAL_TOTAL of HRK 119,587,424.16. The digits are identical, so the decimal was dropped. The CN 168416-2018 estimate is HRK 111,830,880.79, so the lot award is +7% over the estimate, which is plausible. HRK 11.96 bn (about EUR 1.6 bn) is not plausible.",
+  "signals": "A single-lot procedure, so the procedure total must equal the one lot award. That check fails by exactly x100. Buyer: Osijek University (Sveuciliste J. J. Strossmayera). Scope: phase 2 of a student pavilion, a bridge, a square and a car park, with 8 tenders received. The partner is in the same version (v4): a lot award folded to result_value with lot null."
+ },
+ {
+  "id": 6728980,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "other",
+  "evidence": "The head is the award notice 548891-2020 (v3) procedure VAL_TOTAL of DKK 11,984,000,000. The partner is the CN 080288-2020 (v1) VAL_ESTIMATED_TOTAL of DKK 119,840,000 (same digits). The award notice's own lot figures are small: estimates of 8.5m, 37.1m and 35m, and awards of 11.06m, 20.86m and 27.41m (59.3m in total). The v1 lot VAL_OBJECTs are 11.9m, 51.94m and 49.0m.",
+  "signals": "Buyer: the Danish Ministry of Foreign Affairs (Udenrigsministeriet, about 1,350 staff). Scope: a 3-lot IT-infrastructure consultancy framework, with a minimum turnover requirement of DKK 5m a year. DKK 12 bn (EUR 1.6 bn) is implausible. The partner is a different field (estimated_value) in an earlier version (v1), so the relation is cross-field and cross-version."
+ },
+ {
+  "id": 3710456,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "The first award notice 299061-2007 (v2) text reads 'Valore finale totale degli appalti: 17 628 576,64 EUR'. The second award notice 30678-2008 (v3, covering the remaining regional lots) reads '1 762 857 664 EUR', the same digits with the decimal comma dropped. The CN 184983-2007 states 'Valore stimato, IVA esclusa: 17628576.64 EUR'.",
+  "signals": "In the CN the regional lots are EUR 73k to 1.6m each (Valle d'Aosta 73,508.76, Lombardia 1,641,411.48 and so on), and they make up the EUR 17.6m total. Buyer: Agenzia delle Entrate. Scope: 48 months of maintenance of technology plants. EUR 1.76 bn is implausible. This is a free-text 2007/08 notice."
+ },
+ {
+  "id": 5579054,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "The VEAT 348266-2019 (v3) has VAL_TOTAL DKK 130,350,000. The award 606773-2019 (v4) has DKK 13,035,000,000 (same digits). Both notices' description says 'Leasingkontrakten har en okonomisk ramme pa 130 000 000 DKK over 4 ar'. The 2016 award (v2) was DKK 60m.",
+  "signals": "Buyer: Naestved Kommune, a municipal leasing line with KommuneKredit. DKK 13 bn (EUR 1.74 bn) is implausible against the restated text figure of DKK 130m. RULE CAVEAT: in v4 the head figure is carried by both estimated_value and result_value (the lot VAL_ESTIMATED_TOTAL equals VAL_TOTAL). Issue 471's 'another canonical field of the head version carries it' exemption would therefore KEEP this slip under k = 2."
+ },
+ {
+  "id": 7240718,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "other",
+  "evidence": "The CN 599671-2021 (v1) text reads 'Rammeaftalens anslaede vaerdi er 138.624.808 DKK' (range up to DKK 166.3m). Its VAL_ESTIMATED_TOTAL is DKK 138,624,808, and the 12 lot VAL_OBJECTs sum to DKK 138,624,845. The award 156007-2022 (v3) has a procedure VAL_TOTAL of DKK 13,862,480,800 (x100). 11 of its 12 lot values are also exactly x100 of their v1 VAL_OBJECTs: lot 11 is DKK 1,961,310,000 against 19,613,100. Lot 2 is unchanged at 63,100,195.",
+  "signals": "Buyer: a joint purchase by four Danish regions. Scope: a framework for intraocular lenses and viscoelastics. DKK 13.9 bn (EUR 1.86 bn) is implausible. The lot sum check holds at the v1 scale. Rule note: refusing the head still leaves x100-inflated lot results (up to DKK 1.96 bn, about EUR 263m) as electable figures below EUR 1 bn."
+ },
+ {
+  "id": 7393311,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "The CN 272052-2022 (v1) has VAL_ESTIMATED_TOTAL and lot VAL_OBJECT DKK 138,800,000. Its text says the estimated value covers the full eight years with extensions. The award 663545-2023 (v2) has DKK 13,880,000,000 (same digits) in the procedure VAL_TOTAL and in the lot's VAL_ESTIMATED_TOTAL and VAL_TOTAL. No corrigendum explains a change of scale.",
+  "signals": "Buyer: Socialstyrelsen/VISO, under the light regime. Scope: specialist advisory services for preschool children, one of six such tenders. The single winner is Region Midtjylland. DKK 13.9 bn is implausible. Sibling tender 7393321 (also in the hit list, DKK 15,468,000,000) shows the same pattern. RULE CAVEAT: the head figure sits in both estimated_value and result_value of v2, so issue 471's other-field exemption would keep it."
+ },
+ {
+  "id": 8730895,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "The procedure estimate is GBP 1,600,000,000, the same in v1 (planning), v2 (tender) and v3 (award+contract), and the contract value is also GBP 1.6 bn. The partner is lot 4 (Audits, Efficiency Reviews and Niche Consultancy) at GBP 16,000,000. The 8 lot estimates are 120m, 860m, 34m, 16m, 150m, 240m, 140m and 40m, which sum exactly to GBP 1.6 bn.",
+  "signals": "The lot sum check holds, so the procedure total is real. Buyer: Crown Commercial Service. Scope: a pan-government Postal Services and Solutions framework, where GBP 1.6 bn is plausible. The x100 partner is a coincidence: a small sibling lot inside the framework. This is a k = 2 false positive for a rule that accepts lot-vs-procedure partners."
+ },
+ {
+  "id": 5768423,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "NIF Zrt, M7 junction 710 works (7.2 km of ramps, one bridge). CN estimate HUF 7.058 bn. The 2017 CAN (seq 6) awards HUF 7.326 bn, and the 2018 F20 (seq 7) repeats HUF 7.326 bn with before = after. The 2019 F20 (seq 8, 590855-2019) gives HUF 732.6 bn for VAL_TOTAL, VAL_TOTAL_BEFORE and VAL_TOTAL_AFTER, yet its modification text describes only company and bank-detail changes and a technical swap with no price change. The 2021 F20 (seq 9) has before HUF 732.6 bn and after HUF 742.7 bn, the same x100 again. The head is HUF 732.6 bn (EUR 2.08 bn); the real figure is HUF 7.33 bn, about EUR 20 m.",
+  "signals": "Same digit string with the decimal dropped (7325915636.00 became 732591563600). The estimate (7.06 bn) and the award agree at 1x; HUF 732 bn would be about EUR 2 bn for one motorway junction, which is implausible. The publisher repeated the x100 in two later F20s. The real current value is probably the 2021 modification's after-value divided by 100: HUF 7.427 bn."
+ },
+ {
+  "id": 7393321,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Socialstyrelsen/VISO light-regime tender 'Boern og unge med synstab' (specialist advice for children with vision loss), one of six VISO tenders. The 2022 CN (seq 1) gives DKK 154.68 m, and its text says that figure covers the full 8-year term (2+2+2+2). The 2023 CAN (seq 2) gives DKK 15.468 bn for VAL_TOTAL, VAL_ESTIMATED_TOTAL and the RES-1 total, with a single bid from Region Sjaelland. The head is DKK 15.47 bn (EUR 2.07 bn), the CN figure x100.",
+  "signals": "The sibling VISO tenders show the same CN-to-CAN x100 jump: 7393311 (DKK 13.88 bn), 7393312 (22.4 bn), 7393314 (9.16 bn) and 7393320 (22.28 bn). That points to one systematic error by one publisher in the CAN batch. DKK 15 bn for a regional specialist-advice contract is implausible; DKK 155 m over 8 years (about 19 m a year) is plausible."
+ },
+ {
+  "id": 6543414,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Kalundborg Kommune household waste collection (about 24,500 homes and 7,000 summer houses). The 2019 CAN (seq 2) awards DKK 179.8 m to City Container Cph. The 2022 F20 (seq 3, 120566-2022) has VAL_TOTAL_BEFORE DKK 179.8 m and VAL_TOTAL_AFTER DKK 203.1 m, but its section V LotResult VAL_TOTAL is DKK 17.98 bn. The fold elected that x100 figure (EUR 2.42 bn).",
+  "signals": "The same notice contradicts the head: its own before-value is DKK 179.8 m. A municipality of about 49k people cannot have a EUR 2.4 bn waste contract. The real current value is DKK 203.1 m (the modification's after-value), which the fold does not carry as an amount."
+ },
+ {
+  "id": 6904931,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "Crown Commercial Service framework, Digital Outcomes and Specialists 5, with 4 lots. The CN (seq 1) and its corrigenda (seq 2-3) give a procedure estimate of GBP 2 bn. Lot VAL_OBJECT values are LOT-1 GBP 140 m, LOT-2 GBP 575 m, LOT-3 GBP 5 m and LOT-4 (User Research Participants) GBP 20 m. The CAN (seq 4) restates the GBP 2 bn total and the same four lot figures. The x100 partner is LOT-4's GBP 20 m, a small lot under a pan-government framework, so the ratio is a round-number coincidence.",
+  "signals": "The lots sum to GBP 740 m, under the GBP 2 bn ceiling, which is normal headroom for a CCS framework. GBP 2 bn is restated across 4 notices, and the buyer's scale fits. Design hazard: the CAN lot results are stored with lot_id NULL in tender_version_amounts (result_value rows of 5 m, 20 m, 140 m, 575 m and 2 bn), so the partner looks like a procedure-level figure. A k=2 rule with no lot structure would wrongly refuse this head, and a sibling-lot filter keyed on lot_id would not see that the partner is a lot."
+ },
+ {
+  "id": 7956096,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "FTS framework 'Total Surgical Instruments Solutions', 7 lots, procedure estimate GBP 2 bn in seq 2-6. Lot estimates: lot 1 GBP 60 m, lot 2 GBP 20 m, lot 3 GBP 10 m, lot 4 GBP 1 bn (managed service), lot 5 GBP 1 m, lot 6 GBP 908 m, lot 7 GBP 1 m. The x100 partner is lot 2 (Reusable Surgical Instruments, GBP 20 m).",
+  "signals": "The lots sum exactly to the procedure total: 60+20+10+1000+1+908+1 = GBP 2,000 m. Both figures are confirmed as real. A national NHS framework at GBP 2 bn is plausible. A k=2 lot-partner rule would refuse this head unless it requires the lot-sum check to fail."
+ },
+ {
+  "id": 1003919,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "SUMAR (Catalan public social-services company), dynamic purchasing system for food supplies, 2026-2031, a single eForms CN (00157829-2026) with one lot. BT-27-Procedure is EUR 27,838,963.70, while BT-27-Lot for LOT-0001 is EUR 2,783,896,370.00. The fold elected the lot figure (EUR 2.78 bn) as head.",
+  "signals": "A one-lot procedure should have lot value equal to procedure value. The digit strings are identical, and the procedure figure's non-zero cents (.70) show the lot figure is the same number with the decimal dropped. EUR 2.8 bn of food for one regional social-services operator is implausible; EUR 27.8 m over 5 years is plausible."
+ },
+ {
+  "id": 6029915,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "Halton Borough Council '0-19 Healthy Child Service', one lot, 2018-04-01 to 2025-03-31. The CN (seq 1) estimate is GBP 24.15 m on both the lot and the procedure. The CAN (seq 2) gives the procedure VAL_TOTAL as GBP 2.415 bn (the head, EUR 2.73 bn), but its own RES-1 lot award is GBP 25.15 m to Bridgewater Community Healthcare, with a single bid. The exact x100 partner is estimated_value GBP 24.15 m, first published in seq 1 and carried into seq 2.",
+  "signals": "In a one-lot procedure the CAN's procedure total should match its lot award (GBP 25.15 m), and the head is not even 100x that: it is 100x the CN estimate, so the publisher keyed the old estimate with the decimal dropped. A borough of about 130k people spending about GBP 3.5 m a year on a 0-19 public-health service is plausible; GBP 2.4 bn is not."
+ },
+ {
+  "id": 7393320,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Socialstyrelsen/VISO 'Unge og voksne med synstab', one of six parallel light-regime advice tenders. CN 272061-2022 (seq 1, notice 22395362): VAL_ESTIMATED_TOTAL = VALUE = lot VAL_OBJECT = DKK 222,800,000.00. CAN 664845-2023 (seq 2, notice 23490646): procedure VAL_TOTAL and RES-1 VAL_ESTIMATED_TOTAL/VAL_TOTAL = DKK 22,280,000,000.00. The CAN's units equal the CN's cents (22280000000), so this is a dropped decimal (cents-as-units). DKK 22.3 bn (about EUR 3 bn) for 2 + 3x2 years of specialist advice to one provider (winner Instituttet for Blinde og Svagsynede, Kobenhavns Kommune) is implausible.",
+  "signals": "Single lot, single award. The same buyer made the same slip on the same day in sibling 7393312, so the error is systematic. The 471 corroboration exemption WOULD PROTECT this head: in the head version the wrong figure sits in two canonical fields, estimated_value (RES-1 VAL_ESTIMATED_TOTAL) and result_value (VAL_TOTAL), so a k=2 extension with the exemption still keeps it. Both fields come from the one mistyped notice."
+ },
+ {
+  "id": 8715174,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "Choice Housing (NI housing association), 'PRN1501 Land, Design and Build Greater Belfast', FTS. Tender notice 007104-2021: BT-27-Procedure GBP 25,000,000 but BT-27-Lot for the ONLY lot GBP 2,500,000,000. The award notice 033512-2023 restates both and carries one contract (H J Martin Ltd) at GBP 13,985,000. A GBP 2.5 bn single-lot residential land/design/build for one housing association is implausible. GBP 25 m is consistent with the award.",
+  "signals": "The only lot's estimate is 100x its own procedure total, where a one-lot procedure should have lot = procedure: this is the 'lot estimate above its own procedure total' signal. The contract value of GBP 13.99 m sits under the GBP 25 m figure. No corroboration: the GBP 2.5 bn appears in one field only, so a k=2 rule would refuse it."
+ },
+ {
+  "id": 7393312,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Socialstyrelsen/VISO 'Born og Unge med horetab', a sibling of 7393320. The CN 272053-2022 has VAL_ESTIMATED_TOTAL = VALUE = lot VAL_OBJECT = DKK 224,000,000.00, and two corrigenda (331390-2022, 341556-2022) changed only dates. The CAN 662255-2023 (notice 23492544) gives procedure VAL_TOTAL and RES-1 VAL_ESTIMATED_TOTAL/VAL_TOTAL = DKK 22,400,000,000.00, whose units equal the CN's cents: a dropped decimal. DKK 22.4 bn for hearing-loss advice (winner Region Syddanmark) is implausible.",
+  "signals": "Same buyer, same CAN dispatch date (2023-10-27) and same slip as 7393320. The 471 corroboration exemption WOULD PROTECT it: the head version carries the wrong figure in both estimated_value and result_value, copied from one notice. The partner figure is stable across three earlier versions."
+ },
+ {
+  "id": 7683806,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "CC des Terres du Val de Loire (a small French intercommunality, about 48k inhabitants), global performance contract for household waste collection and waste-centre operation, 2025-2032. CAN 462249-2023 (notice 23291522): procedure VALUE/VAL_TOTAL = EUR 3,366,127,254.00, while RES-1 (the only lot) VAL_TOTAL = EUR 33,661,272.54. The procedure figure is the RES-1 cents read as euros. EUR 33.7 m over 8 years (about EUR 4 m/yr) is plausible and EUR 3.4 bn is not.",
+  "signals": "Same version and same canonical field (result_value): the procedure total against the award of its single lot, which should be equal. The earlier CN/corrigendum carry no value. No corroboration: the big figure appears only in procedure result_value (lot_results do not count), so a k=2 rule would refuse it."
+ },
+ {
+  "id": 8386251,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "London Borough of Brent, Health Visiting and School Nursing. CN 307400-2016: estimate GBP 30,000,000. CAN 106259-2017: procedure VAL_TOTAL GBP 30 m and RES-1 VAL_TOTAL GBP 27,168,531.54 (CLCH). Republished CAN 059323-2018 (head): RES-1 VAL_ESTIMATED_TOTAL GBP 30 m, RES-1 VAL_TOTAL GBP 2,716,853,154 (the 2017 cents as pounds), and the procedure VAL_TOTAL 27,168,531.54 in the wrong currency EUR. A GBP 2.7 bn borough 0-19 public-health nursing contract is implausible.",
+  "signals": "The head version itself restates the correct digits (27,168,531.54) in its procedure total, under the wrong currency, so it is not a same-currency partner. The same version's RES-1 estimate (GBP 30 m) is 1/90 of the head. The partner is the 2017 CAN's RES-1 award. No corroboration in another field, so a k=2 rule would refuse it."
+ },
+ {
+  "id": 8800131,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "Crown Commercial Service Security Services framework (42 months, all UK public sector). Procedure BT-27 = GBP 3,000,000,000. Lot estimates: Lot 1 Total Security GBP 1.5 bn, Lot 2 Guarding GBP 800 m, Lot 3 Physical & Technical GBP 670 m, Lot 4 Additional Services GBP 30 m (the x100 partner). Each lot description states its value in prose (for example 'Lot 4 ... with a contract value of GBP 30,000,000'). The award notice 034047-2022 repeats them, and its framework contract value is GBP 3 bn.",
+  "signals": "The lots sum exactly to the procedure total: 1,500 + 800 + 670 + 30 = 3,000 m. The buyer is a national central purchasing body, so GBP 3 bn is plausible. A k=2 rule would make this a FALSE POSITIVE: the GBP 3 bn sits only in estimated_value in amounts (the contract value is outside amounts), so the 471 corroboration exemption does not save it. The lot-sum check is the separator."
+ },
+ {
+  "id": 292242,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "Marktgemeinde Rum (Tyrol, about 9.5k inhabitants), negotiated without call, award to TIGEWOSI for the 'Ortsteilzentrum Neu Rum' district-centre project. eForms subtype 29, notice 00155020-2024 (the only version): BT-27-Procedure = BT-161 = EUR 36,000,000, but BT-27-Lot for the ONLY lot = EUR 3,600,000,000. A EUR 3.6 bn district centre for a 9.5k municipality is implausible. EUR 36 m is consistent with the procedure estimate and the notice value.",
+  "signals": "One lot, so the lot estimate should equal the procedure estimate: the 'lot estimate above its own procedure total' signal again. Two independent procedure fields (estimate and result) agree on EUR 36 m. The tender/contract value is a EUR 1.00 placeholder (BT-720 = 100 cents). No corroboration of the EUR 3.6 bn, so a k=2 rule would refuse it."
+ },
+ {
+  "id": 627800,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "Single eForms result notice 00202229-2024 (subtype 30, the only version). BT-27-Lot for LOT-0001 is EUR 3,994,000,000.00, while BT-27-Procedure in the same notice is EUR 39,940,000.00. The BT-161 notice result is EUR 39,744,011.60, about 0.5% under the estimate, which fits an awarded works contract. The scope is the civil works and balance of plant for the Padova waste-to-energy plant, bought by HERAtech and won by Carron. About EUR 40 m is plausible for that; EUR 4 bn is not.",
+  "signals": "One lot only, so the lot estimate should equal the procedure total; here it is exactly 100x. This is the 'lot estimate above its own procedure total' signal. The procedure-level result value confirms the smaller figure. Same Italian eForms pattern as 474292 (BT-27-Lot = 100 x BT-27-Procedure in a single-lot notice). No other field of the head version carries the head figure."
+ },
+ {
+  "id": 6449525,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "other (estimated_value of v1 against result_value of v2: earlier version, different field)",
+  "evidence": "In the v1 contract notice 121277-2019 (SERMAS, continuous glucose monitoring, 3 lots), the lot values are 10,290,607.20 + 26,123,240.00 + 3,484,000.00 = EUR 39,897,847.20, exactly the procedure VAL_ESTIMATED_TOTAL. The v2 award notice 387550-2019 gives PROCEDURE VAL_TOTAL as EUR 3,989,784,720.00 and puts the same digit string on RES-2 and RES-3. RES-1 has 399,784,720.00, a garbled copy with one digit missing. So the award typed the estimate 39.897.847,20 without its decimal comma and repeated it on each lot.",
+  "signals": "The v1 lots sum exactly to the estimate. The award repeats one digit string across the procedure and every lot, which is not three distinct awards. A regional health service buying glucose monitors at EUR 4 bn is implausible; about EUR 40 m fits. The true award amounts are unknown, but the scale of the smaller figure is right."
+ },
+ {
+  "id": 7248710,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field (RES-1 VAL_ESTIMATED_TOTAL against VAL_TOTAL in the v3 award notice); also the v1 lot-2 VAL_OBJECT",
+  "evidence": "Sofia municipality, waste collection and street cleaning, 2 zone lots. In v1 (618278-2021), lot 1 is BGN 73,921,836.00 and lot 2 is BGN 69,384,819.85; they sum exactly to the procedure estimate BGN 143,306,655.85. The v2 award (444166-2022) puts lot 1 at exactly its estimate, BGN 73,921,836.00. The v3 award for lot 2 (506876-2022) states VAL_ESTIMATED_TOTAL BGN 69,384,819.85 and VAL_TOTAL BGN 6,938,481,985.00 for the same RES section: the same digits with the decimal dropped.",
+  "signals": "The v1 lots sum exactly to the procedure estimate. The sibling lot was awarded at exactly its estimate. Within the same RES section the award is 100x the estimate. BGN 6.9 bn (about EUR 3.5 bn) for one city zone of waste collection is implausible."
+ },
+ {
+  "id": 7428665,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "other (estimated_value and lot VAL_OBJECT of v1, DKK 300 m, against result_value of v3: earlier version, different field)",
+  "evidence": "Fodevarestyrelsen, a 4-year framework for cleaning and disinfection after a livestock disease outbreak. The v1 notice (350288-2022) gives VAL_ESTIMATED_TOTAL and the lot VAL_OBJECT as DKK 300,000,000. INFO_ADD in both v1 and the v3 award (611980-2022) says 'Kontraktvaerdien for denne 4 arig rammeaftale er ca. 50-300 mio. kr.' The v3 award puts PROCEDURE VAL_TOTAL, RES-1 and RES-2 each at DKK 30,000,000,000. That is 300000000,00 with the decimal comma lost.",
+  "signals": "The award notice's own free text restates the 50-300 m DKK range, which contradicts its 30 bn figure. The framework is non-exclusive with no guaranteed minimum. DKK 30 bn (about EUR 4 bn) for outbreak cleaning is implausible. The v2 corrigendum touched only a publication flag."
+ },
+ {
+  "id": 474292,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "Single eForms contract notice 00479769-2024 (subtype 16, the only version) from the Prefettura di Viterbo for migrant reception in single housing units of up to 50 places. BT-22-Lot is 'Lotto unico'. BT-27-Lot is EUR 5,151,297,975.00 and BT-27-Procedure is EUR 51,512,979.75, the same digits.",
+  "signals": "One lot only, so the lot should equal the procedure, but it is exactly 100x it: the 'lot estimate above its own procedure total' signal. One provincial prefecture spending EUR 5.15 bn on reception is implausible, larger than Italy's national annual reception spend; about EUR 51.5 m fits. Same Italian eForms single-lot pattern as 627800. The notice carries several DEFAULT_VALUE_CHANGE_ME placeholders, which points to a low-quality eSender payload."
+ },
+ {
+  "id": 704313,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field (BT-27-Procedure against BT-161-NoticeResult in the one notice)",
+  "evidence": "Single eForms result notice 00700516-2024 (subtype 29) from the Andalusia dependency agency: the 8th call to contract 1,500 new places for the elderly, 9 lots, 36 months. BT-27-Procedure is EUR 54,322,815.38. The same figure appears on every BT-27-Lot, every BT-720 tender value and every contract. Only BT-161-NoticeResult differs, at EUR 5,432,281,538.00: the same digits x100.",
+  "signals": "The same digit string is in every lot, bid and contract, and only the notice-level result is scaled. The nine copied lots sum to 488.9 m, which matches nothing, so they are copies rather than a breakdown. 1,500 places for 36 months is in the tens of millions; EUR 5.4 bn is about EUR 100k per place per month, which is implausible."
+ },
+ {
+  "id": 928196,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version (BT-27-Procedure and BT-271-Procedure in v1 against v2)",
+  "evidence": "INGESA framework for CT scanners, 5 lots, 24 months. In v1 (00217171-2026), BT-27-Procedure and BT-271 are EUR 46,797,460.35, exactly the sum of the lots: 4,303,020.00 + 12,689,979.75 + 20,111,268.60 + 4,214,352.00 + 5,478,840.00. The v2 change notice (00253689-2026, BT-140 update-add) only moves the deadline from 29 Apr to 11 May. Yet it restates BT-27 and BT-271 at EUR 4,679,746,035.00 while every lot value stays the same.",
+  "signals": "The lots still sum to the v1 and smaller figure in both versions. The change notice's actual purpose is a deadline extension, so the value change is a re-serialisation slip and not a restatement. CAVEAT for the rule design: in the head version the slipped figure appears in BOTH estimated_value and framework_maximum (BT-27 and BT-271). The 471 exemption ('also carried by a different canonical field of the head version') would therefore keep this slip even at k = 2, so a k = 2 rule would need a lot-sum check rather than that corroboration test."
+ },
+ {
+  "id": 6622852,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "London Borough of Bromley, 'Passenger Transport Services Framework' (taxis and minibuses for SEN and adult clients, single lot, 2019-09 to 2027-08). Award notice 492135-2020 (seq 3) has II.1.7 TED-VALUE and VAL_TOTAL of GBP 44,000,000. Only its V.2.4 RES-1 VAL_TOTAL reads GBP 4,400,000,000. The contract notice 469904-2019 lot VAL_OBJECT is also GBP 44,000,000. The head is the lone x100 figure.",
+  "signals": "Three of the four published figures (the contract-notice lot estimate, II.1.7 VALUE and II.1.7 VAL_TOTAL) agree on GBP 44m. GBP 4.4bn would be about GBP 550m a year for one borough's taxi framework, more than Bromley's whole net budget. GBP 44m over 8 years (about GBP 5.5m a year) is plausible. There is no corrigendum."
+ },
+ {
+  "id": 8638612,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "Crown Commercial Service pan-government 'Purchase of Standard and Specialist Vehicles' framework (FTS). The procedure estimate is GBP 4,000,000,000. It is BT-27 in the 2021 planning notice 021685-2021 and is stable through seq 1-4. The partner is lot 6 (refuse collection vehicles) at GBP 40,000,000 in seq 2-4.",
+  "signals": "The 10 lot estimates (2,700m + 15m + 500m + 50m + 500m + 75m + 40m + 50m + 50m + 20m) sum exactly to the GBP 4,000,000,000 procedure total. A national framework of this size is plausible. The 2025 award notice carries an OCDS contract value of GBP 5.52bn, which is the same order as GBP 4bn. A k=2 rule would refuse a correct head here because one lot happens to be 1/100 of the total."
+ },
+ {
+  "id": 4002408,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "CEA Cadarache, Jules Horowitz reactor electrical works, won by GMES SNEF / Clemessy. The r208 award notice 120601-2011 (seq 2) gives EUR 59,444,250.43 in every value field. A republication one day later, 122187-2011 (seq 3), gives EUR 5,944,425,043.00 in every field. The publisher's corrigendum 149622-2011 (seq 4, TD_DOCUMENT_TYPE 2, CONTENTS text) says verbatim 'Au lieu de: II.2.1 ... Valeur: 5 944 425 043,00 EUR. Lire: ... Valeur: 59 444 250,43 EUR.'",
+  "signals": "The buyer's own corrigendum confirms the x100 (a dropped decimal comma). The correction is free text in r2.0.8, not an F14 NEW_VALUE, so the fold carries the wrong seq-3 figure forward into seq 4. This is the publisher's slip, not the July-2011 FMTVAL defect, because the corrigendum quotes the wrong figure as published."
+ },
+ {
+  "id": 5991769,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Gaz-System, DN1000 gas pipeline Tworog-Tworzen (won by Denys / Porr). The F06 award 283246-2018 (seq 9) has II.1.7 and V.2.4 of PLN 288,345,300.00, and the V.2.4 estimate is PLN 214,479,956.13. The two F20 modification notices 168304-2022 and 337736-2022 (seq 10-11) carry V.2.4 RES-1 VAL_TOTAL of PLN 28,834,530,000. Their own MOD-1 blocks say value after modification PLN 288,024,177.70 and PLN 288,058,308.03.",
+  "signals": "Both F20s state the post-modification value at about PLN 288m in the same notice. The second F20's 'value before' (PLN 28,802,417,770) is exactly 100 times the first F20's 'value after' (PLN 288,024,177.70), so this buyer systematically drops the decimal in some F20 fields. The estimate is PLN 214m, and PLN 28.8bn is implausible for one pipeline section."
+ },
+ {
+  "id": 6370052,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Sprava zeleznic, track optimisation Lysa nad Labem - Celakovice (won by Eurovia / GJW / EZ Praha). The F03 award 220552-2019 (seq 4) has CZK 1,471,788,834.81, and 11 F20s (seq 5-15) repeat exactly that figure. Only F20 736883-2023 (seq 16, the head) has V.2.4 RES-1 VAL_TOTAL of CZK 147,178,883,481.00. Its own MOD-1 block says before CZK 1,616,075,394.69 and after CZK 1,617,842,396.79.",
+  "signals": "The same-day sibling F20 735637-2023 (seq 15) has CZK 1,471,788,834.81. The estimate is CZK 1,284,294,917. The slip is a dropped decimal comma ('1471788834,81' read as 147178883481). The head notice's own MOD before/after values contradict it, and the figure is the last of 13 restatements."
+ },
+ {
+  "id": 6362644,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Gaz-System, PL-SK interconnector Strachocina - border (won by Budimex / Mostostal Krakow). The F06 award 465021-2019 (seq 7) has II.1.7 VALUE and VAL_TOTAL of PLN 375,700,460.00, with V.2.4 at PLN 521,479,055. The 2020-21 F20s and F20 497314-2022 restate PLN 375,700,460. F20s 140506-2022 (seq 17) and 511252-2022 (seq 20, the head) have V.2.4 of PLN 37,570,046,000. Their own MOD-1 blocks say PLN 468.0m to 472.0m and PLN 472.0m to 499.3m.",
+  "signals": "The head notice's own MOD before/after values (about PLN 0.47-0.50bn) contradict PLN 37.6bn. The x100 F20s interleave with a correct F20 of the same year. The buyer and the 2022 F20 pattern are the same as 5991769. Separately, this Tender also carries unrelated notices (a Lodz design-services description and a Palmett PLN 380,860 award), which is a Tender-identity issue unrelated to the x100."
+ },
+ {
+  "id": 6371148,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "Boligselskabet Sct. Jorgen (a housing association), 'Boliger For Livet': 79 senior homes and a common house in Viborg, 7,950 m2 in total, single lot, won by Byggeselskabet Paulsen. The F03 award 384447-2019 (seq 3) has II.1.7 TED-VALUE and VAL_TOTAL of EUR 8,490,069,400.00, while V.2.4 RES-1 VAL_TOTAL is EUR 84,900,694.00. Neither the F02 nor the F14 carries a value.",
+  "signals": "Buyer size and scope rule the head out: EUR 8.49bn is about EUR 1.07m per m2. Even the partner, EUR 84.9m (about EUR 10.7k per m2), is high. It is likely DKK 84.9m labelled EUR, a currency question beyond the x100. The head is the x100 figure in either case."
+ }
+]

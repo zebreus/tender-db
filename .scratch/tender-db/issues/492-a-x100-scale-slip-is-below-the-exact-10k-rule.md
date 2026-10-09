@@ -1,12 +1,38 @@
 # 492 — a ×100 scale slip (k = 2) is below the exact-10ᵏ rule
 
-Status: ready-for-agent — UNIT 1 MEASURED 2026-10-09 over the €1–10 bn range. NEXT: unit 2 (decide) from the adjudication
-`wf_b250dc41-ad9` of the 56 hits.
-- The read was bounded `/v1/sql`: the band in keyset pages off `tenders_current_value_eur`, then a partner test in
-  batches of 200 ids.
-- **56 of the 3,510 heads in €1–10 bn** (49 TED, 7 FTS) have an exact ×100 same-currency partner amount, where the
-  partner is any version and any field of the same Tender. The list, with the head field and the partner's
-  field:lot:seq, is in `.scratch/tender-db/492-x100/x100-partner-hits-2026-10-09.json`.
+Status: ready-for-agent — UNIT 2 DECIDED 2026-10-09: extend the rule to k = 2 with a framework exemption. NEXT: unit 3, the
+build (data-model change in `ScalePartners`), then the drain.
+- **Adjudication** `wf_b250dc41-ad9`, 56 of 56 Tenders: 45 SLIP_HEAD, 9 GENUINE_DISTINCT, 1 SLIP_PARTNER (8819939), 1
+  PLACEHOLDER (6988280). The verdicts and the synthesis are in `.scratch/tender-db/492-x100/adjudication-*`.
+  - All nine genuine heads are multi-lot frameworks or DPSs, with 4 to 22 lots. The head is the procedure total and
+    the ×100 partner is one small lot: 8713680, 8423121, 8804016, 6572976, 8730895, 6904931, 7956096, 8800131,
+    8638612.
+  - A **plain k = 2 rule** would wrongly refuse 10 of 56 (17.9%), against 471's k ≥ 3 rate of 1 in 65.
+- **Decision.** Refuse ×100 heads, but keep a head F when all three hold:
+  - (b) the head version has two or more lots, and F is a procedure figure;
+  - (c) every ×100 partner is a lot figure: a lot-scope amount, a lot award, or a lot-null `result_value` equal to
+    a lot award of the same version;
+  - (d) the head version's lot figures sum to between F/10 and F.
+  - On the sample this refuses 45 of 45 slips with 1 wrong refusal (8819939, 1.8%), which matches k ≥ 3's rate.
+    8819939 is recorded as the known cost, as 8287294 is for 471.
+- **Unit 3 hazards** from the synthesis:
+  - `ScalePartners.figures` carries only (currency, cents). It needs per-figure scope, the head version's lot count
+    and the lot sums.
+  - Pre-eForms award notices store lot awards in `tender_version_amounts` with `lot_id` NULL. Reading scope from
+    `amounts.lot_id` alone would wrongly refuse 8423121, 6572976 and 6904931. Use `tender_version_lot_results`.
+  - 471's head-version corroboration exemption protects no genuine head at k = 2, and keeps 5–8 slips (one figure
+    copied into two slots of one notice). Do not apply it at k = 2.
+  - Pin tests: 8800131 kept (lots sum exactly); 8423121 kept (r2.0.9, lot partners at lot NULL); 8413585 refused
+    (27.7×); 5864294 refused (sum ≈ F, but the partner is a procedure figure); 474292 refused (one lot, the lot at
+    100× the procedure); 8819939 the recorded wrong refusal.
+  - Refused is not corrected. 5864294, 7240718, 6449525 and 6988280 fall to other wrong figures at the drain; re-read
+    them.
+  - Before the drain, adjudicate the ≥ €10 bn ×100 rows (8595426, 8618327, 8810872, plus the known slips 6640498 and
+    8784848).
+- Unit 1 (2026-10-09): **56 of the 3,510 heads in €1–10 bn** (49 TED, 7 FTS) have an exact ×100 same-currency
+  partner. The list is `.scratch/tender-db/492-x100/x100-partner-hits-2026-10-09.json`.
+- Unit 1's read was bounded `/v1/sql`: the band in keyset pages off `tenders_current_value_eur`, then a partner test in
+  batches of 200 ids. A partner is any version and any field of the same Tender.
 - Many partners are the same field in an earlier version, so a corrigendum is restating a value ×100 one way or
   the other. Some hits are placeholder ladders: 6988280's result values are €100k, €10m, €100m and €1bn.
 Was: ready-for-agent — filed 2026-10-08 from issue 471 unit 5. Band count done (5 of 306 rows at ×100; see
