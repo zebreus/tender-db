@@ -44,9 +44,23 @@ Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (the shadow compare, `TENDER
     statement-heavy end (about 41 rows per version).
   - A per-Tender read (adjunct 2) would hold a rich Tender's whole stored chain in memory. That is the wrong trade
     here; keep per-version reads.
-- NEXT: a small eForms-only shadow cohort (e.g. `eforms:eforms-sdk-1.3`, 4,834 notices) through the bounded batch, in
-  a queue gap with the RSS watchdog. Read us/row on rich versions, then project the corpus compare cost (1.12B
-  rows) and decide unit 4.
+- **SHADOW MEASUREMENT 3, job 2087** (2026-10-09 06:05 UTC, eForms only: `refold eforms:eforms-sdk-1.3`, 4,834
+  notices, 2,224 stale Tenders):
+  - Verdict: **2,224 verified, 0 corrected**. 83,133 tables and 1,581,504 rows identical.
+  - Cost: **1,581,504 rows of 7,888 versions in 4.3 s, 2.73 us per row, 548 us per version** (about 200 rows per
+    version). Phase 2 took 50.6 s, so the compare was 8.5% of it.
+  - Shadow drop-in removed right after (06:07 UTC); prod is back on the compare off.
+- **UNIT 3 DONE: the measurement decides the flip.**
+  - Solving runs 1 and 3 for cost = a × versions + b × rows gives **a ≈ 384 us per version** (the 14-statement
+    floor, about 27 us a statement) and **b ≈ 0.80 us per row**.
+  - Corpus projection for an all-profile refold, at about 14M versions and 1.12B leaf rows: 14M × 384 us ≈ 1.5 h,
+    plus 1.12B × 0.8 us ≈ 0.25 h, so **a compare of about 1.75 h**. That is about 5.6 us per average row, under the
+    6 us bar.
+  - With nothing rewritten (0 corrected on 33,236 stale Tenders across two cohorts), the fold should land near
+    the design's 1.4–3.1 h, against 6.6 h today.
+  - The per-version floor is the compare's largest term. Adjunct 2 (fewer statements per version: skip tables a
+    version cannot hold, or batch the 14 reads) is the follow-up lever, not a precondition.
+- NEXT: unit 4, the flip.
 - Was: UNIT 2 DONE AND DEPLOYED 2026-10-08 ~22:20 UTC (`79b1212`): A1/A2 goldens, B1 descriptor, B2 leaf-indexed Pending + moved values, B3 prepared DELETEs/stored chain/change INSERT, B4 per-Tender identity cache (adversarially reviewed: no refutation; its one hardening point, a reset after the sweep, landed). Every commit byte-identical against the goldens. NEXT: (1) read the next daily fold's time against 2075's 271 s (5,395 notices) and record it here; (2) unit 3, the compare engine in shadow mode (the plan is in the "Design decision" section; LEAF_TABLES/compare_select_sql are ready for it). Was: ready-for-agent — UNIT 2 commits A1/A2 (goldens), B1 (descriptor), B2 (leaf-indexed Pending, moved values), B3 (prepared DELETEs / stored chain / change INSERT) DEPLOYED 2026-10-08 21:3x UTC (`fc1b3dc`), all byte-identical against the goldens. Baseline for the timing record: daily project 2075 (2026-10-08) took 271 s for 5,395 notices → 5,245 tenders written. NEXT: B4 (the per-Tender identity cache, plan step 9; review it adversarially before deploying), then read the next daily fold's time against 2075. Was: ready-for-agent — UNIT 1 DESIGNED 2026-10-08 (`wf_21089c8e-de5`: three designs, a judge that verified
 their claims against the code and refuted the ones that did not hold). Decision: option (b), compare with the
 stored rows at version × table grain, plus "changed versus stored" feed rows. Recorded as
