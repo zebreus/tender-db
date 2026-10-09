@@ -41,10 +41,9 @@ async fn plan(conn: &turso::Connection, sql: &str, params: Vec<Value>) -> Vec<St
     plan
 }
 
-/// Every page of `source` in `order`, through the real `read::tenders_ordered`, following
+/// Every page of `filter` in `order`, through the real `read::tenders_ordered`, following
 /// the keyset cursor to the end.
-async fn every_page(conn: &turso::Connection, source: &str, order: HeadOrder, desc: bool) -> Vec<i64> {
-    let filter = Filter { source: Some(source.into()), ..Filter::default() };
+async fn every_page_of(conn: &turso::Connection, filter: &Filter, order: HeadOrder, desc: bool) -> Vec<i64> {
     let key = |id: i64| match order {
         HeadOrder::PublishedAt => published_of(id),
         HeadOrder::Deadline => deadline_of(id).expect("listed rows carry the key"),
@@ -52,7 +51,7 @@ async fn every_page(conn: &turso::Connection, source: &str, order: HeadOrder, de
     let mut out = Vec::new();
     let mut cursor = None;
     loop {
-        let page = tenders_ordered(conn, &filter, order, desc, cursor, 97).await.expect("page");
+        let page = tenders_ordered(conn, filter, order, desc, cursor, 97).await.expect("page");
         let Some(last) = page.last() else { break };
         cursor = Some((key(last.id), last.id));
         out.extend(page.iter().map(|r| r.id));
@@ -60,9 +59,14 @@ async fn every_page(conn: &turso::Connection, source: &str, order: HeadOrder, de
     out
 }
 
-fn expected(source: &str, order: HeadOrder, desc: bool) -> Vec<i64> {
+async fn every_page(conn: &turso::Connection, source: &str, order: HeadOrder, desc: bool) -> Vec<i64> {
+    every_page_of(conn, &Filter { source: Some(source.into()), ..Filter::default() }, order, desc).await
+}
+
+/// The ids `keep` admits from `source`, in `order`, as the list must serve them.
+fn expected_where(source: &str, order: HeadOrder, desc: bool, keep: impl Fn(i64) -> bool) -> Vec<i64> {
     let mut rows: Vec<(i64, i64)> = (1..=N)
-        .filter(|&i| source_of(i) == source)
+        .filter(|&i| source_of(i) == source && keep(i))
         .filter_map(|i| match order {
             HeadOrder::PublishedAt => Some((published_of(i), i)),
             HeadOrder::Deadline => deadline_of(i).map(|d| (d, i)),
@@ -73,6 +77,10 @@ fn expected(source: &str, order: HeadOrder, desc: bool) -> Vec<i64> {
         rows.reverse();
     }
     rows.into_iter().map(|(_, id)| id).collect()
+}
+
+fn expected(source: &str, order: HeadOrder, desc: bool) -> Vec<i64> {
+    expected_where(source, order, desc, |_| true)
 }
 
 #[tokio::test]
@@ -167,20 +175,80 @@ async fn a_source_companion_on_the_ordered_list_reads_an_index_range_not_a_sort(
     let (sql, _) = tenders_ordered_statement_pinned(&seeded, HeadOrder::PublishedAt, true, None, 51);
     assert!(!sql.contains("INDEXED BY"), "a seeded read is not pinned: {sql}");
 
-    // Anything that could drive the window from another range keeps the planner's choice:
-    // the other date column's bounds, a value band, a status (a `current_deadline` range).
-    // The ordering column's own bounds are the pinned index's range, so they stay pinned.
-    let ted = || Filter { source: Some("ted".into()), ..Filter::default() };
-    for (order, filter, pinned, what) in [
-        (HeadOrder::Deadline, Filter { published_after: Some(1), published_before: Some(2), ..ted() }, false, "published range under sort=deadline"),
-        (HeadOrder::PublishedAt, Filter { deadline_after: Some(1), ..ted() }, false, "deadline bound under sort=published_at"),
-        (HeadOrder::PublishedAt, Filter { min_value: Some(1), ..ted() }, false, "value bound"),
-        (HeadOrder::PublishedAt, Filter { status: Some(store::read::Status::Open), now: 1, ..ted() }, false, "status"),
-        (HeadOrder::PublishedAt, Filter { published_after: Some(1), published_before: Some(2), ..ted() }, true, "own range under sort=published_at"),
-        (HeadOrder::Deadline, Filter { deadline_before: Some(2), kind: Some("procedure".into()), ..ted() }, true, "own bound and kind under sort=deadline"),
+    // Which index each shape pins (unit 3): a closed range on the other date column pins
+    // that column's index; a one-sided other bound or a value band stays with the planner;
+    // `status=open` pins the deadline index; otherwise the ordering column's own index.
+    const NOW: i64 = 1_710_050_000;
+    let ted = || Filter { source: Some("ted".into()), now: NOW, ..Filter::default() };
+    let open = || Filter { status: Some(store::read::Status::Open), ..ted() };
+    let closed = || Filter { status: Some(store::read::Status::Closed), ..ted() };
+    let (published, deadline) = (Some("tenders_source_published"), Some("tenders_source_deadline"));
+    for (order, filter, pin, what) in [
+        (HeadOrder::Deadline, Filter { published_after: Some(1), published_before: Some(2), ..ted() }, published, "closed published range under sort=deadline"),
+        (HeadOrder::PublishedAt, Filter { deadline_after: Some(1), deadline_before: Some(2), ..ted() }, deadline, "closed deadline range under sort=published_at"),
+        (HeadOrder::PublishedAt, Filter { deadline_after: Some(1), ..ted() }, None, "one-sided deadline bound under sort=published_at"),
+        (HeadOrder::Deadline, Filter { published_after: Some(1), ..ted() }, None, "one-sided published bound under sort=deadline"),
+        (HeadOrder::PublishedAt, Filter { min_value: Some(1), ..ted() }, None, "value bound"),
+        (HeadOrder::PublishedAt, open(), deadline, "status=open under sort=published_at"),
+        (HeadOrder::Deadline, open(), deadline, "status=open under sort=deadline"),
+        (HeadOrder::PublishedAt, closed(), published, "status=closed under sort=published_at"),
+        (HeadOrder::Deadline, closed(), deadline, "status=closed under sort=deadline"),
+        (HeadOrder::PublishedAt, Filter { published_after: Some(1), published_before: Some(2), ..ted() }, published, "own range under sort=published_at"),
+        (HeadOrder::Deadline, Filter { deadline_before: Some(2), kind: Some("procedure".into()), ..ted() }, deadline, "own bound and kind under sort=deadline"),
     ] {
-        let (sql, _) = tenders_ordered_statement_pinned(&filter, order, true, None, 51);
-        assert_eq!(sql.contains("INDEXED BY"), pinned, "{what}: {sql}");
+        let (sql, params) = tenders_ordered_statement_pinned(&filter, order, true, None, 51);
+        match pin {
+            Some(index) => {
+                assert!(sql.contains(&format!("INDEXED BY {index}")), "{what}: pins {index}: {sql}");
+                // The window seeks it on the source; a pin on the other column sorts its range.
+                let plan = plan(&conn, &sql, params).await;
+                assert!(
+                    plan.iter().any(|l| l.contains(&format!("USING INDEX {index} (source=?"))),
+                    "{what}: the window must seek {index}:\n{}",
+                    plan.join("\n")
+                );
+            }
+            None => assert!(!sql.contains("INDEXED BY"), "{what}: unpinned: {sql}"),
+        }
+    }
+
+    // And every pinned or unpinned shape answers exactly the rows the filter admits, in
+    // order, page after page, for a dense and a sparse source.
+    let is_open = |i: i64| deadline_of(i).is_some_and(|d| d > NOW);
+    for source in ["ted", "doe"] {
+        let with = |f: Filter| Filter { source: Some(source.into()), ..f };
+        let cases: [(HeadOrder, Filter, Box<dyn Fn(i64) -> bool>, &str); 6] = [
+            (HeadOrder::PublishedAt, with(open()), Box::new(is_open), "status=open by published"),
+            (HeadOrder::PublishedAt, with(closed()), Box::new(move |i| !is_open(i)), "status=closed by published"),
+            (HeadOrder::Deadline, with(closed()), Box::new(move |i| !is_open(i)), "status=closed by deadline"),
+            (
+                HeadOrder::PublishedAt,
+                with(Filter { deadline_after: Some(1_710_020_000), deadline_before: Some(1_710_030_000), ..ted() }),
+                Box::new(|i| deadline_of(i).is_some_and(|d| (1_710_020_000..1_710_030_000).contains(&d))),
+                "closed deadline range by published",
+            ),
+            (
+                HeadOrder::Deadline,
+                with(Filter { published_after: Some(1_700_030_000), published_before: Some(1_700_060_000), ..ted() }),
+                Box::new(|i| (1_700_030_000..1_700_060_000).contains(&published_of(i))),
+                "closed published range by deadline",
+            ),
+            (
+                HeadOrder::PublishedAt,
+                with(Filter { deadline_after: Some(1_710_090_000), ..ted() }),
+                Box::new(|i| deadline_of(i).is_some_and(|d| d >= 1_710_090_000)),
+                "one-sided deadline bound by published (unpinned)",
+            ),
+        ];
+        for (order, filter, keep, what) in cases {
+            for desc in [true, false] {
+                assert_eq!(
+                    every_page_of(&conn, &filter, order, desc).await,
+                    expected_where(source, order, desc, &keep),
+                    "{source} {what} desc={desc}"
+                );
+            }
+        }
     }
 
     // Before the Reindex job builds the pinned index (issue 111), the read is unpinned and

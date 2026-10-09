@@ -1894,25 +1894,40 @@ pub async fn tenders_ordered(
     Ok(rows)
 }
 
-/// The `(source, key, id)` index an ordered Tender read should pin (issue 503), or `None`
-/// to leave the plan to the planner.
+/// The `(source, column, id)` index an ordered Tender read should pin (issue 503), or `None`
+/// to leave the plan to the planner. Unpinned, prod's planner seeks the source's slice and
+/// sorts all of it: 4.7–17 s for TED whatever else the filter says (`status=closed` under
+/// `sort=published_at` measured 17.2 s, a closed deadline range 4.7 s, `status=open` 4.7 s).
 ///
-/// Pinned only when the filter names a `source` and nothing else could drive the window
-/// more selectively than the source's slice in key order. `INDEXED BY` removes every other
-/// access path for `t`, so a bound on the OTHER date column, a value band or a status (a
-/// `current_deadline` range) keeps the planner's range seek, as before 503. Pinned, such a
-/// read would walk the source in key order testing the bound per row: the review's case
-/// was `source=ted&sort=deadline&published_after=…&published_before=…`, a one-month seek
-/// before and a walk of most of TED after.
+/// Which index (unit 3), given a `source` and the plain FROM:
+/// - **A closed range on the OTHER date column** pins that column's index: the range is a
+///   seek, and only its rows are sorted.
+/// - **A one-sided bound on the other column, or a value band**, is left to the planner:
+///   `INDEXED BY` removes every other access path, and the size of an open-ended range is
+///   unknown. Pinned, `source=ted&sort=deadline&published_after=…` would walk or sort most
+///   of TED.
+/// - **`status=open`** (`current_deadline > now`, the small open head) pins the deadline
+///   index under either ordering.
+/// - **Otherwise** (no status, `status=closed`, or only the ordering column's own bounds)
+///   the ordering column's own index serves the range and the order together.
 fn source_pin(filter: &Filter, order: HeadOrder) -> Option<&'static str> {
     filter.source.as_ref()?;
-    let other_column_bound = match order {
-        HeadOrder::PublishedAt => filter.deadline_after.is_some() || filter.deadline_before.is_some(),
-        HeadOrder::Deadline => filter.published_after.is_some() || filter.published_before.is_some(),
+    let (other, other_bounds) = match order {
+        HeadOrder::PublishedAt => (HeadOrder::Deadline, (filter.deadline_after, filter.deadline_before)),
+        HeadOrder::Deadline => (HeadOrder::PublishedAt, (filter.published_after, filter.published_before)),
     };
-    let elsewhere =
-        other_column_bound || filter.status.is_some() || filter.min_value.is_some() || filter.max_value.is_some();
-    (!elsewhere).then(|| order.source_index())
+    match other_bounds {
+        (Some(_), Some(_)) => return Some(other.source_index()),
+        (None, None) => {}
+        _ => return None,
+    }
+    if filter.min_value.is_some() || filter.max_value.is_some() {
+        return None;
+    }
+    match filter.status {
+        Some(Status::Open) => Some(HeadOrder::Deadline.source_index()),
+        Some(Status::Closed) | None => Some(order.source_index()),
+    }
 }
 
 /// Is the index `name` in this database? One `sqlite_master` lookup, which holds a row
