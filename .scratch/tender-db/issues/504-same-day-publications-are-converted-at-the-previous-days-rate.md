@@ -1,6 +1,33 @@
 # 504 — same-day publications are converted at the previous day's rate, and nothing re-derives them
 
-Status: ready-for-agent — filed 2026-10-09 from issue 495 unit 5's prod validation (`rederive-eur` job 2099).
+Status: ready-for-agent — UNITS 1+2 BUILT 2026-10-09 (option 1). NEXT: gate, review, deploy, then read the 2026-10-10
+daily's `rederive-eur-recent` line (prediction below).
+- **Unit 1, the diagnosis checked against the job history.** Of job 2099's 845 moved Tenders, 803 have heads
+  published on 2026-10-07, 25 on 10-08 and 17 on 10-09. The job log explains the split:
+  - The two all-profile refolds re-derived the whole corpus: 2044 on 10-07, 08:38 UTC, and 2067 on 10-08,
+    06:27 UTC, about 10 h each.
+  - 2067 reloaded rates at its start, before 10-08's `fetch-rates`, which was queued behind it and ran at
+    16:48 UTC. So it folded 10-07's publications at 10-06's rate: the 803.
+  - The delayed 10-08 daily fetched rates at 16:48 UTC, after the ECB fixing, so 10-08's publications came
+    out right.
+  - 10-09's publications carry 10-08's rate, and no walk can correct them before the 10-09 fixing is
+    fetched.
+  - So on a normal day (`fetch-rates` at about 07:38 UTC) every non-EUR same-day publication carries the
+    previous day's rate. The refolds had masked the pile-up.
+- **Unit 2, built:**
+  - `Spec::RederiveEurRecent` (`rederive-eur-recent`) runs in the daily chain after `fetch-rates` and before
+    `project`. `already_pending` guards it.
+  - It takes `Db::recent_head_tenders(now − 8 days)` off `tenders_current_published`, in windows of 500
+    through `Db::rederive_eur_tenders`. That is the full walk's window body (`rederive_scope`) with an id-set
+    scope, in one `BEGIN IMMEDIATE` per window: the moved values, D5's correction rows, the stamp, the
+    re-queue. It keeps no watermark.
+  - Tests:
+    - `the_recent_walk_rederives_only_the_tenders_it_is_given`, which also checks that the IN lists seek;
+    - `rederive_eur_recent_walks_only_the_recent_heads` (supervisor);
+    - the daily-chain order: fetch-rates, then rederive-eur-recent, then project.
+- **Prediction for 2026-10-10's daily:** `rederive-eur-recent` moves roughly the non-EUR share of 10-09's
+  publications (hundreds of Tenders, not thousands). The days before that are already right (job 2099).
+Was: ready-for-agent — filed 2026-10-09 from issue 495 unit 5's prod validation (`rederive-eur` job 2099).
 Kind: correctness / ADR-0014 money (`fetch-rates`, the daily pipeline, `rederive-eur`)
 Relates to: 495 (unit 5 made `rederive-eur` announce, ADR-0017 D5), 306 / 375 / 490 (the walk, the stamp, the
 re-queue), ADR-0014 D5 (missing days resolve to the nearest PREVIOUS business day)

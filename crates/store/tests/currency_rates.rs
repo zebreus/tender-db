@@ -526,3 +526,97 @@ async fn rows_of(conn: &store::turso::Connection, sql: &str) -> Vec<String> {
     }
     out
 }
+
+/// Issue 504: the daily `rederive-eur-recent` walks only the Tenders whose head was
+/// published in the last days, by id set, through the same window transaction as the
+/// full walk: the named Tenders are re-derived, announced, stamped and re-queued, and
+/// nothing else is touched (no watermark either: the set is recomputed every run).
+#[tokio::test]
+async fn the_recent_walk_rederives_only_the_tenders_it_is_given() {
+    let (db, path) = open("rederive-recent").await;
+    let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    let now = store::now_unix() / 86_400 * 86_400;
+    // Tender 1 published two days ago, tender 2 a month ago, tender 3 yesterday. Each
+    // carries 10000 USD cents stored at a wrong 7777; USD is 2.0 on each of those days.
+    let published = [(1, now - 2 * 86_400), (2, now - 30 * 86_400), (3, now - 86_400)];
+    let mut rates = Vec::new();
+    for (tender, at) in published {
+        for sql in [
+            format!(
+                "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at, \
+                 projection_epoch) VALUES ({tender}, 'ted', 'p{tender}', 'procedure', 1, {at}, 0, 7)"
+            ),
+            format!(
+                "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, \
+                 ingested_at, parse_state, projected) VALUES ({tender}, 'ted', 'OJ-{tender}', 'h{tender}', 'text', 1, \
+                 'm{tender}', 0, 'parsed', 1)"
+            ),
+            format!(
+                "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id) \
+                 VALUES ({tender}, 1, {at}, 'OJ-{tender}', {tender})"
+            ),
+            format!(
+                "INSERT INTO tender_version_amounts (tender_id, seq, field, cents, currency, eur_cents) \
+                 VALUES ({tender}, 1, 'estimated_value', 10000, 'USD', 7777)"
+            ),
+        ] {
+            conn.execute(&sql, ()).await.unwrap_or_else(|e| panic!("{sql}: {e}"));
+        }
+        rates.push(("USD".to_owned(), store::rates::civil_date(at), 2.0, "ecb".to_owned()));
+    }
+    db.upsert_currency_rates(&rates).await.unwrap();
+    db.reload_rates_lookup().await.unwrap();
+    let lookup = db.rates_lookup();
+
+    assert_eq!(db.recent_head_tenders(now - 8 * 86_400).await.unwrap(), vec![1, 3], "the heads of the last 8 days");
+
+    // The id list seeks each table by its `tender_id` prefix rather than scanning it.
+    for table in ["tender_versions", "tender_version_amounts", "tender_version_lot_results"] {
+        let mut rows = conn
+            .query(&format!("EXPLAIN QUERY PLAN SELECT a.rowid FROM {table} a WHERE a.tender_id IN (1, 3)"), ())
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Ok(store::turso::Value::Text(detail)) = row.get_value(3) {
+                plan.push_str(&detail);
+                plan.push('\n');
+            }
+        }
+        assert!(plan.contains("SEARCH"), "{table}: an IN list must seek, not scan:\n{plan}");
+    }
+
+    let window = db.rederive_eur_tenders(&lookup, &[1, 3]).await.expect("window");
+    assert_eq!(
+        (window.tenders, window.updated, window.changed_tenders.clone(), window.corrections, window.restamped, window.requeued),
+        (2, 2, vec![1, 3], 2, 2, 2),
+        "(tenders, rows updated, moved, correction rows, stamped, re-queued)"
+    );
+    assert_eq!(
+        rows_of(&conn, "SELECT tender_id || ':' || eur_cents FROM tender_version_amounts ORDER BY tender_id").await,
+        ["1:5000", "2:7777", "3:5000"],
+        "only the named Tenders are re-derived"
+    );
+    assert_eq!(
+        rows_of(&conn, "SELECT entity_kind || ' ' || entity_id FROM changes ORDER BY cursor").await,
+        ["tender 1", "tender 3"],
+        "and only they are announced"
+    );
+    assert_eq!(
+        rows_of(&conn, "SELECT id || ':' || projection_epoch FROM tenders ORDER BY id").await,
+        ["1:0", "2:7", "3:0"]
+    );
+    assert_eq!(rows_of(&conn, "SELECT id FROM notices WHERE projected = 0 ORDER BY id").await, ["1", "3"]);
+    assert_eq!(db.rederive_watermark().await.unwrap(), 0, "the recent walk keeps no watermark");
+    assert_eq!(db.rederive_eur_tenders(&lookup, &[]).await.unwrap().tenders, 0, "an empty set is a no-op");
+    let again = db.rederive_eur_tenders(&lookup, &[1, 3]).await.unwrap();
+    assert_eq!((again.updated, again.corrections), (0, 0), "a second run is quiet");
+
+    drop(conn);
+    drop(db);
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}

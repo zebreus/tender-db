@@ -470,112 +470,171 @@ impl Db {
             if tenders == 0 {
                 return Ok(RederiveWindow { watermark: after, ..RederiveWindow::default() });
             }
-            // The versions' publication dates, joined IN RUST: the SQL join
-            // (`JOIN tender_versions ON (tender_id, seq)`) is what wedged BOTH
-            // prod repair runs at the same window — a legacy mega-chain
-            // (2,983 versions) whose additive result rounds put 8.9M
-            // lot_result rows in one 10k-tender window, and turso's evaluation
-            // of the join at that volume spun at 100% CPU indefinitely, while
-            // the bare PK-range scan of the same rows returns in seconds. Two
-            // indexed range scans + an O(1) map lookup replace it.
-            let mut date_of: std::collections::HashMap<(i64, i64), String> =
-                std::collections::HashMap::new();
-            {
-                let mut rows = conn
-                    .query(
-                        "SELECT tender_id, seq, published_at FROM tender_versions \
-                          WHERE tender_id > ? AND tender_id <= ?",
-                        (Value::Integer(after), Value::Integer(watermark)),
-                    )
-                    .await?;
-                while let Some(row) = rows.next().await? {
-                    date_of.insert(
-                        (crate::int(&row, 0), crate::int(&row, 1)),
-                        civil_date(crate::int(&row, 2)),
-                    );
-                }
-            }
-            let mut scanned = 0i64;
-            let mut updated = 0i64;
-            let mut moved = crate::inplace::Moved::default();
-            for (table, cents_col, currency_col, eur_col, lot_col) in EUR_LOCI {
-                let lot = lot_col.map_or_else(|| "NULL".to_owned(), |c| format!("a.{c}"));
-                let mut rows = conn
-                    .query(
-                        &format!(
-                            "SELECT a.rowid, a.{cents_col}, a.{currency_col}, a.{eur_col}, \
-                                    a.tender_id, a.seq, {lot} \
-                               FROM {table} a \
-                              WHERE a.tender_id > ? AND a.tender_id <= ?"
-                        ),
-                        (Value::Integer(after), Value::Integer(watermark)),
-                    )
-                    .await?;
-                let mut pending: Vec<(i64, Option<i64>)> = Vec::new();
-                while let Some(row) = rows.next().await? {
-                    scanned += 1;
-                    let stored = crate::opt_int_of(&row, 3);
-                    let (tender_id, seq) = (crate::int(&row, 4), crate::int(&row, 5));
-                    let date = date_of.get(&(tender_id, seq));
-                    let derived =
-                        match (crate::opt_int_of(&row, 1), crate::opt_text_of(&row, 2), date) {
-                            (Some(cents), Some(currency), Some(date)) => {
-                                rates.eur_cents(cents, &currency, date)
-                            }
-                            _ => None,
-                        };
-                    if derived != stored {
-                        pending.push((crate::int(&row, 0), derived));
-                        moved.row(tender_id, seq, crate::opt_int_of(&row, 6));
-                    }
-                }
-                drop(rows);
-                updated += pending.len() as i64;
-                if !pending.is_empty() {
-                    let mut stmt = conn
-                        .prepare(&format!("UPDATE {table} SET {eur_col} = ? WHERE rowid = ?"))
-                        .await?;
-                    for (rowid, value) in pending {
-                        stmt.execute((crate::opt_int(value), Value::Integer(rowid))).await?;
-                    }
-                }
-            }
-            let changed_tenders = moved.tender_ids();
-            let (mut corrections, mut restamped, mut requeued) = (0, 0, 0);
-            if !changed_tenders.is_empty() {
-                corrections = moved.announce(&conn, now).await?;
-                restamped = Db::stamp_tenders_stale(&conn, changed_tenders.clone()).await?;
-                let notices = Db::notice_ids_of_tenders(&conn, &changed_tenders).await?;
-                requeued = Db::requeue_notice_ids(&conn, &notices, false).await?;
-            }
+            let mut window = rederive_scope(&conn, rates, &Scope::Range { after, watermark }, now).await?;
             conn.execute(
                 "UPDATE projection_state SET rederive_eur_watermark = ? WHERE id = 0",
                 (Value::Integer(watermark),),
             )
             .await?;
-            Ok(RederiveWindow {
-                tenders,
-                scanned,
-                updated,
-                changed_tenders,
-                corrections,
-                restamped,
-                requeued,
-                watermark,
-            })
+            window.tenders = tenders;
+            window.watermark = watermark;
+            Ok(window)
         })
         .await?;
-        // The window is durable from here, so a doorbell that fails to ring is logged,
-        // not returned: failing the job would report applied work as not applied. The
-        // next change anyone appends rings for these rows too (it publishes the newest
-        // cursor).
+        self.ring_for_rederive(&conn, &window).await;
+        Ok(window)
+    }
+
+    /// Issue 504: one window of the same walk over an explicit set of Tenders, the
+    /// daily `rederive-eur-recent`'s unit. The same transaction holds the moved
+    /// `eur_cents`, D5's correction rows, the stamp and the re-queue. There is no
+    /// watermark: the set is recomputed from scratch on every run. The caller keeps
+    /// `ids` to a few hundred, because each statement carries them as an `IN` list.
+    pub async fn rederive_eur_tenders(&self, rates: &RatesLookup, ids: &[i64]) -> turso::Result<RederiveWindow> {
+        if ids.is_empty() {
+            return Ok(RederiveWindow::default());
+        }
+        let conn = self.conn().await;
+        let now = crate::now_unix();
+        let window = Db::immediate(&conn, async {
+            let mut window = rederive_scope(&conn, rates, &Scope::Ids(ids), now).await?;
+            window.tenders = ids.len() as i64;
+            window.watermark = ids.iter().copied().max().unwrap_or(0);
+            Ok(window)
+        })
+        .await?;
+        self.ring_for_rederive(&conn, &window).await;
+        Ok(window)
+    }
+
+    /// Issue 504: the Tenders whose head version was published at or after `since`
+    /// (epoch seconds), ascending, off `tenders_current_published`. These are the ones
+    /// a same-day rate can have missed: the daily fold converts a version published
+    /// today before the ECB publishes today's rate.
+    pub async fn recent_head_tenders(&self, since: i64) -> turso::Result<Vec<i64>> {
+        let conn = self.reader().await?;
+        let mut rows =
+            conn.query("SELECT id FROM tenders WHERE current_published_at >= ?", (Value::Integer(since),)).await?;
+        let mut ids = Vec::new();
+        while let Some(row) = rows.next().await? {
+            ids.push(crate::int(&row, 0));
+        }
+        ids.sort_unstable();
+        Ok(ids)
+    }
+
+    /// Ring the doorbell for a committed rederive window's correction rows. The
+    /// window is durable by now, so a doorbell that fails to ring is logged, not
+    /// returned: failing the job would report applied work as not applied. The next
+    /// change anyone appends rings for these rows too (it publishes the newest cursor).
+    async fn ring_for_rederive(&self, conn: &turso::Connection, window: &RederiveWindow) {
         if window.corrections > 0
-            && let Err(e) = self.publish_cursor(&conn).await
+            && let Err(e) = self.publish_cursor(conn).await
         {
             eprintln!("[rederive-eur] window up to tender {} committed; doorbell: {e}", window.watermark);
         }
-        Ok(window)
     }
+}
+
+/// Which Tenders a rederive window covers: an id range of the full walk, or an explicit
+/// set (issue 504's recent walk).
+enum Scope<'a> {
+    Range { after: i64, watermark: i64 },
+    Ids(&'a [i64]),
+}
+
+impl Scope<'_> {
+    /// The predicate on `col` (a `tender_id` column) and its parameters. Either form is
+    /// a seek on the `(tender_id, …)` prefix of each table's primary key or by-version
+    /// index.
+    fn predicate(&self, col: &str) -> (String, Vec<Value>) {
+        match self {
+            Scope::Range { after, watermark } => {
+                (format!("{col} > ? AND {col} <= ?"), vec![Value::Integer(*after), Value::Integer(*watermark)])
+            }
+            Scope::Ids(ids) => (
+                format!("{col} IN ({})", vec!["?"; ids.len()].join(", ")),
+                ids.iter().map(|&id| Value::Integer(id)).collect(),
+            ),
+        }
+    }
+}
+
+/// The body of a rederive window, inside the caller's transaction: re-derive the four
+/// loci's EUR siblings for `scope`, rewrite the rows that moved, and hand the moved
+/// Tenders to D5's correction rows, the stale stamp and the re-queue. Returns the
+/// counts; the caller fills in `tenders` and `watermark`.
+async fn rederive_scope(
+    conn: &turso::Connection,
+    rates: &RatesLookup,
+    scope: &Scope<'_>,
+    now: i64,
+) -> turso::Result<RederiveWindow> {
+    // The versions' publication dates, joined IN RUST: the SQL join
+    // (`JOIN tender_versions ON (tender_id, seq)`) is what wedged BOTH
+    // prod repair runs at the same window — a legacy mega-chain
+    // (2,983 versions) whose additive result rounds put 8.9M
+    // lot_result rows in one 10k-tender window, and turso's evaluation
+    // of the join at that volume spun at 100% CPU indefinitely, while
+    // the bare PK-range scan of the same rows returns in seconds. Two
+    // indexed range scans + an O(1) map lookup replace it.
+    let mut date_of: std::collections::HashMap<(i64, i64), String> = std::collections::HashMap::new();
+    {
+        let (pred, params) = scope.predicate("tender_id");
+        let mut rows =
+            conn.query(&format!("SELECT tender_id, seq, published_at FROM tender_versions WHERE {pred}"), params).await?;
+        while let Some(row) = rows.next().await? {
+            date_of.insert((crate::int(&row, 0), crate::int(&row, 1)), civil_date(crate::int(&row, 2)));
+        }
+    }
+    let mut scanned = 0i64;
+    let mut updated = 0i64;
+    let mut moved = crate::inplace::Moved::default();
+    for (table, cents_col, currency_col, eur_col, lot_col) in EUR_LOCI {
+        let lot = lot_col.map_or_else(|| "NULL".to_owned(), |c| format!("a.{c}"));
+        let (pred, params) = scope.predicate("a.tender_id");
+        let mut rows = conn
+            .query(
+                &format!(
+                    "SELECT a.rowid, a.{cents_col}, a.{currency_col}, a.{eur_col}, a.tender_id, a.seq, {lot} \
+                       FROM {table} a WHERE {pred}"
+                ),
+                params,
+            )
+            .await?;
+        let mut pending: Vec<(i64, Option<i64>)> = Vec::new();
+        while let Some(row) = rows.next().await? {
+            scanned += 1;
+            let stored = crate::opt_int_of(&row, 3);
+            let (tender_id, seq) = (crate::int(&row, 4), crate::int(&row, 5));
+            let date = date_of.get(&(tender_id, seq));
+            let derived = match (crate::opt_int_of(&row, 1), crate::opt_text_of(&row, 2), date) {
+                (Some(cents), Some(currency), Some(date)) => rates.eur_cents(cents, &currency, date),
+                _ => None,
+            };
+            if derived != stored {
+                pending.push((crate::int(&row, 0), derived));
+                moved.row(tender_id, seq, crate::opt_int_of(&row, 6));
+            }
+        }
+        drop(rows);
+        updated += pending.len() as i64;
+        if !pending.is_empty() {
+            let mut stmt = conn.prepare(&format!("UPDATE {table} SET {eur_col} = ? WHERE rowid = ?")).await?;
+            for (rowid, value) in pending {
+                stmt.execute((crate::opt_int(value), Value::Integer(rowid))).await?;
+            }
+        }
+    }
+    let changed_tenders = moved.tender_ids();
+    let (mut corrections, mut restamped, mut requeued) = (0, 0, 0);
+    if !changed_tenders.is_empty() {
+        corrections = moved.announce(conn, now).await?;
+        restamped = Db::stamp_tenders_stale(conn, changed_tenders.clone()).await?;
+        let notices = Db::notice_ids_of_tenders(conn, &changed_tenders).await?;
+        requeued = Db::requeue_notice_ids(conn, &notices, false).await?;
+    }
+    Ok(RederiveWindow { scanned, updated, changed_tenders, corrections, restamped, requeued, ..RederiveWindow::default() })
 }
 
 /// One window of [`Db::rederive_eur_window`].

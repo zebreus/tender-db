@@ -304,7 +304,12 @@ Two ways jobs start:
   overlap, split wherever a page is full — issue 477 — ~12 s between any two
   requests, across jobs too; it fetches every day after the newest monthly's
   last day that holds no daily, at most 14 a run, and is cancellable at any
-  request) + `process fts daily (all)`; then one `project` that folds whatever landed.
+  request) + `process fts daily (all)`; then `fetch-rates` (the ECB file, up to yesterday's
+  fixing), `rederive-eur-recent` and one `project` that folds whatever landed.
+  `rederive-eur-recent` (issue 504) re-derives the EUR values of the Tenders whose head was
+  published in the last 8 days. The fold converts a version published today at yesterday's rate,
+  because the ECB publishes at about 16:00 CET, after this chain; the next morning's pass corrects
+  it. It announces what moved (ADR-0017 D5) and re-queues it for the `project` that follows.
   (The trailing `snapshot` job was removed with the backup feature,
   2026-08-06.) No operator action needed. Confirm a run fired by looking for a
   `probe` job (and the trailing

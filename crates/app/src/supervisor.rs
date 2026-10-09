@@ -194,6 +194,14 @@ const MARK_BATCH: i64 = 5_000;
 /// satellite, so the batch can be larger than [`MARK_BATCH`]'s wide quarantine
 /// rows while keeping each WAL transaction bounded.
 const BACKFILL_BATCH: i64 = 10_000;
+/// Issue 504: how far back the daily `rederive-eur-recent` reaches, by head publication
+/// date. A version published on day D is folded before D's fixing exists and is
+/// re-derived by the next day's run; eight days also cover a long weekend, a holiday,
+/// or a daily chain that did not run.
+const REDERIVE_RECENT_DAYS: i64 = 8;
+const REDERIVE_RECENT_PARAMS: &str = "rederive-eur, heads published in the last 8 days";
+/// Tenders per `rederive-eur-recent` window: each statement carries them as an `IN` list.
+const REDERIVE_RECENT_WINDOW: usize = 500;
 
 /// Org rows scanned per merge batch (issue 234). Each batch is one bounded
 /// index-range read plus that range's repoints in one transaction, with a
@@ -356,6 +364,12 @@ enum Spec {
     /// issue 366's drains), and an operator following this doc would have got an
     /// error rather than a head column.
     RederiveEur,
+    /// Issue 504: `RederiveEur` over the Tenders whose head was published in the last
+    /// [`REDERIVE_RECENT_DAYS`] days, after the daily `fetch-rates`. The daily fold
+    /// converts a version published today before the ECB publishes today's rate, so it
+    /// takes yesterday's; this pass re-derives it once the day's fixing has landed, and
+    /// announces and re-queues what moved (ADR-0017 D5) for the `project` that follows.
+    RederiveEurRecent,
     /// Repair the stale nested-org mention layer (issue 259 landing): the
     /// 2026-08-20 alias fix changed what `mentions()` emits, but the resolver's
     /// idempotency keeps recorded (notice, section) bindings, so refolds never
@@ -1457,6 +1471,9 @@ impl Supervisor {
             // successor is issue 375's open unit.
             "rederive-eur" => Ok(vec![
                 self.push("rederive-eur", "rederive-eur".into(), Spec::RederiveEur).await,
+            ]),
+            "rederive-eur-recent" => Ok(vec![
+                self.push("rederive-eur-recent", REDERIVE_RECENT_PARAMS.into(), Spec::RederiveEurRecent).await,
             ]),
             // Issue 307: one-time satellite population for the standing corpus.
             "backfill-org-name-variants" => Ok(vec![
@@ -4956,6 +4973,7 @@ impl Supervisor {
             | Spec::BackfillValues
             | Spec::BackfillCurrencies
             | Spec::RederiveEur
+            | Spec::RederiveEurRecent
             | Spec::BackfillOrgNameVariants
             | Spec::FetchRates
             | Spec::FetchRatesEcu => off_frame(|| self.run_backfill_spec(job)).await,
@@ -5851,6 +5869,49 @@ impl Supervisor {
                         String::new()
                     }
                 ))
+            }
+            Spec::RederiveEurRecent => {
+                Box::pin(async move {
+                    // The same reload first as the full walk: today's fetch-rates just
+                    // landed yesterday's fixing.
+                    let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
+                    let rates = self.db.rates_lookup();
+                    let since = store::now_unix() - REDERIVE_RECENT_DAYS * 86_400;
+                    let ids = self.db.recent_head_tenders(since).await.map_err(|e| e.to_string())?;
+                    let mut total = store::rates::RederiveWindow::default();
+                    for chunk in ids.chunks(REDERIVE_RECENT_WINDOW) {
+                        let window = self.db.rederive_eur_tenders(&rates, chunk).await.map_err(|e| e.to_string())?;
+                        total.tenders += window.tenders;
+                        total.scanned += window.scanned;
+                        total.updated += window.updated;
+                        total.corrections += window.corrections;
+                        total.restamped += window.restamped;
+                        total.requeued += window.requeued;
+                        self.set_phase(
+                            "walking",
+                            Some(total.tenders as u64),
+                            Some(ids.len() as u64),
+                            format!("{} money rows scanned, {} updated", total.scanned, total.updated),
+                        );
+                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                            eprintln!("supervisor: checkpoint after rederive-eur-recent window: {e}");
+                        }
+                    }
+                    Ok(format!(
+                        "eur_cents re-derived from {cached} cached rates over {} tender(s) whose head was \
+                         published since {} (issue 504): {} of {} money rows changed, {} correction row(s) \
+                         announced (ADR-0017 D5), {} tender(s) stamped epoch-stale and {} of their \
+                         notice(s) re-queued for the fold",
+                        total.tenders,
+                        store::rates::civil_date(since),
+                        total.updated,
+                        total.scanned,
+                        total.corrections,
+                        total.restamped,
+                        total.requeued,
+                    ))
+                })
+                .await
             }
             Spec::BackfillOrgNameVariants => {
                 let mut totals = store::OrgNameBackfill::default();
@@ -13397,6 +13458,16 @@ impl Supervisor {
         } else {
             ids.push(self.push("fetch-rates", "ecb eurofxref-hist (daily)".into(), Spec::FetchRates).await);
         }
+        // Issue 504: the fold below converts today's publications at yesterday's rate
+        // (the ECB publishes at ~16:00 CET, after this chain), so re-derive the recent
+        // Tenders now that yesterday's fixing has landed. What moved is announced and
+        // re-queued for the projection right after. Seconds, not minutes: a few days of
+        // heads, off `tenders_current_published`.
+        if self.already_pending("rederive-eur-recent") {
+            eprintln!("[schedule] rederive-eur-recent already queued or running, skipping today");
+        } else {
+            ids.push(self.push("rederive-eur-recent", REDERIVE_RECENT_PARAMS.into(), Spec::RederiveEurRecent).await);
+        }
         // One projection folds whatever the fetch+process just landed.
         ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false }).await);
         // D5 reveal recheck rides the daily chain — issue 274's design intent
@@ -13457,6 +13528,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "requeue-uuid-hubs"
             | "refold-buyer-roles"
             | "rederive-eur"
+            | "rederive-eur-recent"
             | "repair-nested-orgs"
             | "repair-placeholder-orgs"
             | "sweep-orphan-orgs"
@@ -14522,6 +14594,12 @@ mod tests {
         // …and the projection folds what the process pass just parsed.
         let project = queued.iter().rposition(|j| j.kind == "project").expect("a projection");
         assert!(process < project, "{queued:?}");
+        // Issue 504: the rates land, the recent Tenders are re-derived against them, and
+        // the projection then folds what that re-queued.
+        let rates = queued.iter().position(|j| j.kind == "fetch-rates").expect("fetch-rates rides the chain");
+        let recent =
+            queued.iter().position(|j| j.kind == "rederive-eur-recent").expect("rederive-eur-recent rides the chain");
+        assert!(rates < recent && recent < project, "{queued:?}");
     }
 
     /// Issue 342: an FTS backfill fans every month since 2021-01 (or the given
@@ -17522,6 +17600,63 @@ mod tests {
         };
         assert_eq!(projected(7).await, Some(store::turso::Value::Integer(0)), "the changed tender's notice is re-queued");
         assert_eq!(projected(8).await, Some(store::turso::Value::Integer(1)), "an unchanged tender's notice is left alone");
+        remove_db(&path);
+    }
+
+    /// Issue 504: `rederive-eur-recent` re-derives the Tenders whose head was published
+    /// in the last days and leaves older ones alone, announcing and re-queueing what moved.
+    #[tokio::test]
+    async fn rederive_eur_recent_walks_only_the_recent_heads() {
+        let path = format!("/tmp/tender-db-sup-rederive-recent-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        let recent = store::now_unix() / 86_400 * 86_400 - 86_400;
+        let old = 1_266_278_400; // 2010-02-16
+        for (id, at) in [(1, recent), (2, old)] {
+            for sql in [
+                format!(
+                    "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, \
+                     ingested_at, parse_state, projected) VALUES ({id}, 'ted', 'OJ-{id}', 'h{id}', 'text', 1, 'm{id}', 0, \
+                     'parsed', 1)"
+                ),
+                format!(
+                    "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at) \
+                     VALUES ({id}, 'ted', 'p{id}', 'procedure', 1, {at}, 0)"
+                ),
+                format!(
+                    "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id) \
+                     VALUES ({id}, 1, {at}, 'OJ-{id}', {id})"
+                ),
+                // Both wrong: 10000 USD cents are 5000 EUR cents at the 2.0 rates below.
+                format!(
+                    "INSERT INTO tender_version_amounts (tender_id, seq, field, cents, currency, eur_cents) \
+                     VALUES ({id}, 1, 'estimated_value', 10000, 'USD', 7777)"
+                ),
+            ] {
+                conn.execute(&sql, ()).await.unwrap();
+            }
+        }
+        db.upsert_currency_rates(&[
+            ("USD".into(), store::rates::civil_date(recent), 2.0, "ecb".into()),
+            ("USD".into(), "2010-02-12".into(), 2.0, "ecb".into()),
+        ])
+        .await
+        .unwrap();
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+
+        let msg = sup.run_spec(&job(Spec::RederiveEurRecent)).await.expect("rederive-eur-recent");
+        assert!(msg.contains("over 1 tender(s)") && msg.contains("1 of 1 money rows changed"), "got: {msg}");
+        assert!(msg.contains("1 correction row(s)") && msg.contains("1 of their notice(s) re-queued"), "got: {msg}");
+        let eur = |id: i64| {
+            let db = db.clone();
+            async move {
+                db.scalar(&format!("SELECT eur_cents FROM tender_version_amounts WHERE tender_id = {id}")).await.unwrap()
+            }
+        };
+        assert_eq!(eur(1).await, Some(store::turso::Value::Integer(5000)), "the recent Tender is re-derived");
+        assert_eq!(eur(2).await, Some(store::turso::Value::Integer(7777)), "an old one is the full walk's business");
         remove_db(&path);
     }
 
