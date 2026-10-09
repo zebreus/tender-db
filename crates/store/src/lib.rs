@@ -1225,7 +1225,7 @@ impl Db {
     /// Issue 498: the writer is ONE connection, so a holder that returned an error
     /// between its `BEGIN` and its `COMMIT` without a `ROLLBACK` (22 sites did, on some
     /// path, at the 2026-10-09 census), or panicked or was cancelled mid-transaction,
-    /// hands the next holder an open transaction. turso aborts only the failing
+    /// hands the next holder an open transaction. turso often aborts only the failing
     /// statement. The next holder's `BEGIN` would then fail, and its autocommit writes
     /// would join the dangling transaction and commit, or vanish, with it.
     ///

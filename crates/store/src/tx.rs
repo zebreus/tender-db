@@ -2,8 +2,11 @@
 //!
 //! The writer is ONE connection, so a transaction its holder leaves open is the next
 //! holder's problem: its `BEGIN` fails, and its autocommit writes join the leak. turso
-//! aborts only the failing statement, never the transaction, so every error between a
-//! `BEGIN` and its `COMMIT` must be followed by a `ROLLBACK`. The 2026-10-09 census found
+//! often aborts only the failing statement and leaves the transaction open (a constraint
+//! error, any error in a journaled write); other errors (a generic one on a read or an
+//! unjournaled write, a `RAISE(ROLLBACK)`) end the transaction itself. The caller cannot
+//! tell which, so every error between a `BEGIN` and its `COMMIT` must be followed by a
+//! `ROLLBACK` unless the connection is already back in autocommit. The 2026-10-09 census found
 //! 22 sites where some `?` skipped it. [`Db::immediate`] makes that impossible to forget:
 //! the body's error and the `COMMIT`'s error both roll back, and the original error is
 //! what the caller sees. (`Db::conn_for`'s handover check is the net under the cases no
@@ -20,26 +23,36 @@ impl Db {
     /// `COMMIT`: a best-effort `ROLLBACK`, and the ORIGINAL error is returned.
     ///
     /// `body` must be lazy (an `async {}` block or an `async fn` call), so it first runs
-    /// AFTER the `BEGIN` succeeds. A large body grows the caller's future by its size:
-    /// `Box::pin` it at the call site (CLAUDE.md records a stack overflow from exactly that).
-    pub(crate) async fn immediate<T>(
-        conn: &Connection,
-        body: impl Future<Output = turso::Result<T>>,
-    ) -> turso::Result<T> {
-        Self::within(conn, "BEGIN IMMEDIATE", body).await
+    /// AFTER the `BEGIN` succeeds.
+    pub(crate) fn immediate<'a, T: 'a>(
+        conn: &'a Connection,
+        body: impl Future<Output = turso::Result<T>> + 'a,
+    ) -> impl Future<Output = turso::Result<T>> + 'a {
+        Self::within(conn, "BEGIN IMMEDIATE", body)
     }
 
     /// [`Db::immediate`] with an explicit `BEGIN` form, for the sites that open a plain
     /// (deferred) `BEGIN` and must convert byte-identically.
-    pub(crate) async fn within<T>(
-        conn: &Connection,
+    ///
+    /// A plain fn that boxes `body` before its async block, on purpose. As an `async fn`
+    /// the body was held about three times over (the argument, the awaitee, and again in
+    /// `immediate`'s state), so every caller's future, and its O0 poll frame, grew by
+    /// several bodies. That is the growth issue 467's size budgets and CLAUDE.md's
+    /// `run_spec` stack overflow warn about. Boxed, the caller holds one pointer, at the
+    /// cost of one allocation per transaction. Boxing does not poll, so the body still
+    /// first runs after the `BEGIN`.
+    pub(crate) fn within<'a, T: 'a>(
+        conn: &'a Connection,
         begin: &'static str,
-        body: impl Future<Output = turso::Result<T>>,
-    ) -> turso::Result<T> {
-        // A failed BEGIN opened nothing, so there is nothing to roll back — and a
-        // transaction this call did not open is never this call's to end.
-        conn.execute(begin, ()).await?;
-        finish(conn, body.await).await
+        body: impl Future<Output = turso::Result<T>> + 'a,
+    ) -> impl Future<Output = turso::Result<T>> + 'a {
+        let body = Box::pin(body);
+        async move {
+            // A failed BEGIN opened nothing, so there is nothing to roll back — and a
+            // transaction this call did not open is never this call's to end.
+            conn.execute(begin, ()).await?;
+            finish(conn, body.await).await
+        }
     }
 }
 

@@ -15382,10 +15382,10 @@ impl Db {
             // inserting in place, so their ids/cursor stay in fold order.
             let mut pending = Pending::default();
             // Issue 498: any error — a Tender's reconcile, the flush, the head gate or
-            // the COMMIT — rolls the batch back. Boxed: the body is the fold's heaviest.
+            // the COMMIT — rolls the batch back. (`within` boxes the body.)
             let applied = Self::immediate(
                 &conn,
-                Box::pin(async {
+                async {
                     let mut applied = Applied::default();
                     // The Tenders whose version chain this batch rewrote — the set whose
                     // head pointer this run is answerable for (see `assert_heads_match`).
@@ -15400,8 +15400,8 @@ impl Db {
                     // Integrity gate (task #27), inside the transaction: a head
                     // that is not the last version never reaches disk.
                     Self::assert_heads_match(&conn, &rewrote).await?;
-                    turso::Result::Ok(applied)
-                }),
+                    Ok(applied)
+                },
             )
             .await?;
             changed_any |= applied.changes > 0;
@@ -30395,7 +30395,7 @@ impl Db {
         out: &mut TwinRepairOutcome,
     ) -> turso::Result<()> {
         let conn = self.conn().await;
-        Self::immediate(&conn, Box::pin(self.twin_repair_tx(&conn, plan, drops, now, out))).await?;
+        Self::immediate(&conn, self.twin_repair_tx(&conn, plan, drops, now, out)).await?;
         let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         Ok(())
     }
