@@ -5070,7 +5070,7 @@ mod head_pointer_plan_tests {
                     for cursor in [None, Some((1_780_000_000, 4_242))] {
                         out.push((
                             format!("tenders_ordered {name} {order:?} desc={desc} cursor={cursor:?}"),
-                            tenders_ordered_query(&f, order, desc, cursor, 100),
+                            tenders_ordered_query(&f, order, desc, cursor, 100, None),
                         ));
                     }
                 }
@@ -5538,7 +5538,7 @@ mod procedure_seed_tests {
             let page = Scope::Page { after: 0, limit: 100 };
             let mut by_id: Vec<i64> =
                 tenders_query(f, page).rows(conn, tender_row).await.unwrap().iter().map(|r| r.id).collect();
-            let mut ordered: Vec<i64> = tenders_ordered_query(f, HeadOrder::PublishedAt, true, None, 100)
+            let mut ordered: Vec<i64> = tenders_ordered_query(f, HeadOrder::PublishedAt, true, None, 100, None)
                 .rows(conn, tender_row)
                 .await
                 .unwrap()
