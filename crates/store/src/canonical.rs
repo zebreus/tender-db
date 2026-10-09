@@ -1488,6 +1488,14 @@ struct StoredHead {
     value_eur_cents: Option<i64>,
 }
 
+/// What `tender_identity` found (issue 495 unit 3): the stored head of an existing Tender, and
+/// whether it moved the Tender's `source` or `kind` in place, which is a Tender-level change
+/// the leaf compare cannot see.
+struct StoredIdentity {
+    head: StoredHead,
+    moved: bool,
+}
+
 /// One stale Tender's shadow compare (issue 495 unit 3), folded into [`Applied`] when the
 /// Tender is done.
 #[derive(Default)]
@@ -15806,7 +15814,7 @@ impl Db {
             shadow.swept_lots.clear();
         }
         let mut applied = Applied::default();
-        let (tender_id, created, stored_epoch, stored_head) =
+        let (tender_id, created, stored_epoch, stored_identity) =
             self.tender_identity(conn, p, now, rebuild, stmts).await?;
         applied.tenders_created += u64::from(created);
 
@@ -15984,7 +15992,7 @@ impl Db {
             };
             // An appended head is announced by its transition rows; otherwise a head column
             // that moved while every version compared identical is a correction.
-            if shadow && !tally.appended && stored_head.as_ref() != Some(&fresh) {
+            if shadow && !tally.appended && stored_identity.as_ref().map(|s| &s.head) != Some(&fresh) {
                 tally.differs = true;
                 tally.head_differs = true;
             }
@@ -16006,6 +16014,10 @@ impl Db {
             if p.versions.len() < stored.len() {
                 tally.differs = true;
                 tally.head_differs = true;
+            }
+            // A `source` or `kind` moved in place is a Tender-level change: rule T, no lots.
+            if stored_identity.as_ref().is_some_and(|s| s.moved) {
+                tally.differs = true;
             }
             let shadow = stmts.shadow.as_ref().expect("shadow statements");
             Self::count_compare(&mut applied, tally, shadow);
@@ -16089,7 +16101,7 @@ impl Db {
         now: i64,
         rebuild: bool,
         stmts: &mut TenderInserts,
-    ) -> turso::Result<(i64, bool, i64, Option<StoredHead>)> {
+    ) -> turso::Result<(i64, bool, i64, Option<StoredIdentity>)> {
         // On a rebuild the tender-content layer was just emptied by
         // [`Db::reset_tender_layer`] and every group_key is distinct, so identity is
         // ALWAYS a fresh insert — skip the random-position probe into the (now
@@ -16126,6 +16138,7 @@ impl Db {
             };
             if let Some(row) = rows.next().await? {
                 let id = int(&row, 0);
+                let moved = text(&row, 1) != p.source || text(&row, 3) != p.kind;
                 // As backfill deepens, a DÖE-first procedure gains its TED twin and
                 // the primary Source flips to TED (ADR-0003); keep the label current.
                 if text(&row, 1) != p.source {
@@ -16149,7 +16162,7 @@ impl Db {
                     title: opt_text_of(&row, 7),
                     value_eur_cents: opt_int_of(&row, 8),
                 };
-                return Ok((id, false, int(&row, 2), Some(head)));
+                return Ok((id, false, int(&row, 2), Some(StoredIdentity { head, moved })));
             }
         }
         stmts

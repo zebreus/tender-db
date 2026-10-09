@@ -529,6 +529,24 @@ async fn run_shadow_split() {
         );
     }
 
+    // A Tender-level change outside the leaf tables: `tender_identity` moves a stored `kind`
+    // back in place. Rule T only: no table rewritten, no lot announced.
+    let kind = text_of(&db, &format!("SELECT kind FROM tenders WHERE id = {chain}")).await;
+    db.execute_for_test(&format!("UPDATE tenders SET kind = 'edited' WHERE id = {chain}"))
+        .await
+        .expect("edit the stored kind");
+    db.set_projection_epoch_for_test(0).await.expect("age every Tender");
+    let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
+    let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
+    db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
+    let a = project::project_incremental(&db).await.expect("shadow refold").applied;
+    assert_eq!(
+        (a.tenders_corrected, a.tables_rewritten, a.correction_rows_planned),
+        (1, 0, 1),
+        "a moved kind is a Tender-level correction: {a:?}"
+    );
+    assert_eq!(text_of(&db, &format!("SELECT kind FROM tenders WHERE id = {chain}")).await, kind);
+
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
