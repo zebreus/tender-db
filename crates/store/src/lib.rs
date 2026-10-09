@@ -684,8 +684,9 @@ pub struct Db {
     /// streams wake on it and read the log themselves. It carries only the
     /// cursor — never a payload — so a slow subscriber cannot lose an event.
     cursor: watch::Sender<i64>,
-    /// The refold compare mode (issue 495 unit 3, [`canonical::RefoldCompare`]): 0 off,
-    /// 1 shadow. `TENDER_REFOLD_COMPARE` at open; [`Db::set_refold_compare`] overrides it.
+    /// The refold compare mode (issue 495, [`canonical::RefoldCompare`]): 0 off, 1 shadow,
+    /// 2 on. `TENDER_REFOLD_COMPARE` at open (on unless set); [`Db::set_refold_compare`]
+    /// overrides it.
     refold_compare: std::sync::atomic::AtomicU8,
 }
 

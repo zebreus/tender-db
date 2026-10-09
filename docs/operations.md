@@ -836,9 +836,16 @@ prefix of unchanged causing notices is re-derived and compared table by table wi
 
 **Reading the compare on the counts line.** The `project` job's counts carry `compare (issue 495): N tenders
 verified, M corrected; tables … skipped / … rewritten; rows …; K correction rows; … us per row` (in shadow, K
-is planned rather than written).
-The fold's `[project] done` line prints it too, with a per-table `identical/compared` split. `verified` Tenders
-were stamped and nothing else. `corrected` ones got exactly `K` correction rows in total.
+is planned rather than written). The fold's last journal lines print it too, on the full and the incremental path,
+with a per-table `identical/compared` split.
+- `verified`: nothing in the compared prefix moved, so the Tender's epoch was stamped. Versions appended past the
+  stored chain, if any, were still written and announced by their transition rows.
+- `corrected`: the Tender got its share of the `K` correction rows. That share is one `tender changed` plus a `lot
+  changed` per rule-L lot: every lot of the new head when the head moved, every surviving lot when stored versions
+  were dropped uncompared (a mid-chain insert or a cut).
+- A filtered SSE subscriber (`/v1/lots?winner=…`) gets an event for each corrected entity, `removed` for one outside
+  its filter (ADR-0017 D4, as for organization merges). A corpus-wide correction is therefore a burst of such
+  events: say so before running one.
 
 **Stop rule.** Before a refold, run its cohort in shadow on a sample (a `refold` of one small profile with a
 runtime drop-in `Environment=TENDER_REFOLD_COMPARE=shadow`) and read the planned correction rows. If the real run's

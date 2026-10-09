@@ -283,6 +283,17 @@ fn an_on_refold_rewrites_only_what_differs_and_announces_it() {
     on_a_big_stack(|| run_split(store::RefoldCompare::On));
 }
 
+/// Issue 495 unit 4 review (`wf_2d3e6fbc-68f`): a stale chain that moved past its compared
+/// prefix is still announced against what subscribers hold, not only fresh against fresh.
+/// - Appended on top of a stored head that differs in a Tender-scope row: rule T plus every
+///   lot of the new head.
+/// - A notice inserted mid-chain above a stored version that differs (dropped uncompared):
+///   rule T plus every surviving lot.
+#[test]
+fn an_on_refold_announces_a_chain_that_moved_past_its_prefix() {
+    on_a_big_stack(run_moved_chains);
+}
+
 /// Issue 495 unit 3: the shadow compare counts exactly the split the flip would act on.
 /// One stored row is edited at a time, every Tender is aged and re-folded in shadow, and
 /// the one corrected Tender, its one rewritten table and its planned correction rows
@@ -799,11 +810,13 @@ async fn run_shapes() {
         );
         assert!(a.compare_rows > 0 || shape == "move", "{shape}: the compare ran: {a:?}");
         match shape {
-            // Nothing moved inside the compared prefix: versions past it are transitions.
-            "equal" | "append" | "move" => {
+            // Nothing moved inside the compared prefix and no stored version was dropped:
+            // versions past it are transitions.
+            "equal" | "append" => {
                 assert_eq!((a.tenders_corrected, a.correction_rows_planned), (0, 0), "{shape}: {a:?}");
             }
-            // The head went back a version with nothing written past the prefix.
+            // A stored version was dropped uncompared (the mid-chain insert re-sequences the
+            // stored seq 3; the cut deletes it): a correction at the head, every surviving lot.
             _ => {
                 assert_eq!(a.tenders_corrected, 1, "{shape}: {a:?}");
                 assert!(a.correction_rows_planned >= 1, "{shape}: {a:?}");
@@ -870,4 +883,90 @@ async fn content_digest(db: &Db) -> String {
         out.push_str(&table_digest(db, table, "id", &[]).await);
     }
     out
+}
+
+/// The seq-less `changed` rows written after `cursor`, `(entity_kind, entity_id)` in cursor
+/// order: the correction rows (transitions carry a seq; the sweep writes `removed`).
+async fn corrections_after(db: &Db, cursor: i64) -> Vec<(String, i64)> {
+    let rows = text_of(
+        db,
+        &format!(
+            "SELECT group_concat(r, ';') FROM (SELECT entity_kind||','||entity_id AS r FROM changes \
+               WHERE cursor > {cursor} AND version_seq IS NULL AND op = 'changed' ORDER BY cursor)"
+        ),
+    )
+    .await;
+    rows.split(';')
+        .filter(|r| !r.is_empty())
+        .map(|r| {
+            let (kind, id) = r.split_once(',').expect("kind,id");
+            (kind.to_owned(), id.parse().expect("entity id"))
+        })
+        .collect()
+}
+
+async fn run_moved_chains() {
+    const CHAIN: [&str; 4] = [
+        "eforms-chain/1-cn-16-831374-2025.xml",
+        "eforms-chain/2-change-16-6281-2026.xml",
+        "eforms-chain/3-change-16-18902-2026.xml",
+        "eforms-chain/4-can-29-380868-2026.xml",
+    ];
+    // (what, first fold's notices, the late notice, the stored seq to edit, the lots announced)
+    for (what, first, late, edit_seq) in [
+        ("appended on a differing stored head", [0usize, 1, 2], 3usize, 3i64),
+        ("inserted mid-chain above a differing stored version", [0, 1, 3], 2, 3),
+    ] {
+        let (db, fetch_id, path) = scratch(&format!("moved-{edit_seq}-{late}")).await;
+        assert_eq!(db.refold_compare(), store::RefoldCompare::On);
+        for i in first {
+            ingest(&db, fetch_id, "ted", CHAIN[i]).await;
+        }
+        project::project(&db, false).await.expect("first fold");
+        db.build_tender_indexes().await.expect("the by-version indexes");
+        let chain = int_of(
+            &db,
+            "SELECT tender_id FROM tender_versions GROUP BY tender_id ORDER BY COUNT(*) DESC, tender_id LIMIT 1",
+        )
+        .await;
+        let edited = db
+            .execute_for_test(&format!(
+                "UPDATE tender_version_texts SET value = value || ' (edited)' WHERE rowid = \
+                   (SELECT MIN(rowid) FROM tender_version_texts WHERE tender_id = {chain} AND seq = {edit_seq} \
+                    AND lot_id IS NULL)"
+            ))
+            .await
+            .expect("edit a Tender-scope row of the stored version");
+        assert_eq!(edited, 1, "{what}");
+        db.set_projection_epoch_for_test(0).await.expect("age every Tender");
+        ingest(&db, fetch_id, "ted", CHAIN[late]).await;
+        let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
+        let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
+        db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
+        let cursor = int_of(&db, "SELECT COALESCE(MAX(cursor), 0) FROM changes").await;
+        let a = project::project_incremental(&db).await.expect("refold").applied;
+        assert_eq!(a.tenders_corrected, 1, "{what}: {a:?}");
+        let expected_lots = if late == 3 {
+            // The new head's lots.
+            int_of(&db, &format!("SELECT COUNT(DISTINCT lot_id) FROM tender_version_lots WHERE tender_id = {chain} AND seq = 4")).await
+        } else {
+            // Every surviving lot of the Tender.
+            int_of(&db, &format!("SELECT COUNT(*) FROM lots WHERE tender_id = {chain}")).await
+        };
+        assert!(expected_lots > 0, "{what}: the case needs lots to announce");
+        let got = corrections_after(&db, cursor).await;
+        assert_eq!(got.first(), Some(&("tender".to_owned(), chain)), "{what}: rule T first: {got:?}");
+        let lots: Vec<i64> = got.iter().filter(|(k, _)| k == "lot").map(|(_, id)| *id).collect();
+        assert_eq!(lots.len() as i64, expected_lots, "{what}: rule L's lots: {got:?}");
+        assert_eq!(got.len() as i64, 1 + expected_lots, "{what}: nothing else seq-less: {got:?}");
+        assert_eq!(a.correction_rows_planned, 1 + expected_lots as u64, "{what}: {a:?}");
+        assert_eq!(
+            int_of(&db, "SELECT COUNT(*) FROM tender_version_texts WHERE value LIKE '% (edited)'").await,
+            0,
+            "{what}: the edit is repaired"
+        );
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
 }

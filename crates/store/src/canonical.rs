@@ -1526,6 +1526,11 @@ struct CompareTally {
     lots: BTreeSet<i64>,
     /// The new head version's lots: rule L's first set, taken when `head_differs`.
     head_lots: BTreeSet<i64>,
+    /// Stored versions past the compared prefix were dropped without a compare (a mid-chain
+    /// insert, a replaced tail, a cut): what subscribers hold is not what the fresh chain
+    /// diffs against, so rule L takes every surviving lot of the Tender (ADR-0017 D3's
+    /// "simplest over-delivery").
+    every_lot: bool,
 }
 
 impl CompareTally {
@@ -1538,6 +1543,16 @@ impl CompareTally {
     /// and whether the whole version is (a differing `tender_versions` row, or no stored
     /// version at this seq).
     fn version(&mut self, fresh: &Pending, stored: Option<&StoredVersion>, is_head: bool) -> Rewrite {
+        if is_head {
+            // The new head's lots, appended or compared: rule L's first set.
+            let table = Leaf::VersionLots.table();
+            let (c, n) = (table.col("lot_id"), table.ncols());
+            for row in fresh.rows[Leaf::VersionLots as usize].chunks(n) {
+                if let Value::Integer(lot) = row[c] {
+                    self.head_lots.insert(lot);
+                }
+            }
+        }
         let Some(stored) = stored else {
             self.appended = true;
             for table in LEAF_TABLES {
@@ -1562,14 +1577,6 @@ impl CompareTally {
             let n = table.ncols();
             let new = &fresh.rows[i];
             let old = &stored.rows[i];
-            if is_head && table.leaf == Leaf::VersionLots {
-                let c = table.col("lot_id");
-                for row in new.chunks(n) {
-                    if let Value::Integer(lot) = row[c] {
-                        self.head_lots.insert(lot);
-                    }
-                }
-            }
             if new.is_empty() && old.is_empty() {
                 continue;
             }
@@ -8487,6 +8494,10 @@ pub struct Applied {
     /// marked-without-a-row route) than under a large `written` (the fold
     /// itself misbehaved), and before this split that diagnosis needed someone
     /// who knew both mechanisms reading code under time pressure.
+    ///
+    /// Under `RefoldCompare::On` (issue 495) every epoch-stale Tender takes this path, so
+    /// it counts the stale Tenders considered; `tenders_verified` says how many of them
+    /// were only stamped, and `versions_written` / `leaf_rows` what was really written.
     pub tenders_written: u64,
     /// Entity rows (lots/lot_results/bids/contracts) deleted by the shrinking-
     /// rewrite sweep (issue 103): rows no surviving version references after a
@@ -8496,12 +8507,13 @@ pub struct Applied {
     /// Tenders verified current by the unchanged-chain early return (same
     /// epoch, same causing-notice sequence) — considered, decided, zero writes.
     pub tenders_unchanged: u64,
-    /// Issue 495 unit 3, [`RefoldCompare::Shadow`] only: stale Tenders whose every compared
-    /// version came out identical, whose chain did not get shorter, and whose head (unless a
-    /// version was appended) is unchanged. The flip (unit 4) would write only their epoch,
-    /// plus any version appended past the stored chain, which is announced as today.
+    /// Issue 495 (`Shadow` and `On`): stale Tenders whose every compared version came out
+    /// identical, with no stored version dropped uncompared, an unchanged head (unless a
+    /// version was appended) and an unchanged source and kind. `On` writes only their
+    /// epoch, plus any version appended past the stored chain, announced as before.
     pub tenders_verified: u64,
-    /// Stale Tenders with any difference: the flip would rewrite what differs and announce it.
+    /// Stale Tenders with any difference: `On` rewrites what differs and announces it with
+    /// correction rows (`Shadow` counts what it would).
     pub tenders_corrected: u64,
     /// (version, leaf table) pairs with rows on either side that compared identical, and
     /// those that differ or belong to a version appended past the stored chain.
@@ -16170,23 +16182,32 @@ impl Db {
             chain_moved = true;
         }
         if shadow {
-            // A chain cut back with nothing written past the prefix moves the head back: a
-            // correction at the head. (With versions past it, their transition rows say so.)
-            if !tally.appended && p.versions.len() < stored.len() {
+            // Stored versions past the prefix were dropped uncompared (a mid-chain insert, a
+            // replaced tail, a cut). The transition rows of what replaced them diff fresh
+            // against fresh, never against the stored head subscribers hold, so the Tender is
+            // a correction at the head and rule L takes every surviving lot (ADR-0017 D3:
+            // over-delivering is harmless, delivering less is not).
+            if compared < stored.len() {
                 tally.differs = true;
+                tally.head_differs = true;
+                tally.every_lot = true;
+            }
+            // A prefix that differs, with versions appended past it: the appended versions'
+            // transitions diff against the FRESH last prefix version, so a tender-scope or
+            // cross-lot difference there reaches no lot reader. Announce the new head's lots.
+            if tally.appended && tally.differs {
                 tally.head_differs = true;
             }
             // A `source` or `kind` moved in place changes the Tender's own reading, which the
-            // lot rows carry too: announced as a head difference (rule L over-delivering is
-            // harmless; delivering less is not, ADR-0017 D3), unless an appended version's
-            // transition rows already make every reader re-read the Tender.
-            if !tally.appended && stored_identity.as_ref().is_some_and(|s| s.moved) {
+            // lot rows carry too, and a lot subscription never sees a `tender` row: announced
+            // as a head difference, appended versions or not.
+            if stored_identity.as_ref().is_some_and(|s| s.moved) {
                 tally.differs = true;
                 tally.head_differs = true;
             }
             let differs = tally.differs;
             let state = stmts.compare.as_ref().expect("compare statements");
-            let lots = Self::count_compare(&mut applied, tally, state);
+            let lots = Self::count_compare(&mut applied, tally, state, &written.lots);
             if acting && differs {
                 // ADR-0017 D3: rule T, then rule L's lots in id order, all seq-less, after the
                 // sweep's `removed` rows. Correction rows for lot_result, bid and contract are
@@ -16439,9 +16460,16 @@ impl Db {
     /// Fold one stale Tender's [`CompareTally`] into `applied`: verified when nothing differs,
     /// otherwise corrected, with ADR-0017 D3's correction rows. Rule T is one `tender
     /// changed`; rule L is the head version's lots when anything at the head differs, plus the
-    /// lots whose own rows differ, plus the lots this fold minted, minus the lots it swept.
+    /// lots whose own rows differ, plus the lots this fold minted, minus the lots it swept; or
+    /// every surviving lot (`surviving`, the lots the fresh chain names) when stored versions
+    /// were dropped uncompared.
     /// Returns rule L's lots, ascending (empty for a verified Tender).
-    fn count_compare(applied: &mut Applied, tally: CompareTally, state: &CompareState) -> BTreeSet<i64> {
+    fn count_compare(
+        applied: &mut Applied,
+        tally: CompareTally,
+        state: &CompareState,
+        surviving: &std::collections::HashSet<i64>,
+    ) -> BTreeSet<i64> {
         applied.tables_skipped += tally.tables_skipped;
         applied.tables_rewritten += tally.tables_rewritten;
         applied.rows_skipped += tally.rows_skipped;
@@ -16460,6 +16488,9 @@ impl Db {
         let mut lots = tally.lots;
         if tally.head_differs {
             lots.extend(tally.head_lots);
+        }
+        if tally.every_lot {
+            lots.extend(surviving.iter().copied());
         }
         lots.extend(state.minted_lots[..tally.prefix_minted.min(state.minted_lots.len())].iter().copied());
         for lot in &state.swept_lots {

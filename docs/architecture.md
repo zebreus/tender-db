@@ -84,10 +84,11 @@ merging only on exact normalised official identifiers with plausibility gates.
 
 Projection is deterministic and rebuildable: canonical = f(notice layer,
 merge rules). Re-projection appends new versions for new notices. A logic change
-re-derives existing versions: today an epoch-stale Tender is rewritten in full and its
-history re-announced on the feed; ADR-0017 (proposed) turns that into a compare against
-the stored rows that rewrites and announces only what differs. Seq-less change rows
-(`version_seq` NULL) mark changes that are not a version transition.
+re-derives existing versions: an epoch-stale Tender is compared with its stored rows and
+only what differs is rewritten and announced, with seq-less correction rows instead of a
+history replay (ADR-0017, since issue 495 unit 4; `TENDER_REFOLD_COMPARE=off` restores
+the full rewrite). Seq-less change rows (`version_seq` NULL) mark changes that are not a
+version transition.
 
 ## Change cursor ↔ backfill (resolved design)
 

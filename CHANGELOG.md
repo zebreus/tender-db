@@ -13,7 +13,8 @@ millions of change rows that changed nothing.
 The fold now compares the re-derived Tender with what is stored and writes only what differs. A Tender whose
 served reading moved gets two kinds of row, both with `version: null`:
 - one `tender` `changed`;
-- one `lot` `changed` for each lot whose reading moved.
+- one `lot` `changed` for each lot whose reading may have moved. When the Tender's current version moved, that is
+  every lot of the new version; when versions were inserted or removed mid-chain, every lot of the Tender.
 A Tender that did not move gets no row at all.
 
 Treat a `version: null` `changed` the way the docs already say: re-read the entity by id and upsert it. A client

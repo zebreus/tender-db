@@ -3476,6 +3476,13 @@ pub async fn project_incremental_chunked_observed(
         report.absorbed,
         t0.elapsed().as_secs_f64()
     );
+    // Issue 495: the compare's tally and its per-table split, as the full path prints them.
+    if let Some(line) = report.applied.compare_line() {
+        eprintln!("[project] {line}");
+    }
+    if let Some(line) = report.applied.compare_tables_line() {
+        eprintln!("[project] {line}");
+    }
     Ok(report)
 }
 
