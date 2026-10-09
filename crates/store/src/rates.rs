@@ -565,8 +565,14 @@ impl Db {
             })
         })
         .await?;
-        if window.corrections > 0 {
-            self.publish_cursor(&conn).await?;
+        // The window is durable from here, so a doorbell that fails to ring is logged,
+        // not returned: failing the job would report applied work as not applied. The
+        // next change anyone appends rings for these rows too (it publishes the newest
+        // cursor).
+        if window.corrections > 0
+            && let Err(e) = self.publish_cursor(&conn).await
+        {
+            eprintln!("[rederive-eur] window up to tender {} committed; doorbell: {e}", window.watermark);
         }
         Ok(window)
     }
