@@ -1899,19 +1899,25 @@ pub async fn tenders_ordered(
 /// sorts all of it: 4.7–17 s for TED whatever else the filter says (`status=closed` under
 /// `sort=published_at` measured 17.2 s, a closed deadline range 4.7 s, `status=open` 4.7 s).
 ///
-/// Which index (unit 3), given a `source` and the plain FROM:
+/// Which index (unit 3), given a `source` and the plain FROM, first match wins:
+/// - **`status=open`** (`current_deadline > now`, the small open head) pins the deadline
+///   index under either ordering, whatever bounds or value band come with it: the open head
+///   bounds them all, and under `sort=deadline` it serves the order too, so the LIMIT stops
+///   early. (Review `wf_acae9505-1b8`: checked after a closed published range, the pin read
+///   and sorted the whole range where the deadline index stops after ~50 open entries.)
 /// - **A closed range on the OTHER date column** pins that column's index: the range is a
 ///   seek, and only its rows are sorted.
 /// - **A one-sided bound on the other column, or a value band**, is left to the planner:
 ///   `INDEXED BY` removes every other access path, and the size of an open-ended range is
 ///   unknown. Pinned, `source=ted&sort=deadline&published_after=…` would walk or sort most
 ///   of TED.
-/// - **`status=open`** (`current_deadline > now`, the small open head) pins the deadline
-///   index under either ordering.
 /// - **Otherwise** (no status, `status=closed`, or only the ordering column's own bounds)
 ///   the ordering column's own index serves the range and the order together.
 fn source_pin(filter: &Filter, order: HeadOrder) -> Option<&'static str> {
     filter.source.as_ref()?;
+    if filter.status == Some(Status::Open) {
+        return Some(HeadOrder::Deadline.source_index());
+    }
     let (other, other_bounds) = match order {
         HeadOrder::PublishedAt => (HeadOrder::Deadline, (filter.deadline_after, filter.deadline_before)),
         HeadOrder::Deadline => (HeadOrder::PublishedAt, (filter.published_after, filter.published_before)),
@@ -1924,10 +1930,7 @@ fn source_pin(filter: &Filter, order: HeadOrder) -> Option<&'static str> {
     if filter.min_value.is_some() || filter.max_value.is_some() {
         return None;
     }
-    match filter.status {
-        Some(Status::Open) => Some(HeadOrder::Deadline.source_index()),
-        Some(Status::Closed) | None => Some(order.source_index()),
-    }
+    Some(order.source_index())
 }
 
 /// Is the index `name` in this database? One `sqlite_master` lookup, which holds a row

@@ -191,6 +191,9 @@ async fn a_source_companion_on_the_ordered_list_reads_an_index_range_not_a_sort(
         (HeadOrder::PublishedAt, Filter { min_value: Some(1), ..ted() }, None, "value bound"),
         (HeadOrder::PublishedAt, open(), deadline, "status=open under sort=published_at"),
         (HeadOrder::Deadline, open(), deadline, "status=open under sort=deadline"),
+        (HeadOrder::Deadline, Filter { published_after: Some(1), published_before: Some(2), ..open() }, deadline, "status=open beats a closed published range"),
+        (HeadOrder::PublishedAt, Filter { deadline_after: Some(1), ..open() }, deadline, "status=open beats a one-sided deadline bound"),
+        (HeadOrder::PublishedAt, Filter { min_value: Some(1), ..open() }, deadline, "status=open beats a value band"),
         (HeadOrder::PublishedAt, closed(), published, "status=closed under sort=published_at"),
         (HeadOrder::Deadline, closed(), deadline, "status=closed under sort=deadline"),
         (HeadOrder::PublishedAt, Filter { published_after: Some(1), published_before: Some(2), ..ted() }, published, "own range under sort=published_at"),
@@ -217,7 +220,7 @@ async fn a_source_companion_on_the_ordered_list_reads_an_index_range_not_a_sort(
     let is_open = |i: i64| deadline_of(i).is_some_and(|d| d > NOW);
     for source in ["ted", "doe"] {
         let with = |f: Filter| Filter { source: Some(source.into()), ..f };
-        let cases: [(HeadOrder, Filter, Box<dyn Fn(i64) -> bool>, &str); 6] = [
+        let cases: [(HeadOrder, Filter, Box<dyn Fn(i64) -> bool>, &str); 7] = [
             (HeadOrder::PublishedAt, with(open()), Box::new(is_open), "status=open by published"),
             (HeadOrder::PublishedAt, with(closed()), Box::new(move |i| !is_open(i)), "status=closed by published"),
             (HeadOrder::Deadline, with(closed()), Box::new(move |i| !is_open(i)), "status=closed by deadline"),
@@ -232,6 +235,12 @@ async fn a_source_companion_on_the_ordered_list_reads_an_index_range_not_a_sort(
                 with(Filter { published_after: Some(1_700_030_000), published_before: Some(1_700_060_000), ..ted() }),
                 Box::new(|i| (1_700_030_000..1_700_060_000).contains(&published_of(i))),
                 "closed published range by deadline",
+            ),
+            (
+                HeadOrder::Deadline,
+                with(Filter { published_after: Some(1_700_030_000), published_before: Some(1_700_060_000), ..open() }),
+                Box::new(move |i| is_open(i) && (1_700_030_000..1_700_060_000).contains(&published_of(i))),
+                "status=open with a closed published range by deadline",
             ),
             (
                 HeadOrder::PublishedAt,
