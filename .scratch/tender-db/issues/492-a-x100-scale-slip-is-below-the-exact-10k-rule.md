@@ -29,6 +29,17 @@ k = 2 rule with the framework exemption, plus `refold-value-band`. NEXT: gate, d
     partner is only ever a figure of OTHER lots; the version has a same-currency procedure figure at least as large.
     It keeps both genuine lots and refuses all 4 reached slips. Pinned by
     `a_x100_lot_figure_is_kept_only_beside_a_sibling_lot_partner`.
+  - **Review** `wf_cd4a83f3-6b2`: 8 confirmed, 1 refuted (legacy lot keys being per-notice positions). Fixed:
+    - The bound took any procedure figure, including one the election refuses or one over the ceiling, so a procedure
+      copy of the slip vouched for it and the head rose to it. Now it must be an admitted procedure figure.
+    - The head election no longer applies the exemption to lot candidates: an admitted bound outranks them anyway.
+    - A Part's or a LotsGroup's figure is no sibling partner. A PIN's PAR-0001 may be the CN's LOT-0001.
+    - Only a `result_value` award copy is excluded from the bound; an `estimated_value` total stays.
+    - Docs: 474292 and 8819939 added to the expected lot moves; /docs and the CHANGELOG state the full condition.
+  - Left, conservative direction (a genuine lot refused, never a slip kept): a legacy F03's V.2.4 lot estimate is
+    folded at tender scope as `estimated_value`. When it differs from the lot's award it registers as a procedure
+    figure and poisons that figure as a sibling partner. Attributing RES-section amounts to the award's lot needs a
+    section-origin marker on the fact. Reopen if a drain re-read shows a genuine lot lost this way.
 - **≥ €10 bn adjudication** (`wf_fd3e7a72-62a`; files `.scratch/tender-db/492-x100/adjudication-over-10bn-*`): 9 heads
   have a ×100 partner: 6 slips, 2 firm genuine and 1 contested.
   - Slips: 751664, 5545591, 6409799, 6640498, 7490161, 8810872.

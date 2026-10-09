@@ -10,7 +10,8 @@ A Tender's `value` (and what `min_value` / `max_value` compare) no longer elects
 exactly 100× another figure of the same Tender in the same currency, unless it is a framework total: a
 procedure-level figure over two or more lots, whose smaller partner is a lot figure, and whose lots add up to
 between a tenth of it and all of it. Each lot's served value follows the same rule, except that a lot figure is
-kept when its smaller partner belongs to a different lot and the notice states a procedure total at least as large.
+kept when its smaller partner only ever appears as a figure of other lots of the Tender (never procedure-level, never
+this lot's own) and the notice states an accepted procedure total at least as large.
 ×1,000 and up was already refused (issue 471). The refused figure stays in `amounts`. Affected Tenders are
 re-folded and announced on the change feed as corrections.
 
