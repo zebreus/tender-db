@@ -1,9 +1,29 @@
 # 492 — a ×100 scale slip (k = 2) is below the exact-10ᵏ rule
 
-Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (`3aa9272`, review fixes `10fea11`, sibling-lot exemption on top): the
-k = 2 rule with the framework exemption, plus `refold-value-band`. NEXT: gate, deploy, then the drain
-(`refold-value-band` dry, then wet, then `project`), then re-read the adjudicated ids and the lot moves (operations.md,
-"The ×100 extension").
+Status: done — UNIT 3 DEPLOYED AND DRAINED 2026-10-09 (`88eb7c5`, gate green after three review rounds). Drain:
+`refold-value-band` (job 2105) stamped 3,835 Tenders and 9,174 notices; `project` (job 2106) took 96 s. Compare:
+3,772 verified + 63 corrected = 3,835, so R3 is complete; 168 correction rows (63 tender, 105 lot).
+- **Re-read**, before against after (`tenders.current_value_eur_cents`):
+  - All 51 adjudicated slips fell: the 45 in €1–10 bn and the 6 at €10 bn or more.
+  - All 11 genuine frameworks kept their heads: the 9 in €1–10 bn, plus 8595426 and 8618327.
+  - 8819939 fell to €12 m (the recorded wrong refusal). 4871119 has no head (contested, as predicted). 6988280 is
+    at €10 m (its placeholder).
+  - Lot rows: 292242, 474292, 627800, 1003919, 8715174 and 8819939 went to NULL. 8748271's and 8811221's £1 bn lots
+    were kept by the sibling-lot exemption.
+  - Unreachable lot slips stayed on earlier-version rows (524394, 952611, 8591463, 8730855, 8821990), as recorded.
+- **9 corrected Tenders outside the adjudicated set** (461276, 886175, 1069955, 3742724, 4678005, 5142447, 5402929,
+  5871454, 8583960). Every one has a tender-scope `result_value` exactly 100× the single lot award of the same
+  notice. Unit 1's measurement searched amounts only, so it missed partners that exist only as lot awards. The raw
+  XML of 5871454 (091029-2017, R2.0.8 F03) states GLOBAL "1 187 457 299" beside CONTRACT "11 874 572,99": a publisher's
+  dropped decimal comma, so the refusal is right. 7 of the 9 now have no head, because the award is not a head
+  candidate. 1069955 and 8583960 fell to their estimates (€20.4 m, €18.9 m).
+- **Residuals:**
+  - 6409799 fell to RON 7.18 bn (€1.44 bn), which the adjudication called possibly another wrong figure.
+  - 7490161 is now €156 m, which may itself be cents-as-units.
+  - 8784848 (€72 bn) is unreachable by any partner rule: filed as **505**.
+  - A legacy F03's V.2.4 estimate can poison a sibling partner (recorded below). It errs only toward refusing.
+- History: UNIT 3 BUILT 2026-10-09 (`3aa9272`, review fixes `10fea11`, sibling-lot exemption `369f70e`, `36101c6`,
+  `88eb7c5`).
 - **Review** `wf_45a636e0-ec3`: 12 findings, 10 confirmed, 2 refuted (the k ≥ 3 corroboration shielding a ×100 figure:
   no measured head has both partners; the drain precondition: the ≥ €10 bn adjudication was already done). Fixed in
   `10fea11`:
