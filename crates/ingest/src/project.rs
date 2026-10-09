@@ -2733,6 +2733,17 @@ const INCREMENTAL_CHUNK: usize = 50_000;
 /// from the plan, so the bucketed sweep honours a SCOPED plan unchanged.
 const INCREMENTAL_BUCKET_THRESHOLD: usize = 100_000;
 
+/// Notices per incremental [`Phase2::ParsedFold`] batch (issue 502). `apply_plan_batch`
+/// holds a batch's whole parsed layer, its notice states and its folded projections in
+/// RAM at once, and an eForms notice is far heavier than the legacy notices
+/// [`APPLY_NOTICE_BATCH`] was sized on: on 2026-10-09 a 73k-notice eForms-SDK-1.6 re-fold
+/// grew the server past its 54 GB `MemoryHigh` inside its first 50k-notice batch and froze
+/// the box (job 2085). 5k bounds that batch tenfold, keeps a normal daily delta (a few
+/// thousand notices) in one batch as before, and lets a cooperative cancel land between
+/// batches. The fold order, and so every surrogate id, does not depend on the batch size:
+/// the groups are applied in `group_key` order either way.
+const INCREMENTAL_PARSED_BATCH: usize = 5_000;
+
 /// The incremental projection with a bounded, streamed Phase 1 (issue 81). Grouping
 /// and Phase 2 stay GLOBAL (one plan, one fold) so the output — surrogate ids
 /// included — is byte-identical to the old whole-delta path; only the parsed-layer
@@ -3393,7 +3404,7 @@ pub async fn project_incremental_chunked_observed(
                     report.stopped = true;
                     break;
                 }
-                let groups = db.next_plan_batch(&after, APPLY_NOTICE_BATCH).await?;
+                let groups = db.next_plan_batch(&after, INCREMENTAL_PARSED_BATCH).await?;
                 let Some(last) = groups.last() else { break };
                 after = last.group_key.clone();
                 tenders_done += groups.len() as u64;
