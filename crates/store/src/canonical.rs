@@ -1505,13 +1505,21 @@ struct CompareTally {
     rows_skipped: u64,
     rows_rewritten: u64,
     /// A compared table differed, the chain got shorter, or (with nothing appended) a head
-    /// column differs.
+    /// column, `source` or `kind` differs.
     differs: bool,
-    /// Something at the head differs: one of its tables, the chain's length, or a head column.
+    /// Something at the head differs: one of its tables, the chain's length, a head column,
+    /// `source` or `kind`.
     head_differs: bool,
-    /// The fold wrote versions past the stored chain. Those are announced by their own
-    /// transition rows, as today, never as corrections (ADR-0017 D3).
+    /// The fold wrote versions past the compared prefix. Those are announced by their own
+    /// transition rows, as today, never as corrections (ADR-0017 D1, D3).
     appended: bool,
+    /// How many of the Tender's minted lots were minted while writing the compared prefix:
+    /// only those join rule L (a lot an appended version mints is announced by its own
+    /// transition rows).
+    prefix_minted: usize,
+    /// Per leaf table, as in [`Applied`].
+    skipped_by_leaf: [u64; LEAF_COUNT],
+    rewritten_by_leaf: [u64; LEAF_COUNT],
     /// Lots whose own rows differ: rule L's second set.
     lots: BTreeSet<i64>,
     /// The new head version's lots: rule L's first set, taken when `head_differs`.
@@ -1529,12 +1537,18 @@ impl CompareTally {
             for table in LEAF_TABLES {
                 let rows = (fresh.rows[table.leaf as usize].len() / table.ncols()) as u64;
                 if rows > 0 {
-                    self.tables_rewritten += 1;
-                    self.rows_rewritten += rows;
+                    self.rewrite(table.leaf, rows);
                 }
             }
             return;
         };
+        let equal: [bool; LEAF_COUNT] = std::array::from_fn(|i| {
+            let (old, new) = (&stored.rows[i], &fresh.rows[i]);
+            old.len() == new.len() && old.iter().zip(new).all(|(a, b)| same_value(a, b))
+        });
+        // A differing `tender_versions` row rewrites the whole version (ADR-0017 D1.4): its
+        // child rows go with the FK parent.
+        let whole = !equal[Leaf::Versions as usize];
         let mut via: Option<LotsVia> = None;
         for table in LEAF_TABLES {
             let i = table.leaf as usize;
@@ -1553,22 +1567,37 @@ impl CompareTally {
                 continue;
             }
             let fresh_rows = (new.len() / n) as u64;
-            if old.len() == new.len() && old.iter().zip(new).all(|(a, b)| same_value(a, b)) {
+            if equal[i] && !whole {
                 self.tables_skipped += 1;
+                self.skipped_by_leaf[i] += 1;
                 self.rows_skipped += fresh_rows;
                 continue;
             }
-            self.tables_rewritten += 1;
-            self.rows_rewritten += fresh_rows;
+            self.rewrite(table.leaf, fresh_rows);
+            if equal[i] {
+                continue; // rewritten only because the version row differs: no lot of its own moved
+            }
             self.differs = true;
             if is_head {
                 self.head_differs = true;
             }
             let via = via.get_or_insert_with(|| LotsVia::of(fresh, stored));
-            for row in differing_rows(old, new, n) {
+            let mut moved = differing_rows(old, new, n);
+            if moved.is_empty() {
+                // The same rows in another order. The API serves several of these tables in
+                // rowid order, so every lot they hold reads differently: announce them all.
+                moved = old.chunks(n).chain(new.chunks(n)).collect();
+            }
+            for row in moved {
                 via.lots_of(table, row, &mut self.lots);
             }
         }
+    }
+
+    fn rewrite(&mut self, leaf: Leaf, rows: u64) {
+        self.tables_rewritten += 1;
+        self.rewritten_by_leaf[leaf as usize] += 1;
+        self.rows_rewritten += rows;
     }
 }
 
@@ -8454,9 +8483,15 @@ pub struct Applied {
     /// ADR-0017 D3's correction rows the flip would write: one seq-less `tender changed`
     /// (rule T) plus one seq-less `lot changed` per rule-L lot, per corrected Tender.
     pub correction_rows_planned: u64,
-    /// Stored rows the compare read back, and the time it spent reading and comparing.
+    /// Stored rows the compare read back, the versions it read them for (one prepared
+    /// SELECT per leaf table each), and the time it spent reading and comparing.
     pub compare_rows: u64,
+    pub compare_versions: u64,
     pub compare_nanos: u64,
+    /// `tables_skipped` and `tables_rewritten` per leaf table, in [`LEAF_TABLES`] order: the
+    /// identical share per table.
+    pub tables_skipped_by_leaf: [u64; LEAF_COUNT],
+    pub tables_rewritten_by_leaf: [u64; LEAF_COUNT],
 }
 
 impl Applied {
@@ -8479,7 +8514,29 @@ impl Applied {
         self.rows_rewritten += other.rows_rewritten;
         self.correction_rows_planned += other.correction_rows_planned;
         self.compare_rows += other.compare_rows;
+        self.compare_versions += other.compare_versions;
         self.compare_nanos += other.compare_nanos;
+        for i in 0..LEAF_COUNT {
+            self.tables_skipped_by_leaf[i] += other.tables_skipped_by_leaf[i];
+            self.tables_rewritten_by_leaf[i] += other.tables_rewritten_by_leaf[i];
+        }
+    }
+
+    /// The shadow compare's per-table split (issue 495 unit 3): each leaf table that held
+    /// rows, as `name skipped/total`, or `None` when no Tender was compared.
+    pub fn compare_tables_line(&self) -> Option<String> {
+        if self.tenders_verified + self.tenders_corrected == 0 {
+            return None;
+        }
+        let parts: Vec<String> = LEAF_TABLES
+            .iter()
+            .enumerate()
+            .filter_map(|(i, table)| {
+                let (skipped, rewritten) = (self.tables_skipped_by_leaf[i], self.tables_rewritten_by_leaf[i]);
+                (skipped + rewritten > 0).then(|| format!("{} {skipped}/{}", table.name, skipped + rewritten))
+            })
+            .collect();
+        Some(format!("compare (shadow, issue 495) tables identical/compared: {}", parts.join(", ")))
     }
 
     /// The shadow compare's tally for the counts line (issue 495 unit 3), or `None` when no
@@ -8491,7 +8548,7 @@ impl Applied {
         Some(format!(
             "compare (shadow, issue 495): {} tenders verified, {} corrected; tables {} skipped / {} \
              rewritten; rows {} skipped / {} rewritten; {} correction rows planned; {} stored rows \
-             read, {:.2} us per row",
+             of {} versions read in {:.1}s: {:.2} us per row, {:.1} us per version",
             self.tenders_verified,
             self.tenders_corrected,
             self.tables_skipped,
@@ -8500,7 +8557,10 @@ impl Applied {
             self.rows_rewritten,
             self.correction_rows_planned,
             self.compare_rows,
-            self.compare_nanos as f64 / 1000.0 / self.compare_rows.max(1) as f64
+            self.compare_versions,
+            self.compare_nanos as f64 / 1e9,
+            self.compare_nanos as f64 / 1000.0 / self.compare_rows.max(1) as f64,
+            self.compare_nanos as f64 / 1000.0 / self.compare_versions.max(1) as f64
         ))
     }
 }
@@ -15698,13 +15758,16 @@ impl Db {
         }
     }
 
-    /// The compare mode this fold runs under: [`Db::refold_compare`], unless
+    /// The compare mode this fold runs under: [`Db::refold_compare`], unless this is a
+    /// rebuild (its chains are empty, nothing to compare) or
     /// `tender_version_bid_parties_version` is missing (a rebuild defers it), when every
-    /// compare read of that table would scan it whole.
-    async fn refold_compare_for_fold(&self, conn: &Connection) -> turso::Result<RefoldCompare> {
+    /// compare read of that table would scan it whole. The refusal is said once per
+    /// process, not once per bucket.
+    async fn refold_compare_for_fold(&self, conn: &Connection, rebuild: bool) -> turso::Result<RefoldCompare> {
+        static REFUSAL_SAID: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
         let mode = self.refold_compare();
-        if mode == RefoldCompare::Off {
-            return Ok(mode);
+        if mode == RefoldCompare::Off || rebuild {
+            return Ok(RefoldCompare::Off);
         }
         let mut rows = conn
             .query(
@@ -15715,10 +15778,12 @@ impl Db {
         let present = rows.next().await?.is_some();
         drop(rows);
         if !present {
-            eprintln!(
-                "[project] compare refused (issue 495): tender_version_bid_parties_version is missing, \
-                 so its compare reads would scan; folding with the compare off"
-            );
+            if !REFUSAL_SAID.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                eprintln!(
+                    "[project] compare refused (issue 495): tender_version_bid_parties_version is missing, \
+                     so its compare reads would scan; folding with the compare off until it is built"
+                );
+            }
             return Ok(RefoldCompare::Off);
         }
         Ok(mode)
@@ -15741,7 +15806,7 @@ impl Db {
         // the fold's uniform inserts. The handles outlive the per-batch
         // BEGIN/COMMIT and the between-batch checkpoints (they carry their own
         // connection clone) and no DDL runs during the fold, so no plan goes stale.
-        let compare = self.refold_compare_for_fold(&conn).await?;
+        let compare = self.refold_compare_for_fold(&conn, rebuild).await?;
         let mut stmts = Box::pin(TenderInserts::prepare(&conn, compare)).await?;
         let mut total = Applied::default();
         let mut changed_any = false;
@@ -15876,17 +15941,29 @@ impl Db {
         // spilled it; see issue 105) — and it means the grouping moved. Treat it as a
         // stop, not as expected growth.
         //
-        // Issue 495 unit 3: in shadow, each version the write loop rewrites over a stored
-        // one is read, then deleted, right before it is written: its first `compared` seqs
-        // are deleted there, the rest of the old chain here. Only a stale Tender (a
-        // re-derivation, keep = 0) is compared: a current-epoch repair rewrites a tail
-        // whose notices moved, so its seqs hold other versions. The writes are the same
-        // as with the compare off: every DELETE still precedes the batch's flush, which
-        // is where every leaf row is inserted, so content and rowids come out identical
-        // (`a_shadow_refold_writes_the_golden_and_verifies_every_tender`).
+        // Issue 495 unit 3: in shadow, the versions of ADR-0017 D1's prefix (`chain_keep`:
+        // the leading versions whose causing notice is unchanged) are compared. Each is
+        // read, then deleted, right before it is written; the rest of the old chain is
+        // deleted here, and the versions past the prefix are written as today. Only a
+        // stale Tender (a re-derivation, keep = 0) is compared.
+        //
+        // The writes are the same as with the compare off, on two conditions:
+        // - every DELETE still precedes the batch's flush, which is where every leaf row is
+        //   inserted, so content and rowids come out identical;
+        // - nothing between the first DELETE and the flush reads this Tender's leaf rows or
+        //   `Pending`'s contents. In shadow the prefix's later versions are still stored
+        //   while an earlier one is written, and its fresh rows sit in `scratch`. True of
+        //   `write_version`, the identity helpers and `append_version_changes` today; the
+        //   kept-prefix read of issue 279 runs only when keep > 0, which a stale Tender
+        //   never is.
+        // `off_and_shadow_write_the_same_for_every_stale_chain_shape` pins both.
         let shadow = stale && !stored.is_empty() && stmts.shadow.is_some();
         debug_assert!(!shadow || keep == 0, "a stale Tender keeps nothing");
-        let compared = if shadow { stored.len().min(p.versions.len()) } else { 0 };
+        let compared = if shadow {
+            stored.iter().zip(&p.versions).take_while(|(a, b)| **a == b.caused_by_notice_id).count()
+        } else {
+            0
+        };
         let mut tally = CompareTally::default();
         let mut scratch = Pending::default();
         for seq in (keep + compared + 1..=stored.len()).rev() {
@@ -15914,6 +15991,7 @@ impl Db {
                 let started = std::time::Instant::now();
                 let (stored_rows, read) = Self::stored_version(stmts, tender_id, seq).await?;
                 applied.compare_rows += read;
+                applied.compare_versions += 1;
                 applied.compare_nanos += started.elapsed().as_nanos() as u64;
                 Self::delete_version(stmts, tender_id, seq).await?;
                 applied.versions_removed += 1;
@@ -15935,6 +16013,9 @@ impl Db {
             applied.changes += self
                 .append_version_changes(conn, tender_id, seq, version, previous, now, stmts)
                 .await?;
+            if shadow && i + 1 == compared {
+                tally.prefix_minted = stmts.shadow.as_ref().map_or(0, |s| s.minted_lots.len());
+            }
         }
 
         // The shrinking-rewrite sweep (issue 103). A full rewrite that produces
@@ -16010,14 +16091,19 @@ impl Db {
                 .await?;
         }
         if shadow {
-            // A shorter chain moves the head back: a correction at the head.
-            if p.versions.len() < stored.len() {
+            // A chain cut back with nothing written past the prefix moves the head back: a
+            // correction at the head. (With versions past it, their transition rows say so.)
+            if !tally.appended && p.versions.len() < stored.len() {
                 tally.differs = true;
                 tally.head_differs = true;
             }
-            // A `source` or `kind` moved in place is a Tender-level change: rule T, no lots.
-            if stored_identity.as_ref().is_some_and(|s| s.moved) {
+            // A `source` or `kind` moved in place changes the Tender's own reading, which the
+            // lot rows carry too: announced as a head difference (rule L over-delivering is
+            // harmless; delivering less is not, ADR-0017 D3), unless an appended version's
+            // transition rows already make every reader re-read the Tender.
+            if !tally.appended && stored_identity.as_ref().is_some_and(|s| s.moved) {
                 tally.differs = true;
+                tally.head_differs = true;
             }
             let shadow = stmts.shadow.as_ref().expect("shadow statements");
             Self::count_compare(&mut applied, tally, shadow);
@@ -16195,19 +16281,29 @@ impl Db {
         let mut read = 0u64;
         for (table, statement) in LEAF_TABLES.iter().zip(shadow.select.iter_mut()) {
             let n = table.ncols();
-            let mut keyed: Vec<(i64, Vec<Value>)> = Vec::new();
+            let flat = &mut out.rows[table.leaf as usize];
+            let mut rowids: Vec<i64> = Vec::new();
             let mut rows = statement.query((Value::Integer(tender_id), Value::Integer(seq))).await?;
             while let Some(row) = rows.next().await? {
-                let mut values = Vec::with_capacity(n);
+                rowids.push(int(&row, 0));
                 for c in 1..=n {
-                    values.push(row.get_value(c)?);
+                    flat.push(row.get_value(c)?);
                 }
-                keyed.push((int(&row, 0), values));
             }
             drop(rows);
-            keyed.sort_unstable_by_key(|(rowid, _)| *rowid);
-            read += keyed.len() as u64;
-            out.rows[table.leaf as usize] = keyed.into_iter().flat_map(|(_, values)| values).collect();
+            read += rowids.len() as u64;
+            // A by-version index yields equal keys in rowid order, so this is nearly always
+            // sorted already; reorder only when it is not.
+            if !rowids.is_sorted() {
+                let mut order: Vec<usize> = (0..rowids.len()).collect();
+                order.sort_unstable_by_key(|&r| rowids[r]);
+                let mut taken: Vec<Option<Value>> = std::mem::take(flat).into_iter().map(Some).collect();
+                for r in order {
+                    for c in 0..n {
+                        flat.push(taken[r * n + c].take().expect("each value moved once"));
+                    }
+                }
+            }
         }
         Ok((out, read))
     }
@@ -16221,7 +16317,14 @@ impl Db {
         applied.tables_rewritten += tally.tables_rewritten;
         applied.rows_skipped += tally.rows_skipped;
         applied.rows_rewritten += tally.rows_rewritten;
-        if !tally.differs && shadow.minted_lots.is_empty() && shadow.swept_lots.is_empty() {
+        for i in 0..LEAF_COUNT {
+            applied.tables_skipped_by_leaf[i] += tally.skipped_by_leaf[i];
+            applied.tables_rewritten_by_leaf[i] += tally.rewritten_by_leaf[i];
+        }
+        // The orphan sweep is not a difference: it runs for every stale Tender and announces
+        // its own `removed` rows, as today. A lot minted inside the prefix always shows as a
+        // leaf difference (its id is new), so `differs` alone decides.
+        if !tally.differs {
             applied.tenders_verified += 1;
             return;
         }
@@ -16229,7 +16332,7 @@ impl Db {
         if tally.head_differs {
             lots.extend(tally.head_lots);
         }
-        lots.extend(shadow.minted_lots.iter().copied());
+        lots.extend(shadow.minted_lots[..tally.prefix_minted.min(shadow.minted_lots.len())].iter().copied());
         for lot in &shadow.swept_lots {
             lots.remove(lot);
         }
@@ -32338,9 +32441,121 @@ async fn write_candidate_edges(
 #[cfg(test)]
 mod tests {
     use super::{
-        Fact, LotState, MinUnionFind, PlanScope, TenderVersion, head_deadline, head_title,
-        head_value_eur_cents, in_transaction, sentinel_amount, transaction_ended_under,
+        CompareTally, Fact, Leaf, LotState, MinUnionFind, Pending, PlanScope, StoredVersion, TenderVersion,
+        head_deadline, head_title, head_value_eur_cents, in_transaction, sentinel_amount,
+        transaction_ended_under,
     };
+
+    /// One leaf row for the compare tests: zeros, `(tender_id, seq) = (1, 1)`, then `set`.
+    fn leaf_row(leaf: Leaf, set: &[(&str, turso::Value)]) -> Vec<turso::Value> {
+        let table = leaf.table();
+        let mut row = vec![turso::Value::Integer(0); table.ncols()];
+        row[table.col("tender_id")] = turso::Value::Integer(1);
+        row[table.col("seq")] = turso::Value::Integer(1);
+        for (column, value) in set {
+            row[table.col(column)] = value.clone();
+        }
+        row
+    }
+
+    fn fresh_of(rows: &[(Leaf, Vec<turso::Value>)]) -> Pending {
+        let mut p = Pending::default();
+        for (leaf, row) in rows {
+            p.rows[*leaf as usize].extend(row.iter().cloned());
+        }
+        p
+    }
+
+    fn stored_of(rows: &[(Leaf, Vec<turso::Value>)]) -> StoredVersion {
+        let mut s = StoredVersion::default();
+        for (leaf, row) in rows {
+            s.rows[*leaf as usize].extend(row.iter().cloned());
+        }
+        s
+    }
+
+    fn i(n: i64) -> turso::Value {
+        turso::Value::Integer(n)
+    }
+
+    /// Issue 495 unit 3: rule L's lot attribution through every scope the fixtures cannot
+    /// reach: a winner reaches its lot through the same version's lot result, a bid party
+    /// through its bid, a group member names both lots. Identical tables are skipped.
+    #[test]
+    fn the_compare_attributes_a_differing_row_to_its_lot_through_every_scope() {
+        let common = vec![
+            (Leaf::Versions, leaf_row(Leaf::Versions, &[("caused_by_notice_id", i(42))])),
+            (Leaf::LotResults, leaf_row(Leaf::LotResults, &[("lot_result_id", i(10)), ("lot_id", i(77))])),
+            (Leaf::Bids, leaf_row(Leaf::Bids, &[("bid_id", i(20)), ("lot_id", i(88))])),
+        ];
+        let with = |winner: i64, bidder: i64, member: i64| {
+            let mut rows = common.clone();
+            rows.push((Leaf::ResultWinners, leaf_row(Leaf::ResultWinners, &[("lot_result_id", i(10)), ("organization_id", i(winner))])));
+            rows.push((Leaf::BidParties, leaf_row(Leaf::BidParties, &[("bid_id", i(20)), ("organization_id", i(bidder))])));
+            rows.push((Leaf::LotGroupMembers, leaf_row(Leaf::LotGroupMembers, &[("group_lot_id", i(3)), ("member_lot_id", i(member))])));
+            rows
+        };
+        let mut tally = CompareTally::default();
+        tally.version(&fresh_of(&with(9, 7, 5)), Some(&stored_of(&with(5, 6, 4))), false);
+        assert!(tally.differs && !tally.head_differs && !tally.appended);
+        assert_eq!(tally.lots.iter().copied().collect::<Vec<_>>(), vec![3, 4, 5, 77, 88]);
+        assert_eq!((tally.tables_rewritten, tally.tables_skipped), (3, 3));
+    }
+
+    /// The same rows in another order are a difference (the API serves several leaf tables
+    /// in rowid order), and every lot those rows hold is announced.
+    #[test]
+    fn a_reordered_table_is_rewritten_and_announces_its_lots() {
+        let a = (Leaf::Parties, leaf_row(Leaf::Parties, &[("lot_id", i(1)), ("organization_id", i(5))]));
+        let b = (Leaf::Parties, leaf_row(Leaf::Parties, &[("lot_id", i(2)), ("organization_id", i(6))]));
+        let mut tally = CompareTally::default();
+        tally.version(&fresh_of(&[b.clone(), a.clone()]), Some(&stored_of(&[a, b])), false);
+        assert!(tally.differs);
+        assert_eq!((tally.tables_rewritten, tally.rows_rewritten), (1, 2));
+        assert_eq!(tally.lots.iter().copied().collect::<Vec<_>>(), vec![1, 2]);
+    }
+
+    /// A differing `tender_versions` row rewrites the whole version (ADR-0017 D1.4): its
+    /// identical tables count as rewritten, but announce no lot of their own.
+    #[test]
+    fn a_differing_version_row_rewrites_the_whole_version() {
+        let text = (Leaf::Texts, leaf_row(Leaf::Texts, &[("lot_id", i(9)), ("value", turso::Value::Text("t".into()))]));
+        let version = |published: i64| (Leaf::Versions, leaf_row(Leaf::Versions, &[("published_at", i(published))]));
+        let mut tally = CompareTally::default();
+        tally.version(&fresh_of(&[version(2), text.clone()]), Some(&stored_of(&[version(1), text])), false);
+        assert!(tally.differs);
+        assert_eq!((tally.tables_rewritten, tally.tables_skipped), (2, 0));
+        assert!(tally.lots.is_empty(), "{:?}", tally.lots);
+    }
+
+    /// A version past the stored chain is written and counted, but is no difference; an
+    /// identical version is skipped; a difference at the head marks the head and collects
+    /// the head version's lots.
+    #[test]
+    fn appended_identical_and_head_versions_tally_as_the_flip_would_act() {
+        let lots = [
+            (Leaf::Versions, leaf_row(Leaf::Versions, &[])),
+            (Leaf::VersionLots, leaf_row(Leaf::VersionLots, &[("lot_id", i(11))])),
+            (Leaf::VersionLots, leaf_row(Leaf::VersionLots, &[("lot_id", i(12))])),
+        ];
+        let mut appended = CompareTally::default();
+        appended.version(&fresh_of(&lots), None, true);
+        assert!(appended.appended && !appended.differs && !appended.head_differs);
+        assert_eq!((appended.tables_rewritten, appended.rows_rewritten), (2, 3));
+
+        let mut same = CompareTally::default();
+        same.version(&fresh_of(&lots), Some(&stored_of(&lots)), true);
+        assert!(!same.differs && !same.head_differs);
+        assert_eq!((same.tables_skipped, same.rows_skipped), (2, 3));
+        assert_eq!(same.head_lots.iter().copied().collect::<Vec<_>>(), vec![11, 12]);
+
+        let mut moved = lots.to_vec();
+        moved[2] = (Leaf::VersionLots, leaf_row(Leaf::VersionLots, &[("lot_id", i(12)), ("value_cents", i(5))]));
+        let mut head = CompareTally::default();
+        head.version(&fresh_of(&moved), Some(&stored_of(&lots)), true);
+        assert!(head.differs && head.head_differs);
+        assert_eq!(head.lots.iter().copied().collect::<Vec<_>>(), vec![12]);
+    }
 
     /// Issue 501: turso 0.7.2 ends the WHOLE transaction on a generic runtime error from a
     /// read inside it (`Program::abort`, the `TxnCleanup::None` arm), so a probe error the

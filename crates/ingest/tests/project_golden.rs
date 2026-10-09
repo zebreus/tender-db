@@ -285,6 +285,16 @@ fn a_version_appended_to_a_stale_chain_is_not_a_correction() {
     on_a_big_stack(run_shadow_append);
 }
 
+/// Issue 495 unit 3 review: off and shadow write the same database for every chain shape a
+/// stale Tender can take: equal, appended past the stored chain, moved mid-chain (only the
+/// prefix of unchanged causing notices is compared), and cut back (the tail deleted up front,
+/// the prefix interleaved). Compared by the full digest: every leaf row with its rowid, the
+/// entity tables, the head columns and the change log in cursor order.
+#[test]
+fn off_and_shadow_write_the_same_for_every_stale_chain_shape() {
+    on_a_big_stack(run_shapes);
+}
+
 /// Run `f`'s future on an explicit 64 MiB stack: turso's debug-build query execution (the wide
 /// `group_concat` digests in particular) overflows libtest's default worker stack.
 fn on_a_big_stack<F: std::future::Future<Output = ()>>(f: impl FnOnce() -> F + Send + 'static) {
@@ -529,23 +539,26 @@ async fn run_shadow_split() {
         );
     }
 
-    // A Tender-level change outside the leaf tables: `tender_identity` moves a stored `kind`
-    // back in place. Rule T only: no table rewritten, no lot announced.
-    let kind = text_of(&db, &format!("SELECT kind FROM tenders WHERE id = {chain}")).await;
-    db.execute_for_test(&format!("UPDATE tenders SET kind = 'edited' WHERE id = {chain}"))
-        .await
-        .expect("edit the stored kind");
-    db.set_projection_epoch_for_test(0).await.expect("age every Tender");
-    let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
-    let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
-    db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
-    let a = project::project_incremental(&db).await.expect("shadow refold").applied;
-    assert_eq!(
-        (a.tenders_corrected, a.tables_rewritten, a.correction_rows_planned),
-        (1, 0, 1),
-        "a moved kind is a Tender-level correction: {a:?}"
-    );
-    assert_eq!(text_of(&db, &format!("SELECT kind FROM tenders WHERE id = {chain}")).await, kind);
+    // Changes outside the leaf tables, each announced as a head difference (rule T plus the
+    // head version's lots) with no table rewritten: `tender_identity` moving a stored `kind`
+    // back in place, and a head column that moved while every version stayed the same.
+    for (what, column) in [("a moved kind", "kind"), ("a moved head title", "current_title")] {
+        let before = text_of(&db, &format!("SELECT {column} FROM tenders WHERE id = {chain}")).await;
+        db.execute_for_test(&format!("UPDATE tenders SET {column} = 'edited' WHERE id = {chain}"))
+            .await
+            .expect("edit the stored Tender row");
+        db.set_projection_epoch_for_test(0).await.expect("age every Tender");
+        let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
+        let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
+        db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
+        let a = project::project_incremental(&db).await.expect("shadow refold").applied;
+        assert_eq!(
+            (a.tenders_corrected, a.tables_rewritten, a.correction_rows_planned),
+            (1, 0, 1 + head_lots as u64),
+            "{what}: a head difference with no table rewritten: {a:?}"
+        );
+        assert_eq!(text_of(&db, &format!("SELECT {column} FROM tenders WHERE id = {chain}")).await, before, "{what}");
+    }
 
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
@@ -576,5 +589,92 @@ async fn run_shadow_append() {
     assert_eq!(a.compare_rows, a.rows_skipped, "the stored prefix compared identical: {a:?}");
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// One stale-chain shape under one compare mode: the full digest after the refold, and its tally.
+async fn stale_shape(compare: store::RefoldCompare, shape: &str) -> (String, store::Applied) {
+    const CHAIN: [&str; 4] = [
+        "eforms-chain/1-cn-16-831374-2025.xml",
+        "eforms-chain/2-change-16-6281-2026.xml",
+        "eforms-chain/3-change-16-18902-2026.xml",
+        "eforms-chain/4-can-29-380868-2026.xml",
+    ];
+    let (db, fetch_id, path) = scratch(&format!("shape-{shape}-{compare:?}")).await;
+    db.set_refold_compare(compare);
+    let first: &[usize] = match shape {
+        "append" => &[0, 1, 2],
+        "move" => &[0, 1, 3],
+        _ => &[0, 1, 2, 3],
+    };
+    for &i in first {
+        ingest(&db, fetch_id, "ted", CHAIN[i]).await;
+    }
+    ingest(&db, fetch_id, "ted", "eforms/pin-4-00496860-2026.xml").await;
+    project::project(&db, false).await.expect("first fold");
+    db.build_tender_indexes().await.expect("the by-version indexes the compare needs");
+    db.set_projection_epoch_for_test(0).await.expect("age every Tender");
+    match shape {
+        "append" => ingest(&db, fetch_id, "ted", CHAIN[3]).await,
+        "move" => ingest(&db, fetch_id, "ted", CHAIN[2]).await,
+        "cut" => {
+            // The stored chain one version longer than the one the fold derives: a phantom
+            // version past the chain's end, with a leaf row and the head pointing at it, as
+            // a notice dropped from the plan would leave behind.
+            let chain = int_of(
+                &db,
+                "SELECT tender_id FROM tender_versions GROUP BY tender_id ORDER BY COUNT(*) DESC, tender_id LIMIT 1",
+            )
+            .await;
+            let notice = int_of(&db, "SELECT MAX(id) FROM notices").await;
+            for sql in [
+                format!(
+                    "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id) \
+                     VALUES ({chain}, 5, {notice}, 0, 'phantom')"
+                ),
+                format!(
+                    "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) \
+                     VALUES ({chain}, 5, NULL, 'title', 'en', 'phantom')"
+                ),
+                format!("UPDATE tenders SET current_seq = 5 WHERE id = {chain}"),
+            ] {
+                assert_eq!(db.execute_for_test(&sql).await.expect("plant the phantom"), 1, "{sql}");
+            }
+        }
+        _ => {}
+    }
+    let ids = text_of(&db, "SELECT group_concat(id, ',') FROM (SELECT id FROM notices ORDER BY id)").await;
+    let ids: Vec<i64> = ids.split(',').map(|id| id.parse().expect("notice id")).collect();
+    db.unmark_projected_by_ids(&ids).await.expect("re-queue every notice");
+    let applied = project::project_incremental(&db).await.expect("stale refold").applied;
+    let digest = full_digest(&db).await;
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    (digest, applied)
+}
+
+async fn run_shapes() {
+    for shape in ["equal", "append", "move", "cut"] {
+        let (off, a_off) = stale_shape(store::RefoldCompare::Off, shape).await;
+        let (shadow, a) = stale_shape(store::RefoldCompare::Shadow, shape).await;
+        assert_eq!(off, shadow, "{shape}: shadow wrote something off did not");
+        assert_eq!(
+            (a_off.versions_written, a_off.versions_removed, a_off.changes, a_off.entities_swept),
+            (a.versions_written, a.versions_removed, a.changes, a.entities_swept),
+            "{shape}: the same work, counted the same"
+        );
+        assert!(a.compare_rows > 0 || shape == "move", "{shape}: the compare ran: {a:?}");
+        match shape {
+            // Nothing moved inside the compared prefix: versions past it are transitions.
+            "equal" | "append" | "move" => {
+                assert_eq!((a.tenders_corrected, a.correction_rows_planned), (0, 0), "{shape}: {a:?}");
+            }
+            // The head went back a version with nothing written past the prefix.
+            _ => {
+                assert_eq!(a.tenders_corrected, 1, "{shape}: {a:?}");
+                assert!(a.correction_rows_planned >= 1, "{shape}: {a:?}");
+            }
+        }
     }
 }

@@ -626,26 +626,43 @@ async fn phase(db: &Db, out: &mut String, title: &str, projections: &[TenderProj
 /// overflow libtest's default worker stack.
 #[test]
 fn fold_writer_output_matches_the_committed_golden() {
+    on_a_big_stack(store::RefoldCompare::Off);
+}
+
+/// Issue 495 unit 3: the same five phases with the shadow compare on write the same golden,
+/// and the epoch-stale refold of the mega chain (lot groups, result rounds, `is_buyer`
+/// winners, bids, converted amounts, a 168-row version) compares identical, Tender by Tender.
+#[test]
+fn fold_writer_output_holds_in_shadow_and_its_stale_refold_verifies() {
+    on_a_big_stack(store::RefoldCompare::Shadow);
+}
+
+fn on_a_big_stack(compare: store::RefoldCompare) {
     std::thread::Builder::new()
         .stack_size(64 * 1024 * 1024)
-        .spawn(|| {
+        .spawn(move || {
             tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
                 .expect("runtime")
-                .block_on(run())
+                .block_on(run(compare))
         })
         .expect("spawn")
         .join()
         .expect("join");
 }
 
-async fn run() {
-    let path = format!("/tmp/tender-db-foldwriter-golden-{}.db", std::process::id());
+async fn run(compare: store::RefoldCompare) {
+    let path = format!("/tmp/tender-db-foldwriter-golden-{compare:?}-{}.db", std::process::id());
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
     let db = Db::open(&path).await.expect("open scratch db");
+    db.set_refold_compare(compare);
+    if compare != store::RefoldCompare::Off {
+        // The compare refuses to run without `tender_version_bid_parties_version`.
+        db.build_tender_indexes().await.expect("the by-version indexes");
+    }
     // The projection runs FK-off; the parties, winners and versions here reference
     // organizations and notices this file never creates.
     db.set_foreign_keys(false).await.expect("foreign keys off");
@@ -694,6 +711,14 @@ async fn run() {
         a.tenders_written == 3 && a.versions_written == 34 && a.versions_removed == a.versions_written && a.entities_swept == 0,
         "every stale Tender is rewritten from keep = 0 and an unchanged rewrite sweeps nothing: {a:?}"
     );
+    if compare == store::RefoldCompare::Shadow {
+        assert_eq!(
+            (a.tenders_verified, a.tenders_corrected, a.tables_rewritten, a.correction_rows_planned),
+            (3, 0, 0, 0),
+            "the stale refold of unchanged projections compares identical: {a:?}"
+        );
+        assert_eq!((a.compare_rows, a.compare_versions), (a.rows_skipped, 34), "{a:?}");
+    }
 
     let file = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/golden/fold_writer.snapshot");
     if std::env::var_os("GOLDEN_CAPTURE_495").is_some() {
@@ -708,7 +733,7 @@ async fn run() {
     // first differing line instead; `diff` the files for the rest.
     if got != golden {
         let line = got.lines().zip(golden.lines()).position(|(g, w)| g != w).unwrap_or_else(|| got.lines().count().min(golden.lines().count()));
-        let dump = format!("/tmp/fold_writer.snapshot.got-{}", std::process::id());
+        let dump = format!("/tmp/fold_writer.snapshot.got-{compare:?}-{}", std::process::id());
         let _ = std::fs::write(&dump, &got);
         panic!(
             "the fold writer's output diverged from the committed golden \

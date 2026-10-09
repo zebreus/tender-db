@@ -1948,6 +1948,9 @@ pub async fn project_with_progress_phase2_stoppable(
     if let Some(line) = report.applied.compare_line() {
         eprintln!("[project] {line}");
     }
+    if let Some(line) = report.applied.compare_tables_line() {
+        eprintln!("[project] {line}");
+    }
     Ok(report)
 }
 

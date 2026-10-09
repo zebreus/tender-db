@@ -1169,7 +1169,11 @@ impl Db {
             cursor,
             refold_compare: std::sync::atomic::AtomicU8::new(0),
         };
-        db.set_refold_compare(canonical::RefoldCompare::parse(std::env::var("TENDER_REFOLD_COMPARE").ok().as_deref()));
+        let compare = canonical::RefoldCompare::parse(std::env::var("TENDER_REFOLD_COMPARE").ok().as_deref());
+        if compare != canonical::RefoldCompare::Off {
+            eprintln!("[store] TENDER_REFOLD_COMPARE={compare:?}: stale Tenders are compared as they are rewritten (issue 495)");
+        }
+        db.set_refold_compare(compare);
         Ok(db)
     }
 
