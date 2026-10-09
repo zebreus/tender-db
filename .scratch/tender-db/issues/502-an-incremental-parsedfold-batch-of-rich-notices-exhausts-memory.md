@@ -1,6 +1,21 @@
 # 502 — an incremental ParsedFold batch of 50k rich eForms notices exhausts the server's memory
 
-Status: ready-for-agent. INCIDENT 2026-10-09 ~04:00–04:36 UTC, resolved.
+Status: done — UNIT 3 MEASURED 2026-10-09 (hourly audit): no further bound is needed today.
+- **Which paths hold a whole batch.** Every full `project` (`rebuild=true`, or the full fallback) takes the bucketed
+  path: `project_with_progress` passes `Phase2::Buckets`. The full-project `ParsedFold` path is only the tests'
+  fold-source baseline. So the only production paths are:
+  - the incremental ParsedFold, bounded by unit 1 at 5,000 notices;
+  - the buckets, one `APPLY_NOTICE_BATCH` = 50k-notice bucket in RAM at a time.
+- **The buckets' peak RSS on today's corpus.** The process's own `[project] … (peak RSS N MB)` lines, which cover the
+  whole run, Phase 2 included:
+  - all-profile refold job 2044 (10-07): 30,990 MB;
+  - job 2067 (10-08): 30,734 MB.
+  - Both are under the unit's `MemoryHigh=54G` with about 23 GB to spare.
+  - The systemd "memory peak" lines reach 54G even in short, light runs. That is the cgroup counting page cache,
+    so it is no measure of the fold.
+- **Reopen if** a full refold's peak-RSS line passes 40 GB. Bound the bucket by estimated bytes then, as unit 3
+  proposed.
+Was: ready-for-agent. INCIDENT 2026-10-09 ~04:00–04:36 UTC, resolved.
 - Unit 1 DEPLOYED 05:00 UTC (`9724ce4`, gate green at `21e88f6`).
 - Unit 2 DONE: the left-over cohort was folded by job 2085 (re-enqueued, the same id reused), 04:58–06:04 UTC, with an
   RSS watchdog armed to cancel at 35 GB.
