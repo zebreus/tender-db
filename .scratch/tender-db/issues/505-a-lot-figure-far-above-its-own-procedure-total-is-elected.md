@@ -1,7 +1,17 @@
 # 505 — a lot figure far above its own procedure total is elected
 
-Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (the residual rule, `ScalePartners::residual_slip`). NEXT: gate,
-review, deploy, drain (`refold-value-band`), re-read the 5 expected Tenders.
+Status: done — DEPLOYED AND DRAINED 2026-10-09 (`206f6ba`, gate green after two review rounds). `refold-value-band`
+(job 2107) stamped 3,774 Tenders; `project` (job 2108, 29 s) verified 3,769 and corrected **exactly the 5 predicted**,
+writing 33 correction rows (5 tender, 28 lot). Re-read:
+- 8784848: €72.03 bn → €1.2005 bn (its £1 bn procedure total). Lot "1"'s stored value is now NULL.
+- 553044: €14.4 bn → €26.958 m.
+- 5748163: €1.96 bn → €8.416 m.
+- 1120720: €1.178 bn → €2.85 m.
+- 915781: the head is unchanged (€6.98 m); LOT-0005's stored value at seq 2 and 3 is now NULL.
+Follow-ups filed: **506** (result-level value fields stored nowhere as amounts: 395737, 627219) and **507** (a
+carried PIN Part elected as head beside the CN's Lots: 8818621). Left as published: 1155337 (a weld, not a value),
+578884 and 8716838 (their procedure fallbacks are themselves wrong), and the nine one-Tender shapes in the synthesis.
+History: UNIT 3 BUILT 2026-10-09 (`78f70f7`, reviews fixed in `9e87a4f`, `206f6ba`).
 - **Review** `wf_b4a46acf-264` of the fixes (`9e87a4f`): 4 confirmed (minor), 1 refuted. Fixed:
   - **Raised heads outside the cohort.** Counting a slip at its residual could admit a P that 492 refused, for a
     Tender that never held a value ≥ €1 bn, because its slip was over the ceiling or already partner-refused. Such a
