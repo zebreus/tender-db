@@ -784,7 +784,9 @@ rates and the quarantine resolution ledger.</p>
   whose smaller partner is a lot figure, and whose lots add up to between a tenth
   of it and all of it. A lot's own figure 100&times; another is kept only when that
   other figure only ever appears as a figure of other lots of the Tender, and the
-  notice states an accepted procedure total at least as large. The refused figure stays in <code>amounts</code> and the election
+  notice states an accepted procedure total at least as large. A lot's figure is also
+  refused when it is exactly 100&times; (or 1,000&times;&hellip;) what the notice's
+  procedure total leaves after its other lots in the same field. The refused figure stays in <code>amounts</code> and the election
   falls to the next one. A figure with no such partner is served as published,
   so a very large single value can still be a typo: in a sample of the residual
   &euro;10bn-and-up band (issue 471, October 2026) roughly a third were. Check

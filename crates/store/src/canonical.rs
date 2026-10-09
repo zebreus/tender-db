@@ -3176,7 +3176,7 @@ pub fn head_value_eur_cents_with(
         // admitted procedure figure at least as large, which already wins this max, so it
         // could only ever raise a head through a figure the election refused (review of
         // the exemption). It keeps the stored LOT value, `elect_lot_value`.
-        .chain(head.lots.iter().flat_map(|l| l.facts.iter()).map(|f| (f, FigureScope::Lot(None))))
+        .chain(head.lots.iter().flat_map(|l| l.facts.iter().map(move |f| (f, FigureScope::HeadLot(Some(l.key.as_str()))))))
         .filter_map(|(f, scope)| match f {
             // The sentinel test reads the PUBLISHED figure, not its conversion: a
             // form-width maximum is a fact about what the publisher's field
@@ -3361,9 +3361,12 @@ pub enum FigureScope<'k> {
     /// A procedure (tender-scope) figure: the framework-total exemption may keep it.
     Procedure,
     /// A lot figure, of the lot with this key where known: the sibling-lot exemption may
-    /// keep it. `None` gets no exemption: a lot award's tender-scope copy, and every lot
-    /// candidate of the HEAD election (see [`head_value_eur_cents_with`]).
+    /// keep it. `None` gets no exemption: a lot award's tender-scope copy, or a Part.
     Lot(Option<&'k str>),
+    /// A lot figure among the HEAD election's candidates (see
+    /// [`head_value_eur_cents_with`]): judged as a lot figure of that lot, except that the
+    /// sibling-lot exemption never applies.
+    HeadLot(Option<&'k str>),
 }
 
 /// The exact-10^k scale-error rule of the head election (issue 471 unit 4(a),
@@ -3421,6 +3424,14 @@ pub enum FigureScope<'k> {
 /// 8811221's "SPV's/LLP's £100m+" lot, and refuses every reached slip: each was a single
 /// lot 100x its own procedure total (292242, 627800, 1003919, 8715174).
 ///
+/// **The residual rule (issue 505, decided 2026-10-09).** A Lot's figure is refused, with no
+/// partner needed, when it is exactly 10^k (k >= 2) times what an admitted procedure figure
+/// of its version leaves after the OTHER Lots' figures in the same field and currency.
+/// 8784848 had no partner anywhere in its chain: its GBP 60 bn lot 1 is 100x the GBP 600 m
+/// its GBP 1 bn procedure leaves after lots of GBP 150 m and 250 m. Of 23 adjudicated heads
+/// elected from a lot 10x or more above the procedure figure, no ratio separated the 18
+/// slips from the 5 genuine; this shape had no false positive.
+///
 /// Every figure is tested on its own, so a second scaled figure falls too, and
 /// a refused figure still counts as a partner of a bigger one. Refused is not
 /// corrected: the head falls to the next admitted figure, which may itself be
@@ -3454,6 +3465,12 @@ pub struct ScalePartners<'a> {
     /// large that the election admits. An estimated total that happens to equal an award
     /// is lost as a bound: that can only refuse a genuine lot, never keep a slip.
     head_procedure: Vec<(&'a str, &'a str, i64)>,
+    /// Issue 505: per (field, currency), each Lot's largest figure in the head version
+    /// (Lots of kind `Lot` only; no withheld figure, no sentinel), by lot key. The
+    /// residual rule sums a lot's siblings from it.
+    head_lot_fields: std::collections::HashMap<(&'a str, &'a str), std::collections::BTreeMap<&'a str, i64>>,
+    /// Issue 505: how many Lots (kind `Lot`) the head version names.
+    head_lot_count: usize,
     /// Every partner candidate (currency, cents) of the chain above the floor.
     figures: std::collections::HashSet<(&'a str, i64)>,
     /// Issue 492: per partner figure, whether EVERY occurrence in the chain so far is a
@@ -3484,6 +3501,8 @@ impl<'a> ScalePartners<'a> {
         ScalePartners {
             lot_keys: Default::default(),
             head_procedure: Vec::new(),
+            head_lot_fields: Default::default(),
+            head_lot_count: 0,
             figures: Default::default(),
             lot_only: Default::default(),
             head: Default::default(),
@@ -3636,6 +3655,25 @@ impl<'a> ScalePartners<'a> {
             let sum = self.head_lot_sums.entry(currency).or_insert(0);
             *sum = sum.saturating_add(cents);
         }
+        // Issue 505: each Lot's figure per field, for the residual rule.
+        self.head_lot_count = head.lots.iter().filter(|l| l.kind == "Lot").count();
+        self.head_lot_fields.clear();
+        for lot in head.lots.iter().filter(|l| l.kind == "Lot") {
+            for f in &lot.facts {
+                if let Fact::Amount { field, cents, currency, quality, .. } = f
+                    && quality.is_none()
+                    && !sentinel_amount(*cents)
+                {
+                    let best = self
+                        .head_lot_fields
+                        .entry((field.as_str(), currency.as_str()))
+                        .or_default()
+                        .entry(lot.key.as_str())
+                        .or_insert(0);
+                    *best = (*best).max(*cents);
+                }
+            }
+        }
     }
 
     /// [`Self::amounts`] with each amount's scope: the lot's key for a lot's own amount.
@@ -3730,12 +3768,46 @@ impl<'a> ScalePartners<'a> {
                 .and_then(|keys| keys.as_ref())
                 .is_some_and(|keys| !keys.is_empty() && !keys.contains(key))
             && self.head_procedure.iter().any(|&(field, c, procedure)| {
-                let eur = (i128::from(eur_cents) * i128::from(procedure) / i128::from(cents)).min(i128::from(i64::MAX)) as i64;
-                c == currency
-                    && procedure >= cents
-                    && eur <= IMPLAUSIBLE_EUR_CENTS
-                    && !self.refuses_amount(field, c, procedure, eur, FigureScope::Procedure)
+                c == currency && procedure >= cents && self.admits_procedure(field, c, procedure, cents, eur_cents)
             })
+    }
+
+    /// Whether the head election admits the procedure figure `procedure` (field `field`,
+    /// currency `currency`): not over [`IMPLAUSIBLE_EUR_CENTS`] and not refused. Its EUR
+    /// value is `eur_cents` (the worth of a figure of `cents` in the same currency and
+    /// version) scaled by the cents ratio, since the same rate converts both.
+    fn admits_procedure(&self, field: &str, currency: &str, procedure: i64, cents: i64, eur_cents: i64) -> bool {
+        let eur = (i128::from(eur_cents) * i128::from(procedure) / i128::from(cents)).min(i128::from(i64::MAX)) as i64;
+        eur <= IMPLAUSIBLE_EUR_CENTS && !self.refuses_amount(field, currency, procedure, eur, FigureScope::Procedure)
+    }
+
+    /// Issue 505's residual rule: a figure of the Lot `key` (field `field`, currency
+    /// `currency`) is a scale slip when the head version has two or more Lots and an
+    /// admitted procedure figure P in the same field and currency, and the figure is
+    /// exactly 10^k (k >= 2) times what P leaves after the OTHER Lots' figures in that
+    /// field: `cents == (P - siblings) * 10^k`. 8784848's GBP 60 bn lot 1 beside lots of
+    /// GBP 150 m and 250 m under a GBP 1 bn procedure: GBP 600 m x 100.
+    ///
+    /// Decided 2026-10-09 on the 23 heads elected from a lot figure 10x or more above
+    /// their procedure figure (18 slips, 5 genuine): no ratio separated them, and this
+    /// shape alone had no false positive. Run over every version holding a stored lot value
+    /// of EUR 1 bn or more (1,815 versions), it fires on 5 Tenders, all slips.
+    fn residual_slip(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, key: &str) -> bool {
+        let Some(lots) = self.head_lot_fields.get(&(field, currency)) else {
+            return false;
+        };
+        if self.head_lot_count < 2 || !lots.contains_key(key) {
+            return false;
+        }
+        let siblings: i64 = lots.iter().filter(|(k, _)| **k != key).map(|(_, c)| *c).fold(0i64, i64::saturating_add);
+        self.head_procedure.iter().any(|&(f, c, procedure)| {
+            let residual = procedure - siblings;
+            f == field
+                && c == currency
+                && residual > 0
+                && (2..=18).any(|k| residual.checked_mul(10i64.pow(k)) == Some(cents))
+                && self.admits_procedure(f, c, procedure, cents, eur_cents)
+        })
     }
 
     /// Whether an amount of the head, published as `cents` in `currency` under
@@ -3748,6 +3820,11 @@ impl<'a> ScalePartners<'a> {
         if eur_cents < SCALE_ERROR_MIN_EUR_CENTS {
             return false;
         }
+        if let FigureScope::Lot(Some(key)) | FigureScope::HeadLot(Some(key)) = scope
+            && self.residual_slip(field, currency, cents, eur_cents, key)
+        {
+            return true;
+        }
         if self.partner(currency, cents).is_none() {
             // Issue 492: a x100 partner (k = 2) refuses too, unless the figure is a
             // framework total over its lots, or a lot figure whose partner is a sibling
@@ -3756,7 +3833,7 @@ impl<'a> ScalePartners<'a> {
             return self.partner_x100(currency, cents).is_some_and(|p| match scope {
                 FigureScope::Procedure => !self.framework_total(currency, cents, p),
                 FigureScope::Lot(Some(key)) => !self.sibling_lot(currency, cents, eur_cents, key, p),
-                FigureScope::Lot(None) => true,
+                FigureScope::Lot(None) | FigureScope::HeadLot(_) => true,
             });
         }
         // Corroborated when another field carries it: the entry is `None`
@@ -34077,6 +34154,112 @@ mod tests {
         grouped.lots.push(LotState { key: "GLO-1".into(), kind: "LotsGroup".into(), facts: [amt("framework_maximum", 271_000_000_000)].into_iter().collect() });
         assert_eq!(lot_value(std::slice::from_ref(&grouped), "GLO-1"), Some(271_000_000_000), "a group total over a sibling lot");
         assert_eq!(head_value_eur_cents(std::slice::from_ref(&grouped), &rates), Some(271_000_000_000));
+    }
+
+    /// Issue 505, decided 2026-10-09 on the 23 EUR 1 bn+ heads elected from a lot figure 10x
+    /// or more above their procedure figure (18 slips, 5 genuine): a Lot's figure exactly 10^k
+    /// (k >= 2) times what its version's procedure figure leaves after the OTHER Lots, in the
+    /// same field and currency, is refused -- from the stored lot value and from the head.
+    /// Each case is an adjudicated shape, in EUR so the empty lookup converts at 1.0.
+    #[test]
+    fn a_lot_exactly_ten_to_the_k_times_the_procedure_residual_is_refused() {
+        use super::{LotAmount, ScalePartners, elect_lot_value, head_value_eur_cents};
+        let rates = crate::rates::RatesLookup::default();
+        let amt = |field: &str, cents: i64| Fact::Amount {
+            field: field.into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
+        let lot_value = |v: &TenderVersion, key: &str| {
+            let rule = ScalePartners::of_chain(std::slice::from_ref(v));
+            let l = v.lots.iter().find(|l| l.key == key).unwrap();
+            elect_lot_value(
+                l.facts.iter().filter_map(|f| match f {
+                    Fact::Amount { field, cents, currency, quality, .. } => Some(LotAmount {
+                        field,
+                        cents: *cents,
+                        currency,
+                        eur_cents: Some(*cents),
+                        quality: quality.as_deref(),
+                    }),
+                    _ => None,
+                }),
+                &rule,
+                (l.kind != "Part").then_some(key),
+            )
+            .map(|a| a.cents)
+        };
+        let one = |v: &TenderVersion| head_value_eur_cents(std::slice::from_ref(v), &rates);
+
+        // 8784848: lot 1 is 100x what GBP 1 bn leaves after lots 2 and 3 (GBP 600 m).
+        let essex = version(
+            vec![amt("estimated_value", 100_000_000_000)],
+            vec![
+                lot("LOT-1", vec![amt("estimated_value", 6_000_000_000_000)]),
+                lot("LOT-2", vec![amt("estimated_value", 15_000_000_000)]),
+                lot("LOT-3", vec![amt("estimated_value", 25_000_000_000)]),
+            ],
+        );
+        assert_eq!(lot_value(&essex, "LOT-1"), None, "the lot is refused");
+        assert_eq!(one(&essex), Some(100_000_000_000), "and the head falls to the procedure total");
+
+        // 553044: field to field. Lot 2's framework maximum is 1000x what the procedure
+        // MAXIMUM leaves; against the procedure estimate it matches nothing.
+        let hzd = version(
+            vec![amt("estimated_value", 2_246_500_000), amt("framework_maximum", 2_695_800_000)],
+            vec![
+                lot("LOT-1", vec![amt("estimated_value", 302_500_000), amt("framework_maximum", 363_000_000)]),
+                lot("LOT-2", vec![amt("estimated_value", 1_200_000_000), amt("framework_maximum", 1_440_000_000_000)]),
+                lot("LOT-3", vec![amt("estimated_value", 744_000_000), amt("framework_maximum", 892_800_000)]),
+            ],
+        );
+        assert_eq!(lot_value(&hzd, "LOT-2"), Some(1_200_000_000), "the slipped maximum falls, the estimate stays");
+        assert_eq!(one(&hzd), Some(2_695_800_000));
+
+        // 915781: the head is already the procedure figure; only lot 5's stored value moves.
+        let krakow = version(
+            vec![amt("estimated_value", 2_959_463_972)],
+            vec![lot("LOT-1", vec![amt("estimated_value", 2_163_135_972)]), lot("LOT-5", vec![amt("estimated_value", 796_328_000_000)])],
+        );
+        assert_eq!(lot_value(&krakow, "LOT-5"), None);
+
+        // Not refused:
+        // lots that sum to the procedure figure (k = 0), the genuine framework;
+        let exact = version(
+            vec![amt("estimated_value", 160_000_000_000)],
+            vec![lot("LOT-1", vec![amt("estimated_value", 100_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 60_000_000_000)])],
+        );
+        assert_eq!(lot_value(&exact, "LOT-1"), Some(100_000_000_000), "k = 0 is a framework, not a slip");
+        // an exact x10 (k = 1): its direction is ambiguous (8682609's procedure lost a zero);
+        let ten = version(
+            vec![amt("estimated_value", 20_000_000_000)],
+            vec![lot("LOT-1", vec![amt("estimated_value", 100_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 10_000_000_000)])],
+        );
+        assert_eq!(lot_value(&ten, "LOT-1"), Some(100_000_000_000), "k = 1 is left alone");
+        // a residual in a different field;
+        let other_field = version(
+            vec![amt("framework_maximum", 100_000_000_000)],
+            vec![lot("LOT-1", vec![amt("estimated_value", 6_000_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 40_000_000_000)])],
+        );
+        assert_eq!(lot_value(&other_field, "LOT-1"), Some(6_000_000_000_000), "fields are compared to themselves");
+        // a near miss;
+        let mut near = essex.clone();
+        near.lots[0].facts = [amt("estimated_value", 6_000_000_000_100)].into_iter().collect();
+        assert_eq!(lot_value(&near, "LOT-1"), Some(6_000_000_000_100), "not exact, not refused");
+        // and a lot under the EUR 1 bn gate.
+        let small = version(
+            vec![amt("estimated_value", 1_000_000_000)],
+            vec![lot("LOT-1", vec![amt("estimated_value", 60_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 400_000_000)])],
+        );
+        assert_eq!(lot_value(&small, "LOT-1"), Some(60_000_000_000), "EUR 600 m is under the gate");
+        // A sentinel or withheld sibling is no figure of its lot.
+        let mut sentinel = essex.clone();
+        sentinel.lots[2].facts.insert(amt("framework_maximum", 9_999_999_999_999));
+        assert_eq!(lot_value(&sentinel, "LOT-1"), None, "a sibling's sentinel in another field changes nothing");
     }
 
     /// Issue 378, decided 2026-09-11: a conversion that lands on zero is

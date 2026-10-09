@@ -1,7 +1,27 @@
 # 505 — a lot figure far above its own procedure total is elected
 
-Status: ready-for-agent — UNIT 1 MEASURED 2026-10-09 (`505-lot-over-procedure/heads-2026-10-09.json`); adjudication
-`wf_368978c8-198` running over the 23 Tenders at ≥ 10×.
+Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (the residual rule, `ScalePartners::residual_slip`). NEXT: gate,
+review, deploy, drain (`refold-value-band`), re-read the 5 expected Tenders.
+- **Unit 2, decided** from adjudication `wf_368978c8-198` (two readers per Tender, who agreed on every refuse/keep
+  call; `505-lot-over-procedure/adjudication-*`). Of the 23 Tenders at ≥ 10×:
+  - Verdicts: 16 LOT_SLIP and 2 BOTH_JUNK (refusing the lot is right), 3 PROCEDURE_JUNK and 2 LOT_GENUINE (refusing
+    it is wrong).
+  - Candidate rules:
+    - (a) a plain ≥ 10× ratio: 5 wrong refusals in 23 (22%).
+    - (c) an exact power of ten: 1 wrong in 3.
+    - Ratio bands: the same welded genuine Tender (1155337) moves between bands.
+  - Only the **exact sum residual** has no false positive: the version has ≥ 2 Lots, and the lot figure equals
+    (procedure figure − the other Lots' figures) × 10ᵏ with k ≥ 2, in the same field and currency. It fires on 4 of
+    the 23 (8784848 ×100; 553044, 5748163 and 1120720 ×1000).
+  - Over every version holding a stored lot value ≥ €1 bn (1,815 versions, 856 Tenders), it fires on 5 Tenders:
+    those 4 plus 915781 (a PLN 7.96 bn medicines lot under a PLN 29.6 m procedure, ×1000), all slips.
+  - Decision: build it, behind the €1 bn gate, for the stored lot value and the head's lot candidates.
+  - The other 14 slips stay as published. Follow-ups, none a ratio rule:
+    - Store BT-709/BT-1118/BT-660 as amounts; that gives 395737 and 627219 an exact ×100 partner.
+    - Elect a PIN Part as head only in a version with no Lot (8818621).
+    - 1155337 is a weld, not a value problem.
+    - 578884 and 8716838 still serve a wrong procedure figure after a refusal.
+- Unit 1 MEASURED 2026-10-09 (`505-lot-over-procedure/heads-2026-10-09.json`).
 - Of 3,736 heads at ≥ €1 bn (after 492's drain), 3,621 are elected from a procedure figure and 115 from a lot figure only.
   - 72 of the 115 have no smaller procedure figure in the head version.
   - 43 have one. By the ratio head / procedure figure: under 2×, 10; 2–10×, 10; 10–50×, 6; 50–100×, 1 (8784848);

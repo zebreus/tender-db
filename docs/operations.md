@@ -663,6 +663,19 @@ Verify, in order:
   theirs. Any other lot that fell from €1 bn or more
   is a finding, a read against its notice.
 
+**The residual rule (issue 505, 2026-10-09).** A Lot's figure of €1 bn or more is refused, with no
+partner needed, when it is exactly 10ᵏ (k ≥ 2) times what an admitted procedure figure of its
+version leaves after the OTHER Lots' figures in the same field and currency (`ScalePartners`'
+`residual_slip`). It catches a lot slip whose true value appears nowhere in the chain: 8784848's
+£60 bn lot 1 is 100× the £600 m its £1 bn procedure leaves after lots of £150 m and £250 m. A ratio
+alone was no signal (23 heads at ≥ 10× adjudicated: 18 slips, 5 genuine, no ratio band separates
+them); this shape had no false positive, and over every version holding a stored lot value of
+€1 bn or more it fires on 5 Tenders, all slips (`.scratch/tender-db/505-lot-over-procedure/`).
+Drain as for the ×100 extension (`refold-value-band` dry, wet, `project`). Expected: 8784848's head
+falls from €72 bn to £1 bn, 553044's to €26.958 m, 5748163's and 1120720's to their procedure
+figures; 915781's lot 5 loses its stored value (its head is already the procedure figure). Nothing
+else moves; a sixth Tender is a finding.
+
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|
 refold-notices|refold-sections|reparse|data-quality|backfill-titles|mark-skipped-siblings|clear-rebuild-flag,

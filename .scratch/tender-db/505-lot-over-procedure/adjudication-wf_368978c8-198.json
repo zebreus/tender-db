@@ -1,0 +1,374 @@
+{
+ "workflow": "wf_368978c8-198",
+ "date": "2026-10-09",
+ "verdicts": [
+  {
+   "id": 8784848,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Ratio 60, not a power of ten. With lot 1 corrected by x100 the lots add up exactly to the procedure figure: \u00a3600m (lot 1) + \u00a3150m (lot 2) + \u00a3250m (lot 3) = \u00a31,000m. Lot 1 is a x100 slip.",
+   "true_value": "About \u00a31.0bn for the procedure (lot 1 about \u00a3600m). That is roughly \u20ac1.2bn, not \u20ac72bn.",
+   "evidence": "FTS 004793-2022 (Essex CC residential/nursing care IRN refresh, 1 version). Procedure estimated_value is \u00a31,000,000,000. Lot 1 (residential care for ECC) is \u00a360,000,000,000, lot 2 is \u00a3150,000,000 and lot 3 is \u00a3250,000,000. Lot text says ECC's current gross cost is about \u00a3140m per annum for lots 1 and 2 together, so \u00a360bn for lot 1 is impossible and \u00a3600m fits a multi-year framework. Issue 505 also notes the buyer's later IRN notices state \u00a3600m and \u00a31.57bn."
+  },
+  {
+   "id": 578884,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot. Ratio 100.9, which is x100 times 222/220. Raw lot BT-27 is '22200000000' with no decimal point, while procedure BT-27 is '220000000.00'. The lot was typed in cents and read as euros, so it means \u20ac222,000,000, about the procedure's \u20ac220m.",
+   "true_value": "At most about \u20ac220m, the procedure estimate. The buyer's real scale may be far lower: the single-bid award is \u20ac382,486.23 for a 2-year contract. Not \u20ac22.2bn in any reading.",
+   "evidence": "Hamburg prison laundry framework (eForms 00288335-2025 / award 00387248-2025), term 2025-07-01 to 2027-06-30 with 2 renewals. Raw CN has EstimatedOverallContractAmount 220000000.00 (procedure) and 22200000000 (lot). The award XML shows the same cents-as-units habit: TotalAmount, Higher and Lower TenderAmount are 382486.23, but the tender PayableAmount is 38248623. \u20ac22.2bn for prison laundry is impossible."
+  },
+  {
+   "id": 553044,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Ratio 534.2, not a power of ten. Lot 2's framework maximum is x1000 too high. Every lot's maximum is 1.2 x its estimate: 3.025\u21923.63, 7.44\u21928.928, so lot 2's 12.0 should give 14.4. With lot 2 at \u20ac14.4m the lot maxima sum exactly to the procedure maximum: 3.63 + 14.4 + 8.928 = \u20ac26.958m.",
+   "true_value": "Lot 2 maximum \u20ac14.4m. Procedure maximum \u20ac26,958,000 (estimate \u20ac22,465,000). Actual awards total about \u20ac14.43m: \u20ac2.42m + \u20ac7.296m + \u20ac4.712m.",
+   "evidence": "HZD Hessen DMS support (00408878-2024 CN, 00754738-2024 CAN). Raw CN lot 2 has FrameworkMaximumAmount 14400000000.00 next to EstimatedOverallContractAmount 12000000.00. The other lots are 3630000.00/3025000.00 and 8928000.00/7440000.00, and the procedure estimate is 22465000.00. Lot 2 was awarded at \u20ac7,296,000 to CGI."
+  },
+  {
+   "id": 4478154,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Ratio 3963, not a power of ten and not a sum relation; lot 2 has no amount. Lot 1's VALUE_COST FMTVAL is 8501350000, i.e. \u20ac8.5bn for organic-waste collection in Bolzano. That is absurd and looks like a mis-keyed figure (perhaps 850,135 with extra digits).",
+   "true_value": "\u20ac2,145,000 for 36 months, as the procedure figure and the notice text both state.",
+   "evidence": "TED 044464-2011 (SEAB Bolzano, collection of organic waste plus bin washing). Raw XML has lot 1 VALUE_COST FMTVAL=\"8501350000\" ('8 501 350 000') with quantity '294 479/per anno'. The procedure VALUE_COST is FMTVAL=\"2145000\", and the text says 'importo complessivo presunto ... 2 145 000,00 EUR (IVA esclusa)' for 36 months including a 1-year renewal. The bid guarantee is 2% of the 2-year value."
+  },
+  {
+   "id": 8821978,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Both lots are x1000 slips: the raw values '6686893930' and '7423090510' have no decimal point and a trailing zero, so a 3-decimal amount lost its separator. Divided by 1000 they sum to \u20ac14,109,984.44, against a procedure / GLO-0001 figure of \u20ac14,109,964.44 (\u20ac20 apart).",
+   "true_value": "About \u20ac14.11m (lot 1 about \u20ac6.69m over 5 years, lot 2 about \u20ac7.42m over 3 years).",
+   "evidence": "Pamplona pneumatic waste collection (eForms 00142243-2026). Raw XML has EstimatedOverallContractAmount 14109964.44 (procedure and lots group) and 6686893930 / 7423090510 (the lots); durations are 5 and 3 years. The head is lot 2 at \u20ac7.42bn, which is impossible for operating two pneumatic-collection plants. The PAR-0002/0003 copies repeat the same slipped figures."
+  },
+  {
+   "id": 8716838,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Ratio 103.4. Lot \u00a35.42bn vs procedure \u00a352.4m, and the digits differ (542 vs 524). The award of \u00a35,225,037 shows the real scale is about \u00a35.2m. So the lot is about x1000 high (a typo of about \u00a35.4m), and the procedure figure itself looks x10 high (\u00a35.24m typed as \u00a352.4m).",
+   "true_value": "About \u00a35.2-5.4m over 5 years (award \u00a35,225,037; likely estimate \u00a35.24m). Note that falling back to the procedure figure would still serve about 10x too much (\u00a352.4m).",
+   "evidence": "FTS 013169-2023 / award 027678-2023, LB Hounslow floating support service, single lot, 2024-01-15 to 2029-01-14, 13 tenders, won by Thames Reach. tender_version_amounts has the same figures in all 3 versions: procedure 5240000000 GBP cents, lot 542000000000 GBP cents. The award notice's contract value is 522503700 cents (\u00a35,225,037). A borough floating-support service at \u00a35.42bn is impossible."
+  },
+  {
+   "id": 8784848,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "3 lots, one version (FTS 004793-2022). Procedure GBP 1.0bn; lot1 GBP 60bn, lot2 GBP 150m, lot3 GBP 250m. The other lots leave GBP 600m (1000-150-250), and lot1 is exactly 100 x GBP 600m. Ratio to the procedure is 60, not a power of ten. The x100 appears only against the residual.",
+   "true_value": "GBP 1.0bn procedure estimate, with lot1 GBP 600m (about EUR 1.2bn)",
+   "evidence": "Essex CC care-homes IRN framework, 2022-06 to 2025-05. Lot text says lots 1+2 currently cost about GBP 140m per annum. GBP 60bn for one lot of a county residential-care framework is absurd, and GBP 600m over 3 years is plausible. Procedure GBP 1bn = 600m + 150m + 250m exactly."
+  },
+  {
+   "id": 578884,
+   "verdict": "BOTH_JUNK",
+   "confidence": "medium",
+   "shape": "1 lot. Lot BT-27 EUR 22.2bn, procedure BT-27 EUR 220m: ratio 100.9, not a power of ten. Award fields in the same version: BT-161 notice result, BT-710 and BT-711 all EUR 382,486.23. BT-720 tender value is EUR 38,248,623, exactly 100x those.",
+   "true_value": "About EUR 0.38m (the award, 2-year framework); the estimate was probably low six figures. Neither EUR 220m nor EUR 22.2bn is real.",
+   "evidence": "Hamburg Behoerde fuer Justiz: laundry for the Hamburg prisons, 2025-07 to 2027-06, 1 tender received (Wilhelm Wulff). Three award fields agree on EUR 382k; the EUR 38m BT-720 is a dropped decimal. A EUR 220m estimate is about 575x the award and implausible for prison laundry. Refusing the lot figure is right, but falling back to the procedure EUR 220m would still serve a slip."
+  },
+  {
+   "id": 553044,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "3 lots, each with an estimate and a framework maximum. Lot1 3.025m to 3.63m, lot3 7.44m to 8.928m: both maxima are 1.2x the estimate. Lot2 estimate is EUR 12.0m and its maximum is EUR 14.4bn: 1.2x gives EUR 14.4m, so the maximum is exactly 1000x too large. Procedure maximum EUR 26.958m = 3.63 + 14.4 + 8.928 exactly. Procedure estimate EUR 22.465m = 3.025 + 12.0 + 7.44.",
+   "true_value": "EUR 26.958m framework maximum (estimate EUR 22.465m); lot2 maximum EUR 14.4m",
+   "evidence": "Hessen HZD DMS support services (DE714), 4-year term. Awards are EUR 2.42m, 7.296m and 4.712m, all consistent with millions. The x1000 is exact, and with lot2 at 14.4m the lots sum exactly to the procedure maximum."
+  },
+  {
+   "id": 4478154,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "2 lots, and only lot1 has an amount. Raw XML lot1 VALUE_COST FMTVAL=8501350000 (EUR 8,501,350,000); procedure FMTVAL=2145000. Ratio 3963.3, not a power of ten. Lot1 is probably EUR 850,135 with a x10^4 error, but that cannot be proven.",
+   "true_value": "EUR 2.145m (36 months including a 1-year renewal)",
+   "evidence": "SEAB Bolzano biowaste collection and bin washing, legacy TED 044464-2011, member 20110209_027 in the 2011-02 tar. The publisher's own text says 'importo complessivo presunto ... 2 145 000,00 EUR (IVA esclusa)'. EUR 8.5bn for one city's organic-waste round is absurd."
+  },
+  {
+   "id": 8821978,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "2 lots, each duplicated as a Part: LOT-0002 = PAR-0002, LOT-0003 = PAR-0003. Lot figures are EUR 6,686,893,930.00 and EUR 7,423,090,510.00, both exactly 1000x a cent-precise value. Divided by 1000 they sum to EUR 14,109,984.44; the procedure and GLO-0001 figure is EUR 14,109,964.44, off by EUR 20 (a digit typo). Seq1 carried procedure EUR 14,109,964.00.",
+   "true_value": "About EUR 14.11m (lot1 EUR 6.687m over 5 years, lot2 EUR 7.423m over 3 years)",
+   "evidence": "Pamplona pneumatic waste collection (Servicios de la Comarca de Pamplona, notice 00142243-2026). The procedure and LotsGroup figures agree. Lot values divided by 1000 reproduce the total to within EUR 20, so the lots are a x1000 decimal slip."
+  },
+  {
+   "id": 8716838,
+   "verdict": "BOTH_JUNK",
+   "confidence": "medium",
+   "shape": "1 lot. Lot GBP 5.42bn, procedure GBP 52.4m; settled contract GBP 5,225,037 (13 tenders, Thames Reach). Ratio 103.4, not exact: the lot digits read 542 and the procedure digits 524. Lot is about 1000x a GBP 5.42m estimate; procedure is about 10x GBP 5.24m.",
+   "true_value": "About GBP 5.2-5.4m over 5 years (contract GBP 5,225,037, 2024-01 to 2029-01)",
+   "evidence": "LB Hounslow floating support service. The award of GBP 5.23m (about GBP 1m a year) fits a borough floating-support contract. GBP 52.4m would be about GBP 10m a year, and GBP 5.42bn is absurd. Refusing the lot figure is right, but the procedure fallback of GBP 52.4m is itself about 10x the award."
+  },
+  {
+   "id": 174969,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot. Lot estimate (BT-27) and procedure estimate are both EUR 277m. Procedure framework maximum (BT-271) is EUR 554m, twice the estimate, which is the usual French ceiling. Lot BT-271 is EUR 5.54bn, exactly 10x the procedure maximum with the same digits (20x the estimate). All three versions (00443762-2026, 00552726-2026, 00606635-2026) carry the same figures.",
+   "true_value": "EUR 554m framework maximum (EUR 277m estimate)",
+   "evidence": "Solimp 5 (DAE printing framework). With one lot whose estimate equals the procedure estimate, the lot ceiling has to equal the procedure ceiling. The publisher's own republication (marchesonline avis 9625588) states 'valeur maximale de l'accord-cadre 554 000 000 EUR' with an estimate of EUR 277m. So the lot's 5,540,000,000 is a x10 slip (one extra zero)."
+  },
+  {
+   "id": 666474,
+   "verdict": "PROCEDURE_JUNK",
+   "confidence": "high",
+   "shape": "Ratio 1108.9 is not a power of ten. The procedure figure is the award (BT-161 = BT-720 tender = lot result = contract) of EUR 2,254,459, entered in thousands of euros as if it were euros. Read as k-EUR it is EUR 2.254bn, 0.90x the EUR 2.5bn lot estimate (BT-27).",
+   "true_value": "About EUR 2.25bn awarded (2,254,459 k-EUR). The EUR 2.5bn lot estimate is genuine.",
+   "evidence": "IDFM public-service contract to operate Transilien line L (about 297k passengers a day, 148-month duration, SNCF Voyageurs, 2 offers). EUR 2.25m for 9 to 12 years of running a whole suburban rail line is impossible, under EUR 0.25m a year. BOAMP 25-81855 prints the same '2,254,459 Euro', so the buyer typed k-EUR into a EUR field. The EUR 2.5bn estimate is coherent with the award read in k-EUR. Refusing the lot figure in favour of EUR 2.25m would be wrong."
+  },
+  {
+   "id": 162784,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot. Procedure and lot estimate (BT-27) are both BGN 571,000. Award (BT-161/BT-710/BT-720) is BGN 651,529.76 and the highest tender (BT-711) BGN 669,682.90. Lot framework maximum (BT-271) is a round BGN 4,000,000,000, 7005x the estimate, not a power of ten. It is a placeholder or garbage ceiling.",
+   "true_value": "About BGN 571k estimated / BGN 651.5k awarded (about EUR 292k-333k)",
+   "evidence": "ESO substation 'Shumen East': window replacement, facade insulation, interior repairs and an access road (CPV 45000000), a single award notice 00721707-2025. A BGN 4bn (about EUR 2.05bn) ceiling for building repairs at one substation is absurd. Every other figure (estimate, award, all bids) clusters at BGN 0.57-0.67m."
+  },
+  {
+   "id": 5748163,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Lots 2-16 sum to EUR 6,456,216. The procedure estimate is EUR 8,416,216, which leaves exactly EUR 1,960,000 for lot 1. Lot 1 is stated as EUR 1,960,000,000, exactly 10^3 times that. Corrected, the lots sum exactly to the procedure total.",
+   "true_value": "EUR 8,416,216 procedure estimate (lot 1 EUR 1.96m). Awarded total EUR 7,082,520.",
+   "evidence": "Cagliari AOU regional framework for intraocular lenses. The 2016 contract notice 318192-2016 (notice 18951384) has LOT-1 VALUE_COST 196000000000 cents. The 2018 award notice 278045-2018 (notice 19864433) gives RES-1 INITIAL_ESTIMATED_TOTAL_VALUE 196000000 cents (EUR 1.96m) and lot 1 awarded EUR 1.47m, so the publisher itself corrects the figure. This is a x1000 slip."
+  },
+  {
+   "id": 8682609,
+   "verdict": "PROCEDURE_JUNK",
+   "confidence": "medium",
+   "shape": "Exact 10x pair with the same digits (1359). Procedure BT-27 is GBP 135.9m and lot '20' BT-27 is GBP 1.359bn, both in tender notice 033973-2024. Each of the 16 supplier contracts in award notices 019204-2025 and 019234-2025 is GBP 1.359bn, the framework ceiling repeated per supplier. One figure is a dropped or extra zero; the evidence says the procedure figure lost one.",
+   "true_value": "About GBP 1.0-1.36bn framework ceiling (GBP 1.359bn as published; about EUR 1.6bn)",
+   "evidence": "MoD Global Bulk Fuels Service 2 (DOEA/0069): worldwide F-34/F-35/F-44/F-76 aviation and marine bulk fuel, May 2025 to June 2029, 16 suppliers. The award notices restate GBP 1.359bn. Trade press (UK Defence Journal) calls it a 'GBP 1 billion' framework with a GBP 1.359bn per-supplier maximum, and a 2024 tender listing gives GBP 1.2bn. GBP 135.9m (about GBP 34m a year) is implausibly low for all MoD bulk fuel. Refusing the lot figure would be wrong. Confidence is medium only because the evidence is a single 10x pair, though it is corroborated."
+  },
+  {
+   "id": 1016150,
+   "verdict": "LOT_GENUINE",
+   "confidence": "high",
+   "shape": "Not a slip; the two figures measure different things. Lot framework maximum (BT-271) is CZK 40bn, identical in all four award notices (00284931-2024, 00515850-2024, 00670378-2024, 00058311-2025). The procedure figure is each notice's BT-161 result, one periodic call-off to ORLEN Unipetrol: CZK 2.32bn, 1.37bn, 2.23bn and 1.84bn (head version CZK 1.84bn). Ratio 21.7, not a power of ten.",
+   "true_value": "CZK 40bn framework ceiling (about EUR 1.59bn). Reported call-offs total at least CZK 7.76bn.",
+   "evidence": "CEPRO multi-supplier framework (fa-w-rc, 2023-11-01 to 2025-12-31) for duty-suspended (ITT) petrol of up to 1.8 million m3 and diesel of up to 2.85 (million) m3. That is about 4.65bn litres, roughly CZK 70-90bn at wholesale prices, so a CZK 40bn ceiling is plausible or even conservative. The smaller figure is one call-off award per notice, not the procedure total."
+  },
+  {
+   "id": 174969,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot, three versions, figures identical in all three. Lot estimated_value equals procedure estimated_value (EUR 277m). Lot framework_maximum is EUR 5.54bn, exactly 10x the procedure framework_maximum of EUR 554m. The ratio is an exact power of ten, and with one lot the two figures should be equal.",
+   "true_value": "Framework maximum EUR 554m (estimate EUR 277m)",
+   "evidence": "DAE Solimp 5, a State printing-services framework over 60 months. Notice 30071980 carries lot BT-27 27700000000 cents and lot max 554000000000 cents, while the procedure max is 55400000000 cents. EUR 554m is exactly 2x the EUR 277m estimate, a normal max/estimate ratio. EUR 5.54bn would be 20x the lot's own estimate. The lot max has one zero too many."
+  },
+  {
+   "id": 666474,
+   "verdict": "PROCEDURE_JUNK",
+   "confidence": "high",
+   "shape": "Single lot. Lot BT-27 estimate EUR 2.5bn. The procedure figure is BT-161 notice result (= BT-720 tender value) of EUR 2,254,459.00. Ratio 1108.9, not a power of ten. The result x1000 gives EUR 2.254bn, 0.90 of the estimate, so the award was most likely entered in thousands of euros.",
+   "true_value": "About EUR 2.25bn awarded (estimate EUR 2.5bn)",
+   "evidence": "IDFM public service contract to run Transilien line L (Saint-Lazare to Versailles, Saint-Nom-la-Breteche, Cergy), awarded to SNCF Voyageurs. Duration BT-36 = 148 months. EUR 2.5bn over about 12 years is about EUR 200m a year, plausible for a suburban rail line. EUR 2.25m is not plausible as the total or as an annual figure. The procedure figure is the unit slip; the lot estimate is genuine."
+  },
+  {
+   "id": 162784,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot. Procedure BT-27 = lot BT-27 = BGN 571,000. Lot BT-271 framework max is BGN 4,000,000,000. Award BT-710/BT-720 is BGN 651,529.76 and the highest tender BT-711 is BGN 669,682.90. The max is about 7000x the estimate. Not a power of ten; it looks like a round junk or sentinel entry.",
+   "true_value": "About BGN 571k estimate / BGN 651.5k awarded (about EUR 333k)",
+   "evidence": "ESO EAD (MER Shumen): repair of buildings and an access road at substation Shumen East (windows, facade insulation, internal repairs). Notice 25230988, 4 tenders. Every other figure in the notice falls within BGN 0.57-0.67m. BGN 4bn for a single substation building repair is absurd. Refusing the lot max is right."
+  },
+  {
+   "id": 5748163,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "16 lots. Lot 1 = EUR 1,960,000,000. Lots 2-16 sum to EUR 6,456,216. Procedure total EUR 8,416,216 minus that sum = EUR 1,960,000 exactly, so lot 1 is a x1000 slip. The same 8784848-type shape: the other lots plus lot1/1000 sum exactly to the procedure total.",
+   "true_value": "EUR 8,416,216 total (lot 1 EUR 1,960,000); awarded total EUR 7,082,520",
+   "evidence": "Raw TED XML 318192-2016 (AOU Cagliari, Sardinian regional framework for ocular prostheses, 4 years) prints lot 1 VALUE_COST FMTVAL=\"1960000000\" for 14,000 lenses, which is EUR 140,000 per lens. Neighbouring lots work out to EUR 120-170 per lens (lot 2 465,600/3,880 = EUR 120; lot 7 3,784,200/22,260 = EUR 170). Lot 1's award result is EUR 1,470,000. The publisher's own slip, repeated in version 278045-2018."
+  },
+  {
+   "id": 8682609,
+   "verdict": "PROCEDURE_JUNK",
+   "confidence": "medium",
+   "shape": "Single lot (key '20'). Procedure BT-27 GBP 135.9m against lot BT-27 GBP 1.359bn, an exact 10x, both in the same tender notice 033973-2024 and repeated in 034016-2024. Both award notices (019204-2025, 019234-2025) give all 16 framework contracts an OCDS value of GBP 1.359bn. 2 of 3 independent statements say GBP 1.359bn.",
+   "true_value": "About GBP 1.359bn framework value (about EUR 1.6bn)",
+   "evidence": "MoD GBFS2 (DOEA/0069), replacing DFAP/0024: supply and delivery of bulk aviation (F-34/F-35/F-44/SAF), marine (F-76/F-75), diesel and gasoline fuels to UK oil fuel depots, the Falklands, RAF Akrotiri, Kenya and Souda Bay, with 16 suppliers including BP, Vitol and World Fuels. Multi-year MoD bulk fuel spend makes GBP 1.36bn plausible; GBP 135.9m is implausibly low for that scope. The procedure figure has most likely dropped a zero. Since the ratio is exactly 10x, the lot side could in principle be the slip, but the award notice values support the lot."
+  },
+  {
+   "id": 1016150,
+   "verdict": "LOT_GENUINE",
+   "confidence": "high",
+   "shape": "Single lot. Lot BT-271 framework maximum CZK 40bn is constant across all 4 award-notice versions. The procedure figure is the BT-161 result of each periodic call-off: CZK 2.32bn, 1.37bn, 2.23bn and 1.84bn (head). The award criterion is priced 'za 4.Q/2024', so these are quarterly mini-competition values, a different measure. Ratio 21.7, not a power of ten.",
+   "true_value": "Framework ceiling CZK 40bn (about EUR 1.59bn); individual call-offs about CZK 1.4-2.3bn",
+   "evidence": "CEPRO multi-supplier framework for petrol BA95 (max 1.8m m3) and diesel (max 2.85m m3) at ITT parity, running 2023-11-01 to 2025-12-31. About CZK 2bn per quarter from one supplier (ORLEN Unipetrol) over about 9 quarters is already about CZK 18bn. The stated volumes (about 4.65bn litres) at wholesale prices are tens of CZK bn. The CZK 40bn ceiling is a real framework maximum; refusing it would be wrong."
+  },
+  {
+   "id": 395737,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot (Bulgarian NKZhI station cleaning, 331 workers, 917,875 m2). The procedure estimate (BT-27-Procedure) equals the lot estimate (BT-27-Lot): 7,348,200.00 BGN. The award (BT-710) is 7,328,340 BGN. The elected BT-271-Lot framework maximum is 2,998,679,400.00 BGN, 408x the estimate, which is not a power of ten. But it is exactly 100x the framework maximum the same notice states in its LotResult section (BT-709-LotResult = 29,986,794.00 BGN), so this is a x100 cents-as-units slip.",
+   "evidence": "Notice 44551095 content: BT-271-Lot cents=299867940000 BGN, BT-709-LotResult cents=2998679400 BGN, BT-660-LotResult 2265845400 (22,658,454 BGN), BT-710 732834000. All four versions carry the same figures. A cleaning contract for 331 workers cannot be 3.0 bn BGN (EUR 1.53 bn).",
+   "true_value": "Procedure/lot estimate 7,348,200 BGN (about EUR 3.76 m), award 7,328,340 BGN. As a framework ceiling, the true figure is 29,986,794 BGN (about EUR 15.33 m), not 2,998,679,400."
+  },
+  {
+   "id": 435764,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "5 lots (RFI catenary steelwork supply). Lot 3 is 1,231,770,114.00 EUR, exactly 100x the 12,317,701.14 EUR the buyer's own description states for Lot 3. The other lots match the description exactly: 21,515,782.22, 15,422,319.61, 9,263,469.04 and 3,069,233.71. The procedure figure is BT-161 notice result total 52,755,182.90 EUR, which is the award total and a plausible figure below the lot estimates.",
+   "evidence": "Description text: 'Lotto n. 3 CIG 9534779C88 - importo posto a base di gara EUR 12.317.701,14'. BT-27-Lot LOT-0003 cents=123177011400, which is 12,317,701.14 x 100. With Lot 3 corrected, the lots sum to 61,588,505.72 EUR, against an awarded total of 52,755,182.90.",
+   "true_value": "Estimated total 61,588,505.72 EUR (Lot 3 12,317,701.14). Awarded total 52,755,182.90 EUR."
+  },
+  {
+   "id": 1120720,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "4 real lots (Scapigliato geosynthetics). The procedure estimate is 2,850,000.00 EUR. Lots 1-3 total 478,000 + 853,600 + 340,400 = 1,672,000, which leaves 1,178,000 for Lot 4. Lot 4 is stated as 1,178,000,000.00, exactly 1000x that remainder, so the lots sum to the procedure figure once Lot 4 is divided by 1000. The awards confirm it: Lot 4 was awarded 706,211.00, and all lots sum to the result_value of 2,175,842.12.",
+   "evidence": "tender_version_amounts seq 1: procedure 285000000, lot 3057365 117800000000, other lots 47800000/85360000/34040000. Lot results: 38,240.00k... Lot 4 awarded 70621100 cents (706,211 EUR).",
+   "true_value": "Estimate 2,850,000 EUR (Lot 4 1,178,000). Awarded 2,175,842.12 EUR."
+  },
+  {
+   "id": 8818621,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "The elected 'lot' is PAR-0001, the PIN Part of a single hospital's pacemaker supply (H.U. Mostoles, 2025-02-10 to 2027-02-09). Its BT-27-Part is 1,118,762,000.00 EUR, against BT-27-Procedure 1,187,620.00 EUR. The ratio is 942, not a power of ten, so this looks like a digit typo or insertion ('1118762000' vs 1187620.00). The GLO-0001 group figure equals the procedure figure. The seq-2 lots sum exactly to it: 292,400 + 784,550 + 93,670 + 17,000 = 1,187,620. The seq-3 lots sum to 1,155,932.",
+   "evidence": "Notice 24276913: BT-27-Part cents=111876200000, BT-27-Procedure cents=118762000. The result_value is 748,781.00 EUR, and the Boston Scientific lot awards are 183,040 each. EUR 1.1 bn of pacemakers for one hospital over 2 years is impossible.",
+   "true_value": "Estimate 1,187,620 EUR. Awarded 748,781 EUR."
+  },
+  {
+   "id": 8698658,
+   "verdict": "PROCEDURE_JUNK",
+   "confidence": "high",
+   "shape": "Single lot (DWP Synergy cross-government ERP and systems integration for MoJ/DWP/DEFRA/HO). The procedure figure is GBP 100.00 (BT-27-Procedure cents=10000), a token placeholder from the planning notice 46947155 that carries through every version. The lot estimate is GBP 933,651,000. The ratio of 9.3 million is meaningless; it is no scale slip.",
+   "evidence": "Tender notice 46951934 has BT-27-Lot 93365100000 GBP and no real procedure value. Award notice 46903478 has a contract to IBM UK of GBP 710,885,044.45, which corroborates a value in the GBP 0.7-0.9 bn range for a 4-department shared-services ERP programme.",
+   "true_value": "Lot estimate GBP 933,651,000 (about EUR 1.116 bn), awarded GBP 710,885,044.45. Refusing the lot would leave GBP 100."
+  },
+  {
+   "id": 514188,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "94-lot Catalan local-authority vehicle purchase/lease framework (Consorci Catala pel Desenvolupament Local). The procedure BT-27 is 140,946,000 EUR. 88 of the 94 lot BT-27 figures are 390 m to 5.2 bn EUR, and they sum to about EUR 131 bn. 93 of the 94 BT-271 framework maxima are 1.04 bn EUR each. These are x1000 slips. Lots 46-51 are published at the native scale (780k, 390k, 780k, 520k, 2.6 m, 1.04 m), which matches the others divided by 1000. Dividing the 88 large lots by 1000 gives a lot sum of 137,306,000 EUR, about 97% of the procedure 140,946,000; close, not exact. The figures are internally incoherent as published: lot 3 has an estimate of 2.6 bn above its own maximum of 1.04 bn. The ratio of 29.5 is not a power of ten.",
+   "evidence": "Notice 25460737: LOT-0024 (leasing of small electric cars, 4-month BT-98) BT-27-Lot 416000000000, BT-271 104000000000. LOT-0046 BT-27 78000000 (EUR 780k) against LOT-0045 39000000000. The DB has seq 1 and 2 identical: 94 lot estimates sum to 13,120,211,000,000 cents, and the 94 maxima sum to 9,984,000,000,000. An elected head of EUR 4.16 bn for one lot of small leased EVs is implausible.",
+   "true_value": "About 140,946,000 EUR (the procedure estimate). The lot-level figures divided by 1000 total about 137.3 m EUR. Lot 24 is about 4.16 m EUR."
+  },
+  {
+   "id": 395737,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot, a framework call. The lot's BT-271 framework_maximum of 2,998,679,400 BGN is exactly 100x the same notice's BT-709-LotResult framework maximum (2998679400 cents = 29,986,794.00 BGN). The head/procedure ratio of 408 is not a power of ten. It only looks large because the procedure figure is the 1-year estimate.",
+   "true_value": "Framework ceiling about 29,986,794 BGN (about EUR 15.3 m). The procedure/lot estimate is 7,348,200 BGN and the award is 7,328,340 BGN.",
+   "evidence": "Award notice 44551095 (NKZI railway cleaning: 138 stations, 331 workers, BT-36 = 1 year). BT-27 Lot and Procedure are both 734820000 cents. BT-271-Lot is 299867940000 cents and BT-709-LotResult is 2998679400 cents, an exact x100. BT-54 says the option is at most 10% of the framework value, '\u043d\u0435 \u043f\u043e\u0432\u0435\u0447\u0435 \u043e\u0442 2 998 679,00' BGN, which puts the framework at about 29.99 m BGN. BT-660 re-estimate is 22,658,454 BGN. A 3 bn BGN cleaning framework is impossible."
+  },
+  {
+   "id": 435764,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "5 lots. Lot 3's figure (EUR 1,231,770,114.00) is exactly 100x the EUR 12,317,701.14 stated in its own description. With lot 3 corrected, the lots sum to EUR 61,588,505.72. The procedure figure is the result_value of EUR 52,755,182.90, which matches the sum of the five stated contract amounts (EUR 52,755,182.03).",
+   "true_value": "Estimated EUR 61.59 m in total (lot 3 EUR 12.32 m). Awarded about EUR 52.76 m (lot 3 awarded EUR 11,050,599.68).",
+   "evidence": "RFI DAC.0248.2022 carpentry supply. Procedure text: 'Lotto n. 3 CIG 9534779C88 - importo posto a base di gara \u20ac 12.317.701,14'. The stored lot 3 estimated_value is 123177011400 cents. Other lots: 21.52 m, 15.42 m, 9.26 m, 3.07 m. Lot 3's contract was EUR 11,050,599.68."
+  },
+  {
+   "id": 1120720,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "4 lots. Lots 1-3 (EUR 478,000 + 853,600 + 340,400 = 1,672,000) plus lot 4 at EUR 1,178,000 sum exactly to the procedure estimate of EUR 2,850,000. Lot 4's stored figure of EUR 1,178,000,000 is an exact x1000 slip.",
+   "true_value": "EUR 2,850,000 estimated (lot 4 EUR 1,178,000). Awarded EUR 2,175,842 (lot 4 EUR 706,211).",
+   "evidence": "Scapigliato Srl geosynthetics supply, award notice 23844197. Lot 4 (Geocompositi) estimated_value is 117800000000 cents. Lot results: 382,400 + 808,103.12 + 279,128 + 706,211 = 2,175,842.12, about the procedure result_value of 2,175,842.14. A landfill-materials lot of EUR 1.18 bn is implausible."
+  },
+  {
+   "id": 8818621,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "The elected figure is PAR-0001 (a single 'Part' from the PIN, subtype 4, carried into every later version). It is EUR 1,118,762,000, against BT-27-Procedure of EUR 1,187,620 in the same PIN. The ratio of 942 is a digit garble of 1187620, not a power of ten. In version 2 the four real lots (292,400 + 784,550 + 93,670 + 17,000) sum exactly to EUR 1,187,620. The GLO-0001 lot group is also EUR 1,187,620.",
+   "true_value": "EUR 1,187,620 estimated. Head-version lots sum to EUR 1,155,932. Result_value is EUR 748,781.",
+   "evidence": "Hospital Universitario de M\u00f3stoles, pacemakers and electrodes. PIN 24276913 has BT-27-Part 111876200000 cents and BT-27-Procedure 118762000 cents. The Part has the same title as the procedure, so it is the same scope. Pacemakers for one hospital at EUR 1.1 bn is impossible."
+  },
+  {
+   "id": 8698658,
+   "verdict": "PROCEDURE_JUNK",
+   "confidence": "high",
+   "shape": "Single lot. The procedure estimated_value is GBP 100 (10000 cents, a token placeholder) in every version. The lot estimate is GBP 933,651,000. The ratio of 9.3 million comes only from the placeholder.",
+   "true_value": "About GBP 933.65 m estimated (about EUR 1.12 bn). The contract awarded to IBM United Kingdom on 2024-08-30 is GBP 710,885,044.45.",
+   "evidence": "DWP Synergy Technology (including ERP) and Systems Integration Services, FTS 030687-2024. It is a cross-government shared-services ERP and SI programme under competitive procedure with negotiation. The lot figure of GBP 933,651,000 is in versions 2-4. The award contract of GBP 710.9 m backs a lot estimate of that order. GBP 100 cannot be the procedure value."
+  },
+  {
+   "id": 514188,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "94 lots. Nearly every lot's BT-27 sits in the EUR 390 m-5.2 bn range (lot sum EUR 1.31 trillion), and BT-271 is EUR 1.04 bn on 93 lots (sum EUR 99.8 bn). Six lots carry the 1000x-smaller form (EUR 390k-2.6 m, e.g. lot 50 scooters at EUR 2.6 m beside lot 7 scooters at EUR 1.56 bn). Dividing the large lots by 1000 gives a total of about EUR 137.3 m, close to the procedure figure of EUR 140,946,000 but not exact. The head of EUR 4.16 bn is one lot's x1000 estimate.",
+   "true_value": "About EUR 140.9 m (the procedure estimate). Per lot about EUR 0.39-5.2 m.",
+   "evidence": "Consorci Catal\u00e0 pel Desenvolupament Local, sustainable-mobility framework for Catalan local entities. Notice 25460737 (and 25445658, identical amounts): BT-27-Procedure is 14094600000 cents. Lote 01 (small electric car) has BT-27 = BT-271 = 104000000000 cents, i.e. EUR 1.04 bn. Lote 94 (carsharing) has BT-27 at EUR 936 m. A total in the trillions for municipal EV purchase and leasing is impossible. The procedure figure is the only one in a plausible range."
+  },
+  {
+   "id": 1155337,
+   "verdict": "LOT_GENUINE",
+   "confidence": "medium",
+   "shape": "Not a scale slip. 38 of the 39 lots each carry the same EUR 4,010,802,463.28, which is the whole framework's own total copied onto every lot. The other lot (LOT-0001, 'CBAM 1 EXP 578/2025') is EUR 634,615.38. The lots do not sum to the procedure figure, and the ratio (2116x) is not a power of ten. The head's procedure figure (EUR 1,822,305.17 estimated, EUR 1,895,197.38 result) is a different scope: one hospital's call-off contract under the framework, not a per-year figure.",
+   "true_value": "About EUR 4.01 bn: the framework's estimated value and maximum. Seq 1's own procedure-level figure is the same EUR 4,010,802,463.28. In seq 1 the 39 supplier lots were awarded EUR 1.77 bn in total, and the framework runs 24 months. EUR 1.9 m is only the CONTR 2026 200973 Granada call-off.",
+   "evidence": "Seq 1 (00359558-2026, notice 25814331) is the Servicio Andaluz de Salud framework award for exclusive medicines (AMC 2204-2025, all SAS hospitals). Its raw XML has OverallMaximumFrameworkContractsAmount = 4010802463.28, EstimatedOverallContractAmount = 4010802463.28 at procedure level and on every lot, and MaximumValueAmount = 4010802463.28 on 38 lots. Seq 1's lot results sum to EUR 1,772,052,937.46 (AbbVie EUR 102.3 m, Alexion EUR 40.5 m, and so on), so EUR 4.01 bn is about 2.3x the awarded total, a normal Spanish estimated-value margin. Seqs 2-33 are separate CBAM call-off notices folded into the same Tender. Each has its own procedure figure of EUR 0.2-5 m (head seq 33: est. 182230517 cents, result 189519738 cents) and only rewrites LOT-0001. The other 38 lots carry over from seq 1. Refusing the lot figure would serve EUR 1.9 m for a EUR 4 bn framework, which would be wrong. The only defect is the per-lot copy of the total, and electing the maximum, not the sum, gives the right number."
+  },
+  {
+   "id": 304460,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "A single lot. The lot framework_maximum is EUR 3,712,800,000.00 and the procedure result_value is EUR 3,120,000.00. The ratio 1190 = 1000 x 1.19 (German 19% VAT), so the lot is the gross ceiling inflated by exactly 1000x. The lot figure has been the same in all 6 versions (BT-271-Lot = 371280000000 cents in the eForms notice 24120510).",
+   "true_value": "Framework ceiling EUR 3,712,800 gross (EUR 3.12 m net). Awarded EUR 3,120,000 net to Ingenieurb\u00fcro Rolf Niehenker.",
+   "evidence": "The lot description says: 'Bei Rahmenvereinbarungen H\u00f6chstwert \u00fcber die Gesamtlaufzeit: ca. 3.712.800,00 \u20ac brutto'. Eligible costs are about EUR 9.8 m net over 48 months of mechanical-services planning (HOAI) for Bundeswehr sites in Berlin, so a fee ceiling of EUR 3.7 m fits and EUR 3.7 bn does not. Contract and bid values are both 312000000 cents, i.e. EUR 3,120,000. The publisher typed 3712800000 into BT-271."
+  },
+  {
+   "id": 627219,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "A single lot. The lot FrameworkMaximumAmount is 3322770833, which is 33227708.33 with the decimal point dropped: an exact 100x slip (cents typed as units) against the notice's own framework figures. The procedure estimated value of EUR 6,666,666.67 is the 1-year estimate (BT-36 = 1 YEAR). The ratio 498.4 is not a power of ten against that figure, but it is exactly 100x against BT-1118.",
+   "true_value": "Framework maximum EUR 33,227,708.33 (estimated EUR 6.67 m per year).",
+   "evidence": "Raw TED XML 00584430_2025.xml has OverallApproximateFrameworkContractsAmount = 33227708.33 (BT-1118), ReestimatedValueAmount = 33227708.33 (BT-660, lot result), EstimatedOverallContractAmount = 6666666.67 (procedure and lot), and FrameworkMaximumAmount = 3322770833 (BT-271-Lot). The procedure is a negotiated direct award (exclusive rights) by the Minist\u00e8re de l'Int\u00e9rieur to DEVERYWARE, an SME, for forensic and anti-cybercrime IT equipment. EUR 3.3 bn is implausible; EUR 33 m fits."
+  },
+  {
+   "id": 153108,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "A single lot. The lot EstimatedOverallContractAmount is 3275825197, which is 327582.5197 with the decimal point dropped. The ratio of about 10000 (10000.03, not exact, because of the trailing '97') matches 4 decimal places lost. Seq 2 is a correction notice that fixed the procedure figure to 327582.51 but left the lot unchanged.",
+   "true_value": "About EUR 327,582.51 (28-month maintenance service).",
+   "evidence": "Raw XML: seq 1 (00675612-2024) has both procedure and lot at 3275825197. Seq 2 (00682169-2024) has procedure = 327582.51 and lot still 3275825197. The contract is integrated electrical and mechanical maintenance of one building, the ICS corporate centre in Barcelona, for 28 months. EUR 327 k is plausible; EUR 3.28 bn is not."
+  },
+  {
+   "id": 8676548,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "A single lot. Lot 1 is GBP 2,600,000,000 and the procedure figure is GBP 260,000,000: an exact 10x power-of-ten ratio with the same mantissa. With one lot, the lot should equal the procedure total.",
+   "true_value": "GBP 260 m (about EUR 300 m), the DPS's estimated total value.",
+   "evidence": "CCS RM6124 Communications Marketplace DPS, FTS release 020398-2026 (a 2026 extension republication). The raw OCDS has tender.value 260000000 and lots[0].value 2600000000. The earlier FTS notices for the same DPS, 018833-2021 and 001132-2024 (FTS archive), both give tender.value = 260000000 GBP and no lot value, so the GBP 2.6 bn lot figure appears only in 2026, as a new extra zero. The notice reports actual spend of GBP 3.1 m in year 1 and GBP 16.4 m in year 2. A web search also reports the stated estimated total as GBP 260,000,000 excl. VAT."
+  },
+  {
+   "id": 1155337,
+   "verdict": "LOT_GENUINE",
+   "confidence": "high",
+   "shape": "Not a lot ceiling and not a slip. The Tender merges the SAS 'medicamentos exclusivos' framework award (seq 1, 00359558-2026) with 32 later based-contract (CBAM) award notices. In seq 1 the publisher states EUR 4,010,802,463.28 as BT-27-Procedure and repeats the same figure as BT-27-Lot and BT-709 on all 39 lot groups ('Lotes 1 a 11 AM SUM', ...). The later notices restate only LOT-0001 and the procedure figure, so the other 38 lots carry the framework total forward. The head version (seq 33, Granada CBAM-1 CONTR 2026 200973) has a procedure figure of EUR 1,822,305.17 (estimate) and EUR 1,895,197.38 (result), which is one call-off's value: a different measure. The ratio 2116 is not a power of ten, and the lots do not sum to anything (the same figure appears 38 times).",
+   "true_value": "About EUR 4.01 bn, the framework's estimated value (24 months; the 38 winning tenders in seq 1 sum to EUR 1.772 bn). The EUR 1.8-1.9 m figures belong to individual based contracts.",
+   "evidence": "Notice 25814331: BT-27-Procedure = 401080246328 cents, the same as BT-27-Lot x39 and BT-709-LotResult x38. Its BT-720-Tender values sum to EUR 1,772,052,937.46 across 38 tenders. Notices 25888939 and 46688031 are based contracts ('1o CONTRATO BASADO en el Acuerdo Marco CONTR 2025 0000519166'), with BT-27-Procedure EUR 699,767.59 and EUR 1,822,305.17, and the second links back via BT-125(i)=359558-2026. Refusing the lot would serve one call-off's value as the framework's, which is wrong. Side note: the real defect is the weld that puts a call-off's procedure figure into the framework's head version."
+  },
+  {
+   "id": 304460,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot. The ratio 1190 is 1000 x 1.19 (German VAT): the lot BT-271 framework maximum of EUR 3,712,800,000 is the gross maximum EUR 3,712,800.00 entered x1000. The procedure figure EUR 3,120,000 is the net result value (BT-161 and BT-720), and 3.12 m x 1.19 = 3.7128 m exactly. The slipped lot figure appears in every version from seq 1 (2024) to seq 6.",
+   "true_value": "EUR 3.12 m net (framework maximum EUR 3,712,800 gross over 48 months)",
+   "evidence": "The text of the publisher's own notice 25854051 (and earlier ones) says: 'Bei Rahmenvereinbarungen Hoechstwert ueber die Gesamtlaufzeit: ca. 3.712.800,00 EUR brutto'. BT-271-Lot = 371280000000 cents, BT-161-NoticeResult = BT-720-Tender = 312000000 cents (winner Ingenieurbuero Rolf Niehenker, contract 9270-2025). This is BImA/BBR HOAI planning (M-Technik) for Bundeswehr sites in Berlin, with anrechenbare Kosten of about EUR 9.8 m: a EUR 3.7 bn ceiling is impossible."
+  },
+  {
+   "id": 627219,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot. The ratio 498.4 is 100 x 4.98: BT-271-Lot of EUR 3,322,770,833.00 is the figure 3322770833 read as euros instead of cents (x100). The same notice states EUR 33,227,708.33 twice, in BT-1118-NoticeResult and BT-660-LotResult. The procedure figure EUR 6,666,666.67 (BT-27, procedure and lot) is the estimated value. The framework maximum is about 5x that, plausible for 1 year + 3 renewals.",
+   "true_value": "Framework maximum EUR 33,227,708.33 (estimate EUR 6.67 m). It is neither the EUR 3.32 bn lot figure nor exactly the procedure figure.",
+   "evidence": "Notice 24995400 (00584430-2025; Ministere de l'Interieur/SAELSI direct award to DEVERYWARE; forensic and cybercrime equipment, 1 yr + 3 renewals, max 4 yrs): BT-271-Lot = 332277083300 cents, while BT-1118-NoticeResult = 3322770833 cents and BT-660-LotResult = 3322770833 cents. The store keeps only estimated_value 666666667 and framework_maximum 332277083300 as amounts, so the EUR 33.2 m partner never reaches the chain. A ratio or scale rule would therefore not see it."
+  },
+  {
+   "id": 153108,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot. The ratio is 10000.0003, not exact: the lot is 3,275,825,197.00 and the procedure is 327,582.51, the same digit string '3275825197' with the decimal point lost (327582.5197 read as units). Seq 1 had both procedure and lot at EUR 3.28 bn. The seq 2 change notice (BT-140 update-add, BT-758 -> 675612-2024) corrected only BT-27-Procedure to EUR 327,582.51 and left BT-27-Lot slipped.",
+   "true_value": "About EUR 327,582.52 (28-month maintenance contract)",
+   "evidence": "Notice 24362798 (00675612-2024): BT-27-Procedure = BT-27-Lot = 327582519700 cents. Change notice 24393721 (00682169-2024): BT-27-Procedure = 32758251 cents, BT-27-Lot unchanged at 327582519700. The subject is integral maintenance of the electrical and mechanical installations of one building (ICS Centre Corporatiu, Barcelona), BT-36 28 months, for which EUR 3.3 bn is impossible. The publisher's own correction confirms the procedure figure."
+  },
+  {
+   "id": 8676548,
+   "verdict": "LOT_SLIP",
+   "confidence": "high",
+   "shape": "Single lot. The ratio is exactly 10 (GBP 2.6 bn lot vs GBP 260 m procedure). There are no other lots. The procedure figure GBP 260 m is the DPS's long-standing estimated total value. The lot value appears only in the 2026 extension notice and is that figure with an extra zero.",
+   "true_value": "GBP 260 m (about EUR 300 m), the RM6124 Communications Marketplace DPS estimate",
+   "evidence": "Raw FTS releases for ocid ocds-h6vhtk-02d0ff. 018833-2021 (original contract notice) and 001132-2024 (re-published tender) both give tender.value GBP 260,000,000 with lot 1 having no value. 020398-2026 (the 17-month extension 'utilising remaining contract options') still has tender.value 260,000,000 but lots[0].value 2,600,000,000. The release says nothing about an uplift, and its description repeats 'The value provided in Section II.1.5) is only an estimate'. Call-offs found under the DPS are GBP 82.7k-841k. Confidence is high rather than certain because CCS's intent cannot be confirmed from outside the notices."
+  }
+ ]
+}
