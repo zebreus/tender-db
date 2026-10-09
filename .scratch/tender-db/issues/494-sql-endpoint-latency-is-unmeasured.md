@@ -1,6 +1,18 @@
 # 494 — /v1/sql's latency and outcomes are unmeasured
 
-Status: ready-for-agent — UNIT 1 DEPLOYED 2026-10-08 20:21 UTC (`0dc59d3`); the gauges read live on /metrics at once (p50 1.6 ms, max 306 ms over the first 3 requests). NEXT: unit 2, read the window and the `[sql] slow` lines after a day of traffic and file what they name. Was: ready-for-agent — UNIT 1 BUILT 2026-10-08 (gate green on `8e7c404`, the session branch; rides with issue 490's
+Status: ready-for-agent — UNIT 2 READ 2026-10-09 (hourly audit). Three findings.
+- The ring cannot span a day while the box deploys several times a day: each restart empties it, and at
+  ~09:20 UTC it was empty (the series absent, honestly).
+- The `[sql] slow` log persists in the journal, so it carried the day. Since unit 1's deploy (2026-10-08
+  20:21 UTC): 4 lines, all from the operator token (user 7) and all whole-table reads. Two were aggregates
+  at 1.1 s and 1.9 s (`MAX(current_seq)`, `COUNT(*) ... profile = 'text'`; 02:03 and 02:44 UTC, as the
+  journal's CEST stamps convert). Two were deliberate heavy probes that 408'd: a dangling-results count,
+  and an unindexed `projection_epoch = 0 ORDER BY current_seq`. No consumer query was slow, and nginx shows no
+  external `/v1/sql` traffic on 2026-10-09.
+- nginx's `rt=` field (issue 97) is the durable latency record and found the real problem: **issue 503**.
+  `/v1/tenders?source=ted&sort=published_at` takes 17.5 s warm (503 cold), and `sort=deadline` 11.4 s.
+NEXT: unit 3 (optional): read latency per path from the access log in a daily summary, since the ring
+resets on deploy; otherwise close once 503 lands. Was: ready-for-agent — UNIT 1 DEPLOYED 2026-10-08 20:21 UTC (`0dc59d3`); the gauges read live on /metrics at once (p50 1.6 ms, max 306 ms over the first 3 requests). NEXT: unit 2, read the window and the `[sql] slow` lines after a day of traffic and file what they name. Was: ready-for-agent — UNIT 1 BUILT 2026-10-08 (gate green on `8e7c404`, the session branch; rides with issue 490's
 deploy B). Filed the same day from the owner's "the sql endpoint is the main way to consume our data and it needs
 to be blazingly fast". NEXT: deploy with 490 B, then unit 2 (read the gauges for a day and file whatever the
 slow log names).
