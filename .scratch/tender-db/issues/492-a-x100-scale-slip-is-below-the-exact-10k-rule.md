@@ -1,13 +1,26 @@
 # 492 — a ×100 scale slip (k = 2) is below the exact-10ᵏ rule
 
-Status: ready-for-agent — UNIT 2 DECIDED 2026-10-09: extend the rule to k = 2 with a framework exemption. NEXT: unit 3, the
-build (data-model change in `ScalePartners`), then the drain.
+Status: ready-for-agent — UNIT 3 BUILT 2026-10-09 (`3aa9272`): the k = 2 rule with the framework exemption, plus
+`refold-value-band`. NEXT: gate, review, deploy, then the drain (`refold-value-band` dry, then wet, then `project`), then
+re-read the adjudicated ids.
+- **≥ €10 bn adjudication** (`wf_fd3e7a72-62a`; files `.scratch/tender-db/492-x100/adjudication-over-10bn-*`): 9 heads
+  have a ×100 partner: 6 slips, 2 firm genuine and 1 contested.
+  - Slips: 751664, 5545591, 6409799, 6640498, 7490161, 8810872.
+  - Firm genuine: 8595426 and 8618327. Each has 8 or so lots summing exactly to F.
+  - Contested: 4871119. The publisher's second F14 deliberately restates £25 bn over the corrected £250 m. Low
+    confidence it is genuine.
+  - The built rule refuses all 6 slips, keeps both firm frameworks and refuses 4871119.
+  - Pooled with the 56: 51 of 51 slips refused, with 1 wrong refusal (8819939) or 2 if 4871119 is genuine. A
+    plain k = 2 rule makes 12 or 13 wrong refusals.
+  - Re-read at the drain: 7490161 falls to €204 m, itself probably cents-as-units; 6409799 may fall to another
+    wrong figure (RON 7.18 bn); 8784848 still needs a re-read.
 - **Adjudication** `wf_b250dc41-ad9`, 56 of 56 Tenders: 45 SLIP_HEAD, 9 GENUINE_DISTINCT, 1 SLIP_PARTNER (8819939), 1
   PLACEHOLDER (6988280). The verdicts and the synthesis are in `.scratch/tender-db/492-x100/adjudication-*`.
   - All nine genuine heads are multi-lot frameworks or DPSs, with 4 to 22 lots. The head is the procedure total and
     the ×100 partner is one small lot: 8713680, 8423121, 8804016, 6572976, 8730895, 6904931, 7956096, 8800131,
     8638612.
   - A **plain k = 2 rule** would wrongly refuse 10 of 56 (17.9%), against 471's k ≥ 3 rate of 1 in 65.
+- Unit 2 decided 2026-10-09: extend the rule to k = 2 with a framework exemption.
 - **Decision.** Refuse ×100 heads, but keep a head F when all three hold:
   - (b) the head version has two or more lots, and F is a procedure figure;
   - (c) every ×100 partner is a lot figure: a lot-scope amount, a lot award, or a lot-null `result_value` equal to

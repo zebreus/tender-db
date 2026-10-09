@@ -1,0 +1,65 @@
+[
+ {
+  "id": 8618327,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure (the partner is an earlier version's lot: lot 3 in v1/v2, the procedure head is in v3/v4)",
+  "evidence": "Kent County Council (LASER) 2028-32 gas/electricity framework. Head is GBP 10,000,000,000 (procedure estimated_value in v3, a revised UK4 notice 013711-2026, carried into the v4 UK6 award 072475-2026). The x100 partner is GBP 100,000,000: lot 3 (innovation/flexibility services) in v1 UK3 070571-2025 and v2 UK4 008262-2026. The v1/v2 figures were procedure GBP 3.1 bn = lot 1 1.8 bn + lot 2 1.2 bn + lot 3 0.1 bn, an exact sum. The v3/v4 figures are GBP 10 bn = 7 bn + 2.5 bn + 0.5 bn, also an exact sum, and the lot awards and bids repeat 7 bn / 2.5 bn / 0.5 bn. The corrigendum raised each figure by a different factor (x3.2 overall; lots x3.9, x2.1, x5), so nothing was rescaled by 100. No same-currency figure is 100x another apart from the cross-version lot-3-to-procedure pair.",
+  "signals": "In both value states the lots sum exactly to the procedure figure. A corrigendum raised the value non-uniformly. The description says 'the estimated value of the Framework, and the individual Lots, represent a greater value than current spend, but account for potential growth'. The scope is about 200 authorities, about 2.4 TWh of electricity and 4.2 TWh of gas a year over 4 years, so a GBP 10 bn growth ceiling is plausible. Under the decided k=2 rule it is KEPT: v4 has 3 lots, the head is a procedure figure, the only partner is a lot-scope amount, and the lot sum equals F."
+ },
+ {
+  "id": 8810872,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "lot_vs_procedure (same version, procedure estimated_value vs its only lot)",
+  "evidence": "North Tees & Hartlepool Solutions LLP (an NHS trust's LLP) Minor Works framework C340471, FTS 006167-2025. There is one version and one lot (lot 1, Refrigeration & Air Conditioning Installation and Repair/Maintenance Minor Works Framework) at GBP 100,000,000. The procedure estimated_value is GBP 10,000,000,000. A single-lot procedure should equal its lot. The same buyer's sibling single-lot minor-works frameworks all state procedure = lot = GBP 100 m: 8727703 'PS1752-10.23 Minor Works Framework for Refrigeration and Air Conditioning Services' (the predecessor of this framework), 8727697 mechanical, 8727931 data cabling, and others at about EUR 117 m. The multi-trade PS1587-01.23 (8725640) is GBP 120 m with 11 lots at 100 m each. So GBP 10 bn is two extra zeros on GBP 100 m.",
+  "signals": "One lot, where the lot equals procedure/100. The buyer's own history puts each trade framework at GBP 100 m. Buyer size against value: a regional NHS LLP minor-works trade lot at GBP 10 bn is implausible. The bare title 'C340471' gives no scope that would justify GBP 10 bn. Under the decided k=2 rule it is REFUSED (condition (b) fails: the head version has only one lot), which is correct."
+ },
+ {
+  "id": 751664,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "ARIA S.p.A. (Lombardy central purchasing body), 'ARIA_2023_018 Pompe e deflussori': a multi-lot framework for infusion pumps and giving sets for the regional health service. There is one version, the eForms CAN subtype 29 00182986-2024 (notice 23835702). In it, BT-161-NoticeResult is EUR 10,120,698,315.00 (the head) and BT-27-Procedure is EUR 101,206,983.15. Both figures have the same digit string, 10120698315, so the result figure lost its decimal separator. The one published lot, LOT-0001, has BT-27-Lot EUR 89,961,762.80. Its lot result (selec-w) carries no value.",
+  "signals": "A EUR 10.1 bn award total is 100 times the procedure's own estimate, and the award should be at or below the estimate. Buyer against value: EUR 10 bn for pumps and infusion sets is about half of Lombardy's yearly health budget, while EUR 101 m is a normal regional framework. No corrigendum. Rule outcome: the head version has 1 lot, so (b) fails and the head is refused, falling to the EUR 101.2 m estimate (correct)."
+ },
+ {
+  "id": 4871119,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Places for People, 'Green Services Framework', a sole-supplier framework open to all UK contracting authorities. The three readings of II.1.5 (estimated_value):\n- v2, CN 174756-2017: GBP 25,000,000,000 (II.1.5, plus the lot's VAL_OBJECT).\n- v3, F14 202373-2017: corrects it to GBP 250,000,000. The buyer wrote 'the incorrect potential contract value ... was published and it should read 250 000 000'.\n- v4, F14 250165-2017 (2017-06-27): a second F14 with OLD GBP 250,000,000 and NEW GBP 25,000,000,000, giving no reason. The same F14 also edits the description (adds 'construction' and 'in the United Kingdom').\nThe partner is v3's GBP 250 m. v1 is the 2012 predecessor framework (350640-2012), linked in through REF_NOTICE THIS_PROCEDURE. It gives GBP 0.5 m to 700 m in total, with lots up to GBP 440 m, and has no x100 relation to the head.",
+  "signals": "Low confidence. The publisher's last word is GBP 25 bn, restated on purpose in an OLD/NEW block, so this is not a transcription slip. Read as a UK-wide ceiling, it sits beside an own-use estimate of GBP 250 m. Plausibility points the other way: GBP 25 bn is about 36 times the predecessor's GBP 700 m upper bound and far above the buyer group's turnover. Issue 489 decided that the latest publication wins (GBP 25 bn). Rule outcome: the v4 head has no lot figures and the partner is a procedure figure, so (c) and (d) fail and the head is refused, falling to GBP 250 m. That would be a second recorded wrong refusal, unless a deliberate F14 restatement is exempted."
+ },
+ {
+  "id": 5545591,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "NIF Zrt., the Kelenfold-Szazhalombatta railway modernisation, one lot, awarded to A-Hid and V-Hid. The award value across versions:\n- HUF 51,359,358,689 in the CAN 310575-2016 (v5) and in the F20 modifications of v6, v7 and v9.\n- HUF 5,135,935,868,900 (the head) in the F20 modifications 397809-2019 (v8) and 273379-2020 (v10), in V.2.4 (VAL_TOTAL). This is the same digit string with the decimal ',00' merged in, so cents were read as units.\nThe slipped notices disagree with themselves. In v10, VAL_TOTAL_BEFORE is HUF 53,453,589,795 and VAL_TOTAL_AFTER is HUF 53,462,677,973. In v8, the modification VAL_TOTAL is HUF 52,873,775,971. v9 (published 3 days after v8) restates HUF 51.36 bn. The estimate is HUF 30.9 bn.",
+  "signals": "A HUF 5.1 trillion (about EUR 13-15 bn) contract for 56 km of track renewal is not plausible. HUF 51-53 bn matches the before/after modification values printed in the very notices that carry the slip. Rule outcome: 1 lot, so (b) fails and the head is refused, falling to HUF 51.36 bn (correct)."
+ },
+ {
+  "id": 6409799,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Sector 4 of Bucharest (DAUI S4 as association leader), a works framework (acord-cadru) with 36 versions, mostly award notices for subsequent contracts. Each RES block restates the framework's VAL_ESTIMATED_TOTAL at about RON 717-788 m:\n- RON 788,387,947.74; 749,614,429.98; 717,552,082.66.\n- RON 749,621,877.54 (the partner), first in v11, 177681-2020 RES-1.\n- In v13, 205961-2020 RES-1 reads RON 74,962,187,754.00 (the head). This is the same digits as 749621877.54 without the decimal point, and that notice's other RES blocks still say RON 749.6 m and 717.6 m.",
+  "signals": "The description puts the largest subsequent contract at RON 39.4 m, and the subsequent awards are RON 0.01-2 m each. RON 75 bn (about EUR 15 bn) is many times Sector 4's yearly budget. There is a second wrong figure, RON 7,175,520,821.14 (from v24, about 10 times the real figure but not an exact 10^k), so at the drain the head will probably fall to that one rather than to about RON 750 m: re-read it. Rule outcome: 1 lot, so the head is refused."
+ },
+ {
+  "id": 6640498,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_version_other_field",
+  "evidence": "Regio Centraal Gelderland (11 municipalities around Arnhem), 'Aanbesteding verblijf 2020', residential youth care, 5 lots.\n- v1, CN 505928-2019: II.1.5 VAL_ESTIMATED_TOTAL EUR 140,000,000.\n- v2, CAN 337801-2020: II.1.7 VAL_TOTAL EUR 14,000,000,000. Lot 1 ('Algemeen Jeugd') is awarded EUR 14 bn and lots 2-5 are awarded EUR 0.01 each (placeholders).\nThe partner is the EUR 140 m estimate, which v2 inherits, so it is the same version but another field (it was published in v1).",
+  "signals": "EUR 14 bn over 4 years is about 70% of the whole Dutch national youth-care budget, for a region of about 680k people. EUR 140 m (about EUR 35 m a year) is plausible. This is already a known slip from issue 471 unit 5. The lot awards are EUR 0.01 placeholders, so no lot sum is available. Rule outcome: there are 5 lots, but the partner is a procedure estimate, so (c) fails and the head is refused, falling to EUR 140 m (correct)."
+ },
+ {
+  "id": 7490161,
+  "verdict": "SLIP_HEAD",
+  "partner_relation": "same_field_earlier_version",
+  "evidence": "Ayuntamiento de Castroverde (Lugo, about 2,500 inhabitants), 10-year municipal waste collection and street cleaning, one lot, awarded to Servizo dos Concellos Galegos SLU.\n- v1, CN 491781-2022: II.1.5 EUR 204,357,980.00.\n- v2, CAN 014192-2023: RES-1 VAL_ESTIMATED_TOTAL EUR 20,435,798,000.00 (the head) and award VAL_TOTAL EUR 156,409,280.00.\nThe head is exactly 100 times the CN estimate.",
+  "signals": "The head is certainly false, but the partner is probably also cents read as units. For a village of about 2,500 people, the real figures are probably EUR 2,043,579.80 (estimate) and EUR 1,564,092.80 (award), about EUR 80 per resident per year. At EUR 204 m it would be EUR 8,000 per resident per year. No prose value confirms this. Rule outcome: 1 lot, so the head is refused, but it falls to EUR 204 m, which is still a x100 figure: re-read it at the drain."
+ },
+ {
+  "id": 8595426,
+  "verdict": "GENUINE_DISTINCT",
+  "partner_relation": "lot_vs_procedure",
+  "evidence": "East of England NHS Collaborative Procurement Hub, 'Homecare Medicines Services'. A 4-year framework for 5 NHS procurement hubs and any publicly funded body, with 8 lots. v3 is the UK4 tender notice 076861-2025, with a procedure estimate of GBP 38,276,875,000 (the head). Its lots are GBP 22,966.1 m, 5,741.5 m, 1,913.8 m four times, 382.77 m (lot 6, Hub and Spoke) and 1,531.1 m. These are 60/15/5/5/5/1/5/4% splits that sum exactly to GBP 38,276,875,000. The x100 partner is lot 6, which is exactly the 1% share.",
+  "signals": "The lots sum exactly to the head. The earlier versions are v1 UK2 PME GBP 3.25 bn and v2 UK1 GBP 13 bn: a rising estimate, with no x100 relation to the head. GBP 38 bn over 4 years is a generous ceiling against national homecare medicines spend of roughly GBP 4-5 bn a year, but it is not a scale slip. Rule outcome: (b) holds with 8 lots and a procedure head, (c) holds because the partner is a lot figure, and (d) holds with a sum equal to F. The head is kept (correct)."
+ }
+]
