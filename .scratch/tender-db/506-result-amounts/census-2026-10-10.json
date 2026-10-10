@@ -1,0 +1,1400 @@
+{
+ "windows": 40,
+ "width": 150,
+ "de_inventory": {
+  "eforms:eforms-de-1.1": {
+   "DE1-FrameworkMaximumAmount": 4,
+   "DE1-NoticeResult-LotResult-FrameworkAgreementValues-MaximumValueAmount": 23,
+   "DE1-NoticeResult-LotResult-FrameworkAgreementValues-ReestimatedValueAmount": 16,
+   "DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount": 2061,
+   "DE1-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount": 287,
+   "DE1-NoticeResult-LotResult-HigherTenderAmount": 605,
+   "DE1-NoticeResult-LotResult-LowerTenderAmount": 662,
+   "DE1-NoticeResult-OverallMaximumFrameworkContractsAmount": 10,
+   "DE1-NoticeResult-OverallApproximateFrameworkContractsAmount": 4,
+   "DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount": 4
+  },
+  "eforms:eforms-de-1.2": {
+   "DE1-NoticeResult-LotResult-FrameworkAgreementValues-MaximumValueAmount": 47,
+   "DE1-NoticeResult-LotResult-FrameworkAgreementValues-ReestimatedValueAmount": 52,
+   "DE1-NoticeResult-LotResult-HigherTenderAmount": 400,
+   "DE1-NoticeResult-LotResult-LowerTenderAmount": 437,
+   "DE1-NoticeResult-OverallApproximateFrameworkContractsAmount": 30,
+   "DE1-NoticeResult-OverallMaximumFrameworkContractsAmount": 27,
+   "DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount": 1704,
+   "DE1-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount": 423,
+   "DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount": 1
+  }
+ },
+ "notices_seen": {
+  "eforms:eforms-de-1.1": 6000,
+  "eforms:eforms-de-1.2": 5875,
+  "eforms:eforms-sdk-1.3": 3643,
+  "eforms:eforms-sdk-1.6": 4123,
+  "eforms:eforms-sdk-1.7": 616,
+  "eforms:eforms-sdk-1.8": 5709,
+  "eforms:eforms-sdk-1.9": 5677,
+  "eforms:eforms-sdk-1.10": 704,
+  "eforms:eforms-sdk-1.11": 610,
+  "eforms:eforms-sdk-1.12": 1800,
+  "eforms:eforms-sdk-1.13": 1800,
+  "eforms:eforms-sdk-1.14": 1500
+ },
+ "stats": {
+  "BT-709-LotResult": {
+   "eforms:eforms-sdk-1.6": {
+    "rows": 11975,
+    "eq_same_lot_figure": 44,
+    "eq_any_lot_figure": 45,
+    "eq_procedure_figure": 54,
+    "eq_tender_value": 11938,
+    "exceeds_head_proxy": 93,
+    "no_mapped_figure": 1867,
+    "pow10_partner": 1,
+    "eq_nothing": 18
+   },
+   "eforms:eforms-sdk-1.7": {
+    "rows": 36,
+    "eq_procedure_figure": 7,
+    "eq_tender_value": 18,
+    "no_mapped_figure": 7,
+    "exceeds_head_proxy": 7,
+    "eq_nothing": 9,
+    "eq_same_lot_figure": 7,
+    "eq_any_lot_figure": 7
+   },
+   "eforms:eforms-sdk-1.8": {
+    "rows": 266,
+    "eq_same_lot_figure": 68,
+    "eq_any_lot_figure": 70,
+    "eq_procedure_figure": 65,
+    "eq_tender_value": 89,
+    "eq_nothing": 112,
+    "exceeds_head_proxy": 31,
+    "no_mapped_figure": 24
+   },
+   "eforms:eforms-sdk-1.9": {
+    "rows": 710,
+    "eq_same_lot_figure": 50,
+    "eq_any_lot_figure": 50,
+    "eq_procedure_figure": 49,
+    "eq_tender_value": 432,
+    "no_mapped_figure": 505,
+    "eq_nothing": 204,
+    "exceeds_head_proxy": 4
+   },
+   "eforms:eforms-sdk-1.10": {
+    "rows": 1013,
+    "eq_nothing": 15,
+    "exceeds_head_proxy": 9,
+    "eq_same_lot_figure": 33,
+    "eq_any_lot_figure": 34,
+    "eq_procedure_figure": 24,
+    "eq_tender_value": 961,
+    "no_mapped_figure": 1
+   },
+   "eforms:eforms-sdk-1.11": {
+    "rows": 120,
+    "eq_procedure_figure": 13,
+    "eq_tender_value": 33,
+    "eq_same_lot_figure": 72,
+    "eq_any_lot_figure": 72,
+    "eq_nothing": 23,
+    "no_mapped_figure": 15,
+    "exceeds_head_proxy": 5
+   },
+   "eforms:eforms-sdk-1.12": {
+    "rows": 487,
+    "eq_tender_value": 125,
+    "eq_nothing": 246,
+    "no_mapped_figure": 179,
+    "eq_same_lot_figure": 92,
+    "eq_any_lot_figure": 94,
+    "eq_procedure_figure": 76,
+    "exceeds_head_proxy": 70
+   },
+   "eforms:eforms-sdk-1.13": {
+    "rows": 659,
+    "eq_tender_value": 499,
+    "eq_same_lot_figure": 113,
+    "eq_any_lot_figure": 140,
+    "eq_nothing": 119,
+    "exceeds_head_proxy": 9,
+    "no_mapped_figure": 58,
+    "eq_procedure_figure": 31,
+    "pow10_partner": 10
+   },
+   "eforms:eforms-sdk-1.14": {
+    "rows": 57,
+    "eq_same_lot_figure": 18,
+    "eq_any_lot_figure": 19,
+    "eq_procedure_figure": 23,
+    "eq_nothing": 26,
+    "exceeds_head_proxy": 6,
+    "eq_tender_value": 14,
+    "no_mapped_figure": 15
+   }
+  },
+  "BT-710-LotResult": {
+   "eforms:eforms-sdk-1.6": {
+    "rows": 14218,
+    "eq_nothing": 847,
+    "eq_procedure_figure": 240,
+    "no_mapped_figure": 2466,
+    "eq_same_lot_figure": 58,
+    "eq_any_lot_figure": 59,
+    "eq_tender_value": 13351,
+    "exceeds_head_proxy": 74,
+    "pow10_partner": 2
+   },
+   "eforms:eforms-sdk-1.7": {
+    "rows": 93,
+    "eq_nothing": 49,
+    "no_mapped_figure": 29,
+    "eq_tender_value": 36,
+    "eq_procedure_figure": 21,
+    "exceeds_head_proxy": 1
+   },
+   "eforms:eforms-sdk-1.8": {
+    "rows": 1169,
+    "eq_nothing": 323,
+    "no_mapped_figure": 226,
+    "eq_tender_value": 826,
+    "exceeds_head_proxy": 18,
+    "eq_procedure_figure": 241,
+    "eq_same_lot_figure": 52,
+    "eq_any_lot_figure": 54
+   },
+   "eforms:eforms-sdk-1.9": {
+    "rows": 49,
+    "eq_nothing": 20,
+    "eq_procedure_figure": 25,
+    "eq_tender_value": 12,
+    "exceeds_head_proxy": 4,
+    "eq_same_lot_figure": 4,
+    "eq_any_lot_figure": 4,
+    "no_mapped_figure": 3
+   },
+   "eforms:eforms-sdk-1.10": {
+    "rows": 1066,
+    "eq_procedure_figure": 31,
+    "eq_tender_value": 1002,
+    "eq_nothing": 56,
+    "no_mapped_figure": 5,
+    "eq_same_lot_figure": 6,
+    "eq_any_lot_figure": 6,
+    "pow10_partner": 1,
+    "exceeds_head_proxy": 2
+   },
+   "eforms:eforms-sdk-1.11": {
+    "rows": 78,
+    "eq_procedure_figure": 30,
+    "eq_tender_value": 51,
+    "eq_nothing": 26,
+    "exceeds_head_proxy": 3,
+    "eq_same_lot_figure": 1,
+    "eq_any_lot_figure": 1,
+    "no_mapped_figure": 1
+   },
+   "eforms:eforms-sdk-1.12": {
+    "rows": 312,
+    "eq_same_lot_figure": 22,
+    "eq_any_lot_figure": 24,
+    "eq_procedure_figure": 48,
+    "eq_tender_value": 284,
+    "eq_nothing": 28,
+    "no_mapped_figure": 2
+   },
+   "eforms:eforms-sdk-1.13": {
+    "rows": 771,
+    "eq_nothing": 121,
+    "no_mapped_figure": 15,
+    "eq_tender_value": 647,
+    "eq_same_lot_figure": 26,
+    "eq_any_lot_figure": 37,
+    "eq_procedure_figure": 92,
+    "pow10_partner": 16,
+    "exceeds_head_proxy": 1
+   },
+   "eforms:eforms-sdk-1.14": {
+    "rows": 352,
+    "eq_tender_value": 299,
+    "eq_nothing": 51,
+    "eq_procedure_figure": 60,
+    "exceeds_head_proxy": 1,
+    "no_mapped_figure": 1,
+    "eq_same_lot_figure": 2,
+    "eq_any_lot_figure": 2
+   }
+  },
+  "BT-711-LotResult": {
+   "eforms:eforms-sdk-1.6": {
+    "rows": 14218,
+    "eq_procedure_figure": 182,
+    "eq_nothing": 5055,
+    "exceeds_head_proxy": 136,
+    "eq_same_lot_figure": 52,
+    "eq_any_lot_figure": 54,
+    "no_mapped_figure": 2466,
+    "eq_tender_value": 9137,
+    "pow10_partner": 1
+   },
+   "eforms:eforms-sdk-1.7": {
+    "rows": 87,
+    "eq_nothing": 70,
+    "no_mapped_figure": 29,
+    "eq_procedure_figure": 12,
+    "exceeds_head_proxy": 14,
+    "eq_tender_value": 13,
+    "eq_same_lot_figure": 1,
+    "eq_any_lot_figure": 1
+   },
+   "eforms:eforms-sdk-1.8": {
+    "rows": 1082,
+    "eq_nothing": 534,
+    "no_mapped_figure": 226,
+    "eq_tender_value": 531,
+    "exceeds_head_proxy": 69,
+    "eq_procedure_figure": 156,
+    "eq_same_lot_figure": 55,
+    "eq_any_lot_figure": 57
+   },
+   "eforms:eforms-sdk-1.9": {
+    "rows": 32,
+    "eq_nothing": 20,
+    "exceeds_head_proxy": 7,
+    "eq_procedure_figure": 9,
+    "eq_tender_value": 5,
+    "eq_same_lot_figure": 3,
+    "eq_any_lot_figure": 3,
+    "no_mapped_figure": 3
+   },
+   "eforms:eforms-sdk-1.10": {
+    "rows": 1063,
+    "eq_procedure_figure": 25,
+    "eq_tender_value": 515,
+    "eq_nothing": 542,
+    "no_mapped_figure": 5,
+    "exceeds_head_proxy": 10,
+    "eq_same_lot_figure": 5,
+    "eq_any_lot_figure": 5,
+    "pow10_partner": 1
+   },
+   "eforms:eforms-sdk-1.11": {
+    "rows": 78,
+    "eq_procedure_figure": 18,
+    "eq_tender_value": 22,
+    "eq_nothing": 55,
+    "exceeds_head_proxy": 16,
+    "eq_same_lot_figure": 1,
+    "eq_any_lot_figure": 1,
+    "no_mapped_figure": 1
+   },
+   "eforms:eforms-sdk-1.12": {
+    "rows": 312,
+    "eq_nothing": 67,
+    "exceeds_head_proxy": 6,
+    "eq_procedure_figure": 39,
+    "eq_tender_value": 245,
+    "eq_same_lot_figure": 20,
+    "eq_any_lot_figure": 22,
+    "no_mapped_figure": 2
+   },
+   "eforms:eforms-sdk-1.13": {
+    "rows": 771,
+    "eq_nothing": 268,
+    "no_mapped_figure": 15,
+    "eq_tender_value": 490,
+    "eq_same_lot_figure": 41,
+    "eq_any_lot_figure": 58,
+    "exceeds_head_proxy": 34,
+    "eq_procedure_figure": 59,
+    "pow10_partner": 14
+   },
+   "eforms:eforms-sdk-1.14": {
+    "rows": 358,
+    "eq_nothing": 148,
+    "eq_tender_value": 207,
+    "eq_procedure_figure": 46,
+    "exceeds_head_proxy": 19,
+    "eq_same_lot_figure": 3,
+    "eq_any_lot_figure": 3,
+    "no_mapped_figure": 1
+   }
+  },
+  "BT-1118-NoticeResult": {
+   "eforms:eforms-sdk-1.6": {
+    "rows": 54,
+    "eq_nothing": 13,
+    "eq_any_lot_figure": 21,
+    "eq_procedure_figure": 40,
+    "exceeds_head_proxy": 3,
+    "eq_tender_value": 9
+   },
+   "eforms:eforms-sdk-1.7": {
+    "rows": 11,
+    "eq_nothing": 5,
+    "no_mapped_figure": 2,
+    "eq_any_lot_figure": 3,
+    "exceeds_head_proxy": 2,
+    "eq_procedure_figure": 5,
+    "eq_tender_value": 1
+   },
+   "eforms:eforms-sdk-1.8": {
+    "rows": 97,
+    "eq_nothing": 50,
+    "eq_procedure_figure": 47,
+    "eq_any_lot_figure": 20,
+    "eq_tender_value": 2,
+    "no_mapped_figure": 11,
+    "exceeds_head_proxy": 17,
+    "pow10_partner": 1
+   },
+   "eforms:eforms-sdk-1.9": {
+    "rows": 29,
+    "eq_procedure_figure": 21,
+    "eq_any_lot_figure": 10,
+    "eq_nothing": 8,
+    "no_mapped_figure": 1,
+    "exceeds_head_proxy": 1
+   },
+   "eforms:eforms-sdk-1.10": {
+    "rows": 64,
+    "eq_procedure_figure": 44,
+    "eq_nothing": 19,
+    "eq_any_lot_figure": 4,
+    "eq_tender_value": 4,
+    "exceeds_head_proxy": 2
+   },
+   "eforms:eforms-sdk-1.11": {
+    "rows": 23,
+    "eq_tender_value": 10,
+    "no_mapped_figure": 2,
+    "eq_procedure_figure": 9,
+    "eq_any_lot_figure": 6,
+    "eq_nothing": 6,
+    "exceeds_head_proxy": 2
+   },
+   "eforms:eforms-sdk-1.12": {
+    "rows": 24,
+    "eq_tender_value": 5,
+    "exceeds_head_proxy": 2,
+    "eq_nothing": 8,
+    "eq_procedure_figure": 11,
+    "eq_any_lot_figure": 9,
+    "no_mapped_figure": 3
+   },
+   "eforms:eforms-sdk-1.13": {
+    "rows": 80,
+    "eq_any_lot_figure": 30,
+    "eq_procedure_figure": 41,
+    "eq_nothing": 29,
+    "exceeds_head_proxy": 5,
+    "eq_tender_value": 10,
+    "no_mapped_figure": 9
+   },
+   "eforms:eforms-sdk-1.14": {
+    "rows": 24,
+    "eq_any_lot_figure": 5,
+    "eq_procedure_figure": 7,
+    "eq_nothing": 14,
+    "eq_tender_value": 6,
+    "no_mapped_figure": 9,
+    "exceeds_head_proxy": 3
+   }
+  },
+  "BT-118-NoticeResult": {
+   "eforms:eforms-sdk-1.6": {
+    "rows": 54,
+    "eq_nothing": 8,
+    "eq_procedure_figure": 45,
+    "eq_tender_value": 25,
+    "eq_any_lot_figure": 6,
+    "exceeds_head_proxy": 2
+   },
+   "eforms:eforms-sdk-1.7": {
+    "rows": 12,
+    "eq_tender_value": 4,
+    "no_mapped_figure": 2,
+    "eq_nothing": 5,
+    "exceeds_head_proxy": 5,
+    "eq_procedure_figure": 4,
+    "eq_any_lot_figure": 2
+   },
+   "eforms:eforms-sdk-1.8": {
+    "rows": 141,
+    "eq_any_lot_figure": 38,
+    "eq_procedure_figure": 91,
+    "eq_tender_value": 48,
+    "eq_nothing": 46,
+    "exceeds_head_proxy": 21,
+    "no_mapped_figure": 9
+   },
+   "eforms:eforms-sdk-1.9": {
+    "rows": 214,
+    "eq_any_lot_figure": 20,
+    "eq_procedure_figure": 65,
+    "eq_tender_value": 76,
+    "no_mapped_figure": 135,
+    "eq_nothing": 77,
+    "exceeds_head_proxy": 10
+   },
+   "eforms:eforms-sdk-1.10": {
+    "rows": 71,
+    "eq_procedure_figure": 14,
+    "eq_nothing": 40,
+    "exceeds_head_proxy": 10,
+    "eq_any_lot_figure": 4,
+    "eq_tender_value": 20,
+    "no_mapped_figure": 1
+   },
+   "eforms:eforms-sdk-1.11": {
+    "rows": 50,
+    "eq_procedure_figure": 18,
+    "eq_tender_value": 9,
+    "eq_nothing": 22,
+    "exceeds_head_proxy": 9,
+    "eq_any_lot_figure": 11,
+    "no_mapped_figure": 10
+   },
+   "eforms:eforms-sdk-1.12": {
+    "rows": 158,
+    "eq_tender_value": 44,
+    "eq_nothing": 72,
+    "no_mapped_figure": 41,
+    "eq_any_lot_figure": 22,
+    "eq_procedure_figure": 51,
+    "exceeds_head_proxy": 20
+   },
+   "eforms:eforms-sdk-1.13": {
+    "rows": 143,
+    "eq_tender_value": 30,
+    "eq_nothing": 75,
+    "eq_procedure_figure": 42,
+    "exceeds_head_proxy": 14,
+    "no_mapped_figure": 28,
+    "eq_any_lot_figure": 27
+   },
+   "eforms:eforms-sdk-1.14": {
+    "rows": 36,
+    "eq_any_lot_figure": 9,
+    "eq_procedure_figure": 14,
+    "eq_nothing": 20,
+    "exceeds_head_proxy": 6,
+    "eq_tender_value": 8,
+    "no_mapped_figure": 12
+   }
+  },
+  "BT-660-LotResult": {
+   "eforms:eforms-sdk-1.6": {
+    "rows": 13013,
+    "eq_nothing": 10279,
+    "eq_tender_value": 2424,
+    "exceeds_head_proxy": 98,
+    "no_mapped_figure": 2180,
+    "eq_procedure_figure": 229,
+    "eq_same_lot_figure": 154,
+    "eq_any_lot_figure": 160,
+    "pow10_partner": 1
+   },
+   "eforms:eforms-sdk-1.7": {
+    "rows": 33,
+    "eq_nothing": 10,
+    "no_mapped_figure": 6,
+    "eq_same_lot_figure": 5,
+    "eq_any_lot_figure": 6,
+    "eq_tender_value": 15,
+    "exceeds_head_proxy": 3,
+    "eq_procedure_figure": 8
+   },
+   "eforms:eforms-sdk-1.8": {
+    "rows": 251,
+    "eq_procedure_figure": 85,
+    "eq_tender_value": 43,
+    "eq_nothing": 105,
+    "no_mapped_figure": 22,
+    "eq_same_lot_figure": 104,
+    "eq_any_lot_figure": 106,
+    "exceeds_head_proxy": 22
+   },
+   "eforms:eforms-sdk-1.9": {
+    "rows": 60,
+    "eq_nothing": 44,
+    "exceeds_head_proxy": 3,
+    "eq_procedure_figure": 16,
+    "eq_same_lot_figure": 8,
+    "eq_any_lot_figure": 8,
+    "no_mapped_figure": 4,
+    "eq_tender_value": 1
+   },
+   "eforms:eforms-sdk-1.10": {
+    "rows": 913,
+    "eq_nothing": 739,
+    "eq_same_lot_figure": 44,
+    "eq_any_lot_figure": 45,
+    "eq_procedure_figure": 21,
+    "eq_tender_value": 116,
+    "pow10_partner": 2,
+    "exceeds_head_proxy": 2
+   },
+   "eforms:eforms-sdk-1.11": {
+    "rows": 36,
+    "eq_tender_value": 21,
+    "no_mapped_figure": 2,
+    "eq_same_lot_figure": 15,
+    "eq_any_lot_figure": 15,
+    "eq_procedure_figure": 7,
+    "eq_nothing": 3,
+    "exceeds_head_proxy": 1
+   },
+   "eforms:eforms-sdk-1.12": {
+    "rows": 119,
+    "eq_tender_value": 64,
+    "exceeds_head_proxy": 2,
+    "eq_same_lot_figure": 68,
+    "eq_any_lot_figure": 70,
+    "eq_procedure_figure": 7,
+    "no_mapped_figure": 24,
+    "eq_nothing": 3
+   },
+   "eforms:eforms-sdk-1.13": {
+    "rows": 513,
+    "eq_same_lot_figure": 439,
+    "eq_any_lot_figure": 441,
+    "eq_procedure_figure": 26,
+    "eq_tender_value": 121,
+    "eq_nothing": 52,
+    "exceeds_head_proxy": 4,
+    "no_mapped_figure": 12,
+    "pow10_partner": 13
+   },
+   "eforms:eforms-sdk-1.14": {
+    "rows": 43,
+    "eq_same_lot_figure": 8,
+    "eq_any_lot_figure": 8,
+    "eq_procedure_figure": 7,
+    "eq_nothing": 19,
+    "eq_tender_value": 20,
+    "no_mapped_figure": 11,
+    "exceeds_head_proxy": 3
+   }
+  },
+  "BT-156-NoticeResult": {
+   "eforms:eforms-sdk-1.9": {
+    "rows": 1,
+    "eq_procedure_figure": 1
+   }
+  },
+  "BT-157-LotsGroup": {
+   "eforms:eforms-sdk-1.9": {
+    "rows": 4,
+    "eq_procedure_figure": 3,
+    "eq_nothing": 1
+   }
+  }
+ },
+ "examples": {
+  "BT-711-LotResult:exceeds": [
+   [
+    23357037,
+    "RES-0001",
+    14508000,
+    "EUR",
+    14500000
+   ],
+   [
+    23464418,
+    "RES-0001",
+    92150000,
+    "EUR",
+    59755000
+   ],
+   [
+    23465479,
+    "RES-0001",
+    41950000,
+    "EUR",
+    41540400
+   ],
+   [
+    23534596,
+    "RES-0001",
+    1490000,
+    "EUR",
+    820000
+   ],
+   [
+    23610306,
+    "RES-0000",
+    120960000,
+    "RON",
+    8928000
+   ],
+   [
+    23611226,
+    "RES-0002",
+    565868916,
+    "RON",
+    266898865
+   ],
+   [
+    23611813,
+    "RES-0001",
+    24037500,
+    "RON",
+    14534020
+   ],
+   [
+    23612066,
+    "RES-0000",
+    2027836134,
+    "RON",
+    1953657750
+   ]
+  ],
+  "BT-660-LotResult:exceeds": [
+   [
+    23610306,
+    "RES-0000",
+    144000000,
+    "RON",
+    8928000
+   ],
+   [
+    23610416,
+    "RES-0000",
+    42768000,
+    "RON",
+    29306722
+   ],
+   [
+    23611226,
+    "RES-0001",
+    349168878,
+    "RON",
+    266898865
+   ],
+   [
+    23611226,
+    "RES-0002",
+    793391556,
+    "RON",
+    266898865
+   ],
+   [
+    23612066,
+    "RES-0000",
+    2079825000,
+    "RON",
+    1953657750
+   ],
+   [
+    23613065,
+    "RES-0000",
+    2933105220,
+    "RON",
+    709728183
+   ],
+   [
+    23614119,
+    "RES-0001",
+    1058400000,
+    "RON",
+    816453000
+   ],
+   [
+    23614119,
+    "RES-0002",
+    917280000,
+    "RON",
+    816453000
+   ]
+  ],
+  "BT-709-LotResult:exceeds": [
+   [
+    23610306,
+    "RES-0000",
+    120960000,
+    "RON",
+    8928000
+   ],
+   [
+    23610416,
+    "RES-0000",
+    42337059,
+    "RON",
+    29306722
+   ],
+   [
+    23614119,
+    "RES-0001",
+    1163816640,
+    "RON",
+    816453000
+   ],
+   [
+    23614119,
+    "RES-0002",
+    1008641088,
+    "RON",
+    816453000
+   ],
+   [
+    23614119,
+    "RES-0003",
+    1662595200,
+    "RON",
+    816453000
+   ],
+   [
+    23614681,
+    "RES-0000",
+    888470032,
+    "RON",
+    34041923
+   ],
+   [
+    23636997,
+    "RES-0000",
+    1953657750,
+    "RON",
+    976828875
+   ],
+   [
+    23637553,
+    "RES-0000",
+    269096000,
+    "RON",
+    21701168
+   ]
+  ],
+  "BT-710-LotResult:exceeds": [
+   [
+    23610306,
+    "RES-0000",
+    107136000,
+    "RON",
+    8928000
+   ],
+   [
+    23611226,
+    "RES-0002",
+    471436680,
+    "RON",
+    266898865
+   ],
+   [
+    23613065,
+    "RES-0000",
+    2928154500,
+    "RON",
+    709728183
+   ],
+   [
+    23614119,
+    "RES-0001",
+    1163816640,
+    "RON",
+    816453000
+   ],
+   [
+    23614119,
+    "RES-0002",
+    1008641088,
+    "RON",
+    816453000
+   ],
+   [
+    23614119,
+    "RES-0003",
+    1662595200,
+    "RON",
+    816453000
+   ],
+   [
+    23636997,
+    "RES-0000",
+    1953657750,
+    "RON",
+    976828875
+   ],
+   [
+    23638185,
+    "RES-0000",
+    4280613120,
+    "RON",
+    16480800
+   ]
+  ],
+  "BT-710-LotResult:pow10": [
+   [
+    23753335,
+    "RES-0000",
+    2000,
+    "RON",
+    [
+     200000000
+    ]
+   ],
+   [
+    23869054,
+    "RES-0018",
+    2698000,
+    "EUR",
+    [
+     26980,
+     149120,
+     1023040,
+     1035520,
+     1130288,
+     1176000
+    ]
+   ],
+   [
+    24121226,
+    "RES-0000",
+    1,
+    "EUR",
+    [
+     1,
+     100
+    ]
+   ],
+   [
+    27261876,
+    "RES-0006",
+    162000,
+    "RON",
+    [
+     272000,
+     393800,
+     604500,
+     682000,
+     687500,
+     900000
+    ]
+   ],
+   [
+    27261876,
+    "RES-0007",
+    60000,
+    "RON",
+    [
+     272000,
+     393800,
+     604500,
+     682000,
+     687500,
+     900000
+    ]
+   ],
+   [
+    27261876,
+    "RES-0059",
+    16800,
+    "RON",
+    [
+     272000,
+     393800,
+     604500,
+     682000,
+     687500,
+     900000
+    ]
+   ],
+   [
+    27261876,
+    "RES-0060",
+    27720,
+    "RON",
+    [
+     272000,
+     393800,
+     604500,
+     682000,
+     687500,
+     900000
+    ]
+   ],
+   [
+    27261876,
+    "RES-0069",
+    15000,
+    "RON",
+    [
+     272000,
+     393800,
+     604500,
+     682000,
+     687500,
+     900000
+    ]
+   ]
+  ],
+  "BT-1118-NoticeResult:exceeds": [
+   [
+    23753644,
+    "PROCEDURE",
+    63672000,
+    "EUR",
+    31500000
+   ],
+   [
+    23901869,
+    "PROCEDURE",
+    484808880,
+    "EUR",
+    327020680
+   ],
+   [
+    24144128,
+    "PROCEDURE",
+    130000000,
+    "EUR",
+    121230000
+   ],
+   [
+    23670345,
+    "PROCEDURE",
+    1268400000,
+    "EUR",
+    60400000
+   ],
+   [
+    24741307,
+    "PROCEDURE",
+    3000000000,
+    "EUR",
+    600000000
+   ],
+   [
+    24074165,
+    "PROCEDURE",
+    2000000000,
+    "SEK",
+    100000000
+   ],
+   [
+    24296873,
+    "PROCEDURE",
+    250000000,
+    "BGN",
+    800000
+   ],
+   [
+    24406909,
+    "PROCEDURE",
+    4000000000,
+    "SEK",
+    480000000
+   ]
+  ],
+  "BT-660-LotResult:pow10": [
+   [
+    23869054,
+    "RES-0018",
+    2698000,
+    "EUR",
+    [
+     26980,
+     149120,
+     1023040,
+     1035520,
+     1130288,
+     1176000
+    ]
+   ],
+   [
+    24645114,
+    "RES-0004",
+    10000000,
+    "EUR",
+    [
+     100000,
+     124000,
+     180000,
+     300000,
+     575000,
+     600000
+    ]
+   ],
+   [
+    24645114,
+    "RES-0021",
+    100000,
+    "EUR",
+    [
+     100000,
+     124000,
+     180000,
+     300000,
+     575000,
+     600000
+    ]
+   ],
+   [
+    28430656,
+    "RES-0041",
+    111600000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0045",
+    10800000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0087",
+    432000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0124",
+    72000000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0132",
+    4320000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ]
+  ],
+  "BT-709-LotResult:pow10": [
+   [
+    23869054,
+    "RES-0018",
+    2698000,
+    "EUR",
+    [
+     26980,
+     149120,
+     1023040,
+     1035520,
+     1130288,
+     1176000
+    ]
+   ],
+   [
+    28430656,
+    "RES-0041",
+    10800000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0088",
+    720000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0091",
+    129600,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0151",
+    3168000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0155",
+    720000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0160",
+    432000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0163",
+    34560,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ]
+  ],
+  "BT-711-LotResult:pow10": [
+   [
+    23869054,
+    "RES-0018",
+    2698000,
+    "EUR",
+    [
+     26980,
+     149120,
+     1023040,
+     1035520,
+     1130288,
+     1176000
+    ]
+   ],
+   [
+    24121226,
+    "RES-0000",
+    1,
+    "EUR",
+    [
+     1,
+     100
+    ]
+   ],
+   [
+    27261876,
+    "RES-0006",
+    162000,
+    "RON",
+    [
+     272000,
+     393800,
+     604500,
+     682000,
+     687500,
+     900000
+    ]
+   ],
+   [
+    27261876,
+    "RES-0059",
+    16800,
+    "RON",
+    [
+     272000,
+     393800,
+     604500,
+     682000,
+     687500,
+     900000
+    ]
+   ],
+   [
+    27261876,
+    "RES-0060",
+    27720,
+    "RON",
+    [
+     272000,
+     393800,
+     604500,
+     682000,
+     687500,
+     900000
+    ]
+   ],
+   [
+    28430656,
+    "RES-0005",
+    16200,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0048",
+    648000,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ],
+   [
+    28430656,
+    "RES-0091",
+    129600,
+    "RON",
+    [
+     18720,
+     20880,
+     31680,
+     32400,
+     36000,
+     36720
+    ]
+   ]
+  ],
+  "BT-118-NoticeResult:exceeds": [
+   [
+    23871666,
+    "PROCEDURE",
+    331221540,
+    "EUR",
+    325000000
+   ],
+   [
+    24144128,
+    "PROCEDURE",
+    130000000,
+    "EUR",
+    121230000
+   ],
+   [
+    23398354,
+    "PROCEDURE",
+    393600000,
+    "EUR",
+    240480000
+   ],
+   [
+    23670345,
+    "PROCEDURE",
+    1268400000,
+    "EUR",
+    60400000
+   ],
+   [
+    23670503,
+    "PROCEDURE",
+    884000000,
+    "DKK",
+    680000000
+   ],
+   [
+    24739675,
+    "PROCEDURE",
+    700000000,
+    "NOK",
+    500000000
+   ],
+   [
+    24741307,
+    "PROCEDURE",
+    3000000000,
+    "EUR",
+    600000000
+   ],
+   [
+    23488331,
+    "PROCEDURE",
+    33618035,
+    "EUR",
+    26896028
+   ]
+  ],
+  "BT-1118-NoticeResult:pow10": [
+   [
+    24666306,
+    "PROCEDURE",
+    100000000,
+    "SEK",
+    [
+     100
+    ]
+   ]
+  ]
+ }
+}
