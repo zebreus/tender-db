@@ -1808,7 +1808,10 @@ impl Bed {
 /// into it would put a correct supplier under someone else's number. A `wrong`
 /// verdict on that number takes the org out of the owner walk: the pair finds no
 /// company-number org and is never planned. A verdict on a number the org does
-/// not carry is inert, and a `related` verdict flags without withholding.
+/// not carry is inert. A `related` verdict withholds too (issue 466): the number is a
+/// related company's, so folding the PPON org into the org under it would put the
+/// supplier under its parent's or sister's number — until the re-key arm moves the
+/// org onto its own number, which ends the withholding (`applied_at`).
 #[tokio::test]
 async fn a_wrong_number_verdict_keeps_the_company_number_org_from_owning_its_pair() {
     let b = bed("withheld-owner").await;
@@ -1828,7 +1831,7 @@ async fn a_wrong_number_verdict_keeps_the_company_number_org_from_owning_its_pai
 
     b.identifier_verdict(2, &minted(COH_A), "related").await;
     let r = b.plan().await;
-    assert_eq!((r.plan_pairs, r.withheld), (1, 0), "a re-review replaces the verdict; related only flags");
+    assert_eq!((r.plan_pairs, r.withheld), (0, 1), "a re-review replaces the verdict; related withholds too");
 }
 
 /// The alias finds the company-number org through the resolver's canonical map,

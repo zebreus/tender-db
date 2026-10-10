@@ -8657,7 +8657,7 @@ impl Supervisor {
                     .await
                     .map_err(|e| e.to_string())?;
                 let head = format!(
-                    "{} wrong-number verdicts with a right number ({} not high, {} gone, {} \
+                    "{} wrong-number or related verdicts with a right number ({} not high, {} gone, {} \
                      several carriers, {} unkeyed, {} same key); denied: {} multi-target, {} \
                      withheld target, {} pending move, {} destination verdict, {} keep verdict, \
                      {} consortium, {} legal-form, {} names ({} admitted by a merge verdict); plan \

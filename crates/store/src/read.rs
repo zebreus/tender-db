@@ -4212,14 +4212,16 @@ const TENDER_LOTS_CAP: i64 = 20_000;
 /// the mention count beside it), each entry's fields joined by `char(31)` and
 /// the entries by `char(30)` — characters no stored identifier carries (the
 /// normaliser keeps ASCII alphanumerics). Column 9, `name_norm`, is the
-/// name-ordered search's sort key.
+/// name-ordered search's sort key. Column 7 serves a `related` verdict only until
+/// the re-key arm acts on it (issue 466): afterwards whoever carries that number is
+/// the related company itself, which the verdict is not about.
 const ORG_COLUMNS: &str = "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
                 (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id),
                 (SELECT v.verdict FROM org_identifier_verdicts v
                   WHERE v.identifier = o.identifier
                     AND v.identifier_kind = COALESCE(o.identifier_kind, '')
                     AND v.country = COALESCE(o.country, '')
-                    AND v.verdict IN ('wrong', 'related')),
+                    AND (v.verdict = 'wrong' OR (v.verdict = 'related' AND v.applied_at IS NULL))),
                 (SELECT group_concat(mi.identifier || char(31) || COALESCE(mi.identifier_kind, '')
                                      || char(31) || COALESCE(mi.country, ''), char(30))
                    FROM organization_merged_identifiers mi WHERE mi.org_id = o.id),

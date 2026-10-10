@@ -6343,17 +6343,22 @@ pub struct RekeyReport {
 
 const REKEY_TXN: usize = 50;
 
-/// The org ids carrying a triple with a `wrong` verdict (issue 452): the set
-/// every identifier-based matcher leaves out. Hand-review sized (hundreds), so
-/// one small read plus a seek per verdict, per planner run or resolver open —
-/// never a join the planner could drive from `organizations`.
+/// The org ids carrying a triple with a `wrong` verdict (issue 452), or a
+/// `related` one the re-key arm has not yet acted on (issue 466): the set every
+/// identifier-based matcher leaves out. A related number is a real company's —
+/// the named org's parent, subsidiary or sister — so grouping by it folds the org
+/// into the very company the reviewer kept apart. Once re-keyed the org no longer
+/// carries it, and whoever carries it next is that company itself, which a verdict
+/// about someone else must not withhold. Hand-review sized (hundreds), so one small
+/// read plus a seek per verdict, per planner run or resolver open — never a join the
+/// planner could drive from `organizations`.
 async fn withheld_identifier_orgs(
     conn: &Connection,
 ) -> turso::Result<std::collections::HashSet<i64>> {
     let mut rows = conn
         .query(
             "SELECT identifier, identifier_kind, country FROM org_identifier_verdicts \
-              WHERE verdict = 'wrong'",
+              WHERE verdict = 'wrong' OR (verdict = 'related' AND applied_at IS NULL)",
             (),
         )
         .await?;
@@ -14732,11 +14737,16 @@ impl Db {
         // to the wrong-number org before; any other spelling of the wrong
         // number is GUARDED with that org among its owners, so it reaches it
         // only by name (the number may be someone else's real one).
+        //
+        // Issue 466: a re-keyed `related` number is never aliased. It IS someone
+        // else's real one — the parent's, the subsidiary's, the sister's — so a
+        // later mention of it is that company's, not the org it was taken off.
         let mut rekeyed: RekeyedLiterals = HashMap::new();
         let mut rows = conn
             .query(
                 "SELECT identifier, identifier_kind, country, applied_literal \
-                   FROM org_identifier_verdicts WHERE applied_literal IS NOT NULL",
+                   FROM org_identifier_verdicts \
+                  WHERE applied_literal IS NOT NULL AND verdict = 'wrong'",
                 (),
             )
             .await?;
@@ -23397,7 +23407,12 @@ impl Db {
             &writer
         };
 
-        // ---- 1. The verdicts, and the org each one names.
+        // ---- 1. The verdicts, and the org each one names. A `related` verdict
+        // that names the org's own number re-keys like a `wrong` one (issue 466):
+        // the org leaves its parent's or sister's number for its own, through the
+        // same gates. Once applied it is not read again: the next carrier of that
+        // number is the related company itself, not the org the verdict was about.
+        // Only that and the alias (never for `related`) tell the two apart.
         struct Cand {
             key: String,
             country: String,
@@ -23410,7 +23425,8 @@ impl Db {
             .query(
                 "SELECT identifier, identifier_kind, country, confidence, correct_identifier \
                    FROM org_identifier_verdicts \
-                  WHERE verdict = 'wrong' AND correct_identifier IS NOT NULL \
+                  WHERE (verdict = 'wrong' OR (verdict = 'related' AND applied_at IS NULL)) \
+                    AND correct_identifier IS NOT NULL \
                   ORDER BY identifier, identifier_kind, country",
                 (),
             )

@@ -5,6 +5,7 @@
 //! and the resolver aliases the wrong number to the entity from then on. The
 //! injected rules are `altid_merge.rs`'s GB miniatures.
 
+use store::read::{self, Filter, Scope};
 use store::turso::{Connection, Value};
 use store::{Identifier, IdentifierVerdict, Mention};
 
@@ -477,7 +478,9 @@ async fn one_right_number_moves_once_and_the_rest_merge_into_it() {
 /// A destination some verdict flags is not a place to put an entity: neither a
 /// right-number owner under a `related` verdict (merge), nor a right number a
 /// `wrong` verdict names while nothing carries it (move) — in ANY spelling: a
-/// verdict on `GBCOH71717179` flags the bare `71717179` a move would write.
+/// verdict on `GBCOH71717179` flags the bare `71717179` a move would write. Since
+/// issue 466 an owner under a not-yet-applied `related` verdict is withheld from the
+/// matchers, so it is refused one step earlier, as a withheld target.
 #[tokio::test]
 async fn a_destination_under_a_verdict_is_refused() {
     let orgs: &[(i64, &str, &str)] = &[
@@ -507,12 +510,17 @@ async fn a_destination_under_a_verdict_is_refused() {
     conn.execute("DELETE FROM organizations WHERE id IN (4, 6)", ()).await.unwrap();
 
     let dry = db.match_org_rekey(args(true, None, None)).await.unwrap();
-    assert_eq!((dry.plan_merge, dry.plan_move, dry.destination_verdict), (0, 0, 3), "{:#?}", dry.denied);
+    assert_eq!(
+        (dry.plan_merge, dry.plan_move, dry.destination_verdict, dry.withheld_target),
+        (0, 0, 2, 1),
+        "{:#?}",
+        dry.denied
+    );
     let mut shapes: Vec<(i64, &str)> = dry.denied.iter().map(|l| (l.org, l.shape.as_str())).collect();
     shapes.sort();
     assert_eq!(
         shapes,
-        vec![(1, "destination-verdict"), (3, "destination-verdict"), (5, "destination-verdict")]
+        vec![(1, "withheld-target"), (3, "destination-verdict"), (5, "destination-verdict")]
     );
     assert!(dry.denied.iter().all(|l| !l.key.contains('>')), "a denied key is the bare wrong triple");
 }
@@ -597,4 +605,73 @@ async fn a_lookalike_whose_fold_is_the_right_number_is_re_keyed_onto_it() {
     assert_eq!((wet.moved, wet.merged), (1, 1));
     assert_eq!(text(&conn, "SELECT identifier FROM organizations WHERE id = 1").await.as_deref(), Some("GBCOHCE019319"));
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 2").await, 0);
+}
+
+/// Issue 466: a `related` verdict names a number that is a real company's — here the
+/// parent group's, under the subsidiary Pagabo — and the org's own number beside it.
+/// Until the re-key the org is withheld, so another spelling of the parent's number
+/// under the parent's own name does not bind to it; the re-key merges it into its own
+/// number's org like a `wrong` one; and the parent's number is never aliased to that
+/// org afterwards: a later mention of it is the parent's.
+#[tokio::test]
+async fn a_related_verdict_re_keys_but_its_number_is_never_aliased() {
+    let orgs: &[(i64, &str, &str)] = &[(1, "13304590", "Pagabo Ltd"), (2, "08787322", "Pagabo Limited")];
+    let related = IdentifierVerdict {
+        org_id: 1,
+        identifier: "13304590".into(),
+        verdict: "related".into(),
+        correct_identifier: Some("08787322".into()),
+        rationale: "fixture: 13304590 is THE 55 GROUP (MIDCO) LIMITED, Pagabo's parent".into(),
+        confidence: "high".into(),
+    };
+    let (db, conn) = bed_with("test-rekey-related.db", orgs, &[related]).await;
+
+    let mut resolver =
+        db.mention_resolver(Some(key), Some(consortium), None, Some(norm), None, None, 0).await.unwrap();
+    let before = db
+        .resolve_mentions(&mut resolver, &[mention(2, "The 55 Group (Midco) Limited", "GBCOH13304590")], 0)
+        .await
+        .unwrap();
+    db.finish_mention_resolver(resolver).await.unwrap();
+    let parent = before[0];
+    assert!(parent > 2, "the parent's mention mints its own org instead of binding to Pagabo ({parent})");
+
+    let dry = db.match_org_rekey(args(true, None, None)).await.unwrap();
+    assert_eq!(dry.keys, vec!["GB/national/13304590>merge:08787322"], "{:#?}", dry.denied);
+    db.match_org_rekey(args(false, Some(dry.keys), None)).await.unwrap();
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 1").await, 0, "merged into 2");
+    assert!(
+        text(&conn, "SELECT applied_at FROM org_identifier_verdicts WHERE identifier = '13304590'").await.is_some()
+            || count(
+                &conn,
+                "SELECT COUNT(*) FROM org_identifier_verdicts WHERE identifier = '13304590' AND applied_at IS NOT NULL"
+            )
+            .await
+                == 1,
+        "the verdict is stamped"
+    );
+
+    let mut resolver =
+        db.mention_resolver(Some(key), Some(consortium), None, Some(norm), None, None, 0).await.unwrap();
+    let after = db
+        .resolve_mentions(&mut resolver, &[mention(3, "The 55 Group (Midco) Limited", "13304590")], 0)
+        .await
+        .unwrap();
+    db.finish_mention_resolver(resolver).await.unwrap();
+    assert_ne!(after[0], 2, "the parent's number never reaches the org it was taken off");
+    assert_eq!(after[0], parent, "it reaches the company that carries it");
+
+    // The verdict was about Pagabo. When the parent carries the exact literal, it is
+    // neither served as a related entity nor planned onto Pagabo's number.
+    conn.execute(
+        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+         VALUES (90, 'GB', 'national', '13304590', 'The 55 Group (Midco) Limited', 'the 55 group midco limited', 0, 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    let page = read::organizations(&conn, &Filter::default(), Scope::At { id: 90, seq: 0 }).await.unwrap();
+    assert_eq!(page.into_iter().map(|r| r.identifier_verdict).collect::<Vec<_>>(), vec![None]);
+    let again = db.match_org_rekey(args(true, None, None)).await.unwrap();
+    assert_eq!((again.verdicts, again.keys.len()), (0, 0), "an applied related verdict is not read again");
 }
