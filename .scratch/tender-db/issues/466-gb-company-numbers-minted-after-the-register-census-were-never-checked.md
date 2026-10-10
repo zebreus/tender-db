@@ -1,6 +1,7 @@
 # 466 — GB company numbers minted after 452's register census were never checked, and the census cannot be re-run
 
-Status: ready-for-agent — UNITS 1, 3 AND 4 DONE AND VERIFIED 2026-10-10. The wet rekey ran (job 2113: 174 merged, 79
+Status: ready-for-agent — UNIT 2 (a) BUILT, REVIEWED AND DEPLOYED 2026-10-10 (`5ac7825` + review fixes `cd9a4f0`, gate green, live at `cd9a4f0`). NEXT: re-POST the five held related rows at medium (`466-census/related-hold-2026-10-10.json`), dry rekey, a register review of the related rows in its plan with each org's mention names, the wet run, then the Verify again.
+Was: ready-for-agent — UNITS 1, 3 AND 4 DONE AND VERIFIED 2026-10-10. The wet rekey ran (job 2113: 174 merged, 79
 moved, residual 0), and the Verify reads `1199 384 [… ('466-census-2026-10-10', 511), ('466-rekey-review-2026-10-10',
 3) …]`. The watermark is now 31,765,469 (`452-census/watermark.json`, snapshot 2026-10-01). NEXT: unit 2, DECIDED (a),
 to build. The `related` numbers are not withheld from the R2/E0/R3 matchers (`withheld_identifier_orgs` reads
@@ -306,4 +307,39 @@ number, 10 high without, 30 medium with, 9 medium without); 466: 62 (37 / 4 / 14
 
 **Then:** dry rekey, a register review of the related rows in the plan (453's shape, smaller), the wet run, and
 the Verify again.
+
+## Unit 2 (a) — built, reviewed, deployed (2026-10-10)
+
+**Built** (`5ac7825`):
+- `withheld_identifier_orgs` reads `wrong` plus `related` with `applied_at IS NULL`.
+- The rekey arm selects the same set, with `correct_identifier`.
+- `ORG_COLUMNS` serves `related_entity` only until the verdict is applied.
+- The rekey arm's flagged destinations read the same set.
+- Tests: `a_related_verdict_re_keys_and_its_number_reaches_the_parent_only_by_name` (rekey.rs) and
+  `a_related_verdict_withholds_only_until_it_is_applied` (identifier_verdicts.rs, R2). Two tests that pinned the old
+  flag-only rule now pin the new one.
+
+**Review** (`wf_8a22ff8f-d88`, three lenses + refuters; 13 confirmed, 1 refuted):
+- **Blocker, confirmed by all three lenses: the design's "never alias" half was wrong.** It assumed a later mention
+  of a re-keyed related number is the related company's. On production, 126 of the 128 mentions on the 90
+  candidate orgs name the org itself, and 2 name the related company (M Group, EMED). Unaliased, each repeat would
+  have minted an unflagged twin, which no verdict reaches: a re-POST keeps `applied_at`. **Fixed (`cd9a4f0`): a
+  re-keyed related number is aliased exactly like a wrong one.** The exact literal reaches the entity, and other
+  spellings reach the related company only by name.
+- **The merge carries every mention, including one that names the related company under its own number.**
+  Milestone 16782120 holds M Group (Services)' own award (notice 46841118); EMED 31535026 is the same shape and
+  multi-target today. These are held at medium until their mentions are split.
+- **The high-only gate trusts the reviewer's confidence over a challenger's downgrade.** Relyon 31576132 and
+  Affinity 11999312 were lowered by their challengers, and This is my healthcare 31621960's number is only "the
+  closest match". All three are held at medium. The four rows above plus these three make the five re-POSTs in
+  `466-census/related-hold-2026-10-10.json`. Alphatrack 12252991 is multi-target, and its challenger confirms the
+  number.
+- Also fixed:
+  - an applied related verdict no longer flags its number as a refused destination;
+  - the withheld counts in the fold and planner summaries read "wrong-number or unapplied related verdict";
+  - the public docs (`v1/docs.rs`) and operations.md describe the new rule.
+- **Expect on the first fold after deploy:** the `[issue 452] … withheld` count rises by up to 164 (each related
+  carrier). After the wet run it falls by the number re-keyed.
+- For future cohorts: `verdict_post.py` posts the reviewer's confidence. A challenger's downgrade should win, which
+  the next census applies by hand.
 

@@ -1,6 +1,7 @@
 # 508 — the 2009-12 → 2010 text vintage names no winner, and from 2010-03 claims no value
 
-Status: ready-for-agent — UNIT 2 BUILT AND REVIEWED 2026-10-10 (WIP `0ae3fbf`; review `wf_20e02b2c-6bb`, 7 confirmed, all fixed). NEXT: gate, push, deploy, then unit 3's drain in two rounds (below).
+Status: ready-for-agent — UNIT 2 DEPLOYED (`96e5816`), UNIT 3 ROUND 1 DRAINED 2026-10-10: reparse 2114 (fetches 186–192, 234,469 notices, 0 unmatched / re-keyed / failing) and project 2115 (215,433 Tenders, 201,269 written, 189,311 corrected). Exhibit 8255697 serves 80,515 EUR and winner Clarke Machinery Ltd. Round 2 (reparse 2116, fetches 193–198) running; then its project and the Verify.
+Was: ready-for-agent — UNIT 2 BUILT AND REVIEWED 2026-10-10 (WIP `0ae3fbf`; review `wf_20e02b2c-6bb`, 7 confirmed, all fixed). NEXT: gate, push, deploy, then unit 3's drain in two rounds (below).
 Was: ready-for-agent — UNIT 1 MEASURED 2026-10-10 (hourly firing, found while working issue 491 unit 3).
 Kind: parse coverage (text era, `crates/ingest/src/text/parse.rs`)
 Relates to: 244 (the era's winner/value campaign; its "2010 tail" open question is this), 491 (same parser, same

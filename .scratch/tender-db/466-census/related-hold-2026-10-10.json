@@ -1,0 +1,45 @@
+{
+ "cohort": "466-related-hold-2026-10-10",
+ "verdicts": [
+  {
+   "org_id": 11999312,
+   "identifier": "07941497",
+   "verdict": "related",
+   "correct_identifier": "07950635",
+   "rationale": "[466 unit 2 review wf_8a22ff8f-d88, 2026-10-10] Lowered to medium before the related re-key: the challenger lowered it to medium (Monarch may have traded under the group brand), and the right number now belongs to COSMO BIDCO, so a move onto it is not settled. Earlier: [related-company/high; absent-mismatch] 07941497 is MONARCH EDUCATION LIMITED, whose PSC register shows Affinity Workforce Limited (07950635, since renamed COSMO BIDCO LIMITED) as its 75%+ owner from 2017 to 2018, so it is an Affinity subsidiary. Since October 2018 both Monarch and AFFINITY WORKFORCE SOLUTIONS LIMITED 11593079 sit under Seed Cap Holdings; a post-2018 notice would point to 11593079 instead. | challenger: 07941497 is MONARCH EDUCATION LIMITED, the operating subsidiary whose 75%+ PSC was Affinity Workforce Limited 07950635 (the register name from Jul 2017 to Oct 2018, formerly Monarch Education Holdings, now COSMO BIDCO) and, from Oct 2018, Seed Cap Holdings, parent of AFFINITY WORKFORCE SOLUTIONS LIMITED 11593079. Related-company stands because 'Affinity Workforce' is the parent's register name, but I lowered the confidence to medium: Monarch may have traded under the group brand, and the notice date decides between 07950635 and 11593079.",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31576132,
+   "identifier": "GBCOH06115331",
+   "verdict": "related",
+   "correct_identifier": "02786348",
+   "rationale": "[466 unit 2 review wf_8a22ff8f-d88, 2026-10-10] Lowered to medium before the related re-key: the challenger lowered it to medium (a post-acquisition RelyOn Nutec brand on Develop would make this the right number). Earlier: [related-company/high; live-mismatch] 06115331 is Develop Training Limited, whose PSC since Dec 2024 is RelyOn Nutec UK Limited, 02786348. The number is a subsidiary of the named company. | challenger: 06115331 is Develop Training Limited, whose PSC since 13 Dec 2024 is RelyOn Nutec UK Limited (02786348, formerly Falck Nutec), and it has moved to RelyOn's Billingham office. The notice's 'Relyon Nutec LTD' matches the parent's name, so related-company stands. I lower it from high because a post-acquisition RelyOn Nutec brand on Develop would make this right-number; the notice's subject (utility training vs safety training) would settle it.",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31535026,
+   "identifier": "GBCOH13121344",
+   "verdict": "related",
+   "correct_identifier": "04088225",
+   "rationale": "[466 unit 2 review wf_8a22ff8f-d88, 2026-10-10] Lowered to medium before the related re-key: one of the org's mentions (notice 46726063) names EMED GROUP LIMITED itself under its own number, so a merge would carry that award with it; the mentions need splitting first. Earlier: [related-company/high; live-mismatch] The head exactly matches the current register name of 04088225, 'EZEC MEDICAL TRANSPORT SERVICES - TRADING AS EMED GROUP LIMITED' (formerly E-Zec Medical Transport Services Ltd). 13121344 is EMED GROUP LIMITED, formerly Leto 2021 Bidco, which is the acquiring parent. | challenger: The head is word for word the current register name of 04088225, 'EZEC MEDICAL TRANSPORT SERVICES - TRADING AS EMED GROUP LIMITED', whose PSC is Emed Holdings Limited. 13121344 is EMED GROUP LIMITED (formerly Leto 2021 Bidco), the acquisition vehicle above it in the same group, so the number is a parent entity and the right number is 04088225.",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 31621960,
+   "identifier": "GBCOH13876333",
+   "verdict": "related",
+   "correct_identifier": "11247383",
+   "rationale": "[466 unit 2 review wf_8a22ff8f-d88, 2026-10-10] Lowered to medium before the related re-key: the correct number (THIS IS MY: HEALTHCARE HOLDINGS) is the closest match, not a settled one; a move onto a holdings company's number needs a register read. Earlier: [related-company/high; live-mismatch] The PSC and officers pages for I3 MEDICAL LIMITED 13876333 show Jonathan Paul Day (b. Apr 1975), Judith Alexandra Clark Pilling (b. Sep 1966) and Ian Ashley Richardson (b. Apr 1959) as its founders and owners from 2022 until it was sold to Lumicare Medtech UK on 22 May 2026. Those same three people, with matching birth dates, are directors of THIS IS MY: HEALTHCARE HOLDINGS LIMITED 11247383 at 93 Water Lane, Leeds, so 13876333 is a sister company in the 'This is my:' group and 11247383 is the closest match for the name 'This is my healthcare'. | challenger: reviewer: wrong-number/medium: 13876333 is I3 MEDICAL LIMITED, a London machinery wholesaler at 9 St Clare Street with no name link to the org. The 'This is my:' healthcare businesses are a separate Leeds group at 93 Water Lane (e.g. THIS IS MY: HEALTHCARE HOLDINGS LIMITED 11247383), so the number belongs to someone unrelated. | challenger (related-company): I3 MEDICAL LIMITED's PSC and officers pages show it was founded and owned from 2022 until 22 May 2026 by Jonathan Paul Day, Judith Pilling and Ian Richardson. Those three are the directors of THIS IS MY: HEALTHCARE HOLDINGS LIMITED 11247383, and the company was sold to Lumicare Medtech in 2026, so it is a sister company under common ownership rather than an unrelated one.",
+   "confidence": "medium"
+  },
+  {
+   "org_id": 16782120,
+   "identifier": "10260164",
+   "verdict": "related",
+   "correct_identifier": "13007933",
+   "rationale": "[466 unit 2 review wf_8a22ff8f-d88, 2026-10-10] Lowered to medium before the related re-key: one of the org's mentions (notice 46841118) names M Group (Services) itself under its own number, so a merge would carry the parent's award onto the subsidiary; the mentions need splitting first. Earlier: [related-company/high; live-mismatch] 10260164 is M GROUP (SERVICES) LIMITED, the parent group, and one mention does name it. But the head 'Milestone Infrastructure Ltd' (2 mentions) is the subsidiary 13007933, which the register shows was MILESTONE INFRASTRUCTURE LIMITED from Nov 2020 to Apr 2025 and is now M GROUP HIGHWAYS LIMITED. | challenger: 10260164 is the parent M GROUP (SERVICES) LIMITED. The head 'Milestone Infrastructure Ltd' (2 mentions) is 13007933: its register page shows MILESTONE INFRASTRUCTURE LIMITED from 27 Nov 2020 to 1 Apr 2025, now M GROUP HIGHWAYS LIMITED, and the search finds no other Milestone Infrastructure company.",
+   "confidence": "medium"
+  }
+ ]
+}
