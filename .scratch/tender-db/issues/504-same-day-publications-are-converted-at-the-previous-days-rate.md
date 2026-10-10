@@ -1,6 +1,7 @@
 # 504 — same-day publications are converted at the previous day's rate, and nothing re-derives them
 
-Status: ready-for-agent — UNITS 1–3 DEPLOYED 2026-10-09 (`192e1de`, gate green). Prod job 2103 (unit 3): **11 s, 4.18M
+Status: done — VERIFIED 2026-10-10 on the first daily after deploy. `rederive-eur-recent` job 2123 (after the daily's fetch-rates 2122): `eur_cents re-derived from 277996 cached rates over 21333 tender(s) whose head was published since 2026-10-02: 140884 of 3680986 money rows changed, 5298 correction row(s) announced (ADR-0017 D5), 839 tender(s) stamped epoch-stale and 5501 of their notice(s) re-queued for the fold`. That is hundreds of Tenders, as predicted: 10-09's non-EUR publications moving off the previous day's rate. The daily's `project` 2124 folded them (its 194,526 notices include issue 508's round-2 cohort).
+Was: ready-for-agent — UNITS 1–3 DEPLOYED 2026-10-09 (`192e1de`, gate green). Prod job 2103 (unit 3): **11 s, 4.18M
 money rows** over 25,267 recent heads, 0 moved, against 169 s and 79.3M rows before the narrowing (job 2102). NEXT: read
 the 2026-10-10 daily's `rederive-eur-recent` line, then close if it moved about the non-EUR share of 10-09's
 publications and the `project` after it corrected them (prediction below).

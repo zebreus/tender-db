@@ -1,0 +1,3700 @@
+[
+{
+"key": "GB/national/01789968>merge:05551907",
+"shape": "merge",
+"org": 13946860,
+"head": "thebigword group Ltd",
+"wrong": "01789968",
+"right": "05551907",
+"org_mentions": [
+{
+"name": "thebigword group Ltd",
+"raw_identifier": "01789968",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "05551907",
+"name": "TheBigWord Group Limited (TBW)",
+"org": 17774510,
+"mentions": [
+{
+"name": "TheBigWord Group Limited (TBW)",
+"raw_identifier": "05551907",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "LINK UP MITAKA LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "THEBIGWORD GROUP LIMITED",
+"status": "Active",
+"previous": [
+"THEBIGWORD GROUP LIMITED",
+"THEBIGWORD HOLDINGS LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "05551907",
+"rationale": "01789968 is LINK UP MITAKA LIMITED, thebigword's operating company, but the notice names 'thebigword group Ltd'. That is a separate registered company, THEBIGWORD GROUP LIMITED 05551907 (formerly Thebigword Holdings), so this number is its subsidiary.",
+"challenge": "01789968 is LINK UP MITAKA LIMITED, thebigword's operating company, and its PSC register names Thebigword Group Limited as its controlling parent. The notice names 'thebigword group Ltd', which exists as THEBIGWORD GROUP LIMITED 05551907 (formerly Thebigword Holdings / Thebigword Group PLC), so this number is the named company's subsidiary and the correct number is 05551907."
+}
+},
+{
+"key": "GB/national/02246366>merge:02150688",
+"shape": "merge",
+"org": 11759767,
+"head": "Kyocera",
+"wrong": "02246366",
+"right": "02150688",
+"org_mentions": [
+{
+"name": "Kyocera",
+"raw_identifier": "02246366",
+"mentions": 2
+},
+{
+"name": "Kyocera Document Solutions UK Limited",
+"raw_identifier": "GB-COH-02246366",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "02150688",
+"name": "Kyocera Document Solutions (U.K.) Limited",
+"org": 10472922,
+"mentions": [
+{
+"name": "KYOCERA DOCUMENT SOLUTIONS (U.K.) LIMITED",
+"raw_identifier": "GB-COH-02150688",
+"mentions": 2
+},
+{
+"name": "Kyocera Document Solutions UK",
+"raw_identifier": "GB-COH-02150688",
+"mentions": 2
+},
+{
+"name": "Kyocera Document Solutions UK Ltd",
+"raw_identifier": "02150688",
+"mentions": 2
+},
+{
+"name": "Kyocera",
+"raw_identifier": "GB-COH-02150688",
+"mentions": 1
+},
+{
+"name": "Kyocera Document Solutions ( UK) Ltd",
+"raw_identifier": "02150688",
+"mentions": 1
+},
+{
+"name": "Kyocera Document Solutions (U.K.) Limited",
+"raw_identifier": "02150688",
+"mentions": 1
+},
+{
+"name": "Kyocera Document Solutions (UK) Ltd",
+"raw_identifier": "GB-COH-02150688",
+"mentions": 1
+},
+{
+"name": "Kyocera Document Solutions Uk Ltd",
+"raw_identifier": "02150688",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "ANNODATA LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "KYOCERA DOCUMENT SOLUTIONS (U.K.) LIMITED",
+"status": "Active",
+"previous": [
+"KYOCERA MITA (UK) LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "02150688",
+"rationale": "Every mention names Kyocera / Kyocera Document Solutions UK Limited, but 02246366 is ANNODATA LIMITED, whose Companies House PSC is Kyocera Document Solutions Inc (Japan). That makes it a sister of the named org, and KYOCERA DOCUMENT SOLUTIONS (U.K.) LIMITED is 02150688.",
+"challenge": "02246366 is ANNODATA LIMITED, whose only PSC is Kyocera Document Solutions Inc (Japan, notified 2016), so it is a group sister and not the named UK distributor. The notice names 'Kyocera Document Solutions UK Limited', which is KYOCERA DOCUMENT SOLUTIONS (U.K.) LIMITED 02150688 (formerly Kyocera Mita (UK)), a separate active company, so no rename makes 02246366 the org's own."
+}
+},
+{
+"key": "GB/national/02717211>move:00111982",
+"shape": "move",
+"org": 16509470,
+"head": "NFU Mutual Insurance Society Ltd",
+"wrong": "02717211",
+"right": "00111982",
+"org_mentions": [
+{
+"name": "NFU Mutual Insurance Society Ltd",
+"raw_identifier": "02717211",
+"mentions": 2
+}
+],
+"target": null,
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "NATIONAL FARMERS UNION MUTUAL INSURANCE SOCIETY LIMITED(THE)",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "00111982",
+"rationale": "NFU Mutual Insurance Association Limited (formerly NFU Mutual Insurance Agency, Tiddington Road, Stratford, dissolved 2017) is a subsidiary at the Society's head office, not the Society itself. The Society is THE NATIONAL FARMERS UNION MUTUAL INSURANCE SOCIETY LIMITED, 00111982.",
+"challenge": "02717211 is NFU MUTUAL INSURANCE ASSOCIATION LIMITED (formerly NFU Mutual Insurance Agency Ltd, dissolved 2017), a group company registered at the Society's Tiddington Road, Stratford head office. The Society the notice names is THE NATIONAL FARMERS UNION MUTUAL INSURANCE SOCIETY LIMITED, 00111982, which is live, so the number belongs to a related NFU Mutual entity."
+}
+},
+{
+"key": "GB/national/03671395>move:02476398",
+"shape": "move",
+"org": 15287891,
+"head": "CapitB T/A RTITB Ltd",
+"wrong": "03671395",
+"right": "02476398",
+"org_mentions": [
+{
+"name": "CapitB T/A RTITB Ltd",
+"raw_identifier": "03671395",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "RTITB PROPERTIES LIMITED",
+"status": "Active",
+"previous": [
+"RTITB LIMITED"
+]
+},
+"register_right": {
+"name": "RTITB LIMITED",
+"status": "Active",
+"previous": [
+"CAPITB LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "02476398",
+"rationale": "The notice's 'CapitB t/a RTITB' is RTITB LIMITED 02476398, whose previous name was CAPITB LIMITED. 03671395 is the sister RTITB PROPERTIES LIMITED, which gave up the RTITB Limited name.",
+"challenge": "'CapitB T/A RTITB' names the entity then called CAPITB LIMITED (2011-2022, formerly CAPITB PLC), which is 02476398 and has been named RTITB LIMITED since April 2022. 03671395 is the sister at the same Telford address that held the name RTITB LIMITED from 1998 to 2022 and is now RTITB PROPERTIES LIMITED. The trading-name clause points to a related name-holder, and the org's own number is 02476398."
+}
+},
+{
+"key": "GB/national/03797747>merge:GBCOH01878835",
+"shape": "merge",
+"org": 7336678,
+"head": "Automobile Association Developments Ltd",
+"wrong": "03797747",
+"right": "01878835",
+"org_mentions": [
+{
+"name": "Automobile Association Developments Ltd",
+"raw_identifier": "03797747",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH01878835",
+"name": "Automobile Association Developments Ltd",
+"org": 31575185,
+"mentions": [
+{
+"name": "Automobile Association Developments Ltd",
+"raw_identifier": "GB-COH-01878835",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "AA CORPORATION LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "AUTOMOBILE ASSOCIATION DEVELOPMENTS LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "01878835",
+"rationale": "The number belongs to AA CORPORATION LIMITED, a holding company in the AA group, and it has no previous names that match. Companies House lists AUTOMOBILE ASSOCIATION DEVELOPMENTS LIMITED separately under 01878835, a sister entity in the same group.",
+"challenge": "03797747 is AA CORPORATION LIMITED (head-office SIC 70100) with no previous names. Companies House lists AUTOMOBILE ASSOCIATION DEVELOPMENTS LIMITED separately under 01878835, and its PSC is AA Corporation Limited (3797747), so this number is the named org's direct parent, not a sister (correct number 01878835)."
+}
+},
+{
+"key": "GB/national/04682354>merge:08599255",
+"shape": "merge",
+"org": 9523325,
+"head": "Oakleaf Commercial Services Limited",
+"wrong": "04682354",
+"right": "08599255",
+"org_mentions": [
+{
+"name": "Oakleaf Commercial Services Limited",
+"raw_identifier": "04682354",
+"mentions": 2
+}
+],
+"target": {
+"identifier": "08599255",
+"name": "Oakleaf Commercial Services Limited",
+"org": 5539004,
+"mentions": [
+{
+"name": "Oakleaf Commercial Services",
+"raw_identifier": "08599255",
+"mentions": 2
+},
+{
+"name": "Oakleaf Commercial Services Limited",
+"raw_identifier": "Company No. 08599255",
+"mentions": 2
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": "not in the 2026-10-01 live snapshot",
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "08599255",
+"rationale": "The Community Housing Group Limited (converted/closed) and OAKLEAF COMMERCIAL SERVICES LIMITED (08599255) share the registered office 3 Foley Grove, Foley Business Park, Kidderminster. The number is therefore the parent housing group, not its subsidiary Oakleaf.",
+"challenge": "04682354 is THE COMMUNITY HOUSING GROUP LIMITED (converted/closed 2017), registered at 3 Foley Grove, Foley Business Park, Kidderminster. OAKLEAF COMMERCIAL SERVICES LIMITED, the company the notice names, is 08599255 at that same address (dissolved 2023), so the number belongs to the related housing group, not Oakleaf."
+}
+},
+{
+"key": "GB/national/04916900>merge:03488535",
+"shape": "merge",
+"org": 16440445,
+"head": "Yarlington Housing Group",
+"wrong": "04916900",
+"right": "03488535",
+"org_mentions": [
+{
+"name": "Yarlington Housing Group",
+"raw_identifier": "04916900",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "03488535",
+"name": "Yarlington Housing Group",
+"org": 5538983,
+"mentions": [
+{
+"name": "Yarlington Housing Group",
+"raw_identifier": "Company No. 03488535",
+"mentions": 2
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": "not in the 2026-10-01 live snapshot",
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "03488535",
+"rationale": "Yarlington Property Management Limited (formerly South Somerset Works) is a subsidiary of the housing group, not the group. CH shows YARLINGTON HOUSING GROUP was company 03488535 (converted to society RS007499).",
+"challenge": "04916900 is YARLINGTON PROPERTY MANAGEMENT LIMITED (formerly South Somerset Works / Stillness 785), a group subsidiary, dissolved 2025 and now registered at Collins House, Eastleigh (the Abri group). The Yarlington Housing Group itself was company 03488535 (formerly South Somerset Homes), converted to a registered society in 2017."
+}
+},
+{
+"key": "GB/national/05221559>merge:05528602",
+"shape": "merge",
+"org": 22735099,
+"head": "Gutteridge Haskins & Davey Limited",
+"wrong": "05221559",
+"right": "05528602",
+"org_mentions": [
+{
+"name": "Gutteridge Haskins & Davey Limited",
+"raw_identifier": "05221559",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "05528602",
+"name": "Gutteridge, Haskins and Davey Limited",
+"org": 12633572,
+"mentions": [
+{
+"name": "GUTTERIDGE HASKINS & DAVEY LIMITED",
+"raw_identifier": "GB-COH-05528602",
+"mentions": 8
+},
+{
+"name": "Gutteridge Haskins & Davey Limited",
+"raw_identifier": "GB-PPON-PTZX-2735-JXQN",
+"mentions": 4
+},
+{
+"name": "GUTTERIDGE HASKINS & DAVEY LIMITED",
+"raw_identifier": "GB-PPON-PTZX-2735-JXQN",
+"mentions": 3
+},
+{
+"name": "Gutteridge Haskins & Davey Limited",
+"raw_identifier": "GB-COH-05528602",
+"mentions": 2
+},
+{
+"name": "Gutteridge, Haskins and Davey Limited",
+"raw_identifier": "05528602",
+"mentions": 2
+},
+{
+"name": "Gutteridge Haskins & Davey Limited Contract Lookup",
+"raw_identifier": "GB-PPON-PTZX-2735-JXQN",
+"mentions": 1
+},
+{
+"name": "Gutteridge Haskins & Davey Ltd",
+"raw_identifier": "GB-COH-05528602",
+"mentions": 1
+},
+{
+"name": "Gutteridge, Haskins & Davey",
+"raw_identifier": "GB-PPON-PTZX-2735-JXQN",
+"mentions": 1
+},
+{
+"name": "Gutteridge, Haskins and Davey Limited",
+"raw_identifier": "GB-PPON-PTZX-2735-JXQN",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "GHD ENVIRONMENT LIMITED",
+"status": "Active",
+"previous": [
+"CONESTOGA-ROVERS & ASSOCIATES (EUROPE) LIMITED"
+]
+},
+"register_right": {
+"name": "GUTTERIDGE HASKINS & DAVEY LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "05528602",
+"rationale": "05221559 is GHD ENVIRONMENT LIMITED (formerly Conestoga-Rovers & Associates (Europe)), a GHD group company. Companies House lists GUTTERIDGE HASKINS & DAVEY LIMITED as a separate company under 05528602, so this number is a sister entity.",
+"challenge": "05221559 is GHD ENVIRONMENT LIMITED (formerly Conestoga-Rovers & Associates (Europe)). Its PSC is Gutteridge Haskins & Davey Limited (05528602), so the number is the named org's subsidiary rather than a sister, and the correct number is 05528602."
+}
+},
+{
+"key": "GB/national/05290222>merge:05286542",
+"shape": "merge",
+"org": 15233447,
+"head": "LIVECO Limited T/A VEST Construction",
+"wrong": "05290222",
+"right": "05286542",
+"org_mentions": [
+{
+"name": "LIVECO Limited T/A VEST Construction",
+"raw_identifier": "05290222",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "05286542",
+"name": "LIVECO Ltd T/A VEST Construction",
+"org": 16486532,
+"mentions": [
+{
+"name": "LIVECO Ltd T/A VEST Construction",
+"raw_identifier": "05286542",
+"mentions": 3
+},
+{
+"name": "LIVECO LIMITED",
+"raw_identifier": "GB-COH-05286542",
+"mentions": 1
+},
+{
+"name": "Liveco Ltd",
+"raw_identifier": "GB-COH-05286542",
+"mentions": 1
+},
+{
+"name": "Liveco ltd t/a Vest Construction Ltd",
+"raw_identifier": "GB-COH-05286542",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "VEST CONSTRUCTION LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "LIVECO LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "05286542",
+"rationale": "05290222 is VEST CONSTRUCTION LIMITED, a dormant company (SIC 99999) at 2 Henson Close, Bishop Auckland. The notice's named legal entity, LIVECO LIMITED, is a separate trading company at the same address under 05286542, so this number is its dormant name-holding sister.",
+"challenge": "05290222 is VEST CONSTRUCTION LIMITED, dormant (SIC 99999) at 2 Henson Close, Bishop Auckland, with Gavin Vest as director. The notice names LIVECO LIMITED as the legal entity trading as VEST Construction, and LIVECO is an active building company under 05286542 at the same address with the same director, so this number is its dormant name-holding sister (correct number 05286542)."
+}
+},
+{
+"key": "GB/national/05396496>merge:02443243",
+"shape": "merge",
+"org": 11424810,
+"head": "Freedom Communications (UK) Ltd",
+"wrong": "05396496",
+"right": "02443243",
+"org_mentions": [
+{
+"name": "Freedom Communications (UK) Ltd",
+"raw_identifier": "05396496",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "02443243",
+"name": "Freedom Communications (UK) Ltd",
+"org": 11745624,
+"mentions": [
+{
+"name": "Freedom Communications (UK) Ltd",
+"raw_identifier": "02443243",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "NASSTAR MANAGED SERVICES GROUP LIMITED",
+"status": "Active",
+"previous": [
+"GCI MANAGED SERVICES GROUP LIMITED",
+"GCI TELECOM GROUP LIMITED"
+]
+},
+"register_right": {
+"name": "FREEDOM COMMUNICATIONS (U.K.) LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "02443243",
+"rationale": "05396496 is Nasstar Managed Services Group Limited (formerly GCI), the group that acquired Freedom Communications. Freedom Communications (U.K.) Limited is its own company, 02443243, at the same Wakefield Nasstar address.",
+"challenge": "The PSC register of Freedom Communications (U.K.) Limited (02443243, Wakefield, formerly Freedom Partnership) names Nasstar Managed Services Group Limited (05396496) as its parent. The number is therefore the acquiring group's, and 02443243 is correct."
+}
+},
+{
+"key": "GB/national/05924997>merge:02863196",
+"shape": "merge",
+"org": 12252991,
+"head": "Alphatrack Systems Ltd",
+"wrong": "05924997",
+"right": "02863196",
+"org_mentions": [
+{
+"name": "Alphatrack Systems Ltd",
+"raw_identifier": "05924997",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "02863196",
+"name": "Alphatrack Systems Ltd",
+"org": 13831554,
+"mentions": [
+{
+"name": "Alphatrack Systems Ltd",
+"raw_identifier": "GB-COH-02863196",
+"mentions": 5
+},
+{
+"name": "ALPHATRACK SYSTEMS LIMITED",
+"raw_identifier": "GB-PPON-PLGB-1737-JLCD",
+"mentions": 2
+},
+{
+"name": "Alphatrack",
+"raw_identifier": "GB-PPON-PLGB-1737-JLCD",
+"mentions": 1
+},
+{
+"name": "Alphatrack Systems Limited",
+"raw_identifier": "GB-COH-02863196",
+"mentions": 1
+},
+{
+"name": "Alphatrack Systems Ltd",
+"raw_identifier": "02863196",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "LONEPIPER LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "ALPHATRACK SYSTEMS LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "02863196",
+"rationale": "Lonepiper Limited's PSCs are registered at The Pavilion, Botleigh Grange Business Park, Hedge End, which is also Alphatrack Systems Limited's registered office (02863196). Lonepiper is a group company sharing Alphatrack's address, not Alphatrack itself.",
+"challenge": "Lonepiper Limited (05924997) is solely controlled by Hugo Mackenzie Smith, a former director of both Alphatrack Systems Limited (02863196) and its parent SCCI Alphatrack Limited (02760731), and it shares their registered office at The Pavilion, Botleigh Grange. That makes Lonepiper a connected vehicle of an Alphatrack insider rather than Alphatrack itself; 02863196 is correct, and the link runs through a person rather than group ownership, hence medium."
+}
+},
+{
+"key": "GB/national/06581276>merge:03230513",
+"shape": "merge",
+"org": 12015029,
+"head": "Cartesian Limited",
+"wrong": "06581276",
+"right": "03230513",
+"org_mentions": [
+{
+"name": "Cartesian Limited",
+"raw_identifier": "06581276",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "03230513",
+"name": "Cartesian Limited",
+"org": 8255551,
+"mentions": [
+{
+"name": "Cartesian Limited",
+"raw_identifier": "03230513",
+"mentions": 10
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "CARTESIAN LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "03230513",
+"rationale": "FARNCOMBE ENGINEERING SERVICES LTD (06581276, formerly Farncombe Strategy) shares CARTESIAN LIMITED's registered office at Second Floor, 168 Shoreditch High Street, and has Cartesian, Inc. as its controlling PSC, so it is a sister company in the Cartesian group. The named organisation CARTESIAN LIMITED is itself active on the register as 03230513 (IT consultancy, same address).",
+"challenge": "reviewer: related-company/high: FARNCOMBE ENGINEERING SERVICES LTD (06581276, formerly Farncombe Strategy) has Cartesian, Inc. as its PSC and shares CARTESIAN LIMITED's registered office at Second Floor, 168 Shoreditch High Street, which makes it a sister company in the Cartesian group. The named organisation CARTESIAN LIMITED has its own active number, 03230513. | challenger (agree): FARNCOMBE ENGINEERING SERVICES LTD 06581276 has Cartesian, Inc. as its PSC and shares Cartesian Limited's Shoreditch office and officers, so it is a sister company in the Cartesian group, not a stranger. The named CARTESIAN LIMITED has its own number, 03230513, so this is related-company rather than right-number."
+}
+},
+{
+"key": "GB/national/06870472>merge:03393686",
+"shape": "merge",
+"org": 14766041,
+"head": "Intrapharm Laboratories",
+"wrong": "06870472",
+"right": "03393686",
+"org_mentions": [
+{
+"name": "Intrapharm Laboratories",
+"raw_identifier": "06870472",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "03393686",
+"name": "INTRAPHARM LABORATORIES LIMITED",
+"org": 11340227,
+"mentions": [
+{
+"name": "Esteve Pharmaceuticals Limited",
+"raw_identifier": "GB-COH-03393686",
+"mentions": 3
+},
+{
+"name": "Esteve Pharmaceuticals Ltd",
+"raw_identifier": "GB-COH-03393686",
+"mentions": 1
+},
+{
+"name": "INTRAPHARM LABORATORIES LIMITED",
+"raw_identifier": "03393686",
+"mentions": 1
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "ESTEVE PHARMACEUTICALS LTD",
+"status": "Active",
+"previous": [
+"INTRAPHARM LABORATORIES LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "03393686",
+"rationale": "06870472 is ABBEY PHARMA LIMITED, which shares directors (Kevin James, Gregory Michael, Shafiq Choudhary, Jorge Muntanola Prat, Rene Just and others) with Intrapharm Laboratories. Intrapharm Laboratories Limited is 03393686, now renamed ESTEVE PHARMACEUTICALS LTD, so the given number is a sister company.",
+"challenge": "06870472 is ABBEY PHARMA LIMITED, owned 75%+ by Riemser Pharma UK Ltd (09858118) and based at the same Courtyard Barns, Choke Lane, Cookham Dean site as Intrapharm. Intrapharm Laboratories Limited is 03393686 (renamed ESTEVE PHARMACEUTICALS LTD in Nov 2021), so the given number is a sister company and the correct one is 03393686."
+}
+},
+{
+"key": "GB/national/07123448>merge:GBCOHSC202170",
+"shape": "merge",
+"org": 22822469,
+"head": "Journeycall",
+"wrong": "07123448",
+"right": "SC202170",
+"org_mentions": [
+{
+"name": "Journeycall",
+"raw_identifier": "07123448",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOHSC202170",
+"name": "JOURNEYCALL LIMITED",
+"org": 31545291,
+"mentions": [
+{
+"name": "JOURNEYCALL LIMITED",
+"raw_identifier": "GB-COH-SC202170",
+"mentions": 2
+},
+{
+"name": "JourneyCall Limited",
+"raw_identifier": "GB-PPON-PHHP-7493-YMQM",
+"mentions": 1
+},
+{
+"name": "Journeycall Limited",
+"raw_identifier": "GB-PPON-PHHP-7493-YMQM",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "ESP SYSTEX HOLDINGS LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "JOURNEYCALL LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "SC202170",
+"rationale": "07123448 is ESP SYSTEX HOLDINGS LIMITED, a Hull head-office company (SIC 70100). Its PSC entry shows it controls JOURNEYCALL LIMITED SC202170 in Dundee. The number is the parent's, not the named org's.",
+"challenge": "JOURNEYCALL LIMITED SC202170 (Dundee) is a live company in its own right, and its PSC register lists ESP Systex Holdings Limited 07123448 with 75%+ of shares and votes. 07123448 is therefore the named org's parent holding company (Hull, SIC 70100), and the correct number is SC202170."
+}
+},
+{
+"key": "GB/national/07129623>move:03893362",
+"shape": "move",
+"org": 13547221,
+"head": "Extreme Performance LTD",
+"wrong": "07129623",
+"right": "03893362",
+"org_mentions": [
+{
+"name": "Extreme Performance LTD",
+"raw_identifier": "07129623",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "EPA MANUFACTURING LIMITED",
+"status": "Active",
+"previous": [
+"EPAMFG LIMITED"
+]
+},
+"register_right": {
+"name": "EXTREME PERFORMANCE LIMITED",
+"status": "Active",
+"previous": [
+"MONTANA MACON LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "03893362",
+"rationale": "EXTREME PERFORMANCE LIMITED 03893362 is its own company at the same address as EPA MANUFACTURING LIMITED (Unit 2, Chancery Court, West Street, Retford). The two share directors (Drechsler, Montana). The number is a sister company's, not Extreme Performance's.",
+"challenge": "EXTREME PERFORMANCE LIMITED 03893362 exists as its own live company at Unit 2, Chancery Court, West Street, Retford, the same office as EPA MANUFACTURING LIMITED 07129623 (formerly EPAMFG). The two share directors (Drechsler, the Montanas, Salm), so the number belongs to a sister company and the correct one is 03893362."
+}
+},
+{
+"key": "GB/national/07597648>merge:04230579",
+"shape": "merge",
+"org": 11617551,
+"head": "Dawnus Construction Holdings Ltd",
+"wrong": "07597648",
+"right": "04230579",
+"org_mentions": [
+{
+"name": "Dawnus Construction Holdings Ltd",
+"raw_identifier": "07597648",
+"mentions": 2
+}
+],
+"target": {
+"identifier": "04230579",
+"name": "Dawnus Construction Holdings Limited",
+"org": 12497031,
+"mentions": [
+{
+"name": "Dawnus Construction Holdings Limited",
+"raw_identifier": "04230579",
+"mentions": 1
+},
+{
+"name": "Dawnus Construction Holdings Ltd",
+"raw_identifier": "04230579",
+"mentions": 1
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "DAWNUS CONSTRUCTION HOLDINGS LIMITED",
+"status": "In Administration",
+"previous": [
+"DAWNUS CONSTRUCTION LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "04230579",
+"rationale": "07597648 is DAWNUS SOUTHERN LIMITED, a subsidiary in the Dawnus group, not the holding company that the notices name. DAWNUS CONSTRUCTION HOLDINGS LIMITED is 04230579 (in administration, c/o Grant Thornton).",
+"challenge": "07597648 is DAWNUS SOUTHERN LIMITED, whose PSC register shows Dawnus Construction Holdings Limited 04230579 as its 75%+ owner. The notices name the holding company, so the given number is a subsidiary and the correct one is 04230579."
+}
+},
+{
+"key": "GB/national/08048224>move:RS007639",
+"shape": "move",
+"org": 19781969,
+"head": "Ongo Homes",
+"wrong": "08048224",
+"right": "RS007639",
+"org_mentions": [
+{
+"name": "Ongo Homes",
+"raw_identifier": "08048224",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "ONGO HOMES LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "RS007639",
+"rationale": "08048224 is ONGO PARTNERSHIP LIMITED (formerly NL Enterprises), a separate entity in the Ongo housing group, not Ongo Homes itself. Ongo Homes Limited was company 05439434 (formerly North Lincolnshire Homes) until it converted in October 2017, and it is now registered society RS007639.",
+"challenge": "08048224 is ONGO PARTNERSHIP LIMITED (formerly NL Enterprises, converted to society RS008945 in 2022), a separate legal entity in the Ongo group at Ongo House, Scunthorpe. Ongo Homes itself was company 05439434 (formerly North Lincolnshire Homes) until it converted on 13 Oct 2017 and is now registered society RS007639, so the correct number is RS007639 (05439434 for a pre-2017 notice)."
+}
+},
+{
+"key": "GB/national/09079868>merge:01198007",
+"shape": "merge",
+"org": 14766052,
+"head": "Ferring Pharmaceuticals Ltd",
+"wrong": "09079868",
+"right": "01198007",
+"org_mentions": [
+{
+"name": "Ferring Pharmaceuticals Ltd",
+"raw_identifier": "09079868",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "01198007",
+"name": "Ferring Pharmaceutical",
+"org": 10338645,
+"mentions": [
+{
+"name": "FERRING PHARMACEUTICALS LTD",
+"raw_identifier": "GB-COH-01198007",
+"mentions": 2
+},
+{
+"name": "FERRING PHARMACEUTICALS LIMITED",
+"raw_identifier": "01198007",
+"mentions": 1
+},
+{
+"name": "FERRING PHARMACEUTICALS LIMITED",
+"raw_identifier": "GB-COH-01198007",
+"mentions": 1
+},
+{
+"name": "Ferring Pharmaceutical",
+"raw_identifier": "01198007",
+"mentions": 1
+},
+{
+"name": "Ferring Pharmaceuticals Limited",
+"raw_identifier": "01198007",
+"mentions": 1
+},
+{
+"name": "Ferring Pharmaceuticals Ltd",
+"raw_identifier": "GB-COH-01198007",
+"mentions": 1
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "FERRING PHARMACEUTICALS LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "01198007",
+"rationale": "09079868 is FERRING ASSET MANAGEMENT LIMITED, which shares company secretaries (David Howes, Sunbal Ahmed, Raphael Cretegny) with Ferring Pharmaceuticals. It is a sister group company; FERRING PHARMACEUTICALS LIMITED itself is 01198007 (West Drayton).",
+"challenge": "09079868 is FERRING ASSET MANAGEMENT LIMITED, owned 75%+ by Ferring Laboratories Limited 01508287 and registered at Drayton Hall, West Drayton, Ferring Pharmaceuticals' own address. It is a sister group company; FERRING PHARMACEUTICALS LIMITED is 01198007, which is the correct number."
+}
+},
+{
+"key": "GB/national/09783130>merge:00925279",
+"shape": "merge",
+"org": 18120063,
+"head": "N M Rothschild & Sons",
+"wrong": "09783130",
+"right": "00925279",
+"org_mentions": [
+{
+"name": "N M Rothschild & Sons",
+"raw_identifier": "09783130",
+"mentions": 2
+}
+],
+"target": {
+"identifier": "00925279",
+"name": "N.M. Rothschild and Sons Ltd",
+"org": 15687872,
+"mentions": [
+{
+"name": "N.M. Rothschild & Sons Limited",
+"raw_identifier": "00925279",
+"mentions": 2
+},
+{
+"name": "N.M. Rothschild and Sons Ltd",
+"raw_identifier": "00925279",
+"mentions": 2
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "N. M. ROTHSCHILD & SONS LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "00925279",
+"rationale": "09783130 is ROTHSCHILD & CO SERVICES LIMITED (formerly ROTHSCHILD & CO LIMITED). Its PSC is Rothschild & Co Continuation Limited (00371601), so it is a group service company, not the bank the notices name. A search finds N. M. ROTHSCHILD & SONS LIMITED as 00925279.",
+"challenge": "09783130 is ROTHSCHILD & CO SERVICES LIMITED (formerly ROTHSCHILD & CO LIMITED), incorporated in 2015 at New Court and 75%+ owned by Rothschild & Co Continuation Limited (00371601), so it is a group company, not the bank. N. M. ROTHSCHILD & SONS LIMITED, the name the notices use, is still active at 00925279."
+}
+},
+{
+"key": "GB/national/10125704>move:06968057",
+"shape": "move",
+"org": 9568094,
+"head": "New Earth Solutions (West) Limited",
+"wrong": "10125704",
+"right": "06968057",
+"org_mentions": [
+{
+"name": "New Earth Solutions (West) Limited",
+"raw_identifier": "10125704",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "DM OPCO LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "NEW EARTH SOLUTIONS (WEST) LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "06968057",
+"rationale": "DM OPCO LIMITED is registered at The MRF, Station Road, Caythorpe, the same address as NEW EARTH SOLUTIONS (WEST) LIMITED, under the DM Topco group, so they are sister companies. The named organization has its own number, 06968057.",
+"challenge": "DM OPCO LIMITED (owned by DM Topco 10125468) and NEW EARTH SOLUTIONS (WEST) LIMITED 06968057 (owned by DM Holdco 10125616) share The MRF, Station Road, Caythorpe, so they are companies in the same group. The notice names NES (West) Limited, an active company that files full accounts under its own number (correct_number 06968057)."
+}
+},
+{
+"key": "GB/national/14645178>move:10954400",
+"shape": "move",
+"org": 22603355,
+"head": "High Speed Transfers Limited",
+"wrong": "14645178",
+"right": "10954400",
+"org_mentions": [
+{
+"name": "High Speed Transfers Limited",
+"raw_identifier": "14645178",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "HST CTV8 LTD",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "PURUS WIND FLEET MANAGEMENT LTD",
+"status": "Active",
+"previous": [
+"HIGH SPEED TRANSFERS LTD"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "10954400",
+"rationale": "The PSC of HST CTV8 LTD is PURUS WIND FLEET MANAGEMENT LTD 10954400, whose previous name was HIGH SPEED TRANSFERS LTD. The number is a vessel subsidiary, not the named parent.",
+"challenge": "The PSC of HST CTV8 LTD 14645178 is PURUS WIND FLEET MANAGEMENT LTD 10954400. The register for 10954400 shows that it was named HIGH SPEED TRANSFERS LTD from 2017 to June 2024, so the named org is 10954400 and 14645178 is its vessel subsidiary. The 'HST' in the subsidiary's name is only the group initialism; the parent is a separate legal entity."
+}
+},
+{
+"key": "GB/national/16215129>merge:09545748",
+"shape": "merge",
+"org": 23745341,
+"head": "planarTECH UK Limited",
+"wrong": "16215129",
+"right": "09545748",
+"org_mentions": [
+{
+"name": "planarTECH UK Limited",
+"raw_identifier": "16215129",
+"mentions": 2
+}
+],
+"target": {
+"identifier": "09545748",
+"name": "planarTECH UK Limited",
+"org": 23688116,
+"mentions": [
+{
+"name": "planarTECH UK Limited",
+"raw_identifier": "09545748",
+"mentions": 2
+}
+]
+},
+"register_wrong": {
+"name": "PTUK SYSTEMS LTD",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "PLANARTECH UK LIMITED",
+"status": "Active - Proposal to Strike off",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "09545748",
+"rationale": "PTUK SYSTEMS LTD is controlled by Jeremy Patrick Frantz, who is also a director of PLANARTECH UK LIMITED 09545748 (now under an active strike-off proposal). The number is a sister or successor company, not the named one.",
+"challenge": "PTUK SYSTEMS LTD 16215129 (incorporated Jan 2025) is controlled by Jeremy Patrick Frantz, who is a director and PSC of PLANARTECH UK LIMITED 09545748, which is now under an active strike-off proposal. 'PTUK' reads as planarTECH UK's initials, but the notice names the separately registered 'planarTECH UK Limited' exactly, so this number is a sister or successor company and the org's own number is 09545748."
+}
+},
+{
+"key": "GB/national/BR023137>move:FC038545",
+"shape": "move",
+"org": 16835730,
+"head": "HDI Global Specialty SE",
+"wrong": "BR023137",
+"right": "FC038545",
+"org_mentions": [
+{
+"name": "HDI Global Specialty SE",
+"raw_identifier": "BR023137",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "HDI GLOBAL SPECIALTY SE",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "FC038545",
+"rationale": "BR023137 is HDI GLOBAL SE - UK BRANCH, the UK branch of the sister insurer HDI Global SE. HDI GLOBAL SPECIALTY SE has its own registration, overseas company FC038545 with UK establishment BR023640.",
+"challenge": "BR023137 is HDI GLOBAL SE - UK BRANCH, the UK branch of the sister insurer HDI Global SE (FC038045). HDI GLOBAL SPECIALTY SE has its own registration: overseas company FC038545, with UK establishment BR023640."
+}
+},
+{
+"key": "GB/national/GBCOH00053723>merge:GBCOH00604934",
+"shape": "merge",
+"org": 31566089,
+"head": "TQ Education and Training Ltd (Trading as Pearson TQ)",
+"wrong": "GBCOH00053723",
+"right": "00604934",
+"org_mentions": [
+{
+"name": "TQ Education and Training Ltd (Trading as Pearson TQ)",
+"raw_identifier": "GB-COH-00053723",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH00604934",
+"name": "TQ EDUCATION AND TRAINING LIMITED",
+"org": 31555775,
+"mentions": [
+{
+"name": "TQ EDUCATION AND TRAINING LIMITED",
+"raw_identifier": "GB-COH-00604934",
+"mentions": 2
+},
+{
+"name": "TQ Education and Training Ltd (Trading as Pearson TQ)",
+"raw_identifier": "GB-COH-00604934",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "PEARSON PLC",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "TQ EDUCATION AND TRAINING LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "00604934",
+"rationale": "00053723 is PEARSON PLC, the parent group, but the notice names TQ Education and Training Ltd. That subsidiary has its own company, TQ EDUCATION AND TRAINING LIMITED 00604934, registered at Pearson's 80 Strand address.",
+"challenge": "00053723 is PEARSON PLC, the group parent, but the notice names the legal entity TQ Education and Training Ltd, with 'Pearson TQ' only as its trading name. That entity is registered separately as TQ EDUCATION AND TRAINING LIMITED 00604934 (formerly TecQuipment Limited) at Pearson's 80 Strand office, so the correct number is 00604934."
+}
+},
+{
+"key": "GB/national/GBCOH01555105>move:GBCOH03044922",
+"shape": "move",
+"org": 31572875,
+"head": "Miles Bramwell Administrative Services Ltd t/a Slimming World",
+"wrong": "GBCOH01555105",
+"right": "03044922",
+"org_mentions": [
+{
+"name": "Miles Bramwell Administrative Services Ltd t/a Slimming World",
+"raw_identifier": "GB-COH-01555105",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "SLIMMING WORLD LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "MILES-BRAMWELL ADMINISTRATIVE SERVICES LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "03044922",
+"rationale": "The notice names Miles Bramwell Administrative Services Ltd t/a Slimming World, but 01555105 is SLIMMING WORLD LIMITED. The named company exists separately as MILES-BRAMWELL ADMINISTRATIVE SERVICES LIMITED 03044922 at the same Somercotes group address, so this is its sister company.",
+"challenge": "The notice names the legal entity Miles Bramwell Administrative Services Ltd, with 'Slimming World' only as its trading name, while 01555105 is SLIMMING WORLD LIMITED. The named entity exists separately as MILES-BRAMWELL ADMINISTRATIVE SERVICES LIMITED 03044922 at the same Clover Nook Road, Somercotes group address, so this number is its sister company and the correct one is 03044922."
+}
+},
+{
+"key": "GB/national/GBCOH03069042>merge:GBCOH03069033",
+"shape": "merge",
+"org": 31647904,
+"head": "ATOC LIMITED",
+"wrong": "GBCOH03069042",
+"right": "03069033",
+"org_mentions": [
+{
+"name": "ATOC LIMITED",
+"raw_identifier": "GB-COH-03069042",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH03069033",
+"name": "ATOC LIMITED",
+"org": 31607936,
+"mentions": [
+{
+"name": "A T O C Ltd",
+"raw_identifier": "GB-COH-03069033",
+"mentions": 3
+},
+{
+"name": "ATOC LIMITED",
+"raw_identifier": "GB-COH-03069033",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "RAIL SETTLEMENT PLAN LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "ATOC LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "03069033",
+"rationale": "03069042 is RAIL SETTLEMENT PLAN LIMITED, the train operators' settlement company and ATOC's sister body. The search finds ATOC LIMITED itself as 03069033, incorporated the same day (12 June 1995).",
+"challenge": "03069042 is RAIL SETTLEMENT PLAN LIMITED at First Floor North, 1 Puddle Dock, London. The search finds ATOC LIMITED 03069033 at that same office, incorporated the same day (12 June 1995). That makes it a sister company, not a mistyped number."
+}
+},
+{
+"key": "GB/national/GBCOH04599477>move:GBCOH07672975",
+"shape": "move",
+"org": 31630832,
+"head": "New Street Consulting Group t/a Interim Partners",
+"wrong": "GBCOH04599477",
+"right": "07672975",
+"org_mentions": [
+{
+"name": "New Street Consulting Group t/a Interim Partners",
+"raw_identifier": "GB-COH-04599477",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "INTERIM PARTNERS LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "NEW STREET CONSULTING GROUP LIMITED",
+"status": "Active",
+"previous": [
+"NEW STREET (GROUP) LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "07672975",
+"rationale": "The only mention names New Street Consulting Group as the legal entity trading as Interim Partners, while 04599477 is INTERIM PARTNERS LIMITED, whose PSC page lists New Street Consulting Group Limited (registration 07672975, same 3 Wellington Place, Leeds office) as its 75%+ owner since 2016. That makes the number the named entity's subsidiary, matching 452's rule for 'X t/a Y' cases (Operam t/a Provision Recruitment, Future Garment t/a Eurox). 07672975 has carried the name NEW STREET CONSULTING GROUP LIMITED since 4 Oct 2020; 12372585 had that name only from Dec 2019 to Oct 2020, so a notice dated in that window would point to 12372585 instead, and the verdict would still be related-company.",
+"challenge": "reviewer: right-number/medium: The notice's trading name 'Interim Partners' is exactly the register name INTERIM PARTNERS LIMITED, a temporary-employment agency at 3 Wellington Place, Leeds. Its parent NEW STREET CONSULTING GROUP LIMITED (07672975) shares that address; if the org is meant to be the parent legal entity rather than the brand, this would be related-company instead. | challenger (related-company): The mention names New Street Consulting Group as the legal entity trading as Interim Partners, and that group has its own number: NEW STREET CONSULTING GROUP LIMITED 07672975, at the same 3 Wellington Place, Leeds office as INTERIM PARTNERS LIMITED. 452 judged the same 'X t/a Y' shape as related-company when the number was Y's (George Hutchison t/a GHD Livigunn, Future Garment t/a Eurox, Operam t/a Provision Recruitment). Caveat: the group name was swapped with 12372585, now NEW STREET (GROUP) LIMITED, formerly New Street Consulting Group, so the notice date decides which group number is meant."
+}
+},
+{
+"key": "GB/national/GBCOH04828168>merge:GBCOHIP030441",
+"shape": "merge",
+"org": 30932877,
+"head": "LONDON & QUADRANT HOUSING TRUST",
+"wrong": "GBCOH04828168",
+"right": "IP030441",
+"org_mentions": [
+{
+"name": "LONDON & QUADRANT HOUSING TRUST",
+"raw_identifier": "GB-COH-04828168",
+"mentions": 3
+}
+],
+"target": {
+"identifier": "GBCOHIP030441",
+"name": "LONDON & QUADRANT HOUSING TRUST",
+"org": 30914545,
+"mentions": [
+{
+"name": "LONDON & QUADRANT HOUSING TRUST",
+"raw_identifier": "GB-COH-IP030441",
+"mentions": 140
+},
+{
+"name": "LONDON and QUADRANT HOUSING TRUST",
+"raw_identifier": "GB-COH-IP030441",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "L&Q NEW HOMES LIMITED",
+"status": "Active",
+"previous": [
+"ZEST HOMES LIMITED"
+]
+},
+"register_right": {
+"name": "LONDON & QUADRANT HOUSING TRUST",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "IP030441",
+"rationale": "04828168 is L&Q NEW HOMES LIMITED (formerly ZEST HOMES), a development subsidiary in the L&Q group. London & Quadrant Housing Trust itself is a registered society, listed on Companies House as IP030441.",
+"challenge": "04828168 is L&Q NEW HOMES LIMITED (formerly Zest Homes), a development subsidiary in the L&Q group. London & Quadrant Housing Trust itself is a registered society, which Companies House lists as IP030441."
+}
+},
+{
+"key": "GB/national/GBCOH05287545>merge:GBCOH10923543",
+"shape": "merge",
+"org": 31536837,
+"head": "Operam Education Group Limited",
+"wrong": "GBCOH05287545",
+"right": "10923543",
+"org_mentions": [
+{
+"name": "Operam Education Group Limited",
+"raw_identifier": "GB-COH-05287545",
+"mentions": 1
+},
+{
+"name": "Operam Education Group t/a Provision Recruitment",
+"raw_identifier": "GB-COH-05287545",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH10923543",
+"name": "OPERAM EDUCATION GROUP LIMITED",
+"org": 31556074,
+"mentions": [
+{
+"name": "OPERAM EDUCATION GROUP LIMITED",
+"raw_identifier": "GB-COH-10923543",
+"mentions": 4
+}
+]
+},
+"register_wrong": {
+"name": "PROVISION RECRUITMENT LTD",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "OPERAM EDUCATION GROUP LIMITED",
+"status": "Active",
+"previous": [
+"WHCO7 LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "10923543",
+"rationale": "05287545 is PROVISION RECRUITMENT LTD, while the notices name Operam Education Group Limited, with Provision Recruitment only as a 't/a' brand. Companies House lists OPERAM EDUCATION GROUP LIMITED under 10923543, so the number is the group's subsidiary and not the named parent.",
+"challenge": "05287545 is PROVISION RECRUITMENT LTD, an operating recruitment agency whose PSC since December 2023 is Operam Education Group Limited (10923543, a holding company). Both mentions name Operam Education Group as the legal entity and give Provision Recruitment only as a t/a brand, so the number is the named parent's subsidiary (correct number 10923543)."
+}
+},
+{
+"key": "GB/national/GBCOH05384799>merge:00770813",
+"shape": "merge",
+"org": 31570648,
+"head": "Personnel Hygiene Services",
+"wrong": "GBCOH05384799",
+"right": "00770813",
+"org_mentions": [
+{
+"name": "Personnel Hygiene Services",
+"raw_identifier": "GB-COH-05384799",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "00770813",
+"name": "Personnel Hygiene Services Ltd T/A PHS Group",
+"org": 15624693,
+"mentions": [
+{
+"name": "PERSONNEL HYGIENE SERVICES LIMITED",
+"raw_identifier": "GB-COH-00770813",
+"mentions": 14
+},
+{
+"name": "Personnel Hygiene Services Limited",
+"raw_identifier": "GB-COH-00770813",
+"mentions": 5
+},
+{
+"name": "Personnel Hygiene Services",
+"raw_identifier": "GB-COH-00770813",
+"mentions": 2
+},
+{
+"name": "(2)\tPersonnel Hygiene Services Limited",
+"raw_identifier": "GB-COH-00770813",
+"mentions": 1
+},
+{
+"name": "PERSONNEL HYGIENE SERVICES LIMITED",
+"raw_identifier": "GB-PPON-PVQD-5955-NLLN",
+"mentions": 1
+},
+{
+"name": "Personnel Hygiene Services Limited",
+"raw_identifier": "GB-PPON-PVQD-5955-NLLN",
+"mentions": 1
+},
+{
+"name": "Personnel Hygiene Services Limited trading as PHS Group plc",
+"raw_identifier": "GB-COH-00770813",
+"mentions": 1
+},
+{
+"name": "Personnel Hygiene Services Limited, Trading as:  PHS Group",
+"raw_identifier": "GB-COH-00770813",
+"mentions": 1
+},
+{
+"name": "Personnel Hygiene Services Ltd",
+"raw_identifier": "00779813",
+"mentions": 1
+},
+{
+"name": "Personnel Hygiene Services Ltd T/A PHS Group",
+"raw_identifier": "00770813",
+"mentions": 1
+},
+{
+"name": "Personnel Hygiene Services Ltd t/a PHS Group PLC",
+"raw_identifier": "GB-COH-00770813",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "PHS GROUP LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "PERSONNEL HYGIENE SERVICES LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "00770813",
+"rationale": "05384799 is PHS Group Limited, the parent group; the notice names 'Personnel Hygiene Services', which the PHS brand abbreviates. Personnel Hygiene Services Limited is its own operating company, 00770813 (Caerphilly).",
+"challenge": "The PSC register of Personnel Hygiene Services Limited (00770813, c/o PHS Group, Caerphilly) names PHS Group Limited (5384799) as its controlling parent. 'PHS' abbreviates the name, but the named entity exists in its own right, so 05384799 is the parent's number and 00770813 is the correct one."
+}
+},
+{
+"key": "GB/national/GBCOH05516946>merge:GBCOH03297710",
+"shape": "merge",
+"org": 31553535,
+"head": "AEGIS RESIDENTIAL CARE HOMES LIMITED (03297710)",
+"wrong": "GBCOH05516946",
+"right": "03297710",
+"org_mentions": [
+{
+"name": "AEGIS RESIDENTIAL CARE HOMES LIMITED (03297710)",
+"raw_identifier": "GB-COH-05516946",
+"mentions": 2
+}
+],
+"target": {
+"identifier": "GBCOH03297710",
+"name": "AEGIS RESIDENTIAL CARE HOMES LIMITED",
+"org": 31579605,
+"mentions": [
+{
+"name": "AEGIS RESIDENTIAL CARE HOMES LIMITED",
+"raw_identifier": "GB-COH-03297710",
+"mentions": 1
+},
+{
+"name": "Aegis Residential Care Homes Limited",
+"raw_identifier": "GB-COH-03297710",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "PEARLCARE INVESTMENTS LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "AEGIS RESIDENTIAL CARE HOMES LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "03297710",
+"rationale": "The org's own name carries its number, 'AEGIS RESIDENTIAL CARE HOMES LIMITED (03297710)', and Companies House confirms that company at New Burlington House, 1075 Finchley Road, owned by Aegis Care Ltd. 05516946 is Pearlcare Investments Limited, a group company at the same address and not the named one.",
+"challenge": "The org's own name carries 03297710, which is Aegis Residential Care Homes Limited. That company is owned by Aegis Care Limited (05710595), which is in turn owned by Pearlcare (Aegis) Limited. 05516946 is Pearlcare Investments Limited, a head-office company with the same Markovic directors at New Burlington House, so it is a group company and not the named one."
+}
+},
+{
+"key": "GB/national/GBCOH05640299>move:GBCOHLP022693",
+"shape": "move",
+"org": 31597892,
+"head": "SSL Farnham Common OPCO LP",
+"wrong": "GBCOH05640299",
+"right": "LP022693",
+"org_mentions": [
+{
+"name": "SSL Farnham Common OPCO LP",
+"raw_identifier": "GB-COH-05640299",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "SIGNATURE SENIOR LIFESTYLE LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "SSL FARNHAM COMMON OPCO LP",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "LP022693",
+"rationale": "'SSL' is Signature Senior Lifestyle, and 05640299 is the group's head-office company (SIC 70100) at Signature House, Beaconsfield. The search finds the named limited partnership SSL FARNHAM COMMON OPCO LP as LP022693 at the same address, so the number is its parent's.",
+"challenge": "05640299 is SIGNATURE SENIOR LIFESTYLE LIMITED, the group head company at Signature House, Beaconsfield. The search finds the named SSL FARNHAM COMMON OPCO LP as LP022693 at the same address, beside its GP LLP OC441652, so the number is the group parent's, not the named partnership's."
+}
+},
+{
+"key": "GB/national/GBCOH05648042>merge:05648039",
+"shape": "merge",
+"org": 31564386,
+"head": "PeopleScout Limited",
+"wrong": "GBCOH05648042",
+"right": "05648039",
+"org_mentions": [
+{
+"name": "Bradley Williams",
+"raw_identifier": "GB-COH-05648042",
+"mentions": 1
+},
+{
+"name": "PeopleScout Limited",
+"raw_identifier": "GB-COH-05648042",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "05648039",
+"name": "TMP Worldwide Limited",
+"org": 12213330,
+"mentions": [
+{
+"name": "PEOPLESCOUT LIMITED (t/a TMP Worldwide)",
+"raw_identifier": "GB-COH-05648039",
+"mentions": 1
+},
+{
+"name": "PeopleScout Limited (trading as TMP Worldwide)",
+"raw_identifier": "GB-COH-05648039",
+"mentions": 1
+},
+{
+"name": "TMP Worldwide (UK) LTD",
+"raw_identifier": "GB-COH-05648039",
+"mentions": 1
+},
+{
+"name": "TMP Worldwide Limited",
+"raw_identifier": "05648039",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "TMP (HOLDINGS) LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "PEOPLESCOUT LIMITED",
+"status": "Active",
+"previous": [
+"TMP (UK) LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "05648039",
+"rationale": "05648042 is TMP (Holdings) Limited; PeopleScout Limited is 05648039, incorporated the same day (7 Dec 2005) at the same 265 Tottenham Court Road address. The number is the sister holding company, three digits away from the named company.",
+"challenge": "The PSC register of PeopleScout Limited (05648039, formerly TMP (UK) Limited) names TMP (Holdings) Limited (05648042) as its parent; the two were incorporated the same day at 265 Tottenham Court Road. The number is the parent's, and 05648039 is correct ('Bradley Williams' is a person's name, not an alternative company)."
+}
+},
+{
+"key": "GB/national/GBCOH05834418>merge:GBCOH01331981",
+"shape": "merge",
+"org": 31581332,
+"head": "Whitehouse Construction Co. Limited",
+"wrong": "GBCOH05834418",
+"right": "01331981",
+"org_mentions": [
+{
+"name": "Whitehouse Construction Co. Limited",
+"raw_identifier": "GB-COH-05834418",
+"mentions": 2
+}
+],
+"target": {
+"identifier": "GBCOH01331981",
+"name": "Whitehouse Construction Co. Ltd",
+"org": 31599631,
+"mentions": [
+{
+"name": "Whitehouse Construction Co. Ltd",
+"raw_identifier": "GB-COH-01331981",
+"mentions": 2
+},
+{
+"name": "WHITEHOUSE CONSTRUCTION CO. LIMITED",
+"raw_identifier": "GB-COH-01331981",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "EWART HOLDINGS LIMITED",
+"status": "Active",
+"previous": [
+"BRELL EWART HOLDINGS LIMITED"
+]
+},
+"register_right": {
+"name": "WHITEHOUSE CONSTRUCTION CO. LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "01331981",
+"rationale": "05834418 is Ewart Holdings Limited, owned by the Ewart-Sear family at Ewart House, Blenheim Road, Airfield Industrial Estate, Ashbourne. Whitehouse Construction Co. Limited is 01331981 at that same Blenheim Road address, so the number is its parent holding company.",
+"challenge": "The PSC register of Whitehouse Construction Co. Limited (01331981, Blenheim Road, Ashbourne) names Ewart Holdings Limited (05834418, a construction holding company, formerly Brell Ewart Holdings) as its 75%+ parent. The number is the parent's, and 01331981 is correct."
+}
+},
+{
+"key": "GB/national/GBCOH06036237>merge:GBCOH04174873",
+"shape": "merge",
+"org": 31559089,
+"head": "Support in Sport (UK) Ltd",
+"wrong": "GBCOH06036237",
+"right": "04174873",
+"org_mentions": [
+{
+"name": "Support in Sport (UK) Ltd",
+"raw_identifier": "GB-COH-06036237",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH04174873",
+"name": "SUPPORT IN SPORT (UK) LIMITED",
+"org": 31550006,
+"mentions": [
+{
+"name": "SUPPORT IN SPORT (UK) LIMITED",
+"raw_identifier": "GB-PPON-PTLP-7733-CWCJ",
+"mentions": 3
+},
+{
+"name": "SUPPORT IN SPORT (UK) LIMITED",
+"raw_identifier": "GB-COH-04174873",
+"mentions": 2
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "SUPPORT IN SPORT (UK) LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "04174873",
+"rationale": "Artificial Grass Limited (Maryport, Cumbria, dissolved 2020) shares directors Mullan, Hope, Jones, Nichols and Wearmouth with Support in Sport (UK) Limited, so it is a sister company in that group. CH shows SUPPORT IN SPORT (UK) LIMITED is 04174873.",
+"challenge": "06036237 ARTIFICIAL GRASS LIMITED (Glasson Industrial Estate, Maryport, dissolved 2020) lists SUPPORT IN SPORT GROUP LTD among its officers. It also shares directors Mullan, Hope, Jones, Nichols, Wearmouth, De Heer, Knight and Lee with Support in Sport (UK) Ltd, so it is a group sister company. The company the notice names is SUPPORT IN SPORT (UK) LIMITED, 04174873 (Dovenby Hall, Cockermouth)."
+}
+},
+{
+"key": "GB/national/GBCOH06198729>move:GBCOH09373229",
+"shape": "move",
+"org": 31616246,
+"head": "LinCA Workforce Development Ltd",
+"wrong": "GBCOH06198729",
+"right": "09373229",
+"org_mentions": [
+{
+"name": "LinCA Workforce Development Ltd",
+"raw_identifier": "GB-COH-06198729",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "LINCOLNSHIRE CARE ASSOCIATION LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "LINCA WORKFORCE DEVELOPMENT LTD",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "09373229",
+"rationale": "LinCA is the acronym of Lincolnshire Care Association, but a CH search shows LINCA WORKFORCE DEVELOPMENT LTD is a separate company, 09373229 (Greetwell Place, Lincoln, incorporated 2015). 06198729 is the association itself, a related entity, not the named workforce-development company.",
+"challenge": "The CH search confirms LINCA WORKFORCE DEVELOPMENT LTD as a separate active company, 09373229 (Greetwell Place, Lincoln, SIC 85590). The number on the org belongs to Lincolnshire Care Association, the related body that LinCA abbreviates."
+}
+},
+{
+"key": "GB/national/GBCOH06418932>move:GBCOH05392158",
+"shape": "move",
+"org": 31617807,
+"head": "Brancaster Care Home Limited",
+"wrong": "GBCOH06418932",
+"right": "05392158",
+"org_mentions": [
+{
+"name": "Brancaster Care Home Limited",
+"raw_identifier": "GB-COH-06418932",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "CINNABAR SUPPORT AND LIVING LTD",
+"status": "Active",
+"previous": [
+"LINFORD GRANGE LTD"
+]
+},
+"register_right": {
+"name": "BRANCASTER CARE HOMES LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "05392158",
+"rationale": "CINNABAR SUPPORT AND LIVING LTD (formerly Linford Grange Ltd) has exactly the same current officers (Bonnon, Rocks, Whelan) as BRANCASTER CARE HOMES LIMITED, which a CH search shows is 05392158 in Warrington. So the number belongs to a sister company, and Brancaster Care Homes Ltd is the named organisation.",
+"challenge": "BRANCASTER CARE HOMES LIMITED is 05392158, at Genesis Centre, Birchwood, Warrington. Its current officers (Bonnon, Rocks, Whelan) and correspondence address are the same as those of CINNABAR SUPPORT AND LIVING LTD (06418932), so the number belongs to a sister company."
+}
+},
+{
+"key": "GB/national/GBCOH06473794>move:GBCOH06678991",
+"shape": "move",
+"org": 31597894,
+"head": "Enable Care Ltd",
+"wrong": "GBCOH06473794",
+"right": "06678991",
+"org_mentions": [
+{
+"name": "Enable Care Ltd",
+"raw_identifier": "GB-COH-06473794",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "ABI DEVELOPMENTS 3 LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "ENABLE CARE LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "06678991",
+"rationale": "A CH search shows ENABLE CARE LIMITED is 06678991. It and ABI DEVELOPMENTS 3 LIMITED share Rahim Dhanani as active director and Nicola Coveney as secretary, so this number belongs to a sister company.",
+"challenge": "ENABLE CARE LIMITED is 06678991, at 167 Fleet Street. It shares Rahim Dhanani as director and Nicola Coveney as secretary with ABI DEVELOPMENTS 3 LIMITED at the same address, so the number belongs to a sister company."
+}
+},
+{
+"key": "GB/national/GBCOH06474145>merge:01026007",
+"shape": "merge",
+"org": 31595257,
+"head": "British Gas Social Housing Ltd T/A PH Jones",
+"wrong": "GBCOH06474145",
+"right": "01026007",
+"org_mentions": [
+{
+"name": "British Gas Social Housing Ltd T/A PH Jones",
+"raw_identifier": "GB-COH-06474145",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "01026007",
+"name": "British Gas Social Housing Ltd trading as PH Jones",
+"org": 8177449,
+"mentions": [
+{
+"name": "BRITISH GAS SOCIAL HOUSING LIMITED",
+"raw_identifier": "GB-COH-01026007",
+"mentions": 8
+},
+{
+"name": "British Gas Social Housing Ltd",
+"raw_identifier": "01026007",
+"mentions": 4
+},
+{
+"name": "British Gas Social Housing Ltd trading as PH Jones",
+"raw_identifier": "01026007",
+"mentions": 2
+},
+{
+"name": "British Gas Social Housing Limited",
+"raw_identifier": "01026007",
+"mentions": 1
+},
+{
+"name": "British Gas Social Housing Limited (PH Jones)",
+"raw_identifier": "GB-COH-01026007",
+"mentions": 1
+},
+{
+"name": "British Gas Social Housing Limited (trading as PH Jones)",
+"raw_identifier": "GB-COH-01026007",
+"mentions": 1
+},
+{
+"name": "British Gas Social Housing Limited T/A PH Jones",
+"raw_identifier": "01026007",
+"mentions": 1
+},
+{
+"name": "British Gas Social Housing Limited t/a PH Jones",
+"raw_identifier": "GB-COH-01026007",
+"mentions": 1
+},
+{
+"name": "British Gas Social Housing Limited, trading as PH Jones",
+"raw_identifier": "GB-PPON-PLXL-7173-NHVV",
+"mentions": 1
+},
+{
+"name": "British Gas Social Housing Ltd T/A PH Jones",
+"raw_identifier": "GB-COH-01026007",
+"mentions": 1
+},
+{
+"name": "PH Jones",
+"raw_identifier": "01026007",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "P.H JONES GROUP LIMITED",
+"status": "Active",
+"previous": [
+"HAJCO 362 LIMITED"
+]
+},
+"register_right": {
+"name": "BRITISH GAS SOCIAL HOUSING LIMITED",
+"status": "Active",
+"previous": [
+"P.H. JONES LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "01026007",
+"rationale": "The head names the legal entity British Gas Social Housing Ltd, which a CH search shows is 01026007 (Millstream, Windsor). P.H JONES GROUP LIMITED (formerly Hajco 362) is the PH Jones group company behind the brand it trades under, a related entity, not the named supplier.",
+"challenge": "BRITISH GAS SOCIAL HOUSING LIMITED is 01026007 and was called P.H. JONES LIMITED from 1999 to 2011, so it is the named supplier. P.H JONES GROUP LIMITED (06474145, PSC British Gas New Heating Ltd) is a related group company."
+}
+},
+{
+"key": "GB/national/GBCOH06492265>merge:03017251",
+"shape": "merge",
+"org": 31548472,
+"head": "Anglian Water Business (National) Limited T/A Wave",
+"wrong": "GBCOH06492265",
+"right": "03017251",
+"org_mentions": [
+{
+"name": "Anglian Water Business (National) Limited T/A Wave",
+"raw_identifier": "GB-COH-06492265",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "03017251",
+"name": "Anglian Water Business National t/a Wave",
+"org": 16011976,
+"mentions": [
+{
+"name": "ANGLIAN WATER BUSINESS (NATIONAL) LIMITED",
+"raw_identifier": "GB-COH-03017251",
+"mentions": 5
+},
+{
+"name": "Anglian Water Business (National) Limited",
+"raw_identifier": "GB-COH-03017251",
+"mentions": 3
+},
+{
+"name": "Anglian Water Business National t/a Wave",
+"raw_identifier": "03017251",
+"mentions": 3
+},
+{
+"name": "Anglian Water Business (National) Limited Trading as Wave",
+"raw_identifier": "GB-COH-03017251",
+"mentions": 2
+},
+{
+"name": "ANGLIAN WATER BUSINESS",
+"raw_identifier": "GB-COH-03017251",
+"mentions": 1
+},
+{
+"name": "Anglian Water Business (National) Limited. Trading as: Wave Utilities",
+"raw_identifier": "GB-PPON-PWMZ-8712-TPPW",
+"mentions": 1
+},
+{
+"name": "Anglian Water Business (National) Ltd",
+"raw_identifier": "GB-COH-03017251",
+"mentions": 1
+},
+{
+"name": "Anglian Water Business (National) t/as Wave Utilities",
+"raw_identifier": "GB-COH-03017251",
+"mentions": 1
+},
+{
+"name": "Anglian Water Business National Limited",
+"raw_identifier": "GB-COH-03017251",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "WAVE LTD",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "ANGLIAN WATER BUSINESS (NATIONAL) LIMITED",
+"status": "Active",
+"previous": [
+"OSPREY WATER SERVICES LIMITED",
+"HARTLEPOOL WATER LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "03017251",
+"rationale": "The notice names the legal entity Anglian Water Business (National) Limited, which is 03017251 at Northumbria House, Pity Me, Durham. WAVE LTD (06492265) is the head-office company at that same address, a group company rather than the contracting entity.",
+"challenge": "The PSC register of Anglian Water Business (National) Limited (03017251, formerly Osprey Water Services / Hartlepool Water) names Wave Ltd (06492265, head-office company, owned by Northumbrian Water Group and Anglian Venture Holdings) as its 75%+ parent. 'Wave' is the trading name, but the named legal entity is the subsidiary, so 03017251 is correct."
+}
+},
+{
+"key": "GB/national/GBCOH06637307>move:GBCOH08839295",
+"shape": "move",
+"org": 31562066,
+"head": "Sonex3 Limited",
+"wrong": "GBCOH06637307",
+"right": "08839295",
+"org_mentions": [
+{
+"name": "Sonex3 Limited",
+"raw_identifier": "GB-COH-06637307",
+"mentions": 2
+}
+],
+"target": null,
+"register_wrong": {
+"name": "LANTERN DEBT RECOVERY SERVICES LIMITED",
+"status": "Active",
+"previous": [
+"MOTORMILE FINANCE UK LIMITED"
+]
+},
+"register_right": {
+"name": "SONEX3 LTD",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "08839295",
+"rationale": "The PSC registers of LANTERN DEBT RECOVERY SERVICES LIMITED (06637307) and SONEX3 LTD (08839295, Llanelli) both name Lantern Group Holdings Limited (13579986) as active controlling PSC. The recorded number is therefore a sister company's, and the named Sonex3 has its own number, 08839295.",
+"challenge": "reviewer: related-company/high: The PSC registers show that LANTERN DEBT RECOVERY SERVICES LIMITED (06637307) and SONEX3 LTD (08839295) are both 75%+ owned by Lantern Group Holdings Limited (13579986). So the number is a sister company's, and the named Sonex3 Limited has its own number, 08839295. | challenger (agree): I checked both PSC pages: SONEX3 LTD 08839295 and LANTERN DEBT RECOVERY SERVICES LIMITED 06637307 both name Lantern Group Holdings Limited as active PSC. So the recorded number is a sister company's, and the named Sonex3 has its own number, 08839295."
+}
+},
+{
+"key": "GB/national/GBCOH06703082>move:GBCOH02174487",
+"shape": "move",
+"org": 31567442,
+"head": "Marketforce Business Media Limited",
+"wrong": "GBCOH06703082",
+"right": "02174487",
+"org_mentions": [
+{
+"name": "MARKETFORCE BUSINESS MEDIA LIMITED",
+"raw_identifier": "GB-COH-06703082",
+"mentions": 2
+},
+{
+"name": "Marketforce Business Media Limited",
+"raw_identifier": "GB-COH-06703082",
+"mentions": 2
+}
+],
+"target": null,
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "MARKETFORCE BUSINESS MEDIA LIMITED",
+"status": "Active",
+"previous": [
+"MARKETFORCE COMMUNICATIONS LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "02174487",
+"rationale": "06703082 is a dissolved MARKETFORCE COMMUNICATIONS LIMITED, incorporated in 2008, whose directors Juliet Knight and David Saunders also sit on the board of MARKETFORCE BUSINESS MEDIA LIMITED 02174487. 02174487 was itself previously named Marketforce Communications Limited, so 06703082 is a sister name-holding company and not the named organization.",
+"challenge": "06703082 is a dormant MARKETFORCE COMMUNICATIONS LIMITED, incorporated on 19 Sep 2008, the same day 02174487 dropped that name to become MARKETFORCE BUSINESS MEDIA LIMITED. Its 75%+ PSC Juliet Knight is a director of 02174487, so it is a sister name-holding company, and the named organization is 02174487."
+}
+},
+{
+"key": "GB/national/GBCOH06991398>merge:04014602",
+"shape": "merge",
+"org": 31609227,
+"head": "Guardian Homecare UK Ltd",
+"wrong": "GBCOH06991398",
+"right": "04014602",
+"org_mentions": [
+{
+"name": "Guardian Homecare UK Ltd",
+"raw_identifier": "GB-COH-06991398",
+"mentions": 2
+}
+],
+"target": {
+"identifier": "04014602",
+"name": "Guardian Homecare Limited",
+"org": 10590634,
+"mentions": [
+{
+"name": "GUARDIAN HOMECARE UK LTD",
+"raw_identifier": "GB-COH-04014602",
+"mentions": 2
+},
+{
+"name": "GUARDIAN HOMECARE UK LTD.",
+"raw_identifier": "GB-COH-04014602",
+"mentions": 1
+},
+{
+"name": "Guardian Homecare",
+"raw_identifier": "04014602",
+"mentions": 1
+},
+{
+"name": "Guardian Homecare Limited",
+"raw_identifier": "04014602",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "CITY AND COUNTY HEALTHCARE GROUP LIMITED",
+"status": "Active",
+"previous": [
+"CITY BIDCO LIMITED"
+]
+},
+"register_right": {
+"name": "GUARDIAN HOMECARE UK LTD.",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "04014602",
+"rationale": "A CH search shows GUARDIAN HOMECARE UK LTD. is a separate company, 04014602, at Cardinal House, Nottingham. CITY AND COUNTY HEALTHCARE GROUP LIMITED (formerly City Bidco) is the home-care group that owns Guardian Homecare, so this number belongs to the parent.",
+"challenge": "GUARDIAN HOMECARE UK LTD. is 04014602, and its PSC register names City And County Healthcare Group Limited (06991398) as owner with 75% or more of the shares. The number belongs to the parent."
+}
+},
+{
+"key": "GB/national/GBCOH07407241>move:GBCOH10630643",
+"shape": "move",
+"org": 31608331,
+"head": "BAEMS Limited (T/A Bristol Ambulance EMS)",
+"wrong": "GBCOH07407241",
+"right": "10630643",
+"org_mentions": [
+{
+"name": "BAEMS Limited (T/A Bristol Ambulance EMS)",
+"raw_identifier": "GB-COH-07407241",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "BAEMS LIMITED",
+"status": "In Administration",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "10630643",
+"rationale": "07407241 is BRISTOL AMBULANCE EMS LIMITED, a dormant company (SIC 99999), now dissolved, registered at Jacwyn House, Kings Park Avenue, Bristol. That is the address of BAEMS EVENTS, FLEET, MEDICAL and TRAINING LIMITED, so 07407241 is a group company that held the name, not the supplier. The notice names BAEMS Limited, which Companies House shows as 10630643 (in administration), the trading entity behind the Bristol Ambulance EMS name.",
+"challenge": "07407241 is BRISTOL AMBULANCE EMS LIMITED, a dormant company (SIC 99999) dissolved on 11 August 2026. It is registered at Jacwyn House, Kings Park Avenue, Bristol, the same address as BAEMS EVENTS, FLEET, MEDICAL and TRAINING LIMITED, so it is a group name-holder rather than the supplier. The notice names BAEMS Limited, which a search shows as 10630643 (in administration, SIC 86900), so this is a related company, not the right number."
+}
+},
+{
+"key": "GB/national/GBCOH08128583>merge:01425062",
+"shape": "merge",
+"org": 31597494,
+"head": "GORGEMEAD LIMITED",
+"wrong": "GBCOH08128583",
+"right": "01425062",
+"org_mentions": [
+{
+"name": "GORGEMEAD LIMITED",
+"raw_identifier": "GB-COH-08128583",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "01425062",
+"name": "Gorgemead ltd T/A Cohens",
+"org": 14842900,
+"mentions": [
+{
+"name": "Gorgemead Ltd",
+"raw_identifier": "GB-COH-01425062",
+"mentions": 3
+},
+{
+"name": "Gorgemead ltd T/A Cohens",
+"raw_identifier": "01425062",
+"mentions": 1
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "GORGEMEAD LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "01425062",
+"rationale": "08128583 is MARKET WEIGHTON PHARMACY LIMITED, whose registered office (Lynstock House, Lostock, Bolton) is the same as GORGEMEAD LIMITED 01425062's, so the two are pharmacy companies in the same group. The notice names Gorgemead itself, so the number belongs to a sister company or subsidiary.",
+"challenge": "I confirmed it. MARKET WEIGHTON PHARMACY LIMITED and GORGEMEAD LIMITED 01425062 (a dispensing chemist) share the registered office Lynstock House, Lynstock Way, Lostock, Bolton, so they are group pharmacy companies. The notice names Gorgemead, so the stored number is a sister company's."
+}
+},
+{
+"key": "GB/national/GBCOH08884360>merge:06723149",
+"shape": "merge",
+"org": 31536801,
+"head": "Essex Cares Limited",
+"wrong": "GBCOH08884360",
+"right": "06723149",
+"org_mentions": [
+{
+"name": "Essex Cares Limited",
+"raw_identifier": "GB-COH-08884360",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "06723149",
+"name": "Essex Cares Ltd (ECL)",
+"org": 16244011,
+"mentions": [
+{
+"name": "Essex Cares Limited",
+"raw_identifier": "GB-COH-06723149",
+"mentions": 16
+},
+{
+"name": "Essex Cares Ltd (ECL)",
+"raw_identifier": "06723149",
+"mentions": 2
+},
+{
+"name": "Essex Cares Limited (ECL)",
+"raw_identifier": "06723149",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "ECL TRADING LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "ESSEX CARES LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "06723149",
+"rationale": "ECL TRADING LIMITED shares Essex Cares' Seax House address, has Essex County Council as its secretary, and its PSC page names Essex Cares Limited as the 75%+ owner, so it is a subsidiary. The notices name the parent, which the register search shows as ESSEX CARES LIMITED 06723149.",
+"challenge": "ECL TRADING LIMITED has Seax House, Chelmsford as its registered office, its PSC is Essex Cares Limited (75%+), and it files audit-exemption subsidiary accounts, so it is a subsidiary. The notices name the parent itself, ESSEX CARES LIMITED 06723149, which is an active company filing group accounts (correct_number 06723149)."
+}
+},
+{
+"key": "GB/national/GBCOH09297203>merge:00968498",
+"shape": "merge",
+"org": 31607645,
+"head": "NEC Software Solutions UK Limited",
+"wrong": "GBCOH09297203",
+"right": "00968498",
+"org_mentions": [
+{
+"name": "NEC Software Solutions UK Limited",
+"raw_identifier": "GB-COH-09297203",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "00968498",
+"name": "Northgate Public Services (UK) Limited",
+"org": 9244853,
+"mentions": [
+{
+"name": "NEC Software Solutions UK Limited",
+"raw_identifier": "GB-COH-00968498",
+"mentions": 21
+},
+{
+"name": "NEC SOFTWARE SOLUTIONS UK LIMITED",
+"raw_identifier": "GB-COH-00968498",
+"mentions": 19
+},
+{
+"name": "NEC Software Solutions UK Ltd",
+"raw_identifier": "GB-COH-00968498",
+"mentions": 6
+},
+{
+"name": "Northgate Public Services (UK) Limited",
+"raw_identifier": "00968498",
+"mentions": 4
+},
+{
+"name": "NEC SOFTWARE SOLUTIONS UK LIMITED",
+"raw_identifier": "GB-PPON-PHXX-6931-VYBP",
+"mentions": 3
+},
+{
+"name": "NEC Software Solutions",
+"raw_identifier": "00968498",
+"mentions": 2
+},
+{
+"name": "NEC Software Solutions UK Limited",
+"raw_identifier": "GB-PPON-PHXX-6931-VYBP",
+"mentions": 2
+},
+{
+"name": "Cadcorp Ltd",
+"raw_identifier": "GB-PPON-PHXX-6931-VYBP",
+"mentions": 1
+},
+{
+"name": "Gravitas Recruitment Group Limited",
+"raw_identifier": "GB-PPON-PHXX-6931-VYBP",
+"mentions": 1
+},
+{
+"name": "NEC SOFTWARE SOLUTIONS",
+"raw_identifier": "GB-COH-00968498",
+"mentions": 1
+},
+{
+"name": "NEC Software  Solutions UK  Limited",
+"raw_identifier": "GB-COH-00968498",
+"mentions": 1
+},
+{
+"name": "NEC Software Solutions",
+"raw_identifier": "GB-COH-00968498",
+"mentions": 1
+},
+{
+"name": "NEC Software Solutions Limited",
+"raw_identifier": "GB-COH-00968498",
+"mentions": 1
+},
+{
+"name": "NEC Softwares Solutions UK",
+"raw_identifier": "GB-COH-00968498",
+"mentions": 1
+},
+{
+"name": "Northgate Public Services (UK) Ltd",
+"raw_identifier": "00968498",
+"mentions": 1
+},
+{
+"name": "Northgate Public Services UK Ltd",
+"raw_identifier": "00968498",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "NPS (HOLDINGS) LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "NEC SOFTWARE SOLUTIONS UK LIMITED",
+"status": "Active",
+"previous": [
+"NORTHGATE PUBLIC SERVICES (UK) LIMITED",
+"NORTHGATE INFORMATION SOLUTIONS UK LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "00968498",
+"rationale": "NPS (HOLDINGS) LIMITED 09297203 has its directors at NEC Software Solutions' Imex Centre in Hemel Hempstead, so it is a holding company in the old Northgate Public Services group. The named company, NEC SOFTWARE SOLUTIONS UK LIMITED (previously Northgate Public Services (UK) Limited), is 00968498 in the Companies House search.",
+"challenge": "NPS (HOLDINGS) LIMITED 09297203 has the same Imex Centre, Hemel Hempstead office as NEC SOFTWARE SOLUTIONS UK LIMITED 00968498, which was called NORTHGATE PUBLIC SERVICES (UK) LIMITED until 2021. So the number belongs to the group's holding company, not to the named company."
+}
+},
+{
+"key": "GB/national/GBCOH09702342>move:GBCOHOC368517",
+"shape": "move",
+"org": 31631959,
+"head": "CSM Sport & Entertainment LLP T/A CSM Live",
+"wrong": "GBCOH09702342",
+"right": "OC368517",
+"org_mentions": [
+{
+"name": "CSM Sport & Entertainment LLP T/A CSM Live",
+"raw_identifier": "GB-COH-09702342",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "CHIME GROUP HOLDINGS LIMITED",
+"status": "Active",
+"previous": [
+"BELL TOPCO LIMITED"
+]
+},
+"register_right": {
+"name": "WASSERMAN EMEA LLP",
+"status": "Active",
+"previous": [
+"CSM SPORT AND ENTERTAINMENT LLP",
+"CHIME SPORTS MARKETING LLP"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "OC368517",
+"rationale": "CHIME GROUP HOLDINGS LIMITED (formerly BELL TOPCO) is the Chime parent company that owned CSM, and Lord Coe was once a director of it. The named LLP is OC368517, whose previous names are CSM SPORT AND ENTERTAINMENT LLP and CHIME SPORTS MARKETING LLP; it is now WASSERMAN EMEA LLP.",
+"challenge": "CHIME GROUP HOLDINGS LIMITED (formerly BELL TOPCO, SIC 70100 head office) is the Chime parent that owned CSM. OC368517 was CHIME SPORTS MARKETING LLP and then CSM SPORT AND ENTERTAINMENT LLP until March 2024 (now WASSERMAN EMEA LLP), so the number belongs to the parent, not the named LLP."
+}
+},
+{
+"key": "GB/national/GBCOH10238811>merge:GBCOH04394772",
+"shape": "merge",
+"org": 31594247,
+"head": "Qualitest Group UK Limited",
+"wrong": "GBCOH10238811",
+"right": "04394772",
+"org_mentions": [
+{
+"name": "Qualitest Group UK Limited",
+"raw_identifier": "GB-COH-10238811",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH04394772",
+"name": "QUALITEST GROUP UK LTD",
+"org": 31581747,
+"mentions": [
+{
+"name": "QUALITEST GROUP UK LTD",
+"raw_identifier": "GB-COH-04394772",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "JUPITER HOLDCO LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "QUALITEST GROUP UK LTD",
+"status": "Active",
+"previous": [
+"TEST-DIRECT LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "04394772",
+"rationale": "JUPITER HOLDCO LIMITED is registered at Equitable House, 47 King William Street, the same office as the Qualitest companies, so it is a group holding company. The named company, QUALITEST GROUP UK LTD, is 04394772 in the Companies House search.",
+"challenge": "JUPITER HOLDCO LIMITED is a holding company (SIC 64209) registered at Equitable House, 47 King William Street, the same office as QUALITEST GROUP UK LTD 04394772. Its past directors include Qualitest's Ayal Zylberman and Yaron Kottler, so it is a Qualitest group holding company, not the named company."
+}
+},
+{
+"key": "GB/national/GBCOH10615396>merge:10080864",
+"shape": "merge",
+"org": 31632979,
+"head": "CADENT GAS LIMITED",
+"wrong": "GBCOH10615396",
+"right": "10080864",
+"org_mentions": [
+{
+"name": "CADENT GAS LIMITED",
+"raw_identifier": "GB-COH-10615396",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "10080864",
+"name": "Cadent Gas Limited",
+"org": 9776766,
+"mentions": [
+{
+"name": "CADENT GAS LIMITED",
+"raw_identifier": "GB-COH-10080864",
+"mentions": 173
+},
+{
+"name": "Cadent Gas Limited",
+"raw_identifier": "10080864",
+"mentions": 22
+},
+{
+"name": "Cadent Gas Ltd",
+"raw_identifier": "10080864",
+"mentions": 16
+},
+{
+"name": "Cadent Gas Limited",
+"raw_identifier": "GB-COH-10080864",
+"mentions": 10
+},
+{
+"name": "CADENT GAS LIMITED",
+"raw_identifier": "GB-PPON-PNHM-3269-DNNL",
+"mentions": 2
+},
+{
+"name": "Cadent",
+"raw_identifier": "10080864",
+"mentions": 2
+},
+{
+"name": "CADENT GAS LIMITED",
+"raw_identifier": "GB-COH-10080164",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "QUADGAS MIDCO LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "CADENT GAS LIMITED",
+"status": "Active",
+"previous": [
+"NATIONAL GRID GAS DISTRIBUTION LIMITED",
+"NATIONAL GRID THIRTY SEVEN LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "10080864",
+"rationale": "QUADGAS MIDCO LIMITED is registered at Cadent's Pilot Way office in Ansty and is a holding company of the Quadgas consortium that owns Cadent. The notice names CADENT GAS LIMITED, which is 10080864 (formerly National Grid Gas Distribution Limited).",
+"challenge": "QUADGAS MIDCO LIMITED is registered at Cadent, Pilot Way, Ansty, the same office as CADENT GAS LIMITED 10080864 (formerly National Grid Gas Distribution). It is a holding company in Cadent's ownership chain, not the named gas distributor."
+}
+},
+{
+"key": "GB/national/GBCOH11402733>merge:GBCOH10469788",
+"shape": "merge",
+"org": 31546182,
+"head": "Country Court Care Homes 5 Limited",
+"wrong": "GBCOH11402733",
+"right": "10469788",
+"org_mentions": [
+{
+"name": "Country Court Care Homes 5 Limited",
+"raw_identifier": "GB-COH-11402733",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH10469788",
+"name": "COUNTRY COURT CARE HOMES 5 LIMITED",
+"org": 30974490,
+"mentions": [
+{
+"name": "COUNTRY COURT CARE HOMES 5 LIMITED",
+"raw_identifier": "GB-COH-10469788",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "KIBO HOLDINGS LIMITED",
+"status": "Active",
+"previous": [
+"KACHRA HOLDINGS LIMITED"
+]
+},
+"register_right": {
+"name": "COUNTRY COURT CARE HOMES 5 LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "10469788",
+"rationale": "11402733 is KIBO HOLDINGS LIMITED, which the PSC register lists as a controlling holder of COUNTRY COURT CARE HOMES 5 LIMITED (10469788); both companies have the same three Kachra directors. The number is the parent holding company, not the named care-home company.",
+"challenge": "The PSC register of COUNTRY COURT CARE HOMES 5 LIMITED (10469788) lists Kibo Holdings Limited (11402733, formerly Kachra Holdings) and Country Court Care Group Limited as controllers, and both companies have the same three Kachra directors. The number is the parent holding company, and the named care-home company is 10469788."
+}
+},
+{
+"key": "GB/national/GBCOH1162592>merge:GBCOHCE004990",
+"shape": "merge",
+"org": 31613231,
+"head": "Third Sector Leaders Kirklees",
+"wrong": "GBCOH1162592",
+"right": "CE004990",
+"org_mentions": [
+{
+"name": "Third Sector Leaders",
+"raw_identifier": "GB-COH-1162592",
+"mentions": 1
+},
+{
+"name": "Third Sector Leaders Kirklees",
+"raw_identifier": "GB-COH-1162592",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOHCE004990",
+"name": "Third Sector Leaders Kirklees",
+"org": 31634396,
+"mentions": [
+{
+"name": "Third Sector Leaders Kirklees",
+"raw_identifier": "GB-COH-'01162592",
+"mentions": 1
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "THIRD SECTOR LEADERS KIRKLEES",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "wrong-number",
+"confidence": "high",
+"correct_number": "CE004990",
+"rationale": "The register returns 404 for 01162592. The Companies House search lists THIRD SECTOR LEADERS KIRKLEES as CIO record CE004990, 'registered externally as 1162592', so the field holds the charity number with a zero added.",
+"challenge": "The 404 makes it wrong-number. The search confirms THIRD SECTOR LEADERS KIRKLEES CE004990 'Registered externally as 1162592'."
+}
+},
+{
+"key": "GB/national/GBCOH11809810>move:GBCOH02334687",
+"shape": "move",
+"org": 31617729,
+"head": "Crown Agents Bank",
+"wrong": "GBCOH11809810",
+"right": "02334687",
+"org_mentions": [
+{
+"name": "Crown Agents Bank",
+"raw_identifier": "GB-COH-11809810",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "CROWN AGENTS BANK LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "02334687",
+"rationale": "The register shows that CAB TECH HOLDCO LIMITED (11809810, dissolved) is 75%+ owned by CAB Payments Holdings plc (09659405), the parent of Crown Agents Bank. The bank itself is CROWN AGENTS BANK LIMITED 02334687, so the stored number belongs to a sister company in the same group.",
+"challenge": "I confirmed it. The register's persons-with-significant-control page for CAB TECH HOLDCO LIMITED names Cab Payments Holdings Plc (09659405) with 75% or more. CROWN AGENTS BANK LIMITED is 02334687 (formerly CROWN AGENTS FINANCIAL SERVICES LIMITED), so the stored number is a group company's."
+}
+},
+{
+"key": "GB/national/GBCOH11979783>move:GBCOH07493614",
+"shape": "move",
+"org": 31574716,
+"head": "Insignia Healthcare Group Ltd",
+"wrong": "GBCOH11979783",
+"right": "07493614",
+"org_mentions": [
+{
+"name": "Insignia Healthcare Group Ltd",
+"raw_identifier": "GB-COH-11979783",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "INSPIRE TRAINING GROUP (EAST ANGLIA) LTD",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "INSIGNIA HEALTHCARE GROUP LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "07493614",
+"rationale": "11979783 is INSPIRE TRAINING GROUP (EAST ANGLIA) LTD, which has INSIGNIA HEALTHCARE GROUP LIMITED as a corporate officer and shares the Secker and Cressey directors with it. The named group is its own company, 07493614 (Norwich).",
+"challenge": "11979783 is INSPIRE TRAINING GROUP (EAST ANGLIA) LTD. Its PSC is Insignia Healthcare Group Limited, which is also a corporate officer, and both companies share Craig Secker and the Sapphire House, Norwich office. The named group is its own company, 07493614, so the number belongs to its subsidiary."
+}
+},
+{
+"key": "GB/national/GBCOH12461691>merge:05233487",
+"shape": "merge",
+"org": 31605885,
+"head": "Learning Curve Group Limited",
+"wrong": "GBCOH12461691",
+"right": "05233487",
+"org_mentions": [
+{
+"name": "Learning Curve Group Limited",
+"raw_identifier": "GB-COH-12461691",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "05233487",
+"name": "Learning Curve Group Limited",
+"org": 13132633,
+"mentions": [
+{
+"name": "LEARNING CURVE GROUP LIMITED",
+"raw_identifier": "GB-COH-05233487",
+"mentions": 17
+},
+{
+"name": "Learning Curve Group",
+"raw_identifier": "GB-COH-05233487",
+"mentions": 3
+},
+{
+"name": "Learning Curve Group Limited",
+"raw_identifier": "GB-COH-05233487",
+"mentions": 3
+},
+{
+"name": "Learning Curve Group",
+"raw_identifier": "GB-PPON-PMCY-9543-YJZV",
+"mentions": 2
+},
+{
+"name": "Learning Curve Group",
+"raw_identifier": "05233487",
+"mentions": 1
+},
+{
+"name": "Learning Curve Group Limited",
+"raw_identifier": "05233487",
+"mentions": 1
+},
+{
+"name": "Learning Curve Group Limited  Lot 1.1,2.00",
+"raw_identifier": "GB-PPON-PMCY-9543-YJZV",
+"mentions": 1
+},
+{
+"name": "Learning Curve JAA",
+"raw_identifier": "05233487",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "BOYD HOLDCO LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "LEARNING CURVE GROUP LIMITED",
+"status": "Active",
+"previous": [
+"LEARNING CURVE (JAA) LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "05233487",
+"rationale": "Companies House's records of who controls each company run LEARNING CURVE GROUP LIMITED 05233487 → Learning Curve (NE) Group → Genius Bidco → Genius Holdco → Boyd Bidco (12462329). BOYD HOLDCO LIMITED (12461691, an education-sector holdco formed the same day) sits at the top of that chain, so it is a parent of the named company.",
+"challenge": "Each company's controller on the register is the next one up: BOYD BIDCO 12462329 is controlled by BOYD MIDCO 2 12462299, which is controlled by BOYD MIDCO 12462253, all at Learning Curve Group's Spennymoor address. BOYD HOLDCO 12461691 (education SIC, formed the same day) is the top of that Boyd chain above LEARNING CURVE GROUP LIMITED 05233487, so it is a parent of the named company."
+}
+},
+{
+"key": "GB/national/GBCOH13020864>move:GBCOHSC473338",
+"shape": "move",
+"org": 31623268,
+"head": "Nuwe Consulting Ltd",
+"wrong": "GBCOH13020864",
+"right": "SC473338",
+"org_mentions": [
+{
+"name": "Nuwe Consulting Ltd",
+"raw_identifier": "GB-COH-13020864",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "KEYSTONE EMPLOYMENT GROUP NO.1 LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "NUWE CONSULTING LIMITED",
+"status": "Active",
+"previous": [
+"BID TALENT LIMITED",
+"LIBER RESOURCE LIMITED",
+"UBER RESOURCE LTD"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "SC473338",
+"rationale": "The Companies House PSC page for NUWE CONSULTING LIMITED (SC473338) lists Keystone Employment Group No 1 Ltd, registration number 13020864, as its active person with significant control (75%+ of shares, notified 5 May 2025, and before that from 23 November 2022). So 13020864 is Nuwe's parent company, not an unrelated one, and the notice names the subsidiary, whose own number is SC473338.",
+"challenge": "reviewer: wrong-number/high: 13020864 is KEYSTONE EMPLOYMENT GROUP NO.1 LIMITED, a software and HR company in Dover, unrelated to the named supplier. NUWE CONSULTING LIMITED is the Scottish company SC473338 (48 West George Street, Glasgow), the only company with that name. | challenger (related-company): The register lists KEYSTONE EMPLOYMENT GROUP NO.1 LIMITED 13020864 as the person with significant control (75%+ of shares) of NUWE CONSULTING LIMITED SC473338, from 23 November 2022 and again from 5 May 2025. So 13020864 is Nuwe's parent company, not an unrelated one: this is related-company, and Nuwe's own number is SC473338."
+}
+},
+{
+"key": "GB/national/GBCOH13174233>merge:04161207",
+"shape": "merge",
+"org": 31596669,
+"head": "Heywood Ltd",
+"wrong": "GBCOH13174233",
+"right": "04161207",
+"org_mentions": [
+{
+"name": "Heywood Ltd",
+"raw_identifier": "GB-COH-13174233",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "04161207",
+"name": "Aguila Heywood Ltd",
+"org": 15095259,
+"mentions": [
+{
+"name": "Heywood",
+"raw_identifier": "GB-COH-04161207",
+"mentions": 4
+},
+{
+"name": "HEYWOOD LIMITED",
+"raw_identifier": "GB-COH-04161207",
+"mentions": 3
+},
+{
+"name": "Heywood Limited",
+"raw_identifier": "GB-PPON-PBNX-5759-TTQX",
+"mentions": 3
+},
+{
+"name": "Heywood Ltd",
+"raw_identifier": "GB-COH-04161207",
+"mentions": 3
+},
+{
+"name": "Heywood Limited",
+"raw_identifier": "GB-COH-04161207",
+"mentions": 2
+},
+{
+"name": "Aguila Heywood Ltd",
+"raw_identifier": "04161207",
+"mentions": 1
+},
+{
+"name": "Heywood Ltd",
+"raw_identifier": "GB-COH-0416207",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "APUS BIDCO LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "HEYWOOD LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "04161207",
+"rationale": "13174233 is APUS BIDCO LIMITED, an IT holding company incorporated 2021 at 2nd Floor 3 Barrington Road, Altrincham. HEYWOOD LIMITED is 04161207 at that same address, so the number is Heywood's acquisition bidco/parent, not Heywood itself.",
+"challenge": "HEYWOOD LIMITED is 04161207 at the same 3 Barrington Road, Altrincham address as APUS BIDCO, and its PSC is AquilaHeywood Limited 05511334. APUS BIDCO is the acquisition company above it, so the number is an upstream group company's."
+}
+},
+{
+"key": "GB/national/GBCOH13304590>merge:GBCOH08787322",
+"shape": "merge",
+"org": 31648221,
+"head": "Pagabo Ltd",
+"wrong": "GBCOH13304590",
+"right": "08787322",
+"org_mentions": [
+{
+"name": "Pagabo Ltd",
+"raw_identifier": "GB-COH-13304590",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH08787322",
+"name": "PAGABO LIMITED",
+"org": 31557760,
+"mentions": [
+{
+"name": "Pagabo Limited",
+"raw_identifier": "GB-PPON-PYHM-9979-CXPY",
+"mentions": 8
+},
+{
+"name": "PAGABO LIMITED",
+"raw_identifier": "GB-COH-08787322",
+"mentions": 4
+},
+{
+"name": "Pagabo",
+"raw_identifier": "GB-COH-08787322",
+"mentions": 1
+},
+{
+"name": "Pagabo Limited",
+"raw_identifier": "GB-COH-08787322",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "THE 55 GROUP (MIDCO) LIMITED",
+"status": "Active",
+"previous": [
+"PROJECT 55 MIDCO LIMITED",
+"ENSCO 1408 LIMITED"
+]
+},
+"register_right": {
+"name": "PAGABO LIMITED",
+"status": "Active",
+"previous": [
+"ADDED VALUE PORTAL LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "08787322",
+"rationale": "13304590 is THE 55 GROUP (MIDCO) LIMITED (formerly Project 55 Midco), a holding company in the group that owns Pagabo. A CH search shows PAGABO LIMITED is its own company 08787322 at 55 Whitefriargate, Hull, so the number is the parent group's.",
+"challenge": "The CH search shows PAGABO LIMITED 08787322 (and PAGABO GROUP LIMITED 13306964) at 55 Whitefriargate, Hull, separate from THE 55 GROUP (MIDCO) LIMITED. The number is a holding company in Pagabo's group, not Pagabo Ltd."
+}
+},
+{
+"key": "GB/national/GBCOH13384013>merge:01180064",
+"shape": "merge",
+"org": 31563591,
+"head": "John Pulsford Associates ltd",
+"wrong": "GBCOH13384013",
+"right": "01180064",
+"org_mentions": [
+{
+"name": "John Pulsford Associates ltd",
+"raw_identifier": "GB-COH-13384013",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "01180064",
+"name": "John Pulsford Associates Limited",
+"org": 18774217,
+"mentions": [
+{
+"name": "John Pulsford Associates Limited",
+"raw_identifier": "01180064",
+"mentions": 2
+}
+]
+},
+"register_wrong": {
+"name": "JPA WORKSPACES LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "JOHN PULSFORD ASSOCIATES LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "01180064",
+"rationale": "13384013 is JPA WORKSPACES LIMITED, a dormant company at the same St Albans address with the same directors (Pulsford, Cooksey) as JOHN PULSFORD ASSOCIATES LIMITED (01180064). It is a sister company of the named firm.",
+"challenge": "13384013 is JPA WORKSPACES LIMITED, incorporated 2021, at the same St Albans address with the same directors (Cooksey and the Pulsfords) and the same PSC, John Pulsford Associates (1974) Limited, as JOHN PULSFORD ASSOCIATES LIMITED (01180064). The notice names the older firm exactly, so the number is a sister company and the right number is 01180064."
+}
+},
+{
+"key": "GB/national/GBCOH14156358>move:GBCOH11318049",
+"shape": "move",
+"org": 31566599,
+"head": "Allegra Services Limited",
+"wrong": "GBCOH14156358",
+"right": "11318049",
+"org_mentions": [
+{
+"name": "Allegra Services Limited",
+"raw_identifier": "GB-COH-14156358",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "MREF V CARE HOLDINGS LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "ALLEGRA SERVICES LIMITED",
+"status": "Active",
+"previous": [
+"DGS CARE LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "11318049",
+"rationale": "MREF V CARE HOLDINGS LIMITED (a Moorfield-address care holding company) shares director Paul Ramsay Spence with ALLEGRA SERVICES LIMITED 11318049. It is a related joint-venture or holding entity, not Allegra Services itself.",
+"challenge": "MREF V CARE HOLDINGS LIMITED 14156358 is owned by a Moorfield MREF V fund general partner. It shares director Paul Ramsay Spence with ALLEGRA SERVICES LIMITED 11318049, which is owned by Seniors Living Group Limited, so it is a related care joint-venture or holding entity and not Allegra Services itself. The org's own number is 11318049."
+}
+},
+{
+"key": "GB/national/GBCOH14405737>merge:GBCOH05027024",
+"shape": "merge",
+"org": 31537254,
+"head": "GREAT BRITISH ENERGY - NUCLEAR",
+"wrong": "GBCOH14405737",
+"right": "05027024",
+"org_mentions": [
+{
+"name": "GREAT BRITISH ENERGY - NUCLEAR",
+"raw_identifier": "GB-COH-14405737",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH05027024",
+"name": "GREAT BRITISH NUCLEAR",
+"org": 30914007,
+"mentions": [
+{
+"name": "GREAT BRITISH ENERGY - NUCLEAR",
+"raw_identifier": "GB-COH-05027024",
+"mentions": 39
+},
+{
+"name": "GREAT BRITISH NUCLEAR",
+"raw_identifier": "GB-COH-05027024",
+"mentions": 26
+},
+{
+"name": "Great British Energy - Nuclear",
+"raw_identifier": "GB-PPON-PRCJ-2655-YDML",
+"mentions": 19
+},
+{
+"name": "Great British Energy - Nuclear",
+"raw_identifier": "GB-COH-05027024",
+"mentions": 1
+},
+{
+"name": "Great British Nuclear",
+"raw_identifier": "GB-PPON-PRCJ-2655-YDML",
+"mentions": 1
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "GREAT BRITISH ENERGY - NUCLEAR",
+"status": "Active",
+"previous": [
+"GREAT BRITISH NUCLEAR",
+"BRITISH NUCLEAR FUELS LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "05027024",
+"rationale": "14405737 was GREAT BRITISH NUCLEAR LIMITED, later renamed DEPARTMENTAL NUCLEAR COMPANY LIMITED and dissolved in Dec 2025, so it was an interim vehicle for the same programme. The body itself is 05027024 (formerly BRITISH NUCLEAR FUELS LIMITED, then GREAT BRITISH NUCLEAR from Mar 2024), which has been named GREAT BRITISH ENERGY - NUCLEAR since Jun 2025.",
+"challenge": "14405737 was GREAT BRITISH NUCLEAR LIMITED from 7 Oct 2022 to 20 Mar 2024. It was then renamed DEPARTMENTAL NUCLEAR COMPANY LIMITED, registered at DESNZ in Whitehall, and dissolved on 30 Dec 2025, so it was the department's interim vehicle for the same programme. The named body is 05027024 (formerly BRITISH NUCLEAR FUELS LIMITED, then GREAT BRITISH NUCLEAR from 20 Mar 2024), which has been GREAT BRITISH ENERGY - NUCLEAR since 10 Jun 2025."
+}
+},
+{
+"key": "GB/national/GBCOH15049670>merge:GBCOH06211226",
+"shape": "merge",
+"org": 31542576,
+"head": "New Medical Systems Limited T/A 'Newmedica'",
+"wrong": "GBCOH15049670",
+"right": "06211226",
+"org_mentions": [
+{
+"name": "New Medical Systems Limited T/A 'Newmedica'",
+"raw_identifier": "GB-COH-15049670",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH06211226",
+"name": "New Medical Systems Limited T/A 'Newmedica'",
+"org": 31542573,
+"mentions": [
+{
+"name": "New Medical Systems Limited T/A 'Newmedica'",
+"raw_identifier": "GB-COH-06211226",
+"mentions": 4
+},
+{
+"name": "New Medical Systems Ltd",
+"raw_identifier": "GB-COH-06211226",
+"mentions": 2
+},
+{
+"name": "NEW MEDICAL SYSTEMS LIMITED",
+"raw_identifier": "GB-COH-06211226",
+"mentions": 1
+},
+{
+"name": "New Medical Systems Limited",
+"raw_identifier": "GB-COH-06211226",
+"mentions": 1
+},
+{
+"name": "New Medical Systems Ltd trading as Newmedica (ODS ACG01)",
+"raw_identifier": "GB-COH-06211226",
+"mentions": 1
+},
+{
+"name": "Newmedical Systems Limited",
+"raw_identifier": "GB-COH-06211226",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "LEICESTER NEWMEDICA LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "NEW MEDICAL SYSTEMS LIMITED",
+"status": "Active",
+"previous": [
+"CHARCO 9 LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "06211226",
+"rationale": "The PSC of LEICESTER NEWMEDICA LIMITED is NEW MEDICAL SYSTEMS LIMITED 06211226 (50-75%). The number is a site subsidiary of the named company, which trades as Newmedica.",
+"challenge": "The PSC page for LEICESTER NEWMEDICA LIMITED 15049670 names NEW MEDICAL SYSTEMS LIMITED 06211226 as its 50-75% owner. The notice names that parent exactly ('New Medical Systems Limited T/A Newmedica'), so the number is its Leicester site subsidiary and the org's own number is 06211226."
+}
+},
+{
+"key": "GB/national/GBCOH15301682>merge:GBCOH13919344",
+"shape": "merge",
+"org": 31546603,
+"head": "MYC Group (UK) Ltd",
+"wrong": "GBCOH15301682",
+"right": "13919344",
+"org_mentions": [
+{
+"name": "MYC Group (UK) Ltd",
+"raw_identifier": "GB-COH-15301682",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOH13919344",
+"name": "MYC Group (UK) Limited",
+"org": 31543696,
+"mentions": [
+{
+"name": "MYC Group (UK) Limited",
+"raw_identifier": "GB-COH-13919344",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "EMWHY INT LTD",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "MYC GROUP (UK) LIMITED",
+"status": "Active",
+"previous": [
+"MYC HOLDINGS LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "13919344",
+"rationale": "EMWHY INT LTD is the holding-company PSC of MYC GROUP (UK) LIMITED 13919344, at the same Barnet address. The number is the parent, not the named company.",
+"challenge": "The PSC page for MYC GROUP (UK) LIMITED 13919344 names EMWHY INT LTD 15301682 as its 75%+ owner, and both are at 5 Beauchamp Court, Barnet. The number is the holding parent of the company the notice names exactly, so the org's own number is 13919344."
+}
+},
+{
+"key": "GB/national/GBCOH1566758>merge:01243967",
+"shape": "merge",
+"org": 31597795,
+"head": "Mott Macdonald Limited",
+"wrong": "GBCOH1566758",
+"right": "01243967",
+"org_mentions": [
+{
+"name": "Mott Macdonald Limited",
+"raw_identifier": "GB-COH-1566758",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "01243967",
+"name": "Mott MacDonald Ltd",
+"org": 11550219,
+"mentions": [
+{
+"name": "MOTT MACDONALD LIMITED",
+"raw_identifier": "GB-COH-01243967",
+"mentions": 44
+},
+{
+"name": "Mott MacDonald Limited",
+"raw_identifier": "GB-PPON-PMRR-1398-DNDL",
+"mentions": 13
+},
+{
+"name": "Mott MacDonald Limited",
+"raw_identifier": "GB-COH-01243967",
+"mentions": 10
+},
+{
+"name": "MOTT MACDONALD LIMITED",
+"raw_identifier": "GB-PPON-PMRR-1398-DNDL",
+"mentions": 5
+},
+{
+"name": "Mott MacDonald",
+"raw_identifier": "GB-PPON-PMRR-1398-DNDL",
+"mentions": 5
+},
+{
+"name": "Mott MacDonald Ltd",
+"raw_identifier": "01243967",
+"mentions": 4
+},
+{
+"name": "Mott MacDonald Ltd",
+"raw_identifier": "GB-COH-01243967",
+"mentions": 4
+},
+{
+"name": "Mott Macdonald Limited",
+"raw_identifier": "GB-COH-01243967",
+"mentions": 4
+},
+{
+"name": "Mott Macdonald Limited",
+"raw_identifier": "GB-PPON-PMRR-1398-DNDL",
+"mentions": 3
+},
+{
+"name": "Mott MacDonald",
+"raw_identifier": "GB-COH-01243967",
+"mentions": 2
+},
+{
+"name": "Mott Macdonald",
+"raw_identifier": "GB-PPON-PMRR-1398-DNDL",
+"mentions": 2
+},
+{
+"name": "MOTT MACDONALD LTD (Belfast)",
+"raw_identifier": "GB-COH-01243967",
+"mentions": 1
+},
+{
+"name": "Matt MacDonald Ltd",
+"raw_identifier": "GB-PPON-PMRR-1398-DNDL",
+"mentions": 1
+},
+{
+"name": "Mott Macdonald Ltd",
+"raw_identifier": "GB-COH-01243967",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "CAMBRIDGE EDUCATION LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "MOTT MACDONALD LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "01243967",
+"rationale": "01566758 is CAMBRIDGE EDUCATION LIMITED, a Mott MacDonald group subsidiary, while the notice names Mott Macdonald Limited. A CH search shows MOTT MACDONALD LIMITED as 01243967 at 10 Fleet Place, London.",
+"challenge": "CAMBRIDGE EDUCATION LIMITED is a Mott MacDonald group subsidiary, while the notice names Mott MacDonald Limited exactly. So the number belongs to a group company, and the named company is 01243967."
+}
+},
+{
+"key": "GB/national/GBCOH2051987>move:GBCOH06016995",
+"shape": "move",
+"org": 31538499,
+"head": "CARELINE LIFESTYLES (UK) LTD",
+"wrong": "GBCOH2051987",
+"right": "06016995",
+"org_mentions": [
+{
+"name": "CARELINE LIFESTYLES (UK) LTD",
+"raw_identifier": "GB-COH-2051987",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "DURHAM CARE LINE LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "CARELINE LIFESTYLES (UK) LTD",
+"status": "Active",
+"previous": [
+"CARELINE LIFESYTLES (UK) LTD",
+"CARELINE LIFESTYLES LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "06016995",
+"rationale": "02051987 is DURHAM CARE LINE LIMITED. Its PSCs (Dr Swatanter Bharat Sharma and Geeta Sharma, One Central Parkway, Newcastle) are the same family and address as CARELINE LIFESTYLES (UK) LTD, 06016995 (PSCs Dr S B Sharma and Rahul Sharma), so the number belongs to a sister company of the named org.",
+"challenge": "CARELINE LIFESTYLES (UK) LTD is its own active company, 06016995, and the mention carries its exact '(UK) LTD' legal name. DURHAM CARE LINE LIMITED 02051987 shares its registered office (6th Floor, Wellbar Central, Gallowgate, Newcastle), so it is a sister company, not the named org."
+}
+},
+{
+"key": "GB/national/GBCOH2202240>merge:RC000503",
+"shape": "merge",
+"org": 31645324,
+"head": "Royal National Lifeboat Institution",
+"wrong": "GBCOH2202240",
+"right": "RC000503",
+"org_mentions": [
+{
+"name": "Royal National Lifeboat Institution",
+"raw_identifier": "GB-COH-2202240",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "RC000503",
+"name": "Royal National Lifeboat Institution",
+"org": 10263087,
+"mentions": [
+{
+"name": "Royal National Lifeboat Institution",
+"raw_identifier": "RC000503",
+"mentions": 1
+}
+]
+},
+"register_wrong": {
+"name": "R.N.L.I. (SALES) LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "THE ROYAL NATIONAL LIFEBOAT INSTITUTION",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "RC000503",
+"rationale": "02202240 is R.N.L.I. (SALES) LIMITED, the charity's trading subsidiary, but the mention names the Royal National Lifeboat Institution itself. A CH search shows THE ROYAL NATIONAL LIFEBOAT INSTITUTION registered as the royal charter body RC000503.",
+"challenge": "02202240 is R.N.L.I. (SALES) LIMITED, the charity's trading subsidiary, but the mention names the Institution itself. A CH search confirms THE ROYAL NATIONAL LIFEBOAT INSTITUTION is the royal charter body RC000503."
+}
+},
+{
+"key": "GB/national/GBCOH2234990>move:GBCOHFC008606",
+"shape": "move",
+"org": 31624393,
+"head": "B&M Investments",
+"wrong": "GBCOH2234990",
+"right": "FC008606",
+"org_mentions": [
+{
+"name": "B&M Investments",
+"raw_identifier": "GB-COH-2234990",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "COLLEYCARE LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "B & M INVESTMENTS LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "FC008606",
+"rationale": "COLLEYCARE LIMITED is a nursing-care company at Old Town Court, 70 Queensway, Hemel Hempstead, wholly owned by B & M Care Group Limited 02013239. B & M INVESTMENTS LIMITED is an Irish group company registered at the same address (overseas company FC008606, UK establishment BR001677), so the number belongs to a subsidiary of the named group.",
+"challenge": "The register confirms COLLEYCARE LIMITED is a nursing-care company (SIC 87100) at Old Town Court, 70 Queensway, Hemel Hempstead. The search shows B & M INVESTMENTS LIMITED as the Irish overseas company FC008606, whose UK establishment BR001677 is at that same address, so the number belongs to a group subsidiary and not the named investor."
+}
+},
+{
+"key": "GB/national/GBCOH4383479>move:GBCOH07276039",
+"shape": "move",
+"org": 31610419,
+"head": "Eden Supported Living Ltd",
+"wrong": "GBCOH4383479",
+"right": "07276039",
+"org_mentions": [
+{
+"name": "Eden Supported Living Ltd",
+"raw_identifier": "GB-COH-4383479",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "HOUSING AND SUPPORT SOLUTIONS LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "EDEN SUPPORTED LIVING LIMITED",
+"status": "Active",
+"previous": [
+"PIMCO 2857 (CARECO) LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "07276039",
+"rationale": "HOUSING AND SUPPORT SOLUTIONS LIMITED's registered office is Harlaxton House, Long Bennington Business Park, Newark. The search finds EDEN SUPPORTED LIVING LIMITED 07276039 (and Eden Supported Housing 07276049) at the same address, so 04383479 is a sister company, not the named one.",
+"challenge": "HOUSING AND SUPPORT SOLUTIONS LIMITED (SIC 55900) is registered at Harlaxton House, Long Bennington Business Park, Newark. EDEN SUPPORTED LIVING LIMITED 07276039 and Eden Supported Housing 07276049 are at the same address, so the number belongs to a sister company of the named Eden entity."
+}
+},
+{
+"key": "GB/national/GBCOH7992282>move:GBCOH07992281",
+"shape": "move",
+"org": 31617009,
+"head": "Spacestor",
+"wrong": "GBCOH7992282",
+"right": "07992281",
+"org_mentions": [
+{
+"name": "Spacestor",
+"raw_identifier": "GB-COH-7992282",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "TRIESTE GROUP ONE LTD",
+"status": "Active",
+"previous": [
+"TABLE PORTFOLIO LIMITED"
+]
+},
+"register_right": {
+"name": "SPACESTOR LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "07992281",
+"rationale": "A CH search shows SPACESTOR LIMITED is 07992281, one number below this one. TRIESTE GROUP ONE LTD (formerly Table Portfolio Limited) was incorporated the same day, 15 March 2012, and shares Spacestor's registered office at Noble House, Hemel Hempstead, so it is a sister group company.",
+"challenge": "The verdict stands, but the relationship is parent, not sister. Spacestor Limited's (07992281) PSC register names Trieste Group One Ltd (07992282) as its owner with 75% or more since April 2018, so the number belongs to Spacestor's holding company."
+}
+},
+{
+"key": "GB/national/GBCOHBR016481>merge:GBCOHBR018892",
+"shape": "merge",
+"org": 31569483,
+"head": "CACEIS Bank-UK Branch",
+"wrong": "GBCOHBR016481",
+"right": "BR018892",
+"org_mentions": [
+{
+"name": "CACEIS Bank-UK Branch",
+"raw_identifier": "GB-COH-BR016481",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOHBR018892",
+"name": "CACEIS BANK UK Branch",
+"org": 31570520,
+"mentions": [
+{
+"name": "CACEIS BANK UK Branch",
+"raw_identifier": "GB-COH-BR018892",
+"mentions": 2
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": "not in the 2026-10-01 live snapshot",
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "BR018892",
+"rationale": "BR016481 is the closed London branch of CACEIS BANK LUXEMBOURG, a sister (and predecessor) entity of CACEIS Bank. The org's 'CACEIS Bank-UK Branch' is CACEIS BANK, UK BRANCH, BR018892 (overseas company FC033805), open since Oct 2016.",
+"challenge": "BR016481 is the closed CACEIS BANK LUXEMBOURG - LONDON BRANCH, the branch of a separate (since absorbed) group bank, not of CACEIS Bank. The org's 'CACEIS Bank-UK Branch' is CACEIS BANK, UK BRANCH, BR018892 (opened 20 Oct 2016, Broadwalk House, a UK establishment of overseas company FC033805)."
+}
+},
+{
+"key": "GB/national/GBCOHIP14044R>move:GBCOH04487182",
+"shape": "move",
+"org": 31625374,
+"head": "IDS TRUSTEES LIMITED",
+"wrong": "GBCOHIP14044R",
+"right": "04487182",
+"org_mentions": [
+{
+"name": "IDS TRUSTEES LIMITED",
+"raw_identifier": "GB-COH-IP14044R",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "INDUSTRIAL DWELLINGS SOCIETY(1885)LIMITED (THE)",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "IDS TRUSTEES LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "04487182",
+"rationale": "IP14044R is the Industrial Dwellings Society (1885) Limited, the IDS housing association itself. A CH search shows IDS TRUSTEES LIMITED is its own company 04487182 at 143 Stoke Newington Road, the society's address, so the number is the parent society's.",
+"challenge": "IDS TRUSTEES LIMITED is its own company, 04487182, at 143 Stoke Newington Road, the society's address. IP14044R is the Industrial Dwellings Society itself, a related entity and not the named trustee company."
+}
+},
+{
+"key": "GB/national/GBCOHOC423092>merge:OC416421",
+"shape": "merge",
+"org": 31541393,
+"head": "Plexus Legal LLP",
+"wrong": "GBCOHOC423092",
+"right": "OC416421",
+"org_mentions": [
+{
+"name": "Plexus Legal LLP",
+"raw_identifier": "GB-COH-OC423092",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "OC416421",
+"name": "Plexus Legal LLP",
+"org": 17616850,
+"mentions": [
+{
+"name": "Plexus Legal LLP",
+"raw_identifier": "OC416421",
+"mentions": 1
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "PLEXUS LEGAL LLP",
+"status": "In Administration/Administrative Receiver",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "OC416421",
+"rationale": "OC423092 is PLEXUS NORTH LLP (dissolved Apr 2025), whose designated members give their address as c/o Plexus Law Limited, Leeds, so it is a sister LLP in the Plexus group. PLEXUS LEGAL LLP itself is OC416421.",
+"challenge": "OC423092 is PLEXUS NORTH LLP (inc. 2018, dissolved Apr 2025). Its designated members give their address as c/o Plexus Law Limited, Josephs Well, Leeds, which makes it a sister LLP in the Plexus group; it has no previous names. The exact-name PLEXUS LEGAL LLP is its own registration, OC416421 (inc. 16 Mar 2017)."
+}
+},
+{
+"key": "GB/national/GBCOHOC423288>merge:GBCOHRS008009",
+"shape": "merge",
+"org": 31647905,
+"head": "Longhurst Group Limited",
+"wrong": "GBCOHOC423288",
+"right": "RS008009",
+"org_mentions": [
+{
+"name": "Longhurst Group Limited",
+"raw_identifier": "GB-COH-OC423288",
+"mentions": 1
+}
+],
+"target": {
+"identifier": "GBCOHRS008009",
+"name": "Longhurst Group Limited",
+"org": 31647922,
+"mentions": [
+{
+"name": "Longhurst Group Limited",
+"raw_identifier": "GB-COH-RS008009",
+"mentions": 1
+}
+]
+},
+"register_wrong": "not in the 2026-10-01 live snapshot",
+"register_right": {
+"name": "LONGHURST GROUP LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "RS008009",
+"rationale": "OC423288 is DHG LG LLP (formerly EVERA HOMES LLP). Its register lists LONGHURST GROUP LIMITED (RS008009) and Keystone Developments (LG) Limited as designated members, so it is a Longhurst-controlled development LLP and not Longhurst Group Limited itself, which is the registered society RS008009.",
+"challenge": "I checked the officers page. Evera Homes LLP began in 2018 as a joint venture of Flagship, Cross Keys, Hyde and Keystone Developments (LG) Limited; since 6 March 2023 its only designated members are LONGHURST GROUP LIMITED (RS008009) and Keystone. So it is a Longhurst-controlled LLP, while Longhurst Group itself is registered society RS008009."
+}
+},
+{
+"key": "GB/national/GBCOHSC242073>move:GBCOHSC288033",
+"shape": "move",
+"org": 31624473,
+"head": "T-Squared P3 Ltd",
+"wrong": "GBCOHSC242073",
+"right": "SC288033",
+"org_mentions": [
+{
+"name": "T-Squared P3 Ltd",
+"raw_identifier": "GB-COH-SC242073",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "TSQUARED P1 LIMITED",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "TSQUARED P3 LIMITED",
+"status": "Active",
+"previous": [
+"TSQUARED S4 LIMITED"
+]
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "SC288033",
+"rationale": "SC242073 is TSQUARED P1 LIMITED, one of the TSquared group's numbered companies at Robroyston Oval, Glasgow. A CH search shows TSQUARED P3 LIMITED is its own company SC288033 at the same address, so this is a sister company.",
+"challenge": "The CH search confirms TSQUARED P3 LIMITED is SC288033 at the same Robroyston Oval office as TSQUARED P1 LIMITED SC242073, under TSQUARED GROUP SC242071. The number is a sister company's."
+}
+},
+{
+"key": "GB/national/OC376452>move:05507863",
+"shape": "move",
+"org": 16866885,
+"head": "Into University Partnerships",
+"wrong": "OC376452",
+"right": "05507863",
+"org_mentions": [
+{
+"name": "Into University Partnerships",
+"raw_identifier": "OC376452",
+"mentions": 1
+}
+],
+"target": null,
+"register_wrong": {
+"name": "IUP 2 LLP",
+"status": "Active",
+"previous": []
+},
+"register_right": {
+"name": "INTO UNIVERSITY PARTNERSHIPS LIMITED",
+"status": "Active",
+"previous": []
+},
+"verdict": {
+"verdict": "related-company",
+"confidence": "high",
+"correct_number": "05507863",
+"rationale": "IUP 2 LLP's designated member is INTO UNIVERSITY PARTNERSHIPS LIMITED (5507863), registered at the same Brighton address. The notice names that parent limited company, not the LLP.",
+"challenge": "OC376452 is IUP 2 LLP. Its designated members are INTO UNIVERSITY PARTNERSHIPS LIMITED and NEWINCCO 1183 LIMITED, all at One Gloucester Place, Brighton. The notice names the parent exactly, and the parent is its own active company, 05507863. 'IUP' is that company's initialism, but the '2 LLP' vehicle is a separate legal entity."
+}
+}
+]
