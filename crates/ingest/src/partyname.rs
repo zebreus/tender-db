@@ -124,9 +124,9 @@ const LOT_WORDS: [&str; 6] = ["lot", "lots", "lote", "lotes", "lotto", "lotti"];
 /// summary numbers its parts with (`Tranche 1 : X. Tranche 2 : infructueux`, `Partie`,
 /// `Partida`). Not `marché`: it is numbered by its contract reference and its duration
 /// (`marché 2012 02 1 0014`, `durée du marché: 5 ans`) inside one lot's void sentence.
-const LOT_DESIGNATORS: [&str; 16] = [
+const LOT_DESIGNATORS: [&str; 20] = [
     "lot", "lots", "lote", "lotes", "lotto", "lotti", "sublote", "sublotes", "tranche", "partie", "partida", "secteur",
-    "secteurs", "zone", "zones", "rang",
+    "secteurs", "zone", "zones", "rang", "perceel", "percelen", "partij", "partijen",
 ];
 
 /// Street words that, beside a five-digit postcode, make an address: a void statement
@@ -221,15 +221,16 @@ const NEGATION_FILLERS: [&str; 17] =
 /// séance`, `et Sa périphérie`) is no `SA`; [`COMPANY_FORMS_DOTTED`] takes any case when
 /// the token was written with dots (`s.r.l.`, `S.A.R.L`). Not the census's folded
 /// `COMMERCIAL_FORMS`, which fold the possessive onto `SA`.
-const COMPANY_TOKENS: [&str; 37] = [
+const COMPANY_TOKENS: [&str; 39] = [
     "SA", "SAS", "Sas", "sas", "SASU", "SAU", "SARL", "Sarl", "sarl", "EURL", "Eurl", "eurl", "SNC", "Sté", "STÉ",
     "Ets", "ETS", "GmbH", "GMBH", "SL", "SLU", "SpA", "SPA", "Srl", "SRL", "srl", "Ltd", "LTD", "Limited",
-    "LIMITED", "Lda", "LDA", "SPRL", "Société", "SOCIÉTÉ", "Societe", "SOCIETE",
+    "LIMITED", "Lda", "LDA", "SPRL", "Société", "SOCIÉTÉ", "Societe", "SOCIETE", "BV", "NV",
 ];
 
 /// Company forms written with dots, any case once the dots are gone (`s.r.l.` → `srl`). Not
 /// `Ste`/`STE` in either list: that is Sainte in a place name (`Ste Marie de Figaniella`).
-const COMPANY_FORMS_DOTTED: [&str; 11] = ["sa", "sas", "sasu", "sau", "sarl", "srl", "spa", "sl", "slu", "ltd", "ets"];
+const COMPANY_FORMS_DOTTED: [&str; 13] =
+    ["sa", "sas", "sasu", "sau", "sarl", "srl", "spa", "sl", "slu", "ltd", "ets", "bv", "nv"];
 
 /// The folded words after `SA` that make it the possessive (`LORS DE SA SÉANCE`).
 const POSSESSIVE_NEXT: [&str; 8] =
@@ -549,6 +550,7 @@ fn several_lots(words: &[&str]) -> bool {
             "secteur" | "secteurs" => "secteur",
             "zone" | "zones" => "zone",
             "tranche" | "partie" | "partida" | "rang" => w,
+            "perceel" | "percelen" | "partij" | "partijen" => "perceel",
             _ => "lot",
         }
     }
@@ -775,6 +777,9 @@ mod tests {
             "Mongin Jauffret : lots 1504 et 1505 Zi Delta industrie la Valentine lots infructueux : 1501, 1502 et 1503",
             "3a) SIAL 54520 3b) lot infructueux",
             "3a: SIAL 54520 - 3b: lot infructueux",
+            // The fourth dry run (job 2173): Dutch forms and lots.
+            "Humble Inpect B.V. (niet gegunde partij)",
+            "Perceel 1: Agens de werkende kracht B.V. en SDW Arbeidsintegratie BV. Voor perceel 2 hebben wij geen geldige aanbieding ontvangen. Perceel 2 is derhalve niet gegund",
             "Lot 2 infructueux. V.1) Award and contract value V.1.1) Name and address of successful supplier: Dupont",
         ] {
             assert_eq!(not_a_name(summary), Some(NotAName::Placeholder), "{summary}");
@@ -798,6 +803,9 @@ mod tests {
             "Niet toegewezen",
             "Not awarded - no compliant bids",
             "Aufgehoben (siehe VI.3)",
+            "Perceel 2 en 3 zijn niet gegund",
+            "De percelen 2, 3, 4, 5 en 6 zijn overeenkomstig het bepaalde in het bestek niet gegund",
+            "De opdracht wordt niet gegund aan Entropia op basis van deze vooraankondiging",
             "Lot 3) Ce lot 3 est déclaré infructueux",
             "Le lot 10: lot n° 10: CQP Vienne a été déclaré infructueux",
             "Le lot 48: Transport scolaire circuit: Ste Marie de Figaniella / Propriano a été déclaré Infructueux",
