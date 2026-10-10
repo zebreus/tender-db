@@ -118,8 +118,42 @@ const LOT_WORDS: [&str; 6] = ["lot", "lots", "lote", "lotes", "lotto", "lotti"];
 /// summary numbers its parts with (`Tranche 1 : X. Tranche 2 : infructueux`, `Partie`,
 /// `Partida`). Not `marché`: it is numbered by its contract reference and its duration
 /// (`marché 2012 02 1 0014`, `durée du marché: 5 ans`) inside one lot's void sentence.
-const LOT_DESIGNATORS: [&str; 11] =
-    ["lot", "lots", "lote", "lotes", "lotto", "lotti", "sublote", "sublotes", "tranche", "partie", "partida"];
+const LOT_DESIGNATORS: [&str; 16] = [
+    "lot", "lots", "lote", "lotes", "lotto", "lotti", "sublote", "sublotes", "tranche", "partie", "partida", "secteur",
+    "secteurs", "zone", "zones", "rang",
+];
+
+/// Street words that, beside a five-digit postcode, make an address: a void statement
+/// carries none, so the name holds a party (`BGE Guyane 16 rue Lt Becker 97300 Cayenne /
+/// La consultation a été déclarée sans suite pour la part non couverte des besoins`).
+const STREET_WORDS: [&str; 18] = [
+    "rue", "avenue", "av", "bd", "boulevard", "chemin", "quartier", "zi", "za", "zac", "route", "allee", "impasse",
+    "place", "bat", "rocade", "cedex", "bp",
+];
+
+/// Folded phrases that name an award beside a void lot: a partial void (`sans suite pour la
+/// part non couverte des besoins`, `tous les autres lots … infructueux`), a negotiated award
+/// after a void call (`marché négocié après appel d'offres infructueux : 5 Mepy Système`),
+/// and the award section's own heading spilled into the slot.
+const AWARD_PHRASES: [&str; 2] = [" non couvert", " autres lots"];
+
+/// The award section's heading spilled into the slot: what follows it is the supplier's name
+/// when anything follows (`Lot 3 sans suite. V.1) Award and contract value V.1.1) Name and
+/// address of successful supplier` alone is a void lot).
+const SUPPLIER_HEADINGS: [&str; 2] = [" successful supplier", " nom et adresse du titulaire"];
+
+/// A void call that the award followed (`marché négocié après appel d'offres infructueux : 5
+/// Mepy Système`): when every void stem sits inside one of these, the void is the earlier
+/// procedure's and the slot names the negotiated award ([`only_an_earlier_void`]).
+const EARLIER_VOID: [&str; 7] = [
+    " apres appel d offres infructu",
+    " apres un appel d offres infructu",
+    " apres l appel d offres infructu",
+    " apres ao infructu",
+    " suite a appel d offres infructu",
+    " suite a un appel d offres infructu",
+    " suite a l appel d offres infructu",
+];
 
 /// Number marks between a lot designator and its number (`lot nº 3`, `lot n° 3`, `lote n.º 3`
 /// — which folds to `n º 3` — and `lote núm. 3`). Up to two are skipped.
@@ -165,15 +199,15 @@ const AWARD_NOUNS: [&str; 26] = [
 
 /// The words that negate an award word before it (`pas d'attributaire`, `no adjudicado`,
 /// `ningún adjudicatario`, `nessun aggiudicatario`, `faute d'attributaire`).
-const NEGATIONS: [&str; 18] = [
+const NEGATIONS: [&str; 20] = [
     "non", "pas", "sans", "aucun", "aucune", "no", "not", "niet", "sin", "ningun", "ninguno", "ninguna", "nessun",
-    "nessuno", "nessuna", "alcun", "faute", "absence",
+    "nessuno", "nessuna", "alcun", "faute", "absence", "n", "ne",
 ];
 
 /// Words skipped between an award word and its negation (`pas d'attributaire`, `no hay
 /// adjudicatario`, `non è stato individuato alcun aggiudicatario` reads its `alcun`).
-const NEGATION_FILLERS: [&str; 15] =
-    ["d", "de", "du", "des", "l", "la", "le", "un", "une", "el", "del", "di", "hay", "ha", "sido"];
+const NEGATION_FILLERS: [&str; 17] =
+    ["d", "de", "du", "des", "l", "la", "le", "un", "une", "el", "del", "di", "hay", "ha", "sido", "a", "ete"];
 
 /// Company forms as published, compared on the raw token with its surrounding punctuation
 /// trimmed and its dots removed ([`company_token`]): a void phrase beside one names the
@@ -181,10 +215,10 @@ const NEGATION_FILLERS: [&str; 15] =
 /// séance`, `et Sa périphérie`) is no `SA`; [`COMPANY_FORMS_DOTTED`] takes any case when
 /// the token was written with dots (`s.r.l.`, `S.A.R.L`). Not the census's folded
 /// `COMMERCIAL_FORMS`, which fold the possessive onto `SA`.
-const COMPANY_TOKENS: [&str; 33] = [
+const COMPANY_TOKENS: [&str; 37] = [
     "SA", "SAS", "Sas", "sas", "SASU", "SAU", "SARL", "Sarl", "sarl", "EURL", "Eurl", "eurl", "SNC", "Sté", "STÉ",
     "Ets", "ETS", "GmbH", "GMBH", "SL", "SLU", "SpA", "SPA", "Srl", "SRL", "srl", "Ltd", "LTD", "Limited",
-    "LIMITED", "Lda", "LDA", "SPRL",
+    "LIMITED", "Lda", "LDA", "SPRL", "Société", "SOCIÉTÉ", "Societe", "SOCIETE",
 ];
 
 /// Company forms written with dots, any case once the dots are gone (`s.r.l.` → `srl`). Not
@@ -265,7 +299,139 @@ pub fn mentions_void(name: &str) -> bool {
 /// 511, which costs a junk name and never a real award.
 fn names_an_award(raw: &str, folded: &str) -> bool {
     let words: Vec<&str> = folded.split(' ').collect();
-    award_clause(folded) || awardee_noun(&words) || several_lots(&words) || mixed_segments(raw) || company_token(raw)
+    let padded = format!(" {folded}");
+    award_clause(folded)
+        || awardee_noun(&words)
+        || several_lots(&words)
+        || mixed_segments(raw)
+        || company_token(raw)
+        || AWARD_PHRASES.iter().any(|phrase| padded.contains(phrase))
+        || only_an_earlier_void(&padded)
+        || SUPPLIER_HEADINGS.iter().any(|heading| {
+            padded.find(heading).is_some_and(|at| padded[at + heading.len()..].chars().any(char::is_alphabetic))
+        })
+        || address(raw, &words)
+        || numbered_entries(raw)
+        || lettered_entries(raw)
+        || rebate(raw)
+        || named_before_spill(folded)
+}
+
+/// Every void stem of the padded fold sits inside an [`EARLIER_VOID`] phrase.
+fn only_an_earlier_void(padded: &str) -> bool {
+    let mut rest = padded.to_owned();
+    let mut found = false;
+    for phrase in EARLIER_VOID {
+        while let Some(at) = rest.find(phrase) {
+            found = true;
+            rest.replace_range(at..at + phrase.len(), " ");
+        }
+    }
+    found && !VOID_STEMS.iter().any(|stem| rest.contains(stem))
+}
+
+/// A five-digit postcode beside a [`STREET_WORDS`] word.
+fn address(raw: &str, words: &[&str]) -> bool {
+    let postcode = raw.split(|c: char| !c.is_alphanumeric()).any(|t| t.len() == 5 && t.bytes().all(|b| b.is_ascii_digit()));
+    postcode && words.iter().any(|w| STREET_WORDS.contains(w))
+}
+
+/// A list of numbered entries (`lot 43 INFRUCTUEUX - 44 reckitt benckiser 28692.07 - 45 …`,
+/// `lot268 sanofi av - 269sanofi AV - …`, `1/ Gidef, … Bondy - 2/ Auxet, …`): entries split at
+/// `;` and at a `-` or `/` with space on one side (not the `/` of `1/`), two or more of
+/// them led by distinct numbers, and one of those naming something after its number.
+fn numbered_entries(raw: &str) -> bool {
+    let chars: Vec<char> = raw.chars().collect();
+    let mut entries: Vec<String> = vec![String::new()];
+    for (i, &c) in chars.iter().enumerate() {
+        let before = i.checked_sub(1).map(|j| chars[j]);
+        let after = chars.get(i + 1).copied();
+        let spaced = before.is_some_and(char::is_whitespace) || after.is_some_and(char::is_whitespace);
+        let split = c == ';'
+            || (c == '-' && spaced)
+            || (c == '/' && spaced && !before.is_some_and(|b| b.is_ascii_digit()));
+        if split {
+            entries.push(String::new());
+        } else {
+            entries.last_mut().expect("one entry").push(c);
+        }
+    }
+    let mut numbers: Vec<&str> = Vec::new();
+    let mut names_something = false;
+    for entry in &entries {
+        let mut tokens = entry.split_whitespace().peekable();
+        if tokens.peek().is_some_and(|t| LOT_WORDS.contains(&t.to_lowercase().as_str())) {
+            tokens.next();
+        }
+        let Some(first) = tokens.next() else { continue };
+        // Glued: `lot268`, `Lots12` (the designator that leaves digits).
+        let lower = first.to_lowercase();
+        let first = LOT_WORDS
+            .iter()
+            .filter(|w| lower.starts_with(**w) && first.is_char_boundary(w.len()))
+            .map(|w| &first[w.len()..])
+            .find(|rest| rest.starts_with(|c: char| c.is_ascii_digit()))
+            .unwrap_or(first);
+        let digits = first.bytes().take_while(u8::is_ascii_digit).count();
+        if digits == 0 {
+            continue;
+        }
+        numbers.push(&first[..digits]);
+        let rest: String = std::iter::once(&first[digits..]).chain(tokens).collect::<Vec<_>>().join(" ");
+        if rest.chars().any(char::is_alphabetic) && !mentions_void(&rest) {
+            names_something = true;
+        }
+    }
+    numbers.sort_unstable();
+    numbers.dedup();
+    numbers.len() >= 2 && names_something
+}
+
+/// Two or more distinct entry markers `A)`, `b)`, `B1)` at an entry start (`Lot A) Rivadis.
+/// Lot B) Ontex. … Lot E) infructueux`, `A) Coca à Lille. B) Placé: sans suite. C) SRTT …`).
+fn lettered_entries(raw: &str) -> bool {
+    let chars: Vec<char> = raw.chars().collect();
+    let mut markers: Vec<String> = Vec::new();
+    for (i, &c) in chars.iter().enumerate() {
+        if c != ')' {
+            continue;
+        }
+        let start = (0..i).rev().take_while(|&j| chars[j].is_ascii_alphanumeric()).last().unwrap_or(i);
+        let marker: String = chars[start..i].iter().collect();
+        let boundary = start == 0 || matches!(chars[start - 1], ' ' | '.' | ';' | ':' | '\n');
+        let shaped = matches!(marker.len(), 1 | 2)
+            && marker.chars().next().is_some_and(|m| m.is_ascii_alphabetic())
+            && marker.chars().skip(1).all(|m| m.is_ascii_digit());
+        if boundary && shaped {
+            markers.push(marker.to_lowercase());
+        }
+    }
+    markers.sort_unstable();
+    markers.dedup();
+    markers.len() >= 2
+}
+
+/// A rebate or price variation in parentheses (`ACS DECO (+5 %) et non attribué
+/// (infructueux)`): an awarded bid's terms.
+fn rebate(raw: &str) -> bool {
+    raw.split('(').skip(1).any(|group| {
+        let inner = group.split(')').next().unwrap_or("").trim();
+        let inner = inner.trim_start_matches(['+', '-', '−']).trim_start();
+        inner.ends_with('%')
+            && inner.trim_end_matches('%').trim().chars().all(|c| c.is_ascii_digit() || c == ',' || c == '.')
+            && inner.chars().any(|c| c.is_ascii_digit())
+    })
+}
+
+/// The award notice's next section spilled into the slot after the winner's name (`Zundel Et
+/// Kohler. SECTION VI: OTHER INFORMATION … VI.7) Other information: Lots Infructueux`): the
+/// head before `section vi` names a party when it carries no void stem.
+fn named_before_spill(folded: &str) -> bool {
+    let padded = format!(" {folded} ");
+    padded.find(" section vi ").is_some_and(|at| {
+        let head = &padded[..at];
+        head.chars().any(char::is_alphabetic) && !VOID_STEMS.iter().any(|stem| head.contains(stem))
+    })
 }
 
 /// A company form among the raw tokens ([`COMPANY_TOKENS`], [`COMPANY_FORMS_DOTTED`]), each
@@ -308,6 +474,16 @@ fn awardee_noun(words: &[&str]) -> bool {
 /// suite` is six lots, not lot 6 six times).
 fn several_lots(words: &[&str]) -> bool {
     let number = |w: &str| w.bytes().any(|b| b.is_ascii_digit()) || ROMAN.contains(&w);
+    // Numbers count within one designator family: `le lot 66 … secteur 6 a été déclaré
+    // infructueux` is one lot of one sector, not a summary.
+    fn family(w: &str) -> &str {
+        match w {
+            "secteur" | "secteurs" => "secteur",
+            "zone" | "zones" => "zone",
+            "tranche" | "partie" | "partida" | "rang" => w,
+            _ => "lot",
+        }
+    }
     let mut numbers: Vec<String> = Vec::new();
     for (i, w) in words.iter().enumerate() {
         if LOT_DESIGNATORS.contains(w) {
@@ -316,7 +492,7 @@ fn several_lots(words: &[&str]) -> bool {
                 j += 1;
             }
             if let Some(n) = words.get(j).filter(|n| number(n)) {
-                let mut whole = (*n).to_owned();
+                let mut whole = format!("{}:{n}", family(w));
                 for more in words[j + 1..].iter().take_while(|w| !w.is_empty() && w.bytes().all(|b| b.is_ascii_digit())) {
                     whole.push('.');
                     whole.push_str(more);
@@ -328,12 +504,25 @@ fn several_lots(words: &[&str]) -> bool {
             .find_map(|d| w.strip_prefix(d).filter(|r| !r.is_empty() && r.bytes().all(|b| b.is_ascii_digit())))
         {
             // Glued: `lot1`, `lote12`.
-            numbers.push(rest.to_owned());
+            numbers.push(format!("lot:{rest}"));
         }
     }
     numbers.sort_unstable();
     numbers.dedup();
-    numbers.len() >= 2
+    let several = numbers.windows(2).any(|pair| pair[0].split(':').next() == pair[1].split(':').next());
+    // Sector or sub-lot codes without a designator each (`Spie secteurs 5a à 5d infructueux 5e
+    // 5f Marc Elec 5g Chenelec 5h`): three or more distinct `<digits><letter>` codes.
+    let mut codes: Vec<&str> = words
+        .iter()
+        .copied()
+        .filter(|w| {
+            let digits = w.bytes().take_while(u8::is_ascii_digit).count();
+            digits > 0 && w.len() == digits + 1 && w.as_bytes()[digits].is_ascii_lowercase()
+        })
+        .collect();
+    codes.sort_unstable();
+    codes.dedup();
+    several || codes.len() >= 3
 }
 
 /// Two or more `;`-separated entries with letters, one of which names something: no void
@@ -492,6 +681,24 @@ mod tests {
             "lot1096 INFRUCTUEUX- lot1097 fresenius k 22500- lot1098 fresenius m 396",
             "Lote 2 declarado desierto; lote 1 adjudicado a Construcciones Pérez",
             "Lotto 2 nessuna aggiudicazione, lotto 1 aggiudicato alla ditta Rossi",
+            // The cohort read of the second dry run (wf_bc5a1594-f9c), prod specimens.
+            "BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins",
+            "1/ Gidef, 37 rue du chemin latérale, 93140 Bondy - 2/ Auxet, Bât 1, 97139 Les Abymes. La consultation a été déclarée sans suite",
+            "lot 43 INFRUCTUEUX - 44 reckitt benckiser 28692.07 - 45 reckitt b 165.24 - 46 ipsen p 2497.138- 47 ASTELLAS 590.15",
+            "lot109 BAYER 5530.56 - 110 INFRUCTUEUX - 111cooper 6243.12 - 112 leo p 977",
+            "lot268 sanofi av - 269sanofi AV - 270renaudin - 282 sans suite",
+            "74 secteur Sud: ACS DECO (+5 %) et non attribué (infructueux) 74 secteur Nord: ACS DECO (+3 %) et non attribué (infructueux)",
+            "Zundel Et Kohler. SECTION VI: OTHER INFORMATION VI.7) Other information: Lots Infructueux (sans relance en marché négocié): 001",
+            "Getinge France. SECTION VI: OTHER INFORMATION VI.7) Other information: Tous les autres lots (sur 123 lots au total) sont infructueux.",
+            "Lot A) Rivadis. Lot B) Ontex. Lot C) Maury. Lot E) infructueux.",
+            "A) Coca à Lille. B) Placé: sans suite. C) SRTT à Grande-Synthe.",
+            "Société Sindarro Lot déclaré infructueux relancé en marché négocié avec publicité",
+            "Procédure de marché négocié après appel d'offres infructueux: 5 Mepy Système",
+            "Rang 1 Helmlinger. Rang 2 Jonnette. Rang 3 infructueux",
+            "SPIE secteurs 5A à 5D/ infructueux 5E 5F/ Marc Elec 5G/ Chenelec 5H",
+            "Secteur Allier: grange (0 %) et Fayolle (-4 %) Secteur Puy-de-Dôme: lot non attribué (infructueux)",
+            "A) non attribué. B1) et B2) Climelec",
+            "Lot 2 infructueux. V.1) Award and contract value V.1.1) Name and address of successful supplier: Dupont",
         ] {
             assert_eq!(not_a_name(summary), Some(NotAName::Placeholder), "{summary}");
         }
@@ -510,6 +717,14 @@ mod tests {
             "Le lot 10: lot n° 10: CQP Vienne a été déclaré infructueux",
             "Le lot 48: Transport scolaire circuit: Ste Marie de Figaniella / Propriano a été déclaré Infructueux",
             "Le lot 3: assurance des véhicules. Durée du marché: 5 ans à compter du 1.1.2011 a été déclaré infructueux",
+            "Lots 2 - 3 - 5 : infructueux",
+            "Lot 2 - Fourniture de mobilier - déclaré infructueux",
+            "Le lot 3 : zone nord a été déclaré infructueux",
+            "Lot 4 : déclaré sans suite (motif : a) absence d'offre)",
+            "Le lot 66 menuiserie bois et PVC secteur 6 a été déclaré infructueux",
+            "Lot 3 sans suite (chemises). V.1) Award and contract value V.1.1) Name and address of successful supplier",
+            "Lot non attribué relancé en marché négocié suite à appel d'offres infructueux",
+            "Aucune candidature n'a été retenue, le lot a été déclaré infructueux",
             "LOT DÉCLARÉ SANS SUITE LORS DE SA SÉANCE DU 3 MAI",
             "Infructueux ; relance en procédure adaptée",
             "Lot infructueux faute d'attributaire",
