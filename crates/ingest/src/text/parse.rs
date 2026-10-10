@@ -147,13 +147,14 @@ const ITEM_STOPS: [&str; 8] =
 /// contratante` alone is 243 names in one 20k-notice window, `See Section VI.2)
 /// Additional information`, `Voir autres informations`. Each would be ONE nameless-
 /// identity organization collecting every award that printed it.
-const NAME_REJECTS: [&str; 13] = [
+const NAME_REJECTS: [&str; 14] = [
     "WOULD PREJUDICE",
     "NOT APPLICABLE",
     "INFRUCTU",
     "SANS SUITE",
     "NON ATTRIBU",
     "PERFIL DEL CONTRATANTE",
+    "PERFIL DE CONTRATANTE",
     "SEE SECTION",
     "VOIR AUTRES INFORMATIONS",
     "VOIR RENSEIGNEMENTS",
@@ -4457,6 +4458,7 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         for junk in [
             "Véase perfil del contratante",
             "Ver perfil del contratante de la Junta de Andalucía",
+            "Véase perfil de contratante",
             "Lot déclaré infructueux",
             "Infructueux le 25.1.2010",
             "Marché déclaré sans suite",
