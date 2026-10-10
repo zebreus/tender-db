@@ -66,5 +66,5 @@ Read:
 - **eForms-DE 1.x carries all four** under `DE1-NoticeResult-…` spellings (`LotResult-FrameworkAgreementValues-
   MaximumValueAmount` / `-ReestimatedValueAmount`, `OverallMaximumFrameworkContractsAmount`,
   `OverallApproximateFrameworkContractsAmount`), plus `DE1-…RequestedTenderTotal-FrameworkMaximumAmount` (287 + 423
-  rows in the sample) — check that last one is the BT-271 alias already (`project.rs:1146-1156`).
+  rows in the sample), which is already the BT-271-Procedure alias (`project.rs:1151`); a bare `DE1-FrameworkMaximumAmount` (4 rows, de-1.1) is not aliased — read where it comes from in unit 2.
 - BT-710 / BT-711 stay unmapped (losing-bid figures; BT-711 exceeds the proxy on 311 rows).
