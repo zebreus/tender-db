@@ -1978,3 +1978,50 @@ async fn a_register_value_with_no_identity_is_held_by_the_org_its_mention_bound(
     let members: Vec<(i64, Option<&str>)> = s.members.iter().map(|m| (m.org_id, m.identifier.as_deref())).collect();
     assert_eq!(members, vec![(30, None), (31, Some(minted(PPON_P).as_str()))]);
 }
+
+/// Issue 469 review 2: a side is held by every org a mention bound where that side
+/// came FIRST, on any notice — a letter-only code's own notices bind it by name even
+/// when every pair witness lists the PPON first — and by the survivor a merge left
+/// the side on (`organization_merged_identifiers`).
+#[tokio::test]
+async fn a_side_is_held_through_its_own_notices_and_through_a_merge() {
+    let b = bed("registry-holders").await;
+    // Whittington: `GB-NHS-RKE` alone binds a provisional org by name; the only pair
+    // witness lists the PPON first and binds the PPON org.
+    b.provisional(70, "Whittington Health").await;
+    b.org(71, PPON_P, "Whittington Health").await;
+    b.notice(900, "fts:ocds-1.1").await;
+    b.party(900, "W1", Some(70), "GB", &["GB-NHS-RKE"]).await;
+    b.notice(901, "fts:ocds-1.1").await;
+    b.party(901, "W2", Some(71), "GB", &[PPON_P, "GB-NHS-RKE"]).await;
+    // Oxfam: the 448 arm merged its PPON org into its company-number org, which now
+    // holds the PPON only as a merged identifier; its charity org stands apart.
+    b.org(80, COH_A, "Oxfam GB").await;
+    b.org(81, "GB-CHC-202918", "Oxfam").await;
+    b.conn
+        .execute(
+            "INSERT INTO organization_merged_identifiers (identifier, identifier_kind, country, org_id, loser, rule)
+             VALUES (?, 'national', 'GB', 80, 999, 'e2-altid')",
+            (Value::Text(minted(PPON_Q)),),
+        )
+        .await
+        .unwrap();
+    b.notice(910, "fts:ocds-1.1").await;
+    b.party(910, "X1", Some(80), "GB", &[COH_A, "GB-CHC-202918", PPON_Q]).await;
+
+    let r = b.plan().await;
+    let nhs = r.registry_pairs.get("GB-NHS").expect("NHS counted");
+    assert_eq!(
+        (nhs.pairs, nhs.no_identity, nhs.both_distinct, nhs.no_target_registry),
+        (1, 1, 1, 0),
+        "{nhs:#?}"
+    );
+    let chc = r.registry_pairs.get("GB-CHC").expect("CHC counted");
+    assert_eq!((chc.pairs, chc.both_distinct, chc.no_target_ppon), (1, 1, 0), "{chc:#?}");
+    let held: Vec<(&str, Vec<i64>)> = r
+        .registry_sample
+        .iter()
+        .map(|s| (s.scheme.as_str(), s.members.iter().map(|m| m.org_id).collect()))
+        .collect();
+    assert_eq!(held, vec![("GB-CHC", vec![81, 80]), ("GB-NHS", vec![70, 71])]);
+}

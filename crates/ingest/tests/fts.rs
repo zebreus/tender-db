@@ -694,3 +694,84 @@ async fn a_supplier_the_altid_arm_merged_stays_one_org_through_the_next_fold_and
 
     let _ = std::fs::remove_dir_all(&archive);
 }
+
+/// Issue 469 unit 1, end to end through the real normaliser and the real fold: a
+/// letter-only NHS code (`GB-NHS-QWO`) mints no identity, so the notice that
+/// publishes it alone binds a provisional org by name, while the PPON-first notice
+/// pairing it with a PPON binds the PPON org. The altid dry plan measures the pair
+/// as one split — never as a register no org holds — and plans nothing from it.
+#[tokio::test]
+async fn a_letter_only_nhs_code_beside_a_ppon_is_measured_as_a_split() {
+    const NAME: &str = "Barts Health NHS Trust";
+    let nhs_only = party_release("ocds-t-469-1", "910101-2026", 1, &[("GB-NHS", "QWO")], NAME);
+    let ppon_first = party_release(
+        "ocds-t-469-2",
+        "910102-2026",
+        2,
+        &[("GB-PPON", "PHDQ-2359-NZMP"), ("GB-NHS", "QWO")],
+        NAME,
+    );
+    let members: [(&str, &[u8]); 2] = [("910101-2026.json", &nhs_only), ("910102-2026.json", &ppon_first)];
+    let (archive, db) = fixture_of("fts-469-registry", &members).await;
+    assert_eq!(run(&db, &archive).await.parsed, 2);
+    project::project(&db, false).await.expect("fold");
+    let bound_to = |publication: &'static str| {
+        let db = &db;
+        async move {
+            cell_i64(
+                db,
+                &format!(
+                    "SELECT m.organization_id FROM organization_mentions m JOIN notices n ON n.id = m.notice_id \
+                      WHERE n.publication_id = '{publication}'"
+                ),
+            )
+            .await
+        }
+    };
+    let (x, p) = (bound_to("910101-2026").await, bound_to("910102-2026").await);
+    assert_ne!(x, p, "the code binds by name, the PPON by identity: two orgs");
+    assert_eq!(
+        cell_i64(&db, &format!("SELECT COUNT(*) FROM organizations WHERE id = {x} AND identifier IS NULL")).await,
+        1,
+        "the code's org carries no identifier"
+    );
+
+    let args = store::AltIdMergeArgs {
+        pair_key: ingest::crosswalk::altid_pair_key,
+        key: ingest::crosswalk::canonical_key_flat,
+        mention_key: ingest::crosswalk::mention_key,
+        register_identity: ingest::project::normalise_identifier,
+        condemns: ingest::idgate::condemns,
+        consortium: ingest::crosswalk::consortium_name,
+        legal_family: ingest::crosswalk::gb_legal_family,
+        name_key: ingest::crosswalk::altid_name_key,
+        names_agree: ingest::crosswalk::altid_keys_agree,
+        trim: ingest::crosswalk::altid_trim,
+        norm: ingest::project::match_norm,
+        stoplist_cap: ingest::idgate::STOPLIST_CAP,
+        plan_listing_cap: store::ALTID_PLAN_LISTING_CAP,
+        dry_run: true,
+        max_pairs: None,
+        expect_pairs: None,
+        known_deferred: Vec::new(),
+        job_id: None,
+        stop: &|| false,
+    };
+    let dry = db.match_org_altid_pairs(args).await.expect("dry plan");
+    assert!(dry.pairs.is_empty(), "a register pair is measured, never planned: {dry:#?}");
+    let nhs = dry.registry_pairs.get("GB-NHS").expect("NHS measured");
+    assert_eq!(
+        (nhs.pairs, nhs.no_identity, nhs.both_distinct, nhs.no_target_registry),
+        (1, 1, 1, 0),
+        "{nhs:#?}"
+    );
+    assert_eq!(dry.registry_sample.len(), 1);
+    let sample = &dry.registry_sample[0];
+    assert_eq!(sample.key, "GB-NHS-QWO~PHDQ2359NZMP");
+    let held: Vec<(i64, Option<&str>)> =
+        sample.members.iter().map(|m| (m.org_id, m.identifier.as_deref())).collect();
+    assert_eq!(held, vec![(x, None), (p, Some("GBPPONPHDQ2359NZMP"))]);
+    assert_eq!(sample.members[0].name, NAME);
+
+    let _ = std::fs::remove_dir_all(&archive);
+}

@@ -5623,8 +5623,8 @@ pub struct RegistryPairCounts {
     /// Distinct (register value, keyed PPON) pairs — what the owner classes count.
     pub pairs: u64,
     /// …of which the register value mints no identity (`register_identity` is `None`,
-    /// e.g. a letter-only NHS code such as `QWO`): its side is the org the party's
-    /// register-first mention bound to (a provisional, name-bound org), if any.
+    /// e.g. a letter-only NHS code such as `QWO`): its side is the orgs its
+    /// register-first mentions bound to by name on any FTS notice (provisional orgs).
     pub no_identity: u64,
     /// One org already serves both sides: the same org on both, or the one standing
     /// side's mentions carry the other side (a merge folded it in).
@@ -5707,10 +5707,10 @@ pub struct AltIdMergeReport {
     pub pairs_seen: u64,
     /// Issue 469 unit 1 (measurement only, nothing is planned from it): every other GB
     /// register (NHS, UKPRN, CHC, MPR, SC, NIC…) paired with a keyed PPON on the same
-    /// party, by scheme. The register side is held by the org carrying the identity the
-    /// resolver mints (`register_identity`, matched exactly against `organizations`) and
-    /// by the org a register-first mention bound to — the only holder of a value that
-    /// mints no identity.
+    /// party, by scheme. A side is held by the orgs carrying its identity (the register's
+    /// from `register_identity`, matched exactly), as their own or as a merged identifier,
+    /// and by every org a mention bound to where that side came first — the only holders
+    /// of a register value that mints no identity.
     pub registry_pairs: std::collections::BTreeMap<String, RegistryPairCounts>,
     /// Up to [`REGISTRY_SAMPLE_PER_SCHEME`] `both_distinct` registry pairs per scheme,
     /// with both orgs' names, for review.
@@ -21307,12 +21307,14 @@ impl Db {
             /// The resolver's identity for the register value, if it mints one.
             identity: Option<Identifier>,
             witnesses: BTreeSet<i64>,
-            /// Orgs the party's mention bound to where the register row came first
-            /// (the register side) or the PPON row came first (the PPON side).
-            register_bound: BTreeSet<i64>,
-            ppon_bound: BTreeSet<i64>,
         }
         let mut reg_pairs: BTreeMap<(String, String, String), RegPair> = BTreeMap::new();
+        // (scheme, value) → the orgs every GB party's mention bound to where that
+        // value came first — a register's uppercase alphanumerics under its scheme, a
+        // keyed PPON under `GB-PPON` — whether or not the party paired it with
+        // anything: a register value with no identity is bound by name on its own
+        // notices, and its pairs may be witnessed PPON-first only.
+        let mut first_bound: HashMap<(String, String), BTreeSet<i64>> = HashMap::new();
         let mut reg_literal: HashSet<(String, String, String)> = HashSet::new();
         let mut reg_two_values: HashSet<(String, String)> = HashSet::new();
         let mut reg_beside_coh: HashSet<(String, String)> = HashSet::new();
@@ -21434,51 +21436,54 @@ impl Db {
                 // Issue 469 unit 1: pair every other register with each PPON on the party.
                 // Measured only — none of it enters the graph below. The fold's mention
                 // of the party binds the party's FIRST identifier, so it names the
-                // register side's org on a register-first party and the PPON side's on a
+                // register's org on a register-first party and the PPON's on a
                 // PPON-first one — the org a value with no identity bound to by name.
+                let keyed_ppons: Vec<(&String, i64)> = ppon
+                    .iter()
+                    .filter_map(|(o, _, s)| match s {
+                        Side::E1(k) => Some((k, *o)),
+                        _ => None,
+                    })
+                    .collect();
+                if let Some(&org) = bound_of.get(&section) {
+                    // The fold binds the party's ordinal-0 identifier (the witness
+                    // flags' test below).
+                    for (scheme, value, _, reg_ordinal) in &regs {
+                        if *reg_ordinal == 0 {
+                            first_bound.entry((scheme.clone(), value.clone())).or_default().insert(org);
+                        }
+                    }
+                    for (pk, ppon_ordinal) in &keyed_ppons {
+                        if *ppon_ordinal == 0 {
+                            first_bound.entry(("GB-PPON".to_owned(), (*pk).clone())).or_default().insert(org);
+                        }
+                    }
+                }
                 if !regs.is_empty() {
-                    let keyed_ppons: Vec<(&String, i64)> = ppon
-                        .iter()
-                        .filter_map(|(o, _, s)| match s {
-                            Side::E1(k) => Some((k, *o)),
-                            _ => None,
-                        })
-                        .collect();
-                    let bound = bound_of.get(&section).copied();
                     let mut values_of: BTreeMap<&str, BTreeSet<&str>> = BTreeMap::new();
                     for (scheme, value, _, _) in &regs {
                         values_of.entry(scheme.as_str()).or_default().insert(value.as_str());
                     }
-                    for (scheme, value, literal, reg_ordinal) in &regs {
+                    for (scheme, value, literal, _) in &regs {
                         for (_, pl, _) in &ppon {
                             reg_literal.insert((scheme.clone(), literal.clone(), pl.clone()));
                         }
-                        for (pk, ppon_ordinal) in &keyed_ppons {
+                        for (pk, _) in &keyed_ppons {
                             if values_of.get(scheme.as_str()).is_some_and(|v| v.len() > 1) {
                                 reg_two_values.insert((scheme.clone(), (*pk).clone()));
                             }
                             if !coh.is_empty() {
                                 reg_beside_coh.insert((scheme.clone(), (*pk).clone()));
                             }
-                            let pair = reg_pairs
+                            reg_pairs
                                 .entry((scheme.clone(), value.clone(), (*pk).clone()))
                                 .or_insert_with(|| RegPair {
                                     registry_literal: literal.clone(),
                                     identity: (args.register_identity)(literal, country.as_deref()),
                                     witnesses: BTreeSet::new(),
-                                    register_bound: BTreeSet::new(),
-                                    ppon_bound: BTreeSet::new(),
-                                });
-                            pair.witnesses.insert(notice);
-                            // The fold binds the party's ordinal-0 identifier (the
-                            // witness flags' test above).
-                            if let Some(org) = bound {
-                                if *reg_ordinal == 0 {
-                                    pair.register_bound.insert(org);
-                                } else if *ppon_ordinal == 0 {
-                                    pair.ppon_bound.insert(org);
-                                }
-                            }
+                                })
+                                .witnesses
+                                .insert(notice);
                         }
                     }
                 }
@@ -21633,6 +21638,50 @@ impl Db {
             }
         }
 
+        // Issue 469: a merge keeps the loser's identifier on the survivor
+        // (`organization_merged_identifiers`, repointed along a chain), so the survivor
+        // holds that side too — a PPON the 448 arm folded into a company-number org, a
+        // register org folded into another.
+        {
+            let mut after = 0i64;
+            loop {
+                if (args.stop)() {
+                    report.stopped = true;
+                    return Ok(report);
+                }
+                let mut rows = conn
+                    .query(
+                        "SELECT rowid, org_id, country, identifier_kind, identifier \
+                           FROM organization_merged_identifiers WHERE rowid > ? ORDER BY rowid LIMIT 20000",
+                        (Value::Integer(after),),
+                    )
+                    .await?;
+                let mut any = false;
+                while let Some(row) = rows.next().await? {
+                    any = true;
+                    after = int(&row, 0);
+                    let org = int(&row, 1);
+                    let Some(country) = opt_text_of(&row, 2) else { continue };
+                    if register_jurisdiction(&country) != "GB" || withheld.contains(&org) {
+                        continue;
+                    }
+                    let kind = opt_text_of(&row, 3).unwrap_or_else(|| "national".into());
+                    let literal = text(&row, 4);
+                    if reg_identities.contains(&(kind.as_str(), literal.as_str())) {
+                        reg_owners.entry((kind.clone(), literal.clone())).or_default().push(org);
+                    }
+                    if let Some(("GB:ppon", key, true, _)) = (args.key)(Some(&country), &kind, &literal) {
+                        if reg_ppon_keys.contains(key.as_str()) {
+                            reg_ppon_owners.entry(key).or_default().push(org);
+                        }
+                    }
+                }
+                if !any {
+                    break;
+                }
+            }
+        }
+
         // Issue 469 unit 1: class every registry pair by who holds each side, and
         // sample the split ones per scheme with both orgs' names.
         for (scheme, _, _) in &reg_literal {
@@ -21644,9 +21693,10 @@ impl Db {
         for (scheme, _) in &reg_beside_coh {
             report.registry_pairs.entry(scheme.clone()).or_default().ppon_beside_coh += 1;
         }
-        // A side's holders are the orgs carrying its identity plus the orgs the party's
-        // mentions bound to where that side came first: a value with no identity (a
-        // letter-only NHS code) is held only by the org its mention bound by name.
+        // A side's holders are the orgs carrying its identity (as their own or as a
+        // merged identifier) plus the orgs any party's mention bound to where that side
+        // came first: a value with no identity (a letter-only NHS code) is held only by
+        // the orgs its mentions bound by name.
         // One standing side is already one org when its mentions carry the other side
         // (the state a merge leaves), read once per org: the uppercase alphanumerics of
         // every raw identifier (the register side) and their keys (the PPON side).
@@ -21693,7 +21743,8 @@ impl Db {
                 report.stopped = true;
                 return Ok(report);
             }
-            let mut r = pair.register_bound.clone();
+            let none = BTreeSet::new();
+            let mut r = first_bound.get(&(scheme.clone(), value.clone())).unwrap_or(&none).clone();
             match &pair.identity {
                 Some(id) => {
                     if let Some(v) = reg_owners.get(&(id.kind.clone(), id.value.clone())) {
@@ -21702,7 +21753,7 @@ impl Db {
                 }
                 None => report.registry_pairs.entry(scheme.clone()).or_default().no_identity += 1,
             }
-            let mut p = pair.ppon_bound.clone();
+            let mut p = first_bound.get(&("GB-PPON".to_owned(), pk.clone())).unwrap_or(&none).clone();
             if let Some(v) = reg_ppon_owners.get(pk) {
                 p.extend(v.iter().copied());
             }
