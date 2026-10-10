@@ -69,3 +69,21 @@ Read:
   `OverallApproximateFrameworkContractsAmount`), plus `DE1-…RequestedTenderTotal-FrameworkMaximumAmount` (287 + 423
   rows in the sample), which is already the BT-271-Procedure alias (`project.rs:1151`); a bare `DE1-FrameworkMaximumAmount` (4 rows, de-1.1) is the root-level notice framework maximum (issue 195, `eforms/index.rs:967-986`): the EU minors gap-fill it as `UBL-FrameworkMaximumAmount` → `framework_maximum`, but eForms-DE 1.x keeps its DE1 id and the alias table (`project.rs:1146-1156`) has no entry, so it is DROPPED there — alias it to `BT-271-Procedure` in unit 2's build (~100 notices by the sample's rate).
 - BT-710 / BT-711 stay unmapped (losing-bid figures; BT-711 exceeds the proxy on 311 rows).
+
+## Unit 3 — the cohort read (2026-10-10, before the deploy)
+
+`../506-result-amounts/cohort.py` → `cohort-2026-10-10.json`. Cohort: 3,844 Tenders (3,757 stored heads and 852
+lot-value Tenders at €1 bn or more, plus the 492 / 505 adjudicated ids). 151 of them carry a result-level framework
+value (1,931 result rows; none dropped — every one names a Lot of its Tender). Listed: **3 Tenders**, no rise, no
+switch:
+
+| Tender | figure | new partner | class | verdict |
+|---|---|---|---|---|
+| 395737 | BGN 2,998,679,400.00 `framework_maximum` (LOT, seq 1–4) | BT-709 BGN 29,986,794.00 (×100) | new-x100 | slip (505 adjudication) |
+| 627219 | €3,322,770,833.00 `framework_maximum` (LOT) | BT-660 €33,227,708.33 (×100) | new-x100 | slip (505 adjudication) |
+| 3509 | €1,600,000,000.00 `estimated_value` (procedure and LOT-0001) | BT-709 €1,600,000.00 (×1000) | new-k3, not corroborated | **slip** — two independent readers, both high: the 2023 contract notice (TED 452776-2023, EUAA/2023/121) and the Publications Office award record state €1.6 m; the EUAA's whole annual budget is ~€180 m; the notice's own BT-709 and BT-118 say €1.6 m |
+
+3509 was not in any earlier cohort (its €1.6 bn had no partner the fold could see). Refused is not corrected: once
+drained its served value falls from €1.6 bn to none (its only other figure is the partner-only BT-709), the 471/492
+precedent. One bare `DE1-FrameworkMaximumAmount` in the cohort (969383, €2,352,941,176) equals its stored head
+already: no rise. Within the decision's stop rule (no rise, no genuine refusal, far under ~20 Tenders).
