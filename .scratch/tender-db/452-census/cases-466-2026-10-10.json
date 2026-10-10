@@ -1,0 +1,10123 @@
+[
+{
+"kind": "live-mismatch",
+"org": 31608965,
+"number": "00163099",
+"head": "Vista",
+"register": {
+"name": "ROYAL LEICESTERSHIRE, RUTLAND AND WYCLIFFE SOCIETY FOR THE BLIND (THE)",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31608965:00163099",
+"mention_names": [
+{
+"name": "Vista",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31621686,
+"number": "00203852",
+"head": "Brewers Decorator Centres",
+"register": {
+"name": "C.BREWER & SONS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31621686:00203852",
+"mention_names": [
+{
+"name": "Brewers Decorator Centres",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31648850,
+"number": "00273216",
+"head": "Norty Ltd t/a T-Pro",
+"register": {
+"name": "WILSHER BROTHERS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31648850:00273216",
+"mention_names": [
+{
+"name": "Norty Ltd t/a T-Pro",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31593002,
+"number": "00653665",
+"head": "Mackworth Vehicle Conversions",
+"register": {
+"name": "MOTUS GROUP (UK) LIMITED",
+"status": "Active",
+"previous": [
+"IMPERIAL COMMERCIALS LTD"
+],
+"source": "live snapshot"
+},
+"case": "31593002:00653665",
+"mention_names": [
+{
+"name": "Mackworth Vehicle Conversions",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31599654,
+"number": "00653665",
+"head": "PENTAGON Motor Group Darley Court",
+"register": {
+"name": "MOTUS GROUP (UK) LIMITED",
+"status": "Active",
+"previous": [
+"IMPERIAL COMMERCIALS LTD"
+],
+"source": "live snapshot"
+},
+"case": "31599654:00653665",
+"mention_names": [
+{
+"name": "Motus Group UK Ltd",
+"mentions": 1
+},
+{
+"name": "PENTAGON Motor Group Darley Court",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31611085,
+"number": "00750939",
+"head": "Volkswagen Van Centre",
+"register": {
+"name": "J.C.T. 600 (LEEDS) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31611085:00750939",
+"mention_names": [
+{
+"name": "Volkswagen Van Centre",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31598440,
+"number": "01072412",
+"head": "Marshall Bio Science",
+"register": {
+"name": "B & K UNIVERSAL LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31598440:01072412",
+"mention_names": [
+{
+"name": "Marshall Bio Science",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31648064,
+"number": "01080038",
+"head": "Northamptonshire ACRE",
+"register": {
+"name": "KINGLADE LIMITED",
+"status": "Liquidation",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31648064:01080038",
+"mention_names": [
+{
+"name": "Northamptonshire ACRE",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31606413,
+"number": "01091434",
+"head": "Nursing And Midwifery Council",
+"register": {
+"name": "POWER CLEANING SERVICES LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31606413:01091434",
+"mention_names": [
+{
+"name": "Nursing And Midwifery Council",
+"mentions": 4
+},
+{
+"name": "NURSING AND MIDWIFERY COUNCIL",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31648224,
+"number": "01438339",
+"head": "John Pye & Sons Limited",
+"register": {
+"name": "MERTHYR TYDFIL CAR AUCTION LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31648224:01438339",
+"mention_names": [
+{
+"name": "John Pye & Sons Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597795,
+"number": "01566758",
+"head": "Mott Macdonald Limited",
+"register": {
+"name": "CAMBRIDGE EDUCATION LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31597795:01566758",
+"mention_names": [
+{
+"name": "Mott Macdonald Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31598442,
+"number": "01569004",
+"head": "MCC Ltd",
+"register": {
+"name": "MICRO COMPUTER CONSULTANTS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31598442:01569004",
+"mention_names": [
+{
+"name": "MCC Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31631395,
+"number": "01695822",
+"head": "MP Award (Division of MPQC)",
+"register": {
+"name": "MINERAL PRODUCTS QUALIFICATIONS COUNCIL",
+"status": "Active",
+"previous": [
+"E2 HOLDINGS LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31631395:01695822",
+"mention_names": [
+{
+"name": "MP Award (Division of MPQC)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31615296,
+"number": "01864090",
+"head": "AP Pavers",
+"register": {
+"name": "ARRIVING LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31615296:01864090",
+"mention_names": [
+{
+"name": "AP Pavers",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31623067,
+"number": "01871452",
+"head": "Quicksilver",
+"register": {
+"name": "D. COLLARD LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31623067:01871452",
+"mention_names": [
+{
+"name": "Quicksilver",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31618220,
+"number": "02052677",
+"head": "Transport for London",
+"register": {
+"name": "DOCKLANDS LIGHT RAILWAY LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31618220:02052677",
+"mention_names": [
+{
+"name": "Transport for London",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31626311,
+"number": "02052677",
+"head": "Transport for London",
+"register": {
+"name": "DOCKLANDS LIGHT RAILWAY LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31626311:02052677",
+"mention_names": [
+{
+"name": "Transport for London",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31649272,
+"number": "02070596",
+"head": "Specsavers Opticians (Frome)",
+"register": {
+"name": "VISIONPLUS (SALISBURY) LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31649272:02070596",
+"mention_names": [
+{
+"name": "Specsavers Opticians (Frome)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31598373,
+"number": "02120194",
+"head": "Elderholme Nursing Home",
+"register": {
+"name": "WIRRELDERLY",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31598373:02120194",
+"mention_names": [
+{
+"name": "Elderholme Nursing Home",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31645324,
+"number": "02202240",
+"head": "Royal National Lifeboat Institution",
+"register": {
+"name": "R.N.L.I. (SALES) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31645324:02202240",
+"mention_names": [
+{
+"name": "Royal National Lifeboat Institution",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31624393,
+"number": "02234990",
+"head": "B&M Investments",
+"register": {
+"name": "COLLEYCARE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31624393:02234990",
+"mention_names": [
+{
+"name": "B&M Investments",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31612272,
+"number": "02338675",
+"head": "Transport for London",
+"register": {
+"name": "TFL TRUSTEE COMPANY LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31612272:02338675",
+"mention_names": [
+{
+"name": "TFL TRUSTEE COMPANY LIMITED",
+"mentions": 1
+},
+{
+"name": "Transport for London",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31644738,
+"number": "02352329",
+"head": "Ellior UK",
+"register": {
+"name": "ELIOR UK HOLDINGS LIMITED",
+"status": "Active",
+"previous": [
+"ELIOR UK LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31644738:02352329",
+"mention_names": [
+{
+"name": "Ellior UK",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31625312,
+"number": "02353068",
+"head": "TP Manufacturing Ltd (T/A Pendock)",
+"register": {
+"name": "TELFORD COPPER & STAINLESS CYLINDERS LIMITED",
+"status": "Active",
+"previous": [
+"TELFORD COPPER CYLINDERS LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31625312:02353068",
+"mention_names": [
+{
+"name": "TP Manufacturing Ltd (T/A Pendock)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31609544,
+"number": "02546698",
+"head": "Stagecoach North East",
+"register": {
+"name": "CLEVELAND TRANSIT LTD.",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31609544:02546698",
+"mention_names": [
+{
+"name": "Stagecoach North East",
+"mentions": 3
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31616990,
+"number": "02571166",
+"head": "Barons Furniture",
+"register": {
+"name": "BARON'S (FYLDE COAST SUPPLIES) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31616990:02571166",
+"mention_names": [
+{
+"name": "Barons Furniture",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31617024,
+"number": "02590521",
+"head": "Strata Geotechnics Ltd",
+"register": {
+"name": "VAN ELLE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31617024:02590521",
+"mention_names": [
+{
+"name": "Strata Geotechnics Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31610164,
+"number": "02780063",
+"head": "Travis Perkins Trading Company Limited trading as Benchmarx Kitchens and Joinery",
+"register": {
+"name": "BENCHMARX KITCHENS AND JOINERY LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31610164:02780063",
+"mention_names": [
+{
+"name": "Travis Perkins Trading Company Limited trading as Benchmarx Kitchens and Joinery",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31606264,
+"number": "02814202",
+"head": "Newcastle City Council",
+"register": {
+"name": "MISSING PEOPLE LIMITED",
+"status": "Active",
+"previous": [
+"NATIONAL MISSING PERSONS HELPLINE"
+],
+"source": "live snapshot"
+},
+"case": "31606264:02814202",
+"mention_names": [
+{
+"name": "Newcastle City Council",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31628104,
+"number": "02978546",
+"head": "The Bitenshaw Group",
+"register": {
+"name": "BIRTENSHAW",
+"status": "Active",
+"previous": [
+"BIRTENSHAW HALL SCHOOL TRUSTEE COMPANY LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31628104:02978546",
+"mention_names": [
+{
+"name": "The Bitenshaw Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31626403,
+"number": "03034745",
+"head": "Dole Ltd T/A Mark Murphy",
+"register": {
+"name": "REDBRIDGE PRODUCE & FLOWERS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31626403:03034745",
+"mention_names": [
+{
+"name": "Dole Ltd T/A Mark Murphy",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31608572,
+"number": "03039768",
+"head": "AM Healthcare",
+"register": {
+"name": "ABILITY MATTERS GROUP LIMITED",
+"status": "Active",
+"previous": [
+"ABILITY TECHNOLOGY GROUP LIMITED",
+"ORTHO GROUP LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31608572:03039768",
+"mention_names": [
+{
+"name": "AM Healthcare",
+"mentions": 1
+},
+{
+"name": "Ability Matters Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31607416,
+"number": "03051047",
+"head": "BRIGHTEDGE LIMITED T/A Summit Medical and Scientific",
+"register": {
+"name": "BRIGHTHEDGE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31607416:03051047",
+"mention_names": [
+{
+"name": "BRIGHTEDGE LIMITED T/A Summit Medical and Scientific",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31647904,
+"number": "03069042",
+"head": "ATOC LIMITED",
+"register": {
+"name": "RAIL SETTLEMENT PLAN LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31647904:03069042",
+"mention_names": [
+{
+"name": "ATOC LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31616483,
+"number": "03231298",
+"head": "Prime Facility Services",
+"register": {
+"name": "CONTRACT SERVICES (WOLVERHAMPTON & WREKIN) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31616483:03231298",
+"mention_names": [
+{
+"name": "Prime Facility Services",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31604734,
+"number": "03247172",
+"head": "Grovewood Residential Home (Soundspace Limited)",
+"register": {
+"name": "SOUNDPACE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31604734:03247172",
+"mention_names": [
+{
+"name": "Grovewood Residential Home (Soundspace Limited)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31611128,
+"number": "03448801",
+"head": "Claytons Automotive",
+"register": {
+"name": "RISING PROFILE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31611128:03448801",
+"mention_names": [
+{
+"name": "Claytons Automotive",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31645192,
+"number": "03478477",
+"head": "THE UNIVERSITY OF BIRMINGHAM",
+"register": {
+"name": "CARL STUART (U.K.) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31645192:03478477",
+"mention_names": [
+{
+"name": "THE UNIVERSITY OF BIRMINGHAM",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31620925,
+"number": "03639715",
+"head": "Jade Country Care Homes",
+"register": {
+"name": "BENSLOW MANAGEMENT COMPANY LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31620925:03639715",
+"mention_names": [
+{
+"name": "Jade Country Care Homes",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31600480,
+"number": "03684767",
+"head": "Project Plan Services",
+"register": {
+"name": "ALLEN REID LIMITED",
+"status": "In Administration",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31600480:03684767",
+"mention_names": [
+{
+"name": "Project Plan Services",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597854,
+"number": "03755343",
+"head": "St Georges Group Limited",
+"register": {
+"name": "CIVICARE (BEDS HERTS & BUCKS) LTD",
+"status": "Active",
+"previous": [
+"ABACUS CARE (BEDS HERTS & BUCKS) LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31597854:03755343",
+"mention_names": [
+{
+"name": "St Georges Group Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31616451,
+"number": "03776582",
+"head": "Fuelmate Ltd",
+"register": {
+"name": "THE COLEBROOKE CONSULTANCY LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31616451:03776582",
+"mention_names": [
+{
+"name": "Fuelmate Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31620307,
+"number": "04057880",
+"head": "Eletrosteel Casting UK Limited",
+"register": {
+"name": "ELECTROSTEEL CASTINGS (UK) LIMITED",
+"status": "Active",
+"previous": [
+"CHESTERFIELD DUCTILE GROUP LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31620307:04057880",
+"mention_names": [
+{
+"name": "Eletrosteel Casting UK Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597887,
+"number": "04077962",
+"head": "St Mary's Care Centre (St Georges Nursing Home -Oldham)",
+"register": {
+"name": "MARANTOMARK LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31597887:04077962",
+"mention_names": [
+{
+"name": "Marantomark Limited",
+"mentions": 1
+},
+{
+"name": "St Mary's Care Centre (St Georges Nursing Home -Oldham)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31602846,
+"number": "04100611",
+"head": "DDM Health ltd",
+"register": {
+"name": "NORWICH CITY COMMUNITY SPORTS FOUNDATION",
+"status": "Active",
+"previous": [
+"NORWICH CITY F.C./NORFOLK COUNTY F.A. FOOTBALL IN THE COMMUNITY"
+],
+"source": "live snapshot"
+},
+"case": "31602846:04100611",
+"mention_names": [
+{
+"name": "DDM Health ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31607818,
+"number": "04140999",
+"head": "Prontaprint",
+"register": {
+"name": "TRIPLE CROWN PRINT LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31607818:04140999",
+"mention_names": [
+{
+"name": "Prontaprint",
+"mentions": 1
+},
+{
+"name": "Triple Crown Print Ltd T/A Prontaprint",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31595388,
+"number": "04194333",
+"head": "Hudspeth Flooring",
+"register": {
+"name": "RAVANE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31595388:04194333",
+"mention_names": [
+{
+"name": "Hudspeth Flooring",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31605853,
+"number": "04274770",
+"head": "ITS Group",
+"register": {
+"name": "INDEPENDENT TRAINING SERVICES LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31605853:04274770",
+"mention_names": [
+{
+"name": "ITS Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31610419,
+"number": "04383479",
+"head": "Eden Supported Living Ltd",
+"register": {
+"name": "HOUSING AND SUPPORT SOLUTIONS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31610419:04383479",
+"mention_names": [
+{
+"name": "Eden Supported Living Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31614363,
+"number": "04446415",
+"head": "Zoe's Place Baby Hospice",
+"register": {
+"name": "GOLFTEXT LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31614363:04446415",
+"mention_names": [
+{
+"name": "Zoe's Place Baby Hospice",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31630832,
+"number": "04599477",
+"head": "New Street Consulting Group t/a Interim Partners",
+"register": {
+"name": "INTERIM PARTNERS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31630832:04599477",
+"mention_names": [
+{
+"name": "New Street Consulting Group t/a Interim Partners",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31618495,
+"number": "04714290",
+"head": "Hendersons Opticians",
+"register": {
+"name": "HENDERSON OPTOMETRISTS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31618495:04714290",
+"mention_names": [
+{
+"name": "Hendersons Opticians",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31594708,
+"number": "04748486",
+"head": "ST MARYS HEALTH CENTRE",
+"register": {
+"name": "ST MARY'S MEDICAL SERVICES LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31594708:04748486",
+"mention_names": [
+{
+"name": "ST MARYS HEALTH CENTRE",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31605092,
+"number": "04788896",
+"head": "Environmontel Ltd",
+"register": {
+"name": "ENVIROMONTEL LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31605092:04788896",
+"mention_names": [
+{
+"name": "Environmontel Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31649281,
+"number": "04865468",
+"head": "Stephen Beswetherick Opticians",
+"register": {
+"name": "AFE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31649281:04865468",
+"mention_names": [
+{
+"name": "Stephen Beswetherick Opticians",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31625053,
+"number": "05129606",
+"head": "RSK Environment Limited",
+"register": {
+"name": "STREETWISE UK MANAGEMENT LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31625053:05129606",
+"mention_names": [
+{
+"name": "RSK Environment Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31649282,
+"number": "05147625",
+"head": "NK Opticians",
+"register": {
+"name": "JENDA UK LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31649282:05147625",
+"mention_names": [
+{
+"name": "NK Opticians",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31595242,
+"number": "05175644",
+"head": "PFL Electrical Ltd",
+"register": {
+"name": "PILON LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31595242:05175644",
+"mention_names": [
+{
+"name": "Pilon Ltd",
+"mentions": 6
+},
+{
+"name": "PFL Electrical Ltd",
+"mentions": 1
+},
+{
+"name": "PiLON Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31612238,
+"number": "05387218",
+"head": "FIRST TRENITALIA WEST COAST RAIL LIMITED",
+"register": {
+"name": "THE7STARS UK LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31612238:05387218",
+"mention_names": [
+{
+"name": "FIRST TRENITALIA WEST COAST RAIL LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597892,
+"number": "05640299",
+"head": "SSL Farnham Common OPCO LP",
+"register": {
+"name": "SIGNATURE SENIOR LIFESTYLE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31597892:05640299",
+"mention_names": [
+{
+"name": "SSL Farnham Common OPCO LP",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31615889,
+"number": "05946095",
+"head": "Henry Ahovi",
+"register": {
+"name": "HDA ORAL SURGERY SERVICES LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31615889:05946095",
+"mention_names": [
+{
+"name": "Henry Ahovi",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31616246,
+"number": "06198729",
+"head": "LinCA Workforce Development Ltd",
+"register": {
+"name": "LINCOLNSHIRE CARE ASSOCIATION LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31616246:06198729",
+"mention_names": [
+{
+"name": "LinCA Workforce Development Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31595226,
+"number": "06294905",
+"head": "AllCare Pharmacy",
+"register": {
+"name": "CLINPHARM HEALTHCARE LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31595226:06294905",
+"mention_names": [
+{
+"name": "AllCare Pharmacy",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31625222,
+"number": "06306397",
+"head": "Mediaworks UK Limited",
+"register": {
+"name": "SWOBBIT EUROPE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31625222:06306397",
+"mention_names": [
+{
+"name": "Mediaworks UK Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31647772,
+"number": "06392125",
+"head": "Hiareth Services Ltd T/A COPE Community",
+"register": {
+"name": "HIRAETH SERVICES LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31647772:06392125",
+"mention_names": [
+{
+"name": "Hiareth Services Ltd T/A COPE Community",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31617807,
+"number": "06418932",
+"head": "Brancaster Care Home Limited",
+"register": {
+"name": "CINNABAR SUPPORT AND LIVING LTD",
+"status": "Active",
+"previous": [
+"LINFORD GRANGE LTD"
+],
+"source": "live snapshot"
+},
+"case": "31617807:06418932",
+"mention_names": [
+{
+"name": "Brancaster Care Home Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31649235,
+"number": "06423134",
+"head": "The Emily Jordan Foundation -CIC Go Green",
+"register": {
+"name": "EJF ENTERPRISES CIC",
+"status": "Active",
+"previous": [
+"SPOKES CIC",
+"SPOKES LTD"
+],
+"source": "live snapshot"
+},
+"case": "31649235:06423134",
+"mention_names": [
+{
+"name": "The Emily Jordan Foundation -CIC Go Green",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597894,
+"number": "06473794",
+"head": "Enable Care Ltd",
+"register": {
+"name": "ABI DEVELOPMENTS 3 LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31597894:06473794",
+"mention_names": [
+{
+"name": "Enable Care Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31595257,
+"number": "06474145",
+"head": "British Gas Social Housing Ltd T/A PH Jones",
+"register": {
+"name": "P.H JONES GROUP LIMITED",
+"status": "Active",
+"previous": [
+"HAJCO 362 LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31595257:06474145",
+"mention_names": [
+{
+"name": "British Gas Social Housing Ltd T/A PH Jones",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31591420,
+"number": "06475161",
+"head": "Thrive Tribe Ltd",
+"register": {
+"name": "SOLUTIONS 4 HEALTH LTD",
+"status": "Active",
+"previous": [
+"CARDIO WELLNESS LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31591420:06475161",
+"mention_names": [
+{
+"name": "Thrive Tribe Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31619458,
+"number": "06527299",
+"head": "Drugs 4 Delivery Pharmacy",
+"register": {
+"name": "TATARI REALTY COMPANY LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31619458:06527299",
+"mention_names": [
+{
+"name": "Drugs 4 Delivery Pharmacy",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31612687,
+"number": "06563486",
+"head": "PHL Ltd",
+"register": {
+"name": "PARTNERING HEALTH LIMITED",
+"status": "Active",
+"previous": [
+"PORTSMOUTH HEALTH LTD"
+],
+"source": "live snapshot"
+},
+"case": "31612687:06563486",
+"mention_names": [
+{
+"name": "PHL Ltd",
+"mentions": 2
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31649291,
+"number": "06640561",
+"head": "Cranmers Optometrists",
+"register": {
+"name": "FACE FURNITURE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31649291:06640561",
+"mention_names": [
+{
+"name": "Cranmers Optometrists",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31610414,
+"number": "06661720",
+"head": "Caremark (Redcar & Cleveland)",
+"register": {
+"name": "FOLKESCARE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31610414:06661720",
+"mention_names": [
+{
+"name": "Caremark (Redcar & Cleveland)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31620573,
+"number": "06677227",
+"head": "Groundswell Innovation",
+"register": {
+"name": "FUTURE FLOWERS LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31620573:06677227",
+"mention_names": [
+{
+"name": "Groundswell Innovation",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597895,
+"number": "06758434",
+"head": "Lezayre Care Home (Sure Care (UK) Ltd)",
+"register": {
+"name": "SURECARE HEALTH LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31597895:06758434",
+"mention_names": [
+{
+"name": "Lezayre Care Home (Sure Care (UK) Ltd)",
+"mentions": 1
+},
+{
+"name": "Surecare Health Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31623966,
+"number": "06917482",
+"head": "Geo",
+"register": {
+"name": "GLOBE UNDERWRITING LIMITED",
+"status": "Active",
+"previous": [
+"OLIVA UNDERWRITING MANAGEMENT LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31623966:06917482",
+"mention_names": [
+{
+"name": "Geo",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31625875,
+"number": "06989033",
+"head": "SF Taylor",
+"register": {
+"name": "CHETHAM HOUSE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31625875:06989033",
+"mention_names": [
+{
+"name": "Chetham House T/A SF Taylor",
+"mentions": 1
+},
+{
+"name": "SF Taylor",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31609227,
+"number": "06991398",
+"head": "Guardian Homecare UK Ltd",
+"register": {
+"name": "CITY AND COUNTY HEALTHCARE GROUP LIMITED",
+"status": "Active",
+"previous": [
+"CITY BIDCO LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31609227:06991398",
+"mention_names": [
+{
+"name": "Guardian Homecare UK Ltd",
+"mentions": 2
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31626150,
+"number": "07083679",
+"head": "CLIFFE VALE RESIDENTIAL HOME LIMITED",
+"register": {
+"name": "ALL SAINTS CARE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31626150:07083679",
+"mention_names": [
+{
+"name": "ALL SAINTS CARE LIMITED",
+"mentions": 1
+},
+{
+"name": "CLIFFE VALE RESIDENTIAL HOME LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31611109,
+"number": "07099642",
+"head": "Bennetts Renault",
+"register": {
+"name": "RMB AUTO LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31611109:07099642",
+"mention_names": [
+{
+"name": "Bennetts Renault",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31645249,
+"number": "07273152",
+"head": "Battersea Healthcare CIC",
+"register": {
+"name": "HISANDHAIRS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31645249:07273152",
+"mention_names": [
+{
+"name": "Battersea Healthcare CIC",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31598060,
+"number": "07409635",
+"head": "Trig Point Consulting",
+"register": {
+"name": "PIED A TERRE ADVENTURES LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31598060:07409635",
+"mention_names": [
+{
+"name": "Trig Point Consulting",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597792,
+"number": "07671308",
+"head": "Colliers Intl Specialist",
+"register": {
+"name": "APAM LTD",
+"status": "Active",
+"previous": [
+"ALLIANCE PROPERTY ASSET MANAGEMENT LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31597792:07671308",
+"mention_names": [
+{
+"name": "Apam Ltd",
+"mentions": 1
+},
+{
+"name": "Colliers Intl Specialist",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31617009,
+"number": "07992282",
+"head": "Spacestor",
+"register": {
+"name": "TRIESTE GROUP ONE LTD",
+"status": "Active",
+"previous": [
+"TABLE PORTFOLIO LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31617009:07992282",
+"mention_names": [
+{
+"name": "Spacestor",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31615958,
+"number": "08394884",
+"head": "F4MU Ltd",
+"register": {
+"name": "FM4U LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31615958:08394884",
+"mention_names": [
+{
+"name": "FM4U Ltd",
+"mentions": 2
+},
+{
+"name": "F4MU Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31609159,
+"number": "08522031",
+"head": "Wave Utilities",
+"register": {
+"name": "VALUE MATCH SERVICES LTD",
+"status": "Active",
+"previous": [
+"APSIZ SERVICES LTD"
+],
+"source": "live snapshot"
+},
+"case": "31609159:08522031",
+"mention_names": [
+{
+"name": "Wave Utilities",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31601589,
+"number": "08583068",
+"head": "KCL Digital",
+"register": {
+"name": "KADEL CONSULTING LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31601589:08583068",
+"mention_names": [
+{
+"name": "KCL Digital",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31617219,
+"number": "08584471",
+"head": "Gradestone Ltd",
+"register": {
+"name": "GRADSTONE LIMITED",
+"status": "Active",
+"previous": [
+"DEVELOPMENT MANAGEMENT CONSULTANCY (DMC) LTD"
+],
+"source": "live snapshot"
+},
+"case": "31617219:08584471",
+"mention_names": [
+{
+"name": "Gradestone Ltd",
+"mentions": 2
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31628147,
+"number": "08839680",
+"head": "Activecare Limited",
+"register": {
+"name": "ABLECARE (PHILIPHAUGH) LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31628147:08839680",
+"mention_names": [
+{
+"name": "Activecare Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31607645,
+"number": "09297203",
+"head": "NEC Software Solutions UK Limited",
+"register": {
+"name": "NPS (HOLDINGS) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31607645:09297203",
+"mention_names": [
+{
+"name": "NEC Software Solutions UK Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31648198,
+"number": "09489299",
+"head": "TCES National Online School",
+"register": {
+"name": "TEACHING TALENT LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31648198:09489299",
+"mention_names": [
+{
+"name": "TCES National Online School",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31602766,
+"number": "09636233",
+"head": "Profad Care Agency Limited",
+"register": {
+"name": "OBSERVATORY NEWS SLOUGH LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31602766:09636233",
+"mention_names": [
+{
+"name": "Profad Care Agency Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31631959,
+"number": "09702342",
+"head": "CSM Sport & Entertainment LLP T/A CSM Live",
+"register": {
+"name": "CHIME GROUP HOLDINGS LIMITED",
+"status": "Active",
+"previous": [
+"BELL TOPCO LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31631959:09702342",
+"mention_names": [
+{
+"name": "CSM Sport & Entertainment LLP T/A CSM Live",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31593324,
+"number": "09739154",
+"head": "Care Angels Batley",
+"register": {
+"name": "RAMS HILL LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31593324:09739154",
+"mention_names": [
+{
+"name": "Care Angels (Batley)",
+"mentions": 1
+},
+{
+"name": "Care Angels Batley",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31596947,
+"number": "09918526",
+"head": "CUMBRIA, NORTHUMBERLAND, TYNE AND WEAR NHS FOUNDATION TRUST",
+"register": {
+"name": "CHANGING LIVES LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31596947:09918526",
+"mention_names": [
+{
+"name": "Changing Lives",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597119,
+"number": "09971838",
+"head": "IPS Group UK",
+"register": {
+"name": "INTERNATIONAL PARKING SYSTEMS (UK) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31597119:09971838",
+"mention_names": [
+{
+"name": "IPS Group UK",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31647711,
+"number": "09997646",
+"head": "Zurich Municipal",
+"register": {
+"name": "VINDALOO FOOD LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31647711:09997646",
+"mention_names": [
+{
+"name": "Zurich Municipal",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31594247,
+"number": "10238811",
+"head": "Qualitest Group UK Limited",
+"register": {
+"name": "JUPITER HOLDCO LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31594247:10238811",
+"mention_names": [
+{
+"name": "Qualitest Group UK Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31633833,
+"number": "10458774",
+"head": "Cumbria, Northumberland,  Tyne and Wear NHS  Foundation Trust",
+"register": {
+"name": "NTW SOLUTIONS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31633833:10458774",
+"mention_names": [
+{
+"name": "Cumbria, Northumberland,  Tyne and Wear NHS  Foundation Trust",
+"mentions": 1
+},
+{
+"name": "Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31609847,
+"number": "10491477",
+"head": "MK Sport Cars",
+"register": {
+"name": "MK AUTOMOTIVE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31609847:10491477",
+"mention_names": [
+{
+"name": "MK Sport Cars",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31632979,
+"number": "10615396",
+"head": "CADENT GAS LIMITED",
+"register": {
+"name": "QUADGAS MIDCO LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31632979:10615396",
+"mention_names": [
+{
+"name": "CADENT GAS LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31598323,
+"number": "10661081",
+"head": "Alcedo Orange Limited",
+"register": {
+"name": "M AND W ENGINEERING LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31598323:10661081",
+"mention_names": [
+{
+"name": "Alcedo Orange Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31598283,
+"number": "10693969",
+"head": "Right At Home Stockport & Didsbury",
+"register": {
+"name": "DM SENIOR CARE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31598283:10693969",
+"mention_names": [
+{
+"name": "Right At Home Stockport & Didsbury",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31593831,
+"number": "10735263",
+"head": "Octavius Infrastructure Limited",
+"register": {
+"name": "BILINGUAL FINANCES LTD",
+"status": "Active",
+"previous": [
+"7OZ LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31593831:10735263",
+"mention_names": [
+{
+"name": "Octavius Infrastructure Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31611118,
+"number": "10822984",
+"head": "SMT Volvo",
+"register": {
+"name": "SERVICES MACHINERY & TRUCKS LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31611118:10822984",
+"mention_names": [
+{
+"name": "SMT Volvo",
+"mentions": 1
+},
+{
+"name": "Services, Machinery and Trucks Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31649337,
+"number": "10855811",
+"head": "Glass Lewis T/A GL & M UK Ltd",
+"register": {
+"name": "GL & M UK LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31649337:10855811",
+"mention_names": [
+{
+"name": "Glass Lewis T/A GL & M UK Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31610569,
+"number": "10919942",
+"head": "13726459",
+"register": {
+"name": "LLD ACTIVE LTD",
+"status": "Active",
+"previous": [
+"SUPER STAR SPORT MIDLANDS LTD"
+],
+"source": "live snapshot"
+},
+"case": "31610569:10919942",
+"mention_names": [
+{
+"name": "13726459",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31602103,
+"number": "11035266",
+"head": "Egan Education Services Ltd",
+"register": {
+"name": "SOUTHBOUND LONDON LIMITED",
+"status": "Liquidation",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31602103:11035266",
+"mention_names": [
+{
+"name": "Egan Education Services Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31631621,
+"number": "11068155",
+"head": "Local Homecare",
+"register": {
+"name": "COMPLETE SERVICE SOLUTIONS LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31631621:11068155",
+"mention_names": [
+{
+"name": "Local Homecare",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31613433,
+"number": "11113763",
+"head": "Krystal Baker, t/a Meklec Cars",
+"register": {
+"name": "MEKLEC TRAVEL LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31613433:11113763",
+"mention_names": [
+{
+"name": "Krystal Baker, t/a Meklec Cars",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31620578,
+"number": "11295272",
+"head": "Cube Thinking",
+"register": {
+"name": "TURNKEY CORPORATE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31620578:11295272",
+"mention_names": [
+{
+"name": "Cube Thinking",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31605786,
+"number": "11392330",
+"head": "Care Matters",
+"register": {
+"name": "THE ROBIN CENTRES (NE) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31605786:11392330",
+"mention_names": [
+{
+"name": "Care Matters",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31622410,
+"number": "11471788",
+"head": "Wates Property Services Limited",
+"register": {
+"name": "MONDIE LIMITED",
+"status": "Active - Proposal to Strike off",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31622410:11471788",
+"mention_names": [
+{
+"name": "Wates Property Services Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597140,
+"number": "11627026",
+"head": "The Gables",
+"register": {
+"name": "DKL HEALTHCARE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31597140:11627026",
+"mention_names": [
+{
+"name": "The Gables",
+"mentions": 2
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31632648,
+"number": "12317133",
+"head": "Enerveo Ltd",
+"register": {
+"name": "SGS FLYING SERVICES LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31632648:12317133",
+"mention_names": [
+{
+"name": "Enerveo Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31605885,
+"number": "12461691",
+"head": "Learning Curve Group Limited",
+"register": {
+"name": "BOYD HOLDCO LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31605885:12461691",
+"mention_names": [
+{
+"name": "Learning Curve Group Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31604832,
+"number": "12516291",
+"head": "Kingstown Works Ltd",
+"register": {
+"name": "PRESTONS CONSTRUCTION LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31604832:12516291",
+"mention_names": [
+{
+"name": "Kingstown Works Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31602237,
+"number": "12664966",
+"head": "Cell And Gene Therapy Catapult - Braintree",
+"register": {
+"name": "CGTC MANUFACTURING INNOVATION CENTRE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31602237:12664966",
+"mention_names": [
+{
+"name": "Cell & Gene Therapy Catapult Manufacturing Innovation Centre",
+"mentions": 5
+},
+{
+"name": "CGTC MANUFACTURING INNOVATION CENTRE LIMITED",
+"mentions": 3
+},
+{
+"name": "CGTC Manufacturing  Innovation Centre Limited, trading  as the Cell and Gene Therapy  Catapult",
+"mentions": 1
+},
+{
+"name": "Cell And Gene Therapy Catapult - Braintree",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31623268,
+"number": "13020864",
+"head": "Nuwe Consulting Ltd",
+"register": {
+"name": "KEYSTONE EMPLOYMENT GROUP NO.1 LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31623268:13020864",
+"mention_names": [
+{
+"name": "Nuwe Consulting Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31627987,
+"number": "13023861",
+"head": "AP Birkenhead Limited",
+"register": {
+"name": "AP MANCHESTER LIMITED",
+"status": "Active",
+"previous": [
+"AP BLACKBURN LIMITED",
+"SANDSTONE SUPPORTED LIVING LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31627987:13023861",
+"mention_names": [
+{
+"name": "AP Birkenhead Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31625502,
+"number": "13071945",
+"head": "CARD PROCESSING ADVISORY SERVICE LIMITED",
+"register": {
+"name": "CPRAS GROUP LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31625502:13071945",
+"mention_names": [
+{
+"name": "CARD PROCESSING ADVISORY SERVICE LIMITED",
+"mentions": 2
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31596669,
+"number": "13174233",
+"head": "Heywood Ltd",
+"register": {
+"name": "APUS BIDCO LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31596669:13174233",
+"mention_names": [
+{
+"name": "Heywood Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31646779,
+"number": "13231557",
+"head": "The FDI Ltd",
+"register": {
+"name": "THE FIRE DOOR INSPECTORS LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31646779:13231557",
+"mention_names": [
+{
+"name": "The FDI Ltd",
+"mentions": 2
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31648221,
+"number": "13304590",
+"head": "Pagabo Ltd",
+"register": {
+"name": "THE 55 GROUP (MIDCO) LIMITED",
+"status": "Active",
+"previous": [
+"PROJECT 55 MIDCO LIMITED",
+"ENSCO 1408 LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31648221:13304590",
+"mention_names": [
+{
+"name": "Pagabo Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31632923,
+"number": "13866404",
+"head": "Happyhealthykidz",
+"register": {
+"name": "Z & S LINKED LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31632923:13866404",
+"mention_names": [
+{
+"name": "Happyhealthykidz",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31621960,
+"number": "13876333",
+"head": "This is my healthcare",
+"register": {
+"name": "I3 MEDICAL LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31621960:13876333",
+"mention_names": [
+{
+"name": "This is my healthcare",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31632056,
+"number": "14025643",
+"head": "The Woodside Group",
+"register": {
+"name": "THE SWEET FLAM LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31632056:14025643",
+"mention_names": [
+{
+"name": "The Woodside Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31649238,
+"number": "14477832",
+"head": "VIP Day Centre Bromsgrove Ltd",
+"register": {
+"name": "J&F CLEANER SOLUTIONS LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31649238:14477832",
+"mention_names": [
+{
+"name": "VIP Day Centre Bromsgrove Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31607235,
+"number": "14700240",
+"head": "GP Primary Choice (GPPC)",
+"register": {
+"name": "UNIVERSITY OF SUFFOLK DENTAL CIC",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31607235:14700240",
+"mention_names": [
+{
+"name": "GP Primary Choice (GPPC)",
+"mentions": 2
+},
+{
+"name": "University of Suffolk Dental Community Interest Company",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31617122,
+"number": "14857524",
+"head": "Mr P Serrant t/a Wigan Orthodontics Centre Ltd",
+"register": {
+"name": "WIGAN ORTHODONTICS CENTRE LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31617122:14857524",
+"mention_names": [
+{
+"name": "Mr P Serrant t/a Wigan Orthodontics Centre Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31618968,
+"number": "15031573",
+"head": "Moorefield Initiatives",
+"register": {
+"name": "MOORFIELD INITIATIVE LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31618968:15031573",
+"mention_names": [
+{
+"name": "Moorefield Initiatives",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31628131,
+"number": "15059517",
+"head": "Lentulus Properties Limited",
+"register": {
+"name": "SPRINGCARE (FT) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31628131:15059517",
+"mention_names": [
+{
+"name": "Lentulus Properties Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31627952,
+"number": "15568557",
+"head": "Mrs K Shone",
+"register": {
+"name": "GERALD HOUSE CARE HOME LTD",
+"status": "Active",
+"previous": [
+"KRYSTYVUE LTD"
+],
+"source": "live snapshot"
+},
+"case": "31627952:15568557",
+"mention_names": [
+{
+"name": "Mrs K Shone",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31594305,
+"number": "15857380",
+"head": "PharmaStrat Ltd",
+"register": {
+"name": "SMOKFREE LOZELLS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31594305:15857380",
+"mention_names": [
+{
+"name": "PharmaStrat Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31610293,
+"number": "15909348",
+"head": "ROYAL HASKONING D H V",
+"register": {
+"name": "HARLEY GROUP INVESTMENTS LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31610293:15909348",
+"mention_names": [
+{
+"name": "ROYAL HASKONING D H V",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597946,
+"number": "16184736",
+"head": "Asda Stores Ltd",
+"register": {
+"name": "ADA STORE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31597946:16184736",
+"mention_names": [
+{
+"name": "Asda Stores Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31600532,
+"number": "16288454",
+"head": "Dr Anish Patel",
+"register": {
+"name": "TERRACE CARE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31600532:16288454",
+"mention_names": [
+{
+"name": "Dr Anish Patel",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31592956,
+"number": "FC037140",
+"head": "RSA Northern Ireland",
+"register": {
+"name": "INTACT INSURANCE",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31592956:FC037140",
+"mention_names": [
+{
+"name": "RSA Northern Ireland",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31625374,
+"number": "IP14044R",
+"head": "IDS TRUSTEES LIMITED",
+"register": {
+"name": "INDUSTRIAL DWELLINGS SOCIETY(1885)LIMITED (THE)",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31625374:IP14044R",
+"mention_names": [
+{
+"name": "IDS TRUSTEES LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31645195,
+"number": "IP19025R",
+"head": "Your Coop Business Solutions",
+"register": {
+"name": "THE MIDCOUNTIES CO-OPERATIVE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31645195:IP19025R",
+"mention_names": [
+{
+"name": "Your Coop Business Solutions",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31593979,
+"number": "NI021213",
+"head": "RPS Consulting Engineers",
+"register": {
+"name": "TODD ARCHITECTS LTD",
+"status": "Active",
+"previous": [
+"BARRIE TODD ARCHITECTS LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31593979:NI021213",
+"mention_names": [
+{
+"name": "RPS Consulting Engineers",
+"mentions": 1
+},
+{
+"name": "Todd Architects",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31596630,
+"number": "NI660282",
+"head": "Stephen McKenna Company T/A Galgorm Group",
+"register": {
+"name": "GALGORM GROUP",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31596630:NI660282",
+"mention_names": [
+{
+"name": "Stephen McKenna Company T/A Galgorm Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31610150,
+"number": "NI674333",
+"head": "Finches Catering",
+"register": {
+"name": "FINCH RETAILING (MILLVALE) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31610150:NI674333",
+"mention_names": [
+{
+"name": "Finches Catering",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31614239,
+"number": "RS007853",
+"head": "GRAND UNION HOUSING GROUP LIMITED",
+"register": {
+"name": "AMPLIUS LIVING",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31614239:RS007853",
+"mention_names": [
+{
+"name": "GRAND UNION HOUSING GROUP LIMITED",
+"mentions": 8
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31597758,
+"number": "SC079314",
+"head": "SP Manweb",
+"register": {
+"name": "SPE ENERGY LIMITED",
+"status": "Active",
+"previous": [
+"SYSTEMS POWER ENGINEERING LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31597758:SC079314",
+"mention_names": [
+{
+"name": "SP Manweb",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31634085,
+"number": "SC219746",
+"head": "External Quality Assurance for Molecular Diagnostics",
+"register": {
+"name": "QCMD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31634085:SC219746",
+"mention_names": [
+{
+"name": "External Quality Assurance for Molecular Diagnostics",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31624473,
+"number": "SC242073",
+"head": "T-Squared P3 Ltd",
+"register": {
+"name": "TSQUARED P1 LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31624473:SC242073",
+"mention_names": [
+{
+"name": "T-Squared P3 Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31602732,
+"number": "00007773",
+"head": "Livv Housing Group",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31602732:00007773",
+"mention_names": [
+{
+"name": "Livv Housing Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31611083,
+"number": "00011876",
+"head": "Lookers Ford",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31611083:00011876",
+"mention_names": [
+{
+"name": "Lookers Ford",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31604834,
+"number": "00015263",
+"head": "University of Strathclyde",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31604834:00015263",
+"mention_names": [
+{
+"name": "University of Strathclyde",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31646976,
+"number": "00031693",
+"head": "THE GUINNESS PARTNERSHIP LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31646976:00031693",
+"mention_names": [
+{
+"name": "THE GUINNESS PARTNERSHIP LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31610413,
+"number": "00041980",
+"head": "Partners in Healthcare Technology Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31610413:00041980",
+"mention_names": [
+{
+"name": "Partners in Healthcare Technology Ltd",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31619611,
+"number": "00050311",
+"head": "Milligan Brothers Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31619611:00050311",
+"mention_names": [
+{
+"name": "Milligan Brothers Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31603911,
+"number": "00090821",
+"head": "Britten Pears Arts",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31603911:00090821",
+"mention_names": [
+{
+"name": "Britten Pears Arts",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31599614,
+"number": "00098875",
+"head": "Cordwallis Group",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31599614:00098875",
+"mention_names": [
+{
+"name": "Cordwallis Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31593004,
+"number": "00103653",
+"head": "Romaquip Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31593004:00103653",
+"mention_names": [
+{
+"name": "Romaquip Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31610464,
+"number": "00113186",
+"head": "SPS Doorguard Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31610464:00113186",
+"mention_names": [
+{
+"name": "SPS Doorguard Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31617769,
+"number": "00116728",
+"head": "Cancer Connections Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31617769:00116728",
+"mention_names": [
+{
+"name": "Cancer Connections Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31622055,
+"number": "00117119",
+"head": "SSE SERVICES PLC",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31622055:00117119",
+"mention_names": [
+{
+"name": "SSE SERVICES PLC",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31624436,
+"number": "00119278",
+"head": "Lloyds Bank Cardnet",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31624436:00119278",
+"mention_names": [
+{
+"name": "Lloyds Bank Cardnet",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31610958,
+"number": "00119642",
+"head": "Crosland Moor Community Learning Centre",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31610958:00119642",
+"mention_names": [
+{
+"name": "Crosland Moor Community Learning Centre",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31610959,
+"number": "00120774",
+"head": "Ravensthorpe Community Centre",
+"register": {
+"http": "200",
+"name": "LIZARD AND DISTRICT HYGIENIC STEAM LAUNDRY COMPANY,LIMITED(THE)",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31610959:00120774",
+"mention_names": [
+{
+"name": "Ravensthorpe Community Centre",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31632883,
+"number": "00127784",
+"head": "Tarkett Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31632883:00127784",
+"mention_names": [
+{
+"name": "Tarkett Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31647147,
+"number": "00130107",
+"head": "SOUTH TEES HOSPITALS NHS FOUNDATION TRUST",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31647147:00130107",
+"mention_names": [
+{
+"name": "SOUTH TEES HOSPITALS NHS FOUNDATION TRUST",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31623034,
+"number": "00136155",
+"head": "Axa",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31623034:00136155",
+"mention_names": [
+{
+"name": "Axa",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31646763,
+"number": "00143213",
+"head": "Lochwynd Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31646763:00143213",
+"mention_names": [
+{
+"name": "Lochwynd Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31645203,
+"number": "00151965",
+"head": "KARL STORZ Endoscopy (UK) Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31645203:00151965",
+"mention_names": [
+{
+"name": "KARL STORZ Endoscopy (UK) Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31595128,
+"number": "00161214",
+"head": "Crystal Galleries t/a TeesPrint",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31595128:00161214",
+"mention_names": [
+{
+"name": "Crystal Galleries t/a TeesPrint",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31632735,
+"number": "00161697",
+"head": "BYTES SOFTWARE SERVICES LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31632735:00161697",
+"mention_names": [
+{
+"name": "BYTES SOFTWARE SERVICES LIMITED",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31625462,
+"number": "00164270",
+"head": "Evotix Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31625462:00164270",
+"mention_names": [
+{
+"name": "Evotix Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31594892,
+"number": "00171736",
+"head": "Durable UK Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31594892:00171736",
+"mention_names": [
+{
+"name": "Durable UK Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31633871,
+"number": "00177946",
+"head": "Pell Frischmann Consultants Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31633871:00177946",
+"mention_names": [
+{
+"name": "Pell Frischmann Consultants Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31625644,
+"number": "00180486",
+"head": "Federated4Health Ltd.",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31625644:00180486",
+"mention_names": [
+{
+"name": "Federated4Health Ltd.",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31622409,
+"number": "00183023",
+"head": "Purdy Contracts Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31622409:00183023",
+"mention_names": [
+{
+"name": "Purdy Contracts Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31621366,
+"number": "00183283",
+"head": "Purdy Contracts Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31621366:00183283",
+"mention_names": [
+{
+"name": "Purdy Contracts Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31634455,
+"number": "00185507",
+"head": "MetaMetrics Inc",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31634455:00185507",
+"mention_names": [
+{
+"name": "MetaMetrics Inc",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31592717,
+"number": "00185974",
+"head": "THORNTON & ROSS LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31592717:00185974",
+"mention_names": [
+{
+"name": "THORNTON & ROSS LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31611972,
+"number": "00207776",
+"head": "NEWCASTLE INTERNATIONAL AIRPORT LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31611972:00207776",
+"mention_names": [
+{
+"name": "NEWCASTLE INTERNATIONAL AIRPORT LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31634456,
+"number": "00209131",
+"head": "BRITISH COUNCIL(THE)",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31634456:00209131",
+"mention_names": [
+{
+"name": "BRITISH COUNCIL(THE)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31634290,
+"number": "00218992",
+"head": "H R Richmond",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31634290:00218992",
+"mention_names": [
+{
+"name": "H R Richmond",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31618702,
+"number": "00226064",
+"head": "Friends of the Elderly Day Care",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31618702:00226064",
+"mention_names": [
+{
+"name": "Friends of the Elderly Day Care",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31593679,
+"number": "00231396",
+"head": "Washco Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31593679:00231396",
+"mention_names": [
+{
+"name": "Washco Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31648142,
+"number": "00236666",
+"head": "THAMES WATER UTILITIES LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31648142:00236666",
+"mention_names": [
+{
+"name": "THAMES WATER UTILITIES LIMITED",
+"mentions": 3
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31602267,
+"number": "00242700",
+"head": "Aquarius Action Projects",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31602267:00242700",
+"mention_names": [
+{
+"name": "Aquarius Action Projects",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31623026,
+"number": "00250150",
+"head": "Streamtec Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31623026:00250150",
+"mention_names": [
+{
+"name": "Streamtec Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31626583,
+"number": "00259450",
+"head": "Jacobs UK Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31626583:00259450",
+"mention_names": [
+{
+"name": "Jacobs UK Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31614461,
+"number": "00265028",
+"head": "International Food Service Equipment (IFSE) Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31614461:00265028",
+"mention_names": [
+{
+"name": "International Food Service Equipment (IFSE) Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31616445,
+"number": "00272173",
+"head": "Terminalfour",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31616445:00272173",
+"mention_names": [
+{
+"name": "Terminalfour",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31601096,
+"number": "00281352",
+"head": "Savanta Group",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31601096:00281352",
+"mention_names": [
+{
+"name": "Savanta Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31617162,
+"number": "00291222",
+"head": "Volunteering Matters",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31617162:00291222",
+"mention_names": [
+{
+"name": "Volunteering Matters",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31620115,
+"number": "00297483",
+"head": "Church Urban Fund",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31620115:00297483",
+"mention_names": [
+{
+"name": "Church Urban Fund",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31592978,
+"number": "00303525",
+"head": "PRICEWATERHOUSECOOPERS LLP",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31592978:00303525",
+"mention_names": [
+{
+"name": "PRICEWATERHOUSECOOPERS LLP",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31624867,
+"number": "00307619",
+"head": "United Kingdom Accreditation Service (UKAS)",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31624867:00307619",
+"mention_names": [
+{
+"name": "United Kingdom Accreditation Service (UKAS)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31622536,
+"number": "00310451",
+"head": "Maven Public Sector",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31622536:00310451",
+"mention_names": [
+{
+"name": "Maven Public Sector",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31601761,
+"number": "00328975",
+"head": "Vysiion Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31601761:00328975",
+"mention_names": [
+{
+"name": "Vysiion Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31593076,
+"number": "00331742",
+"head": "SSE AIRTRICITY LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31593076:00331742",
+"mention_names": [
+{
+"name": "SSE AIRTRICITY LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31601536,
+"number": "00336958",
+"head": "Ward & Burke Construction Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31601536:00336958",
+"mention_names": [
+{
+"name": "Ward & Burke Construction Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31632152,
+"number": "00338589",
+"head": "CDM Smith",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31632152:00338589",
+"mention_names": [
+{
+"name": "CDM Smith",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31614938,
+"number": "00366703",
+"head": "NORTHUMBRIAN WATER LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31614938:00366703",
+"mention_names": [
+{
+"name": "NORTHUMBRIAN WATER GROUP LIMITED",
+"mentions": 3
+},
+{
+"name": "NORTHUMBRIAN WATER LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31602238,
+"number": "00381335",
+"head": "Kneat Solutions Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31602238:00381335",
+"mention_names": [
+{
+"name": "Kneat Solutions Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31615643,
+"number": "00410789",
+"head": "Currall, Lewis & Martin (Construction) Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31615643:00410789",
+"mention_names": [
+{
+"name": "Currall, Lewis & Martin (Construction) Limited",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31594641,
+"number": "00415353",
+"head": "Russell Investments Implementation Services Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31594641:00415353",
+"mention_names": [
+{
+"name": "Russell Investments Implementation Services Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31616149,
+"number": "00416207",
+"head": "Heywood Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31616149:00416207",
+"mention_names": [
+{
+"name": "Heywood Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31607997,
+"number": "00507932",
+"head": "Bus and Truck Parts (NE) Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31607997:00507932",
+"mention_names": [
+{
+"name": "Bus and Truck Parts (NE) Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31598232,
+"number": "00510758",
+"head": "Banner Group Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31598232:00510758",
+"mention_names": [
+{
+"name": "Banner Group Limited",
+"mentions": 2
+},
+{
+"name": "Banner Group Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31625131,
+"number": "00511733",
+"head": "FIRST GREATER WESTERN LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31625131:00511733",
+"mention_names": [
+{
+"name": "FIRST GREATER WESTERN LIMITED",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31597154,
+"number": "00517248",
+"head": "Where Next",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31597154:00517248",
+"mention_names": [
+{
+"name": "Where Next",
+"mentions": 2
+},
+{
+"name": "Where Next Association",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31610579,
+"number": "00522992",
+"head": "Bradby Club for Young People",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31610579:00522992",
+"mention_names": [
+{
+"name": "Bradby Club for Young People",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31607415,
+"number": "00526088",
+"head": "Galloways Society for the Blind",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31607415:00526088",
+"mention_names": [
+{
+"name": "Galloways Society for the Blind",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31634165,
+"number": "00532977",
+"head": "Herts Mind Network",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31634165:00532977",
+"mention_names": [
+{
+"name": "Herts Mind Network",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31620914,
+"number": "00535361",
+"head": "Idaso",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31620914:00535361",
+"mention_names": [
+{
+"name": "Idaso",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31618487,
+"number": "00536383",
+"head": "Gopak Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31618487:00536383",
+"mention_names": [
+{
+"name": "Gopak Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31632077,
+"number": "00604732",
+"head": "EIRNA Bio Ltd.",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31632077:00604732",
+"mention_names": [
+{
+"name": "EIRNA Bio Ltd.",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31625955,
+"number": "00611880",
+"head": "Quidel Ireland Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31625955:00611880",
+"mention_names": [
+{
+"name": "Quidel Ireland Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31622984,
+"number": "00641173",
+"head": "Amet",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31622984:00641173",
+"mention_names": [
+{
+"name": "Amet",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31623035,
+"number": "00659610",
+"head": "AXA XL",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31623035:00659610",
+"mention_names": [
+{
+"name": "AXA XL",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31649336,
+"number": "00666006",
+"head": "Redington Ltd T/A Redington",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31649336:00666006",
+"mention_names": [
+{
+"name": "Redington Ltd T/A Redington",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31621001,
+"number": "00713032",
+"head": "Wildstone Development Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31621001:00713032",
+"mention_names": [
+{
+"name": "Wildstone Development Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31614667,
+"number": "00728170",
+"head": "Japanese Knotweed Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31614667:00728170",
+"mention_names": [
+{
+"name": "Japanese Knotweed Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31609522,
+"number": "00734036",
+"head": "Bio Products Laboratory Ltd",
+"register": {
+"http": "200",
+"name": "E.SMITH & CO. (SURGICAL) LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31609522:00734036",
+"mention_names": [
+{
+"name": "Bio Products Laboratory Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31608650,
+"number": "00736330",
+"head": "DLP Healthcare Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31608650:00736330",
+"mention_names": [
+{
+"name": "DLP Healthcare Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31621343,
+"number": "00741409",
+"head": "Sky B 24 7 Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31621343:00741409",
+"mention_names": [
+{
+"name": "Sky B 24 7 Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31615271,
+"number": "00791887",
+"head": "Willshees Waste & Recycling",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31615271:00791887",
+"mention_names": [
+{
+"name": "Willshees Waste & Recycling",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31623208,
+"number": "00793406",
+"head": "GOVIA THAMESLINK RAILWAY LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31623208:00793406",
+"mention_names": [
+{
+"name": "GOVIA THAMESLINK RAILWAY LIMITED",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31613086,
+"number": "00862624",
+"head": "Watson Construction Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31613086:00862624",
+"mention_names": [
+{
+"name": "Watson Construction Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31614940,
+"number": "00890281",
+"head": "Britten Pears Arts",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31614940:00890281",
+"mention_names": [
+{
+"name": "Britten Pears Arts",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31616180,
+"number": "00898873",
+"head": "JR PAT Testing Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31616180:00898873",
+"mention_names": [
+{
+"name": "JR PAT Testing Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31616360,
+"number": "00898873",
+"head": "JR PAT Testing Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31616360:00898873",
+"mention_names": [
+{
+"name": "JR PAT Testing Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31647556,
+"number": "00915289",
+"head": "Roblett Electrical Contractors",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31647556:00915289",
+"mention_names": [
+{
+"name": "Roblett Electrical Contractors",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31614944,
+"number": "00924625",
+"head": "Wood&Wood International Signs Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31614944:00924625",
+"mention_names": [
+{
+"name": "Wood&Wood International Signs Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31608188,
+"number": "00933402",
+"head": "BIbliU Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31608188:00933402",
+"mention_names": [
+{
+"name": "BIbliU Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31611016,
+"number": "00939007",
+"head": "Groundlord Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31611016:00939007",
+"mention_names": [
+{
+"name": "Groundlord Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31597904,
+"number": "00943873",
+"head": "The Old Garden Care Home Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31597904:00943873",
+"mention_names": [
+{
+"name": "The Old Garden Care Home Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31614717,
+"number": "00980821",
+"head": "Britten Pears Arts",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31614717:00980821",
+"mention_names": [
+{
+"name": "Britten Pears Arts",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31612694,
+"number": "00990952",
+"head": "Medinet Clinical Services Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31612694:00990952",
+"mention_names": [
+{
+"name": "Medinet Clinical Services Limited",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31614053,
+"number": "00993633",
+"head": "Flogas Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31614053:00993633",
+"mention_names": [
+{
+"name": "Flogas Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31648590,
+"number": "01003603",
+"head": "Learning Partnerships (Leeds)",
+"register": {
+"http": "200",
+"name": "J. & L. CARPETS LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31648590:01003603",
+"mention_names": [
+{
+"name": "Learning Partnerships (Leeds)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31596596,
+"number": "01009955",
+"head": "N-Vision",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31596596:01009955",
+"mention_names": [
+{
+"name": "N-Vision",
+"mentions": 2
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31608300,
+"number": "01046441",
+"head": "Hand2Hold Ltd",
+"register": {
+"http": "200",
+"name": "SERVICISED LIMITED",
+"status": "Dissolved",
+"previous": [
+"DEARBORN EUROPE LIMITED"
+],
+"source": "register page"
+},
+"case": "31608300:01046441",
+"mention_names": [
+{
+"name": "Hand2Hold Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31617306,
+"number": "01047908",
+"head": "The Bereavement Counselling Services",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31617306:01047908",
+"mention_names": [
+{
+"name": "The Bereavement Counselling Services",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31599171,
+"number": "01053184",
+"head": "BID Services",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31599171:01053184",
+"mention_names": [
+{
+"name": "BID Services",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31618501,
+"number": "01056192",
+"head": "700 Club",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31618501:01056192",
+"mention_names": [
+{
+"name": "700 Club",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31604722,
+"number": "01062023",
+"head": "Jah-Jireh Nursing Home (Jah-Jireh Charity Homes)",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31604722:01062023",
+"mention_names": [
+{
+"name": "Jah-Jireh Nursing Home (Jah-Jireh Charity Homes)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31628171,
+"number": "01069092",
+"head": "Beyond Support Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31628171:01069092",
+"mention_names": [
+{
+"name": "Beyond Support Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31613620,
+"number": "01071717",
+"head": "Burton Youth for Christ",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31613620:01071717",
+"mention_names": [
+{
+"name": "Burton Youth for Christ",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31594008,
+"number": "01096823",
+"head": "ELM Alliance Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31594008:01096823",
+"mention_names": [
+{
+"name": "ELM Alliance Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31601754,
+"number": "01096823",
+"head": "ELM ALLIANCE LTD",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31601754:01096823",
+"mention_names": [
+{
+"name": "ELM ALLIANCE LTD",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31604532,
+"number": "01097940",
+"head": "Action For Children",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31604532:01097940",
+"mention_names": [
+{
+"name": "Action For Children",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31599217,
+"number": "01135654",
+"head": "Leeds Community Healthcare NHS Trust",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31599217:01135654",
+"mention_names": [
+{
+"name": "Leeds Community Healthcare NHS Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31621406,
+"number": "01141370",
+"head": "Tech Mahindra Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31621406:01141370",
+"mention_names": [
+{
+"name": "Tech Mahindra Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31617783,
+"number": "01142001",
+"head": "If U Care Share",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31617783:01142001",
+"mention_names": [
+{
+"name": "If U Care Share",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31648199,
+"number": "01145284",
+"head": "Positive Youth Organisation",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31648199:01145284",
+"mention_names": [
+{
+"name": "Positive Youth Organisation",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31620388,
+"number": "01145333",
+"head": "Scott Aerospace",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31620388:01145333",
+"mention_names": [
+{
+"name": "Scott Aerospace",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31602842,
+"number": "01146792",
+"head": "Canal & River Trust",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31602842:01146792",
+"mention_names": [
+{
+"name": "Canal & River Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31597139,
+"number": "01151711",
+"head": "Spectrum Days",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31597139:01151711",
+"mention_names": [
+{
+"name": "Spectrum Days",
+"mentions": 3
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31618499,
+"number": "01153121",
+"head": "Footprints in the Community",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31618499:01153121",
+"mention_names": [
+{
+"name": "Footprints in the Community",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31594194,
+"number": "01159057",
+"head": "Sunderland Counselling Service",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31594194:01159057",
+"mention_names": [
+{
+"name": "Sunderland Counselling Service",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31647681,
+"number": "01162586",
+"head": "Shipston Home Nursing Charitable Incorporated Organisation",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31647681:01162586",
+"mention_names": [
+{
+"name": "Shipston Home Nursing Charitable Incorporated Organisation",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31613231,
+"number": "01162592",
+"head": "Third Sector Leaders Kirklees",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31613231:01162592",
+"mention_names": [
+{
+"name": "Third Sector Leaders",
+"mentions": 1
+},
+{
+"name": "Third Sector Leaders Kirklees",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31634396,
+"number": "01162592",
+"head": "Third Sector Leaders Kirklees",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31634396:01162592",
+"mention_names": [
+{
+"name": "Third Sector Leaders Kirklees",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31600382,
+"number": "01167758",
+"head": "Peer Power Youth",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31600382:01167758",
+"mention_names": [
+{
+"name": "Peer Power Youth",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31615602,
+"number": "01167816",
+"head": "Ambition Aspire Achieve",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31615602:01167816",
+"mention_names": [
+{
+"name": "Ambition Aspire Achieve",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31601827,
+"number": "01174907",
+"head": "Recovery College Collective Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31601827:01174907",
+"mention_names": [
+{
+"name": "Recovery College Collective Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31594042,
+"number": "01179077",
+"head": "Homewise Society",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31594042:01179077",
+"mention_names": [
+{
+"name": "Homewise Society",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31593669,
+"number": "01181743",
+"head": "Maundy Relief",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31593669:01181743",
+"mention_names": [
+{
+"name": "Maundy Relief",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31597141,
+"number": "01185428",
+"head": "Sociables Hub & Crews",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31597141:01185428",
+"mention_names": [
+{
+"name": "Sociables Hub & Crews",
+"mentions": 2
+},
+{
+"name": "Sociables Hub & C.R.E.W.S.",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31649237,
+"number": "01188079",
+"head": "Worcester Snoezelen",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31649237:01188079",
+"mention_names": [
+{
+"name": "Worcester Snoezelen",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31613621,
+"number": "01188407",
+"head": "LUOSKO German Shepherd Dog Rescue",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31613621:01188407",
+"mention_names": [
+{
+"name": "LUOSKO German Shepherd Dog Rescue",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31593667,
+"number": "01191006",
+"head": "Positive Futures",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31593667:01191006",
+"mention_names": [
+{
+"name": "Positive Futures",
+"mentions": 1
+},
+{
+"name": "Positive Futures Wellbeing Services",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31606095,
+"number": "01191885",
+"head": "University of Cumbria",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31606095:01191885",
+"mention_names": [
+{
+"name": "University of Cumbria",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31618645,
+"number": "01194467",
+"head": "Red Balloons",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31618645:01194467",
+"mention_names": [
+{
+"name": "Red Balloons",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31596384,
+"number": "01195932",
+"head": "The Sensory Place",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31596384:01195932",
+"mention_names": [
+{
+"name": "The Sensory Place",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31617786,
+"number": "01196837",
+"head": "Coping with Cancer North East",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31617786:01196837",
+"mention_names": [
+{
+"name": "Coping with Cancer North East",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31616971,
+"number": "01198369",
+"head": "Northamptonshire Association for the Blind and Visually Impaired",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31616971:01198369",
+"mention_names": [
+{
+"name": "Northamptonshire Association for the Blind and Visually Impaired",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31608655,
+"number": "01248439",
+"head": "Healthy Bean Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31608655:01248439",
+"mention_names": [
+{
+"name": "Healthy Bean Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31614744,
+"number": "01275795",
+"head": "Vision Pharmaceuticals T/a Spectrum.",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31614744:01275795",
+"mention_names": [
+{
+"name": "Vision Pharmaceuticals T/a Spectrum.",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31623544,
+"number": "01280451",
+"head": "Jacksons Hub Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31623544:01280451",
+"mention_names": [
+{
+"name": "Jacksons Hub Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31594457,
+"number": "01455446",
+"head": "TSA Riley",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31594457:01455446",
+"mention_names": [
+{
+"name": "TSA Riley",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31610576,
+"number": "01462419",
+"head": "Empowering Together Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31610576:01462419",
+"mention_names": [
+{
+"name": "Empowering Together Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31613734,
+"number": "01468261",
+"head": "Limelight Signs Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31613734:01468261",
+"mention_names": [
+{
+"name": "Limelight Signs Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31631490,
+"number": "01604703",
+"head": "CONNECT PLUS (M25) LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31631490:01604703",
+"mention_names": [
+{
+"name": "CONNECT PLUS (M25) LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31630877,
+"number": "01645617",
+"head": "St Cuthberts Care",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31630877:01645617",
+"mention_names": [
+{
+"name": "St Cuthberts Care",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31593006,
+"number": "01706982",
+"head": "DAF Trucks NV",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31593006:01706982",
+"mention_names": [
+{
+"name": "DAF Trucks NV",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31613256,
+"number": "01749440",
+"head": "Severn Trent Green Power Limited Power",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31613256:01749440",
+"mention_names": [
+{
+"name": "Severn Trent Green Power Limited Power",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31648600,
+"number": "01935658",
+"head": "Path Yorkshire",
+"register": {
+"http": "200",
+"name": "CENTRE FOR SPORTS TECHNOLOGY LIMITED",
+"status": "Dissolved",
+"previous": [
+"EBBDAWN LIMITED"
+],
+"source": "register page"
+},
+"case": "31648600:01935658",
+"mention_names": [
+{
+"name": "Path Yorkshire",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31606365,
+"number": "02109186",
+"head": "Boxxe Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31606365:02109186",
+"mention_names": [
+{
+"name": "Boxxe Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31617773,
+"number": "02126518",
+"head": "Sarabec Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31617773:02126518",
+"mention_names": [
+{
+"name": "Sarabec Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31593009,
+"number": "02160575",
+"head": "Glasdon (UK) Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31593009:02160575",
+"mention_names": [
+{
+"name": "Glasdon (UK) Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31606586,
+"number": "02228927",
+"head": "EDF Energy Customers Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31606586:02228927",
+"mention_names": [
+{
+"name": "EDF Energy Customers Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31616681,
+"number": "02251899",
+"head": "Voyage 1 Limited trading as Voyage Care",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31616681:02251899",
+"mention_names": [
+{
+"name": "Voyage 1 Limited trading as Voyage Care",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31612186,
+"number": "02283201",
+"head": "PDS Property Management Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31612186:02283201",
+"mention_names": [
+{
+"name": "PDS Property Management Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31615649,
+"number": "02587165",
+"head": "Radis Community Care",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31615649:02587165",
+"mention_names": [
+{
+"name": "Radis Community Care",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31606786,
+"number": "02680626",
+"head": "Pluxee UK Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31606786:02680626",
+"mention_names": [
+{
+"name": "Pluxee UK Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31598443,
+"number": "02681369",
+"head": "Dell Corporation Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31598443:02681369",
+"mention_names": [
+{
+"name": "Dell Corporation Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31592997,
+"number": "02794455",
+"head": "Terberg Matec UK",
+"register": {
+"http": "200",
+"name": "TURNSTONE WORLDWIDE LIMITED",
+"status": "Dissolved",
+"previous": [
+"LORRAINE'S BEAUTY LIMITED",
+"BURTON & BRUNT ENGINEERING LIMITED"
+],
+"source": "register page"
+},
+"case": "31592997:02794455",
+"mention_names": [
+{
+"name": "Terberg Matec UK",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31615735,
+"number": "02933885",
+"head": "IDOX Software Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31615735:02933885",
+"mention_names": [
+{
+"name": "IDOX Software Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31615862,
+"number": "02953023",
+"head": "Rock Compliance Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31615862:02953023",
+"mention_names": [
+{
+"name": "Rock Compliance Limited",
+"mentions": 2
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31632042,
+"number": "02972780",
+"head": "Circles Network",
+"register": {
+"http": "200",
+"name": "ANGLIA GAS CENTRE LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31632042:02972780",
+"mention_names": [
+{
+"name": "Circles Network",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31602733,
+"number": "03018713",
+"head": "BDW Trading Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31602733:03018713",
+"mention_names": [
+{
+"name": "BDW Trading Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31603194,
+"number": "03034821",
+"head": "Engineering Support Group Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31603194:03034821",
+"mention_names": [
+{
+"name": "Engineering Support Group Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31611216,
+"number": "03055699",
+"head": "FuelCell Energy, Inc.",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31611216:03055699",
+"mention_names": [
+{
+"name": "FuelCell Energy, Inc.",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31633920,
+"number": "03266894",
+"head": "NATIONAL GRID ELECTRICITY DISTRIBUTION PLC",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31633920:03266894",
+"mention_names": [
+{
+"name": "NATIONAL GRID ELECTRICITY DISTRIBUTION PLC",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31591477,
+"number": "03288300",
+"head": "Adams Street Partners LLC",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31591477:03288300",
+"mention_names": [
+{
+"name": "Adams Street Partners LLC",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31606171,
+"number": "03614379",
+"head": "Holgate House Ltd",
+"register": {
+"http": "200",
+"name": "PREMIER STRATEGIES LIMITED",
+"status": "Dissolved",
+"previous": [
+"BDO EAST MIDLANDS TAX CONSULTANCY LIMITED",
+"CORESECTOR LIMITED"
+],
+"source": "register page"
+},
+"case": "31606171:03614379",
+"mention_names": [
+{
+"name": "Holgate House Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31611662,
+"number": "03763248",
+"head": "Revvity (UK) Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31611662:03763248",
+"mention_names": [
+{
+"name": "Revvity (UK) Ltd",
+"mentions": 2
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31611275,
+"number": "03807923",
+"head": "RED BOX CONSULTANCY SERVICES LIMITED",
+"register": {
+"http": "200",
+"name": "REDBOX CONSULTING SERVICES LIMITED",
+"status": "Dissolved",
+"previous": [
+"DEVA MANAGEMENT LIMITED"
+],
+"source": "register page"
+},
+"case": "31611275:03807923",
+"mention_names": [
+{
+"name": "RED BOX CONSULTANCY SERVICES LIMITED",
+"mentions": 3
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31615274,
+"number": "03814332",
+"head": "Suez Recycling and Recovery Surrey Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31615274:03814332",
+"mention_names": [
+{
+"name": "Suez Recycling and Recovery Surrey Limited",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31618502,
+"number": "03945921",
+"head": "Pennington Choices Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31618502:03945921",
+"mention_names": [
+{
+"name": "Pennington Choices Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31618847,
+"number": "04086777",
+"head": "Classic Builders (South West) Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31618847:04086777",
+"mention_names": [
+{
+"name": "Classic Builders (South West) Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31647367,
+"number": "04122365",
+"head": "Bupa Care Homes (AKW) Limited",
+"register": {
+"http": "200",
+"name": "MANDALE (YORK) LIMITED",
+"status": "Dissolved",
+"previous": [
+"VOLTBEST LIMITED"
+],
+"source": "register page"
+},
+"case": "31647367:04122365",
+"mention_names": [
+{
+"name": "Bupa Care Homes (AKW) Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31644816,
+"number": "04157622",
+"head": "Mocha Productions Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31644816:04157622",
+"mention_names": [
+{
+"name": "Mocha Productions Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31610748,
+"number": "04376679",
+"head": "Diamond Light Source Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31610748:04376679",
+"mention_names": [
+{
+"name": "Diamond Light Source Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31649277,
+"number": "04496461",
+"head": "Watson and Smith Opticians",
+"register": {
+"http": "200",
+"name": "ASSOCIATION OF CONVENIENCE STORES DIRECT LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31649277:04496461",
+"mention_names": [
+{
+"name": "Watson and Smith Opticians",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31649279,
+"number": "04535786",
+"head": "Turners: A Concept Eye Clinic",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31649279:04535786",
+"mention_names": [
+{
+"name": "Turners: A Concept Eye Clinic",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31602568,
+"number": "04994900",
+"head": "Haven Health (North East) Limited Trading as Denticare",
+"register": {
+"http": "200",
+"name": "MORGES PACK LIMITED",
+"status": "Dissolved",
+"previous": [
+"SIMIONATO UK LIMITED"
+],
+"source": "register page"
+},
+"case": "31602568:04994900",
+"mention_names": [
+{
+"name": "Haven Health (North East) Limited Trading as Denticare",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31607405,
+"number": "05369180",
+"head": "firmus energy (Supply) Ltd",
+"register": {
+"http": "200",
+"name": "INTENSE PAINT AND DESIGN WINDOW SYSTEMS LIMITED",
+"status": "Dissolved",
+"previous": [
+"WINDOW WORX NORTHANTS LIMITED"
+],
+"source": "register page"
+},
+"case": "31607405:05369180",
+"mention_names": [
+{
+"name": "firmus energy (Supply) Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31649283,
+"number": "05400417",
+"head": "Crown Eyecare",
+"register": {
+"http": "200",
+"name": "AUSTEN ALLEN RECRUITMENT LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31649283:05400417",
+"mention_names": [
+{
+"name": "Crown Eyecare",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31597780,
+"number": "05594803",
+"head": "IFZW Maintenance Ltd",
+"register": {
+"http": "200",
+"name": "HDRS SWISTTAL LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31597780:05594803",
+"mention_names": [
+{
+"name": "IFZW Maintenance Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31625317,
+"number": "05943404",
+"head": "Neomitis Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31625317:05943404",
+"mention_names": [
+{
+"name": "Neomitis Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31607509,
+"number": "06069781",
+"head": "NYNET limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31607509:06069781",
+"mention_names": [
+{
+"name": "NYNET limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31611135,
+"number": "06075015",
+"head": "ISS (Innovative Safety Systems)",
+"register": {
+"http": "200",
+"name": "JULIAN THOMPSON (HAULAGE) LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31611135:06075015",
+"mention_names": [
+{
+"name": "ISS (Innovative Safety Systems)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31615391,
+"number": "06299382",
+"head": "ServiceNow UK Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31615391:06299382",
+"mention_names": [
+{
+"name": "ServiceNow UK Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31649286,
+"number": "06329860",
+"head": "Robert Frith Opticians (Yeovil)",
+"register": {
+"http": "200",
+"name": "INTEGRATED AUDIO VISUAL LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31649286:06329860",
+"mention_names": [
+{
+"name": "Robert Frith Opticians (Yeovil)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31765455,
+"number": "06424311",
+"head": "Gemini Grp Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31765455:06424311",
+"mention_names": [
+{
+"name": "Gemini Grp Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31625154,
+"number": "06491591",
+"head": "Made Tech Ltd",
+"register": {
+"http": "200",
+"name": "PERMTEC LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31625154:06491591",
+"mention_names": [
+{
+"name": "Made Tech Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31614943,
+"number": "06654738",
+"head": "People Places Lives Ltd",
+"register": {
+"http": "200",
+"name": "PITTVILLE BUILDERS (DEVELOPMENTS) LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31614943:06654738",
+"mention_names": [
+{
+"name": "People Places Lives Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31609909,
+"number": "06786330",
+"head": "Calderdale Homecare Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31609909:06786330",
+"mention_names": [
+{
+"name": "Calderdale Homecare Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31649292,
+"number": "07245809",
+"head": "O'Toid Opticians",
+"register": {
+"http": "200",
+"name": "PF ROOFING LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31649292:07245809",
+"mention_names": [
+{
+"name": "O'Toid Opticians",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31608331,
+"number": "07407241",
+"head": "BAEMS Limited (T/A Bristol Ambulance EMS)",
+"register": {
+"http": "200",
+"name": "BRISTOL AMBULANCE EMS LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31608331:07407241",
+"mention_names": [
+{
+"name": "BAEMS Limited (T/A Bristol Ambulance EMS)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31594209,
+"number": "07533119",
+"head": "Help 4 Psychology Services Limited",
+"register": {
+"http": "200",
+"name": "RACEY99 LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31594209:07533119",
+"mention_names": [
+{
+"name": "Help 4 Psychology Services Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31631536,
+"number": "07759170",
+"head": "Education for the 21st Century",
+"register": {
+"http": "200",
+"name": "ADVANCED DIGITAL IMAGING LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31631536:07759170",
+"mention_names": [
+{
+"name": "Education for the 21st Century",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31623626,
+"number": "08088465",
+"head": "Jacobs Enforcement",
+"register": {
+"http": "200",
+"name": "NATIONWIDE VEHICLE RECOVERY LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31623626:08088465",
+"mention_names": [
+{
+"name": "Jacobs Enforcement",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31597494,
+"number": "08128583",
+"head": "GORGEMEAD LIMITED",
+"register": {
+"http": "200",
+"name": "MARKET WEIGHTON PHARMACY LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31597494:08128583",
+"mention_names": [
+{
+"name": "GORGEMEAD LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31646630,
+"number": "08462964",
+"head": "Purity Nursing Limited",
+"register": {
+"http": "200",
+"name": "JL CONNECTIONS LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31646630:08462964",
+"mention_names": [
+{
+"name": "Purity Nursing Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31619423,
+"number": "09155420",
+"head": "B & M McHugh Ltd",
+"register": {
+"http": "200",
+"name": "UNITBOND PROPERTIES LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31619423:09155420",
+"mention_names": [
+{
+"name": "B & M McHugh Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31602447,
+"number": "09308145",
+"head": "Kent Dent Ltd",
+"register": {
+"http": "200",
+"name": "CVS ACCOUNTANTS AND TAX CONSULTING LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31602447:09308145",
+"mention_names": [
+{
+"name": "Kent Dent Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31625815,
+"number": "09424880",
+"head": "Tri Recruitment",
+"register": {
+"http": "200",
+"name": "BECKY LTD",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31625815:09424880",
+"mention_names": [
+{
+"name": "Tri Recruitment",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31623647,
+"number": "09764477",
+"head": "MeeToo Education trading as Tellmi",
+"register": {
+"http": "200",
+"name": "BCS GROUP LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31623647:09764477",
+"mention_names": [
+{
+"name": "MeeToo Education trading as Tellmi",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31607539,
+"number": "10001726",
+"head": "Coventry University",
+"register": {
+"http": "200",
+"name": "SANCTUARY CLEANING LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31607539:10001726",
+"mention_names": [
+{
+"name": "Coventry University",
+"mentions": 2
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31615624,
+"number": "10080164",
+"head": "CADENT GAS LIMITED",
+"register": {
+"http": "200",
+"name": "MLD RECRUITMENT AGENCY LTD",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31615624:10080164",
+"mention_names": [
+{
+"name": "CADENT GAS LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31628081,
+"number": "10809712",
+"head": "Mr Bharat Kumar Modhvadia and Mrs Jaya Bharat Modhvadia",
+"register": {
+"http": "200",
+"name": "ABBEYDALE CARE HOME LTD",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31628081:10809712",
+"mention_names": [
+{
+"name": "Mr Bharat Kumar Modhvadia and Mrs Jaya Bharat Modhvadia",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31611379,
+"number": "11730398",
+"head": "Westmorland and Furness Council",
+"register": {
+"http": "200",
+"name": "CUMBRIA LOCAL ENTERPRISE PARTNERSHIP",
+"status": "Dissolved",
+"previous": [
+"CUMBRIA LOCAL ENTERPRISE PARTNERSHIP LIMITED"
+],
+"source": "register page"
+},
+"case": "31611379:11730398",
+"mention_names": [
+{
+"name": "Westmorland and Furness Council",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31626090,
+"number": "11797878",
+"head": "Dodd Group (Midlands) Ltd",
+"register": {
+"http": "200",
+"name": "PDN AERO LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31626090:11797878",
+"mention_names": [
+{
+"name": "Dodd Group (Midlands) Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31617729,
+"number": "11809810",
+"head": "Crown Agents Bank",
+"register": {
+"http": "200",
+"name": "CAB TECH HOLDCO LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31617729:11809810",
+"mention_names": [
+{
+"name": "Crown Agents Bank",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31592493,
+"number": "11917692",
+"head": "Intelerad Medical Systems Inc",
+"register": {
+"http": "200",
+"name": "FINE PRODUCTS INTERNATIONAL LTD",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31592493:11917692",
+"mention_names": [
+{
+"name": "Intelerad Medical Systems Inc",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31631239,
+"number": "12642964",
+"head": "Skilled Education Ltd",
+"register": {
+"http": "200",
+"name": "GWENT COURIERS LTD",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31631239:12642964",
+"mention_names": [
+{
+"name": "Skilled Education Ltd",
+"mentions": 1
+},
+{
+"name": "Skilled Education Ltd  London",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31601270,
+"number": "13177006",
+"head": "Optique 20:20",
+"register": {
+"http": "200",
+"name": "I-LENS LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31601270:13177006",
+"mention_names": [
+{
+"name": "Optique 20:20",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31595263,
+"number": "13822149",
+"head": "Sustainable Building Services (UK) Ltd.",
+"register": {
+"http": "200",
+"name": "KAANAH LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31595263:13822149",
+"mention_names": [
+{
+"name": "Sustainable Building Services (UK) Ltd.",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31595109,
+"number": "14675937",
+"head": "Community Solutions UK Ltd (TRADING AS TRIO SUPPORTED LIVING)",
+"register": {
+"http": "200",
+"name": "TRIO SUPPORTED LIVING LTD",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31595109:14675937",
+"mention_names": [
+{
+"name": "Community Solutions UK Ltd (TRADING AS TRIO SUPPORTED LIVING)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31606737,
+"number": "15122238",
+"head": "4500000.00",
+"register": {
+"http": "200",
+"name": "JEMBUILD (CONTRACTING) LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31606737:15122238",
+"mention_names": [
+{
+"name": "4500000.00",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31609147,
+"number": "15330824",
+"head": "Go Vocal",
+"register": {
+"http": "200",
+"name": "CITIZEN LAB LTD",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31609147:15330824",
+"mention_names": [
+{
+"name": "Go Vocal",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31614258,
+"number": "18124078",
+"head": "Pharmanovia BV",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31614258:18124078",
+"mention_names": [
+{
+"name": "Pharmanovia BV",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31610167,
+"number": "19112115",
+"head": "Tersus Consultancy Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31610167:19112115",
+"mention_names": [
+{
+"name": "Tersus Consultancy Ltd",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31612379,
+"number": "22782915",
+"head": "University of Warwick",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31612379:22782915",
+"mention_names": [
+{
+"name": "University of Warwick",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31603589,
+"number": "24958423",
+"head": "People Potential Possibilities T/A P3",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31603589:24958423",
+"mention_names": [
+{
+"name": "People Potential Possibilities T/A P3",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31610224,
+"number": "25110853",
+"head": "UNICORN SYSTEMS A.S.",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31610224:25110853",
+"mention_names": [
+{
+"name": "UNICORN SYSTEMS A.S.",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31645208,
+"number": "27770851",
+"head": "AGITO Medical A/S",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31645208:27770851",
+"mention_names": [
+{
+"name": "AGITO Medical A/S",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31600453,
+"number": "33210469",
+"head": "Wartsila Voyage Oy",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31600453:33210469",
+"mention_names": [
+{
+"name": "Wartsila Voyage Oy",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31610225,
+"number": "39314959",
+"head": "ENERGINET SYSTEMANSVAR A/S",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31610225:39314959",
+"mention_names": [
+{
+"name": "ENERGINET SYSTEMANSVAR A/S",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31632689,
+"number": "51296906",
+"head": "Streetwise UK Management Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31632689:51296906",
+"mention_names": [
+{
+"name": "Streetwise UK Management Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31612248,
+"number": "52249597",
+"head": "People Insight",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31612248:52249597",
+"mention_names": [
+{
+"name": "People Insight",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31633892,
+"number": "54267731",
+"head": "Ashley & McDonough Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31633892:54267731",
+"mention_names": [
+{
+"name": "Ashley & McDonough Ltd",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31613549,
+"number": "60180378",
+"head": "Studio Egret West Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31613549:60180378",
+"mention_names": [
+{
+"name": "Studio Egret West Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31608580,
+"number": "66534437",
+"head": "Elitac Systems B.V.",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31608580:66534437",
+"mention_names": [
+{
+"name": "Elitac Systems B.V.",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31622370,
+"number": "85899569",
+"head": "City Home care",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31622370:85899569",
+"mention_names": [
+{
+"name": "City Home care",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31604133,
+"number": "91653393",
+"head": "Brisca Healthcare Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31604133:91653393",
+"mention_names": [
+{
+"name": "Brisca Healthcare Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31622977,
+"number": "BR021003",
+"head": "RMP",
+"register": {
+"http": "200",
+"name": "ARTHUR J GALLAGHER NORDIC AB",
+"status": "Open",
+"previous": [],
+"source": "register page"
+},
+"case": "31622977:BR021003",
+"mention_names": [
+{
+"name": "RMP",
+"mentions": 5
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31622537,
+"number": "BR798500",
+"head": "Zurich Insurance PLC",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31622537:BR798500",
+"mention_names": [
+{
+"name": "Zurich Insurance PLC",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31596505,
+"number": "DN763115",
+"head": "Jenoptik Uk Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31596505:DN763115",
+"mention_names": [
+{
+"name": "Jenoptik Uk Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31597919,
+"number": "FCO35087",
+"head": "Marine View Lodge (Athena Healthcare - New Brighton Two- Ltd)",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31597919:FCO35087",
+"mention_names": [
+{
+"name": "Marine View Lodge (Athena Healthcare - New Brighton Two- Ltd)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31605570,
+"number": "FCO38001",
+"head": "Chubb European Group SE",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31605570:FCO38001",
+"mention_names": [
+{
+"name": "Chubb European Group SE",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31624777,
+"number": "HRB25427",
+"head": "KRÜSS GmbH",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31624777:HRB25427",
+"mention_names": [
+{
+"name": "KRÜSS GmbH",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31619948,
+"number": "HRB31229",
+"head": "TeleAlarm Europe GmbH",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31619948:HRB31229",
+"mention_names": [
+{
+"name": "TeleAlarm Europe GmbH",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31607089,
+"number": "IE210198",
+"head": "Glenman Corporation Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31607089:IE210198",
+"mention_names": [
+{
+"name": "Glenman Corporation Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31621624,
+"number": "IE521657",
+"head": "Dropbox International Unlimited Company",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31621624:IE521657",
+"mention_names": [
+{
+"name": "Dropbox International Unlimited Company",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31621873,
+"number": "IP19198R",
+"head": "Astraline",
+"register": {
+"http": "200",
+"name": "\"JOHNNIE\" JOHNSON HOUSING TRUST LIMITED",
+"status": "Converted / Closed",
+"previous": [],
+"source": "register page"
+},
+"case": "31621873:IP19198R",
+"mention_names": [
+{
+"name": "Astraline",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31596866,
+"number": "IP2744OR",
+"head": "Creative Support Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31596866:IP2744OR",
+"mention_names": [
+{
+"name": "Creative Support Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31597168,
+"number": "IP31881R",
+"head": "Jamboree Support Services",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31597168:IP31881R",
+"mention_names": [
+{
+"name": "Jamboree Support Services",
+"mentions": 2
+},
+{
+"name": "Jamboree Preserves Ltd t/a Jamboree Support Service",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31622411,
+"number": "NC030737",
+"head": "PK Murphy Construction Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31622411:NC030737",
+"mention_names": [
+{
+"name": "PK Murphy Construction Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31592388,
+"number": "NESO0012",
+"head": "NATIONAL ENERGY SYSTEM OPERATOR LIMITED",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31592388:NESO0012",
+"mention_names": [
+{
+"name": "NATIONAL ENERGY SYSTEM OPERATOR LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31593290,
+"number": "OC305937",
+"head": "Knight Frank Promise",
+"register": {
+"http": "200",
+"name": "STOUR VALLEY PERSONNEL LLP",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31593290:OC305937",
+"mention_names": [
+{
+"name": "Knight Frank Promise",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31594842,
+"number": "OC414401",
+"head": "West Suffolk Hospital NHS Foundation Trust",
+"register": {
+"http": "200",
+"name": "COMFORT LIFE DEVELOPMENT LLP",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31594842:OC414401",
+"mention_names": [
+{
+"name": "West Suffolk Hospital NHS Foundation Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31647905,
+"number": "OC423288",
+"head": "Longhurst Group Limited",
+"register": {
+"http": "200",
+"name": "DHG LG LLP",
+"status": "Dissolved",
+"previous": [
+"EVERA HOMES LLP"
+],
+"source": "register page"
+},
+"case": "31647905:OC423288",
+"mention_names": [
+{
+"name": "Longhurst Group Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31602319,
+"number": "OC444330",
+"head": "Forbes Solicitors LLP",
+"register": {
+"http": "200",
+"name": "OH WOW DIGITAL LLP",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31602319:OC444330",
+"mention_names": [
+{
+"name": "Forbes Solicitors LLP",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31611602,
+"number": "SBS10196",
+"head": "Womble Bond Dickinson (UK) LLP",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31611602:SBS10196",
+"mention_names": [
+{
+"name": "Womble Bond Dickinson (UK) LLP",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31633948,
+"number": "SC013683",
+"head": "Net Zero Technology Centre Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31633948:SC013683",
+"mention_names": [
+{
+"name": "Net Zero Technology Centre Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31608000,
+"number": "SC066629",
+"head": "McConechy's Tyre Service Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31608000:SC066629",
+"mention_names": [
+{
+"name": "McConechy's Tyre Service Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31646561,
+"number": "SC096146",
+"head": "BIP Solutions Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31646561:SC096146",
+"mention_names": [
+{
+"name": "BIP Solutions Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31648800,
+"number": "SC404047",
+"head": "The Language Room Limited",
+"register": {
+"http": "200",
+"name": "SD EXCEL LTD",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31648800:SC404047",
+"mention_names": [
+{
+"name": "The Language Room Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31613065,
+"number": "Z203348X",
+"head": "The Childcare Company",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31613065:Z203348X",
+"mention_names": [
+{
+"name": "The Childcare Company",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31538465,
+"number": "00178738",
+"head": "Purchase of 4 x New Four Wheeled Drive Utility Tractors (one with side arm flail)",
+"register": {
+"name": "RUSSELL'S (KIRBYMOORSIDE) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31538465:00178738",
+"mention_names": [
+{
+"name": "Purchase of 4 x New Four Wheeled Drive Utility Tractors (one with side arm flail)",
+"mentions": 1
+},
+{
+"name": "Russell's (Kirbymoorside) Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31570773,
+"number": "00210725",
+"head": "Maven Public Sector",
+"register": {
+"name": "AON UK LIMITED",
+"status": "Active",
+"previous": [
+"AON RISK MANAGEMENT SERVICES UK LIMITED",
+"AON LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31570773:00210725",
+"mention_names": [
+{
+"name": "Maven Public Sector",
+"mentions": 3
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31570794,
+"number": "00603152",
+"head": "Kompan Scotland LTD",
+"register": {
+"name": "WICKSTEED LEISURE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31570794:00603152",
+"mention_names": [
+{
+"name": "Kompan Scotland LTD",
+"mentions": 1
+},
+{
+"name": "Wicksteed Leisure Limited",
+"mentions": 1
+},
+{
+"name": "Wicksteed Leisure Ltd",
+"mentions": 1
+},
+{
+"name": "Wicksteed Leisure Ltd.",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31538499,
+"number": "02051987",
+"head": "CARELINE LIFESTYLES (UK) LTD",
+"register": {
+"name": "DURHAM CARE LINE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31538499:02051987",
+"mention_names": [
+{
+"name": "CARELINE LIFESTYLES (UK) LTD",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31579799,
+"number": "02610358",
+"head": "Wecare Group (Broadway Nursing and Residential Home)",
+"register": {
+"name": "FLIGHTCARE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31579799:02610358",
+"mention_names": [
+{
+"name": "Wecare Group (Broadway Nursing and Residential Home)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31537463,
+"number": "02668971",
+"head": "Community CVS",
+"register": {
+"name": "BLACKBURN WITH DARWEN COUNCIL FOR VOLUNTARY SERVICE",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31537463:02668971",
+"mention_names": [
+{
+"name": "Community CVS",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31540648,
+"number": "02711141",
+"head": "DTP Group",
+"register": {
+"name": "DESK TOP PUBLISHING MICRO SYSTEMS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31540648:02711141",
+"mention_names": [
+{
+"name": "DTP Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31538508,
+"number": "03096548",
+"head": "MMCG TOPCO HOLDINGS LTD",
+"register": {
+"name": "OHI UK MMCH LTD",
+"status": "Active",
+"previous": [
+"MARIA MALLABAND CARE HOMES LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31538508:03096548",
+"mention_names": [
+{
+"name": "MMCG TOPCO HOLDINGS LTD",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31557166,
+"number": "03659610",
+"head": "WCS Group",
+"register": {
+"name": "CLEARWATER TECHNOLOGY LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31557166:03659610",
+"mention_names": [
+{
+"name": "WCS Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31537464,
+"number": "03777037",
+"head": "PFP Thrive",
+"register": {
+"name": "PLACES FOR PEOPLE GROUP LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31537464:03777037",
+"mention_names": [
+{
+"name": "PFP Thrive",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 30932901,
+"number": "03822761",
+"head": "Houosemark Ltd",
+"register": {
+"name": "HOUSEMARK LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "30932901:03822761",
+"mention_names": [
+{
+"name": "Houosemark Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 30929470,
+"number": "03852249",
+"head": "FROG",
+"register": {
+"name": "FUTURE REGENERATION OF GRANGETOWN",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "30929470:03852249",
+"mention_names": [
+{
+"name": "FROG",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31576135,
+"number": "04404870",
+"head": "One File Ltd",
+"register": {
+"name": "HELENSLEA TZEDOKO LIMITED",
+"status": "Active",
+"previous": [
+"HELENSEA TZEDOKO LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31576135:04404870",
+"mention_names": [
+{
+"name": "One File Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31583509,
+"number": "04480792",
+"head": "Periscope Landscape & Architecture Ltd",
+"register": {
+"name": "PETER BARBER ARCHITECTS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31583509:04480792",
+"mention_names": [
+{
+"name": "Periscope Landscape & Architecture Ltd",
+"mentions": 1
+},
+{
+"name": "Public Works Group Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31577536,
+"number": "04725313",
+"head": "Huws Gray Ltd",
+"register": {
+"name": "BUILDING SUPPLIES DISTRIBUTION LIMITED",
+"status": "Active",
+"previous": [
+"GRAFTON MERCHANTING GB LIMITED",
+"BUILDBASE LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31577536:04725313",
+"mention_names": [
+{
+"name": "Grafton Merchanting GB",
+"mentions": 1
+},
+{
+"name": "Huws Gray Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31574155,
+"number": "05021588",
+"head": "TLC LIVE",
+"register": {
+"name": "LEARN SOLUTIONS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31574155:05021588",
+"mention_names": [
+{
+"name": "TLC LIVE",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31583510,
+"number": "05096844",
+"head": "Ove Arup & Partners Limited",
+"register": {
+"name": "PATEL TAYLOR ARCHITECTS LIMITED",
+"status": "Active",
+"previous": [
+"PATEL TAYLOR LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31583510:05096844",
+"mention_names": [
+{
+"name": "Ove Arup & Partners Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31538407,
+"number": "05130324",
+"head": "Universal Commercial Relocation Ltd",
+"register": {
+"name": "WJB SERVICES LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31538407:05130324",
+"mention_names": [
+{
+"name": "WJB Services Ltd",
+"mentions": 2
+},
+{
+"name": "Universal Commercial Relocation Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31583511,
+"number": "05132777",
+"head": "rg+p Living Limited",
+"register": {
+"name": "RICHARD DUDZICKI ASSOCIATES LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31583511:05132777",
+"mention_names": [
+{
+"name": "rg+p Living Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31583512,
+"number": "05282901",
+"head": "Pozzoni Architecture Ltd",
+"register": {
+"name": "PROJECT ARCHITECTS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31583512:05282901",
+"mention_names": [
+{
+"name": "Pozzoni Architecture Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31583513,
+"number": "05465374",
+"head": "Wadhal",
+"register": {
+"name": "WAUGH THISTLETON ARCHITECTS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31583513:05465374",
+"mention_names": [
+{
+"name": "Wadhal",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31588383,
+"number": "06604500",
+"head": "THOKOZANI LIMITED",
+"register": {
+"name": "PICTURES FOR THE PEOPLE LIMITED",
+"status": "Active",
+"previous": [
+"SIGNATURE PICTURES LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31588383:06604500",
+"mention_names": [
+{
+"name": "THOKOZANI LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31550584,
+"number": "06862873",
+"head": "Rape & Sexual Violence Project Birmingham",
+"register": {
+"name": "RSVP (WEST MIDLANDS) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31550584:06862873",
+"mention_names": [
+{
+"name": "Rape & Sexual Violence Project Birmingham",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31538527,
+"number": "06902590",
+"head": "Parklands Nursing Home",
+"register": {
+"name": "MALHOTRA CARE HOMES LIMITED",
+"status": "Active",
+"previous": [
+"DAV HOMES LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31538527:06902590",
+"mention_names": [
+{
+"name": "Heatherfield Care Home (Malhotra Care Homes Limited)",
+"mentions": 1
+},
+{
+"name": "Parklands Nursing Home",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31537418,
+"number": "07253549",
+"head": "Oasis Workforce Solutions",
+"register": {
+"name": "OLYMPIA TRANSPORT LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31537418:07253549",
+"mention_names": [
+{
+"name": "Oasis Workforce Solutions",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31545489,
+"number": "07657380",
+"head": "React2it Refurbishments Ltd.",
+"register": {
+"name": "REACT 2 IT (BUILDING REFURBISHMENT) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31545489:07657380",
+"mention_names": [
+{
+"name": "React2it Refurbishments Ltd.",
+"mentions": 2
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 30915495,
+"number": "08058635",
+"head": "Aspire Community Works Community Interest Company",
+"register": {
+"name": "TRIUMPH ENTERPRISES (UK) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "30915495:08058635",
+"mention_names": [
+{
+"name": "Aspire Community Works Community Interest Company",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 30914963,
+"number": "08271515",
+"head": "Bluebird Care",
+"register": {
+"name": "INSPIRING GENERATIONS LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "30914963:08271515",
+"mention_names": [
+{
+"name": "Inspiring Generations Ltd",
+"mentions": 3
+},
+{
+"name": "Bluebird Care Wakefield & Kirklees",
+"mentions": 2
+},
+{
+"name": "Inspiring Generations t/a Bluebird Care",
+"mentions": 2
+},
+{
+"name": "Bluebird Care",
+"mentions": 1
+},
+{
+"name": "Inspiring Generations Ltd t/a Bluebird Care Wakefield & Kirklees",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 16292952,
+"number": "08355246",
+"head": "Reef Cleaning Solutions",
+"register": {
+"name": "GSO LIMITED",
+"status": "Active",
+"previous": [
+"GSO HOLDINGS LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "16292952:08355246",
+"mention_names": [
+{
+"name": "GSO LIMITED",
+"mentions": 5
+},
+{
+"name": "GSO Ltd t/a Reef Cleaning Solutions",
+"mentions": 3
+},
+{
+"name": "Reef Cleaning Solutions",
+"mentions": 2
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 30933136,
+"number": "08741912",
+"head": "HMS Services",
+"register": {
+"name": "HMSA CORPORATE SERVICES (UK) LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "30933136:08741912",
+"mention_names": [
+{
+"name": "HMS Services",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31587337,
+"number": "08875375",
+"head": "The Little Wild Ones",
+"register": {
+"name": "TLWO LIMITED",
+"status": "Active",
+"previous": [
+"KEVIN FRANCIS LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31587337:08875375",
+"mention_names": [
+{
+"name": "The Little Wild Ones",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31540652,
+"number": "08905314",
+"head": "3E ASSOCIATES LTD",
+"register": {
+"name": "SWEETHAVEN COMPUTERS LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31540652:08905314",
+"mention_names": [
+{
+"name": "3E ASSOCIATES LTD",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31583525,
+"number": "09094748",
+"head": "NOOMA Studio Ltd",
+"register": {
+"name": "NORSE GROUP SERVICES LIMITED",
+"status": "Active",
+"previous": [
+"NORSE CONSULTING GROUP LIMITED",
+"NATURALLY PASSIVE LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "31583525:09094748",
+"mention_names": [
+{
+"name": "NOOMA Studio Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31583527,
+"number": "09325450",
+"head": "Scott Brownrigg Ltd",
+"register": {
+"name": "SELENCKY///PARSONS ARCHITECTS LTD",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31583527:09325450",
+"mention_names": [
+{
+"name": "Scott Brownrigg Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 30914971,
+"number": "09356873",
+"head": "Caremark Kirklees",
+"register": {
+"name": "AFFLECK CARE LIMITED",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "30914971:09356873",
+"mention_names": [
+{
+"name": "Affleck Care Ltd t/a Caremark (Kirklees)",
+"mentions": 6
+},
+{
+"name": "Affleck Care Ltd",
+"mentions": 4
+},
+{
+"name": "Caremark (Kirklees)",
+"mentions": 1
+},
+{
+"name": "Caremark Kirklees",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 31583528,
+"number": "09664511",
+"head": "tp bennett LLP",
+"register": {
+"name": "TRANSITION BY DESIGN COOPERATIVE CIC",
+"status": "Active",
+"previous": [],
+"source": "live snapshot"
+},
+"case": "31583528:09664511",
+"mention_names": [
+{
+"name": "tp bennett LLP",
+"mentions": 1
+}
+]
+},
+{
+"kind": "live-mismatch",
+"org": 16782120,
+"number": "10260164",
+"head": "Milestone Infrastructure Ltd",
+"register": {
+"name": "M GROUP (SERVICES) LIMITED",
+"status": "Active",
+"previous": [
+"M GROUP SERVICES LIMITED",
+"THOR BIDCO LIMITED"
+],
+"source": "live snapshot"
+},
+"case": "16782120:10260164",
+"mention_names": [
+{
+"name": "Milestone Infrastructure Ltd",
+"mentions": 2
+},
+{
+"name": "M Group (Services) Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30915475,
+"number": "00000273",
+"head": "H and J Martin Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30915475:00000273",
+"mention_names": [
+{
+"name": "H and J Martin Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31544414,
+"number": "00018725",
+"head": "DKM Sheetmetal",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31544414:00018725",
+"mention_names": [
+{
+"name": "DKM Sheetmetal",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30917876,
+"number": "00023437",
+"head": "Register Dynamics Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30917876:00023437",
+"mention_names": [
+{
+"name": "Register Dynamics Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31573877,
+"number": "00029639",
+"head": "Graham Gardner Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31573877:00029639",
+"mention_names": [
+{
+"name": "Graham Gardner Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31570771,
+"number": "00033034",
+"head": "Protector Insurance",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31570771:00033034",
+"mention_names": [
+{
+"name": "Protector Insurance",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31541653,
+"number": "00049204",
+"head": "J. Murphy & Sons Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31541653:00049204",
+"mention_names": [
+{
+"name": "J. Murphy & Sons Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31542681,
+"number": "00100008",
+"head": "British Telecommunications Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31542681:00100008",
+"mention_names": [
+{
+"name": "British Telecommunications Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31567644,
+"number": "00110009",
+"head": "Berkshire Healthcare NHS Foundation Trust",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31567644:00110009",
+"mention_names": [
+{
+"name": "Berkshire Healthcare NHS Foundation Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31541788,
+"number": "00116889",
+"head": "St Giles Trust",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31541788:00116889",
+"mention_names": [
+{
+"name": "St Giles Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31566894,
+"number": "00117333",
+"head": "Wirral Change",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31566894:00117333",
+"mention_names": [
+{
+"name": "Wirral Change",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31562041,
+"number": "00130031",
+"head": "County Durham and Darlington NHS Foundation Trust",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31562041:00130031",
+"mention_names": [
+{
+"name": "County Durham and Darlington NHS Foundation Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31562091,
+"number": "00130074",
+"head": "University Hospital of North Tees",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31562091:00130074",
+"mention_names": [
+{
+"name": "University Hospital of North Tees",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31589579,
+"number": "00130078",
+"head": "Northumbria Healthcare NHS Foundation Trust",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31589579:00130078",
+"mention_names": [
+{
+"name": "Northumbria Healthcare NHS Foundation Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31562085,
+"number": "00130126",
+"head": "The Newcastle upon Tyne Hospitals NHS Foundation Trust",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31562085:00130126",
+"mention_names": [
+{
+"name": "The Newcastle Upon Tyne NHS Foundation Trust",
+"mentions": 2
+},
+{
+"name": "The Newcastle upon Tyne Hospitals NHS Foundation Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31538545,
+"number": "00130166",
+"head": "South Tyneside and Sunderland NHS Foundation Trust",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31538545:00130166",
+"mention_names": [
+{
+"name": "South Tyneside and Sunderland NHS Foundation Trust",
+"mentions": 3
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31577160,
+"number": "00134225",
+"head": "Glenn Neville Massiah T/A Bear Buse",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31577160:00134225",
+"mention_names": [
+{
+"name": "Glenn Neville Massiah T/A Bear Buse",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31569874,
+"number": "00209907",
+"head": "Deloitte LLP",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31569874:00209907",
+"mention_names": [
+{
+"name": "Deloitte LLP",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31538503,
+"number": "00235440",
+"head": "ST MARYS CONVENT RESIDENTIAL HOME (THE ORDER OF GOOD AND PERPETUAL SUCCOUT)",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31538503:00235440",
+"mention_names": [
+{
+"name": "ST MARYS CONVENT RESIDENTIAL HOME (THE ORDER OF GOOD AND PERPETUAL SUCCOUT)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31561571,
+"number": "00259558",
+"head": "Staffordshire Wildlife Trust",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31561571:00259558",
+"mention_names": [
+{
+"name": "Staffordshire Wildlife Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31570404,
+"number": "00303675",
+"head": "Deloitte LLP",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31570404:00303675",
+"mention_names": [
+{
+"name": "Deloitte LLP",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30915839,
+"number": "00310082",
+"head": "Critical Healthcare Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30915839:00310082",
+"mention_names": [
+{
+"name": "Critical Healthcare Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31539147,
+"number": "00312832",
+"head": "The City and Guilds of London Institute (CGLI)",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31539147:00312832",
+"mention_names": [
+{
+"name": "The City and Guilds of London Institute",
+"mentions": 1
+},
+{
+"name": "The City and Guilds of London Institute (CGLI)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31550232,
+"number": "00313806",
+"head": "Manchester Square Partners LLP",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31550232:00313806",
+"mention_names": [
+{
+"name": "Manchester Square Partners LLP",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31569606,
+"number": "00340304",
+"head": "NICE Systems UK Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31569606:00340304",
+"mention_names": [
+{
+"name": "NICE Systems UK Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31542829,
+"number": "00390210",
+"head": "Sureserve Energy Services UK",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31542829:00390210",
+"mention_names": [
+{
+"name": "Sureserve Energy Services UK",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31572680,
+"number": "00394920",
+"head": "Pennington Choices Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31572680:00394920",
+"mention_names": [
+{
+"name": "Pennington Choices Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30916428,
+"number": "00440964",
+"head": "Frankham Consultancy Group Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30916428:00440964",
+"mention_names": [
+{
+"name": "Frankham Consultancy Group Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30974704,
+"number": "00477441",
+"head": "LinkedIn Unlimited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30974704:00477441",
+"mention_names": [
+{
+"name": "LinkedIn Ireland",
+"mentions": 1
+},
+{
+"name": "LinkedIn Unlimited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31546952,
+"number": "00479369",
+"head": "CANTERBURY CHRIST CHURCH UNIVERSITY",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31546952:00479369",
+"mention_names": [
+{
+"name": "CANTERBURY CHRIST CHURCH UNIVERSITY",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31557767,
+"number": "00503352",
+"head": "Nuance Communications Ireland Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31557767:00503352",
+"mention_names": [
+{
+"name": "Nuance Communications Ireland Limited",
+"mentions": 2
+},
+{
+"name": "Nuance Communications Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31565836,
+"number": "00512186",
+"head": "St Catherine's Hospice (Lancashire) Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31565836:00512186",
+"mention_names": [
+{
+"name": "St Catherine's Hospice (Lancashire) Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30914234,
+"number": "00521013",
+"head": "Workday Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30914234:00521013",
+"mention_names": [
+{
+"name": "Workday Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30914752,
+"number": "00539588",
+"head": "Vision Built Structures Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30914752:00539588",
+"mention_names": [
+{
+"name": "Vision Built Structures Ltd",
+"mentions": 5
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31553979,
+"number": "00576327",
+"head": "Comfort Call Limited",
+"register": {
+"http": "200",
+"name": "PROSPECT HOMES LIMITED",
+"status": "Dissolved",
+"previous": [
+"COUNTRY HOMES LIMITED"
+],
+"source": "register page"
+},
+"case": "31553979:00576327",
+"mention_names": [
+{
+"name": "Comfort Call Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31587873,
+"number": "00591315",
+"head": "AON Investments Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31587873:00591315",
+"mention_names": [
+{
+"name": "AON Investments Ltd",
+"mentions": 1
+},
+{
+"name": "Aon Investment Ltd",
+"mentions": 1
+},
+{
+"name": "Aon Investments Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31588872,
+"number": "00611946",
+"head": "Twin Services Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31588872:00611946",
+"mention_names": [
+{
+"name": "Twin Services Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31552628,
+"number": "00784592",
+"head": "Spencer Clarke Group",
+"register": {
+"http": "200",
+"name": "SOUTHSEA STRAND MOTORS LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31552628:00784592",
+"mention_names": [
+{
+"name": "Spencer Clarke Group Limited",
+"mentions": 2
+},
+{
+"name": "Spencer Clarke Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31541789,
+"number": "00801355",
+"head": "St Giles Trust",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31541789:00801355",
+"mention_names": [
+{
+"name": "St Giles Trust",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31539036,
+"number": "00803428",
+"head": "Board of Trustees of the Royal Botanic Gardens Kew",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31539036:00803428",
+"mention_names": [
+{
+"name": "Board of Trustees of the Royal Botanic Gardens Kew",
+"mentions": 19
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30917396,
+"number": "00873837",
+"head": "Dreamss",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30917396:00873837",
+"mention_names": [
+{
+"name": "Dreamss",
+"mentions": 4
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31578416,
+"number": "00916792",
+"head": "Ebsco International Inc",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31578416:00916792",
+"mention_names": [
+{
+"name": "Ebsco International Inc",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31572920,
+"number": "00931790",
+"head": "Call Out limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31572920:00931790",
+"mention_names": [
+{
+"name": "Call Out limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31560606,
+"number": "00952663",
+"head": "Hannah's Homecare Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31560606:00952663",
+"mention_names": [
+{
+"name": "Hannah's Homecare Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31536048,
+"number": "00969917",
+"head": "Terberg Matec UK Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31536048:00969917",
+"mention_names": [
+{
+"name": "Terberg Matec UK Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31573775,
+"number": "01001957",
+"head": "We Are With You",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31573775:01001957",
+"mention_names": [
+{
+"name": "We Are With You",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 30917790,
+"number": "01014226",
+"head": "NATIONAL ENERGY SYSTEM OPERATOR LIMITED",
+"register": {
+"http": "200",
+"name": "HARRINGTON BROS (SURFACING) LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "30917790:01014226",
+"mention_names": [
+{
+"name": "NATIONAL ENERGY SYSTEM OPERATOR LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31541787,
+"number": "01051260",
+"head": "Redthread",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31541787:01051260",
+"mention_names": [
+{
+"name": "Redthread",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31542297,
+"number": "01072785",
+"head": "Lifebit Biotech Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31542297:01072785",
+"mention_names": [
+{
+"name": "Lifebit Biotech Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31545436,
+"number": "01093006",
+"head": "KIDS",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31545436:01093006",
+"mention_names": [
+{
+"name": "KIDS",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31566068,
+"number": "01094905",
+"head": "Sussex Community Development Association",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31566068:01094905",
+"mention_names": [
+{
+"name": "Sussex Community Development Association",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31534578,
+"number": "01099204",
+"head": "Hartley Services Group Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31534578:01099204",
+"mention_names": [
+{
+"name": "Hartley Services Group Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31542555,
+"number": "01104478",
+"head": "​​Anne's Day LTD​",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31542555:01104478",
+"mention_names": [
+{
+"name": "​​Anne's Day LTD​",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31563428,
+"number": "01124493",
+"head": "Halton Carers Centre",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31563428:01124493",
+"mention_names": [
+{
+"name": "Halton Carers Centre",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31541427,
+"number": "01154672",
+"head": "Your  Voice in Health & Social Care",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31541427:01154672",
+"mention_names": [
+{
+"name": "Your  Voice in Health & Social Care",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31538491,
+"number": "01158481",
+"head": "ROSEMOUNT HOME",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31538491:01158481",
+"mention_names": [
+{
+"name": "ROSEMOUNT HOME",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30914089,
+"number": "01160580",
+"head": "Kirklees Visual Impairment Network t/a Outlookers",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30914089:01160580",
+"mention_names": [
+{
+"name": "Kirklees Visual Impairment Network t/a Outlookers",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30933156,
+"number": "01165788",
+"head": "Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust (CNTWFT)",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30933156:01165788",
+"mention_names": [
+{
+"name": "Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust (CNTWFT)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31545731,
+"number": "01177308",
+"head": "The Educatch Charity",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31545731:01177308",
+"mention_names": [
+{
+"name": "The Educatch Charity",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30914950,
+"number": "01256386",
+"head": "Willow Wood Care",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30914950:01256386",
+"mention_names": [
+{
+"name": "Willow Wood Care",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31577516,
+"number": "01271198",
+"head": "Larsen Consulting Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31577516:01271198",
+"mention_names": [
+{
+"name": "Larsen Consulting Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30914953,
+"number": "01403361",
+"head": "Roche Home Care Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30914953:01403361",
+"mention_names": [
+{
+"name": "Roche Home Care Ltd",
+"mentions": 2
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 30917402,
+"number": "01424074",
+"head": "HSS Homes",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "30917402:01424074",
+"mention_names": [
+{
+"name": "HSS Homes",
+"mentions": 3
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31556781,
+"number": "01643631",
+"head": "Livico Ltd",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31556781:01643631",
+"mention_names": [
+{
+"name": "Livico Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31564966,
+"number": "02213957",
+"head": "LPTC Solutions Limited",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31564966:02213957",
+"mention_names": [
+{
+"name": "LPTC Solutions Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31535771,
+"number": "02774740",
+"head": "Bright Starts Childcare Group",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31535771:02774740",
+"mention_names": [
+{
+"name": "Bright Starts Childcare Group",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 7254709,
+"number": "03222384",
+"head": "Floyd & Son",
+"register": {
+"http": "200",
+"name": "ALTERNATIVE MAINTENANCE SERVICES LTD",
+"status": "Dissolved",
+"previous": [
+"CHIGWELL MAINTENANCE SERVICES LTD",
+"CHIGWELL (LONDON) LIMITED",
+"CHIGWELL MAINTENANCE SERVICES LTD",
+"CHIGWELL (LONDON) LIMITED",
+"CHIGWELL CONSTRUCTION (LONDON) LIMITED",
+"PROPERTY ASSET HOLDINGS LIMITED",
+"CHIGWELL CONSTRUCTION (LONDON) LIMITED",
+"CHIGWELL PROPERTY ASSETS LIMITED",
+"CHIGWELL CONSTRUCTION (LONDON) LIMITED"
+],
+"source": "register page"
+},
+"case": "7254709:03222384",
+"mention_names": [
+{
+"name": "Chigwell (London) Ltd",
+"mentions": 1
+},
+{
+"name": "Chigwell London Ltd",
+"mentions": 1
+},
+{
+"name": "Floyd & Son",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31578694,
+"number": "04367133",
+"head": "University of Portsmouth Dental Academy",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31578694:04367133",
+"mention_names": [
+{
+"name": "University of Portsmouth Dental Academy",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31559961,
+"number": "04405982",
+"head": "OVERDRIVE INC.",
+"register": {
+"http": "200",
+"name": "XN FINANCIAL SERVICES (UK) LIMITED",
+"status": "Dissolved",
+"previous": [
+"XN (UK) LIMITED",
+"IBIS (753) LIMITED"
+],
+"source": "register page"
+},
+"case": "31559961:04405982",
+"mention_names": [
+{
+"name": "OVERDRIVE INC.",
+"mentions": 1
+}
+]
+},
+{
+"kind": "never-issued",
+"org": 31556679,
+"number": "04620804",
+"head": "UK INDUSTRIAL FUSION SOLUTIONS LTD",
+"register": {
+"source": "register page",
+"http": "404"
+},
+"case": "31556679:04620804",
+"mention_names": [
+{
+"name": "UK FUSION ENERGY LTD",
+"mentions": 1
+},
+{
+"name": "UK INDUSTRIAL FUSION SOLUTIONS LTD",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31562433,
+"number": "05335308",
+"head": "Unisys Ltd",
+"register": {
+"http": "200",
+"name": "JOHN SANDERCOCK LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31562433:05335308",
+"mention_names": [
+{
+"name": "Unisys Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 30914650,
+"number": "05913591",
+"head": "AON Investments Limited",
+"register": {
+"http": "200",
+"name": "FC ASSOCIATES LIMITED",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "30914650:05913591",
+"mention_names": [
+{
+"name": "AON Investments Limited",
+"mentions": 2
+},
+{
+"name": "Aon Investments Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31542557,
+"number": "06603033",
+"head": "​​​Preventx Limited​​",
+"register": {
+"http": "200",
+"name": "GOD TYPSNITT I SVERIGE LTD",
+"status": "Dissolved",
+"previous": [
+"FONTSHOP SWEDEN LTD"
+],
+"source": "register page"
+},
+"case": "31542557:06603033",
+"mention_names": [
+{
+"name": "​​​Preventx Limited​​",
+"mentions": 1
+}
+]
+},
+{
+"kind": "absent-mismatch",
+"org": 31540237,
+"number": "09717154",
+"head": "Care Angels Batley",
+"register": {
+"http": "200",
+"name": "AWESOMETECH UK LTD",
+"status": "Dissolved",
+"previous": [],
+"source": "register page"
+},
+"case": "31540237:09717154",
+"mention_names": [
+{
+"name": "Care Angels Batley",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-absent-mismatch",
+"org": 15687871,
+"number": "02330205",
+"head": "Chatham Financial",
+"earlier": {
+"verdict": "disputed:right-number",
+"confidence": "medium",
+"correct_number": "04223247",
+"rationale": "J.C. Rathbone Associates Limited (12 St James's Square, SIC financial management, dissolved 2023) is the UK treasury adviser Chatham Financial acquired in 2016, so it is a group subsidiary rather than Chatham itself. Chatham's own UK company is CHATHAM FINANCIAL EUROPE, LTD, 04223247.",
+"challenge": "CH shows J.C. Rathbone Associates came under new control on 1 Aug 2017, when J.C. Rathbone left the board. It kept filing full trading accounts through 2020 from its own office at 12 St James's Square, and in 2019 Chatham's UK executives Conly and Macdonald became its directors, while Chatham Financial Europe Ltd (04223247) sat at Tabernacle Street/Theobalds Road. So after the acquisition JCRA was probably the UK treasury-advisory company trading under the Chatham Financial brand, and a buyer could only have entered its number from the supplier's own papers, because a name search for 'Chatham Financial' never returns JCRA. The notice's date and supplier address would settle it: 2017–2021 with 12 St James's Square means JCRA's own number, and a Chatham Financial Europe address means related-company."
+},
+"case": "15687871:02330205",
+"mention_names": [
+{
+"name": "Chatham Financial",
+"mentions": 2
+}
+]
+},
+{
+"kind": "residue-absent-mismatch",
+"org": 17148628,
+"number": "02820079",
+"head": "Tudor Print and Signs",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "Tudor Print & Design Limited (Liverpool, printing SIC) shares 'Tudor Print' and the trade, but its last accounts were for 2009, it was dissolved in 2020, and CH has no company named 'Tudor Print and Signs'. The notice's date and supplier address would settle it: Liverpool and 2009 or earlier points to this company, anything else points to an unrelated business.",
+"challenge": null
+},
+"case": "17148628:02820079",
+"mention_names": [
+{
+"name": "Tudor Print and Signs",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-absent-mismatch",
+"org": 6980287,
+"number": "04179455",
+"head": "Utilitywise Corporate",
+"earlier": {
+"verdict": "disputed:right-number",
+"confidence": "high",
+"correct_number": "06361235",
+"rationale": "Clouds Environmental Consultancy Limited is an energy consultancy Utilitywise acquired; its registered office is Utilitywise's 3 & 4 Cobalt Park Way, making it a sister subsidiary. CH shows UTILITYWISE CORPORATE LIMITED is its own company, 06361235.",
+"challenge": "The reviewer's correct number, UTILITYWISE CORPORATE LIMITED 06361235 (formerly Ecoauditors, renamed Jan 2015), filed dormant accounts for every year 2014–2017. Like its twin UTILITYWISE ENTERPRISE LIMITED, it was a name-holding shell that never traded. Clouds Environmental Consultancy Ltd was already registered at Utilitywise House by 2014 and filed full trading accounts for FY2014–FY2016 before going dormant, so it was the company actually running Utilitywise's 'Corporate' division. The notice's 'Utilitywise Corporate' is therefore best read as the brand Clouds traded under, and the number 04179455 as the org's own."
+},
+"case": "6980287:04179455",
+"mention_names": [
+{
+"name": "Utilitywise Corporate",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-absent-mismatch",
+"org": 10218516,
+"number": "05165301",
+"head": "Cedar Court",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "Four Seasons Health Care Limited is a care-home group holding company, so if 'Cedar Court' is one of its homes this is a parent-for-site related-company case. 'Cedar Court' is also a Yorkshire hotel brand, which would make it a wrong number; the notice's subject (care placement versus venue) and address would settle it.",
+"challenge": null
+},
+"case": "10218516:05165301",
+"mention_names": [
+{
+"name": "Cedar Court",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-absent-mismatch",
+"org": 12015029,
+"number": "06581276",
+"head": "Cartesian Limited",
+"earlier": {
+"verdict": "disputed:related-company",
+"confidence": "high",
+"correct_number": "03230513",
+"rationale": "06581276 is FARNCOMBE ENGINEERING SERVICES LTD (formerly Farncombe Strategy Limited), which is unrelated to Cartesian. CARTESIAN LIMITED is registered as 03230513 (Shoreditch High Street, London).",
+"challenge": "The claim that the two are unrelated does not hold. FARNCOMBE ENGINEERING SERVICES LTD (formerly Farncombe Strategy) has Cartesian, Inc. as its 75%+ PSC, uses Cartesian Limited's registered office (Second Floor, 168 Shoreditch High Street) and shares its officers (Kuby, Myers, Ranaghan, Serafin, Cromwell, Woodward), which makes it a sister company in the Cartesian group. CARTESIAN LIMITED itself is 03230513, and the correct number is 03230513."
+},
+"case": "12015029:06581276",
+"mention_names": [
+{
+"name": "Cartesian Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-absent-mismatch",
+"org": 16732917,
+"number": "08482877",
+"head": "UL Global Pharma",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "08482877 is PILATUS PHARMA LIMITED, a wholesale company now owned by the Bøgh-Sørensen family. Its former director and PSC Paul Smith later ran UL PHARMA LIMITED 11751227, so there is some link, but no register entity is called 'UL Global Pharma'. The notice's supplier address or date would settle whether it means Pilatus (Northwood or Liverpool address), UL Pharma Ltd, or a foreign firm.",
+"challenge": null
+},
+"case": "16732917:08482877",
+"mention_names": [
+{
+"name": "UL Global Pharma",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-absent-mismatch",
+"org": 12009898,
+"number": "10918555",
+"head": "Abbott International Ltd",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "10918555 is ABBOT INTERNATIONAL LIMITED (director Samantha Abbot, EC1V 9BD, dissolved January 2019), which could be a spelling variant. But there is also an exact-name ABBOTT INTERNATIONAL LTD, 11138016 (a textiles agent in Oakham, dissolved April 2019), and the Abbott healthcare group is a third possibility. The notice's supplier address and date, checked against the two registered offices, would settle it.",
+"challenge": null
+},
+"case": "12009898:10918555",
+"mention_names": [
+{
+"name": "Abbott International Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-absent-mismatch",
+"org": 30929458,
+"number": "13840197",
+"head": "Coast 2 Coast Cars",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "13840197 is COAST 2 COAST TAXIS LTD, a Middlesbrough taxi operator (dissolved 2025), which could plausibly trade as 'Coast 2 Coast Cars'. But COAST 2 COAST CARS LIMITED (04344023, a Halifax new-car dealer) carries the exact name, so the notice's buyer and service settle it: taxi or transport in Teesside means 13840197, vehicle supply means 04344023.",
+"challenge": null
+},
+"case": "30929458:13840197",
+"mention_names": [
+{
+"name": "Coast 2 Coast Cars",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-absent-mismatch",
+"org": 17732992,
+"number": "NI616844",
+"head": "Fathom",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "NI616844 is DUNADRY ENTERPRISES LIMITED, a Belfast professional-services company (19 Arthur Street; dissolved Jan 2026) bought in 2021 by LOW&BEHOLD HOLDINGS, and nothing on the register names 'Fathom'. A notice supplier address at 19 Arthur Street Belfast, or a website or letterhead showing Dunadry Enterprises trading as Fathom, would make it right-number; otherwise it is an unrelated number.",
+"challenge": null
+},
+"case": "17732992:NI616844",
+"mention_names": [
+{
+"name": "Fathom",
+"mentions": 4
+}
+]
+},
+{
+"kind": "residue-absent-mismatch",
+"org": 15785949,
+"number": "OC300843",
+"head": "Grosvenor Film",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "OC300843 is GROSVENOR PARK 2002 FILM LLP, a dissolved film-finance investment partnership, which is an unlikely public-procurement counterparty for an org called 'Grosvenor Film'. The only similarly named companies are the dissolved GROSVENOR FILMS PLC (04877825) and FOX GROSVENOR FILMS LTD (11096469), so the notice's supplier address and description are needed to identify the entity.",
+"challenge": null
+},
+"case": "15785949:OC300843",
+"mention_names": [
+{
+"name": "Grosvenor Film",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31572648,
+"number": "00367257",
+"head": "1000000",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "The org's only name is '1000000', which looks like a value that landed in the name field, so nothing ties it to BENNETT SAFETYWEAR LIMITED or rules it out. A PPE supplier in a notice is plausible; reading the source notice's supplier block would settle whether 00367257 was published beside Bennett Safetywear.",
+"challenge": null
+},
+"case": "31572648:00367257",
+"mention_names": [
+{
+"name": "1000000",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 7417594,
+"number": "00422148",
+"head": "Motors and Rewinds",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "PARK, GATE AND COMPANY LIMITED is a Carlisle firm registered for electrical installation and engineering, so motor rewinding is plausible work for it. However, 'Motors and Rewinds' is a generic phrase (perhaps a lot description) that does not name it; the notice's supplier block, or the firm's own trading name, would settle it.",
+"challenge": null
+},
+"case": "7417594:00422148",
+"mention_names": [
+{
+"name": "Motors and Rewinds",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31535203,
+"number": "03628053",
+"head": "Westmorland and Furness Council",
+"earlier": {
+"verdict": "disputed:related-company",
+"confidence": "high",
+"correct_number": null,
+"rationale": "Westmorland and Furness Council is a local authority with no company number. 03628053 is COURTS NOMINEES LTD, an unrelated company, so this is a statutory body under a random company's number.",
+"challenge": "03628053 COURTS NOMINEES LTD is not a random company. It is a dormant nominee company whose registered PSC since 1 April 2023 is Westmorland & Furness Council, and before that was Cumbria County Council, whose HQ was 'The Courts', Carlisle, hence the name. Its registered office is the pension fund's finance team at Kingmoor, Carlisle. So this is a council-owned subsidiary used for the council itself (related-company), and the council has no company number of its own."
+},
+"case": "31535203:03628053",
+"mention_names": [
+{
+"name": "Westmorland and Furness Council",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31587465,
+"number": "04332326",
+"head": "Thinc",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "The number is DIAZONE COMPUTER SERVICES LIMITED, an IT consultancy in Sale owned by Amplify Technology Group, and none of its names relate to 'Thinc'. Unrelated THINC LIMITED (05000663) and THINC GROUP LIMITED (03020619) also exist; the notice's supplier address, or evidence that Diazone/Amplify trades as 'Thinc', would settle it.",
+"challenge": null
+},
+"case": "31587465:04332326",
+"mention_names": [
+{
+"name": "Thinc",
+"mentions": 2
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 17091264,
+"number": "04938457",
+"head": "Engie Ltd",
+"earlier": {
+"verdict": "disputed:related-company",
+"confidence": "high",
+"correct_number": null,
+"rationale": "04938457 is C3 RESOURCES LTD, which has no previous names and no link to the ENGIE group. The notice's bare 'Engie Ltd' could be any of several UK ENGIE entities, and the only ENGIE LTD (14678274) is an unrelated dissolved shell, so the right number cannot be told from the name alone.",
+"challenge": "The reviewer's 'no link to ENGIE' is refuted by the register. C3 RESOURCES LTD was renamed TRACTEBEL UK ENGINEERING LIMITED on 14 Sep 2026, after the snapshot. Its PSC was Engie Services Holding UK Limited (08155362) from 2016 to 2022, and since then it has been Red Group Holdings Limited (10211704), which is owned by Engie Impact Belgium SA. So this is an ENGIE group subsidiary under a notice that names the group ('Engie Ltd'); which ENGIE entity is meant cannot be told from the name, so there is no correct number (null)."
+},
+"case": "17091264:04938457",
+"mention_names": [
+{
+"name": "Engie Ltd",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31536464,
+"number": "05008552",
+"head": "OPAL",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "05008552 is ROAD TRAFFIC SOLUTIONS LIMITED (Scunthorpe, equipment rental), and nothing on the register ties it to the bare name 'OPAL'. The notice's context would settle it: whether OPAL is an RTS product, or another body such as the police Opal intelligence unit put under the supplier's number.",
+"challenge": null
+},
+"case": "31536464:05008552",
+"mention_names": [
+{
+"name": "OPAL",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 15474918,
+"number": "05276699",
+"head": "The Chestnuts",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "05276699 is CEDAR COURT CARE LTD., a Leicester residential care company, and 'The Chestnuts' sounds like a care-home name, but nothing on the register links the two. The CQC provider of the 'The Chestnuts' location in the notice would settle it: if Cedar Court Care runs it, this is a site under its operator (related-company); if not, it is wrong-number.",
+"challenge": null
+},
+"case": "15474918:05276699",
+"mention_names": [
+{
+"name": "The Chestnuts",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 11440753,
+"number": "05999412",
+"head": "TGS",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "05999412 is Smart Desk Systems Limited (IT services, 14 Old Queen Street), owned by TGL Services (UK) Ltd and in turn by Intelicrypt Tactical Solutions; none of these reads as 'TGS' except loosely as 'TGL Services'. The notice's supplier address, or a TGS brand on Smart Desk's or TGL's website, would settle it.",
+"challenge": null
+},
+"case": "11440753:05999412",
+"mention_names": [
+{
+"name": "TGS",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 10823871,
+"number": "06609295",
+"head": "Eden Futures",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "06609295 is Assisted Living South West Ltd (in liquidation), owned through Assisted Living South West Holdings by Rehability UK Community Ltd; its directors are Rehability people with no visible link to the Newark 'Eden Futures' companies (e.g. Eden Futures Contracting Services 03984126). Eight mentions carry this number, so it may have traded as Eden Futures before a business transfer; the CQC provider record for the Eden Futures services, or the notices' supplier address (Tewkesbury vs Newark), would settle it.",
+"challenge": null
+},
+"case": "10823871:06609295",
+"mention_names": [
+{
+"name": "Eden Futures",
+"mentions": 8
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31562066,
+"number": "06637307",
+"head": "Sonex3 Limited",
+"earlier": {
+"verdict": "disputed:related-company",
+"confidence": "high",
+"correct_number": "08839295",
+"rationale": "06637307 is Lantern Debt Recovery Services Limited (formerly Motormile Finance UK), an unrelated company. Companies House lists Sonex3 Ltd as 08839295 (Llanelli).",
+"challenge": "The two companies are not unrelated. Sonex3 Ltd (08839295, Llanelli) and Lantern Debt Recovery Services Limited (06637307, formerly Motormile Finance UK) both name Lantern Group Holdings Limited (13579986) as their active controlling PSC. The number is therefore a sister company under the same parent, and the correct number is 08839295."
+},
+"case": "31562066:06637307",
+"mention_names": [
+{
+"name": "Sonex3 Limited",
+"mentions": 2
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31588623,
+"number": "07109428",
+"head": "Sparkminds",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "07109428 is TWO EARS ONE MOUTH LTD, a Warwick market-research company, and nothing on its register pages links it to 'Sparkminds'. The only Sparkminds-like companies are SPARK MINDS LIMITED 12139844 (dissolved 2025) and SPARK MINDS CONSULTING LTD 17066982 (set up 2026). Settle it with the notice's supplier address, or by checking whether Sparkminds is a research-panel brand of Two Ears One Mouth.",
+"challenge": null
+},
+"case": "31588623:07109428",
+"mention_names": [
+{
+"name": "Sparkminds",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 15322628,
+"number": "07236489",
+"head": "Magna-IM",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "07236489 is MHP INSTALLATION & MAINTENANCE LIMITED, in liquidation, with no previous names. Its officers and PSCs (Lockyer, Kmack Property Services, Steve Walker) show no 'Magna' link, and a search finds no Magna installation company. The '-IM' in 'Magna-IM' may stand for 'Installation & Maintenance', but only the notice's supplier address or a trading-name filing would settle it.",
+"challenge": null
+},
+"case": "15322628:07236489",
+"mention_names": [
+{
+"name": "Magna-IM",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 14108033,
+"number": "08123840",
+"head": "Podium UK",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "08123840 is CLEAR PROFILING LTD (Nigel and Magdalena Guenole, SIC 74909), and its register pages show no link to 'Podium UK'. PODIUMUK LTD 12758494 (Northampton) is a live name match. The notice's supplier address, or a Podium brand tied to Clear Profiling, would decide between wrong-number and right-number.",
+"challenge": null
+},
+"case": "14108033:08123840",
+"mention_names": [
+{
+"name": "Podium UK",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31577762,
+"number": "09329355",
+"head": "Tarshish",
+"earlier": {
+"verdict": "disputed:unclear",
+"confidence": "medium",
+"correct_number": null,
+"rationale": "BCC NORTH LTD is a Wood Green property/head-office company owned by the Yavuz family, and nothing on its register page links it to 'Tarshish'. Several unrelated Tarshish companies exist (e.g. TARSHISH LTD 10754332, Salford), and the notice's address would be needed to pick the right one.",
+"challenge": "No Tarshish company's number is a near-miss of 09329355 (TARSHISH LTD 10754332, TARSHISH PROPERTIES 11777980, TARSHISH TRADING 10279221 and the others are far off), so a typo does not explain the number. BCC NORTH LTD is a Haringey head-office company whose Yavuz officers run food businesses (Crazy Cook, Yavuzlar Supermarket, 261WGR, BOS Hackney), so a restaurant trading name 'Tarshish' cannot be ruled out: a supplier address in N22/N8 in the notice would make it right-number, and one elsewhere would make it wrong-number."
+},
+"case": "31577762:09329355",
+"mention_names": [
+{
+"name": "Tarshish",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31572239,
+"number": "09652306",
+"head": "Conflux Events",
+"earlier": {
+"verdict": "disputed:right-number",
+"confidence": "high",
+"correct_number": "10582746",
+"rationale": "PROPERTY MANAGEMENT AND EVENT SAFETY LIMITED and CONFLUX EVENTS LTD. share 16 Brunswick Road, Coventry and the same PSC, Harry Cook, so they are sister companies. The named organization has its own number, 10582746.",
+"challenge": "CONFLUX EVENTS LTD. 10582746 has filed dormant accounts for every year since incorporation (January 2018 through January 2025), so it has never traded and cannot be the contracting party. Its only PSC, Harry Cook, trades from the same 16 Brunswick Road, Coventry address through PROPERTY MANAGEMENT AND EVENT SAFETY LIMITED 09652306 (event-support SIC 82990, micro accounts), so 'Conflux Events' is that company's trading name and the recorded number is the org's own."
+},
+"case": "31572239:09652306",
+"mention_names": [
+{
+"name": "Conflux Events",
+"mentions": 1
+},
+{
+"name": "Property Management and Event Safety Limited (t/a Conflux Events)",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 30916725,
+"number": "10632568",
+"head": "STEM RETURNERS",
+"earlier": {
+"verdict": "disputed:right-number",
+"confidence": "medium",
+"correct_number": "14042589",
+"rationale": "MARINE PEOPLE LIMITED shares its Cardiff address and its director Natalie Desty with STEM RETURNERS LIMITED 14042589, so they are sister companies. Since 2022 the named brand has its own company; if the notices predate April 2022, Marine People may have traded as STEM Returners, which would make this right-number.",
+"challenge": "STEM RETURNERS LIMITED 14042589 has filed dormant accounts every year since it was incorporated in April 2022 (to March 2023, March 2024, December 2024 and December 2025), so the brand has not traded through its own company. The trading entity at the same Cardiff address, with the same founder-director Natalie Desty, is MARINE PEOPLE LIMITED 10632568 (small-company accounts), so 'STEM RETURNERS' is Marine People's trading name whatever the notice date."
+},
+"case": "30916725:10632568",
+"mention_names": [
+{
+"name": "STEM RETURNERS",
+"mentions": 2
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31556546,
+"number": "11089520",
+"head": "SANDHURST SOLICITORS",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "11089520 is LEGAL & COMMERCIAL CONSULTANCY LTD, a Leeds management consultancy with one director (Abdul Nasser Hussain). No Companies House company is called Sandhurst Solicitors, so the evidence cannot show whether it is this firm's trading name. The SRA register entry for Sandhurst Solicitors, which names the legal entity behind it, would settle it.",
+"challenge": null
+},
+"case": "31556546:11089520",
+"mention_names": [
+{
+"name": "SANDHURST SOLICITORS",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 12754925,
+"number": "11279240",
+"head": "Haileybury JV",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "11279240 is STANLEY LOGISTICS LTD (London Colney, business support), controlled by the Polak family. It shares no name or officer with any Haileybury company, and a JV usually has no company number of its own. The notice's supplier address, or knowing who the members of the Haileybury JV are, would settle whether Stanley Logistics is one of them or a stray number.",
+"challenge": null
+},
+"case": "12754925:11279240",
+"mention_names": [
+{
+"name": "Haileybury JV",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31590116,
+"number": "11570944",
+"head": "Hi-Flyers Homecare",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "11570944 is EXECUTIVE CONNECT LIMITED (Preston, business support, directors Shukla). No Companies House company is called Hi-Flyers Homecare, and the only Preston HI-FLYERS LIMITED (08013623) was a retail shop with different officers. The CQC registration for Hi-Flyers Homecare, which names its provider company, would settle it.",
+"challenge": null
+},
+"case": "31590116:11570944",
+"mention_names": [
+{
+"name": "Executive Connect Limited",
+"mentions": 1
+},
+{
+"name": "Hi-Flyers Homecare",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31555265,
+"number": "13058188",
+"head": "Brogdale CIC T/A Vibe Community Limited",
+"earlier": {
+"verdict": "disputed:unclear",
+"confidence": "medium",
+"correct_number": "07181187",
+"rationale": "The notice names BROGDALE CIC as the legal entity trading as Vibe Community Limited, and Brogdale CIC is its own company, 07181187. The number belongs to VIBE COMMUNITY LIMITED (13058188), a separate sister company with the identical board (Avenell, Bicker, the Lewises, Lady Nelson, O'Neill).",
+"challenge": "The mention names two legal entities, and the number is the exact register name of one of them. VIBE COMMUNITY LIMITED (13058188) is not owned by Brogdale CIC (it has a no-PSC statement) and shares its board and Maidstone address, while BROGDALE CIC (07181187) has no previous names. Since 'T/A ... Limited' is an internally confused designation, nothing shows the supplier's number is wrong for the Vibe entity it names, and the award document or contract naming the contracting party would settle whether 13058188 or 07181187 is right."
+},
+"case": "31555265:13058188",
+"mention_names": [
+{
+"name": "Brogdale CIC T/A Vibe Community Limited",
+"mentions": 1
+},
+{
+"name": "VIBE COMMUNITY LIMITED",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 30972128,
+"number": "13135153",
+"head": "Sureserve Compliance Electrical Limited",
+"earlier": {
+"verdict": "disputed:right-number",
+"confidence": "medium",
+"correct_number": "01830283",
+"rationale": "13135153 is RAMP AND MOBILITY SOLUTIONS LTD. That is correct for the one mention with that name, but this org is a mismerge: its head, SURESERVE COMPLIANCE ELECTRICAL LIMITED, is its own company 01830283 with no officer overlap. The Sureserve mention should be split off to 01830283, leaving the Ramp mention on this number.",
+"challenge": "One of the org's two mentions, 'RAMP AND MOBILITY SOLUTIONS LTD', is exactly the register name of 13135153 (Lowestoft, owned by Andrew Sutherland and Marie Sutherland-Binks). The number is therefore the org's own, and the head is just the first-seen election of a mismerged mention: SURESERVE COMPLIANCE ELECTRICAL LIMITED is 01830283 (PSC Sureserve Compliance Electrical Holdings), with no ownership or officer link to Ramp. The fix is to split the one Sureserve mention off to 01830283, not to re-number this org, which would carry the Ramp mention to the wrong company."
+},
+"case": "30972128:13135153",
+"mention_names": [
+{
+"name": "RAMP AND MOBILITY SOLUTIONS LTD",
+"mentions": 1
+},
+{
+"name": "Sureserve Compliance Electrical Limited",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31540427,
+"number": "13559397",
+"head": "1423500",
+"earlier": {
+"verdict": "unclear",
+"confidence": "medium",
+"correct_number": null,
+"rationale": "The org's only name is the bare number '1423500', which is not a company number (01423500 returns 404), so there is no name to compare with IASPIRE CRISIS / STEP DOWN BEDS LTD (formerly Kharpal Care). A similar case in this batch ('2757224' beside TRF HEALTHCARE LTD) suggests the numeral is some other supplier ID and the company number may be genuine, but only the notice's supplier name and address block can settle it.",
+"challenge": null
+},
+"case": "31540427:13559397",
+"mention_names": [
+{
+"name": "1423500",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 14308569,
+"number": "NI040916",
+"head": "Barclay Communications",
+"earlier": {
+"verdict": "disputed:unclear",
+"confidence": "medium",
+"correct_number": "NI635061",
+"rationale": "FONEZONE TELECOMMUNICATIONS LIMITED shares its director (John Britton Megahey) and its Grove House, 145-149 Donegall Pass, Belfast address with BARCLAY COMMUNICATIONS LTD NI635061. That exact-name company is the likely supplier, and Fonezone is a sister company.",
+"challenge": "The name history undercuts the reviewer's correct number. NI635061 was WORKPAL LIMITED until 2021 and TUSKAR CONSULTANCY LTD until 18 Aug 2025, and only then became BARCLAY COMMUNICATIONS LTD. The name had earlier sat on NI053702 (2005-2015, now WORKPAL LIMITED), and BARCLAY COMMUNICATIONS GROUP LIMITED NI695021 dates only from 2023. So between 2015 and 2023 no company was called Barclay Communications, and the Megahey group traded under that name through one of its companies. FONEZONE TELECOMMUNICATIONS LIMITED (NI040916) is that group's wireless-telecoms company, at Grove House with John Megahey as director, and it is the number the notice gives, so it may well be the trading entity (right-number). The notice's date and the contracting entity it names would settle this; if the notice is from after Aug 2025, NI635061 is the better number."
+},
+"case": "14308569:NI040916",
+"mention_names": [
+{
+"name": "Barclay Communications",
+"mentions": 1
+}
+]
+},
+{
+"kind": "residue-live-mismatch",
+"org": 31539290,
+"number": "NP000219",
+"head": "Skilled NI",
+"earlier": {
+"verdict": "unclear",
+"confidence": "low",
+"correct_number": null,
+"rationale": "NP000219 is a Northern Ireland registered society, BELFAST CENTRAL TRAINING LIMITED, and Companies House shows no 'Skilled NI' company. A society number is rarely entered by accident, which hints that Skilled NI is BCT's trading name. The society's FCA Mutuals Register entry or its own site showing the Skilled NI brand would settle it.",
+"challenge": null
+},
+"case": "31539290:NP000219",
+"mention_names": [
+{
+"name": "Skilled NI",
+"mentions": 3
+}
+]
+}
+]
