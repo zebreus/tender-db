@@ -15401,6 +15401,56 @@ impl Db {
         Ok(ids)
     }
 
+    /// Issue 510's `refold-void-names` walk: one window of `organizations` by id (after
+    /// `after`, at most `limit` rows), keeping the rows whose head name `matches` — the
+    /// caller injects `partyname::not_a_name(..) == VoidLot`, the SAME predicate the fold
+    /// applies, so the store holds no language. Returns the matches as
+    /// `(id, name, identifier)` and the last id read (`None` once the walk is past the
+    /// end). A primary-key range read on a reader connection.
+    pub async fn orgs_named_window(
+        &self,
+        after: i64,
+        limit: i64,
+        matches: fn(&str) -> bool,
+    ) -> turso::Result<(Vec<(i64, String, Option<String>)>, Option<i64>)> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT id, name, identifier FROM organizations WHERE id > ? ORDER BY id LIMIT ?",
+                (Value::Integer(after), Value::Integer(limit)),
+            )
+            .await?;
+        let (mut found, mut last) = (Vec::new(), None);
+        while let Some(row) = rows.next().await? {
+            let id = int(&row, 0);
+            last = Some(id);
+            if let Some(name) = opt_text_of(&row, 1)
+                && matches(&name)
+            {
+                found.push((id, name, opt_text_of(&row, 2)));
+            }
+        }
+        Ok((found, last))
+    }
+
+    /// The `(organization, notice)` of every recorded mention of `orgs`, through
+    /// `organization_mentions_org` (issue 510's cohort).
+    pub async fn mention_notices_of_orgs(&self, orgs: &[i64]) -> turso::Result<Vec<(i64, i64)>> {
+        let conn = self.reader().await?;
+        let mut out = Vec::new();
+        for chunk in orgs.chunks(IN_CHUNK) {
+            let sql = format!(
+                "SELECT organization_id, notice_id FROM organization_mentions WHERE organization_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, chunk.iter().map(|id| Value::Integer(*id)).collect::<Vec<_>>()).await?;
+            while let Some(row) = rows.next().await? {
+                out.push((int(&row, 0), int(&row, 1)));
+            }
+        }
+        Ok(out)
+    }
+
     /// Issue 510: retire the recorded mentions of void-lot parties — `keys` are the
     /// `(notice, section)` of parties whose every published name says the lot was not
     /// awarded (`partyname::not_a_name`, decided in ingest; the store holds no language).

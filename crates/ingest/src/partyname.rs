@@ -137,6 +137,12 @@ pub fn not_a_name(name: &str) -> Option<NotAName> {
     None
 }
 
+/// Whether `name` says the lot was not awarded ([`NotAName::VoidLot`]) — the fold's rule,
+/// as a plain predicate for injection (issue 510's `refold-void-names` org walk).
+pub fn is_void_lot(name: &str) -> bool {
+    not_a_name(name) == Some(NotAName::VoidLot)
+}
+
 /// Whether a folded void phrase goes on to say the lot was awarded after all: an
 /// `attribué` form not right after `non` / `pas` / `sans`, or `avec la société`.
 fn award_clause(folded: &str) -> bool {

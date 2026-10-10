@@ -567,6 +567,12 @@ enum Spec {
     /// so the next incremental fold re-derives exactly those. Dry (the default) counts and
     /// stores the cohort as the `buyer-role-refold` report.
     RefoldBuyerRoles { dry_run: bool },
+    /// Issue 510: find every organization whose head name says the lot was not awarded
+    /// (`ingest::partyname::is_void_lot`, the fold's own rule) and the notices that
+    /// mention one; a wet run (which needs `expect`, the dry run's notice count) re-queues
+    /// those notices with their Tenders stamped epoch-stale, so the next incremental fold
+    /// retires the mentions. Dry (the default) counts and stores `void-names-refold`.
+    RefoldVoidNames { dry_run: bool, expect: Option<u64> },
     /// Issue 443 step 3: the sweep a fold queues after it re-bound mentions
     /// (every re-bind can empty the row it left). It counts, then sweeps in
     /// the same job when the count is at most `cap`; above it (an era-scale
@@ -2086,6 +2092,34 @@ impl Supervisor {
                 let params = if dry_run { "refold-buyer-roles dry-run" } else { "refold-buyer-roles" }.to_owned();
                 Ok(vec![self.push("refold-buyer-roles", params, Spec::RefoldBuyerRoles { dry_run }).await])
             }
+            // Issue 510: dry unless asked; a wet run needs `expect` (the dry run's notice
+            // count) and is paired with the fold that retires the mentions.
+            "refold-void-names" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                if !dry_run && req.expect.is_none() {
+                    return Err("refold-void-names wet needs `expect` — the dry run's notice count".into());
+                }
+                if dry_run {
+                    return Ok(vec![
+                        self.push(
+                            "refold-void-names",
+                            "refold-void-names dry-run".into(),
+                            Spec::RefoldVoidNames { dry_run, expect: req.expect },
+                        )
+                        .await,
+                    ]);
+                }
+                Ok(vec![
+                    self.push(
+                        "refold-void-names",
+                        format!("refold-void-names expect {}", req.expect.unwrap_or(0)),
+                        Spec::RefoldVoidNames { dry_run, expect: req.expect },
+                    )
+                    .await,
+                    self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
+                        .await,
+                ])
+            }
             // Issue 259 landing: repair the stale nested-org mention layer.
             // Deletes org rows and emits change events, so it asks to be meant:
             // `dry_run` defaults to TRUE (the data-quality convention — a
@@ -2990,6 +3024,10 @@ fn buyer_role_census_summary(r: &ingest::project::role_census::BuyerRoleCensus) 
 /// the buyer mentions it drops and the parties it promotes) and the counts.
 const BUYER_ROLE_REFOLD_REPORT: &str = "buyer-role-refold";
 
+/// Issue 510: the report `refold-void-names` stores — the counts, the identifier-bearing
+/// orgs and the top orgs by mentions.
+const VOID_NAMES_REFOLD_REPORT: &str = "void-names-refold";
+
 /// The hub Tender ids of a stored `procedure-key-census` report body (issue 482 unit 2).
 fn hub_tender_ids(body: &str) -> Result<Vec<i64>, String> {
     let report: serde_json::Value = serde_json::from_str(body).map_err(|e| format!("census report: {e}"))?;
@@ -3215,6 +3253,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 483 unit 2: read between mention strides; a stopped run stores no report (a
     // wet run's finished strides stay re-queued, and a re-run finds them so).
     "refold-buyer-roles",
+    // Issue 510: read between organization windows; a stop writes nothing (the wet
+    // re-queue starts only after the whole walk) and stores no report.
+    "refold-void-names",
     // Issue 429: read between tables; a stop still refreshes the readers.
     "analyze",
     // Issue 477 unit 3: read before every by-id request; every answer is already in
@@ -4709,6 +4750,107 @@ impl Supervisor {
         ))
     }
 
+    /// Issue 510's `refold-void-names`, its own fn through `off_frame` (issue 467). Walks
+    /// `organizations` by id window with the fold's own predicate
+    /// (`ingest::partyname::is_void_lot`, never SQL `LIKE`), then reads each match's
+    /// mention notices through `organization_mentions_org`. Dry counts; wet holds the
+    /// notice count to `expect` (aborting, with nothing written, when it is above it by
+    /// more than a quarter: a predicate change caught before it re-queues the corpus),
+    /// then re-queues the notices and stamps their Tenders epoch-stale in chunks (the
+    /// issue-179 pair), for the paired fold to retire the mentions. Stoppable between
+    /// windows; a stopped run writes nothing and stores no report. A finished run stores
+    /// `void-names-refold`.
+    async fn run_refold_void_names(&self, job: &Job, dry_run: bool, expect: Option<u64>) -> Result<String, String> {
+        const WINDOW: i64 = 20_000;
+        let mode = if dry_run { " DRY RUN — nothing written" } else { "" };
+        let mut orgs: Vec<(i64, String, Option<String>)> = Vec::new();
+        let (mut after, mut walked) = (0i64, 0u64);
+        loop {
+            if self.cancelled(job.id) {
+                return Ok(format!(
+                    "refold-void-names (issue 510){mode}: STOPPED by cancel at organization id {after} — \
+                     nothing written, no report stored"
+                ));
+            }
+            let (found, last) = Box::pin(self.db.orgs_named_window(after, WINDOW, ingest::partyname::is_void_lot))
+                .await
+                .map_err(|e| e.to_string())?;
+            orgs.extend(found);
+            let Some(last) = last else { break };
+            walked += WINDOW as u64;
+            after = last;
+            self.set_phase(
+                "counting",
+                Some(walked),
+                None,
+                format!("organization id {after}: {} void-lot org(s) so far", orgs.len()),
+            );
+        }
+        let ids: Vec<i64> = orgs.iter().map(|(id, _, _)| *id).collect();
+        let pairs = Box::pin(self.db.mention_notices_of_orgs(&ids)).await.map_err(|e| e.to_string())?;
+        let mut per_org: std::collections::HashMap<i64, u64> = std::collections::HashMap::new();
+        for (org, _) in &pairs {
+            *per_org.entry(*org).or_default() += 1;
+        }
+        let mut notices: Vec<i64> = pairs.iter().map(|(_, n)| *n).collect();
+        notices.sort_unstable();
+        notices.dedup();
+        let identified: Vec<serde_json::Value> = orgs
+            .iter()
+            .filter(|(_, _, identifier)| identifier.is_some())
+            .map(|(id, name, identifier)| serde_json::json!({ "org": id, "name": name, "identifier": identifier }))
+            .collect();
+        let mut top: Vec<(i64, &str, u64)> =
+            orgs.iter().map(|(id, name, _)| (*id, name.as_str(), per_org.get(id).copied().unwrap_or(0))).collect();
+        top.sort_by(|a, b| b.2.cmp(&a.2).then(a.0.cmp(&b.0)));
+        top.truncate(20);
+        let found = notices.len() as u64;
+        let (mut requeued, mut stamped) = (0u64, 0u64);
+        if !dry_run {
+            let expect = expect.ok_or("refold-void-names wet needs `expect`")?;
+            if found > expect.saturating_add(expect / 4) {
+                return Err(format!(
+                    "refold-void-names aborted: {found} notices mention a void-lot org, expected ~{expect} — \
+                     re-run dry and read it (nothing was written)"
+                ));
+            }
+            for chunk in notices.chunks(1_000) {
+                requeued += Box::pin(self.db.unmark_projected_by_ids(chunk)).await.map_err(|e| e.to_string())?;
+                stamped += Box::pin(self.db.stamp_stale_for_notices(chunk)).await.map_err(|e| e.to_string())?;
+                self.set_phase(
+                    "re-queueing",
+                    Some(requeued),
+                    Some(found),
+                    format!("re-queued {requeued} of {found} notice(s), stamped {stamped} tender(s)"),
+                );
+            }
+        }
+        let body = serde_json::json!({
+            "dry_run": dry_run,
+            "orgs": orgs.len(),
+            "mentions": pairs.len(),
+            "notices": found,
+            "requeued": requeued,
+            "stamped": stamped,
+            "identified": identified,
+            "top": top.iter().map(|(id, name, n)| serde_json::json!({ "org": id, "name": name, "mentions": n })).collect::<Vec<_>>(),
+        });
+        self.db
+            .put_report(VOID_NAMES_REFOLD_REPORT, &body.to_string(), store::now_unix())
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(format!(
+            "refold-void-names (issue 510){mode}: {} void-lot org(s) ({} with an identifier), {} mention(s) on {found} \
+             notice(s); {} {}, stamped {stamped} tender(s) epoch-stale — the fold retires the mentions, then run \
+             sweep-orphan-orgs",
+            orgs.len(),
+            identified.len(),
+            pairs.len(),
+            if dry_run { "would re-queue" } else { "re-queued" },
+            if dry_run { found } else { requeued },
+        ))
+    }
+
     /// Issue 483 unit 2's `refold-buyer-roles`, its own fn through `off_frame` (issue 467).
     /// Walks `organization_mentions` in fixed notice-id strides; per stride the cohort is
     /// [`ingest::project::role_census::buyer_role_refold_window`] (pattern-named mentions →
@@ -4960,6 +5102,9 @@ impl Supervisor {
             Spec::BuyerRoleCensus { stride } => off_frame(|| self.run_buyer_role_census(job, *stride)).await,
             Spec::RequeueUuidHubs { dry_run } => off_frame(|| self.run_requeue_uuid_hubs(*dry_run)).await,
             Spec::RefoldBuyerRoles { dry_run } => off_frame(|| self.run_refold_buyer_roles(job, *dry_run)).await,
+            Spec::RefoldVoidNames { dry_run, expect } => {
+                off_frame(|| self.run_refold_void_names(job, *dry_run, *expect)).await
+            }
             Spec::Analyze => off_frame(|| self.run_analyze(job)).await,
             Spec::AuditFtsIds { dry_run, max_ids, recheck_absent_days } => {
                 off_frame(|| self.run_audit_fts_ids(job, *dry_run, *max_ids, *recheck_absent_days)).await
@@ -13629,6 +13774,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-tender-links"
             | "requeue-uuid-hubs"
             | "refold-buyer-roles"
+            | "refold-void-names"
             | "refold-value-band"
             | "rederive-eur"
             | "rederive-eur-recent"
@@ -14526,6 +14672,9 @@ mod tests {
                 // Issue 483 unit 2: `run_refold_buyer_roles` reads the flag before every
                 // mention stride; a stopped run stores no report.
                 "refold-buyer-roles",
+                // Issue 510: `run_refold_void_names` reads the flag before every
+                // organization window; a stopped run writes nothing.
+                "refold-void-names",
                 // Issue 429: `run_analyze` reads the flag before every table, and a
                 // stopped run still drops `organizations` statistics and refreshes
                 // the readers.
@@ -15340,6 +15489,81 @@ mod tests {
         assert!(msg.contains("DRY RUN") && msg.contains("2 hub Tender(s)") && msg.contains("would re-queue 0"), "{msg}");
         let msg = sup.run_spec(&job(false)).await.expect("wet");
         assert!(!msg.contains("DRY RUN") && msg.contains("re-queued 0"), "{msg}");
+    }
+
+    /// Issue 510: `refold-void-names` enqueues dry unless asked (a wet request without
+    /// `expect` is refused), counts the void-lot orgs with the fold's own predicate and the
+    /// notices that mention them, aborts a wet run above its `expect` with nothing written,
+    /// and otherwise re-queues those notices with their Tenders stamped.
+    #[tokio::test]
+    async fn refold_void_names_counts_dry_refuses_over_expect_and_requeues() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        sup.enqueue_request(&JobRequest { kind: "refold-void-names".into(), ..Default::default() }).await.unwrap();
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            assert!(matches!(queue[0].spec, Spec::RefoldVoidNames { dry_run: true, expect: None }), "dry unless asked");
+        }
+        let wet_without_expect =
+            JobRequest { kind: "refold-void-names".into(), dry_run: Some(false), ..Default::default() };
+        assert!(sup.enqueue_request(&wet_without_expect).await.is_err(), "wet needs expect");
+
+        // A winner organization minted before the rule: fold a real name, then give the
+        // org the void phrase the parse once carried.
+        let fetch_id = seed_fetch(&db).await;
+        let parsed = store::Parsed {
+            sections: vec![
+                store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                store::Section { id: "ORG-1".into(), kind: "Organization".into(), parent: None },
+            ],
+            values: vec![store::ValueRow {
+                section_id: "ORG-1".into(),
+                field_id: "BT-500-Organization-Company".into(),
+                ordinal: 0,
+                value: store::NoticeValue::Text { value: "Acme SARL".into(), lang: None },
+            }],
+        };
+        db.record_notice(
+            &store::Notice {
+                source: "ted".into(),
+                publication_id: "00510001-2024".into(),
+                content_hash: "h510".into(),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id,
+                member_path: "m510".into(),
+                ingested_at: 0,
+                published_at: Some(store::Stamp::utc(0)),
+                dispatched_at: None,
+            },
+            &store::Parse::Parsed(parsed),
+        )
+        .await
+        .unwrap();
+        ingest::project::project(&db, false).await.expect("fold");
+        db.execute_for_test("UPDATE organizations SET name = 'Lot déclaré infructueux'").await.unwrap();
+        assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty());
+
+        let job = |id: u64, dry_run: bool, expect: Option<u64>| Job {
+            id,
+            kind: "refold-void-names".into(),
+            params: String::new(),
+            spec: Spec::RefoldVoidNames { dry_run, expect },
+            resume_after: None,
+        };
+        let msg = sup.run_spec(&job(1, true, None)).await.expect("dry");
+        assert!(msg.contains("DRY RUN") && msg.contains("1 void-lot org(s)") && msg.contains("would re-queue 1"), "{msg}");
+        let (body, _) = db.latest_report(VOID_NAMES_REFOLD_REPORT).await.unwrap().expect("report");
+        assert!(body.contains("\"notices\":1") && body.contains("Lot déclaré infructueux"), "{body}");
+        assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "dry writes nothing");
+
+        let err = sup.run_spec(&job(2, false, Some(0))).await.expect_err("over expect");
+        assert!(err.contains("aborted") && err.contains("nothing was written"), "{err}");
+        assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "the abort wrote nothing");
+
+        let msg = sup.run_spec(&job(3, false, Some(1))).await.expect("wet");
+        assert!(msg.contains("re-queued 1") && msg.contains("stamped 1"), "{msg}");
+        assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap().len(), 1, "re-queued for the fold");
     }
 
     /// Issue 483 unit 2: `refold-buyer-roles` enqueues dry unless asked, runs through

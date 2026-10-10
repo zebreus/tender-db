@@ -4,6 +4,15 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 510) — "the lot was not awarded" is no longer served as a winner
+
+A winner slot that says the lot was not awarded (`Infructueux`, `Sans suite`, `Desierto`, `Lotto deserto`,
+`Niet gegund`, `Not awarded`, …) is no longer an organization. Such a party is not served as a winner, buyer or
+any other party, and an older-format award whose only "winner" it was now reads `decision: clos-nw` instead of
+`selec-w`. About 11,000 organizations made of these phrases (one alone, `infructueux`, held over 3,000 winner
+mentions) are removed once the drain runs; each publishes `organization removed`. eForms results keep the
+publisher's own decision code.
+
 ## Unreleased (issue 506) — an award notice's framework values per lot are kept, and refuse scale slips
 
 eForms award notices state a framework maximum and a re-estimated value per lot result (BT-709, BT-660). They are
