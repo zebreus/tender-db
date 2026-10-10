@@ -1,6 +1,7 @@
 # 491 — a text-era minimum/maximum range is read as one run-together figure
 
-Status: ready-for-agent — UNIT 2 DEPLOYED + DRAINED 2026-10-08 (`f71802e`, then `ab879bc`): 0 of the 25 notices keep a run-together `VAL_TOTAL`. Reparses 2046–2061 all ran with 0 unmatched, re-keyed or failing; projects 2058 and 2062 are done. NEXT: read section 16 of data-quality job 2063 (enqueued 2026-10-08, which also serves as issue 490's head-band before-image) and expect the 19 text rows out; then units 3 (b) and 4 (c).
+Status: ready-for-agent — UNIT 2 VERIFIED, UNIT 3 DECIDED 2026-10-10. Section 16 of the stored data-quality report (computed 2026-10-08 ~18:2x UTC, after project 2062) holds 8 text-era rows, exactly the 8 that do not split: 4179951 (c), 3427333 (b), 8161499 (a ×1000 typo) and 3864512, 8083067, 8212935, 2694586, 3551819 (not adjudicated). The 19 run-together rows are gone. Unit 3 (b) is decided below; it is built after issue 508, which rewrites the same `awarded_value`. NEXT: unit 3 build (after 508), then unit 4 (c).
+Was: ready-for-agent — UNIT 2 DEPLOYED + DRAINED 2026-10-08 (`f71802e`, then `ab879bc`): 0 of the 25 notices keep a run-together `VAL_TOTAL`. Reparses 2046–2061 all ran with 0 unmatched, re-keyed or failing; projects 2058 and 2062 are done. NEXT: read section 16 of data-quality job 2063 (enqueued 2026-10-08, which also serves as issue 490's head-band before-image) and expect the 19 text rows out; then units 3 (b) and 4 (c).
 text-era rows in the €10 bn band were errors, and 5 of the 8 have this mechanism. NEXT: unit 1,
 measure the shape corpus-wide by currency (a window read, not a full scan) before changing
 `parse_money`.
@@ -166,3 +167,41 @@ the text era's Tenders (incremental path, under the 500k-notice line).
   with 0 unmatched, re-keyed or failing. Project 2062 then rewrote 92,206 Tenders in 1,827 s.
   **0 `TED-VAL_TOTAL` rows remain on the 25 notices** (bounded read 2026-10-08).
 
+## Unit 3 — (b) read and decided (2026-10-10)
+
+**Why V.4 is dropped.** `awarded_value` claims per scope: II.2.1 `Total final value of contract(s)` is scope 1, the
+notice's total; V.4 `Total final value of the contract` is scope 0, one contract's. The widest scope stated wins, and the
+narrower claim is discarded. That is right for a total and its parts (3871014's four contracts sum to II.2.1 exactly).
+But in a SINGLE-contract notice the two state one fact, and a disagreement between them is never seen. 3427333 is
+143891-2008 (notice 3403986): II.2.1 `35 076 200 000 EUR`, V.4 `35 076 200 EUR` twice (initial and final), one
+`CONTRACT NO`.
+
+**Measured** on the parse layer's bodies, 5k-id windows every 100k from 2.7M to 4.0M (2005–2010 sectioned, colon print;
+14,567 bodies stating both II.2.1 and V.4):
+
+| single-contract bodies stating both | 7,814 |
+|---|---:|
+| equal | 6,219 (80 %) |
+| differ, not by 10ᵏ (VAT basis, estimate vs final, part totals) | 1,444 |
+| different currency | 132 |
+| **exactly 10ᵏ apart** | **19** (0.24 %) |
+
+The 19 split in both directions: II.2.1 is the bigger figure in 12 (k = 1: 7, 2: 4, 3: 1) and V.4 in 7 (k = 1: 2,
+2: 2, 3: 2, 6: 1). So "prefer the smaller" would be a guess: 3600214 has II.2.1 `29,50 EUR` against V.4
+`29 500 000 EUR`. Multi-contract bodies: 1,523 of 2,515 sum exactly to II.2.1, and 1 is a 10ᵏ slip (3900981).
+Corpus-wide that is about 380 single-contract 10ᵏ pairs, of which a handful reach the €1 bn gate (3403986, 3301887,
+3500335, 3802477 in the sample).
+
+**Decided: store V.4's figure, as the award's own value, not as a second notice-level total.** The home already
+exists. Since issue 244 each award is a `RES-n` `LotResult` section, and `read_legacy_results` folds a `TED-VAL_TOTAL`
+inside a result section as that result's awarded value (`direct_cents`). That is the r209 shape, which publishes
+`VAL_TOTAL` per `AWARD_OF_CONTRACT`. Lot awards are already partners of 471's and 492's scale rules (`head_awards`), so
+3427333's €35 bn head would meet its exact ×1000 partner. That is the shape 471's rule refuses, subject to its own gate
+and corroboration test, which the build must check on this exhibit. No new rule, and no parse-time guess at a direction. The cost is pairing. Today `RES-n` is minted per winner NAME, in document order, and a name that
+fails `plausible_name` would shift every later figure onto the wrong award. So the build reads the body per award block
+(`CONTRACT NO` / `LOT NO` / V.3 headings, issue 508's guard markers) and gives each block its own name(s) and V.4 figure.
+A block whose figure does not parse stores none.
+
+**Build after 508**, which changes `awarded_value` and the block markers. Measure first: how many tenders' heads
+change once multi-contract notices carry lot award values. Those notices have no head today unless II.2.1 is stated, so
+the head election may start electing from lot awards.
