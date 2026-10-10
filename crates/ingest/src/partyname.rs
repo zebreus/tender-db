@@ -49,7 +49,7 @@ pub enum NotAName {
 /// `declarada desierta`. Each carries its leading space, the boundary, so the match is
 /// a `contains` on the space-padded fold with nothing built per stem (the projection's
 /// hot loop: the issue-483 `PADDED_PATTERNS` lesson).
-const VOID_STEMS: [&str; 8] = [
+const VOID_STEMS: [&str; 11] = [
     " infructu",
     " infructeu",
     " sans suite",
@@ -58,6 +58,12 @@ const VOID_STEMS: [&str; 8] = [
     " declarada desiert",
     " queda desiert",
     " nessuna aggiudicazione",
+    // Belgian bilingual notices pair `Non attribué` with the Dutch, typos included (`Niet
+    // gegung`, `Niet gegunde percelen`): a stem, so the pair is void together (the drain's
+    // Verify, 2026-10-11: `Non attribué` survived beside `Niet gegung`).
+    " niet gegun",
+    " niet toegewez",
+    " niet toegeken",
 ];
 
 /// Whole values that say the lot was not awarded, compared entire after the lot strip.
@@ -258,6 +264,13 @@ pub fn not_a_name(name: &str) -> Option<NotAName> {
     if VOID_WHOLE.contains(&whole) {
         return Some(NotAName::VoidLot);
     }
+    // A void whole value followed by its reason (`Desierto (no ofertas)`, `Lotto deserto -
+    // non aggiudicato per importo offerto superiore alla base d'asta`, `Niet gegund - perceel
+    // teruggetrokken`) is void — unless the name also names an award, and then it is a name
+    // (`DESIERTO, S.L.` is a company; the text parser must keep it).
+    if reason_head(name).is_some_and(|head| VOID_WHOLE.contains(&fold(head).as_str())) {
+        return (!names_an_award(name, &full)).then_some(NotAName::VoidLot);
+    }
     if PLACEHOLDER_WHOLE.contains(&whole) {
         return Some(NotAName::Placeholder);
     }
@@ -284,6 +297,22 @@ pub fn mentions_void(name: &str) -> bool {
     }
     let stripped = strip_lot_qualifier(name).map(fold);
     VOID_WHOLE.contains(&stripped.as_deref().unwrap_or(&full))
+        || reason_head(name).is_some_and(|head| VOID_WHOLE.contains(&fold(head).as_str()))
+}
+
+/// The head of a name that goes on to give a reason: the text before the first `(`, `[`,
+/// `:`, `;`, `,`, ` - `, ` – `, ` — ` or `. `, when something follows it. `None` for a name
+/// with no such break.
+fn reason_head(name: &str) -> Option<&str> {
+    let name = name.trim();
+    let mut cut = name.len();
+    for sep in ["(", "[", ":", ";", ",", " - ", " – ", " — ", ". "] {
+        if let Some(at) = name.find(sep) {
+            cut = cut.min(at);
+        }
+    }
+    let head = name[..cut].trim();
+    (cut < name.len() && !head.is_empty() && name[cut..].chars().any(char::is_alphanumeric)).then_some(head)
 }
 
 /// Whether a name that carries a void stem also names an award (issue 510's drain review):
@@ -761,6 +790,14 @@ mod tests {
             "pas d'attributaire, lot infructueux",
             "Lote no adjudicado, declarado desierto",
             "Lot infructueux (not awarded)",
+            "Lotto deserto (non aggiudicato)",
+            "Lotto deserto - non aggiudicato per importo offerto superiore alla base d'asta",
+            "Niet gegund - perceel teruggetrokken door aanbestedende dienst",
+            "Niet gegung",
+            "Niet gegunde percelen",
+            "Niet toegewezen",
+            "Not awarded - no compliant bids",
+            "Aufgehoben (siehe VI.3)",
             "Lot 3) Ce lot 3 est déclaré infructueux",
             "Le lot 10: lot n° 10: CQP Vienne a été déclaré infructueux",
             "Le lot 48: Transport scolaire circuit: Ste Marie de Figaniella / Propriano a été déclaré Infructueux",
@@ -855,7 +892,9 @@ mod tests {
         assert_eq!(not_a_name("desierto (lote 3)"), Some(NotAName::VoidLot));
         assert_eq!(not_a_name("Desierto (lot 9/10)."), Some(NotAName::VoidLot));
         assert_eq!(not_a_name("ACME (lot 3)"), None);
-        assert_eq!(not_a_name("Desierto (no ofertas)"), None, "not a lot qualifier: prose stays out of the whole compare");
+        assert_eq!(not_a_name("Desierto (no ofertas)"), Some(NotAName::VoidLot), "a void head and its reason");
+        assert_eq!(not_a_name("Desierto, S.L."), None, "a company form: a company named like the phrase");
+        assert_eq!(not_a_name("Desierto OÜ"), None, "no break: a company's name");
         assert_eq!(not_a_name(""), None);
         assert_eq!(not_a_name("  ...  "), None);
     }
