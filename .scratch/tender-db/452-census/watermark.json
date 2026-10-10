@@ -1,11 +1,11 @@
 {
- "max_org_id": 31590759,
- "orgs_input": "gb-orgs-2026-09-30.jsonl",
- "rows": 58938,
- "snapshot": "BasicCompanyDataAsOneFile-2026-09-01.zip",
+ "max_org_id": 31765469,
+ "orgs_input": "/root/census/gb-orgs-above-31590759.jsonl (box; public listing cursor=31590759, read 2026-10-10)",
+ "rows": 10150,
+ "snapshot": "BasicCompanyDataAsOneFile-2026-10-01.zip",
  "snapshot_path_on_box": "/data/archive/companies-house/",
  "census_commit": "9f68699",
- "cohort": "452-census-2026-09-30",
+ "cohort": "466-census-2026-10-10",
  "reproduced_2026_10_10": {
   "orgs": 30857,
   "numbers": 30844,
@@ -19,5 +19,14 @@
    "extra": 2,
    "missing": 1
   }
- }
+ },
+ "previous": {
+  "max_org_id": 31590759,
+  "orgs_input": "gb-orgs-2026-09-30.jsonl",
+  "rows": 58938,
+  "snapshot": "BasicCompanyDataAsOneFile-2026-09-01.zip",
+  "cohort": "452-census-2026-09-30"
+ },
+ "census_flags": "--min-org-id 31590759 --pad-short",
+ "next_run": "page /v1 organizations with cursor=31765469; join against the newest monthly snapshot (Companies House publishes on the 1st)"
 }

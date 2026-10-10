@@ -1,0 +1,29 @@
+{
+ "cohort": "466-rekey-review-2026-10-10",
+ "verdicts": [
+  {
+   "org_id": 31633920,
+   "identifier": "GBCOH03266894",
+   "verdict": "wrong",
+   "correct_identifier": "02366894",
+   "confidence": "medium",
+   "rationale": "[466 plan review 2026-10-10 (wf_761ff26a-9a4), decider] The published 03266894 was never issued and is one adjacent swap of 02366894, NATIONAL GRID ELECTRICITY DISTRIBUTION (SOUTH WEST) PLC (active), not a typo path of the group plc 09223384. NGED notices pair the bare group name with a licensee's number (org 31544411 carries the West Midlands licensee 03600574 under the group head name), so the exact name match to 09223384 does not show the group contracted. Medium, not high: the buyer address and lot should be read before re-keying to the South West licensee (org 31574736 already carries 02366894). Corrects the 466 census verdict's correct_identifier 09223384, which would have merged a licensee mention into its parent."
+  },
+  {
+   "org_id": 31617783,
+   "identifier": "GBCOH1142001",
+   "verdict": "wrong",
+   "correct_identifier": "07505273",
+   "confidence": "high",
+   "rationale": "[466 plan review 2026-10-10 (wf_761ff26a-9a4), decider] The stored 1142001 is charity number 1142001 with a zero added. IF U CARE SHARE FOUNDATION's full accounts to 31 March 2025 (filed 2 Dec 2025, iXBRL from the 07505273 filing history) state 'Company registration number 07505273 ... Charity registration number 1142001'. The census verdict's 07338734 (IF U CARE SHARE) is a dormant sister company at the same Chester-le-Street address (dormant accounts FY Jan-2022 to Jan-2026). Corrects the 466 census verdict's correct_identifier."
+  },
+  {
+   "org_id": 31610576,
+   "identifier": "GBCOH1462419",
+   "verdict": "wrong",
+   "correct_identifier": null,
+   "confidence": "high",
+   "rationale": "[466 plan review 2026-10-10 (wf_761ff26a-9a4), both lenses agree] 01462419 is a 404, so the number is wrong. The census verdict's 14672419 is EMPOWERING TOGETHER UK LTD (Stafford, 2023, dissolved 2024-07-23): a different name from the org's 'Empowering Together Limited', and the exact name belongs to 12282279 (Grimsby, dissolved 2021) and to an active CIC 16843262. The dropped-7 digit fit alone does not tie the org to 14672419, and no other number fits, so no correct number is given."
+  }
+ ]
+}

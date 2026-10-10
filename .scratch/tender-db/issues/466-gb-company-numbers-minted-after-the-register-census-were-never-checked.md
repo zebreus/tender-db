@@ -1,9 +1,30 @@
 # 466 — GB company numbers minted after 452's register census were never checked, and the census cannot be re-run
 
-Status: ready-for-agent — UNITS 1, 3 AND 4 DONE 2026-10-10: 514 verdicts POSTed as cohort `466-census-2026-10-10`
+Status: ready-for-agent — UNITS 1, 3 AND 4 DONE AND VERIFIED 2026-10-10. The wet rekey ran (job 2113: 174 merged, 79
+moved, residual 0), and the Verify reads `1199 384 [… ('466-census-2026-10-10', 511), ('466-rekey-review-2026-10-10',
+3) …]`. The watermark is now 31,765,469 (`452-census/watermark.json`, snapshot 2026-10-01). NEXT: unit 2, DECIDED (a),
+to build. The `related` numbers are not withheld from the R2/E0/R3 matchers (`withheld_identifier_orgs` reads
+`verdict = 'wrong'` only), so an org carrying its parent's or sister's number can still be grouped with that company.
+That is the parent/subsidiary merge the rubric forbids. 90 of the 164 `related` verdicts (452: 53, 466: 37) are high
+with the org's own number found.
+- **Unit 4, the plan review** (`wf_761ff26a-9a4`, 37 agents; `466-census/rekey-review-2111-2026-10-10.json`). Each
+  16-row chunk of the 256 plan rows went to a register lens and a skeptic, and a decider settled the splits.
+  **253 execute, 3 hold**:
+  - NGED, `GBCOH03266894`: the census verdict's 09223384 is the group plc. The typed digits are one swap of 02366894,
+    the South West licensee, so the merge would have folded a licensee mention into its parent. Re-POSTed with
+    02366894 at **medium**, so the rekey leaves it alone until the buyer address is read.
+  - IF U CARE SHARE, `GBCOH1142001`: the census verdict's 07338734 is a dormant sister. The Foundation's filed accounts
+    tie charity 1142001 to 07505273. Re-POSTed with 07505273, high. The next plan name-denies it (`denied_names` 25 →
+    26), so nothing moved.
+  - Empowering Together, `GBCOH1462419`: 14672419 is a differently named company, dissolved. Re-POSTed as wrong with
+    no right number.
+  - Cohort `466-rekey-review-2026-10-10`: recorded 3 (`466-census/corrections-466-rekey-review-2026-10-10.json`).
+- **Re-plan, job 2112.** 174 merges + 79 moves = 253 keys, exactly the reviewed execute set, with no hold among them
+  (`466-census/rekey-plan-2112.json`).
+- **Wet, job 2113.** Held against 253 stored keys, with 0 planned since and 0 no longer planned. Merged 174 (213
+  mentions, 261 parties, 300 bid-parties, 297 winners repointed, 178 tenders touched); moved 79; residual 0.
+Was: UNITS 1, 3 AND 4 DONE 2026-10-10: 514 verdicts POSTed as cohort `466-census-2026-10-10`
 (recorded 514, stale 0, 417 served statuses changed). The rekey dry run (job 2111) plans 175 merges and 81 moves.
-NEXT: unit 4's last step, the 453-shape register review of those 256 plan rows; then the wet rekey; then unit 2 (the 83
-`related` numbers) and the Verify.
 - **Unit 4, the review** (`wf_90b6a9e0-d81`, 45 agents, about 4.5 M tokens).
   - The reviewer and challenger read every one of the 535 cases (`452-census/cases-466-2026-10-10.json`) against
     `rubric.md`. An adjudicator decided every disagreement and every residue case: 47 adjudicated, 488 agreed.
