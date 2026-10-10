@@ -340,6 +340,10 @@ the Verify again.
   - the public docs (`v1/docs.rs`) and operations.md describe the new rule.
 - **Expect on the first fold after deploy:** the `[issue 452] … withheld` count rises by up to 164 (each related
   carrier). After the wet run it falls by the number re-keyed.
-- For future cohorts: `verdict_post.py` posts the reviewer's confidence. A challenger's downgrade should win, which
-  the next census applies by hand.
+- **`verdict_post.py`** now posts medium where a high verdict's challenge text lowers it (`DOWNGRADE`). Over the
+  two cohorts it matches 10:
+  - two related: 11999312 (held) and 12252991 (multi-target);
+  - eight wrong. Of those, only Crown Eyecare 31649283 was re-keyed (2113, a move to 12215586), and the plan review
+    had re-verified it on the register (SIC 47782 opticians, the only company of the name, the batch's region).
+    Nothing applied needs undoing.
 
