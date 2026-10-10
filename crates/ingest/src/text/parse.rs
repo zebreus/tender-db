@@ -138,7 +138,35 @@ const ITEM_STOPS: [&str; 8] =
 /// short: a general "does this read like prose" test would also reject real names, and
 /// any other withholding wording the era uses will surface as a junk organization and
 /// can be added with its own evidence.
-const NAME_REJECTS: [&str; 2] = ["WOULD PREJUDICE", "NOT APPLICABLE"];
+///
+/// The 2010 print (issue 508) put a further family of non-names in the winner slot,
+/// measured over the colonless sample (232 of 22,622 names) and the first drained round
+/// (about 3,000 of its names): an unsuccessful or discontinued lot in French
+/// (`Lot déclaré infructueux`, `Sans suite`, `Non attribué`), Spanish (`Desierto`) and
+/// Italian (`Nessuna aggiudicazione`), and a pointer elsewhere — `Véase perfil del
+/// contratante` alone is 243 names in one 20k-notice window, `See Section VI.2)
+/// Additional information`, `Voir autres informations`. Each would be ONE nameless-
+/// identity organization collecting every award that printed it.
+const NAME_REJECTS: [&str; 13] = [
+    "WOULD PREJUDICE",
+    "NOT APPLICABLE",
+    "INFRUCTU",
+    "SANS SUITE",
+    "NON ATTRIBU",
+    "PERFIL DEL CONTRATANTE",
+    "SEE SECTION",
+    "VOIR AUTRES INFORMATIONS",
+    "VOIR RENSEIGNEMENTS",
+    "VER INFORMACI",
+    "DECLARADO DESIERT",
+    "QUEDA DESIERT",
+    "NESSUNA AGGIUDICAZIONE",
+];
+
+/// Whole values that are no name (compared entire, so a company whose name merely
+/// contains the word is untouched): the era's `Various`, and the Spanish and Italian
+/// for a lot left void (issue 508: `Desierto` ×11 in the colonless sample).
+const NAME_WHOLE_REJECTS: [&str; 5] = ["VARIOUS", "DESIERTO", "DESIERTA", "DESERTO", "DESERTA"];
 
 /// Whether a candidate can be a company at all, before it is allowed to mint an
 /// organization. Every rule here comes from a payload that would otherwise have minted
@@ -155,7 +183,7 @@ fn plausible_name(name: &str) -> bool {
     if name.is_empty() || !name.chars().any(char::is_alphabetic) {
         return false;
     }
-    if name.eq_ignore_ascii_case("various") {
+    if NAME_WHOLE_REJECTS.iter().any(|r| name.eq_ignore_ascii_case(r)) {
         return false;
     }
     if opens_with_contact_line(name) {
@@ -4420,5 +4448,36 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         // One block is one award, and its figure is the notice's.
         let one = format!("SECTION V: AWARD OF CONTRACT\n{}", block("103 835"));
         assert_eq!(awarded_value(&one), Some((10_383_500, "EUR".to_owned(), None)));
+    }
+
+    /// Issue 508: the non-names the 2010 print put in the winner slot are refused,
+    /// and real names that merely contain such a word are not.
+    #[test]
+    fn a_void_lot_or_a_pointer_in_the_winner_slot_names_nobody() {
+        for junk in [
+            "Véase perfil del contratante",
+            "Ver perfil del contratante de la Junta de Andalucía",
+            "Lot déclaré infructueux",
+            "Infructueux le 25.1.2010",
+            "Marché déclaré sans suite",
+            "Non attribué",
+            "See Section VI.2) Additional information",
+            "Voir autres informations",
+            "Ver información adicional",
+            "Desierto",
+            "Declarado Desierto",
+            "Nessuna aggiudicazione",
+            "Various",
+        ] {
+            assert!(!plausible_name(junk), "{junk}");
+        }
+        for name in ["Suite Hotels Ltd", "Desierto Florido SL", "Desertec GmbH", "Voirol SA", "Perfiles Andaluces SL"] {
+            assert!(plausible_name(name), "{name}");
+        }
+        let body = "V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                    AWARD DECISION HAS BEEN TAKEN\n\
+                    Véase perfil del contratante\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT";
+        assert!(awarded_names(body).is_empty());
     }
 }
