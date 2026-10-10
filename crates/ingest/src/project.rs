@@ -1169,6 +1169,11 @@ const DE1_FIELD_ALIASES: &[(&str, &str)] = &[
     // gate (`every_de1_alias_target_is_a_field_the_projection_reads`) would refuse them.
     ("DE1-NoticeResult-LotResult-FrameworkAgreementValues-MaximumValueAmount", "BT-709-LotResult"),
     ("DE1-NoticeResult-LotResult-FrameworkAgreementValues-ReestimatedValueAmount", "BT-660-LotResult"),
+    // Issue 506: the root-level notice framework maximum, the national notice-level
+    // variant of BT-271 (`eforms/index.rs`, issue 195). EU-minor notices already claim the
+    // same element as `UBL-FrameworkMaximumAmount`; eForms-DE 1.x kept its DE1 id, which
+    // nothing read, so the figure was dropped there. One element, one id in both dialects.
+    ("DE1-FrameworkMaximumAmount", "UBL-FrameworkMaximumAmount"),
     // CPV (main + additional) and the realized-location NUTS, at both scopes.
     ("DE1-ProcurementProject-MainCommodityClassification-ItemClassificationCode", "BT-262-Procedure"),
     (
@@ -10397,6 +10402,27 @@ mod tests {
         normalise_de1(&mut de1);
         let (de1_notice, de1_parsed) = &de1[0];
         assert_eq!(amounts(&NoticeState::read(de1_notice, de1_parsed)), expected, "the DE1 spellings alias");
+
+        // The bare root-level `DE1-FrameworkMaximumAmount` is the Tender's framework
+        // maximum, as `UBL-FrameworkMaximumAmount` already is on the EU minors.
+        let mut bare = vec![(
+            notice("eforms:eforms-de-1.1"),
+            Parsed {
+                sections: vec![section("ROOT", "Notice")],
+                values: vec![amount("ROOT", "DE1-FrameworkMaximumAmount", 8_000_000)],
+            },
+        )];
+        normalise_de1(&mut bare);
+        let (bare_notice, bare_parsed) = &bare[0];
+        let tender: Vec<(String, i64)> = NoticeState::read(bare_notice, bare_parsed)
+            .facts
+            .iter()
+            .filter_map(|f| match f {
+                Fact::Amount { field, cents, .. } => Some((field.clone(), *cents)),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(tender, vec![("framework_maximum".to_owned(), 8_000_000)]);
 
         // The sieve agrees: the two LotResult fields and their DE1 spellings are read; the
         // notice totals (and their DE1 spellings) and the losing-bid figures are not.

@@ -11,7 +11,9 @@ now served in `amounts` at their lot under two new `field` values, `result_frame
 `result_framework_reestimate`; they are never elected as a Tender's or a lot's `value`. A figure of €1 bn or more
 that is exactly 100× (or 10ᵏ×) one of them is now refused as a scale slip, so two Tenders whose value was a
 framework maximum typed 100× too large now serve their estimate. `?currency=` matches a Tender whose only amount
-in that currency is one of these rows.
+in that currency is one of these rows. eForms-DE 1.x notices that state a notice-level framework maximum at the
+root of the notice (`DE1-FrameworkMaximumAmount`, about 100 notices) now serve it as the Tender's
+`framework_maximum`, as EU notices with the same element already did; their `value` can rise to it.
 
 ## Unreleased (issue 508) — text-era award notices of 2009-12 to 2010 serve their winners and values
 
