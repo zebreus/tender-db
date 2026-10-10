@@ -13228,4 +13228,221 @@ mod tests {
         }
         assert!(eu_minors >= 14, "the fourteen vendored EU minors were read, not skipped");
     }
+
+    /// Issue 510 (unit1-decision §6, §8): the void-lot rule on every fold branch, through
+    /// `NoticeState::read` and `bind_organizations`. EVERY party section is bound to an
+    /// org id, the void ones too: that is Phase 2 binding through a mention row recorded
+    /// before the rule (the stale-row case), and the void party must still bind nothing.
+    #[test]
+    fn a_void_lot_party_is_dropped_on_every_fold_branch() {
+        let notice = |profile: &str| store::NoticeRef {
+            id: 9,
+            source: "ted".into(),
+            publication_id: "000009-2020".into(),
+            profile: profile.into(),
+        };
+        let section = |id: &str, kind: &str, parent: Option<&str>| store::Section {
+            id: id.into(),
+            kind: kind.into(),
+            parent: parent.map(Into::into),
+        };
+        let id_ref = |section: &str, field: &str, target: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: target.into(), is_ref: true },
+        };
+        let id_val = |section: &str, field: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: value.into(), is_ref: false },
+        };
+        let code = |section: &str, field: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Code { list: None, code: value.into() },
+        };
+        let row = |section: &str, field: &str, value: NoticeValue| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value,
+        };
+        // Section `ORG-n` (or an sdk-0.1 party at position n) binds to org 1000 + n.
+        let org_of = |section: &str| -> i64 {
+            1_000 + section.rsplit('-').next().and_then(|n| n.parse::<i64>().ok()).expect("numbered section")
+        };
+        let bound = |profile: &str, parsed: &Parsed| -> NoticeState {
+            let mut state = NoticeState::read(&notice(profile), parsed);
+            let orgs: HashMap<String, i64> = parsed
+                .sections
+                .iter()
+                .filter(|s| s.kind == ORGANIZATION_KIND || SDK01_PARTY_KINDS.contains(&s.kind.as_str()))
+                .map(|s| (s.id.clone(), org_of(&s.id)))
+                .collect();
+            state.bind_organizations(&orgs);
+            state
+        };
+        // Every organization a party fact names, Tender- and lot-scoped.
+        let party_orgs = |state: &NoticeState| -> BTreeSet<i64> {
+            state
+                .facts
+                .iter()
+                .chain(state.lots.iter().flat_map(|l| l.facts.iter()))
+                .filter_map(|f| match f {
+                    Fact::Party { organization_id, .. } => Some(*organization_id),
+                    _ => None,
+                })
+                .collect()
+        };
+        // (decision, winners) per result, in result order.
+        let results = |state: &NoticeState| -> Vec<(Option<String>, Vec<i64>)> {
+            let round = state.round.as_ref().expect("an award notice binds a round");
+            round.lot_results.iter().map(|r| (r.decision.clone(), r.winners.clone())).collect()
+        };
+        let skipped = |profile: &str, parsed: &Parsed| -> (Vec<String>, Vec<String>) {
+            let (mentions, void) = NoticeState::mentions_and_void(is_sdk01_profile(profile), 9, parsed);
+            (mentions.into_iter().map(|m| m.section_id).collect(), void)
+        };
+
+        // Legacy (r209): one award block, its winner refs, and `orgs` (section, names…).
+        let legacy = |orgs: &[(&str, Option<&str>, &[&str])], winners: &[&str], extra: Vec<store::ValueRow>| -> Parsed {
+            let mut p = Parsed {
+                sections: vec![section("PROC", "Notice", None), section("RES-1", "LotResult", None)],
+                values: extra,
+            };
+            for (id, parent, names) in orgs {
+                p.sections.push(section(id, ORGANIZATION_KIND, *parent));
+                for (i, n) in names.iter().enumerate() {
+                    p.values.push(store::ValueRow { ordinal: i as i64, ..text_value(id, "TED-OFFICIALNAME", 0, None, n) });
+                }
+            }
+            for w in winners {
+                p.values.push(id_ref("RES-1", "TED-ADDRESS_CONTRACTOR", w));
+            }
+            p.values.push(id_ref("PROC", "TED-ADDRESS_CONTRACTING_BODY", "ORG-9"));
+            p.sections.push(section("ORG-9", ORGANIZATION_KIND, None));
+            p.values.push(text_value("ORG-9", "TED-OFFICIALNAME", 0, None, "Ville de Lyon"));
+            p
+        };
+        let r209 = "ted-export-r209";
+        let date = row(
+            "RES-1",
+            LEGACY_AWARD_DATE_FIELD,
+            NoticeValue::Date { utc_seconds: 1_600_000_000, offset_minutes: 0, has_time: false },
+        );
+
+        // A real co-winner beside the void one: the real one wins, `selec-w`.
+        let co = legacy(&[("ORG-1", None, &["Infructueux"]), ("ORG-2", None, &["ACME SA"])], &["ORG-1", "ORG-2"], vec![]);
+        let state = bound(r209, &co);
+        assert_eq!(results(&state), vec![(Some("selec-w".into()), vec![1_002])], "a real co-winner keeps the result selected");
+        assert_eq!(party_orgs(&state), BTreeSet::from([1_002, 1_009]), "the void party has no role");
+        assert_eq!(skipped(r209, &co), (vec!["ORG-2".into(), "ORG-9".into()], vec!["ORG-1".into()]));
+
+        // The publisher's own no-award marker beside a void winner: they agree.
+        let marker = legacy(
+            &[("ORG-1", None, &["Lot infructueux"])],
+            &["ORG-1"],
+            vec![row("RES-1", LEGACY_NO_AWARD_MARKER, NoticeValue::Integer(1))],
+        );
+        assert_eq!(results(&bound(r209, &marker)), vec![(Some("clos-nw".into()), vec![])], "the marker and the void winner agree");
+
+        // A zero value and an award date do not outrank the void statement.
+        let zero = legacy(
+            &[("ORG-1", None, &["Desierto"])],
+            &["ORG-1"],
+            vec![row("RES-1", "TED-VAL_TOTAL", NoticeValue::Amount { cents: 0, currency: "EUR".into() }), date.clone()],
+        );
+        assert_eq!(results(&bound(r209, &zero)), vec![(Some("clos-nw".into()), vec![])], "a zero-valued void lot still closes");
+
+        // The ref names the INNER half of a nested party whose name says void: dropped.
+        let nested = legacy(
+            &[("ORG-1", Some("RES-1"), &[]), ("ORG-2", Some("ORG-1"), &["Desierto (lote 3)"])],
+            &["ORG-2"],
+            vec![date.clone()],
+        );
+        let state = bound(r209, &nested);
+        assert_eq!(results(&state), vec![(Some("clos-nw".into()), vec![])], "a void winner named through its nested half");
+        assert_eq!(party_orgs(&state), BTreeSet::from([1_009]), "no role through the inner half either");
+        assert_eq!(skipped(r209, &nested), (vec!["ORG-9".into()], vec!["ORG-1".into()]), "only the outermost is skipped");
+
+        // One real name among the names: not void.
+        let mixed = legacy(&[("ORG-1", None, &["Infructueux", "ACME SA"])], &["ORG-1"], vec![]);
+        let state = bound(r209, &mixed);
+        assert_eq!(results(&state), vec![(Some("selec-w".into()), vec![1_001])], "a party with one real name is a party");
+        assert_eq!(skipped(r209, &mixed).1, Vec::<String>::new());
+
+        // sdk-0.1: a void WinningParty alone closes the result; beside a TenderResultCode
+        // the publisher's code stands, with no winner.
+        let sdk01_name = "SDK01-TenderResult-WinningParty-Party-PartyName-Name";
+        let sdk01 = Parsed {
+            sections: vec![
+                section("PROC", "Notice", None),
+                section("CP-9", SDK01_BUYER_KIND, None),
+                section("TR-1", SDK01_RESULT_KIND, None),
+                section("WP-1", SDK01_WINNER_KIND, Some("TR-1")),
+                section("TR-2", SDK01_RESULT_KIND, None),
+                section("WP-2", SDK01_WINNER_KIND, Some("TR-2")),
+            ],
+            values: vec![
+                text_value("CP-9", "SDK01-ContractingParty-Party-PartyName-Name", 0, None, "Stadt Graz"),
+                text_value("WP-1", sdk01_name, 0, None, "Nicht vergeben"),
+                text_value("WP-2", sdk01_name, 0, None, "Aufgehoben"),
+                code("TR-2", SDK01_RESULT_CODE_FIELD, "open-nw"),
+            ],
+        };
+        let sdk = "eforms:eforms-sdk-0.1";
+        assert!(is_sdk01_profile(sdk));
+        let state = bound(sdk, &sdk01);
+        assert_eq!(
+            results(&state),
+            vec![(Some("clos-nw".into()), vec![]), (Some("open-nw".into()), vec![])],
+            "sdk-0.1: clos-nw from the void winner, the published code kept"
+        );
+        assert_eq!(party_orgs(&state), BTreeSet::from([1_009]));
+
+        // eForms: a void tenderer and a void subcontractor. The publisher's BT-142 stays,
+        // the Bid stays, and neither party is a winner, a bid party or a role.
+        let mut eforms = Parsed {
+            sections: vec![
+                section("PROC", "Notice", None),
+                section("ORG-1", ORGANIZATION_KIND, None),
+                section("ORG-2", ORGANIZATION_KIND, None),
+                section("ORG-3", ORGANIZATION_KIND, None),
+                section("LOT-0", "Lot", None),
+                section("RES-0", "LotResult", None),
+                section("TEN-0", "LotTender", None),
+                section("TPA-0", "TenderingParty", None),
+            ],
+            values: vec![
+                id_ref("PROC", "OPT-300-Procedure-Buyer", "ORG-1"),
+                code("RES-0", "BT-142-LotResult", "selec-w"),
+                id_val("RES-0", "BT-13713-LotResult", "LOT-0"),
+                id_ref("RES-0", "OPT-320-LotResult", "TEN-0"),
+                id_val("TEN-0", "BT-13714-Tender", "LOT-0"),
+                id_ref("TEN-0", "OPT-310-Tender", "TPA-0"),
+                id_ref("TPA-0", "OPT-300-Tenderer", "ORG-2"),
+                id_ref("TPA-0", "OPT-301-Tenderer-SubCont", "ORG-3"),
+            ],
+        };
+        for (id, n) in [("ORG-1", "Comune di Torino"), ("ORG-2", "Lotto deserto"), ("ORG-3", "Non aggiudicato")] {
+            eforms.values.push(text_value(id, ORG_NAME_FIELD, 0, None, n));
+        }
+        let ef = "eforms:eforms-sdk-1.10";
+        let state = bound(ef, &eforms);
+        assert_eq!(results(&state), vec![(Some("selec-w".into()), vec![])], "the publisher's decision stands, no winner");
+        let round = state.round.as_ref().unwrap();
+        assert_eq!(round.bids.len(), 1, "the Bid stays");
+        assert!(round.bids[0].parties.is_empty(), "no void bid party: {:?}", round.bids[0].parties);
+        assert_eq!(party_orgs(&state), BTreeSet::from([1_001]), "only the buyer is a party");
+
+        // Phase 1's buyer tokens: the void mentions are skipped, so the resolver's answer
+        // (one id per mention, in order) still zips onto the right sections.
+        let (mentions, void) = NoticeState::mentions_and_void(false, 9, &eforms);
+        assert_eq!(void, vec!["ORG-2".to_owned(), "ORG-3".to_owned()]);
+        let orgs = resolved_orgs(&mentions, &[101]);
+        assert_eq!(orgs[&9], HashMap::from([("ORG-1".to_owned(), 101)]), "buyer tokens stay aligned");
+    }
 }
