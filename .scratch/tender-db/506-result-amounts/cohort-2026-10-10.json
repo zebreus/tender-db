@@ -1,0 +1,133 @@
+{
+ "cohort": 3844,
+ "heads": 3757,
+ "lot_value_tenders": 852,
+ "rows": [
+  {
+   "tender": 3509,
+   "seq": 1,
+   "lot_id": null,
+   "field": "estimated_value",
+   "cents": 160000000000,
+   "currency": "EUR",
+   "eur_cents": 160000000000,
+   "class": "new-k3",
+   "corroborated": false,
+   "head_eur_cents": 160000000000,
+   "result_figures": [
+    160000000
+   ]
+  },
+  {
+   "tender": 3509,
+   "seq": 1,
+   "lot_id": 9918,
+   "field": "estimated_value",
+   "cents": 160000000000,
+   "currency": "EUR",
+   "eur_cents": 160000000000,
+   "class": "new-k3",
+   "corroborated": false,
+   "head_eur_cents": 160000000000,
+   "result_figures": [
+    160000000
+   ]
+  },
+  {
+   "tender": 395737,
+   "seq": 1,
+   "lot_id": 1085587,
+   "field": "framework_maximum",
+   "cents": 299867940000,
+   "currency": "BGN",
+   "eur_cents": 153322394928,
+   "class": "new-x100",
+   "corroborated": false,
+   "head_eur_cents": 153320043153,
+   "result_figures": [
+    2265845400,
+    2998679400
+   ]
+  },
+  {
+   "tender": 395737,
+   "seq": 2,
+   "lot_id": 1085587,
+   "field": "framework_maximum",
+   "cents": 299867940000,
+   "currency": "BGN",
+   "eur_cents": 153322394928,
+   "class": "new-x100",
+   "corroborated": false,
+   "head_eur_cents": 153320043153,
+   "result_figures": [
+    2265845400,
+    2998679400
+   ]
+  },
+  {
+   "tender": 395737,
+   "seq": 3,
+   "lot_id": 1085587,
+   "field": "framework_maximum",
+   "cents": 299867940000,
+   "currency": "BGN",
+   "eur_cents": 153320043153,
+   "class": "new-x100",
+   "corroborated": false,
+   "head_eur_cents": 153320043153,
+   "result_figures": [
+    2265845400,
+    2998679400
+   ]
+  },
+  {
+   "tender": 395737,
+   "seq": 4,
+   "lot_id": 1085587,
+   "field": "framework_maximum",
+   "cents": 299867940000,
+   "currency": "BGN",
+   "eur_cents": 153320043153,
+   "class": "new-x100",
+   "corroborated": false,
+   "head_eur_cents": 153320043153,
+   "result_figures": [
+    2265845400,
+    2998679400
+   ]
+  },
+  {
+   "tender": 627219,
+   "seq": 1,
+   "lot_id": 1711490,
+   "field": "framework_maximum",
+   "cents": 332277083300,
+   "currency": "EUR",
+   "eur_cents": 332277083300,
+   "class": "new-x100",
+   "corroborated": false,
+   "head_eur_cents": 332277083300,
+   "result_figures": [
+    3322770833
+   ]
+  }
+ ],
+ "bare_above_head": [
+  {
+   "tender": 969383,
+   "notice": 26204016,
+   "cents": 235294117600,
+   "currency": "EUR",
+   "head_eur_cents": 235294117600
+  }
+ ],
+ "dropped": {},
+ "carriers": 151,
+ "result_rows": 1931,
+ "tenders_listed": [
+  3509,
+  395737,
+  627219
+ ]
+}
