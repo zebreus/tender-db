@@ -9299,8 +9299,12 @@ pub struct MentionResolver {
     /// silently moved a million mentions would otherwise read the same.
     mentions_refreshed: u64,
     mentions_rebound: u64,
+    /// Issue 510: recorded mentions of void-lot parties retired this run
+    /// ([`Db::retire_mentions`]) — each takes its party rows, and its organization is
+    /// left for the orphan sweep.
+    mentions_retired: u64,
     /// Tenders stamped epoch-stale because a mention of one of their notices
-    /// was re-bound, so this run's Phase 2 rewrites their party rows.
+    /// was re-bound (or retired), so this run's Phase 2 rewrites their party rows.
     tenders_stamped: u64,
     /// Issue 448 unit 3: the PPON → company-number alias, `None` until
     /// [`Db::arm_altid_alias`] arms it. `None` is the byte-identical pre-448
@@ -9374,6 +9378,8 @@ fn rekey_target(
 pub struct MentionRefresh {
     pub refreshed: u64,
     pub rebound: u64,
+    /// Issue 510: recorded void-lot mentions retired ([`Db::retire_mentions`]).
+    pub retired: u64,
     pub tenders_stamped: u64,
 }
 
@@ -15001,6 +15007,7 @@ impl Db {
             generic_memo: std::collections::HashMap::new(),
             mentions_refreshed: 0,
             mentions_rebound: 0,
+            mentions_retired: 0,
             tenders_stamped: 0,
             altid: None,
         })
@@ -15394,6 +15401,95 @@ impl Db {
         Ok(ids)
     }
 
+    /// Issue 510: retire the recorded mentions of void-lot parties — `keys` are the
+    /// `(notice, section)` of parties whose every published name says the lot was not
+    /// awarded (`partyname::not_a_name`, decided in ingest; the store holds no language).
+    ///
+    /// The fold no longer builds a mention for such a party, so a recorded row would
+    /// otherwise stand for good: the resolver never sees it again, the issue-434 refresh
+    /// never reaches it, and its organization stays referenced, out of the orphan sweep's
+    /// reach. Per key, inside one `BEGIN IMMEDIATE` per chunk (issue 498): the party and
+    /// bid-party rows that name the mention go first (they are foreign-keyed to it), then
+    /// the mention row; the Tenders of the deleted rows and of the notice are stamped
+    /// stale in the same transaction, so this run's Phase 2 rewrites them. A key with no
+    /// recorded row costs one primary-key seek and writes nothing. Returns how many
+    /// mentions were retired; the organizations they bound are left to `sweep-orphan-orgs`.
+    pub async fn retire_mentions(&self, resolver: &mut MentionResolver, keys: &[(i64, String)]) -> turso::Result<u64> {
+        if keys.is_empty() {
+            return Ok(0);
+        }
+        let conn = self.conn().await;
+        let mut retired = 0u64;
+        for chunk in keys.chunks(WRITE_BATCH) {
+            let (n, stamped) = Self::immediate(&conn, async {
+                let mut n = 0u64;
+                let mut tenders: Vec<i64> = Vec::new();
+                let mut notices: Vec<i64> = Vec::new();
+                for (notice, section) in chunk {
+                    let key = (Value::Integer(*notice), Value::Text(section.clone()));
+                    let mut rows = conn
+                        .query("SELECT 1 FROM organization_mentions WHERE notice_id = ? AND section_id = ?", key.clone())
+                        .await?;
+                    let recorded = rows.next().await?.is_some();
+                    drop(rows);
+                    if !recorded {
+                        continue;
+                    }
+                    for table in ["tender_version_parties", "tender_version_bid_parties"] {
+                        let mut rows = conn
+                            .query(
+                                &format!(
+                                    "SELECT DISTINCT tender_id FROM {table} \
+                                      WHERE mention_notice_id = ? AND mention_section_id = ?"
+                                ),
+                                key.clone(),
+                            )
+                            .await?;
+                        while let Some(row) = rows.next().await? {
+                            tenders.push(int(&row, 0));
+                        }
+                        drop(rows);
+                        conn.execute(
+                            &format!("DELETE FROM {table} WHERE mention_notice_id = ? AND mention_section_id = ?"),
+                            key.clone(),
+                        )
+                        .await?;
+                    }
+                    conn.execute("DELETE FROM organization_mentions WHERE notice_id = ? AND section_id = ?", key).await?;
+                    notices.push(*notice);
+                    n += 1;
+                }
+                // The deleted rows' own Tenders (a party row can sit in a version another
+                // notice caused) and the notices' Tenders, as one set, stamped inline:
+                // `stamp_tenders_stale` checkpoints, which must not run inside this
+                // transaction (issue 501).
+                for ids in notices.chunks(IN_CHUNK) {
+                    let sql = format!(
+                        "SELECT tender_id FROM tender_versions WHERE caused_by_notice_id IN ({})",
+                        placeholders(ids.len())
+                    );
+                    let mut rows = conn.query(&sql, ids.iter().map(|id| Value::Integer(*id)).collect::<Vec<_>>()).await?;
+                    while let Some(row) = rows.next().await? {
+                        tenders.push(int(&row, 0));
+                    }
+                }
+                tenders.sort_unstable();
+                tenders.dedup();
+                for ids in tenders.chunks(IN_CHUNK) {
+                    let sql =
+                        format!("UPDATE tenders SET projection_epoch = 0 WHERE id IN ({})", placeholders(ids.len()));
+                    conn.execute(&sql, ids.iter().map(|id| Value::Integer(*id)).collect::<Vec<_>>()).await?;
+                }
+                Ok((n, tenders.len() as u64))
+            })
+            .await?;
+            retired += n;
+            resolver.tenders_stamped += stamped;
+        }
+        resolver.mentions_retired += retired;
+        Ok(retired)
+    }
+
     /// Ring the change-cursor doorbell once if the resolver created any
     /// Organization over its lifetime, so a change-feed consumer sees every new
     /// Organization exactly once.
@@ -15424,6 +15520,7 @@ impl Db {
         MentionRefresh {
             refreshed: resolver.mentions_refreshed,
             rebound: resolver.mentions_rebound,
+            retired: resolver.mentions_retired,
             tenders_stamped: resolver.tenders_stamped,
         }
     }

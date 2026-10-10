@@ -77,6 +77,9 @@ pub struct Report {
     /// parse fix is where this says how far the fix reached the org layer.
     pub mentions_refreshed: u64,
     pub mentions_rebound: u64,
+    /// Issue 510: recorded mentions of void-lot parties retired this run
+    /// ([`store::Db::retire_mentions`]); their organizations are the orphan sweep's.
+    pub mentions_retired: u64,
     /// Issue 448 unit 3: what the resolver's altid alias did — PPON-first
     /// mentions asked, bound to the company-number org, refused. Durable for
     /// the reason `wall` is; `armed: false` when no resolver was opened.
@@ -1829,6 +1832,7 @@ pub async fn project_with_progress_phase2_stoppable(
         report.procedure = procedure;
         report.mentions_refreshed = refresh.refreshed;
         report.mentions_rebound = refresh.rebound;
+        report.mentions_retired = refresh.retired;
     }
     probe(db, "Phase-1 (build_plan)");
     if report.stopped {
@@ -2043,6 +2047,9 @@ async fn build_plan(
         /// buyer tokens take once the writer half has resolved them.
         guard_sections: Vec<Vec<String>>,
         mentions: Vec<Mention>,
+        /// Issue 510: the `(notice, section)` of each void-lot party the chunk's
+        /// mentions skipped, for [`store::Db::retire_mentions`].
+        void: Vec<(i64, String)>,
         /// Issue 364's per-kind tally for this chunk's notices, summed by the
         /// writer half — the sweep is where `Ident::read` runs.
         citations: CitationGate,
@@ -2092,6 +2099,7 @@ async fn build_plan(
                     let Some((last, _)) = chunk.last() else { break };
                     after_id = last.id;
                     let mut mentions: Vec<Mention> = Vec::new();
+                    let mut void: Vec<(i64, String)> = Vec::new();
                     let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
                     let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(chunk.len());
                     let mut citations = CitationGate::default();
@@ -2099,7 +2107,9 @@ async fn build_plan(
                     let mut procedure = ProcedureTally::default();
                     for (notice, parsed) in &chunk {
                         let ident = Ident::read(notice, parsed);
-                        mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
+                        let (notice_mentions, skipped) = NoticeState::mentions_and_void(ident.sdk01, notice.id, parsed);
+                        mentions.extend(notice_mentions);
+                        void.extend(skipped.into_iter().map(|section| (notice.id, section)));
                         citations.add(ident.citations);
                         f14.add(ident.f14_targets);
                         procedure.add(ident.procedure);
@@ -2109,7 +2119,7 @@ async fn build_plan(
                     }
                     SweepClock::add(&clock.decode_ns, decode);
                     let send = std::time::Instant::now();
-                    if tx.send(Ok(PlanChunk { rows, guard_sections, mentions, citations, f14, procedure })).is_err() {
+                    if tx.send(Ok(PlanChunk { rows, guard_sections, mentions, void, citations, f14, procedure })).is_err() {
                         return; // the writer half bailed on an error
                     }
                     SweepClock::add(&clock.send_wait_ns, send);
@@ -2160,6 +2170,12 @@ async fn build_plan(
                 break;
             }
         };
+        // Issue 510: the void-lot parties this chunk no longer mints; a recorded mention
+        // of one is retired so its organization falls to the orphan sweep.
+        if let Err(e) = db.retire_mentions(&mut resolver, &chunk.void).await {
+            plan_err = Some(e);
+            break;
+        }
         writer_clock.resolve += resolving.elapsed();
         let inserting = std::time::Instant::now();
         mentions_total += resolved.len() as u64;
@@ -2251,9 +2267,11 @@ async fn build_plan(
     }
     eprintln!(
         "[project] plan: {notices} notices, {mentions_total} mentions resolved \
-         ({} recorded mention(s) refreshed, {} re-bound — issue 434) in {:.1}s{}",
+         ({} recorded mention(s) refreshed, {} re-bound — issue 434; {} void-lot mention(s) retired — \
+         issue 510) in {:.1}s{}",
         refresh.refreshed,
         refresh.rebound,
+        refresh.retired,
         t0.elapsed().as_secs_f64(),
         if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
@@ -2282,6 +2300,7 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
             procedure,
             mentions_refreshed: refresh.refreshed,
             mentions_rebound: refresh.rebound,
+            mentions_retired: refresh.retired,
             alias,
             ..Default::default()
         })
@@ -3094,14 +3113,18 @@ fn incremental_plan_rows(
     parsed: &[(store::NoticeRef, Parsed)],
     changed_set: &std::collections::HashSet<i64>,
     report: &mut Report,
-) -> (Vec<store::PlanRow>, Vec<Vec<String>>, Vec<Mention>) {
+) -> (Vec<store::PlanRow>, Vec<Vec<String>>, Vec<Mention>, Vec<(i64, String)>) {
     let mut rows: Vec<store::PlanRow> = Vec::with_capacity(parsed.len());
     let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(parsed.len());
     let mut mentions: Vec<Mention> = Vec::new();
+    // Issue 510: the void-lot parties the delta's mentions skipped.
+    let mut void: Vec<(i64, String)> = Vec::new();
     for (notice, p) in parsed {
         let ident = Ident::read(notice, p);
         if changed_set.contains(&notice.id) {
-            mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, p));
+            let (notice_mentions, skipped) = NoticeState::mentions_and_void(ident.sdk01, notice.id, p);
+            mentions.extend(notice_mentions);
+            void.extend(skipped.into_iter().map(|section| (notice.id, section)));
         }
         // Issue 364: counted in the PLAN build only — pass 1 reads the same
         // notices' identity again, and counting there too would double every
@@ -3113,7 +3136,7 @@ fn incremental_plan_rows(
         rows.push(row);
         guard_sections.push(sections);
     }
-    (rows, guard_sections, mentions)
+    (rows, guard_sections, mentions, void)
 }
 
 /// The chunked incremental with its Progress surfaced and its plan-build loops
@@ -3338,12 +3361,15 @@ pub async fn project_incremental_chunked_observed(
         let mut parsed = db.parsed_by_ids(chunk).await?;
         normalise_de1(&mut parsed);
         parsed.sort_by_key(|(n, _)| n.id);
-        let (mut rows, guard_sections, mentions) = incremental_plan_rows(&parsed, &changed_set, &mut report);
+        let (mut rows, guard_sections, mentions, void) = incremental_plan_rows(&parsed, &changed_set, &mut report);
         // Issue 481 unit 2c: resolved BEFORE the rows are written, so each row carries
         // its buyers' organizations — the resolver's answer for the delta's notices, the
         // recorded mentions for the closure's (boxed: issue 467's poll budget).
         let resolved = db.resolve_mentions(&mut resolver, &mentions, now).await?;
         report.mentions += resolved.len() as u64;
+        // Issue 510: a recorded mention of a void-lot party is retired (its party rows go
+        // with it, its Tenders are stamped for this run's Phase 2).
+        db.retire_mentions(&mut resolver, &void).await?;
         let mut orgs = resolved_orgs(&mentions, &resolved);
         let recorded: Vec<i64> = rows
             .iter()
@@ -3364,6 +3390,7 @@ pub async fn project_incremental_chunked_observed(
     let refresh = store::Db::mention_refresh(&resolver);
     report.mentions_refreshed = refresh.refreshed;
     report.mentions_rebound = refresh.rebound;
+    report.mentions_retired = refresh.retired;
     db.finish_mention_resolver(resolver).await?;
     if report.stopped {
         // A stopped pass 2 wrote a PARTIAL plan: clear it, and do NOT advance
@@ -3382,8 +3409,8 @@ pub async fn project_incremental_chunked_observed(
         db.advance_legacy_adjacency(*max).await?;
     }
     stage(&format!(
-        "pass-2 plan build ({} mentions resolved, {} recorded mention(s) refreshed, {} re-bound)",
-        report.mentions, report.mentions_refreshed, report.mentions_rebound
+        "pass-2 plan build ({} mentions resolved, {} recorded mention(s) refreshed, {} re-bound, {} void-lot retired)",
+        report.mentions, report.mentions_refreshed, report.mentions_rebound, report.mentions_retired
     ));
 
     // Group the whole plan (same SQL as a full run — over the touched set only).
@@ -4329,6 +4356,41 @@ fn party_names<'a>(
     names
 }
 
+/// Issue 510: the party sections of a notice whose EVERY published name says the lot was
+/// not awarded ([`crate::partyname::NotAName::VoidLot`]) — each outermost party section,
+/// plus the nested inner halves of one ([`nested_org_aliases`]), so a role or result
+/// reference to either half is caught. A party with one real name among its names is not
+/// void; a party with no name is not void.
+///
+/// The ONE place the fold decides "void": [`NoticeState::mentions`] skips these parties
+/// (no organization is minted) and [`NoticeState::read`] drops every role, result winner
+/// and bid party that names them (which holds even while a recorded mention row still
+/// exists, because Phase 2 binds through the recorded mentions).
+fn void_party_sections(
+    sdk01: bool,
+    sections: &HashMap<&str, &store::Section>,
+    alias: &HashMap<String, String>,
+    parsed: &Parsed,
+) -> BTreeSet<String> {
+    let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
+    // Outermost party → whether every non-empty name seen so far is a void lot.
+    let mut all_void: HashMap<String, bool> = HashMap::new();
+    for value in &parsed.values {
+        let NoticeValue::Text { value: name, .. } = &value.value else { continue };
+        if name.trim().is_empty() || !party_name_field(sdk01, &value.field_id) {
+            continue;
+        }
+        let Some(owner) = enclosing(sections, &value.section_id, kinds) else { continue };
+        let owner = alias.get(owner).map_or(owner, |o| o.as_str());
+        let void = crate::partyname::not_a_name(name) == Some(crate::partyname::NotAName::VoidLot);
+        all_void.entry(owner.to_owned()).and_modify(|v| *v &= void).or_insert(void);
+    }
+    let mut out: BTreeSet<String> = all_void.into_iter().filter(|(_, void)| *void).map(|(s, _)| s).collect();
+    let inner: Vec<String> = alias.iter().filter(|(_, outer)| out.contains(*outer)).map(|(i, _)| i.clone()).collect();
+    out.extend(inner);
+    out
+}
+
 /// A normalised OJS publication key `(year, number)`. The display form is not
 /// stable across eras (`2011/S 1-000181` vs `2019/S 001-000001` vs the
 /// `000001-2019` DOC form vs the text era's `154-2005`), so the join key is
@@ -4672,6 +4734,13 @@ impl NoticeState {
         // A role or winner reference may name the inner half of a nested party
         // (issue 259); both halves must bind to the one Organization.
         let org_alias = nested_org_aliases(&sections, if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] });
+        // Issue 510: a void-lot party carries no role, no result winner and no bid party,
+        // in every role and era — decided here from the parse, so a mention row recorded
+        // before the rule (still read by Phase 2's binding) binds nothing.
+        let void = void_party_sections(sdk01, &sections, &org_alias, parsed);
+        if !void.is_empty() {
+            raw_roles.retain(|(_, _, _, target)| !void.contains(target));
+        }
         // Issue 483 unit 2: a review body or platform vendor in the buyer slot loses the
         // buyer role (or yields it to the real buyer the notice names elsewhere) — the
         // census's own verdict, the same one `buyer_side_mentions` applies to the guards.
@@ -4682,7 +4751,7 @@ impl NoticeState {
             if sdk01 || legacy { "buyer" } else { "Procedure-Buyer" },
         );
 
-        let mut raw_results = read_results(&sections, parsed, legacy, sdk01);
+        let mut raw_results = read_results(&sections, parsed, legacy, sdk01, &void);
         // Issue 484 unit 3: which winner sections are the notice's own buyer — judged
         // against the buyers the fix above left, so a demoted review body is no buyer
         // and a promoted real buyer is one. Award notices only.
@@ -4757,6 +4826,14 @@ impl NoticeState {
     /// them on the 2026-136 daily). So a mention collects from the whole
     /// subtree, keyed by the enclosing Organization.
     fn mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Vec<Mention> {
+        Self::mentions_and_void(sdk01, notice_id, parsed).0
+    }
+
+    /// [`Self::mentions`], and the outermost party sections it skipped because every name
+    /// they publish says the lot was not awarded (issue 510, [`void_party_sections`]) —
+    /// the keys a fold hands to [`store::Db::retire_mentions`], so a mention recorded
+    /// before the rule is retired rather than left standing.
+    fn mentions_and_void(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<Mention>, Vec<String>) {
         let sections: HashMap<&str, &store::Section> =
             parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
 
@@ -4769,11 +4846,19 @@ impl NoticeState {
         // Organization sections for it (issue 259). The inner ones are aliases, not
         // parties of their own.
         let alias = nested_org_aliases(&sections, mention_kinds);
+        // Issue 510: a party whose every name says the lot was not awarded mints nothing.
+        let void = void_party_sections(sdk01, &sections, &alias, parsed);
+        let skipped: Vec<String> = parsed
+            .sections
+            .iter()
+            .filter(|s| mention_kinds.contains(&s.kind.as_str()) && !alias.contains_key(&s.id) && void.contains(&s.id))
+            .map(|s| s.id.clone())
+            .collect();
 
         let mut mentions: BTreeMap<&str, Mention> = parsed
             .sections
             .iter()
-            .filter(|s| mention_kinds.contains(&s.kind.as_str()) && !alias.contains_key(&s.id))
+            .filter(|s| mention_kinds.contains(&s.kind.as_str()) && !alias.contains_key(&s.id) && !void.contains(&s.id))
             .map(|s| {
                 (
                     s.id.as_str(),
@@ -4841,7 +4926,7 @@ impl NoticeState {
             }
         }
 
-        mentions
+        let mentions = mentions
             .into_values()
             .map(|mut m| {
                 // Canonicalise the country to alpha-2 (issue 48) before it is
@@ -4869,7 +4954,8 @@ impl NoticeState {
                     .and_then(|raw| normalise_identifier(raw, m.country.as_deref()));
                 m
             })
-            .collect()
+            .collect();
+        (mentions, skipped)
     }
 
     /// Turn the notice-local role references into party facts — and the
@@ -5761,6 +5847,9 @@ struct RawLotResult {
     /// the block itself — there is no bid/contract graph to resolve through
     /// (research §2.2: legacy notices have no notice-internal entity ids).
     direct_winners: Vec<String>, // ORG-n section ids
+    /// Issue 510: the block named a party whose every name says the lot was not awarded
+    /// (`Infructueux`, `Desierto`) — an explicit no-award statement.
+    void_lot: bool,
     direct_cents: Option<i64>,
     direct_currency: Option<String>,
 }
@@ -5804,12 +5893,13 @@ fn read_results(
     parsed: &Parsed,
     legacy: bool,
     sdk01: bool,
+    void: &BTreeSet<String>,
 ) -> RawResults {
     if legacy {
-        return read_legacy_results(sections, parsed);
+        return read_legacy_results(sections, parsed, void);
     }
     if sdk01 {
-        return read_sdk01_results(parsed);
+        return read_sdk01_results(parsed, void);
     }
     // Issue 372: BT-720 is the figure buyers withhold most, and it reaches the
     // canonical layer here rather than through the amount table, so the marker
@@ -5909,10 +5999,12 @@ fn read_results(
             "TenderingParty" => {
                 let Some(p) = raw.parties.iter_mut().find(|p| p.key == owner) else { continue };
                 match (row.field_id.as_str(), &row.value) {
-                    ("OPT-300-Tenderer", NoticeValue::Id { value, .. }) => {
+                    // Issue 510: a void-lot party is no tenderer; the Bid and the
+                    // publisher's BT-142 stay.
+                    ("OPT-300-Tenderer", NoticeValue::Id { value, .. }) if !void.contains(value) => {
                         p.members.push(("tenderer".to_owned(), value.clone()));
                     }
-                    ("OPT-301-Tenderer-SubCont", NoticeValue::Id { value, .. }) => {
+                    ("OPT-301-Tenderer-SubCont", NoticeValue::Id { value, .. }) if !void.contains(value) => {
                         p.members.push(("subcontractor".to_owned(), value.clone()));
                     }
                     _ => {}
@@ -5948,7 +6040,11 @@ fn read_results(
 /// value sits on the block, and the received-bid count is the one statistic —
 /// there is no bid/contract graph in the legacy schema (research §2.2), so
 /// those stay empty and the winner/value resolve directly.
-fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parsed) -> RawResults {
+fn read_legacy_results(
+    sections: &HashMap<&str, &store::Section>,
+    parsed: &Parsed,
+    void: &BTreeSet<String>,
+) -> RawResults {
     let mut raw = RawResults::default();
     for s in &parsed.sections {
         if s.kind == "LotResult" {
@@ -5984,7 +6080,12 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
             (_, NoticeValue::Id { value: org, is_ref: true, scheme })
                 if scheme.as_deref() != Some("ojs") =>
             {
-                r.direct_winners.push(org.clone());
+                // Issue 510: a void-lot "winner" is the publisher saying no award.
+                if void.contains(org) {
+                    r.void_lot = true;
+                } else {
+                    r.direct_winners.push(org.clone());
+                }
             }
             ("TED-LOT_NO" | "TED-LOT_NUMBER" | "TED-ITEM", NoticeValue::Id { value: no, .. }) => {
                 r.lot_key = lot_by_no.get(no.trim()).cloned();
@@ -6030,11 +6131,20 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
     // and what issue 244's slice 9 mints for the era's winner-silent award bodies).
     // `clos-nw` remains the default only for a result block with no award evidence
     // at all.
+    //
+    // Issue 510: a void-lot phrase in the winner slot (`Infructueux`, `Desierto`) is an
+    // explicit no-award statement, like `NO_AWARDED_CONTRACT`: with no real winner beside
+    // it, it outranks a value (often 0) or a date. Before, the phrase was itself the
+    // "winner" and manufactured `selec-w`.
     for r in &mut raw.lot_results {
         r.direct_winners.sort();
         r.direct_winners.dedup();
         if r.decision.is_none() {
-            if !r.direct_winners.is_empty() || r.direct_cents.is_some() {
+            if !r.direct_winners.is_empty() {
+                r.decision = Some("selec-w".to_owned());
+            } else if r.void_lot {
+                r.decision = Some("clos-nw".to_owned());
+            } else if r.direct_cents.is_some() {
                 r.decision = Some("selec-w".to_owned());
             } else if r.decided.is_none() {
                 r.decision = Some("clos-nw".to_owned());
@@ -6059,7 +6169,7 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
 /// day of the award, no code, no winner, no value. So the winner shortfall this
 /// era shows is the publisher's, not ours — where a `WinningParty` IS published
 /// we resolve it, and every one of them carried a `PartyName` to resolve.
-fn read_sdk01_results(parsed: &Parsed) -> RawResults {
+fn read_sdk01_results(parsed: &Parsed, void: &BTreeSet<String>) -> RawResults {
     let mut raw = RawResults::default();
     for s in &parsed.sections {
         if s.kind == SDK01_RESULT_KIND {
@@ -6092,7 +6202,12 @@ fn read_sdk01_results(parsed: &Parsed) -> RawResults {
             && let Some(parent) = &s.parent
             && let Some(r) = raw.lot_results.iter_mut().find(|r| &r.key == parent)
         {
-            r.direct_winners.push(s.id.clone());
+            // Issue 510: a void-lot WinningParty is the publisher saying no award.
+            if void.contains(&s.id) {
+                r.void_lot = true;
+            } else {
+                r.direct_winners.push(s.id.clone());
+            }
         }
     }
     for r in &mut raw.lot_results {
@@ -6108,6 +6223,10 @@ fn read_sdk01_results(parsed: &Parsed) -> RawResults {
         // (issue 257). Unstated is now NULL, and the date it does state is kept.
         if r.decision.is_none() && !r.direct_winners.is_empty() {
             r.decision = Some("selec-w".to_owned());
+        } else if r.decision.is_none() && r.void_lot {
+            // Issue 510: a void-lot WinningParty and no real one — the explicit
+            // no-award statement, not silence.
+            r.decision = Some("clos-nw".to_owned());
         }
     }
     raw
@@ -8976,7 +9095,7 @@ mod tests {
             };
             let sections: HashMap<&str, &store::Section> =
                 parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
-            read_results(&sections, &parsed, false, false).bind(1, None, &HashMap::new())
+            read_results(&sections, &parsed, false, false, &BTreeSet::new()).bind(1, None, &HashMap::new())
         };
 
         let settled = round("028961-2025");

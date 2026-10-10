@@ -2831,10 +2831,11 @@ enum SweepMode {
 }
 
 /// Issue 443 step 3: whether a finished fold queues the orphan sweep. A re-bind
-/// is the only way a fold empties an organization, and a stopped fold's tallies
+/// and (issue 510) a retired void-lot mention are the ways a fold empties an
+/// organization — the caller passes their sum — and a stopped fold's tallies
 /// are a prefix its re-run will finish (and queue from).
-fn sweep_after_fold(stopped: bool, mentions_rebound: u64) -> bool {
-    !stopped && mentions_rebound > 0
+fn sweep_after_fold(stopped: bool, mentions_emptied: u64) -> bool {
+    !stopped && mentions_emptied > 0
 }
 
 /// The plan body: `counted`'s classes, and `swept` = what is left to sweep —
@@ -4463,6 +4464,12 @@ impl Supervisor {
         } else {
             String::new()
         };
+        // Issue 510: void-lot mentions retired, silent at zero.
+        let retired = if report.mentions_retired > 0 {
+            format!("; {} void-lot mention(s) retired (issue 510)", report.mentions_retired)
+        } else {
+            String::new()
+        };
         let citations = format!(
             "{}{}{}{}{}{}",
             citation_suffix(&report.citations),
@@ -4475,13 +4482,16 @@ impl Supervisor {
         // Issue 443 step 3: a re-bind can leave the row it left with no mention
         // at all, so a fold that re-bound anything queues the sweep behind it —
         // once: a sweep already queued or running covers this fold's orphans.
-        let sweep = if sweep_after_fold(report.stopped, report.mentions_rebound)
+        let sweep = if sweep_after_fold(report.stopped, report.mentions_rebound + report.mentions_retired)
             && !self.already_pending("sweep-orphan-orgs")
         {
             let id = self
                 .push(
                     "sweep-orphan-orgs",
-                    format!("sweep-orphan-orgs auto (after a fold re-bound {})", report.mentions_rebound),
+                    format!(
+                        "sweep-orphan-orgs auto (after a fold re-bound {} and retired {})",
+                        report.mentions_rebound, report.mentions_retired
+                    ),
                     Spec::SweepOrphanOrgsAuto { cap: AUTO_SWEEP_CAP },
                 )
                 .await;
@@ -4492,7 +4502,7 @@ impl Supervisor {
         // Issue 495 unit 3: the shadow compare's tally, when a stale Tender was compared.
         let compare = report.applied.compare_line().map(|line| format!("; {line}")).unwrap_or_default();
         Ok(format!(
-            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{compare}{wall}{alias}{refreshed}{sweep}{citations}",
+            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{compare}{wall}{alias}{refreshed}{retired}{sweep}{citations}",
             report.notices,
             report.tenders,
             report.islands,

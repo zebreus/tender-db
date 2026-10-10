@@ -105,14 +105,14 @@ async fn a_stale_mention_is_rewritten_in_place_and_an_unchanged_one_is_kept() {
     // nothing is written or minted.
     let (again, refresh) = run(&db, &[mention(1, "Stadtwerke Alt", Some("DE"))]).await;
     assert_eq!(again[0], old);
-    assert_eq!(refresh, store::MentionRefresh { refreshed: 0, rebound: 0, tenders_stamped: 0 });
+    assert_eq!(refresh, store::MentionRefresh { refreshed: 0, rebound: 0, retired: 0, tenders_stamped: 0 });
     assert_eq!(int(&db, "SELECT COUNT(*) FROM organizations").await, 1, "nothing minted");
 
     // The parse now publishes another name for the same section.
     let (after, refresh) = run(&db, &[mention(1, "Stadtwerke Neu", Some("DE"))]).await;
     let new = after[0];
     assert_ne!(new, old, "the new name resolves through the new-mention path");
-    assert_eq!(refresh, store::MentionRefresh { refreshed: 1, rebound: 1, tenders_stamped: 1 });
+    assert_eq!(refresh, store::MentionRefresh { refreshed: 1, rebound: 1, retired: 0, tenders_stamped: 1 });
     assert_eq!(
         int(&db, &epoch(10)).await,
         0,
@@ -167,7 +167,7 @@ async fn a_stale_mention_is_rewritten_in_place_and_an_unchanged_one_is_kept() {
     let (reg, _) = run(&db, &[with_id("Landkreis Muster")]).await;
     let (reg2, refresh) = run(&db, &[with_id("Landratsamt Muster")]).await;
     assert_eq!(reg2[0], reg[0], "the registration still binds its own row");
-    assert_eq!(refresh, store::MentionRefresh { refreshed: 1, rebound: 0, tenders_stamped: 0 });
+    assert_eq!(refresh, store::MentionRefresh { refreshed: 1, rebound: 0, retired: 0, tenders_stamped: 0 });
     assert_eq!(
         int(&db, &epoch(20)).await,
         store::canonical::PROJECTION_EPOCH,
@@ -340,5 +340,62 @@ async fn the_triple_preload_and_the_name_probes_bind_the_lowest_id_among_duplica
     );
 
     drop(db);
+    cleanup(&path);
+}
+
+/// Issue 510: a recorded mention of a void-lot party is retired with the party and
+/// bid-party rows that name it, and both their Tenders and the notice's own are
+/// stamped stale for the fold's Phase 2. An absent key writes nothing; a second
+/// retire finds nothing; the organization stays for the orphan sweep.
+#[tokio::test]
+async fn retiring_a_mention_takes_its_party_rows_and_stamps_their_tenders() {
+    let (db, path) = fresh("retire-mention").await;
+    let (ids, _) = run(&db, &[mention(1, "Infructueux", Some("FR"))]).await;
+    let org = ids[0];
+    // Tender 10's version is caused by notice 1; Tender 30's by notice 3, but a party
+    // row there still names notice 1's mention (a party a later version carries).
+    for (tender, notice) in [(10, 1), (30, 3)] {
+        db.execute_for_test(&format!(
+            "INSERT INTO tenders (id, source, kind, created_at, projection_epoch)
+             VALUES ({tender}, 'ted', 'procedure', 0, {})",
+            store::canonical::PROJECTION_EPOCH
+        ))
+        .await
+        .unwrap();
+        db.execute_for_test(&format!(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES ({tender}, 1, {notice}, 0, 'pub-{notice}')"
+        ))
+        .await
+        .unwrap();
+        db.execute_for_test(&format!(
+            "INSERT INTO tender_version_parties (tender_id, seq, lot_id, role, organization_id,
+                                                 mention_notice_id, mention_section_id)
+             VALUES ({tender}, 1, NULL, 'winner', {org}, 1, 'ORG-1')"
+        ))
+        .await
+        .unwrap();
+    }
+    db.execute_for_test(&format!(
+        "INSERT INTO tender_version_bid_parties (tender_id, seq, bid_id, role, organization_id,
+                                                 mention_notice_id, mention_section_id)
+         VALUES (10, 1, 1, 'tenderer', {org}, 1, 'ORG-1')"
+    ))
+    .await
+    .unwrap();
+
+    let mut resolver = db.mention_resolver(None, None, None, None, None, None, 0).await.unwrap();
+    let keys = vec![(1, "ORG-1".to_owned()), (9, "ORG-9".to_owned())];
+    assert_eq!(db.retire_mentions(&mut resolver, &keys).await.unwrap(), 1, "the absent key writes nothing");
+    assert_eq!(db.retire_mentions(&mut resolver, &keys).await.unwrap(), 0, "idempotent");
+    let refresh = Db::mention_refresh(&resolver);
+    db.finish_mention_resolver(resolver).await.unwrap();
+    assert_eq!((refresh.retired, refresh.tenders_stamped), (1, 2), "{refresh:?}");
+
+    assert_eq!(int(&db, "SELECT COUNT(*) FROM organization_mentions").await, 0);
+    assert_eq!(int(&db, "SELECT COUNT(*) FROM tender_version_parties").await, 0);
+    assert_eq!(int(&db, "SELECT COUNT(*) FROM tender_version_bid_parties").await, 0);
+    assert_eq!(int(&db, "SELECT COUNT(*) FROM tenders WHERE projection_epoch = 0").await, 2, "both Tenders stamped");
+    assert_eq!(int(&db, &format!("SELECT COUNT(*) FROM organizations WHERE id = {org}")).await, 1, "the sweep's job");
     cleanup(&path);
 }

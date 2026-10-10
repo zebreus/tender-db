@@ -6130,3 +6130,112 @@ async fn the_procedure_type_carries_forward_through_a_silent_notice_and_supersed
     assert_eq!((r209.folded, r209.unmapped, r209.none), (3, 1, 0));
     let _ = std::fs::remove_file(&path);
 }
+
+/// Issue 510: the r208 defence award fixture with its winner's name replaced — the
+/// notice as it is, and as a publisher who wrote a void-lot phrase in the winner slot
+/// would have sent it — as (Notice, original Parsed, void Parsed).
+fn defence_award_with_winner(fetch_id: i64, winner: &str) -> (Notice, Parsed, Parsed) {
+    let relative = "r209/f18-defence-001420-2019.xml";
+    let original = std::fs::read(format!("tests/fixtures/{relative}")).expect("fixture");
+    let text = String::from_utf8(original.clone()).expect("utf-8");
+    assert_eq!(text.matches("<OFFICIALNAME>Indaeltrac</OFFICIALNAME>").count(), 1, "premise: one winner name");
+    let voided = text.replace("<OFFICIALNAME>Indaeltrac</OFFICIALNAME>", &format!("<OFFICIALNAME>{winner}</OFFICIALNAME>"));
+    let profile::Disposition::Records(records) = profile::dispatch(relative, &original) else { panic!("dispatch") };
+    let [profile::Record::Notice(n)] = &records[..] else { panic!("one notice") };
+    let parsed = |bytes: &[u8]| match process::parse_payload(&n.profile, bytes) {
+        Parse::Parsed(p) => p,
+        other => panic!("{other:?}"),
+    };
+    let (original, voided) = (parsed(&original), parsed(voided.as_bytes()));
+    let (published_at, dispatched_at) = project::notice_stamps(&original);
+    let notice = Notice {
+        source: SOURCE.into(),
+        publication_id: n.publication_id.clone(),
+        content_hash: n.content_hash.clone(),
+        profile: n.profile.clone(),
+        declared_version: n.declared_version.clone(),
+        fetch_id,
+        member_path: n.member_path.clone(),
+        ingested_at: 0,
+        published_at,
+        dispatched_at,
+    };
+    (notice, original, voided)
+}
+
+/// Issue 510, through the real parser and fold: an award block whose winner slot says
+/// the lot was not awarded mints no organization, binds no winner, and its result reads
+/// `clos-nw` — not the `selec-w` the void "winner" used to manufacture, even beside the
+/// block's own value and award date. The buyer and the review body still mint.
+#[tokio::test]
+async fn a_void_lot_winner_mints_no_organization_and_closes_its_result() {
+    let (db, fetch_id, path) = scratch("510-void-winner").await;
+    let (notice, _, voided) = defence_award_with_winner(fetch_id, "Lot déclaré infructueux");
+    db.record_notice(&notice, &Parse::Parsed(voided)).await.expect("record");
+    project::project(&db, false).await.expect("fold");
+
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organizations WHERE name LIKE '%nfructueux%'").await, 0);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organization_mentions WHERE name LIKE '%nfructueux%'").await, 0);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organization_mentions").await, 2, "the buyer and the review body");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await, 0);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_parties WHERE role = 'winner'").await, 0);
+    assert_eq!(
+        query_text(&db, "SELECT decision FROM tender_version_lot_results").await.as_deref(),
+        Some("clos-nw"),
+        "the void phrase is a no-award statement, not a winner"
+    );
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 510: a winner fixed into a void phrase by a re-parse (the shape of every
+/// standing junk mention when the rule deploys) is RETIRED by the refold — mention,
+/// party row and result winner gone, the result closed, the Tender current again — and
+/// its organization is left mention-less for the orphan sweep. A second refold retires
+/// nothing.
+async fn a_standing_void_mention_is_retired_by_a_refold(refold: Refold) {
+    let (db, fetch_id, path) = scratch(&format!("510-retire-{refold:?}")).await;
+    let (notice, original, voided) = defence_award_with_winner(fetch_id, "Infructueux");
+    db.record_notice(&notice, &Parse::Parsed(original)).await.expect("record");
+    project::project(&db, false).await.expect("first fold");
+    let winner = scalar(&db, "SELECT organization_id FROM tender_version_result_winners").await;
+    assert_eq!(
+        query_text(&db, &format!("SELECT name FROM organizations WHERE id = {winner}")).await.as_deref(),
+        Some("Indaeltrac"),
+        "premise"
+    );
+    assert_eq!(query_text(&db, "SELECT decision FROM tender_version_lot_results").await.as_deref(), Some("selec-w"));
+
+    db.reparse_notice(&notice, &voided).await.expect("reparse");
+    let report = match refold {
+        Refold::Incremental => project::project_incremental(&db).await.expect("refold"),
+        Refold::Full => project::project(&db, false).await.expect("full refold"),
+    };
+    assert_eq!(report.mentions_retired, 1, "{refold:?}: the recorded winner mention was retired");
+    assert_eq!(scalar(&db, &format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {winner}")).await, 0);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await, 0, "{refold:?}");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_parties WHERE role = 'winner'").await, 0, "{refold:?}");
+    assert_eq!(query_text(&db, "SELECT decision FROM tender_version_lot_results").await.as_deref(), Some("clos-nw"));
+    assert_eq!(
+        scalar(
+            &db,
+            &format!("SELECT COUNT(*) FROM tenders WHERE projection_epoch <> {}", store::canonical::PROJECTION_EPOCH)
+        )
+        .await,
+        0,
+        "{refold:?}: the stamp was consumed by this run's Phase 2"
+    );
+
+    let again = project::project_incremental(&db).await.expect("second refold");
+    assert_eq!(again.mentions_retired, 0, "nothing left to retire");
+    let _ = std::fs::remove_file(&path);
+}
+
+#[tokio::test]
+async fn an_incremental_refold_retires_a_standing_void_mention() {
+    a_standing_void_mention_is_retired_by_a_refold(Refold::Incremental).await;
+}
+
+#[tokio::test]
+async fn a_full_fold_retires_a_standing_void_mention() {
+    a_standing_void_mention_is_retired_by_a_refold(Refold::Full).await;
+}
