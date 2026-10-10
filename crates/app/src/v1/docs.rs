@@ -149,8 +149,9 @@ it in <code>merged_identifiers</code>, <code>?identifier=</code> finds the survi
 and the page names the merge as
 <code>"resolved_filters": {"identifier": {"asked": "…", "merged_into": [&lt;id&gt;, …]}}</code>
 (see <a href="#lookups">lookups</a>). The one exception is a number a review found was
-never the organization's own (<code>identifier_status: register_mismatch</code>): when that
-organization is re-keyed onto its right number, the wrong number — in any spelling — stops
+never the organization's own (<code>identifier_status: register_mismatch</code>, or
+<code>related_entity</code> for a parent's, subsidiary's or sister company's number): when
+that organization is re-keyed onto its own number, the old number — in any spelling — stops
 answering it rather than following it.</p>
 <p>Tender rows echo the <code>cpv</code> (CPV codes) and <code>country</code>
 (NUTS place codes) they carry, so you can see why a row matched a
@@ -882,8 +883,9 @@ rates and the quarantine resolution ledger.</p>
   <code>identifier_status: "register_mismatch"</code>. That number then never merges it
   with another organization, and another spelling of the number reaches it only under
   a matching name; a notice publishing exactly that number still resolves to it. A
-  parent's or subsidiary's number reads
-  <code>"related_entity"</code>. Null means no review found a problem, not that the
+  parent's, subsidiary's or sister company's number reads
+  <code>"related_entity"</code> and is treated the same way until the organization is
+  re-keyed onto its own number. Null means no review found a problem, not that the
   number was checked.</li>
 </ul>
 

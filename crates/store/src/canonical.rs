@@ -14738,15 +14738,18 @@ impl Db {
         // number is GUARDED with that org among its owners, so it reaches it
         // only by name (the number may be someone else's real one).
         //
-        // Issue 466: a re-keyed `related` number is never aliased. It IS someone
-        // else's real one — the parent's, the subsidiary's, the sister's — so a
-        // later mention of it is that company's, not the org it was taken off.
+        // Issue 466: a re-keyed `related` number is aliased the same way. It is
+        // the related company's real number, but its later mentions are the
+        // publisher repeating it for the org: on the 90 orgs the arm can re-key,
+        // 126 of 128 mentions name the org itself and 2 the related company. Left
+        // unaliased, each repeat would mint an unflagged twin (no verdict reaches a
+        // new carrier of an applied triple), and other spellings still reach the
+        // related company by name through the guard below.
         let mut rekeyed: RekeyedLiterals = HashMap::new();
         let mut rows = conn
             .query(
                 "SELECT identifier, identifier_kind, country, applied_literal \
-                   FROM org_identifier_verdicts \
-                  WHERE applied_literal IS NOT NULL AND verdict = 'wrong'",
+                   FROM org_identifier_verdicts WHERE applied_literal IS NOT NULL",
                 (),
             )
             .await?;
@@ -14790,7 +14793,7 @@ impl Db {
         // Logged whatever it found (the issue-318 rule), so a fold's log says
         // whether the verdicts were in force for it.
         self.log_diag(&format!(
-            "[issue 452] {} org(s) withheld by a wrong-number verdict; {} canonical key(s) bind \
+            "[issue 452] {} org(s) withheld by a wrong-number or unapplied related verdict; {} canonical key(s) bind \
              only on a name match; {aliased} re-keyed wrong number(s) aliased to their org (issue 453); \
              {} canonical key(s) carried through the GB O/0 fold by {} row(s), reached only by name \
              (issue 470)",
@@ -23410,9 +23413,9 @@ impl Db {
         // ---- 1. The verdicts, and the org each one names. A `related` verdict
         // that names the org's own number re-keys like a `wrong` one (issue 466):
         // the org leaves its parent's or sister's number for its own, through the
-        // same gates. Once applied it is not read again: the next carrier of that
-        // number is the related company itself, not the org the verdict was about.
-        // Only that and the alias (never for `related`) tell the two apart.
+        // same gates and the same alias afterwards. Once applied it is not read
+        // again: a carrier of that number other than the alias's entity is the
+        // related company itself, not the org the verdict was about.
         struct Cand {
             key: String,
             country: String,
@@ -23539,12 +23542,14 @@ impl Db {
         // destination under one is refused), and, per right number with no
         // owner, the candidates that would move onto it (only the smallest
         // key moves). A flag is per canonical key, not per spelling: a verdict
-        // on `GBCOH…` flags the bare number a move would write too.
+        // on `GBCOH…` flags the bare number a move would write too. An applied
+        // `related` verdict flags nothing (issue 466): its number is the related
+        // company's own, a fine place for that company's own mistyped rows.
         let mut flagged: HashSet<(&'static str, String)> = HashSet::new();
         let mut rows = conn
             .query(
                 "SELECT identifier, identifier_kind, country FROM org_identifier_verdicts \
-                  WHERE verdict IN ('wrong', 'related')",
+                  WHERE verdict = 'wrong' OR (verdict = 'related' AND applied_at IS NULL)",
                 (),
             )
             .await?;

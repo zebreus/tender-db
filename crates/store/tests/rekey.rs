@@ -611,10 +611,12 @@ async fn a_lookalike_whose_fold_is_the_right_number_is_re_keyed_onto_it() {
 /// parent group's, under the subsidiary Pagabo — and the org's own number beside it.
 /// Until the re-key the org is withheld, so another spelling of the parent's number
 /// under the parent's own name does not bind to it; the re-key merges it into its own
-/// number's org like a `wrong` one; and the parent's number is never aliased to that
-/// org afterwards: a later mention of it is the parent's.
+/// number's org like a `wrong` one; and afterwards the publisher's repeat of the
+/// parent's number for Pagabo reaches Pagabo (on production 126 of 128 such mentions
+/// name the org itself), while the parent's own spelling under its own name reaches the
+/// parent.
 #[tokio::test]
-async fn a_related_verdict_re_keys_but_its_number_is_never_aliased() {
+async fn a_related_verdict_re_keys_and_its_number_reaches_the_parent_only_by_name() {
     let orgs: &[(i64, &str, &str)] = &[(1, "13304590", "Pagabo Ltd"), (2, "08787322", "Pagabo Limited")];
     let related = IdentifierVerdict {
         org_id: 1,
@@ -640,26 +642,29 @@ async fn a_related_verdict_re_keys_but_its_number_is_never_aliased() {
     assert_eq!(dry.keys, vec!["GB/national/13304590>merge:08787322"], "{:#?}", dry.denied);
     db.match_org_rekey(args(false, Some(dry.keys), None)).await.unwrap();
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 1").await, 0, "merged into 2");
-    assert!(
-        text(&conn, "SELECT applied_at FROM org_identifier_verdicts WHERE identifier = '13304590'").await.is_some()
-            || count(
-                &conn,
-                "SELECT COUNT(*) FROM org_identifier_verdicts WHERE identifier = '13304590' AND applied_at IS NOT NULL"
-            )
-            .await
-                == 1,
+    assert_eq!(
+        count(
+            &conn,
+            "SELECT COUNT(*) FROM org_identifier_verdicts WHERE identifier = '13304590' AND applied_at IS NOT NULL"
+        )
+        .await,
+        1,
         "the verdict is stamped"
     );
 
     let mut resolver =
         db.mention_resolver(Some(key), Some(consortium), None, Some(norm), None, None, 0).await.unwrap();
     let after = db
-        .resolve_mentions(&mut resolver, &[mention(3, "The 55 Group (Midco) Limited", "13304590")], 0)
+        .resolve_mentions(
+            &mut resolver,
+            &[mention(3, "Pagabo Ltd", "13304590"), mention(4, "The 55 Group (Midco) Limited", "GB13304590")],
+            0,
+        )
         .await
         .unwrap();
     db.finish_mention_resolver(resolver).await.unwrap();
-    assert_ne!(after[0], 2, "the parent's number never reaches the org it was taken off");
-    assert_eq!(after[0], parent, "it reaches the company that carries it");
+    assert_eq!(after[0], 2, "the publisher's repeat for Pagabo reaches Pagabo, no unflagged twin");
+    assert_eq!(after[1], parent, "another spelling under the parent's name reaches the parent");
 
     // The verdict was about Pagabo. When the parent carries the exact literal, it is
     // neither served as a related entity nor planned onto Pagabo's number.

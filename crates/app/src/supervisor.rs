@@ -8096,7 +8096,7 @@ impl Supervisor {
                 }
                 Ok(format!(
                     "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned \
-                     ({} withheld by a wrong-number verdict), {} E1-keyed ({} through the GB O/0 fold), \
+                     ({} withheld by a wrong-number or unapplied related verdict), {} E1-keyed ({} through the GB O/0 fold), \
                      {} groups >=2; denied: {} cap, {} gate, {} consortium \
                      ({} members excluded member-scoped), {} fold ({} folded members excluded by names, {} of them by the generic wall), \
                      {} legal-form, {} vat-group-wall, {} names, {} verdict-keep, {} verdict-merge; plan {} groups; merged {} groups \
@@ -8291,7 +8291,7 @@ impl Supervisor {
                 }
                 Ok(format!(
                     "match-org-identifiers e0 (issue 329 E0){}: {} orgs scanned \
-                     ({} withheld by a wrong-number verdict), {} E0-grouped, {} groups >=2; \
+                     ({} withheld by a wrong-number or unapplied related verdict), {} E0-grouped, {} groups >=2; \
                      denied: {} cap, {} gate, {} consortium \
                      ({} members excluded member-scoped), \
                      {} legal-form, {} vat-group-wall, {} names ({} echo admitted), {} verdict-keep, \
@@ -8501,7 +8501,7 @@ impl Supervisor {
                 }
                 Ok(format!(
                     "match-org-identifiers r3 (issue 300 Stage 3){}: pool {}; skipped: \
-                     {} withheld by a wrong-number verdict (pool or target), {} register-prefixed, {} unanchored/ambiguous, {} no-target, \
+                     {} withheld by a wrong-number or unapplied related verdict (pool or target), {} register-prefixed, {} unanchored/ambiguous, {} no-target, \
                      {} multi-target, {} uncorroborated; denied: {} generic-name \
                      ({} generic but hard-anchored), {} gate, {} consortium, \
                      {} legal-form, {} vat-group-wall, {} co-anchor-cap; plan {} \
@@ -9000,7 +9000,7 @@ impl Supervisor {
                 let summary = format!(
                     "{} FTS notices, {} company-number/PPON pairs keyed ({} literal; \
                      unpaired: {} padded, {} condemned, {} malformed, {} non-GB; {} ambiguous \
-                     parties); owners: {} withheld by a wrong-number verdict, {} already one, \
+                     parties); owners: {} withheld by a wrong-number or unapplied related verdict, {} already one, \
                      {} multi-target, {} no company-number org, {} no PPON org, {} neither, {} two distinct GB orgs; denied: {} gate, \
                      {} consortium, {} legal-form, {} evidence-wall, {} loser-incoherent, {} \
                      verdict-keep, {} uncorroborated-overlap, {} uncorroborated-disjoint, {} \

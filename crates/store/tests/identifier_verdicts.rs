@@ -208,6 +208,30 @@ async fn verdicts_are_validated_keyed_by_the_triple_and_replaced_on_re_review() 
     assert_eq!(rows[0][6], Value::Null, "and its correct_identifier with it");
 }
 
+/// Issue 466: a `related` number withholds its org from R2 too — it is a related
+/// company's number, and grouping by it folds the org into that company — but only
+/// until the re-key arm stamps the verdict: after that, whoever carries the number is
+/// the related company itself, which the verdict is not about.
+#[tokio::test]
+async fn a_related_verdict_withholds_only_until_it_is_applied() {
+    let (db, conn) = bed(
+        "test-identifier-verdicts-related.db",
+        &[(30, "FI", "national", "30303030", "Annodata Oy"), (31, "FI", "vat", "FI30303030", "Annodata Oy")],
+        0,
+    )
+    .await;
+    let plan = || async { db.match_org_identifiers_r2(r2_args(true, None)).await.unwrap() };
+    assert_eq!((plan().await.withheld, plan().await.plan_groups), (0, 1), "the control");
+    db.record_identifier_verdicts("466", &[verdict(31, "FI30303030", "related")], 0).await.unwrap();
+    let r = plan().await;
+    assert_eq!((r.withheld, r.plan_groups), (1, 0), "withheld while unapplied");
+    conn.execute("UPDATE org_identifier_verdicts SET applied_at = 1 WHERE identifier = 'FI30303030'", ())
+        .await
+        .unwrap();
+    let r = plan().await;
+    assert_eq!((r.withheld, r.plan_groups), (0, 1), "applied: no longer withheld");
+}
+
 /// R2 and a wrong number. Group 01003158: two rows of one supplier plus a
 /// council keyed by the same number in another spelling — names disagree, so
 /// the whole group stands (issue 359). Withholding the council's number takes
@@ -240,7 +264,7 @@ async fn r2_leaves_a_withheld_member_out_and_merges_the_remainder() {
     .await
     .unwrap();
     let dry = db.match_org_identifiers_r2(r2_args(true, None)).await.unwrap();
-    assert_eq!((dry.scanned, dry.withheld), (5, 2), "only `wrong` withholds");
+    assert_eq!((dry.scanned, dry.withheld), (5, 2), "`right` does not withhold");
     assert_eq!((dry.groups, dry.denied_names, dry.plan_groups), (1, 0, 1), "{dry:#?}");
 
     let wet = db.match_org_identifiers_r2(r2_args(false, Some(1))).await.unwrap();
