@@ -47,7 +47,12 @@ const AUTHORITY_SECTION: &str = "ORG-1";
 /// - `V.1.1)  Name and address of successful supplier, contractor or service provider:`
 ///   — the 2004/2005 vintage, the same wording the era's own `CO:` line carries;
 /// - `V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN
-///   AWARDED:` — 2006 onward.
+///   AWARDED:` — 2006 onward;
+/// - `V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD
+///   DECISION HAS BEEN TAKEN:` — the standard forms of 2009-11-28 onward (issue 508).
+///   Measured: of 39,866 award notices from then until the colons go (2010-02-25),
+///   512 carried a winner. From 2010-02-25 the same heading ends its line with no
+///   colon at all, which no label here can match; [`line_awarded_names`] reads that.
 ///
 /// Measured coverage of award notices carrying an English body, per June window on
 /// prod: 2004 202/203, 2005 311/314, 2006 347/354, 2008 361/371. Matching the tail
@@ -83,10 +88,11 @@ const AUTHORITY_SECTION: &str = "ORG-1";
 /// thing covers the standalone spelling too, and the value starts at the same colon
 /// either way. Note the existing `SERVICE PROVIDER:` does NOT reach that heading: the
 /// era writes `service provider(s):` there and the `(s)` breaks the match.
-const AWARD_LABELS: [&str; 10] = [
+const AWARD_LABELS: [&str; 11] = [
     "SERVICE PROVIDER:",
     "SERVICE PROVIDER(S):",
     "HAS BEEN AWARDED:",
+    "HAS BEEN TAKEN:",
     "SUCCESSFUL CONTRACTOR(S):",
     "SUCCESSFUL CONTRACTOR:",
     "SUCCESSFUL TENDERER(S):",
@@ -264,6 +270,10 @@ const AGGREGATE_SCOPE: &str = "OF CONTRACT(S)";
 /// the bare count, and 159 of that difference are bodies with ONE heading plus a mid-line
 /// mention, i.e. single-contract notices the bare count would have refused.
 const CONTRACT_MARKER: &str = "\nCONTRACT NO";
+
+/// How a sectioned body heads an award that it numbers by lot instead of by contract
+/// (issue 508). Line starts only, for the reason [`CONTRACT_MARKER`] gives.
+const LOT_MARKER: &str = "\nLOT NO";
 
 /// How a monetary value must be written to be claimed at all.
 ///
@@ -801,51 +811,121 @@ fn awarded_names(body: &str) -> Vec<String> {
                 (&window[..item_end.unwrap_or(window.len())], item_end)
             }
         };
-        // (name, whether the segment is the authority's own contact entry)
-        let mut found: Vec<(String, bool)> = Vec::new();
-        for segment in winner_segments(value) {
-            let segment = segment.trim_start();
-            // A contract reference is not a name (issue 484), but what follows it may be:
-            // 2002406 opens its value with `Contrato n° S-036/02-DJ.` as a segment of its
-            // own, 2002408 with `Contrato n° S-037/02-DJ. Gobierno Vasco, …` and 2002409
-            // with `Marché n° 03/010002: 1) Biotronik France, …`. Hop the reference; a
-            // segment that is nothing else is skipped.
-            let segment = match contract_reference_len(segment) {
-                Some(len) => segment[len..].trim_start(),
-                None => segment,
-            };
-            if segment.is_empty() {
-                continue;
-            }
-            // The name ends at the first comma — the address follows it in every
-            // measured shape. With no comma, the name is the whole segment, which is
-            // safe only because the item stop already bounded it: with NEITHER boundary
-            // the segment is the raw 256-byte window, and a "name" that long mints one
-            // organization per notice and poisons an identity that has no identifier to
-            // fall back on. Refuse it instead.
-            let segment = strip_lot_prefix(segment);
-            let (name, bounded) = match segment.find(',') {
-                Some(comma) => (&segment[..comma], true),
-                None => (segment, item_end.is_some()),
-            };
-            if !bounded {
-                continue;
-            }
-            let name = trim_sentence_period(name.trim());
-            if plausible_name(name) {
-                let contact = authority.as_ref().is_some_and(|a| a.contact_entry(name, segment));
-                found.push((name.to_owned(), contact));
-            }
-        }
-        // Drop the authority's own contact entry — and only when another named entry
-        // survives in the same value (issue 484). A single entry naming the buyer is what
-        // the notice says (3002722, 3009398: the publisher repeated its own block in
-        // V.3), and serving it as published is the projection's call, not this one's.
-        let others = found.iter().filter(|(_, contact)| !contact).count();
-        names.extend(found.into_iter().filter(|(_, contact)| others == 0 || !contact).map(|(n, _)| n));
+        names.extend(names_in_value(value, item_end.is_some(), authority.as_ref()));
         at = value_at;
     }
+    names.extend(line_awarded_names(body, authority.as_ref()));
     names
+}
+
+/// The winner names one value states, in order: each [`winner_segments`] entry read up
+/// to its first comma. `bounded` says whether something other than the window cut the
+/// value — an item stop, a successor marker, a line end — which is what makes a
+/// comma-less entry safe to take whole.
+fn names_in_value(value: &str, bounded: bool, authority: Option<&Authority>) -> Vec<String> {
+    // (name, whether the segment is the authority's own contact entry)
+    let mut found: Vec<(String, bool)> = Vec::new();
+    for segment in winner_segments(value) {
+        let segment = segment.trim_start();
+        // A contract reference is not a name (issue 484), but what follows it may be:
+        // 2002406 opens its value with `Contrato n° S-036/02-DJ.` as a segment of its
+        // own, 2002408 with `Contrato n° S-037/02-DJ. Gobierno Vasco, …` and 2002409
+        // with `Marché n° 03/010002: 1) Biotronik France, …`. Hop the reference; a
+        // segment that is nothing else is skipped.
+        let segment = match contract_reference_len(segment) {
+            Some(len) => segment[len..].trim_start(),
+            None => segment,
+        };
+        if segment.is_empty() {
+            continue;
+        }
+        // The name ends at the first comma — the address follows it in every
+        // measured shape. With no comma, the name is the whole segment, which is
+        // safe only because the item stop already bounded it: with NEITHER boundary
+        // the segment is the raw 256-byte window, and a "name" that long mints one
+        // organization per notice and poisons an identity that has no identifier to
+        // fall back on. Refuse it instead.
+        let segment = strip_lot_prefix(segment);
+        let (name, bounded) = match segment.find(',') {
+            Some(comma) => (&segment[..comma], true),
+            None => (segment, bounded),
+        };
+        if !bounded {
+            continue;
+        }
+        let name = trim_sentence_period(name.trim());
+        if plausible_name(name) {
+            let contact = authority.is_some_and(|a| a.contact_entry(name, segment));
+            found.push((name.to_owned(), contact));
+        }
+    }
+    // Drop the authority's own contact entry — and only when another named entry
+    // survives in the same value (issue 484). A single entry naming the buyer is what
+    // the notice says (3002722, 3009398: the publisher repeated its own block in
+    // V.3), and serving it as published is the projection's call, not this one's.
+    let others = found.iter().filter(|(_, contact)| !contact).count();
+    found.into_iter().filter(|(_, contact)| others == 0 || !contact).map(|(n, _)| n).collect()
+}
+
+/// The heading the 2010 print ends its line with (issue 508). It is
+/// [`AWARD_LABELS`]' `HAS BEEN TAKEN:` with the colon gone.
+const LINE_AWARD_HEADING: &str = "HAS BEEN TAKEN";
+
+/// The winner names of the 2010 print, which drops the colons (issue 508):
+///
+/// ```text
+///     V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT
+///     AWARD DECISION HAS BEEN TAKEN
+///     Clarke Machinery Ltd.
+///     New Inn, Ballyjamesduff, Co. Cavan
+///     IRELAND
+///     V.4)  INFORMATION ON VALUE OF CONTRACT
+/// ```
+///
+/// That is notice 4,200,000, and it is the whole era from 2010-02-25 to its end on
+/// 2010-12-31: 121,734 award notices, 851 of which carried a winner. The address follows
+/// the name on LINES of its own, not after a comma, so the flattened body that
+/// [`awarded_names`] scans cannot tell where the name ends: `Clarke Machinery Ltd. New
+/// Inn` would be its name. So this reads the unflattened body: a line that ends in
+/// [`LINE_AWARD_HEADING`] names its winner on the next non-empty line, which then goes
+/// through [`names_in_value`] like any other value, line end as its bound.
+///
+/// Measured over 10,339 such headings (2010-03, -06 and -12 windows): every one ends its
+/// line; 2 have no line after them; about 3 % of name lines reach the ~72-column wrap and
+/// continue on the next line. A wrapped name is cut at the wrap, never joined to the
+/// next line — that line is as often the street of a name that filled the line exactly
+/// (`Κοινωφελής Δημοτική Επιχείρηση … Κορδελιού` / `Εθνικής Αντιστάσεως 58`), and an
+/// address in a name mints an organization per spelling (issue 234).
+fn line_awarded_names(body: &str, authority: Option<&Authority>) -> Vec<String> {
+    let mut names = Vec::new();
+    let mut lines = body.lines();
+    while let Some(line) = lines.next() {
+        let line = line.trim_end().as_bytes();
+        let n = LINE_AWARD_HEADING.len();
+        if line.len() < n || !line[line.len() - n..].eq_ignore_ascii_case(LINE_AWARD_HEADING.as_bytes()) {
+            continue;
+        }
+        let Some(next) = lines.by_ref().map(str::trim).find(|l| !l.is_empty()) else { break };
+        // The publisher left the slot empty and the next item follows at once.
+        if opens_an_item(next) {
+            continue;
+        }
+        names.extend(names_in_value(next, true, authority));
+    }
+    names
+}
+
+/// Whether a line of the sectioned form opens an item or a heading rather than holding
+/// a value: `V.4)  INFORMATION ON VALUE OF CONTRACT`, `SECTION VI: …`, `CONTRACT NO: 2`,
+/// `LOT NO: 2`.
+fn opens_an_item(line: &str) -> bool {
+    let b = line.as_bytes();
+    if b.len() >= 3 && b[0] == b'V' && b[1] == b'.' && b[2].is_ascii_digit() {
+        return true;
+    }
+    ["SECTION ", "CONTRACT NO", "LOT NO"]
+        .iter()
+        .any(|m| b.len() >= m.len() && b[..m.len()].eq_ignore_ascii_case(m.as_bytes()))
 }
 
 /// How far a NUMBERED-form value is followed looking for its successor item (issue
@@ -1100,7 +1180,10 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
         // is 5, 9 or 10 — [`ITEM_STOPS`], which is aimed at the winner item, does not
         // bound this. Any numbered item does.
         let end = next_item_marker(window);
-        if let Some(money) = read_value_item(&window[..end.unwrap_or(window.len())]) {
+        let item = &window[..end.unwrap_or(window.len())];
+        let money = read_value_item(item)
+            .or_else(|| if label == COLONLESS_TOTAL_LABEL { colonless_total(item) } else { None });
+        if let Some(money) = money {
             match &claim[scope] {
                 // Two labels agreeing is one fact stated twice; two disagreeing AT THE
                 // SAME SCOPE is a notice this cannot read.
@@ -1116,7 +1199,15 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
     // and its first V.4 figure is 40 087 596 SEK against a real total of 81 605 403, so
     // claiming it would understate by half. This drops such a claim rather than record it,
     // and it cannot touch the pre-2004 numbered form, which never writes `CONTRACT NO`.
-    if count_ascii_ci(body, CONTRACT_MARKER) > 1 {
+    //
+    // A sectioned body may head its awards `LOT NO: n` with no `CONTRACT NO` at all (issue
+    // 508): notice 4040506 awards sixteen lots that way. Each lot's V.4 total but the
+    // last runs into the next `LOT NO:` line, which no stop ends, so only the last one
+    // parses, and without this it was claimed as the notice's total. Counted only where
+    // the body is sectioned (`SECTION V`), so the numbered form's own `Lot No` lines
+    // stay out of it.
+    let lots = if find_ascii_ci(body, "SECTION V").is_some() { count_ascii_ci(body, LOT_MARKER) } else { 0 };
+    if count_ascii_ci(body, CONTRACT_MARKER).max(lots) > 1 {
         claim[0] = None;
     }
     // The widest scope the notice states wins, and a conflict THERE is still a refusal —
@@ -1146,16 +1237,7 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
 /// the subcontracted figure as the contract price. A pure label has no digits; a second
 /// figure does.
 fn read_value_item(item: &str) -> Option<(i64, String, Option<&'static str>)> {
-    // The sectioned form's prose continues past the figure, so cut it at the first stop
-    // and remember whether that stop stated the basis (issue 244 slice 7).
-    let (item, stop_basis) = match VALUE_STOPS
-        .iter()
-        .filter_map(|(stop, basis)| find_ascii_ci(item, stop).map(|at| (at, *basis)))
-        .min_by_key(|(at, _)| *at)
-    {
-        Some((at, basis)) => (&item[..at], basis),
-        None => (item, None),
-    };
+    let (item, stop_basis) = cut_at_value_stop(item);
     if let Some((cents, currency, basis)) = parse_money(item) {
         return Some((cents, currency, basis.or(stop_basis)));
     }
@@ -1168,6 +1250,52 @@ fn read_value_item(item: &str) -> Option<(i64, String, Option<&'static str>)> {
     // stop phrase; they agree in every measured body, and the nearer statement is the more
     // specific one.
     Some((cents, currency, basis.or_else(|| phrase_basis(label)).or(stop_basis)))
+}
+
+/// The value item up to its first [`VALUE_STOPS`] phrase, and the basis that phrase
+/// states. The sectioned form's prose continues past the figure, so it is cut at the
+/// first stop (issue 244 slice 7).
+fn cut_at_value_stop(item: &str) -> (&str, Option<&'static str>) {
+    match VALUE_STOPS
+        .iter()
+        .filter_map(|(stop, basis)| find_ascii_ci(item, stop).map(|at| (at, *basis)))
+        .min_by_key(|(at, _)| *at)
+    {
+        Some((at, basis)) => (&item[..at], basis),
+        None => (item, None),
+    }
+}
+
+/// The only label [`colonless_total`] reads after.
+const COLONLESS_TOTAL_LABEL: &str = "TOTAL FINAL VALUE";
+
+/// The 2010 print's total, which carries no colon to retry after (issue 508):
+///
+/// ```text
+///     II.2.1)  Total final value of contract(s)          V.4)  … Total final value of the contract
+///     Value 80 515 EUR                                    Value 80 515 EUR
+///     Including VAT. VAT rate (%) 21                      Including VAT. VAT rate (%) 21
+/// ```
+///
+/// From 2010-02-25 to the era's end, 98,295 award bodies state a total this way and 1,698
+/// carried a figure: [`read_value_item`]'s retry splits on the LAST colon, and here there
+/// is none. This reads exactly that shape and nothing looser — the scope words, the word
+/// `Value`, then a figure [`parse_money`] takes whole — because a loose "after the word
+/// Value" would also read `Price: Estimated value 2 000 000 ECU` as a price. Only the
+/// `TOTAL FINAL VALUE` label calls it, so no other vintage's outcome moves.
+fn colonless_total(item: &str) -> Option<(i64, String, Option<&'static str>)> {
+    let (item, stop_basis) = cut_at_value_stop(item);
+    let rest = item.trim_start();
+    let rest = [AGGREGATE_SCOPE, "OF THE CONTRACT"].iter().find_map(|scope| strip_prefix_ci(rest, scope))?;
+    let figure = strip_prefix_ci(rest.trim_start(), "VALUE ")?;
+    let (cents, currency, basis) = parse_money(figure)?;
+    Some((cents, currency, basis.or(stop_basis)))
+}
+
+/// `s` without its leading `prefix`, compared ASCII-case-insensitively.
+fn strip_prefix_ci<'a>(s: &'a str, prefix: &str) -> Option<&'a str> {
+    let n = prefix.len();
+    (s.len() >= n && s.as_bytes()[..n].eq_ignore_ascii_case(prefix.as_bytes())).then(|| &s[n..])
 }
 
 /// Where the next numbered form item begins: ` <n>. ` with one or two digits, in the
@@ -3879,5 +4007,205 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
             "NO-Tromso: architectural, engineering, construction and related technical consultancy services"
         );
         assert!(!wrapped.contains('\n'));
+    }
+
+    /// Issue 508: the standard forms of 2009-11-28 onward name the winner under `IN FAVOUR
+    /// OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN:`. Notice 3,990,107, verbatim
+    /// (section V), served with its value and without its winner until this.
+    #[test]
+    fn the_2009_heading_names_its_winner_after_its_colon() {
+        let body = "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+                    II.2.1)  Total final value of contract(s): Value: 59 752 EUR.\n\
+                    Excluding VAT.\n\
+                    SECTION V: AWARD OF CONTRACT\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT \n\
+                    AWARD DECISION HAS BEEN TAKEN: Mike Priwitzer, Friedensstr. 39, 17179 \n\
+                    Gnoien, DEUTSCHLAND.\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+                    Value: 59 752 EUR.\n\
+                    Excluding VAT.";
+        assert_eq!(awarded_names(body), vec!["Mike Priwitzer".to_owned()]);
+        assert_eq!(awarded_value(body), Some((5_975_200, "EUR".to_owned(), Some("excl"))));
+    }
+
+    /// Issue 508: from 2010-02-25 the same heading ends its line with no colon, the name is
+    /// the NEXT line and the address the lines after it, and the totals read `Value 80 515
+    /// EUR` with no colon either. Notice 4,200,000 (Tender 8255697), verbatim: before this
+    /// it served neither the winner nor the value.
+    #[test]
+    fn the_2010_print_names_its_winner_on_the_next_line_and_states_its_total_without_colons() {
+        let body = "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+                    II.2.1)  Total final value of contract(s)\n\
+                    Value 80 515 EUR\n\
+                    Including VAT. VAT rate (%) 21\n\
+                    SECTION IV: PROCEDURE\n\
+                    IV.1)  TYPE OF PROCEDURE\n\
+                    IV.1.1)  Type of procedure\n\
+                    Open\n\
+                    SECTION V: AWARD OF CONTRACT\n\
+                    CONTRACT NO: AS/0030/10\n\
+                    LOT NO:  - TITLE Tractors for OPW.\n\
+                    V.1)  Date of contract award decision:\n\
+                    3.8.2010\n\
+                    V.2)  NUMBER OF OFFERS RECEIVED:\n\
+                    4\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                    AWARD DECISION HAS BEEN TAKEN\n\
+                    Clarke Machinery Ltd.\n\
+                    New Inn, Ballyjamesduff, Co. Cavan\n\
+                    IRELAND\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Total final value of the contract\n\
+                    Value 80 515 EUR\n\
+                    Including VAT. VAT rate (%) 21\n\
+                    SECTION VI: COMPLEMENTARY INFORMATION";
+        // The name only: the flattened body would have read `Clarke Machinery Ltd. New Inn`.
+        assert_eq!(awarded_names(body), vec!["Clarke Machinery Ltd".to_owned()]);
+        assert_eq!(awarded_value(body), Some((8_051_500, "EUR".to_owned(), Some("incl"))));
+
+        // …and the whole record: one result, its winner, the value at notice scope.
+        let record = format!(
+            "1.0/000001\nND: 239051-2010\nTD: 7 - Contract award\nTX: {}\n",
+            body.replace('\n', "\n    ")
+        );
+        let p = parse(&record).expect("parses");
+        let org = p.sections.iter().find(|s| s.kind == "Organization").expect("a winner");
+        assert_eq!(org.parent.as_deref(), Some("RES-1"));
+        assert!(p.values.iter().any(|v| v.section_id == org.id
+            && v.field_id == "TED-OFFICIALNAME"
+            && matches!(&v.value, NoticeValue::Text { value, .. } if value == "Clarke Machinery Ltd")));
+        let amount = p.values.iter().find(|v| v.field_id == "TED-VAL_TOTAL").expect("the total");
+        assert_eq!(amount.section_id, SECTION);
+        assert_eq!(amount.value, NoticeValue::Amount { cents: 8_051_500, currency: "EUR".to_owned() });
+    }
+
+    /// Issue 508: a 2010 body awarding five contracts (notice 4,101,747, the first two and
+    /// the aggregate verbatim) names every winner and claims the aggregate, never one
+    /// contract's figure.
+    #[test]
+    fn a_2010_multi_contract_body_names_every_winner_and_claims_its_aggregate() {
+        let body = "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+                    II.2.1)  Total final value of contract(s)\n\
+                    Value 1 139 185,00 PLN\n\
+                    Excluding VAT\n\
+                    SECTION V: AWARD OF CONTRACT\n\
+                    CONTRACT NO: 1\n\
+                    LOT NO: 1\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                    AWARD DECISION HAS BEEN TAKEN\n\
+                    Stryker Polska Sp. z o.o.\n\
+                    ul. Łopuszańska 38B\n\
+                    02-232 Warszawa\n\
+                    POLAND\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Total final value of the contract\n\
+                    Value 359 050,00 PLN\n\
+                    Excluding VAT\n\
+                    CONTRACT NO: 2\n\
+                    LOT NO: 2\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                    AWARD DECISION HAS BEEN TAKEN\n\
+                    Biomet Polska Sp. z o.o.\n\
+                    ul. Płowiecka 75\n\
+                    04-501 Warszawa\n\
+                    POLAND\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Total final value of the contract\n\
+                    Value 28 200,00 PLN\n\
+                    Excluding VAT";
+        assert_eq!(
+            awarded_names(body),
+            vec!["Stryker Polska Sp. z o.o.".to_owned(), "Biomet Polska Sp. z o.o.".to_owned()]
+        );
+        assert_eq!(awarded_value(body), Some((113_918_500, "PLN".to_owned(), Some("excl"))));
+    }
+
+    /// Issue 508: a 2010 body heading its awards `LOT NO: n` with no `CONTRACT NO` (notice
+    /// 4,040,506, sixteen lots; the first and last two verbatim) and no aggregate. Each lot
+    /// total but the last runs into the next `LOT NO:` line and refuses, so the last one
+    /// alone parsed, and it was claimed as the notice's total: EUR 147 795,73 for sixteen
+    /// lots. One lot's figure is a part, so nothing is claimed.
+    #[test]
+    fn a_2010_body_awarding_lots_without_contract_numbers_claims_no_part_as_its_total() {
+        let body = "SECTION V: AWARD OF CONTRACT\n\
+                    LOT NO: 01\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN\n\
+                    Entreprise ITE\n\
+                    ZAC des Cettons, rue Panhard et Levassor\n\
+                    78570 Chanteloup Les Vignes\n\
+                    FRANCE\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Total final value of the contract\n\
+                    Value 1 912 138 EUR\n\
+                    LOT NO: 15\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN\n\
+                    Entreprise SRBG\n\
+                    Cité du Grand Cormier, BP 20878\n\
+                    78108 Saint Germain en Laye Cedex\n\
+                    FRANCE\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Total final value of the contract\n\
+                    Value 607 822,70 EUR\n\
+                    LOT NO: 16\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN\n\
+                    GC Cuisines (Groupe LANEF PRO)\n\
+                    9 village d'Entreprises, avenue Mauldre\n\
+                    78680 Epone\n\
+                    FRANCE\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Total final value of the contract\n\
+                    Value 147 795,73 EUR";
+        assert_eq!(
+            awarded_names(body),
+            vec![
+                "Entreprise ITE".to_owned(),
+                "Entreprise SRBG".to_owned(),
+                "GC Cuisines (Groupe LANEF PRO)".to_owned()
+            ]
+        );
+        assert_eq!(awarded_value(body), None);
+        // The numbered form's own `Lot No` lines are not award headings: without a
+        // `SECTION V`, a body's one price stays claimed whatever lot lines it prints.
+        let numbered = "6.  Supplier(s):\n\
+                        Lot No 1: Acme Ltd.\n\
+                        Lot No 2: Acme Ltd.\n\
+                        8.  Price: 1 000 000 EUR.\n\
+                        9.  Other information: None.";
+        assert_eq!(awarded_value(numbered), Some((100_000_000, "EUR".to_owned(), None)));
+    }
+
+    /// Issue 508: what the 2010 name line and colonless total refuse.
+    #[test]
+    fn the_2010_print_refuses_what_its_colon_twin_refuses() {
+        // A comma in the name line ends the name, as it does after a colon (notice 4,040,925),
+        // and an initial estimate is not a final value.
+        let comma = "V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN\n\
+                     Ghenova Civil, S.L.\n\
+                     V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                     Initial estimated total value of the contract \n\
+                     Value 324 078,71 EUR\n\
+                     Excluding VAT";
+        assert_eq!(awarded_names(comma), vec!["Ghenova Civil".to_owned()]);
+        assert_eq!(awarded_value(comma), None);
+        // An empty slot names nobody: the next line opens an item.
+        let empty = "V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                     AWARD DECISION HAS BEEN TAKEN\n\
+                     V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                     Total final value of the contract\n\
+                     Value 0 EUR";
+        assert!(awarded_names(empty).is_empty());
+        assert_eq!(awarded_value(empty), None, "a zero is no figure (notice 4,101,508)");
+        // A range is not a total, with or without colons.
+        let range = "V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                     Total final value of the contract\n\
+                     Lowest offer 1 200 000 and highest offer 1 900 000 EUR\n\
+                     Excluding VAT";
+        assert_eq!(awarded_value(range), None);
+        // Only the exact shape: scope words, `Value`, a figure. Other words before the
+        // figure are not read past, and no other label retries without a colon.
+        let loose = "Total final value of the contract estimated at Value 1 000 EUR";
+        assert_eq!(awarded_value(loose), None);
+        let price = "8.  Price: Estimated value 2 000 000 ECU.\n 9.  Other information: None.";
+        assert_eq!(awarded_value(price), None);
     }
 }
