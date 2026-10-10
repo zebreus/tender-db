@@ -4620,11 +4620,13 @@ mod tests {
         let title = field_sql(&FIELDS[0]);
         assert!(title.contains("tender_version_texts"));
         assert!(title.contains("AND field = 'title'"), "{title}");
-        // `value` has no predicate — any amount row counts, so the EXISTS carries
-        // only the version join.
+        // `value` counts any amount an election can elect: since issue 506 the EXISTS
+        // carries the partner-only exclusion beside the version join.
         let value = field_sql(&FIELDS[2]);
         assert!(value.contains("tender_version_amounts"));
-        assert!(!value.contains("AND field"), "{value}");
+        assert!(value.contains("AND field NOT IN ('result_framework_maximum', 'result_framework_reestimate')"), "{value}");
+        // `winner` has none: any named winner counts.
+        assert!(FIELDS[5].predicate.is_none());
 
         // Issue 230: the derived-table shape must never come back. It is the
         // documented turso trap (re-evaluated per outer row) and it cost >50
