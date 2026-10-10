@@ -1,6 +1,7 @@
 # 508 — the 2009-12 → 2010 text vintage names no winner, and from 2010-03 claims no value
 
-Status: ready-for-agent — UNIT 2 DEPLOYED (`96e5816`), UNIT 3 ROUND 1 DRAINED 2026-10-10: reparse 2114 (fetches 186–192, 234,469 notices, 0 unmatched / re-keyed / failing) and project 2115 (215,433 Tenders, 201,269 written, 189,311 corrected). Exhibit 8255697 serves 80,515 EUR and winner Clarke Machinery Ltd. Round 2 (reparse 2116, fetches 193–198) running; then its project and the Verify.
+Status: ready-for-agent — RE-DRAIN IN PROGRESS 2026-10-10 with the junk-name fix (`c21411c` + `76c44ed`, gate green, deployed `0292104`). Round 1 (2114/2115) and the first round-2 re-parse (2116) ran on the code before the fix. Now: reparse 2117 (fetches 193–198), its fold (the 07:35 daily's or an explicit project), then round 1 again (reparse after 185 × 7, project), then the Verify.
+Was: ready-for-agent — UNIT 2 DEPLOYED (`96e5816`), UNIT 3 ROUND 1 DRAINED 2026-10-10: reparse 2114 (fetches 186–192, 234,469 notices, 0 unmatched / re-keyed / failing) and project 2115 (215,433 Tenders, 201,269 written, 189,311 corrected). Exhibit 8255697 serves 80,515 EUR and winner Clarke Machinery Ltd. Round 2 (reparse 2116, fetches 193–198) running; then its project and the Verify.
 Was: ready-for-agent — UNIT 2 BUILT AND REVIEWED 2026-10-10 (WIP `0ae3fbf`; review `wf_20e02b2c-6bb`, 7 confirmed, all fixed). NEXT: gate, push, deploy, then unit 3's drain in two rounds (below).
 Was: ready-for-agent — UNIT 1 MEASURED 2026-10-10 (hourly firing, found while working issue 491 unit 3).
 Kind: parse coverage (text era, `crates/ingest/src/text/parse.rs`)
@@ -138,4 +139,19 @@ committed):
 **Effect of the fixes on the sample.** 35 distinct colonless bodies changed value: 28 multi-award parts dropped, 7
 single-contract figures gained by (4). 5 colon-era values changed: 2 gained (3602477, 3300270) and 3 multi-award parts dropped
 (2902041, 3303486, 4002443). These reach older vintages only at their next re-parse.
+
+## Drain audit — junk winner names (2026-10-10)
+
+After round 1's fold, the most frequent new winner names in three 20k windows were real suppliers (PGF Urtica,
+Farmacol, Salus …), with one family of non-names among them. About 3,000 of round 1's names (2 %) were void-lot
+or pointer phrases:
+- `Véase perfil del contratante`: 243 in one window, plus its `de` spelling (org 31817859).
+- `Ver perfil del contratante de la Junta de Andalucía`: 152.
+- `Infructueux`, `Lot déclaré infructueux`, `Sans suite`, `Non attribué`, `Desierto`, `Nessuna aggiudicazione`,
+  `See Section VI.2) Additional information`, `Voir autres informations`.
+
+Each would be one organization collecting every award that printed it. **Fixed** in `c21411c` and `76c44ed`:
+`NAME_REJECTS` gained the substrings, and `NAME_WHOLE_REJECTS` the whole values (`Various`, `Desierto`,
+`Deserto`). A 300k-name scan over 1997–2010 found no real name among the matches. The same junk is stored across
+1997–2009, which is filed as **issue 509** (an era re-parse). Both rounds of this issue are re-drained with the fix.
 
