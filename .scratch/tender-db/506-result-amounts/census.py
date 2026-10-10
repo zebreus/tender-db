@@ -42,8 +42,23 @@ def sql(q):
     if "error" in d:
         raise SystemExit(f"query failed: {d['error']}: {q[:120]}")
     if d.get("truncated"):
-        raise SystemExit(f"truncated: {q[:120]}")
+        raise Truncated(q)
     return d["rows"]
+
+
+class Truncated(Exception):
+    pass
+
+
+def sql_in(template, ids):
+    """`template` with `{ids}` over `ids`, halving the list while the endpoint truncates."""
+    try:
+        return sql(template.format(ids=",".join(map(str, ids))))
+    except Truncated:
+        if len(ids) == 1:
+            raise SystemExit(f"one notice overflows the row cap: {ids[0]}")
+        half = len(ids) // 2
+        return sql_in(template, ids[:half]) + sql_in(template, ids[half:])
 
 
 def sample(profile, lo, hi, windows, width):
@@ -73,9 +88,7 @@ def main(argv):
         ids = sample(profile, lo, hi, windows, width)
         notices_seen[profile] = len(ids)
         for ch in chunks(ids):
-            for (f, n) in sql(
-                "SELECT field_id, count(*) FROM notice_amounts WHERE notice_id IN (" + ",".join(map(str, ch)) + ") GROUP BY field_id"
-            ):
+            for (f, n) in sql_in("SELECT field_id, count(*) FROM notice_amounts WHERE notice_id IN ({ids}) GROUP BY field_id", ch):
                 if any(x in f for x in DE_FRAGMENTS):
                     de_inventory[profile][f] += n
         print(f"{profile}: {len(ids)} notices", file=sys.stderr)
@@ -83,16 +96,15 @@ def main(argv):
         ids = sample(profile, lo, hi, windows, width)
         notices_seen[profile] = len(ids)
         for ch in chunks(ids):
-            inlist = ",".join(map(str, ch))
             amounts = collections.defaultdict(list)
-            for n, sec, f, c, cur in sql(
-                f"SELECT notice_id, section_id, field_id, cents, currency FROM notice_amounts WHERE notice_id IN ({inlist})"
+            for n, sec, f, c, cur in sql_in(
+                "SELECT notice_id, section_id, field_id, cents, currency FROM notice_amounts WHERE notice_id IN ({ids})", ch
             ):
                 amounts[n].append((sec, f, c, cur))
             lot_of = {}
-            for n, sec, v in sql(
-                f"SELECT notice_id, section_id, value FROM notice_ids WHERE notice_id IN ({inlist}) "
-                f"AND field_id = 'BT-13713-LotResult'"
+            for n, sec, v in sql_in(
+                "SELECT notice_id, section_id, value FROM notice_ids WHERE notice_id IN ({ids}) "
+                "AND field_id = 'BT-13713-LotResult'", ch
             ):
                 lot_of[(n, sec)] = v
             for n, rows in amounts.items():
