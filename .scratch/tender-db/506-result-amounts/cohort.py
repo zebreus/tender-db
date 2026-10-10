@@ -54,12 +54,22 @@ def sql(q):
     return d["rows"]
 
 
+SEQS = {}  # tender -> its version seqs, for a single Tender too big for one read
+
+
 def sql_in(template, ids):
     try:
         return sql(template.format(ids=",".join(map(str, ids))))
     except Truncated:
         if len(ids) == 1:
-            raise SystemExit(f"one id overflows the row cap: {ids[0]}")
+            seqs = SEQS.get(ids[0])
+            if not seqs or "tender_id IN" not in template:
+                raise SystemExit(f"one id overflows the row cap: {ids[0]}")
+            # One Tender with more rows than the cap: read it one version at a time.
+            out = []
+            for seq in seqs:
+                out += sql(template.format(ids=ids[0]) + f" AND seq = {seq}")
+            return out
         half = len(ids) // 2
         return sql_in(template, ids[:half]) + sql_in(template, ids[half:])
 
@@ -117,6 +127,8 @@ def main(argv):
         batch = cohort[i:i + 100]
         versions = sql_in("SELECT tender_id, seq, caused_by_notice_id FROM tender_versions WHERE tender_id IN ({ids})", batch)
         notice_of = {(t, s): n for t, s, n in versions}
+        for t, s, _ in versions:
+            SEQS.setdefault(t, []).append(s)
         notices = sorted({n for _, _, n in versions})
         amounts = sql_in(
             "SELECT tender_id, seq, lot_id, field, cents, currency, eur_cents, quality FROM tender_version_amounts "
