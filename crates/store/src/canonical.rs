@@ -3723,6 +3723,8 @@ impl<'a> ScalePartners<'a> {
         }
         self.head_lot_max = per_lot;
         // Issue 505: each Lot's figure per field, for the residual rule.
+        // The partner-only guard below is defensive: `residual_of` and `residual_lot_sum`
+        // read these tables only under an electable field, so no outcome depends on it today.
         self.head_lot_count = head.lots.iter().filter(|l| l.kind == "Lot").count();
         self.head_lot_fields.clear();
         self.head_lot_field_figures.clear();
@@ -34614,6 +34616,46 @@ mod tests {
         };
         assert_eq!(lot_value(&laundry(Vec::new()), "LOT-1"), Some(big));
         assert_eq!(lot_value(&laundry(vec![amt(RESULT_FRAMEWORK_MAXIMUM, small)]), "LOT-1"), None, "its own result is no sibling");
+
+        // Nor an admitted procedure figure: the sibling-lot exemption needs a procedure
+        // figure at least as large, and a partner-only one (which the fold never files at
+        // Tender scope) does not vouch. 8748271's lot kept above beside a EUR 2.71 bn
+        // procedure is refused when the only larger procedure-scope figure is partner-only.
+        let vouched = |procedure: Fact| {
+            version(
+                vec![procedure],
+                vec![
+                    lot("LOT-1", vec![amt("estimated_value", big)]),
+                    lot("LOT-2", vec![amt("estimated_value", 170_000_000_000)]),
+                    lot("LOT-4", vec![amt("estimated_value", small)]),
+                ],
+            )
+        };
+        assert_eq!(lot_value(&vouched(amt("estimated_value", 271_000_000_000)), "LOT-1"), Some(big));
+        assert_eq!(lot_value(&vouched(amt(RESULT_FRAMEWORK_MAXIMUM, 271_000_000_000)), "LOT-1"), None, "no vouching");
+
+        // Risk 1, the path switch: a NEW k >= 3 partner moves a figure from the x100 test to
+        // the k >= 3 test. (a) The genuine framework total above, kept by 492's exemption,
+        // is refused once a lot's result states F/1000 and nothing corroborates F.
+        let (f, partner) = (100_000_000_000, 1_000_000_000);
+        let switched = version(
+            vec![amt("framework_maximum", f)],
+            vec![
+                lot("LOT-1", vec![amt("estimated_value", partner), amt(RESULT_FRAMEWORK_MAXIMUM, f / 1000)]),
+                lot("LOT-2", vec![amt("estimated_value", 50_000_000_000)]),
+            ],
+        );
+        assert_eq!(one(&switched), Some(50_000_000_000), "k >= 3 now judges it: uncorroborated, refused");
+        // (b) A x100 procedure slip with no exemption (one lot) but corroborated by a second
+        // field is refused at x100 (no corroboration there) — and KEPT once a k >= 3 partner
+        // moves it to the corroboration test.
+        let corroborated = |extra: Vec<Fact>| {
+            let mut lot1 = vec![amt("estimated_value", partner)];
+            lot1.extend(extra);
+            version(vec![amt("framework_maximum", f), amt("estimated_value", f)], vec![lot("LOT-1", lot1)])
+        };
+        assert_eq!(one(&corroborated(Vec::new())), Some(partner), "x100: corroboration does not save it");
+        assert_eq!(one(&corroborated(vec![amt(RESULT_FRAMEWORK_REESTIMATE, f / 1000)])), Some(f), "k >= 3: corroborated, kept");
     }
 
     /// Issue 492, the unit 3 review: a x100 LOT figure is kept when its partner is a

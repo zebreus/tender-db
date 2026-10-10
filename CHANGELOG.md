@@ -9,8 +9,10 @@ answers; this file exists for the rare case where one does.
 eForms award notices state a framework maximum and a re-estimated value per lot result (BT-709, BT-660). They are
 now served in `amounts` at their lot under two new `field` values, `result_framework_maximum` and
 `result_framework_reestimate`; they are never elected as a Tender's or a lot's `value`. A figure of €1 bn or more
-that is exactly 100× (or 10ᵏ×) one of them is now refused as a scale slip, so two Tenders whose value was a
-framework maximum typed 100× too large now serve their estimate. `?currency=` matches a Tender whose only amount
+that is exactly 100× (or 10ᵏ×) one of them can now be refused as a scale slip under the existing rules (their
+corroboration and framework-total exemptions are unchanged). Measured before the release, three Tenders move: two
+whose value was a framework maximum typed 100× too large now serve their estimate, and one whose €1.6 bn estimate is
+exactly 1000× its own award notice's framework maximum now serves no value (refused is not corrected). `?currency=` matches a Tender whose only amount
 in that currency is one of these rows. eForms-DE 1.x notices that state a notice-level framework maximum at the
 root of the notice (`DE1-FrameworkMaximumAmount`, about 100 notices) now serve it as the Tender's
 `framework_maximum`, as EU notices with the same element already did; their `value` can rise to it.

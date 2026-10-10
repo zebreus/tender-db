@@ -980,6 +980,18 @@ async fn result_level_framework_values_land_on_the_results_lot() {
     project::project(&db, false).await.expect("project");
     assert_eq!(scalar(&db, &at_lot("result_framework_reestimate", "LOT-0001")).await, 2_340_000);
     assert_eq!(scalar(&db, &at_lot("result_framework_reestimate", "LOT-0002")).await, 9_460_000);
+    // ...and the fold's stored lot value ignores it: LOT-0001 keeps its BT-27-Lot (EUR 21,000),
+    // not the larger re-estimate (EUR 23,400).
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT vl.value_cents FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id \
+              WHERE l.lot_key = 'LOT-0001'"
+        )
+        .await,
+        2_100_000,
+        "a partner-only figure is never the stored lot value"
+    );
     let _ = std::fs::remove_file(&path);
 }
 

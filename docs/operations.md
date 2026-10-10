@@ -689,8 +689,12 @@ they stay out of 492's lot sums and 505's tables. BT-118 / BT-1118 (the notice t
 unmapped. Decision and census: `.scratch/tender-db/506-result-amounts/`. Drain, after the cohort
 read predicts the moves (`cohort.py`): Pass A `refold-value-band` dry, wet, `project` (expected:
 395737 falls to BGN 7,348,200, 627219 to €6,666,666.67, plus the adjudicated list; anything else
-that moved is a finding); Pass B `refold-fields` over the four field ids on `notice_amounts`, sized
-with `expect:1` first (storage completeness: no served value may move).
+that moved is a finding); Pass C `refold-fields` over `DE1-FrameworkMaximumAmount` on
+`notice_amounts` (the bare eForms-DE 1.x root framework maximum, aliased in the second 506 commit and
+the one piece that can RAISE a head), sized with `expect:1`, then wet, every moved head read against its
+notice; then Pass B `refold-fields` over the four field ids on `notice_amounts`, sized with `expect:1`
+first (storage completeness: no served value may move — B assumes C has run, or a de-1.1 chain carrying
+both shapes would rise inside B).
 
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|
