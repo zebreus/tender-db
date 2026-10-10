@@ -142,6 +142,18 @@ fn legal_family(name: &str) -> Option<&'static str> {
         .last()
 }
 
+/// `project::normalise_identifier` in small: the uppercase alphanumerics, minted
+/// only from four characters up and with a digit among them — so a letter-only
+/// NHS code (`GB-NHS-QWO`) mints none and its mention binds by name.
+fn register_identity(raw: &str, country: Option<&str>) -> Option<store::Identifier> {
+    let value = minted(raw);
+    (value.len() >= 4 && value.chars().any(|c| c.is_ascii_digit())).then(|| store::Identifier {
+        country: country.map(str::to_owned),
+        kind: "national".into(),
+        value,
+    })
+}
+
 fn consortium(name: &str) -> bool {
     norm(name).split(' ').any(|t| t == "consortium")
 }
@@ -151,6 +163,7 @@ fn args<'a>(stoplist_cap: usize) -> store::AltIdMergeArgs<'a> {
         pair_key,
         key,
         mention_key,
+        register_identity,
         condemns,
         consortium,
         legal_family,
@@ -233,6 +246,18 @@ impl Bed {
     /// A standing GB org keyed by `literal` (minted as the resolver would).
     async fn org(&self, id: i64, literal: &str, name: &str) {
         self.org_in(id, "GB", &minted(literal), name).await;
+    }
+
+    /// A provisional GB org with no identifier: what a mention binds by name.
+    async fn provisional(&self, id: i64, name: &str) {
+        self.conn
+            .execute(
+                "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, 'GB', NULL, NULL, ?, ?, 1, 0)",
+                (Value::Integer(id), Value::Text(name.into()), Value::Text(name.to_lowercase())),
+            )
+            .await
+            .unwrap();
     }
 
     async fn org_in(&self, id: i64, country: &str, identifier: &str, name: &str) {
@@ -1870,26 +1895,86 @@ async fn an_nhs_ppon_pair_is_counted_and_never_planned() {
     b.org(20, "GB-UKPRN-10000840", "Bradford College").await;
     b.notice(300, "fts:ocds-1.1").await;
     b.party(300, "B1", Some(20), "GB", &["GB-UKPRN-10000840", PPON_R]).await;
-    // A party with two charity numbers beside one PPON.
+    // A party with two charity numbers beside one PPON: the first one stands (the
+    // mention bound to it), the second does not, and no org carries the PPON.
+    b.org(21, "GB-CHC-216250", "Barnardo's").await;
     b.notice(400, "fts:ocds-1.1").await;
-    b.party(400, "C1", None, "GB", &["GB-CHC-216250", "GB-CHC-1234567", PPON_S]).await;
-    b.mention(400, "ORG-C1", 20, "GB", Some("GB-CHC-216250"), "Barnardo's").await;
+    b.party(400, "C1", Some(21), "GB", &["GB-CHC-216250", "GB-CHC-1234567", PPON_S]).await;
 
     let r = b.plan().await;
     assert_eq!(r.plan_pairs, 1, "only the company-number pair is planned: {r:#?}");
     assert_eq!((r.pairs_seen, r.both_distinct), (1, 1), "the COH counters see no register");
     let nhs = r.registry_pairs.get("GB-NHS").expect("NHS counted");
-    assert_eq!((nhs.literal_pairs, nhs.pairs, nhs.both_distinct), (1, 1, 1));
+    assert_eq!((nhs.literal_pairs, nhs.pairs, nhs.no_identity, nhs.both_distinct), (1, 1, 0, 1));
     let ukprn = r.registry_pairs.get("GB-UKPRN").expect("UKPRN counted");
     assert_eq!((ukprn.pairs, ukprn.no_target_ppon, ukprn.both_distinct), (1, 1, 0));
     let chc = r.registry_pairs.get("GB-CHC").expect("CHC counted");
-    assert_eq!((chc.pairs, chc.ppon_beside_two_values, chc.no_target_both), (2, 1, 2));
+    assert_eq!(
+        (chc.pairs, chc.ppon_beside_two_values, chc.no_target_ppon, chc.no_target_both),
+        (2, 1, 1, 1)
+    );
     assert_eq!(r.registry_sample.len(), 1);
     let s = &r.registry_sample[0];
+    assert_eq!((s.scheme.as_str(), s.key.clone()), ("GB-NHS", format!("GB-NHS-RR8~{}", k(PPON_Q))));
+    let members: Vec<(i64, Option<&str>, &str)> =
+        s.members.iter().map(|m| (m.org_id, m.identifier.as_deref(), m.name.as_str())).collect();
     assert_eq!(
-        (s.scheme.as_str(), s.registry_org, s.ppon_org, s.registry_literal.as_str()),
-        ("GB-NHS", 10, 11, "GB-NHS-RR8")
+        members,
+        vec![
+            (10, Some("GBNHSRR8"), "Leeds Teaching Hospitals NHS Trust"),
+            (11, Some(minted(PPON_Q).as_str()), "Leeds Teaching Hospitals NHS Trust"),
+        ],
+        "R2's listing shape: the register org first"
     );
-    assert_eq!(s.registry_name, "Leeds Teaching Hospitals NHS Trust");
     assert_eq!(s.notices, vec!["pub-200".to_owned()]);
+}
+
+/// Issue 469 review: a register value the resolver mints no identity for (a
+/// letter-only NHS code) is held by the org its register-first mention bound to
+/// by name — never looked up as an identifier, which no org carries. And a pair
+/// one org already serves, by binding or by its mentions, is `already_one`.
+#[tokio::test]
+async fn a_register_value_with_no_identity_is_held_by_the_org_its_mention_bound() {
+    let b = bed("registry-identity").await;
+    // Barts: `GB-NHS-QWO` mints nothing, so the party bound a provisional org by name.
+    b.provisional(30, "Barts Health NHS Trust").await;
+    b.org(31, PPON_P, "Barts Health NHS Trust").await;
+    b.notice(500, "fts:ocds-1.1").await;
+    b.party(500, "Q1", Some(30), "GB", &["GB-NHS-QWO", PPON_P]).await;
+    // Brighton: the code's mention bound the PPON org itself — one org already.
+    b.org(40, PPON_Q, "Brighton Hospitals").await;
+    b.notice(600, "fts:ocds-1.1").await;
+    b.party(600, "R1", Some(40), "GB", &["GB-NHS-RXH", PPON_Q]).await;
+    // A college whose UKPRN org was merged into its PPON org: the pair is witnessed
+    // PPON-first, no org carries the UKPRN, and the PPON org's mentions carry it.
+    b.org(50, PPON_R, "Leeds College").await;
+    b.notice(700, "fts:ocds-1.1").await;
+    b.party(700, "U1", Some(50), "GB", &[PPON_R, "GB-UKPRN-10003841"]).await;
+    b.notice(701, "fts:ocds-1.1").await;
+    b.party(701, "U2", Some(50), "GB", &["GB-UKPRN-10003841"]).await;
+    // A charity whose PPON org was merged into its charity org: register-first, no
+    // org carries the PPON, and the charity org's mentions carry it.
+    b.org(60, "GB-CHC-1112223", "Oxfam").await;
+    b.notice(800, "fts:ocds-1.1").await;
+    b.party(800, "H1", Some(60), "GB", &["GB-CHC-1112223", PPON_S]).await;
+    b.notice(801, "fts:ocds-1.1").await;
+    b.party(801, "H2", Some(60), "GB", &[PPON_S]).await;
+
+    let r = b.plan().await;
+    assert_eq!(r.plan_pairs, 0, "{r:#?}");
+    let nhs = r.registry_pairs.get("GB-NHS").expect("NHS counted");
+    assert_eq!(
+        (nhs.pairs, nhs.no_identity, nhs.both_distinct, nhs.already_one, nhs.no_target_registry),
+        (2, 2, 1, 1, 0),
+        "{nhs:#?}"
+    );
+    let ukprn = r.registry_pairs.get("GB-UKPRN").expect("UKPRN counted");
+    assert_eq!((ukprn.pairs, ukprn.no_identity, ukprn.already_one), (1, 0, 1), "{ukprn:#?}");
+    let chc = r.registry_pairs.get("GB-CHC").expect("CHC counted");
+    assert_eq!((chc.pairs, chc.already_one, chc.no_target_ppon), (1, 1, 0), "{chc:#?}");
+    assert_eq!(r.registry_sample.len(), 1);
+    let s = &r.registry_sample[0];
+    assert_eq!(s.key, format!("GB-NHS-QWO~{}", k(PPON_P)));
+    let members: Vec<(i64, Option<&str>)> = s.members.iter().map(|m| (m.org_id, m.identifier.as_deref())).collect();
+    assert_eq!(members, vec![(30, None), (31, Some(minted(PPON_P).as_str()))]);
 }

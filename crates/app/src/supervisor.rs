@@ -8811,6 +8811,7 @@ impl Supervisor {
                         pair_key: ingest::crosswalk::altid_pair_key,
                         key: ingest::crosswalk::canonical_key_flat,
                         mention_key: ingest::crosswalk::mention_key,
+                        register_identity: ingest::project::normalise_identifier,
                         condemns: ingest::idgate::condemns,
                         consortium: ingest::crosswalk::consortium_name,
                         legal_family: ingest::crosswalk::gb_legal_family,
@@ -8985,6 +8986,7 @@ impl Supervisor {
                             serde_json::json!({
                                 "literal_pairs": c.literal_pairs,
                                 "pairs": c.pairs,
+                                "no_identity": c.no_identity,
                                 "already_one": c.already_one,
                                 "both_distinct": c.both_distinct,
                                 "no_target_registry": c.no_target_registry,
@@ -9001,14 +9003,15 @@ impl Supervisor {
                     .registry_sample
                     .iter()
                     .map(|x| {
+                        // R2's listing shape: the register org first, then the PPON org.
                         serde_json::json!({
-                            "scheme": x.scheme,
-                            "registry": x.registry_literal,
-                            "registry_org": x.registry_org,
-                            "registry_name": x.registry_name,
-                            "ppon": x.ppon_literal,
-                            "ppon_org": x.ppon_org,
-                            "ppon_name": x.ppon_name,
+                            "country": "GB", "scheme": x.scheme, "key": x.key,
+                            "members": x.members.iter().map(|m| {
+                                serde_json::json!({
+                                    "org_id": m.org_id, "kind": m.kind,
+                                    "identifier": m.identifier, "name": m.name,
+                                })
+                            }).collect::<Vec<_>>(),
                             "notices": x.notices,
                         })
                     })

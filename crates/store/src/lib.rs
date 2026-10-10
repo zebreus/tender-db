@@ -60,7 +60,7 @@ pub use canonical::{
     NameAttribution, NameAttributionReport,
     AddressStrip, NamePollutionReport, PollutedName,
     MintedCountryFix, MintedCountryReport,
-    AltIdAliasCounts, AltIdAliasRules, AltIdListing, AltIdMergeArgs, AltIdMergeReport, RegistryPairCounts, RegistrySample,
+    AltIdAliasCounts, AltIdAliasRules, AltIdListing, AltIdMergeArgs, AltIdMergeReport, RegistryMember, RegistryPairCounts, RegistrySample,
     REGISTRY_SAMPLE_PER_SCHEME,
     ALTID_ALIAS_LEDGER_SQL, ALTID_NEXT_PROFILE_SQL, ALTID_PARTY_IDS_SQL, ALTID_PARTY_MENTIONS_SQL,
     ALTID_LISTING_NAMES, ALTID_PLAN_LISTING_CAP,
