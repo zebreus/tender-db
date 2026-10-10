@@ -13411,6 +13411,7 @@ mod tests {
                 section("ORG-1", ORGANIZATION_KIND, None),
                 section("ORG-2", ORGANIZATION_KIND, None),
                 section("ORG-3", ORGANIZATION_KIND, None),
+                section("ORG-4", ORGANIZATION_KIND, None),
                 section("LOT-0", "Lot", None),
                 section("RES-0", "LotResult", None),
                 section("TEN-0", "LotTender", None),
@@ -13425,9 +13426,15 @@ mod tests {
                 id_ref("TEN-0", "OPT-310-Tender", "TPA-0"),
                 id_ref("TPA-0", "OPT-300-Tenderer", "ORG-2"),
                 id_ref("TPA-0", "OPT-301-Tenderer-SubCont", "ORG-3"),
+                id_ref("LOT-0", "OPT-301-Lot-ReviewOrg", "ORG-4"),
             ],
         };
-        for (id, n) in [("ORG-1", "Comune di Torino"), ("ORG-2", "Lotto deserto"), ("ORG-3", "Non aggiudicato")] {
+        for (id, n) in [
+            ("ORG-1", "Comune di Torino"),
+            ("ORG-2", "Lotto deserto"),
+            ("ORG-3", "Non aggiudicato"),
+            ("ORG-4", "TAR Piemonte"),
+        ] {
             eforms.values.push(text_value(id, ORG_NAME_FIELD, 0, None, n));
         }
         let ef = "eforms:eforms-sdk-1.10";
@@ -13436,13 +13443,19 @@ mod tests {
         let round = state.round.as_ref().unwrap();
         assert_eq!(round.bids.len(), 1, "the Bid stays");
         assert!(round.bids[0].parties.is_empty(), "no void bid party: {:?}", round.bids[0].parties);
-        assert_eq!(party_orgs(&state), BTreeSet::from([1_001]), "only the buyer is a party");
+        assert_eq!(party_orgs(&state), BTreeSet::from([1_001, 1_004]), "the buyer and the review body, no void party");
 
-        // Phase 1's buyer tokens: the void mentions are skipped, so the resolver's answer
-        // (one id per mention, in order) still zips onto the right sections.
+        // Phase 1's buyer tokens: the void mentions (ORG-2, ORG-3, between two real ones in
+        // section order) are skipped, so the resolver's answer — one id per mention, in
+        // order — still zips onto the right sections. A leaked void mention would shift
+        // 104 onto ORG-2.
         let (mentions, void) = NoticeState::mentions_and_void(false, 9, &eforms);
         assert_eq!(void, vec!["ORG-2".to_owned(), "ORG-3".to_owned()]);
-        let orgs = resolved_orgs(&mentions, &[101]);
-        assert_eq!(orgs[&9], HashMap::from([("ORG-1".to_owned(), 101)]), "buyer tokens stay aligned");
+        let orgs = resolved_orgs(&mentions, &[101, 104]);
+        assert_eq!(
+            orgs[&9],
+            HashMap::from([("ORG-1".to_owned(), 101), ("ORG-4".to_owned(), 104)]),
+            "buyer tokens stay aligned"
+        );
     }
 }
