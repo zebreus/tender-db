@@ -1,6 +1,7 @@
 # 509 — text-era void-lot phrases (`Infructueux`, `Sans suite`, `Desierto`) are minted as winner organizations era-wide
 
-Status: ready-for-agent — filed 2026-10-10 from issue 508's drain audit. The parser fix landed with 508 (`c21411c`,
+Status: ready-for-agent — DRAIN QUEUED 2026-10-10 ~10:10 UTC on `0292104`: 2004-01 → 2009-11 (text fetches 199–269; 217 is not text and the reparse skips it) in 9 rounds of reparse + project, jobs 2132–2149: after 198×8, 206×8, 214×8, 223×8, 231×8, 239×8, 247×8, 255×8, 263×6 (106k–237k notices each; fetch → id map in `../508-2010-text-vintage/text-fetch-map-1900000-3899999.txt`). 2009-12 → 2010 was already re-drained under 508. Pre-2004 (fetches 270+) carries ~10–20 junk names per 50k notices and is left for now. NEXT: per round, read reparse `unmatched` / `re-keyed` (0) and the fold's closure line; then the auto orphan sweep and the Verify.
+Was: ready-for-agent — filed 2026-10-10 from issue 508's drain audit. The parser fix landed with 508 (`c21411c`,
 `76c44ed`). It applies to a notice only when that notice is re-parsed. 508's two rounds clean 2009-12 → 2010. The
 rest of the era (1997–2009) still carries the junk until an era-wide re-parse.
 Kind: data quality (organizations; text era)
