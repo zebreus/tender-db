@@ -1711,12 +1711,18 @@ change silently); the fold's line reads `N void-lot mention(s) retired, M correc
 ```sh
 /root/aj.sh /admin/jobs '{"kind":"refold-void-names"}'                             # dry: counts
 /root/aj.sh /admin/reports/void-names-refold | jq -r .body \
-  | jq '{orgs, mentions, notices, notices_by_profile, identified, legal_form, top: .top[:10]}'
+  | jq '{orgs, mentions, notices, notices_by_profile, identified, legal_form, long, exempted: (.exempted|length), top: .top[:10]}'
 /root/aj.sh /admin/jobs '{"kind":"refold-void-names","dry_run":false,"expect":N}'  # wet + the fold
 ```
 
 The walk reads every organization by id window with the fold's own predicate (never SQL `LIKE`), then
-the mentions' notices through `organization_mentions_org`. Before the wet run read three lists:
+the mentions' notices through `organization_mentions_org`. The walk's net is every void phrase
+(`partyname::mentions_void`); the fold's own rule splits it, and what `partyname::names_an_award` keeps
+(a per-lot summary such as `Lot 1) Sarl Bremond. Lot 2) Infructueux`, a company form, an awardee word)
+is listed in `exempted` and never re-queued — dropping such a "name" would turn the awards it lists
+into `clos-nw` (the first dry run, job 2164, stopped on exactly these). `long` lists every void name over
+120 characters (summaries the exemption missed) and `distinct` the void names by fold. Before the wet run
+read three lists:
 `notices_by_profile` against the census shape (r208 ≈ 8.5k, text ≈ 0.7k, internal-ojs ≈ 150, r209 ≈ 140,
 eForms ≈ 50 notices), `identified` (matches carrying an identifier) and `legal_form` (matches whose name
 also holds a commercial legal form — the design lists them instead of guarding on them). **Stop and add

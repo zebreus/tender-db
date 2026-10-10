@@ -4762,8 +4762,15 @@ impl Supervisor {
     /// `void-names-refold`.
     async fn run_refold_void_names(&self, job: &Job, dry_run: bool, expect: Option<u64>) -> Result<String, String> {
         const WINDOW: i64 = 20_000;
+        // A void name longer than this is listed in full for the operator: the composite
+        // summaries the first dry run found ran to hundreds of characters, a void phrase
+        // to a few dozen.
+        const LONG_VOID_NAME: usize = 120;
         let mode = if dry_run { " DRY RUN — nothing written" } else { "" };
         let mut orgs: Vec<(i64, String, Option<String>)> = Vec::new();
+        // Matched a void phrase, kept by `partyname::names_an_award` (a summary that names an
+        // award beside the void lot): never re-queued, listed for the operator.
+        let mut exempted: Vec<(i64, String, Option<String>)> = Vec::new();
         let (mut after, mut walked) = (0i64, 0u64);
         loop {
             if self.cancelled(job.id) {
@@ -4772,10 +4779,18 @@ impl Supervisor {
                      nothing written, no report stored"
                 ));
             }
-            let (found, last) = Box::pin(self.db.orgs_named_window(after, WINDOW, ingest::partyname::is_void_lot))
+            // The walk's net is every void phrase; the fold's own rule splits it below, so
+            // the plan lists what the award exemption keeps beside what the fold drops.
+            let (found, last) = Box::pin(self.db.orgs_named_window(after, WINDOW, ingest::partyname::mentions_void))
                 .await
                 .map_err(|e| e.to_string())?;
-            orgs.extend(found);
+            for org in found {
+                if ingest::partyname::is_void_lot(&org.1) {
+                    orgs.push(org);
+                } else {
+                    exempted.push(org);
+                }
+            }
             let Some(last) = last else { break };
             walked += WINDOW as u64;
             after = last;
@@ -4816,6 +4831,40 @@ impl Supervisor {
             })
             .collect();
         let by_profile = Box::pin(self.db.notice_profile_counts(&notices)).await.map_err(|e| e.to_string())?;
+        // What the operator reads before the wet run (issue 510's drain review): every
+        // exempted org; every void name long enough to be a summary the exemption missed;
+        // and the void names by fold, so the whole cohort is readable in one report.
+        let clip = |name: &str, max: usize| -> String { name.chars().take(max).collect() };
+        let exempted_ids: Vec<i64> = exempted.iter().map(|(id, _, _)| *id).collect();
+        let mut exempted_mentions: std::collections::HashMap<i64, u64> = std::collections::HashMap::new();
+        for (org, _) in Box::pin(self.db.mention_notices_of_orgs(&exempted_ids)).await.map_err(|e| e.to_string())? {
+            *exempted_mentions.entry(org).or_default() += 1;
+        }
+        let exempted_list: Vec<serde_json::Value> = exempted
+            .iter()
+            .map(|(id, name, _)| {
+                serde_json::json!({
+                    "org": id,
+                    "name": clip(name, 300),
+                    "mentions": exempted_mentions.get(id).copied().unwrap_or(0),
+                })
+            })
+            .collect();
+        let long: Vec<serde_json::Value> = orgs
+            .iter()
+            .filter(|(_, name, _)| name.chars().count() > LONG_VOID_NAME)
+            .map(|(id, name, _)| {
+                serde_json::json!({ "org": id, "name": clip(name, 400), "mentions": per_org.get(id).copied().unwrap_or(0) })
+            })
+            .collect();
+        let mut by_fold: std::collections::BTreeMap<String, (u64, u64)> = std::collections::BTreeMap::new();
+        for (id, name, _) in &orgs {
+            let entry = by_fold.entry(clip(&ingest::partyname::fold(name), 120)).or_default();
+            entry.0 += 1;
+            entry.1 += per_org.get(id).copied().unwrap_or(0);
+        }
+        let mut distinct: Vec<(String, u64, u64)> = by_fold.into_iter().map(|(fold, (o, m))| (fold, o, m)).collect();
+        distinct.sort_by(|a, b| b.1.cmp(&a.1).then(b.2.cmp(&a.2)).then(a.0.cmp(&b.0)));
         let mut top: Vec<(i64, &str, u64)> =
             orgs.iter().map(|(id, name, _)| (*id, name.as_str(), per_org.get(id).copied().unwrap_or(0))).collect();
         top.sort_by(|a, b| b.2.cmp(&a.2).then(a.0.cmp(&b.0)));
@@ -4851,6 +4900,9 @@ impl Supervisor {
             "notices_by_profile": by_profile,
             "identified": identified,
             "legal_form": legal_form,
+            "exempted": exempted_list,
+            "long": long,
+            "distinct": distinct.iter().map(|(fold, o, m)| serde_json::json!({ "fold": fold, "orgs": o, "mentions": m })).collect::<Vec<_>>(),
             "top": top.iter().map(|(id, name, n)| serde_json::json!({ "org": id, "name": name, "mentions": n })).collect::<Vec<_>>(),
         });
         self.db
@@ -4858,12 +4910,14 @@ impl Supervisor {
             .await
             .map_err(|e| e.to_string())?;
         Ok(format!(
-            "refold-void-names (issue 510){mode}: {} void-lot org(s) ({} with an identifier, {} with a legal form), \
-             {} mention(s) on {found} notice(s) ({}); {} {}, stamped {stamped} tender(s) epoch-stale — the fold \
-             retires the mentions, then run sweep-orphan-orgs",
+            "refold-void-names (issue 510){mode}: {} void-lot org(s) ({} with an identifier, {} with a legal form, \
+             {} long; {} more exempted as naming an award), {} mention(s) on {found} notice(s) ({}); {} {}, stamped \
+             {stamped} tender(s) epoch-stale — the fold retires the mentions, then run sweep-orphan-orgs",
             orgs.len(),
             identified.len(),
             legal_form.len(),
+            long.len(),
+            exempted.len(),
             pairs.len(),
             by_profile.iter().map(|(profile, n)| format!("{profile} {n}")).collect::<Vec<_>>().join(", "),
             if dry_run { "would re-queue" } else { "re-queued" },
@@ -15562,11 +15616,14 @@ mod tests {
         .unwrap();
         ingest::project::project(&db, false).await.expect("fold");
         db.execute_for_test("UPDATE organizations SET name = 'Lot déclaré infructueux'").await.unwrap();
-        // A match that also holds a legal form, mentioned nowhere: listed for the operator,
-        // never re-queued (unit1-decision §5.3's stand-in for a guard).
+        // Two more matches, mentioned nowhere. A void sentence whose fold holds the census's
+        // legal-form `sa` (the French possessive): void, and listed for the operator
+        // (unit1-decision §5.3's stand-in for a guard). A per-lot summary that names a
+        // winner beside the void lot: exempted, listed, never re-queued.
         db.execute_for_test(
             "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
-             VALUES (99510, 'FR', NULL, NULL, 'ACME SA (lot 2 infructueux)', 'acme sa lot 2 infructueux', 1, 0)",
+             VALUES (99510, 'FR', NULL, NULL, 'Marché déclaré infructueux en sa séance', 'x', 1, 0),
+                    (99511, 'FR', NULL, NULL, 'Lot 1) Dupont. Lot 2) infructueux', 'x', 1, 0)",
         )
         .await
         .unwrap();
@@ -15582,7 +15639,7 @@ mod tests {
         let msg = sup.run_spec(&job(1, true, None)).await.expect("dry");
         assert!(
             msg.contains("DRY RUN")
-                && msg.contains("2 void-lot org(s) (0 with an identifier, 1 with a legal form)")
+                && msg.contains("2 void-lot org(s) (0 with an identifier, 1 with a legal form, 0 long; 1 more exempted")
                 && msg.contains("on 1 notice(s) (eforms:eforms-sdk-1.13 1)")
                 && msg.contains("would re-queue 1"),
             "{msg}"
@@ -15593,7 +15650,21 @@ mod tests {
         assert_eq!(report["notices_by_profile"], serde_json::json!({ "eforms:eforms-sdk-1.13": 1 }), "{body}");
         assert_eq!(
             report["legal_form"],
-            serde_json::json!([{ "org": 99510, "name": "ACME SA (lot 2 infructueux)", "identifier": null, "mentions": 0 }]),
+            serde_json::json!([{ "org": 99510, "name": "Marché déclaré infructueux en sa séance", "identifier": null, "mentions": 0 }]),
+            "{body}"
+        );
+        assert_eq!(
+            report["exempted"],
+            serde_json::json!([{ "org": 99511, "name": "Lot 1) Dupont. Lot 2) infructueux", "mentions": 0 }]),
+            "{body}"
+        );
+        assert_eq!(report["long"], serde_json::json!([]), "{body}");
+        assert_eq!(
+            report["distinct"],
+            serde_json::json!([
+                { "fold": "lot declare infructueux", "orgs": 1, "mentions": 1 },
+                { "fold": "marche declare infructueux en sa seance", "orgs": 1, "mentions": 0 },
+            ]),
             "{body}"
         );
         assert!(body.contains("Lot déclaré infructueux"), "{body}");
