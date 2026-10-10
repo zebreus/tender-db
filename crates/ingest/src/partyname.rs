@@ -113,43 +113,87 @@ const PLACEHOLDER_WHOLE: [&str; 1] = ["various"];
 /// The words that open a trailing lot qualifier ([`strip_lot_qualifier`]).
 const LOT_WORDS: [&str; 6] = ["lot", "lots", "lote", "lotes", "lotto", "lotti"];
 
-/// Lot designators on the fold, for [`several_lots`]: [`LOT_WORDS`] plus the Spanish
-/// sub-lot (`sous-lot` folds to `sous lot`, so `lot` covers it).
-const LOT_DESIGNATORS: [&str; 8] = ["lot", "lots", "lote", "lotes", "lotto", "lotti", "sublote", "sublotes"];
+/// Lot designators on the fold, for [`several_lots`]: [`LOT_WORDS`], the Spanish sub-lot
+/// (`sous-lot` folds to `sous lot`, so `lot` covers it), and the other words a per-lot
+/// summary numbers its parts with (`Tranche 1 : X. Tranche 2 : infructueux`, `Partie`,
+/// `Partida`). Not `marché`: it is numbered by its contract reference and its duration
+/// (`marché 2012 02 1 0014`, `durée du marché: 5 ans`) inside one lot's void sentence.
+const LOT_DESIGNATORS: [&str; 11] =
+    ["lot", "lots", "lote", "lotes", "lotto", "lotti", "sublote", "sublotes", "tranche", "partie", "partida"];
 
-/// A number mark between a lot designator and its number (`lot nº 3`, `lot n° 3`, `lote núm. 3`).
-const NUMBER_MARKS: [&str; 7] = ["n", "nº", "no", "nr", "num", "numero", "nos"];
+/// Number marks between a lot designator and its number (`lot nº 3`, `lot n° 3`, `lote n.º 3`
+/// — which folds to `n º 3` — and `lote núm. 3`). Up to two are skipped.
+const NUMBER_MARKS: [&str; 9] = ["n", "nº", "no", "nr", "num", "numero", "nos", "º", "o"];
+
+/// Roman lot numbers (`Lote I: X. Lote II: declarado desierto`), on the fold.
+const ROMAN: [&str; 20] = [
+    "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii", "xiii", "xiv", "xv", "xvi", "xvii",
+    "xviii", "xix", "xx",
+];
 
 /// Folded words that name an awardee: a void phrase beside one of them, not negated, is a
 /// summary that names an award (`GRPT vallée sas (mandataire), … suite à procédure
 /// négociée après AO infructueux`).
-const AWARD_NOUNS: [&str; 13] = [
+const AWARD_NOUNS: [&str; 26] = [
     "mandataire",
     "titulaire",
     "titulaires",
     "attributaire",
     "attributaires",
     "attribution",
+    "retenu",
+    "retenue",
     "adjudicatario",
     "adjudicataria",
     "adjudicatarios",
+    "adjudicado",
+    "adjudicada",
+    "adjudicados",
+    "adjudicadas",
     "aggiudicatario",
     "aggiudicataria",
     "aggiudicatari",
+    "aggiudicato",
+    "aggiudicata",
+    "aggiudicati",
+    "attribuito",
+    "attribuita",
+    "attribuiti",
     "awarded",
+    "gegund",
 ];
 
-/// The words that negate an award word before it (`pas d'attributaire`, `no adjudicado`).
-const NEGATIONS: [&str; 7] = ["non", "pas", "sans", "aucun", "aucune", "no", "not"];
-
-/// Company forms as published (case-sensitive raw tokens): a void phrase beside one names
-/// the company another lot went to. Not the census's folded `COMMERCIAL_FORMS`: those
-/// fold the French possessive `sa` (`lors de sa séance`, `et sa périphérie`) onto `SA`.
-const COMPANY_TOKENS: [&str; 34] = [
-    "SA", "S.A.", "S.A", "SAS", "S.A.S.", "S.A.S", "SARL", "Sarl", "sarl", "S.A.R.L.", "EURL", "Eurl", "eurl",
-    "SNC", "Sté", "STE", "Ets", "Ets.", "ETS", "GmbH", "S.L.", "S.L", "SL", "S.L.U.", "SLU", "S.p.A.", "SpA",
-    "S.r.l.", "Srl", "SRL", "Ltd", "Ltd.", "LTD", "Limited",
+/// The words that negate an award word before it (`pas d'attributaire`, `no adjudicado`,
+/// `ningún adjudicatario`, `nessun aggiudicatario`, `faute d'attributaire`).
+const NEGATIONS: [&str; 18] = [
+    "non", "pas", "sans", "aucun", "aucune", "no", "not", "niet", "sin", "ningun", "ninguno", "ninguna", "nessun",
+    "nessuno", "nessuna", "alcun", "faute", "absence",
 ];
+
+/// Words skipped between an award word and its negation (`pas d'attributaire`, `no hay
+/// adjudicatario`, `non è stato individuato alcun aggiudicatario` reads its `alcun`).
+const NEGATION_FILLERS: [&str; 15] =
+    ["d", "de", "du", "des", "l", "la", "le", "un", "une", "el", "del", "di", "hay", "ha", "sido"];
+
+/// Company forms as published, compared on the raw token with its surrounding punctuation
+/// trimmed and its dots removed ([`company_token`]): a void phrase beside one names the
+/// company another lot went to. Case-sensitive, so the French possessive `sa` (`lors de sa
+/// séance`, `et Sa périphérie`) is no `SA`; [`COMPANY_FORMS_DOTTED`] takes any case when
+/// the token was written with dots (`s.r.l.`, `S.A.R.L`). Not the census's folded
+/// `COMMERCIAL_FORMS`, which fold the possessive onto `SA`.
+const COMPANY_TOKENS: [&str; 33] = [
+    "SA", "SAS", "Sas", "sas", "SASU", "SAU", "SARL", "Sarl", "sarl", "EURL", "Eurl", "eurl", "SNC", "Sté", "STÉ",
+    "Ets", "ETS", "GmbH", "GMBH", "SL", "SLU", "SpA", "SPA", "Srl", "SRL", "srl", "Ltd", "LTD", "Limited",
+    "LIMITED", "Lda", "LDA", "SPRL",
+];
+
+/// Company forms written with dots, any case once the dots are gone (`s.r.l.` → `srl`). Not
+/// `Ste`/`STE` in either list: that is Sainte in a place name (`Ste Marie de Figaniella`).
+const COMPANY_FORMS_DOTTED: [&str; 11] = ["sa", "sas", "sasu", "sau", "sarl", "srl", "spa", "sl", "slu", "ltd", "ets"];
+
+/// The folded words after `SA` that make it the possessive (`LORS DE SA SÉANCE`).
+const POSSESSIVE_NEXT: [&str; 8] =
+    ["seance", "peripherie", "forme", "duree", "reunion", "decision", "deliberation", "session"];
 
 /// A name as the lists read it: the role census's fold — [`crate::project::match_norm`]
 /// (lowercase, every non-alphanumeric run one space), then Latin diacritics folded.
@@ -221,48 +265,91 @@ pub fn mentions_void(name: &str) -> bool {
 /// 511, which costs a junk name and never a real award.
 fn names_an_award(raw: &str, folded: &str) -> bool {
     let words: Vec<&str> = folded.split(' ').collect();
-    award_clause(folded)
-        || awardee_noun(&words)
-        || several_lots(&words)
-        || mixed_segments(raw)
-        || raw
-            .split(|c: char| c.is_whitespace() || ",;:()/".contains(c))
-            .any(|token| COMPANY_TOKENS.contains(&token))
+    award_clause(folded) || awardee_noun(&words) || several_lots(&words) || mixed_segments(raw) || company_token(raw)
 }
 
-/// An [`AWARD_NOUNS`] word not negated: the word before it, skipping one article
-/// (`pas d'attributaire`), is not a [`NEGATIONS`] word.
-fn awardee_noun(words: &[&str]) -> bool {
-    words.iter().enumerate().any(|(i, w)| {
-        AWARD_NOUNS.contains(w) && {
-            let before: Vec<&str> =
-                words[..i].iter().rev().filter(|b| !matches!(**b, "d" | "de" | "l" | "un" | "une")).take(1).copied().collect();
-            !before.first().is_some_and(|b| NEGATIONS.contains(b))
-        }
+/// A company form among the raw tokens ([`COMPANY_TOKENS`], [`COMPANY_FORMS_DOTTED`]), each
+/// trimmed of surrounding punctuation (`Yvelin SA.`, `«SARL»`) and compared without its dots.
+/// `SA` before a [`POSSESSIVE_NEXT`] word is the possessive in capitals, not a company.
+fn company_token(raw: &str) -> bool {
+    let tokens: Vec<&str> = raw
+        .split(|c: char| c.is_whitespace() || ",;:()/[]".contains(c))
+        .map(|t| t.trim_matches(|c: char| !c.is_alphanumeric()))
+        .filter(|t| !t.is_empty())
+        .collect();
+    tokens.iter().enumerate().any(|(i, token)| {
+        let bare: String = token.chars().filter(|c| *c != '.').collect();
+        let dotted = token.contains('.');
+        let form = COMPANY_TOKENS.contains(&bare.as_str())
+            || (dotted && COMPANY_FORMS_DOTTED.contains(&bare.to_lowercase().as_str()));
+        form && !(bare == "SA" && tokens.get(i + 1).is_some_and(|next| POSSESSIVE_NEXT.contains(&fold(next).as_str())))
     })
 }
 
-/// Two or more numbered lot designators (`lot 1 … lot 3`, `sous lot 5b … lot 6`, `lote nº 2 …
-/// lote 3`): the name is a per-lot summary, not one lot's outcome.
-fn several_lots(words: &[&str]) -> bool {
-    let numbered = |w: Option<&&str>| w.is_some_and(|w| w.bytes().any(|b| b.is_ascii_digit()));
-    let count = (0..words.len())
-        .filter(|&i| {
-            LOT_DESIGNATORS.contains(&words[i])
-                && (numbered(words.get(i + 1))
-                    || (words.get(i + 1).is_some_and(|w| NUMBER_MARKS.contains(w)) && numbered(words.get(i + 2))))
-        })
-        .count();
-    count >= 2
+/// An [`AWARD_NOUNS`] word not negated: the nearest word before it that is not a
+/// [`NEGATION_FILLERS`] word is not a [`NEGATIONS`] word (`pas d'attributaire`, `no hay
+/// adjudicatario`).
+fn awardee_noun(words: &[&str]) -> bool {
+    words.iter().enumerate().any(|(i, w)| {
+        AWARD_NOUNS.contains(w)
+            && !words[..i]
+                .iter()
+                .rev()
+                .find(|b| !NEGATION_FILLERS.contains(*b))
+                .is_some_and(|b| NEGATIONS.contains(b))
+    })
 }
 
-/// Two or more `;`-separated entries with letters, one of which carries no void stem.
+/// Two or more DISTINCT numbered lot designators (`lot 1 … lot 3`, `sous lot 5b … lot 6`,
+/// `lote nº 2 … lote 3`, `Lote I … Lote II`, `lot1 … lot2`): the name is a per-lot summary,
+/// not one lot's outcome. One lot named twice (`Lot 3) Ce lot 3 est déclaré infructueux`) is
+/// one lot. A number is the whole run of digit words after the designator, because the fold
+/// splits `6.01.01` and `2002-03` into words (`Lot 6.01.01 : PARAMAT … Lot 6.01.06 : sans
+/// suite` is six lots, not lot 6 six times).
+fn several_lots(words: &[&str]) -> bool {
+    let number = |w: &str| w.bytes().any(|b| b.is_ascii_digit()) || ROMAN.contains(&w);
+    let mut numbers: Vec<String> = Vec::new();
+    for (i, w) in words.iter().enumerate() {
+        if LOT_DESIGNATORS.contains(w) {
+            let mut j = i + 1;
+            while j < words.len() && j <= i + 2 && NUMBER_MARKS.contains(&words[j]) {
+                j += 1;
+            }
+            if let Some(n) = words.get(j).filter(|n| number(n)) {
+                let mut whole = (*n).to_owned();
+                for more in words[j + 1..].iter().take_while(|w| !w.is_empty() && w.bytes().all(|b| b.is_ascii_digit())) {
+                    whole.push('.');
+                    whole.push_str(more);
+                }
+                numbers.push(whole);
+            }
+        } else if let Some(rest) = LOT_DESIGNATORS
+            .iter()
+            .find_map(|d| w.strip_prefix(d).filter(|r| !r.is_empty() && r.bytes().all(|b| b.is_ascii_digit())))
+        {
+            // Glued: `lot1`, `lote12`.
+            numbers.push(rest.to_owned());
+        }
+    }
+    numbers.sort_unstable();
+    numbers.dedup();
+    numbers.len() >= 2
+}
+
+/// Two or more `;`-separated entries with letters, one of which names something: no void
+/// stem, not a void whole value, and not a relaunch note (`infructueux ; relance en procédure
+/// adaptée` is one void lot).
 fn mixed_segments(raw: &str) -> bool {
     let segments: Vec<&str> = raw.split(';').filter(|s| s.chars().any(char::is_alphabetic)).collect();
     segments.len() >= 2
         && segments.iter().any(|segment| {
-            let padded = format!(" {}", fold(segment));
+            let folded = fold(segment);
+            let padded = format!(" {folded}");
             !VOID_STEMS.iter().any(|stem| padded.contains(stem))
+                && !VOID_WHOLE.contains(&folded.as_str())
+                && ![" relanc", " nouvelle consultation", " nueva licitaci", " nuova gara", " nuevo procedimiento"]
+                    .iter()
+                    .any(|note| padded.contains(note))
         })
 }
 
@@ -389,6 +476,22 @@ mod tests {
             "2013061903/zone Mâcon : infructueux ; 2013061904/zone Paray le Monial : Cd'Elec - 71600 Paray-le-Monial",
             "GRPT vallée sas (mandataire), La Comec et Arbat System, suite à procédure négociée après AO infructueux",
             "Lot 1) Dupont. Lot 2) infructueux",
+            // The second review's shapes (wf_d9c376dd-312).
+            "Yvelin SA. Lot 2 : infructueux",
+            "Rossi s.r.l. (lotto 2 nessuna aggiudicazione)",
+            "ACME S.A.R.L (lot 2 infructueux)",
+            "Construcciones Pérez, S.A.U. (lote 2 declarado desierto)",
+            "Lote I: Construcciones Pérez. Lote II: declarado desierto",
+            "Lot1 : Dupont. Lot2 : infructueux",
+            "Lote12 : Dupont. Lote13 : declarado desierto",
+            "Lote n.º 1: Construcciones Pérez. Lote n.º 2: declarado desierto",
+            "Tranche 1 : Dupont. Tranche 2 : infructueux",
+            "lot 9.02.01 : sans suite Lot 9.02.02 : Vygon",
+            "Lot 2002-01: infructeux. Lots 2002-03 et 2002-06: Faurie Midi-Pyrénées",
+            "Gaudais Distribution (lots 1-1, 1-3, 1-5) Transgourmet (lot 1-6) lot 1-7 est déclaré sans suite",
+            "lot1096 INFRUCTUEUX- lot1097 fresenius k 22500- lot1098 fresenius m 396",
+            "Lote 2 declarado desierto; lote 1 adjudicado a Construcciones Pérez",
+            "Lotto 2 nessuna aggiudicazione, lotto 1 aggiudicato alla ditta Rossi",
         ] {
             assert_eq!(not_a_name(summary), Some(NotAName::Placeholder), "{summary}");
         }
@@ -403,10 +506,24 @@ mod tests {
             "pas d'attributaire, lot infructueux",
             "Lote no adjudicado, declarado desierto",
             "Lot infructueux (not awarded)",
+            "Lot 3) Ce lot 3 est déclaré infructueux",
+            "Le lot 10: lot n° 10: CQP Vienne a été déclaré infructueux",
+            "Le lot 48: Transport scolaire circuit: Ste Marie de Figaniella / Propriano a été déclaré Infructueux",
+            "Le lot 3: assurance des véhicules. Durée du marché: 5 ans à compter du 1.1.2011 a été déclaré infructueux",
+            "LOT DÉCLARÉ SANS SUITE LORS DE SA SÉANCE DU 3 MAI",
+            "Infructueux ; relance en procédure adaptée",
+            "Lot infructueux faute d'attributaire",
+            "Declarado desierto, no hay adjudicatario",
+            "Nessuna aggiudicazione, non è stato individuato alcun aggiudicatario",
         ] {
             assert_eq!(not_a_name(void), Some(NotAName::VoidLot), "{void}");
             assert!(super::mentions_void(void), "{void}");
         }
+        assert_eq!(
+            not_a_name("Sublote 9.1: Declarado desierto. Sublote 9.2: Declarado desierto."),
+            Some(NotAName::Placeholder),
+            "a summary of void lots only is kept — the accepted cost (a junk name, never a lost award)"
+        );
         assert!(super::mentions_void("Lot 1) Dupont. Lot 2) infructueux"), "the walk's net still catches a summary");
         assert!(!super::mentions_void("ACME SA"));
     }
