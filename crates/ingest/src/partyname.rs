@@ -67,7 +67,7 @@ const VOID_STEMS: [&str; 11] = [
 ];
 
 /// Whole values that say the lot was not awarded, compared entire after the lot strip.
-const VOID_WHOLE: [&str; 30] = [
+const VOID_WHOLE: [&str; 49] = [
     "desierto",
     "desierta",
     "deserto",
@@ -98,6 +98,28 @@ const VOID_WHOLE: [&str; 30] = [
     "abandon",
     "aufgehoben",
     "nicht vergeben",
+    // TED's own "not awarded", which r208 award notices print in the winner slot in all
+    // two dozen languages at once (`Not awarded` / `Ikke tildelt` / … / `Ugovor nije
+    // sklopljen`, notice 17674598): every one must read void for the party to be void.
+    "ikke tildelt",
+    "no ha sido adjudicado",
+    "sopimusta ei tehty",
+    "δεν ανατεθηκε",
+    "nao adjudicado",
+    "ej tilldelat",
+    "nebyla zadana",
+    "lepingut ei solmitud",
+    "nem iteltek oda",
+    "nesudaryta",
+    "nav pieskirts",
+    "ma ngħatax",
+    "zamowienia nie udzielono",
+    "nebola pridelena",
+    "narocilo ni bilo oddano",
+    "gan damhachtain",
+    "не е възложена",
+    "nu a fost atribuit",
+    "ugovor nije sklopljen",
 ];
 
 /// Pointer and withheld-value stems (the rest of the 508 text list), padded like
@@ -269,7 +291,7 @@ pub fn not_a_name(name: &str) -> Option<NotAName> {
     // non aggiudicato per importo offerto superiore alla base d'asta`, `Niet gegund - perceel
     // teruggetrokken`) is void — unless the name also names an award, and then it is a name
     // (`DESIERTO, S.L.` is a company; the text parser must keep it).
-    if reason_head(name).is_some_and(|head| VOID_WHOLE.contains(&fold(head).as_str())) {
+    if reason_head(name).is_some_and(|head| VOID_WHOLE.contains(&fold(head).as_str())) || void_prefix(name) {
         return (!names_an_award(name, &full)).then_some(NotAName::VoidLot);
     }
     if PLACEHOLDER_WHOLE.contains(&whole) {
@@ -299,6 +321,33 @@ pub fn mentions_void(name: &str) -> bool {
     let stripped = strip_lot_qualifier(name).map(fold);
     VOID_WHOLE.contains(&stripped.as_deref().unwrap_or(&full))
         || reason_head(name).is_some_and(|head| VOID_WHOLE.contains(&fold(head).as_str()))
+        || void_prefix(name)
+}
+
+/// A void whole value opening the name and running straight on into its reason: the next
+/// character is punctuation (`BRAK OFERT -unieważniona …`, `Desierto / Ninguna oferta`) or
+/// the next word is lowercase (`Desierto al no haberse presentado ninguna oferta`, `Lotto
+/// deserto in quanto non è pervenuta alcuna offerta`, `Brak ofert na zadanie nr 1`).
+/// `Desierto OÜ` — an uppercase word after it — is a company's name.
+fn void_prefix(name: &str) -> bool {
+    let name = name.trim();
+    let mut end = 0;
+    for word in name.split_whitespace().take(4) {
+        let Some(at) = name[end..].find(word) else { return false };
+        end += at + word.len();
+        if !VOID_WHOLE.contains(&fold(&name[..end]).as_str()) {
+            continue;
+        }
+        let rest = &name[end..];
+        let next = rest.trim_start();
+        let Some(first) = next.chars().next() else { return false };
+        // The head's own trailing punctuation (`Desierto.`) folds away; what follows decides.
+        let glued = !rest.starts_with(char::is_whitespace);
+        if glued || !first.is_alphanumeric() || first.is_lowercase() || word.ends_with(|c: char| !c.is_alphanumeric()) {
+            return true;
+        }
+    }
+    false
 }
 
 /// The head of a name that goes on to give a reason: the text before the first `(`, `[`,
@@ -803,6 +852,12 @@ mod tests {
             "Niet toegewezen",
             "Not awarded - no compliant bids",
             "Aufgehoben (siehe VI.3)",
+            // The fifth dry run's survivors (job 2174 → Verify).
+            "Desierto al no haberse presentado ninguna oferta",
+            "Lotto deserto in quanto non è pervenuta alcuna offerta valida",
+            "Brak ofert na zadanie nr 1.",
+            "BRAK OFERT -unieważniona na podstawie art. 93 ust. 1 pkt 1 uPzp",
+            "Desierto / Ninguna oferta adecuada",
             "Perceel 2 en 3 zijn niet gegund",
             "De percelen 2, 3, 4, 5 en 6 zijn overeenkomstig het bepaalde in het bestek niet gegund",
             "De opdracht wordt niet gegund aan Entropia op basis van deze vooraankondiging",
@@ -835,6 +890,21 @@ mod tests {
         );
         assert!(super::mentions_void("Lot 1) Dupont. Lot 2) infructueux"), "the walk's net still catches a summary");
         assert!(!super::mentions_void("ACME SA"));
+    }
+
+    /// TED's "not awarded" in every language one r208 winner slot carried (notice 17674598):
+    /// each must be void, or the party keeps its organization.
+    #[test]
+    fn teds_not_awarded_is_void_in_every_language() {
+        for void in [
+            "Not awarded", "Ikke tildelt", "nicht vergeben", "No ha sido adjudicado", "sopimusta ei tehty",
+            "Non attribué", "Δεν ανατέθηκε", "non aggiudicato", "Niet gegund", "Não adjudicado", "Ej tilldelat",
+            "Nebyla zadána", "lepingut ei sõlmitud", "Nem ítélték oda", "Nesudaryta", "Nav piešķirts", "Ma ngħatax",
+            "Zamówienia nie udzielono", "Nebola pridelená.", "Naročilo ni bilo oddano", "Gan dámhachtain",
+            "Не е възложена", "Nu a fost atribuit", "Ugovor nije sklopljen",
+        ] {
+            assert_eq!(not_a_name(void), Some(NotAName::VoidLot), "{void}");
+        }
     }
 
     #[test]
