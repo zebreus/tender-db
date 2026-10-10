@@ -21,7 +21,7 @@ the 2026-09-30 input exactly:
   a bare 8 digits, or a bare 2 letters + 6 digits.
 
 Usage:
-  census.py SNAPSHOT.zip ORGS.jsonl OUT_DIR [--min-org-id N] [--skip-verdicts verdicts.json]
+  census.py SNAPSHOT.zip ORGS.jsonl OUT_DIR [--min-org-id N] [--pad-short] [--skip-verdicts verdicts.json]
 
 Writes OUT_DIR/counts.json, OUT_DIR/live-name-disjoint-candidates.json and
 OUT_DIR/absent.json, in 452's shapes.
@@ -35,10 +35,17 @@ ALNUM8 = re.compile(r"[A-Z0-9]{8}")
 BARE = re.compile(r"\d{8}|[A-Z]{2}\d{6}")
 
 
-def company_number(identifier):
-    """The company number an org identifier carries, or None (452's shape rule)."""
+def company_number(identifier, pad_short=False):
+    """The company number an org identifier carries, or None (452's shape rule).
+
+    `pad_short` (issue 466) also reads a `GBCOH` number of 6 or 7 digits as the company
+    number with its leading zeros restored (`GBCOH3433043` is company 03433043). 452's rule
+    left those out: 1,291 seven-digit and 117 six-digit `GBCOH` orgs on the 2026-09-30
+    input were never checked. Off by default, so the 452 reproduction stays exact."""
     if identifier.startswith("GBCOH"):
         rest = identifier[5:]
+        if pad_short and rest.isdigit() and 6 <= len(rest) < 8:
+            rest = rest.zfill(8)
         return rest if ALNUM8.fullmatch(rest) else None
     return identifier if BARE.fullmatch(identifier) else None
 
@@ -114,12 +121,15 @@ def related_spelling(head, register):
 def main(argv):
     zip_path, orgs_path, out_dir = argv[1:4]
     min_org = 0
+    pad_short = False
     skip = set()
     rest = argv[4:]
     while rest:
         flag = rest.pop(0)
         if flag == "--min-org-id":
             min_org = int(rest.pop(0))
+        elif flag == "--pad-short":
+            pad_short = True
         elif flag == "--skip-verdicts":
             # A triple that already carries a verdict is not re-reviewed (466 unit 3).
             for v in json.load(open(rest.pop(0))):
@@ -129,7 +139,7 @@ def main(argv):
     orgs = []
     for line in open(orgs_path):
         identifier, org, head = json.loads(line)
-        number = company_number(identifier)
+        number = company_number(identifier, pad_short)
         if number and org > min_org and (org, number) not in skip:
             orgs.append((org, number, head))
     register = load_register(zip_path, {n for _, n, _ in orgs})

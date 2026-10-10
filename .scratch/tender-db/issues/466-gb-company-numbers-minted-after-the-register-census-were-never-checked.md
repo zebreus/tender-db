@@ -1,7 +1,26 @@
 # 466 — GB company numbers minted after 452's register census were never checked, and the census cannot be re-run
 
-Status: ready-for-agent — UNIT 1 DONE 2026-10-10 (tooling). NEXT: unit 3, the incremental run over the orgs above
-the watermark against the 2026-10-01 snapshot; unit 2, decide the 83 `related` numbers.
+Status: ready-for-agent — UNIT 1 DONE, UNIT 3's JOIN RUN 2026-10-10. NEXT:
+- unit 3's register pages for the absent numbers (`ch_fetch.py`);
+- unit 4's reviewer + challenger over the candidates below, with the 34 residue cases;
+- unit 2, decide the 83 `related` numbers.
+- **Unit 3, the join.**
+  - Input: the public listing above the watermark (`cursor=31590759`), read 2026-10-10. 10,150 GB national orgs, up
+    from 8,057 on 10-01: the dailies kept minting. Saved on the box as `/root/census/gb-orgs-above-31590759.jsonl`.
+  - **A gap in 452's shape.** `GBCOH3433043` is company 03433043 with its leading zero dropped. 452's rule (8
+    characters after `GBCOH`) skipped every 6- or 7-digit `GBCOH` number: 1,408 orgs on the 09-30 input were never
+    checked. `census.py --pad-short` restores the zeros. It is off by default, so the 452 reproduction stays exact.
+  - Against the 2026-10-01 snapshot, with `--pad-short`:
+
+    | cohort | orgs (numbers) | match | mismatch | absent | disjoint |
+    |---|---|---|---|---|---|
+    | above the watermark | 7,219 (7,063) | 6,215 | 566 | 438 | **148** |
+    | the 09-30 input, now with the short numbers | 32,265 (31,435) | 29,716 | 1,431 | 1,118 | 390 |
+    | of which new against 452 (≈ the 1,408 short numbers) | | | +128 | +109 | **+35** |
+
+  - So unit 4's review set is: 148 disjoint and 438 absent above the watermark; about 35 disjoint and 109 absent among
+    the newly read short numbers; and the 34 residue cases. Absent numbers first need their register page, to split
+    never-issued from dissolved.
 - **Unit 1.** `452-census/census.py` is committed. It imports 448's matcher (`core`, `matches`) from
   `448-campaign/altid_cases.py`. Its inputs are committed beside it: `gb-orgs-2026-09-30.jsonl` (the box's
   `/root/gb-orgs.jsonl`, 58,938 rows) and `watermark.json` (`max_org_id` 31,590,759, snapshot 2026-09-01). Both
