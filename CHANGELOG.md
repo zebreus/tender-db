@@ -4,6 +4,15 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 506) — an award notice's framework values per lot are kept, and refuse scale slips
+
+eForms award notices state a framework maximum and a re-estimated value per lot result (BT-709, BT-660). They are
+now served in `amounts` at their lot under two new `field` values, `result_framework_maximum` and
+`result_framework_reestimate`; they are never elected as a Tender's or a lot's `value`. A figure of €1 bn or more
+that is exactly 100× (or 10ᵏ×) one of them is now refused as a scale slip, so two Tenders whose value was a
+framework maximum typed 100× too large now serve their estimate. `?currency=` matches a Tender whose only amount
+in that currency is one of these rows.
+
 ## Unreleased (issue 508) — text-era award notices of 2009-12 to 2010 serve their winners and values
 
 Award notices published from 2009-12-02 to 2010-12-31, the last thirteen months of the tagged-text era, now serve

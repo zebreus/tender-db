@@ -679,6 +679,19 @@ else moves; a sixth Tender is a finding. The rule never raises a value outside t
 slip it counts at its residual when judging P is one that survived the election before, so its
 Tender held a value of €1 bn or more.
 
+**Result-level framework values as scale partners (issue 506, 2026-10-10).** An eForms award
+notice's framework maximum and re-estimate per lot result (BT-709, BT-660, and their eForms-DE 1.x
+spellings) are stored on the Lot their result names through BT-13713 as `result_framework_maximum` /
+`result_framework_reestimate` — dropped when the result names no Lot of the notice, never lot-null.
+They are PARTNER-ONLY (`store::PARTNER_ONLY_AMOUNT_FIELDS`, `electable_amount_field`): every scale
+rule sees them as lot figures of their lot, no election elects them, they never corroborate, and
+they stay out of 492's lot sums and 505's tables. BT-118 / BT-1118 (the notice totals) stay
+unmapped. Decision and census: `.scratch/tender-db/506-result-amounts/`. Drain, after the cohort
+read predicts the moves (`cohort.py`): Pass A `refold-value-band` dry, wet, `project` (expected:
+395737 falls to BGN 7,348,200, 627219 to €6,666,666.67, plus the adjudicated list; anything else
+that moved is a finding); Pass B `refold-fields` over the four field ids on `notice_amounts`, sized
+with `expect:1` first (storage completeness: no served value may move).
+
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|
 refold-notices|refold-sections|reparse|data-quality|backfill-titles|mark-skipped-siblings|clear-rebuild-flag,

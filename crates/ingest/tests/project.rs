@@ -943,6 +943,46 @@ async fn an_award_notice_files_its_values_as_results_not_estimates() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 506, through the real parser and fold: an award notice's framework values per
+/// lot result — BT-709 (maximum) and BT-660 (re-estimate) — land on the lot their result
+/// names as partner-only amounts. Nothing lands at Tender scope, the notice totals
+/// (BT-118 NOK 4 m, BT-1118 NOK 2 m) stay unmapped, and the lot's own BT-271 is not
+/// superseded.
+#[tokio::test]
+async fn result_level_framework_values_land_on_the_results_lot() {
+    let (db, fetch_id, path) = scratch("506-result-lot").await;
+    ingest(&db, fetch_id, "eforms/can-cvd-legacy-00412845-2025.xml").await;
+    project::project(&db, false).await.expect("project");
+    let at_lot = |field: &str, lot: &str| {
+        format!(
+            "SELECT COALESCE(SUM(a.cents), -1) FROM tender_version_amounts a JOIN lots l ON l.id = a.lot_id \
+              WHERE a.field = '{field}' AND l.lot_key = '{lot}'"
+        )
+    };
+    assert_eq!(scalar(&db, &at_lot("result_framework_maximum", "LOT-0000")).await, 400_000_000);
+    assert_eq!(scalar(&db, &at_lot("result_framework_reestimate", "LOT-0000")).await, 200_000_000);
+    assert_eq!(scalar(&db, &at_lot("framework_maximum", "LOT-0000")).await, 400_000_000, "the lot's BT-271 stands");
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_amounts WHERE lot_id IS NULL AND field LIKE 'result_framework_%'").await,
+        0,
+        "never at Tender scope"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_amounts WHERE lot_id IS NULL AND cents = 200000000").await,
+        0,
+        "BT-1118 (NOK 2 m) is not mapped"
+    );
+    let _ = std::fs::remove_file(&path);
+
+    // Five framework lots: each re-estimate goes to the lot its own result names.
+    let (db, fetch_id, path) = scratch("506-result-lots").await;
+    ingest(&db, fetch_id, "eforms/can-cvd-lot-00054478-2025.xml").await;
+    project::project(&db, false).await.expect("project");
+    assert_eq!(scalar(&db, &at_lot("result_framework_reestimate", "LOT-0001")).await, 2_340_000);
+    assert_eq!(scalar(&db, &at_lot("result_framework_reestimate", "LOT-0002")).await, 9_460_000);
+    let _ = std::fs::remove_file(&path);
+}
+
 /// The corrigendum moved the submission deadline from 2026-01-21 to 2026-01-27
 /// and changed nothing else. The projection must carry that through — and carry
 /// everything the corrigendum was silent about forward unchanged.

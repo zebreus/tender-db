@@ -48,6 +48,7 @@ pub use canonical::{
     KeyedTenderVersion, LinkEndpoint, LinkTally, link_fans_in_shared_kind, link_refuses_shared_kind, UUID_HUB_CLUSTERS, UuidHubTally, buyer_clusters, is_uuid_key, buyer_abbr_token, buyer_initials_token, buyer_name_fold, buyer_prefix_token, buyer_token, buyer_tokens_disjoint,
     MatchedLink, PlanGroup, PlanGroupTally, PlanRow, PlanScope, TenderLinkBackfill, TenderLinkRuleCounts, TenderLinkSample,
     QUALITY_WITHHELD, R2MergeArgs, version_stem,
+    PARTNER_ONLY_AMOUNT_FIELDS, RESULT_FRAMEWORK_MAXIMUM, RESULT_FRAMEWORK_REESTIMATE, electable_amount_field,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
     DuplicateIdentity, GenericKeyProbe, ProvisionalEchoGroup, ProvisionalEchoReport, ProvisionalFoldArgs, ProvisionalFoldReport, EchoTier, NameVerdict, DuplicateIdentityReport,

@@ -998,7 +998,11 @@ const TABLE_NOTES: &[(&str, &str)] = &[
          official rate resolves or the row predates the backfill refold. NOT FILTERABLE \
          (issue 239); read `tenders t CROSS JOIN tender_version_amounts a ON a.tender_id = \
          t.id AND a.seq = t.current_seq` — tenders first, CROSS JOIN, for the reason \
-         v_tender_classifications gives (issue 421).",
+         v_tender_classifications gives (issue 421). Two fields are PARTNER-ONLY (issue 506): \
+         result_framework_maximum and result_framework_reestimate, an award notice's framework \
+         maximum and re-estimate per lot result (BT-709, BT-660). They are always lot-scoped and \
+         never elected as any value; they only let the scale rules refuse a figure exactly \
+         10^k times them, so a MAX(cents) over this view is not the Tender's value.",
     ),
     ("v_tender_dates", "Dates of each current Tender (utc_seconds epoch + offset_minutes). \
       NOT FILTERABLE (issue 239); read `tenders t CROSS JOIN tender_version_dates d ON \
@@ -1144,8 +1148,9 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         "The lot's elected value in this version, as published (pair with value_currency): \
          the figure the REST lot row serves, chosen by the fold (issue 490) from the lot's own \
          amounts -- withheld, placeholder (0, one unit, all-nines), over-EUR-100bn and exact \
-         10^k scale slips skipped; the largest remaining figure wins. NULL = no lot-scoped \
-         figure survives: a lot never falls back to its Tender's figure.",
+         10^k scale slips skipped, and never the partner-only award-notice framework values \
+         (issue 506); the largest remaining figure wins. NULL = no lot-scoped figure \
+         survives: a lot never falls back to its Tender's figure.",
     ),
     (
         "*",

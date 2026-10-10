@@ -82,16 +82,22 @@ struct FieldSpec {
 /// satellite and the projection's own field/role vocabulary (`project.rs`).
 /// `buyer` matches both the legacy `buyer` role and the eForms `Procedure-Buyer`
 /// via the shared `uyer` infix; `deadline` spans the submission/participation/
-/// info deadlines; `value` and `winner` need no narrowing (any amount, any named
-/// winner).
+/// info deadlines; `winner` needs no narrowing (any named winner), and `value` is any
+/// amount the elections can elect — not a partner-only one (issue 506,
+/// [`VALUE_PRESENT`]).
 const FIELDS: [FieldSpec; 6] = [
     FieldSpec { key: "title", satellite: "tender_version_texts", predicate: Some("field = 'title'") },
     FieldSpec { key: "buyer", satellite: "tender_version_parties", predicate: Some("role LIKE '%uyer%'") },
-    FieldSpec { key: "value", satellite: "tender_version_amounts", predicate: None },
+    FieldSpec { key: "value", satellite: "tender_version_amounts", predicate: Some(VALUE_PRESENT) },
     FieldSpec { key: "cpv", satellite: "tender_version_classifications", predicate: Some("scheme = 'cpv'") },
     FieldSpec { key: "deadline", satellite: "tender_version_dates", predicate: Some("field LIKE '%deadline%'") },
     FieldSpec { key: "winner", satellite: "tender_version_result_winners", predicate: None },
 ];
+
+/// Issue 506: a version has a value when it carries an amount some election can elect.
+/// The partner-only fields ([`store::PARTNER_ONLY_AMOUNT_FIELDS`]) are stored and served
+/// but never elected, so a version carrying only those has no value to complete.
+const VALUE_PRESENT: &str = "field NOT IN ('result_framework_maximum', 'result_framework_reestimate')";
 
 /// Per-profile count of versions carrying one field. Driven by the satellite so
 /// it is a single scan: distinct `(tender_id, seq)` that have the field, joined
@@ -4562,6 +4568,16 @@ fn group(n: u64) -> String {
 
 #[cfg(test)]
 mod tests {
+    /// Issue 506: the value-completeness predicate excludes exactly the partner-only
+    /// amount fields, each quoted.
+    #[test]
+    fn the_value_predicate_excludes_exactly_the_partner_only_fields() {
+        for field in store::PARTNER_ONLY_AMOUNT_FIELDS {
+            assert!(super::VALUE_PRESENT.contains(&format!("'{field}'")), "{field}");
+        }
+        assert_eq!(super::VALUE_PRESENT.matches('\'').count(), 2 * store::PARTNER_ONLY_AMOUNT_FIELDS.len());
+    }
+
     use super::*;
 
     /// Issue 471 unit 4(a): the band listing's partner search and the head

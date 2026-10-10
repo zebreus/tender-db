@@ -3043,6 +3043,27 @@ pub enum Fact {
 /// number means anything (issue 372 unit 2, option (b)).
 pub const QUALITY_WITHHELD: &str = "withheld";
 
+/// Issue 506: an award notice's framework maximum per lot result (BT-709).
+pub const RESULT_FRAMEWORK_MAXIMUM: &str = "result_framework_maximum";
+/// Issue 506: an award notice's framework re-estimated value per lot result (BT-660).
+pub const RESULT_FRAMEWORK_REESTIMATE: &str = "result_framework_reestimate";
+/// Issue 506: the amount fields that are SCALE PARTNERS ONLY. They are stored and served
+/// at their lot (the result's lot, through BT-13713) and every scale rule sees them as
+/// lot figures ([`ScalePartners::add_version_figures`]), but no election ever elects
+/// them: never a head candidate, never a lot-value candidate, never a corroborator
+/// ([`ScalePartners::add_head_amount`]), and never counted in 492's lot sums or 505's
+/// residual tables ([`ScalePartners::set_head`]). They can refuse a figure, never raise
+/// one. Measured 2026-10-10: BT-709 is the winning tender value on most rows and BT-660
+/// a new number on most, so electing either would move lot values broadly; under the
+/// existing field names a CAN that does not restate the CN's lot figures would
+/// supersede them.
+pub const PARTNER_ONLY_AMOUNT_FIELDS: &[&str] = &[RESULT_FRAMEWORK_MAXIMUM, RESULT_FRAMEWORK_REESTIMATE];
+
+/// Whether an election may elect an amount of `field` ([`PARTNER_ONLY_AMOUNT_FIELDS`]).
+pub fn electable_amount_field(field: &str) -> bool {
+    !PARTNER_ONLY_AMOUNT_FIELDS.contains(&field)
+}
+
 impl Fact {
     /// What "a later notice supersedes this field" replaces as a unit. All
     /// language variants of a title go together, as do all CPV codes of one
@@ -3201,8 +3222,9 @@ pub fn head_value_eur_cents_with(
                 // already refuses the SDK's -1 placeholder, so this arm changes no
                 // election today -- and it is the one that states the reason, which
                 // matters the moment a publisher withholds a field without writing -1.
+                // Issue 506: a partner-only field is never a candidate (it only refuses).
                 Fact::Amount { field, cents, currency, quality, .. }
-                    if quality.is_none() && !sentinel_amount(*cents) =>
+                    if quality.is_none() && !sentinel_amount(*cents) && electable_amount_field(field) =>
                 {
                     let eur = rates.eur_cents(*cents, currency, &date)?;
                     // Issue 471 unit 4(a): a figure exactly 10^k (k >= 3) above
@@ -3299,7 +3321,8 @@ pub fn elect_lot_value<'a>(
 ) -> Option<LotAmount<'a>> {
     let mut best: Option<LotAmount<'a>> = None;
     for a in amounts {
-        if a.quality.is_some() || sentinel_amount(a.cents) {
+        // Issue 506: a partner-only field is never a lot value.
+        if !electable_amount_field(a.field) || a.quality.is_some() || sentinel_amount(a.cents) {
             continue;
         }
         if a.eur_cents.is_some_and(|eur| eur > IMPLAUSIBLE_EUR_CENTS) {
@@ -3470,6 +3493,14 @@ pub enum FigureScope<'k> {
 /// `'withheld'`, a statement the SOURCE made; this is our inference. The one
 /// place that decides is still the fold: the read layer looks the elected row
 /// up by `eur_cents` and has no rule of its own to drift.
+///
+/// **Partner-only amounts (issue 506).** An award notice's framework maximum and
+/// re-estimate per lot result ([`PARTNER_ONLY_AMOUNT_FIELDS`]) are partners like any
+/// other lot figure of their lot — so a lot whose own result states F/100 refuses F and
+/// loses the sibling-lot exemption — but they are never elected, never corroborate and
+/// never count in the head's lot sums or residual tables. They can only add partners:
+/// the one way a new partner changes an outcome other than by refusing is a NEW k >= 3
+/// partner, which moves a figure from the x100 test to the k >= 3 test.
 #[derive(Debug, PartialEq)]
 pub struct ScalePartners<'a> {
     /// Issue 492: per partner figure, the keys of the lots it is a figure of, while every
@@ -3566,8 +3597,12 @@ impl<'a> ScalePartners<'a> {
     }
 
     /// An amount of the HEAD version (tender or lot scope), for corroboration.
-    /// Lot awards never go here: they are not a second declaration.
+    /// Lot awards never go here: they are not a second declaration, and neither does
+    /// a partner-only field (issue 506): it neither corroborates nor is corroborated.
     pub fn add_head_amount(&mut self, field: &'a str, currency: &'a str, cents: i64) {
+        if !electable_amount_field(field) {
+            return;
+        }
         self.head
             .entry((currency, cents))
             .and_modify(|seen| {
@@ -3633,6 +3668,7 @@ impl<'a> ScalePartners<'a> {
             if let Fact::Amount { field, cents, currency, quality, .. } = f
                 && quality.is_none()
                 && !sentinel_amount(*cents)
+                && electable_amount_field(field)
                 && !self.head_awards.contains(&(currency.as_str(), *cents))
             {
                 self.head_procedure.push((field.as_str(), currency.as_str(), *cents));
@@ -3655,12 +3691,15 @@ impl<'a> ScalePartners<'a> {
         let mut per_lot: std::collections::HashMap<(&'a str, &'a str), i64> = std::collections::HashMap::new();
         let mut keys: std::collections::HashSet<&'a str> =
             head.lots.iter().filter(|l| l.kind == unit).map(|l| l.key.as_str()).collect();
+        // A partner-only field (issue 506) is no figure of its lot here either: the lot
+        // election never elects it.
         for lot in head.lots.iter().filter(|l| l.kind == unit) {
             for f in &lot.facts {
-                if let Fact::Amount { cents, currency, quality, .. } = f
+                if let Fact::Amount { field, cents, currency, quality, .. } = f
                     && *cents > SCALE_PARTNER_FLOOR_CENTS
                     && quality.is_none()
                     && !sentinel_amount(*cents)
+                    && electable_amount_field(field)
                 {
                     let best = per_lot.entry((lot.key.as_str(), currency.as_str())).or_insert(0);
                     *best = (*best).max(*cents);
@@ -3692,6 +3731,7 @@ impl<'a> ScalePartners<'a> {
                 if let Fact::Amount { field, cents, currency, quality, .. } = f
                     && quality.is_none()
                     && !sentinel_amount(*cents)
+                    && electable_amount_field(field)
                 {
                     let best = self
                         .head_lot_fields
@@ -34462,6 +34502,118 @@ mod tests {
             vec![award("LOT-1", f)],
         );
         assert_eq!(one(copy), Some(p), "an award's tender-scope copy is a lot figure");
+    }
+
+    /// Issue 506: a partner-only amount (an award notice's BT-709 / BT-660, filed on its
+    /// result's lot) refuses a scale slip but is never elected, never corroborates and never
+    /// counts in the head's lot sums. In EUR, so the empty lookup converts at 1.0.
+    #[test]
+    fn a_partner_only_amount_refuses_but_is_never_elected() {
+        use super::{
+            LotAmount, RESULT_FRAMEWORK_MAXIMUM, RESULT_FRAMEWORK_REESTIMATE, ScalePartners, elect_lot_value,
+            head_value_eur_cents,
+        };
+        let rates = crate::rates::RatesLookup::default();
+        let amt = |field: &str, cents: i64| Fact::Amount {
+            field: field.into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
+        let one = |v: &TenderVersion| head_value_eur_cents(std::slice::from_ref(v), &rates);
+        let lot_value = |v: &TenderVersion, key: &str| {
+            let chain = std::slice::from_ref(v);
+            let rule = ScalePartners::of_chain(chain);
+            let l = v.lots.iter().find(|l| l.key == key).unwrap();
+            elect_lot_value(
+                l.facts.iter().filter_map(|f| match f {
+                    Fact::Amount { field, cents, currency, quality, .. } => Some(LotAmount {
+                        field,
+                        cents: *cents,
+                        currency,
+                        eur_cents: Some(*cents),
+                        quality: quality.as_deref(),
+                    }),
+                    _ => None,
+                }),
+                &rule,
+                Some(key),
+            )
+            .map(|a| a.cents)
+        };
+
+        // Alone it elects nothing; beside a smaller estimate the estimate wins both.
+        let alone = version(Vec::new(), vec![lot("LOT-1", vec![amt(RESULT_FRAMEWORK_MAXIMUM, 500_000_000)])]);
+        assert_eq!((one(&alone), lot_value(&alone, "LOT-1")), (None, None), "never a candidate");
+        let beside = version(
+            Vec::new(),
+            vec![lot("LOT-1", vec![amt("estimated_value", 100_000_000), amt(RESULT_FRAMEWORK_REESTIMATE, 900_000_000)])],
+        );
+        assert_eq!((one(&beside), lot_value(&beside, "LOT-1")), (Some(100_000_000), Some(100_000_000)));
+
+        // 395737 (BGN there): one lot, the estimate P at procedure and lot, the lot's
+        // framework maximum F = 100x its result's BT-709. Today F is elected; with the
+        // result's figure it is refused in both elections and the Tender falls to P.
+        let (p, f) = (734_820_000, 299_867_940_000);
+        let slip = |result: Option<(&str, i64)>| {
+            let mut facts = vec![amt("estimated_value", p), amt("framework_maximum", f)];
+            facts.extend(result.map(|(field, cents)| amt(field, cents)));
+            version(vec![amt("estimated_value", p)], vec![lot("LOT-1", facts)])
+        };
+        assert_eq!(one(&slip(None)), Some(f), "without the result's figure the slip is the head");
+        let refused = slip(Some((RESULT_FRAMEWORK_MAXIMUM, f / 100)));
+        assert_eq!((one(&refused), lot_value(&refused, "LOT-1")), (Some(p), Some(p)), "395737");
+        // 627219: the re-estimate (BT-660) is the x100 partner; F/1000 is no integer.
+        let (p, f) = (666_666_667, 332_277_083_300);
+        let reestimated = version(
+            vec![amt("estimated_value", p)],
+            vec![lot("LOT-1", vec![amt("estimated_value", p), amt("framework_maximum", f), amt(RESULT_FRAMEWORK_REESTIMATE, f / 100)])],
+        );
+        assert_eq!((one(&reestimated), lot_value(&reestimated, "LOT-1")), (Some(p), Some(p)), "627219");
+
+        // Never a corroborator: a k >= 3 slip repeated only in a partner-only field stays
+        // refused, while a second electable field still corroborates it (471, unchanged).
+        let (p, f) = (1_000_000_000, 1_000_000_000_000);
+        let lone = version(
+            vec![amt("estimated_value", p)],
+            vec![lot("LOT-1", vec![amt("framework_maximum", f), amt(RESULT_FRAMEWORK_MAXIMUM, f)])],
+        );
+        assert_eq!(one(&lone), Some(p), "a partner-only copy vouches for nothing");
+        let corroborated =
+            version(vec![amt("estimated_value", p)], vec![lot("LOT-1", vec![amt("framework_maximum", f), amt("estimated_value", f)])]);
+        assert_eq!(one(&corroborated), Some(f));
+
+        // Out of the lot sums: 492 keeps a x100 framework total F (EUR 1 bn) whose lots sum
+        // to F/10..F. A partner-only figure that would push LOT-2 past F's sum is not counted.
+        let (f, partner) = (100_000_000_000, 1_000_000_000);
+        let framework = |extra: Vec<Fact>| {
+            let mut lot2 = vec![amt("estimated_value", 50_000_000_000)];
+            lot2.extend(extra);
+            version(vec![amt("framework_maximum", f)], vec![lot("LOT-1", vec![amt("estimated_value", partner)]), lot("LOT-2", lot2)])
+        };
+        assert_eq!(one(&framework(Vec::new())), Some(f), "the genuine framework total is kept");
+        assert_eq!(one(&framework(vec![amt(RESULT_FRAMEWORK_MAXIMUM, 99_500_000_000)])), Some(f), "still kept");
+
+        // But it IS a lot figure of its lot: 8748271's genuine EUR 1 bn lot, kept beside a
+        // sibling's EUR 10 m, is refused once its OWN result states EUR 10 m.
+        let (big, small) = (100_000_000_000, 1_000_000_000);
+        let laundry = |own: Vec<Fact>| {
+            let mut lot1 = vec![amt("estimated_value", big)];
+            lot1.extend(own);
+            version(
+                vec![amt("estimated_value", 271_000_000_000)],
+                vec![
+                    lot("LOT-1", lot1),
+                    lot("LOT-2", vec![amt("estimated_value", 170_000_000_000)]),
+                    lot("LOT-4", vec![amt("estimated_value", small)]),
+                ],
+            )
+        };
+        assert_eq!(lot_value(&laundry(Vec::new()), "LOT-1"), Some(big));
+        assert_eq!(lot_value(&laundry(vec![amt(RESULT_FRAMEWORK_MAXIMUM, small)]), "LOT-1"), None, "its own result is no sibling");
     }
 
     /// Issue 492, the unit 3 review: a x100 LOT figure is kept when its partner is a

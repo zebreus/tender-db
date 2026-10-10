@@ -233,6 +233,14 @@ const AMOUNTS: &[(&str, &str)] = &[
     // `SDK01-TenderResult-SubcontractTerms-Amount` is the subcontracted share, which has
     // no canonical home in any era yet.
 ];
+/// Issue 506: the framework values of a LotResult — its framework maximum (BT-709) and
+/// re-estimated value (BT-660). A LotResult has no Lot ancestor, so these reach their lot
+/// through BT-13713 ([`RawResults::lot_of`]), never through [`scope_of`], and are dropped
+/// when the result names no Lot of the notice: a lot-null result figure would be a
+/// Procedure partner (492 decision (c)) and void 492's exemptions. Stored as partner-only
+/// amounts ([`store::PARTNER_ONLY_AMOUNT_FIELDS`]): they refuse scale slips, never elect.
+const RESULT_LOT_AMOUNTS: &[(&str, &str)] =
+    &[("BT-709", store::RESULT_FRAMEWORK_MAXIMUM), ("BT-660", store::RESULT_FRAMEWORK_REESTIMATE)];
 const CLASSIFICATIONS: &[(&str, &str)] = &[
     ("BT-262", "main"),
     ("BT-263", "additional"),
@@ -1154,6 +1162,13 @@ const DE1_FIELD_ALIASES: &[(&str, &str)] = &[
         "BT-271-Lot",
     ),
     ("DE1-NoticeResult-TotalAmount", "BT-161-NoticeResult"),
+    // Issue 506: the result-level framework values, partner-only amounts on the result's
+    // lot. The notice totals (`DE1-NoticeResult-OverallMaximumFrameworkContractsAmount`,
+    // `-OverallApproximateFrameworkContractsAmount`) are deliberately NOT aliased: like
+    // BT-118 / BT-1118 they stay unmapped (issue 506's unit-2 decision), and the alias
+    // gate (`every_de1_alias_target_is_a_field_the_projection_reads`) would refuse them.
+    ("DE1-NoticeResult-LotResult-FrameworkAgreementValues-MaximumValueAmount", "BT-709-LotResult"),
+    ("DE1-NoticeResult-LotResult-FrameworkAgreementValues-ReestimatedValueAmount", "BT-660-LotResult"),
     // CPV (main + additional) and the realized-location NUTS, at both scopes.
     ("DE1-ProcurementProject-MainCommodityClassification-ItemClassificationCode", "BT-262-Procedure"),
     (
@@ -4420,6 +4435,9 @@ impl NoticeState {
             });
         }
 
+        // Issue 506: result-level framework values, placed on their lot once the results
+        // graph is read (below).
+        let mut result_amounts: Vec<(String, Fact)> = Vec::new();
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
@@ -4507,7 +4525,8 @@ impl NoticeState {
                         })
                 }
                 NoticeValue::Amount { cents, currency } => {
-                    amount_target(field_id, &sections, &value.section_id, has_results).map(|field| {
+                    let deferred = canonical_name(RESULT_LOT_AMOUNTS, field_id);
+                    let fact = deferred.clone().or_else(|| amount_target(field_id, &sections, &value.section_id, has_results)).map(|field| {
                         Fact::Amount {
                             field,
                             cents: *cents,
@@ -4539,7 +4558,16 @@ impl NoticeState {
                             // record is the parse-layer `.FMTVAL_MISMATCH` row,
                             // which reaches no canonical fact.
                         }
-                    })
+                    });
+                    // Issue 506: a result-level framework value waits for the results
+                    // graph; the scope insert below never sees it.
+                    match (deferred, fact) {
+                        (Some(_), Some(fact)) => {
+                            result_amounts.push((value.section_id.clone(), fact));
+                            None
+                        }
+                        (_, fact) => fact,
+                    }
                 }
                 NoticeValue::Date { utc_seconds, offset_minutes, has_time } => {
                     // Issue 385: an F14 corrigendum's new date means whatever the
@@ -4673,6 +4701,19 @@ impl NoticeState {
                 (scope, role, target)
             })
             .collect();
+        // Issue 506: each result-level framework value on the Lot its result names
+        // (BT-13713). Anything unresolved — no BT-13713, a key the notice does not
+        // declare, or a LotsGroup or Part, which `ScalePartners` would read as a lot of no
+        // known key — is dropped, never placed at Tender scope.
+        for (section, fact) in result_amounts {
+            if let Some(lot) = raw_results
+                .lot_of(&sections, &section)
+                .and_then(|key| lots.get_mut(&key))
+                .filter(|lot| lot.kind == "Lot")
+            {
+                lot.facts.insert(fact);
+            }
+        }
 
         // `tender_versions.published_at` is NOT NULL and the fold orders
         // versions by it, so the version layer keeps the pre-367 epoch fallback
@@ -6431,7 +6472,8 @@ const NATURE_STEMS: &[&str] = &["BT-23", "TXT-NC", "TED-NC_CONTRACT_NATURE"];
 /// Deliberately does NOT model scope. A value can satisfy this and still be
 /// dropped because its Lot section is missing (`NoticeState::read`'s
 /// `lots.get_mut(key)` miss), so a `true` here means "the vocabulary knows this
-/// id", not "this particular row landed".
+/// id", not "this particular row landed". A result-level framework value (issue 506)
+/// is likewise dropped by design when its result names no Lot of the notice.
 /// A parse-layer row filed beside an amount by the issue-471 `@FMTVAL` check
 /// (`r209::value::FMTVAL_MISMATCH_SUFFIX` / `FMTVAL_TEXT_SUFFIX`).
 fn is_fmtval_beside_row(field_id: &str) -> bool {
@@ -6458,6 +6500,7 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
         }
         Channel::Amount => {
             canonical_name(AMOUNTS, field_id).is_some()
+                || canonical_name(RESULT_LOT_AMOUNTS, field_id).is_some()
                 || RESULT_AMOUNT_STEMS.contains(&stem)
                 || field_id.ends_with(AMOUNT_ELEMENT)
         }
@@ -10257,6 +10300,124 @@ mod tests {
         // Nothing to judge: no buyer reference at all leaves every result unflagged.
         let buyerless = eforms(&[("ORG-1", "Morsø Kommune")], &[], &["ORG-1"]);
         assert_eq!(flags(&round("eforms:eforms-sdk-1.10", &buyerless, &[])), vec![(1, 0)]);
+    }
+
+    /// Issue 506: a LotResult's framework values (BT-709, BT-660) reach the Lot its
+    /// BT-13713 names, as partner-only amounts; a result that names no Lot of the notice —
+    /// no BT-13713, an undeclared key, or a LotsGroup — files nothing anywhere, never at
+    /// Tender scope (a lot-null result figure would be a Procedure partner, 492 decision
+    /// (c)). eForms-DE 1.x's spellings alias onto the same facts, and the notice totals
+    /// (BT-118 / BT-1118) stay unread.
+    #[test]
+    fn a_lot_result_framework_value_lands_on_its_lot_through_bt_13713() {
+        let notice = |profile: &str| store::NoticeRef {
+            id: 1,
+            source: "ted".into(),
+            publication_id: "00001-2026".into(),
+            profile: profile.into(),
+        };
+        let section = |id: &str, kind: &str| store::Section {
+            id: id.into(),
+            kind: kind.into(),
+            parent: (id != "ROOT").then(|| "ROOT".into()),
+        };
+        let amount = |section: &str, field: &str, cents: i64| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Amount { cents, currency: "EUR".into() },
+        };
+        let lot_of = |section: &str, field: &str, lot: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: lot.into(), is_ref: false },
+        };
+        let parsed = |maximum: &str, reestimate: &str, lot_ref: &str| Parsed {
+            sections: ["ROOT", "LOT-0001", "LOT-0002", "GLO-0001", "RES-0001", "RES-0002", "RES-0003", "RES-0004", "RES-0005"]
+                .iter()
+                .map(|id| {
+                    section(
+                        id,
+                        match &id[..3] {
+                            "ROO" => "Notice",
+                            "LOT" => "Lot",
+                            "GLO" => "LotsGroup",
+                            _ => "LotResult",
+                        },
+                    )
+                })
+                .collect(),
+            values: vec![
+                lot_of("RES-0001", lot_ref, "LOT-0001"),
+                amount("RES-0001", maximum, 1_000_000),
+                lot_of("RES-0002", lot_ref, "LOT-0002"),
+                amount("RES-0002", reestimate, 2_000_000),
+                amount("RES-0003", maximum, 3_000_000),
+                lot_of("RES-0004", lot_ref, "LOT-0009"),
+                amount("RES-0004", maximum, 4_000_000),
+                lot_of("RES-0005", lot_ref, "GLO-0001"),
+                amount("RES-0005", reestimate, 5_000_000),
+                amount("ROOT", "BT-118-NoticeResult", 6_000_000),
+                amount("ROOT", "BT-1118-NoticeResult", 7_000_000),
+            ],
+        };
+        let amounts = |state: &NoticeState| -> (Vec<(String, String, i64)>, usize) {
+            let mut at_lots: Vec<(String, String, i64)> = state
+                .lots
+                .iter()
+                .flat_map(|l| {
+                    l.facts.iter().filter_map(move |f| match f {
+                        Fact::Amount { field, cents, .. } => Some((l.key.clone(), field.clone(), *cents)),
+                        _ => None,
+                    })
+                })
+                .collect();
+            at_lots.sort();
+            (at_lots, state.facts.iter().filter(|f| matches!(f, Fact::Amount { .. })).count())
+        };
+        let expected = (
+            vec![
+                ("LOT-0001".to_owned(), store::RESULT_FRAMEWORK_MAXIMUM.to_owned(), 1_000_000),
+                ("LOT-0002".to_owned(), store::RESULT_FRAMEWORK_REESTIMATE.to_owned(), 2_000_000),
+            ],
+            0,
+        );
+        let eforms = parsed("BT-709-LotResult", "BT-660-LotResult", "BT-13713-LotResult");
+        assert_eq!(amounts(&NoticeState::read(&notice("eforms:eforms-sdk-1.13"), &eforms)), expected);
+
+        let mut de1 = vec![(
+            notice("eforms:eforms-de-1.2"),
+            parsed(
+                "DE1-NoticeResult-LotResult-FrameworkAgreementValues-MaximumValueAmount",
+                "DE1-NoticeResult-LotResult-FrameworkAgreementValues-ReestimatedValueAmount",
+                "DE1-NoticeResult-LotResult-TenderLot-ID",
+            ),
+        )];
+        normalise_de1(&mut de1);
+        let (de1_notice, de1_parsed) = &de1[0];
+        assert_eq!(amounts(&NoticeState::read(de1_notice, de1_parsed)), expected, "the DE1 spellings alias");
+
+        // The sieve agrees: the two LotResult fields and their DE1 spellings are read; the
+        // notice totals (and their DE1 spellings) and the losing-bid figures are not.
+        for read in [
+            "BT-709-LotResult",
+            "BT-660-LotResult",
+            "DE1-NoticeResult-LotResult-FrameworkAgreementValues-MaximumValueAmount",
+            "DE1-NoticeResult-LotResult-FrameworkAgreementValues-ReestimatedValueAmount",
+        ] {
+            assert!(has_destination(read, Channel::Amount), "{read} is read");
+        }
+        for unread in [
+            "BT-118-NoticeResult",
+            "BT-1118-NoticeResult",
+            "DE1-NoticeResult-OverallMaximumFrameworkContractsAmount",
+            "DE1-NoticeResult-OverallApproximateFrameworkContractsAmount",
+            "BT-710-LotResult",
+            "BT-711-LotResult",
+        ] {
+            assert!(!has_destination(unread, Channel::Amount), "{unread} stays unread (issue 506)");
+        }
     }
 
     fn text_value(
