@@ -1,6 +1,7 @@
 # 506 — result-level value fields (BT-709, BT-1118, BT-660) are not stored as amounts
 
-Status: needs-triage — filed 2026-10-09 from issue 505's adjudication (`.scratch/tender-db/505-lot-over-procedure/`).
+Status: ready-for-agent — TRIAGED 2026-10-10: unit 1's code side is done (`../506-result-amounts/unit1-code-census.md`, a full parser → fold → elections walk with file:line cites, owner-spot-checked). The decisive fact: a LotResult has no Lot ancestor, so any LotResult BT mapped through plain `AMOUNTS` lands LOT-NULL and, by 492 decision (c), poisons `lot_only` / `lot_keys` for every genuine framework. BT-709 and BT-660 must go to the result's lot through BT-13713 (the award-role `lot_of` precedent, `project.rs:4660-4675`); BT-118 / BT-1118 are notice totals and lot-null is right for them, but each adds a Procedure head candidate on every framework award notice (BT-161 is forbidden there). Leave BT-710/711 (a losing bid; BT-711 would become heads). NEXT: unit 1's census half — a windowed per-field-id job over `notice_amounts` (no `field_id` index), run in an idle queue (not beside the 509 drain), reporting per field id and SDK minor: rows, equal to the same version's BT-271-Lot / BT-27-Lot / a lot award, heads that would rise, new ×100 / 10^k partners ≥ €1 bn; then unit 2 decides per the census file's list.
+Was: needs-triage — filed 2026-10-09 from issue 505's adjudication (`.scratch/tender-db/505-lot-over-procedure/`).
 Read 2026-10-09:
 - The fold's `AMOUNTS` table (`project.rs`) maps only BT-27, BT-271 and BT-161 among the eForms money BTs, plus the
   legacy and DÖE spellings. BT-709, BT-660, BT-118/BT-1118 and BT-156/157 reach the notice layer (the all-BT claim)
