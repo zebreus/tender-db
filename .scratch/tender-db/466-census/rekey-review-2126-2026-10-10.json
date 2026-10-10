@@ -1,0 +1,601 @@
+{
+ "rows": [
+  {
+   "key": "GB/national/01789968>merge:05551907",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right 05551907 is THEBIGWORD GROUP LIMITED (formerly Thebigword Holdings), which matches the org's only mention 'thebigword group Ltd' (raw 01789968) and the target 'TheBigWord Group Limited (TBW)' (raw 05551907), so the target is the same legal entity. No mention names LINK UP MITAKA LIMITED, the operating subsidiary at 01789968. The challenge confirms 05551907.",
+   "path": "agreed",
+   "other": "(1) register_right 05551907 is THEBIGWORD GROUP LIMITED (formerly Thebigword Holdings), which matches the org's only name 'thebigword group Ltd' exactly. 01789968 is LINK UP MITAKA LIMITED, the operating subsidiary. (2) The target org 17774510 'TheBigWord Group Limited (TBW)' is the same group company under 05551907. (3) The org has one mention, 'thebigword group Ltd', and it does not name Link Up Mitaka. (4) Reviewer and challenger agree on 05551907. Skeptic's caveat: thebigword contracts are often held by Link Up Mitaka, but the notice names the group, and the rubric goes by the name."
+  },
+  {
+   "key": "GB/national/02246366>merge:02150688",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right 02150688 is KYOCERA DOCUMENT SOLUTIONS (U.K.) LIMITED (formerly Kyocera Mita (UK)). The org's mentions are 'Kyocera' (raw 02246366, x2) and 'Kyocera Document Solutions UK Limited' (raw GB-COH-02246366), and the target's eight Kyocera Document Solutions UK spellings all carry 02150688, so it is the same entity. No mention names ANNODATA LIMITED (02246366, the Japanese parent's sister company). The challenge confirms 02150688.",
+   "path": "agreed",
+   "other": "(1) register_right 02150688 is KYOCERA DOCUMENT SOLUTIONS (U.K.) LIMITED (formerly Kyocera Mita (UK)). One org mention is literally 'Kyocera Document Solutions UK Limited'; the head is 'Kyocera'. (2) The target org 10472922 carries 02150688 under eight spellings of the KDUK name, bare 'Kyocera' among them, so it is the same entity. (3) The org's mentions are 'Kyocera' x2 and 'Kyocera Document Solutions UK Limited' x1, and none names ANNODATA LIMITED, the register_wrong company (active, no previous names). (4) The challenge confirms 02150688 and only adds that Annodata is a sister. Residual risk: the two bare 'Kyocera' mentions could be Annodata selling under the group brand, but nothing in the evidence shows that."
+  },
+  {
+   "key": "GB/national/02717211>move:00111982",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right 00111982 is THE NATIONAL FARMERS UNION MUTUAL INSURANCE SOCIETY LIMITED, which is the 'NFU Mutual Insurance Society Ltd' of the org's only mention (raw 02717211, x2). 02717211 is the dissolved NFU MUTUAL INSURANCE ASSOCIATION LIMITED (formerly NFU Mutual Insurance Agency), per the cached 452 register page. No mention names the Association or the Agency, and the challenge confirms 00111982.",
+   "path": "agreed",
+   "other": "(1) register_right 00111982 is THE NATIONAL FARMERS UNION MUTUAL INSURANCE SOCIETY LIMITED (active), which is the Society the org's name 'NFU Mutual Insurance Society Ltd' gives. 02717211 is NFU Mutual Insurance Association Ltd, a group company dissolved in 2017, so it is absent from the live snapshot. (2) This is a move, so there is no target to check. (3) The only mention, 'NFU Mutual Insurance Society Ltd' x2, names the Society, not the Association/Agency. (4) The challenge confirms 00111982."
+  },
+  {
+   "key": "GB/national/03671395>move:02476398",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right 02476398 is RTITB LIMITED, previously CAPITB LIMITED. The org's only mention 'CapitB T/A RTITB Ltd' (raw 03671395) names CapitB as the legal entity, so it matches 02476398 whether the notice is from before or after the 2022 rename. The related company 03671395 is RTITB PROPERTIES LIMITED. It once held the name RTITB LIMITED, but the mention uses 'RTITB' only as CapitB's trading name, which 02476398 now carries as its registered name. So no mention names the related company itself. The challenge confirms 02476398.",
+   "path": "agreed",
+   "other": "(1) register_right 02476398 is RTITB LIMITED, previous name CAPITB LIMITED, which matches the 'CapitB' legal entity in the mention 'CapitB T/A RTITB Ltd'. On Companies House, 02476398 is the trading company (SIC 85590/85600/62012, incorporated 1990). 03671395 is now RTITB PROPERTIES LIMITED (SIC 68209 property letting, carries charges). It held the RTITB name until its 8 Apr 2022 rename, and its PSC moved from Capitb Trust to Hc 1333 Ltd. (3) Skeptic check: 'RTITB Ltd' was 03671395's name until 2022, but in the mention it sits in the T/A clause after the legal entity CapitB, and RTITB LIMITED is 02476398's own name today. So both halves of the mention fit 02476398, and the property company is not named as the contractor. This is a move with one mention. (4) The challenge confirms 02476398."
+  },
+  {
+   "key": "GB/national/03797747>merge:GBCOH01878835",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right 01878835 is AUTOMOBILE ASSOCIATION DEVELOPMENTS LIMITED, an exact match for the org's only mention (raw 03797747) and for the target 'Automobile Association Developments Ltd' (raw GB-COH-01878835), so the target is the same entity. No mention names AA CORPORATION LIMITED (03797747). The challenge reclassifies 03797747 as the parent, not a sister, but keeps 01878835 as the correct number.",
+   "path": "agreed",
+   "other": "(1) register_right 01878835 is AUTOMOBILE ASSOCIATION DEVELOPMENTS LIMITED (active), an exact match for the org name. 03797747 is AA CORPORATION LIMITED, the parent. (2) The target org 31575185 is 'Automobile Association Developments Ltd' under GB-COH-01878835: the same name and the same company. (3) The only mention, 'Automobile Association Developments Ltd', does not name AA Corporation. (4) The challenge changes the relationship from sister to direct parent but keeps 01878835."
+  },
+  {
+   "key": "GB/national/04682354>merge:08599255",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "08599255 is not in the live snapshot. The cached 452 register page shows it as OAKLEAF COMMERCIAL SERVICES LIMITED (dissolved), and a Companies House name search shows it is the only company of that name. The org's mention 'Oakleaf Commercial Services Limited' (raw 04682354, x2) and the target's 'Oakleaf Commercial Services [Limited]' (raw 08599255 and 'Company No. 08599255') name the same entity. No mention names THE COMMUNITY HOUSING GROUP LIMITED (04682354, the converted parent). The challenge confirms 08599255.",
+   "path": "agreed",
+   "other": "Both numbers are absent from the snapshot, so I checked Companies House. 08599255 is OAKLEAF COMMERCIAL SERVICES LIMITED: incorporated 2013, dissolved 25 Apr 2023, at 3 Foley Grove, Kidderminster. A name search returns no other company of that name, so dissolved is acceptable. (1) The name matches the org's. (2) The target org 5539004 'Oakleaf Commercial Services Limited' carries 08599255, independently cited as 'Company No. 08599255' in its own mentions, so it is the same entity. (3) The org's mention 'Oakleaf Commercial Services Limited' x2 does not name The Community Housing Group, the parent that owns 04682354. (4) The challenge confirms 08599255."
+  },
+  {
+   "key": "GB/national/04916900>merge:03488535",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "03488535 is not in the live snapshot. The cached 452 register page shows it as YARLINGTON HOUSING GROUP (formerly South Somerset Homes Limited, converted/closed when it became a registered society). That exactly matches the org's only mention 'Yarlington Housing Group' (raw 04916900) and the target 'Yarlington Housing Group' (raw 'Company No. 03488535'), so the target is the same entity. No mention names YARLINGTON PROPERTY MANAGEMENT LIMITED (04916900, the dissolved subsidiary). The challenge confirms 03488535.",
+   "path": "agreed",
+   "other": "Both numbers are absent from the snapshot, so I checked Companies House. 03488535 is YARLINGTON HOUSING GROUP (Lupin Way, Yeovil; SIC 68201), converted/closed on 28 Feb 2017 when it became a registered society. (1) It is the org's own former company number, an exact name match. 04916900 is the subsidiary Yarlington Property Management. (2) The target org 5538983 'Yarlington Housing Group' carries 'Company No. 03488535', so it is the same entity. (3) The only mention, 'Yarlington Housing Group', does not name Yarlington Property Management / South Somerset Works. (4) The challenge confirms 03488535."
+  },
+  {
+   "key": "GB/national/05221559>merge:05528602",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right 05528602 is GUTTERIDGE HASKINS & DAVEY LIMITED, matching the org's only mention 'Gutteridge Haskins & Davey Limited' (raw 05221559). The target's nine spellings, under GB-COH-05528602 and its PPON, are all Gutteridge Haskins & Davey, so it is the same entity. No mention names GHD ENVIRONMENT LIMITED or Conestoga-Rovers (05221559). The challenge reclassifies 05221559 as a subsidiary but keeps 05528602.",
+   "path": "agreed",
+   "other": "(1) register_right 05528602 is GUTTERIDGE HASKINS & DAVEY LIMITED (active), an exact match for the org name. 05221559 is GHD ENVIRONMENT LIMITED (formerly Conestoga-Rovers & Associates (Europe)), a subsidiary. (2) The target org 12633572 carries 05528602 and its PPON under every spelling of Gutteridge Haskins & Davey, so it is the same entity. (3) The only mention, 'Gutteridge Haskins & Davey Limited', does not name GHD Environment or Conestoga-Rovers. (4) The challenge changes the relationship from sister to subsidiary but keeps 05528602."
+  },
+  {
+   "key": "GB/national/05290222>merge:05286542",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right 05286542 is LIVECO LIMITED. The org's only mention 'LIVECO Limited T/A VEST Construction' (raw 05290222) names LIVECO as the legal entity, and 'VEST Construction' only as its trading name. The target 'LIVECO Ltd T/A VEST Construction' (raw 05286542) is the same entity and already carries 'Liveco ltd t/a Vest Construction Ltd'. No mention names the dormant VEST CONSTRUCTION LIMITED (05290222) as the supplier. The challenge confirms 05286542.",
+   "path": "agreed",
+   "other": "(1) register_right 05286542 is LIVECO LIMITED (active), the legal entity the org's name gives. (2) The target org 16486532 already carries 05286542 as 'LIVECO Ltd T/A VEST Construction', 'LIVECO LIMITED' and 'Liveco ltd t/a Vest Construction Ltd', so it is the same entity and the same mention shape. (3) Skeptic check: the mention contains 'VEST Construction', but only as a trading name after LIVECO Limited, the legal entity. The register_wrong company VEST CONSTRUCTION LIMITED is dormant (SIC 99999, per both verdict texts), so this cannot be its own award, unlike the M Group case. (4) The challenge confirms 05286542."
+  },
+  {
+   "key": "GB/national/05396496>merge:02443243",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right 02443243 is FREEDOM COMMUNICATIONS (U.K.) LIMITED, matching both the org's only mention 'Freedom Communications (UK) Ltd' (raw 05396496) and the identically named target (raw 02443243), so the target is the same entity. No mention names NASSTAR MANAGED SERVICES GROUP LIMITED or its former GCI names (05396496, the acquiring parent). The challenge confirms 02443243.",
+   "path": "agreed",
+   "other": "(1) register_right 02443243 is FREEDOM COMMUNICATIONS (U.K.) LIMITED (active), an exact match for the org name. 05396496 is NASSTAR MANAGED SERVICES GROUP LIMITED (formerly GCI), the acquiring parent. (2) The target org 11745624 is 'Freedom Communications (UK) Ltd' under 02443243, the same entity. (3) The only mention, 'Freedom Communications (UK) Ltd', does not name Nasstar or GCI. (4) The challenge confirms 02443243 from 02443243's PSC record."
+  },
+  {
+   "key": "GB/national/05924997>merge:02863196",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 02863196 is ALPHATRACK SYSTEMS LIMITED (active), an exact match for the head. The target 13831554 is the same company: all its mentions are Alphatrack Systems Ltd/Limited/Alphatrack under GB-COH-02863196, bare 02863196 or one PPON id. The org's only mention is 'Alphatrack Systems Ltd' (raw 05924997), and nothing names LONEPIPER LIMITED, the company that number belongs to on the register. The challenge says outright that '02863196 is correct'. Its 'hence medium' is about whether Lonepiper counts as related or unrelated (the link runs through a person), not about the number, and the merge is the same either way. One caveat: verdict_post.py's DOWNGRADE match flags 12252991, so a gate that holds every challenger downgrade mechanically would hold this row.",
+   "path": "agreed",
+   "other": "The register_right entry for 02863196 is ALPHATRACK SYSTEMS LIMITED (Active, no previous names), which is the same name as the org. The target org 13831554 is the same legal entity: its head is Alphatrack Systems Ltd and its mentions carry GB-COH-02863196 plus a PPON for ALPHATRACK SYSTEMS LIMITED. The org's only mention is 'Alphatrack Systems Ltd', so none names LONEPIPER LIMITED. The challenger did drop confidence to medium, but only because the link runs through a person rather than group ownership. It says outright that '02863196 is correct', and a related or wrong verdict would lead to the same re-key. Issue 466 kept this row out of the hold for the same reason. The plan now shows multi_target 0, so the earlier multi-target block is cleared."
+  },
+  {
+   "key": "GB/national/06581276>merge:03230513",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 03230513 is CARTESIAN LIMITED (active), an exact match for the head. The target 8255551 is 'Cartesian Limited' with 10 mentions under raw 03230513, so it is the same entity. The org's single mention is 'Cartesian Limited' (raw 06581276). Nothing names FARNCOMBE ENGINEERING SERVICES LTD or Farncombe Strategy, which the verdict gives as the holder of 06581276 (the number is not in the snapshot). The challenger agrees with 03230513.",
+   "path": "agreed",
+   "other": "03230513 is CARTESIAN LIMITED (Active, no previous names), the org's exact name. No other company could have held that name, so it is not a namesake or a predecessor. The target org 8255551 is the same entity, with 10 'Cartesian Limited' mentions under 03230513. The org's mention 'Cartesian Limited' does not name Farncombe Engineering Services (the sister company). The challenger agrees with the number."
+  },
+  {
+   "key": "GB/national/06870472>merge:03393686",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 03393686 is ESTEVE PHARMACEUTICALS LTD (active), previously INTRAPHARM LABORATORIES LIMITED, so the head names this company under its old name. The target 11340227 is the same entity: its mentions are INTRAPHARM LABORATORIES LIMITED (03393686) and Esteve Pharmaceuticals Ltd/Limited (GB-COH-03393686). The CH page confirms 06870472 is ABBEY PHARMA LIMITED (dissolved, no previous names). The org's only mention, 'Intrapharm Laboratories' (raw 06870472), does not name Abbey Pharma. The challenge confirms 03393686.",
+   "path": "agreed",
+   "other": "03393686 is ESTEVE PHARMACEUTICALS LTD, and the register lists INTRAPHARM LABORATORIES LIMITED as its previous name, so this is a known rename of the org. I checked on the register whether the freed Intrapharm name had moved to 06870472: it is ABBEY PHARMA LIMITED with no previous names, dissolved 2022. So no. The target org 11340227 (head INTRAPHARM LABORATORIES LIMITED, plus Esteve mentions under GB-COH-03393686) is the same entity. The mention 'Intrapharm Laboratories' does not name Abbey Pharma. The challenger agrees with 03393686."
+  },
+  {
+   "key": "GB/national/07123448>merge:GBCOHSC202170",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right SC202170 is JOURNEYCALL LIMITED (active), an exact match for the head 'Journeycall'. The target 31545291 is JOURNEYCALL LIMITED (GB-COH-SC202170) and JourneyCall/Journeycall Limited (PPON), so it is the same entity. The identifier GBCOHSC202170 is the store's kept GBCOH spelling of SC202170. On the register 07123448 is ESP SYSTEX HOLDINGS LIMITED, the parent. The org's only mention is 'Journeycall' (raw 07123448), and nothing names ESP Systex. The challenge confirms SC202170.",
+   "path": "agreed",
+   "other": "SC202170 is JOURNEYCALL LIMITED (Active, no previous names), the org's own name. 07123448 is its parent, ESP SYSTEX HOLDINGS LIMITED. The target org 31545291 (JOURNEYCALL LIMITED, under GB-COH-SC202170 and its PPON) is the same entity. The org's single mention, 'Journeycall', does not name ESP Systex. The challenger confirms SC202170 through the PSC link."
+  },
+  {
+   "key": "GB/national/07129623>move:03893362",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 03893362 is EXTREME PERFORMANCE LIMITED (active, previously MONTANA MACON LIMITED), an exact match for the head 'Extreme Performance LTD'. CH names are unique, and the reviewer places it at the same Retford office as the sister company. On the register 07129623 is EPA MANUFACTURING LIMITED (previously EPAMFG LIMITED). The org's only mention is 'Extreme Performance LTD' (raw 07129623), and nothing names EPA Manufacturing or EPAMFG. The challenge confirms 03893362.",
+   "path": "agreed",
+   "other": "03893362 is EXTREME PERFORMANCE LIMITED, the org's exact name. The register page shows it Active, renamed from MONTANA MACON LIMITED in July 2009, filing accounts to March 2026, with SIC 32990, so it is a real operating company and not a dormant brand shell. 07129623 is EPA MANUFACTURING LIMITED (formerly EPAMFG for two weeks in 2010). It is a sister company at the same Retford address. The mention 'Extreme Performance LTD' does not name EPA. The challenger agrees with 03893362."
+  },
+  {
+   "key": "GB/national/07597648>merge:04230579",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 04230579 is DAWNUS CONSTRUCTION HOLDINGS LIMITED (in administration, previously DAWNUS CONSTRUCTION LIMITED), an exact match for the head. The target 12497031 is Dawnus Construction Holdings Limited/Ltd under 04230579, so it is the same entity. The CH page confirms 07597648 is DAWNUS SOUTHERN LIMITED (dissolved, no previous names). The org's two mentions are both 'Dawnus Construction Holdings Ltd' (raw 07597648), and neither names Dawnus Southern. The challenge confirms 04230579.",
+   "path": "agreed",
+   "other": "04230579 is DAWNUS CONSTRUCTION HOLDINGS LIMITED (In Administration; previously DAWNUS CONSTRUCTION LIMITED), the org's exact name. I checked on the register whether 07597648 had once held the Holdings name, which would make it the right number. It has not: it is DAWNUS SOUTHERN LIMITED, incorporated 2011 with no previous names and dissolved 2025. The target org 12497031 has both mentions as Dawnus Construction Holdings under 04230579, so it is the same entity. Neither of the org's 2 mentions names Dawnus Southern. The challenger confirms 04230579 is Dawnus Southern's 75%+ parent."
+  },
+  {
+   "key": "GB/national/08048224>move:RS007639",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right RS007639 is ONGO HOMES LIMITED (active), which matches the head 'Ongo Homes'. The verdict gives 08048224 as ONGO PARTNERSHIP LIMITED (formerly NL Enterprises, now society RS008945); it is not in the snapshot. The org's only mention is 'Ongo Homes' (raw 08048224), and nothing names Ongo Partnership or NL Enterprises. The challenge's '05439434 for a pre-2017 notice' does not dispute the number. 05439434 is the same body corporate before its 2017 conversion to a registered society, and RS007639 is its current number.",
+   "path": "agreed",
+   "other": "The snapshot shows RS007639 as ONGO HOMES LIMITED (Active), the org's name. It is the same legal body as company 05439434, which converted into this society in 2017. The successor is the entity itself, not a different one. The mention 'Ongo Homes' does not name Ongo Partnership (08048224, the sister company). The challenger's '(05439434 for a pre-2017 notice)' names the same entity's earlier number and confirms RS007639 as correct, so it does not dispute the number. A minor risk: if some org still carries 05439434, this move makes a twin of the same entity rather than a mis-key."
+  },
+  {
+   "key": "GB/national/09079868>merge:01198007",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 01198007 is FERRING PHARMACEUTICALS LIMITED (active), an exact match for the head. The target 10338645 (head 'Ferring Pharmaceutical') carries only Ferring Pharmaceuticals Ltd/Limited mentions under 01198007 or GB-COH-01198007, so it is the same entity. The verdict gives 09079868 as FERRING ASSET MANAGEMENT LIMITED; it is not in the snapshot. The org's only mention is 'Ferring Pharmaceuticals Ltd' (raw 09079868), and nothing names Ferring Asset Management. The challenge confirms 01198007.",
+   "path": "agreed",
+   "other": "01198007 is FERRING PHARMACEUTICALS LIMITED (Active, no previous names), the org's exact name. The target org 10338645 carries 7 Ferring Pharmaceuticals mentions under 01198007 and GB-COH-01198007, so it is the same entity. The org's mention 'Ferring Pharmaceuticals Ltd' does not name Ferring Asset Management. The challenger agrees with 01198007."
+  },
+  {
+   "key": "GB/national/09783130>merge:00925279",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 00925279 is N. M. ROTHSCHILD & SONS LIMITED (active), which matches the head 'N M Rothschild & Sons'. The target 15687872 is N.M. Rothschild & Sons Limited / N.M. Rothschild and Sons Ltd under 00925279, so it is the same entity. The CH page confirms 09783130 is ROTHSCHILD & CO SERVICES LIMITED (dissolved, previously ROTHSCHILD & CO LIMITED 2015-2023). The org's two mentions are both 'N M Rothschild & Sons' (raw 09783130), and neither names Rothschild & Co. The challenge confirms 00925279.",
+   "path": "agreed",
+   "other": "00925279 is N. M. ROTHSCHILD & SONS LIMITED (Active, no previous names), the org's name. The target org 15687872 has all 4 of its mentions as N.M. Rothschild & Sons under 00925279, so it is the same entity. The org's 2 mentions read 'N M Rothschild & Sons'. Neither names Rothschild & Co Services, formerly Rothschild & Co Limited (09783130, a group service company). The challenger agrees with 00925279."
+  },
+  {
+   "key": "GB/national/10125704>move:06968057",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 06968057 is NEW EARTH SOLUTIONS (WEST) LIMITED (active), an exact match for the head. On the register 10125704 is DM OPCO LIMITED, a sister company in the DM Topco group. The org's only mention is 'New Earth Solutions (West) Limited' (raw 10125704), and nothing names DM Opco. The challenge confirms 06968057, which files its own accounts.",
+   "path": "agreed",
+   "other": "06968057 is NEW EARTH SOLUTIONS (WEST) LIMITED (Active, no previous names), the org's exact name. 10125704 is DM OPCO LIMITED, a sister company in the same group at the same Caythorpe address. The mention 'New Earth Solutions (West) Limited' does not name DM Opco. The challenger confirms 06968057 as an active company filing full accounts under its own number."
+  },
+  {
+   "key": "GB/national/14645178>move:10954400",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "10954400 PURUS WIND FLEET MANAGEMENT LTD was previously named HIGH SPEED TRANSFERS LTD (2017 to June 2024), so this is a known rename of the org's own name. A CH name search (2026-10-10) finds no other company that has ever been called High Speed Transfers. The only mention (High Speed Transfers Limited, raw 14645178) names the org, not HST CTV8 LTD, and the challenge confirms 10954400.",
+   "path": "agreed",
+   "other": "10954400 is PURUS WIND FLEET MANAGEMENT LTD, which was called HIGH SPEED TRANSFERS LTD before. I searched Companies House for 'high speed transfers' and this is the only company ever to have held that name, so no new company took the name after the June 2024 rename. 14645178 is HST CTV8 LTD, a vessel subsidiary. The org's only mention ('High Speed Transfers Limited') does not name HST CTV8. The challenge confirms 10954400."
+  },
+  {
+   "key": "GB/national/BR023137>move:FC038545",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "FC038545 is HDI GLOBAL SPECIALTY SE (Active) in the register, an exact name match. Its UK establishment is BR023640. BR023137 is the UK branch of the sister insurer HDI Global SE. The only mention names HDI Global Specialty SE, not HDI Global SE, and the challenge agrees on FC038545.",
+   "path": "agreed",
+   "other": "FC038545 is HDI GLOBAL SPECIALTY SE (Active), the org's own overseas company, under its exact name. BR023137 is not in the snapshot. The verdict says it is the UK branch of the sister company HDI Global SE (FC038045), and HDI Global Specialty's own UK establishment is BR023640. Even if BR023137 were somehow HDI Global Specialty's own branch, the move still lands on the same legal entity. The single mention names HDI Global Specialty SE, not HDI Global SE, and the challenge repeats FC038545 without disputing it."
+  },
+  {
+   "key": "GB/national/GBCOH00053723>merge:GBCOH00604934",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "00604934 is TQ EDUCATION AND TRAINING LIMITED in the register, an exact match for the legal-entity part of the head. The target org 31555775 carries that name and already holds the identical 'TQ Education and Training Ltd (Trading as Pearson TQ)' mention under 00604934, so it is the same entity. The org's only mention names TQ Education and Training as the legal entity, with 'Pearson TQ' only as a trading name. It does not name PEARSON PLC. The challenge confirms 00604934.",
+   "path": "agreed",
+   "other": "00604934 is TQ EDUCATION AND TRAINING LIMITED (Active), the legal entity the mention names. The target org 31555775 carries that same number and already holds an identical mention string, 'TQ Education and Training Ltd (Trading as Pearson TQ)', under it, so the target is the same entity. 00053723 is PEARSON PLC, the group parent. 'Pearson TQ' is TQ's own trading name, not the name 'Pearson PLC', so no mention names the parent. The challenge confirms 00604934."
+  },
+  {
+   "key": "GB/national/GBCOH03069042>merge:GBCOH03069033",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "03069033 is ATOC LIMITED in the register, an exact match. The target org 31607936 is ATOC LIMITED, with mentions 'A T O C Ltd' and 'ATOC LIMITED' under 03069033, so it is the same entity. The org's only mention is ATOC LIMITED (raw 03069042) and does not name RAIL SETTLEMENT PLAN LIMITED. The challenge only confirms the sister relation and does not dispute 03069033.",
+   "path": "agreed",
+   "other": "03069033 is ATOC LIMITED (Active). The target org 31607936 carries that number with mentions 'ATOC LIMITED' and 'A T O C Ltd', so it is the same legal entity. 03069042 is RAIL SETTLEMENT PLAN LIMITED, a sister body incorporated the same day at the same office. The org's single mention, 'ATOC LIMITED', does not name Rail Settlement Plan, and the challenge only rules out a typo; it does not dispute 03069033."
+  },
+  {
+   "key": "GB/national/GBCOH04599477>move:GBCOH07672975",
+   "decision": "hold",
+   "corrected_number": null,
+   "reason": "Criterion 4 fails: the challenge disputes the number. The reviewer's side reads right-number/medium, because the mention's trading name 'Interim Partners' is exactly the register_wrong company INTERIM PARTNERS LIMITED 04599477, an operating agency. The challenger's caveat says the group name moved from 12372585 (Dec 2019 to Oct 2020) to 07672975 (since Oct 2020), so the notice date decides which group number is meant. The only mention also names the related company by its exact register name, as the t/a brand. The notice date and the actual contracting entity would settle it.",
+   "path": "agreed",
+   "other": "The challenge disputes the number (condition 4). The first reviewer called the current number right-number at medium confidence. The challenger warns that the name NEW STREET CONSULTING GROUP passed between 07672975 (which used it from Oct 2020 and was earlier called NEW STREET (GROUP) LIMITED) and 12372585 (which used it Dec 2019 to Oct 2020), so the notice date decides which group number is meant. The mention 'New Street Consulting Group t/a Interim Partners' also names the related company, INTERIM PARTNERS LIMITED 04599477, a temp agency whose number the notice carries (condition 3). It could be 12372585 if the notice falls between Dec 2019 and Oct 2020."
+  },
+  {
+   "key": "GB/national/GBCOH04828168>merge:GBCOHIP030441",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "IP030441 is LONDON & QUADRANT HOUSING TRUST (Active registered society) in the register, an exact match. The target org 30914545 has the same name, with 141 mentions under IP030441, so it is the same entity. All 3 org mentions read LONDON & QUADRANT HOUSING TRUST (raw 04828168), and none names L&Q NEW HOMES LIMITED or ZEST HOMES. The challenge confirms IP030441.",
+   "path": "agreed",
+   "other": "IP030441 is LONDON & QUADRANT HOUSING TRUST (Active), a registered society under the org's exact name. The target org 30914545 carries it with 141 mentions under the same name, so it is the same entity. 04828168 is L&Q NEW HOMES LIMITED (formerly ZEST HOMES), a development subsidiary. All 3 of the org's mentions read 'LONDON & QUADRANT HOUSING TRUST', and none names L&Q New Homes or Zest Homes. The challenge repeats IP030441."
+  },
+  {
+   "key": "GB/national/GBCOH05384799>merge:00770813",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "00770813 is PERSONNEL HYGIENE SERVICES LIMITED in the register, matching the org's name. The target org 15624693 carries that name across about 28 mentions under 00770813 and the PPON, so it is the same operating company. The org's only mention is 'Personnel Hygiene Services' (raw 05384799) and does not name PHS GROUP LIMITED. The challenge confirms 00770813.",
+   "path": "agreed",
+   "other": "00770813 is PERSONNEL HYGIENE SERVICES LIMITED (Active). The target org 15624693 carries it with more than 20 mentions of Personnel Hygiene Services Ltd, so it is the same legal entity. 05384799 is PHS GROUP LIMITED, the parent, and the challenge cites PHS Group as the PSC of 00770813 while confirming 00770813. The org's single mention, 'Personnel Hygiene Services', does not name PHS Group. The 'PHS Group' trading-name strings are already on the target and do not move."
+  },
+  {
+   "key": "GB/national/16215129>merge:09545748",
+   "decision": "hold",
+   "corrected_number": null,
+   "reason": "Conditions 2-4 hold, but condition 1 is in real doubt. The verdict itself says 'sister or successor'. 16215129 is PTUK SYSTEMS LTD ('PTUK' = planarTECH UK), incorporated 29 Jan 2025 under the same controller, so both mentions carrying it date from 2025 or later. 09545748 filed accounts to Dec 2025 and then applied for voluntary strike-off (DS01, Aug 2026). That is the pattern of a business moved to a new company that kept the old trade name. If so, these two awards are the successor's and 16215129 is right-number, with 'planarTECH UK Limited' a habitual trading name. The merge would put them on a company being struck off, and the re-keyed literal's alias would keep routing later 16215129 awards there. Both reviewers see this risk, and the mention names cannot rule it out. The notice dates and the contracting entity would settle it; the register cannot.",
+   "path": "decided"
+  },
+  {
+   "key": "GB/national/GBCOH01555105>move:GBCOH03044922",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "03044922 is MILES-BRAMWELL ADMINISTRATIVE SERVICES LIMITED (Active, SIC 82990, Clover Nook, Somercotes), which matches the legal entity the mention names. The mention says 'Slimming World' only as a t/a brand, and the related company is not the business behind that brand. The register page shows SLIMMING WORLD LIMITED 01555105 has SIC 68209 (letting and operating of real estate): a property-holding sister, so the award cannot plausibly be its own, and the number most likely came from a name search. That separates this case from Milestone / M Group and from Operam. The group uses Executive Services 01242071 by name when that company is the contractor: org 31567525 'Miles-Bramwell Executive Services Limited (Slimming World)' does. This notice explicitly says Administrative, so no correction applies. The challenge confirms 03044922.",
+   "path": "decided"
+  },
+  {
+   "key": "GB/national/GBCOH05287545>merge:GBCOH10923543",
+   "decision": "hold",
+   "corrected_number": null,
+   "reason": "Condition 3 fails on the mention 'Operam Education Group t/a Provision Recruitment' (raw GB-COH-05287545). The register page for 10923543 shows OPERAM EDUCATION GROUP LIMITED with SIC 64209, a holding company (formerly the shelf company WHCO7). 05287545 PROVISION RECRUITMENT LTD is the operating recruitment agency, the very business the 'Provision Recruitment' brand names. The mention carries that agency's name and its own number, with a non-trading holding company as the stated entity, so it is most likely the agency's own award. The merge would carry it onto the parent's number, the Milestone / M Group shape. Unlike Slimming World, the related company here is the brand's operating business. The other mention, 'Operam Education Group Limited', is clean. Target 31556074 is the same entity as 10923543, so the merge can go ahead once the t/a mention is split off.",
+   "path": "decided"
+  },
+  {
+   "key": "GB/national/GBCOH05516946>merge:GBCOH03297710",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 03297710 = AEGIS RESIDENTIAL CARE HOMES LIMITED (Active). That is the org's exact name, and the number is printed in its own head. The target org 31579605 has the same name, with mentions 'AEGIS RESIDENTIAL CARE HOMES LIMITED' / 'Aegis Residential Care Homes Limited' under GB-COH-03297710, so it is the same entity. The org's only mention, 'AEGIS RESIDENTIAL CARE HOMES LIMITED (03297710)' (raw GB-COH-05516946), does not name PEARLCARE INVESTMENTS LIMITED. The challenge confirms 03297710.",
+   "path": "agreed",
+   "other": "register_right 03297710 is AEGIS RESIDENTIAL CARE HOMES LIMITED (Active). That is an exact match for the org's head, which even carries the number in brackets. The target org 31579605 is that company under that number, with only Aegis Residential Care Homes mentions, so it is the same entity. The org's only mention names Aegis Residential Care Homes, not PEARLCARE INVESTMENTS LIMITED (register_wrong). The challenge confirms 03297710 and explains the Pearlcare group link."
+  },
+  {
+   "key": "GB/national/GBCOH05640299>move:GBCOHLP022693",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right LP022693 = SSL FARNHAM COMMON OPCO LP (Active), an exact match for the org's name. Wrong 05640299 = SIGNATURE SENIOR LIFESTYLE LIMITED, the group parent. The org's single mention, 'SSL Farnham Common OPCO LP' (raw GB-COH-05640299), names the partnership and not Signature Senior Lifestyle Limited. The challenge confirms LP022693.",
+   "path": "agreed",
+   "other": "register_right LP022693 is SSL FARNHAM COMMON OPCO LP (Active), an exact match for the org's name and mention. The wrong number 05640299 is SIGNATURE SENIOR LIFESTYLE LIMITED, the group head company. The only mention is 'SSL Farnham Common OPCO LP' and does not name Signature Senior Lifestyle. The challenge confirms LP022693 (same Beaconsfield address, beside its GP LLP). This is a move with no target. LP022693 is a Companies House partnership number, not a limited company's, so the rekey's legal-form gate should accept the LP prefix."
+  },
+  {
+   "key": "GB/national/GBCOH05648042>merge:05648039",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 05648039 = PEOPLESCOUT LIMITED (Active, previously TMP (UK) LIMITED), an exact match for the head. The target org 12213330 is keyed on 05648039, and its mentions are 'PEOPLESCOUT LIMITED (t/a TMP Worldwide)', 'PeopleScout Limited (trading as TMP Worldwide)' and TMP Worldwide variants. TMP Worldwide is PeopleScout's trading name and former name, so the target is the same entity. The org's mentions are 'PeopleScout Limited' and 'Bradley Williams' (both raw GB-COH-05648042). Neither names TMP (HOLDINGS) LIMITED; 'Bradley Williams' is a person's name (a contact), and moving it is no worse than leaving it on the parent's number. The challenge confirms 05648039.",
+   "path": "agreed",
+   "other": "register_right 05648039 is PEOPLESCOUT LIMITED (Active, formerly TMP (UK) LIMITED), an exact match for the head. The wrong number is TMP (HOLDINGS) LIMITED, its PSC parent. I considered whether target 12213330 ('TMP Worldwide Limited') could be another company. A CH search shows the 'TMP WORLDWIDE' former name belongs to Monster Worldwide Limited 01881381. But every target mention carries 05648039 and includes 'PEOPLESCOUT LIMITED (t/a TMP Worldwide)', so the target is the same legal entity using a trading name. Neither org mention names TMP (Holdings): one is 'PeopleScout Limited', the other 'Bradley Williams', a person's name that the challenge addresses. The challenge confirms 05648039."
+  },
+  {
+   "key": "GB/national/GBCOH05834418>merge:GBCOH01331981",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 01331981 = WHITEHOUSE CONSTRUCTION CO. LIMITED (Active), an exact match for the org's name. The target org 31599631 is 'Whitehouse Construction Co. Ltd/LIMITED' under GB-COH-01331981, the same entity. The org's mention, 'Whitehouse Construction Co. Limited' (raw GB-COH-05834418), does not name EWART HOLDINGS LIMITED or its former name Brell Ewart Holdings. The challenge confirms 01331981 via the PSC register.",
+   "path": "agreed",
+   "other": "register_right 01331981 is WHITEHOUSE CONSTRUCTION CO. LIMITED (Active), an exact match including the distinctive 'Co.'. The wrong number 05834418 is EWART HOLDINGS LIMITED, its 75%+ PSC parent. The target org 31599631 carries only Whitehouse Construction Co. mentions under 01331981, so it is the same entity. The org's only mention, 'Whitehouse Construction Co. Limited', does not name Ewart Holdings. The challenge confirms 01331981."
+  },
+  {
+   "key": "GB/national/GBCOH06036237>merge:GBCOH04174873",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 04174873 = SUPPORT IN SPORT (UK) LIMITED (Active), an exact match for 'Support in Sport (UK) Ltd'. The target org 31550006 has the same name under GB-COH-04174873 and a PPON id, the same entity. Wrong 06036237 is absent from the live snapshot, which fits the verdict's Artificial Grass Limited, dissolved 2020. The org's only mention, 'Support in Sport (UK) Ltd' (raw GB-COH-06036237), does not name Artificial Grass Limited. The challenge confirms 04174873.",
+   "path": "agreed",
+   "other": "register_right 04174873 is SUPPORT IN SPORT (UK) LIMITED (Active), an exact match for 'Support in Sport (UK) Ltd'. The wrong number 06036237 is absent from the snapshot. The verdict identifies it as Artificial Grass Limited, a sister company dissolved in 2020. The target org 31550006 is the same company under 04174873, also seen with a PPON identifier. The org's only mention is 'Support in Sport (UK) Ltd' and does not name Artificial Grass. The challenge confirms 04174873."
+  },
+  {
+   "key": "GB/national/GBCOH06198729>move:GBCOH09373229",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 09373229 = LINCA WORKFORCE DEVELOPMENT LTD (Active), an exact match for the org's name. Wrong 06198729 = LINCOLNSHIRE CARE ASSOCIATION LIMITED, the related body that LinCA abbreviates. The org's only mention, 'LinCA Workforce Development Ltd' (raw GB-COH-06198729), names the workforce-development company and not Lincolnshire Care Association. The challenge confirms 09373229.",
+   "path": "agreed",
+   "other": "register_right 09373229 is LINCA WORKFORCE DEVELOPMENT LTD (Active), an exact match for the org and its only mention. The wrong number is LINCOLNSHIRE CARE ASSOCIATION LIMITED, the related body that 'LinCA' abbreviates. The mention names the Workforce Development Ltd itself, not the Association, so the acronym does not make it a mention of the related company. The challenge confirms 09373229 as a separate active company. This is a move with no target."
+  },
+  {
+   "key": "GB/national/GBCOH06418932>move:GBCOH05392158",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 05392158 = BRANCASTER CARE HOMES LIMITED (Active). The org's 'Brancaster Care Home Limited' differs only by the plural. A Companies House search for 'brancaster care home' finds no BRANCASTER CARE HOME LIMITED namesake; the nearest, BRANCASTER HOMECARE LIMITED (Kendal), is a different name. The wrong number 06418932 (CINNABAR SUPPORT AND LIVING LTD, formerly LINFORD GRANGE LTD) shares its officers with 05392158, which ties the publisher to this group. The org's only mention, 'Brancaster Care Home Limited', does not name Cinnabar or Linford Grange. The challenge confirms 05392158.",
+   "path": "agreed",
+   "other": "register_right 05392158 is BRANCASTER CARE HOMES LIMITED (Active), a singular/plural variant of 'Brancaster Care Home Limited'. A CH search found no singular-named company. The nearest namesake is BRANCASTER HOMECARE LIMITED 06598231 (Kendal), a different word order. The carried number supports 05392158: CH officers for 06418932 (CINNABAR SUPPORT AND LIVING LTD, formerly Linford Grange) list Bonnon and Rocks at Genesis Centre, Birchwood, Warrington, which is 05392158's registered address. The mention does not name Cinnabar or Linford Grange. The challenge confirms 05392158."
+  },
+  {
+   "key": "GB/national/GBCOH06473794>move:GBCOH06678991",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 06678991 = ENABLE CARE LIMITED (Active), an exact match for 'Enable Care Ltd'. Wrong 06473794 = ABI DEVELOPMENTS 3 LIMITED, which shares a director (Dhanani) and a secretary with 06678991 at the same address, so the number carried points to this Enable Care's group and not to some namesake. The org's only mention, 'Enable Care Ltd' (raw GB-COH-06473794), does not name ABI Developments 3. The challenge confirms 06678991.",
+   "path": "agreed",
+   "other": "register_right 06678991 is ENABLE CARE LIMITED (Active), an exact match for 'Enable Care Ltd'. Companies House treats Ltd and Limited as the same name, so it is the only live company of that name. The wrong number is ABI DEVELOPMENTS 3 LIMITED, which shares director Dhanani, secretary Coveney and the 167 Fleet Street address. That ties the carried number to this Enable Care rather than to a namesake. The only mention does not name ABI Developments. The challenge confirms 06678991. This is a move with no target."
+  },
+  {
+   "key": "GB/national/GBCOH06474145>merge:01026007",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 01026007 = BRITISH GAS SOCIAL HOUSING LIMITED (Active, previously P.H. JONES LIMITED), the legal entity the head names. 'PH Jones' is that company's former name and trading name. The target org 8177449 is British Gas Social Housing (t/a PH Jones) under 01026007/GB-COH-01026007, the same entity. The org's only mention, 'British Gas Social Housing Ltd T/A PH Jones' (raw GB-COH-06474145), names the subsidiary with its trading name and does not name P.H JONES GROUP LIMITED (formerly Hajco 362). The challenge confirms 01026007.",
+   "path": "agreed",
+   "other": "register_right 01026007 is BRITISH GAS SOCIAL HOUSING LIMITED (Active, formerly P.H. JONES LIMITED), the legal entity the head names. 'PH Jones' is its trading name and its former name. The wrong number is P.H JONES GROUP LIMITED (formerly Hajco 362), a group company. The org's only mention, 'British Gas Social Housing Ltd T/A PH Jones', names BGSH with its trade name, not P.H Jones Group Limited. The target org 8177449 holds about 20 mentions of the same entity under 01026007. The challenge confirms 01026007."
+  },
+  {
+   "key": "GB/national/GBCOH06492265>merge:03017251",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register right 03017251 = ANGLIAN WATER BUSINESS (NATIONAL) LIMITED (Active; previously Osprey Water Services / Hartlepool Water), an exact match for the head's legal entity. The target org 16011976 carries the same name (several 'trading as Wave' variants) under 03017251, the same entity. The org's only mention, 'Anglian Water Business (National) Limited T/A Wave' (raw GB-COH-06492265), names the subsidiary as the contracting entity. 'Wave' appears only as its trading name, matching the target's own 'Trading as Wave' mentions; the mention does not name WAVE LTD as the supplier, so it is not the M Group shape. The challenge confirms 03017251.",
+   "path": "agreed",
+   "other": "register_right 03017251 is ANGLIAN WATER BUSINESS (NATIONAL) LIMITED (Active, formerly Osprey Water Services / Hartlepool Water), the legal entity named. The wrong number is WAVE LTD, its 75%+ PSC parent. The org's only mention says 'T/A Wave'. 'Wave' is the subsidiary's trading name, and the mention names AWB(N)L as the contracting entity, not Wave Ltd as supplier, so this is not the M Group shape. The target org 16011976 holds the same 'Trading as Wave' formulations under 03017251. The challenge confirms 03017251."
+  },
+  {
+   "key": "GB/national/GBCOH06637307>move:GBCOH08839295",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right SONEX3 LTD (08839295, active) matches the org name Sonex3 Limited exactly. The org's only mention, 'Sonex3 Limited' (raw GB-COH-06637307, 2), names the org and not LANTERN DEBT RECOVERY SERVICES (formerly Motormile Finance), the sister company. The reviewer and challenger both confirm 08839295 from the PSC registers, which name Lantern Group Holdings as owner of both companies.",
+   "path": "agreed",
+   "other": "Right 08839295 is SONEX3 LTD (active), which matches the org name exactly. Wrong 06637307 is LANTERN DEBT RECOVERY SERVICES LIMITED (formerly Motormile Finance UK), a sister under Lantern Group Holdings according to the PSC pages, which reviewer and challenger both read. The only mention is 'Sonex3 Limited' and none names Lantern or Motormile. The challenge agrees and does not lower the number. It is a move, and no other org carries 08839295."
+  },
+  {
+   "key": "GB/national/GBCOH06703082>move:GBCOH02174487",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right MARKETFORCE BUSINESS MEDIA LIMITED 02174487 (active, previously Marketforce Communications Limited) matches the head exactly. Both mention spellings are 'Marketforce Business Media Limited' (raw GB-COH-06703082, 2+2). Neither names the related company, the dormant or dissolved name-holder MARKETFORCE COMMUNICATIONS LIMITED 06703082. The challenge only adds detail about the name-holder and agrees on 02174487.",
+   "path": "agreed",
+   "other": "Right 02174487 is MARKETFORCE BUSINESS MEDIA LIMITED (active), an exact match for both mention names. Wrong 06703082 (not in the snapshot) is the MARKETFORCE COMMUNICATIONS LIMITED name-holder. It was incorporated on the day 02174487 dropped that name, so it is a sister with no trading of its own. No mention says 'Marketforce Communications'; both mentions name Business Media. The challenge calls it dormant where the rationale says dissolved, but both agree on 02174487 at high, so nothing disputes the number."
+  },
+  {
+   "key": "GB/national/GBCOH06991398>merge:04014602",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right GUARDIAN HOMECARE UK LTD. 04014602 matches the org name Guardian Homecare UK Ltd. The target org 10590634 is the org already keyed to 04014602, and its mentions (GUARDIAN HOMECARE UK LTD / Guardian Homecare Limited under 04014602) make it the same legal entity. The org's only mention, 'Guardian Homecare UK Ltd' (raw GB-COH-06991398), does not name the parent CITY AND COUNTY HEALTHCARE GROUP / City Bidco. The challenge confirms 04014602, with the parent as its 75%+ PSC.",
+   "path": "agreed",
+   "other": "Right 04014602 is GUARDIAN HOMECARE UK LTD. (active), an exact match for the org's only mention, 'Guardian Homecare UK Ltd'. Wrong 06991398 is CITY AND COUNTY HEALTHCARE GROUP LIMITED, the 75%+ PSC parent named in the challenge. The target org 10590634 is the same legal entity: every one of its mentions carries 04014602, and most read 'GUARDIAN HOMECARE UK LTD'. Its head 'Guardian Homecare Limited' is a spelling under the same number, not a separate company. No mention names City and County. The challenge confirms the number."
+  },
+  {
+   "key": "GB/national/GBCOH07407241>move:GBCOH10630643",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right BAEMS LIMITED 10630643 (in administration) matches the legal name in the org's only mention, 'BAEMS Limited (T/A Bristol Ambulance EMS)' (raw GB-COH-07407241, 1). The mention carries 'Bristol Ambulance EMS' only as BAEMS Limited's trading name. The related company 07407241, BRISTOL AMBULANCE EMS LIMITED, was a dormant name-holder (SIC 99999), dissolved 11 Aug 2026, and could not have held the award, so the mention is the org's own and not the related company's. The challenge agrees on 10630643.",
+   "path": "agreed",
+   "other": "Right 10630643 is BAEMS LIMITED (in administration), an exact match for the legal name in the only mention. I checked wrong 07407241 on Companies House: BRISTOL AMBULANCE EMS LIMITED, SIC 99999 dormant, last accounts Jan 2024, dissolved 11 Aug 2026, at the BAEMS Jacwyn House address. That makes it a group name-holder. The mention 'BAEMS Limited (T/A Bristol Ambulance EMS)' does use the name-holder's style, but only as BAEMS Limited's trading name. A dormant company holds no award, so the move does not carry a related company's own award onto BAEMS. The challenge confirms 10630643."
+  },
+  {
+   "key": "GB/national/GBCOH08128583>merge:01425062",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right GORGEMEAD LIMITED 01425062 (active) matches the head exactly. The target org 14842900 ('Gorgemead Ltd' GB-COH-01425062 x3, 'Gorgemead ltd T/A Cohens' 01425062) is the same legal entity, trading as Cohens. The org's only mention, 'GORGEMEAD LIMITED' (raw GB-COH-08128583), does not name the sister MARKET WEIGHTON PHARMACY LIMITED, and the challenger confirms 01425062.",
+   "path": "agreed",
+   "other": "Right 01425062 is GORGEMEAD LIMITED (active), an exact match for the org's only mention, 'GORGEMEAD LIMITED'. Wrong 08128583 (not in the snapshot) is MARKET WEIGHTON PHARMACY LIMITED, a group pharmacy at the same Lostock, Bolton office. The target org 14842900 carries 01425062 under 'Gorgemead Ltd' and 'Gorgemead ltd T/A Cohens', so it is the same entity with its trading name. No mention names Market Weighton Pharmacy. The challenge confirms the number."
+  },
+  {
+   "key": "GB/national/GBCOH08884360>merge:06723149",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right ESSEX CARES LIMITED 06723149 (active) matches the head exactly. The target org 16244011 holds 'Essex Cares Limited' under GB-COH-06723149 (16 mentions) and 'Essex Cares Ltd (ECL)' under 06723149, so it is the same entity, with ECL as its acronym. The org's only mention, 'Essex Cares Limited' (raw GB-COH-08884360), does not name the subsidiary ECL TRADING LIMITED. The challenge confirms 06723149.",
+   "path": "agreed",
+   "other": "Right 06723149 is ESSEX CARES LIMITED (active), an exact match for the org's only mention, 'Essex Cares Limited'. Wrong 08884360 is ECL TRADING LIMITED, whose PSC page names Essex Cares as 75%+ owner, so it is a subsidiary. The target org 16244011 carries 06723149 under 'Essex Cares Limited' (16 mentions) and 'Essex Cares Ltd (ECL)', so it is the same entity. 'ECL' is the parent's acronym, not 'ECL Trading', and no mention names ECL Trading Limited. The challenge confirms 06723149."
+  },
+  {
+   "key": "GB/national/GBCOH09297203>merge:00968498",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right NEC SOFTWARE SOLUTIONS UK LIMITED 00968498 (previously Northgate Public Services (UK) Limited) matches the head exactly. The target org 9244853, headed 'Northgate Public Services (UK) Limited', is the same company under its former name, and its mentions are dominated by NEC Software Solutions UK Limited under GB-COH-00968498. The org's only mention, 'NEC Software Solutions UK Limited' (raw GB-COH-09297203), does not name the holding company NPS (HOLDINGS) LIMITED. Separately, the target already holds stray PPON-keyed mentions (Cadcorp Ltd, Gravitas Recruitment Group Limited under GB-PPON-PHXX-6931-VYBP); they are pre-existing contamination unrelated to this merge.",
+   "path": "agreed",
+   "other": "Right 00968498 is NEC SOFTWARE SOLUTIONS UK LIMITED (formerly Northgate Public Services (UK) Limited), an exact match for the org's only mention. Wrong 09297203 is NPS (HOLDINGS) LIMITED, the group holding company. The target org 9244853 is the same entity: it carries 00968498 under both the current name and the former Northgate name. It does already hold stray PPON-keyed mentions ('Cadcorp Ltd', 'Gravitas Recruitment Group Limited'), but that contamination is the target's own, and this merge adds only one correct NEC mention. No mention names NPS (Holdings). The challenge confirms the number."
+  },
+  {
+   "key": "GB/national/GBCOH09702342>move:GBCOHOC368517",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right OC368517 is WASSERMAN EMEA LLP, previously CSM SPORT AND ENTERTAINMENT LLP and Chime Sports Marketing LLP. That previous name matches the org's name, and the LLP legal form matches the OC prefix. The org's only mention, 'CSM Sport & Entertainment LLP T/A CSM Live' (raw GB-COH-09702342), names the LLP and not the parent CHIME GROUP HOLDINGS LIMITED / Bell Topco. The challenge confirms OC368517.",
+   "path": "agreed",
+   "other": "Right OC368517 is WASSERMAN EMEA LLP, whose previous names include CSM SPORT AND ENTERTAINMENT LLP. That matches the legal entity in the mention 'CSM Sport & Entertainment LLP T/A CSM Live', a known rename, and the LLP form agrees. Wrong 09702342 is CHIME GROUP HOLDINGS LIMITED (formerly Bell Topco), the Chime parent. The only mention names the LLP, with CSM Live as its trading style, and neither Chime nor Bell Topco. The challenge confirms OC368517, and no org carries it."
+  },
+  {
+   "key": "GB/national/GBCOH10238811>merge:GBCOH04394772",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right QUALITEST GROUP UK LTD 04394772 (active, previously Test-Direct Limited) matches the head. The target org 31581747 ('QUALITEST GROUP UK LTD', GB-COH-04394772) is the same legal entity. The org's only mention, 'Qualitest Group UK Limited' (raw GB-COH-10238811), does not name the holding company JUPITER HOLDCO LIMITED. The challenge confirms 04394772.",
+   "path": "agreed",
+   "other": "Right 04394772 is QUALITEST GROUP UK LTD (active, formerly Test-Direct), an exact match for the org's only mention, 'Qualitest Group UK Limited'. Wrong 10238811 is JUPITER HOLDCO LIMITED, a SIC 64209 holding company at the same office with Qualitest's directors. The target org 31581747 carries GB-COH-04394772 under 'QUALITEST GROUP UK LTD', so it is the same entity. No mention names Jupiter Holdco. The challenge confirms the number."
+  },
+  {
+   "key": "GB/national/GBCOH10615396>merge:10080864",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register_right CADENT GAS LIMITED 10080864 (formerly National Grid Gas Distribution) matches the head exactly. The target org 9776766 (CADENT GAS LIMITED, 173 mentions under GB-COH-10080864) is the same legal entity. The org's only mention, 'CADENT GAS LIMITED' (raw GB-COH-10615396), does not name the holding company QUADGAS MIDCO LIMITED. The challenge confirms the number.",
+   "path": "agreed",
+   "other": "Right 10080864 is CADENT GAS LIMITED (active, formerly National Grid Gas Distribution), an exact match for the org's only mention, 'CADENT GAS LIMITED'. Wrong 10615396 is QUADGAS MIDCO LIMITED, a holding company above Cadent at the same Ansty office. The target org 9776766 is the same entity, with more than 200 mentions under 10080864 and Cadent spellings. No mention names Quadgas Midco. The challenge confirms the number."
+  },
+  {
+   "key": "GB/national/GBCOH11402733>merge:GBCOH10469788",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "The register lists 10469788 as COUNTRY COURT CARE HOMES 5 LIMITED, the org's exact name. The target org 30974490 has that same name, with its single mention under GB-COH-10469788, so it is the same entity. The org's only mention, 'Country Court Care Homes 5 Limited', does not name KIBO HOLDINGS / KACHRA HOLDINGS (11402733). The challenge confirms 10469788.",
+   "path": "agreed",
+   "other": "Right 10469788 is COUNTRY COURT CARE HOMES 5 LIMITED (active), the exact name of the org. Wrong 11402733 is KIBO HOLDINGS LIMITED (formerly Kachra Holdings), which the PSC register lists as the parent. The target org 30974490 is COUNTRY COURT CARE HOMES 5 LIMITED under GB-COH-10469788, so it is the same entity and not the holdco. The one mention names the care-home company, not Kibo or Kachra. The challenge confirms 10469788."
+  },
+  {
+   "key": "GB/national/GBCOH1162592>merge:GBCOHCE004990",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "CE004990 is THIRD SECTOR LEADERS KIRKLEES on the register (an active CIO), the org's exact head. 1162592 is the charity number, so no related company is involved. The target org 31634396 has the same name, and its mention carried that charity number ('01162592), so it is the same entity, re-keyed earlier. Both of the org's mentions ('Third Sector Leaders', 'Third Sector Leaders Kirklees') name the org itself. The challenge confirms CE004990.",
+   "path": "agreed",
+   "other": "This is a wrong-number verdict, not a related one: 1162592 is the charity number with a zero added. CE004990 is the CIO THIRD SECTOR LEADERS KIRKLEES (active), registered externally as 1162592. Both org mentions ('Third Sector Leaders' and 'Third Sector Leaders Kirklees') carry that same charity number, so both are this CIO. The target org 31634396 is 'Third Sector Leaders Kirklees', already re-keyed from the raw value '01162592, so it is the same body. No company holds the wrong number, so no mention can name one. The challenge confirms CE004990."
+  },
+  {
+   "key": "GB/national/GBCOH11809810>move:GBCOH02334687",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "The register lists 02334687 as CROWN AGENTS BANK LIMITED, which matches the org's name 'Crown Agents Bank'. 11809810 (CAB TECH HOLDCO, dissolved, not in the live snapshot) is a group company. The org's only mention, 'Crown Agents Bank', does not name CAB Tech Holdco. The challenge confirms 02334687.",
+   "path": "agreed",
+   "other": "Right 02334687 is CROWN AGENTS BANK LIMITED (active), which matches the org name 'Crown Agents Bank'. Wrong 11809810 is the dissolved sister company CAB TECH HOLDCO LIMITED, under CAB Payments Holdings plc. It is not in the live snapshot. The one mention names the bank, not CAB Tech Holdco. The challenge confirms 02334687. This is a move, so no other entity is folded in."
+  },
+  {
+   "key": "GB/national/GBCOH11979783>move:GBCOH07493614",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "The register lists 07493614 as INSIGNIA HEALTHCARE GROUP LIMITED, the org's exact name. 11979783 is its subsidiary, INSPIRE TRAINING GROUP (EAST ANGLIA) LTD. The only mention, 'Insignia Healthcare Group Ltd', does not name Inspire Training. The challenge confirms 07493614.",
+   "path": "agreed",
+   "other": "Right 07493614 is INSIGNIA HEALTHCARE GROUP LIMITED (active), the exact name of the org. Wrong 11979783 is its subsidiary INSPIRE TRAINING GROUP (EAST ANGLIA) LTD, whose PSC and corporate officer is Insignia. The one mention is 'Insignia Healthcare Group Ltd' and does not name Inspire Training Group. The challenge confirms 07493614."
+  },
+  {
+   "key": "GB/national/GBCOH12461691>merge:05233487",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "The register lists 05233487 as LEARNING CURVE GROUP LIMITED (formerly LEARNING CURVE (JAA) LIMITED), the org's exact name. The target org 13132633 has the same name. All of its mentions (Learning Curve Group, Learning Curve Group Limited, Learning Curve JAA) are under 05233487 or its PPON, so it is the same entity. The org's only mention, 'Learning Curve Group Limited', does not name BOYD HOLDCO (12461691). The challenge confirms 05233487.",
+   "path": "agreed",
+   "other": "Right 05233487 is LEARNING CURVE GROUP LIMITED (active, previously LEARNING CURVE (JAA) LIMITED), the exact name of the org. Wrong 12461691 is BOYD HOLDCO LIMITED, at the top of the Boyd/Genius chain of parents. The target org 13132633 carries 05233487 under Learning Curve Group names and the former JAA name, plus the group's PPON, so it is the same entity. The org's one mention names Learning Curve Group Limited, not Boyd Holdco. The challenge confirms 05233487."
+  },
+  {
+   "key": "GB/national/GBCOH13020864>move:GBCOHSC473338",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "The register lists SC473338 as NUWE CONSULTING LIMITED (previous names BID TALENT, LIBER RESOURCE, UBER RESOURCE), which matches 'Nuwe Consulting Ltd' exactly. 13020864 is its parent, KEYSTONE EMPLOYMENT GROUP NO.1. The only mention, 'Nuwe Consulting Ltd', does not name Keystone. The reviewer (wrong-number) and the challenger (related-company) differ on the verdict but both give SC473338, so the number is not disputed.",
+   "path": "agreed",
+   "other": "Right SC473338 is NUWE CONSULTING LIMITED (active; earlier names Bid Talent, Liber Resource, Uber Resource), the only company of that name. Wrong 13020864 is KEYSTONE EMPLOYMENT GROUP NO.1 LIMITED, Nuwe's 75%+ PSC parent. The one mention is 'Nuwe Consulting Ltd' and does not name Keystone. The reviewer said wrong-number and the challenger said related-company, but both name SC473338, so neither lowers or disputes the number."
+  },
+  {
+   "key": "GB/national/GBCOH13174233>merge:04161207",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "The register lists 04161207 as HEYWOOD LIMITED, which matches the org's name 'Heywood Ltd'. 13174233 is the acquisition bidco above it, APUS BIDCO. The target org 15095259 carries 04161207 and nearly all its mentions are Heywood / Heywood Limited / Heywood Ltd. Its head, 'Aguila Heywood Ltd', is a misspelling of Aquila Heywood, Heywood's trading brand, so the target is the same entity. The org's only mention, 'Heywood Ltd', does not name APUS BIDCO. The challenge confirms 04161207.",
+   "path": "agreed",
+   "other": "Right 04161207 is HEYWOOD LIMITED (active), which matches the org name 'Heywood Ltd'. Company names are unique, and the wrong number is APUS BIDCO LIMITED at Heywood's Altrincham address, so this is the Heywood group. The target org 15095259 is keyed on 04161207, and 23 of its 24 mentions name Heywood, so it is the same legal entity. One caveat: the target's head is 'Aguila Heywood Ltd', a single mention that names the parent AquilaHeywood Limited (05511334) under the subsidiary's number. That naming problem already exists on the target and this merge does not cause it. It does not make the target a different entity. The org's one mention is 'Heywood Ltd' and does not name Apus Bidco. The challenge confirms 04161207."
+  },
+  {
+   "key": "GB/national/GBCOH13304590>merge:GBCOH08787322",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "The register lists 08787322 as PAGABO LIMITED (formerly ADDED VALUE PORTAL), which matches 'Pagabo Ltd' exactly. The target org 31557760 is PAGABO LIMITED, and all its mentions (Pagabo, Pagabo Limited, under 08787322 or its PPON) are the same entity. The org's only mention, 'Pagabo Ltd', does not name THE 55 GROUP (MIDCO) (13304590). The challenge confirms 08787322.",
+   "path": "agreed",
+   "other": "Right 08787322 is PAGABO LIMITED (active, previously ADDED VALUE PORTAL LIMITED), the exact name of the org 'Pagabo Ltd'. It is not PAGABO GROUP LIMITED 13306964, because the mention is 'Ltd', not 'Group'. Wrong 13304590 is THE 55 GROUP (MIDCO) LIMITED, a holding company. The target org 31557760 carries PAGABO LIMITED, Pagabo Limited and Pagabo under 08787322 and its PPON, so it is the same entity. The one mention does not name The 55 Group, Project 55 Midco or ENSCO 1408. The challenge confirms 08787322."
+  },
+  {
+   "key": "GB/national/GBCOH13384013>merge:01180064",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "The register lists 01180064 as JOHN PULSFORD ASSOCIATES LIMITED, the org's exact name. The target org 18774217 has that same name, with its mention under 01180064, so it is the same entity. The org's only mention, 'John Pulsford Associates ltd', does not name the sister company JPA WORKSPACES (13384013). The challenge confirms 01180064.",
+   "path": "agreed",
+   "other": "Right 01180064 is JOHN PULSFORD ASSOCIATES LIMITED (active), which matches the org name exactly. It is not the shared parent JOHN PULSFORD ASSOCIATES (1974) LIMITED, which has a different name. Wrong 13384013 is JPA WORKSPACES LIMITED, a dormant sister company. The target org 18774217 is 'John Pulsford Associates Limited' under 01180064, so it is the same entity. The one mention names John Pulsford Associates, not JPA Workspaces. The challenge confirms 01180064."
+  },
+  {
+   "key": "GB/national/GBCOH14156358>move:GBCOH11318049",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "The register lists 11318049 as ALLEGRA SERVICES LIMITED (formerly DGS CARE LIMITED), the org's exact name. 14156358 is MREF V CARE HOLDINGS, a related care holding entity. The only mention, 'Allegra Services Limited', does not name MREF V Care Holdings. The challenge confirms 11318049. It is unsure what the relationship is, but that does not affect the number.",
+   "path": "agreed",
+   "other": "Right 11318049 is ALLEGRA SERVICES LIMITED (active, previously DGS CARE LIMITED), the exact and unique name of the org. Wrong 14156358 is MREF V CARE HOLDINGS LIMITED, a Moorfield care holding entity linked to it only by a shared director. That link is thin, but whether it counts as related or wrong-number does not change the move or how the literal is aliased. The one mention is 'Allegra Services Limited' and does not name MREF V or Moorfield. The challenge confirms 11318049."
+  },
+  {
+   "key": "GB/national/GBCOH14405737>merge:GBCOH05027024",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register name of 05027024 is GREAT BRITISH ENERGY - NUCLEAR, with previous names GREAT BRITISH NUCLEAR and BRITISH NUCLEAR FUELS LIMITED. That exactly matches the org head and the target org (GREAT BRITISH NUCLEAR, whose mentions are all GBE-N/GBN under 05027024 or PPON). The only mention, 'GREAT BRITISH ENERGY - NUCLEAR' (raw GB-COH-14405737), uses a name 05027024 took in Jun 2025. 14405737 never held that name: it was Great British Nuclear Limited and then Departmental Nuclear Company, and was dissolved Dec 2025. So the mention does not name the related company. The challenge confirms 05027024.",
+   "path": "agreed",
+   "other": "Register: 05027024 is GREAT BRITISH ENERGY - NUCLEAR (Active, previously GREAT BRITISH NUCLEAR and BRITISH NUCLEAR FUELS LIMITED), which matches the org's only mention exactly. The target org 30914007 is the same body: every one of its mentions is GBE-N or GBN under 05027024 or the same PPON. The org's one mention names GBE-N, not 14405737's own names (Great British Nuclear Limited / Departmental Nuclear Company Limited). 14405737 was renamed in Mar 2024, and GBE-N has been 05027024's name only since Jun 2025, so the mention cannot be the interim vehicle's. The challenge agrees with 05027024."
+  },
+  {
+   "key": "GB/national/GBCOH15049670>merge:GBCOH06211226",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register name of 06211226 is NEW MEDICAL SYSTEMS LIMITED (prev CHARCO 9), which exactly matches the org and the target org, and every target mention is a New Medical Systems / Newmedica spelling. The single mention (raw GB-COH-15049670) names 'New Medical Systems Limited T/A Newmedica', the parent. It does not name LEICESTER NEWMEDICA LIMITED, so it is not the related company. The challenge confirms 06211226.",
+   "path": "agreed",
+   "other": "Register: 06211226 is NEW MEDICAL SYSTEMS LIMITED (Active), and the org's mention names it exactly with its Newmedica trading name. 15049670 is LEICESTER NEWMEDICA LIMITED, a site subsidiary that 06211226 owns 50-75% according to the PSC page. The target org 31542573 has the same head name, and all its mentions are New Medical Systems spellings under 06211226, so it is the same entity. No mention on the org names Leicester Newmedica Limited. The challenge confirms the number."
+  },
+  {
+   "key": "GB/national/GBCOH15301682>merge:GBCOH13919344",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register name of 13919344 is MYC GROUP (UK) LIMITED (prev MYC HOLDINGS LIMITED), which exactly matches the org 'MYC Group (UK) Ltd' and the target 'MYC Group (UK) Limited' (its only mention). The org's single mention (raw GB-COH-15301682) names MYC Group (UK) Ltd, not EMWHY INT LTD, the parent that owns the wrong number. The challenge confirms 13919344.",
+   "path": "agreed",
+   "other": "Register: 13919344 is MYC GROUP (UK) LIMITED (Active, previously MYC HOLDINGS LIMITED), which matches the mention 'MYC Group (UK) Ltd'. 15301682 is EMWHY INT LTD, the 75%+ holding parent at the same Barnet address. The target org 31543696 is 'MYC Group (UK) Limited' under GB-COH-13919344, the same company. The org's only mention names MYC Group, not Emwhy. The challenge confirms 13919344."
+  },
+  {
+   "key": "GB/national/GBCOH1566758>merge:01243967",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register name of 01243967 is MOTT MACDONALD LIMITED, which exactly matches the org and the target org, whose mentions are all Mott MacDonald spellings under 01243967 or its PPON. The single mention (raw GB-COH-1566758) names 'Mott Macdonald Limited', not CAMBRIDGE EDUCATION LIMITED, the group subsidiary that owns 01566758. The challenge confirms 01243967.",
+   "path": "agreed",
+   "other": "Register: 01243967 is MOTT MACDONALD LIMITED (Active), the exact name on the org's one mention. 01566758 is CAMBRIDGE EDUCATION LIMITED, a group subsidiary, and no mention on the org names Cambridge Education. The target org 11550219 holds about 100 Mott MacDonald mentions under GB-COH-01243967, the bare 01243967 and the Mott MacDonald PPON, so it is the same legal entity. Its bare identifier format is common among the digest's targets (29 of 47). The challenge does not dispute the number."
+  },
+  {
+   "key": "GB/national/GBCOH2051987>move:GBCOH06016995",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register name of 06016995 is CARELINE LIFESTYLES (UK) LTD (prev CARELINE LIFESYTLES (UK) LTD, CARELINE LIFESTYLES LIMITED), an exact match to the org head. The single mention (raw GB-COH-2051987) names CARELINE LIFESTYLES (UK) LTD, not DURHAM CARE LINE LIMITED, the sister company that owns the wrong number. The challenge only restates the sister link (shared registered office) and confirms 06016995.",
+   "path": "agreed",
+   "other": "Register: 06016995 is CARELINE LIFESTYLES (UK) LTD (Active, previous names include the misspelling CARELINE LIFESYTLES (UK) LTD and CARELINE LIFESTYLES LIMITED), an exact match for the org's head and only mention. 02051987 is DURHAM CARE LINE LIMITED, a sister company in the same Sharma family. The mention does not name Durham Care Line. The rationale and the challenge cite different Newcastle addresses, but both agree on 06016995, and the challenge does not lower it."
+  },
+  {
+   "key": "GB/national/GBCOH2202240>merge:RC000503",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register name of RC000503 is THE ROYAL NATIONAL LIFEBOAT INSTITUTION, the royal-charter body, which matches the org and the target org 'Royal National Lifeboat Institution' (raw RC000503), so both are the same legal entity. The single mention (raw GB-COH-2202240) names the Institution itself, not R.N.L.I. (SALES) LIMITED, the trading subsidiary that owns 02202240. The challenge confirms RC000503.",
+   "path": "agreed",
+   "other": "Register: RC000503 is THE ROYAL NATIONAL LIFEBOAT INSTITUTION (Active, royal charter body), which matches the org's mention. 02202240 is R.N.L.I. (SALES) LIMITED, the charity's trading subsidiary, and the org's only mention names the Institution, not RNLI (Sales). The target org 10263087 is 'Royal National Lifeboat Institution' under RC000503, the same body. The challenge confirms RC000503."
+  },
+  {
+   "key": "GB/national/GBCOH2234990>move:GBCOHFC008606",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register name of FC008606 is B & M INVESTMENTS LIMITED, matching the org 'B&M Investments'. A CH search shows the only exact-name records are this Irish company: FC008606, OE003115, and UK establishment BR001677 at Old Town Court, 70 Queensway, Hemel Hempstead, which is COLLEYCARE's group address. That ties it to the care group whose subsidiary's number the mention carried. The single mention (raw GB-COH-2234990) names B&M Investments, not COLLEYCARE LIMITED, and the challenge confirms FC008606.",
+   "path": "agreed",
+   "other": "Register: FC008606 is B & M INVESTMENTS LIMITED (Active Irish overseas company), matching 'B&M Investments'. I checked the CH search because the name is generic. FC008606, OE003115 and BR001677 are the only plain 'B & M INVESTMENTS LIMITED' and are the same Irish company. Its UK establishment BR001677 is at Old Town Court, 70 Queensway, Hemel Hempstead, the address of COLLEYCARE LIMITED, the B & M care-group company whose number the org carries now. The other hits are differently named, not exact namesakes: B&M Investments Group (Grimsby), NFK (Norwich) and (Midlands). The mention does not name Colleycare. The challenge confirms the number."
+  },
+  {
+   "key": "GB/national/GBCOH4383479>move:GBCOH07276039",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register name of 07276039 is EDEN SUPPORTED LIVING LIMITED (prev PIMCO 2857 (CARECO) LIMITED), an exact match to the org 'Eden Supported Living Ltd'. The single mention (raw GB-COH-4383479) names Eden Supported Living Ltd, not HOUSING AND SUPPORT SOLUTIONS LIMITED, the sister company at the same Newark address that owns 04383479. The challenge confirms 07276039.",
+   "path": "agreed",
+   "other": "Register: 07276039 is EDEN SUPPORTED LIVING LIMITED (Active, previously PIMCO 2857 (CARECO) LIMITED), an exact match for the org's head and only mention. 04383479 is HOUSING AND SUPPORT SOLUTIONS LIMITED, a sister company at Harlaxton House, Newark, and no mention names it. The neighbouring Eden Supported Housing 07276049 is a differently named sister, and the org's name is 'Living', not 'Housing'. The challenge confirms 07276039."
+  },
+  {
+   "key": "GB/national/GBCOH7992282>move:GBCOH07992281",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Register name of 07992281 is SPACESTOR LIMITED, matching the org 'Spacestor'. The single mention (raw GB-COH-7992282) names Spacestor, not TRIESTE GROUP ONE LTD / TABLE PORTFOLIO LIMITED, which owns 07992282. The challenge only changes the relationship from sister to parent (Trieste is Spacestor's 75%+ owner) and explicitly says the verdict and 07992281 stand.",
+   "path": "agreed",
+   "other": "Register: 07992281 is SPACESTOR LIMITED (Active), which matches the org's only mention, 'Spacestor'. 07992282 is TRIESTE GROUP ONE LTD (formerly Table Portfolio Limited), and no mention names it. The challenge reclassifies Trieste as Spacestor's 75%+ PSC parent rather than a sister, but explicitly keeps 07992281 as the org's own number, so it does not lower or dispute it."
+  },
+  {
+   "key": "GB/national/GBCOHBR016481>merge:GBCOHBR018892",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "Neither number is in the snapshot, so I checked the CH page. BR018892 is CACEIS BANK, UK BRANCH, open since 20 Oct 2016 at Broadwalk House, a UK establishment of CACEIS BANK FC033805. That matches the org 'CACEIS Bank-UK Branch' and the target 'CACEIS BANK UK Branch' (raw GB-COH-BR018892), so they are the same entity. The single mention (raw GB-COH-BR016481) names CACEIS Bank-UK Branch, not CACEIS Bank Luxembourg, whose closed London branch owns BR016481. The challenge confirms BR018892.",
+   "path": "agreed",
+   "other": "These numbers are not in the snapshot, so I checked CH. BR018892 is CACEIS BANK, UK BRANCH (Open since 20 Oct 2016, Broadwalk House, a UK establishment of CACEIS BANK FC033805), which matches 'CACEIS Bank-UK Branch'. BR016481 is the closed CACEIS BANK LUXEMBOURG - LONDON BRANCH (of FC031414) at the same address: the branch of a predecessor bank that was absorbed into CACEIS Bank, so the successor is the named entity, not a different one. The target org 31570520 is 'CACEIS BANK UK Branch' under BR018892, the same branch. The org's mention does not name CACEIS Bank Luxembourg. The challenge confirms BR018892."
+  },
+  {
+   "key": "GB/national/GBCOHIP14044R>move:GBCOH04487182",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "register_right 04487182 is IDS TRUSTEES LIMITED (Active), an exact match for the head and for the only mention. The wrong number IP14044R is the parent, INDUSTRIAL DWELLINGS SOCIETY(1885)LIMITED. The one mention ('IDS TRUSTEES LIMITED', raw GB-COH-IP14044R) names the trustee company, not the Industrial Dwellings Society. The challenge confirms 04487182.",
+   "path": "agreed",
+   "other": "(1) In the snapshot, 04487182 is IDS TRUSTEES LIMITED, Active, which is the org's name exactly. IP14044R is the parent, INDUSTRIAL DWELLINGS SOCIETY(1885)LIMITED. (3) The only mention is 'IDS TRUSTEES LIMITED' (raw GB-COH-IP14044R). It names the trustee company, not the society. (4) The challenge confirms 04487182 and does not lower it. I found nothing pointing to a namesake or another successor."
+  },
+  {
+   "key": "GB/national/GBCOHOC423092>merge:OC416421",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "register_right OC416421 is PLEXUS LEGAL LLP (in administration), an exact match. Company names are unique on the register, so this is the org's own registration. Target org 17616850 is 'Plexus Legal LLP' with one mention under raw OC416421, so it is the same entity. The org's only mention ('Plexus Legal LLP', raw GB-COH-OC423092) does not name the sister company PLEXUS NORTH LLP that OC423092 belongs to. The challenge confirms OC416421.",
+   "path": "agreed",
+   "other": "(1) In the snapshot, OC416421 is PLEXUS LEGAL LLP, which is the org's name exactly. It is in administration, but it is the only registration of that name. I fetched the CH page for OC423092 because it is not in the snapshot: it is PLEXUS NORTH LLP, dissolved 16 Apr 2025, with no previous names, so it was never Plexus Legal. That makes it a sister LLP. (2) The target org 17616850 is 'Plexus Legal LLP' under OC416421, the same legal entity. (3) The only mention is 'Plexus Legal LLP' and none names Plexus North. (4) The challenge confirms OC416421."
+  },
+  {
+   "key": "GB/national/GBCOHOC423288>merge:GBCOHRS008009",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "register_right RS008009 is LONGHURST GROUP LIMITED (Active), an exact match for the head. Target org 31647922 is 'Longhurst Group Limited' with one mention under raw GB-COH-RS008009, so it is the same registered society. The GBCOH prefix on its identifier is only formatting. The org's one mention ('Longhurst Group Limited', raw GB-COH-OC423288) does not name the controlled LLP that OC423288 belongs to (DHG LG LLP / Evera Homes LLP). The challenge confirms RS008009.",
+   "path": "agreed",
+   "other": "(1) In the snapshot, RS008009 is LONGHURST GROUP LIMITED, Active, which is the org's name exactly. I fetched the CH page for OC423288 because it is not in the snapshot: it is DHG LG LLP (formerly EVERA HOMES LLP 2018-2023), dissolved 18 Mar 2025, and it was never named Longhurst. It is a development LLP that Longhurst controls. (2) The target org 31647922 is 'Longhurst Group Limited' under RS008009, the same entity. (3) The only mention is 'Longhurst Group Limited' and none names DHG LG or Evera Homes. (4) The challenge confirms RS008009."
+  },
+  {
+   "key": "GB/national/GBCOHSC242073>move:GBCOHSC288033",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "register_right SC288033 is TSQUARED P3 LIMITED (Active; previous name TSQUARED S4 LIMITED). 'T-Squared P3 Ltd' is a spelling variant of that name. The wrong number SC242073 is the sister company TSQUARED P1 LIMITED. The only mention ('T-Squared P3 Ltd', raw GB-COH-SC242073) says P3, not P1, so it does not name the sister. The challenge confirms SC288033.",
+   "path": "agreed",
+   "other": "(1) In the snapshot, SC288033 is TSQUARED P3 LIMITED, Active (previously TSQUARED S4 LIMITED). That is a spelling variant of 'T-Squared P3 Ltd'. The wrong number SC242073 is the sister TSQUARED P1 LIMITED, and the distinct P1/P3 suffixes rule out confusion between the two. (3) The only mention is 'T-Squared P3 Ltd', which names P3, not P1. (4) The challenge confirms SC288033."
+  },
+  {
+   "key": "GB/national/OC376452>move:05507863",
+   "decision": "execute",
+   "corrected_number": null,
+   "reason": "register_right 05507863 is INTO UNIVERSITY PARTNERSHIPS LIMITED (Active). A Companies House search for the name returns only this company, so 'Into University Partnerships' is this org. The only mention ('Into University Partnerships', raw OC376452) names the parent company, not the vehicle IUP 2 LLP that carries the wrong number. The challenge confirms 05507863 and disputes only the LLP.",
+   "path": "agreed",
+   "other": "(1) In the snapshot, 05507863 is INTO UNIVERSITY PARTNERSHIPS LIMITED, Active. That is the org's name 'Into University Partnerships' plus the Limited suffix. The wrong number OC376452 is IUP 2 LLP, a vehicle whose designated member is this company. (3) The only mention is 'Into University Partnerships', not 'IUP 2 LLP', so the move carries no mention of the LLP. (4) The challenge confirms 05507863 as the named parent's own number and does not lower it."
+  }
+ ]
+}
