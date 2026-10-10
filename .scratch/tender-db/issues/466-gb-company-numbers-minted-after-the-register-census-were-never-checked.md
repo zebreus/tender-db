@@ -1,9 +1,35 @@
 # 466 — GB company numbers minted after 452's register census were never checked, and the census cannot be re-run
 
-Status: ready-for-agent — UNIT 1 DONE, UNIT 3's JOIN RUN 2026-10-10. NEXT:
-- unit 3's register pages for the absent numbers (`ch_fetch.py`);
-- unit 4's reviewer + challenger over the candidates below, with the 34 residue cases;
-- unit 2, decide the 83 `related` numbers.
+Status: ready-for-agent — UNITS 1, 3 AND 4 DONE 2026-10-10: 514 verdicts POSTed as cohort `466-census-2026-10-10`
+(recorded 514, stale 0, 417 served statuses changed). The rekey dry run (job 2111) plans 175 merges and 81 moves.
+NEXT: unit 4's last step, the 453-shape register review of those 256 plan rows; then the wet rekey; then unit 2 (the 83
+`related` numbers) and the Verify.
+- **Unit 4, the review** (`wf_90b6a9e0-d81`, 45 agents, about 4.5 M tokens).
+  - The reviewer and challenger read every one of the 535 cases (`452-census/cases-466-2026-10-10.json`) against
+    `rubric.md`. An adjudicator decided every disagreement and every residue case: 47 adjudicated, 488 agreed.
+  - Verdicts (`452-census/verdicts-466-2026-10-10.json`): **355 wrong** (284 with the right number found), 97 right,
+    62 related, 21 unclear (not posted).
+
+    | kind | wrong | related | right | unclear |
+    |---|---|---|---|---|
+    | live-mismatch (185) | 49 | 49 | 80 | 7 |
+    | never-issued (257) | 257 | | | |
+    | absent-mismatch (59) | 48 | 8 | 2 | 1 |
+    | 452 residue (34) | 1 | 5 | 15 | 13 |
+
+  - The residue: 21 of 34 settled; 13 stay unclear with the reason written in the verdict.
+  - Register pages: Companies House blocked the box's IP with 403s after about 480 fetches, so the last 54 were
+    fetched from the session container. A census run should keep its page fetches under a few hundred per IP.
+- **POST.** `452-census/identifier-verdicts-466-2026-10-10.json` (`verdict_post.py`): recorded 514, stale 0,
+  changed 417. From the next planner run or fold, the 355 wrong numbers are withheld from R2/E0/R3, the altid arm
+  and the resolver's canonical bind, and the 417 orgs serve `register_mismatch` or `related_entity`.
+- **Rekey dry run, job 2111** (`466-census/rekey-plan-2111.json`). 469 wrong verdicts carry a right number, across
+  452 and 466.
+  - Not acted on: 170 gone (applied by 453), 10 not high, 3 unkeyed.
+  - Denied: 25 names, 1 legal form, 1 withheld target, 1 pending move, 1 destination verdict, 1 keep verdict.
+  - Plan: **175 merges + 81 moves**. A merge deletes the wrong-number org into the right number's org, so 453's step
+    applies before the wet run: an adversarial register review of every right number in the plan. 453's review held
+    2 of 158 whose right number was itself wrong.
 - **Unit 3, the join.**
   - Input: the public listing above the watermark (`cursor=31590759`), read 2026-10-10. 10,150 GB national orgs, up
     from 8,057 on 10-01: the dailies kept minting. Saved on the box as `/root/census/gb-orgs-above-31590759.jsonl`.
