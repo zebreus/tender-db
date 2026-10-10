@@ -8974,7 +8974,48 @@ impl Supervisor {
                     "edges_error": r.edges_error,
                     "stopped": r.stopped,
                 });
+                // Issue 469 unit 1: every other GB register paired with a PPON, by
+                // scheme — measured, never planned.
+                let registry_pairs: serde_json::Map<String, serde_json::Value> = r
+                    .registry_pairs
+                    .iter()
+                    .map(|(scheme, c)| {
+                        (
+                            scheme.clone(),
+                            serde_json::json!({
+                                "literal_pairs": c.literal_pairs,
+                                "pairs": c.pairs,
+                                "already_one": c.already_one,
+                                "both_distinct": c.both_distinct,
+                                "no_target_registry": c.no_target_registry,
+                                "no_target_ppon": c.no_target_ppon,
+                                "no_target_both": c.no_target_both,
+                                "multi_target": c.multi_target,
+                                "ppon_beside_two_values": c.ppon_beside_two_values,
+                                "ppon_beside_coh": c.ppon_beside_coh,
+                            }),
+                        )
+                    })
+                    .collect();
+                let registry_sample: Vec<serde_json::Value> = r
+                    .registry_sample
+                    .iter()
+                    .map(|x| {
+                        serde_json::json!({
+                            "scheme": x.scheme,
+                            "registry": x.registry_literal,
+                            "registry_org": x.registry_org,
+                            "registry_name": x.registry_name,
+                            "ppon": x.ppon_literal,
+                            "ppon_org": x.ppon_org,
+                            "ppon_name": x.ppon_name,
+                            "notices": x.notices,
+                        })
+                    })
+                    .collect();
                 let listings = serde_json::json!({
+                    "registry_pairs": registry_pairs,
+                    "registry_sample": registry_sample,
                     // The planned keys, sorted and uncapped: the set a wet run
                     // holds its live plan against (after a wet run, the residual).
                     "pairs": pairs,
@@ -9044,6 +9085,17 @@ impl Supervisor {
                         ""
                     }
                 );
+                // Issue 469 unit 1: each register's split pairs, measured only.
+                let registries: Vec<String> = r
+                    .registry_pairs
+                    .iter()
+                    .map(|(scheme, c)| format!("{scheme} {} of {} two orgs", c.both_distinct, c.pairs))
+                    .collect();
+                let summary = if registries.is_empty() {
+                    summary
+                } else {
+                    format!("{summary}; other registers paired with a PPON (issue 469, not planned): {}", registries.join(", "))
+                };
                 if dry_run {
                     return Ok(format!(
                         "match-org-identifiers altid (issue 448) DRY RUN — plan recorded, nothing \

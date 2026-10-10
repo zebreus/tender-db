@@ -5611,6 +5611,49 @@ impl AltIdListing {
     }
 }
 
+/// Issue 469 unit 1: one GB register's pairs with a PPON, as the altid harvest saw them.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct RegistryPairCounts {
+    /// Distinct (register value, PPON) literal pairs on GB parties, the PPON keyed or not.
+    pub literal_pairs: u64,
+    /// Distinct (register identity, keyed PPON) pairs — what the owner classes count.
+    pub pairs: u64,
+    /// One org already serves both sides.
+    pub already_one: u64,
+    /// Both sides stand, as two different GB orgs — the split this issue is about.
+    pub both_distinct: u64,
+    /// No org carries the register identity (the PPON side stands).
+    pub no_target_registry: u64,
+    /// No org carries the PPON (the register side stands).
+    pub no_target_ppon: u64,
+    /// Neither side stands.
+    pub no_target_both: u64,
+    /// Either side is held by two or more orgs.
+    pub multi_target: u64,
+    /// Distinct PPONs published beside two or more values of this scheme on one party.
+    pub ppon_beside_two_values: u64,
+    /// Distinct PPONs published beside this scheme AND a company number on one party
+    /// (the charitable-company shape).
+    pub ppon_beside_coh: u64,
+}
+
+/// Issue 469 unit 1: one `both_distinct` registry pair, for review.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RegistrySample {
+    pub scheme: String,
+    pub registry_literal: String,
+    pub registry_org: i64,
+    pub registry_name: String,
+    pub ppon_literal: String,
+    pub ppon_org: i64,
+    pub ppon_name: String,
+    /// Up to three witness notices' publication ids.
+    pub notices: Vec<String>,
+}
+
+/// How many `both_distinct` registry pairs per scheme the altid report samples.
+pub const REGISTRY_SAMPLE_PER_SCHEME: usize = 30;
+
 /// What the issue-448 altid planner found. Every both-distinct pair lands in
 /// exactly one of the plan, a denial, or the conflicts:
 /// `both_distinct == plan_pairs + denied_pairs() + conflicts`.
@@ -5646,6 +5689,14 @@ pub struct AltIdMergeReport {
     pub unkeyed_scheme: std::collections::BTreeMap<String, u64>,
     /// Distinct keyed (company number, PPON) pairs — the graph's edges.
     pub pairs_seen: u64,
+    /// Issue 469 unit 1 (measurement only, nothing is planned from it): every other GB
+    /// register (NHS, UKPRN, CHC, MPR, SC, NIC…) paired with a keyed PPON on the same
+    /// party, by scheme. The register side is the org identity the resolver mints — the
+    /// value's uppercase alphanumerics — matched exactly against `organizations`.
+    pub registry_pairs: std::collections::BTreeMap<String, RegistryPairCounts>,
+    /// Up to [`REGISTRY_SAMPLE_PER_SCHEME`] `both_distinct` registry pairs per scheme,
+    /// with both orgs' names, for review.
+    pub registry_sample: Vec<RegistrySample>,
     // ---- The owners.
     /// Identifier-bearing org rows walked.
     pub scanned: u64,
@@ -21230,6 +21281,18 @@ impl Db {
         let mut padded: HashSet<(String, String)> = HashSet::new();
         let mut condemned: HashSet<(String, String)> = HashSet::new();
         let mut unkeyed: HashSet<(String, String)> = HashSet::new();
+        // Issue 469 unit 1: (scheme, register identity, PPON key) → the pair's literals
+        // and witness notices; per scheme, the distinct literal pairs and the PPONs seen
+        // beside two values of the scheme or beside a company number.
+        struct RegPair {
+            registry_literal: String,
+            ppon_literal: String,
+            witnesses: BTreeSet<i64>,
+        }
+        let mut reg_pairs: BTreeMap<(String, String, String), RegPair> = BTreeMap::new();
+        let mut reg_literal: HashSet<(String, String, String)> = HashSet::new();
+        let mut reg_two_values: HashSet<(String, String)> = HashSet::new();
+        let mut reg_beside_coh: HashSet<(String, String)> = HashSet::new();
         // Prepared once and re-bound per notice: two statements per FTS notice,
         // and no re-prepare of either.
         let mut ids_stmt = conn.prepare(ALTID_PARTY_IDS_SQL).await?;
@@ -21268,6 +21331,8 @@ impl Db {
                 let gb = country.as_deref().map(register_jurisdiction) == Some("GB");
                 let mut coh: Vec<(i64, String, Side)> = Vec::new();
                 let mut ppon: Vec<(i64, String, Side)> = Vec::new();
+                // Issue 469: (scheme, identity, literal) of every other GB register row.
+                let mut regs: Vec<(String, String, String)> = Vec::new();
                 for (ordinal, scheme, value) in ids {
                     // The publisher's scheme decides the side. Every other
                     // register is counted and left alone — `altid_pair_key`
@@ -21282,6 +21347,16 @@ impl Db {
                                     .unkeyed_scheme
                                     .entry(other.unwrap_or("(none)").to_owned())
                                     .or_default() += 1;
+                                if let Some(scheme) = other {
+                                    let identity: String = value
+                                        .chars()
+                                        .filter(char::is_ascii_alphanumeric)
+                                        .map(|c| c.to_ascii_uppercase())
+                                        .collect();
+                                    if !identity.is_empty() {
+                                        regs.push((scheme.to_owned(), identity, value.clone()));
+                                    }
+                                }
                             }
                             continue;
                         }
@@ -21329,6 +21404,43 @@ impl Db {
                         }
                     }
                     continue;
+                }
+                // Issue 469 unit 1: pair every other register with each PPON on the party.
+                // Measured only — none of it enters the graph below.
+                if !regs.is_empty() {
+                    let keyed_ppons: Vec<(&String, &String)> = ppon
+                        .iter()
+                        .filter_map(|(_, l, s)| match s {
+                            Side::E1(k) => Some((l, k)),
+                            _ => None,
+                        })
+                        .collect();
+                    let mut values_of: BTreeMap<&str, BTreeSet<&str>> = BTreeMap::new();
+                    for (scheme, identity, _) in &regs {
+                        values_of.entry(scheme.as_str()).or_default().insert(identity.as_str());
+                    }
+                    for (scheme, identity, literal) in &regs {
+                        for (_, pl, _) in &ppon {
+                            reg_literal.insert((scheme.clone(), literal.clone(), pl.clone()));
+                        }
+                        for (pl, pk) in &keyed_ppons {
+                            if values_of.get(scheme.as_str()).is_some_and(|v| v.len() > 1) {
+                                reg_two_values.insert((scheme.clone(), (*pk).clone()));
+                            }
+                            if !coh.is_empty() {
+                                reg_beside_coh.insert((scheme.clone(), (*pk).clone()));
+                            }
+                            reg_pairs
+                                .entry((scheme.clone(), identity.clone(), (*pk).clone()))
+                                .or_insert_with(|| RegPair {
+                                    registry_literal: literal.clone(),
+                                    ppon_literal: (*pl).clone(),
+                                    witnesses: BTreeSet::new(),
+                                })
+                                .witnesses
+                                .insert(notice);
+                        }
+                    }
                 }
                 let e1 = |v: &[(i64, String, Side)]| -> BTreeSet<String> {
                     v.iter()
@@ -21402,6 +21514,12 @@ impl Db {
         }
         let mut owners: HashMap<(&'static str, String), Vec<Owner>> = HashMap::new();
         let withheld = withheld_identifier_orgs(conn).await?;
+        // Issue 469 unit 1: the register identities and PPON keys its pairs name, and
+        // who holds them. Kept apart from `owners` so no planner count moves.
+        let reg_identities: HashSet<&str> = reg_pairs.keys().map(|(_, id, _)| id.as_str()).collect();
+        let reg_ppon_keys: HashSet<&str> = reg_pairs.keys().map(|(_, _, pk)| pk.as_str()).collect();
+        let mut reg_owners: HashMap<String, Vec<i64>> = HashMap::new();
+        let mut reg_ppon_owners: HashMap<String, Vec<i64>> = HashMap::new();
         {
             let mut after = 0i64;
             loop {
@@ -21429,6 +21547,11 @@ impl Db {
                     }
                     let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
                     let literal = text(&row, 3);
+                    // Issue 469: a register identity keys nothing, so it is matched
+                    // exactly, before the key test below drops it.
+                    if kind == "national" && reg_identities.contains(literal.as_str()) && !withheld.contains(&id) {
+                        reg_owners.entry(literal.clone()).or_default().push(id);
+                    }
                     // Issue 470: a folded row owns its key here too. Beside
                     // the register spelling's row it makes the key
                     // `multi_target` (refused); alone it is a target the
@@ -21437,6 +21560,9 @@ impl Db {
                     else {
                         continue;
                     };
+                    if scheme == "GB:ppon" && reg_ppon_keys.contains(key.as_str()) && !withheld.contains(&id) {
+                        reg_ppon_owners.entry(key.clone()).or_default().push(id);
+                    }
                     let wanted = match scheme {
                         "GB:coh" => coh_partners.contains_key(key.as_str()),
                         "GB:ppon" => ppon_partners.contains_key(key.as_str()),
@@ -21458,6 +21584,68 @@ impl Db {
                 if !any {
                     break;
                 }
+            }
+        }
+
+        // Issue 469 unit 1: class every registry pair by who holds each side, and
+        // sample the split ones per scheme with both orgs' names.
+        for (scheme, _, _) in &reg_literal {
+            report.registry_pairs.entry(scheme.clone()).or_default().literal_pairs += 1;
+        }
+        for (scheme, _) in &reg_two_values {
+            report.registry_pairs.entry(scheme.clone()).or_default().ppon_beside_two_values += 1;
+        }
+        for (scheme, _) in &reg_beside_coh {
+            report.registry_pairs.entry(scheme.clone()).or_default().ppon_beside_coh += 1;
+        }
+        let mut sampled: HashMap<String, usize> = HashMap::new();
+        for ((scheme, identity, pk), pair) in &reg_pairs {
+            let none = Vec::new();
+            let r = reg_owners.get(identity).unwrap_or(&none);
+            let p = reg_ppon_owners.get(pk).unwrap_or(&none);
+            let counts = report.registry_pairs.entry(scheme.clone()).or_default();
+            counts.pairs += 1;
+            match (r.as_slice(), p.as_slice()) {
+                ([], []) => counts.no_target_both += 1,
+                ([], [_]) => counts.no_target_registry += 1,
+                ([_], []) => counts.no_target_ppon += 1,
+                ([a], [b]) if a == b => counts.already_one += 1,
+                ([a], [b]) => {
+                    counts.both_distinct += 1;
+                    let n = sampled.entry(scheme.clone()).or_default();
+                    if *n < REGISTRY_SAMPLE_PER_SCHEME {
+                        *n += 1;
+                        let name_of = |id: i64| async move {
+                            let mut rows = conn
+                                .query("SELECT name FROM organizations WHERE id = ?", (Value::Integer(id),))
+                                .await?;
+                            Ok::<String, turso::Error>(match rows.next().await? {
+                                Some(row) => opt_text_of(&row, 0).unwrap_or_default(),
+                                None => String::new(),
+                            })
+                        };
+                        let mut notices = Vec::new();
+                        for notice in pair.witnesses.iter().take(3) {
+                            let mut rows = conn
+                                .query("SELECT publication_id FROM notices WHERE id = ?", (Value::Integer(*notice),))
+                                .await?;
+                            if let Some(row) = rows.next().await? {
+                                notices.push(text(&row, 0));
+                            }
+                        }
+                        report.registry_sample.push(RegistrySample {
+                            scheme: scheme.clone(),
+                            registry_literal: pair.registry_literal.clone(),
+                            registry_org: *a,
+                            registry_name: name_of(*a).await?,
+                            ppon_literal: pair.ppon_literal.clone(),
+                            ppon_org: *b,
+                            ppon_name: name_of(*b).await?,
+                            notices,
+                        });
+                    }
+                }
+                _ => counts.multi_target += 1,
             }
         }
 

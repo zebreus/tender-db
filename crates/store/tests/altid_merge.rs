@@ -1848,3 +1848,48 @@ async fn the_alias_never_binds_to_a_withheld_company_number_org() {
     assert_ne!(ids[0], 2, "refused: the number is not trusted to name an owner");
     assert_eq!((c.asked, c.bound, c.refused, c.refused_no_owner), (1, 0, 1, 1), "{c:?}");
 }
+
+/// Issue 469 unit 1: the other GB registers are measured, never planned. Leeds Teaching
+/// Hospitals publishes its NHS code and its PPON on one party, and each keys its own org:
+/// counted `both_distinct` under `GB-NHS`, sampled with both names, and left alone. A
+/// UKPRN pair one org already serves, a PPON beside two charity numbers, and the
+/// company-number control beside them all read as before.
+#[tokio::test]
+async fn an_nhs_ppon_pair_is_counted_and_never_planned() {
+    let b = bed("registry-pairs").await;
+    // The control: a company-number pair, planned exactly as without the registers.
+    b.split(100, (2, COH_A, "Harvey Nash Ltd"), (1, PPON_P, "HARVEY NASH LTD")).await;
+    // Leeds: NHS-first on one notice (bound to the NHS org), PPON-first on the next.
+    b.org(10, "GB-NHS-RR8", "Leeds Teaching Hospitals NHS Trust").await;
+    b.org(11, PPON_Q, "Leeds Teaching Hospitals NHS Trust").await;
+    b.notice(200, "fts:ocds-1.1").await;
+    b.party(200, "L1", Some(10), "GB", &["GB-NHS-RR8", PPON_Q]).await;
+    b.notice(201, "fts:ocds-1.1").await;
+    b.party(201, "L2", Some(11), "GB", &[PPON_Q]).await;
+    // Bradford College: one org already serves its UKPRN, and no org carries its PPON.
+    b.org(20, "GB-UKPRN-10000840", "Bradford College").await;
+    b.notice(300, "fts:ocds-1.1").await;
+    b.party(300, "B1", Some(20), "GB", &["GB-UKPRN-10000840", PPON_R]).await;
+    // A party with two charity numbers beside one PPON.
+    b.notice(400, "fts:ocds-1.1").await;
+    b.party(400, "C1", None, "GB", &["GB-CHC-216250", "GB-CHC-1234567", PPON_S]).await;
+    b.mention(400, "ORG-C1", 20, "GB", Some("GB-CHC-216250"), "Barnardo's").await;
+
+    let r = b.plan().await;
+    assert_eq!(r.plan_pairs, 1, "only the company-number pair is planned: {r:#?}");
+    assert_eq!((r.pairs_seen, r.both_distinct), (1, 1), "the COH counters see no register");
+    let nhs = r.registry_pairs.get("GB-NHS").expect("NHS counted");
+    assert_eq!((nhs.literal_pairs, nhs.pairs, nhs.both_distinct), (1, 1, 1));
+    let ukprn = r.registry_pairs.get("GB-UKPRN").expect("UKPRN counted");
+    assert_eq!((ukprn.pairs, ukprn.no_target_ppon, ukprn.both_distinct), (1, 1, 0));
+    let chc = r.registry_pairs.get("GB-CHC").expect("CHC counted");
+    assert_eq!((chc.pairs, chc.ppon_beside_two_values, chc.no_target_both), (2, 1, 2));
+    assert_eq!(r.registry_sample.len(), 1);
+    let s = &r.registry_sample[0];
+    assert_eq!(
+        (s.scheme.as_str(), s.registry_org, s.ppon_org, s.registry_literal.as_str()),
+        ("GB-NHS", 10, 11, "GB-NHS-RR8")
+    );
+    assert_eq!(s.registry_name, "Leeds Teaching Hospitals NHS Trust");
+    assert_eq!(s.notices, vec!["pub-200".to_owned()]);
+}
