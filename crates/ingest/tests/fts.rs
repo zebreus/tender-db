@@ -630,6 +630,7 @@ async fn a_supplier_the_altid_arm_merged_stays_one_org_through_the_next_fold_and
         pair_key: ingest::crosswalk::altid_pair_key,
         key: ingest::crosswalk::canonical_key_flat,
         mention_key: ingest::crosswalk::mention_key,
+        register_identity: ingest::project::normalise_identifier,
         condemns: ingest::idgate::condemns,
         consortium: ingest::crosswalk::consortium_name,
         legal_family: ingest::crosswalk::gb_legal_family,
