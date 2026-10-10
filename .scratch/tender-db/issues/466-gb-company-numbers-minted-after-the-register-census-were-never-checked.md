@@ -276,3 +276,34 @@ This reads unit 4, the last one.
 - **done**: the second figure is above 0 and a `466-census-…` cohort is in the list, meaning the incremental census's
   verdicts are posted. The settled residue rides the same cohort on ids at or below 31,590,759, so the first figure
   grows by those too.
+
+## Unit 2 — decided (a), design (2026-10-10)
+
+**Why (a).** A `related` number is a real company's, the named org's parent, subsidiary or sister (rubric). Today:
+- **Matchers.** `withheld_identifier_orgs` reads `verdict = 'wrong'` only, so a `related` org still joins the
+  R2/E0/R3 groups, the altid arm's owners and the resolver's canonical bind under that company's number. Grouped
+  there, it folds into the very company the rubric keeps apart.
+- **Served status.** `related_entity`, but the org keeps the number, and `?identifier=` for the named company's
+  own number does not find it.
+
+90 of the 164 `related` verdicts are high and name the org's own number. 452: 102 related (53 high with a
+number, 10 high without, 30 medium with, 9 medium without); 466: 62 (37 / 4 / 14 / 7).
+
+**Build (store, `canonical.rs`):**
+1. **Withhold.** `withheld_identifier_orgs` also reads `verdict = 'related' AND applied_at IS NULL`. The related
+   org leaves the matchers until it is re-keyed. Once re-keyed it no longer carries the number, and a later carrier
+   of it (the related company itself) must not be withheld by a verdict about someone else, hence `applied_at IS NULL`.
+2. **Re-key.** The `rule: rekey` arm selects `verdict IN ('wrong','related') AND correct_identifier IS NOT NULL`,
+   with the same high-only, name, legal-form, withheld-target and destination gates. For a related verdict the
+   merge target is the named company's own org, which is exactly the merge the rubric wants and not the parent.
+3. **Never alias.** The resolver's re-keyed alias reads `applied_literal IS NOT NULL AND verdict = 'wrong'`. A
+   later mention of the related literal is the related company's, so it must not reach the re-keyed org.
+4. **Pin** `a_related_verdict_re_keys_but_its_number_is_never_aliased` in `crates/store/tests/rekey.rs`: the related
+   org merges into its own number's org; a later mention of the related literal under the related company's name
+   does not reach that org; and before the re-key, another spelling of the related number does not bind to the
+   withheld org under a different name.
+5. **Docs.** `docs/operations.md` beside the rekey rule and `POST /admin/identifier-verdicts`.
+
+**Then:** dry rekey, a register review of the related rows in the plan (453's shape, smaller), the wet run, and
+the Verify again.
+

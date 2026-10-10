@@ -49,10 +49,11 @@ const AUTHORITY_SECTION: &str = "ORG-1";
 /// - `V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN
 ///   AWARDED:` — 2006 onward;
 /// - `V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD
-///   DECISION HAS BEEN TAKEN:` — the standard forms of 2009-11-28 onward (issue 508).
-///   Measured: of 39,866 award notices from then until the colons go (2010-02-25),
-///   512 carried a winner. From 2010-02-25 the same heading ends its line with no
-///   colon at all, which no label here can match; [`line_awarded_names`] reads that.
+///   DECISION HAS BEEN TAKEN:` — the standard forms published from 2009-12-02 on (issue
+///   508; first body notice 3,931,555). Measured: of 35,758 award notices from then to
+///   the 2010-03 package, 142 carried a winner. From 2010-03 the same heading ends its
+///   line with no colon at all, which no label here can match; [`line_awarded_names`]
+///   reads that.
 ///
 /// Measured coverage of award notices carrying an English body, per June window on
 /// prod: 2004 202/203, 2005 311/314, 2006 347/354, 2008 361/371. Matching the tail
@@ -274,6 +275,30 @@ const CONTRACT_MARKER: &str = "\nCONTRACT NO";
 /// How a sectioned body heads an award that it numbers by lot instead of by contract
 /// (issue 508). Line starts only, for the reason [`CONTRACT_MARKER`] gives.
 const LOT_MARKER: &str = "\nLOT NO";
+
+/// The sectioned form's winner heading, printed once per award (V.3 from 2006 on), for a
+/// body that heads its awards with neither [`CONTRACT_MARKER`] nor [`LOT_MARKER`] (issue
+/// 508). Counted on the flattened body, so a wrap inside it does not hide it.
+const AWARD_BLOCK_HEADING: &str = "NAME AND ADDRESS OF ECONOMIC OPERATOR";
+
+/// How many times a line-start heading marker occurs, not counting an occurrence that a
+/// letter continues: the 2010 print puts IV.3.2's previous-publication type on a line of
+/// its own (`Contract notice`), which a bare count of `\nCONTRACT NO` reads as a second
+/// contract heading and so drops a single contract's only figure (notice 4,041,078), and
+/// `Lot not awarded` is no `LOT NO` heading either. `CONTRACT NO:`, `CONTRACT No 001` and
+/// `LOT NO:  - TITLE` still count.
+fn count_heading(body: &str, marker: &str) -> usize {
+    let mut n = 0;
+    let mut at = 0;
+    while let Some(i) = find_ascii_ci(&body[at..], marker) {
+        let end = at + i + marker.len();
+        if !body.as_bytes().get(end).is_some_and(u8::is_ascii_alphabetic) {
+            n += 1;
+        }
+        at = end;
+    }
+    n
+}
 
 /// How a monetary value must be written to be claimed at all.
 ///
@@ -882,37 +907,106 @@ const LINE_AWARD_HEADING: &str = "HAS BEEN TAKEN";
 ///     V.4)  INFORMATION ON VALUE OF CONTRACT
 /// ```
 ///
-/// That is notice 4,200,000, and it is the whole era from 2010-02-25 to its end on
-/// 2010-12-31: 121,734 award notices, 851 of which carried a winner. The address follows
+/// That is notice 4,200,000, and the print runs from the 2010-03 package (first body notice
+/// 4,023,765) to the era's end on 2010-12-31: about 121,000 award notices, under 1 % of
+/// which carried a winner. The address follows
 /// the name on LINES of its own, not after a comma, so the flattened body that
 /// [`awarded_names`] scans cannot tell where the name ends: `Clarke Machinery Ltd. New
 /// Inn` would be its name. So this reads the unflattened body: a line that ends in
 /// [`LINE_AWARD_HEADING`] names its winner on the next non-empty line, which then goes
 /// through [`names_in_value`] like any other value, line end as its bound.
 ///
-/// Measured over 10,339 such headings (2010-03, -06 and -12 windows): every one ends its
-/// line; 2 have no line after them; about 3 % of name lines reach the ~72-column wrap and
-/// continue on the next line. A wrapped name is cut at the wrap, never joined to the
-/// next line — that line is as often the street of a name that filled the line exactly
-/// (`Κοινωφελής Δημοτική Επιχείρηση … Κορδελιού` / `Εθνικής Αντιστάσεως 58`), and an
-/// address in a name mints an organization per spelling (issue 234).
+/// Measured over 10,339 such headings (windows of 2010-03, -05 and -11): every one ends
+/// its line and 2 have no line after them. Two shapes of that next line need care:
+///
+/// - **A bare country.** A publisher who leaves the name and address blank still gets
+///   the address block's country printed: `…HAS BEEN TAKEN` / `GERMANY` / `V.4)` (notice
+///   4,201,806). Taken as a name, every such slot in the era folds into ONE nameless-
+///   identity organization per country — 198 awards across the colonless windows, 80 of
+///   them `GERMANY` — so a line that is only a country names nobody.
+/// - **A wrapped name.** About 1 % of names fill the ~72-column wrap and continue on the
+///   next line (`…Centrum Badawczo-Konstrukcyjne Obrabiarek Sp.` / `z o.o.`, notice
+///   4,101,615). Cut at the wrap, each mints a second spelling of an identifier-less
+///   company (issue 234). [`wrapped_continuation`] joins the next line only where the
+///   wrapper must have broken the name.
 fn line_awarded_names(body: &str, authority: Option<&Authority>) -> Vec<String> {
+    // Gate before collecting lines: the line pass runs on every award body of a
+    // 3.8M-notice era, and only the 2010 print carries the heading.
+    if find_ascii_ci(body, LINE_AWARD_HEADING).is_none() {
+        return Vec::new();
+    }
+    let lines: Vec<&str> = body.lines().map(str::trim).collect();
+    let width = wrap_width(&lines);
     let mut names = Vec::new();
-    let mut lines = body.lines();
-    while let Some(line) = lines.next() {
-        let line = line.trim_end().as_bytes();
+    let mut i = 0usize;
+    while i < lines.len() {
+        let line = lines[i].as_bytes();
+        i += 1;
         let n = LINE_AWARD_HEADING.len();
         if line.len() < n || !line[line.len() - n..].eq_ignore_ascii_case(LINE_AWARD_HEADING.as_bytes()) {
             continue;
         }
-        let Some(next) = lines.by_ref().map(str::trim).find(|l| !l.is_empty()) else { break };
-        // The publisher left the slot empty and the next item follows at once.
-        if opens_an_item(next) {
+        while i < lines.len() && lines[i].is_empty() {
+            i += 1;
+        }
+        let Some(&next) = lines.get(i) else { break };
+        // The publisher left the slot empty: the next item follows at once, or only the
+        // address block's country was printed.
+        if opens_an_item(next) || is_country(next) {
             continue;
         }
-        names.extend(names_in_value(next, true, authority));
+        i += 1;
+        match wrapped_continuation(next, lines.get(i).copied(), width) {
+            Some(rest) => names.extend(names_in_value(&format!("{next} {rest}"), true, authority)),
+            None => names.extend(names_in_value(next, true, authority)),
+        }
     }
     names
+}
+
+/// The width the body is wrapped at, or `None` when it is not wrapped. TED's wrapper
+/// breaks the 2010 print at about 72 columns in most packages (its longest lines run
+/// 72–80 characters) and not at all in others, whose headings run past 100 on one line.
+fn wrap_width(lines: &[&str]) -> Option<usize> {
+    let widest = lines.iter().map(|l| l.chars().count()).max()?;
+    (widest <= 80).then_some(widest)
+}
+
+/// The line that continues a wrapped name, when the wrapper must have broken it there:
+/// the body is wrapped, the first word of `following` could NOT have fitted on the name's
+/// line (so the wrapper, not the publisher, ended it), and `following` reads as more name
+/// rather than an address — no item, no country, no digit, no street opener.
+///
+/// Measured on the colonless sample (issue 508 review): the join repairs about 100 of 139
+/// comma-less names that fill the line, and takes 2 street lines without a digit or an
+/// opener (`routes des Gatines`, a Greek locality) against the ~31 an unconditional join
+/// would take.
+fn wrapped_continuation<'a>(name: &str, following: Option<&'a str>, width: Option<usize>) -> Option<&'a str> {
+    let width = width?;
+    let following = following?;
+    let first = following.split(' ').next().unwrap_or("");
+    if first.is_empty() || name.chars().count() + 1 + first.chars().count() <= width {
+        return None;
+    }
+    if opens_an_item(following) || is_country(following) || following.bytes().any(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    let opens_street = STREET_OPENERS.iter().any(|w| {
+        following.len() >= w.len() && following.as_bytes()[..w.len()].eq_ignore_ascii_case(w.as_bytes())
+    });
+    (!opens_street).then_some(following)
+}
+
+/// Words an address line of the 2010 print opens with, measured on the colonless sample's
+/// lines after a name: Polish `ul.`/`al.`/`pl.`, Italian `via`/`viale`, French `rue`/
+/// `avenue`/`route`, Spanish `calle`/`c/`, German `Str.`, Dutch `Postbus`, French `BP`.
+const STREET_OPENERS: [&str; 13] =
+    ["UL.", "AL.", "PL.", "VIA ", "VIALE ", "RUE ", "AVENUE ", "ROUTE ", "CALLE ", "C/", "STR.", "POSTBUS", "BP "];
+
+/// Whether a line is nothing but a country's name (`GERMANY`, `United Kingdom.`).
+fn is_country(line: &str) -> bool {
+    let line = line.trim_end_matches('.').trim();
+    crate::countries::NAME_TO_ALPHA2.iter().any(|(name, _)| name.eq_ignore_ascii_case(line))
 }
 
 /// Whether a line of the sectioned form opens an item or a heading rather than holding
@@ -1203,11 +1297,17 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
     // A sectioned body may head its awards `LOT NO: n` with no `CONTRACT NO` at all (issue
     // 508): notice 4040506 awards sixteen lots that way. Each lot's V.4 total but the
     // last runs into the next `LOT NO:` line, which no stop ends, so only the last one
-    // parses, and without this it was claimed as the notice's total. Counted only where
-    // the body is sectioned (`SECTION V`), so the numbered form's own `Lot No` lines
-    // stay out of it.
-    let lots = if find_ascii_ci(body, "SECTION V").is_some() { count_ascii_ci(body, LOT_MARKER) } else { 0 };
-    if count_ascii_ci(body, CONTRACT_MARKER).max(lots) > 1 {
+    // parses, and without this it was claimed as the notice's total. Some bodies print no
+    // heading at all, only one V.3 winner block per award (4300188: three, of 185 650,
+    // 7 140 and 103 835 EUR, the last claimed), so the V.3 heading counts too. All three
+    // are counted only where the body is sectioned (`SECTION V`), so the numbered form's
+    // own `Lot No` lines stay out of it.
+    let awards = count_heading(body, CONTRACT_MARKER).max(if find_ascii_ci(body, "SECTION V").is_some() {
+        count_heading(body, LOT_MARKER).max(count_ascii_ci(&flat, AWARD_BLOCK_HEADING))
+    } else {
+        0
+    });
+    if awards > 1 {
         claim[0] = None;
     }
     // The widest scope the notice states wins, and a conflict THERE is still a refusal —
@@ -1277,9 +1377,9 @@ const COLONLESS_TOTAL_LABEL: &str = "TOTAL FINAL VALUE";
 ///     Including VAT. VAT rate (%) 21                      Including VAT. VAT rate (%) 21
 /// ```
 ///
-/// From 2010-02-25 to the era's end, 98,295 award bodies state a total this way and 1,698
-/// carried a figure: [`read_value_item`]'s retry splits on the LAST colon, and here there
-/// is none. This reads exactly that shape and nothing looser — the scope words, the word
+/// From the 2010-03 package to the era's end, about 98,000 award bodies state a total this
+/// way and 1,698 carried a figure: [`read_value_item`]'s retry splits on the LAST colon,
+/// and here there is none. This reads exactly that shape and nothing looser — the scope words, the word
 /// `Value`, then a figure [`parse_money`] takes whole — because a loose "after the word
 /// Value" would also read `Price: Estimated value 2 000 000 ECU` as a price. Only the
 /// `TOTAL FINAL VALUE` label calls it, so no other vintage's outcome moves.
@@ -4009,7 +4109,7 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         assert!(!wrapped.contains('\n'));
     }
 
-    /// Issue 508: the standard forms of 2009-11-28 onward name the winner under `IN FAVOUR
+    /// Issue 508: the standard forms published from 2009-12-02 on name the winner under `IN FAVOUR
     /// OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN:`. Notice 3,990,107, verbatim
     /// (section V), served with its value and without its winner until this.
     #[test]
@@ -4028,7 +4128,7 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         assert_eq!(awarded_value(body), Some((5_975_200, "EUR".to_owned(), Some("excl"))));
     }
 
-    /// Issue 508: from 2010-02-25 the same heading ends its line with no colon, the name is
+    /// Issue 508: from the 2010-03 package the same heading ends its line with no colon, the name is
     /// the NEXT line and the address the lines after it, and the totals read `Value 80 515
     /// EUR` with no colon either. Notice 4,200,000 (Tender 8255697), verbatim: before this
     /// it served neither the winner nor the value.
@@ -4207,5 +4307,118 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         assert_eq!(awarded_value(loose), None);
         let price = "8.  Price: Estimated value 2 000 000 ECU.\n 9.  Other information: None.";
         assert_eq!(awarded_value(price), None);
+    }
+
+    /// Issue 508 review: a publisher who leaves the slot blank still gets the address
+    /// block's country printed (notice 4,201,806, verbatim). As a name it would fold every
+    /// such award of the era into one `GERMANY` organization.
+    #[test]
+    fn a_2010_slot_that_prints_only_a_country_names_nobody() {
+        let body = "SECTION V: AWARD OF CONTRACT\n\
+                    CONTRACT NO: 1\n\
+                    LOT NO: 1\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                    AWARD DECISION HAS BEEN TAKEN\n\
+                    GERMANY\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Total final value of the contract\n\
+                    Value 12 060,50 EUR\n\
+                    Including VAT. VAT rate (%) 19,00";
+        assert!(awarded_names(body).is_empty());
+        assert!(is_country("United Kingdom.") && !is_country("Clarke Machinery Ltd."));
+    }
+
+    /// Issue 508 review: a name the ~72-column wrapper broke is read whole (notice
+    /// 4,101,615, verbatim: cut at the wrap it was `…Obrabiarek Sp`), and a name that fills
+    /// the line before its street is not joined to the street (notice 4,101,904).
+    #[test]
+    fn a_2010_name_the_wrapper_broke_is_joined_and_its_street_is_not() {
+        let wrapped = "V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                       AWARD DECISION HAS BEEN TAKEN\n\
+                       Konsorcjum: MDT Sp. z o.o. i Centrum Badawczo-Konstrukcyjne Obrabiarek Sp.\n\
+                       z o.o.\n\
+                       ul. Barcelońska 3/95\n\
+                       02-762 Warszawa\n\
+                       POLAND\n\
+                       V.4)  INFORMATION ON VALUE OF CONTRACT";
+        assert_eq!(
+            awarded_names(wrapped),
+            vec!["Konsorcjum: MDT Sp. z o.o. i Centrum Badawczo-Konstrukcyjne Obrabiarek Sp. z o.o.".to_owned()]
+        );
+        let street = "V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                      AWARD DECISION HAS BEEN TAKEN\n\
+                      Κοινωφελής Δημοτική Επιχείρηση Αλληλεγγύης Δήμου Ελευθερίου Κορδελιού\n\
+                      Εθνικής Αντιστάσεως 58\n\
+                      GREECE\n\
+                      V.4)  INFORMATION ON VALUE OF CONTRACT";
+        assert_eq!(
+            awarded_names(street),
+            vec!["Κοινωφελής Δημοτική Επιχείρηση Αλληλεγγύης Δήμου Ελευθερίου Κορδελιού".to_owned()]
+        );
+        // A word that would have fitted on the name's line was put on the next one by the
+        // publisher, not the wrapper: no join.
+        let fits = "V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                    AWARD DECISION HAS BEEN TAKEN\n\
+                    Sadec\n\
+                    Rue du Bas Perreux\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT";
+        assert_eq!(awarded_names(fits), vec!["Sadec".to_owned()]);
+    }
+
+    /// Issue 508 review: the 2010 print puts IV.3.2's `Contract notice` on a line of its
+    /// own, which is no contract heading (notice 4,041,078, verbatim): counted as one, it
+    /// dropped the single contract's only figure.
+    #[test]
+    fn a_contract_notice_line_is_no_contract_heading() {
+        let body = "IV.3.2)  Previous publication(s) concerning the same contract\n\
+                    Contract notice\n\
+                    Notice number in the OJEU: 2009/s186268028 of 21.9.2009\n\
+                    SECTION V: AWARD OF CONTRACT\n\
+                    CONTRACT NO: AFRS 2009-03\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN\n\
+                    Bailey Maintenance Ltd\n\
+                    Thames Valley House 14-16 Theale Lakes Business Park Moulden Way Sulhampstead\n\
+                    RG7 4GB Reading\n\
+                    UNITED KINGDOM\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Total final value of the contract\n\
+                    Value 149 677,14 GBP\n\
+                    Excluding VAT\n\
+                    If annual or monthly value number of months 36";
+        assert_eq!(awarded_names(body), vec!["Bailey Maintenance Ltd".to_owned()]);
+        assert_eq!(awarded_value(body), Some((14_967_714, "GBP".to_owned(), Some("excl"))));
+        assert_eq!(count_heading(body, CONTRACT_MARKER), 1);
+        assert_eq!(count_heading("\nLot not awarded\nLOT NO: 2\nLOT NO:  - TITLE x", LOT_MARKER), 2);
+    }
+
+    /// Issue 508 review: a body of several award blocks with no `CONTRACT NO` or `LOT NO`
+    /// heading at all (notice 4,300,188, verbatim): only the last figure parses, and one
+    /// award of three is no notice total.
+    #[test]
+    fn several_award_blocks_without_headings_claim_no_part_as_the_total() {
+        let block = |value: &str| {
+            format!(
+                "V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                 AWARD DECISION HAS BEEN TAKEN\n\
+                 SAS Nouvelle Technique du Bâtiment\n\
+                 446 voie Georges Pompidou\n\
+                 83300 Draguignan\n\
+                 FRANCE\n\
+                 V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                 Total final value of the contract\n\
+                 Value {value} EUR"
+            )
+        };
+        let body = format!(
+            "SECTION V: AWARD OF CONTRACT\n{}\n{}\n{}",
+            block("185 650"),
+            block("7 140"),
+            block("103 835")
+        );
+        assert_eq!(awarded_names(&body).len(), 3);
+        assert_eq!(awarded_value(&body), None);
+        // One block is one award, and its figure is the notice's.
+        let one = format!("SECTION V: AWARD OF CONTRACT\n{}", block("103 835"));
+        assert_eq!(awarded_value(&one), Some((10_383_500, "EUR".to_owned(), None)));
     }
 }

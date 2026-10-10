@@ -6,9 +6,9 @@ answers; this file exists for the rare case where one does.
 
 ## Unreleased (issue 508) — text-era award notices of 2009-12 to 2010 serve their winners and values
 
-Award notices published from 2009-11-28 to 2010-12-31, the last thirteen months of the tagged-text era, now serve
-the winners they name. Those published from 2010-02-25 on also serve their total value. Before, about 157,000 of these
-Tenders served no winner, and about 96,000 of those from 2010-02-25 on served no value, although the notice text
+Award notices published from 2009-12-02 to 2010-12-31, the last thirteen months of the tagged-text era, now serve
+the winners they name. Those published from March 2010 on also serve their total value. Before, about 155,000 of these
+Tenders served no winner, and about 96,000 of those from March 2010 on served no value, although the notice text
 states both. One value is no longer served: where a 2004–2010 notice awards several lots under `LOT NO` headings and
 states no total, one lot's figure is no longer served as the Tender's `value`.
 
