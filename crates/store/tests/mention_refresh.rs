@@ -105,14 +105,14 @@ async fn a_stale_mention_is_rewritten_in_place_and_an_unchanged_one_is_kept() {
     // nothing is written or minted.
     let (again, refresh) = run(&db, &[mention(1, "Stadtwerke Alt", Some("DE"))]).await;
     assert_eq!(again[0], old);
-    assert_eq!(refresh, store::MentionRefresh { refreshed: 0, rebound: 0, retired: 0, tenders_stamped: 0 });
+    assert_eq!(refresh, store::MentionRefresh { refreshed: 0, rebound: 0, retired: 0, retire_corrections: 0, tenders_stamped: 0 });
     assert_eq!(int(&db, "SELECT COUNT(*) FROM organizations").await, 1, "nothing minted");
 
     // The parse now publishes another name for the same section.
     let (after, refresh) = run(&db, &[mention(1, "Stadtwerke Neu", Some("DE"))]).await;
     let new = after[0];
     assert_ne!(new, old, "the new name resolves through the new-mention path");
-    assert_eq!(refresh, store::MentionRefresh { refreshed: 1, rebound: 1, retired: 0, tenders_stamped: 1 });
+    assert_eq!(refresh, store::MentionRefresh { refreshed: 1, rebound: 1, retired: 0, retire_corrections: 0, tenders_stamped: 1 });
     assert_eq!(
         int(&db, &epoch(10)).await,
         0,
@@ -167,7 +167,7 @@ async fn a_stale_mention_is_rewritten_in_place_and_an_unchanged_one_is_kept() {
     let (reg, _) = run(&db, &[with_id("Landkreis Muster")]).await;
     let (reg2, refresh) = run(&db, &[with_id("Landratsamt Muster")]).await;
     assert_eq!(reg2[0], reg[0], "the registration still binds its own row");
-    assert_eq!(refresh, store::MentionRefresh { refreshed: 1, rebound: 0, retired: 0, tenders_stamped: 0 });
+    assert_eq!(refresh, store::MentionRefresh { refreshed: 1, rebound: 0, retired: 0, retire_corrections: 0, tenders_stamped: 0 });
     assert_eq!(
         int(&db, &epoch(20)).await,
         store::canonical::PROJECTION_EPOCH,
@@ -386,11 +386,25 @@ async fn retiring_a_mention_takes_its_party_rows_and_stamps_their_tenders() {
 
     let mut resolver = db.mention_resolver(None, None, None, None, None, None, 0).await.unwrap();
     let keys = vec![(1, "ORG-1".to_owned()), (9, "ORG-9".to_owned())];
-    assert_eq!(db.retire_mentions(&mut resolver, &keys).await.unwrap(), 1, "the absent key writes nothing");
-    assert_eq!(db.retire_mentions(&mut resolver, &keys).await.unwrap(), 0, "idempotent");
+    let changes_before = int(&db, "SELECT COUNT(*) FROM changes").await;
+    assert_eq!(db.retire_mentions(&mut resolver, &keys, 77).await.unwrap(), 1, "the absent key writes nothing");
+    assert_eq!(db.retire_mentions(&mut resolver, &keys, 78).await.unwrap(), 0, "idempotent");
     let refresh = Db::mention_refresh(&resolver);
     db.finish_mention_resolver(resolver).await.unwrap();
-    assert_eq!((refresh.retired, refresh.tenders_stamped), (1, 2), "{refresh:?}");
+    assert_eq!((refresh.retired, refresh.tenders_stamped, refresh.retire_corrections), (1, 2, 2), "{refresh:?}");
+    // ADR-0017 D5: the deleted party rows were served, so each Tender is announced once,
+    // seq-less, in the retire's own transaction (the fold's compare reads after the delete
+    // and would see nothing to correct for a party-only footprint).
+    assert_eq!(
+        int(
+            &db,
+            "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND entity_id IN (10, 30) \
+              AND version_seq IS NULL AND op = 'changed' AND changed_at = 77"
+        )
+        .await,
+        2
+    );
+    assert_eq!(int(&db, "SELECT COUNT(*) FROM changes").await, changes_before + 2, "the idempotent call announces nothing");
 
     assert_eq!(int(&db, "SELECT COUNT(*) FROM organization_mentions").await, 0);
     assert_eq!(int(&db, "SELECT COUNT(*) FROM tender_version_parties").await, 0);

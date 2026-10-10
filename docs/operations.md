@@ -1703,20 +1703,27 @@ leaves it for issue 511.
 
 A refold of a notice that still has a recorded void mention RETIRES it (`Db::retire_mentions`): the
 mention and the party / bid-party rows naming it are deleted and their Tenders stamped stale, in one
-transaction; the fold's line reads `N void-lot mention(s) retired (issue 510)` and queues the orphan
-sweep. `refold-void-names` finds the standing ones:
+transaction that also writes ADR-0017 D5's correction rows for the deleted party rows (the fold's
+compare reads after the delete, so a Tender whose only void footprint was a party row would otherwise
+change silently); the fold's line reads `N void-lot mention(s) retired, M correction row(s) announced
+— issue 510` and queues the orphan sweep. `refold-void-names` finds the standing ones:
 
 ```sh
 /root/aj.sh /admin/jobs '{"kind":"refold-void-names"}'                             # dry: counts
-/root/aj.sh /admin/reports/void-names-refold | jq -r .body | jq '{orgs, mentions, notices, identified, top: .top[:10]}'
+/root/aj.sh /admin/reports/void-names-refold | jq -r .body \
+  | jq '{orgs, mentions, notices, notices_by_profile, identified, legal_form, top: .top[:10]}'
 /root/aj.sh /admin/jobs '{"kind":"refold-void-names","dry_run":false,"expect":N}'  # wet + the fold
 ```
 
 The walk reads every organization by id window with the fold's own predicate (never SQL `LIKE`), then
-the mentions' notices through `organization_mentions_org`. Wet needs `expect` (the dry run's notice
-count) and aborts, writing nothing, when it finds more than a quarter above it. Then read the fold's
-`retired` count (≈ the dry mention count), and run `sweep-orphan-orgs` dry → read → wet (above 10,000
-orphans the auto sweep only records the plan).
+the mentions' notices through `organization_mentions_org`. Before the wet run read three lists:
+`notices_by_profile` against the census shape (r208 ≈ 8.5k, text ≈ 0.7k, internal-ojs ≈ 150, r209 ≈ 140,
+eForms ≈ 50 notices), `identified` (matches carrying an identifier) and `legal_form` (matches whose name
+also holds a commercial legal form — the design lists them instead of guarding on them). **Stop and add
+an exemption** if an identifier-bearing or legal-form org reads as a company. Wet needs `expect` (the dry
+run's notice count) and aborts, writing nothing, when it finds more than a quarter above it. Then read the
+fold's `retired` count (≈ the dry mention count), and run `sweep-orphan-orgs` dry → read → wet (above
+10,000 orphans the auto sweep only records the plan).
 
 ### The buyer-role demote and `refold-buyer-roles` (issue 483 unit 2)
 

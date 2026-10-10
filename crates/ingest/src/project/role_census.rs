@@ -385,6 +385,13 @@ fn buyer_shaped(p: &Party) -> bool {
     p.is(RoleKind::BuyerShaped) || p.is(RoleKind::DocsProvider) || p.is(RoleKind::Financing) || p.is(RoleKind::Signatory) || p.is(RoleKind::Paying)
 }
 
+/// Whether a published name holds a commercial legal form ([`COMMERCIAL_FORMS`]) — the
+/// swap classes' test on a raw name, for issue 510's dry plan (a void-lot match that also
+/// reads as a company is listed for the operator before the wet run).
+pub fn has_commercial_form(name: &str) -> bool {
+    commercial(&fold(name))
+}
+
 /// Whether the folded name holds a commercial legal form ([`COMMERCIAL_FORMS`]).
 fn commercial(folded: &str) -> bool {
     let padded = format!(" {folded} ");

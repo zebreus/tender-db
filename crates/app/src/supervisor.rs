@@ -4800,6 +4800,22 @@ impl Supervisor {
             .filter(|(_, _, identifier)| identifier.is_some())
             .map(|(id, name, identifier)| serde_json::json!({ "org": id, "name": name, "identifier": identifier }))
             .collect();
+        // The design's stand-in for a legal-form guard (unit1-decision §5.3): a match that
+        // also holds a commercial legal form is listed, every one, for the operator to
+        // read before the wet run. Its stop rule: such an org that reads as a company.
+        let legal_form: Vec<serde_json::Value> = orgs
+            .iter()
+            .filter(|(_, name, _)| ingest::project::role_census::has_commercial_form(name))
+            .map(|(id, name, identifier)| {
+                serde_json::json!({
+                    "org": id,
+                    "name": name,
+                    "identifier": identifier,
+                    "mentions": per_org.get(id).copied().unwrap_or(0),
+                })
+            })
+            .collect();
+        let by_profile = Box::pin(self.db.notice_profile_counts(&notices)).await.map_err(|e| e.to_string())?;
         let mut top: Vec<(i64, &str, u64)> =
             orgs.iter().map(|(id, name, _)| (*id, name.as_str(), per_org.get(id).copied().unwrap_or(0))).collect();
         top.sort_by(|a, b| b.2.cmp(&a.2).then(a.0.cmp(&b.0)));
@@ -4832,7 +4848,9 @@ impl Supervisor {
             "notices": found,
             "requeued": requeued,
             "stamped": stamped,
+            "notices_by_profile": by_profile,
             "identified": identified,
+            "legal_form": legal_form,
             "top": top.iter().map(|(id, name, n)| serde_json::json!({ "org": id, "name": name, "mentions": n })).collect::<Vec<_>>(),
         });
         self.db
@@ -4840,12 +4858,14 @@ impl Supervisor {
             .await
             .map_err(|e| e.to_string())?;
         Ok(format!(
-            "refold-void-names (issue 510){mode}: {} void-lot org(s) ({} with an identifier), {} mention(s) on {found} \
-             notice(s); {} {}, stamped {stamped} tender(s) epoch-stale — the fold retires the mentions, then run \
-             sweep-orphan-orgs",
+            "refold-void-names (issue 510){mode}: {} void-lot org(s) ({} with an identifier, {} with a legal form), \
+             {} mention(s) on {found} notice(s) ({}); {} {}, stamped {stamped} tender(s) epoch-stale — the fold \
+             retires the mentions, then run sweep-orphan-orgs",
             orgs.len(),
             identified.len(),
+            legal_form.len(),
             pairs.len(),
+            by_profile.iter().map(|(profile, n)| format!("{profile} {n}")).collect::<Vec<_>>().join(", "),
             if dry_run { "would re-queue" } else { "re-queued" },
             if dry_run { found } else { requeued },
         ))
@@ -15542,6 +15562,14 @@ mod tests {
         .unwrap();
         ingest::project::project(&db, false).await.expect("fold");
         db.execute_for_test("UPDATE organizations SET name = 'Lot déclaré infructueux'").await.unwrap();
+        // A match that also holds a legal form, mentioned nowhere: listed for the operator,
+        // never re-queued (unit1-decision §5.3's stand-in for a guard).
+        db.execute_for_test(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (99510, 'FR', NULL, NULL, 'ACME SA (lot 2 infructueux)', 'acme sa lot 2 infructueux', 1, 0)",
+        )
+        .await
+        .unwrap();
         assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty());
 
         let job = |id: u64, dry_run: bool, expect: Option<u64>| Job {
@@ -15552,9 +15580,23 @@ mod tests {
             resume_after: None,
         };
         let msg = sup.run_spec(&job(1, true, None)).await.expect("dry");
-        assert!(msg.contains("DRY RUN") && msg.contains("1 void-lot org(s)") && msg.contains("would re-queue 1"), "{msg}");
+        assert!(
+            msg.contains("DRY RUN")
+                && msg.contains("2 void-lot org(s) (0 with an identifier, 1 with a legal form)")
+                && msg.contains("on 1 notice(s) (eforms:eforms-sdk-1.13 1)")
+                && msg.contains("would re-queue 1"),
+            "{msg}"
+        );
         let (body, _) = db.latest_report(VOID_NAMES_REFOLD_REPORT).await.unwrap().expect("report");
-        assert!(body.contains("\"notices\":1") && body.contains("Lot déclaré infructueux"), "{body}");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(report["notices"], 1, "{body}");
+        assert_eq!(report["notices_by_profile"], serde_json::json!({ "eforms:eforms-sdk-1.13": 1 }), "{body}");
+        assert_eq!(
+            report["legal_form"],
+            serde_json::json!([{ "org": 99510, "name": "ACME SA (lot 2 infructueux)", "identifier": null, "mentions": 0 }]),
+            "{body}"
+        );
+        assert!(body.contains("Lot déclaré infructueux"), "{body}");
         assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "dry writes nothing");
 
         let err = sup.run_spec(&job(2, false, Some(0))).await.expect_err("over expect");

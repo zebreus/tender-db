@@ -10,8 +10,9 @@ A winner slot that says the lot was not awarded (`Infructueux`, `Sans suite`, `D
 `Niet gegund`, `Not awarded`, …) is no longer an organization. Such a party is not served as a winner, buyer or
 any other party, and an older-format award whose only "winner" it was now reads `decision: clos-nw` instead of
 `selec-w`. About 11,000 organizations made of these phrases (one alone, `infructueux`, held over 3,000 winner
-mentions) are removed once the drain runs; each publishes `organization removed`. eForms results keep the
-publisher's own decision code.
+mentions) are removed once the drain runs; each publishes `organization removed`, and every Tender that served
+one publishes `tender changed` (with `lot changed` for its affected lots). eForms results keep the publisher's own
+decision code.
 
 ## Unreleased (issue 506) — an award notice's framework values per lot are kept, and refuse scale slips
 

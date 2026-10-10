@@ -2172,7 +2172,7 @@ async fn build_plan(
         };
         // Issue 510: the void-lot parties this chunk no longer mints; a recorded mention
         // of one is retired so its organization falls to the orphan sweep.
-        if let Err(e) = db.retire_mentions(&mut resolver, &chunk.void).await {
+        if let Err(e) = db.retire_mentions(&mut resolver, &chunk.void, now).await {
             plan_err = Some(e);
             break;
         }
@@ -2267,11 +2267,12 @@ async fn build_plan(
     }
     eprintln!(
         "[project] plan: {notices} notices, {mentions_total} mentions resolved \
-         ({} recorded mention(s) refreshed, {} re-bound — issue 434; {} void-lot mention(s) retired — \
-         issue 510) in {:.1}s{}",
+         ({} recorded mention(s) refreshed, {} re-bound — issue 434; {} void-lot mention(s) retired, \
+         {} correction row(s) announced — issue 510) in {:.1}s{}",
         refresh.refreshed,
         refresh.rebound,
         refresh.retired,
+        refresh.retire_corrections,
         t0.elapsed().as_secs_f64(),
         if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
@@ -3368,8 +3369,8 @@ pub async fn project_incremental_chunked_observed(
         let resolved = db.resolve_mentions(&mut resolver, &mentions, now).await?;
         report.mentions += resolved.len() as u64;
         // Issue 510: a recorded mention of a void-lot party is retired (its party rows go
-        // with it, its Tenders are stamped for this run's Phase 2).
-        db.retire_mentions(&mut resolver, &void).await?;
+        // with it, announced per ADR-0017 D5; its Tenders are stamped for this run's Phase 2).
+        db.retire_mentions(&mut resolver, &void, now).await?;
         let mut orgs = resolved_orgs(&mentions, &resolved);
         let recorded: Vec<i64> = rows
             .iter()
@@ -3409,8 +3410,9 @@ pub async fn project_incremental_chunked_observed(
         db.advance_legacy_adjacency(*max).await?;
     }
     stage(&format!(
-        "pass-2 plan build ({} mentions resolved, {} recorded mention(s) refreshed, {} re-bound, {} void-lot retired)",
-        report.mentions, report.mentions_refreshed, report.mentions_rebound, report.mentions_retired
+        "pass-2 plan build ({} mentions resolved, {} recorded mention(s) refreshed, {} re-bound, {} void-lot retired, \
+         {} correction row(s) announced for their party rows)",
+        report.mentions, report.mentions_refreshed, report.mentions_rebound, report.mentions_retired, refresh.retire_corrections
     ));
 
     // Group the whole plan (same SQL as a full run — over the touched set only).

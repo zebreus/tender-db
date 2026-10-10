@@ -9303,6 +9303,8 @@ pub struct MentionResolver {
     /// ([`Db::retire_mentions`]) — each takes its party rows, and its organization is
     /// left for the orphan sweep.
     mentions_retired: u64,
+    /// ADR-0017 D5 correction rows the retire's party-row deletes wrote.
+    retire_corrections: u64,
     /// Tenders stamped epoch-stale because a mention of one of their notices
     /// was re-bound (or retired), so this run's Phase 2 rewrites their party rows.
     tenders_stamped: u64,
@@ -9380,6 +9382,8 @@ pub struct MentionRefresh {
     pub rebound: u64,
     /// Issue 510: recorded void-lot mentions retired ([`Db::retire_mentions`]).
     pub retired: u64,
+    /// The ADR-0017 D5 correction rows those retires wrote for the party rows they took.
+    pub retire_corrections: u64,
     pub tenders_stamped: u64,
 }
 
@@ -15008,6 +15012,7 @@ impl Db {
             mentions_refreshed: 0,
             mentions_rebound: 0,
             mentions_retired: 0,
+            retire_corrections: 0,
             tenders_stamped: 0,
             altid: None,
         })
@@ -15451,6 +15456,21 @@ impl Db {
         Ok(out)
     }
 
+    /// How many of `notices` each `notices.profile` holds, by primary key in IN chunks
+    /// (issue 510's dry plan: the cohort's era split, read against the census shape).
+    pub async fn notice_profile_counts(&self, notices: &[i64]) -> turso::Result<std::collections::BTreeMap<String, u64>> {
+        let conn = self.reader().await?;
+        let mut out = std::collections::BTreeMap::new();
+        for chunk in notices.chunks(IN_CHUNK) {
+            let sql = format!("SELECT profile FROM notices WHERE id IN ({})", placeholders(chunk.len()));
+            let mut rows = conn.query(&sql, chunk.iter().map(|id| Value::Integer(*id)).collect::<Vec<_>>()).await?;
+            while let Some(row) = rows.next().await? {
+                *out.entry(opt_text_of(&row, 0).unwrap_or_default()).or_insert(0) += 1;
+            }
+        }
+        Ok(out)
+    }
+
     /// Issue 510: retire the recorded mentions of void-lot parties — `keys` are the
     /// `(notice, section)` of parties whose every published name says the lot was not
     /// awarded (`partyname::not_a_name`, decided in ingest; the store holds no language).
@@ -15464,17 +15484,31 @@ impl Db {
     /// stale in the same transaction, so this run's Phase 2 rewrites them. A key with no
     /// recorded row costs one primary-key seek and writes nothing. Returns how many
     /// mentions were retired; the organizations they bound are left to `sweep-orphan-orgs`.
-    pub async fn retire_mentions(&self, resolver: &mut MentionResolver, keys: &[(i64, String)]) -> turso::Result<u64> {
+    ///
+    /// The party-row delete moves served rows outside the fold, so it owes ADR-0017 D5's
+    /// correction rows, written in the same transaction ([`crate::inplace::Moved`]) with
+    /// the doorbell rung after COMMIT. Phase 2's compare cannot owe them: it reads the
+    /// stored version after this delete, so a Tender whose only void footprint is a party
+    /// row (a non-winner role, an eForms tenderer or subcontractor) compares identical and
+    /// is stamped silently. A winner's Tender is announced twice (its result rows still
+    /// differ in Phase 2), which D3 allows.
+    pub async fn retire_mentions(
+        &self,
+        resolver: &mut MentionResolver,
+        keys: &[(i64, String)],
+        now: i64,
+    ) -> turso::Result<u64> {
         if keys.is_empty() {
             return Ok(0);
         }
         let conn = self.conn().await;
         let mut retired = 0u64;
         for chunk in keys.chunks(WRITE_BATCH) {
-            let (n, stamped) = Self::immediate(&conn, async {
+            let (n, stamped, corrections) = Self::immediate(&conn, async {
                 let mut n = 0u64;
                 let mut tenders: Vec<i64> = Vec::new();
                 let mut notices: Vec<i64> = Vec::new();
+                let mut moved = crate::inplace::Moved::default();
                 for (notice, section) in chunk {
                     let key = (Value::Integer(*notice), Value::Text(section.clone()));
                     let mut rows = conn
@@ -15485,18 +15519,22 @@ impl Db {
                     if !recorded {
                         continue;
                     }
-                    for table in ["tender_version_parties", "tender_version_bid_parties"] {
+                    // A party row is lot-scoped through `lot_id`; a bid party has no lot of
+                    // its own (rule L still takes the head's lots when it sits in the head).
+                    for (table, lot) in [("tender_version_parties", "lot_id"), ("tender_version_bid_parties", "NULL")] {
                         let mut rows = conn
                             .query(
                                 &format!(
-                                    "SELECT DISTINCT tender_id FROM {table} \
+                                    "SELECT tender_id, seq, {lot} FROM {table} \
                                       WHERE mention_notice_id = ? AND mention_section_id = ?"
                                 ),
                                 key.clone(),
                             )
                             .await?;
                         while let Some(row) = rows.next().await? {
-                            tenders.push(int(&row, 0));
+                            let tender = int(&row, 0);
+                            tenders.push(tender);
+                            moved.row(tender, int(&row, 1), opt_int_of(&row, 2));
                         }
                         drop(rows);
                         conn.execute(
@@ -15530,11 +15568,20 @@ impl Db {
                         format!("UPDATE tenders SET projection_epoch = 0 WHERE id IN ({})", placeholders(ids.len()));
                     conn.execute(&sql, ids.iter().map(|id| Value::Integer(*id)).collect::<Vec<_>>()).await?;
                 }
-                Ok((n, tenders.len() as u64))
+                let corrections = moved.announce(&conn, now).await?;
+                Ok((n, tenders.len() as u64, corrections))
             })
             .await?;
             retired += n;
             resolver.tenders_stamped += stamped;
+            resolver.retire_corrections += corrections;
+            // Committed by now: a doorbell that fails to ring is logged, not returned (the
+            // `rederive-eur` rule); the next append publishes the newest cursor anyway.
+            if corrections > 0
+                && let Err(e) = self.publish_cursor(&conn).await
+            {
+                eprintln!("[issue 510] void-lot mentions retired; doorbell: {e}");
+            }
         }
         resolver.mentions_retired += retired;
         Ok(retired)
@@ -15571,6 +15618,7 @@ impl Db {
             refreshed: resolver.mentions_refreshed,
             rebound: resolver.mentions_rebound,
             retired: resolver.mentions_retired,
+            retire_corrections: resolver.retire_corrections,
             tenders_stamped: resolver.tenders_stamped,
         }
     }

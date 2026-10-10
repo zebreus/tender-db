@@ -41,16 +41,18 @@ pub enum NotAName {
 
 /// Stems that say the lot was not awarded, matched at a left word boundary on the
 /// fold. The 508 text list, plus the `infructeux` misspelling and the feminine
-/// `declarada desierta`.
+/// `declarada desierta`. Each carries its leading space, the boundary, so the match is
+/// a `contains` on the space-padded fold with nothing built per stem (the projection's
+/// hot loop: the issue-483 `PADDED_PATTERNS` lesson).
 const VOID_STEMS: [&str; 8] = [
-    "infructu",
-    "infructeu",
-    "sans suite",
-    "non attribu",
-    "declarado desiert",
-    "declarada desiert",
-    "queda desiert",
-    "nessuna aggiudicazione",
+    " infructu",
+    " infructeu",
+    " sans suite",
+    " non attribu",
+    " declarado desiert",
+    " declarada desiert",
+    " queda desiert",
+    " nessuna aggiudicazione",
 ];
 
 /// Whole values that say the lot was not awarded, compared entire after the lot strip.
@@ -87,16 +89,17 @@ const VOID_WHOLE: [&str; 30] = [
     "nicht vergeben",
 ];
 
-/// Pointer and withheld-value stems (the rest of the 508 text list).
+/// Pointer and withheld-value stems (the rest of the 508 text list), padded like
+/// [`VOID_STEMS`].
 const PLACEHOLDER_STEMS: [&str; 8] = [
-    "would prejudice",
-    "not applicable",
-    "see section",
-    "perfil del contratante",
-    "perfil de contratante",
-    "voir autres informations",
-    "voir renseignements",
-    "ver informaci",
+    " would prejudice",
+    " not applicable",
+    " see section",
+    " perfil del contratante",
+    " perfil de contratante",
+    " voir autres informations",
+    " voir renseignements",
+    " ver informaci",
 ];
 
 /// Placeholder whole values.
@@ -118,20 +121,23 @@ pub fn not_a_name(name: &str) -> Option<NotAName> {
         return None;
     }
     let padded = format!(" {full}");
-    if VOID_STEMS.iter().any(|stem| padded.contains(&format!(" {stem}"))) {
+    if VOID_STEMS.iter().any(|stem| padded.contains(stem)) {
         // "Lot déclaré infructueux … puis attribué à la Société X": the lot WAS awarded,
         // in the end, to a named company. Reading it as no award would contradict the
         // publisher, so it is a placeholder (the fold leaves it as it is).
         return Some(if award_clause(&full) { NotAName::Placeholder } else { NotAName::VoidLot });
     }
-    if PLACEHOLDER_STEMS.iter().any(|stem| padded.contains(&format!(" {stem}"))) {
+    if PLACEHOLDER_STEMS.iter().any(|stem| padded.contains(stem)) {
         return Some(NotAName::Placeholder);
     }
-    let whole = fold(strip_lot_qualifier(name));
-    if VOID_WHOLE.contains(&whole.as_str()) {
+    // Folded again only when a lot qualifier came off: the fold already drops leading and
+    // trailing punctuation and space, so an unstripped name folds to `full`.
+    let stripped = strip_lot_qualifier(name).map(fold);
+    let whole = stripped.as_deref().unwrap_or(&full);
+    if VOID_WHOLE.contains(&whole) {
         return Some(NotAName::VoidLot);
     }
-    if PLACEHOLDER_WHOLE.contains(&whole.as_str()) {
+    if PLACEHOLDER_WHOLE.contains(&whole) {
         return Some(NotAName::Placeholder);
     }
     None
@@ -157,28 +163,24 @@ fn award_clause(folded: &str) -> bool {
 }
 
 /// `name` without ONE trailing parenthetical lot qualifier — `(lote 3)`,
-/// `(lotes VIII y IX)`, `(lot 9/10)` — and the punctuation after it. Only for the
-/// whole-value compare: `Desierto (lotes VIII y IX)` is the whole value `desierto`, while
-/// `ACME (lot 3)` stays the name `ACME`.
-fn strip_lot_qualifier(name: &str) -> &str {
+/// `(lotes VIII y IX)`, `(lot 9/10)` — and the punctuation after it; `None` when there is
+/// none. Only for the whole-value compare: `Desierto (lotes VIII y IX)` is the whole value
+/// `desierto`, while `ACME (lot 3)` stays the name `ACME`.
+fn strip_lot_qualifier(name: &str) -> Option<&str> {
     let trimmed = name.trim().trim_end_matches(|c: char| c.is_whitespace() || ".,;:".contains(c));
-    let Some(inner) = trimmed.strip_suffix(')') else { return name.trim() };
-    let Some(open) = inner.rfind('(') else { return name.trim() };
+    let inner = trimmed.strip_suffix(')')?;
+    let open = inner.rfind('(')?;
     let group = &inner[open + 1..];
     if group.contains(['(', ')']) {
-        return name.trim();
+        return None;
     }
     let first = group.trim_start().split(|c: char| !c.is_alphanumeric()).next().unwrap_or("");
-    if LOT_WORDS.iter().any(|w| first.eq_ignore_ascii_case(w)) {
-        inner[..open].trim_end()
-    } else {
-        name.trim()
-    }
+    LOT_WORDS.iter().any(|w| first.eq_ignore_ascii_case(w)).then(|| inner[..open].trim_end())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{NotAName, fold, not_a_name};
+    use super::{NotAName, PLACEHOLDER_STEMS, PLACEHOLDER_WHOLE, VOID_STEMS, VOID_WHOLE, fold, not_a_name};
 
     /// One prod specimen per entry, and the spellings the 508 lists missed.
     #[test]
@@ -324,5 +326,18 @@ mod tests {
         assert_eq!(fold("Lot  déclaré—INFRUCTUEUX."), "lot declare infructueux");
         assert_eq!(fold("Unieważniony"), "uniewazniony");
         assert_eq!(fold("Pas d'offre"), "pas d offre");
+    }
+
+    /// Every entry is already in the fold's alphabet, so it can match at all, and every
+    /// stem carries its boundary space (the match is a bare `contains`).
+    #[test]
+    fn every_entry_is_folded_and_every_stem_padded() {
+        for stem in VOID_STEMS.iter().chain(&PLACEHOLDER_STEMS) {
+            let bare = stem.strip_prefix(' ').unwrap_or_else(|| panic!("{stem:?} lacks its boundary space"));
+            assert_eq!(fold(bare), bare, "{stem:?}");
+        }
+        for whole in VOID_WHOLE.iter().chain(&PLACEHOLDER_WHOLE) {
+            assert_eq!(fold(whole), *whole, "{whole:?}");
+        }
     }
 }
