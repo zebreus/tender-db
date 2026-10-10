@@ -315,6 +315,34 @@ fn names_an_award(raw: &str, folded: &str) -> bool {
         || lettered_entries(raw)
         || rebate(raw)
         || named_before_spill(folded)
+        || labelled_entries(raw)
+}
+
+/// Parallel `label : value` entries split at `;`, ` - ` or ` / ` — labels with one first word
+/// — one value void and another naming something (`Agence d'Amboise : appel d'offres déclaré
+/// sans suite - Agence de Chinon : savelys GDF suez`). Parallel, because a lot's own sentence
+/// carries `label : value` details too (`Le lot 2: béton. … seuil minimum Ht par an: 2 508,36
+/// EUR / seuil maximum … a été déclaré infructueux`).
+fn labelled_entries(raw: &str) -> bool {
+    let mut void: Vec<String> = Vec::new();
+    let mut named: Vec<String> = Vec::new();
+    for entry in raw.split(';').flat_map(|e| e.split(" - ")).flat_map(|e| e.split(" / ")) {
+        let Some((label, value)) = entry.split_once(':') else { continue };
+        let Some(head) = fold(label).split(' ').next().filter(|h| !h.is_empty()).map(str::to_owned) else { continue };
+        if !value.chars().any(char::is_alphabetic) {
+            continue;
+        }
+        let folded = fold(value);
+        let padded = format!(" {folded}");
+        if mentions_void(value) {
+            void.push(head);
+        } else if !VOID_WHOLE.contains(&folded.as_str())
+            && ![" relanc", " nouvelle consultation", " nueva licitaci", " nuova gara"].iter().any(|n| padded.contains(n))
+        {
+            named.push(head);
+        }
+    }
+    void.iter().any(|head| named.contains(head))
 }
 
 /// Every void stem of the padded fold sits inside an [`EARLIER_VOID`] phrase.
@@ -376,8 +404,13 @@ fn numbered_entries(raw: &str) -> bool {
         if digits == 0 {
             continue;
         }
-        numbers.push(&first[..digits]);
-        let rest: String = std::iter::once(&first[digits..]).chain(tokens).collect::<Vec<_>>().join(" ");
+        // A sub-lot letter right after the number is part of it (`3a:` and `3b:` are two lots;
+        // `269sanofi` is lot 269 of Sanofi).
+        let lettered = first[digits..].chars().next().is_some_and(|c| c.is_ascii_alphabetic())
+            && !first[digits..].chars().nth(1).is_some_and(char::is_alphabetic);
+        let end = if lettered { digits + 1 } else { digits };
+        numbers.push(&first[..end]);
+        let rest: String = std::iter::once(&first[end..]).chain(tokens).collect::<Vec<_>>().join(" ");
         if rest.chars().any(char::is_alphabetic) && !mentions_void(&rest) {
             names_something = true;
         }
@@ -399,9 +432,15 @@ fn lettered_entries(raw: &str) -> bool {
         let start = (0..i).rev().take_while(|&j| chars[j].is_ascii_alphanumeric()).last().unwrap_or(i);
         let marker: String = chars[start..i].iter().collect();
         let boundary = start == 0 || matches!(chars[start - 1], ' ' | '.' | ';' | ':' | '\n');
-        let shaped = matches!(marker.len(), 1 | 2)
+        // `A)`, `B1)`, and the sub-lot `3a)` / `3b)`; never a bare number (`Lot 2)`).
+        let letter_first = matches!(marker.len(), 1 | 2)
             && marker.chars().next().is_some_and(|m| m.is_ascii_alphabetic())
             && marker.chars().skip(1).all(|m| m.is_ascii_digit());
+        let digits = marker.chars().take_while(char::is_ascii_digit).count();
+        let sub_lot = (1..=3).contains(&digits)
+            && marker.len() == digits + 1
+            && marker.chars().last().is_some_and(|m| m.is_ascii_alphabetic());
+        let shaped = letter_first || sub_lot;
         if boundary && shaped {
             markers.push(marker.to_lowercase());
         }
@@ -487,8 +526,13 @@ fn several_lots(words: &[&str]) -> bool {
     let mut numbers: Vec<String> = Vec::new();
     for (i, w) in words.iter().enumerate() {
         if LOT_DESIGNATORS.contains(w) {
+            // Skip up to two number marks or void words (`lot nº 3`, `lots infructueux : 1501`).
             let mut j = i + 1;
-            while j < words.len() && j <= i + 2 && NUMBER_MARKS.contains(&words[j]) {
+            while j < words.len()
+                && j <= i + 2
+                && (NUMBER_MARKS.contains(&words[j])
+                    || VOID_STEMS.iter().any(|stem| stem.trim_start().split(' ').next().is_some_and(|head| words[j].starts_with(head))))
+            {
                 j += 1;
             }
             if let Some(n) = words.get(j).filter(|n| number(n)) {
@@ -698,6 +742,10 @@ mod tests {
             "SPIE secteurs 5A à 5D/ infructueux 5E 5F/ Marc Elec 5G/ Chenelec 5H",
             "Secteur Allier: grange (0 %) et Fayolle (-4 %) Secteur Puy-de-Dôme: lot non attribué (infructueux)",
             "A) non attribué. B1) et B2) Climelec",
+            "Agence d'Amboise : appel d'offres déclaré sans suite - Agence de Chinon : savelys GDF suez",
+            "Mongin Jauffret : lots 1504 et 1505 Zi Delta industrie la Valentine lots infructueux : 1501, 1502 et 1503",
+            "3a) SIAL 54520 3b) lot infructueux",
+            "3a: SIAL 54520 - 3b: lot infructueux",
             "Lot 2 infructueux. V.1) Award and contract value V.1.1) Name and address of successful supplier: Dupont",
         ] {
             assert_eq!(not_a_name(summary), Some(NotAName::Placeholder), "{summary}");
@@ -723,6 +771,7 @@ mod tests {
             "Lot 4 : déclaré sans suite (motif : a) absence d'offre)",
             "Le lot 66 menuiserie bois et PVC secteur 6 a été déclaré infructueux",
             "Lot 3 sans suite (chemises). V.1) Award and contract value V.1.1) Name and address of successful supplier",
+            "Lots infructueux : 1501, 1502 et 1503",
             "Lot non attribué relancé en marché négocié suite à appel d'offres infructueux",
             "Aucune candidature n'a été retenue, le lot a été déclaré infructueux",
             "LOT DÉCLARÉ SANS SUITE LORS DE SA SÉANCE DU 3 MAI",
