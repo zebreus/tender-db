@@ -15,6 +15,7 @@ pub mod idgate;
 pub mod internal_ojs;
 pub mod orgid;
 pub mod package;
+pub mod partyname;
 pub mod process;
 pub mod profile;
 pub mod countries;

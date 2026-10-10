@@ -533,7 +533,7 @@ fn buyer_equal(buyer: &Party, winner: &Party) -> bool {
 
 /// Issue 484 unit 3 (review): folded names ([`fold`]) that stand for a withheld or
 /// missing name, not an organization — never "the same name" for the winner flag.
-/// Literal and short, like the text parser's `NAME_REJECTS`: a fold matches whole, so a
+/// Literal and short, like `crate::partyname`'s lists: a fold matches whole, so a
 /// company whose name merely contains one of these words is untouched. Not measured
 /// against the corpus; each entry is a withholding wording publishers use.
 const NON_NAME_FOLDS: [&str; 15] = [

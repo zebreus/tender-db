@@ -123,51 +123,12 @@ const NAME_WINDOW: usize = 256;
 const ITEM_STOPS: [&str; 8] =
     ["V.1.2)", "V.2)", "V.3)", "V.4)", "CONTRACT NO", " 7.", " 9.", " 10."];
 
-/// Phrases that mean the value is not a name, so no organization is minted from it.
-///
-/// The pre-2004 numbered form fills a withheld item with boilerplate rather than
-/// leaving it blank — `6.  Successful contractor(s): Publication of this information
-/// would prejudice the legitimate commercial interests of a particular undertaking.`
-/// (measured on prod: 2001-06 uses it for items 8, 9 and 10 of the same notice). That
-/// sentence reaches a boundary well inside `NAME_WINDOW`, so the fall-through that
-/// protects against runaway values does NOT catch it — it would be minted as an
-/// organization, once per notice that withholds, which is exactly the identity-less
-/// provisional-org problem of issue 234 manufactured on purpose.
-///
-/// Matched case-insensitively against the trimmed candidate. Deliberately literal and
-/// short: a general "does this read like prose" test would also reject real names, and
-/// any other withholding wording the era uses will surface as a junk organization and
-/// can be added with its own evidence.
-///
-/// The 2010 print (issue 508) put a further family of non-names in the winner slot,
-/// measured over the colonless sample (232 of 22,622 names) and the first drained round
-/// (about 3,000 of its names): an unsuccessful or discontinued lot in French
-/// (`Lot déclaré infructueux`, `Sans suite`, `Non attribué`), Spanish (`Desierto`) and
-/// Italian (`Nessuna aggiudicazione`), and a pointer elsewhere — `Véase perfil del
-/// contratante` alone is 243 names in one 20k-notice window, `See Section VI.2)
-/// Additional information`, `Voir autres informations`. Each would be ONE nameless-
-/// identity organization collecting every award that printed it.
-const NAME_REJECTS: [&str; 14] = [
-    "WOULD PREJUDICE",
-    "NOT APPLICABLE",
-    "INFRUCTU",
-    "SANS SUITE",
-    "NON ATTRIBU",
-    "PERFIL DEL CONTRATANTE",
-    "PERFIL DE CONTRATANTE",
-    "SEE SECTION",
-    "VOIR AUTRES INFORMATIONS",
-    "VOIR RENSEIGNEMENTS",
-    "VER INFORMACI",
-    "DECLARADO DESIERT",
-    "QUEDA DESIERT",
-    "NESSUNA AGGIUDICAZIONE",
-];
-
-/// Whole values that are no name (compared entire, so a company whose name merely
-/// contains the word is untouched): the era's `Various`, and the Spanish and Italian
-/// for a lot left void (issue 508: `Desierto` ×11 in the colonless sample).
-const NAME_WHOLE_REJECTS: [&str; 5] = ["VARIOUS", "DESIERTO", "DESIERTA", "DESERTO", "DESERTA"];
+// The phrases that mean a value is not a name live in `crate::partyname` since issue 510,
+// one definition for this parser and the fold. Their text-era evidence: the pre-2004
+// numbered form's withheld-item boilerplate (`… would prejudice the legitimate commercial
+// interests …`, `Not applicable`), the era's `Various`, and the 2010 print's void lots
+// and pointers (issue 508: `Lot déclaré infructueux`, `Sans suite`, `Desierto`,
+// `Véase perfil del contratante`, `See Section VI.2) Additional information`).
 
 /// Whether a candidate can be a company at all, before it is allowed to mint an
 /// organization. Every rule here comes from a payload that would otherwise have minted
@@ -179,18 +140,17 @@ const NAME_WHOLE_REJECTS: [&str; 5] = ["VARIOUS", "DESIERTO", "DESIERTA", "DESER
 /// - **it must not be the era's word for "no single answer".** `6.  Supplier(s): Various.`
 ///   appears four times in the committed 1993 daily alone. Compared whole, not as a
 ///   substring, so a company whose name contains the word is untouched.
-/// - **it must not be one of [`NAME_REJECTS`]** — the withheld-value boilerplate.
+/// - **it must not be a non-name** ([`crate::partyname::not_a_name`], issue 510): a void
+///   lot (`Infructueux`, `Desierto`) or a pointer, a withheld value or `Various`. Both
+///   classes are refused here, before a section exists; the fold drops only void lots.
 fn plausible_name(name: &str) -> bool {
     if name.is_empty() || !name.chars().any(char::is_alphabetic) {
-        return false;
-    }
-    if NAME_WHOLE_REJECTS.iter().any(|r| name.eq_ignore_ascii_case(r)) {
         return false;
     }
     if opens_with_contact_line(name) {
         return false;
     }
-    !NAME_REJECTS.iter().any(|r| find_ascii_ci(name, r).is_some())
+    crate::partyname::not_a_name(name).is_none()
 }
 
 /// Whether a candidate is the tail of a contact block — `Fax 0044 2920 644615`,
@@ -1767,7 +1727,7 @@ fn days_in_month(month: u32, year: i32) -> u32 {
 /// canonical model hangs an award date on an award, not on a Tender. Those notices keep
 /// the date in their `TXT-TX` prose, retrievable, exactly as before.
 /// Phrases with which an award body says the procedure ended WITHOUT an award, in
-/// the winner slot or beside it. Literal and short on purpose, like [`NAME_REJECTS`]:
+/// the winner slot or beside it. Literal and short on purpose, like `crate::partyname`'s lists:
 /// each entry is added with its own evidence, because a broad "sounds cancelled" test
 /// would also match bodies that merely mention a cancelled predecessor.
 const REJECTION_PHRASES: [&str; 3] =
@@ -4470,10 +4430,25 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
             "Declarado Desierto",
             "Nessuna aggiudicazione",
             "Various",
+            // Issue 510: the spellings the 508 lists missed (now one list, `crate::partyname`).
+            "Desierto.",
+            "Desierto (lotes VIII y IX)",
+            "Non-attribué",
+            "Lot déclaré infructeux",
+            "Lotto deserto",
         ] {
             assert!(!plausible_name(junk), "{junk}");
         }
-        for name in ["Suite Hotels Ltd", "Desierto Florido SL", "Desertec GmbH", "Voirol SA", "Perfiles Andaluces SL"] {
+        // `Gestiver Información SL` held `VER INFORMACI` as a raw substring; the shared
+        // list matches at a word boundary.
+        for name in [
+            "Suite Hotels Ltd",
+            "Desierto Florido SL",
+            "Desertec GmbH",
+            "Voirol SA",
+            "Perfiles Andaluces SL",
+            "Gestiver Información SL",
+        ] {
             assert!(plausible_name(name), "{name}");
         }
         let body = "V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
