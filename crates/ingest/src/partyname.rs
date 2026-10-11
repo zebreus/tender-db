@@ -412,6 +412,7 @@ fn names_an_award(raw: &str, folded: &str) -> bool {
         || several_lots(&words)
         || mixed_segments(raw)
         || company_token(raw)
+        || [" sp z o o", " sp z oo", " spolka ", " spolki "].iter().any(|form| format!("{padded} ").contains(form))
         || AWARD_PHRASES.iter().any(|phrase| padded.contains(phrase))
         || only_an_earlier_void(&padded)
         || SUPPLIER_HEADINGS.iter().any(|heading| {
@@ -857,6 +858,8 @@ mod tests {
             // The fourth dry run (job 2173): Dutch forms and lots.
             "Humble Inpect B.V. (niet gegunde partij)",
             "Perceel 1: Agens de werkende kracht B.V. en SDW Arbeidsintegratie BV. Voor perceel 2 hebben wij geen geldige aanbieding ontvangen. Perceel 2 is derhalve niet gegund",
+            // The seventh dry run (job 2182): the Polish company form.
+            "Olprint Sp. z o.o. unieważnienie art. 94 ust. 1 pkt 4",
             "Lot 2 infructueux. V.1) Award and contract value V.1.1) Name and address of successful supplier: Dupont",
         ] {
             assert_eq!(not_a_name(summary), Some(NotAName::Placeholder), "{summary}");

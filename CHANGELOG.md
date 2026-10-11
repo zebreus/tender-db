@@ -9,10 +9,12 @@ answers; this file exists for the rare case where one does.
 A winner slot that says the lot was not awarded (`Infructueux`, `Sans suite`, `Desierto`, `Lotto deserto`,
 `Niet gegund`, `Not awarded`, …) is no longer an organization. Such a party is not served as a winner, buyer or
 any other party, and an older-format award whose only "winner" it was now reads `decision: clos-nw` instead of
-`selec-w`. About 11,000 organizations made of these phrases (one alone, `infructueux`, held over 3,000 winner
-mentions) are removed once the drain runs; each publishes `organization removed`, and every Tender that served
-one publishes `tender changed` (with `lot changed` for its affected lots). eForms results keep the publisher's own
-decision code.
+`selec-w`. About 17,000 organizations made of these phrases (one alone, `infructueux`, held over 3,000 winner
+mentions), in every language including TED's own multilingual "not awarded", have been removed; each published
+`organization removed`, and every Tender that served one published `tender changed` (with `lot changed` for its
+affected lots). eForms results keep the publisher's own decision code. A "name" that states a void lot but also
+names an award — a per-lot summary such as `Lot 1) Sarl Bremond. Lot 2) S.A. Les Rapides Varois. Lot 3) Déclaré
+infructueux`, or `infructueux, relancé et attribué à …` — is kept as it was.
 
 ## Unreleased (issue 506) — an award notice's framework values per lot are kept, and refuse scale slips
 
