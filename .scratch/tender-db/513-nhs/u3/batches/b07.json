@@ -1,0 +1,1556 @@
+[
+ {
+  "code": "REP",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "REP",
+   "legal_end": null,
+   "name": "LIVERPOOL WOMEN'S NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 8,
+    "tail": "REP"
+   }
+  ],
+  "coded_parties": 8,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PVNM7611RDDL"
+  ],
+  "holder_ids": [
+   1223655,
+   9160536,
+   31536256
+  ],
+  "holders": [
+   {
+    "org_id": 1223655,
+    "via": "party",
+    "coded_parties": 7,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Liverpool Women's NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 99,
+      "value": "liverpool women's nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 99,
+    "raw_identifiers": [
+     {
+      "n": 91,
+      "raw": null
+     },
+     {
+      "n": 7,
+      "raw": "GB-NHS-REP"
+     },
+     {
+      "n": 1,
+      "raw": "Liverpool Women's Hospital"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "REP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 9160536,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Liverpool Women's Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "liverpool women's hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-REP"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "REP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31536256,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PVNM7611RDDL"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPVNM7611RDDL",
+    "name": "Liverpool Women's NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 45,
+      "value": "liverpool women's nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 45,
+    "raw_identifiers": [
+     {
+      "n": 45,
+      "raw": "GB-PPON-PVNM-7611-RDDL"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "REP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1223655,
+   9160536,
+   31536256
+  ]
+ },
+ {
+  "code": "RET",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RET",
+   "legal_end": null,
+   "name": "THE WALTON CENTRE NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 25,
+    "tail": "RET"
+   }
+  ],
+  "coded_parties": 25,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PYLD6221NJVP"
+  ],
+  "holder_ids": [
+   1371484,
+   4275910,
+   30968741,
+   31549806
+  ],
+  "holders": [
+   {
+    "org_id": 1371484,
+    "via": "party",
+    "coded_parties": 7,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "The Walton Centre NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 143,
+      "value": "the walton centre nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 143,
+    "raw_identifiers": [
+     {
+      "n": 127,
+      "raw": null
+     },
+     {
+      "n": 9,
+      "raw": "GB-NHS-REN"
+     },
+     {
+      "n": 7,
+      "raw": "GB-NHS-RET"
+     }
+    ],
+    "other_codes": [
+     "REN"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "REN",
+     "RET"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 4275910,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "The Walton Centre",
+    "name_norms": [
+     {
+      "n": 34,
+      "value": "the walton centre"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 34,
+    "raw_identifiers": [
+     {
+      "n": 26,
+      "raw": null
+     },
+     {
+      "n": 6,
+      "raw": "GB-NHS-REN"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RET"
+     }
+    ],
+    "other_codes": [
+     "REN"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "REN",
+     "RET"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30968741,
+    "via": "party",
+    "coded_parties": 16,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Alder Hey",
+    "name_norms": [
+     {
+      "n": 16,
+      "value": "alder hey"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 16,
+    "raw_identifiers": [
+     {
+      "n": 16,
+      "raw": "GB-NHS-RET"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RET"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31549806,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PYLD6221NJVP"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPYLD6221NJVP",
+    "name": "The Walton Centre NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 8,
+      "value": "the walton centre nhs foundation trust"
+     },
+     {
+      "n": 1,
+      "value": "alder hey"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 9,
+    "raw_identifiers": [
+     {
+      "n": 9,
+      "raw": "GB-PPON-PYLD-6221-NJVP"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RET"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1371484,
+   4275910,
+   30968741,
+   31549806
+  ]
+ },
+ {
+  "code": "RFF",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RFF",
+   "legal_end": null,
+   "name": "BARNSLEY HOSPITAL NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 1,
+    "tail": "RFF"
+   }
+  ],
+  "coded_parties": 1,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   31223758
+  ],
+  "holders": [
+   {
+    "org_id": 31223758,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "EPSOM & ST HELIER UNIVERSITY HOSPITAL NHS TRUST",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "epsom & st helier university hospital nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RFF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RFF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   31223758
+  ]
+ },
+ {
+  "code": "RFR",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RFR",
+   "legal_end": null,
+   "name": "THE ROTHERHAM NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 1,
+    "tail": "RFR"
+   }
+  ],
+  "coded_parties": 1,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   31648228
+  ],
+  "holders": [
+   {
+    "org_id": 31648228,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "The Rotherham Foundation Trust Hospital",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "the rotherham foundation trust hospital"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RFR"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RFR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   31648228
+  ]
+ },
+ {
+  "code": "RFS",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RFS",
+   "legal_end": null,
+   "name": "CHESTERFIELD ROYAL HOSPITAL NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 1,
+    "tail": "RFS"
+   }
+  ],
+  "coded_parties": 1,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   5888684
+  ],
+  "holders": [
+   {
+    "org_id": 5888684,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Chesterfield Royal Hospital",
+    "name_norms": [
+     {
+      "n": 15,
+      "value": "chesterfield royal hospital"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 15,
+    "raw_identifiers": [
+     {
+      "n": 14,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RFS"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RFS"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   5888684
+  ]
+ },
+ {
+  "code": "RGD",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RGD",
+   "legal_end": null,
+   "name": "LEEDS AND YORK PARTNERSHIP NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 2,
+    "tail": "RGD"
+   }
+  ],
+  "coded_parties": 2,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PTWP8794GHJN"
+  ],
+  "holder_ids": [
+   5476801,
+   30919688,
+   30926718
+  ],
+  "holders": [
+   {
+    "org_id": 5476801,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Leeds and York Partnership NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 63,
+      "value": "leeds and york partnership nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 63,
+    "raw_identifiers": [
+     {
+      "n": 62,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RGD"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30919688,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Leeds and York Partnership NHS Foundation Trust, trading as North of England NHS Commercial Procurement Collaborative (\"NOE CPC\")",
+    "name_norms": [
+     {
+      "n": 74,
+      "value": "leeds and york partnership nhs foundation trust, trading as north of england nhs commercial procurement collaborative (\"noe cpc\")"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 74,
+    "raw_identifiers": [
+     {
+      "n": 73,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RGD"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30926718,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PTWP8794GHJN"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPTWP8794GHJN",
+    "name": "Leeds and York Partnership NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 102,
+      "value": "leeds and york partnership nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 102,
+    "raw_identifiers": [
+     {
+      "n": 102,
+      "raw": "GB-PPON-PTWP-8794-GHJN"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   5476801,
+   30919688,
+   30926718
+  ]
+ },
+ {
+  "code": "RGM",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RGM",
+   "legal_end": null,
+   "name": "ROYAL PAPWORTH HOSPITAL NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 6,
+    "tail": "RGM"
+   }
+  ],
+  "coded_parties": 6,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PDNZ7768RRQQ"
+  ],
+  "holder_ids": [
+   30914473,
+   30916977
+  ],
+  "holders": [
+   {
+    "org_id": 30914473,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PDNZ7768RRQQ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPDNZ7768RRQQ",
+    "name": "Royal Papworth Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 22,
+      "value": "royal papworth hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 22,
+    "raw_identifiers": [
+     {
+      "n": 22,
+      "raw": "GB-PPON-PDNZ-7768-RRQQ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916977,
+    "via": "party",
+    "coded_parties": 6,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Royal Papworth Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 30,
+      "value": "royal papworth hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 30,
+    "raw_identifiers": [
+     {
+      "n": 24,
+      "raw": null
+     },
+     {
+      "n": 6,
+      "raw": "GB-NHS-RGM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30914473,
+   30916977
+  ]
+ },
+ {
+  "code": "RGN",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RGN",
+   "legal_end": null,
+   "name": "NORTH WEST ANGLIA NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RQQ"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 8,
+    "tail": "RGN"
+   }
+  ],
+  "coded_parties": 8,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PGZM4323VGQT"
+  ],
+  "holder_ids": [
+   30929970,
+   31537918
+  ],
+  "holders": [
+   {
+    "org_id": 30929970,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PGZM4323VGQT"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPGZM4323VGQT",
+    "name": "North West Anglia NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 27,
+      "value": "north west anglia nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 27,
+    "raw_identifiers": [
+     {
+      "n": 27,
+      "raw": "GB-PPON-PGZM-4323-VGQT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGN"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31537918,
+    "via": "party",
+    "coded_parties": 8,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NORTH WEST ANGLIA NHS FOUNDATION TRUST",
+    "name_norms": [
+     {
+      "n": 10,
+      "value": "north west anglia nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 10,
+    "raw_identifiers": [
+     {
+      "n": 8,
+      "raw": "GB-NHS-RGN"
+     },
+     {
+      "n": 2,
+      "raw": null
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGN"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30929970,
+   31537918
+  ]
+ },
+ {
+  "code": "RGP",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RGP",
+   "legal_end": null,
+   "name": "JAMES PAGET UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 23,
+    "tail": "RGP"
+   }
+  ],
+  "coded_parties": 23,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   1280779,
+   31597478,
+   31598092,
+   31599086
+  ],
+  "holders": [
+   {
+    "org_id": 1280779,
+    "via": "party",
+    "coded_parties": 18,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "James Paget University Hospitals NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 86,
+      "value": "james paget university hospitals nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 86,
+    "raw_identifiers": [
+     {
+      "n": 68,
+      "raw": null
+     },
+     {
+      "n": 18,
+      "raw": "GB-NHS-RGP"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31597478,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "James Paget University Hospitals NHS Foundation Trust (JPUH)",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "james paget university hospitals nhs foundation trust (jpuh)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-NHS-RGP"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31598092,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "James Paget University Hospitals NHS Foundation Trust (JPUH)  Great Yarmouth",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "james paget university hospitals nhs foundation trust (jpuh) great yarmouth"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RGP"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31599086,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "James Paget University Hospitals NHS Foundation Trust Lowestoft Road Gorleston Great Yarmouth Norfolk NR31 6LA",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "james paget university hospitals nhs foundation trust lowestoft road gorleston great yarmouth norfolk nr31 6la"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RGP"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1280779,
+   31597478,
+   31598092,
+   31599086
+  ]
+ },
+ {
+  "code": "RGR",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RGR",
+   "legal_end": null,
+   "name": "WEST SUFFOLK NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 10,
+    "tail": "RGR"
+   }
+  ],
+  "coded_parties": 10,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PZXH6286HYJQ"
+  ],
+  "holder_ids": [
+   2228352,
+   7192624,
+   30916897
+  ],
+  "holders": [
+   {
+    "org_id": 2228352,
+    "via": "party",
+    "coded_parties": 9,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "West Suffolk NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 236,
+      "value": "west suffolk nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 236,
+    "raw_identifiers": [
+     {
+      "n": 225,
+      "raw": null
+     },
+     {
+      "n": 8,
+      "raw": "GB-NHS-RGR"
+     },
+     {
+      "n": 1,
+      "raw": "East Of England NHS Collaborative Hub"
+     },
+     {
+      "n": 1,
+      "raw": "East of England NHS Collaborative Hub"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-rgr"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 7192624,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "West Suffolk Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "west suffolk hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RGR"
+     },
+     {
+      "n": 1,
+      "raw": "c/o East Of England NHS Collaborative Hub"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916897,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PZXH6286HYJQ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPZXH6286HYJQ",
+    "name": "West Suffolk NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 82,
+      "value": "west suffolk nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 82,
+    "raw_identifiers": [
+     {
+      "n": 82,
+      "raw": "GB-PPON-PZXH-6286-HYJQ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RGR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   2228352,
+   7192624,
+   30916897
+  ]
+ }
+]

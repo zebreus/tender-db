@@ -1,0 +1,1870 @@
+[
+ {
+  "code": "RXP",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RXP",
+   "legal_end": null,
+   "name": "COUNTY DURHAM AND DARLINGTON NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RR9",
+    "RTA"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 26,
+    "tail": "RXP"
+   }
+  ],
+  "coded_parties": 26,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PQLT2871PCJY"
+  ],
+  "holder_ids": [
+   1165278,
+   30913742
+  ],
+  "holders": [
+   {
+    "org_id": 1165278,
+    "via": "party",
+    "coded_parties": 26,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "County Durham and Darlington NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 182,
+      "value": "county durham and darlington nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 182,
+    "raw_identifiers": [
+     {
+      "n": 156,
+      "raw": null
+     },
+     {
+      "n": 25,
+      "raw": "GB-NHS-RXP"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-rxp"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30913742,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PQLT2871PCJY"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPQLT2871PCJY",
+    "name": "County Durham and Darlington NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 6,
+      "value": "county durham and darlington nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 6,
+    "raw_identifiers": [
+     {
+      "n": 6,
+      "raw": "GB-PPON-PQLT-2871-PCJY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1165278,
+   30913742
+  ]
+ },
+ {
+  "code": "RXQ",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RXQ",
+   "legal_end": null,
+   "name": "BUCKINGHAMSHIRE HEALTHCARE NHS TRUST",
+   "predecessors": [
+    "RH2",
+    "RNT"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 23,
+    "tail": "RXQ"
+   }
+  ],
+  "coded_parties": 23,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PHNT5649ZYQJ"
+  ],
+  "holder_ids": [
+   1185447,
+   31537782
+  ],
+  "holders": [
+   {
+    "org_id": 1185447,
+    "via": "party",
+    "coded_parties": 23,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Buckinghamshire Healthcare NHS Trust",
+    "name_norms": [
+     {
+      "n": 253,
+      "value": "buckinghamshire healthcare nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 253,
+    "raw_identifiers": [
+     {
+      "n": 230,
+      "raw": null
+     },
+     {
+      "n": 23,
+      "raw": "GB-NHS-RXQ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXQ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31537782,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PHNT5649ZYQJ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPHNT5649ZYQJ",
+    "name": "Buckinghamshire Healthcare NHS Trust",
+    "name_norms": [
+     {
+      "n": 8,
+      "value": "buckinghamshire healthcare nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 8,
+    "raw_identifiers": [
+     {
+      "n": 8,
+      "raw": "GB-PPON-PHNT-5649-ZYQJ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXQ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1185447,
+   31537782
+  ]
+ },
+ {
+  "code": "RXT",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RXT",
+   "legal_end": null,
+   "name": "BIRMINGHAM AND SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RND",
+    "RNF"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 7,
+    "tail": "RXT"
+   }
+  ],
+  "coded_parties": 7,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PTMC2127TPCV"
+  ],
+  "holder_ids": [
+   10958945,
+   13043614,
+   30926645,
+   30932865
+  ],
+  "holders": [
+   {
+    "org_id": 10958945,
+    "via": "party",
+    "coded_parties": 5,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Birmingham & Solihull Mental Health NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 155,
+      "value": "birmingham & solihull mental health nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 155,
+    "raw_identifiers": [
+     {
+      "n": 150,
+      "raw": null
+     },
+     {
+      "n": 5,
+      "raw": "GB-NHS-RXT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXT"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 13043614,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Birmingham Women's and Children's Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "birmingham women's and children's hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RXT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": "RQ3",
+     "verdict": "better"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXT"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30926645,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PTMC2127TPCV"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPTMC2127TPCV",
+    "name": "Birmingham & Solihull Mental Health Foundation Trust",
+    "name_norms": [
+     {
+      "n": 51,
+      "value": "birmingham & solihull mental health foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 51,
+    "raw_identifiers": [
+     {
+      "n": 51,
+      "raw": "GB-PPON-PTMC-2127-TPCV"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXT"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": [
+     30917358
+    ]
+   },
+   {
+    "org_id": 30932865,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Birmingham and Solihull Mental Health Foundation NHS Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "birmingham and solihull mental health foundation nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RXT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXT"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   10958945,
+   13043614,
+   30926645,
+   30932865
+  ]
+ },
+ {
+  "code": "RXV",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RXV",
+   "legal_end": null,
+   "name": "GREATER MANCHESTER MENTAL HEALTH NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RMH",
+    "TAE"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 4,
+    "tail": "RXV"
+   }
+  ],
+  "coded_parties": 4,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PGCZ7958BVXT"
+  ],
+  "holder_ids": [
+   10374035,
+   31569803
+  ],
+  "holders": [
+   {
+    "org_id": 10374035,
+    "via": "party",
+    "coded_parties": 4,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Greater Manchester Mental Health NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 112,
+      "value": "greater manchester mental health nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 112,
+    "raw_identifiers": [
+     {
+      "n": 108,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-RXV"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXV"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31569803,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PGCZ7958BVXT"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPGCZ7958BVXT",
+    "name": "Greater Manchester Mental Health NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "greater manchester mental health nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-PPON-PGCZ-7958-BVXT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXV"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   10374035,
+   31569803
+  ]
+ },
+ {
+  "code": "RXW",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RXW",
+   "legal_end": null,
+   "name": "THE SHREWSBURY AND TELFORD HOSPITAL NHS TRUST",
+   "predecessors": [
+    "RKF",
+    "RLZ"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 3,
+    "tail": "RXW"
+   }
+  ],
+  "coded_parties": 3,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PMRB7317GVDL"
+  ],
+  "holder_ids": [
+   1470141,
+   12053291,
+   12431017,
+   30913590
+  ],
+  "holders": [
+   {
+    "org_id": 1470141,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Shrewsbury & Telford Hospital NHS Trust",
+    "name_norms": [
+     {
+      "n": 6,
+      "value": "shrewsbury & telford hospital nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 6,
+    "raw_identifiers": [
+     {
+      "n": 5,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RXW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 12053291,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "The Shrewsbury and Telford Hospital NHS Trust",
+    "name_norms": [
+     {
+      "n": 33,
+      "value": "the shrewsbury and telford hospital nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 33,
+    "raw_identifiers": [
+     {
+      "n": 32,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RXW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 12431017,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Shrewsbury and Telford Hospital NHS Trust",
+    "name_norms": [
+     {
+      "n": 6,
+      "value": "shrewsbury and telford hospital nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 6,
+    "raw_identifiers": [
+     {
+      "n": 5,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RXW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30913590,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PMRB7317GVDL"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPMRB7317GVDL",
+    "name": "The Shrewsbury and Telford Hospital NHS Trust",
+    "name_norms": [
+     {
+      "n": 146,
+      "value": "the shrewsbury and telford hospital nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 146,
+    "raw_identifiers": [
+     {
+      "n": 146,
+      "raw": "GB-PPON-PMRB-7317-GVDL"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1470141,
+   12053291,
+   12431017,
+   30913590
+  ]
+ },
+ {
+  "code": "RXX",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RXX",
+   "legal_end": null,
+   "name": "SURREY AND BORDERS PARTNERSHIP NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RTJ",
+    "RTN",
+    "RW7"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 2,
+    "tail": "RXX"
+   }
+  ],
+  "coded_parties": 2,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PBCW8913JCZL"
+  ],
+  "holder_ids": [
+   2022375,
+   2409657,
+   30916802
+  ],
+  "holders": [
+   {
+    "org_id": 2022375,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Sussex Partnership NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 118,
+      "value": "sussex partnership nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 118,
+    "raw_identifiers": [
+     {
+      "n": 117,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RXX"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 2409657,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Surrey and Borders Partnership NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 132,
+      "value": "surrey and borders partnership nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 132,
+    "raw_identifiers": [
+     {
+      "n": 130,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RXX"
+     },
+     {
+      "n": 1,
+      "raw": "UK"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916802,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PBCW8913JCZL"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPBCW8913JCZL",
+    "name": "SUSSEX PARTNERSHIP NHS FOUNDATION TRUST",
+    "name_norms": [
+     {
+      "n": 21,
+      "value": "sussex partnership nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 21,
+    "raw_identifiers": [
+     {
+      "n": 21,
+      "raw": "GB-PPON-PBCW-8913-JCZL"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   2022375,
+   2409657,
+   30916802
+  ]
+ },
+ {
+  "code": "RXY",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RXY",
+   "legal_end": null,
+   "name": "KENT AND MEDWAY MENTAL HEALTH NHS TRUST",
+   "predecessors": [
+    "RTM",
+    "RXJ"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 1,
+    "tail": "RXY"
+   }
+  ],
+  "coded_parties": 1,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   9260274
+  ],
+  "holders": [
+   {
+    "org_id": 9260274,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Kent and Medway NHS and Social Care Partnership Trust (KMPT)",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "kent and medway nhs and social care partnership trust (kmpt)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RXY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RXY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   9260274
+  ]
+ },
+ {
+  "code": "RYA",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYA",
+   "legal_end": null,
+   "name": "WEST MIDLANDS AMBULANCE SERVICE UNIVERSITY NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RB7",
+    "RKA",
+    "RL5",
+    "RL6"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 16,
+    "tail": "RYA"
+   }
+  ],
+  "coded_parties": 16,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PNDY4353CMWY"
+  ],
+  "holder_ids": [
+   6384818,
+   12508548,
+   13335820,
+   30913621,
+   31567619,
+   31626603
+  ],
+  "holders": [
+   {
+    "org_id": 6384818,
+    "via": "party",
+    "coded_parties": 5,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "West Midlands Ambulance Service",
+    "name_norms": [
+     {
+      "n": 21,
+      "value": "west midlands ambulance service"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 21,
+    "raw_identifiers": [
+     {
+      "n": 14,
+      "raw": null
+     },
+     {
+      "n": 5,
+      "raw": "GB-NHS-RYA"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-west midlands ambulance service"
+     },
+     {
+      "n": 1,
+      "raw": "GB-UKPRN-RYA"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 12508548,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "West Midlands Ambulance Service University NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 86,
+      "value": "west midlands ambulance service university nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 86,
+    "raw_identifiers": [
+     {
+      "n": 81,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "Millenium Point"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RYA"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 13335820,
+    "via": "party",
+    "coded_parties": 6,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "West Midlands Ambulance Service University NHS FT",
+    "name_norms": [
+     {
+      "n": 20,
+      "value": "west midlands ambulance service university nhs ft"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 20,
+    "raw_identifiers": [
+     {
+      "n": 12,
+      "raw": null
+     },
+     {
+      "n": 6,
+      "raw": "GB-NHS-RYA"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-west midlands Ambulance Service"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30913621,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PNDY4353CMWY"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPNDY4353CMWY",
+    "name": "West Midlands Ambulance Service University NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 5,
+      "value": "west midlands ambulance service university nhs foundation trust"
+     },
+     {
+      "n": 3,
+      "value": "west midlands ambulance service university nhs ft"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 8,
+    "raw_identifiers": [
+     {
+      "n": 8,
+      "raw": "GB-PPON-PNDY-4353-CMWY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31567619,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "West Midland Ambulance Service University NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "west midland ambulance service university nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-RYA"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31626603,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "West Midlands Service University NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "west midlands service university nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RYA"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   6384818,
+   12508548,
+   13335820,
+   30913621,
+   31567619,
+   31626603
+  ]
+ },
+ {
+  "code": "RYC",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYC",
+   "legal_end": null,
+   "name": "EAST OF ENGLAND AMBULANCE SERVICE NHS TRUST",
+   "predecessors": [
+    "RB4",
+    "RFU",
+    "RMZ"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 3,
+    "tail": "RYC"
+   }
+  ],
+  "coded_parties": 3,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PBNZ4155WXBZ"
+  ],
+  "holder_ids": [
+   1263180,
+   30916110
+  ],
+  "holders": [
+   {
+    "org_id": 1263180,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "East of England Ambulance Service NHS Trust",
+    "name_norms": [
+     {
+      "n": 209,
+      "value": "east of england ambulance service nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 209,
+    "raw_identifiers": [
+     {
+      "n": 202,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-RYC"
+     },
+     {
+      "n": 1,
+      "raw": "C/O West Midlands Ambulance Service NHS FT"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-East of England Ambulance Service NHS Trust"
+     },
+     {
+      "n": 1,
+      "raw": "N/A"
+     },
+     {
+      "n": 1,
+      "raw": "c/o West Midlands Ambulance Service NHS FT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYC"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916110,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PBNZ4155WXBZ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPBNZ4155WXBZ",
+    "name": "East of England Ambulance Service NHS Trust Headquarters",
+    "name_norms": [
+     {
+      "n": 71,
+      "value": "east of england ambulance service nhs trust"
+     },
+     {
+      "n": 18,
+      "value": "east of england ambulance service nhs trust headquarters"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 89,
+    "raw_identifiers": [
+     {
+      "n": 89,
+      "raw": "GB-PPON-PBNZ-4155-WXBZ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYC"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": [
+     31623946
+    ]
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1263180,
+   30916110
+  ]
+ },
+ {
+  "code": "RYD",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYD",
+   "legal_end": null,
+   "name": "SOUTH EAST COAST AMBULANCE SERVICE NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RPH",
+    "RPQ",
+    "RQ2"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 3,
+    "tail": "RYD"
+   }
+  ],
+  "coded_parties": 3,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PGNR3396MRLQ"
+  ],
+  "holder_ids": [
+   2332253,
+   5824298,
+   30918360
+  ],
+  "holders": [
+   {
+    "org_id": 2332253,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "South East Coast Ambulance Service NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 154,
+      "value": "south east coast ambulance service nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 154,
+    "raw_identifiers": [
+     {
+      "n": 152,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RYD"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 5824298,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "South East Coast Ambulance Service",
+    "name_norms": [
+     {
+      "n": 10,
+      "value": "south east coast ambulance service"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 10,
+    "raw_identifiers": [
+     {
+      "n": 8,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RYD"
+     },
+     {
+      "n": 1,
+      "raw": "c/O West Midlands Ambulance Service NHS FT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30918360,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PGNR3396MRLQ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPGNR3396MRLQ",
+    "name": "South East Coast Ambulance Service NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 35,
+      "value": "south east coast ambulance service nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 35,
+    "raw_identifiers": [
+     {
+      "n": 35,
+      "raw": "GB-PPON-PGNR-3396-MRLQ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   2332253,
+   5824298,
+   30918360
+  ]
+ }
+]

@@ -1,0 +1,2439 @@
+[
+ {
+  "code": "0AR",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "0AR",
+   "legal_end": null,
+   "name": "NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT",
+   "predecessors": [],
+   "role": "RO213",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 16,
+    "tail": "0AR"
+   }
+  ],
+  "coded_parties": 16,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PJGL8154MTZX"
+  ],
+  "holder_ids": [
+   4058565,
+   30929531,
+   31592074
+  ],
+  "holders": [
+   {
+    "org_id": 4058565,
+    "via": "party",
+    "coded_parties": 15,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS North of England Commissioning Support Unit",
+    "name_norms": [
+     {
+      "n": 39,
+      "value": "nhs north of england commissioning support unit"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 39,
+    "raw_identifiers": [
+     {
+      "n": 24,
+      "raw": null
+     },
+     {
+      "n": 15,
+      "raw": "GB-NHS-0AR"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0AR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30929531,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PJGL8154MTZX"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPJGL8154MTZX",
+    "name": "NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT",
+    "name_norms": [
+     {
+      "n": 12,
+      "value": "nhs north of england commissioning support unit"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 12,
+    "raw_identifiers": [
+     {
+      "n": 12,
+      "raw": "GB-PPON-PJGL-8154-MTZX"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0AR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31592074,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS North of England Commissioning Support Unit (hosted by NHS England)",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "nhs north of england commissioning support unit (hosted by nhs england)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-0AR"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0AR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   4058565,
+   30929531,
+   31592074
+  ]
+ },
+ {
+  "code": "0CX",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "0CX",
+   "legal_end": null,
+   "name": "NHS MIDLANDS AND LANCASHIRE COMMISSIONING SUPPORT UNIT",
+   "predecessors": [],
+   "role": "RO213",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 40,
+    "tail": "0CX"
+   },
+   {
+    "folded": true,
+    "later_parties": 0,
+    "parties": 1,
+    "tail": "OCX"
+   }
+  ],
+  "coded_parties": 41,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PGTM4634DGZQ"
+  ],
+  "holder_ids": [
+   5694794,
+   6191087,
+   31572637,
+   31616128
+  ],
+  "holders": [
+   {
+    "org_id": 5694794,
+    "via": "party",
+    "coded_parties": 38,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Midlands and Lancashire Commissioning Support Unit",
+    "name_norms": [
+     {
+      "n": 62,
+      "value": "nhs midlands and lancashire commissioning support unit"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 62,
+    "raw_identifiers": [
+     {
+      "n": 38,
+      "raw": "GB-NHS-0CX"
+     },
+     {
+      "n": 24,
+      "raw": null
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0CX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 6191087,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Midlands and Lancashire Commissioning Support Unit",
+    "name_norms": [
+     {
+      "n": 4096,
+      "value": "midlands and lancashire commissioning support unit"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 24864,
+    "raw_identifiers": [
+     {
+      "n": 4089,
+      "raw": null
+     },
+     {
+      "n": 6,
+      "raw": "GB-NHS-ODX"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-0CX"
+     }
+    ],
+    "other_codes": [
+     "ODX"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0CX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31572637,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PGTM4634DGZQ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPGTM4634DGZQ",
+    "name": "TEST",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "test"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-PPON-PGTM-4634-DGZQ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": true,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0CX"
+    ],
+    "contested": false,
+    "denied": [
+     "generic"
+    ],
+    "key_owners_elsewhere": [
+     8477963
+    ]
+   },
+   {
+    "org_id": 31616128,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Midlands & Lancashire C S U",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "midlands & lancashire c s u"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-ocx"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0CX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   5694794,
+   6191087,
+   31616128
+  ]
+ },
+ {
+  "code": "0DE",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "0DE",
+   "legal_end": null,
+   "name": "NHS ARDEN AND GREATER EAST MIDLANDS COMMISSIONING SUPPORT UNIT",
+   "predecessors": [
+    "0AA",
+    "0AK"
+   ],
+   "role": "RO213",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 4,
+    "tail": "0DE"
+   }
+  ],
+  "coded_parties": 4,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PLVR6647BVMM"
+  ],
+  "holder_ids": [
+   6340194,
+   7501468,
+   30916122
+  ],
+  "holders": [
+   {
+    "org_id": 6340194,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Arden and Greater East Midlands Commissioning Support Unit",
+    "name_norms": [
+     {
+      "n": 234,
+      "value": "nhs arden and greater east midlands commissioning support unit"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 234,
+    "raw_identifiers": [
+     {
+      "n": 208,
+      "raw": null
+     },
+     {
+      "n": 23,
+      "raw": "na"
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-0DE"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0DE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 7501468,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Arden & GEM Commissioning Support Unit",
+    "name_norms": [
+     {
+      "n": 22,
+      "value": "nhs arden & gem commissioning support unit"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 22,
+    "raw_identifiers": [
+     {
+      "n": 21,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-0DE"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0DE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916122,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PLVR6647BVMM"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPLVR6647BVMM",
+    "name": "NHS Arden and Greater East Midlands Commissioning Support Unit",
+    "name_norms": [
+     {
+      "n": 65,
+      "value": "nhs arden and greater east midlands commissioning support unit"
+     },
+     {
+      "n": 2,
+      "value": "nhs arden & gem csu"
+     },
+     {
+      "n": 1,
+      "value": "arden & greater east midlands commissioning support unit (agem csu)"
+     },
+     {
+      "n": 1,
+      "value": "nhs arden & cmu"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 69,
+    "raw_identifiers": [
+     {
+      "n": 69,
+      "raw": "GB-PPON-PLVR-6647-BVMM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0DE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   6340194,
+   7501468,
+   30916122
+  ]
+ },
+ {
+  "code": "0DF",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "0DF",
+   "legal_end": null,
+   "name": "NHS SOUTH, CENTRAL AND WEST COMMISSIONING SUPPORT UNIT",
+   "predecessors": [
+    "0AC",
+    "0AW"
+   ],
+   "role": "RO213",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 61,
+    "tail": "0DF"
+   },
+   {
+    "folded": true,
+    "later_parties": 0,
+    "parties": 1,
+    "tail": "ODF"
+   }
+  ],
+  "coded_parties": 62,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PXTZ5316XWPW"
+  ],
+  "holder_ids": [
+   13087055,
+   13252367,
+   30915590,
+   30930432,
+   30968729,
+   31538082
+  ],
+  "holders": [
+   {
+    "org_id": 13087055,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS South, Central and West Commissioning Support Unit (SCW)",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "nhs south, central and west commissioning support unit (scw)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-ODF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0DF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 13252367,
+    "via": "party",
+    "coded_parties": 12,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS South Central and West Commissioning Support Unit",
+    "name_norms": [
+     {
+      "n": 14,
+      "value": "nhs south central and west commissioning support unit"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 14,
+    "raw_identifiers": [
+     {
+      "n": 12,
+      "raw": "GB-NHS-0DF"
+     },
+     {
+      "n": 2,
+      "raw": null
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0DF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30915590,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PXTZ5316XWPW"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPXTZ5316XWPW",
+    "name": "NHS South, Central and West Commissioning Support Unit (hosted by NHS England)",
+    "name_norms": [
+     {
+      "n": 37,
+      "value": "nhs south, central and west commissioning support unit (hosted by nhs england)"
+     },
+     {
+      "n": 1,
+      "value": "nhs south central and west commissioning support"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 38,
+    "raw_identifiers": [
+     {
+      "n": 38,
+      "raw": "GB-PPON-PXTZ-5316-XWPW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0DF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30930432,
+    "via": "party",
+    "coded_parties": 46,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS South Central and West CSU",
+    "name_norms": [
+     {
+      "n": 50,
+      "value": "nhs south central and west csu"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 50,
+    "raw_identifiers": [
+     {
+      "n": 46,
+      "raw": "GB-NHS-0DF"
+     },
+     {
+      "n": 4,
+      "raw": null
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0DF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30968729,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS SOUTH CENTRAL AND WEST COMMISSIONING SUPPORT",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs south central and west commissioning support"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-0DF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0DF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31538082,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS South, Central and West Commissioning Support Unit (hosted by NHS England)",
+    "name_norms": [
+     {
+      "n": 21,
+      "value": "nhs south, central and west commissioning support unit (hosted by nhs england)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 21,
+    "raw_identifiers": [
+     {
+      "n": 19,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-0DF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "0DF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   13087055,
+   13252367,
+   30915590,
+   30930432,
+   30968729,
+   31538082
+  ]
+ },
+ {
+  "code": "DQF",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "DQF",
+   "legal_end": null,
+   "name": "CALDERDALE AND HUDDERSFIELD SOLUTIONS LIMITED",
+   "predecessors": [],
+   "role": "RO172",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 1,
+    "parties": 0,
+    "tail": "DQF"
+   }
+  ],
+  "coded_parties": 0,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PHPR3762LPLP"
+  ],
+  "holder_ids": [
+   31550606
+  ],
+  "holders": [
+   {
+    "org_id": 31550606,
+    "via": "party-later+ppon",
+    "coded_parties": 0,
+    "later_parties": 1,
+    "ppons": [
+     "PHPR3762LPLP"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBCOH11258001",
+    "name": "CALDERDALE AND HUDDERSFIELD SOLUTIONS LTD",
+    "name_norms": [
+     {
+      "n": 17,
+      "value": "calderdale and huddersfield solutions limited"
+     },
+     {
+      "n": 4,
+      "value": "calderdale and huddersfield solutions ltd"
+     },
+     {
+      "n": 1,
+      "value": "calderdale & huddersfield nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 22,
+    "raw_identifiers": [
+     {
+      "n": 17,
+      "raw": "GB-PPON-PHPR-3762-LPLP"
+     },
+     {
+      "n": 5,
+      "raw": "GB-COH-11258001"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [
+     "GBPPONPHPR3762LPLP"
+    ],
+    "under_review": true,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": true,
+    "holder_of": [
+     "DQF"
+    ],
+    "contested": false,
+    "denied": [
+     "minted-identity"
+    ],
+    "key_owners_elsewhere": [
+     14305379
+    ]
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": []
+ },
+ {
+  "code": "QGH",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QGH",
+   "legal_end": null,
+   "name": "NHS HEREFORDSHIRE AND WORCESTERSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 15,
+    "tail": "QGH"
+   }
+  ],
+  "coded_parties": 15,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PNMN7243RQRR"
+  ],
+  "holder_ids": [
+   30916931,
+   31542355
+  ],
+  "holders": [
+   {
+    "org_id": 30916931,
+    "via": "party",
+    "coded_parties": 15,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 77,
+      "value": "nhs herefordshire and worcestershire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 77,
+    "raw_identifiers": [
+     {
+      "n": 62,
+      "raw": null
+     },
+     {
+      "n": 15,
+      "raw": "GB-NHS-QGH"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QGH"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31542355,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PNMN7243RQRR"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPNMN7243RQRR",
+    "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 9,
+      "value": "nhs herefordshire and worcestershire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 9,
+    "raw_identifiers": [
+     {
+      "n": 9,
+      "raw": "GB-PPON-PNMN-7243-RQRR"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QGH"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30916931,
+   31542355
+  ]
+ },
+ {
+  "code": "QHG",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QHG",
+   "legal_end": "2026-03-31",
+   "name": "NHS BEDFORDSHIRE, LUTON AND MILTON KEYNES INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": [
+    "S1Y5D"
+   ]
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 1,
+    "tail": "QHG"
+   }
+  ],
+  "coded_parties": 1,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   30918226
+  ],
+  "holders": [
+   {
+    "org_id": 30918226,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Bedfordshire, Luton and Milton Keynes Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 114,
+      "value": "nhs bedfordshire, luton and milton keynes integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 114,
+    "raw_identifiers": [
+     {
+      "n": 113,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QHG"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHG"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30918226
+  ]
+ },
+ {
+  "code": "QHL",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QHL",
+   "legal_end": null,
+   "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 107,
+    "tail": "QHL"
+   }
+  ],
+  "coded_parties": 107,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PWQY9673JBYN"
+  ],
+  "holder_ids": [
+   30915737,
+   30915738,
+   30916123
+  ],
+  "holders": [
+   {
+    "org_id": 30915737,
+    "via": "party",
+    "coded_parties": 43,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Birmingham and Solihull ICB",
+    "name_norms": [
+     {
+      "n": 156,
+      "value": "nhs birmingham and solihull icb"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 156,
+    "raw_identifiers": [
+     {
+      "n": 113,
+      "raw": null
+     },
+     {
+      "n": 43,
+      "raw": "GB-NHS-QHL"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHL"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30915738,
+    "via": "party",
+    "coded_parties": 64,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+    "name_norms": [
+     {
+      "n": 131,
+      "value": "nhs birmingham and solihull integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 131,
+    "raw_identifiers": [
+     {
+      "n": 64,
+      "raw": null
+     },
+     {
+      "n": 64,
+      "raw": "GB-NHS-QHL"
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-ODS QHL"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHL"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916123,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PWQY9673JBYN"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPWQY9673JBYN",
+    "name": "NHS Birmingham and Solihull Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 20,
+      "value": "nhs birmingham and solihull integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 20,
+    "raw_identifiers": [
+     {
+      "n": 20,
+      "raw": "GB-PPON-PWQY-9673-JBYN"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHL"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30915737,
+   30915738,
+   30916123
+  ]
+ },
+ {
+  "code": "QHM",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QHM",
+   "legal_end": null,
+   "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD",
+   "predecessors": [
+    "QMK",
+    "QT8",
+    "QVP"
+   ],
+   "role": "RO261",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 1310,
+    "tail": "QHM"
+   }
+  ],
+  "coded_parties": 1310,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PMYZ6944BYLH"
+  ],
+  "holder_ids": [
+   3257070,
+   30915134,
+   30930129,
+   30976504,
+   31538425,
+   31547927,
+   31548114,
+   31556600,
+   31565552,
+   31577547,
+   31593327,
+   31595235,
+   31603816,
+   31604957,
+   31605903,
+   31608998,
+   31645251
+  ],
+  "holders": [
+   {
+    "org_id": 3257070,
+    "via": "party",
+    "coded_parties": 14,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "North of England Commissioning Support",
+    "name_norms": [
+     {
+      "n": 253,
+      "value": "north of england commissioning support"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 253,
+    "raw_identifiers": [
+     {
+      "n": 239,
+      "raw": null
+     },
+     {
+      "n": 14,
+      "raw": "GB-NHS-QHM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "role"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30915134,
+    "via": "party",
+    "coded_parties": 915,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD",
+    "name_norms": [
+     {
+      "n": 1001,
+      "value": "nhs north east and north cumbria integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1001,
+    "raw_identifiers": [
+     {
+      "n": 899,
+      "raw": "GB-NHS-QHM"
+     },
+     {
+      "n": 61,
+      "raw": null
+     },
+     {
+      "n": 16,
+      "raw": "GB-NHS-qhm"
+     },
+     {
+      "n": 9,
+      "raw": "GB-COH-QHM"
+     },
+     {
+      "n": 8,
+      "raw": "GB-NHS-00P"
+     },
+     {
+      "n": 5,
+      "raw": "GB-NHS-00N"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-ICB"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD (QHM)"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-TBC"
+     }
+    ],
+    "other_codes": [
+     "00N",
+     "00P",
+     "ICB",
+     "TBC"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30930129,
+    "via": "party",
+    "coded_parties": 356,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "North East and North Cumbria Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 1347,
+      "value": "north east and north cumbria integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1347,
+    "raw_identifiers": [
+     {
+      "n": 990,
+      "raw": null
+     },
+     {
+      "n": 356,
+      "raw": "GB-NHS-QHM"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-North East and North Cumbria Integrated Care Board"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30976504,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "North East North Cumbria Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "north east north cumbria integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QHM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31538425,
+    "via": "party",
+    "coded_parties": 6,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS North East and North Cumbria ICB",
+    "name_norms": [
+     {
+      "n": 19,
+      "value": "nhs north east and north cumbria icb"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 19,
+    "raw_identifiers": [
+     {
+      "n": 11,
+      "raw": null
+     },
+     {
+      "n": 6,
+      "raw": "GB-NHS-QHM"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-00P"
+     }
+    ],
+    "other_codes": [
+     "00P"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31547927,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Aspatria Medical Group",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "aspatria medical group"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-COH-TBC"
+     },
+     {
+      "n": 1,
+      "raw": "GB-COH-To Be Confirmed"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QHM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31548114,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Parkway Medical Group",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "parkway medical group"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-COH-TBC"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QHM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31556600,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PMYZ6944BYLH"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPMYZ6944BYLH",
+    "name": "NHS North East and North Cumbria Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs north east and north cumbria integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-PPON-PMYZ-6944-BYLH"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31565552,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS North Eeast and North Cumbria Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs north eeast and north cumbria integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QHM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31577547,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS England North West / Greater Manchester",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs england north west / greater manchester"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QHM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": "01M",
+     "verdict": "better"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31593327,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS North East & North Cumbria Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 7,
+      "value": "nhs north east & north cumbria integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 7,
+    "raw_identifiers": [
+     {
+      "n": 4,
+      "raw": "GB-NHS-00P"
+     },
+     {
+      "n": 2,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QHM"
+     }
+    ],
+    "other_codes": [
+     "00P"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31595235,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "North East & North Cumbria Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 9,
+      "value": "north east & north cumbria integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 9,
+    "raw_identifiers": [
+     {
+      "n": 4,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-QHM"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-00P"
+     }
+    ],
+    "other_codes": [
+     "00P"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31603816,
+    "via": "party",
+    "coded_parties": 4,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS North East North Cumbria Integrated Care Board - County Durham Place",
+    "name_norms": [
+     {
+      "n": 5,
+      "value": "nhs north east north cumbria integrated care board - county durham place"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 5,
+    "raw_identifiers": [
+     {
+      "n": 4,
+      "raw": "GB-NHS-QHM"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-00P"
+     }
+    ],
+    "other_codes": [
+     "00P"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31604957,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS North East North Cumbria Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 6,
+      "value": "nhs north east north cumbria integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 6,
+    "raw_identifiers": [
+     {
+      "n": 4,
+      "raw": "GB-NHS-00P"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-QHM"
+     }
+    ],
+    "other_codes": [
+     "00P"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31605903,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS North East North Cumbria Integrated Care Board - Tees Valley Place",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "nhs north east north cumbria integrated care board - tees valley place"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-QHM"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-00P"
+     }
+    ],
+    "other_codes": [
+     "00P"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31608998,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NH North East and North Cumbria ICB",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nh north east and north cumbria icb"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QHM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31645251,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "The Store House Pharmacy",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "the store house pharmacy"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-COH-TBC"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-qhm"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QHM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   3257070,
+   30915134,
+   30930129,
+   30976504,
+   31538425,
+   31547927,
+   31548114,
+   31556600,
+   31565552,
+   31577547,
+   31593327,
+   31595235,
+   31603816,
+   31604957,
+   31605903,
+   31608998,
+   31645251
+  ]
+ }
+]

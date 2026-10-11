@@ -1,0 +1,2191 @@
+[
+ {
+  "code": "RPY",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RPY",
+   "legal_end": null,
+   "name": "THE ROYAL MARSDEN NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 2,
+    "tail": "RPY"
+   }
+  ],
+  "coded_parties": 2,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PXLT9823WVCY"
+  ],
+  "holder_ids": [
+   1206891,
+   6454935,
+   30926647
+  ],
+  "holders": [
+   {
+    "org_id": 1206891,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "The Royal Marsden NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 139,
+      "value": "the royal marsden nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 139,
+    "raw_identifiers": [
+     {
+      "n": 138,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RPY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RPY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 6454935,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Royal Marsden Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 16,
+      "value": "royal marsden hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 16,
+    "raw_identifiers": [
+     {
+      "n": 15,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RPY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RPY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30926647,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PXLT9823WVCY"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPXLT9823WVCY",
+    "name": "The Royal Marsden NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 35,
+      "value": "the royal marsden nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 35,
+    "raw_identifiers": [
+     {
+      "n": 35,
+      "raw": "GB-PPON-PXLT-9823-WVCY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RPY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1206891,
+   6454935,
+   30926647
+  ]
+ },
+ {
+  "code": "RQF",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RQF",
+   "legal_end": null,
+   "name": "VELINDRE NHS TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 553,
+    "tail": "RQF"
+   }
+  ],
+  "coded_parties": 553,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   1178447,
+   1264053,
+   1721255,
+   7444653,
+   8540581,
+   10766419,
+   12008955,
+   13080608,
+   15641552,
+   15693878,
+   30915473,
+   31541477,
+   31544734,
+   31547581,
+   31547740,
+   31548395,
+   31549671,
+   31550182,
+   31564434,
+   31564845,
+   31569517,
+   31570228,
+   31570494,
+   31573635,
+   31575191,
+   31581564,
+   31597187,
+   31764086
+  ],
+  "holders": [
+   {
+    "org_id": 1178447,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership - Procurement Services",
+    "name_norms": [
+     {
+      "n": 114,
+      "value": "nhs wales shared services partnership - procurement services"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 114,
+    "raw_identifiers": [
+     {
+      "n": 113,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 1264053,
+    "via": "party",
+    "coded_parties": 73,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership",
+    "name_norms": [
+     {
+      "n": 2208,
+      "value": "nhs wales shared services partnership"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2208,
+    "raw_identifiers": [
+     {
+      "n": 2135,
+      "raw": null
+     },
+     {
+      "n": 73,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 1721255,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Service Partnership - Procurement Services",
+    "name_norms": [
+     {
+      "n": 12,
+      "value": "nhs wales shared service partnership - procurement services"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 12,
+    "raw_identifiers": [
+     {
+      "n": 9,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 7444653,
+    "via": "party",
+    "coded_parties": 9,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NWSSP Procurement Services",
+    "name_norms": [
+     {
+      "n": 19,
+      "value": "nwssp procurement services"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 19,
+    "raw_identifiers": [
+     {
+      "n": 10,
+      "raw": null
+     },
+     {
+      "n": 9,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 8540581,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NWSSP",
+    "name_norms": [
+     {
+      "n": 45,
+      "value": "nwssp"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 45,
+    "raw_identifiers": [
+     {
+      "n": 43,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 10766419,
+    "via": "party",
+    "coded_parties": 14,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Service Partnership",
+    "name_norms": [
+     {
+      "n": 52,
+      "value": "nhs wales shared service partnership"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 52,
+    "raw_identifiers": [
+     {
+      "n": 38,
+      "raw": null
+     },
+     {
+      "n": 14,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 12008955,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Health Education and Improvement Wales",
+    "name_norms": [
+     {
+      "n": 19,
+      "value": "health education and improvement wales"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 19,
+    "raw_identifiers": [
+     {
+      "n": 18,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 13080608,
+    "via": "party",
+    "coded_parties": 36,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Velindre University NHS Trust",
+    "name_norms": [
+     {
+      "n": 93,
+      "value": "velindre university nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 93,
+    "raw_identifiers": [
+     {
+      "n": 57,
+      "raw": null
+     },
+     {
+      "n": 36,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 15641552,
+    "via": "party",
+    "coded_parties": 235,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+    "name_norms": [
+     {
+      "n": 2120,
+      "value": "nhs wales shared services partnership-procurement services (hosted by velindre university nhs trust)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2120,
+    "raw_identifiers": [
+     {
+      "n": 1881,
+      "raw": null
+     },
+     {
+      "n": 235,
+      "raw": "GB-NHS-RQF"
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-RYT"
+     },
+     {
+      "n": 1,
+      "raw": "Paul Thomas"
+     }
+    ],
+    "other_codes": [
+     "RYT"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF",
+     "RYT"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 15693878,
+    "via": "party",
+    "coded_parties": 144,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)",
+    "name_norms": [
+     {
+      "n": 146,
+      "value": "nhs wales shared services partnership (hosted by velindre university nhs trust)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 146,
+    "raw_identifiers": [
+     {
+      "n": 144,
+      "raw": "GB-NHS-RQF"
+     },
+     {
+      "n": 2,
+      "raw": null
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30915473,
+    "via": "party",
+    "coded_parties": 7,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership-Procurement Services",
+    "name_norms": [
+     {
+      "n": 65,
+      "value": "nhs wales shared services partnership-procurement services"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 65,
+    "raw_identifiers": [
+     {
+      "n": 58,
+      "raw": null
+     },
+     {
+      "n": 7,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31541477,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Service Partnership (hosted by Velindre University NHS Trust)",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "nhs wales shared service partnership (hosted by velindre university nhs trust)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31544734,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Shared Services",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs shared services"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31547581,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NWSSP - Procurement NHS",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nwssp - procurement nhs"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31547740,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Health Education and Improvement Wales (HEIW)",
+    "name_norms": [
+     {
+      "n": 84,
+      "value": "health education and improvement wales (heiw)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 84,
+    "raw_identifiers": [
+     {
+      "n": 82,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31548395,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NWSSP hosted by Velindre University NHS Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nwssp hosted by velindre university nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31549671,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust) on behalf of Betsi Cadwaladr University Health Board",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "nhs wales shared services partnership-procurement services (hosted by velindre university nhs trust) on behalf of betsi cadwaladr university health board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "agent"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31550182,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NWSSP- Procurement Sevices",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nwssp- procurement sevices"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31564434,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "nhs wales shared services partnership (hosted by velindre university nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31564845,
+    "via": "party",
+    "coded_parties": 6,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NWSSP Shared Services Partnership - Procurement Services",
+    "name_norms": [
+     {
+      "n": 6,
+      "value": "nwssp shared services partnership - procurement services"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 6,
+    "raw_identifiers": [
+     {
+      "n": 6,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31569517,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "North Wales Shared Service Partnership",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "north wales shared service partnership"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31570228,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Welsh Blood Service Trust hosted by Velindre NHS Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "welsh blood service trust hosted by velindre nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": "RT4",
+     "verdict": "better"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31570494,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership - Procurement Services (hosted by Velindre NHS Trust)",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs wales shared services partnership - procurement services (hosted by velindre nhs trust)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31573635,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales (NWSSP)",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "nhs wales (nwssp)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31575191,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Service Partnership (NWSSP)",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs wales shared service partnership (nwssp)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31581564,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS)",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs wales shared services partnership (hosted by velindre university nhs)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31597187,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust) on behalf of the Joint Commissioning Committee",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs wales shared services partnership-procurement services (hosted by velindre university nhs trust) on behalf of the joint commissioning committee"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "agent"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31764086,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership (NWSSP) on behalf of Aneurin Bevan University Health Board (ABUHB)",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs wales shared services partnership (nwssp) on behalf of aneurin bevan university health board (abuhb)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "agent"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1178447,
+   1264053,
+   1721255,
+   7444653,
+   8540581,
+   10766419,
+   12008955,
+   13080608,
+   15641552,
+   15693878,
+   30915473,
+   31541477,
+   31544734,
+   31547581,
+   31547740,
+   31548395,
+   31549671,
+   31550182,
+   31564434,
+   31564845,
+   31569517,
+   31570228,
+   31570494,
+   31573635,
+   31575191,
+   31581564,
+   31597187,
+   31764086
+  ]
+ },
+ {
+  "code": "RQM",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RQM",
+   "legal_end": null,
+   "name": "CHELSEA AND WESTMINSTER HOSPITAL NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 2,
+    "tail": "RQM"
+   }
+  ],
+  "coded_parties": 2,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   3465906
+  ],
+  "holders": [
+   {
+    "org_id": 3465906,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Chelsea and Westminster Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 151,
+      "value": "chelsea and westminster hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 151,
+    "raw_identifiers": [
+     {
+      "n": 149,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RQM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQM"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   3465906
+  ]
+ },
+ {
+  "code": "RQX",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RQX",
+   "legal_end": null,
+   "name": "HOMERTON HEALTHCARE NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 6,
+    "tail": "RQX"
+   }
+  ],
+  "coded_parties": 6,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PMGT9179VJHQ"
+  ],
+  "holder_ids": [
+   1238214,
+   30976286,
+   30976496,
+   31571651
+  ],
+  "holders": [
+   {
+    "org_id": 1238214,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Homerton University Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 167,
+      "value": "homerton university hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 167,
+    "raw_identifiers": [
+     {
+      "n": 166,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RQX"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30976286,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PMGT9179VJHQ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPMGT9179VJHQ",
+    "name": "Homerton University Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 5,
+      "value": "homerton university hospital nhs foundation trust"
+     },
+     {
+      "n": 2,
+      "value": "homerton healthcare nhs foundation trust"
+     },
+     {
+      "n": 1,
+      "value": "homerton nhs healthcare foundation trust (hhft)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 8,
+    "raw_identifiers": [
+     {
+      "n": 8,
+      "raw": "GB-PPON-PMGT-9179-VJHQ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30976496,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Homerton Healthcare NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 14,
+      "value": "homerton healthcare nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 14,
+    "raw_identifiers": [
+     {
+      "n": 11,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-RQX"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31571651,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Homerton Healthcare NHS FT",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "homerton healthcare nhs ft"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-RQX"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1238214,
+   30976286,
+   30976496,
+   31571651
+  ]
+ },
+ {
+  "code": "RQY",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RQY",
+   "legal_end": null,
+   "name": "SOUTH WEST LONDON AND ST GEORGE'S MENTAL HEALTH NHS TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 3,
+    "tail": "RQY"
+   }
+  ],
+  "coded_parties": 3,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   3793368
+  ],
+  "holders": [
+   {
+    "org_id": 3793368,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "South West London and St George's Mental Health NHS Trust",
+    "name_norms": [
+     {
+      "n": 43,
+      "value": "south west london and st george's mental health nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 43,
+    "raw_identifiers": [
+     {
+      "n": 39,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-RQY"
+     },
+     {
+      "n": 1,
+      "raw": "UK"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   3793368
+  ]
+ },
+ {
+  "code": "RRE",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RRE",
+   "legal_end": null,
+   "name": "MIDLANDS PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RBG",
+    "RBH",
+    "RNG"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 6,
+    "tail": "RRE"
+   }
+  ],
+  "coded_parties": 6,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   11951117,
+   30915714,
+   30916057
+  ],
+  "holders": [
+   {
+    "org_id": 11951117,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Midlands Partnership NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 83,
+      "value": "midlands partnership nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 83,
+    "raw_identifiers": [
+     {
+      "n": 80,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RRE"
+     },
+     {
+      "n": 1,
+      "raw": "na"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RRE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30915714,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Midlands Partnership University NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 35,
+      "value": "midlands partnership university nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 35,
+    "raw_identifiers": [
+     {
+      "n": 32,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-RRE"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RRE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916057,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Inclusion - part of Midlands Partnership NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs inclusion - part of midlands partnership nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RRE"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RRE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   11951117,
+   30915714,
+   30916057
+  ]
+ }
+]

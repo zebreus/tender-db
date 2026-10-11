@@ -1,0 +1,1328 @@
+[
+ {
+  "code": "RNA",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RNA",
+   "legal_end": null,
+   "name": "THE DUDLEY GROUP NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 2,
+    "tail": "RNA"
+   }
+  ],
+  "coded_parties": 2,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PRGP5218PVYD"
+  ],
+  "holder_ids": [
+   2473797,
+   31565549
+  ],
+  "holders": [
+   {
+    "org_id": 2473797,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "The Dudley Group NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 68,
+      "value": "the dudley group nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 68,
+    "raw_identifiers": [
+     {
+      "n": 66,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RNA"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31565549,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PRGP5218PVYD"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPRGP5218PVYD",
+    "name": "The Dudley Group NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 16,
+      "value": "the dudley group nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 16,
+    "raw_identifiers": [
+     {
+      "n": 16,
+      "raw": "GB-PPON-PRGP-5218-PVYD"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   2473797,
+   31565549
+  ]
+ },
+ {
+  "code": "RNK",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RNK",
+   "legal_end": "2026-03-31",
+   "name": "TAVISTOCK AND PORTMAN NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": [
+    "G6V2S"
+   ]
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 4,
+    "tail": "RNK"
+   }
+  ],
+  "coded_parties": 4,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PGGT9642DYWY"
+  ],
+  "holder_ids": [
+   1538916,
+   31554431
+  ],
+  "holders": [
+   {
+    "org_id": 1538916,
+    "via": "party",
+    "coded_parties": 4,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Tavistock and Portman NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 29,
+      "value": "tavistock and portman nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 29,
+    "raw_identifiers": [
+     {
+      "n": 25,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-RNK"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNK"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31554431,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PGGT9642DYWY"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPGGT9642DYWY",
+    "name": "Tavistock and Portman NHS Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "tavistock and portman nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-PPON-PGGT-9642-DYWY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNK"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": [
+     31598112
+    ]
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1538916,
+   31554431
+  ]
+ },
+ {
+  "code": "RNN",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RNN",
+   "legal_end": null,
+   "name": "NORTH CUMBRIA INTEGRATED CARE NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RE7",
+    "RLF"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 11,
+    "tail": "RNN"
+   }
+  ],
+  "coded_parties": 11,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PDXN7482RVVM"
+  ],
+  "holder_ids": [
+   14205876,
+   30969250
+  ],
+  "holders": [
+   {
+    "org_id": 14205876,
+    "via": "party",
+    "coded_parties": 11,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "North Cumbria Integrated Care NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 45,
+      "value": "north cumbria integrated care nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 45,
+    "raw_identifiers": [
+     {
+      "n": 34,
+      "raw": null
+     },
+     {
+      "n": 11,
+      "raw": "GB-NHS-RNN"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNN"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30969250,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PDXN7482RVVM"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPDXN7482RVVM",
+    "name": "North Cumbria Integrated Care NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 45,
+      "value": "north cumbria integrated care nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 45,
+    "raw_identifiers": [
+     {
+      "n": 45,
+      "raw": "GB-PPON-PDXN-7482-RVVM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNN"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   14205876,
+   30969250
+  ]
+ },
+ {
+  "code": "RNQ",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RNQ",
+   "legal_end": null,
+   "name": "KETTERING GENERAL HOSPITAL NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 9,
+    "tail": "RNQ"
+   }
+  ],
+  "coded_parties": 9,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PCPL4765VNRN"
+  ],
+  "holder_ids": [
+   1432862,
+   30915885
+  ],
+  "holders": [
+   {
+    "org_id": 1432862,
+    "via": "party",
+    "coded_parties": 9,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Kettering General Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 183,
+      "value": "kettering general hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 183,
+    "raw_identifiers": [
+     {
+      "n": 171,
+      "raw": null
+     },
+     {
+      "n": 9,
+      "raw": "GB-NHS-RNQ"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-KGH"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RJZ"
+     },
+     {
+      "n": 1,
+      "raw": "RNQ"
+     }
+    ],
+    "other_codes": [
+     "KGH",
+     "RJZ"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RJZ",
+     "RNQ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30915885,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PCPL4765VNRN"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPCPL4765VNRN",
+    "name": "Kettering General Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 64,
+      "value": "kettering general hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 64,
+    "raw_identifiers": [
+     {
+      "n": 64,
+      "raw": "GB-PPON-PCPL-4765-VNRN"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNQ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1432862,
+   30915885
+  ]
+ },
+ {
+  "code": "RNS",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RNS",
+   "legal_end": null,
+   "name": "NORTHAMPTON GENERAL HOSPITAL NHS TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 11,
+    "tail": "RNS"
+   }
+  ],
+  "coded_parties": 11,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PQBY8547GYGP"
+  ],
+  "holder_ids": [
+   1251847,
+   30913740
+  ],
+  "holders": [
+   {
+    "org_id": 1251847,
+    "via": "party",
+    "coded_parties": 11,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Northampton General Hospital NHS Trust",
+    "name_norms": [
+     {
+      "n": 397,
+      "value": "northampton general hospital nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 397,
+    "raw_identifiers": [
+     {
+      "n": 385,
+      "raw": null
+     },
+     {
+      "n": 11,
+      "raw": "GB-NHS-RNS"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NGH"
+     }
+    ],
+    "other_codes": [
+     "NGH"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNS"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30913740,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PQBY8547GYGP"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPQBY8547GYGP",
+    "name": "Northampton General Hospital NHS Trust",
+    "name_norms": [
+     {
+      "n": 91,
+      "value": "northampton general hospital nhs trust"
+     },
+     {
+      "n": 1,
+      "value": "xiel"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 92,
+    "raw_identifiers": [
+     {
+      "n": 92,
+      "raw": "GB-PPON-PQBY-8547-GYGP"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNS"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1251847,
+   30913740
+  ]
+ },
+ {
+  "code": "RNU",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RNU",
+   "legal_end": null,
+   "name": "OXFORD HEALTH NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 27,
+    "tail": "RNU"
+   }
+  ],
+  "coded_parties": 27,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   1862654
+  ],
+  "holders": [
+   {
+    "org_id": 1862654,
+    "via": "party",
+    "coded_parties": 27,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Oxford Health NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 155,
+      "value": "oxford health nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 155,
+    "raw_identifiers": [
+     {
+      "n": 127,
+      "raw": null
+     },
+     {
+      "n": 27,
+      "raw": "GB-NHS-RNU"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-AMMR"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNU"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1862654
+  ]
+ },
+ {
+  "code": "RNZ",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RNZ",
+   "legal_end": null,
+   "name": "SALISBURY NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 9,
+    "tail": "RNZ"
+   }
+  ],
+  "coded_parties": 9,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PHNB6299PVMY"
+  ],
+  "holder_ids": [
+   1262730,
+   30972038,
+   31632712
+  ],
+  "holders": [
+   {
+    "org_id": 1262730,
+    "via": "party",
+    "coded_parties": 8,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Salisbury NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 461,
+      "value": "salisbury nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 461,
+    "raw_identifiers": [
+     {
+      "n": 450,
+      "raw": null
+     },
+     {
+      "n": 8,
+      "raw": "GB-NHS-RNZ"
+     },
+     {
+      "n": 2,
+      "raw": "UK"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-UHS"
+     }
+    ],
+    "other_codes": [
+     "UHS"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNZ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30972038,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PHNB6299PVMY"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPHNB6299PVMY",
+    "name": "Salisbury NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 75,
+      "value": "salisbury nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 75,
+    "raw_identifiers": [
+     {
+      "n": 75,
+      "raw": "GB-PPON-PHNB-6299-PVMY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNZ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31632712,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "SALISBURY NHS FOUNDATION TRUST in partnership with Carbon and Energy Fund",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "salisbury nhs foundation trust in partnership with carbon and energy fund"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RNZ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RNZ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1262730,
+   30972038,
+   31632712
+  ]
+ },
+ {
+  "code": "RPA",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RPA",
+   "legal_end": null,
+   "name": "MEDWAY NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 224,
+    "tail": "RPA"
+   }
+  ],
+  "coded_parties": 224,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PGVY4831CRNZ"
+  ],
+  "holder_ids": [
+   1291482,
+   30917062
+  ],
+  "holders": [
+   {
+    "org_id": 1291482,
+    "via": "party",
+    "coded_parties": 224,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Medway NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 297,
+      "value": "medway nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 297,
+    "raw_identifiers": [
+     {
+      "n": 224,
+      "raw": "GB-NHS-RPA"
+     },
+     {
+      "n": 72,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "RPA"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RPA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30917062,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PGVY4831CRNZ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPGVY4831CRNZ",
+    "name": "Medway NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "medway nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 4,
+      "raw": "GB-PPON-PGVY-4831-CRNZ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RPA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1291482,
+   30917062
+  ]
+ },
+ {
+  "code": "RPC",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RPC",
+   "legal_end": null,
+   "name": "QUEEN VICTORIA HOSPITAL NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 1,
+    "tail": "RPC"
+   }
+  ],
+  "coded_parties": 1,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   1379961
+  ],
+  "holders": [
+   {
+    "org_id": 1379961,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Queen Victoria Hospital NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 86,
+      "value": "queen victoria hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 86,
+    "raw_identifiers": [
+     {
+      "n": 85,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RPC"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RPC"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1379961
+  ]
+ },
+ {
+  "code": "RPG",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RPG",
+   "legal_end": null,
+   "name": "OXLEAS NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 6,
+    "tail": "RPG"
+   }
+  ],
+  "coded_parties": 6,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PMGB6764GLGQ"
+  ],
+  "holder_ids": [
+   1346825,
+   30917846
+  ],
+  "holders": [
+   {
+    "org_id": 1346825,
+    "via": "party",
+    "coded_parties": 6,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Oxleas NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 162,
+      "value": "oxleas nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 162,
+    "raw_identifiers": [
+     {
+      "n": 156,
+      "raw": null
+     },
+     {
+      "n": 6,
+      "raw": "GB-NHS-RPG"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RPG"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30917846,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PMGB6764GLGQ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPMGB6764GLGQ",
+    "name": "Oxleas NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 27,
+      "value": "oxleas nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 27,
+    "raw_identifiers": [
+     {
+      "n": 27,
+      "raw": "GB-PPON-PMGB-6764-GLGQ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RPG"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1346825,
+   30917846
+  ]
+ }
+]

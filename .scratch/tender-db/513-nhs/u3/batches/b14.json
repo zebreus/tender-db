@@ -1,0 +1,1904 @@
+[
+ {
+  "code": "RWD",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RWD",
+   "legal_end": null,
+   "name": "UNITED LINCOLNSHIRE TEACHING HOSPITALS NHS TRUST",
+   "predecessors": [
+    "RK1",
+    "RQU",
+    "RRX"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 7,
+    "tail": "RWD"
+   }
+  ],
+  "coded_parties": 7,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PTYN5349TLTT"
+  ],
+  "holder_ids": [
+   30913995,
+   30915785,
+   31604037
+  ],
+  "holders": [
+   {
+    "org_id": 30913995,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PTYN5349TLTT"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPTYN5349TLTT",
+    "name": "United Lincolnshire Teaching Hospitals NHS Trust",
+    "name_norms": [
+     {
+      "n": 165,
+      "value": "united lincolnshire teaching hospitals nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 165,
+    "raw_identifiers": [
+     {
+      "n": 165,
+      "raw": "GB-PPON-PTYN-5349-TLTT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30915785,
+    "via": "party",
+    "coded_parties": 6,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "UNITED LINCOLNSHIRE TEACHING HOSPITALS NHS TRUST",
+    "name_norms": [
+     {
+      "n": 65,
+      "value": "united lincolnshire teaching hospitals nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 65,
+    "raw_identifiers": [
+     {
+      "n": 56,
+      "raw": null
+     },
+     {
+      "n": 6,
+      "raw": "GB-NHS-RWD"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-United Lincolnshire Teaching Hospitals NHS Trust"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-united Lincolnshire Teaching Hospitals NHS Trust"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31604037,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "United Lincolnshire NHS Hospital Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "united lincolnshire nhs hospital trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWD"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30913995,
+   30915785,
+   31604037
+  ]
+ },
+ {
+  "code": "RWE",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RWE",
+   "legal_end": null,
+   "name": "UNIVERSITY HOSPITALS OF LEICESTER NHS TRUST",
+   "predecessors": [
+    "RFB",
+    "RFD",
+    "RFL"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 6,
+    "tail": "RWE"
+   }
+  ],
+  "coded_parties": 6,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PWXN8614MPHH"
+  ],
+  "holder_ids": [
+   4474166,
+   30930117
+  ],
+  "holders": [
+   {
+    "org_id": 4474166,
+    "via": "party",
+    "coded_parties": 6,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "University Hospitals of Leicester NHS Trust",
+    "name_norms": [
+     {
+      "n": 506,
+      "value": "university hospitals of leicester nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 506,
+    "raw_identifiers": [
+     {
+      "n": 495,
+      "raw": null
+     },
+     {
+      "n": 6,
+      "raw": "GB-NHS-RWE"
+     },
+     {
+      "n": 4,
+      "raw": "RWE"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RTF"
+     }
+    ],
+    "other_codes": [
+     "RTF"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RTF",
+     "RWE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30930117,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PWXN8614MPHH"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPWXN8614MPHH",
+    "name": "University Hospitals of Leicester NHS Trust",
+    "name_norms": [
+     {
+      "n": 121,
+      "value": "university hospitals of leicester nhs trust"
+     },
+     {
+      "n": 1,
+      "value": "university hospital of leicester nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 122,
+    "raw_identifiers": [
+     {
+      "n": 122,
+      "raw": "GB-PPON-PWXN-8614-MPHH"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   4474166,
+   30930117
+  ]
+ },
+ {
+  "code": "RWF",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RWF",
+   "legal_end": null,
+   "name": "MAIDSTONE AND TUNBRIDGE WELLS NHS TRUST",
+   "predecessors": [
+    "RG1",
+    "RPD"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 35,
+    "tail": "RWF"
+   }
+  ],
+  "coded_parties": 35,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PLWZ5628VQPM"
+  ],
+  "holder_ids": [
+   1517322,
+   30913981,
+   31610393
+  ],
+  "holders": [
+   {
+    "org_id": 1517322,
+    "via": "party",
+    "coded_parties": 32,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Maidstone and Tunbridge Wells NHS Trust",
+    "name_norms": [
+     {
+      "n": 297,
+      "value": "maidstone and tunbridge wells nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 297,
+    "raw_identifiers": [
+     {
+      "n": 262,
+      "raw": null
+     },
+     {
+      "n": 31,
+      "raw": "GB-NHS-RWF"
+     },
+     {
+      "n": 3,
+      "raw": "RWF"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-rwf"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30913981,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PLWZ5628VQPM"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPLWZ5628VQPM",
+    "name": "Maidstone and Tunbridge Wells NHS Trust",
+    "name_norms": [
+     {
+      "n": 75,
+      "value": "maidstone and tunbridge wells nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 75,
+    "raw_identifiers": [
+     {
+      "n": 75,
+      "raw": "GB-PPON-PLWZ-5628-VQPM"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31610393,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Sustainable Energy First Limited C/O Maidstone and Tunbridge Wells NHS Trust",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "sustainable energy first limited c/o maidstone and tunbridge wells nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-NHS-RWF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "agent"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1517322,
+   30913981,
+   31610393
+  ]
+ },
+ {
+  "code": "RWG",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RWG",
+   "legal_end": null,
+   "name": "WEST HERTFORDSHIRE TEACHING HOSPITALS NHS TRUST",
+   "predecessors": [
+    "RPW",
+    "RQL"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 4,
+    "tail": "RWG"
+   }
+  ],
+  "coded_parties": 4,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PQPL8842GLBD"
+  ],
+  "holder_ids": [
+   30913934,
+   31537155
+  ],
+  "holders": [
+   {
+    "org_id": 30913934,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PQPL8842GLBD"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPQPL8842GLBD",
+    "name": "West Hertfordshire Teaching Hospitals NHS Trust",
+    "name_norms": [
+     {
+      "n": 120,
+      "value": "west hertfordshire teaching hospitals nhs trust"
+     },
+     {
+      "n": 15,
+      "value": "west hertfordshire hospitals nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 135,
+    "raw_identifiers": [
+     {
+      "n": 135,
+      "raw": "GB-PPON-PQPL-8842-GLBD"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWG"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31537155,
+    "via": "party",
+    "coded_parties": 4,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "WEST HERTFORDSHIRE TEACHING HOSPITALS NHS TRUST",
+    "name_norms": [
+     {
+      "n": 16,
+      "value": "west hertfordshire teaching hospitals nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 16,
+    "raw_identifiers": [
+     {
+      "n": 12,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-RWG"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWG"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30913934,
+   31537155
+  ]
+ },
+ {
+  "code": "RWJ",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RWJ",
+   "legal_end": null,
+   "name": "STOCKPORT NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RMS",
+    "RMT"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 17,
+    "tail": "RWJ"
+   }
+  ],
+  "coded_parties": 17,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PHJH5159PMBG"
+  ],
+  "holder_ids": [
+   1193388,
+   31574798,
+   31604158
+  ],
+  "holders": [
+   {
+    "org_id": 1193388,
+    "via": "party",
+    "coded_parties": 11,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Stockport NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 199,
+      "value": "stockport nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 199,
+    "raw_identifiers": [
+     {
+      "n": 188,
+      "raw": null
+     },
+     {
+      "n": 11,
+      "raw": "GB-NHS-RWJ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWJ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31574798,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PHJH5159PMBG"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPHJH5159PMBG",
+    "name": "Stockport NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 7,
+      "value": "stockport nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 7,
+    "raw_identifiers": [
+     {
+      "n": 7,
+      "raw": "GB-PPON-PHJH-5159-PMBG"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWJ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31604158,
+    "via": "party",
+    "coded_parties": 6,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Stockport N H S Foundation Trust",
+    "name_norms": [
+     {
+      "n": 8,
+      "value": "stockport n h s foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 8,
+    "raw_identifiers": [
+     {
+      "n": 6,
+      "raw": "GB-NHS-RWJ"
+     },
+     {
+      "n": 2,
+      "raw": null
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWJ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1193388,
+   31574798,
+   31604158
+  ]
+ },
+ {
+  "code": "RWK",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RWK",
+   "legal_end": null,
+   "name": "EAST LONDON NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RRG",
+    "RRH",
+    "RRL"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 5,
+    "tail": "RWK"
+   }
+  ],
+  "coded_parties": 5,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   1264733
+  ],
+  "holders": [
+   {
+    "org_id": 1264733,
+    "via": "party",
+    "coded_parties": 5,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "East London NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 187,
+      "value": "east london nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 187,
+    "raw_identifiers": [
+     {
+      "n": 181,
+      "raw": null
+     },
+     {
+      "n": 5,
+      "raw": "GB-NHS-RWK"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RAT"
+     }
+    ],
+    "other_codes": [
+     "RAT"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RAT",
+     "RWK"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1264733
+  ]
+ },
+ {
+  "code": "RWP",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RWP",
+   "legal_end": null,
+   "name": "WORCESTERSHIRE ACUTE HOSPITALS NHS TRUST",
+   "predecessors": [
+    "RJB",
+    "RLR",
+    "RM9"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 5,
+    "tail": "RWP"
+   }
+  ],
+  "coded_parties": 5,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PPWB7691MHZW"
+  ],
+  "holder_ids": [
+   1385205,
+   30916584
+  ],
+  "holders": [
+   {
+    "org_id": 1385205,
+    "via": "party",
+    "coded_parties": 5,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Worcestershire Acute Hospitals NHS Trust",
+    "name_norms": [
+     {
+      "n": 76,
+      "value": "worcestershire acute hospitals nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 76,
+    "raw_identifiers": [
+     {
+      "n": 71,
+      "raw": null
+     },
+     {
+      "n": 5,
+      "raw": "GB-NHS-RWP"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916584,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PPWB7691MHZW"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPPWB7691MHZW",
+    "name": "Worcestershire Acute Hospitals NHS Trust",
+    "name_norms": [
+     {
+      "n": 22,
+      "value": "worcestershire acute hospitals nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 22,
+    "raw_identifiers": [
+     {
+      "n": 22,
+      "raw": "GB-PPON-PPWB-7691-MHZW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWP"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1385205,
+   30916584
+  ]
+ },
+ {
+  "code": "RWR",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RWR",
+   "legal_end": null,
+   "name": "HERTFORDSHIRE PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RC8",
+    "RQJ"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 3,
+    "tail": "RWR"
+   }
+  ],
+  "coded_parties": 3,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   4840892,
+   5359917,
+   31549588
+  ],
+  "holders": [
+   {
+    "org_id": 4840892,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Hertfordshire Partnership NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 7,
+      "value": "hertfordshire partnership nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 7,
+    "raw_identifiers": [
+     {
+      "n": 6,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWR"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 5359917,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Hertfordshire Partnership University NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 66,
+      "value": "hertfordshire partnership university nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 66,
+    "raw_identifiers": [
+     {
+      "n": 65,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWR"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31549588,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Hertfordshire Partnership NHS Foundation Trust (RWR)  Principal and/or registered office address: The Colonnades Beaconsfield Close, Hatfield, Hertfordshire. AL10 8YE",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "hertfordshire partnership nhs foundation trust (rwr) principal and/or registered office address: the colonnades beaconsfield close, hatfield, hertfordshire. al10 8ye"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWR"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   4840892,
+   5359917,
+   31549588
+  ]
+ },
+ {
+  "code": "RWV",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RWV",
+   "legal_end": null,
+   "name": "DEVON PARTNERSHIP NHS TRUST",
+   "predecessors": [
+    "REA"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 2,
+    "tail": "RWV"
+   }
+  ],
+  "coded_parties": 2,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PNWB6144XTMH"
+  ],
+  "holder_ids": [
+   3793356,
+   9420410,
+   31541155
+  ],
+  "holders": [
+   {
+    "org_id": 3793356,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Devon Partnership NHS Trust",
+    "name_norms": [
+     {
+      "n": 124,
+      "value": "devon partnership nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 124,
+    "raw_identifiers": [
+     {
+      "n": 101,
+      "raw": null
+     },
+     {
+      "n": 11,
+      "raw": "Devon Partnership NHS Trust"
+     },
+     {
+      "n": 8,
+      "raw": "1234"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWV"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWW"
+     },
+     {
+      "n": 1,
+      "raw": "UK"
+     },
+     {
+      "n": 1,
+      "raw": "UKK"
+     }
+    ],
+    "other_codes": [
+     "RWW"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWV",
+     "RWW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 9420410,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Devon Partnership Trust",
+    "name_norms": [
+     {
+      "n": 11,
+      "value": "devon partnership trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 11,
+    "raw_identifiers": [
+     {
+      "n": 8,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWV"
+     },
+     {
+      "n": 1,
+      "raw": "UKK"
+     },
+     {
+      "n": 1,
+      "raw": "UKK4"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWV"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31541155,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PNWB6144XTMH"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPNWB6144XTMH",
+    "name": "Devon Partnership NHS Trust",
+    "name_norms": [
+     {
+      "n": 6,
+      "value": "devon partnership nhs trust"
+     },
+     {
+      "n": 1,
+      "value": "devon partnership trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 7,
+    "raw_identifiers": [
+     {
+      "n": 7,
+      "raw": "GB-PPON-PNWB-6144-XTMH"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWV"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   3793356,
+   9420410,
+   31541155
+  ]
+ },
+ {
+  "code": "RWW",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RWW",
+   "legal_end": null,
+   "name": "NORTH CHESHIRE AND MERSEY NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RJS",
+    "RKC"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 109,
+    "tail": "RWW"
+   }
+  ],
+  "coded_parties": 109,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PBMJ3394DBQQ"
+  ],
+  "holder_ids": [
+   3793356,
+   15410940,
+   31538397,
+   31564277,
+   31571325,
+   31598258,
+   31618484
+  ],
+  "holders": [
+   {
+    "org_id": 3793356,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Devon Partnership NHS Trust",
+    "name_norms": [
+     {
+      "n": 124,
+      "value": "devon partnership nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 124,
+    "raw_identifiers": [
+     {
+      "n": 101,
+      "raw": null
+     },
+     {
+      "n": 11,
+      "raw": "Devon Partnership NHS Trust"
+     },
+     {
+      "n": 8,
+      "raw": "1234"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWV"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWW"
+     },
+     {
+      "n": 1,
+      "raw": "UK"
+     },
+     {
+      "n": 1,
+      "raw": "UKK"
+     }
+    ],
+    "other_codes": [
+     "RWV"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWV",
+     "RWW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 15410940,
+    "via": "party",
+    "coded_parties": 103,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Warrington and Halton Teaching Hospitals NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 165,
+      "value": "warrington and halton teaching hospitals nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 165,
+    "raw_identifiers": [
+     {
+      "n": 103,
+      "raw": "GB-NHS-RWW"
+     },
+     {
+      "n": 62,
+      "raw": null
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31538397,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Warrington and Halton Teaching Hospitals NHS Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "warrington and halton teaching hospitals nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31564277,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PBMJ3394DBQQ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPBMJ3394DBQQ",
+    "name": "Warrington and Halton Teaching Hospitals NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "warrington and halton teaching hospitals nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 4,
+      "raw": "GB-PPON-PBMJ-3394-DBQQ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31571325,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "North Cheshire and Mersey NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "north cheshire and mersey nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31598258,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Warrington & Halton Teaching Hospitals NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "warrington & halton teaching hospitals nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RWW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31618484,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Warrington & Halton Teaching Hospitals NHS Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "warrington & halton teaching hospitals nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RWW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RWW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   3793356,
+   15410940,
+   31538397,
+   31564277,
+   31571325,
+   31598258,
+   31618484
+  ]
+ }
+]

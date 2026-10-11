@@ -1,0 +1,1639 @@
+[
+ {
+  "code": "RYE",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYE",
+   "legal_end": null,
+   "name": "SOUTH CENTRAL AMBULANCE SERVICE NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RH1",
+    "RHY",
+    "RKD",
+    "RNY"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 18,
+    "tail": "RYE"
+   }
+  ],
+  "coded_parties": 18,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PVXR6533XJPY"
+  ],
+  "holder_ids": [
+   1391882,
+   2442353,
+   30915164
+  ],
+  "holders": [
+   {
+    "org_id": 1391882,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "South Central Ambulance Service",
+    "name_norms": [
+     {
+      "n": 9,
+      "value": "south central ambulance service"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 9,
+    "raw_identifiers": [
+     {
+      "n": 8,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RYE"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 2442353,
+    "via": "party",
+    "coded_parties": 17,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "South Central Ambulance Service NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 121,
+      "value": "south central ambulance service nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 121,
+    "raw_identifiers": [
+     {
+      "n": 99,
+      "raw": null
+     },
+     {
+      "n": 17,
+      "raw": "GB-NHS-RYE"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-None"
+     },
+     {
+      "n": 2,
+      "raw": "N/A"
+     },
+     {
+      "n": 1,
+      "raw": "UKD"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30915164,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PVXR6533XJPY"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPVXR6533XJPY",
+    "name": "South Central Ambulance Service NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 15,
+      "value": "south central ambulance service nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 15,
+    "raw_identifiers": [
+     {
+      "n": 15,
+      "raw": "GB-PPON-PVXR-6533-XJPY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1391882,
+   2442353,
+   30915164
+  ]
+ },
+ {
+  "code": "RYF",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYF",
+   "legal_end": null,
+   "name": "SOUTH WESTERN AMBULANCE SERVICE NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RHP",
+    "RJ9",
+    "RX5"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 68,
+    "tail": "RYF"
+   }
+  ],
+  "coded_parties": 68,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PQXD1311BRXL"
+  ],
+  "holder_ids": [
+   1430119,
+   30916200
+  ],
+  "holders": [
+   {
+    "org_id": 1430119,
+    "via": "party",
+    "coded_parties": 68,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "South Western Ambulance Service NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 246,
+      "value": "south western ambulance service nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 246,
+    "raw_identifiers": [
+     {
+      "n": 178,
+      "raw": null
+     },
+     {
+      "n": 68,
+      "raw": "GB-NHS-RYF"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916200,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PQXD1311BRXL"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPQXD1311BRXL",
+    "name": "South Western Ambulance Service NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 51,
+      "value": "south western ambulance service nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 51,
+    "raw_identifiers": [
+     {
+      "n": 51,
+      "raw": "GB-PPON-PQXD-1311-BRXL"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYF"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1430119,
+   30916200
+  ]
+ },
+ {
+  "code": "RYG",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYG",
+   "legal_end": null,
+   "name": "COVENTRY AND WARWICKSHIRE PARTNERSHIP NHS TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 6,
+    "tail": "RYG"
+   }
+  ],
+  "coded_parties": 6,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PPBB6627GXNQ"
+  ],
+  "holder_ids": [
+   1691021,
+   4648675,
+   30918096
+  ],
+  "holders": [
+   {
+    "org_id": 1691021,
+    "via": "party",
+    "coded_parties": 5,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Coventry and Warwickshire Partnership NHS Trust",
+    "name_norms": [
+     {
+      "n": 40,
+      "value": "coventry and warwickshire partnership nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 40,
+    "raw_identifiers": [
+     {
+      "n": 34,
+      "raw": null
+     },
+     {
+      "n": 5,
+      "raw": "GB-NHS-RYG"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RGY"
+     }
+    ],
+    "other_codes": [
+     "RGY"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYG"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 4648675,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Coventry and Warwickshire Partnership Trust",
+    "name_norms": [
+     {
+      "n": 32,
+      "value": "coventry and warwickshire partnership trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 32,
+    "raw_identifiers": [
+     {
+      "n": 31,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RYG"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYG"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30918096,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PPBB6627GXNQ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPPBB6627GXNQ",
+    "name": "Coventry & Warwickshire Partnership Trust",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "coventry & warwickshire partnership trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 4,
+    "raw_identifiers": [
+     {
+      "n": 4,
+      "raw": "GB-PPON-PPBB-6627-GXNQ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYG"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": [
+     5317015
+    ]
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1691021,
+   4648675,
+   30918096
+  ]
+ },
+ {
+  "code": "RYJ",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYJ",
+   "legal_end": null,
+   "name": "IMPERIAL COLLEGE HEALTHCARE NHS TRUST",
+   "predecessors": [
+    "RJ5"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 3,
+    "tail": "RYJ"
+   }
+  ],
+  "coded_parties": 3,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   1168120
+  ],
+  "holders": [
+   {
+    "org_id": 1168120,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Imperial College Healthcare NHS Trust",
+    "name_norms": [
+     {
+      "n": 326,
+      "value": "imperial college healthcare nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 326,
+    "raw_identifiers": [
+     {
+      "n": 323,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-RYJ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYJ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   1168120
+  ]
+ },
+ {
+  "code": "RYR",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYR",
+   "legal_end": null,
+   "name": "UNIVERSITY HOSPITALS SUSSEX NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RPL"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 2,
+    "tail": "RYR"
+   }
+  ],
+  "coded_parties": 2,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   30919601
+  ],
+  "holders": [
+   {
+    "org_id": 30919601,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "University Hospitals Sussex NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 38,
+      "value": "university hospitals sussex nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 38,
+    "raw_identifiers": [
+     {
+      "n": 36,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RYR"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYR"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30919601
+  ]
+ },
+ {
+  "code": "RYT",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYT",
+   "legal_end": null,
+   "name": "PUBLIC HEALTH WALES NHS TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 63,
+    "tail": "RYT"
+   }
+  ],
+  "coded_parties": 63,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   5410843,
+   7897539,
+   15641552,
+   31540818
+  ],
+  "holders": [
+   {
+    "org_id": 5410843,
+    "via": "party",
+    "coded_parties": 51,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Public Health Wales NHS Trust",
+    "name_norms": [
+     {
+      "n": 91,
+      "value": "public health wales nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 91,
+    "raw_identifiers": [
+     {
+      "n": 51,
+      "raw": "GB-NHS-RYT"
+     },
+     {
+      "n": 40,
+      "raw": null
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYT"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 7897539,
+    "via": "party",
+    "coded_parties": 6,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Public Health Wales",
+    "name_norms": [
+     {
+      "n": 34,
+      "value": "public health wales"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 34,
+    "raw_identifiers": [
+     {
+      "n": 28,
+      "raw": null
+     },
+     {
+      "n": 6,
+      "raw": "GB-NHS-RYT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYT"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 15641552,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+    "name_norms": [
+     {
+      "n": 2120,
+      "value": "nhs wales shared services partnership-procurement services (hosted by velindre university nhs trust)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2120,
+    "raw_identifiers": [
+     {
+      "n": 1881,
+      "raw": null
+     },
+     {
+      "n": 235,
+      "raw": "GB-NHS-RQF"
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-RYT"
+     },
+     {
+      "n": 1,
+      "raw": "Paul Thomas"
+     }
+    ],
+    "other_codes": [
+     "RQF"
+    ],
+    "check": {
+     "rival": "RQF",
+     "verdict": "better"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RQF",
+     "RYT"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31540818,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Public Health Wales - NHS",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "public health wales - nhs"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-NHS-RYT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYT"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   5410843,
+   7897539,
+   15641552,
+   31540818
+  ]
+ },
+ {
+  "code": "RYV",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYV",
+   "legal_end": "2026-03-31",
+   "name": "CAMBRIDGESHIRE COMMUNITY SERVICES NHS TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": [
+    "RY3"
+   ]
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 36,
+    "tail": "RYV"
+   }
+  ],
+  "coded_parties": 36,
+  "coded_notices_after_legal_end": 1,
+  "ppons": [
+   "PHQR1485BDJQ"
+  ],
+  "holder_ids": [
+   5447323,
+   5654151,
+   31557115
+  ],
+  "holders": [
+   {
+    "org_id": 5447323,
+    "via": "party",
+    "coded_parties": 35,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Cambridgeshire Community Services NHS Trust",
+    "name_norms": [
+     {
+      "n": 117,
+      "value": "cambridgeshire community services nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 117,
+    "raw_identifiers": [
+     {
+      "n": 80,
+      "raw": null
+     },
+     {
+      "n": 35,
+      "raw": "GB-NHS-RYV"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS Organisation"
+     }
+    ],
+    "other_codes": [
+     "NHS"
+    ],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYV"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 5654151,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Cambridge Community Services NHS Trust",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "cambridge community services nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RYV"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYV"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31557115,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PHQR1485BDJQ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPHQR1485BDJQ",
+    "name": "Cambridgeshire Community Services NHS Trust",
+    "name_norms": [
+     {
+      "n": 6,
+      "value": "cambridgeshire community services nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 6,
+    "raw_identifiers": [
+     {
+      "n": 6,
+      "raw": "GB-PPON-PHQR-1485-BDJQ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYV"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   5447323,
+   5654151,
+   31557115
+  ]
+ },
+ {
+  "code": "RYW",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYW",
+   "legal_end": null,
+   "name": "BIRMINGHAM COMMUNITY HEALTHCARE NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 4,
+    "tail": "RYW"
+   }
+  ],
+  "coded_parties": 4,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PLVW7764XPRN"
+  ],
+  "holder_ids": [
+   8042570,
+   30916580
+  ],
+  "holders": [
+   {
+    "org_id": 8042570,
+    "via": "party",
+    "coded_parties": 4,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Birmingham Community Healthcare NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 50,
+      "value": "birmingham community healthcare nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 50,
+    "raw_identifiers": [
+     {
+      "n": 46,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-RYW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916580,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PLVW7764XPRN"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPLVW7764XPRN",
+    "name": "Birmingham Community Healthcare Trust Headquarters",
+    "name_norms": [
+     {
+      "n": 54,
+      "value": "birmingham community healthcare nhs foundation trust"
+     },
+     {
+      "n": 20,
+      "value": "birmingham community healthcare trust headquarters"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 74,
+    "raw_identifiers": [
+     {
+      "n": 74,
+      "raw": "GB-PPON-PLVW-7764-XPRN"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYW"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   8042570,
+   30916580
+  ]
+ },
+ {
+  "code": "RYX",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYX",
+   "legal_end": null,
+   "name": "CENTRAL LONDON COMMUNITY HEALTHCARE NHS TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 2,
+    "tail": "RYX"
+   }
+  ],
+  "coded_parties": 2,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   3435558
+  ],
+  "holders": [
+   {
+    "org_id": 3435558,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Central London Community Healthcare NHS Trust",
+    "name_norms": [
+     {
+      "n": 221,
+      "value": "central london community healthcare nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 221,
+    "raw_identifiers": [
+     {
+      "n": 218,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-RYX"
+     },
+     {
+      "n": 1,
+      "raw": "UK"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYX"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   3435558
+  ]
+ },
+ {
+  "code": "RYY",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYY",
+   "legal_end": null,
+   "name": "KENT COMMUNITY HEALTH NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 44,
+    "tail": "RYY"
+   }
+  ],
+  "coded_parties": 44,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PHVC1716LBDJ"
+  ],
+  "holder_ids": [
+   6676127,
+   30916727,
+   31560119,
+   31604013,
+   31649007
+  ],
+  "holders": [
+   {
+    "org_id": 6676127,
+    "via": "party",
+    "coded_parties": 40,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Kent Community Health NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 209,
+      "value": "kent community health nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 209,
+    "raw_identifiers": [
+     {
+      "n": 168,
+      "raw": null
+     },
+     {
+      "n": 40,
+      "raw": "GB-NHS-RYY"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-ODS RYY)"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916727,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PHVC1716LBDJ"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPHVC1716LBDJ",
+    "name": "Kent Community Health NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 31,
+      "value": "kent community health nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 31,
+    "raw_identifiers": [
+     {
+      "n": 31,
+      "raw": "GB-PPON-PHVC-1716-LBDJ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31560119,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Kent Community Health NHS Foundation Trust (KCHFT)",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "kent community health nhs foundation trust (kchft)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RYY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31604013,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Kent Community Foundation Hospitals Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "kent community foundation hospitals trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RYY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31649007,
+    "via": "party",
+    "coded_parties": 2,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Kent Community Healthcare NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "kent community healthcare nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-RYY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "RYY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   6676127,
+   30916727,
+   31560119,
+   31604013,
+   31649007
+  ]
+ }
+]

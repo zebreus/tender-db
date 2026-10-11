@@ -1,0 +1,272 @@
+[
+ {
+  "code": "TAD",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "TAD",
+   "legal_end": null,
+   "name": "BRADFORD DISTRICT CARE NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RCE"
+   ],
+   "role": "RO107",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 3,
+    "tail": "TAD"
+   }
+  ],
+  "coded_parties": 3,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PPRG6967RHTD"
+  ],
+  "holder_ids": [
+   9107193,
+   31600268
+  ],
+  "holders": [
+   {
+    "org_id": 9107193,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Bradford District Care NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 32,
+      "value": "bradford district care nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 32,
+    "raw_identifiers": [
+     {
+      "n": 29,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-TAD"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "TAD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31600268,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PPRG6967RHTD"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPPRG6967RHTD",
+    "name": "Bradford District Care NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "bradford district care nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-PPON-PPRG-6967-RHTD"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "TAD"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   9107193,
+   31600268
+  ]
+ },
+ {
+  "code": "TAJ",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "TAJ",
+   "legal_end": null,
+   "name": "BLACK COUNTRY HEALTHCARE NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RQ4"
+   ],
+   "role": "RO107",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 11,
+    "tail": "TAJ"
+   }
+  ],
+  "coded_parties": 11,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PRPV1569HTLT"
+  ],
+  "holder_ids": [
+   30917612,
+   30968798
+  ],
+  "holders": [
+   {
+    "org_id": 30917612,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PRPV1569HTLT"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPRPV1569HTLT",
+    "name": "Black Country Healthcare NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 37,
+      "value": "black country healthcare nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 37,
+    "raw_identifiers": [
+     {
+      "n": 37,
+      "raw": "GB-PPON-PRPV-1569-HTLT"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "TAJ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30968798,
+    "via": "party",
+    "coded_parties": 11,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "Black Country Healthcare NHS Foundation Trust",
+    "name_norms": [
+     {
+      "n": 52,
+      "value": "black country healthcare nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 52,
+    "raw_identifiers": [
+     {
+      "n": 41,
+      "raw": null
+     },
+     {
+      "n": 11,
+      "raw": "GB-NHS-TAJ"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "TAJ"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30917612,
+   30968798
+  ]
+ }
+]

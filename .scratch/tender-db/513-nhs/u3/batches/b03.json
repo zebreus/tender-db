@@ -1,0 +1,1569 @@
+[
+ {
+  "code": "QRV",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QRV",
+   "legal_end": "2026-03-31",
+   "name": "NHS NORTH WEST LONDON INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": [
+    "Z9B2Z"
+   ]
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 2,
+    "tail": "QRV"
+   }
+  ],
+  "coded_parties": 2,
+  "coded_notices_after_legal_end": 1,
+  "ppons": [],
+  "holder_ids": [
+   30914264,
+   31534509
+  ],
+  "holders": [
+   {
+    "org_id": 30914264,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS North West London Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 138,
+      "value": "nhs north west london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 138,
+    "raw_identifiers": [
+     {
+      "n": 133,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-QMV"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QRV"
+     }
+    ],
+    "other_codes": [
+     "QMV"
+    ],
+    "check": {
+     "rival": "Z9B2Z",
+     "verdict": "tie"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QRV"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31534509,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS West and North London Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 74,
+      "value": "nhs west and north london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 74,
+    "raw_identifiers": [
+     {
+      "n": 73,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QRV"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": "Z9B2Z",
+     "verdict": "tie"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": "Z9B2Z",
+    "minted_identity": false,
+    "holder_of": [
+     "QRV"
+    ],
+    "contested": false,
+    "denied": [
+     "successor-name"
+    ],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30914264
+  ]
+ },
+ {
+  "code": "QSL",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QSL",
+   "legal_end": null,
+   "name": "NHS SOMERSET INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 19,
+    "tail": "QSL"
+   }
+  ],
+  "coded_parties": 19,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [],
+  "holder_ids": [
+   30967505
+  ],
+  "holders": [
+   {
+    "org_id": 30967505,
+    "via": "party",
+    "coded_parties": 19,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS SOMERSET INTEGRATED CARE BOARD",
+    "name_norms": [
+     {
+      "n": 32,
+      "value": "nhs somerset integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 32,
+    "raw_identifiers": [
+     {
+      "n": 19,
+      "raw": "GB-NHS-QSL"
+     },
+     {
+      "n": 13,
+      "raw": null
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QSL"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30967505
+  ]
+ },
+ {
+  "code": "QUA",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QUA",
+   "legal_end": null,
+   "name": "NHS BLACK COUNTRY INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 4,
+    "tail": "QUA"
+   }
+  ],
+  "coded_parties": 4,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PCXW1342CXYV"
+  ],
+  "holder_ids": [
+   30917129,
+   31542353
+  ],
+  "holders": [
+   {
+    "org_id": 30917129,
+    "via": "party",
+    "coded_parties": 4,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Black Country Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 66,
+      "value": "nhs black country integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 66,
+    "raw_identifiers": [
+     {
+      "n": 62,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-QUA"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QUA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31542353,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PCXW1342CXYV"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPCXW1342CXYV",
+    "name": "NHS Black Country Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 17,
+      "value": "nhs black country integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 17,
+    "raw_identifiers": [
+     {
+      "n": 17,
+      "raw": "GB-PPON-PCXW-1342-CXYV"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QUA"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30917129,
+   31542353
+  ]
+ },
+ {
+  "code": "QUE",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QUE",
+   "legal_end": "2026-03-31",
+   "name": "NHS CAMBRIDGESHIRE AND PETERBOROUGH INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": [
+    "S1Y5D"
+   ]
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 5,
+    "tail": "QUE"
+   }
+  ],
+  "coded_parties": 5,
+  "coded_notices_after_legal_end": 2,
+  "ppons": [],
+  "holder_ids": [
+   31542038,
+   31555514,
+   31603041
+  ],
+  "holders": [
+   {
+    "org_id": 31542038,
+    "via": "party",
+    "coded_parties": 3,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS CAMBRIDGESHIRE AND PETERBOROUGH INTEGRATED CARE BOARD",
+    "name_norms": [
+     {
+      "n": 1858,
+      "value": "nhs cambridgeshire and peterborough integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1858,
+    "raw_identifiers": [
+     {
+      "n": 1855,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-QUE"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QUE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31555514,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Cambridgeshire and Peterborough ICB",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "nhs cambridgeshire and peterborough icb"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QUE"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QUE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31603041,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS CAMBRIDGESHIRE AND PETERBOROUGH INTEGRATED CARE BOARD (ICB)",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "nhs cambridgeshire and peterborough integrated care board (icb)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 2,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QUE"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QUE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   31542038,
+   31555514,
+   31603041
+  ]
+ },
+ {
+  "code": "QUY",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QUY",
+   "legal_end": null,
+   "name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 34,
+    "tail": "QUY"
+   }
+  ],
+  "coded_parties": 34,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PPCD6597HCDW"
+  ],
+  "holder_ids": [
+   30914356,
+   31536069,
+   31609946
+  ],
+  "holders": [
+   {
+    "org_id": 30914356,
+    "via": "party",
+    "coded_parties": 33,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+    "name_norms": [
+     {
+      "n": 163,
+      "value": "nhs bristol, north somerset and south gloucestershire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 163,
+    "raw_identifiers": [
+     {
+      "n": 130,
+      "raw": null
+     },
+     {
+      "n": 33,
+      "raw": "GB-NHS-QUY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QUY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31536069,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PPCD6597HCDW"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPPCD6597HCDW",
+    "name": "NHS Bristol North Somerset & South Gloucestershire Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 5,
+      "value": "nhs bristol north somerset & south gloucestershire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 5,
+    "raw_identifiers": [
+     {
+      "n": 5,
+      "raw": "GB-PPON-PPCD-6597-HCDW"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QUY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": [
+     31592799
+    ]
+   },
+   {
+    "org_id": 31609946,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Bristol, North East Somerset and South Gloucestershire Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs bristol, north east somerset and south gloucestershire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QUY"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QUY"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30914356,
+   31536069,
+   31609946
+  ]
+ },
+ {
+  "code": "QVV",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QVV",
+   "legal_end": null,
+   "name": "NHS DORSET INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 22,
+    "tail": "QVV"
+   }
+  ],
+  "coded_parties": 22,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PGWM4538ZGJR"
+  ],
+  "holder_ids": [
+   30914398,
+   31571396
+  ],
+  "holders": [
+   {
+    "org_id": 30914398,
+    "via": "party",
+    "coded_parties": 22,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Dorset Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 154,
+      "value": "nhs dorset integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 154,
+    "raw_identifiers": [
+     {
+      "n": 132,
+      "raw": null
+     },
+     {
+      "n": 22,
+      "raw": "GB-NHS-QVV"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QVV"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31571396,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PGWM4538ZGJR"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPGWM4538ZGJR",
+    "name": "NHS Dorset Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "nhs dorset integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-PPON-PGWM-4538-ZGJR"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QVV"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30914398,
+   31571396
+  ]
+ },
+ {
+  "code": "QWE",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QWE",
+   "legal_end": null,
+   "name": "NHS SOUTH WEST LONDON INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 78,
+    "tail": "QWE"
+   }
+  ],
+  "coded_parties": 78,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PVVY4762MPRZ"
+  ],
+  "holder_ids": [
+   30915087,
+   31536736
+  ],
+  "holders": [
+   {
+    "org_id": 30915087,
+    "via": "party",
+    "coded_parties": 77,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS South West London Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 254,
+      "value": "nhs south west london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 254,
+    "raw_identifiers": [
+     {
+      "n": 175,
+      "raw": null
+     },
+     {
+      "n": 77,
+      "raw": "GB-NHS-QWE"
+     },
+     {
+      "n": 1,
+      "raw": "GB-COH-QWE"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS South West London Integrated Care Board"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QWE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31536736,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS South West London Integrated Care Board  London",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs south west london integrated care board london"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 1,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QWE"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QWE"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30915087,
+   31536736
+  ]
+ },
+ {
+  "code": "QWO",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QWO",
+   "legal_end": null,
+   "name": "NHS WEST YORKSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 10,
+    "tail": "QWO"
+   }
+  ],
+  "coded_parties": 10,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PMTJ1118QVJH"
+  ],
+  "holder_ids": [
+   30914544,
+   30917022,
+   30933188
+  ],
+  "holders": [
+   {
+    "org_id": 30914544,
+    "via": "party",
+    "coded_parties": 9,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS West Yorkshire Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 532,
+      "value": "nhs west yorkshire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 532,
+    "raw_identifiers": [
+     {
+      "n": 520,
+      "raw": null
+     },
+     {
+      "n": 9,
+      "raw": "GB-NHS-QWO"
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-QWOICB"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QWO"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30917022,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PMTJ1118QVJH"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPMTJ1118QVJH",
+    "name": "NHS West Yorkshire Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 33,
+      "value": "nhs west yorkshire integrated care board"
+     },
+     {
+      "n": 2,
+      "value": "nhs west yorkshire integrated care board (icb)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 35,
+    "raw_identifiers": [
+     {
+      "n": 35,
+      "raw": "GB-PPON-PMTJ-1118-QVJH"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QWO"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30933188,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS WEST YORKSHIRE ICB",
+    "name_norms": [
+     {
+      "n": 24,
+      "value": "nhs west yorkshire icb"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 24,
+    "raw_identifiers": [
+     {
+      "n": 23,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QWO"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QWO"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   30914544,
+   30917022,
+   30933188
+  ]
+ },
+ {
+  "code": "QWU",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QWU",
+   "legal_end": null,
+   "name": "NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 10,
+    "tail": "QWU"
+   }
+  ],
+  "coded_parties": 10,
+  "coded_notices_after_legal_end": 0,
+  "ppons": [
+   "PBZT7637QJTP"
+  ],
+  "holder_ids": [
+   31534829,
+   31542351
+  ],
+  "holders": [
+   {
+    "org_id": 31534829,
+    "via": "party",
+    "coded_parties": 10,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Coventry and Warwickshire Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 75,
+      "value": "nhs coventry and warwickshire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 75,
+    "raw_identifiers": [
+     {
+      "n": 64,
+      "raw": null
+     },
+     {
+      "n": 10,
+      "raw": "GB-NHS-QWU"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS Coventry and Warwickshire Integrated Care Board"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QWU"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31542351,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PBZT7637QJTP"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPBZT7637QJTP",
+    "name": "NHS Coventry and Warwickshire Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 13,
+      "value": "nhs coventry and warwickshire integrated care board"
+     },
+     {
+      "n": 1,
+      "value": "support to manage transition to systems of new delegated responsibilities"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 14,
+    "raw_identifiers": [
+     {
+      "n": 14,
+      "raw": "GB-PPON-PBZT-7637-QJTP"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QWU"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   31534829,
+   31542351
+  ]
+ },
+ {
+  "code": "QXU",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QXU",
+   "legal_end": "2026-03-31",
+   "name": "NHS SURREY HEARTLANDS INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": [
+    "S9B9J"
+   ]
+  },
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 148,
+    "tail": "QXU"
+   }
+  ],
+  "coded_parties": 148,
+  "coded_notices_after_legal_end": 24,
+  "ppons": [
+   "PTCP5774GNNH"
+  ],
+  "holder_ids": [
+   21990238,
+   30916138,
+   31543412,
+   31552079
+  ],
+  "holders": [
+   {
+    "org_id": 21990238,
+    "via": "party",
+    "coded_parties": 29,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Surrey Heartlands ICB",
+    "name_norms": [
+     {
+      "n": 112,
+      "value": "nhs surrey heartlands icb"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 112,
+    "raw_identifiers": [
+     {
+      "n": 83,
+      "raw": null
+     },
+     {
+      "n": 29,
+      "raw": "GB-NHS-QXU"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QXU"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 30916138,
+    "via": "party",
+    "coded_parties": 118,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Surrey Heartlands Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 126,
+      "value": "nhs surrey heartlands integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 126,
+    "raw_identifiers": [
+     {
+      "n": 118,
+      "raw": "GB-NHS-QXU"
+     },
+     {
+      "n": 8,
+      "raw": null
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QXU"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31543412,
+    "via": "party",
+    "coded_parties": 1,
+    "later_parties": 0,
+    "ppons": [],
+    "stands": true,
+    "provisional": true,
+    "country": "GB",
+    "identifier_kind": null,
+    "identifier": null,
+    "name": "NHS Surrey Heartlands Integrated Care Board (ICB)",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "nhs surrey heartlands integrated care board (icb)"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QXU"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QXU"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   },
+   {
+    "org_id": 31552079,
+    "via": "ppon",
+    "coded_parties": 0,
+    "later_parties": 0,
+    "ppons": [
+     "PTCP5774GNNH"
+    ],
+    "stands": true,
+    "provisional": false,
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBPPONPTCP5774GNNH",
+    "name": "NHS Surrey Heartlands Integrated Care Board",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "nhs surrey heartlands integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "mentions": 3,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-PPON-PTCP-5774-GNNH"
+     }
+    ],
+    "other_codes": [],
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "merged_identifiers": [],
+    "under_review": false,
+    "generic": false,
+    "consortium": false,
+    "consortium_names": [],
+    "successor_name": null,
+    "minted_identity": false,
+    "holder_of": [
+     "QXU"
+    ],
+    "contested": false,
+    "denied": [],
+    "key_owners_elsewhere": []
+   }
+  ],
+  "holders_truncated": false,
+  "eligible": [
+   21990238,
+   30916138,
+   31543412,
+   31552079
+  ]
+ }
+]
