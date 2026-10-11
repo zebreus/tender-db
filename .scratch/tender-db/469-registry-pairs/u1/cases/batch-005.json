@@ -1,0 +1,1868 @@
+[
+ {
+  "case": "03035530~PMDX2435TWHR",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03035530",
+   "http": "200",
+   "name": "HELP AT HOME (EGERTON LODGE) LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31539034,
+    "identifier": "GBPPONPMDX2435TWHR",
+    "head": "Help at home"
+   },
+   {
+    "org": 31588414,
+    "identifier": "GBCOH03035530",
+    "head": "HELP AT HOME (EGERTON LODGE) LIMITED"
+   }
+  ],
+  "keep": 31588414,
+  "coh_names": [
+   "HELP AT HOME (EGERTON LODGE) LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Help at home"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "075430-2026",
+   "084111-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "03037228~PTWW4948MMCY",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03037228",
+   "http": "200",
+   "name": "DIAMOND BUS (NORTH WEST) LIMITED",
+   "status": "Active",
+   "previous": [
+    "GREEN TRIANGLE BUSES LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30926788,
+    "identifier": "GBCOH03037228",
+    "head": "DIAMOND BUS (NORTH WEST) LIMITED"
+   },
+   {
+    "org": 31573667,
+    "identifier": "GBPPONPTWW4948MMCY",
+    "head": "Preston Bus"
+   }
+  ],
+  "keep": 30926788,
+  "coh_names": [
+   "DIAMOND BUS (NORTH WEST) LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Preston Bus"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 4,
+  "witness_publications": [
+   "084929-2026",
+   "062305-2025",
+   "069281-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 4,
+  "first_ppon": 0
+ },
+ {
+  "case": "03091639~PTPW9451XDQD",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "03091639",
+   "http": "200",
+   "name": "HUGHES BROTHERS (BUILDING & JOINERY) LTD",
+   "status": "Active",
+   "previous": [
+    "CHARMTOP LTD"
+   ]
+  },
+  "members": [
+   {
+    "org": 15254328,
+    "identifier": "03091639",
+    "head": "Hughes Brothers Building and Joinery Ltd"
+   },
+   {
+    "org": 31553857,
+    "identifier": "GBPPONPTPW9451XDQD",
+    "head": "SLC Care Ltd"
+   }
+  ],
+  "keep": 15254328,
+  "coh_names": [
+   "Hughes Brothers Building and Joinery Ltd"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "SLC Care Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "077851-2025",
+   "005955-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "03128681~PVMZ4123TVXQ",
+  "gate": "witness-only",
+  "kind": "denied",
+  "register": {
+   "number": "03128681",
+   "http": "200",
+   "name": "EAST MIDLANDS CROSSROADS-CARING FOR CARERS",
+   "status": "Active",
+   "previous": [
+    "TRENT CROSSROADS"
+   ]
+  },
+  "members": [
+   {
+    "org": 31560591,
+    "identifier": "GBCOH03128681",
+    "head": "East Midlands Crossroads-Caring For Carers- Crossroads Together from Carers Trust 4all"
+   },
+   {
+    "org": 31588883,
+    "identifier": "GBPPONPVMZ4123TVXQ",
+    "head": " EAST MIDLANDS CROSSROADS-CARING FOR CARERS"
+   }
+  ],
+  "keep": 31560591,
+  "coh_names": [
+   "East Midlands Crossroads-Caring For Carers- Crossroads Together from Carers Trust 4all"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   " EAST MIDLANDS CROSSROADS-CARING FOR CARERS",
+   "Tuvida"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "083333-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03214465~PMHC9629CWGZ",
+  "gate": "ppon-multi-coh",
+  "kind": "conflict",
+  "register": {
+   "number": "03214465",
+   "http": "200",
+   "name": "ONEADVANCED LIMITED",
+   "status": "Active",
+   "previous": [
+    "ADVANCED BUSINESS SOFTWARE AND SOLUTIONS LIMITED",
+    "COA SOLUTIONS LIMITED",
+    "CEDAR SOFTWARE LIMITED",
+    "CEDAR ENTERPRISE SOLUTIONS LIMITED",
+    "CEDARDATA SOFTWARE LIMITED",
+    "INSUREGUARD LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 17575182,
+    "identifier": "03214465",
+    "head": "Advanced Business Software and Solutions Limited"
+   },
+   {
+    "org": 31647091,
+    "identifier": "GBPPONPMHC9629CWGZ",
+    "head": "ONEADVANCED LIMITED"
+   }
+  ],
+  "keep": 17575182,
+  "coh_names": [
+   "ADVANCED BUSINESS SOFTWARE AND SOLUTIONS LIMITED",
+   "One Advanced Limited",
+   "oneAdvanced",
+   "ONEADVANCED LIMITED",
+   "Sheffield Hallam University"
+  ],
+  "coh_name_keys": 5,
+  "ppon_names": [
+   "Advanced Business Solutions",
+   "OneAdvanced",
+   "ONEADVANCED LIMITED"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": null,
+  "witnesses": 19,
+  "witness_publications": [
+   "021925-2026",
+   "036783-2026",
+   "040462-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 18,
+  "first_ppon": 1
+ },
+ {
+  "case": "03218090~PVQD2247RJXX",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03218090",
+   "http": "200",
+   "name": "FRESENIUS MEDICAL CARE (HOLDINGS) LIMITED",
+   "status": "Active",
+   "previous": [
+    "INHOCO 520 LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31548645,
+    "identifier": "GBCOH03218090",
+    "head": "FRESENIUS MEDICAL CARE (HOLDINGS) LIMITED"
+   },
+   {
+    "org": 31561885,
+    "identifier": "GBPPONPVQD2247RJXX",
+    "head": "Fresenius Medical Care"
+   }
+  ],
+  "keep": 31548645,
+  "coh_names": [
+   "FRESENIUS MEDICAL CARE (HOLDINGS) LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Fresenius Medical Care",
+   "FRESENIUS MEDICAL CARE (UK) LIMITED"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 4,
+  "witness_publications": [
+   "065671-2025",
+   "065991-2025",
+   "085158-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 4,
+  "first_ppon": 0
+ },
+ {
+  "case": "03226403~PBGD2746GXHP",
+  "gate": "coh-multi-ppon",
+  "kind": "conflict",
+  "register": {
+   "number": "03226403",
+   "http": "200",
+   "name": "ESSITY UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "SCA HYGIENE PRODUCTS UK LIMITED",
+    "SCA HYGIENE UK LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 15189638,
+    "identifier": "03226403",
+    "head": "Essity UK Ltd"
+   },
+   {
+    "org": 31535064,
+    "identifier": "GBPPONPBGD2746GXHP",
+    "head": "Rotherham Doncaster and South Humber NHS Foundation Trust"
+   }
+  ],
+  "keep": 15189638,
+  "coh_names": [
+   "Essity UK Limited",
+   "Kimberly Clark Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Rotherham Doncaster and South Humber NHS Foundation Trust",
+   "ROTHERHAM DONCASTER AND SOUTH HUMBER NHS FOUNDATION TRUST CHARITABLE FUND"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "027999-2025",
+   "028000-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "03226403~PLBQ7163MQWL",
+  "gate": "coh-multi-ppon",
+  "kind": "conflict",
+  "register": {
+   "number": "03226403",
+   "http": "200",
+   "name": "ESSITY UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "SCA HYGIENE PRODUCTS UK LIMITED",
+    "SCA HYGIENE UK LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 15189638,
+    "identifier": "03226403",
+    "head": "Essity UK Ltd"
+   },
+   {
+    "org": 30969128,
+    "identifier": "GBPPONPLBQ7163MQWL",
+    "head": "Essity UK Ltd - Health & Medical Solutions"
+   }
+  ],
+  "keep": 15189638,
+  "coh_names": [
+   "Essity UK Limited",
+   "Kimberly Clark Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Essity T/A BSN Medical Ltd",
+   "ESSITY UK LIMITED",
+   "Essity UK Ltd - Health & Medical Solutions"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "031452-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03250579~PLND7281RMGM",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "03250579",
+   "http": "200",
+   "name": "CROWN WORKSPACE LIMITED",
+   "status": "Active",
+   "previous": [
+    "PREMIER MOVES LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 16683856,
+    "identifier": "03250579",
+    "head": "Crown Workspace Ltd"
+   },
+   {
+    "org": 31646872,
+    "identifier": "GBPPONPLND7281RMGM",
+    "head": "Premier Moves Ltd."
+   }
+  ],
+  "keep": 16683856,
+  "coh_names": [
+   "Crown Workspace",
+   "Crown Workspace Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Premier Moves Ltd."
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 7,
+  "witness_publications": [
+   "085678-2026",
+   "064697-2025",
+   "067891-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 7,
+  "first_ppon": 0
+ },
+ {
+  "case": "03252690~PYQQ2698DDXZ",
+  "gate": "verdict-keep",
+  "kind": "denied",
+  "register": {
+   "number": "03252690",
+   "http": "200",
+   "name": "CONCUR TECHNOLOGIES (UK) LIMITED",
+   "status": "Active",
+   "previous": [
+    "XMS (UK) LIMITED",
+    "LAW 780 LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31544092,
+    "identifier": "GBCOH03252690",
+    "head": "Concur Holdings (Netherlands) BV"
+   },
+   {
+    "org": 31586965,
+    "identifier": "GBPPONPYQQ2698DDXZ",
+    "head": "Concur Holdings (Netherlands) BV"
+   }
+  ],
+  "keep": 31544092,
+  "coh_names": [
+   "Concur Technologies (UK) Limited"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Concur Holdings (Netherlands) BV"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "055838-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03284871~PQCC9149RDWW",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03284871",
+   "http": "200",
+   "name": "R.G. CARTER CONSTRUCTION LIMITED",
+   "status": "Active",
+   "previous": [
+    "R.G. CARTER GROUP LIMITED",
+    "LEGISLATOR 1301 LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 13942375,
+    "identifier": "03284871",
+    "head": "RG Carter Construction Ltd"
+   },
+   {
+    "org": 30929570,
+    "identifier": "GBPPONPQCC9149RDWW",
+    "head": "R G Carter"
+   }
+  ],
+  "keep": 13942375,
+  "coh_names": [
+   "RG Carter Construction Ltd"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "R G Carter",
+   "R G Carter Civil Engineering"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 4,
+  "witness_publications": [
+   "012929-2026",
+   "033843-2026",
+   "059127-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 4,
+  "first_ppon": 0
+ },
+ {
+  "case": "03297914~PJVY9952JQGR",
+  "gate": "witness-only",
+  "kind": "denied",
+  "register": {
+   "number": "03297914",
+   "http": "200",
+   "name": "GAMCARE",
+   "status": "Active",
+   "previous": [
+    "NATIONAL ASSOCIATION FOR GAMBLING CARE, EDUCATIONAL RESOURCES & TRAINING"
+   ]
+  },
+  "members": [
+   {
+    "org": 30913731,
+    "identifier": "GBPPONPJVY9952JQGR",
+    "head": "Government Actuary's Department"
+   },
+   {
+    "org": 31550335,
+    "identifier": "GBCOH03297914",
+    "head": "Government Actuary's Department"
+   }
+  ],
+  "keep": 31550335,
+  "coh_names": [
+   "GamCare"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Government Actuary Department",
+   "Government Actuary's Department",
+   "Government Actuary's Dept",
+   "Government's Actuary Department",
+   "Government's Actuary Department (GAD)"
+  ],
+  "ppon_name_keys": 5,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "069561-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03308698~PTYN6256NGVH",
+  "gate": "witness-only",
+  "kind": "denied",
+  "register": {
+   "number": "03308698",
+   "http": "200",
+   "name": "SINDEN CONSTRUCTION LIMITED",
+   "status": "Active",
+   "previous": [
+    "THOMAS SINDEN LIMITED",
+    "THOMAS SINDEN CONSTRUCTION LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 16615004,
+    "identifier": "03308698",
+    "head": "Thomas Sinden Ltd"
+   },
+   {
+    "org": 31649097,
+    "identifier": "GBPPONPTYN6256NGVH",
+    "head": "Sinden Construction Limited (10, 11)"
+   }
+  ],
+  "keep": 16615004,
+  "coh_names": [
+   "Thomas Sinden",
+   "Thomas Sinden Limited"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Sinden Construction Limited (10, 11)"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 6,
+  "witness_publications": [
+   "061060-2025",
+   "076375-2025",
+   "086091-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 6,
+  "first_ppon": 0
+ },
+ {
+  "case": "03427970~PQXV9532DNJW",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03427970",
+   "http": "200",
+   "name": "INTOXIMETERS UK LTD.",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31569661,
+    "identifier": "GBCOH03427970",
+    "head": "Intoximeters (UK) Ltd"
+   },
+   {
+    "org": 31570201,
+    "identifier": "GBPPONPQXV9532DNJW",
+    "head": "Intoximeters Inc"
+   }
+  ],
+  "keep": 31569661,
+  "coh_names": [
+   "Intoximeters UK Ltd"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Intoximeters Inc"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "042509-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03446039~PBHQ8556RPBN",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03446039",
+   "http": "200",
+   "name": "ALLIANCE HEALTHCARE (DISTRIBUTION) LIMITED",
+   "status": "Active",
+   "previous": [
+    "UNICHEM LIMITED",
+    "COLLAPSAR LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 13613915,
+    "identifier": "03446039",
+    "head": "Alliance Healthcare (Distribution) Ltd"
+   },
+   {
+    "org": 31587981,
+    "identifier": "GBPPONPBHQ8556RPBN",
+    "head": "Alliance Healthcare"
+   }
+  ],
+  "keep": 13613915,
+  "coh_names": [
+   "Alliance",
+   "Alliance Healthcare (Distribution) Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Alliance Healthcare"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "056205-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03447849~PVNR1339LVXP",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03447849",
+   "http": "200",
+   "name": "LEONARDO HOTEL MANAGEMENT (UK) LIMITED",
+   "status": "Active",
+   "previous": [
+    "JURYS HOTEL MANAGEMENT (UK) LIMITED",
+    "JURYS DOYLE HOTEL MANAGEMENT (UK) LIMITED",
+    "JURYS HOTEL MANAGEMENT (UK) LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31538759,
+    "identifier": "GBPPONPVNR1339LVXP",
+    "head": "Leonardo Hotel Cardiff"
+   },
+   {
+    "org": 31538777,
+    "identifier": "GBCOH03447849",
+    "head": "LEONARDO HOTEL MANAGEMENT (UK) LIMITED"
+   }
+  ],
+  "keep": 31538777,
+  "coh_names": [
+   "LEONARDO HOTEL MANAGEMENT (UK) LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Leonardo Hotel Cardiff"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 4,
+  "witness_publications": [
+   "044355-2025",
+   "044361-2025",
+   "044355-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 4,
+  "first_ppon": 0
+ },
+ {
+  "case": "03473589~PCJG7425YTJH",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03473589",
+   "http": "200",
+   "name": "CORPS SECURITY (UK) LIMITED",
+   "status": "Active",
+   "previous": [
+    "CORPS PAYROLL SERVICES LIMITED",
+    "SERVICE SOLUTIONS LIMITED",
+    "METALSTUDY LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30969274,
+    "identifier": "GBPPONPCJG7425YTJH",
+    "head": "Corps of Commissionaires Management Limited"
+   },
+   {
+    "org": 31554933,
+    "identifier": "GBCOH03473589",
+    "head": "CORPS SECURITY (UK) LIMITED"
+   }
+  ],
+  "keep": 31554933,
+  "coh_names": [
+   "Corps Security (UK) Limited"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Corps of Commissionaires Management Limited"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 3,
+  "witness_publications": [
+   "080365-2025",
+   "004546-2026",
+   "040409-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ },
+ {
+  "case": "03485838~PNGV1151NQTD",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "03485838",
+   "http": "200",
+   "name": "SMITHS METAL CENTRES LIMITED",
+   "status": "Active",
+   "previous": [
+    "DRAFTDIGS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30973339,
+    "identifier": "GBCOH03485838",
+    "head": "SMITHS METAL CENTRES LIMITED"
+   },
+   {
+    "org": 31646590,
+    "identifier": "GBPPONPNGV1151NQTD",
+    "head": "Thames Stockholders"
+   }
+  ],
+  "keep": 30973339,
+  "coh_names": [
+   "SMITHS METAL CENTRES LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Thames Stockholders"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "089732-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03578140~PRRH8298MPBM",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03578140",
+   "http": "200",
+   "name": "SEDDON CONSTRUCTION LIMITED",
+   "status": "Active",
+   "previous": [
+    "VOM 98108 LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 8455438,
+    "identifier": "03578140",
+    "head": "Seddon Construction"
+   },
+   {
+    "org": 31762758,
+    "identifier": "GBPPONPRRH8298MPBM",
+    "head": "Seddon Construction Limited a 2 3 h 2 3"
+   }
+  ],
+  "keep": 8455438,
+  "coh_names": [
+   "Seddon Construction",
+   "Seddon Construction Limited",
+   "Sustainable Building Services (UK) Ltd"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Seddon Construction Limited a 2 3 h 2 3"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 19,
+  "witness_publications": [
+   "086156-2026",
+   "087572-2026",
+   "087925-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 19,
+  "first_ppon": 0
+ },
+ {
+  "case": "03645180~PTLN8594JVXV",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03645180",
+   "http": "200",
+   "name": "RENAISSANCE LEARNING UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "ADVANTAGE LEARNING SYSTEMS UK LIMITED",
+    "ENDURERELAY LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31548599,
+    "identifier": "GBCOH03645180",
+    "head": "RENAISSANCE LEARNING UK LIMITED"
+   },
+   {
+    "org": 31587689,
+    "identifier": "GBPPONPTLN8594JVXV",
+    "head": "Renaissance Products & Services"
+   }
+  ],
+  "keep": 31548599,
+  "coh_names": [
+   "RENAISSANCE LEARNING UK LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Renaissance Products & Services"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 6,
+  "witness_publications": [
+   "065562-2025",
+   "078944-2025",
+   "083040-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 6,
+  "first_ppon": 0
+ },
+ {
+  "case": "03665438~PMDV3851DZPP",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03665438",
+   "http": "200",
+   "name": "SBS ELECTRICAL, HEATING & PLUMBING SERVICES LIMITED",
+   "status": "Active",
+   "previous": [
+    "SBS ELECTRICAL ENGINEERS & CONTRACTORS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31565258,
+    "identifier": "GBPPONPMDV3851DZPP",
+    "head": "SBS Electrical Ltd"
+   },
+   {
+    "org": 31646689,
+    "identifier": "GBCOH03665438",
+    "head": "SBS ELECTRICAL, HEATING & PLUMBING SERVICES LIMITED"
+   }
+  ],
+  "keep": 31646689,
+  "coh_names": [
+   "SBS ELECTRICAL, HEATING & PLUMBING SERVICES LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "SBS Electrical Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "082849-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03686010~PZVV2177HPGR",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "03686010",
+   "http": "200",
+   "name": "DOCUMENT OUTPUT SOLUTIONS UK LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31554381,
+    "identifier": "GBPPONPZVV2177HPGR",
+    "head": "XL PRINT"
+   },
+   {
+    "org": 31762594,
+    "identifier": "GBCOH03686010",
+    "head": "DOCUMENT OUTPUT SOLUTIONS UK LIMITED"
+   }
+  ],
+  "keep": 31762594,
+  "coh_names": [
+   "DOCUMENT OUTPUT SOLUTIONS UK LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "XL Print"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "094185-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03707827~PQCM4775BCGP",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03707827",
+   "http": "200",
+   "name": "UNIVERSITY OF PLYMOUTH ENTERPRISE LIMITED",
+   "status": "Active",
+   "previous": [
+    "PLYMOUTH ENTERPRISE PARTNERSHIPS LIMITED",
+    "SECONDMETAL LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30915795,
+    "identifier": "GBCOH03707827",
+    "head": "University of Plymouth Enterprise Limited"
+   },
+   {
+    "org": 31578091,
+    "identifier": "GBPPONPQCM4775BCGP",
+    "head": "University Of Plymouth"
+   }
+  ],
+  "keep": 30915795,
+  "coh_names": [
+   "University of Plymouth Enterprise Ltd"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "University of Plymouth"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 8,
+  "witness_publications": [
+   "065522-2025",
+   "085360-2025",
+   "014206-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 8,
+  "first_ppon": 0
+ },
+ {
+  "case": "03784486~PBBY1822TZCN",
+  "gate": "legal-form",
+  "kind": "denied",
+  "register": {
+   "number": "03784486",
+   "http": "200",
+   "name": "LANES GROUP LIMITED",
+   "status": "Active",
+   "previous": [
+    "LANES GROUP PLC",
+    "LANES GROUP LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 14894495,
+    "identifier": "03784486",
+    "head": "Lanes Group plc"
+   },
+   {
+    "org": 30928223,
+    "identifier": "GBPPONPBBY1822TZCN",
+    "head": "Lanes Group Limited"
+   }
+  ],
+  "keep": 14894495,
+  "coh_names": [
+   "Lanes Group Limited",
+   "LANES GROUP PLC"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "LANES GROUP LIMITED"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 8,
+  "witness_publications": [
+   "041204-2025",
+   "066684-2025",
+   "076441-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 6,
+  "first_ppon": 2
+ },
+ {
+  "case": "03841918~PNXB4819NCBD",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "03841918",
+   "http": "200",
+   "name": "MANPOWER UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "VALLEYGREEN LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31541108,
+    "identifier": "GBCOH03841918",
+    "head": "MANPOWER UK LIMITED"
+   },
+   {
+    "org": 31543369,
+    "identifier": "GBPPONPNXB4819NCBD",
+    "head": "DfI Rivers Directorate"
+   }
+  ],
+  "keep": 31541108,
+  "coh_names": [
+   "MANPOWER UK LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Department for Infrastructure \u2013 Water and Departmental Delivery \u2013 Rivers Directorate",
+   "DfI Rivers Directorate"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "049102-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03854782~PTVQ9584RCLP",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03854782",
+   "http": "200",
+   "name": "POWELL ENGINEERING UK LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 13171869,
+    "identifier": "03854782",
+    "head": "Powell Engineering UK Ltd"
+   },
+   {
+    "org": 31647174,
+    "identifier": "GBPPONPTVQ9584RCLP",
+    "head": "Powell Engineering UK Ltd T/as Omexom"
+   }
+  ],
+  "keep": 13171869,
+  "coh_names": [
+   "Powell Engineering UK Ltd"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Powell Engineering UK Ltd T/as Omexom"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "092798-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 0,
+  "first_ppon": 1
+ },
+ {
+  "case": "03861209~PCCL2652HDNW",
+  "gate": "coh-multi-ppon",
+  "kind": "conflict",
+  "register": {
+   "number": "03861209",
+   "http": "200",
+   "name": "CHANGE, GROW, LIVE",
+   "status": "Active",
+   "previous": [
+    "CRIME REDUCTION INITIATIVES",
+    "CRIME REDUCTION INITIATIVES (TRANSITIONAL)"
+   ]
+  },
+  "members": [
+   {
+    "org": 12866857,
+    "identifier": "03861209",
+    "head": "Change Grow Live"
+   },
+   {
+    "org": 31548471,
+    "identifier": "GBPPONPCCL2652HDNW",
+    "head": "Change Grow Live"
+   }
+  ],
+  "keep": 12866857,
+  "coh_names": [
+   "CGL",
+   "Change, Grow Live",
+   "Change Grow Live (CGL)"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Change Grow Live",
+   "Change Grow Live (CGL)"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "078595-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 0,
+  "first_ppon": 1
+ },
+ {
+  "case": "03873993~PBPT5626NTBN",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "03873993",
+   "http": "200",
+   "name": "TRADEBE ENVIRONMENTAL SERVICES LIMITED",
+   "status": "Active",
+   "previous": [
+    "W.G. HOLDINGS LIMITED",
+    "INHOCO 1045 LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30933056,
+    "identifier": "GBCOH03873993",
+    "head": "Tradebe Environmental Services Ltd"
+   },
+   {
+    "org": 31548303,
+    "identifier": "GBPPONPBPT5626NTBN",
+    "head": "Tradebe Gwent Limited"
+   }
+  ],
+  "keep": 30933056,
+  "coh_names": [
+   "Tradebe Environmental Services",
+   "Tradebe Environmental Services Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Inutec Limited",
+   "Tradebe Gwent Limited"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "007436-2026",
+   "041413-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "04012335~PWDN2677YBTD",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "04012335",
+   "http": "200",
+   "name": "VALE ENGINEERING (YORK) LIMITED",
+   "status": "Active",
+   "previous": [
+    "PRIZESPRING LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30929865,
+    "identifier": "GBCOH04012335",
+    "head": "VALE ENGINEERING (YORK) LIMITED"
+   },
+   {
+    "org": 31576982,
+    "identifier": "GBPPONPWDN2677YBTD",
+    "head": "Vale Engineering LTD"
+   }
+  ],
+  "keep": 30929865,
+  "coh_names": [
+   "VALE ENGINEERING (YORK) LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Vale Engineering LTD"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "086118-2026",
+   "080017-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "04034666~PCDN6614NZRR",
+  "gate": "witness-only",
+  "kind": "denied",
+  "register": {
+   "number": "04034666",
+   "http": "200",
+   "name": "CHUBB LIMITED",
+   "status": "Active",
+   "previous": [
+    "CHUBB PLC",
+    "EXCHANGESTART PUBLIC LIMITED COMPANY"
+   ]
+  },
+  "members": [
+   {
+    "org": 31553579,
+    "identifier": "GBCOH04034666",
+    "head": "CHUBB FIRE & SECURITY LTD"
+   },
+   {
+    "org": 31765382,
+    "identifier": "GBPPONPCDN6614NZRR",
+    "head": "Chubb Fire & Security LIMITED"
+   }
+  ],
+  "keep": 31553579,
+  "coh_names": [
+   "Chubb Limited"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Chubb Fire & Security LIMITED"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "077328-2025",
+   "066224-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "04057460~PPLB6982ZZNX",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "04057460",
+   "http": "200",
+   "name": "IGLOO REGENERATION LIMITED",
+   "status": "Active",
+   "previous": [
+    "BROOMCO (2340) LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31551902,
+    "identifier": "GBCOH04057460",
+    "head": "IGLOO REGENERATION LIMITED"
+   },
+   {
+    "org": 31762753,
+    "identifier": "GBPPONPPLB6982ZZNX",
+    "head": "igloo Regeneration Limited a 1 2 h 1"
+   }
+  ],
+  "keep": 31551902,
+  "coh_names": [
+   "IGLOO REGENERATION LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "igloo Regeneration Limited a 1 2 h 1"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "073226-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "04078501~PDTH8893GTCW",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "04078501",
+   "http": "200",
+   "name": "SOURCE BIOSCIENCE UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "MEDICAL SOLUTIONS (NOTTINGHAM) LIMITED",
+    "PATHLORE LTD",
+    "ADVANCED DIAGNOSTIC SOLUTIONS LIMITED",
+    "ADVANCED DIAGNOSTIC LABORATORIES LIMITED",
+    "ANGLIA TELECOMMUNICATIONS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 11890423,
+    "identifier": "04078501",
+    "head": "Source BioScience UK Limited"
+   },
+   {
+    "org": 31647004,
+    "identifier": "GBPPONPDTH8893GTCW",
+    "head": "Source Bio International Ltd"
+   }
+  ],
+  "keep": 11890423,
+  "coh_names": [
+   "Source Bioscience UK Ltd"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Source Bio International Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "024785-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "04124726~PDVT3869BBZT",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "04124726",
+   "http": "200",
+   "name": "TOSHIBA TEC U.K. IMAGING SYSTEMS LIMITED",
+   "status": "Active",
+   "previous": [
+    "STARTPLAY LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 15764682,
+    "identifier": "04124726",
+    "head": "Toshiba TEC UK Imaging Systems Ltd"
+   },
+   {
+    "org": 30973192,
+    "identifier": "GBPPONPDVT3869BBZT",
+    "head": "Toshiba"
+   }
+  ],
+  "keep": 15764682,
+  "coh_names": [
+   "Toshiba TEC UK Imaging Solutions Ltd",
+   "TOSHIBA TEC UK IMAGING SYSTEMS LTD."
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Toshiba"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "022021-2026",
+   "022021-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "04129384~PCNW7288QMCM",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "04129384",
+   "http": "200",
+   "name": "COOPER MOBILE SERVICES LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31564363,
+    "identifier": "GBPPONPCNW7288QMCM",
+    "head": "Cooper Group UK T/A CMS Hire"
+   },
+   {
+    "org": 31579216,
+    "identifier": "GBCOH04129384",
+    "head": "COOPER MOBILE SERVICES LIMITED"
+   }
+  ],
+  "keep": 31579216,
+  "coh_names": [
+   "Cooper Mobile Services Limited"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Cooper Group UK T/A CMS Hire"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "061633-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "04190816~PHNX3475DCLH",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "04190816",
+   "http": "200",
+   "name": "BT GROUP PLC",
+   "status": "Active",
+   "previous": [
+    "NEWGATE TELECOMMUNICATIONS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30972029,
+    "identifier": "GBCOH04190816",
+    "head": "BT GROUP PLC"
+   },
+   {
+    "org": 31568816,
+    "identifier": "GBPPONPHNX3475DCLH",
+    "head": "British Telecom"
+   }
+  ],
+  "keep": 30972029,
+  "coh_names": [
+   "BT Business Direct",
+   "BT Group PLC",
+   "bt plc"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "British Telecom",
+   "PSBA"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 15,
+  "witness_publications": [
+   "081917-2025",
+   "083476-2025",
+   "000904-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 15,
+  "first_ppon": 0
+ },
+ {
+  "case": "04231155~PHMZ9359NYTY",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "04231155",
+   "http": "200",
+   "name": "CYTOCELL LIMITED",
+   "status": "Active",
+   "previous": [
+    "CYTOCELL TECHNOLOGIES LIMITED",
+    "LABINTEL LIMITED",
+    "LABORATORY IMPEX RESEARCH LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31548204,
+    "identifier": "GBPPONPHMZ9359NYTY",
+    "head": "OGT"
+   },
+   {
+    "org": 31562102,
+    "identifier": "GBCOH04231155",
+    "head": "CYTOCELL LIMITED"
+   }
+  ],
+  "keep": 31562102,
+  "coh_names": [
+   "Cytocell Ltd"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "OGT"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "011428-2026",
+   "011438-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "04236707~PYMN8897JPLN",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "04236707",
+   "http": "200",
+   "name": "BECTON DICKINSON (CME) U.K. LIMITED",
+   "status": "Active",
+   "previous": [
+    "CME MEDICAL UK LIMITED",
+    "CME MCKINLEY UK LIMITED",
+    "MCKINLEY MEDICAL UK LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30915425,
+    "identifier": "GBCOH04236707",
+    "head": "BECTON DICKINSON (CME) U.K. LIMITED"
+   },
+   {
+    "org": 31762781,
+    "identifier": "GBPPONPYMN8897JPLN",
+    "head": "CME Medical UK"
+   }
+  ],
+  "keep": 30915425,
+  "coh_names": [
+   "Becton Dickinson",
+   "BECTON DICKINSON (CME) U.K. LIMITED"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "CME Medical UK"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 5,
+  "witness_publications": [
+   "031182-2025",
+   "090893-2026",
+   "073899-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 5,
+  "first_ppon": 0
+ },
+ {
+  "case": "04273754~PPZX2842HHPG",
+  "gate": "legal-form",
+  "kind": "denied",
+  "register": {
+   "number": "04273754",
+   "http": "200",
+   "name": "MORGAN SINDALL CONSTRUCTION & INFRASTRUCTURE LTD",
+   "status": "Active",
+   "previous": [
+    "MORGAN SINDALL CONSTRUCTION & INFRASTRUCTURE LIMITED",
+    "MORGAN SINDALL CONSTRUCTION & INFRASTRUCTURE PLC",
+    "MORGAN SINDALL PLC",
+    "MORGAN SINDALL (CONSTRUCTION) PLC",
+    "MORGAN ASHURST PLC",
+    "BLUESTONE PUBLIC LIMITED COMPANY",
+    "ROCKETWHITE PUBLIC LIMITED COMPANY"
+   ]
+  },
+  "members": [
+   {
+    "org": 9087207,
+    "identifier": "04273754",
+    "head": "Morgan Sindall plc"
+   },
+   {
+    "org": 30967646,
+    "identifier": "GBPPONPPZX2842HHPG",
+    "head": "Morgan Sindall Construction & Infrastructure Ltd"
+   }
+  ],
+  "keep": 9087207,
+  "coh_names": [
+   "Morgan Sindall",
+   "Morgan Sindall Construction",
+   "Morgan Sindall Construction & Infrastructure",
+   "Morgan Sindall Construction & Infrastructure Ltd",
+   "Morgan Sindall Construction Limited",
+   "Morgan Sindall plc",
+   "MSVE Transmission"
+  ],
+  "coh_name_keys": 7,
+  "ppon_names": [
+   "Morgan Sindall Construction and Infrastructure ",
+   "Morgan Sindall Construction & Infrastructure Ltd (1)"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 23,
+  "witness_publications": [
+   "087925-2026",
+   "075384-2025",
+   "002531-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 23,
+  "first_ppon": 0
+ },
+ {
+  "case": "04276292~PCJW1314WRTP",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "04276292",
+   "http": "200",
+   "name": "SPLASH PADS ENTERPRISES LIMITED",
+   "status": "Active",
+   "previous": [
+    "KINGCOMBE STONBURY LIMITED",
+    "KINGCOMBE AQUACARE LTD"
+   ]
+  },
+  "members": [
+   {
+    "org": 31535622,
+    "identifier": "GBPPONPCJW1314WRTP",
+    "head": "The Splash"
+   },
+   {
+    "org": 31535887,
+    "identifier": "GBCOH04276292",
+    "head": "SPLASH PADS ENTERPRISES LIMITED"
+   }
+  ],
+  "keep": 31535887,
+  "coh_names": [
+   "SPLASH PADS ENTERPRISES LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "The Splash"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "027627-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "04303751~PGPG4472WZDW",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "04303751",
+   "http": "200",
+   "name": "CITYSCAPE DIGITAL LIMITED",
+   "status": "Active",
+   "previous": [
+    "ACRE 509 LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31548070,
+    "identifier": "GBPPONPGPG4472WZDW",
+    "head": "CITYSCAPE DIGITAL (HOLDINGS) LIMITED"
+   },
+   {
+    "org": 31911566,
+    "identifier": "GBCOH04303751",
+    "head": "CITYSCAPE DIGITAL LIMITED"
+   }
+  ],
+  "keep": 31911566,
+  "coh_names": [
+   "CITYSCAPE DIGITAL LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "CITYSCAPE DIGITAL (HOLDINGS) LIMITED"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "095857-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ }
+]

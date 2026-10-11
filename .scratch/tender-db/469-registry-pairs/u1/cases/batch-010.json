@@ -1,0 +1,274 @@
+[
+ {
+  "case": "RC000817~PMGL5552GJZX",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "RC000817",
+   "http": "200",
+   "name": "THE SCIENCE AND TECHNOLOGY FACILITIES COUNCIL",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31546252,
+    "identifier": "GBCOHRC000817",
+    "head": "Science and Technologies Facilities Council"
+   },
+   {
+    "org": 31570158,
+    "identifier": "GBPPONPMGL5552GJZX",
+    "head": "Individual"
+   }
+  ],
+  "keep": 31546252,
+  "coh_names": [
+   "Science and Technologies Facilities Council"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Individual"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "057209-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "RS007826~PJJV4784DLLH",
+  "gate": "coh-multi-ppon",
+  "kind": "conflict",
+  "register": {
+   "number": "RS007826",
+   "http": "200",
+   "name": "TORUS62 LIMITED",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 13089134,
+    "identifier": "RS007826",
+    "head": "Torus"
+   },
+   {
+    "org": 31534617,
+    "identifier": "GBPPONPJJV4784DLLH",
+    "head": "Torus62 Limited"
+   }
+  ],
+  "keep": 13089134,
+  "coh_names": [
+   "Torus",
+   "TORUS62 LIMITED"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "TORUS62 Developments LIMITED",
+   "Torus62 Limitd",
+   "Torus62 Limited"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": null,
+  "witnesses": 7,
+  "witness_publications": [
+   "044084-2026",
+   "046573-2026",
+   "046622-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 7,
+  "first_ppon": 0
+ },
+ {
+  "case": "SC029934~PHHR1941ZRZX",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "SC029934",
+   "http": "200",
+   "name": "ASCO UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "ABERDEEN SERVICE COMPANY (NORTH SEA) LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30930086,
+    "identifier": "GBCOHSC029934",
+    "head": "ASCO UK LIMITED"
+   },
+   {
+    "org": 31575483,
+    "identifier": "GBPPONPHHR1941ZRZX",
+    "head": "ASCO"
+   }
+  ],
+  "keep": 30930086,
+  "coh_names": [
+   "ASCO UK LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "ASCO"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "086231-2026",
+   "095115-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "SC139953~PRYQ1479GWPT",
+  "gate": "legal-form",
+  "kind": "denied",
+  "register": {
+   "number": "SC139953",
+   "http": "200",
+   "name": "OPTOS PUBLIC LIMITED COMPANY",
+   "status": "Active",
+   "previous": [
+    "BESCA LIMITED",
+    "ZENOPLAN LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 22686658,
+    "identifier": "SC139953",
+    "head": "Optos Public Limited Company"
+   },
+   {
+    "org": 31627823,
+    "identifier": "GBPPONPRYQ1479GWPT",
+    "head": "Optos plc"
+   }
+  ],
+  "keep": 22686658,
+  "coh_names": [
+   "Optos Public Limited Company"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Optos plc"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 5,
+  "witness_publications": [
+   "044087-2025",
+   "082484-2025",
+   "004489-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 5,
+  "first_ppon": 0
+ },
+ {
+  "case": "SC212151~PTLW2755GDGH",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "SC212151",
+   "http": "200",
+   "name": "VIGILANT PROTECT UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "VIGILANT SECURITY (SCOTLAND) LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30914225,
+    "identifier": "GBCOHSC212151",
+    "head": "Vigilant Protect UK Limited trading as Vigilant Security"
+   },
+   {
+    "org": 31578895,
+    "identifier": "GBPPONPTLW2755GDGH",
+    "head": "VIGILANT PROTECT UK LIMITED (SC212151) - t/a Vigilant Security (previously operated as Croma Vigilant)"
+   }
+  ],
+  "keep": 30914225,
+  "coh_names": [
+   "Vigilant Protect UK Limited"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "VIGILANT PROTECT UK LIMITED (SC212151) - t/a Vigilant Security (previously operated as Croma Vigilant)",
+   "Vigilant Security"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "083239-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "SC332092~PTMG3258QPBX",
+  "gate": "verdict-keep",
+  "kind": "denied",
+  "register": {
+   "number": "SC332092",
+   "http": "200",
+   "name": "BUSINESS STREAM LTD",
+   "status": "Active",
+   "previous": [
+    "CAMVO 175 LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31541057,
+    "identifier": "GBCOHSC332092",
+    "head": "BUSINESS STREAM LTD"
+   },
+   {
+    "org": 31552073,
+    "identifier": "GBPPONPTMG3258QPBX",
+    "head": "Scottish Water Business Stream"
+   }
+  ],
+  "keep": 31541057,
+  "coh_names": [
+   "Business Stream Ltd",
+   "Scottish Water Business Stream"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Scottish Water Business Stream",
+   "Scottish Water Business Stream Ltd T/A Business Stream"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "049021-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ }
+]

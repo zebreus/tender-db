@@ -1,0 +1,1784 @@
+[
+ {
+  "case": "14616198~PJWX6972PQJV",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "14616198",
+   "http": "200",
+   "name": "SEC WATCHDOG LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31535178,
+    "identifier": "GBCOH14616198",
+    "head": "SEC WATCHDOG LIMITED"
+   },
+   {
+    "org": 31569625,
+    "identifier": "GBPPONPJWX6972PQJV",
+    "head": "MATRIX SCM LIMITED"
+   }
+  ],
+  "keep": 31535178,
+  "coh_names": [
+   "SEC WATCHDOG LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "MATRIX SCM LIMITED"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "037219-2025",
+   "077941-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "15028578~PPVV7714XYXQ",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "15028578",
+   "http": "200",
+   "name": "J&B BUILDING CONTRACTORS LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31578925,
+    "identifier": "GBCOH15028578",
+    "head": "J&B BUILDING CONTRACTORS LIMITED"
+   },
+   {
+    "org": 31647146,
+    "identifier": "GBPPONPPVV7714XYXQ",
+    "head": "J& Building Contractors Ltd"
+   }
+  ],
+  "keep": 31578925,
+  "coh_names": [
+   "J&B BUILDING CONTRACTORS LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "J& Building Contractors Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 3,
+  "witness_publications": [
+   "060646-2026",
+   "064527-2026",
+   "067863-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ },
+ {
+  "case": "15334213~PMVH4554QLCX",
+  "gate": "legal-form",
+  "kind": "denied",
+  "register": {
+   "number": "15334213",
+   "http": "200",
+   "name": "CPC PROJECT SERVICES LIMITED",
+   "status": "Active",
+   "previous": [
+    "CPC PROJECT SERVICES HOLDINGS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31548692,
+    "identifier": "GBCOH15334213",
+    "head": "CPC Project Services Limited"
+   },
+   {
+    "org": 31762744,
+    "identifier": "GBPPONPMVH4554QLCX",
+    "head": "CPC Project Services LLP 1  2  3  4  5  6  7"
+   }
+  ],
+  "keep": 31548692,
+  "coh_names": [
+   "CPC",
+   "CPC PROJECT SERVICES LIMITED"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "CPC Project Services LLP 1  2  3  4  5  6  7"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 10,
+  "witness_publications": [
+   "065718-2025",
+   "069108-2025",
+   "069331-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 10,
+  "first_ppon": 0
+ },
+ {
+  "case": "15630835~PMYD7625HDDZ",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "15630835",
+   "http": "200",
+   "name": "NP AEROSPACE SV LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31575142,
+    "identifier": "GBCOH15630835",
+    "head": "NP AEROSPACE SV LIMITED"
+   },
+   {
+    "org": 31762640,
+    "identifier": "GBPPONPMYD7625HDDZ",
+    "head": "NP AEROSPACE LIMITED"
+   }
+  ],
+  "keep": 31575142,
+  "coh_names": [
+   "NP AEROSPACE SV LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "NP AEROSPACE LIMITED"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "049251-2026",
+   "067231-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "15698048~PJWM2721NDNZ",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "15698048",
+   "http": "200",
+   "name": "EUROSAFE COMPLIANCE LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30967379,
+    "identifier": "GBCOH15698048",
+    "head": "EUROSAFE COMPLIANCE LIMITED"
+   },
+   {
+    "org": 31572286,
+    "identifier": "GBPPONPJWM2721NDNZ",
+    "head": "Eurosafe Solutions Limited"
+   }
+  ],
+  "keep": 30967379,
+  "coh_names": [
+   "EUROSAFE COMPLIANCE LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Eurosafe Solutions Limited"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 3,
+  "witness_publications": [
+   "087633-2026",
+   "035602-2026",
+   "040592-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ },
+ {
+  "case": "15700894~PLTD3933TDPH",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "15700894",
+   "http": "200",
+   "name": "VINCI BUILDING LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30967583,
+    "identifier": "GBCOH15700894",
+    "head": "VINCI BUILDING LIMITED"
+   },
+   {
+    "org": 31649085,
+    "identifier": "GBPPONPLTD3933TDPH",
+    "head": "VINCI Construction UK Limited"
+   }
+  ],
+  "keep": 30967583,
+  "coh_names": [
+   "VINCI BUILDING LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "VINCI Construction UK Limited"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 7,
+  "witness_publications": [
+   "087925-2026",
+   "013168-2026",
+   "025511-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 7,
+  "first_ppon": 0
+ },
+ {
+  "case": "15700897~PYCB3475QWVQ",
+  "gate": "verdict-keep",
+  "kind": "denied",
+  "register": {
+   "number": "15700897",
+   "http": "200",
+   "name": "VINCI FACILITIES LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31549354,
+    "identifier": "GBCOH15700897",
+    "head": "VINCI FACILITIES LIMITED"
+   },
+   {
+    "org": 31559202,
+    "identifier": "GBPPONPYCB3475QWVQ",
+    "head": "Vinci Construction"
+   }
+  ],
+  "keep": 31549354,
+  "coh_names": [
+   "VINCI FACILITIES LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Vinci Construction",
+   "VINCI Construction UK t/a VINCI Facilities",
+   "VINCI FACILITIES LIMITED"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "066883-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "15739721~PJXC2438QZWM",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "15739721",
+   "http": "200",
+   "name": "ELKINS CONSTRUCTION LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30916945,
+    "identifier": "GBCOH15739721",
+    "head": "ELKINS CONSTRUCTION LIMITED"
+   },
+   {
+    "org": 31546610,
+    "identifier": "GBPPONPJXC2438QZWM",
+    "head": "A&E Elkins Ltd. T/A Elkins Construction Ltd"
+   }
+  ],
+  "keep": 30916945,
+  "coh_names": [
+   "ELKINS CONSTRUCTION LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "A & E Elkins Limited"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "033637-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "16132339~PJJT5168QLVH",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "16132339",
+   "http": "200",
+   "name": "HEALTHBOXHR LTD",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31555333,
+    "identifier": "GBCOH16132339",
+    "head": "HealthBoxHR"
+   },
+   {
+    "org": 31648981,
+    "identifier": "GBPPONPJJT5168QLVH",
+    "head": "HBHR"
+   }
+  ],
+  "keep": 31555333,
+  "coh_names": [
+   "HealthBoxHR",
+   "HEALTHBOXHR LTD"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "HBHR"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 4,
+  "witness_publications": [
+   "026700-2026",
+   "030048-2026",
+   "036714-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 4,
+  "first_ppon": 0
+ },
+ {
+  "case": "16531967~PQNM7582GQWM",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "16531967",
+   "http": "200",
+   "name": "J.W. GARNHAM & SON LTD",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31576469,
+    "identifier": "GBPPONPQNM7582GQWM",
+    "head": "J W Garnham"
+   },
+   {
+    "org": 31580910,
+    "identifier": "GBCOH16531967",
+    "head": "J.W. GARNHAM & SON LTD"
+   }
+  ],
+  "keep": 31580910,
+  "coh_names": [
+   "J.W. GARNHAM & SON LTD"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "J W Garnham"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "066585-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "17092607~PBPT1797BGMZ",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "17092607",
+   "http": "200",
+   "name": "PROSTARS FOOTBALL DEVELOPMENT LTD",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30928405,
+    "identifier": "GBCOH17092607",
+    "head": "Prostars Football Development Ltd"
+   },
+   {
+    "org": 31647072,
+    "identifier": "GBPPONPBPT1797BGMZ",
+    "head": "Prostars Football School"
+   }
+  ],
+  "keep": 30928405,
+  "coh_names": [
+   "Prostars Football Development Ltd"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Prostars Football School"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "085564-2026",
+   "086023-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "BR021056~PRTB7625DNJD",
+  "gate": "generic",
+  "kind": "denied",
+  "register": {
+   "number": "BR021056",
+   "http": "200",
+   "name": "WILLIS TOWERS WATSON",
+   "status": "Open",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31549856,
+    "identifier": "GBCOHBR021056",
+    "head": "Willis Towers Watson"
+   },
+   {
+    "org": 31577928,
+    "identifier": "GBPPONPRTB7625DNJD",
+    "head": "Willis Towers Watson"
+   }
+  ],
+  "keep": 31549856,
+  "coh_names": [
+   "Willis Towers Watson"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Willis Towers Watson"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 7,
+  "witness_publications": [
+   "068465-2025",
+   "010759-2026",
+   "035417-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 7,
+  "first_ppon": 0
+ },
+ {
+  "case": "BR024402~PBWH6489BWXM",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "BR024402",
+   "http": "200",
+   "name": "TOPCON GREAT BRITAIN MEDICAL, BRANCH OF TOPCON EUROPE MEDICAL B.V",
+   "status": "Open",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30926673,
+    "identifier": "GBCOHBR024402",
+    "head": "TOPCON GREAT BRITAIN MEDICAL, BRANCH OF TOPCON EUROPE MEDICAL B.V"
+   },
+   {
+    "org": 31547573,
+    "identifier": "GBPPONPBWH6489BWXM",
+    "head": "Topcon Healthcare"
+   }
+  ],
+  "keep": 30926673,
+  "coh_names": [
+   "TOPCON GREAT BRITAIN MEDICAL, BRANCH OF TOPCON EUROPE MEDICAL B.V"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Topcon Healthcare"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 3,
+  "witness_publications": [
+   "084736-2026",
+   "009630-2026",
+   "064266-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ },
+ {
+  "case": "CE010464~PZWQ1769RMGN",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "CE010464",
+   "http": "200",
+   "name": "INTERCOM",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30968708,
+    "identifier": "GBPPONPZWQ1769RMGN",
+    "head": "The Intercom Trust"
+   },
+   {
+    "org": 31572266,
+    "identifier": "GBCOHCE010464",
+    "head": "INTERCOM"
+   }
+  ],
+  "keep": 31572266,
+  "coh_names": [
+   "INTERCOM"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "The Intercom Trust"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "037886-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "FC016134~PHHL9383NLJL",
+  "gate": "generic",
+  "kind": "denied",
+  "register": {
+   "number": "FC016134",
+   "http": "200",
+   "name": "EBSCO INTERNATIONAL INC.",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30926902,
+    "identifier": "GBCOHFC016134",
+    "head": "EBSCO INTERNATIONAL INC"
+   },
+   {
+    "org": 31762621,
+    "identifier": "GBPPONPHHL9383NLJL",
+    "head": "EBSCO INTERNATIONAL INC."
+   }
+  ],
+  "keep": 30926902,
+  "coh_names": [
+   "Ebsco Information Services",
+   "EBSCO INTERNATIONAL INC.",
+   "EBSCO International Incl"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "EBSCO INTERNATIONAL INC."
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 21,
+  "witness_publications": [
+   "044520-2025",
+   "044661-2025",
+   "056248-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 21,
+  "first_ppon": 0
+ },
+ {
+  "case": "FC027405~PYVN7941JMVZ",
+  "gate": "witness-only",
+  "kind": "denied",
+  "register": {
+   "number": "FC027405",
+   "http": "200",
+   "name": "CRISIS PREVENTION INSTITUTE, INC.",
+   "status": "Active",
+   "previous": [
+    "CPI INC.",
+    "CRISIS PREVENTION INSTITUTE, INC."
+   ]
+  },
+  "members": [
+   {
+    "org": 31578268,
+    "identifier": "GBPPONPYVN7941JMVZ",
+    "head": "Crisis Prevention Institute, Inc."
+   },
+   {
+    "org": 31623404,
+    "identifier": "GBCOHFC027405",
+    "head": "CPI Inc (Crisis Prevention Institute)"
+   }
+  ],
+  "keep": 31623404,
+  "coh_names": [
+   "CPI Inc (Crisis Prevention Institute)"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "CRISIS PREVENTION INSTITUTE, INC."
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "094761-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "IP031693~PBNQ4523TMYT",
+  "gate": "coh-multi-ppon",
+  "kind": "conflict",
+  "register": {
+   "number": "IP031693",
+   "http": "200",
+   "name": "THE GUINNESS PARTNERSHIP LIMITED",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30914401,
+    "identifier": "GBCOHIP031693",
+    "head": "THE GUINNESS PARTNERSHIP LIMITED"
+   },
+   {
+    "org": 31573642,
+    "identifier": "GBPPONPBNQ4523TMYT",
+    "head": "Guinness Developments Ltd."
+   }
+  ],
+  "keep": 30914401,
+  "coh_names": [
+   "The Guinness Partnership",
+   "THE GUINNESS PARTNERSHIP LIMITED"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Guinness Developments Ltd.",
+   "The Guinness Partnership"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 169,
+  "witness_publications": [
+   "029919-2025",
+   "031306-2025",
+   "031376-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 169,
+  "first_ppon": 0
+ },
+ {
+  "case": "NI003503~PGTW4456TGCY",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "NI003503",
+   "http": "200",
+   "name": "JOHN GRAHAM CONSTRUCTION LIMITED",
+   "status": "Active",
+   "previous": [
+    "JOHN GRAHAM (DROMORE) LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 12264652,
+    "identifier": "NI003503",
+    "head": "John Graham Construction Ltd"
+   },
+   {
+    "org": 31762722,
+    "identifier": "GBPPONPGTW4456TGCY",
+    "head": "John Graham Construction Ltd a 8 b 1 8 c 1 3 4 5 7 8 h 1 8"
+   }
+  ],
+  "keep": 12264652,
+  "coh_names": [
+   "GRAHAM",
+   "John Graham",
+   "John Graham Construction Limited (3)",
+   "John Graham (Dromore) Ltd t/a Graham Construction"
+  ],
+  "coh_name_keys": 4,
+  "ppon_names": [
+   "John Graham Construction Ltd a 8 b 1 8 c 1 3 4 5 7 8 h 1 8"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 12,
+  "witness_publications": [
+   "087925-2026",
+   "079795-2025",
+   "012929-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 12,
+  "first_ppon": 0
+ },
+ {
+  "case": "NI041643~PMQR4417CMCJ",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "NI041643",
+   "http": "200",
+   "name": "D.F.P.F. LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31539282,
+    "identifier": "GBCOHNI041643",
+    "head": "D.F.P.F. LIMITED"
+   },
+   {
+    "org": 31761325,
+    "identifier": "GBPPONPMQR4417CMCJ",
+    "head": "People 1st"
+   }
+  ],
+  "keep": 31539282,
+  "coh_names": [
+   "D.F.P.F. LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "People 1st"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "045276-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "NI628343~PLLY4995WZBW",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "NI628343",
+   "http": "200",
+   "name": "AMBIT CRE LTD",
+   "status": "Active",
+   "previous": [
+    "LISNEY (NI) LTD"
+   ]
+  },
+  "members": [
+   {
+    "org": 30967380,
+    "identifier": "GBPPONPLLY4995WZBW",
+    "head": "LISNEY NI Ltd."
+   },
+   {
+    "org": 31649065,
+    "identifier": "GBCOHNI628343",
+    "head": "Ambit CRE Limited"
+   }
+  ],
+  "keep": 31649065,
+  "coh_names": [
+   "Ambit CRE Limited"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "LISNEY NI Ltd."
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "093497-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "NI643580~PNXD8516BXYD",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "NI643580",
+   "http": "200",
+   "name": "HAJ GROUP (N.I.) LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31544945,
+    "identifier": "GBCOHNI643580",
+    "head": "HAJ GROUP (N.I.) LIMITED"
+   },
+   {
+    "org": 31559413,
+    "identifier": "GBPPONPNXD8516BXYD",
+    "head": "HAJ Repairs"
+   }
+  ],
+  "keep": 31544945,
+  "coh_names": [
+   "HAJ GROUP (N.I.) LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "HAJ Repairs"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "057687-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "NI648489~PXGW5622DZJJ",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "NI648489",
+   "http": "200",
+   "name": "MOORE ELECTRICS (BALLYMENA) LTD",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31575277,
+    "identifier": "GBPPONPXGW5622DZJJ",
+    "head": "Moores Electrics"
+   },
+   {
+    "org": 31581164,
+    "identifier": "GBCOHNI648489",
+    "head": "MOORE ELECTRICS (BALLYMENA) LTD"
+   }
+  ],
+  "keep": 31581164,
+  "coh_names": [
+   "MOORE ELECTRICS (BALLYMENA) LTD"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Moores Electrics"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "067327-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "NP000226~PTZH2752JBMM",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "NP000226",
+   "http": "200",
+   "name": "IMPACT TRAINING (N.I) LIMITED",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31539291,
+    "identifier": "GBCOHNP000226",
+    "head": "IMPACT TRAINING (N.I) LIMITED"
+   },
+   {
+    "org": 31761337,
+    "identifier": "GBPPONPTZH2752JBMM",
+    "head": "Impact Training"
+   }
+  ],
+  "keep": 31539291,
+  "coh_names": [
+   "IMPACT TRAINING (N.I) LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Impact Training"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "045276-2025",
+   "069986-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC300001~PMLW7292ZXTL",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "OC300001",
+   "http": "200",
+   "name": "ERNST & YOUNG LLP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 12015028,
+    "identifier": "OC300001",
+    "head": "Ernst and Young LLP"
+   },
+   {
+    "org": 31762784,
+    "identifier": "GBPPONPMLW7292ZXTL",
+    "head": "Ernest & Young LLP"
+   }
+  ],
+  "keep": 12015028,
+  "coh_names": [
+   "Ernst & Young",
+   "Ernst & Young LLP",
+   "EY LLP",
+   "KPMG LLP"
+  ],
+  "coh_name_keys": 4,
+  "ppon_names": [
+   "Ernest & Young LLP"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 52,
+  "witness_publications": [
+   "084952-2026",
+   "086137-2026",
+   "091201-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 50,
+  "first_ppon": 2
+ },
+ {
+  "case": "OC304688~PPCM1511PDGH",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "OC304688",
+   "http": "200",
+   "name": "FREETHS LLP",
+   "status": "Active",
+   "previous": [
+    "FREETH CARTWRIGHT LLP",
+    "FREETHCARTWRIGHT LLP"
+   ]
+  },
+  "members": [
+   {
+    "org": 15336603,
+    "identifier": "OC304688",
+    "head": "Freeths LLP"
+   },
+   {
+    "org": 31762751,
+    "identifier": "GBPPONPPCM1511PDGH",
+    "head": "Freeths LLP 1 2 3 4 5 6 7"
+   }
+  ],
+  "keep": 15336603,
+  "coh_names": [
+   "Freeths LLP"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Freeths LLP 1 2 3 4 5 6 7"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 7,
+  "witness_publications": [
+   "054461-2025",
+   "005002-2026",
+   "014757-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 7,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC306448~PGVM7475NQYV",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "OC306448",
+   "http": "200",
+   "name": "BROWNE JACOBSON LLP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 15336602,
+    "identifier": "OC306448",
+    "head": "Browne Jacobson LLP"
+   },
+   {
+    "org": 31762723,
+    "identifier": "GBPPONPGVM7475NQYV",
+    "head": "Browne Jacobson LLP 1 2 3 4 5 6 7 8"
+   }
+  ],
+  "keep": 15336602,
+  "coh_names": [
+   "Browne Jacobson",
+   "Browne Jacobson Solicitors",
+   "Browne Jacobson LLP"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Browne Jacobson LLP 1 2 3 4 5 6 7 8"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 7,
+  "witness_publications": [
+   "084909-2026",
+   "054461-2025",
+   "005002-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 7,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC308311~PTNY5134VLPM",
+  "gate": "legal-form",
+  "kind": "denied",
+  "register": {
+   "number": "OC308311",
+   "http": "200",
+   "name": "RAPLEYS LIMITED LIABILITY PARTNERSHIP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 12206867,
+    "identifier": "OC308311",
+    "head": "Rapleys LLP"
+   },
+   {
+    "org": 30927064,
+    "identifier": "GBPPONPTNY5134VLPM",
+    "head": "RAPLEYS LIMITED LIABILITY PARTNERSHIP"
+   }
+  ],
+  "keep": 12206867,
+  "coh_names": [
+   "Rapleys LLp"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Rapleys LLP",
+   "RAPLEYS LIMITED LIABILITY PARTNERSHIP",
+   "RAPLEYS LIMITED LIABILITY PARTNERSHIP (OC308311)"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": null,
+  "witnesses": 6,
+  "witness_publications": [
+   "078671-2025",
+   "023844-2026",
+   "033009-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 6,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC309219~PJMX5523TXZX",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "OC309219",
+   "http": "200",
+   "name": "BEVAN BRITTAN LLP",
+   "status": "Active",
+   "previous": [
+    "JAVALAW LLP"
+   ]
+  },
+  "members": [
+   {
+    "org": 10985758,
+    "identifier": "OC309219",
+    "head": "Bevan Brittan LLP"
+   },
+   {
+    "org": 31762729,
+    "identifier": "GBPPONPJMX5523TXZX",
+    "head": "Bevan Brittan LLP 1 2 3 4 5 6 7 8"
+   }
+  ],
+  "keep": 10985758,
+  "coh_names": [
+   "Bevan Brittan",
+   "Bevan Brittan LLP"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Bevan Brittan LLP 1 2 3 4 5 6 7 8"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 25,
+  "witness_publications": [
+   "089062-2026",
+   "051212-2025",
+   "054461-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 25,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC309501~PLRB9696CVWX",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "OC309501",
+   "http": "200",
+   "name": "BRABNERS LLP",
+   "status": "Active",
+   "previous": [
+    "BRABNERS CHAFFE STREET LLP"
+   ]
+  },
+  "members": [
+   {
+    "org": 10985754,
+    "identifier": "OC309501",
+    "head": "Brabners LLP"
+   },
+   {
+    "org": 31762733,
+    "identifier": "GBPPONPLRB9696CVWX",
+    "head": "Brabners LLP 2 4 5 6 7"
+   }
+  ],
+  "keep": 10985754,
+  "coh_names": [
+   "Brabners LLP"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Brabners LLP 2 4 5 6 7"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "079652-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC310651~PQRQ8342WDHY",
+  "gate": "legal-form",
+  "kind": "denied",
+  "register": {
+   "number": "OC310651",
+   "http": "200",
+   "name": "DANIEL CONNAL LIMITED LIABILITY PARTNERSHIP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30919433,
+    "identifier": "GBPPONPQRQ8342WDHY",
+    "head": "Daniel Connal Partnership LLP"
+   },
+   {
+    "org": 31561923,
+    "identifier": "GBCOHOC310651",
+    "head": "DANIEL CONNAL LIMITED LIABILITY PARTNERSHIP"
+   }
+  ],
+  "keep": 31561923,
+  "coh_names": [
+   "Daniel Connal Partnership",
+   "DANIEL CONNAL LIMITED LIABILITY PARTNERSHIP"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Daniel Connal Partnership LLP"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "041880-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC325348~PHLR9855THZV",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "OC325348",
+   "http": "200",
+   "name": "RSM UK TAX AND CONSULTING LLP",
+   "status": "Active",
+   "previous": [
+    "RSM UK TAX AND ADVISORY SERVICES LLP",
+    "RSM TAX AND ADVISORY SERVICES LLP",
+    "BAKER TILLY TAX AND ADVISORY SERVICES LLP"
+   ]
+  },
+  "members": [
+   {
+    "org": 31584527,
+    "identifier": "GBPPONPHLR9855THZV",
+    "head": "RSM UK TAX AND ADVISORY SERVICES LLP"
+   },
+   {
+    "org": 31761419,
+    "identifier": "GBCOHOC325348",
+    "head": "RSM UK TAX AND CONSULTING LLP"
+   }
+  ],
+  "keep": 31761419,
+  "coh_names": [
+   "RSM UK TAX AND CONSULTING LLP"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "RSM UK TAX AND ADVISORY SERVICES LLP"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "094027-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC325522~PZRV8111PTBJ",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "OC325522",
+   "http": "200",
+   "name": "BATES WELLS & BRAITHWAITE LONDON LLP",
+   "status": "Active",
+   "previous": [
+    "BATES WELLS LLP"
+   ]
+  },
+  "members": [
+   {
+    "org": 30930069,
+    "identifier": "GBPPONPZRV8111PTBJ",
+    "head": "Bates Wells Braithwaite"
+   },
+   {
+    "org": 31563976,
+    "identifier": "GBCOHOC325522",
+    "head": "BATES WELLS & BRAITHWAITE LONDON LLP"
+   }
+  ],
+  "keep": 31563976,
+  "coh_names": [
+   "Bates Wells & Braithwaite London LLP"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Bate Wells",
+   "Bates Wells",
+   "Bates Wells Braithwaite"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": null,
+  "witnesses": 3,
+  "witness_publications": [
+   "016687-2026",
+   "033606-2026",
+   "041014-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC328794~PZTP2177WBYM",
+  "gate": "verdict-keep",
+  "kind": "denied",
+  "register": {
+   "number": "OC328794",
+   "http": "200",
+   "name": "DWF LLP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 10985760,
+    "identifier": "OC328794",
+    "head": "DWF LLP"
+   },
+   {
+    "org": 31558187,
+    "identifier": "GBPPONPZTP2177WBYM",
+    "head": "DWF Law LLP"
+   }
+  ],
+  "keep": 10985760,
+  "coh_names": [
+   "DWF Law LLP",
+   "DWF LLP"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "DWF",
+   "DWF Law LLP"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 4,
+  "witness_publications": [
+   "003658-2026",
+   "030654-2026",
+   "030663-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 4,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC376271~PVYV9912VRXT",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "OC376271",
+   "http": "200",
+   "name": "LST PARTNERSHIP LLP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31537879,
+    "identifier": "GBCOHOC376271",
+    "head": "LST Projects"
+   },
+   {
+    "org": 31649102,
+    "identifier": "GBPPONPVYV9912VRXT",
+    "head": "LST Projects (8, 11)"
+   }
+  ],
+  "keep": 31537879,
+  "coh_names": [
+   "LST Projects"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "LST Projects (8, 11)"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 3,
+  "witness_publications": [
+   "065354-2025",
+   "071755-2026",
+   "080063-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC384196~PRNJ9978WTVD",
+  "gate": "uncorroborated-disjoint",
+  "kind": "denied",
+  "register": {
+   "number": "OC384196",
+   "http": "200",
+   "name": "GGI DEVELOPMENT AND RESEARCH LLP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30926689,
+    "identifier": "GBCOHOC384196",
+    "head": "GGI Development and Research LLP"
+   },
+   {
+    "org": 31580837,
+    "identifier": "GBPPONPRNJ9978WTVD",
+    "head": "The Good Governance Institute"
+   }
+  ],
+  "keep": 30926689,
+  "coh_names": [
+   "GGI Development and Research LLP"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "The Good Governance Institute"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "095022-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC423384~PMQQ1618DXNP",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "OC423384",
+   "http": "200",
+   "name": "DWF LAW LLP",
+   "status": "Active",
+   "previous": [
+    "GAGE 1 LLP"
+   ]
+  },
+  "members": [
+   {
+    "org": 17616847,
+    "identifier": "OC423384",
+    "head": "DWF Law LLP"
+   },
+   {
+    "org": 31762743,
+    "identifier": "GBPPONPMQQ1618DXNP",
+    "head": "DWF Law LLP 1 2 3 4 5 6 7 8"
+   }
+  ],
+  "keep": 17616847,
+  "coh_names": [
+   "DFW Law LLP",
+   "DWF Law LLP",
+   "DWF LLP"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "DWF Law LLP 1 2 3 4 5 6 7 8"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "058891-2026",
+   "077677-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC433300~PMMP2131QPLJ",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "OC433300",
+   "http": "200",
+   "name": "FORBES SOLICITORS LLP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 16866855,
+    "identifier": "OC433300",
+    "head": "Forbes Solicitors"
+   },
+   {
+    "org": 31762740,
+    "identifier": "GBPPONPMMP2131QPLJ",
+    "head": "Forbes Solicitors LLP 2 3 4 5 6 7"
+   }
+  ],
+  "keep": 16866855,
+  "coh_names": [
+   "Forbes Solicitors",
+   "Forbes Solicitors LLP"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Forbes Solicitors LLP 2 3 4 5 6 7"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 5,
+  "witness_publications": [
+   "016687-2026",
+   "033606-2026",
+   "065144-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 5,
+  "first_ppon": 0
+ },
+ {
+  "case": "RC000057~PJRB3233GTQL",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "RC000057",
+   "http": "200",
+   "name": "BRITISH BROADCASTING CORPORATION",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31561336,
+    "identifier": "GBCOHRC000057",
+    "head": "BBC (British Broadcasting Corporation)"
+   },
+   {
+    "org": 31762771,
+    "identifier": "GBPPONPJRB3233GTQL",
+    "head": "British Broadcasting Corporation (BBC)"
+   }
+  ],
+  "keep": 31561336,
+  "coh_names": [
+   "BBC (British Broadcasting Corporation)",
+   "BRITISH BROADCASTING CORPORATION"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "British Broadcasting Corporation (BBC)"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "009284-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "RC000117~PGZW9515MWNT",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "RC000117",
+   "http": "200",
+   "name": "CITY AND GUILDS OF LONDON INSTITUTE",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 14289271,
+    "identifier": "RC000117",
+    "head": "City and Guilds of London Institute"
+   },
+   {
+    "org": 30973319,
+    "identifier": "GBPPONPGZW9515MWNT",
+    "head": "Gen II Engineering & Technology"
+   }
+  ],
+  "keep": 14289271,
+  "coh_names": [
+   "The City and Guilds of London Institute",
+   "The City and Guilds of London Institute (CGLI)"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "City and Guilds",
+   "Gen II Engineering & Technology"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 6,
+  "witness_publications": [
+   "033204-2025",
+   "036079-2025",
+   "038738-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 6,
+  "first_ppon": 0
+ },
+ {
+  "case": "RC000639~PTNV7472GRTW",
+  "gate": "verdict-keep",
+  "kind": "denied",
+  "register": {
+   "number": "RC000639",
+   "http": "200",
+   "name": "SWANSEA UNIVERSITY",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30913750,
+    "identifier": "GBPPONPTNV7472GRTW",
+    "head": "Swansea University"
+   },
+   {
+    "org": 30915733,
+    "identifier": "GBCOHRC000639",
+    "head": "SWANSEA UNIVERSITY"
+   }
+  ],
+  "keep": 30915733,
+  "coh_names": [
+   "Swansea University"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+   "Swansea Bay University Health Board ",
+   "Swansea University"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "031651-2025",
+   "082435-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ }
+]

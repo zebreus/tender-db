@@ -1,0 +1,2052 @@
+[
+ {
+  "case": "00061625~PHTN1518HDWG",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "00061625",
+   "http": "200",
+   "name": "BARNARDO'S",
+   "status": "Active",
+   "previous": [
+    "DR.BARNARDO'S"
+   ]
+  },
+  "members": [
+   {
+    "org": 8672813,
+    "identifier": "00061625",
+    "head": "Barnardo's"
+   },
+   {
+    "org": 31649207,
+    "identifier": "GBPPONPHTN1518HDWG",
+    "head": "Barnardos"
+   }
+  ],
+  "keep": 8672813,
+  "coh_names": [
+   "Barnardo's",
+   "BARNARDOS",
+   "Barnardos South East"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Barnardos"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "BARNARDOS",
+   "Barnardos"
+  ],
+  "witnesses": 15,
+  "witness_publications": [
+   "039953-2025",
+   "057650-2025",
+   "058793-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 15,
+  "first_ppon": 0
+ },
+ {
+  "case": "00217803~PLWY5294PZMM",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "00217803",
+   "http": "200",
+   "name": "HONEYWELL CONTROL SYSTEMS LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31540883,
+    "identifier": "GBCOH00217803",
+    "head": "HONEYWELL CONTROL SYSTEMS LIMITED"
+   },
+   {
+    "org": 31646564,
+    "identifier": "GBPPONPLWY5294PZMM",
+    "head": "Honeywell Building Solutions"
+   }
+  ],
+  "keep": 31540883,
+  "coh_names": [
+   "Honeywell Building Solutions",
+   "Honeywell Control Systems Limited"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Honeywell Building Solutions"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Honeywell Building Solutions",
+   "Honeywell Building Solutions"
+  ],
+  "witnesses": 16,
+  "witness_publications": [
+   "048585-2025",
+   "065660-2025",
+   "065673-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 16,
+  "first_ppon": 0
+ },
+ {
+  "case": "00239718~PGVD4164WXBR",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "00239718",
+   "http": "200",
+   "name": "BFS GROUP LIMITED",
+   "status": "Active",
+   "previous": [
+    "BOOKER FOODSERVICE GROUP LIMITED",
+    "BOOKER FITCH FOOD SERVICES LIMITED",
+    "SNOWDON AND BRIDGE LIMITED",
+    "SNOWDON & BRIDGE LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31537640,
+    "identifier": "GBCOH00239718",
+    "head": "BFS GROUP LIMITED (t/a Bidfood)"
+   },
+   {
+    "org": 31648935,
+    "identifier": "GBPPONPGVD4164WXBR",
+    "head": "Bidfood"
+   }
+  ],
+  "keep": 31537640,
+  "coh_names": [
+   "BFS Group (Trading as BidFood)",
+   "BFS Group Ltd",
+   "Bidfood"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Bidfood"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Bidfood",
+   "Bidfood"
+  ],
+  "witnesses": 10,
+  "witness_publications": [
+   "021436-2026",
+   "042213-2026",
+   "049339-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 10,
+  "first_ppon": 0
+ },
+ {
+  "case": "00571025~PCWL7351GDQD",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "00571025",
+   "http": "200",
+   "name": "CAR HIRE (DAY OF SWANSEA) LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 15827831,
+    "identifier": "00571025",
+    "head": "Car Hire (Day of Swansea) Ltd t/a Days Fleet"
+   },
+   {
+    "org": 30932855,
+    "identifier": "GBPPONPCWL7351GDQD",
+    "head": "Car Hire (Day of Swansea)"
+   }
+  ],
+  "keep": 15827831,
+  "coh_names": [
+   "CAR HIRE (DAY OF SWANSEA) LIMITED",
+   "Car Hire (Days of Swansea) T/as Days Rental"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Car Hire (Day of Swansea)",
+   "Car hire (Day of Swansea) Ltd t/a Days Rental",
+   "CAR HIRE (DAY OF SWANSEA) LIMITED (00571025) - t/a Day's Fleet & Day's Rental",
+   "Days Rental",
+   "Days Rental (Car Hire of Swansea)Ltd"
+  ],
+  "ppon_name_keys": 5,
+  "corroborated_by": [
+   "CAR HIRE (DAY OF SWANSEA) LIMITED",
+   "Car Hire (Day of Swansea)"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "084165-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "00633976~PJWJ2234QNRV",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "00633976",
+   "http": "200",
+   "name": "C.WYNNE & SONS LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31545869,
+    "identifier": "GBPPONPJWJ2234QNRV",
+    "head": "C. Wynne & Sons Ltd"
+   },
+   {
+    "org": 31647063,
+    "identifier": "GBCOH00633976",
+    "head": "C.WYNNE & SONS LIMITED"
+   }
+  ],
+  "keep": 31647063,
+  "coh_names": [
+   "C.WYNNE & SONS LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "C. Wynne Construction (4, 9)",
+   "C. Wynne & Sons Ltd"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "C.WYNNE & SONS LIMITED",
+   "C. Wynne & Sons Ltd"
+  ],
+  "witnesses": 2,
+  "witness_publications": [
+   "083859-2026",
+   "094489-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "00688424~PLLV1772YDYN",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "00688424",
+   "http": "200",
+   "name": "ATKINSR\u00c9ALIS UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "ATKINS LIMITED",
+    "W S ATKINS (SERVICES) LIMITED",
+    "MOUNT DISTON LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 10733656,
+    "identifier": "00688424",
+    "head": "Atkins Limited"
+   },
+   {
+    "org": 31762732,
+    "identifier": "GBPPONPLLV1772YDYN",
+    "head": "AtkinsRealis UK Limited 1  2  3  4  5  6  7  8"
+   }
+  ],
+  "keep": 10733656,
+  "coh_names": [
+   "Atkins Realis",
+   "Atkins Realis UK Limited",
+   "Atkins Limited",
+   "AtkinsRealis",
+   "Atkinsrealis UK Limited (previously Atkins Limited)",
+   "AtkinsRealis Limited",
+   "AtkinsR\u00e9alis",
+   "AtkinsR\u00e9alis PPS Limited"
+  ],
+  "coh_name_keys": 10,
+  "ppon_names": [
+   "AtkinsRealis UK Limited 1  2  3  4  5  6  7  8",
+   "ATKINSR\u00c9ALIS UK LIMITED"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "AtkinsR\u00e9alis UK Limited",
+   "ATKINSR\u00c9ALIS UK LIMITED"
+  ],
+  "witnesses": 71,
+  "witness_publications": [
+   "032687-2025",
+   "089077-2026",
+   "090448-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 71,
+  "first_ppon": 0
+ },
+ {
+  "case": "01122137~PXVM5935ZMLV",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "01122137",
+   "http": "200",
+   "name": "P. CASEY (LAND RECLAMATION) LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 17415418,
+    "identifier": "01122137",
+    "head": "P Casey (Land Reclamation) Ltd"
+   },
+   {
+    "org": 31649133,
+    "identifier": "GBPPONPXVM5935ZMLV",
+    "head": "P Casey Land Reclaimation Ltd "
+   }
+  ],
+  "keep": 17415418,
+  "coh_names": [
+   "P Casey Land Reclaimation Ltd",
+   "P Casey (Land Reclamation) Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "P Casey Land Reclaimation Ltd "
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "P Casey Land Reclaimation Ltd",
+   "P Casey Land Reclaimation Ltd "
+  ],
+  "witnesses": 10,
+  "witness_publications": [
+   "086156-2026",
+   "076010-2025",
+   "079938-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 10,
+  "first_ppon": 0
+ },
+ {
+  "case": "01144096~PQGL2671MVPV",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "01144096",
+   "http": "200",
+   "name": "H.C.G.HEATING CONSTRUCTION LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30928243,
+    "identifier": "GBPPONPQGL2671MVPV",
+    "head": "H.C.G.Heating Construction Limited"
+   },
+   {
+    "org": 31646674,
+    "identifier": "GBCOH01144096",
+    "head": "H.C.G.HEATING CONSTRUCTION LIMITED"
+   }
+  ],
+  "keep": 31646674,
+  "coh_names": [
+   "H.C.G.HEATING CONSTRUCTION LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "HCG Heating Construction Ltd",
+   "HCG Heating Contruction Ltd"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "H.C.G.HEATING CONSTRUCTION LIMITED",
+   "HCG Heating Construction Ltd"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "082849-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "01238274~PNZL2194VZYZ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "01238274",
+   "http": "200",
+   "name": "LIBERATA UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "CSL GROUP LIMITED",
+    "CIPFA SERVICES LIMITED",
+    "SEAHORSE INVESTMENTS LIMITED",
+    "MAXCRETE PROPERTIES LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 13262107,
+    "identifier": "01238274",
+    "head": "Liberata UK Ltd"
+   },
+   {
+    "org": 31646868,
+    "identifier": "GBPPONPNZL2194VZYZ",
+    "head": "Liberate UK Limited - Lot 1"
+   }
+  ],
+  "keep": 13262107,
+  "coh_names": [
+   "Liberata UK Ltd",
+   "Liberator UK Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Liberata UK Limited",
+   "Liberate UK Limited - Lot 1"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Liberata UK Ltd",
+   "Liberata UK Limited"
+  ],
+  "witnesses": 6,
+  "witness_publications": [
+   "038036-2025",
+   "048840-2025",
+   "058554-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 6,
+  "first_ppon": 0
+ },
+ {
+  "case": "01324100~PZRH8617DHJT",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "01324100",
+   "http": "200",
+   "name": "FRANK ROGERS (BUILDING CONTRACTOR) LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 15562343,
+    "identifier": "01324100",
+    "head": "Frank Rogers Building Contractor Ltd"
+   },
+   {
+    "org": 31649135,
+    "identifier": "GBPPONPZRH8617DHJT",
+    "head": "Frank Rogers Building Contractors Ltd"
+   }
+  ],
+  "keep": 15562343,
+  "coh_names": [
+   "Frank Rogers Building Contractor Ltd",
+   "Frank Rogers Building Contractors Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Frank Rogers Building Contractors Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Frank Rogers Building Contractors Ltd",
+   "Frank Rogers Building Contractors Ltd"
+  ],
+  "witnesses": 16,
+  "witness_publications": [
+   "032165-2025",
+   "086156-2026",
+   "037905-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 16,
+  "first_ppon": 0
+ },
+ {
+  "case": "01371473~PMMH8591VGTY",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "01371473",
+   "http": "200",
+   "name": "M & J GROUP (CONSTRUCTION & ROOFING) LTD",
+   "status": "Active",
+   "previous": [
+    "M & J FLAT ROOFING LIMITED",
+    "M & J FELT ROOFING LIMITED",
+    "KARMBEY LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 12315584,
+    "identifier": "01371473",
+    "head": "M & J Group (Construction & Roofing) Ltd"
+   },
+   {
+    "org": 31649125,
+    "identifier": "GBPPONPMMH8591VGTY",
+    "head": "M J Group Construction and Roofing Ltd"
+   }
+  ],
+  "keep": 12315584,
+  "coh_names": [
+   "M&J Constructing and Roofing Group",
+   "M&J Group (Construction & Roofing)",
+   "M & J Group (Construction & Roofing ) Ltd",
+   "M&J Group Limited",
+   "M J Group Construction and Roofing Ltd"
+  ],
+  "coh_name_keys": 5,
+  "ppon_names": [
+   "M J Group Construction and Roofing Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "M J Group Construction and Roofing Ltd",
+   "M J Group Construction and Roofing Ltd"
+  ],
+  "witnesses": 21,
+  "witness_publications": [
+   "084669-2026",
+   "087925-2026",
+   "088320-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 21,
+  "first_ppon": 0
+ },
+ {
+  "case": "01647362~PCGZ2339GGDT",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "01647362",
+   "http": "200",
+   "name": "STARK BUILDING MATERIALS UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "SAINT-GOBAIN BUILDING DISTRIBUTION LIMITED",
+    "MEYER INTERNATIONAL PLC"
+   ]
+  },
+  "members": [
+   {
+    "org": 12404217,
+    "identifier": "01647362",
+    "head": "Saint-Gobain Building Distribution Ltd"
+   },
+   {
+    "org": 31649225,
+    "identifier": "GBPPONPCGZ2339GGDT",
+    "head": "J P Corry"
+   }
+  ],
+  "keep": 12404217,
+  "coh_names": [
+   "George Boyd [legal entity: STARK Building Materials UK Ltd]",
+   "Jewson Partnership Solutions",
+   "Jewson Partnership Solutions [legal entity: STARK Building Materials UK Ltd]",
+   "Jewson Ltd",
+   "J P Corry",
+   "Saint-Gobain Building Distribution (Trading as Jewson Partnership Solutions)",
+   "Saint-Gobain Building Distribution Limited (T/A Jewson)",
+   "SGBD t/a Frazer"
+  ],
+  "coh_name_keys": 11,
+  "ppon_names": [
+   "J P Corry"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "J P Corry",
+   "J P Corry"
+  ],
+  "witnesses": 9,
+  "witness_publications": [
+   "056084-2025",
+   "082377-2025",
+   "052639-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 8,
+  "first_ppon": 1
+ },
+ {
+  "case": "01831261~PYTJ9243RDRL",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "01831261",
+   "http": "200",
+   "name": "CELLPATH LIMITED",
+   "status": "Active",
+   "previous": [
+    "CELLPATH PLC",
+    "SURGIPATH LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30917422,
+    "identifier": "GBCOH01831261",
+    "head": "CELLPATH LIMITED"
+   },
+   {
+    "org": 31646612,
+    "identifier": "GBPPONPYTJ9243RDRL",
+    "head": "Cell Path Ltd"
+   }
+  ],
+  "keep": 30917422,
+  "coh_names": [
+   "Cell Path Ltd",
+   "CellPath Limited"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Cell Path Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Cell Path Ltd",
+   "Cell Path Ltd"
+  ],
+  "witnesses": 3,
+  "witness_publications": [
+   "034596-2025",
+   "081154-2025",
+   "081716-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ },
+ {
+  "case": "01920623~PTYH4442XPRH",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "01920623",
+   "http": "200",
+   "name": "THE FINANCIAL CONDUCT AUTHORITY",
+   "status": "Active",
+   "previous": [
+    "THE FINANCIAL SERVICES AUTHORITY",
+    "THE SECURITIES AND INVESTMENTS BOARD",
+    "SECURITIES AND INVESTMENTS BOARD LIMITED(THE)"
+   ]
+  },
+  "members": [
+   {
+    "org": 8805068,
+    "identifier": "01920623",
+    "head": "Fujitsu Services Limited"
+   },
+   {
+    "org": 31648817,
+    "identifier": "GBPPONPTYH4442XPRH",
+    "head": "FCA"
+   }
+  ],
+  "keep": 8805068,
+  "coh_names": [
+   "FCA",
+   "Financial Conduct Authority",
+   "Fujitsu Services Ltd",
+   "London Economics",
+   "Populus"
+  ],
+  "coh_name_keys": 5,
+  "ppon_names": [
+   "FCA",
+   "Financial Conduct Authority"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "FCA",
+   "FCA"
+  ],
+  "witnesses": 14,
+  "witness_publications": [
+   "084688-2026",
+   "090082-2026",
+   "048058-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 14,
+  "first_ppon": 0
+ },
+ {
+  "case": "02183240~PGCD9498WYHR",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "02183240",
+   "http": "200",
+   "name": "TRUSTMARQUE SOLUTIONS LIMITED",
+   "status": "Active",
+   "previous": [
+    "INTERNET SOFTWARE CORPORATION LIMITED",
+    "INFOBANK SOFTWARE CORPORATION PLC",
+    "SOFTWARE CORPORATION PLC",
+    "THE SOFTWARE CORPORATION LIMITED",
+    "ROTHMEL LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 15445620,
+    "identifier": "02183240",
+    "head": "Trustmarque Solutions Ltd"
+   },
+   {
+    "org": 31647061,
+    "identifier": "GBPPONPGCD9498WYHR",
+    "head": "Claris International"
+   }
+  ],
+  "keep": 15445620,
+  "coh_names": [
+   "Aston University",
+   "TRUSTMARQUE SOLUTIONS LIMITE",
+   "Trustmarque Solutions Ltd"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Claris International",
+   "TRUSTMARQUE SOLUTIONS LIMITED"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Trustmarque Solutions Ltd",
+   "TRUSTMARQUE SOLUTIONS LIMITED"
+  ],
+  "witnesses": 19,
+  "witness_publications": [
+   "032136-2025",
+   "040359-2025",
+   "045303-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 19,
+  "first_ppon": 0
+ },
+ {
+  "case": "02188200~PZXC1937DMVH",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "02188200",
+   "http": "200",
+   "name": "HAMILTON SALES & SERVICE UK LTD",
+   "status": "Active",
+   "previous": [
+    "HAMILTON ROBOTICS LTD",
+    "HAMILTON (G.B.) LIMITED",
+    "MAGNAMINSTER LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 16185918,
+    "identifier": "02188200",
+    "head": "Hamilton Sales and Service UK Ltd"
+   },
+   {
+    "org": 31648940,
+    "identifier": "GBPPONPZXC1937DMVH",
+    "head": "AB Sciex UK Limited "
+   }
+  ],
+  "keep": 16185918,
+  "coh_names": [
+   "Hamilton Sales & Service UK Ltd",
+   "Hamilton Sales & Services UK Ltd",
+   "AB Sciex UK Limited"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Hamilton Sales & Services UK Limited",
+   "AB Sciex UK Limited"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Hamilton Sales & Services UK Ltd",
+   "Hamilton Sales & Services UK Limited"
+  ],
+  "witnesses": 3,
+  "witness_publications": [
+   "053347-2026",
+   "064811-2026",
+   "093329-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ },
+ {
+  "case": "02207415~PJNX1574LCMY",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "02207415",
+   "http": "200",
+   "name": "BUILDING DESIGN PARTNERSHIP LIMITED",
+   "status": "Active",
+   "previous": [
+    "CLUSTERCALL LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 15715152,
+    "identifier": "02207415",
+    "head": "Building Design Partnership Ltd (BDP)"
+   },
+   {
+    "org": 31649124,
+    "identifier": "GBPPONPJNX1574LCMY",
+    "head": "BDP Ltd (Build Design Partnership Ltd)"
+   }
+  ],
+  "keep": 15715152,
+  "coh_names": [
+   "BDP",
+   "BDP Ltd (Build Design Partnership Ltd)",
+   "Build Design Partnership Ltd",
+   "Building Design Partnership (BDP) Ltd",
+   "Building Design Partnership Limited (BDP)"
+  ],
+  "coh_name_keys": 5,
+  "ppon_names": [
+   "BDP Ltd (Build Design Partnership Ltd)"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "BDP",
+   "BDP Ltd (Build Design Partnership Ltd)"
+  ],
+  "witnesses": 17,
+  "witness_publications": [
+   "090702-2026",
+   "049729-2025",
+   "067446-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 17,
+  "first_ppon": 0
+ },
+ {
+  "case": "02296559~PLML4925BDXJ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "02296559",
+   "http": "200",
+   "name": "B. BRAUN MEDICAL LIMITED",
+   "status": "Active",
+   "previous": [
+    "AESCULAP LIMITED",
+    "AESCULAP-SKIDMORE HOLDINGS LIMITED",
+    "WF 156 LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 14863797,
+    "identifier": "02296559",
+    "head": "B Braun Medical Ltd"
+   },
+   {
+    "org": 31627747,
+    "identifier": "GBPPONPLML4925BDXJ",
+    "head": "B Braun Avitum UK Ltd"
+   }
+  ],
+  "keep": 14863797,
+  "coh_names": [
+   "B Braun",
+   "B Braun Medical",
+   "B Braun Medical Ltd",
+   "B Braun Medical Ltd UK",
+   "B. Braun UK",
+   "B Braun Ltd",
+   "BBraun Ltd"
+  ],
+  "coh_name_keys": 7,
+  "ppon_names": [
+   "B Braun Avitum UK Ltd",
+   "B. BRAUN MEDICAL LIMITED"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "B Braun Medical Ltd",
+   "B. BRAUN MEDICAL LIMITED"
+  ],
+  "witnesses": 7,
+  "witness_publications": [
+   "033132-2025",
+   "040414-2025",
+   "076397-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 7,
+  "first_ppon": 0
+ },
+ {
+  "case": "02366777~PLQZ5134YYJN",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "02366777",
+   "http": "200",
+   "name": "DWR CYMRU CYFYNGEDIG",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 15714293,
+    "identifier": "02366777",
+    "head": "D\u0175r Cymru Cyfyngedig"
+   },
+   {
+    "org": 31649116,
+    "identifier": "GBPPONPLQZ5134YYJN",
+    "head": "Dwr Cymru Cyf"
+   }
+  ],
+  "keep": 15714293,
+  "coh_names": [
+   "Dwr Cymru Cyfyngedig",
+   "D\u0175r Cymru Cyfyngedig",
+   "Welsh Water/ Dwr Cymru"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Dwr Cymru Cyf",
+   "Welsh Water/ Dwr Cymru"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Welsh Water/ Dwr Cymru",
+   "Welsh Water/ Dwr Cymru"
+  ],
+  "witnesses": 17,
+  "witness_publications": [
+   "041204-2025",
+   "041205-2025",
+   "042339-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 17,
+  "first_ppon": 0
+ },
+ {
+  "case": "02540020~PTJW4159VPRN",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "02540020",
+   "http": "200",
+   "name": "ASHI GROUP LIMITED",
+   "status": "Active",
+   "previous": [
+    "ANGLIAN WINDOWS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 17310659,
+    "identifier": "02540020",
+    "head": "Anglian Windows Ltd"
+   },
+   {
+    "org": 31646981,
+    "identifier": "GBPPONPTJW4159VPRN",
+    "head": "ASHI GROUP LIMITED"
+   }
+  ],
+  "keep": 17310659,
+  "coh_names": [
+   "Anglian Building Products, a Division of ASHI Group Ltd",
+   "Anglian Building Products, Anglian Windows Ltd",
+   "Anglian Building Products Limited",
+   "Anglian Building Products PLC",
+   "Anglian Windows Ltd",
+   "ASHI GROUP LIMITED"
+  ],
+  "coh_name_keys": 6,
+  "ppon_names": [
+   "Anglian Building Products a Division of ASHI Group Limited",
+   "ASHI GROUP LIMITED"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Anglian Building Products, a Division of ASHI Group Ltd",
+   "Anglian Building Products a Division of ASHI Group Limited"
+  ],
+  "witnesses": 11,
+  "witness_publications": [
+   "089389-2026",
+   "061557-2025",
+   "065896-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 11,
+  "first_ppon": 0
+ },
+ {
+  "case": "02652033~PPPQ2821MBPH",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "02652033",
+   "http": "200",
+   "name": "MUFG CORPORATE MARKETS TREASURY LIMITED",
+   "status": "Active",
+   "previous": [
+    "LINK TREASURY SERVICES LIMITED",
+    "CAPITA TREASURY SOLUTIONS LIMITED",
+    "SECTOR TREASURY SERVICES LIMITED",
+    "INTEGER TREASURY SERVICES LIMITED",
+    "LATIMA LIMITED",
+    "CODECIRCLE LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 8745991,
+    "identifier": "02652033",
+    "head": "Capita Treasury Solutions Limited"
+   },
+   {
+    "org": 31764000,
+    "identifier": "GBPPONPPPQ2821MBPH",
+    "head": "MUFG Corporate Markets (A division of MUFG Pension & Market Services)"
+   }
+  ],
+  "keep": 8745991,
+  "coh_names": [
+   "Capita Treasury Solutions Limited",
+   "MUFG",
+   "MUFG Corporate Markets",
+   "MUFG Corporate Markets (A division of MUFG Pension & Market Services)",
+   "MUFG CORPORATE MARKETS TREASURY LIMITED"
+  ],
+  "coh_name_keys": 5,
+  "ppon_names": [
+   "MUFG Corporate Markets (A division of MUFG Pension & Market Services)"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "MUFG Corporate Markets (A division of MUFG Pension & Market Services)",
+   "MUFG Corporate Markets (A division of MUFG Pension & Market Services)"
+  ],
+  "witnesses": 6,
+  "witness_publications": [
+   "048215-2025",
+   "000748-2026",
+   "043107-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 6,
+  "first_ppon": 0
+ },
+ {
+  "case": "02719704~PRPD2752ZQDD",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "02719704",
+   "http": "200",
+   "name": "GBM DIGITAL TECHNOLOGIES LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 23353964,
+    "identifier": "02719704",
+    "head": "GBM Digital Technologies Ltd (Trading as Sync)"
+   },
+   {
+    "org": 31647093,
+    "identifier": "GBPPONPRPD2752ZQDD",
+    "head": "Sync"
+   }
+  ],
+  "keep": 23353964,
+  "coh_names": [
+   "GBM Digital Technologies Limited (t/a Sync)",
+   "Sync",
+   "Sync (A Trading Name of GBM Digital Technologies Ltd)"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Sync"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Sync",
+   "Sync"
+  ],
+  "witnesses": 5,
+  "witness_publications": [
+   "089727-2026",
+   "052002-2025",
+   "002015-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 5,
+  "first_ppon": 0
+ },
+ {
+  "case": "02748683~PHTT9248ZXMG",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "02748683",
+   "http": "200",
+   "name": "CITYAXIS LIMITED",
+   "status": "Active",
+   "previous": [
+    "AXIS INTERIOR CONTRACTS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 16437304,
+    "identifier": "02748683",
+    "head": "City Axis Ltd"
+   },
+   {
+    "org": 30969224,
+    "identifier": "GBPPONPHTT9248ZXMG",
+    "head": "City Axis Limited"
+   }
+  ],
+  "keep": 16437304,
+  "coh_names": [
+   "City Axis Limited",
+   "CITYAXIS LIMITED"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "City Axis Limited",
+   "CITYAXIS LIMITED"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "City Axis Limited",
+   "City Axis Limited"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "094489-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03056469~PNJD4733GTBJ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "03056469",
+   "http": "200",
+   "name": "OCS GROUP UK LIMITED",
+   "status": "Active",
+   "previous": [
+    "OCS LIMITED",
+    "OCS SUPPORT SERVICES LIMITED",
+    "OCS CLEANING MIDLANDS & NORTH LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 11709483,
+    "identifier": "03056469",
+    "head": "OCS Group UK"
+   },
+   {
+    "org": 31649184,
+    "identifier": "GBPPONPNJD4733GTBJ",
+    "head": "OCS UK&I Ltd"
+   }
+  ],
+  "keep": 11709483,
+  "coh_names": [
+   "OCS",
+   "OCS Food Co trading as Catering Academy",
+   "OCS Group UK",
+   "OCS Group UK Limited",
+   "OCS UK&I LIMITED"
+  ],
+  "coh_name_keys": 5,
+  "ppon_names": [
+   "OCS UK&I Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "OCS UK&I LIMITED",
+   "OCS UK&I Ltd"
+  ],
+  "witnesses": 21,
+  "witness_publications": [
+   "033530-2025",
+   "069526-2025",
+   "075874-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 21,
+  "first_ppon": 0
+ },
+ {
+  "case": "03076444~PZCJ2164HJQZ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "03076444",
+   "http": "200",
+   "name": "NORTHERN TRAINS LIMITED",
+   "status": "Active",
+   "previous": [
+    "DFT OLR3 LIMITED",
+    "EM TRAINS LIMITED",
+    "OQS RAIL LIMITED",
+    "OQS BRANDS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 15635709,
+    "identifier": "03076444",
+    "head": "Northern Trains Ltd"
+   },
+   {
+    "org": 31648636,
+    "identifier": "GBPPONPZCJ2164HJQZ",
+    "head": "Northern Train Limited"
+   }
+  ],
+  "keep": 15635709,
+  "coh_names": [
+   "Northern Railway",
+   "Northern Railway Ltd",
+   "Northern Train Limited",
+   "NORTHERN TRAINS LIMITED"
+  ],
+  "coh_name_keys": 4,
+  "ppon_names": [
+   "Northern Train Limited",
+   "Northern Trains Limited"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Northern Train Limited",
+   "Northern Train Limited"
+  ],
+  "witnesses": 132,
+  "witness_publications": [
+   "029761-2025",
+   "030259-2025",
+   "031402-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 132,
+  "first_ppon": 0
+ },
+ {
+  "case": "03167858~PVGH8321DTVQ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "03167858",
+   "http": "200",
+   "name": "LOGAN CONSTRUCTION (SOUTH EAST) LTD",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 13307624,
+    "identifier": "03167858",
+    "head": "Logan Construction (South East) Ltd"
+   },
+   {
+    "org": 31649098,
+    "identifier": "GBPPONPVGH8321DTVQ",
+    "head": "Logan Construction SE Ltd (10, 11)"
+   }
+  ],
+  "keep": 13307624,
+  "coh_names": [
+   "Logan Construction (SE) Limited",
+   "Logan Construction (South East) Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Logan Construction SE Ltd (10, 11)"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Logan Construction (SE) Limited",
+   "Logan Construction SE Ltd (10, 11)"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "094489-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03300999~PMBD8859HNHH",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "03300999",
+   "http": "200",
+   "name": "SPT LABTECH LIMITED",
+   "status": "Active",
+   "previous": [
+    "TTP LABTECH LIMITED",
+    "ACUMEN BIOSCIENCE LIMITED",
+    "PYX LIMITED",
+    "GAC NO. 68 LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 14482887,
+    "identifier": "03300999",
+    "head": "TTPLabtech Ltd"
+   },
+   {
+    "org": 31647021,
+    "identifier": "GBPPONPMBD8859HNHH",
+    "head": "SPTLabtech"
+   }
+  ],
+  "keep": 14482887,
+  "coh_names": [
+   "SPT Labtech",
+   "SPT LABTECH LTD",
+   "SPTLabtech",
+   "TTPLabtech Ltd"
+  ],
+  "coh_name_keys": 4,
+  "ppon_names": [
+   "SPTLabtech"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "SPTLabtech",
+   "SPTLabtech"
+  ],
+  "witnesses": 2,
+  "witness_publications": [
+   "006355-2026",
+   "069071-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "03319324~PQXQ2287LBVL",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "03319324",
+   "http": "200",
+   "name": "BUILDING RESEARCH ESTABLISHMENT LIMITED",
+   "status": "Active",
+   "previous": [
+    "PACETYPE LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 13576167,
+    "identifier": "03319324",
+    "head": "Building Research Establishment Ltd"
+   },
+   {
+    "org": 30917641,
+    "identifier": "GBPPONPQXQ2287LBVL",
+    "head": "Building Establishment Research Limited"
+   }
+  ],
+  "keep": 13576167,
+  "coh_names": [
+   "BRE Group",
+   "Building Research Establishment (BRE)",
+   "Building Research Establishment Ltd"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Building Establishment Research Limited",
+   "Building Research Establishment (BRE)",
+   "Building Research Establishment Limited"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": [
+   "Building Research Establishment (BRE)",
+   "Building Research Establishment (BRE)"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "094128-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03477456~PWRC4246BYHQ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "03477456",
+   "http": "200",
+   "name": "ATHERDEN FULLER LENG LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31583615,
+    "identifier": "GBCOH03477456",
+    "head": "ATHERDEN FULLER LENG LIMITED"
+   },
+   {
+    "org": 31649131,
+    "identifier": "GBPPONPWRC4246BYHQ",
+    "head": "AFL Architects (Atherden Fuller Leng Ltd)"
+   }
+  ],
+  "keep": 31583615,
+  "coh_names": [
+   "AFL Architects (Atherden Fuller Leng Ltd)",
+   "Atherden Fuller Leng Ltd "
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "AFL Architects (Atherden Fuller Leng Ltd)"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "AFL Architects (Atherden Fuller Leng Ltd)",
+   "AFL Architects (Atherden Fuller Leng Ltd)"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "070281-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03529819~PGPT1484QRMX",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "03529819",
+   "http": "200",
+   "name": "ARTIC BUILDING SERVICES LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30969282,
+    "identifier": "GBPPONPGPT1484QRMX",
+    "head": "Artic Building Services Ltd"
+   },
+   {
+    "org": 31607247,
+    "identifier": "GBCOH03529819",
+    "head": "ARTIC BUILDING SERVICES LIMITED"
+   }
+  ],
+  "keep": 31607247,
+  "coh_names": [
+   "ARTIC BUILDING SERVICES LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Archizone Site Services Ltd.",
+   "Artic Building Services Limited"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "ARTIC BUILDING SERVICES LIMITED",
+   "Artic Building Services Limited"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "082849-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "03870923~PNTT7781TWHG",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "03870923",
+   "http": "200",
+   "name": "CUNLIFFES LIMITED",
+   "status": "Active",
+   "previous": [
+    "CUNLIFFE SURVEYORS LTD."
+   ]
+  },
+  "members": [
+   {
+    "org": 31558489,
+    "identifier": "GBCOH03870923",
+    "head": "CUNLIFFES LIMITED"
+   },
+   {
+    "org": 31649127,
+    "identifier": "GBPPONPNTT7781TWHG",
+    "head": "Cuncliffes Ltd"
+   }
+  ],
+  "keep": 31558489,
+  "coh_names": [
+   "Cuncliffes Ltd",
+   "Cunliffes Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Cuncliffes Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Cuncliffes Ltd",
+   "Cuncliffes Ltd"
+  ],
+  "witnesses": 2,
+  "witness_publications": [
+   "002493-2026",
+   "013967-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "04125764~PCTJ5948ZJZV",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "04125764",
+   "http": "200",
+   "name": "THE WASTE AND RESOURCES ACTION PROGRAMME",
+   "status": "Converted / Closed",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31534690,
+    "identifier": "GBCOH04125764",
+    "head": "THE WASTE AND RESOURCES ACTION PROGRAMME"
+   },
+   {
+    "org": 31648727,
+    "identifier": "GBPPONPCTJ5948ZJZV",
+    "head": "WRAP (Waste and Resources Action Programme)"
+   }
+  ],
+  "keep": 31534690,
+  "coh_names": [
+   "Waste & Resources Action Programme",
+   "WRAP",
+   "WRAP (Waste and Resources Action Programme)"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Waste & Resources Action Programme",
+   "WRAP (Waste and Resources Action Programme)"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Waste & Resources Action Programme",
+   "Waste & Resources Action Programme"
+  ],
+  "witnesses": 19,
+  "witness_publications": [
+   "091544-2026",
+   "091563-2026",
+   "069466-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 19,
+  "first_ppon": 0
+ },
+ {
+  "case": "04142000~PGTV4978TPPW",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "04142000",
+   "http": "200",
+   "name": "24 X 7 LTD.",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30917988,
+    "identifier": "GBCOH04142000",
+    "head": "24 X 7 LTD."
+   },
+   {
+    "org": 31646589,
+    "identifier": "GBPPONPGTV4978TPPW",
+    "head": "24x7 Ltd"
+   }
+  ],
+  "keep": 30917988,
+  "coh_names": [
+   "24 X 7 LTD.",
+   "24x7",
+   "24x7 Ltd"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "24x7 Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "24x7",
+   "24x7 Ltd"
+  ],
+  "witnesses": 21,
+  "witness_publications": [
+   "035607-2025",
+   "085411-2026",
+   "087057-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 21,
+  "first_ppon": 0
+ },
+ {
+  "case": "04289790~PDRC8465GYTP",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "04289790",
+   "http": "200",
+   "name": "SOCIAL CARE INSTITUTE FOR EXCELLENCE",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30972155,
+    "identifier": "GBCOH04289790",
+    "head": "SOCIAL CARE INSTITUTE FOR EXCELLENCE"
+   },
+   {
+    "org": 31649189,
+    "identifier": "GBPPONPDRC8465GYTP",
+    "head": "Social Care Institute of Excellence"
+   }
+  ],
+  "keep": 30972155,
+  "coh_names": [
+   "SOCIAL CARE INSTITUTE FOR EXCELLENCE",
+   "Social Care Institute of Excellence",
+   "Social Care Institute of Excellence (SCIE)"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Social Care Institute of Excellence"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Social Care Institute of Excellence",
+   "Social Care Institute of Excellence"
+  ],
+  "witnesses": 7,
+  "witness_publications": [
+   "089350-2026",
+   "014597-2026",
+   "028369-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 7,
+  "first_ppon": 0
+ },
+ {
+  "case": "04358614~PVZP9887JPRL",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "04358614",
+   "http": "200",
+   "name": "THE NHS CONFEDERATION",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30926702,
+    "identifier": "GBCOH04358614",
+    "head": "NHS Confederation"
+   },
+   {
+    "org": 31575553,
+    "identifier": "GBPPONPVZP9887JPRL",
+    "head": "NHS Confederation (Services) Co Ltd"
+   }
+  ],
+  "keep": 30926702,
+  "coh_names": [
+   "Diabetes UK",
+   "The NHS Alliance",
+   "NHS Confederation (T/A NHS Employers)",
+   "NHS Employers/NHS Confederation"
+  ],
+  "coh_name_keys": 4,
+  "ppon_names": [
+   "The NHS Alliance",
+   "The NHS Confederation",
+   "NHS Confederation (Services) Co Ltd"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": [
+   "The NHS Alliance",
+   "The NHS Alliance"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "032270-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "04498683~PGRG9322VXQG",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "04498683",
+   "http": "200",
+   "name": "YORK ST JOHN UNIVERSITY",
+   "status": "Active",
+   "previous": [
+    "YORK ST JOHN ENDOWMENT",
+    "YORK ST JOHN COLLEGE"
+   ]
+  },
+  "members": [
+   {
+    "org": 16165830,
+    "identifier": "04498683",
+    "head": "York St John University"
+   },
+   {
+    "org": 31646551,
+    "identifier": "GBPPONPGRG9322VXQG",
+    "head": "YSJU Graduation Service ITT"
+   }
+  ],
+  "keep": 16165830,
+  "coh_names": [
+   "York St John University",
+   "YSJU Graduation Service ITT"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "York St John University",
+   "YSJU Graduation Service ITT"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "York St John University",
+   "York St John University"
+  ],
+  "witnesses": 6,
+  "witness_publications": [
+   "035473-2026",
+   "036288-2026",
+   "036664-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 6,
+  "first_ppon": 0
+ },
+ {
+  "case": "04659351~PYJB8958TLYW",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "04659351",
+   "http": "200",
+   "name": "OFFSHORE RENEWABLE ENERGY CATAPULT",
+   "status": "Active",
+   "previous": [
+    "NATIONAL RENEWABLE ENERGY CENTRE LIMITED",
+    "NEW AND RENEWABLE ENERGY CENTRE LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31551068,
+    "identifier": "GBCOH04659351",
+    "head": "OFFSHORE RENEWABLE ENERGY CATAPULT"
+   },
+   {
+    "org": 31646565,
+    "identifier": "GBPPONPYJB8958TLYW",
+    "head": "ORE Catapult"
+   }
+  ],
+  "keep": 31551068,
+  "coh_names": [
+   "Offshore Renewable Energy Catapult",
+   "ORE Catapult"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Offshore Renewable Energy Catapult",
+   "ORE Catapult"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Offshore Renewable Energy Catapult",
+   "Offshore Renewable Energy Catapult"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "071318-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "04806777~PNNH4964HLMV",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "04806777",
+   "http": "200",
+   "name": "CLASSIC BUILDERS (SOUTH WEST) LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 12328966,
+    "identifier": "04806777",
+    "head": "Classic Builders (South West) Limited"
+   },
+   {
+    "org": 31590028,
+    "identifier": "GBPPONPNNH4964HLMV",
+    "head": "J Group Construction"
+   }
+  ],
+  "keep": 12328966,
+  "coh_names": [
+   "Classic Builders",
+   "Classic Builders (South West) Limited",
+   "Classic Builders Ltd"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Classic Builders (South West) Limited (8)",
+   "J Group Construction"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Classic Builders (South West) Limited",
+   "Classic Builders (South West) Limited (8)"
+  ],
+  "witnesses": 25,
+  "witness_publications": [
+   "086942-2026",
+   "049917-2025",
+   "049927-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 25,
+  "first_ppon": 0
+ },
+ {
+  "case": "05071073~PRYH2665RBDM",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "05071073",
+   "http": "200",
+   "name": "THE PRIORY FOR WALES OF THE MOST VENERABLE ORDER OF THE HOSPITAL OF ST. JOHN OF JERUSALEM",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31575097,
+    "identifier": "GBCOH05071073",
+    "head": "THE PRIORY FOR WALES OF THE MOST VENERABLE ORDER OF THE HOSPITAL OF ST. JOHN OF JERUSALEM"
+   },
+   {
+    "org": 31764074,
+    "identifier": "GBPPONPRYH2665RBDM",
+    "head": "St John Ambulance Cymru"
+   }
+  ],
+  "keep": 31575097,
+  "coh_names": [
+   "THE PRIORY FOR WALES OF THE MOST VENERABLE ORDER OF THE HOSPITAL OF ST. JOHN OF JERUSALEM",
+   "St John Ambulance Cymru"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "St John Ambulance Cymru"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "St John Ambulance Cymru",
+   "St John Ambulance Cymru"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "048983-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "05187882~PMZH5958HBBN",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "05187882",
+   "http": "200",
+   "name": "THINK RECRUITMENT (UK) LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31577224,
+    "identifier": "GBPPONPMZH5958HBBN",
+    "head": "Think Education Partners Ltd"
+   },
+   {
+    "org": 31582961,
+    "identifier": "GBCOH05187882",
+    "head": "Think Education Partners Limited"
+   }
+  ],
+  "keep": 31582961,
+  "coh_names": [
+   "Think Education Partners Limited"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Think Education Partners Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Think Education Partners Limited",
+   "Think Education Partners Ltd"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "082763-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ }
+]

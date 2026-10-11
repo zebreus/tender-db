@@ -1,0 +1,1959 @@
+[
+ {
+  "case": "05750134~PCTR9183ZZVH",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "05750134",
+   "http": "200",
+   "name": "LANCASHIRE GAS SERVICES LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31548992,
+    "identifier": "GBCOH05750134",
+    "head": "LANCASHIRE GAS SERVICES LIMITED"
+   },
+   {
+    "org": 31649121,
+    "identifier": "GBPPONPCTR9183ZZVH",
+    "head": "Sencat Ltd"
+   }
+  ],
+  "keep": 31548992,
+  "coh_names": [
+   "Lancashire Gas",
+   "Lancashire Gas Services Limited",
+   "Sencat Ltd"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Sencat Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Sencat Ltd",
+   "Sencat Ltd"
+  ],
+  "witnesses": 2,
+  "witness_publications": [
+   "066113-2025",
+   "082849-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "05899577~PXDW8243WDTL",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "05899577",
+   "http": "200",
+   "name": "STERLING SERVICES (NORTHERN) LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30928349,
+    "identifier": "GBCOH05899577",
+    "head": "STERLING SERVICES (NORTHERN) LIMITED"
+   },
+   {
+    "org": 31649132,
+    "identifier": "GBPPONPXDW8243WDTL",
+    "head": "Sterling Service Northern Ltd"
+   }
+  ],
+  "keep": 30928349,
+  "coh_names": [
+   "Sterling Service Northern Ltd",
+   "Sterling Services (Northern)Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Sterling Service Northern Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Sterling Service Northern Ltd",
+   "Sterling Service Northern Ltd"
+  ],
+  "witnesses": 7,
+  "witness_publications": [
+   "049486-2025",
+   "025511-2026",
+   "034503-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 7,
+  "first_ppon": 0
+ },
+ {
+  "case": "06309397~PGMB5426PPJQ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "06309397",
+   "http": "200",
+   "name": "MEDIAWORKS UK LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 13556531,
+    "identifier": "06309397",
+    "head": "Mediaworks Creative Search Agency"
+   },
+   {
+    "org": 31648764,
+    "identifier": "GBPPONPGMB5426PPJQ",
+    "head": "Media Works"
+   }
+  ],
+  "keep": 13556531,
+  "coh_names": [
+   "Media Works",
+   "Mediaworks Creative Search Agency",
+   "Mediaworks UK Limited"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Media Works"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Media Works",
+   "Media Works"
+  ],
+  "witnesses": 2,
+  "witness_publications": [
+   "047442-2025",
+   "070178-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "07155581~PJBN7821GZJY",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "07155581",
+   "http": "200",
+   "name": "HEYNE TILLETT STEEL LTD",
+   "status": "Active",
+   "previous": [
+    "HEYNE TILLETT STEEL (STRUCTURAL ENGINEERS) LTD"
+   ]
+  },
+  "members": [
+   {
+    "org": 30917736,
+    "identifier": "GBCOH07155581",
+    "head": "HEYNE TILLETT STEEL LTD"
+   },
+   {
+    "org": 31649123,
+    "identifier": "GBPPONPJBN7821GZJY",
+    "head": "Heyne Tillet Steel Ltd"
+   }
+  ],
+  "keep": 30917736,
+  "coh_names": [
+   "Heyne Tillet Steel Ltd"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Heyne Tillet Steel Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Heyne Tillet Steel Ltd",
+   "Heyne Tillet Steel Ltd"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "035094-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "07737430~PQMR9471JTYZ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "07737430",
+   "http": "200",
+   "name": "CORSERV SOLUTIONS LIMITED",
+   "status": "Active",
+   "previous": [
+    "CORMAC SOLUTIONS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 10450971,
+    "identifier": "07737430",
+    "head": "Cormac Solutions Ltd"
+   },
+   {
+    "org": 31649096,
+    "identifier": "GBPPONPQMR9471JTYZ",
+    "head": "Corserv Contracting Ltd"
+   }
+  ],
+  "keep": 10450971,
+  "coh_names": [
+   "Cormac Solutions Ltd",
+   "Corserv Care",
+   "Corserv Solutions Ltd"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Corserv Contracting Ltd",
+   "Corserv Solutions Ltd"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Corserv Solutions Ltd",
+   "Corserv Solutions Ltd"
+  ],
+  "witnesses": 23,
+  "witness_publications": [
+   "029583-2025",
+   "084984-2026",
+   "037121-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 23,
+  "first_ppon": 0
+ },
+ {
+  "case": "07934306~PCNW8528NRRP",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "07934306",
+   "http": "200",
+   "name": "GOVIA THAMESLINK RAILWAY LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 9345056,
+    "identifier": "07934306",
+    "head": "Govia Thameslink Railway Limited"
+   },
+   {
+    "org": 31649210,
+    "identifier": "GBPPONPCNW8528NRRP",
+    "head": "Govia Thames Link Railway Limited"
+   }
+  ],
+  "keep": 9345056,
+  "coh_names": [
+   "GOVIA THAMELINK RAILWAY LIMITED",
+   "Govia Thames Link Railway Limited",
+   "Govia Thameslink Railway",
+   "GOVIA THAMESLINK RAILWAY LIMITED",
+   "Thameslink Southern Great Northern Limited (TSGN)"
+  ],
+  "coh_name_keys": 5,
+  "ppon_names": [
+   "Govia Thames Link Railway Limited",
+   "Govia Thameslink Railway Limited",
+   "Thameslink Southern Great Northern Limited (TSGN)"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": [
+   "Govia Thames Link Railway Limited",
+   "Govia Thames Link Railway Limited"
+  ],
+  "witnesses": 2,
+  "witness_publications": [
+   "059417-2025",
+   "067715-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "07964711~PNLN8116PBCH",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "07964711",
+   "http": "200",
+   "name": "CELL THERAPY CATAPULT LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 9526005,
+    "identifier": "07964711",
+    "head": "Cell & Gene Therapy Ltd"
+   },
+   {
+    "org": 31648929,
+    "identifier": "GBPPONPNLN8116PBCH",
+    "head": "Cell & Gene Therapy Catapult"
+   }
+  ],
+  "keep": 9526005,
+  "coh_names": [
+   "Catapult CT",
+   "CELL AND GENE THERAPY CATAPULT",
+   "Cell & Gene Therapy Ltd",
+   "CELL THERAPY CATAPULT LIMITED",
+   "CT Catapult"
+  ],
+  "coh_name_keys": 5,
+  "ppon_names": [
+   "Cell & Gene Therapy Catapult"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "CELL AND GENE THERAPY CATAPULT",
+   "Cell & Gene Therapy Catapult"
+  ],
+  "witnesses": 79,
+  "witness_publications": [
+   "030997-2025",
+   "031238-2025",
+   "032136-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 79,
+  "first_ppon": 0
+ },
+ {
+  "case": "08067630~PXWV7539YVMM",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "08067630",
+   "http": "200",
+   "name": "G2V RECRUITMENT GROUP LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30916578,
+    "identifier": "GBCOH08067630",
+    "head": "G2V RECRUITMENT GROUP LIMITED"
+   },
+   {
+    "org": 31627863,
+    "identifier": "GBPPONPXWV7539YVMM",
+    "head": "VIVID RESOURCING DIV GV2 RECRUITMENT GRP"
+   }
+  ],
+  "keep": 30916578,
+  "coh_names": [
+   "G2 Recruitment",
+   "G2 Recruitment Solutions Ltd",
+   "G2V Recruitment Group Limited",
+   "G2V Recruitment Group Ltd (Vivid Resourcing),",
+   "G2V Recruitment - Vivid Resourcing",
+   "Vivid Government (Part of Vivid Resourcing)",
+   "Vivid Resourcing",
+   "Vivid Resourcing, a division of G2V Recruitment Group Limited"
+  ],
+  "coh_name_keys": 10,
+  "ppon_names": [
+   "Vivid Resourcing ",
+   "VIVID RESOURCING DIV GV2 RECRUITMENT GRP"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Vivid Resourcing",
+   "Vivid Resourcing "
+  ],
+  "witnesses": 25,
+  "witness_publications": [
+   "032948-2025",
+   "085597-2026",
+   "089959-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 25,
+  "first_ppon": 0
+ },
+ {
+  "case": "08257059~PYTN2411BGWR",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "08257059",
+   "http": "200",
+   "name": "SEVERN HEALTHCARE TECHNOLOGIES LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31541218,
+    "identifier": "GBCOH08257059",
+    "head": "Severn Healthcare Technologies Limited"
+   },
+   {
+    "org": 31649206,
+    "identifier": "GBPPONPYTN2411BGWR",
+    "head": "SEVERN HEALTHCHARE TECHNOLOGIES LIMITED"
+   }
+  ],
+  "keep": 31541218,
+  "coh_names": [
+   "Severn Healthcare Technologies Limited",
+   "SEVERN HEALTHCHARE TECHNOLOGIES LIMITED"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "SEVERN HEALTHCHARE TECHNOLOGIES LIMITED"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "SEVERN HEALTHCHARE TECHNOLOGIES LIMITED",
+   "SEVERN HEALTHCHARE TECHNOLOGIES LIMITED"
+  ],
+  "witnesses": 2,
+  "witness_publications": [
+   "058869-2025",
+   "059014-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "08538844~PVZV9156DNTY",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "08538844",
+   "http": "200",
+   "name": "ST CHRISTOPHER'S C OF E (PRIMARY) MULTI ACADEMY TRUST",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31561311,
+    "identifier": "GBPPONPVZV9156DNTY",
+    "head": "St Christopher's Multi Academy Trust"
+   },
+   {
+    "org": 31648974,
+    "identifier": "GBCOH08538844",
+    "head": "ST CHRISTOPHER'S C OF E (PRIMARY) MULTI ACADEMY TRUST"
+   }
+  ],
+  "keep": 31648974,
+  "coh_names": [
+   "ST CHRISTOPHER'S C OF E (PRIMARY) MULTI ACADEMY TRUST"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "St Christopher's Multi Academy Trust",
+   "St Christopher's C of E (Primary) Multi Academy Trust"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "ST CHRISTOPHER'S C OF E (PRIMARY) MULTI ACADEMY TRUST",
+   "St Christopher's C of E (Primary) Multi Academy Trust"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "093072-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "08762136~PHLP5578WRNV",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "08762136",
+   "http": "200",
+   "name": "STORYCATCHERS LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31573535,
+    "identifier": "GBCOH08762136",
+    "head": "STORYCATCHERS LIMITED"
+   },
+   {
+    "org": 31648765,
+    "identifier": "GBPPONPHLP5578WRNV",
+    "head": "Story Catchers"
+   }
+  ],
+  "keep": 31573535,
+  "coh_names": [
+   "Story Catchers"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Story Catchers"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Story Catchers",
+   "Story Catchers"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "042244-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "09367066~PTMB6149RNGX",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "09367066",
+   "http": "200",
+   "name": "RESPONSIBLE LEADERSHIP FOUNDATION LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31574804,
+    "identifier": "GBCOH09367066",
+    "head": "Forward Institute"
+   },
+   {
+    "org": 31588473,
+    "identifier": "GBPPONPTMB6149RNGX",
+    "head": "Forward Institute"
+   }
+  ],
+  "keep": 31574804,
+  "coh_names": [
+   "Forward Institute"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Forward Institute"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Forward Institute",
+   "Forward Institute"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "092736-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "10203463~PDZT2699XDQV",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "10203463",
+   "http": "200",
+   "name": "KEYSTONE CONTRACTS UK LTD",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31553849,
+    "identifier": "GBCOH10203463",
+    "head": "KEYSTONE CONTRACTS UK LTD"
+   },
+   {
+    "org": 31649122,
+    "identifier": "GBPPONPDZT2699XDQV",
+    "head": "Keystone constracts UK Ltd"
+   }
+  ],
+  "keep": 31553849,
+  "coh_names": [
+   "Keystone constracts UK Ltd"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Keystone constracts UK Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Keystone constracts UK Ltd",
+   "Keystone constracts UK Ltd"
+  ],
+  "witnesses": 2,
+  "witness_publications": [
+   "077851-2025",
+   "005955-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "10266803~PWQZ2918CYVN",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "10266803",
+   "http": "200",
+   "name": "TEIGN TREES AND LANDSCAPES SOUTH WEST LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 15520630,
+    "identifier": "10266803",
+    "head": "Teign Trees and Landscaping"
+   },
+   {
+    "org": 31648659,
+    "identifier": "GBPPONPWQZ2918CYVN",
+    "head": "Teign Trees & Landscapes SW Ltd"
+   }
+  ],
+  "keep": 15520630,
+  "coh_names": [
+   "Teign Trees and Landscapes South West Limited",
+   "Teign Trees & Landscapes SW Ltd",
+   "Teign Trees and Landscaping",
+   "Teign Trees and Landscaping South West Limited"
+  ],
+  "coh_name_keys": 4,
+  "ppon_names": [
+   "Teign Trees & Landscapes SW Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Teign Trees & Landscapes SW Ltd",
+   "Teign Trees & Landscapes SW Ltd"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "040295-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "11268239~PPGG1557LGMY",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "11268239",
+   "http": "200",
+   "name": "BD MANAGEMENT SERVICES LTD",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30919621,
+    "identifier": "GBCOH11268239",
+    "head": "BD MANAGEMENT SERVICES LTD"
+   },
+   {
+    "org": 31648939,
+    "identifier": "GBPPONPPGG1557LGMY",
+    "head": "BD Group"
+   }
+  ],
+  "keep": 30919621,
+  "coh_names": [
+   "BD Group",
+   "BD MANAGEMENT SERVICES LTD"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "BD Group"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "BD Group",
+   "BD Group"
+  ],
+  "witnesses": 6,
+  "witness_publications": [
+   "084523-2026",
+   "066226-2026",
+   "073628-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 6,
+  "first_ppon": 0
+ },
+ {
+  "case": "11911171~PCCY9241MYHV",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "11911171",
+   "http": "200",
+   "name": "CARE CITY INNOVATION C.I.C.",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31553151,
+    "identifier": "GBCOH11911171",
+    "head": "CARE CITY INNOVATION C.I.C."
+   },
+   {
+    "org": 31564677,
+    "identifier": "GBPPONPCCY9241MYHV",
+    "head": "Oteca Ltd"
+   }
+  ],
+  "keep": 31553151,
+  "coh_names": [
+   "Care City  Innovation C.I.C",
+   "Care City Innovation CIC",
+   "North East London NHS Foundation Trust"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Care City Innovation C.I.C.",
+   "Oteca Ltd"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Care City  Innovation C.I.C",
+   "Care City Innovation C.I.C."
+  ],
+  "witnesses": 3,
+  "witness_publications": [
+   "076240-2025",
+   "001181-2026",
+   "012333-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ },
+ {
+  "case": "12040709~PLCV7118GQCJ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "12040709",
+   "http": "200",
+   "name": "CUBBY STUDIO LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31578192,
+    "identifier": "GBCOH12040709",
+    "head": "CUBBY STUDIO LIMITED"
+   },
+   {
+    "org": 31648766,
+    "identifier": "GBPPONPLCV7118GQCJ",
+    "head": "Cubby Studios Limited"
+   }
+  ],
+  "keep": 31578192,
+  "coh_names": [
+   "Cubby Studio Limited",
+   "Cubby Studios Limited"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Cubby Studios Limited"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Cubby Studios Limited",
+   "Cubby Studios Limited"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "058906-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "14620804~PCRM7973DCBL",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "14620804",
+   "http": "200",
+   "name": "UK FUSION ENERGY LTD",
+   "status": "Active",
+   "previous": [
+    "UK INDUSTRIAL FUSION SOLUTIONS LTD"
+   ]
+  },
+  "members": [
+   {
+    "org": 31538593,
+    "identifier": "GBCOH14620804",
+    "head": "UK INDUSTRIAL FUSION SOLUTIONS LTD"
+   },
+   {
+    "org": 31646748,
+    "identifier": "GBPPONPCRM7973DCBL",
+    "head": "UK Fusion Energy Ltd"
+   }
+  ],
+  "keep": 31538593,
+  "coh_names": [
+   "UK FUSION ENERGY LTD",
+   "UK Industrial Fusion Energy Ltd",
+   "UK Industrial Fusion Solutions",
+   "UK INDUSTRIAL FUSION SOLUTIONS LTD",
+   "UK Industrial Solutions Ltd",
+   "United Kingdom Fusion Energy Ltd",
+   "United Kingdom Industrial Fusion Solutions"
+  ],
+  "coh_name_keys": 7,
+  "ppon_names": [
+   "UK Fusion Energy Ltd",
+   "UK Industrial Fusion Solutions Ltd",
+   "United Kingdom Industrial Fusion Solutions"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": [
+   "UK FUSION ENERGY LTD",
+   "UK Fusion Energy Ltd"
+  ],
+  "witnesses": 15,
+  "witness_publications": [
+   "044109-2025",
+   "050142-2025",
+   "050210-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 15,
+  "first_ppon": 0
+ },
+ {
+  "case": "BR000105~PQWR3824ZVZH",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "BR000105",
+   "http": "200",
+   "name": "ZURICH INSURANCE COMPANY LTD",
+   "status": "Open",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 15336628,
+    "identifier": "BR000105",
+    "head": "Zurich"
+   },
+   {
+    "org": 31646974,
+    "identifier": "GBPPONPQWR3824ZVZH",
+    "head": "Zurich Municipal"
+   }
+  ],
+  "keep": 15336628,
+  "coh_names": [
+   "Zurich",
+   "Zurich Insurance Company",
+   "ZURICH INSURANCE COMPANY (U.K.) LIMITED",
+   "Zurich Insurance Company Ltd",
+   "Zurich Insurance plc",
+   "Zurich Municipal"
+  ],
+  "coh_name_keys": 6,
+  "ppon_names": [
+   "Zurich Municipal"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Zurich Municipal",
+   "Zurich Municipal"
+  ],
+  "witnesses": 41,
+  "witness_publications": [
+   "037267-2025",
+   "037601-2025",
+   "047278-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 41,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC306763~PXWN7559NWJQ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "OC306763",
+   "http": "200",
+   "name": "ALLEN OVERY SHEARMAN STERLING LLP",
+   "status": "Active",
+   "previous": [
+    "ALLEN & OVERY LLP"
+   ]
+  },
+  "members": [
+   {
+    "org": 23338899,
+    "identifier": "OC306763",
+    "head": "ALLEN OVERY SHEARMAN STERLINQ LLP"
+   },
+   {
+    "org": 31648820,
+    "identifier": "GBPPONPXWN7559NWJQ",
+    "head": "A&O Shearman"
+   }
+  ],
+  "keep": 23338899,
+  "coh_names": [
+   "A&O Shearman",
+   "ALLEN OVERY SHEARMAN STERLING LLP",
+   "ALLEN OVERY SHEARMAN STERLINQ LLP"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "A&O Shearman"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "A&O Shearman",
+   "A&O Shearman"
+  ],
+  "witnesses": 2,
+  "witness_publications": [
+   "043063-2026",
+   "062190-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC307124~PPGW7436DBWT",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "OC307124",
+   "http": "200",
+   "name": "GARDINER & THEOBALD LLP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 8987620,
+    "identifier": "OC307124",
+    "head": "Gardiner & Theobald LLP"
+   },
+   {
+    "org": 31649128,
+    "identifier": "GBPPONPPGW7436DBWT",
+    "head": "Gardiner & Theobold LLP"
+   }
+  ],
+  "keep": 8987620,
+  "coh_names": [
+   "233600",
+   "Gardiner & Theobald",
+   "Gardiner and Theobald LLP",
+   "Gardiner & Theobold LLP"
+  ],
+  "coh_name_keys": 4,
+  "ppon_names": [
+   "GARDINER & THEOBALD LLP",
+   "Gardiner & Theobold LLP"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Gardiner & Theobald",
+   "GARDINER & THEOBALD LLP"
+  ],
+  "witnesses": 21,
+  "witness_publications": [
+   "089801-2026",
+   "065318-2025",
+   "080348-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 21,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC322760~PGJB3773RCMH",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "OC322760",
+   "http": "200",
+   "name": "GIBBS LAIDLER CONSULTING LLP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30913722,
+    "identifier": "GBCOHOC322760",
+    "head": "GIBBS LAIDLER CONSULTING LLP"
+   },
+   {
+    "org": 31648641,
+    "identifier": "GBPPONPGJB3773RCMH",
+    "head": "Newlon Housing Trust"
+   }
+  ],
+  "keep": 30913722,
+  "coh_names": [
+   "English Rural Housing Association",
+   "Gibbs Laidler",
+   "Gibbs Laidler Consulting",
+   "GIBBS LAIDLER CONSULTING LLP",
+   "Gibbslaidler",
+   "Hull Churches Housing Association",
+   "YMCA Saint Pauls Group"
+  ],
+  "coh_name_keys": 7,
+  "ppon_names": [
+   "English Rural Housing Association",
+   "Gibbs Laidler",
+   "Gibbs Laidler Consulting LLP",
+   "Gibbslaidler",
+   "Newlon Housing Trust"
+  ],
+  "ppon_name_keys": 5,
+  "corroborated_by": [
+   "English Rural Housing Association",
+   "English Rural Housing Association"
+  ],
+  "witnesses": 12,
+  "witness_publications": [
+   "029116-2025",
+   "035102-2025",
+   "042585-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 12,
+  "first_ppon": 0
+ },
+ {
+  "case": "OC333653~PCCJ7195ZBYD",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "OC333653",
+   "http": "200",
+   "name": "PINSENT MASONS LLP",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 11335660,
+    "identifier": "OC333653",
+    "head": "Pinsent Masons LLP"
+   },
+   {
+    "org": 31648818,
+    "identifier": "GBPPONPCCJ7195ZBYD",
+    "head": "Pinsent Mason LLP"
+   }
+  ],
+  "keep": 11335660,
+  "coh_names": [
+   "Pinsent Mason LLP",
+   "Pinsent Masons",
+   "Pinsent Masons LLP"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Pinsent Mason LLP",
+   "Pinsent Masons 1 2 3 4 5 6 7 8"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Pinsent Mason LLP",
+   "Pinsent Mason LLP"
+  ],
+  "witnesses": 9,
+  "witness_publications": [
+   "034768-2025",
+   "052926-2025",
+   "063621-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 9,
+  "first_ppon": 0
+ },
+ {
+  "case": "RC000121~PVHC8282CYGZ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "RC000121",
+   "http": "200",
+   "name": "CITY ST GEORGE\u2019S, UNIVERSITY OF LONDON",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 30974692,
+    "identifier": "GBCOHRC000121",
+    "head": "City St Georges, university of London"
+   },
+   {
+    "org": 31534525,
+    "identifier": "GBPPONPVHC8282CYGZ",
+    "head": "City University"
+   }
+  ],
+  "keep": 30974692,
+  "coh_names": [
+   "Bayes Business School, City St George's, University of London",
+   "City St George\u2019s, University of London",
+   "City St Georges University of London"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "City St George's, University of London",
+   "City St Georges University of London",
+   "City University",
+   "EXECUTIVE AND ACADEMIC GOVERNANCE REVIEW"
+  ],
+  "ppon_name_keys": 4,
+  "corroborated_by": [
+   "City St George\u2019s, University of London",
+   "City St George's, University of London"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "083301-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "RC000622~PXWM8968LPJY",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "RC000622",
+   "http": "200",
+   "name": "THE CORPORATION OF TRINITY HOUSE OF DEPTFORD STROND",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31579996,
+    "identifier": "GBCOHRC000622",
+    "head": "THE CORPORATION OF TRINITY HOUSE OF DEPTFORD STROND"
+   },
+   {
+    "org": 31648946,
+    "identifier": "GBPPONPXWM8968LPJY",
+    "head": "TRINITY HOUSE"
+   }
+  ],
+  "keep": 31579996,
+  "coh_names": [
+   "The Corporation of Trinity House",
+   "The Corporation of Trinity House of Deptford Strond",
+   "Trinity House"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "The Corporation of Trinity House of Deptford Strond",
+   "Trinity House"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "The Corporation of Trinity House of Deptford Strond",
+   "The Corporation of Trinity House of Deptford Strond"
+  ],
+  "witnesses": 4,
+  "witness_publications": [
+   "063294-2026",
+   "067999-2026",
+   "068270-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 4,
+  "first_ppon": 0
+ },
+ {
+  "case": "RC000749~PLMW5186XMWR",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "RC000749",
+   "http": "200",
+   "name": "THE ZOOLOGICAL SOCIETY OF LONDON",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 12202640,
+    "identifier": "RC000749",
+    "head": "The Zoological Society of London"
+   },
+   {
+    "org": 30953622,
+    "identifier": "GBPPONPLMW5186XMWR",
+    "head": "Zoological Society of London"
+   }
+  ],
+  "keep": 12202640,
+  "coh_names": [
+   "The Zoological Society of London"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Institute of Zoology",
+   "Zoological Society of London"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "The Zoological Society of London",
+   "Zoological Society of London"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "093097-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "RC000772~PQTB3743RWWM",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "RC000772",
+   "http": "200",
+   "name": "THE KING\u2019S TRUST",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 22556410,
+    "identifier": "RC000772",
+    "head": "The Prince's Trust"
+   },
+   {
+    "org": 31761334,
+    "identifier": "GBPPONPQTB3743RWWM",
+    "head": "The Prince's Trust"
+   }
+  ],
+  "keep": 22556410,
+  "coh_names": [
+   "The Prince's Trust"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "The Prince's Trust"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "The Prince's Trust",
+   "The Prince's Trust"
+  ],
+  "witnesses": 2,
+  "witness_publications": [
+   "019238-2026",
+   "053217-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "RS007726~PRPW7482CJBN",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "RS007726",
+   "http": "200",
+   "name": "POPLAR HOUSING AND REGENERATION COMMUNITY ASSOCIATION LIMITED",
+   "status": null,
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31550531,
+    "identifier": "GBCOHRS007726",
+    "head": "POPLAR HOUSING AND REGENERATION COMMUNITY ASSOCIATION LIMITED"
+   },
+   {
+    "org": 31911559,
+    "identifier": "GBPPONPRPW7482CJBN",
+    "head": "Poplar HARCA (Housing and Regeneration Community Association)"
+   }
+  ],
+  "keep": 31550531,
+  "coh_names": [
+   "Poplar HARCA",
+   "Poplar HARCA (Housing and Regeneration Community Association)",
+   "POPLAR HOUSING AND REGENERATION COMMUNITY ASSOCIATION LIMITED"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "Poplar HARCA (Housing and Regeneration Community Association)"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Poplar HARCA (Housing and Regeneration Community Association)",
+   "Poplar HARCA (Housing and Regeneration Community Association)"
+  ],
+  "witnesses": 5,
+  "witness_publications": [
+   "070099-2025",
+   "075898-2025",
+   "061962-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 5,
+  "first_ppon": 0
+ },
+ {
+  "case": "SC120550~PZTM5527WTQQ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "SC120550",
+   "http": "200",
+   "name": "MORRISON FACILITIES SERVICES LIMITED",
+   "status": "Active",
+   "previous": [
+    "AWG FACILITIES SERVICES LIMITED",
+    "MORRISON GOVERNMENT SERVICES LIMITED",
+    "MORRISON UTILITY & FACILITES MANAGEMENT LIMITED",
+    "MORRISON UTILITY & ENERGY LIMITED",
+    "MORRISON OIL & GAS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 30914554,
+    "identifier": "GBCOHSC120550",
+    "head": "MORRISON FACILITIES SERVICES LIMITED (t/a Mears FM)"
+   },
+   {
+    "org": 30969373,
+    "identifier": "GBPPONPZTM5527WTQQ",
+    "head": "Morrison Facilities Services Limited (trading as Mears FM)"
+   }
+  ],
+  "keep": 30914554,
+  "coh_names": [
+   "MORRISON FACILITIES SERVICES LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Mears Limited",
+   "Morrison Facilities Services Limited (trading as Mears FM)"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "MORRISON FACILITIES SERVICES LIMITED",
+   "Morrison Facilities Services Limited (trading as Mears FM)"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "082849-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "SC132484~PVWV3926TZTL",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "SC132484",
+   "http": "200",
+   "name": "HULLEY AND KIRKWOOD CONSULTING ENGINEERS LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 12861121,
+    "identifier": "SC132484",
+    "head": "Hulley and Kirkwood Consulting Engineers Ltd"
+   },
+   {
+    "org": 31538768,
+    "identifier": "GBPPONPVWV3926TZTL",
+    "head": "Hulley & Kirkwood Consultant Engineers Ltd"
+   }
+  ],
+  "keep": 12861121,
+  "coh_names": [
+   "Hulley and Kirkwood",
+   "Hulley and Kirkwood Consulting Engineers Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Hulley & Kirkwood",
+   "Hulley & Kirkwood Consultant Engineers Ltd"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": [
+   "Hulley and Kirkwood",
+   "Hulley & Kirkwood"
+  ],
+  "witnesses": 1,
+  "witness_publications": [
+   "083337-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "SC194276~PYNC9658MBVV",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "SC194276",
+   "http": "200",
+   "name": "PHOTONIC SOLUTIONS LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 15623271,
+    "identifier": "SC194276",
+    "head": "Photonic Solutions Ltd"
+   },
+   {
+    "org": 31646603,
+    "identifier": "GBPPONPYNC9658MBVV",
+    "head": "Photonics Solutions"
+   }
+  ],
+  "keep": 15623271,
+  "coh_names": [
+   "Photonic Solutions",
+   "Photonic Solutions Ltd",
+   "Photonic Solutions Plc",
+   "Photonics Solutions",
+   "Photonics Solutions Ltd"
+  ],
+  "coh_name_keys": 5,
+  "ppon_names": [
+   "Photonics Solutions"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "Photonics Solutions",
+   "Photonics Solutions"
+  ],
+  "witnesses": 5,
+  "witness_publications": [
+   "065352-2025",
+   "066173-2025",
+   "036707-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 5,
+  "first_ppon": 0
+ },
+ {
+  "case": "SC288763~PYBB4931GPPD",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "SC288763",
+   "http": "200",
+   "name": "CBES LIMITED",
+   "status": "Active",
+   "previous": [
+    "CORRYMILL LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 11968109,
+    "identifier": "SC288763",
+    "head": "CBES Ltd"
+   },
+   {
+    "org": 31649134,
+    "identifier": "GBPPONPYBB4931GPPD",
+    "head": "City Building Engineering Services Ltd"
+   }
+  ],
+  "keep": 11968109,
+  "coh_names": [
+   "CBES",
+   "CBES LIMITED",
+   "City Building Engineering Services Ltd"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "City Building Engineering Services Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": [
+   "City Building Engineering Services Ltd",
+   "City Building Engineering Services Ltd"
+  ],
+  "witnesses": 5,
+  "witness_publications": [
+   "087925-2026",
+   "075384-2025",
+   "025511-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 5,
+  "first_ppon": 0
+ },
+ {
+  "case": "SC347921~PHWZ6349VLXZ",
+  "gate": "plan",
+  "kind": "plan",
+  "register": {
+   "number": "SC347921",
+   "http": "200",
+   "name": "ROBERTSON CONSTRUCTION GROUP LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 7940077,
+    "identifier": "SC347921",
+    "head": "Robertson Construction Group Ltd"
+   },
+   {
+    "org": 31565242,
+    "identifier": "GBPPONPHWZ6349VLXZ",
+    "head": "Robertson Construction NW"
+   }
+  ],
+  "keep": 7940077,
+  "coh_names": [
+   "Robertson",
+   "Robertson Construction Group Limited"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Kajima Partnerships a 1 8 b 1 8 c 1 7 8 f 1 2 3 4 5 6 7 8 g 1 2 3 4 5 6 7 8 h 8",
+   "Robertson Construction Group Limited (2)",
+   "Robertson Construction NW"
+  ],
+  "ppon_name_keys": 3,
+  "corroborated_by": [
+   "Robertson Construction Group Limited",
+   "Robertson Construction Group Limited (2)"
+  ],
+  "witnesses": 9,
+  "witness_publications": [
+   "084487-2026",
+   "053154-2025",
+   "025511-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 9,
+  "first_ppon": 0
+ },
+ {
+  "case": "00025088~PGWR9284XMRY",
+  "gate": "coh-multi-ppon",
+  "kind": "conflict",
+  "register": {
+   "number": "00025088",
+   "http": "200",
+   "name": "FIRST WEST OF ENGLAND LIMITED",
+   "status": "Active",
+   "previous": [
+    "FIRST SOMERSET & AVON LIMITED",
+    "FIRST BRISTOL BUSES LIMITED",
+    "BRISTOL OMNIBUS COMPANY LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 9555434,
+    "identifier": "00025088",
+    "head": "First Somerset and Avon Limited"
+   },
+   {
+    "org": 30917050,
+    "identifier": "GBPPONPGWR9284XMRY",
+    "head": "West of England Combined Authority"
+   }
+  ],
+  "keep": 9555434,
+  "coh_names": [
+   "First Somerset and Avon Limited",
+   "First West of England",
+   "FIRST WEST OF ENGLAND LIMITED"
+  ],
+  "coh_name_keys": 3,
+  "ppon_names": [
+   "The West of England Combined Authority"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "031030-2026",
+   "031042-2026"
+  ],
+  "cooccurring": 15,
+  "cooccur_publications": [
+   "033830-2025",
+   "033834-2025",
+   "033844-2025"
+  ],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "00077536~PYLG3941DTQW",
+  "gate": "legal-form",
+  "kind": "denied",
+  "register": {
+   "number": "00077536",
+   "http": "200",
+   "name": "RELX PLC",
+   "status": "Active",
+   "previous": [
+    "REED ELSEVIER PLC",
+    "REED INTERNATIONAL P.L.C."
+   ]
+  },
+  "members": [
+   {
+    "org": 31567534,
+    "identifier": "GBCOH00077536",
+    "head": "RELX PLC"
+   },
+   {
+    "org": 31577793,
+    "identifier": "GBPPONPYLG3941DTQW",
+    "head": "Relux UK Limited ( Lexis Nexis)"
+   }
+  ],
+  "keep": 31567534,
+  "coh_names": [
+   "RELX PLC"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Relux UK Limited ( Lexis Nexis)"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 4,
+  "witness_publications": [
+   "024973-2026",
+   "052709-2026",
+   "059772-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 4,
+  "first_ppon": 0
+ },
+ {
+  "case": "00129834~PRGP6331RLDT",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "00129834",
+   "http": "200",
+   "name": "WILLIAM BIRCH & SONS LIMITED",
+   "status": "Active",
+   "previous": [
+    "WILLIAM BIRCH AND SONS,LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 31577328,
+    "identifier": "GBPPONPRGP6331RLDT",
+    "head": "Willliam Birch & Sons Ltd"
+   },
+   {
+    "org": 31630824,
+    "identifier": "GBCOH00129834",
+    "head": "William Birch & Sons Ltd (Appointed to Lots 1 & 2)"
+   }
+  ],
+  "keep": 31630824,
+  "coh_names": [
+   "William Birch and Sons Limited"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "Willliam Birch & Sons Ltd"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 1,
+  "witness_publications": [
+   "094489-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 1,
+  "first_ppon": 0
+ },
+ {
+  "case": "00145516~PLMT5991PNDQ",
+  "gate": "coh-multi-ppon",
+  "kind": "conflict",
+  "register": {
+   "number": "00145516",
+   "http": "200",
+   "name": "REFINITIV LIMITED",
+   "status": "Active",
+   "previous": [
+    "REUTERS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 13647999,
+    "identifier": "00145516",
+    "head": "Refinitiv LTD"
+   },
+   {
+    "org": 31546458,
+    "identifier": "GBPPONPLMT5991PNDQ",
+    "head": "LSEG"
+   }
+  ],
+  "keep": 13647999,
+  "coh_names": [
+   "Refinitiv Limited (a wholly-owned subsidiary of the London Stock Exchange Group, LSEG)"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "LSEG",
+   "Refinitiv Limited"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 9,
+  "witness_publications": [
+   "062961-2025",
+   "062976-2025",
+   "063405-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 9,
+  "first_ppon": 0
+ },
+ {
+  "case": "00145516~PNRW1118MLDV",
+  "gate": "ppon-multi-coh+coh-multi-ppon",
+  "kind": "conflict",
+  "register": {
+   "number": "00145516",
+   "http": "200",
+   "name": "REFINITIV LIMITED",
+   "status": "Active",
+   "previous": [
+    "REUTERS LIMITED"
+   ]
+  },
+  "members": [
+   {
+    "org": 13647999,
+    "identifier": "00145516",
+    "head": "Refinitiv LTD"
+   },
+   {
+    "org": 30916879,
+    "identifier": "GBPPONPNRW1118MLDV",
+    "head": "REFINITIV Limited"
+   }
+  ],
+  "keep": 13647999,
+  "coh_names": [
+   "REFINITIV LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "REFINITIV Limited"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 2,
+  "witness_publications": [
+   "082915-2025",
+   "082923-2025"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 2,
+  "first_ppon": 0
+ },
+ {
+  "case": "00235446~PDXZ8283PNNJ",
+  "gate": "uncorroborated-overlap",
+  "kind": "denied",
+  "register": {
+   "number": "00235446",
+   "http": "200",
+   "name": "FORD MOTOR COMPANY LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 13941178,
+    "identifier": "00235446",
+    "head": "Ford Motor Group Ltd"
+   },
+   {
+    "org": 31574879,
+    "identifier": "GBPPONPDXZ8283PNNJ",
+    "head": "Ford Motors UK"
+   }
+  ],
+  "keep": 13941178,
+  "coh_names": [
+   "Ford Motor Company Limited",
+   "Ford Motor Group Ltd"
+  ],
+  "coh_name_keys": 2,
+  "ppon_names": [
+   "Ford Motors UK"
+  ],
+  "ppon_name_keys": 1,
+  "corroborated_by": null,
+  "witnesses": 3,
+  "witness_publications": [
+   "051721-2025",
+   "094174-2026",
+   "095282-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ },
+ {
+  "case": "00314578~PXQG6353YYNL",
+  "gate": "verdict-keep",
+  "kind": "denied",
+  "register": {
+   "number": "00314578",
+   "http": "200",
+   "name": "TAYLOR & FRANCIS LIMITED",
+   "status": "Active",
+   "previous": []
+  },
+  "members": [
+   {
+    "org": 31549166,
+    "identifier": "GBPPONPXQG6353YYNL",
+    "head": "Taylor & Francis Limited"
+   },
+   {
+    "org": 31549170,
+    "identifier": "GBCOH00314578",
+    "head": "TAYLOR & FRANCIS LIMITED"
+   }
+  ],
+  "keep": 31549170,
+  "coh_names": [
+   "TAYLOR & FRANCIS LIMITED"
+  ],
+  "coh_name_keys": 1,
+  "ppon_names": [
+   "INFORMA UK LIMITED, TRADING AS TAYLOR & FRANCIS GROUP",
+   "Taylor & Francis Limited"
+  ],
+  "ppon_name_keys": 2,
+  "corroborated_by": null,
+  "witnesses": 3,
+  "witness_publications": [
+   "066484-2025",
+   "085846-2025",
+   "076557-2026"
+  ],
+  "cooccurring": 0,
+  "cooccur_publications": [],
+  "first_coh": 3,
+  "first_ppon": 0
+ }
+]
