@@ -3706,13 +3706,25 @@ impl<'a> ScalePartners<'a> {
                 }
             }
         }
-        for (lot, currency, cents) in Self::awards(head) {
-            if let Some(lot) = lot.filter(|key| !not_lots.contains(key)) {
-                keys.insert(lot);
-                if cents > SCALE_PARTNER_FLOOR_CENTS && !sentinel_amount(cents) {
-                    let best = per_lot.entry((lot, currency)).or_insert(0);
-                    *best = (*best).max(cents);
-                }
+        // Issue 491 unit 3: a head with no lot at all — the 2004–2010 text era, whose award
+        // blocks become lot-key-less results (`RES-n`), and r209's multi-contract awards —
+        // states its contracts as awards with no lot key. Each counts as a lot by its result
+        // key, so a total near the sum of its contracts gets the framework exemption the
+        // eForms lot shape gets: without it a genuine EUR 1.2 bn total beside contracts of
+        // EUR 12 m and 1.188 bn was refused against the 12 m one (the unit-3 review). One
+        // such award (r209's lot-null copy of the head) can never reach `head_lots >= 2`.
+        let lotless = !head.lots.iter().any(|l| l.kind == unit);
+        for r in head.rounds.iter().flat_map(|r| r.lot_results.iter()) {
+            let (Some(currency), Some(cents)) = (r.awarded_currency.as_deref(), r.awarded_cents) else { continue };
+            let lot = match r.lot_key.as_deref() {
+                Some(key) if !not_lots.contains(key) => key,
+                None if lotless => r.key.as_str(),
+                _ => continue,
+            };
+            keys.insert(lot);
+            if cents > SCALE_PARTNER_FLOOR_CENTS && !sentinel_amount(cents) {
+                let best = per_lot.entry((lot, currency)).or_insert(0);
+                *best = (*best).max(cents);
             }
         }
         self.head_lots = keys.len();
@@ -35408,6 +35420,22 @@ mod tests {
         // Several contracts and no II.2.1: the awards elect nothing, as before the parse
         // change stored them.
         assert_eq!(one(text_head(Vec::new(), &[400_875_960, 156_050_000])), None);
+        // A genuine multi-contract total of EUR 1 bn or more that is exactly 100x one
+        // contract's figure (the unit-3 review's shape: EUR 1.2 bn over contracts of 12 m and
+        // 1.188 bn) is a FRAMEWORK TOTAL: its contracts count as lots by result key, they sum
+        // to between F / 10 and F, and 492's exemption keeps it, as it keeps the eForms lot
+        // shape.
+        assert_eq!(
+            one(text_head(vec![amt("result_value", 120_000_000_000)], &[1_200_000_000, 118_800_000_000])),
+            Some(120_000_000_000),
+            "a total near the sum of its contracts is kept"
+        );
+        // …and a total whose contracts sum to far less than a tenth of it is still refused:
+        // EUR 1.2 bn over two contracts of EUR 12 m and 1 m.
+        assert_eq!(one(text_head(vec![amt("result_value", 120_000_000_000)], &[1_200_000_000, 100_000_000])), None);
+        // One contract alone never makes a framework (r209's lot-null copy, or a single
+        // contract's x100 slip): EUR 1.2 bn over its one EUR 12 m contract is refused.
+        assert_eq!(one(text_head(vec![amt("result_value", 120_000_000_000)], &[1_200_000_000])), None);
     }
 
     /// Issue 492 unit 3, decided 2026-10-09 on the 56 adjudicated EUR 1-10 bn heads with

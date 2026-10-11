@@ -1410,10 +1410,16 @@ fn awarded_names_and_values(body: &str) -> Vec<(String, Option<Money>)> {
     named
         .into_iter()
         .zip(homes)
-        .map(|((_, name), home)| {
+        .map(|((at, name), home)| {
+            // Only the text from the award's own name on: every print states the value item
+            // after the winner item (V.4 after V.3), so a figure BEFORE the name is the
+            // previous award's tail — reached when a stray line-start `Lot No` (an address,
+            // `Lot No 4, Hal Far Industrial Estate`) starts a block mid-award (the unit-3
+            // review).
             let value = home
                 .filter(|&b| names_in[b] == 1 && !blocks[b].nested)
-                .and_then(|b| block_value(&flat[blocks[b].span.clone()]));
+                .and_then(|b| flat.get(at.max(blocks[b].span.start)..blocks[b].span.end))
+                .and_then(block_value);
             (name, value)
         })
         .collect()
@@ -1456,24 +1462,27 @@ fn award_blocks(body: &str, flat: &str, line_starts: &[usize]) -> Vec<AwardBlock
     };
     let lines: Vec<&str> = body.lines().collect();
     let Some(sv) = lines.iter().position(|l| opens(l, "SECTION V")) else { return Vec::new() };
+    // Section V ends at the `SECTION VI` line, and nothing past it may start, choose or
+    // extend a block (the unit-3 review): a VI.2 line opening `Lot No 2: not awarded.` used
+    // to start a block, so the last real award's block ran on into Section VI and could
+    // take a VI.2 `Contract value:` as its own figure; and one VI line opening `Contract No`
+    // switched a lot-headed body to the contract family, every block then lying in VI.
+    let vi = (sv + 1..lines.len()).find(|&i| opens(lines[i], "SECTION VI")).unwrap_or(lines.len());
+    let end = line_starts.get(vi).copied().unwrap_or(flat.len());
     let heads = |marker: &str| -> Vec<usize> {
-        (sv + 1..lines.len()).filter(|&i| opens(lines[i], marker)).map(|i| line_starts[i]).collect()
+        (sv + 1..vi).filter(|&i| opens(lines[i], marker)).map(|i| line_starts[i]).collect()
     };
     let contract = heads("CONTRACT NO");
     let lot = heads("LOT NO");
     let mut v3 = Vec::new();
     let mut at = line_starts[sv];
-    while let Some(i) = find_ascii_ci(&flat[at..], AWARD_BLOCK_HEADING) {
+    while let Some(i) = find_ascii_ci(&flat[at..end], AWARD_BLOCK_HEADING) {
         let found = at + i;
         let prefixed = found >= 5 && flat.as_bytes()[found - 5..found].eq_ignore_ascii_case(b"V.3) ");
         v3.push(if prefixed { found - 5 } else { found });
         at = found + AWARD_BLOCK_HEADING.len();
     }
     let Some(starts) = [&contract, &lot, &v3].into_iter().find(|s| !s.is_empty()) else { return Vec::new() };
-    let last = starts[starts.len() - 1];
-    let end = (sv + 1..lines.len())
-        .find(|&i| line_starts[i] > last && opens(lines[i], "SECTION VI"))
-        .map_or(flat.len(), |i| line_starts[i]);
     // How many of `heads` fall inside `span`: both lists are in document order.
     let within = |heads: &[usize], span: &std::ops::Range<usize>| {
         heads.partition_point(|&h| h < span.end) - heads.partition_point(|&h| h < span.start)
@@ -5002,6 +5011,81 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
                     V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN: Infructueux.\n\
                     V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract: Value: 200 000 EUR.";
         assert_eq!(awarded_names_and_values(body), vec![("Acme Ltd".to_owned(), None)]);
+    }
+
+    /// Issue 491 unit 3 (the review): Section VI never starts, chooses or extends a block.
+    /// A VI.2 line opening `Lot No 2:` used to start a block, so the lot-1 award's block ran
+    /// on into Section VI and took VI.2's `Contract value:` for its own figure, though its
+    /// V.4 states only an estimate; and one VI line opening `Contract No` switched a
+    /// V.3-headed body to the contract family, every Section V figure then lost.
+    #[test]
+    fn a_section_vi_line_never_starts_or_extends_an_award_block() {
+        let body = "SECTION V: AWARD OF CONTRACT\n\
+                    LOT NO: 1\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                    AWARD DECISION HAS BEEN TAKEN\n\
+                    Entreprise ITE\n\
+                    FRANCE\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Initial estimated total value of the contract\n\
+                    Value 2 000 000 EUR\n\
+                    SECTION VI: COMPLEMENTARY INFORMATION\n\
+                    VI.2)  ADDITIONAL INFORMATION\n\
+                    Contract value: 1 800 000 EUR.\n\
+                    Lot No 2: not awarded.";
+        assert_eq!(awarded_names_and_values(body), vec![("Entreprise ITE".to_owned(), None)]);
+        // A V.3-headed body whose VI.2 cites a contract number keeps every award's figure.
+        let block = |name: &str, value: &str| {
+            format!(
+                "V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                 AWARD DECISION HAS BEEN TAKEN\n\
+                 {name}\n\
+                 FRANCE\n\
+                 V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                 Total final value of the contract\n\
+                 Value {value} EUR"
+            )
+        };
+        let body = format!(
+            "SECTION V: AWARD OF CONTRACT\n{}\n{}\nSECTION VI: COMPLEMENTARY INFORMATION\n\
+             VI.2)  ADDITIONAL INFORMATION\n\
+             Contract No 2008/114 refers to the framework.",
+            block("Acme SAS", "185 650"),
+            block("Bolt SARL", "7 140")
+        );
+        assert_eq!(
+            awarded_names_and_values(&body),
+            vec![
+                ("Acme SAS".to_owned(), Some((18_565_000, "EUR".to_owned(), None))),
+                ("Bolt SARL".to_owned(), Some((714_000, "EUR".to_owned(), None))),
+            ]
+        );
+    }
+
+    /// Issue 491 unit 3 (the review): an award's figure is read only from its own name on.
+    /// A stray line-start `Lot No` in an address starts a block mid-award; that block holds
+    /// the previous award's V.4 and the next award's name, and the next award (whose own V.4
+    /// states no final value) used to take the previous award's figure.
+    #[test]
+    fn a_figure_before_an_awards_name_is_never_its_own() {
+        let body = "SECTION V: AWARD OF CONTRACT\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                    AWARD DECISION HAS BEEN TAKEN\n\
+                    Acme Ltd\n\
+                    Lot No 4, Hal Far Industrial Estate\n\
+                    MALTA\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Total final value of the contract\n\
+                    Value 185 650 EUR\n\
+                    Excluding VAT.\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                    AWARD DECISION HAS BEEN TAKEN\n\
+                    Bolt Ltd\n\
+                    MALTA\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT";
+        let pairs = awarded_names_and_values(body);
+        assert_eq!(pairs.iter().map(|(n, _)| n.as_str()).collect::<Vec<_>>(), vec!["Acme Ltd", "Bolt Ltd"]);
+        assert!(pairs.iter().all(|(_, v)| v.is_none()), "Acme's figure never lands on Bolt: {pairs:?}");
     }
 
     /// Issue 491 unit 3: a name read before the first contract heading falls in no block and

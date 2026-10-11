@@ -9,11 +9,12 @@ answers; this file exists for the rare case where one does.
 Award notices of the 2004–2010 text era now serve each contract's own figure (its "total final value of the
 contract") as that award's `awarded` value, where the notice heads its awards and the figure belongs to exactly one
 named winner. Before, that figure was read only as the notice's total, and only when the notice awarded a single
-contract and stated no overall total. A notice total of €1 bn or more that is exactly 10ᵏ× its single contract's own
-figure can now be refused by the existing scale rules: a €35 bn total whose one contract states €35 m is no longer the
-Tender's `value`, which falls to its next accepted figure or to none (refused is not corrected). Otherwise the Tender's
-`value` is unchanged, and `amounts` gains no rows; the contract figures appear only on the results. The affected
-Tenders are re-folded and announced as `tender changed`.
+contract and stated no overall total. The contract figures are now partners of the existing scale rules, so a notice
+total of €1 bn or more that is exactly 10ᵏ× one of its contracts' figures (×100 included) can be refused: a €35 bn
+total whose one contract states €35 m is no longer the Tender's `value`, which falls to its next accepted figure or to
+none (refused is not corrected). A total that is close to the sum of its contracts is kept, as a framework total over
+lots is. No other Tender `value` moves, and `amounts` gains no rows; the contract figures appear only on the results.
+The affected Tenders are re-folded and announced as `tender changed`.
 
 ## Unreleased (issue 517) — `/v1/changes` refuses a `cursor` parameter
 
