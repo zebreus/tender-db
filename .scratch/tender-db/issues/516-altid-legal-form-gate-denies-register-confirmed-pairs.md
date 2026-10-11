@@ -1,6 +1,7 @@
 # 516 — the altid legal-form gate denies register-confirmed pairs: spelled-out forms, re-registrations, stray heads
 
-Status: ready-for-agent — filed 2026-10-11 from an audit of issue 469 U1's merges. Part (a) is BUILT and waits for the
+Status: ready-for-agent — (a) DONE 2026-10-11: fix f44b159, gated, deployed 136cff8; dry job 2206 (legal-form 24 → 15, 9 verdict-admitted, plan 9) → wet job 2207 merged 9 of 9 (18 tenders touched); all 9 PPON orgs answer 308. NEXT: (b), a decision (7 pairs).
+Was: ready-for-agent — filed 2026-10-11 from an audit of issue 469 U1's merges. Part (a) was BUILT and waited for the
 next gate; part (b) needs a decision, and that decision is the next step.
 Kind: data quality (organization identity)
 Relates to: 448 (the altid arm; legal form is a structural gate with no verdict override), 469 U1 (cohort
