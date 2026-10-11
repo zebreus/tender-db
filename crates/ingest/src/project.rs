@@ -1106,8 +1106,10 @@ const LEGACY_AWARD_DATE_FIELD: &str = "TED-CONTRACT_AWARD_DATE";
 /// corpus size is whatever `refold-fields` counts.
 const LEGACY_AWARD_DATE_FIELD_R207: &str = "TED-DATE_OF_CONTRACT_AWARD";
 /// The legacy "no contract was awarded" marker on the award block, a `Rule::Marker`
-/// the parser stores as `Integer(1)`; the results reader turns it into the
-/// `clos-nw` decision. Named for the same reason as the award date (issue 384):
+/// the XML parsers store as `Integer(1)` and the text parser as `Code("1")` (its award
+/// skeleton for a body that says every tender was rejected; issue 512 — for years only
+/// the Integer was read, so a dated text rejection read NULL); the results reader turns
+/// either into the `clos-nw` decision. Named for the same reason as the award date (issue 384):
 /// the reader matched it with a wildcard value pattern, so the predicate had
 /// no channel to know it on and would have listed it as dropped.
 const LEGACY_NO_AWARD_MARKER: &str = "TED-NO_AWARDED_CONTRACT";
@@ -6125,7 +6127,9 @@ fn read_legacy_results(
             ) => {
                 r.decided = Some((*utc_seconds, *offset_minutes, *has_time));
             }
-            (LEGACY_NO_AWARD_MARKER, NoticeValue::Integer(_)) => r.decision = Some("clos-nw".to_owned()),
+            (LEGACY_NO_AWARD_MARKER, NoticeValue::Integer(_) | NoticeValue::Code { .. }) => {
+                r.decision = Some("clos-nw".to_owned());
+            }
             (f, NoticeValue::Integer(n)) if LEGACY_BID_COUNT_FIELDS.contains(&f) => {
                 r.statistics.push(("tenders".to_owned(), *n, None));
             }
@@ -6662,6 +6666,8 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
                 || EFORMS_NOTICE_TYPE_FIELDS.contains(&field_id)
                 || field_id == ORG_COUNTRY_FIELD
                 || field_id == SDK01_RESULT_CODE_FIELD
+                // Issue 512: the text parser's spelling of the no-award marker.
+                || field_id == LEGACY_NO_AWARD_MARKER
                 || ORG_COUNTRY_FIELDS.contains(&field_id)
                 || SDK01_PARTY_COUNTRY_FIELDS.contains(&field_id)
                 || TAX_BASIS_FIELDS.contains(&field_id)
@@ -11192,6 +11198,7 @@ mod tests {
         assert!(has_destination(LEGACY_AWARD_DATE_FIELD, Channel::Date));
         assert!(has_destination(LEGACY_AWARD_DATE_FIELD_R207, Channel::Date));
         assert!(has_destination(LEGACY_NO_AWARD_MARKER, Channel::Integer));
+        assert!(has_destination(LEGACY_NO_AWARD_MARKER, Channel::Code), "issue 512: the text era's spelling");
         for f in LEGACY_BID_COUNT_FIELDS {
             assert!(has_destination(f, Channel::Integer), "{f}: Integer");
             assert!(has_destination(f, Channel::Number), "{f}: Number");
@@ -13478,5 +13485,40 @@ mod tests {
             HashMap::from([("ORG-1".to_owned(), 101), ("ORG-4".to_owned(), 104)]),
             "buyer tokens stay aligned"
         );
+    }
+
+    /// Issue 512: the text parser stores the "every tender was rejected" marker as a Code
+    /// on its award skeleton, beside the award date. Read as the Integer only, a dated text
+    /// rejection decided nothing (NULL); both spellings now close the result.
+    #[test]
+    fn a_text_era_rejection_with_an_award_date_closes_its_result() {
+        let section = |id: &str, kind: &str, parent: Option<&str>| store::Section {
+            id: id.into(),
+            kind: kind.into(),
+            parent: parent.map(Into::into),
+        };
+        let row = |field: &str, value: NoticeValue| store::ValueRow {
+            section_id: "RES-1".into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value,
+        };
+        let date = NoticeValue::Date { utc_seconds: 1_200_000_000, offset_minutes: 0, has_time: false };
+        for marker in [NoticeValue::Code { list: None, code: "1".into() }, NoticeValue::Integer(1)] {
+            let parsed = Parsed {
+                sections: vec![section("BODY", "Notice", None), section("RES-1", "LotResult", Some("BODY"))],
+                values: vec![row(LEGACY_NO_AWARD_MARKER, marker.clone()), row(LEGACY_AWARD_DATE_FIELD, date.clone())],
+            };
+            let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+            let raw = read_results(&sections, &parsed, true, false, &BTreeSet::new());
+            assert_eq!(raw.lot_results[0].decision.as_deref(), Some("clos-nw"), "{marker:?}");
+        }
+        // The date alone stays NULL: an announced award with no outcome is silence (issue 257).
+        let parsed = Parsed {
+            sections: vec![section("BODY", "Notice", None), section("RES-1", "LotResult", Some("BODY"))],
+            values: vec![row(LEGACY_AWARD_DATE_FIELD, date)],
+        };
+        let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+        assert_eq!(read_results(&sections, &parsed, true, false, &BTreeSet::new()).lot_results[0].decision, None);
     }
 }

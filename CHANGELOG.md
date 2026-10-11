@@ -4,6 +4,12 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 512) — a text-era award body that says every tender was rejected reads "closed, no award"
+
+Award notices of the 1993–2010 text era that state an award date and say every tender was rejected now serve
+`decision: clos-nw` on their result, as the same statement already did in the XML eras. They served no decision
+(NULL) before: the rejection was recorded but never read.
+
 ## Unreleased (issue 510) — "the lot was not awarded" is no longer served as a winner
 
 A winner slot that says the lot was not awarded (`Infructueux`, `Sans suite`, `Desierto`, `Lotto deserto`,
