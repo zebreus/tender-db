@@ -63,6 +63,10 @@ pub use canonical::{
     MintedCountryFix, MintedCountryReport,
     AltIdAliasCounts, AltIdAliasRules, AltIdListing, AltIdMergeArgs, AltIdMergeReport, RegistryMember, RegistryPairCounts, RegistrySample,
     RegistryNhsEntry, RegistryNhsHolder, REGISTRY_NHS_LISTING_CAP, REGISTRY_NHS_PPON_HOLDERS, REGISTRY_NHS_REGISTER_HOLDERS,
+    NHS_BODY_SCHEME, NhsBodyArgs, NhsBodyCaps, NhsBodyCode, NhsBodyHolder, NhsBodyReport, NhsBodyTail, NhsBodyVerdict,
+    NhsCount, NhsNameCheck, NhsOdsCode, NhsOffAllowlistTail, NhsPartySample, NhsRawCount, NhsYearShare,
+    NHS_BODY_HOLDER_MENTIONS_SQL, NHS_BODY_KEY_OWNERS_SQL, NHS_BODY_MENTION_COUNT_SQL, NHS_BODY_MERGED_HOLDERS_SQL,
+    NHS_BODY_PARTY_MENTIONS_SQL,
     RegistryGateCounts, RegistryPairListing, AltIdRegistryAliasCounts, RegistryMerged,
     REGISTRY_SAMPLE_PER_SCHEME, ALTID_REGISTRY_CONFIRMED_COHORT_PREFIX,
     ALTID_ALIAS_LEDGER_SQL, ALTID_ALIAS_OWNER_MENTIONS, ALTID_ALIAS_OWNER_MENTION_NAMES_SQL, ALTID_NEXT_PROFILE_SQL, ALTID_PARTY_IDS_SQL, ALTID_PARTY_MENTIONS_SQL,
@@ -714,7 +718,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 33] = [
+const MIGRATIONS: [&str; 34] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -801,6 +805,11 @@ const MIGRATIONS: [&str; 33] = [
     "ALTER TABLE tender_version_lots ADD COLUMN value_cents INTEGER",
     "ALTER TABLE tender_version_lots ADD COLUMN value_currency TEXT",
     "ALTER TABLE tender_version_lots ADD COLUMN value_eur_cents INTEGER",
+    // Issue 513 U2: an `nhs-body` merge verdict's reviewed holder set. Nullable, no
+    // default, so metadata-only; every existing row (R2, altid, rekey) reads NULL, which
+    // no planner but the nhs-body census reads. Same commit as canonical.rs's CREATE
+    // TABLE column (the issue-372 lesson).
+    "ALTER TABLE org_merge_verdicts ADD COLUMN reviewed_holders TEXT",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {

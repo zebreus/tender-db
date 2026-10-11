@@ -605,6 +605,7 @@ impl Bed {
                     action: action.into(),
                     rationale: "fixture".into(),
                     confidence: confidence.into(),
+                    reviewed_holders: None,
                 }],
                 0,
             )
@@ -650,6 +651,7 @@ impl Bed {
                     action: action.into(),
                     rationale: "fixture".into(),
                     confidence: confidence.into(),
+                    reviewed_holders: None,
                 }],
                 0,
             )
@@ -1167,6 +1169,53 @@ async fn a_verdict_for_another_member_set_is_stale() {
     let r = b.plan().await;
     assert_eq!((r.verdict_stale, r.admitted_verdict), (2, 0));
     assert_eq!((r.uncorroborated_disjoint, r.plan_pairs), (2, 0));
+}
+
+/// Issue 513 U2: `reviewed_holders` belongs to the nhs-body census alone. An altid
+/// verdict records it NULL, and the altid planner never reads it: a column filled behind
+/// its back admits and stales exactly the pairs it did before (the R2 half is
+/// `r2_verdicts_ignore_reviewed_holders` in r2_name_gate.rs).
+#[tokio::test]
+async fn altid_verdicts_ignore_reviewed_holders() {
+    let b = bed("reviewed-holders").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Zenith Ltd")).await;
+    b.verdict(COH_A, PPON_P, vec![1, 2], "merge", "high").await;
+    b.split(200, (3, COH_B, "Northgate Ltd"), (4, PPON_Q, "Southgate Ltd")).await;
+    b.verdict(COH_B, PPON_Q, vec![3, 99], "merge", "high").await;
+    assert_eq!(
+        b.count("SELECT COUNT(*) FROM org_merge_verdicts WHERE reviewed_holders IS NULL").await,
+        2,
+        "an altid verdict carries no holder set"
+    );
+    let before = b.plan().await;
+    assert_eq!((before.admitted_verdict, before.verdict_stale, before.plan_pairs), (1, 1, 1));
+    b.conn.execute("UPDATE org_merge_verdicts SET reviewed_holders = '[999]'", ()).await.unwrap();
+    let after = b.plan().await;
+    assert_eq!(
+        (after.admitted_verdict, after.verdict_stale, after.plan_pairs, after.pairs),
+        (before.admitted_verdict, before.verdict_stale, before.plan_pairs, before.pairs),
+        "the column is not altid's"
+    );
+    // And recording one on an altid verdict is refused: it would read as reviewed.
+    let refused = b
+        .db
+        .record_merge_verdicts(
+            "448-altid-test",
+            &[store::MergeVerdict {
+                country: "GB".into(),
+                scheme: "GB:altid".into(),
+                key: pk(COH_A, PPON_P),
+                members: vec![1, 2],
+                action: "merge".into(),
+                rationale: "fixture".into(),
+                confidence: "high".into(),
+                reviewed_holders: Some(vec![1, 2]),
+            }],
+            0,
+        )
+        .await
+        .expect_err("reviewed_holders is nhs-body's");
+    assert!(refused.to_string().contains("reviewed_holders is for GB:nhs-body verdicts only"), "{refused}");
 }
 
 /// The dry plan writes nothing — not even the denied pair's edge, which only a

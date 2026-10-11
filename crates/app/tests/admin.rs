@@ -228,6 +228,66 @@ async fn admin_api_drives_ingestion_end_to_end() {
     assert_eq!(one["unmapped_field_ids"], listing["unmapped_field_ids"]);
     assert!(one["unmapped"].as_array().unwrap().len() <= 1);
 
+    // --- issue 513 U2: nhs-body verdicts and the census report --------------
+    // `POST /admin/merge-verdicts` passes `reviewed_holders` through; a one-member verdict
+    // is a `GB:nhs-body` one's alone, and its `merge` needs the holder set.
+    let verdicts = |body: Value| {
+        h.http.post(format!("{}/admin/merge-verdicts", h.base)).header("x-admin-secret", SECRET).json(&body)
+    };
+    let nhs = |members: Value, holders: Value| {
+        json!({"cohort": "nhs-body-ods-confirmed-test", "verdicts": [{
+            "country": "GB", "scheme": "GB:nhs-body", "key": "RTH", "members": members,
+            "action": "merge", "rationale": "ODS RTH", "confidence": "high", "reviewed_holders": holders,
+        }]})
+    };
+    let ok = verdicts(nhs(json!([5]), json!([5, 8]))).send().await.unwrap();
+    assert_eq!(ok.status().as_u16(), 200, "a one-member nhs-body verdict records");
+    assert_eq!(ok.json::<Value>().await.unwrap()["recorded"], 1);
+    let stored = h
+        .db
+        .scalar("SELECT reviewed_holders FROM org_merge_verdicts WHERE scheme = 'GB:nhs-body' AND key = 'RTH'")
+        .await
+        .unwrap();
+    assert_eq!(stored, Some(store::turso::Value::Text("[5,8]".into())), "the holder set is stored as posted");
+    // …and reads back on the verdict-store surface (the table is not on /v1/sql), so U3
+    // can check the holder set it posted.
+    let back: Value = h
+        .http
+        .get(format!("{}/admin/case-reviews?table=merge&cohort=nhs-body-ods-confirmed-test", h.base))
+        .header("x-admin-secret", SECRET)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(back["count"], 1, "{back}");
+    let row = &back["rows"][0];
+    assert_eq!(
+        (row["scheme"].clone(), row["key"].clone(), row["members"].clone(), row["reviewed_holders"].clone()),
+        (json!("GB:nhs-body"), json!("RTH"), json!("[5]"), json!("[5,8]")),
+        "{back}"
+    );
+    let no_holders = verdicts(nhs(json!([5]), Value::Null)).send().await.unwrap();
+    assert_eq!(no_holders.status().as_u16(), 400, "an nhs-body merge without its holder set is the request's error");
+    let altid_one = json!({"cohort": "c", "verdicts": [{
+        "country": "GB", "scheme": "GB:altid", "key": "03914810~PHDQ2359NZMP", "members": [5],
+        "action": "merge", "rationale": "r", "confidence": "high",
+    }]});
+    assert_eq!(verdicts(altid_one).send().await.unwrap().status().as_u16(), 400, "every other scheme needs two");
+    // The census is dry only: a wet run is refused at enqueue, and the dry run's report is
+    // readable on the stored-report surface (empty here: the fixture has no FTS notice).
+    let wet = h.enqueue(Some(SECRET), json!({"kind":"match-org-identifiers","rule":"nhs-body","dry_run":false})).await;
+    assert_eq!(wet.status().as_u16(), 400, "the nhs-body wet path is U4's");
+    assert!(wet.text().await.unwrap().contains("nhs-body wet path is U4; not built"));
+    let dry = h.enqueue(Some(SECRET), json!({"kind":"match-org-identifiers","rule":"nhs-body"})).await;
+    assert_eq!(dry.status().as_u16(), 202);
+    let state = h.drain(3).await;
+    assert_eq!(state["recent"][0]["outcome"], "ok", "the census ran: {}", state["recent"][0]);
+    let report: Value = h.report(Some(SECRET), "nhs-body-plan").await.json().await.unwrap();
+    let census: Value = serde_json::from_str(report["body"].as_str().unwrap()).unwrap();
+    assert_eq!((census["dry_run"].clone(), census["codes"].clone()), (json!(true), json!([])), "{census}");
+
     // --- DELETE an unknown queued job ⇒ 404 (and the route is gated) --------
     let unknown =
         h.http.delete(format!("{}/admin/jobs/999999", h.base)).header("x-admin-secret", SECRET);

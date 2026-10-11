@@ -339,13 +339,21 @@ struct MergeVerdictIn {
     action: String,
     rationale: String,
     confidence: String,
+    /// Issue 513 U2, `GB:nhs-body` verdicts only: every holder org the reviewer read,
+    /// ascending — the census admits the verdict only while its live holder set is
+    /// exactly this one. Absent on every other scheme (the store refuses it there).
+    #[serde(default)]
+    reviewed_holders: Option<Vec<i64>>,
 }
 
 /// `POST /admin/merge-verdicts` — record one cohort's per-GROUP merge
 /// verdicts (issue 362): the review loop's execution path for the groups the
 /// R2 name gate leaves standing. Recording only; the next wet
 /// `match-org-identifiers` run executes HIGH `merge` verdicts whose member
-/// set still matches, and `keep` denies its group from then on.
+/// set still matches, and `keep` denies its group from then on. Issue 513 U2:
+/// a `GB:nhs-body` verdict (key: the ODS code) may name one member and must
+/// carry `reviewed_holders` to be a `merge`; the dry `nhs-body` census reports
+/// whether it is admissible (no wet path reads it before U4).
 async fn record_merge_verdicts(
     State(sup): State<Arc<Supervisor>>,
     headers: HeaderMap,
@@ -381,14 +389,11 @@ async fn record_merge_verdicts(
                 &format!("group {name}: confidence must be high|medium|low"),
             );
         }
-        if v.members.len() < 2 || v.members.windows(2).any(|w| w[0] >= w[1]) {
-            return error(
-                StatusCode::BAD_REQUEST,
-                &format!("group {name}: members must be two or more org ids, ascending, distinct"),
-            );
-        }
         if v.rationale.len() > 4_000 {
             return error(StatusCode::BAD_REQUEST, &format!("group {name}: rationale over 4,000 chars"));
+        }
+        if v.reviewed_holders.as_ref().is_some_and(|h| h.len() > 10_000) {
+            return error(StatusCode::BAD_REQUEST, &format!("group {name}: reviewed_holders over 10,000 ids"));
         }
     }
     let verdicts: Vec<store::MergeVerdict> = req
@@ -402,8 +407,17 @@ async fn record_merge_verdicts(
             action: v.action,
             rationale: v.rationale,
             confidence: v.confidence,
+            reviewed_holders: v.reviewed_holders,
         })
         .collect();
+    // The members and holder shape is the store's rule (issue 513 U2: one member for
+    // `GB:nhs-body`, two for every other scheme; `reviewed_holders` there only), asked
+    // here so a malformed verdict is this request's 400 rather than the store's 500.
+    for v in &verdicts {
+        if let Err(e) = v.validate() {
+            return error(StatusCode::BAD_REQUEST, &e);
+        }
+    }
     match sup.db().record_merge_verdicts(&req.cohort, &verdicts, store::now_unix()).await {
         Ok(n) => (StatusCode::OK, axum::Json(json!({ "recorded": n, "cohort": req.cohort })))
             .into_response(),

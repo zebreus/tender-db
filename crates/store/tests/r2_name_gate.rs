@@ -170,6 +170,7 @@ async fn a_reviewers_verdict_admits_or_denies_a_group_and_the_wet_merge_stamps_i
         action: action.into(),
         rationale: "read by hand".into(),
         confidence: confidence.into(),
+        reviewed_holders: None,
     };
     // Validation: members must be ascending and distinct; action is merge|keep.
     assert!(db.record_merge_verdicts("rev-1", &[mv("10773381", vec![31, 30], "merge", "high")], 1).await.is_err());
@@ -221,4 +222,45 @@ async fn a_reviewers_verdict_admits_or_denies_a_group_and_the_wet_merge_stamps_i
     // keep still denies.
     let again = db.match_org_identifiers_r2(args(true, None)).await.expect("dry again");
     assert_eq!((again.denied_verdict, again.admitted_verdict), (1, 0));
+}
+
+/// Issue 513 U2: `reviewed_holders` belongs to the nhs-body census alone. An R2 verdict
+/// records it NULL, and the R2 planner never reads it: with the column filled behind its
+/// back, the same three verdicts keep, admit and stale exactly as above (the altid half
+/// is `altid_verdicts_ignore_reviewed_holders` in altid_merge.rs).
+#[tokio::test]
+async fn r2_verdicts_ignore_reviewed_holders() {
+    let (db, conn) = seed("test-r2-name-gate-reviewed-holders.db").await;
+    let mv = |key: &str, members: Vec<i64>, action: &str| store::MergeVerdict {
+        country: "FI".into(),
+        scheme: "FI:ytunnus".into(),
+        key: key.into(),
+        members,
+        action: action.into(),
+        rationale: "read by hand".into(),
+        confidence: "high".into(),
+        reviewed_holders: None,
+    };
+    let verdicts = [
+        mv("10773381", vec![30, 31], "merge"),
+        mv("01003158", vec![10, 11], "keep"),
+        mv("20445111", vec![40, 41], "merge"),
+    ];
+    db.record_merge_verdicts("rev-1", &verdicts, 1).await.expect("records");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_verdicts WHERE reviewed_holders IS NULL").await, 3);
+    let before = db.match_org_identifiers_r2(args(true, None)).await.expect("dry");
+    assert_eq!((before.denied_verdict, before.admitted_verdict, before.verdict_stale), (1, 1, 1));
+    // A holder set that matches nothing, and one that is exactly the stale group.
+    conn.execute("UPDATE org_merge_verdicts SET reviewed_holders = '[999]' WHERE key <> '20445111'", ()).await.unwrap();
+    conn.execute("UPDATE org_merge_verdicts SET reviewed_holders = '[40,41,42]' WHERE key = '20445111'", ())
+        .await
+        .unwrap();
+    let after = db.match_org_identifiers_r2(args(true, None)).await.expect("dry again");
+    assert_eq!(
+        (after.denied_verdict, after.admitted_verdict, after.verdict_stale, after.denied_names, after.plan_groups),
+        (before.denied_verdict, before.admitted_verdict, before.verdict_stale, before.denied_names, before.plan_groups),
+        "the column is not R2's"
+    );
+    // A one-member verdict is still refused for every scheme but nhs-body.
+    assert!(db.record_merge_verdicts("rev-2", &[mv("10773381", vec![30], "merge")], 2).await.is_err());
 }

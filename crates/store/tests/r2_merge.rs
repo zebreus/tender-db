@@ -505,6 +505,7 @@ async fn a_fold_joined_r2_group_merges_agreeing_names_into_the_unfolded_literal(
             action: "merge".into(),
             rationale: "fixture".into(),
             confidence: "high".into(),
+            reviewed_holders: None,
         }],
         1,
     )
@@ -529,6 +530,7 @@ async fn a_fold_joined_r2_group_merges_agreeing_names_into_the_unfolded_literal(
             action: "keep".into(),
             rationale: "fixture: a charity number and a company's".into(),
             confidence: "high".into(),
+            reviewed_holders: None,
         }],
         2,
     )

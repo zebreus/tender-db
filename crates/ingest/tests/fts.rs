@@ -780,6 +780,7 @@ async fn a_college_the_altid_arm_merged_by_its_ukprn_stays_one_org_through_the_n
         action: "merge".into(),
         rationale: "UKRLP".into(),
         confidence: "high".into(),
+        reviewed_holders: None,
     };
     let cohort = format!("{}test", store::ALTID_REGISTRY_CONFIRMED_COHORT_PREFIX);
     db.record_merge_verdicts(&cohort, &[verdict], 0).await.unwrap();

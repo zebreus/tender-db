@@ -337,6 +337,7 @@ fn merge_verdict(key: &str, members: Vec<i64>, action: &str) -> store::MergeVerd
         action: action.into(),
         rationale: "fixture".into(),
         confidence: "high".into(),
+        reviewed_holders: None,
     }
 }
 

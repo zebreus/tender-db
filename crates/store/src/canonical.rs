@@ -615,6 +615,12 @@ pub(crate) const SCHEMA: &str = "
     -- joining the key later voids it, parity at the smallest grain. `keep`
     -- denies the group for good, whatever its names come to say. Only HIGH
     -- merges execute; `applied_action` names the survivor.
+    -- Issue 513 U2: `reviewed_holders` is an `nhs-body` verdict's full holder set
+    -- (JSON array of org ids, ascending) — every org the reviewer READ, members or
+    -- not. The verdict is admitted only while the live holder set is exactly this
+    -- one, so a newcomer holder makes it stale (362's members-exact rule at code
+    -- grain). NULL on every other scheme's row, which no other planner reads. Last,
+    -- so a fresh table's column order is a migrated one's (store::MIGRATIONS).
     CREATE TABLE IF NOT EXISTS org_merge_verdicts (
         country        TEXT    NOT NULL,
         scheme         TEXT    NOT NULL,
@@ -628,6 +634,7 @@ pub(crate) const SCHEMA: &str = "
         applied_at     INTEGER,
         applied_action TEXT,
         job_id         INTEGER,
+        reviewed_holders TEXT,             -- issue 513 U2: nhs-body only, else NULL
         PRIMARY KEY (country, scheme, key, cohort)
     ) STRICT;
 
@@ -5803,6 +5810,393 @@ pub const REGISTRY_NHS_REGISTER_HOLDERS: usize = 5;
 /// Issue 513 unit 1: the PPON-side holders a listed GB-NHS pair names.
 pub const REGISTRY_NHS_PPON_HOLDERS: usize = 3;
 
+// ---- Issue 513 U2: the `nhs-body` census (decision "unit 2, second", design C's U2).
+
+/// Issue 513 U2: one ODS code as the nhs-body census reads it — `ingest::nhs_ods`'s
+/// frozen row, injected through [`NhsBodyArgs::ods`] (store never depends on ingest).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsOdsCode {
+    pub code: &'static str,
+    /// As ODS writes it (upper case).
+    pub name: &'static str,
+    /// The primary role id (`RO197`, `RO261`, `RO98`, …).
+    pub role: &'static str,
+    pub active: bool,
+    /// On the survivor allowlist: only such a code anchors a body (D3).
+    pub allow: bool,
+    pub predecessors: Vec<&'static str>,
+    pub successors: Vec<&'static str>,
+    /// `YYYY-MM-DD`: the code's legal period ended, though ODS still answers it Active.
+    pub legal_end: Option<&'static str>,
+}
+
+/// Issue 513 U2: `nhs_ods::check`'s answer for a head name under a code, flattened.
+/// `verdict` is `admitted`, `tie`, or the refusal (`agent`, `non-nhs`, `role`, `zero`,
+/// `better`, `coverage`, `unknown`); `rival` names a tie's or a `better`'s rival. A
+/// planner flag only (D3): nothing binds or is denied on it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct NhsNameCheck {
+    pub verdict: &'static str,
+    pub rival: Option<&'static str>,
+}
+
+impl NhsNameCheck {
+    pub fn admitted(&self) -> bool {
+        self.verdict == "admitted"
+    }
+}
+
+/// Issue 513 U2: the census's caps. Every list is cut at one and says so (`*_truncated`,
+/// `*_capped`), and the cut is logged. [`NhsBodyCaps::PRODUCTION`] in the job; a test
+/// injects small ones to show each cut is honest without building thousands of rows.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NhsBodyCaps {
+    /// Allowlisted codes listed (the allowlist has 215, so this never binds).
+    pub codes: usize,
+    /// Holder entries listed with their details, over every code. A code's `holder_ids`
+    /// are never cut: they are the live set a verdict is held to.
+    pub holders: usize,
+    /// Mention rows read per holder, newest first.
+    pub mentions: usize,
+    /// Distinct mention `name_norm`s kept per holder, the most frequent first.
+    pub names: usize,
+    /// Tails off the allowlist listed.
+    pub off_allowlist: usize,
+    /// Rows per party sample (country-less, non-GB, other GB-NHS values).
+    pub samples: usize,
+    /// Standing identifier-NULL owners of a holder's 234 key listed.
+    pub key_owners: usize,
+    /// Consortium-shaped mention spellings listed per holder (a flag, never a denial).
+    pub consortium_names: usize,
+}
+
+impl NhsBodyCaps {
+    pub const PRODUCTION: NhsBodyCaps = NhsBodyCaps {
+        codes: 2_000,
+        holders: 10_000,
+        mentions: 4_096,
+        names: 64,
+        off_allowlist: 2_000,
+        samples: 50,
+        key_owners: 8,
+        consortium_names: 8,
+    };
+}
+
+/// Issue 513 U2: the inputs of [`Db::plan_nhs_bodies`]. The ODS knowledge and the
+/// identifier and name rules arrive as plain fns, the altid pattern — store owns the walk,
+/// ingest owns `nhs_ods`, the normaliser and the crosswalk.
+pub struct NhsBodyArgs<'a> {
+    /// `nhs_ods::nhs_tail` — a raw identifier's uppercase alphanumerics (`GBNHSRTH`) to
+    /// its three-character tail (`RTH`); `None` for anything else.
+    pub tail: fn(&str) -> Option<&str>,
+    /// `nhs_ods::survivor_code` — a tail to the allowlisted code it names, and whether a
+    /// unique O↔0 fold was needed (`ROB` → `R0B`); `None` off the allowlist.
+    pub survivor_code: fn(&str) -> Option<(&'static str, bool)>,
+    /// `nhs_ods::org`, as [`NhsOdsCode`]: any code of the table, allowlisted or not.
+    pub ods: fn(&str) -> Option<NhsOdsCode>,
+    /// `nhs_ods::check` (code, head name), as [`NhsNameCheck`].
+    pub check: fn(&str, &str) -> NhsNameCheck,
+    /// `nhs_ods::VERSION`, recorded on the report.
+    pub ods_version: &'static str,
+    /// `crosswalk::altid_pair_key` — a party's `GB-PPON` row to its PPON key (E1 only).
+    pub pair_key: fn(&str, &str, Option<&str>) -> Option<(&'static str, String, bool, bool)>,
+    /// `crosswalk::canonical_key_flat` — whether a holder's own identifier is a PPON.
+    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+    /// `project::normalise_identifier` — the triple a PPON literal mints, which its
+    /// holders carry as their own or a merged identifier.
+    pub register_identity: fn(&str, Option<&str>) -> Option<Identifier>,
+    /// `crosswalk::consortium_name`: a holder's head name (the denial) and its mention
+    /// spellings (listed, a flag only).
+    pub consortium: fn(&str) -> bool,
+    /// `project::match_norm` — the generic wall's N2 key, and the successor-name equality.
+    pub norm: fn(&str) -> String,
+    /// The generic-name cap (`STOPLIST_CAP`).
+    pub stoplist_cap: usize,
+    pub caps: NhsBodyCaps,
+    /// Cooperative stop, polled between notices and between holders.
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+}
+
+/// Issue 513 U2: a value and how often it was seen.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsCount {
+    pub value: String,
+    pub n: u64,
+}
+
+/// Issue 513 U2: a raw identifier of a holder's mentions (`None`: published without one).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsRawCount {
+    pub raw: Option<String>,
+    pub n: u64,
+}
+
+/// Issue 513 U2: one holder org of one code, as the census lists it — what the reviewer
+/// and the challenger read (U3), and what the structural denials (D6) are decided on.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyHolder {
+    pub org_id: i64,
+    /// How it holds the code, the paths joined by `+` in this order: `party` (a GB party
+    /// whose raw identifier is the code bound it), `party-later` (a GB party publishing the
+    /// code behind another first identifier — one that is no keyed PPON — bound it), `ppon`
+    /// (it holds a PPON some GB party published beside the code). `party`, `party+ppon`, ….
+    pub via: &'static str,
+    /// The code's coded GB parties whose mention bound this org.
+    pub coded_parties: u64,
+    /// The code's later-coded GB parties (`party-later`) whose mention bound this org.
+    pub later_parties: u64,
+    /// The code's paired PPON keys this org holds.
+    pub ppons: Vec<String>,
+    /// `false` when the org row no longer stands (every fact below is then empty).
+    pub stands: bool,
+    pub provisional: bool,
+    pub country: Option<String>,
+    pub identifier_kind: Option<String>,
+    pub identifier: Option<String>,
+    /// The head name, and its 234 key (`organizations.name_norm`) — D4's alias key.
+    pub name: String,
+    pub name_norm: String,
+    /// The identifiers merges folded into it (`organization_merged_identifiers`).
+    pub merged_identifiers: Vec<String>,
+    /// Every mention of the org (a count over its `organization_mentions_org` range).
+    pub mentions: u64,
+    /// The newest mentions read, at most `caps.mentions`; `mentions_capped` when cut.
+    pub mentions_read: u64,
+    pub mentions_capped: bool,
+    /// Over the mentions read: each raw identifier, and each distinct `name_norm` (at most
+    /// `caps.names`, `names_capped` when cut), the most frequent first.
+    pub raw_identifiers: Vec<NhsRawCount>,
+    pub name_norms: Vec<NhsCount>,
+    pub names_capped: bool,
+    /// Other three-character GB-NHS tails its mentions publish (a neighbour's code picked
+    /// by mistake, or a second body).
+    pub other_codes: Vec<String>,
+    /// `nhs_ods::check` of the head name under this code.
+    pub check: NhsNameCheck,
+    /// Standing identifier-NULL GB rows on its 234 key that are not holders of this code
+    /// (D4: such a key is `alias_key_owned_elsewhere` at U4), at most `caps.key_owners`.
+    pub key_owners_elsewhere: Vec<i64>,
+    // ---- Flags.
+    /// Named by a review or verdict table other than an nhs-body verdict (rehoming,
+    /// case review, country, identifier, another scheme's merge verdict).
+    pub under_review: bool,
+    /// The head name's N2 key is over the generic wall.
+    pub generic: bool,
+    /// The head name is consortium-shaped: the `consortium` denial.
+    pub consortium: bool,
+    /// Its consortium-shaped mention spellings (one per `name_norm`, the most frequent
+    /// first, at most `caps.consortium_names`): a flag for the reviewer, never a denial —
+    /// one stray spelling must not bar the body's own PPON org.
+    pub consortium_names: Vec<String>,
+    /// The successor (of this code's legal end) whose ODS name the head name is: equal
+    /// under `norm`, or admitted by `check` under the successor.
+    pub successor_name: Option<&'static str>,
+    /// It carries an own identifier that is not a PPON (519's identity orgs).
+    pub minted_identity: bool,
+    /// Every allowlisted code it is a holder of, this one included.
+    pub holder_of: Vec<&'static str>,
+    /// The merge verdicts of two or more codes name it a member.
+    pub contested: bool,
+    /// The structural denials (D6) — no verdict overrides one; empty when it may be a
+    /// member: `gone` (the org row no longer stands), `minted-identity`, `generic`,
+    /// `consortium`, `successor-name`, `contested`.
+    pub denied: Vec<&'static str>,
+}
+
+/// Issue 513 U2: one published tail that reached a code.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyTail {
+    pub tail: String,
+    /// Coded GB parties publishing it as their raw identifier.
+    pub parties: u64,
+    /// Later-coded GB parties publishing it behind another first identifier.
+    pub later_parties: u64,
+    /// Reached the code only through `survivor_code`'s O↔0 fold (`ROB` → `R0B`).
+    pub folded: bool,
+}
+
+/// Issue 513 U2: the standing merge verdict of a code (`GB`, `GB:nhs-body`, `<code>`) and
+/// whether the census admits it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyVerdict {
+    pub cohort: String,
+    pub action: String,
+    pub confidence: String,
+    pub members: Vec<i64>,
+    pub reviewed_holders: Option<Vec<i64>>,
+    /// `admitted` (HIGH, unapplied, `reviewed_holders` the live holder set exactly,
+    /// members live, standing, undenied and owning their 234 keys), `keep`, or why a merge
+    /// is not admitted: `applied`, `not-high`, `no-reviewed-holders`, `holders-unlisted`
+    /// (the holder listing was cut), `stale` (the live holders are not the reviewed ones),
+    /// `members-not-live`, `member-gone` (a member's org row no longer stands),
+    /// `contested`, `member-denied`, `member-key-owned-elsewhere` (D4: a standing
+    /// identifier-NULL row outside the body owns a member's 234 key, so U4 would hold it).
+    pub status: &'static str,
+    /// For `stale`: the live holders the reviewer never read, and the read ones gone.
+    pub newcomers: Vec<i64>,
+    pub departed: Vec<i64>,
+}
+
+/// Issue 513 U2: one allowlisted code — its ODS record, the tails that reached it, and
+/// EVERY holder.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyCode {
+    pub code: &'static str,
+    pub ods: NhsOdsCode,
+    pub tails: Vec<NhsBodyTail>,
+    pub coded_parties: u64,
+    /// Its tails' later-coded GB parties (`party-later`).
+    pub later_parties: u64,
+    /// For a code with a legal end: distinct notices published after it on which a GB
+    /// party publishes one of its tails, at any ordinal.
+    pub coded_notices_after_legal_end: u64,
+    /// The PPON keys GB parties published beside it.
+    pub ppons: Vec<String>,
+    /// Every holder, ascending, uncapped: the set a verdict's `reviewed_holders` must equal.
+    pub holder_ids: Vec<i64>,
+    /// The holders with their details, ascending — cut at the report-wide `caps.holders`.
+    pub holders: Vec<NhsBodyHolder>,
+    pub holders_truncated: bool,
+    /// Listed holders no structural gate denies: the only possible members.
+    pub eligible: Vec<i64>,
+    pub verdict: Option<NhsBodyVerdict>,
+}
+
+/// Issue 513 U2: one three-character tail off the allowlist (the `not-allowlisted`
+/// denial: it anchors no body) — `ICB`, a sub-ICB `00N`, an O/0 typo with no unique fold.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsOffAllowlistTail {
+    pub tail: String,
+    /// The raw identifier's uppercase alphanumerics (`GBNHSICB`).
+    pub value: String,
+    pub parties: u64,
+    pub later_parties: u64,
+    /// Distinct orgs the coded and later-coded parties' mentions bound.
+    pub holders: u64,
+    /// Distinct PPON keys published beside it.
+    pub ppons: u64,
+    /// The coded and later-coded parties' most frequent names (at most five).
+    pub top_names: Vec<NhsCount>,
+    /// The table's row for the tail itself, when it has one (an RO98 or Inactive code).
+    pub ods: Option<NhsOdsCode>,
+}
+
+/// Issue 513 U2: one sampled FTS party of a census class.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsPartySample {
+    pub publication_id: String,
+    pub section_id: String,
+    pub country: Option<String>,
+    /// The published literal.
+    pub value: String,
+    pub name: String,
+}
+
+/// Issue 513 U2: per notice year (UTC, of `notices.published_at`; `unknown` for none),
+/// the holders' mentions read and how many publish a GB-NHS code — the coded share D1's
+/// "a mint holds ~9.5% of a body" was measured by, and U6's opening condition.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsYearShare {
+    pub year: String,
+    pub coded: u64,
+    pub mentions: u64,
+}
+
+/// What the issue-513 U2 census found. Dry only: nothing is written.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+pub struct NhsBodyReport {
+    /// The ODS table's version.
+    pub ods_version: &'static str,
+    // ---- The harvest: every FTS party, the altid walk.
+    pub fts_notices: u64,
+    pub party_sections: u64,
+    /// Parties the fold has recorded no mention for yet: skipped.
+    pub unfolded_sections: u64,
+    /// GB parties whose mention's raw identifier is GB-NHS and three characters, any tail.
+    pub coded_parties: u64,
+    /// …of which the tail reaches an allowlisted code, and of those by an O↔0 fold.
+    pub coded_parties_allowlisted: u64,
+    pub folded_parties: u64,
+    /// GB parties whose first identifier is no keyed PPON (a company number, a charity,
+    /// an unkeyable PPON) and which publish a three-character GB-NHS tail behind it, other
+    /// than their raw identifier's: the org their mention bound is a `party-later` holder.
+    pub later_coded_parties: u64,
+    /// Parties publishing a three-character GB-NHS tail at any ordinal whose mention has
+    /// no country, or a non-GB one: no holder is taken from them. Counted and sampled.
+    pub countryless_parties: u64,
+    pub countryless_sample: Vec<NhsPartySample>,
+    pub non_gb_parties: u64,
+    pub non_gb_sample: Vec<NhsPartySample>,
+    /// `GB-NHS` rows with no three-character tail: typed names, five-character codes.
+    pub other_nhs_values: u64,
+    pub other_nhs_sample: Vec<NhsPartySample>,
+    /// Distinct (three-character tail, PPON key) pairs on GB parties.
+    pub ppon_pairs: u64,
+    // ---- The bodies.
+    pub codes_seen: u64,
+    pub codes: Vec<NhsBodyCode>,
+    pub codes_truncated: bool,
+    /// Distinct holder orgs over every code, and the holder entries listed in detail.
+    pub holders: u64,
+    pub holders_listed: u64,
+    pub holders_truncated: bool,
+    /// Distinct orgs holding two or more codes.
+    pub multi_code_orgs: u64,
+    // ---- Off the allowlist.
+    pub off_allowlist_seen: u64,
+    pub off_allowlist: Vec<NhsOffAllowlistTail>,
+    pub off_allowlist_truncated: bool,
+    // ---- The structural denials, per listed (code, holder) entry and reason.
+    pub denied: std::collections::BTreeMap<&'static str, u64>,
+    pub eligible_holders: u64,
+    /// Distinct orgs two codes' merge verdicts both name.
+    pub contested_orgs: u64,
+    /// Listed entries whose 234 key a standing row outside the body owns (D4).
+    pub key_owned_elsewhere: u64,
+    // ---- The verdicts (`GB`, `GB:nhs-body`, `<code>`).
+    pub admitted_verdict: u64,
+    /// Merge verdicts not admitted, whatever the reason (`verdict_status` splits them).
+    pub verdict_stale: u64,
+    pub verdict_keep: u64,
+    pub verdict_status: std::collections::BTreeMap<&'static str, u64>,
+    // ---- The coded share by notice year, over the listed holders (each org once).
+    pub coded_share_by_year: Vec<NhsYearShare>,
+    /// A holder's mention read or the holder listing was cut: the share is a sample.
+    pub coded_share_partial: bool,
+    pub stopped: bool,
+}
+
+/// Issue 513 U2: one notice's party mentions, with the name and the raw identifier the
+/// fold recorded — [`ALTID_PARTY_MENTIONS_SQL`]'s range, two columns wider.
+pub const NHS_BODY_PARTY_MENTIONS_SQL: &str = "SELECT section_id, country, organization_id, name, raw_identifier \
+     FROM organization_mentions WHERE notice_id = ? AND section_id >= 'ORG-' AND section_id < 'ORG.'";
+
+/// Issue 513 U2: the holders of a PPON as a merged identifier — a prefix seek on the
+/// table's primary key `(identifier, loser)`.
+pub const NHS_BODY_MERGED_HOLDERS_SQL: &str =
+    "SELECT org_id, identifier_kind, country FROM organization_merged_identifiers WHERE identifier = ?";
+
+/// Issue 513 U2: a holder's mention count — the org's own range of the covering index
+/// `organization_mentions_org`, no table row read.
+pub const NHS_BODY_MENTION_COUNT_SQL: &str = "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = ?";
+
+/// Issue 513 U2: a holder's newest mentions, capped — the reverse walk of
+/// `organization_mentions_org` that [`ALTID_ALIAS_OWNER_MENTION_NAMES_SQL`] makes, so no
+/// sorter reads every mention of a large holder before the LIMIT. Bound to the cap plus
+/// one, so a cut is told apart from a holder with exactly the cap.
+pub const NHS_BODY_HOLDER_MENTIONS_SQL: &str = "SELECT notice_id, name, raw_identifier FROM organization_mentions \
+     WHERE organization_id = ? ORDER BY rowid DESC LIMIT ?";
+
+/// Issue 513 U2: the standing identifier-NULL rows on one 234 key — the resolver's own
+/// probe (`organizations_name_country`), wider than its `LIMIT 1`.
+pub const NHS_BODY_KEY_OWNERS_SQL: &str = "SELECT id FROM organizations \
+     WHERE name_norm = ? AND country = ? AND identifier IS NULL ORDER BY id LIMIT ?";
+
+/// Issue 513 U2: the rows the key-owner probe reads before filtering out the body's own
+/// holders; one row per 234 key is the norm (234 reuses it), so this never binds.
+const NHS_BODY_KEY_OWNER_ROWS: i64 = 64;
+
 /// Issue 469 U4: where one scheme's `both_distinct` register pairs landed in the DRY
 /// register planner — the company-number arm's gate counts, kept per scheme and apart
 /// from them, so no company-number count moves. Every candidate lands in exactly one
@@ -6501,6 +6895,242 @@ async fn registry_nhs_entry(
     })
 }
 
+/// Issue 513 U2: what the nhs-body census reads of one holder org — once, however many
+/// codes it holds. `stands: false` (every other field empty) for an org gone since the
+/// harvest.
+#[derive(Default)]
+struct NhsOrgFacts {
+    stands: bool,
+    provisional: bool,
+    country: Option<String>,
+    identifier_kind: Option<String>,
+    identifier: Option<String>,
+    name: String,
+    name_norm: String,
+    merged: Vec<String>,
+    mentions: u64,
+    read: u64,
+    capped: bool,
+    raws: Vec<NhsRawCount>,
+    name_norms: Vec<NhsCount>,
+    names_capped: bool,
+    /// The three-character GB-NHS tails the mentions read publish.
+    mention_tails: BTreeSet<String>,
+    /// The head name is consortium-shaped (the denial).
+    consortium: bool,
+    /// The consortium-shaped mention spellings (one per `name_norm`, the most frequent
+    /// first, at most `caps.consortium_names`): listed, never denied on.
+    consortium_names: Vec<String>,
+    /// The standing identifier-NULL rows on its 234 key (head `name_norm`, country), itself
+    /// excluded, ascending.
+    key_owners: Vec<i64>,
+    /// Notice year (`None`: no `published_at`) → (coded mentions, mentions), over the
+    /// mentions read.
+    years: std::collections::BTreeMap<Option<i64>, (u64, u64)>,
+}
+
+/// Issue 513 U2: one holder's facts, every read bounded — a primary-key seek, a seek on
+/// `organization_merged_identifiers_org`, a count over the org's own range of
+/// `organization_mentions_org`, its newest `caps.mentions` mentions through that index
+/// ([`NHS_BODY_HOLDER_MENTIONS_SQL`]), a primary-key seek per distinct notice among them
+/// (cached across holders), and the 234 key's probe.
+async fn nhs_org_facts(
+    conn: &Connection,
+    org: i64,
+    caps: &NhsBodyCaps,
+    tail: fn(&str) -> Option<&str>,
+    consortium: fn(&str) -> bool,
+    published: &mut std::collections::HashMap<i64, Option<i64>>,
+) -> turso::Result<NhsOrgFacts> {
+    use std::collections::HashMap;
+    let mut f = NhsOrgFacts::default();
+    let mut rows = conn
+        .query(
+            "SELECT country, identifier_kind, identifier, name, name_norm, provisional FROM organizations WHERE id = ?",
+            (Value::Integer(org),),
+        )
+        .await?;
+    let Some(row) = rows.next().await? else {
+        return Ok(f);
+    };
+    f.stands = true;
+    f.country = opt_text_of(&row, 0);
+    f.identifier_kind = opt_text_of(&row, 1);
+    f.identifier = opt_text_of(&row, 2);
+    f.name = opt_text_of(&row, 3).unwrap_or_default();
+    f.name_norm = opt_text_of(&row, 4).unwrap_or_else(|| org_name_norm(&f.name));
+    f.provisional = int(&row, 5) != 0;
+    drop(rows);
+
+    let mut rows = conn.query(ALTID_MERGED_IDS_OF_ORG_SQL, (Value::Integer(org),)).await?;
+    while let Some(row) = rows.next().await? {
+        f.merged.push(text(&row, 2));
+    }
+    drop(rows);
+    f.merged.sort();
+    f.merged.dedup();
+
+    let mut rows = conn.query(NHS_BODY_MENTION_COUNT_SQL, (Value::Integer(org),)).await?;
+    f.mentions = match rows.next().await? {
+        Some(row) => int(&row, 0).max(0) as u64,
+        None => 0,
+    };
+    drop(rows);
+
+    // Collected first and the cursor dropped, so the notice seeks below are not
+    // interleaved with an open statement on the same connection.
+    let limit = i64::try_from(caps.mentions.saturating_add(1)).unwrap_or(i64::MAX);
+    let mut read: Vec<(i64, Option<String>, Option<String>)> = Vec::new();
+    let mut rows = conn.query(NHS_BODY_HOLDER_MENTIONS_SQL, (Value::Integer(org), Value::Integer(limit))).await?;
+    while let Some(row) = rows.next().await? {
+        if read.len() == caps.mentions {
+            f.capped = true;
+            break;
+        }
+        read.push((int(&row, 0), opt_text_of(&row, 1), opt_text_of(&row, 2)));
+    }
+    drop(rows);
+    f.read = read.len() as u64;
+
+    let mut raws: HashMap<Option<String>, u64> = HashMap::new();
+    let mut norms: HashMap<String, u64> = HashMap::new();
+    let mut spelling: HashMap<String, String> = HashMap::new();
+    for (notice, name, raw) in read {
+        let coded = raw.as_deref().is_some_and(|r| {
+            let value: String = r.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
+            match tail(&value) {
+                Some(t) => {
+                    f.mention_tails.insert(t.to_owned());
+                    true
+                }
+                None => false,
+            }
+        });
+        *raws.entry(raw).or_default() += 1;
+        if let Some(name) = name {
+            let norm = org_name_norm(&name);
+            if !norm.is_empty() {
+                *norms.entry(norm.clone()).or_default() += 1;
+                spelling.entry(norm).or_insert(name);
+            }
+        }
+        let year = notice_published(conn, notice, published).await?.map(unix_year);
+        let y = f.years.entry(year).or_default();
+        y.0 += u64::from(coded);
+        y.1 += 1;
+    }
+    // Only the head name denies (D6): one stray consortium-shaped spelling among 4,096
+    // mentions would otherwise bar the body's PPON org, unseen past the 64 names kept.
+    // The spellings are listed instead, for the reviewer.
+    f.consortium = consortium(&f.name);
+    let mut shaped: Vec<(u64, &String)> =
+        spelling.iter().filter(|(_, name)| consortium(name)).map(|(norm, name)| (norms[norm], name)).collect();
+    shaped.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.cmp(b.1)));
+    f.consortium_names = shaped.into_iter().take(caps.consortium_names).map(|(_, name)| name.clone()).collect();
+    f.raws = raws.into_iter().map(|(raw, n)| NhsRawCount { raw, n }).collect();
+    f.raws.sort_by(|a, b| b.n.cmp(&a.n).then_with(|| a.raw.cmp(&b.raw)));
+    f.name_norms = norms.into_iter().map(|(value, n)| NhsCount { value, n }).collect();
+    f.name_norms.sort_by(|a, b| b.n.cmp(&a.n).then_with(|| a.value.cmp(&b.value)));
+    if f.name_norms.len() > caps.names {
+        f.names_capped = true;
+        f.name_norms.truncate(caps.names);
+    }
+
+    if let Some(country) = f.country.as_deref()
+        && !f.name_norm.is_empty()
+    {
+        let mut rows = conn
+            .query(
+                NHS_BODY_KEY_OWNERS_SQL,
+                (t(f.name_norm.as_str()), t(country), Value::Integer(NHS_BODY_KEY_OWNER_ROWS)),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            let owner = int(&row, 0);
+            if owner != org {
+                f.key_owners.push(owner);
+            }
+        }
+    }
+    Ok(f)
+}
+
+/// Issue 513 U2: a notice's `published_at` (unix seconds, UTC), one primary-key seek,
+/// cached across the census.
+async fn notice_published(
+    conn: &Connection,
+    notice: i64,
+    cache: &mut std::collections::HashMap<i64, Option<i64>>,
+) -> turso::Result<Option<i64>> {
+    if let Some(at) = cache.get(&notice) {
+        return Ok(*at);
+    }
+    let mut rows = conn.query("SELECT published_at FROM notices WHERE id = ?", (Value::Integer(notice),)).await?;
+    let at = match rows.next().await? {
+        Some(row) => opt_int_of(&row, 0),
+        None => None,
+    };
+    cache.insert(notice, at);
+    Ok(at)
+}
+
+/// Days from 1970-01-01 to a proleptic Gregorian date (H. Hinnant's `days_from_civil`).
+fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = (if y >= 0 { y } else { y - 399 }) / 400;
+    let yoe = y - era * 400;
+    let doy = (153 * ((m + 9) % 12) + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    era * 146_097 + doe - 719_468
+}
+
+/// The UTC year of a unix instant (Hinnant's `civil_from_days`, the year only). A
+/// date-only publication is its civil day's LOCAL midnight (issue 367), so a notice of 1
+/// January published east of UTC reads as the year before; the census accepts that.
+fn unix_year(at: i64) -> i64 {
+    let z = at.div_euclid(86_400) + 719_468;
+    let era = (if z >= 0 { z } else { z - 146_096 }) / 146_097;
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    yoe + era * 400 + i64::from(m <= 2)
+}
+
+/// Issue 513 U2: the first unix second after an ODS legal end (`YYYY-MM-DD`): the next
+/// day's UTC midnight. `None` for a malformed date, which then flags nothing.
+fn legal_end_unix(end: &str) -> Option<i64> {
+    let mut parts = end.splitn(3, '-');
+    let y: i64 = parts.next()?.parse().ok()?;
+    let m: i64 = parts.next()?.parse().ok()?;
+    let d: i64 = parts.next()?.parse().ok()?;
+    if !(1..=12).contains(&m) || !(1..=31).contains(&d) {
+        return None;
+    }
+    Some((days_from_civil(y, m, d) + 1) * 86_400)
+}
+
+#[cfg(test)]
+mod nhs_body_date_tests {
+    use super::{legal_end_unix, unix_year};
+
+    /// Issue 513 U2: the census's two date reads — a notice's year, and the first second
+    /// after a legal end — against instants computed independently (Python's `calendar`).
+    #[test]
+    fn the_census_dates_agree_with_the_calendar() {
+        assert_eq!(unix_year(0), 1970);
+        assert_eq!(unix_year(-1), 1969);
+        assert_eq!(unix_year(1_704_067_199), 2023, "2023-12-31T23:59:59Z");
+        assert_eq!(unix_year(1_704_067_200), 2024, "2024-01-01T00:00:00Z");
+        assert_eq!(unix_year(1_709_208_000), 2024, "2024-02-29T12:00:00Z");
+        assert_eq!(legal_end_unix("2026-03-31"), Some(1_775_001_600), "QNQ: 2026-04-01T00:00:00Z");
+        assert_eq!(legal_end_unix("2011-11-01"), Some(1_320_192_000), "RBF: 2011-11-02T00:00:00Z");
+        assert_eq!(legal_end_unix("2026-13-01"), None);
+        assert_eq!(legal_end_unix("not a date"), None);
+    }
+}
+
 /// Issue 469 U4: one org row as the register planner reads it — its listing member,
 /// the v2 gate's literal, and the triple gate's own-identifier test.
 struct AltIdOrgRow {
@@ -7091,7 +7721,72 @@ pub struct MergeVerdict {
     pub action: String,
     pub rationale: String,
     pub confidence: String,
+    /// Issue 513 U2, [`NHS_BODY_SCHEME`] only: every holder org the reviewer read, members
+    /// or not, ascending — the set the census's live holders must equal for the verdict to
+    /// be admitted. `None` on every other scheme (recording one there is refused).
+    pub reviewed_holders: Option<Vec<i64>>,
 }
+
+impl MergeVerdict {
+    /// The shape [`Db::record_merge_verdicts`] records, as `group "<c>/<s>/<k>": …` on a
+    /// refusal. Issue 513 U2: `POST /admin/merge-verdicts` asks it too, so an
+    /// nhs-body shape error is a 400 there rather than the store's 500.
+    pub fn validate(&self) -> Result<(), String> {
+        let name = format!("{}/{}/{}", self.country, self.scheme, self.key);
+        if self.country.is_empty() || self.scheme.is_empty() || self.key.is_empty() {
+            return Err(format!("group {name:?}: country, scheme and key are required"));
+        }
+        if !matches!(self.action.as_str(), "merge" | "keep") {
+            return Err(format!("group {name:?}: action must be merge|keep, got {:?}", self.action));
+        }
+        if !matches!(self.confidence.as_str(), "high" | "medium" | "low") {
+            return Err(format!("group {name:?}: confidence must be high|medium|low"));
+        }
+        // Issue 513 U2: an nhs-body verdict may name ONE member (a body that is already
+        // one org: the verdict records the ODS code and folds nothing); every other
+        // scheme still needs two. It is keyed (`GB`, `GB:nhs-body`, `<code>`), and a
+        // `merge` carries the full holder set the reviewer read, members included —
+        // without it the census could never admit it.
+        let nhs_body = self.scheme == NHS_BODY_SCHEME;
+        let least = if nhs_body { 1 } else { 2 };
+        if self.members.len() < least || self.members.windows(2).any(|w| w[0] >= w[1]) {
+            return Err(if nhs_body {
+                format!("group {name:?}: members must be one or more org ids, ascending, distinct")
+            } else {
+                format!("group {name:?}: members must be two or more org ids, ascending, distinct")
+            });
+        }
+        if !nhs_body {
+            return match self.reviewed_holders {
+                Some(_) => Err(format!("group {name:?}: reviewed_holders is for {NHS_BODY_SCHEME} verdicts only")),
+                None => Ok(()),
+            };
+        }
+        let code_shaped = self.key.len() == 3 && self.key.bytes().all(|b| b.is_ascii_uppercase() || b.is_ascii_digit());
+        if self.country != "GB" || !code_shaped {
+            return Err(format!(
+                "group {name:?}: an {NHS_BODY_SCHEME} verdict is keyed (GB, {NHS_BODY_SCHEME}, \
+                 <three-character ODS code>)"
+            ));
+        }
+        match &self.reviewed_holders {
+            Some(h) if h.windows(2).all(|w| w[0] < w[1]) && self.members.iter().all(|m| h.contains(m)) => Ok(()),
+            Some(_) => Err(format!(
+                "group {name:?}: reviewed_holders must be ascending, distinct org ids containing every member"
+            )),
+            None if self.action == "merge" => Err(format!(
+                "group {name:?}: an {NHS_BODY_SCHEME} merge needs reviewed_holders — the full holder set \
+                 the reviewer read"
+            )),
+            None => Ok(()),
+        }
+    }
+}
+
+/// Issue 513 U2: the merge-verdict scheme of a reviewed NHS body (`GB`, this, `<code>`),
+/// the one scheme whose verdicts may name a single member (record the ODS code, fold
+/// nothing) and must carry `reviewed_holders`.
+pub const NHS_BODY_SCHEME: &str = "GB:nhs-body";
 
 /// One reviewer's verdict on the registration number an organization is keyed
 /// by (issue 452): `wrong` (someone else's, or no one's), `related` (a parent
@@ -7312,6 +8007,15 @@ struct MergeVerdictRow {
     action: String,
     confidence: String,
     applied: bool,
+    /// Issue 513 U2: the nhs-body census's members-exact input; `None` (a NULL column)
+    /// on every other scheme's row, and R2, E0, altid and rekey never read it.
+    reviewed_holders: Option<Vec<i64>>,
+}
+
+/// A merge verdict's stored org-id list (`members`, `reviewed_holders`): a JSON array of
+/// integers, read the way the R2 planner always read `members`.
+fn verdict_org_ids(json: &str) -> Vec<i64> {
+    json.trim_matches(|c| c == '[' || c == ']').split(',').filter_map(|x| x.trim().parse::<i64>().ok()).collect()
 }
 
 /// One planned (dry) or executed (wet) country move.
@@ -24205,6 +24909,687 @@ impl Db {
         Ok(())
     }
 
+    /// Issue 513 U2: the DRY census of the `nhs-body` rule (decision "unit 2, second",
+    /// design C's U2). A letter-only NHS code (`GB-NHS-RTH`) mints no identity, so each
+    /// body stands as its spelling clusters plus its PPON org. U4 will fold a body under a
+    /// reviewed, members-exact verdict; this reads what the reviewer needs and writes
+    /// NOTHING — there is no wet path (the supervisor refuses `dry_run: false`).
+    ///
+    /// 1. HARVEST, the altid walk (every FTS notice, its parties' BT-501 rows and the
+    ///    fold's mention of each party): a GB party whose mention's raw identifier is
+    ///    `GBNHS` + three characters (`args.tail`) is a coded party — EVERY one, PPON beside
+    ///    it or not, unlike unit 1's listing — and its mention's org a holder of that tail.
+    ///    A GB party whose first identifier is no keyed PPON and which publishes a tail
+    ///    behind it (`GB-COH-…, GB-NHS-DQF`) is a later-coded party, and its mention's org a
+    ///    `party-later` holder of that tail (a keyed PPON first reaches the code through the
+    ///    PPON's holders instead). A party publishing a tail at ANY ordinal under no country
+    ///    or a non-GB one is counted and sampled, never a holder. Each (tail, PPON) a GB
+    ///    party publishes together, in any order, is a PPON pair.
+    /// 2. CODES: each tail to its allowlisted code (`args.survivor_code`, a unique O↔0 fold
+    ///    recorded as `folded`); a tail with none is listed off the allowlist (it anchors
+    ///    nothing). A code's holders, UNCAPPED: its coded and later-coded parties' orgs,
+    ///    plus each paired PPON's holders — the orgs carrying the PPON triple as their own
+    ///    or a merged identifier (a wrong-number verdict withholds them), and the orgs
+    ///    PPON-first GB parties bound (unit 1's holder walk, without
+    ///    `REGISTRY_NHS_REGISTER_HOLDERS`).
+    /// 3. HOLDERS: per holder, bounded reads — its row, its merged identifiers, its mention
+    ///    count, its newest `caps.mentions` mentions through `organization_mentions_org`
+    ///    (raw identifiers, `name_norm`s, notice years), its 234 key's other owners — and
+    ///    the flags: `check` of the head name, under review, the generic wall, consortium,
+    ///    a successor's ODS name, an own non-PPON identity.
+    /// 4. STRUCTURAL denials (D6), which no verdict overrides: `gone` (the org row went
+    ///    since the harvest), `minted-identity`, `generic`, `consortium` (the head name),
+    ///    `successor-name`, and `contested` (two codes' merge verdicts name the org). A code
+    ///    off the allowlist is denied too (`off_allowlist`).
+    /// 5. VERDICT (`GB`, `GB:nhs-body`, `<code>`): a HIGH, unapplied `merge` is admissible
+    ///    only while its `reviewed_holders` IS the live holder set and its members are live,
+    ///    standing holders no gate denies and whose 234 keys no row outside the body owns
+    ///    (D4) — 362's members-exact rule at code grain, so a newcomer holder makes it
+    ///    `stale`. Counted; nothing acts on it before U4.
+    /// 6. CENSUS extras: the coded share of the holders' mentions by notice year, and the
+    ///    coded notices published after a code's legal end.
+    ///
+    /// Read-only, on a pooled reader: it never takes the writer.
+    pub async fn plan_nhs_bodies(&self, args: NhsBodyArgs<'_>) -> turso::Result<NhsBodyReport> {
+        use std::collections::{BTreeMap, HashMap, HashSet};
+        let conn = self.reader().await?;
+        let caps = args.caps;
+        let mut report = NhsBodyReport { ods_version: args.ods_version, ..NhsBodyReport::default() };
+
+        // ---- 1. HARVEST.
+        let mut notices: Vec<i64> = Vec::new();
+        {
+            let mut after = "fts:".to_owned();
+            loop {
+                let mut rows = conn.query(ALTID_NEXT_PROFILE_SQL, (t(after.as_str()),)).await?;
+                let Some(row) = rows.next().await? else { break };
+                let profile = text(&row, 0);
+                drop(rows);
+                let mut rows = conn.query(ALTID_PROFILE_NOTICES_SQL, (t(profile.as_str()),)).await?;
+                while let Some(row) = rows.next().await? {
+                    notices.push(int(&row, 0));
+                }
+                after = profile;
+            }
+        }
+        notices.sort_unstable();
+        report.fts_notices = notices.len() as u64;
+
+        /// One tail's coded and later-coded GB parties.
+        #[derive(Default)]
+        struct TailSeen {
+            parties: u64,
+            /// The org each coded party's mention bound → its parties.
+            bound: BTreeMap<i64, u64>,
+            later_parties: u64,
+            /// The org each later-coded party's mention bound → its parties.
+            later: BTreeMap<i64, u64>,
+            /// The coded and later-coded parties' published names → count.
+            names: HashMap<String, u64>,
+            /// Every notice a GB party publishes the tail on, at any ordinal.
+            notices: BTreeSet<i64>,
+        }
+        let mut tails: BTreeMap<String, TailSeen> = BTreeMap::new();
+        // (tail, PPON key) → the PPON literal as first published, and its party's country.
+        let mut pairs: BTreeMap<(String, String), (String, Option<String>)> = BTreeMap::new();
+        // PPON key → the orgs every GB party's mention bound where the PPON came first.
+        let mut ppon_first: HashMap<String, BTreeSet<i64>> = HashMap::new();
+        // The sampled parties, by notice: (notice, section, country, literal, name).
+        type Sampled = Vec<(i64, String, Option<String>, String, String)>;
+        let (mut countryless, mut non_gb, mut other_nhs): (Sampled, Sampled, Sampled) = (vec![], vec![], vec![]);
+        let upper = |s: &str| -> String {
+            s.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect()
+        };
+        let mut ids_stmt = conn.prepare(ALTID_PARTY_IDS_SQL).await?;
+        let mut mentions_stmt = conn.prepare(NHS_BODY_PARTY_MENTIONS_SQL).await?;
+        for (i, &notice) in notices.iter().enumerate() {
+            if i % IN_CHUNK == 0 && (args.stop)() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            let mut sections: BTreeMap<String, Vec<(i64, Option<String>, String)>> = BTreeMap::new();
+            let mut rows = ids_stmt.query((Value::Integer(notice),)).await?;
+            while let Some(row) = rows.next().await? {
+                sections.entry(text(&row, 0)).or_default().push((int(&row, 1), opt_text_of(&row, 2), text(&row, 3)));
+            }
+            drop(rows);
+            if sections.is_empty() {
+                continue;
+            }
+            // section → (country, org, name, raw identifier)
+            let mut mention_of: HashMap<String, (Option<String>, i64, String, Option<String>)> = HashMap::new();
+            let mut rows = mentions_stmt.query((Value::Integer(notice),)).await?;
+            while let Some(row) = rows.next().await? {
+                mention_of.insert(
+                    text(&row, 0),
+                    (opt_text_of(&row, 1), int(&row, 2), opt_text_of(&row, 3).unwrap_or_default(), opt_text_of(&row, 4)),
+                );
+            }
+            drop(rows);
+            for (section, ids) in sections {
+                report.party_sections += 1;
+                let Some((country, org, name, raw)) = mention_of.get(&section) else {
+                    report.unfolded_sections += 1;
+                    continue;
+                };
+                let gb = country.as_deref().map(register_jurisdiction) == Some("GB");
+                // The decision's "bare" values: a GB-NHS row that is no three-character
+                // code — a typed name, a five-character code, a doubled prefix.
+                for (_, scheme, value) in &ids {
+                    if scheme.as_deref() == Some("GB-NHS") && (args.tail)(&upper(value)).is_none() {
+                        report.other_nhs_values += 1;
+                        if other_nhs.len() < caps.samples {
+                            other_nhs.push((notice, section.clone(), country.clone(), value.clone(), name.clone()));
+                        }
+                    }
+                }
+                // The party's own code: the raw identifier its mention carries — the one
+                // the fold bound it by (by name, as the code mints nothing).
+                let raw_tail: Option<String> =
+                    raw.as_deref().and_then(|r| (args.tail)(&upper(r)).map(str::to_owned));
+                if !gb {
+                    // Counted over EVERY ordinal: a code behind a company number is as
+                    // unplaceable without a GB country as one in first place.
+                    let literal = match &raw_tail {
+                        Some(_) => raw.clone(),
+                        None => ids
+                            .iter()
+                            .filter(|(_, _, value)| (args.tail)(&upper(value)).is_some())
+                            .min_by_key(|(ordinal, _, _)| *ordinal)
+                            .map(|(_, _, value)| value.clone()),
+                    };
+                    match (literal, country) {
+                        (None, _) => {}
+                        (Some(literal), None) => {
+                            report.countryless_parties += 1;
+                            if countryless.len() < caps.samples {
+                                countryless.push((notice, section.clone(), None, literal, name.clone()));
+                            }
+                        }
+                        (Some(literal), Some(c)) => {
+                            report.non_gb_parties += 1;
+                            if non_gb.len() < caps.samples {
+                                non_gb.push((notice, section.clone(), Some(c.clone()), literal, name.clone()));
+                            }
+                        }
+                    }
+                    continue;
+                }
+                if let Some(tail) = &raw_tail {
+                    report.coded_parties += 1;
+                    let seen = tails.entry(tail.clone()).or_default();
+                    seen.parties += 1;
+                    *seen.bound.entry(*org).or_default() += 1;
+                    *seen.names.entry(name.clone()).or_default() += 1;
+                    seen.notices.insert(notice);
+                }
+                // The PPON pairs: every three-character tail beside every keyed PPON on the
+                // party, whichever came first.
+                let mut party_tails: BTreeSet<String> = BTreeSet::new();
+                let mut party_ppons: Vec<(String, &String)> = Vec::new();
+                let mut ppon_led = false;
+                for (ordinal, scheme, value) in &ids {
+                    let norm = upper(value);
+                    if let Some(tail) = (args.tail)(&norm) {
+                        party_tails.insert(tail.to_owned());
+                    } else if scheme.as_deref() == Some("GB-PPON")
+                        && let Some(("GB:ppon", key, true, _)) = (args.pair_key)("GB-PPON", value, country.as_deref())
+                    {
+                        if *ordinal == 0 {
+                            ppon_led = true;
+                            ppon_first.entry(key.clone()).or_default().insert(*org);
+                        }
+                        party_ppons.push((key, value));
+                    }
+                }
+                // A later-coded party: a tail behind a first identifier that is no keyed
+                // PPON (`GB-COH-…, GB-NHS-DQF`) — no pair reaches its org, so the tail binds
+                // it directly (`party-later`). PPON-led, its org is the PPON's holder
+                // already (`ppon_first`), and stays a `ppon` one.
+                if !ppon_led {
+                    let mut later = false;
+                    for tail in party_tails.iter().filter(|tail| raw_tail.as_ref() != Some(*tail)) {
+                        later = true;
+                        let seen = tails.entry(tail.clone()).or_default();
+                        seen.later_parties += 1;
+                        *seen.later.entry(*org).or_default() += 1;
+                        *seen.names.entry(name.clone()).or_default() += 1;
+                    }
+                    report.later_coded_parties += u64::from(later);
+                }
+                for tail in &party_tails {
+                    tails.entry(tail.clone()).or_default().notices.insert(notice);
+                    for (key, literal) in &party_ppons {
+                        pairs
+                            .entry((tail.clone(), key.clone()))
+                            .or_insert_with(|| ((*literal).clone(), country.clone()));
+                    }
+                }
+            }
+        }
+        drop(ids_stmt);
+        drop(mentions_stmt);
+        report.ppon_pairs = pairs.len() as u64;
+
+        // ---- 2. CODES: each tail to its allowlisted code, or off the allowlist.
+        let all_tails: BTreeSet<&String> = tails.keys().chain(pairs.keys().map(|(tail, _)| tail)).collect();
+        let mut by_code: BTreeMap<&'static str, Vec<(String, bool)>> = BTreeMap::new();
+        let mut off: Vec<&String> = Vec::new();
+        for tail in all_tails {
+            let parties = tails.get(tail).map_or(0, |s| s.parties);
+            match (args.survivor_code)(tail) {
+                Some((code, folded)) => {
+                    report.coded_parties_allowlisted += parties;
+                    if folded {
+                        report.folded_parties += parties;
+                    }
+                    by_code.entry(code).or_default().push((tail.clone(), folded));
+                }
+                None => off.push(tail),
+            }
+        }
+        report.codes_seen = by_code.len() as u64;
+
+        // Each paired PPON's holders, read once: its triple as an own identifier (a seek on
+        // `organizations_identifier_id`) or a merged one (a seek on the merged table's
+        // key), less the withheld; and the orgs PPON-first parties bound.
+        let withheld = withheld_identifier_orgs(&conn).await?;
+        let mut ppon_owners: HashMap<&str, BTreeSet<i64>> = HashMap::new();
+        for ((tail, key), (literal, country)) in &pairs {
+            if (args.stop)() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            if (args.survivor_code)(tail).is_none() || ppon_owners.contains_key(key.as_str()) {
+                continue;
+            }
+            let mut owners = ppon_first.get(key).cloned().unwrap_or_default();
+            if let Some(id) = (args.register_identity)(literal, country.as_deref()) {
+                let id_country = id.country.clone().unwrap_or_default();
+                for org in orgs_with_triple(&conn, &id.value, &id.kind, &id_country).await? {
+                    if !withheld.contains(&org) {
+                        owners.insert(org);
+                    }
+                }
+                let mut rows = conn.query(NHS_BODY_MERGED_HOLDERS_SQL, (t(id.value.as_str()),)).await?;
+                while let Some(row) = rows.next().await? {
+                    let org = int(&row, 0);
+                    let same_triple = opt_text_of(&row, 1).unwrap_or_default() == id.kind
+                        && opt_text_of(&row, 2).unwrap_or_default() == id_country;
+                    if same_triple && !withheld.contains(&org) {
+                        owners.insert(org);
+                    }
+                }
+            }
+            ppon_owners.insert(key.as_str(), owners);
+        }
+
+        /// One code's holders before their details: the coded and later-coded parties each
+        /// org's mention bound, and the paired PPON keys each org holds.
+        #[derive(Default)]
+        struct Holding {
+            party: BTreeMap<i64, u64>,
+            later: BTreeMap<i64, u64>,
+            ppon: BTreeMap<i64, BTreeSet<String>>,
+            ppons: BTreeSet<String>,
+        }
+        let mut holding: BTreeMap<&'static str, Holding> = BTreeMap::new();
+        let mut holder_of: BTreeMap<i64, Vec<&'static str>> = BTreeMap::new();
+        for (&code, code_tails) in &by_code {
+            let h = holding.entry(code).or_default();
+            for (tail, _) in code_tails {
+                if let Some(seen) = tails.get(tail) {
+                    for (org, n) in &seen.bound {
+                        *h.party.entry(*org).or_default() += n;
+                    }
+                    for (org, n) in &seen.later {
+                        *h.later.entry(*org).or_default() += n;
+                    }
+                }
+                // The tail's pairs: one range of the (tail, PPON) map.
+                for ((paired, key), _) in pairs.range((tail.clone(), String::new())..) {
+                    if paired != tail {
+                        break;
+                    }
+                    h.ppons.insert(key.clone());
+                    for org in ppon_owners.get(key.as_str()).into_iter().flatten() {
+                        h.ppon.entry(*org).or_default().insert(key.clone());
+                    }
+                }
+            }
+            let orgs: BTreeSet<i64> = h.party.keys().chain(h.later.keys()).chain(h.ppon.keys()).copied().collect();
+            for org in orgs {
+                holder_of.entry(org).or_default().push(code);
+            }
+        }
+        report.holders = holder_of.len() as u64;
+        report.multi_code_orgs = holder_of.values().filter(|c| c.len() > 1).count() as u64;
+
+        // ---- 5 (read first). The standing verdicts, and the orgs two codes' merge
+        // verdicts both name: `contested`, denied in both.
+        let mut verdicts: BTreeMap<&'static str, MergeVerdictRow> = BTreeMap::new();
+        for &code in by_code.keys() {
+            if let Some(v) = self.merge_verdict_for("GB", NHS_BODY_SCHEME, code).await? {
+                verdicts.insert(code, v);
+            }
+        }
+        let mut proposed: HashMap<i64, BTreeSet<&'static str>> = HashMap::new();
+        for (&code, v) in &verdicts {
+            if v.action == "merge" {
+                for m in &v.members {
+                    proposed.entry(*m).or_default().insert(code);
+                }
+            }
+        }
+        let contested: HashSet<i64> = proposed.into_iter().filter(|(_, c)| c.len() > 1).map(|(o, _)| o).collect();
+        report.contested_orgs = contested.len() as u64;
+
+        // ---- 3/4. HOLDERS, with their details, and the structural denials.
+        let under_review = Self::review_keep_set_but(&conn, Some(NHS_BODY_SCHEME)).await?;
+        let mut published: HashMap<i64, Option<i64>> = HashMap::new();
+        let mut facts: HashMap<i64, NhsOrgFacts> = HashMap::new();
+        let mut generic: HashMap<String, bool> = HashMap::new();
+        for (&code, code_tails) in &by_code {
+            if report.codes.len() >= caps.codes {
+                report.codes_truncated = true;
+                eprintln!(
+                    "[store] nhs-body: code listing cut at {} of {} codes; {code} and later unlisted",
+                    caps.codes, report.codes_seen
+                );
+                break;
+            }
+            let Some(ods) = (args.ods)(code) else {
+                debug_assert!(false, "survivor_code named {code}, which the table lacks");
+                continue;
+            };
+            let h = &holding[&code];
+            let holder_ids: Vec<i64> = h
+                .party
+                .keys()
+                .chain(h.later.keys())
+                .chain(h.ppon.keys())
+                .copied()
+                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .collect();
+            let mut entry = NhsBodyCode {
+                code,
+                ods: ods.clone(),
+                tails: code_tails
+                    .iter()
+                    .map(|(tail, folded)| NhsBodyTail {
+                        tail: tail.clone(),
+                        parties: tails.get(tail).map_or(0, |s| s.parties),
+                        later_parties: tails.get(tail).map_or(0, |s| s.later_parties),
+                        folded: *folded,
+                    })
+                    .collect(),
+                coded_parties: code_tails.iter().map(|(tail, _)| tails.get(tail).map_or(0, |s| s.parties)).sum(),
+                later_parties: code_tails.iter().map(|(tail, _)| tails.get(tail).map_or(0, |s| s.later_parties)).sum(),
+                coded_notices_after_legal_end: 0,
+                ppons: h.ppons.iter().cloned().collect(),
+                holder_ids: holder_ids.clone(),
+                holders: Vec::new(),
+                holders_truncated: false,
+                eligible: Vec::new(),
+                verdict: None,
+            };
+            // The census U1 promised: a code still published after its legal end.
+            if let Some(end) = ods.legal_end.and_then(legal_end_unix) {
+                let mut after = BTreeSet::new();
+                for (tail, _) in code_tails {
+                    for &notice in tails.get(tail).map(|s| &s.notices).into_iter().flatten() {
+                        if notice_published(&conn, notice, &mut published).await?.is_some_and(|at| at >= end) {
+                            after.insert(notice);
+                        }
+                    }
+                }
+                entry.coded_notices_after_legal_end = after.len() as u64;
+            }
+            for &org in &holder_ids {
+                if report.holders_listed as usize >= caps.holders {
+                    entry.holders_truncated = true;
+                    continue;
+                }
+                if (args.stop)() {
+                    report.stopped = true;
+                    return Ok(report);
+                }
+                report.holders_listed += 1;
+                if !facts.contains_key(&org) {
+                    let f = nhs_org_facts(&conn, org, &caps, args.tail, args.consortium, &mut published);
+                    let f = Box::pin(f).await?;
+                    facts.insert(org, f);
+                }
+                let f = &facts[&org];
+                let n2 = (args.norm)(&f.name);
+                let is_generic = match generic.get(&n2) {
+                    Some(known) => *known,
+                    None => {
+                        let found = f.stands
+                            && !n2.is_empty()
+                            && self.name_key_is_generic_on(&conn, "n2", &n2, args.stoplist_cap).await?;
+                        generic.insert(n2.clone(), found);
+                        found
+                    }
+                };
+                let successor_name = if f.stands {
+                    ods.successors.iter().copied().find(|s| {
+                        (args.ods)(s).is_some_and(|row| (args.norm)(row.name) == n2)
+                            || (args.check)(s, &f.name).admitted()
+                    })
+                } else {
+                    None
+                };
+                let minted_identity = f.identifier.as_deref().is_some_and(|literal| {
+                    let kind = f.identifier_kind.as_deref().unwrap_or("national");
+                    !matches!((args.key)(f.country.as_deref(), kind, literal), Some(("GB:ppon", _, _, _)))
+                });
+                let own: BTreeSet<&str> = code_tails.iter().map(|(tail, _)| tail.as_str()).collect();
+                let other_codes: Vec<String> = f
+                    .mention_tails
+                    .iter()
+                    .filter(|tail| {
+                        !own.contains(tail.as_str()) && (args.survivor_code)(tail).map(|(c, _)| c) != Some(code)
+                    })
+                    .cloned()
+                    .collect();
+                let key_owners_elsewhere: Vec<i64> = f
+                    .key_owners
+                    .iter()
+                    .copied()
+                    .filter(|o| holder_ids.binary_search(o).is_err())
+                    .take(caps.key_owners)
+                    .collect();
+                let is_contested = contested.contains(&org);
+                let mut denied: Vec<&'static str> = Vec::new();
+                // Gone since the harvest (a concurrent merge or sweep: the reader is no
+                // snapshot across statements). Its facts are empty, so no other gate can
+                // fire; this one keeps it from reading eligible.
+                if !f.stands {
+                    denied.push("gone");
+                }
+                if minted_identity {
+                    denied.push("minted-identity");
+                }
+                if is_generic {
+                    denied.push("generic");
+                }
+                if f.consortium {
+                    denied.push("consortium");
+                }
+                if successor_name.is_some() {
+                    denied.push("successor-name");
+                }
+                if is_contested {
+                    denied.push("contested");
+                }
+                for reason in &denied {
+                    *report.denied.entry(reason).or_default() += 1;
+                }
+                if denied.is_empty() {
+                    report.eligible_holders += 1;
+                    entry.eligible.push(org);
+                }
+                if !key_owners_elsewhere.is_empty() {
+                    report.key_owned_elsewhere += 1;
+                }
+                let party = h.party.get(&org).copied();
+                let later = h.later.get(&org).copied();
+                let ppons: Vec<String> = h.ppon.get(&org).map(|k| k.iter().cloned().collect()).unwrap_or_default();
+                entry.holders.push(NhsBodyHolder {
+                    org_id: org,
+                    via: match (party.is_some(), later.is_some(), !ppons.is_empty()) {
+                        (true, true, true) => "party+party-later+ppon",
+                        (true, true, false) => "party+party-later",
+                        (true, false, true) => "party+ppon",
+                        (true, false, false) => "party",
+                        (false, true, true) => "party-later+ppon",
+                        (false, true, false) => "party-later",
+                        (false, false, _) => "ppon",
+                    },
+                    coded_parties: party.unwrap_or(0),
+                    later_parties: later.unwrap_or(0),
+                    ppons,
+                    stands: f.stands,
+                    provisional: f.provisional,
+                    country: f.country.clone(),
+                    identifier_kind: f.identifier_kind.clone(),
+                    identifier: f.identifier.clone(),
+                    name: f.name.clone(),
+                    name_norm: f.name_norm.clone(),
+                    merged_identifiers: f.merged.clone(),
+                    mentions: f.mentions,
+                    mentions_read: f.read,
+                    mentions_capped: f.capped,
+                    raw_identifiers: f.raws.clone(),
+                    name_norms: f.name_norms.clone(),
+                    names_capped: f.names_capped,
+                    other_codes,
+                    check: if f.stands {
+                        (args.check)(code, &f.name)
+                    } else {
+                        NhsNameCheck { verdict: "unknown", rival: None }
+                    },
+                    key_owners_elsewhere,
+                    under_review: under_review.contains(&org),
+                    generic: is_generic,
+                    consortium: f.consortium,
+                    consortium_names: f.consortium_names.clone(),
+                    successor_name,
+                    minted_identity,
+                    holder_of: holder_of.get(&org).cloned().unwrap_or_default(),
+                    contested: is_contested,
+                    denied,
+                });
+            }
+            if entry.holders_truncated {
+                report.holders_truncated = true;
+                eprintln!(
+                    "[store] nhs-body: {code}: {} of {} holders listed (the report-wide cap {} bound)",
+                    entry.holders.len(),
+                    holder_ids.len(),
+                    caps.holders
+                );
+            }
+
+            // ---- 5. The verdict: admissible only members-exact over the LIVE holders.
+            if let Some(v) = verdicts.remove(&code) {
+                let live: BTreeSet<i64> = holder_ids.iter().copied().collect();
+                let (mut newcomers, mut departed) = (Vec::new(), Vec::new());
+                let status: &'static str = if v.action == "keep" {
+                    "keep"
+                } else if v.applied {
+                    "applied"
+                } else if v.confidence != "high" {
+                    "not-high"
+                } else if entry.holders_truncated {
+                    "holders-unlisted"
+                } else {
+                    match &v.reviewed_holders {
+                        None => "no-reviewed-holders",
+                        Some(read) => {
+                            let read: BTreeSet<i64> = read.iter().copied().collect();
+                            newcomers = live.difference(&read).copied().collect();
+                            departed = read.difference(&live).copied().collect();
+                            // Every live member is listed here: a cut listing stopped above.
+                            let any_member = |test: fn(&NhsBodyHolder) -> bool| {
+                                v.members.iter().any(|m| entry.holders.iter().any(|x| x.org_id == *m && test(x)))
+                            };
+                            if !newcomers.is_empty() || !departed.is_empty() {
+                                "stale"
+                            } else if !v.members.iter().all(|m| live.contains(m)) {
+                                "members-not-live"
+                            } else if any_member(|x| !x.stands) {
+                                "member-gone"
+                            } else if v.members.iter().any(|m| contested.contains(m)) {
+                                "contested"
+                            } else if any_member(|x| !x.denied.is_empty()) {
+                                "member-denied"
+                            } else if any_member(|x| !x.key_owners_elsewhere.is_empty()) {
+                                // D4: U4 would hold this member (`alias_key_owned_elsewhere`),
+                                // so the verdict could not fold what it names.
+                                "member-key-owned-elsewhere"
+                            } else {
+                                "admitted"
+                            }
+                        }
+                    }
+                };
+                *report.verdict_status.entry(status).or_default() += 1;
+                match status {
+                    "admitted" => report.admitted_verdict += 1,
+                    "keep" => report.verdict_keep += 1,
+                    _ => report.verdict_stale += 1,
+                }
+                entry.verdict = Some(NhsBodyVerdict {
+                    cohort: v.cohort,
+                    action: v.action,
+                    confidence: v.confidence,
+                    members: v.members,
+                    reviewed_holders: v.reviewed_holders,
+                    status,
+                    newcomers,
+                    departed,
+                });
+            }
+            report.codes.push(entry);
+        }
+
+        // ---- 6. The coded share by notice year, over the listed holders, each org once.
+        let mut years: BTreeMap<Option<i64>, (u64, u64)> = BTreeMap::new();
+        for f in facts.values() {
+            report.coded_share_partial |= f.capped;
+            for (year, (coded, all)) in &f.years {
+                let y = years.entry(*year).or_default();
+                y.0 += coded;
+                y.1 += all;
+            }
+        }
+        report.coded_share_partial |= report.holders_truncated || report.codes_truncated;
+        report.coded_share_by_year = years
+            .into_iter()
+            .map(|(year, (coded, mentions))| NhsYearShare {
+                year: year.map_or_else(|| "unknown".to_owned(), |y| y.to_string()),
+                coded,
+                mentions,
+            })
+            .collect();
+
+        // ---- Off the allowlist: the most-published first.
+        report.off_allowlist_seen = off.len() as u64;
+        let mut listed: Vec<NhsOffAllowlistTail> = off
+            .into_iter()
+            .map(|tail| {
+                let seen = tails.get(tail);
+                let mut names: Vec<NhsCount> = seen
+                    .map(|s| s.names.iter().map(|(name, n)| NhsCount { value: name.clone(), n: *n }).collect())
+                    .unwrap_or_default();
+                names.sort_by(|a, b| b.n.cmp(&a.n).then_with(|| a.value.cmp(&b.value)));
+                names.truncate(5);
+                NhsOffAllowlistTail {
+                    tail: tail.clone(),
+                    value: format!("GBNHS{tail}"),
+                    parties: seen.map_or(0, |s| s.parties),
+                    later_parties: seen.map_or(0, |s| s.later_parties),
+                    holders: seen.map_or(0, |s| {
+                        s.bound.keys().chain(s.later.keys()).collect::<BTreeSet<_>>().len() as u64
+                    }),
+                    ppons: pairs.keys().filter(|(t, _)| t == tail).count() as u64,
+                    top_names: names,
+                    ods: (args.ods)(tail),
+                }
+            })
+            .collect();
+        listed.sort_by(|a, b| {
+            (b.parties + b.later_parties).cmp(&(a.parties + a.later_parties)).then_with(|| a.tail.cmp(&b.tail))
+        });
+        if listed.len() > caps.off_allowlist {
+            report.off_allowlist_truncated = true;
+            eprintln!(
+                "[store] nhs-body: off-allowlist listing cut at {} of {} tails (the least published dropped)",
+                caps.off_allowlist,
+                listed.len()
+            );
+            listed.truncate(caps.off_allowlist);
+        }
+        report.off_allowlist = listed;
+
+        // ---- The samples, by publication id.
+        async fn sampled(conn: &Connection, rows: Sampled) -> turso::Result<Vec<NhsPartySample>> {
+            let mut out = Vec::with_capacity(rows.len());
+            for (notice, section_id, country, value, name) in rows {
+                let publication_id = publications(conn, std::iter::once(notice)).await?.pop().unwrap_or_default();
+                out.push(NhsPartySample { publication_id, section_id, country, value, name });
+            }
+            Ok(out)
+        }
+        report.countryless_sample = sampled(&conn, countryless).await?;
+        report.non_gb_sample = sampled(&conn, non_gb).await?;
+        report.other_nhs_sample = sampled(&conn, other_nhs).await?;
+        Ok(report)
+    }
+
     /// Issue 448 unit 2: the altid WET run, on the writer the live re-plan was
     /// made under ([`Self::match_org_altid_pairs`] holds it end to end). Since issue 469
     /// U5 it merges BOTH families — the company-number pairs, then the register pairs —
@@ -25500,47 +26885,28 @@ impl Db {
         now: i64,
     ) -> turso::Result<u64> {
         for v in verdicts {
-            let name = format!("{}/{}/{}", v.country, v.scheme, v.key);
-            if v.country.is_empty() || v.scheme.is_empty() || v.key.is_empty() {
-                return Err(turso::Error::Error(format!(
-                    "group {name:?}: country, scheme and key are required"
-                )));
-            }
-            if !matches!(v.action.as_str(), "merge" | "keep") {
-                return Err(turso::Error::Error(format!(
-                    "group {name:?}: action must be merge|keep, got {:?}",
-                    v.action
-                )));
-            }
-            if !matches!(v.confidence.as_str(), "high" | "medium" | "low") {
-                return Err(turso::Error::Error(format!(
-                    "group {name:?}: confidence must be high|medium|low"
-                )));
-            }
-            if v.members.len() < 2 || v.members.windows(2).any(|w| w[0] >= w[1]) {
-                return Err(turso::Error::Error(format!(
-                    "group {name:?}: members must be two or more org ids, ascending, distinct"
-                )));
-            }
+            v.validate().map_err(turso::Error::Error)?;
         }
         let conn = self.conn().await;
         conn.execute("BEGIN IMMEDIATE", ()).await?;
         let result: turso::Result<u64> = async {
             let mut n = 0u64;
+            let ids = |v: &[i64]| format!("[{}]", v.iter().map(|m| m.to_string()).collect::<Vec<_>>().join(","));
             for v in verdicts {
-                let members = format!(
-                    "[{}]",
-                    v.members.iter().map(|m| m.to_string()).collect::<Vec<_>>().join(",")
-                );
+                let members = ids(&v.members);
+                // NULL for every scheme but nhs-body (validated above), so an R2 or altid
+                // re-POST writes exactly the row it always wrote.
+                let reviewed_holders = v.reviewed_holders.as_deref().map_or(Value::Null, |h| Value::Text(ids(h)));
                 conn.execute(
                     "INSERT INTO org_merge_verdicts \
                        (country, scheme, key, cohort, members, action, rationale, \
-                        confidence, reviewed_at) \
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) \
+                        confidence, reviewed_at, reviewed_holders) \
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
                      ON CONFLICT(country, scheme, key, cohort) DO UPDATE SET \
                         members = excluded.members, action = excluded.action, \
                         rationale = excluded.rationale, confidence = excluded.confidence, \
-                        reviewed_at = excluded.reviewed_at",
+                        reviewed_at = excluded.reviewed_at, \
+                        reviewed_holders = excluded.reviewed_holders",
                     (
                         t(&v.country),
                         t(&v.scheme),
@@ -25551,6 +26917,7 @@ impl Db {
                         t(&v.rationale),
                         t(&v.confidence),
                         Value::Integer(now),
+                        reviewed_holders,
                     ),
                 )
                 .await?;
@@ -25573,7 +26940,7 @@ impl Db {
         let reader = self.reader().await?;
         let mut rows = reader
             .query(
-                "SELECT cohort, members, action, confidence, applied_at FROM org_merge_verdicts \
+                "SELECT cohort, members, action, confidence, applied_at, reviewed_holders FROM org_merge_verdicts \
                   WHERE country = ? AND scheme = ? AND key = ? \
                   ORDER BY (action = 'keep') DESC, reviewed_at DESC LIMIT 1",
                 (t(country), t(scheme), t(key)),
@@ -25582,17 +26949,13 @@ impl Db {
         let Some(row) = rows.next().await? else {
             return Ok(None);
         };
-        let members: Vec<i64> = text(&row, 1)
-            .trim_matches(|c| c == '[' || c == ']')
-            .split(',')
-            .filter_map(|x| x.trim().parse::<i64>().ok())
-            .collect();
         Ok(Some(MergeVerdictRow {
             cohort: text(&row, 0),
-            members,
+            members: verdict_org_ids(&text(&row, 1)),
             action: text(&row, 2),
             confidence: text(&row, 3),
             applied: opt_int_of(&row, 4).is_some(),
+            reviewed_holders: opt_text_of(&row, 5).map(|h| verdict_org_ids(&h)),
         }))
     }
 
@@ -26260,8 +27623,11 @@ impl Db {
             ),
             "merge" => (
                 "org_merge_verdicts",
+                // Issue 513 U2: `reviewed_holders` last (NULL off `GB:nhs-body`), so a
+                // reader by position sees the columns it always saw.
                 &["country", "scheme", "key", "cohort", "members", "action", "rationale",
-                  "confidence", "reviewed_at", "applied_at", "applied_action", "job_id"],
+                  "confidence", "reviewed_at", "applied_at", "applied_action", "job_id",
+                  "reviewed_holders"],
                 "reviewed_at DESC, country, scheme, key",
             ),
             "identifier" => (
@@ -32550,6 +33916,16 @@ impl Db {
     /// wet run is under way (the POST writes through the same writer) is seen
     /// by the next window rather than by the next run.
     async fn review_keep_set(conn: &Connection) -> turso::Result<std::collections::HashSet<i64>> {
+        Self::review_keep_set_but(conn, None).await
+    }
+
+    /// [`Self::review_keep_set`] without the merge verdicts of one scheme. Issue 513 U2:
+    /// the nhs-body census flags a holder "under review" for every OTHER reason — a body's
+    /// own verdict names its holders, and counting it would flag every reviewed member.
+    async fn review_keep_set_but(
+        conn: &Connection,
+        skip_merge_scheme: Option<&str>,
+    ) -> turso::Result<std::collections::HashSet<i64>> {
         let mut ids = std::collections::HashSet::new();
         for sql in [
             "SELECT case_org_id FROM org_case_reviews",
@@ -32577,14 +33953,12 @@ impl Db {
         }
         // A merge verdict names its group as the JSON array of member ids,
         // read the way the R2 planner reads it (`merge_verdict_for`).
-        let mut rows = conn.query("SELECT members FROM org_merge_verdicts", ()).await?;
+        let mut rows = match skip_merge_scheme {
+            None => conn.query("SELECT members FROM org_merge_verdicts", ()).await?,
+            Some(scheme) => conn.query("SELECT members FROM org_merge_verdicts WHERE scheme <> ?", (t(scheme),)).await?,
+        };
         while let Some(row) = rows.next().await? {
-            ids.extend(
-                text(&row, 0)
-                    .trim_matches(|c| c == '[' || c == ']')
-                    .split(',')
-                    .filter_map(|x| x.trim().parse::<i64>().ok()),
-            );
+            ids.extend(verdict_org_ids(&text(&row, 0)));
         }
         Ok(ids)
     }

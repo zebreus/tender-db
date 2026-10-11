@@ -414,6 +414,11 @@ enum Spec {
     /// move onto the right number. Dry plans and records `rekey-plan`; wet
     /// executes only that plan's `keys`, at most `max_groups` of them.
     MatchOrgIdentifiersRekey { dry_run: bool, max_groups: Option<u64> },
+    /// Issue 513 U2: the `nhs-body` census — every holder of every allowlisted NHS ODS
+    /// code, the structural denials and whether each body's reviewed verdict is still
+    /// admissible. Dry only: records `nhs-body-plan`. `dry_run: false` is refused at
+    /// enqueue and here (the wet path, the fold, is U4).
+    MatchOrgIdentifiersNhsBody { dry_run: bool },
     ApplyCaseReviews { dry_run: bool },
     /// Issue 312: the symmetric UNDO for `ApplyCaseReviews` — restore the
     /// identifiers whose pre-image value is a platform GUID, which the
@@ -1123,9 +1128,10 @@ pub struct JobRequest {
     /// `match-org-identifiers` only: which merge rule to run — `r2` (the
     /// Stage-2 same-country canonical-key merge, the default), `r3` (the
     /// Stage-3 NULL-country checksum-anchor rescue), `e0` (issue 329's exact
-    /// triples) or `altid` (issue 448's company-number/PPON pairs; a wet run
-    /// merges only the stored dry plan's reviewed pairs). Anything else is
-    /// rejected at enqueue.
+    /// triples), `altid` (issue 448's company-number/PPON pairs; a wet run
+    /// merges only the stored dry plan's reviewed pairs), `rekey` (issue 453) or
+    /// `nhs-body` (issue 513 U2's census; dry only). Anything else is rejected at
+    /// enqueue.
     pub rule: Option<String>,
     /// `scan-org-match-keys` wet runs only: write at most this many edges —
     /// the design's capped first prod run (issue 300 Stage 4). The census
@@ -1538,9 +1544,13 @@ impl Supervisor {
                     "e0" => Spec::MatchOrgIdentifiersE0 { dry_run, max_groups },
                     "altid" => Spec::MatchOrgIdentifiersAltId { dry_run, max_groups },
                     "rekey" => Spec::MatchOrgIdentifiersRekey { dry_run, max_groups },
+                    // Issue 513 U2: the census only. Refused wet HERE, before a job row
+                    // exists — the merge is U4's, and a queued wet job would read as one.
+                    "nhs-body" if !dry_run => return Err(NHS_BODY_WET_REFUSAL.to_owned()),
+                    "nhs-body" => Spec::MatchOrgIdentifiersNhsBody { dry_run },
                     other => {
                         return Err(format!(
-                            "match-org-identifiers: unknown rule '{other}' (r2, r3, e0, altid or rekey)"
+                            "match-org-identifiers: unknown rule '{other}' (r2, r3, e0, altid, rekey or nhs-body)"
                         ));
                     }
                 };
@@ -2933,6 +2943,72 @@ fn altid_registry_summary(r: &store::AltIdMergeReport) -> String {
         r.registry_cross_register_ppons,
         r.registry_cross_register_denied_ppons,
         r.registry_triple_ppons,
+    )
+}
+
+/// Issue 513 U2: why a wet `nhs-body` run is refused — at enqueue, and by the arm if a
+/// job reaches it anyway. The rule is a census until U4 builds the fold.
+const NHS_BODY_WET_REFUSAL: &str = "match-org-identifiers nhs-body REFUSED: nhs-body wet path is U4; not built \
+     — the rule is a dry census for now ({\"kind\":\"match-org-identifiers\",\"rule\":\"nhs-body\"}); \
+     nothing was written";
+
+/// Issue 513 U2: the nhs-body census's counts line — the harvest, the bodies, the
+/// structural denials (nonzero, in D6's order) and the verdicts; a cut list or a blind
+/// generic wall is said, never left to the stored body.
+fn nhs_body_summary(r: &store::NhsBodyReport, wall_readable: bool) -> String {
+    let denied: Vec<String> = ["gone", "minted-identity", "generic", "consortium", "successor-name", "contested"]
+        .iter()
+        .filter_map(|reason| r.denied.get(reason).filter(|n| **n > 0).map(|n| format!("{n} {reason}")))
+        .collect();
+    let stale: Vec<String> = r
+        .verdict_status
+        .iter()
+        .filter(|(status, _)| !matches!(**status, "admitted" | "keep"))
+        .map(|(status, n)| format!("{n} {status}"))
+        .collect();
+    let mut cut: Vec<String> = Vec::new();
+    if r.codes_truncated {
+        cut.push(format!("codes listed {} of {}", r.codes.len(), r.codes_seen));
+    }
+    if r.holders_truncated {
+        cut.push(format!("holders listed {} of the holder entries", r.holders_listed));
+    }
+    if r.off_allowlist_truncated {
+        cut.push(format!("off-allowlist tails listed {} of {}", r.off_allowlist.len(), r.off_allowlist_seen));
+    }
+    format!(
+        "ODS {}; {} FTS notices, {} coded GB parties ({} on the allowlist, {} of them by an O/0 fold; {} \
+         more publish a code behind another first identifier; {} country-less, {} non-GB and {} other \
+         GB-NHS values counted apart), {} code/PPON pairs; {} codes, \
+         {} holders ({} holding two or more codes); {} tails off the allowlist; denied: {}; {} eligible \
+         holder entries, {} keys owned outside their body; verdicts: {} admitted, {} not admitted{}, {} keep{}{}",
+        r.ods_version,
+        r.fts_notices,
+        r.coded_parties,
+        r.coded_parties_allowlisted,
+        r.folded_parties,
+        r.later_coded_parties,
+        r.countryless_parties,
+        r.non_gb_parties,
+        r.other_nhs_values,
+        r.ppon_pairs,
+        r.codes_seen,
+        r.holders,
+        r.multi_code_orgs,
+        r.off_allowlist_seen,
+        if denied.is_empty() { "none".to_owned() } else { denied.join(", ") },
+        r.eligible_holders,
+        r.key_owned_elsewhere,
+        r.admitted_verdict,
+        r.verdict_stale,
+        if stale.is_empty() { String::new() } else { format!(" ({})", stale.join(", ")) },
+        r.verdict_keep,
+        if cut.is_empty() { String::new() } else { format!(" — CUT: {}", cut.join("; ")) },
+        if wall_readable {
+            ""
+        } else {
+            " — NOTE: org_match_keys is EMPTY, so the generic-name wall saw nothing and flagged nothing"
+        },
     )
 }
 
@@ -5530,7 +5606,8 @@ impl Supervisor {
             | Spec::MatchOrgIdentifiersE0 { .. }
             | Spec::MatchOrgIdentifiersR3 { .. }
             | Spec::MatchOrgIdentifiersRekey { .. }
-            | Spec::MatchOrgIdentifiersAltId { .. } => off_frame(|| self.run_match_identifiers_spec(job)).await,
+            | Spec::MatchOrgIdentifiersAltId { .. }
+            | Spec::MatchOrgIdentifiersNhsBody { .. } => off_frame(|| self.run_match_identifiers_spec(job)).await,
             Spec::FoldOrgCountries { .. }
             | Spec::ApplyCountryVerdicts { .. }
             | Spec::ApplyRehoming { .. }
@@ -8405,7 +8482,8 @@ impl Supervisor {
         }
     }
 
-    /// `run_spec`'s family of the `match-org-identifiers` merges (r2, e0, r3, rekey, altid).
+    /// `run_spec`'s family of the `match-org-identifiers` merges (r2, e0, r3, rekey, altid), and
+    /// issue 513 U2's dry `nhs-body` census.
     /// Issue 467: one family per fn, reached through `off_frame`, so its poll frame holds only
     /// these arms' locals.
     async fn run_match_identifiers_spec(&self, job: &Job) -> Result<String, String> {
@@ -9689,6 +9767,82 @@ impl Supervisor {
                 } else {
                     format!("match-org-identifiers altid (issue 448) WET: {merged}. Live plan: {summary}")
                 })
+            }).await,
+            Spec::MatchOrgIdentifiersNhsBody { dry_run } => Box::pin(async move {
+                // Issue 513 U2: the nhs-body census (decision "unit 2, second", design C's
+                // U2) — every holder of every allowlisted ODS code, uncapped, with what the
+                // reviewer and the challenger read (U3) and whether each body's verdict is
+                // still admissible. Writes nothing but its report. Boxed like altid:
+                // run_spec is one future over every arm (CLAUDE.md's stack note).
+                if !*dry_run {
+                    return Err(NHS_BODY_WET_REFUSAL.to_owned());
+                }
+                // altid's dry refusals, for altid's reason: the generic-wall flag reads
+                // `org_match_keys`, so a half-built or superseded keyspace refuses; an
+                // EMPTY one runs and says the wall was blind.
+                let (watermark, epoch) =
+                    self.db.org_match_keys_state().await.map_err(|e| e.to_string())?;
+                let keys = self.db.org_match_keys_count().await.map_err(|e| e.to_string())?;
+                if watermark != 0 {
+                    return Err(format!(
+                        "match-org-identifiers nhs-body REFUSED: a key build is in flight \
+                         (watermark {watermark}); the generic-name probe would read a half-built \
+                         keyspace of {keys} rows"
+                    ));
+                }
+                if keys > 0 && epoch != ingest::crosswalk::NAME_KEY_EPOCH {
+                    return Err(format!(
+                        "match-org-identifiers nhs-body REFUSED: org_match_keys carries keys epoch \
+                         {epoch:?}, this binary's is {:?} — the generic-name wall would answer about \
+                         a superseded keyspace; run a WET build first: \
+                         {{\"kind\":\"build-org-match-keys\",\"dry_run\":false}}",
+                        ingest::crosswalk::NAME_KEY_EPOCH
+                    ));
+                }
+                self.set_phase("planning", None, None, "harvesting the FTS GB-NHS parties".to_owned());
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let r = self
+                    .db
+                    .plan_nhs_bodies(store::NhsBodyArgs {
+                        tail: ingest::nhs_ods::nhs_tail,
+                        survivor_code: ingest::nhs_ods::survivor_code,
+                        ods: ingest::nhs_ods::census_code,
+                        check: ingest::nhs_ods::census_check,
+                        ods_version: ingest::nhs_ods::VERSION,
+                        pair_key: ingest::crosswalk::altid_pair_key,
+                        key: ingest::crosswalk::canonical_key_flat,
+                        register_identity: ingest::project::normalise_identifier,
+                        consortium: ingest::crosswalk::consortium_name,
+                        norm: ingest::project::match_norm,
+                        stoplist_cap: SCAN_STOPLIST_CAP,
+                        caps: store::NhsBodyCaps::PRODUCTION,
+                        stop: &stop,
+                    })
+                    .await
+                    .map_err(|e| e.to_string())?;
+                // A stopped census is partial; recorded, it would read as every holder.
+                if r.stopped {
+                    return Ok("match-org-identifiers nhs-body STOPPED during the census: nothing was \
+                               recorded, and the previously recorded plan was left untouched"
+                        .to_owned());
+                }
+                let mut body = serde_json::to_value(&r).map_err(|e| e.to_string())?;
+                if let Some(all) = body.as_object_mut() {
+                    all.insert("dry_run".to_owned(), true.into());
+                    // The R3 panel's catch, as altid carries it: a blind wall's "not
+                    // generic" is not a readable one.
+                    all.insert("generic_wall_readable".to_owned(), (keys > 0).into());
+                }
+                self.db
+                    .put_report("nhs-body-plan", &body.to_string(), store::now_unix())
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "match-org-identifiers nhs-body (issue 513 U2) DRY RUN — census recorded as \
+                     nhs-body-plan, nothing written: {}",
+                    nhs_body_summary(&r, keys > 0)
+                ))
             }).await,
             _ => Err(misrouted(job, "run_match_identifiers_spec")),
         }
@@ -16871,6 +17025,7 @@ mod tests {
             action: "keep".into(),
             rationale: "fixture".into(),
             confidence: "high".into(),
+            reviewed_holders: None,
         };
         db.record_merge_verdicts("469-u4-test", &[verdict], store::now_unix()).await.unwrap();
         let msg = sup.run_spec(&altid_job(5, true)).await.expect("dry re-plans");
@@ -16912,6 +17067,7 @@ mod tests {
             action: "merge".into(),
             rationale: "UKRLP: UKPRN 10007798 is Leeds City College".into(),
             confidence: "high".into(),
+            reviewed_holders: None,
         };
         let cohort = format!("{}2026-10-12", store::ALTID_REGISTRY_CONFIRMED_COHORT_PREFIX);
         db.record_merge_verdicts(&cohort, &[verdict], store::now_unix()).await.unwrap();
@@ -17109,6 +17265,226 @@ mod tests {
         let queued = sup.queued();
         assert_eq!(queued.len(), 1);
         assert_eq!(queued[0].params, "match-org-identifiers altid dry-run");
+    }
+
+    fn nhs_body_job(id: u64, dry: bool) -> Job {
+        Job {
+            id,
+            kind: "match-org-identifiers".into(),
+            params: String::new(),
+            spec: Spec::MatchOrgIdentifiersNhsBody { dry_run: dry },
+            resume_after: None,
+        }
+    }
+
+    /// Issue 513 U2: `nhs-body` is a rule of `match-org-identifiers`, dry unless told
+    /// otherwise; a mistyped rule's refusal names it; and a WET run is refused — at
+    /// enqueue, before a job row exists, and by the arm should one reach it — because the
+    /// fold is U4's and is not built.
+    #[tokio::test]
+    async fn the_unknown_rule_message_lists_nhs_body_and_a_wet_nhs_body_run_is_refused() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let mut typo = req("match-org-identifiers");
+        typo.rule = Some("nhs_body".into());
+        let err = sup.enqueue_request(&typo).await.expect_err("an unknown rule is refused");
+        assert!(err.contains("nhs-body"), "the message must list the rule: {err}");
+        let mut wet = req("match-org-identifiers");
+        wet.rule = Some("nhs-body".into());
+        wet.dry_run = Some(false);
+        let err = sup.enqueue_request(&wet).await.expect_err("the wet path is U4's");
+        assert!(err.contains("nhs-body wet path is U4; not built"), "{err}");
+        assert!(sup.queued().is_empty(), "a refused wet run queues nothing");
+        let err = sup.run_spec(&nhs_body_job(2, false)).await.expect_err("the arm refuses too");
+        assert!(err.contains("nhs-body wet path is U4; not built"), "{err}");
+        assert!(sup.db().latest_report("nhs-body-plan").await.unwrap().is_none(), "nothing recorded");
+        let mut dry = req("match-org-identifiers");
+        dry.rule = Some("nhs-body".into());
+        sup.enqueue_request(&dry).await.expect("the census enqueues, dry by default");
+        let queued = sup.queued();
+        assert_eq!(queued.len(), 1);
+        assert_eq!(queued[0].params, "match-org-identifiers nhs-body dry-run");
+    }
+
+    /// Issue 513 U2, through the PRODUCTION table and rules (`ingest::nhs_ods`, the
+    /// normaliser, the crosswalk): Oxford's body as unit 1 found such bodies — two spelling
+    /// clusters its `GB-NHS-RTH` parties bound by name, the PPON org a PPON-first party
+    /// names beside the code, and a stray (`University of Oxford` typed RTH) — plus `ICB`,
+    /// a tail ODS does not know, and `GB-NHS-ROB`, R0B typed with a letter O, which the real
+    /// table folds uniquely into R0B (it has no O/0 twin). The dry census lists all four RTH
+    /// holders with the real ODS check, folds ROB, lists ICB off the allowlist, and stores
+    /// `nhs-body-plan`; a reviewer's verdict over exactly the RTH holders is then admitted
+    /// by the next dry run. Nothing is written.
+    #[tokio::test]
+    async fn an_nhs_body_census_lists_every_holder_and_admits_a_reviewed_verdict() {
+        let path = format!("/tmp/tender-db-sup-nhs-body-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        let org = "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at) VALUES";
+        let notice = "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at) VALUES";
+        let id = "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) VALUES";
+        let mention = "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme) VALUES";
+        let ouh = "Oxford University Hospitals NHS Foundation Trust";
+        let ouh_ft = "Oxford University Hospitals NHS FT";
+        let upper = "OXFORD UNIVERSITY HOSPITALS NHS FOUNDATION TRUST";
+        let cm = "NHS Cheshire and Merseyside ICB";
+        let sts = "South Tyneside and Sunderland NHS Foundation Trust";
+        for sql in [
+            format!("{org} (5, 'GB', NULL, NULL, '{ouh}', 'oxford university hospitals nhs foundation trust', 1, 0)"),
+            format!("{org} (6, 'GB', NULL, NULL, '{ouh_ft}', 'oxford university hospitals nhs ft', 1, 0)"),
+            format!("{org} (7, 'GB', 'national', 'GBPPONPHDQ2359NZMP', '{upper}', 'oxford university hospitals nhs foundation trust', 0, 0)"),
+            format!("{org} (8, 'GB', NULL, NULL, 'University of Oxford', 'university of oxford', 1, 0)"),
+            format!("{org} (9, 'GB', NULL, NULL, '{cm}', 'nhs cheshire and merseyside icb', 1, 0)"),
+            format!("{org} (10, 'GB', NULL, NULL, '{sts}', 'south tyneside and sunderland nhs foundation trust', 1, 0)"),
+            format!("{notice} (14, 'fts', 'ocds-a', 'h', 'fts:ocds-1.1', 1, 'a', 0)"),
+            format!("{notice} (15, 'fts', 'ocds-b', 'h', 'fts:ocds-1.1', 1, 'b', 0)"),
+            format!("{notice} (16, 'fts', 'ocds-c', 'h', 'fts:ocds-1.1', 1, 'c', 0)"),
+            format!("{notice} (17, 'fts', 'ocds-d', 'h', 'fts:ocds-1.1', 1, 'd', 0)"),
+            format!("{notice} (18, 'fts', 'ocds-e', 'h', 'fts:ocds-1.1', 1, 'e', 0)"),
+            format!("{notice} (19, 'fts', 'ocds-f', 'h', 'fts:ocds-1.1', 1, 'f', 0)"),
+            format!("{id} (14, 'ORG-A', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-RTH', 0)"),
+            format!("{id} (15, 'ORG-B', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-RTH', 0)"),
+            format!("{id} (16, 'ORG-C', 'BT-501-Organization-Company', 0, 'GB-PPON', 'GB-PPON-PHDQ-2359-NZMP', 0)"),
+            format!("{id} (16, 'ORG-C', 'BT-501-Organization-Company', 1, 'GB-NHS', 'GB-NHS-RTH', 0)"),
+            format!("{id} (17, 'ORG-D', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-RTH', 0)"),
+            format!("{id} (18, 'ORG-E', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-ICB', 0)"),
+            format!("{id} (19, 'ORG-F', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-ROB', 0)"),
+            format!("{mention} (14, 'ORG-A', 5, '{ouh}', 'GB', 'GB-NHS-RTH', 'GB-NHS')"),
+            format!("{mention} (15, 'ORG-B', 6, '{ouh_ft}', 'GB', 'GB-NHS-RTH', 'GB-NHS')"),
+            format!("{mention} (16, 'ORG-C', 7, '{upper}', 'GB', 'GB-PPON-PHDQ-2359-NZMP', 'GB-PPON')"),
+            format!("{mention} (17, 'ORG-D', 8, 'University of Oxford', 'GB', 'GB-NHS-RTH', 'GB-NHS')"),
+            format!("{mention} (18, 'ORG-E', 9, '{cm}', 'GB', 'GB-NHS-ICB', 'GB-NHS')"),
+            format!("{mention} (19, 'ORG-F', 10, '{sts}', 'GB', 'GB-NHS-ROB', 'GB-NHS')"),
+        ] {
+            conn.execute(sql.as_str(), ()).await.unwrap();
+        }
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let plan = || {
+            let sup = &sup;
+            async move {
+                let (body, _) = sup.db().latest_report("nhs-body-plan").await.unwrap().expect("recorded");
+                (serde_json::from_str::<serde_json::Value>(&body).unwrap(), body)
+            }
+        };
+        // `codes[]` is in code order, and `R0B` sorts before `RTH`.
+        let code_of = |v: &serde_json::Value, code: &str| {
+            v["codes"].as_array().unwrap().iter().find(|c| c["code"] == code).cloned().unwrap_or_else(|| {
+                panic!("{code} not planned: {v}")
+            })
+        };
+
+        let msg = sup.run_spec(&nhs_body_job(3, true)).await.expect("the census runs");
+        assert!(msg.contains("DRY RUN — census recorded as nhs-body-plan"), "{msg}");
+        assert!(msg.contains("5 coded GB parties (4 on the allowlist, 1 of them by an O/0 fold"), "{msg}");
+        assert!(msg.contains("2 codes, 5 holders"), "{msg}");
+        assert!(msg.contains("1 tails off the allowlist"), "{msg}");
+        assert!(msg.contains("generic-name wall saw nothing"), "an empty satellite is said: {msg}");
+        let (v, body) = plan().await;
+        assert_eq!(v["dry_run"], true, "{body}");
+        assert_eq!(v["generic_wall_readable"], false, "{body}");
+        assert_eq!(v["ods_version"], ingest::nhs_ods::VERSION, "{body}");
+        // The real `survivor_code` folds ROB into R0B: a swapped or non-folding lookup
+        // in the wiring would list ROB off the allowlist instead.
+        assert_eq!(v["folded_parties"], 1, "{body}");
+        let r0b = code_of(&v, "R0B");
+        assert_eq!(
+            r0b["tails"],
+            serde_json::json!([{"tail": "ROB", "parties": 1, "later_parties": 0, "folded": true}]),
+            "{body}"
+        );
+        assert_eq!(r0b["holder_ids"], serde_json::json!([10]), "{body}");
+        let rth = &code_of(&v, "RTH");
+        assert_eq!(rth["code"], "RTH", "{body}");
+        assert_eq!(rth["ods"]["name"], "OXFORD UNIVERSITY HOSPITALS NHS FOUNDATION TRUST", "{body}");
+        assert_eq!(rth["holder_ids"], serde_json::json!([5, 6, 7, 8]), "{body}");
+        assert_eq!(rth["ppons"], serde_json::json!(["PHDQ2359NZMP"]), "{body}");
+        let checks: Vec<(i64, String, String)> = rth["holders"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|h| {
+                (
+                    h["org_id"].as_i64().unwrap(),
+                    h["via"].as_str().unwrap().to_owned(),
+                    h["check"]["verdict"].as_str().unwrap().to_owned(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            checks,
+            vec![
+                (5, "party".to_owned(), "admitted".to_owned()),
+                (6, "party".to_owned(), "admitted".to_owned()),
+                (7, "ppon".to_owned(), "admitted".to_owned()),
+                (8, "party".to_owned(), "non-nhs".to_owned()),
+            ],
+            "{body}"
+        );
+        assert_eq!(rth["holders"][2]["minted_identity"], false, "a PPON is no minted identity: {body}");
+        assert_eq!(v["off_allowlist"][0]["tail"], "ICB", "{body}");
+        assert_eq!(v["off_allowlist"][0]["ods"], serde_json::Value::Null, "{body}");
+        assert_eq!(v["admitted_verdict"], 0, "{body}");
+
+        // U3's shape: the reviewer reads all four holders, keeps the stray out.
+        let verdict = store::MergeVerdict {
+            country: "GB".into(),
+            scheme: store::NHS_BODY_SCHEME.into(),
+            key: "RTH".into(),
+            members: vec![5, 6, 7],
+            action: "merge".into(),
+            rationale: "ODS RTH; University of Oxford is not the trust".into(),
+            confidence: "high".into(),
+            reviewed_holders: Some(vec![5, 6, 7, 8]),
+        };
+        db.record_merge_verdicts("nhs-body-ods-confirmed-test", &[verdict], store::now_unix()).await.unwrap();
+        let msg = sup.run_spec(&nhs_body_job(4, true)).await.expect("the census re-runs");
+        assert!(msg.contains("verdicts: 1 admitted, 0 not admitted"), "{msg}");
+        let (v, body) = plan().await;
+        assert_eq!(v["admitted_verdict"], 1, "{body}");
+        assert_eq!(code_of(&v, "RTH")["verdict"]["status"], "admitted", "{body}");
+        assert_eq!(code_of(&v, "RTH")["verdict"]["reviewed_holders"], serde_json::json!([5, 6, 7, 8]), "{body}");
+        // A census moves nothing.
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 6);
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_log").await, 0);
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_verdicts WHERE applied_at IS NOT NULL").await, 0);
+        remove_db(&path);
+    }
+
+    /// Issue 513 U2: the nhs-body arm's own key guards, altid's for altid's reason — its
+    /// generic-wall flag reads `org_match_keys`, so a key build in flight (a half-built
+    /// keyspace) or keys of a superseded epoch refuse the census, and the refused run
+    /// stores no `nhs-body-plan`. Past both guards the same store plans: the guards were
+    /// the refusals' only cause.
+    #[tokio::test]
+    async fn an_nhs_body_census_refuses_mid_key_build_and_on_a_drifted_key_epoch() {
+        let (db, conn, path) = altid_fixture("nhs-body-keys").await;
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
+        altid_satellite(&conn).await;
+        conn.execute("UPDATE projection_state SET org_match_keys_watermark = 77 WHERE id = 0", ()).await.unwrap();
+        let err = sup.run_spec(&nhs_body_job(1, true)).await.expect_err("mid-build refuses");
+        assert!(err.contains("nhs-body REFUSED") && err.contains("build is in flight") && err.contains("77"), "{err}");
+        assert!(sup.db().latest_report("nhs-body-plan").await.unwrap().is_none(), "a refused run records no plan");
+        conn.execute(
+            "UPDATE projection_state SET org_match_keys_watermark = 0, org_match_keys_epoch = 'n0v0' WHERE id = 0",
+            (),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&nhs_body_job(2, true)).await.expect_err("a drifted epoch refuses");
+        assert!(err.contains("nhs-body REFUSED") && err.contains("keys epoch"), "{err}");
+        assert!(sup.db().latest_report("nhs-body-plan").await.unwrap().is_none(), "a refused run records no plan");
+        conn.execute(
+            "UPDATE projection_state SET org_match_keys_epoch = ? WHERE id = 0",
+            (store::turso::Value::Text(ingest::crosswalk::NAME_KEY_EPOCH.to_owned()),),
+        )
+        .await
+        .unwrap();
+        let msg = sup.run_spec(&nhs_body_job(3, true)).await.expect("past both guards the census runs");
+        assert!(msg.contains("DRY RUN") && !msg.contains("generic-name wall saw nothing"), "{msg}");
+        let (body, _) = sup.db().latest_report("nhs-body-plan").await.unwrap().expect("recorded");
+        assert!(body.contains("\"generic_wall_readable\":true"), "{body}");
+        remove_db(&path);
     }
 
     /// Issue 173 (D4): the rehash probe enqueues with its sample cap, defaulting
