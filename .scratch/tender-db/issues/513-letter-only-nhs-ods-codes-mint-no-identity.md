@@ -1,6 +1,7 @@
 # 513 — letter-only NHS ODS codes (`GB-NHS-RTH`) mint no identity, so their parties bind by name and never pair
 
-Status: ready-for-agent — unit 1 BUILT 2026-10-11 (9e8e123, gate green, two-lens review wf_d682d870-832 found nothing; on main, deploy waits for the 491 drain): the altid dry run stores `registry_nhs_listing` — every GB-NHS ↔ PPON pair (literal, minted identity or null, the unit-1 class, ≤5 register / ≤3 PPON holders with provisional flags, witnesses), dry runs only, no count moves. NEXT: gate + deploy (after the 491 drain), a dry run, then the ODS read of every code (organisation vs site, active, name match, multi-target name variants vs different bodies) and the unit-2 decision.
+Status: ready-for-agent — UNIT 1 DONE 2026-10-11 (`../513-nhs/u1/u1-results.md`): all 129 three-character identity-null codes are Active RC1 ODS organisations; multi-target holders are one body's spellings (238 SAME holders), and strays are 0.96% of coded mentions. UNIT 2 DECIDED (below, "Decision (unit 2)"): exempt the three-character ODS organisation form from the digit and all-zero rules, bind literally, and repair by a refold-invariant mention re-bind, dry first. NEXT: unit 2's build (normaliser arm + tests), then unit 3 (the re-bind job, dry → read → wet), then 469 U7.
+Was: ready-for-agent — unit 1 BUILT 2026-10-11 (9e8e123, gate green, two-lens review wf_d682d870-832 found nothing; on main, deploy waits for the 491 drain): the altid dry run stores `registry_nhs_listing` — every GB-NHS ↔ PPON pair (literal, minted identity or null, the unit-1 class, ≤5 register / ≤3 PPON holders with provisional flags, witnesses), dry runs only, no count moves. NEXT: gate + deploy (after the 491 drain), a dry run, then the ODS read of every code (organisation vs site, active, name match, multi-target name variants vs different bodies) and the unit-2 decision.
 Was: ready-for-agent — triaged 2026-10-11 with issue 469 U2's evidence. NEXT: unit 1, measure (an in-app read of the
 letter-only GB-NHS values and the 73 multi-target codes; ODS lookups from the agent container, as U2's fetcher did).
 Was: needs-triage — filed 2026-10-11 from issue 469's unit-2 decision (`../469-registry-pairs/unit2-decision.md`, "NHS").
@@ -44,3 +45,57 @@ code name-bound to several provisional orgs).
   `H6A5H`) and sites (`NCS04`, an NHS Property Services site). A letter-only exemption should therefore be
   ODS-confirmed, or limited to the 3-character trust and ICB forms (`R??`, `Q??`). The 3-character `\d\d[A-Z]` form
   (`06H`) is a sub-ICB location, not an organisation.
+
+## Decision (unit 2) — 2026-10-11
+
+The evidence is `../513-nhs/u1/u1-results.md`. The owner decides as follows.
+
+**D1. Exempt the three-character ODS organisation form.** `normalise_identifier` mints a GB national identity for a
+value that is `GBNHS` followed by exactly three alphanumerics, when the digit rule or the all-zero filler rule would
+otherwise refuse it. That covers letter-only tails (`GBNHSRTH`) and zero-only tails (`GBNHSR0B`, `GBNHS0AR`). It does
+not cover:
+- any other length. Typed names (`GBNHSNHSCHESHIREANDMERSEYSIDEICB`) stay refused, and five-character codes, which mix
+  sites with organisations, keep today's rule;
+- any tail that `idgate::condemns` condemns. The arm still runs under the v2 gate.
+
+The tail must also pass a small placeholder denylist (`TBC TBA TBD NHS NIL NON UNK XXX ZZZ AAA` and same-letter runs)
+with its own tests.
+- *Why:* ODS answers every one of the 129 measured codes as an Active organisation-level record. The digit rule
+  exists to stop placeholder text minting, and here it refuses real organisation codes while it already lets sites and
+  sub-units through.
+- *Why no lead-letter list:* ODS organisation codes lead with R, Q, T, 0, D and N. A list would be a second register
+  to maintain, and the placeholder risk sits in the tail, which the denylist covers.
+
+**D2. Bind literally (exact triple), name-blind, as every digit-bearing GB-NHS code already binds.** No name gate.
+- Strays are 0.96% of coded mentions, and almost all are a neighbour's code picked by mistake: names close enough that
+  a core-token gate passes most of them, such as north-east vs south-east London ICB, or Leeds vs Bradford Teaching
+  Hospitals.
+- A strict gate (`altid_keys_agree`) would refuse the SAME variants the data is full of: ICB / Integrated Care Board,
+  FT / NHS Foundation Trust, typos. That is issue 518's regrowth again, at worse rates.
+- Strays stay identifier-verdict material (452's withheld-identifier path), as for every other scheme.
+
+**D3. Repair by a refold-invariant mention re-bind (unit 3), not by promoting clusters.**
+- *What it does:* a dry-first job re-resolves every standing mention whose raw identifier now mints an identity under
+  D1 and whose org has no identifier. Such a mention moves to the identity org, which its first mention mints. A
+  provisional cluster left empty is reclaimed through the standing reclaim, which stamps ledger rows (old ids redirect
+  through the ledger). A cluster that keeps uncoded mentions stays as the body's provisional twin.
+- *Why not promote the cluster:* promoting the whole cluster to the code would keep its uncoded mentions with the
+  identity. But a rebuild undoes that, because identifier-less mentions bind only `identifier IS NULL` rows (issue 234).
+  A promotion would also be the provisional ↔ canonical capture that issue 300 rules out. The twin is the standing
+  state of every digit-coded NHS body (u1-results §4); it is issue 300's E3 problem, not this issue's.
+- *Expected result:* 131 identity orgs hold the 7,408 coded mentions now spread over 238 SAME clusters. About 36
+  clusters empty out. After 469 U7 pairs each identity with its PPON org (53 of 54 `both_distinct` codes are one body),
+  each NHS body stands as one canonical org plus its uncoded twin or twins. That is no more orgs than today's k
+  variant clusters plus the PPON org, and the canonical row carries both identifiers.
+- *Why the job is needed:* `publishes()` compares the raw string, so a refold alone does not re-bind.
+
+**D4. Dry plan, reading and stop rules for unit 3.** The dry plan lists, per code: mentions to move, source orgs,
+clusters left empty, and the distinct names moved, with the most frequent first.
+- *S1:* stop and revisit D2 if, corpus-wide, more than 3% of moved mentions carry a name sharing no core token with
+  the code's most frequent name. The listing measured about 1% of strays, most of them with overlapping names.
+- *S2:* stop if a 50-code random sample of the newly minted values has more than 2 codes ODS does not answer as an
+  Active organisation.
+- *S3:* the wet run holds against the dry plan's stored keys (the 453 rekey pattern).
+
+**Out of scope, filed as 519:** sub-ICB location codes (`03N`, `15M`) and transposed typo codes (`RF1` for `R1F`).
+Both already mint identities that split their body.
