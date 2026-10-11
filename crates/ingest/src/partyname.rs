@@ -49,7 +49,7 @@ pub enum NotAName {
 /// `declarada desierta`. Each carries its leading space, the boundary, so the match is
 /// a `contains` on the space-padded fold with nothing built per stem (the projection's
 /// hot loop: the issue-483 `PADDED_PATTERNS` lesson).
-const VOID_STEMS: [&str; 11] = [
+const VOID_STEMS: [&str; 15] = [
     " infructu",
     " infructeu",
     " sans suite",
@@ -64,10 +64,16 @@ const VOID_STEMS: [&str; 11] = [
     " niet gegun",
     " niet toegewez",
     " niet toegeken",
+    " niet gunning",
+    " geen gunning",
+    // Polish "annulled" in every form and its common typo (`Unieważnia postępowanie`,
+    // `UNIEWAZNIONO POSTĘPOWANIE …`, `Uniewaniono postepowanie`).
+    " uniewazni",
+    " uniewanion",
 ];
 
 /// Whole values that say the lot was not awarded, compared entire after the lot strip.
-const VOID_WHOLE: [&str; 49] = [
+const VOID_WHOLE: [&str; 50] = [
     "desierto",
     "desierta",
     "deserto",
@@ -90,6 +96,7 @@ const VOID_WHOLE: [&str; 49] = [
     "uniewazniono",
     "postepowanie uniewaznione",
     "brak ofert",
+    "brak oferty",
     "aucune offre",
     "aucune offre recue",
     "pas d attributaire",
@@ -234,8 +241,13 @@ const NEGATIONS: [&str; 20] = [
 
 /// Words skipped between an award word and its negation (`pas d'attributaire`, `no hay
 /// adjudicatario`, `non è stato individuato alcun aggiudicatario` reads its `alcun`).
-const NEGATION_FILLERS: [&str; 17] =
-    ["d", "de", "du", "des", "l", "la", "le", "un", "une", "el", "del", "di", "hay", "ha", "sido", "a", "ete"];
+const NEGATION_FILLERS: [&str; 30] = [
+    "d", "de", "du", "des", "l", "la", "le", "un", "une", "el", "del", "di", "hay", "ha", "sido", "a", "ete",
+    // The noun between a negation and its participle (`No contract awarded`, `aucune offre
+    // retenue`, `ningún contrato adjudicado`).
+    "contract", "contrat", "contratto", "contrato", "offre", "offres", "oferta", "ofertas", "offerta", "offerte",
+    "candidature", "candidat", "tender",
+];
 
 /// Company forms as published, compared on the raw token with its surrounding punctuation
 /// trimmed and its dots removed ([`company_token`]): a void phrase beside one names the
@@ -325,30 +337,46 @@ pub fn mentions_void(name: &str) -> bool {
 }
 
 /// A void whole value opening the name and running straight on into its reason: the next
-/// character is punctuation (`BRAK OFERT -unieważniona …`, `Desierto / Ninguna oferta`) or
-/// the next word is lowercase (`Desierto al no haberse presentado ninguna oferta`, `Lotto
-/// deserto in quanto non è pervenuta alcuna offerta`, `Brak ofert na zadanie nr 1`).
-/// `Desierto OÜ` — an uppercase word after it — is a company's name.
+/// character is punctuation (`BRAK OFERT-unieważniona …`, `Desierto / Ninguna oferta`), the
+/// next word is lowercase (`Desierto al no haberse presentado ninguna oferta`, `Lotto deserto
+/// in quanto …`, `Brak ofert na zadanie nr 1`), a [`CONTINUATIONS`] word in any case
+/// (`DESIERTO POR NO PRESENTARSE LICITADORES`), or a TED section number spilled into the slot
+/// (`Brak ofert V.1) Award and contract value …`). `Desierto OÜ` — an uppercase word after it —
+/// is a company's name.
 fn void_prefix(name: &str) -> bool {
     let name = name.trim();
-    let mut end = 0;
-    for word in name.split_whitespace().take(4) {
-        let Some(at) = name[end..].find(word) else { return false };
-        end += at + word.len();
+    // Every place a word ends (an alphanumeric run before a non-alphanumeric char), the first
+    // dozen: the head can end at a space or at glued punctuation.
+    let ends: Vec<usize> = name
+        .char_indices()
+        .zip(name.char_indices().skip(1))
+        .filter(|((_, a), (_, b))| a.is_alphanumeric() && !b.is_alphanumeric())
+        .map(|(_, (at, _))| at)
+        .take(12)
+        .collect();
+    for end in ends {
         if !VOID_WHOLE.contains(&fold(&name[..end]).as_str()) {
             continue;
         }
         let rest = &name[end..];
         let next = rest.trim_start();
         let Some(first) = next.chars().next() else { return false };
-        // The head's own trailing punctuation (`Desierto.`) folds away; what follows decides.
         let glued = !rest.starts_with(char::is_whitespace);
-        if glued || !first.is_alphanumeric() || first.is_lowercase() || word.ends_with(|c: char| !c.is_alphanumeric()) {
+        let word: String = next.chars().take_while(|c| c.is_alphanumeric()).collect::<String>().to_lowercase();
+        let section = word == "section" || ["v.", "vi.", "iv.", "ii."].iter().any(|m| next.to_lowercase().starts_with(m));
+        if glued || !first.is_alphanumeric() || first.is_lowercase() || CONTINUATIONS.contains(&word.as_str()) || section {
             return true;
         }
     }
     false
 }
+
+/// Words that continue a void phrase into its reason, in any case (all-caps names hide the
+/// lowercase cue): `DESIERTO POR NO PRESENTARSE LICITADORES`, `NOT AWARDED DUE TO …`.
+const CONTINUATIONS: [&str; 24] = [
+    "por", "al", "en", "de", "del", "per", "in", "na", "for", "due", "to", "as", "pour", "faute", "par", "w", "z",
+    "ze", "sin", "ya", "on", "nr", "da", "zgodnie",
+];
 
 /// The head of a name that goes on to give a reason: the text before the first `(`, `[`,
 /// `:`, `;`, `,`, ` - `, ` – `, ` — ` or `. `, when something follows it. `None` for a name
@@ -858,6 +886,17 @@ mod tests {
             "Brak ofert na zadanie nr 1.",
             "BRAK OFERT -unieważniona na podstawie art. 93 ust. 1 pkt 1 uPzp",
             "Desierto / Ninguna oferta adecuada",
+            // The sixth dry run's survivors.
+            "DESIERTO POR NO PRESENTARSE LICITADORES",
+            "BRAK OFERT-unieważniona na podstawie art. 93 ust. 1 pkt. 1 uPzp",
+            "Brak ofert V.1) Award and contract value V.1.1) Name and address of successful supplier",
+            "Brak oferty",
+            "Uniewaniono postepowanie",
+            "Unieważnia postępowanie przetargowe na podstawie art. 93 ust. 1",
+            "UNIEWAZNIONO POSTĘPOWANIE NA PODSTAWIE ART.93 UST.1 PKT 1",
+            "Niet gunning",
+            "No contract awarded due to budgetary constraints",
+            "aucune offre retenue",
             "Perceel 2 en 3 zijn niet gegund",
             "De percelen 2, 3, 4, 5 en 6 zijn overeenkomstig het bepaalde in het bestek niet gegund",
             "De opdracht wordt niet gegund aan Entropia op basis van deze vooraankondiging",

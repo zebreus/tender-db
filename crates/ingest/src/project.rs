@@ -4362,7 +4362,11 @@ fn party_names<'a>(
 /// not awarded ([`crate::partyname::NotAName::VoidLot`]) — each outermost party section,
 /// plus the nested inner halves of one ([`nested_org_aliases`]), so a role or result
 /// reference to either half is caught. A party with one real name among its names is not
-/// void; a party with no name is not void.
+/// void; a party with no name is not void — except a party that prints four or more names
+/// at least half of which are void: TED's own "not awarded" in two dozen languages, whose
+/// translations vary by year (`No se ha adjudicado`, `Kontraktet har inte tilldelats.`,
+/// `mhux mogħtija`) beyond any list (the drain's Verify, 2026-10-11). A real party's
+/// translated names never include a void phrase.
 ///
 /// The ONE place the fold decides "void": [`NoticeState::mentions`] skips these parties
 /// (no organization is minted) and [`NoticeState::read`] drops every role, result winner
@@ -4375,8 +4379,8 @@ fn void_party_sections(
     parsed: &Parsed,
 ) -> BTreeSet<String> {
     let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
-    // Outermost party → whether every non-empty name seen so far is a void lot.
-    let mut all_void: HashMap<String, bool> = HashMap::new();
+    // Outermost party → (void names, names).
+    let mut tally: HashMap<String, (usize, usize)> = HashMap::new();
     for value in &parsed.values {
         let NoticeValue::Text { value: name, .. } = &value.value else { continue };
         if name.trim().is_empty() || !party_name_field(sdk01, &value.field_id) {
@@ -4385,9 +4389,15 @@ fn void_party_sections(
         let Some(owner) = enclosing(sections, &value.section_id, kinds) else { continue };
         let owner = alias.get(owner).map_or(owner, |o| o.as_str());
         let void = crate::partyname::not_a_name(name) == Some(crate::partyname::NotAName::VoidLot);
-        all_void.entry(owner.to_owned()).and_modify(|v| *v &= void).or_insert(void);
+        let entry = tally.entry(owner.to_owned()).or_default();
+        entry.0 += usize::from(void);
+        entry.1 += 1;
     }
-    let mut out: BTreeSet<String> = all_void.into_iter().filter(|(_, void)| *void).map(|(s, _)| s).collect();
+    let mut out: BTreeSet<String> = tally
+        .into_iter()
+        .filter(|(_, (void, names))| *void == *names || (*names >= 4 && 2 * *void >= *names))
+        .map(|(s, _)| s)
+        .collect();
     let inner: Vec<String> = alias.iter().filter(|(_, outer)| out.contains(*outer)).map(|(i, _)| i.clone()).collect();
     out.extend(inner);
     out
@@ -13373,6 +13383,17 @@ mod tests {
         let state = bound(r209, &mixed);
         assert_eq!(results(&state), vec![(Some("selec-w".into()), vec![1_001])], "a party with one real name is a party");
         assert_eq!(skipped(r209, &mixed).1, Vec::<String>::new());
+
+        // TED's multilingual "not awarded", some translations off the list: four or more
+        // names, at least half void, is void.
+        let ted = legacy(
+            &[("ORG-1", None, &["not awarded", "ikke tildelt", "No se ha adjudicado", "Kontraktet har inte tilldelats.", "mhux mogħtija", "non aggiudicato"])],
+            &["ORG-1"],
+            vec![],
+        );
+        assert_eq!(results(&bound(r209, &ted)), vec![(Some("clos-nw".into()), vec![])], "multilingual majority void");
+        let few = legacy(&[("ORG-1", None, &["not awarded", "No se ha adjudicado", "Kontraktet har inte tilldelats."])], &["ORG-1"], vec![]);
+        assert_eq!(results(&bound(r209, &few)), vec![(Some("selec-w".into()), vec![1_001])], "three names: every one must be void");
 
         // sdk-0.1: a void WinningParty alone closes the result; beside a TenderResultCode
         // the publisher's code stands, with no winner.
