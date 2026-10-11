@@ -4,6 +4,13 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 516) — a supplier that spells out "Public Limited Company" is no longer split from its plc
+
+The Companies House ↔ PPON merge arm (issue 448) read `PUBLIC LIMITED COMPANY` and `LIMITED LIABILITY PARTNERSHIP`
+as "Limited", so a supplier published as `X PUBLIC LIMITED COMPANY` under one identifier and `X plc` under the other
+was refused as a form conflict and stayed two organizations. The spelled-out forms now read as `plc` / `LLP`; such
+pairs merge once reviewed, and the merged organization publishes `organization removed` with a 308 to the survivor.
+
 ## Unreleased (issue 512) — a text-era award body that says every tender was rejected reads "closed, no award"
 
 Award notices of the 1993–2010 text era that state an award date and say every tender was rejected now serve

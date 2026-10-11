@@ -1308,17 +1308,32 @@ pub fn altid_keys_agree(a: &str, b: &str) -> bool {
 /// [`legal_form_family`] knows no GB form, so it never vetoes `Acme plc`
 /// against `Acme Ltd`; this does. The LAST family token wins, because an
 /// English name puts its form at the end and may start with a form word
-/// (`Limited Editions plc`).
+/// (`Limited Editions plc`). The spelled-out forms (`Public Limited Company`,
+/// `Public Limited`, `Limited Liability Partnership`) read as the abbreviation
+/// they spell, never as their `Limited` (issue 516).
 pub fn gb_legal_family(name: &str) -> Option<&'static str> {
-    crate::project::match_norm(name)
-        .split(' ')
-        .filter_map(|t| match t {
-            "ltd" | "limited" => Some("ltd"),
-            "plc" => Some("plc"),
-            "llp" => Some("llp"),
-            _ => None,
-        })
-        .last()
+    let norm = crate::project::match_norm(name);
+    let tokens: Vec<&str> = norm.split(' ').collect();
+    let mut last = None;
+    let mut at = 0;
+    while at < tokens.len() {
+        // The spelled-out forms first: their `limited` is not a Ltd (the 469 U1 read,
+        // 2026-10-11: `NATIONAL WESTMINSTER BANK PUBLIC LIMITED COMPANY` against
+        // `Natwest Bank plc` and `RAPLEYS LIMITED LIABILITY PARTNERSHIP` against `Rapleys LLP`
+        // read as a form conflict, and nine register-confirmed pairs could never merge).
+        let (form, used) = match &tokens[at..] {
+            ["public", "limited", "company", ..] => (Some("plc"), 3),
+            ["public", "limited", ..] => (Some("plc"), 2),
+            ["limited", "liability", "partnership", ..] => (Some("llp"), 3),
+            ["ltd" | "limited", ..] => (Some("ltd"), 1),
+            ["plc", ..] => (Some("plc"), 1),
+            ["llp", ..] => (Some("llp"), 1),
+            _ => (None, 1),
+        };
+        last = form.or(last);
+        at += used;
+    }
+    last
 }
 
 #[cfg(test)]
@@ -1456,5 +1471,31 @@ mod altid {
         assert_ne!(gb_legal_family("Acme plc"), gb_legal_family("Acme Ltd"));
         assert_ne!(gb_legal_family("Acme LLP"), gb_legal_family("Acme Limited"));
         assert_eq!(gb_legal_family("Limited Editions plc"), Some("plc"), "the last form wins");
+    }
+
+    /// The spelled-out forms are the abbreviations they spell, not a Ltd: the nine
+    /// register-confirmed pairs the 469 U1 read found denied as a form conflict.
+    #[test]
+    fn spelled_out_forms_are_their_abbreviations() {
+        for (spelled, short) in [
+            ("NATIONAL WESTMINSTER BANK PUBLIC LIMITED COMPANY", "Natwest Bank plc"),
+            ("Bayer Public Limited Company", "Bayer PLC"),
+            ("3M UNITED KINGDOM PUBLIC LIMITED COMPANY (01123045)", "3M United Kingdom PLC"),
+            ("BRITISH TELECOMMUNICATIONS PUBLIC LIMITED", "British Telecommunications PLC"),
+            ("RAPLEYS LIMITED LIABILITY PARTNERSHIP", "Rapleys LLP"),
+            ("DANIEL CONNAL LIMITED LIABILITY PARTNERSHIP", "Daniel Connal Partnership LLP"),
+        ] {
+            assert_eq!(gb_legal_family(spelled), gb_legal_family(short), "{spelled}");
+            assert!(gb_legal_family(spelled).is_some(), "{spelled}");
+        }
+        assert_eq!(gb_legal_family("Acme Public Limited Company"), Some("plc"));
+        assert_eq!(gb_legal_family("Acme Limited Liability Partnership"), Some("llp"));
+        // …and still apart from the form they are not.
+        assert_ne!(gb_legal_family("Acme Public Limited Company"), gb_legal_family("Acme Limited"));
+        assert_ne!(gb_legal_family("Acme Limited Liability Partnership"), gb_legal_family("Acme Ltd"));
+        // A word between them is no spelled-out form, and the last form still wins.
+        assert_eq!(gb_legal_family("Public Health Limited"), Some("ltd"));
+        assert_eq!(gb_legal_family("Limited Liability Partnership Services Ltd"), Some("ltd"));
+        assert_eq!(gb_legal_family("Public Limited Company Registrars LLP"), Some("llp"));
     }
 }
