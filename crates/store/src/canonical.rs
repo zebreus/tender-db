@@ -484,7 +484,9 @@ pub(crate) const SCHEMA: &str = "
         PRIMARY KEY (loser, at)
     ) STRICT;
     -- Issue 448 unit 3: the resolver alias reads the e2-altid merges at every
-    -- fold. The ledger holds millions of rows of other rules (p0 alone wrote
+    -- fold — both families since issue 469 U5 (a company-number row's `coh`, a
+    -- register row's `registry_scheme`/`registry_kind`/`registry`, under the same
+    -- WHERE). The ledger holds millions of rows of other rules (p0 alone wrote
     -- 5.76M), so the read is a seek through this partial index, which holds
     -- only the e2-altid rows. Built once when a store first opens with it.
     CREATE INDEX IF NOT EXISTS org_merge_log_e2_altid ON org_merge_log(rule) WHERE rule = 'e2-altid';
@@ -740,7 +742,9 @@ pub(crate) const SCHEMA: &str = "
     -- PK serves org_a-prefix probes.
     -- Issue 448: rule 'e2-altid', tier 'E2' — a company-number/PPON pair an FTS
     -- party published whose two orgs the altid arm's gates DENIED (evidence
-    -- carries the gate as `status`). Written after each wet altid run, never
+    -- carries the gate as `status`) — or (issue 469 U5) a register/PPON pair,
+    -- evidence `registry_scheme`/`registry`/`registry_org` in place of
+    -- `coh`/`coh_org`. Written after each wet altid run, never
     -- deleted; state='merged' once a later run merges the pair. The readers
     -- (edge census, xb packet) join components over 'e3-*' rows ONLY.
     CREATE TABLE IF NOT EXISTS org_candidate_edges (
@@ -4930,7 +4934,8 @@ async fn record_alias_identifier(conn: &Connection, id: &Identifier, org: i64) -
 
 /// Issue 460 unit 3: the ledger rules whose evidence names the loser's
 /// identifier literal under `$.loser_id`, in the order the backfill reads them.
-/// `e2-altid` (448) stores the PPON org's `organizations.identifier`; `r2`, `e0`
+/// `e2-altid` (448, and issue 469 U5's register merges: the loser is always the PPON
+/// org) stores the PPON org's `organizations.identifier`; `r2`, `e0`
 /// and `r3` the loser member's literal (`e0` merges identical triples, so its
 /// rows count as the survivor's own and write nothing — read to show it). Not
 /// read: `p0`/`p1` (that key is the numeric org id), `rekey` (a wrong number,
@@ -5588,8 +5593,11 @@ pub struct AltIdMergeArgs<'a> {
     /// `true` plans and writes nothing. `false` (unit 2) re-plans live under the
     /// writer, holds the live plan against [`Self::expect_pairs`], and merges.
     pub dry_run: bool,
-    /// Wet runs only: merge at most this many pairs (the job's `max_groups`, the
-    /// design's capped first wet run). `None` merges every reviewed pair.
+    /// Wet runs only: merge at most this many pairs OF EACH FAMILY (the job's
+    /// `max_groups`, the design's capped first wet run; issue 469 U5's D2 — the
+    /// company-number pairs and the register pairs are capped apart, so a capped run
+    /// samples the register family whatever the company-number backlog is). `None`
+    /// merges every reviewed pair.
     pub max_pairs: Option<u64>,
     /// Wet runs only: the stored dry plan's `pairs` — the reviewed set. A wet
     /// run without it is refused before anything is read. Only live ∩ expected
@@ -5603,6 +5611,15 @@ pub struct AltIdMergeArgs<'a> {
     /// first run's, and re-counting the same deferred pairs would abort it with
     /// nothing changed (unit 2 review).
     pub known_deferred: Vec<String>,
+    /// Issue 469 U5, wet runs only: the stored plan's `registry_pairs_planned` — the
+    /// reviewed register set, held to its OWN max(2%, 5) parity. Empty on a dry run, and
+    /// when the stored plan carries none (a plan from before U4): every live register pair
+    /// is then deferred, and more than five abort the run (C14, the safe direction).
+    pub expect_registry_pairs: Vec<String>,
+    /// Issue 469 U5, wet runs only: register pairs a previous wet run already deferred
+    /// (the stored residual's `registry_deferred_pairs`) — never merged, and not drift a
+    /// second time, as [`Self::known_deferred`] for the company-number family.
+    pub known_registry_deferred: Vec<String>,
     /// Recorded into `org_merge_log`, `org_merge_verdicts` and
     /// `org_candidate_edges` rows.
     pub job_id: Option<i64>,
@@ -5890,6 +5907,10 @@ pub struct RegistryPairListing {
     /// Notices, the witnesses excepted, where both orgs carry a mention. Listed, never
     /// gated.
     pub cooccurring: u64,
+    /// Issue 469 U5: the cohort of the HIGH merge verdict that admitted the pair. `None`
+    /// for a pair planned on corroboration alone, which a wet run HOLDS (D1: every
+    /// register merge needs an admitting verdict) and counts `registry_unconfirmed`.
+    pub verdict_cohort: Option<String>,
 }
 
 impl RegistryPairListing {
@@ -5899,6 +5920,29 @@ impl RegistryPairListing {
     pub fn key(&self) -> String {
         format!("{}:{}~{}", self.registry_scheme, self.registry, self.ppon)
     }
+}
+
+/// Issue 469 U5 (D1): the cohort prefix under which a register-CONFIRMED pair's HIGH merge
+/// verdict is posted — the store has no other record that a register (UKRLP, the Charity
+/// Commission, OSCR, …) confirmed a pair. The ledger's `confirmed` reads `register` for a
+/// verdict whose cohort starts with it and `verdict` for any other (a reviewer and a
+/// challenger, `altid-registry-<date>`). A string contract: U6's tooling posts under it, and
+/// a reviewer cohort named with it by mistake would make the ledger claim a register check.
+pub const ALTID_REGISTRY_CONFIRMED_COHORT_PREFIX: &str = "altid-registry-confirmed-";
+
+/// Issue 469 U5: one register merge a wet run committed — S4's ledger read, carried on the
+/// report because `org_merge_log` is not on `/v1/sql`'s allow-list.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RegistryMerged {
+    /// `<registry scheme>:<identity>~<ppon>`.
+    pub key: String,
+    /// The register org (survivor) and the PPON org (deleted).
+    pub keep: i64,
+    pub loser: i64,
+    /// The admitting HIGH merge verdict's cohort, stamped applied by the merge.
+    pub verdict_cohort: String,
+    /// The exact `org_merge_log.evidence` written.
+    pub evidence: String,
 }
 
 /// What the issue-448 altid planner found. Every both-distinct pair lands in
@@ -5946,8 +5990,8 @@ pub struct AltIdMergeReport {
     /// Up to [`REGISTRY_SAMPLE_PER_SCHEME`] `both_distinct` registry pairs per scheme,
     /// with both orgs' names, for review.
     pub registry_sample: Vec<RegistrySample>,
-    // ---- Issue 469 U4: the register graph, planned on DRY runs only (all empty on a
-    // wet run); the wet path never reads it.
+    // ---- Issue 469 U4: the register graph — planned on BOTH runs since U5: a wet run
+    // re-plans it live under the writer, as it re-plans the company-number graph.
     /// Per scheme, where its `both_distinct` pairs landed.
     pub registry_gates: std::collections::BTreeMap<String, RegistryGateCounts>,
     /// Distinct keyed PPONs partnered with two or more register values (any scheme)
@@ -5958,8 +6002,8 @@ pub struct AltIdMergeReport {
     /// Distinct register-paired PPONs some GB party published beside a company-number
     /// row.
     pub registry_triple_ppons: u64,
-    /// The planned `<scheme>:<identity>~<ppon>` keys, sorted and UNCAPPED — the set U5's
-    /// wet path will hold its register family to.
+    /// The planned `<scheme>:<identity>~<ppon>` keys, sorted and UNCAPPED — the set a wet
+    /// run holds its register family to (U5). On a wet run, the LIVE register plan.
     pub registry_pairs_planned: Vec<String>,
     /// Capped at `AltIdMergeArgs::plan_listing_cap`, like the company-number plan.
     pub registry_plan_listing: Vec<RegistryPairListing>,
@@ -6050,9 +6094,11 @@ pub struct AltIdMergeReport {
     /// denied, or an org gone. Part of the parity drift, never merged.
     pub expected_not_live: u64,
     /// Live ∩ expected pairs left unmerged because their PPON org is the loser
-    /// of ANOTHER such pair too — two admitting verdicts over one PPON, which
-    /// only verdicts can plan (the conflict flag denies it otherwise). The arm
-    /// never picks a side, so neither merges.
+    /// of ANOTHER live pair of either family too — two admitting verdicts over one
+    /// PPON, which only verdicts can plan (the conflict flag denies it otherwise) — or
+    /// the keep of one (issue 469 U5's C9: a register keep can be another pair's loser,
+    /// and merging that loser first would delete a keep the other family still needs).
+    /// The arm never picks a side, so neither merges.
     pub contradictory: u64,
     /// Pairs merged (≤ live ∩ expected under a cap or a stop).
     pub merged_pairs: u64,
@@ -6073,6 +6119,35 @@ pub struct AltIdMergeReport {
     /// raised: raising would drop the residual the supervisor records and lock
     /// the next wet run out on parity over merges that are already done.
     pub edges_error: Option<String>,
+    // ---- Issue 469 U5: the register family's wet run; all zero or empty on a dry run.
+    // `merged_pairs` and `residual_pairs` above stay the company-number family's; the
+    // shared counters (`removed`, `mentions`, `parties`, `bid_parties`, `winners`,
+    // `winner_dups`, `tender_changes`, `edges_written`, `edges_merged`) sum both.
+    /// The stored plan's register pair count, the set the live register plan was held
+    /// against.
+    pub registry_expected_pairs: u64,
+    /// Live register pairs the stored register set lacks: never merged by this run.
+    pub registry_deferred_unreviewed: u64,
+    pub registry_deferred_pairs: Vec<String>,
+    /// Stored register pairs the live register plan no longer carries.
+    pub registry_expected_not_live: u64,
+    /// Live ∩ expected register pairs whose PPON org is contested (C9), across families.
+    pub registry_contradictory: u64,
+    /// Live ∩ expected register pairs no HIGH merge verdict admitted (D1): planned on
+    /// corroboration alone, so held, never merged, until a verdict is posted.
+    pub registry_unconfirmed: u64,
+    /// Register pairs merged (≤ live ∩ expected under a cap or a stop).
+    pub registry_merged_pairs: u64,
+    /// Live ∩ expected register pairs left unmerged (cap, stop, contested, unconfirmed),
+    /// sorted: what the supervisor re-records as the plan's `registry_pairs_planned`.
+    pub registry_residual_pairs: Vec<String>,
+    /// Of `edges_written`, the register pairs'.
+    pub registry_edges_written: u64,
+    /// Every register merge committed, with the exact ledger evidence (S4's read).
+    pub registry_merged: Vec<RegistryMerged>,
+    /// S5 (both runs): register keys the ledger merged whose pair stands split again —
+    /// not `already_one` — so the alias failed to replay the merge somewhere.
+    pub registry_regrown: Vec<String>,
     pub plan_listing: Vec<AltIdListing>,
     pub plan_listing_truncated: bool,
     pub denied_listing: Vec<AltIdListing>,
@@ -6116,9 +6191,14 @@ pub const ALTID_LISTING_NAMES: usize = 8;
 /// what runs.
 ///
 /// Unit 3: the alias preload's ledger read — through the partial index
-/// `org_merge_log_e2_altid`, pinned by the same plan guard.
-pub const ALTID_ALIAS_LEDGER_SQL: &str = "SELECT json_extract(evidence, '$.coh'), json_extract(evidence, '$.ppon') \
-     FROM org_merge_log WHERE rule = 'e2-altid'";
+/// `org_merge_log_e2_altid`, pinned by the same plan guard. Issue 469 U5: both families'
+/// rows — a company-number row's `coh`, a register row's `registry_scheme` /
+/// `registry_kind` / `registry` (NULL where the row is the other family's) — under the
+/// same WHERE, so the read is still the same seek. The planner's `registry_regrown` (S5)
+/// reads it too.
+pub const ALTID_ALIAS_LEDGER_SQL: &str = "SELECT json_extract(evidence, '$.coh'), json_extract(evidence, '$.ppon'), \
+     json_extract(evidence, '$.registry_scheme'), json_extract(evidence, '$.registry_kind'), \
+     json_extract(evidence, '$.registry') FROM org_merge_log WHERE rule = 'e2-altid'";
 
 /// The next FTS profile after a bound: one seek into `notices_profile` per
 /// distinct profile (`fts:ocds-1.1`, …), never a DISTINCT over every FTS row.
@@ -6199,6 +6279,64 @@ struct AltIdDenied {
     coh_org: i64,
     ppon_org: i64,
     listing: AltIdListing,
+}
+
+/// Issue 469 U5: one planned register pair as the wet run merges it — the PPON org folds
+/// into the register org.
+struct AltIdRegPlanned {
+    /// `<registry scheme>:<identity>~<ppon>`, the stored plan's key.
+    key: String,
+    /// The publisher's scheme (`GB-UKPRN`).
+    registry_scheme: String,
+    /// The identity's kind (`national`, the shape gate's) and the identity itself — the
+    /// exact (`GB`, kind, identity) triple the register alias binds through.
+    registry_kind: String,
+    registry: String,
+    /// The FTS literals as first published.
+    registry_literal: String,
+    ppon: String,
+    ppon_literal: String,
+    keep: i64,
+    loser: i64,
+    /// The two orgs' stored identifiers (`keep_id` / `loser_id`), "" for none.
+    keep_literal: String,
+    loser_literal: String,
+    witnesses: u64,
+    /// `p`: distinct buyer orgs of the witness notices.
+    publishers: u64,
+    /// The first three witness notice ids, ascending.
+    witness_notices: Vec<i64>,
+    /// The altid key of the corroborating register-side name; "" when a verdict stood
+    /// in — always, under D1 (C6).
+    name_key: String,
+    /// The admitting HIGH merge verdict's cohort; `None` holds the pair (D1).
+    verdict_cohort: Option<String>,
+}
+
+/// Issue 469 U5: one two-org register pair a gate denied, kept for its `e2-altid` edge.
+struct AltIdRegDenied {
+    registry_org: i64,
+    ppon_org: i64,
+    listing: RegistryPairListing,
+}
+
+/// Issue 469 U5: what the register planner hands the wet run — both empty on a dry run.
+#[derive(Default)]
+struct AltIdRegistryWet {
+    planned: Vec<AltIdRegPlanned>,
+    denied: Vec<AltIdRegDenied>,
+}
+
+/// Issue 469 U5: one merge the wet run commits, whichever family planned it — what
+/// [`Db::altid_merge_steps`] needs, so both families share one transaction discipline.
+struct AltIdMergeStep<'p> {
+    /// The stored plan's key, which the admitting verdict is stamped under.
+    key: &'p str,
+    keep: i64,
+    loser: i64,
+    /// The flat `org_merge_log.evidence`.
+    evidence: String,
+    verdict_cohort: Option<&'p str>,
 }
 
 /// Issue 469: one (scheme, register value, PPON key) pair of the altid harvest — unit
@@ -6530,18 +6668,21 @@ pub struct AltIdAliasCounts {
     /// (every store-level caller) and on a fold that opened no resolver, so a
     /// zero below can be told from "not armed".
     pub armed: bool,
-    /// `e2-altid` ledger rows read at arming.
+    /// `e2-altid` ledger rows read at arming — usable rows of either family (issue
+    /// 469 U5: a company-number row or a register row).
     pub ledger_rows: u64,
     /// PPON keys aliased to one company number.
     pub aliases: u64,
     /// Ledger pairs a `keep` verdict under (`GB`, `GB:altid`, `<coh>~<ppon>`)
     /// dropped.
     pub kept: u64,
-    /// PPON keys the ledger merged into two or more company numbers: never
-    /// aliased.
+    /// PPON keys the ledger merged into two or more targets of any kind (company
+    /// numbers, register identities, or one of each): never aliased.
     pub poisoned: u64,
     /// Mentions whose E1 `GB:ppon` key missed the exact and the canonical
-    /// lookups and has an alias entry (mapped or poisoned).
+    /// lookups and has an alias entry (mapped or poisoned). Issue 469 U5: a
+    /// company-number entry — a register target, or a poisoned PPON with one
+    /// among its targets, is asked in [`Self::registry`].
     pub asked: u64,
     /// …bound to the company-number org's current owner.
     pub bound: u64,
@@ -6554,7 +6695,8 @@ pub struct AltIdAliasCounts {
     /// `asked == bound + refused`.
     pub refused: u64,
     /// Issue 460 review: binds that recorded their PPON as a merged
-    /// identifier of the company-number org, because it carried none — what a
+    /// identifier of the org they bound to (the company-number org, or since
+    /// issue 469 U5 the register org), because it carried none — what a
     /// from-archive rebuild leaves (the table emptied, no PPON org minted). One
     /// per `(PPON, org)` a run; zero on a fold the merges already covered.
     pub recorded: u64,
@@ -6575,15 +6717,64 @@ pub struct AltIdAliasCounts {
     /// share says the cap binds and the bar compares only the newest names.
     pub owner_name_reads: u64,
     pub owner_names_capped: u64,
+    /// Issue 469 U5: the alias's REGISTER-target activity, counted apart so the
+    /// company-number fields above keep their 448 meaning (`recorded`,
+    /// `ledger_rows` and `poisoned` stay shared).
+    pub registry: AltIdRegistryAliasCounts,
+}
+
+/// Issue 469 U5: what the alias did for PPONs the ledger merged into a REGISTER org —
+/// [`AltIdAliasCounts`]' 448 fields, again, for register targets. A PPON poisoned with a
+/// register target among its targets is asked and refused here.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct AltIdRegistryAliasCounts {
+    /// PPON keys aliased to one register identity.
+    pub aliases: u64,
+    /// Register ledger pairs a `keep` verdict under (`GB`, `GB:altid`,
+    /// `<registry scheme>:<identity>~<ppon>`) dropped.
+    pub kept: u64,
+    pub asked: u64,
+    pub bound: u64,
+    pub bound_unwalled: u64,
+    /// `asked == bound + refused`.
+    pub refused: u64,
+    pub refused_poisoned: u64,
+    /// …no standing row carries the exact (`GB`, kind, identity) triple…
+    pub refused_no_owner: u64,
+    /// …the triple stands on two or more rows, or under a `wrong`/`related` verdict:
+    /// the alias never picks one…
+    pub refused_shared: u64,
+    pub refused_veto: u64,
+    pub refused_names: u64,
+    pub refused_generic: u64,
+}
+
+/// Issue 469 U5: where the ledger aimed a merged PPON.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum AltIdTarget {
+    /// A company-number `GB:coh` key — 448's, found through `canon_of`.
+    Coh(String),
+    /// (kind, identity): a register identity, bound ONLY through the exact (`GB`, kind,
+    /// identity) row, when exactly one row holds it and no `wrong`/`related` verdict names
+    /// it. A register literal keys nothing, so there is no canonical map to find it by.
+    Registry(String, String),
 }
 
 /// The armed alias a [`MentionResolver`] carries: identity to identity
-/// (`GB:ppon` key → `GB:coh` key), never org ids, so it survives the
-/// renumbering of a bare rebuild while `org_merge_log` persists.
+/// (`GB:ppon` key → `GB:coh` key, or since issue 469 U5 → a register identity), never
+/// org ids, so it survives the renumbering of a bare rebuild while `org_merge_log`
+/// persists.
 struct AltIdAlias {
     rules: AltIdAliasRules,
-    alias_of: std::collections::HashMap<String, String>,
+    alias_of: std::collections::HashMap<String, AltIdTarget>,
     poisoned: std::collections::HashSet<String>,
+    /// Issue 469 U5: the poisoned PPONs with a register target among their targets — a
+    /// refusal of one is counted in the register family.
+    poisoned_registry: std::collections::HashSet<String>,
+    /// Issue 469 U5 (C3): the triples a `wrong` or unapplied `related` verdict names, read
+    /// at arming ([`withheld_identifier_triples`]). A register target among them binds
+    /// nobody — in a rebuild too, where the resolver's withheld org set starts empty.
+    withheld_triples: std::collections::HashSet<(Option<String>, String, String)>,
     counts: AltIdAliasCounts,
     /// Issue 460 review: the `(PPON, org)` pairs a bind already recorded (or
     /// found recorded) as a merged identifier this run — one seek per pair,
@@ -6601,6 +6792,9 @@ struct AltIdAlias {
 enum AltIdRefusal {
     Poisoned,
     NoOwner,
+    /// Issue 469 U5: the register target's triple stands on two or more rows, or under a
+    /// `wrong`/`related` verdict.
+    Shared,
     Veto,
     Names,
     Generic,
@@ -6618,6 +6812,64 @@ fn altid_json_esc(s: &str) -> String {
             c => vec![c],
         })
         .collect()
+}
+
+/// Issue 448 unit 2: a company-number merge's `org_merge_log.evidence` — flat,
+/// json_extract-readable. The witness notices make one bad publisher statement's merges
+/// findable, and the keys are what the resolver alias (unit 3) replays.
+fn altid_coh_ledger_evidence(p: &AltIdPlanned) -> String {
+    format!(
+        "{{\"scheme\":\"GB:altid\",\"coh\":\"{}\",\"ppon\":\"{}\",\
+         \"coh_literal\":\"{}\",\"ppon_literal\":\"{}\",\
+         \"keep_id\":\"{}\",\"loser_id\":\"{}\",\"name_key\":\"{}\",\
+         \"witnesses\":{},\"witness_notices\":[{}],\"verdict\":\"{}\"}}",
+        altid_json_esc(&p.coh),
+        altid_json_esc(&p.ppon),
+        altid_json_esc(&p.coh_literal),
+        altid_json_esc(&p.ppon_literal),
+        altid_json_esc(&p.keep_literal),
+        altid_json_esc(&p.loser_literal),
+        altid_json_esc(&p.name_key),
+        p.witnesses,
+        p.witness_notices.iter().map(i64::to_string).collect::<Vec<_>>().join(","),
+        if p.verdict_cohort.is_some() { "admitted" } else { "none" },
+    )
+}
+
+/// Issue 469 U5: a register merge's `org_merge_log.evidence` — flat like the
+/// company-number row's, `scheme` `GB:altid` kept (C5: on every `e2-altid` row), and NO
+/// `coh` key, so a pre-U5 alias preload (`!coh.is_empty()`) drops the row rather than
+/// reading it as a company-number merge. `registry_kind` and `registry` are the exact
+/// triple the register alias replays; `loser_id` is still the PPON org's identifier, which
+/// the 460 backfill reads. `confirmed`: `register` for an admitting cohort under
+/// [`ALTID_REGISTRY_CONFIRMED_COHORT_PREFIX`], else `verdict` (D1: every register merge
+/// has one; `verdict` is therefore always `admitted`).
+fn altid_registry_ledger_evidence(p: &AltIdRegPlanned) -> String {
+    let confirmed = match &p.verdict_cohort {
+        Some(cohort) if cohort.starts_with(ALTID_REGISTRY_CONFIRMED_COHORT_PREFIX) => "register",
+        Some(_) => "verdict",
+        None => "none",
+    };
+    format!(
+        "{{\"scheme\":\"GB:altid\",\"registry_scheme\":\"{}\",\"registry_kind\":\"{}\",\
+         \"registry\":\"{}\",\"registry_literal\":\"{}\",\"ppon\":\"{}\",\"ppon_literal\":\"{}\",\
+         \"keep_id\":\"{}\",\"loser_id\":\"{}\",\"name_key\":\"{}\",\"witnesses\":{},\
+         \"publishers\":{},\"witness_notices\":[{}],\"verdict\":\"{}\",\"confirmed\":\"{}\"}}",
+        altid_json_esc(&p.registry_scheme),
+        altid_json_esc(&p.registry_kind),
+        altid_json_esc(&p.registry),
+        altid_json_esc(&p.registry_literal),
+        altid_json_esc(&p.ppon),
+        altid_json_esc(&p.ppon_literal),
+        altid_json_esc(&p.keep_literal),
+        altid_json_esc(&p.loser_literal),
+        altid_json_esc(&p.name_key),
+        p.witnesses,
+        p.publishers,
+        p.witness_notices.iter().map(i64::to_string).collect::<Vec<_>>().join(","),
+        if p.verdict_cohort.is_some() { "admitted" } else { "none" },
+        confirmed,
+    )
 }
 
 /// One issue-311 per-case review verdict, as the admin surface hands it to
@@ -6893,6 +7145,27 @@ pub struct RekeyReport {
 
 const REKEY_TXN: usize = 50;
 
+/// Issue 469 U5 (C3): the triples a `wrong` verdict, or an unapplied `related` one, names
+/// — `(identifier, kind, country)` with `''` for no country: the first half of
+/// [`withheld_identifier_orgs`], read on its own by the register alias at arming. Verdicts
+/// are triple-wide, so in steady state these are exactly the triples of the withheld orgs;
+/// in a rebuild, where `organizations` starts empty and no org is withheld yet, they still
+/// name what must not bind.
+async fn withheld_identifier_triples(conn: &Connection) -> turso::Result<Vec<(String, String, String)>> {
+    let mut rows = conn
+        .query(
+            "SELECT identifier, identifier_kind, country FROM org_identifier_verdicts \
+              WHERE verdict = 'wrong' OR (verdict = 'related' AND applied_at IS NULL)",
+            (),
+        )
+        .await?;
+    let mut triples = Vec::new();
+    while let Some(row) = rows.next().await? {
+        triples.push((text(&row, 0), text(&row, 1), text(&row, 2)));
+    }
+    Ok(triples)
+}
+
 /// The org ids carrying a triple with a `wrong` verdict (issue 452), or a
 /// `related` one the re-key arm has not yet acted on (issue 466): the set every
 /// identifier-based matcher leaves out. A related number is a real company's —
@@ -6905,18 +7178,7 @@ const REKEY_TXN: usize = 50;
 async fn withheld_identifier_orgs(
     conn: &Connection,
 ) -> turso::Result<std::collections::HashSet<i64>> {
-    let mut rows = conn
-        .query(
-            "SELECT identifier, identifier_kind, country FROM org_identifier_verdicts \
-              WHERE verdict = 'wrong' OR (verdict = 'related' AND applied_at IS NULL)",
-            (),
-        )
-        .await?;
-    let mut triples = Vec::new();
-    while let Some(row) = rows.next().await? {
-        triples.push((text(&row, 0), text(&row, 1), text(&row, 2)));
-    }
-    drop(rows);
+    let triples = withheld_identifier_triples(conn).await?;
     let mut out = std::collections::HashSet::new();
     for (identifier, kind, country) in triples {
         out.extend(orgs_with_triple(conn, &identifier, &kind, &country).await?);
@@ -9749,8 +10011,12 @@ pub struct MentionResolver {
     tenders_stamped: u64,
     /// Issue 448 unit 3: the PPON → company-number alias, `None` until
     /// [`Db::arm_altid_alias`] arms it. `None` is the byte-identical pre-448
-    /// resolver, which every caller but the fold keeps.
-    altid: Option<AltIdAlias>,
+    /// resolver, which every caller but the fold keeps. Boxed (issue 469 U5):
+    /// the register family and issue 518 roughly doubled the alias, and the
+    /// resolver moves by value through the fold's frames (into
+    /// `finish_mention_resolver`), where every inline copy is stack —
+    /// `run_project`'s poll frame went over its budget (issue 467's tripwire).
+    altid: Option<Box<AltIdAlias>>,
     /// Issue 452: canonical keys a WITHHELD org owns (a reviewer found the
     /// number is not that org's), with every standing owner of the key. Such a
     /// key never binds name-blind: a different spelling of the number binds to
@@ -9758,6 +10024,12 @@ pub struct MentionResolver {
     /// and the mint joins the owners here instead of claiming the key. Out of
     /// `canon_of`, so the anchor path and the altid alias find no owner there.
     guarded: std::collections::HashMap<(String, &'static str, String), Vec<i64>>,
+    /// Issue 469 U5: GB `national` triples standing on two or more org rows at open. A
+    /// register alias target here binds nobody — `org_of` keeps the lowest id per triple
+    /// (issue 439), and the alias must not hand a merged PPON's mentions to whichever row
+    /// that happens to be. In-run mints never duplicate a GB national triple (`org_of`
+    /// guards the mint, and the anchor path is country-less), so the open scan sees all.
+    shared_triples: std::collections::HashSet<(Option<String>, String, String)>,
     /// Issue 452: guarded-key mentions bound to the one owner their name
     /// matched, and the ones that matched none (or several) and minted.
     guarded_bound: u64,
@@ -15235,6 +15507,8 @@ impl Db {
         let mut withheld_keys: HashMap<(String, &'static str, String), Vec<i64>> = HashMap::new();
         // Issue 470: rows whose literal reaches its key only through the fold.
         let mut folded: HashMap<(String, &'static str, String), Vec<i64>> = HashMap::new();
+        let mut shared_triples: std::collections::HashSet<(Option<String>, String, String)> =
+            std::collections::HashSet::new();
         let mut rows = conn
             .query(
                 "SELECT id, country, identifier_kind, identifier FROM organizations
@@ -15272,7 +15546,19 @@ impl Db {
                     canon_of.insert(ck, id);
                 }
             }
-            org_of.entry((country, kind, value)).or_insert(id);
+            // The FIRST row per triple keeps it (issue 439). Issue 469 U5: a GB `national`
+            // triple a later row carries too is SHARED — a register alias target there
+            // binds nobody, rather than the lowest id (which includes a withheld row).
+            match org_of.entry((country, kind, value)) {
+                std::collections::hash_map::Entry::Occupied(e) => {
+                    if e.key().0.as_deref() == Some("GB") && e.key().1 == "national" {
+                        shared_triples.insert(e.key().clone());
+                    }
+                }
+                std::collections::hash_map::Entry::Vacant(e) => {
+                    e.insert(id);
+                }
+            }
         }
         drop(rows);
         // A key two unreviewed owners already poison binds nobody, which is
@@ -15356,11 +15642,13 @@ impl Db {
             "[issue 452] {} org(s) withheld by a wrong-number or unapplied related verdict; {} canonical key(s) bind \
              only on a name match; {aliased} re-keyed wrong number(s) aliased to their org (issue 453); \
              {} canonical key(s) carried through the GB O/0 fold by {} row(s), reached only by name \
-             (issue 470)",
+             (issue 470); {} GB national triple(s) stand on two or more rows and bind no register \
+             alias target (issue 469)",
             withheld.len(),
             guarded.len(),
             folded.len(),
-            folded.values().map(Vec::len).sum::<usize>()
+            folded.values().map(Vec::len).sum::<usize>(),
+            shared_triples.len()
         ));
         // Issue 318, panel round 1: the wall's cost claim was "one indexed
         // seek", and that is true only in the STEADY state.
@@ -15423,6 +15711,7 @@ impl Db {
             canon_of,
             poisoned,
             guarded,
+            shared_triples,
             guarded_bound: 0,
             guarded_refused: 0,
             folded,
@@ -15473,14 +15762,19 @@ impl Db {
     ///
     /// The preload, one small read each:
     /// - `org_merge_log WHERE rule = 'e2-altid'`, the merges' `coh` and
-    ///   `ppon` keys. Identity to identity, never org ids, so the alias
+    ///   `ppon` keys — and since issue 469 U5 a register merge's
+    ///   `registry_scheme` / `registry_kind` / `registry` (a register row carries
+    ///   no `coh`). Identity to identity, never org ids, so the alias
     ///   survives a bare rebuild's renumbering (the rebuild keeps the log);
     /// - the `keep` verdicts under (`GB`, `GB:altid`): a pair a reviewer
     ///   kept apart — after its merge, as the marker of an unwind — is
-    ///   dropped;
-    /// - of what is left, a PPON the ledger merged into two company numbers
+    ///   dropped, under its family's key (`<coh>~<ppon>`, or
+    ///   `<registry scheme>:<identity>~<ppon>`);
+    /// - of what is left, a PPON the ledger merged into two targets of any kind
     ///   is poisoned and never aliased: the arm would not pick a side, so
-    ///   neither does the fold.
+    ///   neither does the fold;
+    /// - (issue 469 U5, C3) the triples a `wrong`/`related` verdict names: a
+    ///   register target among them binds nobody.
     ///
     /// Logged `[issue 448]` whatever it found, so "armed with nothing to
     /// alias" reads differently from "never armed".
@@ -15498,13 +15792,19 @@ impl Db {
         // `the_harvest_seeks_notices_profile_and_the_notice_ids_pk` pins it. The JSON fields
         // are flat by construction (`altid_wet`).
         let mut rows = conn.query(ALTID_ALIAS_LEDGER_SQL, ()).await?;
-        let mut ledger: Vec<(String, String)> = Vec::new();
+        // (PPON, target, the keep verdict's key). A non-empty `coh` comes first, so a
+        // 448 row reads exactly as it did; a row with neither family's fields is skipped,
+        // as an empty coh was.
+        let mut ledger: Vec<(String, AltIdTarget, String)> = Vec::new();
         while let Some(row) = rows.next().await? {
-            if let (Some(coh), Some(ppon)) = (opt_text_of(&row, 0), opt_text_of(&row, 1))
-                && !coh.is_empty()
-                && !ppon.is_empty()
-            {
-                ledger.push((coh, ppon));
+            let field = |i: usize| opt_text_of(&row, i).filter(|v| !v.is_empty());
+            let Some(ppon) = field(1) else { continue };
+            if let Some(coh) = field(0) {
+                let keep_key = format!("{coh}~{ppon}");
+                ledger.push((ppon, AltIdTarget::Coh(coh), keep_key));
+            } else if let (Some(scheme), Some(kind), Some(identity)) = (field(2), field(3), field(4)) {
+                let keep_key = format!("{scheme}:{identity}~{ppon}");
+                ledger.push((ppon, AltIdTarget::Registry(kind, identity), keep_key));
             }
         }
         drop(rows);
@@ -15521,44 +15821,86 @@ impl Db {
             kept_keys.insert(text(&row, 0));
         }
         drop(rows);
+        // Issue 469 U5 (C3): the verdict TRIPLES, read here rather than off the
+        // resolver's withheld org set, which a rebuild opens empty (the table starts
+        // empty) while the triples still name what must not bind. Country `''` is no
+        // country, as `rekeyed` reads it.
+        let withheld_triples: HashSet<(Option<String>, String, String)> = withheld_identifier_triples(&conn)
+            .await?
+            .into_iter()
+            .map(|(identifier, kind, country)| ((!country.is_empty()).then_some(country), kind, identifier))
+            .collect();
         let mut counts = AltIdAliasCounts {
             armed: true,
             ledger_rows: ledger.len() as u64,
             ..AltIdAliasCounts::default()
         };
-        let mut targets: HashMap<String, BTreeSet<String>> = HashMap::new();
-        for (coh, ppon) in ledger {
-            if kept_keys.contains(&format!("{coh}~{ppon}")) {
-                counts.kept += 1;
+        let mut targets: HashMap<String, BTreeSet<AltIdTarget>> = HashMap::new();
+        for (ppon, target, keep_key) in ledger {
+            if kept_keys.contains(&keep_key) {
+                match target {
+                    AltIdTarget::Coh(_) => counts.kept += 1,
+                    AltIdTarget::Registry(..) => counts.registry.kept += 1,
+                }
                 continue;
             }
-            targets.entry(ppon).or_default().insert(coh);
+            targets.entry(ppon).or_default().insert(target);
         }
-        let mut alias_of: HashMap<String, String> = HashMap::new();
+        let mut alias_of: HashMap<String, AltIdTarget> = HashMap::new();
         let mut poisoned: HashSet<String> = HashSet::new();
-        for (ppon, cohs) in targets {
-            if cohs.len() == 1 {
-                alias_of.insert(ppon, cohs.into_iter().next().unwrap_or_default());
+        let mut poisoned_registry: HashSet<String> = HashSet::new();
+        for (ppon, aimed) in targets {
+            if aimed.len() == 1 {
+                if let Some(target) = aimed.into_iter().next() {
+                    alias_of.insert(ppon, target);
+                }
             } else {
+                // Two targets of any kind — two company numbers, two register identities,
+                // or one of each: the arm never picks a side of a contradiction.
+                if aimed.iter().any(|t| matches!(t, AltIdTarget::Registry(..))) {
+                    poisoned_registry.insert(ppon.clone());
+                }
                 poisoned.insert(ppon);
             }
         }
-        counts.aliases = alias_of.len() as u64;
+        counts.aliases = alias_of.values().filter(|t| matches!(t, AltIdTarget::Coh(_))).count() as u64;
+        counts.registry.aliases = alias_of.len() as u64 - counts.aliases;
         counts.poisoned = poisoned.len() as u64;
+        // A register target that cannot bind at all this fold: its triple stands on two or
+        // more rows at open, or under a wrong/related verdict.
+        let unbindable = alias_of
+            .values()
+            .filter(|t| match t {
+                AltIdTarget::Registry(kind, identity) => {
+                    let triple = (Some("GB".to_owned()), kind.clone(), identity.clone());
+                    resolver.shared_triples.contains(&triple) || withheld_triples.contains(&triple)
+                }
+                AltIdTarget::Coh(_) => false,
+            })
+            .count();
         self.log_diag(&format!(
             "[issue 448] resolver alias ARMED for this run: {} PPON key(s) aliased to a company \
-             number from {} e2-altid ledger row(s); {} pair(s) dropped by a keep verdict, {} \
-             PPON(s) poisoned (merged into two company numbers, never aliased)",
-            counts.aliases, counts.ledger_rows, counts.kept, counts.poisoned
+             number and {} to a register identity (issue 469) from {} e2-altid ledger row(s); {} \
+             pair(s) dropped by a keep verdict ({} register), {} PPON(s) poisoned (merged into two \
+             or more targets, never aliased); {unbindable} register target(s) stand on two or more \
+             rows or under a wrong/related verdict and bind nobody",
+            counts.aliases,
+            counts.registry.aliases,
+            counts.ledger_rows,
+            counts.kept + counts.registry.kept,
+            counts.registry.kept,
+            counts.poisoned
         ));
-        resolver.altid = Some(AltIdAlias {
+        resolver.altid = Some(Box::new(AltIdAlias {
             rules,
             alias_of,
             poisoned,
+            poisoned_registry,
+            withheld_triples,
             counts,
             recorded: HashSet::new(),
             owner_mention_names: HashMap::new(),
-        });
+        }));
         Ok(())
     }
 
@@ -15581,7 +15923,11 @@ impl Db {
     ///   company number has several standing owners in the resolver's map;
     /// - the company number has a standing owner — found through the SAME
     ///   canonical map the resolver binds by, so a renumbered org is found by
-    ///   its key;
+    ///   its key. Issue 469 U5: a REGISTER target's owner is the one row carrying
+    ///   its exact (`GB`, kind, identity) triple (`org_of`; a register literal keys
+    ///   nothing): refused `shared` when two or more rows carry it at open or a
+    ///   `wrong`/`related` verdict names it, before `org_of` (lowest id first,
+    ///   withheld rows included) is asked, and `no owner` when none does;
     /// - no consortium name among the mention's names (head and variants) or
     ///   the owner's (head and satellites), and the GB legal forms agree head
     ///   against head;
@@ -15603,6 +15949,8 @@ impl Db {
         m: &Mention,
         alias: &mut AltIdAlias,
         canon_of: &std::collections::HashMap<(String, &'static str, String), i64>,
+        org_of: &std::collections::HashMap<(Option<String>, String, String), i64>,
+        shared_triples: &std::collections::HashSet<(Option<String>, String, String)>,
         resolver_poisoned: &std::collections::HashSet<(String, &'static str, String)>,
         memo: &mut std::collections::HashMap<String, bool>,
         wall: bool,
@@ -15623,15 +15971,48 @@ impl Db {
             // Nothing the ledger merged: not a question for the alias.
             return Ok(None);
         }
-        alias.counts.asked += 1;
+        // Issue 469 U5: an ask lands in its target's family — the register counts for a
+        // register target, or for a poisoned PPON with one among its targets.
+        let registry = matches!(target, Some(AltIdTarget::Registry(..)))
+            || (target.is_none() && alias.poisoned_registry.contains(&ppon));
+        if registry {
+            alias.counts.registry.asked += 1;
+        } else {
+            alias.counts.asked += 1;
+        }
         let verdict: Result<(i64, bool), AltIdRefusal> = 'bar: {
-            let Some(coh) = target else { break 'bar Err(AltIdRefusal::Poisoned) };
+            let Some(target) = target else { break 'bar Err(AltIdRefusal::Poisoned) };
             let ppon_key = ("GB".to_owned(), "GB:ppon", ppon.clone());
-            let coh_key = ("GB".to_owned(), "GB:coh", coh);
-            if resolver_poisoned.contains(&ppon_key) || resolver_poisoned.contains(&coh_key) {
+            if resolver_poisoned.contains(&ppon_key) {
                 break 'bar Err(AltIdRefusal::Poisoned);
             }
-            let Some(&owner) = canon_of.get(&coh_key) else { break 'bar Err(AltIdRefusal::NoOwner) };
+            let owner = match target {
+                // 448's: the company number's owner through the canonical map the
+                // resolver binds by, so a renumbered org is found by its key.
+                AltIdTarget::Coh(coh) => {
+                    let coh_key = ("GB".to_owned(), "GB:coh", coh);
+                    if resolver_poisoned.contains(&coh_key) {
+                        break 'bar Err(AltIdRefusal::Poisoned);
+                    }
+                    let Some(&owner) = canon_of.get(&coh_key) else { break 'bar Err(AltIdRefusal::NoOwner) };
+                    owner
+                }
+                // Issue 469 U5: the exact triple, which the planner's D3 gate made the
+                // survivor's OWN identifier, so the replay finds the org the merge kept —
+                // or its re-mint after a rebuild. A shared or withheld triple is refused
+                // before `org_of` is asked: its first-row-wins pick includes withheld rows
+                // (the decision's "`org_of` is too loose for the alias").
+                AltIdTarget::Registry(kind, identity) => {
+                    let triple = (Some("GB".to_owned()), kind, identity);
+                    if shared_triples.contains(&triple) || alias.withheld_triples.contains(&triple) {
+                        break 'bar Err(AltIdRefusal::Shared);
+                    }
+                    let Some(&owner) = org_of.get(&triple) else { break 'bar Err(AltIdRefusal::NoOwner) };
+                    owner
+                }
+            };
+            // From here 448's bar, one code path for both target kinds, so a merge and
+            // its replay read agreement the same way whatever the family.
             let mut mention_names: Vec<String> = vec![m.name.clone()];
             mention_names.extend(m.variants.iter().map(|(_, v)| v.clone()));
             let mut owner_names: Vec<String> = Vec::new();
@@ -15736,21 +16117,42 @@ impl Db {
         let c = &mut alias.counts;
         match verdict {
             Ok((owner, unwalled)) => {
-                c.bound += 1;
+                let (bound, lenient) = if registry {
+                    (&mut c.registry.bound, &mut c.registry.bound_unwalled)
+                } else {
+                    (&mut c.bound, &mut c.bound_unwalled)
+                };
+                *bound += 1;
                 if unwalled {
-                    c.bound_unwalled += 1;
+                    *lenient += 1;
                 }
                 Ok(Some(owner))
             }
             Err(why) => {
-                c.refused += 1;
-                *match why {
-                    AltIdRefusal::Poisoned => &mut c.refused_poisoned,
-                    AltIdRefusal::NoOwner => &mut c.refused_no_owner,
-                    AltIdRefusal::Veto => &mut c.refused_veto,
-                    AltIdRefusal::Names => &mut c.refused_names,
-                    AltIdRefusal::Generic => &mut c.refused_generic,
-                } += 1;
+                let slot = if registry {
+                    let r = &mut c.registry;
+                    r.refused += 1;
+                    match why {
+                        AltIdRefusal::Poisoned => &mut r.refused_poisoned,
+                        AltIdRefusal::NoOwner => &mut r.refused_no_owner,
+                        AltIdRefusal::Shared => &mut r.refused_shared,
+                        AltIdRefusal::Veto => &mut r.refused_veto,
+                        AltIdRefusal::Names => &mut r.refused_names,
+                        AltIdRefusal::Generic => &mut r.refused_generic,
+                    }
+                } else {
+                    c.refused += 1;
+                    match why {
+                        AltIdRefusal::Poisoned => &mut c.refused_poisoned,
+                        // A company-number target is found through `canon_of`, never a
+                        // triple, so `Shared` is a register refusal only.
+                        AltIdRefusal::NoOwner | AltIdRefusal::Shared => &mut c.refused_no_owner,
+                        AltIdRefusal::Veto => &mut c.refused_veto,
+                        AltIdRefusal::Names => &mut c.refused_names,
+                        AltIdRefusal::Generic => &mut c.refused_generic,
+                    }
+                };
+                *slot += 1;
                 Ok(None)
             }
         }
@@ -16132,7 +16534,9 @@ impl Db {
                  company-number org ({} with the generic wall unable to answer; {} PPON(s) \
                  recorded as its merged identifier, issue 460), {} refused \
                  ({} poisoned, {} no owner, {} consortium/legal-form veto, {} names disagree, {} \
-                 generic) and minted or bound as without the alias; owner mention names read for {} \
+                 generic) and minted or bound as without the alias; issue 469 register targets: {} \
+                 asked, {} bound ({} unwalled), {} refused ({} poisoned, {} no owner, {} \
+                 shared/withheld, {} veto, {} names, {} generic); owner mention names read for {} \
                  owner(s), {} cut by the cap (issue 518)",
                 c.asked,
                 c.bound,
@@ -16144,6 +16548,16 @@ impl Db {
                 c.refused_veto,
                 c.refused_names,
                 c.refused_generic,
+                c.registry.asked,
+                c.registry.bound,
+                c.registry.bound_unwalled,
+                c.registry.refused,
+                c.registry.refused_poisoned,
+                c.registry.refused_no_owner,
+                c.registry.refused_shared,
+                c.registry.refused_veto,
+                c.registry.refused_names,
+                c.registry.refused_generic,
                 c.owner_name_reads,
                 c.owner_names_capped
             ));
@@ -16648,18 +17062,24 @@ impl Db {
                     // (the anchor path is country-less, the alias GB-only, so
                     // the two never both apply). `None` on an unarmed
                     // resolver, which is therefore byte-identical.
+                    //
+                    // Issue 469 U5: the register target binds through `org_of`, the live
+                    // `&mut` above reborrowed shared for the call (disjoint fields). Boxed,
+                    // so the bind's state stays off this future's frame (CLAUDE.md).
                     let alias_hit = match (&mut resolver.altid, canon_hit.or(guarded_hit).or(merged_hit), anchor_hit) {
                         (Some(alias), None, None) => {
-                            self.altid_alias_bind(
+                            Box::pin(self.altid_alias_bind(
                                 conn,
                                 m,
                                 alias,
                                 &resolver.canon_of,
+                                &*org_of,
+                                &resolver.shared_triples,
                                 &resolver.poisoned,
                                 &mut resolver.generic_memo,
                                 resolver.hard_scheme.is_some(),
                                 resolver.stoplist_cap,
-                            )
+                            ))
                             .await?
                         }
                         _ => None,
@@ -21933,12 +22353,14 @@ impl Db {
     /// 6. JUDGMENT: the conflict flags; then positive corroboration — one
     ///    altid name key equal across both orgs' heads and satellites; then the
     ///    generic-name wall on the corroborating names.
-    /// 7. REGISTER pairs (issue 469 U4), dry runs only: every other GB register's
-    ///    `both_distinct` pairs with a PPON, gated as their own graph by
-    ///    [`Self::plan_registry_pairs`] into `registry_pairs_planned` — which no wet
-    ///    run reads yet (U5).
+    /// 7. REGISTER pairs (issue 469 U4), on BOTH runs since U5: every other GB
+    ///    register's `both_distinct` pairs with a PPON, gated as their own graph by
+    ///    [`Self::plan_registry_pairs`] into `registry_pairs_planned`, which a wet run
+    ///    holds to the stored register set and merges only under an admitting HIGH
+    ///    merge verdict (D1).
     ///
-    /// Survivor: always the company-number org; the PPON org is the loser.
+    /// Survivor: the company-number org for a company-number pair, the register org for
+    /// a register pair; the PPON org is always the loser.
     pub async fn match_org_altid_pairs(
         &self,
         args: AltIdMergeArgs<'_>,
@@ -22459,6 +22881,22 @@ impl Db {
         let mut sampled: HashMap<String, usize> = HashMap::new();
         // Issue 469 U4: the `both_distinct` pairs, exactly — the register planner's input.
         let mut registry_candidates: Vec<(String, String, String, i64, i64)> = Vec::new();
+        // Issue 469 U5 (S5, C10): the register keys the ledger merged — one seek through
+        // the partial index (the alias's read). A merged pair whose classes below are not
+        // `already_one` stands split again: the register alias failed to replay it, and a
+        // re-minted PPON org reads `multi_target` (the survivor holds the PPON as a merged
+        // identifier), not `both_distinct`. Read only when the harvest paired a register
+        // at all, so a store with none runs exactly the reads it ran before U5.
+        let mut merged_registry: HashSet<String> = HashSet::new();
+        if !reg_pairs.is_empty() {
+            let mut rows = conn.query(ALTID_ALIAS_LEDGER_SQL, ()).await?;
+            while let Some(row) = rows.next().await? {
+                let field = |i: usize| opt_text_of(&row, i).filter(|v| !v.is_empty());
+                if let (Some(ppon), Some(scheme), Some(identity)) = (field(1), field(2), field(4)) {
+                    merged_registry.insert(format!("{scheme}:{identity}~{ppon}"));
+                }
+            }
+        }
         for ((scheme, value, pk), pair) in &reg_pairs {
             if (args.stop)() {
                 report.stopped = true;
@@ -22497,6 +22935,13 @@ impl Db {
                 }
                 None => false,
             };
+            let one = carried || matches!((r.as_slice(), p.as_slice()), ([a], [b]) if a == b);
+            if !one
+                && let Some(id) = &pair.identity
+                && merged_registry.contains(&format!("{scheme}:{}~{pk}", id.value))
+            {
+                report.registry_regrown.push(format!("{scheme}:{}~{pk}", id.value));
+            }
             let counts = report.registry_pairs.entry(scheme.clone()).or_default();
             counts.pairs += 1;
             match (r.as_slice(), p.as_slice()) {
@@ -22523,6 +22968,9 @@ impl Db {
                 _ => counts.multi_target += 1,
             }
         }
+        // Two spellings of one identity are two harvest pairs and one merged key.
+        report.registry_regrown.sort();
+        report.registry_regrown.dedup();
 
         // One org's mention evidence, keyed through `mention_key` — the raw
         // identifier under the mention's country, else the org's. Every tier is
@@ -23068,37 +23516,47 @@ impl Db {
             .await?;
         }
         report.pairs.sort();
-        if args.dry_run {
-            // ---- 7. REGISTER pairs (issue 469 U4): a separate graph, planned DRY only
-            // (U5 lifts this). After the company-number loop, so none of its counts can
-            // move; boxed, so its state and poll frame stay off this future's (CLAUDE.md).
-            Box::pin(self.plan_registry_pairs(
-                conn,
-                &args,
-                AltIdRegistryGraph {
-                    pairs: &reg_pairs,
-                    candidates: &registry_candidates,
-                    reg_owners: &reg_owners,
-                    reg_ppon_owners: &reg_ppon_owners,
-                    ppon_with_coh: &ppon_with_coh,
-                    tainted: &tainted,
-                },
-                &mut report,
-            ))
-            .await?;
+        // ---- 7. REGISTER pairs (issue 469 U4/U5): their own graph, planned on BOTH runs
+        // since U5 — a wet run re-plans it live under the writer, as it re-plans the
+        // company-number graph, so the cross-family contest reads both families' LIVE
+        // plans from one writer-held re-plan. After the company-number loop, so none of
+        // its counts can move; it only reads, and before any write, so a query error fails
+        // a wet run with nothing written. Boxed, so its state and poll frame stay off this
+        // future's (CLAUDE.md).
+        let mut registry = AltIdRegistryWet::default();
+        Box::pin(self.plan_registry_pairs(
+            conn,
+            &args,
+            AltIdRegistryGraph {
+                pairs: &reg_pairs,
+                candidates: &registry_candidates,
+                reg_owners: &reg_owners,
+                reg_ppon_owners: &reg_ppon_owners,
+                ppon_with_coh: &ppon_with_coh,
+                tainted: &tainted,
+            },
+            &mut report,
+            &mut registry,
+        ))
+        .await?;
+        // A stop inside the register planner leaves a PARTIAL register plan: merge
+        // nothing. Load-bearing — merging on it would read a spurious register parity
+        // drift, or fold a company-number loser that an unplanned register pair claims.
+        if args.dry_run || report.stopped {
             return Ok(report);
         }
-        self.altid_wet(conn, &args, &mut report, planned, denied).await?;
+        Box::pin(self.altid_wet(conn, &args, &mut report, planned, denied, registry)).await?;
         Ok(report)
     }
 
-    /// Issue 469 U4: the DRY register planner, step 7 of [`Self::match_org_altid_pairs`].
+    /// Issue 469 U4: the register planner, step 7 of [`Self::match_org_altid_pairs`].
     /// Unit 1's `both_distinct` register ↔ PPON pairs are E2 statements like the
     /// company-number pairs (`.scratch/tender-db/469-registry-pairs/unit2-decision.md`),
     /// gated as their own graph so no company-number count moves, and keyed
-    /// `<scheme>:<identity>~<ppon>` under (`GB`, `GB:altid`). It writes nothing and plans
-    /// only: `registry_pairs_planned` is the set U5's wet path will hold its register
-    /// family to.
+    /// `<scheme>:<identity>~<ppon>` under (`GB`, `GB:altid`). It writes nothing:
+    /// `registry_pairs_planned` is the set a wet run holds its register family to, and
+    /// since U5 a wet run's live re-plan also hands [`Self::altid_wet`] each planned pair
+    /// and each two-org denial (`wet`).
     ///
     /// 1. STRUCTURAL gates, which no verdict overrides — the graph gates first, so a
     ///    merged-holder triple reads `triple` rather than the loser-incoherent it also is
@@ -23122,13 +23580,17 @@ impl Db {
     /// The control flow duplicates the company-number loop's rather than sharing it, so
     /// that loop stays exactly as it was; only its pure predicates are shared. Listed,
     /// never gated: `witnesses` (k), `publishers` (p, the witness notices' distinct buyer
-    /// orgs), `self`, `coherent`, `cooccurring`. Survivor (U5): the register org.
+    /// orgs), `self`, `coherent`, `cooccurring`. Survivor (U5): the register org, which
+    /// must carry the identity as its OWN identifier (D3, in `single-owner`), and which a
+    /// wet run keeps only for a pair a HIGH merge verdict admitted (D1): `verdict_cohort`
+    /// on the listing says which.
     async fn plan_registry_pairs(
         &self,
         conn: &Connection,
         args: &AltIdMergeArgs<'_>,
         g: AltIdRegistryGraph<'_>,
         report: &mut AltIdMergeReport,
+        wet: &mut AltIdRegistryWet,
     ) -> turso::Result<()> {
         use std::collections::{BTreeMap, HashMap, HashSet};
         // ---- The graph: each side's partners over every pair, owned or not and of
@@ -23160,7 +23622,16 @@ impl Db {
             list.push(listing);
             Ok(())
         }
-        // One denial: counted under its gate and listed (R2's cap).
+        // Wet only: a denied two-org pair, kept whole (the listings are capped) for its
+        // `e2-altid` edge (issue 469 U5, C7) — the company-number loop's `keep_denied`.
+        fn keep_denied(denied: &mut Vec<AltIdRegDenied>, wet: bool, orgs: (i64, i64), listing: &RegistryPairListing) {
+            if wet {
+                denied.push(AltIdRegDenied { registry_org: orgs.0, ppon_org: orgs.1, listing: listing.clone() });
+            }
+        }
+        // One denial: counted under its gate, listed (R2's cap), and on a wet run kept for
+        // its edge.
+        #[allow(clippy::too_many_arguments)]
         async fn deny(
             conn: &Connection,
             report: &mut AltIdMergeReport,
@@ -23168,9 +23639,12 @@ impl Db {
             gate: &str,
             mut listing: RegistryPairListing,
             witnesses: &BTreeSet<i64>,
+            denied: (&mut Vec<AltIdRegDenied>, bool),
+            orgs: (i64, i64),
         ) -> turso::Result<()> {
             report.registry_gates.entry(scheme.to_owned()).or_default().bump(gate);
             listing.gate = gate.to_owned();
+            keep_denied(denied.0, denied.1, orgs, &listing);
             push(
                 conn,
                 &mut report.registry_denied_listing,
@@ -23315,7 +23789,18 @@ impl Db {
                     .copied()
                     .collect();
                 let ppon_held: BTreeSet<i64> = g.reg_ppon_owners.get(pk).into_iter().flatten().copied().collect();
-                if held != BTreeSet::from([a]) || ppon_held != BTreeSet::from([b]) {
+                // Issue 469 U5 (D3): and the register org carries the identity as its OWN
+                // identifier — the alias replays a register merge only through that exact
+                // (`GB`, `national`, identity) row, so a holder through a merged identifier
+                // alone would merge and then refuse every later PPON-first mention `no
+                // owner`: silent regrowth. Verdicts are triple-wide, so `held == {a}` with
+                // its own row means no other row, withheld or not, carries the triple.
+                let own_row = org_rows[&a].as_ref().is_some_and(|r| {
+                    r.country.as_deref() == Some("GB")
+                        && r.kind.as_deref() == Some("national")
+                        && r.identifier.as_deref() == Some(identity.as_str())
+                });
+                if held != BTreeSet::from([a]) || ppon_held != BTreeSet::from([b]) || !own_row {
                     break 'gates Some("single-owner");
                 }
                 // Triple: any GB party showed the PPON beside a company number (the
@@ -23381,8 +23866,9 @@ impl Db {
                 }
                 None
             };
+            let wet_denied = !args.dry_run;
             if let Some(gate) = structural {
-                deny(conn, report, scheme, gate, listing, &pair.witnesses).await?;
+                deny(conn, report, scheme, gate, listing, &pair.witnesses, (&mut wet.denied, wet_denied), (a, b)).await?;
                 continue;
             }
 
@@ -23390,15 +23876,21 @@ impl Db {
             let key = listing.key();
             let live = vec![a.min(b), a.max(b)];
             let mut admitted = false;
+            // Issue 469 U5 (D1): the admitting verdict's cohort — what a wet run merges
+            // by, stamps, and names in the ledger's `confirmed`.
+            let mut admitted_cohort: Option<String> = None;
             if let Some(v) = self.merge_verdict_for("GB", "GB:altid", &key).await? {
                 if v.action == "keep" {
-                    deny(conn, report, scheme, "verdict-keep", listing, &pair.witnesses).await?;
+                    let held = (&mut wet.denied, wet_denied);
+                    deny(conn, report, scheme, "verdict-keep", listing, &pair.witnesses, held, (a, b)).await?;
                     continue;
                 }
                 let counts = report.registry_gates.entry(scheme.clone()).or_default();
                 if v.confidence == "high" && !v.applied && v.members == live {
                     admitted = true;
                     counts.admitted_verdict += 1;
+                    listing.verdict_cohort = Some(v.cohort.clone());
+                    admitted_cohort = Some(v.cohort);
                 } else {
                     counts.verdict_stale += 1;
                 }
@@ -23423,6 +23915,7 @@ impl Db {
                         counts.bump(flag);
                     }
                     listing.gate = flags.join("+");
+                    keep_denied(&mut wet.denied, wet_denied, (a, b), &listing);
                     push(
                         conn,
                         &mut report.registry_denied_listing,
@@ -23439,7 +23932,8 @@ impl Db {
                 let corroborating = match altid_corroborates(&rs, &ps, args.names_agree, args.legal_family) {
                     AltIdNames::Corroborated(pairs) => pairs,
                     AltIdNames::FormConflict => {
-                        deny(conn, report, scheme, "form-conflict", listing, &pair.witnesses).await?;
+                        let held = (&mut wet.denied, wet_denied);
+                        deny(conn, report, scheme, "form-conflict", listing, &pair.witnesses, held, (a, b)).await?;
                         continue;
                     }
                     AltIdNames::Uncorroborated => {
@@ -23452,7 +23946,8 @@ impl Db {
                         } else {
                             "uncorroborated-overlap"
                         };
-                        deny(conn, report, scheme, gate, listing, &pair.witnesses).await?;
+                        deny(conn, report, scheme, gate, listing, &pair.witnesses, (&mut wet.denied, wet_denied), (a, b))
+                            .await?;
                         continue;
                     }
                 };
@@ -23480,13 +23975,39 @@ impl Db {
                     }
                 }
                 if !clear {
-                    deny(conn, report, scheme, "generic", listing, &pair.witnesses).await?;
+                    let held = (&mut wet.denied, wet_denied);
+                    deny(conn, report, scheme, "generic", listing, &pair.witnesses, held, (a, b)).await?;
                     continue;
                 }
             }
 
             // ---- The plan: U5 folds the PPON org into the register org.
             report.registry_gates.entry(scheme.clone()).or_default().bump("plan");
+            if !args.dry_run {
+                let literal = |o: i64| org_rows[&o].as_ref().and_then(|r| r.identifier.clone()).unwrap_or_default();
+                wet.planned.push(AltIdRegPlanned {
+                    key: key.clone(),
+                    registry_scheme: scheme.clone(),
+                    // The shape gate passed, so the resolver's identity is `national`
+                    // and equals `registry_pair_key`'s.
+                    registry_kind: pair.identity.as_ref().map(|i| i.kind.clone()).unwrap_or_default(),
+                    registry: listing.registry.clone(),
+                    registry_literal: pair.registry_literal.clone(),
+                    ppon: pk.clone(),
+                    ppon_literal: pair.ppon_literal.clone(),
+                    keep: a,
+                    loser: b,
+                    keep_literal: literal(a),
+                    loser_literal: literal(b),
+                    witnesses: pair.witnesses.len() as u64,
+                    publishers: listing.publishers,
+                    witness_notices: pair.witnesses.iter().take(3).copied().collect(),
+                    // "" for a verdict-admitted pair, the only kind that merges under D1:
+                    // a verdict stands in for corroboration (C6).
+                    name_key: listing.corroborated_by.as_ref().map(|(x, _)| (args.name_key)(x)).unwrap_or_default(),
+                    verdict_cohort: admitted_cohort,
+                });
+            }
             report.registry_pairs_planned.push(key);
             listing.gate = "plan".to_owned();
             push(
@@ -23512,20 +24033,29 @@ impl Db {
     }
 
     /// Issue 448 unit 2: the altid WET run, on the writer the live re-plan was
-    /// made under ([`Self::match_org_altid_pairs`] holds it end to end).
+    /// made under ([`Self::match_org_altid_pairs`] holds it end to end). Since issue 469
+    /// U5 it merges BOTH families — the company-number pairs, then the register pairs —
+    /// in one run, because the contest below needs both families' live plans from one
+    /// writer-held re-plan.
     ///
     /// 1. SET PARITY against the stored plan's `pairs`: a symmetric difference
     ///    over max(2% of the stored set, 5) aborts before any write. R2's count
-    ///    tolerance of max(2%, 50) would be ~31% slack on a plan of ~161.
+    ///    tolerance of max(2%, 50) would be ~31% slack on a plan of ~161. Then the
+    ///    register family's own parity against `registry_pairs_planned`, the same
+    ///    rule apart (U5): either family over tolerance aborts before any write.
     /// 2. Only live ∩ expected merges, in sorted key order; a live pair the
-    ///    stored plan lacks was never reviewed and is `deferred_unreviewed`.
+    ///    stored plan lacks was never reviewed and is `deferred_unreviewed`. A PPON
+    ///    org contested across both families (C9) merges in neither, and a register
+    ///    pair no HIGH merge verdict admitted is held (`registry_unconfirmed`, D1).
+    ///    `max_pairs` caps each family apart (D2).
     /// 3. `ALTID_MERGE_TXN_PAIRS` pairs per `BEGIN IMMEDIATE`, foreign keys ON
     ///    (issue 442 step 2; the supervisor refuses while an org FK index is
-    ///    missing): repoint the PPON org's references onto the company-number
-    ///    org, delete it, log `e2-altid`, the change events, the verdict stamp
-    ///    and the edge's `merged`; then COMMIT, a TRUNCATE checkpoint, and the
-    ///    doorbell. The stop is polled between transactions, so a stopped run
-    ///    stands on a committed prefix.
+    ///    missing): repoint the PPON org's references onto the survivor (the
+    ///    company-number org, or the register org), delete it, log `e2-altid`, the
+    ///    change events, the verdict stamp and the edge's `merged`; then COMMIT, a
+    ///    TRUNCATE checkpoint, and the doorbell ([`Self::altid_merge_steps`], one
+    ///    discipline for both families). The stop is polled between transactions, so
+    ///    a stopped run stands on a committed prefix.
     /// 4. Open `e2-altid`/`E2` edges for the two-org pairs a gate denied — the
     ///    record of what was NOT merged, never deleted.
     async fn altid_wet(
@@ -23535,6 +24065,7 @@ impl Db {
         report: &mut AltIdMergeReport,
         mut planned: Vec<AltIdPlanned>,
         denied: Vec<AltIdDenied>,
+        registry: AltIdRegistryWet,
     ) -> turso::Result<()> {
         use std::collections::{HashMap, HashSet};
         let expect: BTreeSet<&str> =
@@ -23556,51 +24087,298 @@ impl Db {
                 expect.len(),
             )));
         }
+        // Issue 469 U5: the register family's parity, the same rule held apart — a
+        // company-number backlog can neither mask register drift nor be masked by it. On a
+        // store with no register pairs both sets are empty and nothing here can fire.
+        let r_expect: BTreeSet<&str> = args.expect_registry_pairs.iter().map(String::as_str).collect();
+        let r_live: BTreeSet<&str> = report.registry_pairs_planned.iter().map(String::as_str).collect();
+        let r_deferred: Vec<String> = r_live.difference(&r_expect).map(|k| (*k).to_owned()).collect();
+        let r_known: BTreeSet<&str> = args.known_registry_deferred.iter().map(String::as_str).collect();
+        let r_unforeseen = r_deferred.iter().filter(|k| !r_known.contains(k.as_str())).count() as u64;
+        let r_gone = r_expect.difference(&r_live).count() as u64;
+        let r_drift = r_unforeseen + r_gone;
+        let r_tolerance = (r_expect.len() as u64 / 50).max(5);
+        if r_drift > r_tolerance {
+            return Err(turso::Error::Error(format!(
+                "altid register parity abort: the live register plan has {} pairs, the stored \
+                 register plan {} — {r_drift} differ ({r_unforeseen} planned since the dry run, \
+                 {r_gone} no longer planned), over the max(2%, 5) tolerance of {r_tolerance}; \
+                 nothing was written. Re-run the dry plan and review it",
+                r_live.len(),
+                r_expect.len(),
+            )));
+        }
         report.expected_pairs = expect.len() as u64;
         report.deferred_unreviewed = deferred.len() as u64;
         report.deferred_pairs = deferred;
         report.expected_not_live = gone;
+        report.registry_expected_pairs = r_expect.len() as u64;
+        report.registry_deferred_unreviewed = r_deferred.len() as u64;
+        report.registry_deferred_pairs = r_deferred;
+        report.registry_expected_not_live = r_gone;
 
-        // A PPON org two LIVE pairs would fold into two company-number orgs:
-        // only two admitting verdicts can plan that (the conflict flag denies it
-        // otherwise), and the arm never picks a side, so neither merges. Counted
-        // over the whole live plan BEFORE it is cut to the reviewed set: a verdict
-        // posted after the dry run plans a pair the stored set lacks, and it
-        // still contests the PPON org (unit 2 review — the reviewed pair would
-        // otherwise fold the org and the later verdict go silently stale).
+        // A PPON org two LIVE pairs would fold into two survivors: only two
+        // admitting verdicts can plan that (the conflict flag denies it otherwise),
+        // and the arm never picks a side, so neither merges. Counted over the whole
+        // live plans BEFORE they are cut to the reviewed sets: a verdict posted after
+        // the dry run plans a pair the stored set lacks, and it still contests the PPON
+        // org (unit 2 review — the reviewed pair would otherwise fold the org and the
+        // later verdict go silently stale). Issue 469 U5 (C9): across BOTH families, and
+        // an org that is one live pair's loser and another's keep is contested too —
+        // merging that loser first would delete a keep the other family still needs, and
+        // `repoint_org_references` into a deleted org fails mid-run with foreign keys ON.
+        // Deferred and unconfirmed register pairs contest like any live pair. Within the
+        // company-number family alone a keep is never a loser (one org identifier keys one
+        // series), so a store with no register pairs contests exactly as before.
         let mut loser_uses: HashMap<i64, usize> = HashMap::new();
-        for p in &planned {
-            *loser_uses.entry(p.loser).or_default() += 1;
+        for loser in planned.iter().map(|p| p.loser).chain(registry.planned.iter().map(|p| p.loser)) {
+            *loser_uses.entry(loser).or_default() += 1;
         }
+        let keeps: HashSet<i64> =
+            planned.iter().map(|p| p.keep).chain(registry.planned.iter().map(|p| p.keep)).collect();
+        let contested = |loser: i64| loser_uses[&loser] > 1 || keeps.contains(&loser);
         // Live ∩ expected, in the stored plan's (string) order: a capped run and
         // its continuation cover a stable prefix. The graph's (coh, ppon) tuple
         // order is NOT that order (`AB~X` sorts after `ABC~Y`).
         planned.retain(|p| expect.contains(p.key.as_str()));
         planned.sort_by(|a, b| a.key.cmp(&b.key));
         let (merge, contradictory): (Vec<AltIdPlanned>, Vec<AltIdPlanned>) =
-            planned.into_iter().partition(|p| loser_uses[&p.loser] == 1);
+            planned.into_iter().partition(|p| !contested(p.loser));
         report.contradictory = contradictory.len() as u64;
+        // Issue 469 U5: the register family, the same cut, then D1 — a pair no HIGH
+        // merge verdict admitted was planned on corroboration alone, which the store
+        // cannot tell from an unread pair (C1): held, never merged, until one is posted.
+        let mut reg_planned = registry.planned;
+        reg_planned.retain(|p| r_expect.contains(p.key.as_str()));
+        reg_planned.sort_by(|a, b| a.key.cmp(&b.key));
+        let (reg_planned, reg_contradictory): (Vec<AltIdRegPlanned>, Vec<AltIdRegPlanned>) =
+            reg_planned.into_iter().partition(|p| !contested(p.loser));
+        let (reg_merge, reg_unconfirmed): (Vec<AltIdRegPlanned>, Vec<AltIdRegPlanned>) =
+            reg_planned.into_iter().partition(|p| p.verdict_cohort.is_some());
+        report.registry_contradictory = reg_contradictory.len() as u64;
+        report.registry_unconfirmed = reg_unconfirmed.len() as u64;
 
         let now = crate::now_unix();
+        // D2: the cap applies to each family on its own.
+        let cap = args.max_pairs.unwrap_or(u64::MAX);
+        let mut touched: BTreeSet<i64> = BTreeSet::new();
+        let coh_steps: Vec<AltIdMergeStep<'_>> = merge
+            .iter()
+            .map(|p| AltIdMergeStep {
+                key: &p.key,
+                keep: p.keep,
+                loser: p.loser,
+                evidence: altid_coh_ledger_evidence(p),
+                verdict_cohort: p.verdict_cohort.as_deref(),
+            })
+            .collect();
+        let done = Box::pin(self.altid_merge_steps(conn, args, &coh_steps, cap, now, &mut touched, report)).await?;
+        report.merged_pairs = done;
+        let done = done as usize;
+        drop(coh_steps);
+        // The register family after the company-number one, under the same writer; a stop
+        // during the first leaves the second wholly in the residual.
+        let mut rdone = 0usize;
+        if !report.stopped {
+            let reg_steps: Vec<AltIdMergeStep<'_>> = reg_merge
+                .iter()
+                .map(|p| AltIdMergeStep {
+                    key: &p.key,
+                    keep: p.keep,
+                    loser: p.loser,
+                    evidence: altid_registry_ledger_evidence(p),
+                    verdict_cohort: p.verdict_cohort.as_deref(),
+                })
+                .collect();
+            let merged = Box::pin(self.altid_merge_steps(conn, args, &reg_steps, cap, now, &mut touched, report)).await?;
+            report.registry_merged_pairs = merged;
+            rdone = merged as usize;
+            report.registry_merged = reg_merge[..rdone]
+                .iter()
+                .zip(reg_steps)
+                .map(|(p, step)| RegistryMerged {
+                    key: p.key.clone(),
+                    keep: p.keep,
+                    loser: p.loser,
+                    verdict_cohort: p.verdict_cohort.clone().unwrap_or_default(),
+                    evidence: step.evidence,
+                })
+                .collect();
+        }
+        report.tender_changes = touched.len() as u64;
+        let mut residual: Vec<String> =
+            merge[done..].iter().chain(contradictory.iter()).map(|p| p.key.clone()).collect();
+        residual.sort();
+        report.residual_pairs = residual;
+        // Issue 469 U5: the reviewed register pairs still unmerged — a cap, a stop, a
+        // contest, or no admitting verdict yet — the set a continuation holds itself to.
+        let mut residual: Vec<String> = reg_merge[rdone..]
+            .iter()
+            .chain(reg_contradictory.iter())
+            .chain(reg_unconfirmed.iter())
+            .map(|p| p.key.clone())
+            .collect();
+        residual.sort();
+        report.registry_residual_pairs = residual;
+        if report.removed > 0 {
+            // Every committed transaction already rang; this is R2's closing
+            // ring, and a failure here must not cost the residual (see
+            // `edges_error`).
+            let _ = self.publish_cursor(conn).await;
+        }
+        if report.stopped {
+            return Ok(());
+        }
+
+        // ---- The denied two-org pairs, as open e2-altid edges. A pair whose
+        // PPON org this run just folded (a conflict beside a verdict-admitted
+        // merge) no longer joins two orgs, so it gets none. Evidence only: no
+        // change events, no cursor (the Stage-4 decision 6). One batch at prod
+        // scale (398 denied pairs in dry job 1681), so the stop is not polled.
+        let folded: HashSet<i64> =
+            merge[..done].iter().map(|p| p.loser).chain(reg_merge[..rdone].iter().map(|p| p.loser)).collect();
+        let mut rows: Vec<CandidateEdge> = denied
+            .iter()
+            .filter(|d| !folded.contains(&d.ppon_org))
+            .map(|d| {
+                let l = &d.listing;
+                CandidateEdge {
+                    a: d.coh_org.min(d.ppon_org),
+                    b: d.coh_org.max(d.ppon_org),
+                    rule: "e2-altid",
+                    score: l.witnesses as f64,
+                    evidence: format!(
+                        "{{\"coh\":\"{}\",\"ppon\":\"{}\",\"coh_literal\":\"{}\",\
+                         \"ppon_literal\":\"{}\",\"coh_org\":{},\"ppon_org\":{},\
+                         \"status\":\"{}\",\"witnesses\":{},\"coh_partners\":{},\
+                         \"ppon_partners\":{},\"first_coh\":{},\"first_ppon\":{}}}",
+                        altid_json_esc(&l.coh),
+                        altid_json_esc(&l.ppon),
+                        altid_json_esc(&l.coh_literal),
+                        altid_json_esc(&l.ppon_literal),
+                        d.coh_org,
+                        d.ppon_org,
+                        altid_json_esc(&l.gate),
+                        l.witnesses,
+                        l.coh_partners,
+                        l.ppon_partners,
+                        l.first_coh,
+                        l.first_ppon,
+                    ),
+                }
+            })
+            .collect();
+        // Issue 469 U5 (C7): the register family's denied two-org pairs, after the
+        // company-number rows, rule `e2-altid` and tier E2 like them, evidence naming the
+        // register in place of `coh`. `write_candidate_edges` upserts on (org_a, org_b,
+        // rule), so an org pair a company-number row (or an earlier register row: two
+        // spellings of one identity) already took this run keeps that row's evidence.
+        let coh_rows = rows.len() as u64;
+        let mut edged: HashSet<(i64, i64)> = rows.iter().map(|e| (e.a, e.b)).collect();
+        for d in &registry.denied {
+            let (a, b) = (d.registry_org.min(d.ppon_org), d.registry_org.max(d.ppon_org));
+            if folded.contains(&d.registry_org) || folded.contains(&d.ppon_org) || !edged.insert((a, b)) {
+                continue;
+            }
+            let l = &d.listing;
+            rows.push(CandidateEdge {
+                a,
+                b,
+                rule: "e2-altid",
+                score: l.witnesses as f64,
+                evidence: format!(
+                    "{{\"registry_scheme\":\"{}\",\"registry\":\"{}\",\"registry_literal\":\"{}\",\
+                     \"ppon\":\"{}\",\"ppon_literal\":\"{}\",\"registry_org\":{},\"ppon_org\":{},\
+                     \"status\":\"{}\",\"witnesses\":{},\"publishers\":{},\"registry_partners\":{},\
+                     \"ppon_partners\":{}}}",
+                    altid_json_esc(&l.registry_scheme),
+                    altid_json_esc(&l.registry),
+                    altid_json_esc(&l.registry_literal),
+                    altid_json_esc(&l.ppon),
+                    altid_json_esc(&l.ppon_literal),
+                    d.registry_org,
+                    d.ppon_org,
+                    altid_json_esc(&l.gate),
+                    l.witnesses,
+                    l.publishers,
+                    l.registry_partners,
+                    l.ppon_partners,
+                ),
+            });
+        }
+        // The merges are committed. An edge failure from here on is REPORTED,
+        // never raised: raising would make the supervisor skip the residual,
+        // and the next wet run would then abort on parity over merges already
+        // done, with the deferred list lost (unit 2 review).
+        for batch in rows.chunks(EDGE_WRITE_BATCH) {
+            let written: turso::Result<()> = async {
+                conn.execute("BEGIN IMMEDIATE", ()).await?;
+                match write_candidate_edges(conn, batch, "E2", now, args.job_id).await {
+                    Ok(()) => {
+                        if let Err(e) = conn.execute("COMMIT", ()).await {
+                            let _ = conn.execute("ROLLBACK", ()).await;
+                            return Err(e);
+                        }
+                        Ok(())
+                    }
+                    Err(e) => {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        Err(e)
+                    }
+                }
+            }
+            .await;
+            if let Err(e) = written {
+                report.edges_error = Some(e.to_string());
+                break;
+            }
+            report.edges_written += batch.len() as u64;
+            let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
+        }
+        report.registry_edges_written = report.edges_written.saturating_sub(coh_rows);
+        Ok(())
+    }
+
+    /// Issue 448 unit 2's merge transactions, shared since issue 469 U5 by both families
+    /// so the riskiest code — the commit, rollback and doorbell discipline — exists once:
+    /// commit `steps` in order, `ALTID_MERGE_TXN_PAIRS` per `BEGIN IMMEDIATE`, at most `cap`
+    /// of them, and return how many committed. Per step: the loser's tenders read, its
+    /// references repointed onto the keep (`repoint_org_references`, which also records
+    /// the loser's identifier as a merged identifier of the keep), the loser deleted, the
+    /// `e2-altid` ledger row with the step's evidence, the change events, the admitting
+    /// verdict stamped applied in the same transaction, and an earlier run's denial edge
+    /// moved to `merged`. The stop is polled per transaction, never inside one, so an empty
+    /// `steps` polls nothing; the shared counters (`removed`, `mentions`, …) accumulate on
+    /// `report`, and `touched` collects the committed transactions' tenders.
+    #[allow(clippy::too_many_arguments)]
+    async fn altid_merge_steps(
+        &self,
+        conn: &Connection,
+        args: &AltIdMergeArgs<'_>,
+        steps: &[AltIdMergeStep<'_>],
+        cap: u64,
+        now: i64,
+        touched: &mut BTreeSet<i64>,
+        report: &mut AltIdMergeReport,
+    ) -> turso::Result<u64> {
         let job = || match args.job_id {
             Some(j) => Value::Integer(j),
             None => Value::Null,
         };
-        let cap = args.max_pairs.unwrap_or(u64::MAX);
-        let mut touched: BTreeSet<i64> = BTreeSet::new();
-        for txn in merge.chunks(ALTID_MERGE_TXN_PAIRS) {
+        let mut merged = 0u64;
+        for txn in steps.chunks(ALTID_MERGE_TXN_PAIRS) {
             if (args.stop)() {
                 report.stopped = true;
                 break;
             }
-            if report.merged_pairs >= cap {
+            if merged >= cap {
                 break;
             }
             conn.execute("BEGIN IMMEDIATE", ()).await?;
             let mut txn_touched: BTreeSet<i64> = BTreeSet::new();
             let result: turso::Result<()> = async {
                 for p in txn {
-                    if report.merged_pairs >= cap {
+                    if merged >= cap {
                         break;
                     }
                     let mut trows = conn
@@ -23627,32 +24405,13 @@ impl Db {
                     report.winner_dups += moved.winner_dups;
                     conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(p.loser),))
                         .await?;
-                    // Flat, json_extract-readable evidence. The witness notices
-                    // make one bad publisher statement's merges findable, and
-                    // the keys are what the resolver alias (unit 3) replays.
-                    let evidence = format!(
-                        "{{\"scheme\":\"GB:altid\",\"coh\":\"{}\",\"ppon\":\"{}\",\
-                         \"coh_literal\":\"{}\",\"ppon_literal\":\"{}\",\
-                         \"keep_id\":\"{}\",\"loser_id\":\"{}\",\"name_key\":\"{}\",\
-                         \"witnesses\":{},\"witness_notices\":[{}],\"verdict\":\"{}\"}}",
-                        altid_json_esc(&p.coh),
-                        altid_json_esc(&p.ppon),
-                        altid_json_esc(&p.coh_literal),
-                        altid_json_esc(&p.ppon_literal),
-                        altid_json_esc(&p.keep_literal),
-                        altid_json_esc(&p.loser_literal),
-                        altid_json_esc(&p.name_key),
-                        p.witnesses,
-                        p.witness_notices.iter().map(i64::to_string).collect::<Vec<_>>().join(","),
-                        if p.verdict_cohort.is_some() { "admitted" } else { "none" },
-                    );
                     conn.execute(
                         "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
                          VALUES(?, ?, 'e2-altid', ?, ?, ?)",
                         (
                             Value::Integer(p.keep),
                             Value::Integer(p.loser),
-                            Value::Text(evidence),
+                            t(&p.evidence),
                             job(),
                             Value::Integer(now),
                         ),
@@ -23661,10 +24420,10 @@ impl Db {
                     append_change(conn, "organization", p.loser, None, "removed", now).await?;
                     append_change(conn, "organization", p.keep, None, "changed", now).await?;
                     report.removed += 1;
-                    report.merged_pairs += 1;
+                    merged += 1;
                     // Issue 362's stamp: the verdict that admitted this pair
                     // records the merge it caused, in the same transaction.
-                    if let Some(cohort) = &p.verdict_cohort {
+                    if let Some(cohort) = p.verdict_cohort {
                         conn.execute(
                             "UPDATE org_merge_verdicts SET applied_at = ?, applied_action = ?, \
                              job_id = ? WHERE country = 'GB' AND scheme = 'GB:altid' AND key = ? \
@@ -23673,7 +24432,7 @@ impl Db {
                                 Value::Integer(now),
                                 Value::Text(format!("merged 1 row(s) into {}", p.keep)),
                                 job(),
-                                t(&p.key),
+                                t(p.key),
                                 t(cohort),
                             ),
                         )
@@ -23723,92 +24482,10 @@ impl Db {
             let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
             // The doorbell per committed transaction (the design's order), so a
             // subscriber hears a long run's merges as they land; R2's single
-            // after-the-loop ring below stays the guarantee.
+            // after-the-loop ring stays the guarantee.
             let _ = self.publish_cursor(conn).await;
         }
-        report.tender_changes = touched.len() as u64;
-        let done = report.merged_pairs as usize;
-        let mut residual: Vec<String> =
-            merge[done..].iter().chain(contradictory.iter()).map(|p| p.key.clone()).collect();
-        residual.sort();
-        report.residual_pairs = residual;
-        if report.removed > 0 {
-            // Every committed transaction already rang; this is R2's closing
-            // ring, and a failure here must not cost the residual (see
-            // `edges_error`).
-            let _ = self.publish_cursor(conn).await;
-        }
-        if report.stopped {
-            return Ok(());
-        }
-
-        // ---- The denied two-org pairs, as open e2-altid edges. A pair whose
-        // PPON org this run just folded (a conflict beside a verdict-admitted
-        // merge) no longer joins two orgs, so it gets none. Evidence only: no
-        // change events, no cursor (the Stage-4 decision 6). One batch at prod
-        // scale (398 denied pairs in dry job 1681), so the stop is not polled.
-        let folded: HashSet<i64> = merge[..done].iter().map(|p| p.loser).collect();
-        let rows: Vec<CandidateEdge> = denied
-            .iter()
-            .filter(|d| !folded.contains(&d.ppon_org))
-            .map(|d| {
-                let l = &d.listing;
-                CandidateEdge {
-                    a: d.coh_org.min(d.ppon_org),
-                    b: d.coh_org.max(d.ppon_org),
-                    rule: "e2-altid",
-                    score: l.witnesses as f64,
-                    evidence: format!(
-                        "{{\"coh\":\"{}\",\"ppon\":\"{}\",\"coh_literal\":\"{}\",\
-                         \"ppon_literal\":\"{}\",\"coh_org\":{},\"ppon_org\":{},\
-                         \"status\":\"{}\",\"witnesses\":{},\"coh_partners\":{},\
-                         \"ppon_partners\":{},\"first_coh\":{},\"first_ppon\":{}}}",
-                        altid_json_esc(&l.coh),
-                        altid_json_esc(&l.ppon),
-                        altid_json_esc(&l.coh_literal),
-                        altid_json_esc(&l.ppon_literal),
-                        d.coh_org,
-                        d.ppon_org,
-                        altid_json_esc(&l.gate),
-                        l.witnesses,
-                        l.coh_partners,
-                        l.ppon_partners,
-                        l.first_coh,
-                        l.first_ppon,
-                    ),
-                }
-            })
-            .collect();
-        // The merges are committed. An edge failure from here on is REPORTED,
-        // never raised: raising would make the supervisor skip the residual,
-        // and the next wet run would then abort on parity over merges already
-        // done, with the deferred list lost (unit 2 review).
-        for batch in rows.chunks(EDGE_WRITE_BATCH) {
-            let written: turso::Result<()> = async {
-                conn.execute("BEGIN IMMEDIATE", ()).await?;
-                match write_candidate_edges(conn, batch, "E2", now, args.job_id).await {
-                    Ok(()) => {
-                        if let Err(e) = conn.execute("COMMIT", ()).await {
-                            let _ = conn.execute("ROLLBACK", ()).await;
-                            return Err(e);
-                        }
-                        Ok(())
-                    }
-                    Err(e) => {
-                        let _ = conn.execute("ROLLBACK", ()).await;
-                        Err(e)
-                    }
-                }
-            }
-            .await;
-            if let Err(e) = written {
-                report.edges_error = Some(e.to_string());
-                break;
-            }
-            report.edges_written += batch.len() as u64;
-            let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
-        }
-        Ok(())
+        Ok(merged)
     }
 
     /// Issue 351 unit 4: record one cohort's name-level verdicts, one row

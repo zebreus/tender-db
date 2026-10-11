@@ -646,6 +646,8 @@ async fn a_supplier_the_altid_arm_merged_stays_one_org_through_the_next_fold_and
         max_pairs: None,
         expect_pairs,
         known_deferred: Vec::new(),
+        expect_registry_pairs: Vec::new(),
+        known_registry_deferred: Vec::new(),
         job_id: None,
         stop: &|| false,
     };
@@ -691,6 +693,142 @@ async fn a_supplier_the_altid_arm_merged_stays_one_org_through_the_next_fold_and
     assert_eq!(org_count(&db).await, 1, "still one supplier after the rebuild");
     let keep = cell_i64(&db, &format!("SELECT id FROM organizations WHERE identifier = '{COH}'")).await;
     for publication in ["910001-2026", "910002-2026", "910003-2026"] {
+        assert_eq!(bound_to(&db, publication).await, keep, "{publication}");
+    }
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Issue 469 U5, end to end through the real rules and the real fold: the altid arm's
+/// REGISTER family merges a college published UKPRN-first on one notice and PPON-first on
+/// another — once a register-confirmed HIGH verdict admits the pair (D1) — folding the PPON
+/// org into the UKPRN org. The fold's register alias then keeps it one organization through
+/// the exact UKPRN triple: on the next day's incremental fold, and across a bare rebuild
+/// that re-mints and renumbers every org (`org_merge_log` survives it).
+#[tokio::test]
+async fn a_college_the_altid_arm_merged_by_its_ukprn_stays_one_org_through_the_next_fold_and_a_rebuild() {
+    const UKPRN: &str = "GBUKPRN10007798";
+    const PPON: &str = "GBPPONPBZB4962TVLR";
+    const NAME: &str = "Leeds City College";
+    let both = party_release(
+        "ocds-t-469-u5-1",
+        "910201-2026",
+        1,
+        &[("GB-UKPRN", "10007798"), ("GB-PPON", "PBZB-4962-TVLR")],
+        NAME,
+    );
+    let ppon_first = party_release("ocds-t-469-u5-2", "910202-2026", 2, &[("GB-PPON", "PBZB-4962-TVLR")], NAME);
+    let members: [(&str, &[u8]); 2] = [("910201-2026.json", &both), ("910202-2026.json", &ppon_first)];
+    let (archive, db) = fixture_of("fts-469-u5", &members).await;
+    assert_eq!(run(&db, &archive).await.parsed, 2);
+    project::project(&db, false).await.expect("first fold");
+    async fn org_count(db: &store::Db) -> i64 {
+        cell_i64(db, &format!("SELECT COUNT(*) FROM organizations WHERE identifier IN ('{UKPRN}', '{PPON}')")).await
+    }
+    async fn bound_to(db: &store::Db, publication: &str) -> i64 {
+        cell_i64(
+            db,
+            &format!(
+                "SELECT m.organization_id FROM organization_mentions m JOIN notices n ON n.id = m.notice_id \
+                  WHERE n.publication_id = '{publication}'"
+            ),
+        )
+        .await
+    }
+    assert_eq!(org_count(&db).await, 2, "the split: one college, two orgs");
+
+    // The altid arm through the production rules: dry, the confirmed verdict, dry, wet.
+    let args = |dry_run: bool, expect: Option<(Vec<String>, Vec<String>)>| {
+        let (expect_pairs, expect_registry_pairs) = match expect {
+            Some((pairs, registry)) => (Some(pairs), registry),
+            None => (None, Vec::new()),
+        };
+        store::AltIdMergeArgs {
+            pair_key: ingest::crosswalk::altid_pair_key,
+            key: ingest::crosswalk::canonical_key_flat,
+            mention_key: ingest::crosswalk::mention_key,
+            register_identity: ingest::project::normalise_identifier,
+            registry_pair_key: ingest::crosswalk::registry_pair_key,
+            registry_mention_key: ingest::crosswalk::registry_mention_key,
+            condemns: ingest::idgate::condemns,
+            consortium: ingest::crosswalk::consortium_name,
+            legal_family: ingest::crosswalk::gb_legal_family,
+            name_key: ingest::crosswalk::altid_name_key,
+            names_agree: ingest::crosswalk::altid_keys_agree,
+            trim: ingest::crosswalk::altid_trim,
+            norm: ingest::project::match_norm,
+            stoplist_cap: ingest::idgate::STOPLIST_CAP,
+            plan_listing_cap: store::ALTID_PLAN_LISTING_CAP,
+            dry_run,
+            max_pairs: None,
+            expect_pairs,
+            known_deferred: Vec::new(),
+            expect_registry_pairs,
+            known_registry_deferred: Vec::new(),
+            job_id: None,
+            stop: &|| false,
+        }
+    };
+    let dry = db.match_org_altid_pairs(args(true, None)).await.expect("dry plan");
+    assert_eq!(dry.registry_pairs_planned, vec![format!("GB-UKPRN:{UKPRN}~PBZB4962TVLR")], "{dry:#?}");
+    let l = &dry.registry_plan_listing[0];
+    let verdict = store::MergeVerdict {
+        country: "GB".into(),
+        scheme: "GB:altid".into(),
+        key: l.key(),
+        members: l.members.iter().map(|m| m.org_id).collect(),
+        action: "merge".into(),
+        rationale: "UKRLP".into(),
+        confidence: "high".into(),
+    };
+    let cohort = format!("{}test", store::ALTID_REGISTRY_CONFIRMED_COHORT_PREFIX);
+    db.record_merge_verdicts(&cohort, &[verdict], 0).await.unwrap();
+    let dry = db.match_org_altid_pairs(args(true, None)).await.expect("dry plan");
+    assert_eq!(dry.registry_plan_listing[0].verdict_cohort.as_deref(), Some(cohort.as_str()), "{dry:#?}");
+    let wet = db
+        .match_org_altid_pairs(args(false, Some((dry.pairs.clone(), dry.registry_pairs_planned.clone()))))
+        .await
+        .expect("wet run");
+    assert_eq!((wet.registry_merged_pairs, wet.merged_pairs), (1, 0), "{wet:#?}");
+    assert_eq!(org_count(&db).await, 1);
+    let keep = cell_i64(&db, &format!("SELECT id FROM organizations WHERE identifier = '{UKPRN}'")).await;
+
+    // The next day: another PPON-first notice, through the incremental fold.
+    let next = party_release("ocds-t-469-u5-3", "910203-2026", 3, &[("GB-PPON", "PBZB-4962-TVLR")], "LEEDS CITY COLLEGE");
+    let zip = archive.join("fts/daily/2026-09-04.zip");
+    {
+        let mut w = zip::ZipWriter::new(std::fs::File::create(&zip).unwrap());
+        w.start_file("910203-2026.json", zip::write::SimpleFileOptions::default()).unwrap();
+        w.write_all(&next).unwrap();
+        w.finish().unwrap().flush().unwrap();
+    }
+    db.record_fetch(&store::Fetch {
+        source: "fts".into(),
+        kind: "daily".into(),
+        period: "2026-09-04".into(),
+        url: "https://x".into(),
+        sha256: ingest::sha256_hex(&std::fs::read(&zip).unwrap()),
+        bytes: std::fs::metadata(&zip).unwrap().len() as i64,
+        fetched_at: 2,
+        path: "fts/daily/2026-09-04.zip".into(),
+    })
+    .await
+    .unwrap();
+    assert_eq!(run(&db, &archive).await.parsed, 1);
+    let r = project::project(&db, false).await.expect("next fold");
+    let a = r.alias.registry;
+    assert_eq!((a.aliases, a.asked, a.bound, a.refused), (1, 1, 1, 0), "{:?}", r.alias);
+    assert_eq!((r.alias.aliases, r.alias.asked), (0, 0), "no company-number alias: {:?}", r.alias);
+    assert_eq!(org_count(&db).await, 1, "no PPON org re-minted");
+    assert_eq!(bound_to(&db, "910203-2026").await, keep, "the PPON-first mention is on the UKPRN org");
+
+    // A bare rebuild re-mints every org in notice order: the UKPRN-first notice mints the
+    // UKPRN org, and both PPON-first mentions bind to it through the exact triple.
+    let r = project::project(&db, true).await.expect("rebuild");
+    assert_eq!((r.alias.registry.asked, r.alias.registry.bound), (2, 2), "{:?}", r.alias);
+    assert_eq!(org_count(&db).await, 1, "still one college after the rebuild");
+    let keep = cell_i64(&db, &format!("SELECT id FROM organizations WHERE identifier = '{UKPRN}'")).await;
+    for publication in ["910201-2026", "910202-2026", "910203-2026"] {
         assert_eq!(bound_to(&db, publication).await, keep, "{publication}");
     }
 
@@ -758,6 +896,8 @@ async fn a_letter_only_nhs_code_beside_a_ppon_is_measured_as_a_split() {
         max_pairs: None,
         expect_pairs: None,
         known_deferred: Vec::new(),
+        expect_registry_pairs: Vec::new(),
+        known_registry_deferred: Vec::new(),
         job_id: None,
         stop: &|| false,
     };

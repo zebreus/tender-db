@@ -208,6 +208,8 @@ fn args<'a>(stoplist_cap: usize) -> store::AltIdMergeArgs<'a> {
         max_pairs: None,
         expect_pairs: None,
         known_deferred: Vec::new(),
+        expect_registry_pairs: Vec::new(),
+        known_registry_deferred: Vec::new(),
         job_id: Some(77),
         stop: &|| false,
     }
@@ -216,6 +218,33 @@ fn args<'a>(stoplist_cap: usize) -> store::AltIdMergeArgs<'a> {
 /// A wet run held against `expect` (the stored plan's `pairs`).
 fn wet_args<'a>(expect: &[String]) -> store::AltIdMergeArgs<'a> {
     store::AltIdMergeArgs { dry_run: false, expect_pairs: Some(expect.to_vec()), ..args(20) }
+}
+
+/// Issue 469 U5: a wet run held against both stored sets — `pairs` and
+/// `registry_pairs_planned`.
+fn wet_all_args<'a>(expect: &[String], expect_registry: &[String]) -> store::AltIdMergeArgs<'a> {
+    store::AltIdMergeArgs { expect_registry_pairs: expect_registry.to_vec(), ..wet_args(expect) }
+}
+
+/// Issue 469 U5 (D1): a cohort under the register-confirmed prefix — the ledger's
+/// `confirmed` reads `register` for it.
+const CONFIRMED: &str = "altid-registry-confirmed-test";
+
+/// Issue 469 U4/U5: every register split is a register candidate, every candidate lands
+/// in exactly one place, and the planned keys are the planned count — on a dry plan and,
+/// since U5 re-plans live, on a wet run too.
+fn assert_registry_accounting(r: &store::AltIdMergeReport) {
+    for (scheme, c) in &r.registry_pairs {
+        let g = r.registry_gates.get(scheme).cloned().unwrap_or_default();
+        assert_eq!(c.both_distinct, g.candidates, "{scheme}: {r:#?}");
+        assert_eq!(g.candidates, g.planned + g.denied() + g.conflicts, "{scheme}: {g:#?}");
+    }
+    assert!(r.registry_gates.keys().all(|s| r.registry_pairs.contains_key(s)), "{r:#?}");
+    assert_eq!(
+        r.registry_pairs_planned.len() as u64,
+        r.registry_gates.values().map(|g| g.planned).sum::<u64>(),
+        "{r:#?}"
+    );
 }
 
 /// A pair's stored-plan key, from the literals.
@@ -513,17 +542,27 @@ impl Bed {
         );
         // Issue 469 U4: every register split is a register candidate, and every register
         // candidate lands in exactly one place too.
-        for (scheme, c) in &r.registry_pairs {
-            let g = r.registry_gates.get(scheme).cloned().unwrap_or_default();
-            assert_eq!(c.both_distinct, g.candidates, "{scheme}: {r:#?}");
-            assert_eq!(g.candidates, g.planned + g.denied() + g.conflicts, "{scheme}: {g:#?}");
-        }
-        assert!(r.registry_gates.keys().all(|s| r.registry_pairs.contains_key(s)), "{r:#?}");
+        assert_registry_accounting(&r);
+        r
+    }
+
+    /// Issue 469 U5: a wet run held against both stored sets, checked for both families'
+    /// accounting: the company-number plan's, the register plan's (planned live since U5),
+    /// and every live ∩ stored register pair either merged or in the residual.
+    async fn wet_all(&self, expect: &[String], expect_registry: &[String]) -> store::AltIdMergeReport {
+        let r = self.db.match_org_altid_pairs(wet_all_args(expect, expect_registry)).await.expect("wet run");
         assert_eq!(
-            r.registry_pairs_planned.len() as u64,
-            r.registry_gates.values().map(|g| g.planned).sum::<u64>(),
-            "{r:#?}"
+            r.both_distinct,
+            r.plan_pairs + r.denied_pairs() + r.conflicts,
+            "every both-distinct pair lands in exactly one place: {r:#?}"
         );
+        assert_registry_accounting(&r);
+        assert_eq!(
+            r.registry_merged_pairs + r.registry_residual_pairs.len() as u64,
+            r.registry_pairs_planned.len() as u64 - r.registry_deferred_unreviewed,
+            "every reviewed live register pair merged or carried: {r:#?}"
+        );
+        assert_eq!(r.registry_merged.len() as u64, r.registry_merged_pairs, "{r:#?}");
         r
     }
 
@@ -563,11 +602,19 @@ impl Bed {
         self.party(notice + 1, &format!("P{notice}"), Some(ppon_org), "GB", &[ppon]).await;
     }
 
-    /// A merge verdict under (`GB`, `GB:altid`) on a register key ([`rk`]).
+    /// A merge verdict under (`GB`, `GB:altid`) on a register key ([`rk`]), cohort
+    /// `469-registry-test` — a reviewer's, so a merge it admits reads `confirmed`
+    /// `verdict`.
     async fn registry_verdict(&self, key: &str, members: Vec<i64>, action: &str, confidence: &str) {
+        self.registry_verdict_in("469-registry-test", key, members, action, confidence).await;
+    }
+
+    /// Issue 469 U5: [`Self::registry_verdict`] under `cohort` ([`CONFIRMED`] for a
+    /// register-confirmed pair).
+    async fn registry_verdict_in(&self, cohort: &str, key: &str, members: Vec<i64>, action: &str, confidence: &str) {
         self.db
             .record_merge_verdicts(
-                "469-registry-test",
+                cohort,
                 &[store::MergeVerdict {
                     country: "GB".into(),
                     scheme: "GB:altid".into(),
@@ -2446,6 +2493,19 @@ fn coh_view(r: &store::AltIdMergeReport) -> String {
     r.registry_plan_listing_truncated = false;
     r.registry_denied_listing.clear();
     r.registry_denied_listing_truncated = false;
+    // Issue 469 U5: the register family's wet fields, and the edges they add.
+    r.registry_expected_pairs = 0;
+    r.registry_deferred_unreviewed = 0;
+    r.registry_deferred_pairs.clear();
+    r.registry_expected_not_live = 0;
+    r.registry_contradictory = 0;
+    r.registry_unconfirmed = 0;
+    r.registry_merged_pairs = 0;
+    r.registry_residual_pairs.clear();
+    r.edges_written -= r.registry_edges_written;
+    r.registry_edges_written = 0;
+    r.registry_merged.clear();
+    r.registry_regrown.clear();
     format!("{r:#?}")
 }
 
@@ -2454,7 +2514,8 @@ fn coh_view(r: &store::AltIdMergeReport) -> String {
 /// `ppon-multi-coh` conflict reads the same before and after register pairs of every
 /// outcome land beside it — one of them on the planned pair's own PPON — and the same
 /// again with the register key disabled. The wet run merges only the company-number
-/// pair, and plans no register.
+/// pair: since U5 it re-plans the register family live, and a register pair the stored
+/// plan does not carry (this run holds an empty register set) is deferred, never merged.
 #[tokio::test]
 async fn registry_pairs_never_change_the_coh_plan() {
     let b = bed("registry-coh-parity").await;
@@ -2515,7 +2576,10 @@ async fn registry_pairs_never_change_the_coh_plan() {
 
     let wet = b.wet(&dry.pairs).await;
     assert_eq!(wet.merged_pairs, 1, "{wet:#?}");
-    assert!(wet.registry_pairs_planned.is_empty() && wet.registry_gates.is_empty(), "the wet path plans no register");
+    assert_eq!(wet.registry_pairs_planned, vec![rk(UKPRN_A, PPON_R)], "the live register plan: {wet:#?}");
+    assert_eq!((wet.registry_deferred_unreviewed, wet.registry_merged_pairs), (1, 0), "{wet:#?}");
+    assert_eq!(wet.registry_deferred_pairs, vec![rk(UKPRN_A, PPON_R)]);
+    assert!(wet.registry_residual_pairs.is_empty(), "a deferred register pair is never carried as reviewed");
     assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id BETWEEN 10 AND 17").await, 8);
     assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 1);
     assert_eq!(
@@ -2662,4 +2726,659 @@ async fn the_owner_name_read_is_capped_newest_first_and_says_so() {
     let (ids, c) = b.resolve_capped(3, &[ppon_first(301, PPON_P, "Caterlink")]).await;
     assert_eq!(ids[0], 2, "a cap of three reaches the oldest mention");
     assert_eq!((c.bound, c.owner_name_reads, c.owner_names_capped), (1, 1, 0), "exactly the cap is no cut: {c:?}");
+}
+
+// ---- Issue 469 U5: the register wet path and the register alias.
+
+impl Bed {
+    /// Plan, post a register-confirmed HIGH merge verdict ([`CONFIRMED`]) over every
+    /// planned register pair as its listing names it, plan again, and merge both stored
+    /// sets — the U6 runbook in small. Every planned register pair merges.
+    async fn merge_registry_all(&self) -> store::AltIdMergeReport {
+        let first = self.plan().await;
+        for l in &first.registry_plan_listing {
+            let members = l.members.iter().map(|m| m.org_id).collect();
+            self.registry_verdict_in(CONFIRMED, &l.key(), members, "merge", "high").await;
+        }
+        let dry = self.plan().await;
+        assert!(dry.registry_plan_listing.iter().all(|l| l.verdict_cohort.as_deref() == Some(CONFIRMED)), "{dry:#?}");
+        let r = self.wet_all(&dry.pairs, &dry.registry_pairs_planned).await;
+        assert_eq!(r.registry_merged_pairs, dry.registry_pairs_planned.len() as u64, "{r:#?}");
+        assert!(r.registry_residual_pairs.is_empty(), "{r:#?}");
+        r
+    }
+
+    /// The register alias's owner, for asserting: the org carrying `literal` as its own
+    /// identifier, if one stands.
+    async fn holder(&self, literal: &str) -> i64 {
+        self.count(&format!("SELECT COALESCE(MAX(id), 0) FROM organizations WHERE identifier = '{}'", minted(literal)))
+            .await
+    }
+
+    /// Undo a refused mention's mint, so the next resolve of the same PPON is asked again
+    /// rather than riding the minted row's exact triple.
+    async fn unmint(&self, notice: i64, org: i64) {
+        self.conn.execute(&format!("DELETE FROM organization_mentions WHERE notice_id = {notice}"), ()).await.unwrap();
+        self.conn.execute(&format!("DELETE FROM organizations WHERE id = {org}"), ()).await.unwrap();
+    }
+}
+
+/// The decision's headline test. A college split across its UKPRN org (the HIGHER id)
+/// and its PPON org; a register-confirmed HIGH verdict admits the pair; the wet run folds
+/// the PPON org into the UKPRN org — mentions, satellites, the PPON as a merged identifier
+/// — writes a register ledger row with no `coh`, stamps the verdict, and says what it wrote.
+/// The next dry plan reads the pair `already_one`. And the alias binds the next PPON-first
+/// mention to the UKPRN org through the exact triple, at 448's bar: another name is refused
+/// and mints.
+#[tokio::test]
+async fn a_ukprn_ppon_pair_merges_into_the_ukprn_org_and_the_alias_binds_the_next_ppon_mention() {
+    let b = bed("u5-merge").await;
+    b.registry_split(100, (2, UKPRN_A, "Leeds City College"), (1, PPON_P, "LEEDS CITY COLLEGE")).await;
+    b.satellite(1, "CYM", "Coleg Dinas Leeds").await;
+    let key = rk(UKPRN_A, PPON_P);
+    assert_eq!(b.plan().await.registry_plan_listing[0].verdict_cohort, None, "planned on corroboration alone");
+    b.registry_verdict_in(CONFIRMED, &key, vec![1, 2], "merge", "high").await;
+    let dry = b.plan().await;
+    assert_eq!(dry.registry_gates["GB-UKPRN"].admitted_verdict, 1, "{dry:#?}");
+    assert_eq!(dry.registry_plan_listing[0].verdict_cohort.as_deref(), Some(CONFIRMED));
+
+    let r = b.wet_all(&dry.pairs, &dry.registry_pairs_planned).await;
+    assert_eq!((r.registry_merged_pairs, r.removed, r.merged_pairs), (1, 1, 0), "{r:#?}");
+    assert_eq!((r.registry_expected_pairs, r.registry_unconfirmed, r.registry_contradictory), (1, 0, 0));
+    assert!(r.registry_residual_pairs.is_empty() && r.registry_deferred_pairs.is_empty(), "{r:#?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id = 1").await, 0, "the PPON org is gone");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id = 2").await, 1, "the UKPRN org survives");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 2").await, 2);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organization_names WHERE org_id = 2 AND lang = 'CYM'").await, 1);
+    assert_eq!(
+        b.count(&format!(
+            "SELECT COUNT(*) FROM organization_merged_identifiers WHERE identifier = '{}' AND org_id = 2",
+            minted(PPON_P)
+        ))
+        .await,
+        1,
+        "the PPON is a merged identifier of the UKPRN org"
+    );
+    // The ledger: flat, no `coh`, every field the alias and an unwind read.
+    assert_eq!(
+        b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'e2-altid' AND keep = 2 AND loser = 1 AND job_id = 77").await,
+        1
+    );
+    let evidence = b.text("SELECT evidence FROM org_merge_log WHERE loser = 1").await;
+    for (field, value) in [
+        ("scheme", "GB:altid".to_owned()),
+        ("registry_scheme", "GB-UKPRN".to_owned()),
+        ("registry_kind", "national".to_owned()),
+        ("registry", minted(UKPRN_A)),
+        ("registry_literal", UKPRN_A.to_owned()),
+        ("ppon", k(PPON_P)),
+        ("ppon_literal", PPON_P.to_owned()),
+        ("keep_id", minted(UKPRN_A)),
+        ("loser_id", minted(PPON_P)),
+        ("name_key", String::new()),
+        ("verdict", "admitted".to_owned()),
+        ("confirmed", "register".to_owned()),
+    ] {
+        assert!(evidence.contains(&format!("\"{field}\":\"{value}\"")), "{field} in {evidence}");
+    }
+    assert!(evidence.contains("\"witnesses\":1") && evidence.contains("\"publishers\":0"), "{evidence}");
+    assert_eq!(
+        b.count(
+            "SELECT COUNT(*) FROM org_merge_log WHERE loser = 1 AND json_extract(evidence, '$.coh') IS NULL \
+               AND json_extract(evidence, '$.witness_notices[0]') = 100"
+        )
+        .await,
+        1,
+        "parses as JSON, and carries no coh"
+    );
+    assert_eq!(
+        b.count(&format!(
+            "SELECT COUNT(*) FROM org_merge_verdicts WHERE scheme = 'GB:altid' AND key = '{key}' AND cohort = '{CONFIRMED}' \
+               AND applied_at IS NOT NULL AND job_id = 77 AND applied_action = 'merged 1 row(s) into 2'"
+        ))
+        .await,
+        1
+    );
+    for (id, op) in [(1, "removed"), (2, "changed")] {
+        assert_eq!(
+            b.count(&format!(
+                "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND entity_id = {id} AND op = '{op}'"
+            ))
+            .await,
+            1,
+            "organization {id} {op}"
+        );
+    }
+    assert_eq!(
+        r.registry_merged,
+        vec![store::RegistryMerged { key: key.clone(), keep: 2, loser: 1, verdict_cohort: CONFIRMED.into(), evidence }],
+        "the report carries what the ledger holds (S4)"
+    );
+
+    // The next dry plan: one org, nothing regrown.
+    let again = b.plan().await;
+    let ukprn = &again.registry_pairs["GB-UKPRN"];
+    assert_eq!((ukprn.already_one, ukprn.both_distinct), (1, 0), "{ukprn:#?}");
+    assert!(again.registry_regrown.is_empty() && again.registry_pairs_planned.is_empty(), "{again:#?}");
+
+    // The alias: the PPON-first mention binds to the UKPRN org; another company's name
+    // under the same PPON is refused and mints.
+    b.fresh(&[300, 301]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b
+        .resolve(true, &[ppon_first(300, PPON_P, "Leeds City College"), ppon_first(301, PPON_P, "Zenith Holdings Ltd")])
+        .await;
+    assert_eq!(ids[0], 2, "bound through the exact UKPRN triple");
+    assert_ne!(ids[1], 2);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs + 1, "only the refused mention minted");
+    assert_eq!(
+        c,
+        store::AltIdAliasCounts {
+            armed: true,
+            ledger_rows: 1,
+            owner_name_reads: 1,
+            registry: store::AltIdRegistryAliasCounts {
+                aliases: 1,
+                asked: 2,
+                bound: 1,
+                bound_unwalled: 1,
+                refused: 1,
+                refused_names: 1,
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+        "register counts only, nothing recorded (the merge wrote the PPON)"
+    );
+}
+
+/// A register ledger row carries no `coh`, so 448's alias read — the SQL a pre-U5 binary
+/// runs — sees an empty company number and drops the row; the U5 read names the register.
+/// The register target never falls through to the canonical map: with the UKPRN org gone it
+/// is refused `no owner`. A keep verdict disarms it only under the REGISTER key.
+#[tokio::test]
+async fn a_registry_ledger_row_never_reaches_the_coh_alias() {
+    let b = bed("u5-no-coh").await;
+    b.registry_split(100, (2, UKPRN_A, "Leeds City College"), (1, PPON_P, "LEEDS CITY COLLEGE")).await;
+    b.merge_registry_all().await;
+    let mut rows = b
+        .conn
+        .query("SELECT json_extract(evidence, '$.coh'), json_extract(evidence, '$.ppon') FROM org_merge_log WHERE rule = 'e2-altid'", ())
+        .await
+        .unwrap();
+    let row = rows.next().await.unwrap().unwrap();
+    assert_eq!((row.get_value(0).unwrap(), row.get_value(1).unwrap()), (Value::Null, Value::Text(k(PPON_P))));
+    drop(rows);
+    let mut rows = b.conn.query(store::ALTID_ALIAS_LEDGER_SQL, ()).await.unwrap();
+    let row = rows.next().await.unwrap().unwrap();
+    let cols: Vec<Value> = (0..5).map(|i| row.get_value(i).unwrap()).collect();
+    assert_eq!(
+        cols,
+        vec![
+            Value::Null,
+            Value::Text(k(PPON_P)),
+            Value::Text("GB-UKPRN".into()),
+            Value::Text("national".into()),
+            Value::Text(minted(UKPRN_A)),
+        ]
+    );
+    drop(rows);
+
+    b.conn.execute("DELETE FROM organization_mentions WHERE organization_id = 2", ()).await.unwrap();
+    b.conn.execute("DELETE FROM organizations WHERE id = 2", ()).await.unwrap();
+    b.fresh(&[300, 301, 302]).await;
+    let (ids, c) = b.resolve(true, &[ppon_first(300, PPON_P, "Leeds City College")]).await;
+    assert_eq!((c.aliases, c.registry.aliases, c.asked), (0, 1, 0), "{c:?}");
+    assert_eq!((c.registry.asked, c.registry.refused_no_owner), (1, 1), "no fall-through to canon_of: {c:?}");
+    b.unmint(300, ids[0]).await;
+
+    // A keep under a company-number-shaped key names no register merge.
+    b.registry_verdict(&format!("{}~{}", minted(UKPRN_A), k(PPON_P)), vec![1, 2], "keep", "high").await;
+    let (ids, c) = b.resolve(true, &[ppon_first(301, PPON_P, "Leeds City College")]).await;
+    assert_eq!((c.kept, c.registry.kept, c.registry.aliases), (0, 0, 1), "{c:?}");
+    b.unmint(301, ids[0]).await;
+    b.registry_verdict(&rk(UKPRN_A, PPON_P), vec![1, 2], "keep", "high").await;
+    let (_, c) = b.resolve(true, &[ppon_first(302, PPON_P, "Leeds City College")]).await;
+    assert_eq!((c.registry.kept, c.registry.aliases, c.registry.asked), (1, 0, 0), "{c:?}");
+}
+
+/// A PPON the ledger merged into a company number AND into a register is poisoned across
+/// kinds: the arm never picks a side, so neither does the fold — asked, refused in the
+/// register family (a register target is among its targets), and minted. A keep on the
+/// register merge leaves one target, and the PPON aliases to the company number again.
+#[tokio::test]
+async fn a_ppon_aliased_to_a_company_number_and_a_register_is_poisoned() {
+    let b = bed("u5-poison").await;
+    b.split(100, (2, COH_A, "Acme Widgets Ltd"), (1, PPON_P, "ACME WIDGETS LTD")).await;
+    b.merge_all().await;
+    b.org(5, UKPRN_A, "Acme Widgets Ltd").await;
+    b.conn
+        .execute(
+            "INSERT INTO org_merge_log (keep, loser, rule, evidence, job_id, at) VALUES (5, 6, 'e2-altid', ?, 78, 1)",
+            (Value::Text(format!(
+                "{{\"scheme\":\"GB:altid\",\"registry_scheme\":\"GB-UKPRN\",\"registry_kind\":\"national\",\
+                  \"registry\":\"{}\",\"ppon\":\"{}\"}}",
+                minted(UKPRN_A),
+                k(PPON_P)
+            )),),
+        )
+        .await
+        .unwrap();
+    b.fresh(&[300, 301]).await;
+    let (ids, c) = b.resolve(true, &[ppon_first(300, PPON_P, "Acme Widgets Ltd")]).await;
+    assert!(ids[0] != 2 && ids[0] != 5, "neither target takes it: {ids:?}");
+    assert_eq!((c.ledger_rows, c.poisoned, c.aliases, c.registry.aliases), (2, 1, 0, 0), "{c:?}");
+    assert_eq!((c.asked, c.registry.asked, c.registry.refused_poisoned), (0, 1, 1), "{c:?}");
+    b.unmint(300, ids[0]).await;
+
+    b.registry_verdict(&rk(UKPRN_A, PPON_P), vec![5, 6], "keep", "high").await;
+    let (ids, c) = b.resolve(true, &[ppon_first(301, PPON_P, "Acme Widgets Ltd")]).await;
+    assert_eq!(ids[0], 2, "one target left: the company number");
+    assert_eq!((c.registry.kept, c.aliases, c.bound, c.poisoned), (1, 1, 1, 0), "{c:?}");
+}
+
+/// A register target binds only through a triple exactly one row carries and no
+/// `wrong`/`related` verdict names: (a) a second row with the same UKPRN, added after the
+/// merge, makes it `shared` and it binds neither; (b) a `wrong` verdict on the survivor's
+/// number does too, even with one row; (c) a re-review to `right` lifts it.
+#[tokio::test]
+async fn a_register_target_on_two_rows_or_withheld_binds_nobody() {
+    let b = bed("u5-shared").await;
+    b.registry_split(100, (2, UKPRN_A, "Leeds City College"), (1, PPON_P, "LEEDS CITY COLLEGE")).await;
+    b.merge_registry_all().await;
+    b.fresh(&[300, 301, 302]).await;
+
+    b.org_in(7, "GB", &minted(UKPRN_A), "Leeds City College").await;
+    let (ids, c) = b.resolve(true, &[ppon_first(300, PPON_P, "Leeds City College")]).await;
+    assert!(ids[0] != 2 && ids[0] != 7, "two rows carry the triple: {ids:?}");
+    assert_eq!((c.registry.asked, c.registry.refused_shared), (1, 1), "{c:?}");
+    b.unmint(300, ids[0]).await;
+    b.conn.execute("DELETE FROM organizations WHERE id = 7", ()).await.unwrap();
+
+    b.identifier_verdict(2, &minted(UKPRN_A), "wrong").await;
+    let (ids, c) = b.resolve(true, &[ppon_first(301, PPON_P, "Leeds City College")]).await;
+    assert_ne!(ids[0], 2, "a withheld triple binds nobody");
+    assert_eq!((c.registry.asked, c.registry.refused_shared), (1, 1), "{c:?}");
+    b.unmint(301, ids[0]).await;
+
+    b.identifier_verdict(2, &minted(UKPRN_A), "right").await;
+    let (ids, c) = b.resolve(true, &[ppon_first(302, PPON_P, "Leeds City College")]).await;
+    assert_eq!(ids[0], 2);
+    assert_eq!((c.registry.asked, c.registry.bound), (1, 1), "{c:?}");
+}
+
+/// Parity is held per family: register drift over max(2%, 5) aborts the whole run before
+/// any write, even though the company-number plan matches its stored set exactly. At the
+/// tolerance both families merge.
+#[tokio::test]
+async fn registry_drift_aborts_even_when_coh_parity_holds() {
+    let b = bed("u5-drift").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Acme Ltd")).await;
+    b.registry_split(200, (3, UKPRN_A, "Leeds City College"), (4, PPON_Q, "Leeds City College")).await;
+    b.registry_verdict_in(CONFIRMED, &rk(UKPRN_A, PPON_Q), vec![3, 4], "merge", "high").await;
+    let dry = b.plan().await;
+    assert_eq!((dry.pairs.len(), dry.registry_pairs_planned.len()), (1, 1), "{dry:#?}");
+    let fake = |n: usize| -> Vec<String> { (0..n).map(|i| format!("GB-UKPRN:GBUKPRN1000000{i}~FAKE{i:08}")).collect() };
+    let before = b.snapshot().await;
+    let err = b.db.match_org_altid_pairs(wet_all_args(&dry.pairs, &fake(6))).await.expect_err("register drift aborts");
+    let msg = err.to_string();
+    assert!(msg.contains("register parity abort"), "{msg}");
+    assert!(msg.contains("live register plan has 1 pairs, the stored register plan 6") && msg.contains("7 differ"), "{msg}");
+    assert!(msg.contains("nothing was written"), "{msg}");
+    assert_eq!(b.snapshot().await, before, "the company-number pair was not merged either");
+
+    let mut expect = fake(5);
+    expect.extend(dry.registry_pairs_planned.iter().cloned());
+    expect.sort();
+    let r = b.wet_all(&dry.pairs, &expect).await;
+    assert_eq!((r.merged_pairs, r.registry_merged_pairs, r.registry_expected_not_live), (1, 1, 5), "{r:#?}");
+}
+
+/// The cross-family contest (C9; U4's C8): one PPON org is the loser of a company-number
+/// pair (its own PPON) and of a register pair (a PPON it holds as a merged identifier).
+/// Each family alone would fold it; together they would fold it twice, so neither merges
+/// and both keys stay in their residuals. With the register side gone, the company-number
+/// pair merges.
+#[tokio::test]
+async fn a_ppon_org_two_families_would_fold_merges_neither() {
+    let b = bed("u5-two-families").await;
+    b.org(1, PPON_P, "Acme Widgets Ltd").await;
+    b.conn
+        .execute(
+            "INSERT INTO organization_merged_identifiers (identifier, identifier_kind, country, org_id, loser, rule)
+             VALUES (?, 'national', 'GB', 1, 999, 'e2-altid')",
+            (Value::Text(minted(PPON_Q)),),
+        )
+        .await
+        .unwrap();
+    b.org(2, COH_A, "Acme Widgets Ltd").await;
+    b.org(3, UKPRN_A, "Acme Widgets Ltd").await;
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party(100, "C", Some(2), "GB", &[COH_A, PPON_P]).await;
+    b.notice(200, "fts:ocds-1.1").await;
+    b.party(200, "R", Some(3), "GB", &[UKPRN_A, PPON_Q]).await;
+    // L's own mention carries no raw identifier, so neither loser-incoherent gate fires.
+    b.notice(300, "fts:ocds-1.1").await;
+    b.mention(300, "ORG-L", 1, "GB", None, "Acme Widgets Ltd").await;
+    b.registry_verdict_in(CONFIRMED, &rk(UKPRN_A, PPON_Q), vec![1, 3], "merge", "high").await;
+    let dry = b.plan().await;
+    assert_eq!(dry.pairs, vec![pk(COH_A, PPON_P)], "{dry:#?}");
+    assert_eq!(dry.registry_pairs_planned, vec![rk(UKPRN_A, PPON_Q)], "{dry:#?}");
+
+    let before = b.snapshot().await;
+    let r = b.wet_all(&dry.pairs, &dry.registry_pairs_planned).await;
+    assert_eq!((r.contradictory, r.registry_contradictory), (1, 1), "{r:#?}");
+    assert_eq!((r.merged_pairs, r.registry_merged_pairs), (0, 0), "{r:#?}");
+    assert_eq!((r.residual_pairs.clone(), r.registry_residual_pairs.clone()), (dry.pairs.clone(), dry.registry_pairs_planned.clone()));
+    assert_eq!(b.snapshot().await, before, "the contested org stays where it is");
+
+    // The control: without the merged identifier the register side has no PPON holder.
+    b.conn.execute("DELETE FROM organization_merged_identifiers", ()).await.unwrap();
+    let dry = b.plan().await;
+    assert!(dry.registry_pairs_planned.is_empty(), "{dry:#?}");
+    assert_eq!(dry.registry_pairs["GB-UKPRN"].no_target_ppon, 1, "{dry:#?}");
+    let r = b.wet_all(&dry.pairs, &[]).await;
+    assert_eq!((r.merged_pairs, r.contradictory), (1, 0), "{r:#?}");
+}
+
+/// D1: a register pair planned on corroboration alone carries no verdict, so the wet run
+/// HOLDS it — counted `registry_unconfirmed`, carried in the residual, no ledger row. A
+/// reviewer's HIGH verdict posted afterwards admits it on the continuation's live re-plan,
+/// and the ledger says a verdict, not a register, confirmed it.
+#[tokio::test]
+async fn a_register_pair_planned_without_a_high_verdict_is_held_until_one_is_posted() {
+    let b = bed("u5-unconfirmed").await;
+    b.registry_split(100, (2, UKPRN_A, "Leeds City College"), (1, PPON_P, "Leeds City College")).await;
+    let dry = b.plan().await;
+    let key = rk(UKPRN_A, PPON_P);
+    assert_eq!(dry.registry_pairs_planned, vec![key.clone()]);
+    assert_eq!(dry.registry_plan_listing[0].verdict_cohort, None);
+    let r = b.wet_all(&dry.pairs, &dry.registry_pairs_planned).await;
+    assert_eq!((r.registry_unconfirmed, r.registry_merged_pairs, r.removed), (1, 0, 0), "{r:#?}");
+    assert_eq!(r.registry_residual_pairs, vec![key.clone()]);
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 0, "nothing merged on corroboration");
+
+    b.registry_verdict(&key, vec![1, 2], "merge", "high").await;
+    let r = b.wet_all(&[], &r.registry_residual_pairs).await;
+    assert_eq!((r.registry_unconfirmed, r.registry_merged_pairs), (0, 1), "{r:#?}");
+    let evidence = b.text("SELECT evidence FROM org_merge_log WHERE loser = 1").await;
+    assert!(evidence.contains("\"confirmed\":\"verdict\"") && evidence.contains("\"verdict\":\"admitted\""), "{evidence}");
+}
+
+/// D2 and S4: `max_groups` caps EACH family, so a capped run samples the register family
+/// whatever the company-number backlog — one of each merges, `registry_merged` carries the
+/// one ledger row verbatim — and the continuation held against both residuals merges the
+/// rest.
+#[tokio::test]
+async fn a_capped_wet_run_caps_each_family_on_its_own() {
+    let b = bed("u5-capped").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Acme Ltd")).await;
+    b.split(200, (3, COH_B, "Northgate Ltd"), (4, PPON_Q, "Northgate Ltd")).await;
+    b.registry_split(300, (5, UKPRN_A, "Leeds City College"), (6, PPON_R, "Leeds City College")).await;
+    b.registry_split(400, (7, UKPRN_B, "Harrogate College"), (8, PPON_S, "Harrogate College")).await;
+    for (key, members) in [(rk(UKPRN_A, PPON_R), vec![5, 6]), (rk(UKPRN_B, PPON_S), vec![7, 8])] {
+        b.registry_verdict_in(CONFIRMED, &key, members, "merge", "high").await;
+    }
+    let dry = b.plan().await;
+    assert_eq!((dry.pairs.len(), dry.registry_pairs_planned.len()), (2, 2), "{dry:#?}");
+    let r = b
+        .db
+        .match_org_altid_pairs(store::AltIdMergeArgs {
+            max_pairs: Some(1),
+            ..wet_all_args(&dry.pairs, &dry.registry_pairs_planned)
+        })
+        .await
+        .unwrap();
+    assert_eq!((r.merged_pairs, r.registry_merged_pairs, r.removed), (1, 1, 2), "{r:#?}");
+    assert_eq!((r.residual_pairs.len(), r.registry_residual_pairs.len()), (1, 1), "{r:#?}");
+    assert_eq!(r.registry_residual_pairs, dry.registry_pairs_planned[1..].to_vec(), "the stored order's prefix merged");
+    assert_eq!(r.registry_merged.len(), 1);
+    let m = &r.registry_merged[0];
+    assert_eq!(
+        b.text(&format!("SELECT evidence FROM org_merge_log WHERE keep = {} AND loser = {}", m.keep, m.loser)).await,
+        m.evidence
+    );
+    let rest = b.wet_all(&r.residual_pairs, &r.registry_residual_pairs).await;
+    assert_eq!((rest.merged_pairs, rest.registry_merged_pairs, rest.registry_deferred_unreviewed), (1, 1, 0), "{rest:#?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, 4);
+}
+
+/// D3: the register org must carry the identity as its OWN identifier. One holding the
+/// UKPRN only as a merged identifier is the pair's single owner — U4 planned it — but the
+/// alias replays a register merge only through the exact row, so every later PPON-first
+/// mention would be refused `no owner`: denied `single-owner`. Re-keyed onto the UKPRN, it
+/// plans.
+#[tokio::test]
+async fn a_register_org_holding_the_number_only_as_a_merged_identifier_never_plans() {
+    let b = bed("u5-own-row").await;
+    b.org(2, CHC_Y, "Leeds City College").await;
+    b.conn
+        .execute(
+            "INSERT INTO organization_merged_identifiers (identifier, identifier_kind, country, org_id, loser, rule)
+             VALUES (?, 'national', 'GB', 2, 999, 'r2')",
+            (Value::Text(minted(UKPRN_A)),),
+        )
+        .await
+        .unwrap();
+    b.org(1, PPON_P, "Leeds City College").await;
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party(100, "R", Some(2), "GB", &[UKPRN_A, PPON_P]).await;
+    b.notice(101, "fts:ocds-1.1").await;
+    b.party(101, "P", Some(1), "GB", &[PPON_P]).await;
+    let r = b.plan().await;
+    let g = &r.registry_gates["GB-UKPRN"];
+    assert_eq!((g.candidates, g.denied_single_owner, g.planned), (1, 1, 0), "{g:#?}");
+    assert!(r.registry_pairs_planned.is_empty());
+
+    b.conn.execute(&format!("UPDATE organizations SET identifier = '{}' WHERE id = 2", minted(UKPRN_A)), ()).await.unwrap();
+    assert_eq!(b.plan().await.registry_pairs_planned, vec![rk(UKPRN_A, PPON_P)], "its own row: planned");
+}
+
+/// S5 (C10): after a register merge, a re-minted PPON org makes the PPON side two holders
+/// — the survivor (by its merged identifier) and the new org — so the pair reads
+/// `multi_target`, never `both_distinct`. `registry_regrown` names it.
+#[tokio::test]
+async fn a_merged_register_pair_that_splits_again_is_counted_regrown() {
+    let b = bed("u5-regrown").await;
+    b.registry_split(100, (2, UKPRN_A, "Leeds City College"), (1, PPON_P, "LEEDS CITY COLLEGE")).await;
+    b.merge_registry_all().await;
+    b.org(9, PPON_P, "Leeds City College").await;
+    b.notice(500, "fts:ocds-1.1").await;
+    b.party(500, "N", Some(9), "GB", &[PPON_P]).await;
+    let r = b.plan().await;
+    assert_eq!(r.registry_regrown, vec![rk(UKPRN_A, PPON_P)], "{r:#?}");
+    assert_eq!(r.registry_pairs["GB-UKPRN"].multi_target, 1, "{r:#?}");
+}
+
+/// C9's chain: org 3 is one register pair's keep (its UKPRN) and the other's loser (a PPON
+/// it holds as a merged identifier). The second pair sorts first; merging it would delete
+/// org 3 before the first pair repoints into it. The arm holds the contested pair and
+/// merges the other.
+#[tokio::test]
+async fn a_keep_that_another_register_pair_would_fold_is_contested() {
+    let b = bed("u5-chain").await;
+    b.org(3, UKPRN_A, "Leeds College").await;
+    b.conn
+        .execute(
+            "INSERT INTO organization_merged_identifiers (identifier, identifier_kind, country, org_id, loser, rule)
+             VALUES (?, 'national', 'GB', 3, 999, 'e2-altid')",
+            (Value::Text(minted(PPON_Q)),),
+        )
+        .await
+        .unwrap();
+    b.org(4, PPON_P, "Leeds College").await;
+    b.org(5, UKPRN_B, "Leeds College").await;
+    // PPON-first parties, each bound to its PPON's holder.
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party(100, "A", Some(4), "GB", &[PPON_P, UKPRN_A]).await;
+    b.notice(200, "fts:ocds-1.1").await;
+    b.party(200, "B", Some(3), "GB", &[PPON_Q, UKPRN_B]).await;
+    let (first, second) = (rk(UKPRN_A, PPON_P), rk(UKPRN_B, PPON_Q));
+    assert!(second < first, "the pair that would delete the keep sorts first");
+    b.registry_verdict_in(CONFIRMED, &first, vec![3, 4], "merge", "high").await;
+    b.registry_verdict_in(CONFIRMED, &second, vec![3, 5], "merge", "high").await;
+    let dry = b.plan().await;
+    assert_eq!(dry.registry_pairs_planned, vec![second.clone(), first.clone()], "{dry:#?}");
+    let r = b.wet_all(&dry.pairs, &dry.registry_pairs_planned).await;
+    assert_eq!((r.registry_merged_pairs, r.registry_contradictory), (1, 1), "{r:#?}");
+    assert_eq!(r.registry_residual_pairs, vec![second]);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id IN (3, 5)").await, 2, "the keep stands");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id = 4").await, 0);
+}
+
+/// Identity to identity: the register alias maps the PPON to (kind, identity), never an org
+/// id, so after a rebuild — the org layer re-minted under new ids, the merged-identifier
+/// table emptied, the ledger kept — it finds the re-minted UKPRN org by its exact triple,
+/// and records the PPON there (issue 460's rule, target-agnostic).
+#[tokio::test]
+async fn the_register_alias_survives_the_register_orgs_renumbering() {
+    let b = bed("u5-renumber").await;
+    b.registry_split(100, (2, UKPRN_A, "Leeds City College"), (1, PPON_P, "LEEDS CITY COLLEGE")).await;
+    b.merge_registry_all().await;
+    for table in ["organization_mentions", "organization_names", "organizations", "organization_merged_identifiers"] {
+        b.conn.execute(&format!("DELETE FROM {table}"), ()).await.unwrap();
+    }
+    b.org(50, UKPRN_A, "Leeds City College").await;
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[ppon_first(300, PPON_P, "LEEDS CITY COLLEGE")]).await;
+    assert_eq!(ids[0], 50, "found by its triple, not by the id the ledger recorded");
+    assert_eq!((c.registry.bound, c.recorded), (1, 1), "{c:?}");
+    assert_eq!(
+        b.count(&format!(
+            "SELECT COUNT(*) FROM organization_merged_identifiers WHERE identifier = '{}' AND org_id = 50 AND rule = 'altid-alias'",
+            minted(PPON_P)
+        ))
+        .await,
+        1
+    );
+}
+
+/// The register alias holds 448's bar, never looser: a plc beside the owner's Ltd (head
+/// against head), another company's name, and a consortium name are each refused — counted
+/// in the register family — and each mints exactly as it would unarmed.
+#[tokio::test]
+async fn a_register_alias_bind_holds_448s_bar_and_refused_mentions_mint() {
+    let b = bed("u5-bar").await;
+    b.registry_split(100, (2, UKPRN_A, "Leeds Trust Ltd"), (1, PPON_P, "Leeds Trust Ltd")).await;
+    b.registry_split(200, (4, UKPRN_B, "Harrogate College"), (3, PPON_Q, "Harrogate College")).await;
+    b.registry_split(300, (6, CHC_X, "Helping Hands Trust"), (5, PPON_R, "Helping Hands Trust")).await;
+    assert_eq!(b.merge_registry_all().await.registry_merged_pairs, 3);
+    b.fresh(&[500, 501, 502]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b
+        .resolve(
+            true,
+            &[
+                ppon_first(500, PPON_P, "Leeds Trust plc"),
+                ppon_first(501, PPON_Q, "Zenith Holdings"),
+                ppon_first(502, PPON_R, "Helping Hands Consortium"),
+            ],
+        )
+        .await;
+    for (id, owner) in ids.iter().zip([UKPRN_A, UKPRN_B, CHC_X]) {
+        assert_ne!(*id, b.holder(owner).await, "{owner}: {ids:?}");
+    }
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs + 3);
+    assert_eq!((c.registry.asked, c.registry.bound, c.registry.refused), (3, 0, 3), "{c:?}");
+    assert_eq!((c.registry.refused_veto, c.registry.refused_names), (2, 1), "{c:?}");
+    assert_eq!(c.asked, 0, "nothing in the company-number family: {c:?}");
+}
+
+/// Issue 518's fix holds for the register family too (one bar for both target kinds): the
+/// owner's designated name `Leeds City College Ltd` does not agree with `Leeds College`, its
+/// mentions do — the PPON org's, folded in by the merge — so the PPON-first `Leeds College`
+/// binds; with the owner-name read capped to nothing it is refused.
+#[tokio::test]
+async fn the_register_alias_reads_the_owners_mention_names_too() {
+    let b = bed("u5-owner-mentions").await;
+    b.registry_split(100, (2, UKPRN_A, "Leeds City College Ltd"), (1, PPON_P, "Leeds College")).await;
+    b.notice(102, "fts:ocds-1.1").await;
+    b.party_named(102, "R102", Some(2), "GB", &[UKPRN_A], "Leeds College").await;
+    b.merge_registry_all().await;
+    b.fresh(&[300, 301]).await;
+    let (ids, c) = b.resolve_capped(0, &[ppon_first(300, PPON_P, "Leeds College")]).await;
+    assert_ne!(ids[0], 2, "the designated names alone do not agree");
+    assert_eq!((c.registry.asked, c.registry.refused_names), (1, 1), "{c:?}");
+    b.unmint(300, ids[0]).await;
+    let (ids, c) = b.resolve(true, &[ppon_first(301, PPON_P, "Leeds College")]).await;
+    assert_eq!(ids[0], 2);
+    assert_eq!((c.registry.bound, c.owner_name_reads), (1, 1), "{c:?}");
+}
+
+/// The hard rule of U5: on a store with no register pairs, the company-number family's dry
+/// AND wet runs are what they were — the register planner runs on the wet run but finds
+/// nothing, its parity holds two empty sets, the contest reduces to the company-number
+/// family's, and the ledger and edge evidence keep their exact text. Pinned here verbatim.
+#[tokio::test]
+async fn a_store_with_no_register_pairs_merges_exactly_as_before() {
+    let b = bed("u5-coh-only").await;
+    b.split(100, (2, COH_A, "Acme Widgets Ltd"), (1, PPON_P, "ACME WIDGETS LTD")).await;
+    b.split(200, (3, COH_B, "Northgate Ltd"), (4, PPON_Q, "Zenith Ltd")).await;
+    let dry = b.plan().await;
+    let wet = b.wet(&dry.pairs).await;
+    for r in [&dry, &wet] {
+        assert!(r.registry_pairs.is_empty() && r.registry_gates.is_empty() && r.registry_pairs_planned.is_empty(), "{r:#?}");
+        assert!(r.registry_regrown.is_empty() && r.registry_merged.is_empty() && r.registry_residual_pairs.is_empty());
+        assert_eq!(
+            (r.registry_expected_pairs, r.registry_deferred_unreviewed, r.registry_expected_not_live),
+            (0, 0, 0)
+        );
+        assert_eq!(
+            (r.registry_contradictory, r.registry_unconfirmed, r.registry_merged_pairs, r.registry_edges_written),
+            (0, 0, 0, 0)
+        );
+    }
+    assert_eq!((wet.merged_pairs, wet.removed, wet.edges_written, wet.contradictory), (1, 1, 1, 0), "{wet:#?}");
+    assert_eq!(
+        b.text("SELECT evidence FROM org_merge_log WHERE loser = 1").await,
+        format!(
+            "{{\"scheme\":\"GB:altid\",\"coh\":\"{}\",\"ppon\":\"{}\",\"coh_literal\":\"{COH_A}\",\
+             \"ppon_literal\":\"{PPON_P}\",\"keep_id\":\"{}\",\"loser_id\":\"{}\",\
+             \"name_key\":\"acme widgets §ltd\",\"witnesses\":1,\"witness_notices\":[100],\"verdict\":\"none\"}}",
+            k(COH_A),
+            k(PPON_P),
+            minted(COH_A),
+            minted(PPON_P)
+        ),
+        "the 448 ledger row, byte for byte"
+    );
+    assert_eq!(
+        b.text("SELECT evidence FROM org_candidate_edges WHERE org_a = 3 AND org_b = 4").await,
+        format!(
+            "{{\"coh\":\"{}\",\"ppon\":\"{}\",\"coh_literal\":\"{COH_B}\",\"ppon_literal\":\"{PPON_Q}\",\
+             \"coh_org\":3,\"ppon_org\":4,\"status\":\"uncorroborated-disjoint\",\"witnesses\":1,\
+             \"coh_partners\":1,\"ppon_partners\":1,\"first_coh\":1,\"first_ppon\":0}}",
+            k(COH_B),
+            k(PPON_Q)
+        ),
+        "the 448 edge row, byte for byte"
+    );
+}
+
+/// C7: a register pair a gate denied gets an open `e2-altid`/`E2` edge like a
+/// company-number one, its evidence naming the register in place of `coh`.
+#[tokio::test]
+async fn a_denied_register_pair_gets_an_open_e2_edge() {
+    let b = bed("u5-edge").await;
+    b.registry_split(100, (1, UKPRN_A, "Leeds City College"), (2, PPON_P, "Zenith Holdings")).await;
+    let dry = b.plan().await;
+    assert_eq!(dry.registry_gates["GB-UKPRN"].uncorroborated_disjoint, 1, "{dry:#?}");
+    let r = b.wet_all(&dry.pairs, &dry.registry_pairs_planned).await;
+    assert_eq!((r.edges_written, r.registry_edges_written), (1, 1), "{r:#?}");
+    assert_eq!(
+        b.count("SELECT COUNT(*) FROM org_candidate_edges WHERE org_a = 1 AND org_b = 2 AND rule = 'e2-altid' AND tier = 'E2' AND state = 'open' AND job_id = 77").await,
+        1
+    );
+    let evidence = b.text("SELECT evidence FROM org_candidate_edges WHERE org_a = 1 AND org_b = 2").await;
+    for field in [
+        "\"registry_scheme\":\"GB-UKPRN\"".to_owned(),
+        format!("\"registry\":\"{}\"", minted(UKPRN_A)),
+        format!("\"ppon\":\"{}\"", k(PPON_P)),
+        "\"registry_org\":1".to_owned(),
+        "\"ppon_org\":2".to_owned(),
+        "\"status\":\"uncorroborated-disjoint\"".to_owned(),
+    ] {
+        assert!(evidence.contains(&field), "{field} in {evidence}");
+    }
+    assert!(!evidence.contains("\"coh\""), "{evidence}");
 }

@@ -1,0 +1,26 @@
+469 U5 unit 1 = issue 518 unit 2a (u5-plan.md §7): the altid alias bar's corroboration reads the owner's
+designated names ∪ its newest mention names (ALTID_ALIAS_OWNER_MENTION_NAMES_SQL, a reverse walk of
+organization_mentions_org, cap ALTID_ALIAS_OWNER_MENTIONS = 4,096 rows, ≤ 256 distinct names, cached per fold);
+the consortium veto and head-against-head stay on designated names; counters owner_name_reads /
+owner_names_capped in the [issue 448] finish line; plan-guard EXPLAIN (no SORTER / TEMP B-TREE); tests.
+
+Files (exactly these four):
+crates/store/src/canonical.rs      AltIdAliasRules.owner_mention_cap, ALTID_ALIAS_OWNER_MENTIONS, ALTID_ALIAS_OWNER_MENTION_NAMES_SQL, altid_owner_mention_names, AltIdAlias.owner_mention_names cache, counters, bind + diag line
+crates/store/src/lib.rs            export ALTID_ALIAS_OWNER_MENTIONS, ALTID_ALIAS_OWNER_MENTION_NAMES_SQL
+crates/ingest/src/project.rs       altid_alias_rules(): owner_mention_cap = store::ALTID_ALIAS_OWNER_MENTIONS
+crates/store/tests/altid_merge.rs  alias_rules() cap, resolve_capped/resolve_ruled helpers, owner_name_reads: 1 in the 1654 test, plan-guard EXPLAIN, the_alias_reads_the_owners_mention_names_as_the_planner_does (Caterlink), the_owner_name_read_is_capped_newest_first_and_says_so
+
+State: all of unit 1 except the final sorter-assertion wording is already in WIP commit 735b5ab (the owner's
+snapshot). Unit 2 (U5 proper) edits the SAME four files afterwards, so this unit's exact diff against 88bc209
+(the commit before the WIP snapshot) is saved as u5-unit1.patch beside this file:
+  git diff 88bc209 -- <the four files>  ==  u5-unit1.patch   (at the moment unit 1's focused tests passed)
+
+Focused tests (CLAUDE.md flags, gate package set), all green:
+  CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p model -p store -p ingest -p tender-db --features tender-db/server --test altid_merge        -> 62 passed
+  ... --test fts --test project -- altid empty_notice_layer letter_only                                                                            -> fts 2 passed, project 1 passed
+  ... --lib -- alias_suffix run_spec_futures_stay_inside_their_size_budgets an_execute_without_an_expected_count_is_refused altid                   -> 7 supervisor + 13 crosswalk passed
+
+Added later (during unit 2): unit 1's DOCS — the issue-518 sentences in docs/operations.md (the
+"issue-448 alias" counts-line paragraph: "Since issue 518 the bar's name corroboration reads the owner's
+MENTION names …"; and the resolver-alias paragraph of the altid row: "— and, since issue 518, the owner's
+mention names …") — sit in the same file as unit 2's docs. They belong to unit 1 if the docs are split.

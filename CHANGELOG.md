@@ -4,6 +4,15 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 469) — a UK college, charity or society published under its PPON is merged into its register entry
+
+A UK body that Find a Tender publishes under its Central Digital Platform PPON in some notices and under its register
+number in others — a college's UKPRN, a charity's Charity Commission, OSCR or CCNI number, a housing association's
+FCA Mutuals number — stood as two organizations. Pairs that a notice states together for one party, that the register
+confirms or a reviewer reads, are now merged into the register-numbered organization: the PPON organization publishes
+`organization removed` and answers `308` to the survivor, and later PPON-only mentions bind to the survivor. NHS codes
+are not part of this yet. Nothing merges until each pair is reviewed, so the change reaches `/v1` as the review runs.
+
 ## Unreleased (issue 491) — text-era award notices serve each contract's own figure
 
 Award notices of the 2004–2010 text era now serve each contract's own figure (its "total final value of the
