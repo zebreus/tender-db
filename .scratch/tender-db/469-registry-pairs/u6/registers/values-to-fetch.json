@@ -1,0 +1,264 @@
+{
+ "cc": [
+  {
+   "scheme": "GB-CHC",
+   "value": "287780",
+   "names": [
+    "British Film Institute",
+    "The British Film Institute"
+   ]
+  },
+  {
+   "scheme": "GB-CHC",
+   "value": "292786",
+   "names": [
+    "The British Computer Society",
+    "British Computer Society "
+   ]
+  }
+ ],
+ "mpr": [
+  {
+   "scheme": "GB-MPR",
+   "value": "RS008376",
+   "names": [
+    "Connexus Homes Limited",
+    "Connexus Homes Limited"
+   ]
+  }
+ ],
+ "ukrlp": [
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10005790",
+   "names": [
+    "Sheffield Hallam University",
+    "Sheffield Hallam University"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10005999",
+   "names": [
+    "Tyne Coast College",
+    "Tyne Coast College"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10006174",
+   "names": [
+    "St Helens College",
+    "St Helens College"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10006299",
+   "names": [
+    "University of Staffordshire",
+    "Staffordshire University"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10006687",
+   "names": [
+    "The Heathland School",
+    "The Heathland School"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007140",
+   "names": [
+    "Birmingham City University",
+    "Birmingham City University"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007141",
+   "names": [
+    "University of Lancashire",
+    "University of Central Lancashire"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007147",
+   "names": [
+    "University of Hertfordshire Higher Education Corporation",
+    "University of Hertfordshire Higher Education Corporation"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007150",
+   "names": [
+    "The University Of Kent",
+    "University of Kent"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007155",
+   "names": [
+    "University of Portsmouth Higher Education Corporation",
+    "University of Portsmouth"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007158",
+   "names": [
+    "University of Southampton",
+    "University of Southampton"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007161",
+   "names": [
+    "TEESSIDE UNIVERSITY",
+    "Teesside University"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007167",
+   "names": [
+    "University of York",
+    "University of York"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007321",
+   "names": [
+    "Waltham Forest College",
+    "Waltham Forest College"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007578",
+   "names": [
+    "City of Wolverhampton College",
+    "City of Wolverhampton College"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007696",
+   "names": [
+    "Yeovil College",
+    "Yeovil College"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007774",
+   "names": [
+    "University of Oxford",
+    "University of Oxford (Centre for Genomic Pathogen Surveillance)"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007788",
+   "names": [
+    "UNIVERSITY OF CAMBRIDGE",
+    "The University of Cambridge"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007801",
+   "names": [
+    "University of Plymouth",
+    "University of Plymouth"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007817",
+   "names": [
+    "Chichester College Group",
+    "Chichester College Group"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10007823",
+   "names": [
+    "Edge Hill University",
+    "Edge Hill University\t"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10023139",
+   "names": [
+    "LTE Group",
+    "LTE Group"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10024294",
+   "names": [
+    "Cheshire West and Chester Council",
+    "Cheshire West and Chester Council"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10034301",
+   "names": [
+    "Merseyside Fire and Rescue Authority",
+    "Merseyside Fire and Rescue Authority"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10035180",
+   "names": [
+    "Saint John Bosco College",
+    "Saint John Bosco College"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10039859",
+   "names": [
+    "Academy Transformation Trust",
+    "Academy Transformation Trust"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10046414",
+   "names": [
+    "BRIGHT FUTURES EDUCATIONAL TRUST",
+    "Bright Futures Educational Trust"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10047762",
+   "names": [
+    "The Riverside Group Ltd (Care & Support)",
+    "The Riverside Group LTD"
+   ]
+  },
+  {
+   "scheme": "GB-UKPRN",
+   "value": "10060053",
+   "names": [
+    "THE WHITE HILLS PARK TRUST LTD",
+    "The White Hills Park Trust"
+   ]
+  }
+ ]
+}

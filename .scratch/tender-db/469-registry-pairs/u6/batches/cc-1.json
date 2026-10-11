@@ -1,0 +1,65 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-CHC-287780~PZCD7428WWBG",
+  "scheme": "GB-CHC",
+  "verdict_key": "GB-CHC:GBCHC287780~PZCD7428WWBG",
+  "members": [
+   {
+    "org_id": 30913601,
+    "identifier": "GBCHC287780",
+    "kind": "national",
+    "name": "British Film Institute"
+   },
+   {
+    "org_id": 31568664,
+    "identifier": "GBPPONPZCD7428WWBG",
+    "kind": "national",
+    "name": "The British Film Institute"
+   }
+  ],
+  "notices": [
+   "035326-2026",
+   "037627-2026"
+  ],
+  "registry_names": [
+   "British Film Institute"
+  ],
+  "ppon_names": [
+   "The British Film Institute"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-292786~PGHM9562ZBPZ",
+  "scheme": "GB-CHC",
+  "verdict_key": "GB-CHC:GBCHC292786~PGHM9562ZBPZ",
+  "members": [
+   {
+    "org_id": 30917771,
+    "identifier": "GBCHC292786",
+    "kind": "national",
+    "name": "The British Computer Society"
+   },
+   {
+    "org_id": 31560892,
+    "identifier": "GBPPONPGHM9562ZBPZ",
+    "kind": "national",
+    "name": "British Computer Society "
+   }
+  ],
+  "notices": [
+   "049167-2025",
+   "049257-2025",
+   "054788-2025"
+  ],
+  "registry_names": [
+   "The British Computer Society"
+  ],
+  "ppon_names": [
+   "BCS",
+   "BCS, The Chartered Institute for IT",
+   "British Computer Society "
+  ]
+ }
+]

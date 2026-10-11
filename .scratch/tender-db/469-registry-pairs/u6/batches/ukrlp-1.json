@@ -1,0 +1,481 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10005790~PVMW4512JZYY",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10005790~PVMW4512JZYY",
+  "members": [
+   {
+    "org_id": 30915632,
+    "identifier": "GBUKPRN10005790",
+    "kind": "national",
+    "name": "Sheffield Hallam University"
+   },
+   {
+    "org_id": 31535088,
+    "identifier": "GBPPONPVMW4512JZYY",
+    "kind": "national",
+    "name": "Sheffield Hallam University"
+   }
+  ],
+  "notices": [
+   "033480-2025",
+   "034463-2025",
+   "036153-2025"
+  ],
+  "registry_names": [
+   "Access UK Ltd",
+   "Sheffield Hallam University"
+  ],
+  "ppon_names": [
+   "Centre for Behavioural Science and Applied Psychology, Sheffield Hallam University",
+   "Sheffield Hallam University",
+   "Sheffield Hallam University (CRESR)",
+   "Sheffield Hallam University Enterprises Ltd",
+   "Sheffield Polytechnic",
+   "University of Sheffield"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10005999~PVYH4724YLXW",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10005999~PVYH4724YLXW",
+  "members": [
+   {
+    "org_id": 30915694,
+    "identifier": "GBUKPRN10005999",
+    "kind": "national",
+    "name": "Tyne Coast College"
+   },
+   {
+    "org_id": 31588199,
+    "identifier": "GBPPONPVYH4724YLXW",
+    "kind": "national",
+    "name": "Tyne Coast College"
+   }
+  ],
+  "notices": [
+   "031598-2025",
+   "032222-2025",
+   "045416-2025"
+  ],
+  "registry_names": [
+   "Tyne Coast College"
+  ],
+  "ppon_names": [
+   "Tyne Coast College"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10006174~PPLZ2597YGWD",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10006174~PPLZ2597YGWD",
+  "members": [
+   {
+    "org_id": 31536921,
+    "identifier": "GBUKPRN10006174",
+    "kind": "national",
+    "name": "St Helens College"
+   },
+   {
+    "org_id": 31541597,
+    "identifier": "GBPPONPPLZ2597YGWD",
+    "kind": "national",
+    "name": "St Helens College"
+   }
+  ],
+  "notices": [
+   "040770-2025",
+   "041887-2025",
+   "043896-2025"
+  ],
+  "registry_names": [
+   "St Helens College"
+  ],
+  "ppon_names": [
+   "St Helens College"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10006299~PGTX1922RJNX",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10006299~PGTX1922RJNX",
+  "members": [
+   {
+    "org_id": 30919588,
+    "identifier": "GBUKPRN10006299",
+    "kind": "national",
+    "name": "University of Staffordshire"
+   },
+   {
+    "org_id": 30974621,
+    "identifier": "GBPPONPGTX1922RJNX",
+    "kind": "national",
+    "name": "Staffordshire University"
+   }
+  ],
+  "notices": [
+   "057018-2025",
+   "057615-2025",
+   "059573-2025"
+  ],
+  "registry_names": [
+   "STAFFORDSHIRE UNIVERSITY",
+   "University of Staffordshire"
+  ],
+  "ppon_names": [
+   "Staffordshire University"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10006687~PJNV8655BTTY",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10006687~PJNV8655BTTY",
+  "members": [
+   {
+    "org_id": 31535812,
+    "identifier": "GBUKPRN10006687",
+    "kind": "national",
+    "name": "The Heathland School"
+   },
+   {
+    "org_id": 31575359,
+    "identifier": "GBPPONPJNV8655BTTY",
+    "kind": "national",
+    "name": "The Heathland School"
+   }
+  ],
+  "notices": [
+   "038383-2025",
+   "021492-2025"
+  ],
+  "registry_names": [
+   "The Heathland School"
+  ],
+  "ppon_names": [
+   "The Heathland School"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007140~PMDM3781JGCD",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007140~PMDM3781JGCD",
+  "members": [
+   {
+    "org_id": 31541046,
+    "identifier": "GBUKPRN10007140",
+    "kind": "national",
+    "name": "Birmingham City University"
+   },
+   {
+    "org_id": 31562487,
+    "identifier": "GBPPONPMDM3781JGCD",
+    "kind": "national",
+    "name": "Birmingham City University"
+   }
+  ],
+  "notices": [
+   "049001-2025",
+   "004013-2026",
+   "013815-2026"
+  ],
+  "registry_names": [
+   "Birmingham City University"
+  ],
+  "ppon_names": [
+   "Birmingham City University"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007141~PXZY8464ZLQL",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007141~PXZY8464ZLQL",
+  "members": [
+   {
+    "org_id": 31542244,
+    "identifier": "GBUKPRN10007141",
+    "kind": "national",
+    "name": "University of Lancashire"
+   },
+   {
+    "org_id": 31542308,
+    "identifier": "GBPPONPXZY8464ZLQL",
+    "kind": "national",
+    "name": "University of Central Lancashire"
+   }
+  ],
+  "notices": [
+   "051942-2025",
+   "051960-2025",
+   "042228-2026"
+  ],
+  "registry_names": [
+   "University of Central Lancashire",
+   "University of Lancashire"
+  ],
+  "ppon_names": [
+   "University of Central Lancashire",
+   "University of Lancashire",
+   "UNIVERSITY OF LANCASHIRE HOLDINGS LIMITED"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007147~PHWL7636TRBG",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007147~PHWL7636TRBG",
+  "members": [
+   {
+    "org_id": 30975939,
+    "identifier": "GBUKPRN10007147",
+    "kind": "national",
+    "name": "University of Hertfordshire Higher Education Corporation"
+   },
+   {
+    "org_id": 30974629,
+    "identifier": "GBPPONPHWL7636TRBG",
+    "kind": "national",
+    "name": "University of Hertfordshire Higher Education Corporation"
+   }
+  ],
+  "notices": [
+   "090365-2026",
+   "070732-2025",
+   "009086-2026"
+  ],
+  "registry_names": [
+   "UNIVERSITY OF HERTFORDSHIRE T/A University of Hertfordshire",
+   "University of Hertfordshire Higher Education Corporation"
+  ],
+  "ppon_names": [
+   "University of Hertfordshire",
+   "University of Hertfordshire Higher Education Corporation"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007150~PDYN9654JPQJ",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007150~PDYN9654JPQJ",
+  "members": [
+   {
+    "org_id": 30913766,
+    "identifier": "GBUKPRN10007150",
+    "kind": "national",
+    "name": "The University Of Kent"
+   },
+   {
+    "org_id": 31537451,
+    "identifier": "GBPPONPDYN9654JPQJ",
+    "kind": "national",
+    "name": "University of Kent"
+   }
+  ],
+  "notices": [
+   "029161-2025",
+   "029163-2025",
+   "032600-2025"
+  ],
+  "registry_names": [
+   "THE UNIVERSITY OF KENT"
+  ],
+  "ppon_names": [
+   "University of Kent"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007155~PTVH5678HHZV",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007155~PTVH5678HHZV",
+  "members": [
+   {
+    "org_id": 30928411,
+    "identifier": "GBUKPRN10007155",
+    "kind": "national",
+    "name": "University of Portsmouth Higher Education Corporation"
+   },
+   {
+    "org_id": 31577500,
+    "identifier": "GBPPONPTVH5678HHZV",
+    "kind": "national",
+    "name": "University of Portsmouth"
+   }
+  ],
+  "notices": [
+   "062861-2025",
+   "094815-2026"
+  ],
+  "registry_names": [
+   "University of Portsmouth",
+   "University of Portsmouth Higher Education Corporation"
+  ],
+  "ppon_names": [
+   "University of Portsmouth"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007158~PLJL3977CCGG",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007158~PLJL3977CCGG",
+  "members": [
+   {
+    "org_id": 31558830,
+    "identifier": "GBUKPRN10007158",
+    "kind": "national",
+    "name": "University of Southampton"
+   },
+   {
+    "org_id": 31537324,
+    "identifier": "GBPPONPLJL3977CCGG",
+    "kind": "national",
+    "name": "University of Southampton"
+   }
+  ],
+  "notices": [
+   "003227-2026",
+   "004381-2026",
+   "014980-2026"
+  ],
+  "registry_names": [
+   "UNIVERSITY OF SOUTHAMPTON"
+  ],
+  "ppon_names": [
+   "University of Southampton"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007161~PNHW8344ZGMY",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007161~PNHW8344ZGMY",
+  "members": [
+   {
+    "org_id": 30919543,
+    "identifier": "GBUKPRN10007161",
+    "kind": "national",
+    "name": "TEESSIDE UNIVERSITY"
+   },
+   {
+    "org_id": 31577499,
+    "identifier": "GBPPONPNHW8344ZGMY",
+    "kind": "national",
+    "name": "Teesside University"
+   }
+  ],
+  "notices": [
+   "084381-2026",
+   "051144-2025",
+   "052699-2025"
+  ],
+  "registry_names": [
+   "Anglia Ruskin University",
+   "TEESSIDE UNIVERSITY"
+  ],
+  "ppon_names": [
+   "Teeside University",
+   "Teesside University"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007167~PRDQ5539WTHX",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007167~PRDQ5539WTHX",
+  "members": [
+   {
+    "org_id": 30917206,
+    "identifier": "GBUKPRN10007167",
+    "kind": "national",
+    "name": "University of York"
+   },
+   {
+    "org_id": 30953635,
+    "identifier": "GBPPONPRDQ5539WTHX",
+    "kind": "national",
+    "name": "University of York"
+   }
+  ],
+  "notices": [
+   "034968-2025",
+   "090198-2026",
+   "045764-2025"
+  ],
+  "registry_names": [
+   "University of York"
+  ],
+  "ppon_names": [
+   "University of York",
+   "University Of York (Pelican)"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007321~PPZD2983XRBH",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007321~PPZD2983XRBH",
+  "members": [
+   {
+    "org_id": 31561339,
+    "identifier": "GBUKPRN10007321",
+    "kind": "national",
+    "name": "Waltham Forest College"
+   },
+   {
+    "org_id": 30914498,
+    "identifier": "GBPPONPPZD2983XRBH",
+    "kind": "national",
+    "name": "Waltham Forest College"
+   }
+  ],
+  "notices": [
+   "009295-2026",
+   "012695-2026",
+   "012695-2026"
+  ],
+  "registry_names": [
+   "Waltham Forest College"
+  ],
+  "ppon_names": [
+   "Waltham Forest College"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007578~PCGV6666ZWYD",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007578~PCGV6666ZWYD",
+  "members": [
+   {
+    "org_id": 31557738,
+    "identifier": "GBUKPRN10007578",
+    "kind": "national",
+    "name": "City of Wolverhampton College"
+   },
+   {
+    "org_id": 31541862,
+    "identifier": "GBPPONPCGV6666ZWYD",
+    "kind": "national",
+    "name": "City of Wolverhampton College"
+   }
+  ],
+  "notices": [
+   "000644-2026",
+   "066241-2026",
+   "067054-2026"
+  ],
+  "registry_names": [
+   "City of Wolverhampton College"
+  ],
+  "ppon_names": [
+   "City of Wolverhampton College"
+  ]
+ }
+]

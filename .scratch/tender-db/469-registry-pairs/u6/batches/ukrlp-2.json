@@ -1,0 +1,444 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007696~PRRD2679CZWR",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007696~PRRD2679CZWR",
+  "members": [
+   {
+    "org_id": 31579303,
+    "identifier": "GBUKPRN10007696",
+    "kind": "national",
+    "name": "Yeovil College"
+   },
+   {
+    "org_id": 31537861,
+    "identifier": "GBPPONPRRD2679CZWR",
+    "kind": "national",
+    "name": "Yeovil College"
+   }
+  ],
+  "notices": [
+   "061825-2026",
+   "072932-2026",
+   "072934-2026"
+  ],
+  "registry_names": [
+   "Yeovil College"
+  ],
+  "ppon_names": [
+   "Yeovil College"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007774~PTVC9174PZNM",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007774~PTVC9174PZNM",
+  "members": [
+   {
+    "org_id": 30918126,
+    "identifier": "GBUKPRN10007774",
+    "kind": "national",
+    "name": "University of Oxford"
+   },
+   {
+    "org_id": 30926767,
+    "identifier": "GBPPONPTVC9174PZNM",
+    "kind": "national",
+    "name": "University of Oxford (Centre for Genomic Pathogen Surveillance)"
+   }
+  ],
+  "notices": [
+   "035863-2025",
+   "054405-2025",
+   "061919-2025"
+  ],
+  "registry_names": [
+   "The Global Health Network",
+   "University of Oxford"
+  ],
+  "ppon_names": [
+   "OXFORD UNIVERSITY TRADING LIMITED",
+   "University of Oxford",
+   "University of Oxford (Centre for Genomic Pathogen Surveillance)"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007788~PMCX4817NTNG",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007788~PMCX4817NTNG",
+  "members": [
+   {
+    "org_id": 31549754,
+    "identifier": "GBUKPRN10007788",
+    "kind": "national",
+    "name": "UNIVERSITY OF CAMBRIDGE"
+   },
+   {
+    "org_id": 31569620,
+    "identifier": "GBPPONPMCX4817NTNG",
+    "kind": "national",
+    "name": "The University of Cambridge"
+   }
+  ],
+  "notices": [
+   "068051-2025",
+   "070033-2025",
+   "007698-2026"
+  ],
+  "registry_names": [
+   "The Chancellor, Masters and Scholars of the University of Cambridge",
+   "University of Cambridge"
+  ],
+  "ppon_names": [
+   "University of Cambridge"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007801~PQHL4825PGGL",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007801~PQHL4825PGGL",
+  "members": [
+   {
+    "org_id": 30914461,
+    "identifier": "GBUKPRN10007801",
+    "kind": "national",
+    "name": "University of Plymouth"
+   },
+   {
+    "org_id": 30930105,
+    "identifier": "GBPPONPQHL4825PGGL",
+    "kind": "national",
+    "name": "University of Plymouth"
+   }
+  ],
+  "notices": [
+   "030001-2025",
+   "030130-2025",
+   "030141-2025"
+  ],
+  "registry_names": [
+   "UNIVERSITY OF PLYMOUTH"
+  ],
+  "ppon_names": [
+   "University of Plymouth"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007817~PNTH7125HMDM",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007817~PNTH7125HMDM",
+  "members": [
+   {
+    "org_id": 30917699,
+    "identifier": "GBUKPRN10007817",
+    "kind": "national",
+    "name": "Chichester College Group"
+   },
+   {
+    "org_id": 30928159,
+    "identifier": "GBPPONPNTH7125HMDM",
+    "kind": "national",
+    "name": "Chichester College Group"
+   }
+  ],
+  "notices": [
+   "035066-2025",
+   "007110-2026",
+   "044088-2026"
+  ],
+  "registry_names": [
+   "Chichester College Group"
+  ],
+  "ppon_names": [
+   "Chichester College Group"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10007823~PHYP8666RBNG",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10007823~PHYP8666RBNG",
+  "members": [
+   {
+    "org_id": 31571816,
+    "identifier": "GBUKPRN10007823",
+    "kind": "national",
+    "name": "Edge Hill University"
+   },
+   {
+    "org_id": 31541751,
+    "identifier": "GBPPONPHYP8666RBNG",
+    "kind": "national",
+    "name": "Edge Hill University\t"
+   }
+  ],
+  "notices": [
+   "036759-2026",
+   "036782-2026",
+   "041109-2026"
+  ],
+  "registry_names": [
+   "EDGE HILL UNIVERSITY"
+  ],
+  "ppon_names": [
+   "Edge Hill University\t"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10023139~PGJB2915QCHM",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10023139~PGJB2915QCHM",
+  "members": [
+   {
+    "org_id": 31539563,
+    "identifier": "GBUKPRN10023139",
+    "kind": "national",
+    "name": "LTE Group"
+   },
+   {
+    "org_id": 31551167,
+    "identifier": "GBPPONPGJB2915QCHM",
+    "kind": "national",
+    "name": "LTE Group"
+   }
+  ],
+  "notices": [
+   "045756-2025",
+   "056178-2025",
+   "058425-2025"
+  ],
+  "registry_names": [
+   "LTE Group"
+  ],
+  "ppon_names": [
+   "LTE Group"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10024294~PCJB2814BHZP",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10024294~PCJB2814BHZP",
+  "members": [
+   {
+    "org_id": 30973174,
+    "identifier": "GBUKPRN10024294",
+    "kind": "national",
+    "name": "Cheshire West and Chester Council"
+   },
+   {
+    "org_id": 30914299,
+    "identifier": "GBPPONPCJB2814BHZP",
+    "kind": "national",
+    "name": "Cheshire West and Chester Council"
+   }
+  ],
+  "notices": [
+   "089408-2026",
+   "092107-2026",
+   "092513-2026"
+  ],
+  "registry_names": [
+   "Cheshire West and Chester Council"
+  ],
+  "ppon_names": [
+   "Cheshire West and Chester Council",
+   "Cheshire West and Chester Council (as Administering Authority of the Cheshire Pension Fund)",
+   "HealthCare Matters",
+   "SLC Care UK Ltd",
+   "SLC Care Ltd"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10034301~PNJC6862YTRY",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10034301~PNJC6862YTRY",
+  "members": [
+   {
+    "org_id": 31564275,
+    "identifier": "GBUKPRN10034301",
+    "kind": "national",
+    "name": "Merseyside Fire and Rescue Authority"
+   },
+   {
+    "org_id": 30913875,
+    "identifier": "GBPPONPNJC6862YTRY",
+    "kind": "national",
+    "name": "Merseyside Fire and Rescue Authority"
+   }
+  ],
+  "notices": [
+   "017460-2026",
+   "026751-2026",
+   "031364-2026"
+  ],
+  "registry_names": [
+   "Merseyside Fire and Rescue Authority"
+  ],
+  "ppon_names": [
+   "Merseyside Fire and Rescue Authority",
+   "Merseyside Fire & Rescue Service"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10035180~PLPT9129NCMD",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10035180~PLPT9129NCMD",
+  "members": [
+   {
+    "org_id": 31546215,
+    "identifier": "GBUKPRN10035180",
+    "kind": "national",
+    "name": "Saint John Bosco College"
+   },
+   {
+    "org_id": 30974625,
+    "identifier": "GBPPONPLPT9129NCMD",
+    "kind": "national",
+    "name": "Saint John Bosco College"
+   }
+  ],
+  "notices": [
+   "060334-2025",
+   "017288-2025",
+   "017295-2025"
+  ],
+  "registry_names": [
+   "Saint John Bosco College"
+  ],
+  "ppon_names": [
+   "Saint John Bosco College"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10039859~PZZT9217WDTL",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10039859~PZZT9217WDTL",
+  "members": [
+   {
+    "org_id": 31555168,
+    "identifier": "GBUKPRN10039859",
+    "kind": "national",
+    "name": "Academy Transformation Trust"
+   },
+   {
+    "org_id": 31559471,
+    "identifier": "GBPPONPZZT9217WDTL",
+    "kind": "national",
+    "name": "Academy Transformation Trust"
+   }
+  ],
+  "notices": [
+   "081090-2025",
+   "081097-2025",
+   "082918-2025"
+  ],
+  "registry_names": [
+   "Academy Transformation Trust"
+  ],
+  "ppon_names": [
+   "Academy Transformation Trust"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10046414~PLMG9927NZNP",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10046414~PLMG9927NZNP",
+  "members": [
+   {
+    "org_id": 30933059,
+    "identifier": "GBUKPRN10046414",
+    "kind": "national",
+    "name": "BRIGHT FUTURES EDUCATIONAL TRUST"
+   },
+   {
+    "org_id": 31572388,
+    "identifier": "GBPPONPLMG9927NZNP",
+    "kind": "national",
+    "name": "Bright Futures Educational Trust"
+   }
+  ],
+  "notices": [
+   "086971-2026",
+   "056535-2026",
+   "064380-2026"
+  ],
+  "registry_names": [
+   "BRIGHT FUTURES EDUCATIONAL TRUST"
+  ],
+  "ppon_names": [
+   "Bright Futures Educational Trust"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10047762~PLNV2765HCWJ",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10047762~PLNV2765HCWJ",
+  "members": [
+   {
+    "org_id": 30975003,
+    "identifier": "GBUKPRN10047762",
+    "kind": "national",
+    "name": "The Riverside Group Ltd (Care & Support)"
+   },
+   {
+    "org_id": 31548647,
+    "identifier": "GBPPONPLNV2765HCWJ",
+    "kind": "national",
+    "name": "The Riverside Group LTD"
+   }
+  ],
+  "notices": [
+   "090358-2026",
+   "086133-2025",
+   "005320-2026"
+  ],
+  "registry_names": [
+   "The Riverside Group Ltd (Care & Support)"
+  ],
+  "ppon_names": [
+   "The Riverside Group",
+   "The Riverside Group Limited"
+  ]
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10060053~PQQC4436QQBJ",
+  "scheme": "GB-UKPRN",
+  "verdict_key": "GB-UKPRN:GBUKPRN10060053~PQQC4436QQBJ",
+  "members": [
+   {
+    "org_id": 31575717,
+    "identifier": "GBUKPRN10060053",
+    "kind": "national",
+    "name": "THE WHITE HILLS PARK TRUST LTD"
+   },
+   {
+    "org_id": 31565945,
+    "identifier": "GBPPONPQQC4436QQBJ",
+    "kind": "national",
+    "name": "The White Hills Park Trust"
+   }
+  ],
+  "notices": [
+   "051877-2026"
+  ],
+  "registry_names": [
+   "THE WHITE HILLS PARK TRUST LTD"
+  ],
+  "ppon_names": [
+   "The White Hills Park Trust"
+  ]
+ }
+]

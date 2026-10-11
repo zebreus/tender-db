@@ -1,0 +1,34 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-MPR-RS008376~PZTX9645HPZJ",
+  "scheme": "GB-MPR",
+  "verdict_key": "GB-MPR:GBMPRRS008376~PZTX9645HPZJ",
+  "members": [
+   {
+    "org_id": 31536226,
+    "identifier": "GBMPRRS008376",
+    "kind": "national",
+    "name": "Connexus Homes Limited"
+   },
+   {
+    "org_id": 30917221,
+    "identifier": "GBPPONPZTX9645HPZJ",
+    "kind": "national",
+    "name": "Connexus Homes Limited"
+   }
+  ],
+  "notices": [
+   "039282-2025",
+   "080107-2025",
+   "030562-2026"
+  ],
+  "registry_names": [
+   "Connexus Homes Limited"
+  ],
+  "ppon_names": [
+   "Connexus Group Limited",
+   "Connexus Homes Limited"
+  ]
+ }
+]

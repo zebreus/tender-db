@@ -1,0 +1,4866 @@
+[
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Oasis Care and Training Agency",
+   "Oasis Care and Training Agency"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31564094,
+  "key": "GB-CHC:GBCHC1044521~PZRZ3969DNNT",
+  "loser": 31583635,
+  "members": [
+   {
+    "identifier": "GBCHC1044521",
+    "kind": "national",
+    "name": "Oasis Care and Training Agency",
+    "org_id": 31564094,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPZRZ3969DNNT",
+    "kind": "national",
+    "name": "Oasis Care and Training Agency",
+    "org_id": 31583635,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PZRZ3969DNNT",
+  "ppon_literal": "GB-PPON-PZRZ-3969-DNNT",
+  "ppon_names": [
+   "Oasis Care and Training Agency"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBCHC1044521",
+  "registry_literal": "GB-CHC-1044521",
+  "registry_names": [
+   "Oasis Care and Training Agency"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "033450-2026",
+   "075430-2026",
+   "084111-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Coram Family Lives",
+   "Coram Family Lives"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31547023,
+  "key": "GB-CHC:GBCHC1077722~PYWT7232MXMX",
+  "loser": 31545512,
+  "members": [
+   {
+    "identifier": "GBPPONPYWT7232MXMX",
+    "kind": "national",
+    "name": "Family Lives",
+    "org_id": 31545512,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBCHC1077722",
+    "kind": "national",
+    "name": "FAMILY LIVES",
+    "org_id": 31547023,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PYWT7232MXMX",
+  "ppon_literal": "GB-PPON-PYWT-7232-MXMX",
+  "ppon_names": [
+   "Coram Family Lives",
+   "Family Lives",
+   "FAMILYLIVES"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBCHC1077722",
+  "registry_literal": "GB-CHC-1077722",
+  "registry_names": [
+   "Coram Family Lives"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "061751-2025",
+   "050446-2026",
+   "074445-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "THE KING'S TRUST",
+   "The King's Trust"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31553465,
+  "key": "GB-CHC:GBCHC1079675~PZJW8184GHXX",
+  "loser": 31535076,
+  "members": [
+   {
+    "identifier": "GBPPONPZJW8184GHXX",
+    "kind": "national",
+    "name": "The King's Trust",
+    "org_id": 31535076,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBCHC1079675",
+    "kind": "national",
+    "name": "THE KING'S TRUST",
+    "org_id": 31553465,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PZJW8184GHXX",
+  "ppon_literal": "GB-PPON-PZJW-8184-GHXX",
+  "ppon_names": [
+   "The King's Trust",
+   "The Prince's Trust"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBCHC1079675",
+  "registry_literal": "GB-CHC-1079675",
+  "registry_names": [
+   "THE KING'S TRUST"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "077104-2025",
+   "019238-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "THE CHARTERED INSTITUTE OF PERSONNEL AND DEVELOPMENT",
+   "The Chartered Institute of Personnel and Development"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31537664,
+  "key": "GB-CHC:GBCHC1079797~PNGT9457RTMH",
+  "loser": 31544500,
+  "members": [
+   {
+    "identifier": "GBCHC1079797",
+    "kind": "national",
+    "name": "THE CHARTERED INSTITUTE OF PERSONNEL AND DEVELOPMENT",
+    "org_id": 31537664,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPNGT9457RTMH",
+    "kind": "national",
+    "name": "Chartered Institute of Personnel and Development",
+    "org_id": 31544500,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PNGT9457RTMH",
+  "ppon_literal": "GB-PPON-PNGT-9457-RTMH",
+  "ppon_names": [
+   "The Chartered Institute of Personnel and Development",
+   "CIPD"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBCHC1079797",
+  "registry_literal": "GB-CHC-1079797",
+  "registry_names": [
+   "THE CHARTERED INSTITUTE OF PERSONNEL AND DEVELOPMENT"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "042234-2025",
+   "047482-2025",
+   "011809-2025"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "NURSING AND MIDWIFERY COUNCIL",
+   "The Nursing and Midwifery Council"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30915093,
+  "key": "GB-CHC:GBCHC1091434~PHCH9173QTMH",
+  "loser": 30915966,
+  "members": [
+   {
+    "identifier": "GBCHC1091434",
+    "kind": "national",
+    "name": "NURSING AND MIDWIFERY COUNCIL",
+    "org_id": 30915093,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPHCH9173QTMH",
+    "kind": "national",
+    "name": "The Nursing and Midwifery Council",
+    "org_id": 30915966,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PHCH9173QTMH",
+  "ppon_literal": "GB-PPON-PHCH-9173-QTMH",
+  "ppon_names": [
+   "The Nursing and Midwifery Council"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBCHC1091434",
+  "registry_literal": "GB-CHC-1091434",
+  "registry_names": [
+   "NURSING AND MIDWIFERY COUNCIL"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 42,
+  "witness_publications": [
+   "030634-2025",
+   "030885-2025",
+   "033605-2025"
+  ],
+  "witnesses": 42
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "AFGHANISTAN & CENTRAL ASIAN ASSOCIATION",
+   "Afghanistan & Central Asian Association"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31542369,
+  "key": "GB-CHC:GBCHC1096908~PHBZ6759CZRZ",
+  "loser": 30926776,
+  "members": [
+   {
+    "identifier": "GBPPONPHBZ6759CZRZ",
+    "kind": "national",
+    "name": "Afghanistan & Central Asian Association",
+    "org_id": 30926776,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBCHC1096908",
+    "kind": "national",
+    "name": "AFGHANISTAN & CENTRAL ASIAN ASSOCIATION",
+    "org_id": 31542369,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PHBZ6759CZRZ",
+  "ppon_literal": "GB-PPON-PHBZ-6759-CZRZ",
+  "ppon_names": [
+   "Afghanistan & Central Asian Association"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBCHC1096908",
+  "registry_literal": "GB-CHC-1096908",
+  "registry_names": [
+   "AFGHANISTAN & CENTRAL ASIAN ASSOCIATION"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "052255-2025",
+   "016911-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Forum CIO",
+   "Forum CIO"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31553021,
+  "key": "GB-CHC:GBCHC1107013~PWXN7778TJJG",
+  "loser": 31589350,
+  "members": [
+   {
+    "identifier": "GBCHC1107013",
+    "kind": "national",
+    "name": "Forum CIO",
+    "org_id": 31553021,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPWXN7778TJJG",
+    "kind": "national",
+    "name": "Forum CIO",
+    "org_id": 31589350,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PWXN7778TJJG",
+  "ppon_literal": "GB-PPON-PWXN-7778-TJJG",
+  "ppon_names": [
+   "Forum CIO"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBCHC1107013",
+  "registry_literal": "GB-CHC-1107013",
+  "registry_names": [
+   "Forum CIO"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "076240-2025",
+   "001181-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "London Museum",
+   "London Museum"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31552217,
+  "key": "GB-CHC:GBCHC1139250~PDTH9328QRQP",
+  "loser": 30918375,
+  "members": [
+   {
+    "identifier": "GBPPONPDTH9328QRQP",
+    "kind": "national",
+    "name": "London Museum",
+    "org_id": 30918375,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBCHC1139250",
+    "kind": "national",
+    "name": "London Museum",
+    "org_id": 31552217,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PDTH9328QRQP",
+  "ppon_literal": "GB-PPON-PDTH-9328-QRQP",
+  "ppon_names": [
+   "London Museum"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBCHC1139250",
+  "registry_literal": "GB-CHC-1139250",
+  "registry_names": [
+   "THE BOARD OF GOVERNORS OF THE MUSEUM OF LONDON",
+   "London Museum"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 2,
+  "witness_publications": [
+   "074191-2025",
+   "062754-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "University of South Wales",
+   "University of South Wales"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30914105,
+  "key": "GB-CHC:GBCHC1140312~PCWX4677HTMN",
+  "loser": 30919521,
+  "members": [
+   {
+    "identifier": "GBCHC1140312",
+    "kind": "national",
+    "name": "University of South Wales",
+    "org_id": 30914105,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPCWX4677HTMN",
+    "kind": "national",
+    "name": "University of South Wales",
+    "org_id": 30919521,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PCWX4677HTMN",
+  "ppon_literal": "GB-PPON-PCWX-4677-HTMN",
+  "ppon_names": [
+   "University of South Wales"
+  ],
+  "ppon_partners": 1,
+  "publishers": 10,
+  "registry": "GBCHC1140312",
+  "registry_literal": "GB-CHC-1140312",
+  "registry_names": [
+   "University of South Wales"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "031651-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "CARDIFF METROPOLITAN UNIVERSITY",
+   "Cardiff Metropolitan University"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30915727,
+  "key": "GB-CHC:GBCHC1140762~PPNB5569JLHH",
+  "loser": 30914980,
+  "members": [
+   {
+    "identifier": "GBPPONPPNB5569JLHH",
+    "kind": "national",
+    "name": "Cardiff Metropolitan University",
+    "org_id": 30914980,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBCHC1140762",
+    "kind": "national",
+    "name": "CARDIFF METROPOLITAN UNIVERSITY",
+    "org_id": 30915727,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PPNB5569JLHH",
+  "ppon_literal": "GB-PPON-PPNB-5569-JLHH",
+  "ppon_names": [
+   "Cardiff Metropolitan University"
+  ],
+  "ppon_partners": 1,
+  "publishers": 10,
+  "registry": "GBCHC1140762",
+  "registry_literal": "GB-CHC-1140762",
+  "registry_names": [
+   "CARDIFF METROPOLITAN UNIVERSITY"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "031651-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": false,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Aberystwyth University",
+   "Aberystwyth University"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30915728,
+  "key": "GB-CHC:GBCHC1145141~PDMD5638NXMT",
+  "loser": 30968735,
+  "members": [
+   {
+    "identifier": "GBCHC1145141",
+    "kind": "national",
+    "name": "PRIFYSGOL ABERYSTWYTH UNIVERSITY",
+    "org_id": 30915728,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPDMD5638NXMT",
+    "kind": "national",
+    "name": "Aberystwyth University",
+    "org_id": 30968735,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PDMD5638NXMT",
+  "ppon_literal": "GB-PPON-PDMD-5638-NXMT",
+  "ppon_names": [
+   "Aberystwyth University",
+   "Prifysgol Aberystwyth University"
+  ],
+  "ppon_partners": 1,
+  "publishers": 11,
+  "registry": "GBCHC1145141",
+  "registry_literal": "GB-CHC-1145141",
+  "registry_names": [
+   "Aberystwyth University"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "031651-2025",
+   "062363-2026",
+   "062426-2026"
+  ],
+  "witnesses": 4
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "UNIVERSITY OF WALES:TRINITY SAINT DAVID",
+   "UNIVERSITY OF WALES:TRINITY SAINT DAVID"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30915729,
+  "key": "GB-CHC:GBCHC1149535~PCRP2139LPXM",
+  "loser": 30919672,
+  "members": [
+   {
+    "identifier": "GBCHC1149535",
+    "kind": "national",
+    "name": "UNIVERSITY OF WALES:TRINITY SAINT DAVID",
+    "org_id": 30915729,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPCRP2139LPXM",
+    "kind": "national",
+    "name": "University of Wales Trinity Saint David",
+    "org_id": 30919672,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PCRP2139LPXM",
+  "ppon_literal": "GB-PPON-PCRP-2139-LPXM",
+  "ppon_names": [
+   "UNIVERSITY OF WALES:TRINITY SAINT DAVID",
+   "University of Wales Trinity St David"
+  ],
+  "ppon_partners": 1,
+  "publishers": 10,
+  "registry": "GBCHC1149535",
+  "registry_literal": "GB-CHC-1149535",
+  "registry_names": [
+   "UNIVERSITY OF WALES:TRINITY SAINT DAVID"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "031651-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Step 2 Young People's Health",
+   "Step 2 Young People's Health"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31541488,
+  "key": "GB-CHC:GBCHC1161921~PRHY4184BBDM",
+  "loser": 31554980,
+  "members": [
+   {
+    "identifier": "GBCHC1161921",
+    "kind": "national",
+    "name": "Step 2 Young People's Health",
+    "org_id": 31541488,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPRHY4184BBDM",
+    "kind": "national",
+    "name": "Step 2 Young People's Health",
+    "org_id": 31554980,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PRHY4184BBDM",
+  "ppon_literal": "GB-PPON-PRHY-4184-BBDM",
+  "ppon_names": [
+   "Step 2 Young People's Health"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBCHC1161921",
+  "registry_literal": "GB-CHC-1161921",
+  "registry_names": [
+   "Step 2 Young People's Health"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "050074-2025",
+   "009197-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Shine Lincolnshire",
+   "SHINE LINCOLNSHIRE"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31566916,
+  "key": "GB-CHC:GBCHC1175616~PDXH7241QMQH",
+  "loser": 31565792,
+  "members": [
+   {
+    "identifier": "GBPPONPDXH7241QMQH",
+    "kind": "national",
+    "name": "Shine Lincolnshire",
+    "org_id": 31565792,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBCHC1175616",
+    "kind": "national",
+    "name": "Shine Lincolnshire",
+    "org_id": 31566916,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PDXH7241QMQH",
+  "ppon_literal": "GB-PPON-PDXH-7241-QMQH",
+  "ppon_names": [
+   "SHINE LINCOLNSHIRE"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBCHC1175616",
+  "registry_literal": "GB-CHC-1175616",
+  "registry_names": [
+   "Shine Lincolnshire"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "067382-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "ROYAL SOCIETY FOR THE PROTECTION OF BIRDS",
+   "Royal Society for the Protection of Birds"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31587889,
+  "key": "GB-CHC:GBCHC207076~PZJG5765BRHD",
+  "loser": 31589220,
+  "members": [
+   {
+    "identifier": "GBCHC207076",
+    "kind": "national",
+    "name": "ROYAL SOCIETY FOR THE PROTECTION OF BIRDS",
+    "org_id": 31587889,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPZJG5765BRHD",
+    "kind": "national",
+    "name": "The Royal Society for the Protection of Birds",
+    "org_id": 31589220,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PZJG5765BRHD",
+  "ppon_literal": "GB-PPON-PZJG-5765-BRHD",
+  "ppon_names": [
+   "Royal Society for the Protection of Birds"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBCHC207076",
+  "registry_literal": "GB-CHC-207076",
+  "registry_names": [
+   "ROYAL SOCIETY FOR THE PROTECTION OF BIRDS"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "073085-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "THE GUIDE DOGS FOR THE BLIND ASSOCIATION",
+   "The Guide Dogs for the Blind Association"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30967402,
+  "key": "GB-CHC:GBCHC209617~PGQC5728VHDY",
+  "loser": 31590269,
+  "members": [
+   {
+    "identifier": "GBCHC209617",
+    "kind": "national",
+    "name": "THE GUIDE DOGS FOR THE BLIND ASSOCIATION",
+    "org_id": 30967402,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPGQC5728VHDY",
+    "kind": "national",
+    "name": "The Guide Dogs for the Blind Association",
+    "org_id": 31590269,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PGQC5728VHDY",
+  "ppon_literal": "GB-PPON-PGQC-5728-VHDY",
+  "ppon_names": [
+   "The Guide Dogs for the Blind Association"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBCHC209617",
+  "registry_literal": "GB-CHC-209617",
+  "registry_names": [
+   "THE GUIDE DOGS FOR THE BLIND ASSOCIATION"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "087663-2026",
+   "055112-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "THE INSTITUTION OF CIVIL ENGINEERS",
+   "Institution of Civil Engineers"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31580864,
+  "key": "GB-CHC:GBCHC210252~PVMC1756WQNH",
+  "loser": 31556347,
+  "members": [
+   {
+    "identifier": "GBPPONPVMC1756WQNH",
+    "kind": "national",
+    "name": "Institution of Civil Engineers",
+    "org_id": 31556347,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBCHC210252",
+    "kind": "national",
+    "name": "THE INSTITUTION OF CIVIL ENGINEERS",
+    "org_id": 31580864,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PVMC1756WQNH",
+  "ppon_literal": "GB-PPON-PVMC-1756-WQNH",
+  "ppon_names": [
+   "Institution of Civil Engineers"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBCHC210252",
+  "registry_literal": "GB-CHC-210252",
+  "registry_names": [
+   "THE INSTITUTION OF CIVIL ENGINEERS"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "066429-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "ROYAL COLLEGE OF SURGEONS OF ENGLAND",
+   "The Royal College of Surgeons of England"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31575435,
+  "key": "GB-CHC:GBCHC212808~PJNX8831LRZX",
+  "loser": 31578267,
+  "members": [
+   {
+    "identifier": "GBCHC212808",
+    "kind": "national",
+    "name": "ROYAL COLLEGE OF SURGEONS OF ENGLAND",
+    "org_id": 31575435,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPJNX8831LRZX",
+    "kind": "national",
+    "name": "The Royal College of Surgeons of England",
+    "org_id": 31578267,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PJNX8831LRZX",
+  "ppon_literal": "GB-PPON-PJNX-8831-LRZX",
+  "ppon_names": [
+   "The Royal College of Surgeons England",
+   "The Royal College of Surgeons of England"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBCHC212808",
+  "registry_literal": "GB-CHC-212808",
+  "registry_names": [
+   "ROYAL COLLEGE OF SURGEONS OF ENGLAND"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "050653-2026",
+   "061655-2026",
+   "069458-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "British Film Institute",
+   "The British Film Institute"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30913601,
+  "key": "GB-CHC:GBCHC287780~PZCD7428WWBG",
+  "loser": 31568664,
+  "members": [
+   {
+    "identifier": "GBCHC287780",
+    "kind": "national",
+    "name": "British Film Institute",
+    "org_id": 30913601,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPZCD7428WWBG",
+    "kind": "national",
+    "name": "The British Film Institute",
+    "org_id": 31568664,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PZCD7428WWBG",
+  "ppon_literal": "GB-PPON-PZCD-7428-WWBG",
+  "ppon_names": [
+   "The British Film Institute"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBCHC287780",
+  "registry_literal": "GB-CHC-287780",
+  "registry_names": [
+   "British Film Institute"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "035326-2026",
+   "037627-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "The British Computer Society",
+   "British Computer Society "
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30917771,
+  "key": "GB-CHC:GBCHC292786~PGHM9562ZBPZ",
+  "loser": 31560892,
+  "members": [
+   {
+    "identifier": "GBCHC292786",
+    "kind": "national",
+    "name": "The British Computer Society",
+    "org_id": 30917771,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPGHM9562ZBPZ",
+    "kind": "national",
+    "name": "British Computer Society ",
+    "org_id": 31560892,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PGHM9562ZBPZ",
+  "ppon_literal": "GB-PPON-PGHM-9562-ZBPZ",
+  "ppon_names": [
+   "BCS",
+   "BCS, The Chartered Institute for IT",
+   "British Computer Society "
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBCHC292786",
+  "registry_literal": "GB-CHC-292786",
+  "registry_names": [
+   "The British Computer Society"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-CHC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "049167-2025",
+   "049257-2025",
+   "054788-2025"
+  ],
+  "witnesses": 5
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Sussex Housing & Care",
+   "Sussex Housing & Care"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31573778,
+  "key": "GB-MPR:GBMPR12871R~PLDT3146ZNQQ",
+  "loser": 31550992,
+  "members": [
+   {
+    "identifier": "GBPPONPLDT3146ZNQQ",
+    "kind": "national",
+    "name": "Sussex Housing & Care",
+    "org_id": 31550992,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBMPR12871R",
+    "kind": "national",
+    "name": "Sussex Housing & Care",
+    "org_id": 31573778,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PLDT3146ZNQQ",
+  "ppon_literal": "GB-PPON-PLDT-3146-ZNQQ",
+  "ppon_names": [
+   "Sussex Housing & Care"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBMPR12871R",
+  "registry_literal": "GB-MPR-12871R",
+  "registry_names": [
+   "Sussex Housing & Care"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "043208-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Salvation Army Housing Association",
+   "Salvation Army Housing Association"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31557064,
+  "key": "GB-MPR:GBMPR15210R~PDVR1783RWJX",
+  "loser": 31540541,
+  "members": [
+   {
+    "identifier": "GBPPONPDVR1783RWJX",
+    "kind": "national",
+    "name": "Salvation Army Housing Association",
+    "org_id": 31540541,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBMPR15210R",
+    "kind": "national",
+    "name": "Salvation Army Housing Association",
+    "org_id": 31557064,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PDVR1783RWJX",
+  "ppon_literal": "GB-PPON-PDVR-1783-RWJX",
+  "ppon_names": [
+   "Salvation Army Housing Association"
+  ],
+  "ppon_partners": 1,
+  "publishers": 4,
+  "registry": "GBMPR15210R",
+  "registry_literal": "GB-MPR-15210R",
+  "registry_names": [
+   "Salvation Army Housing Association"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "085887-2025",
+   "005320-2026",
+   "029379-2026"
+  ],
+  "witnesses": 8
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "METROPOLITAN HOUSING TRUST LIMITED",
+   "Metropolitan Housing Trust"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30976449,
+  "key": "GB-MPR:GBMPR16337R~PMCL4972LYCY",
+  "loser": 31538068,
+  "members": [
+   {
+    "identifier": "GBMPR16337R",
+    "kind": "national",
+    "name": "Metropolitan Housing Trust Limited",
+    "org_id": 30976449,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPMCL4972LYCY",
+    "kind": "national",
+    "name": "Metropolitan Thames Valley Housing Limited",
+    "org_id": 31538068,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PMCL4972LYCY",
+  "ppon_literal": "GB-PPON-PMCL-4972-LYCY",
+  "ppon_names": [
+   "Metropolitan Housing Trust",
+   "METROPOLITAN HOUSING TRUST LIMITED",
+   "Metropolitan Thames Valley Housing",
+   "Metropolitan Thames Valley Housing Limited"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBMPR16337R",
+  "registry_literal": "GB-MPR-16337R",
+  "registry_names": [
+   "METROPOLITAN HOUSING TRUST LIMITED"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 64,
+  "witness_publications": [
+   "090941-2026",
+   "059125-2025",
+   "073047-2025"
+  ],
+  "witnesses": 65
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Orwell Housing Association Ltd",
+   "Orwell Housing Association Limited"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30916416,
+  "key": "GB-MPR:GBMPR16460R~PGDJ9755ZNCY",
+  "loser": 31569638,
+  "members": [
+   {
+    "identifier": "GBMPR16460R",
+    "kind": "national",
+    "name": "Orwell Housing Association Ltd",
+    "org_id": 30916416,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPGDJ9755ZNCY",
+    "kind": "national",
+    "name": "Orwell Housing Association Limited",
+    "org_id": 31569638,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PGDJ9755ZNCY",
+  "ppon_literal": "GB-PPON-PGDJ-9755-ZNCY",
+  "ppon_names": [
+   "Orwell Housing Association Limited"
+  ],
+  "ppon_partners": 1,
+  "publishers": 4,
+  "registry": "GBMPR16460R",
+  "registry_literal": "GB-MPR-16460R",
+  "registry_names": [
+   "Orwell Housing Association Ltd"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 23,
+  "witness_publications": [
+   "032816-2025",
+   "085197-2026",
+   "085404-2026"
+  ],
+  "witnesses": 27
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Southdown Housing Association",
+   "Southdown Housing Association"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30919585,
+  "key": "GB-MPR:GBMPR20755R~PGZD6448RDPL",
+  "loser": 30915945,
+  "members": [
+   {
+    "identifier": "GBPPONPGZD6448RDPL",
+    "kind": "national",
+    "name": "Southdown Housing Association",
+    "org_id": 30915945,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBMPR20755R",
+    "kind": "national",
+    "name": "Southdown Housing Association",
+    "org_id": 30919585,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PGZD6448RDPL",
+  "ppon_literal": "GB-PPON-PGZD-6448-RDPL",
+  "ppon_names": [
+   "Southdown Housing Association",
+   "Southdown Housing Association Limited"
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBMPR20755R",
+  "registry_literal": "GB-MPR-20755R",
+  "registry_names": [
+   "Southdown Housing Association",
+   "Southdown Housing Association Ltd"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "037828-2025",
+   "075794-2025",
+   "000300-2026"
+  ],
+  "witnesses": 5
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Waltham Forest Housing Association",
+   "Waltham Forest Housing Association"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30917457,
+  "key": "GB-MPR:GBMPR21186R~PLHD1176CCXP",
+  "loser": 31535363,
+  "members": [
+   {
+    "identifier": "GBMPR21186R",
+    "kind": "national",
+    "name": "Waltham Forest Housing Association",
+    "org_id": 30917457,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPLHD1176CCXP",
+    "kind": "national",
+    "name": "Waltham Forest Housing Association",
+    "org_id": 31535363,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PLHD1176CCXP",
+  "ppon_literal": "GB-PPON-PLHD-1176-CCXP",
+  "ppon_names": [
+   "Waltham Forest Housing Association"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBMPR21186R",
+  "registry_literal": "GB-MPR-21186r",
+  "registry_names": [
+   "Waltham Forest Housing Association"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "017087-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "West Kent Housing Association",
+   "West Kent Housing Association"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30916785,
+  "key": "GB-MPR:GBMPR26278R~PWND8621RJPR",
+  "loser": 31564029,
+  "members": [
+   {
+    "identifier": "GBMPR26278R",
+    "kind": "national",
+    "name": "West Kent Housing Association",
+    "org_id": 30916785,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPWND8621RJPR",
+    "kind": "national",
+    "name": "West Kent Housing Association",
+    "org_id": 31564029,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PWND8621RJPR",
+  "ppon_literal": "GB-PPON-PWND-8621-RJPR",
+  "ppon_names": [
+   "West Kent Housing Association"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBMPR26278R",
+  "registry_literal": "GB-MPR-26278R",
+  "registry_names": [
+   "West Kent Housing Association"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 20,
+  "witness_publications": [
+   "033354-2025",
+   "084328-2026",
+   "053234-2025"
+  ],
+  "witnesses": 20
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Creative Support",
+   "Creative Support"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30913929,
+  "key": "GB-MPR:GBMPR27440R~PQBH3597XBJD",
+  "loser": 31553186,
+  "members": [
+   {
+    "identifier": "GBMPR27440R",
+    "kind": "national",
+    "name": "Creative Support",
+    "org_id": 30913929,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPQBH3597XBJD",
+    "kind": "national",
+    "name": "CREATIVE SUPPORT LIMITED",
+    "org_id": 31553186,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PQBH3597XBJD",
+  "ppon_literal": "GB-PPON-PQBH-3597-XBJD",
+  "ppon_names": [
+   "Creative Support",
+   "Creative Support Ltd"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBMPR27440R",
+  "registry_literal": "GB-MPR-27440R",
+  "registry_names": [
+   "Creative Support",
+   "Creative Support Limited"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "076240-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "CLARION HOUSING GROUP LIMITED",
+   "Clarion Housing Group"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31534486,
+  "key": "GB-MPR:GBMPR28038R~PQND5289JNDN",
+  "loser": 30914385,
+  "members": [
+   {
+    "identifier": "GBPPONPQND5289JNDN",
+    "kind": "national",
+    "name": "Clarion Housing Group",
+    "org_id": 30914385,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBMPR28038R",
+    "kind": "national",
+    "name": "CLARION HOUSING GROUP LIMITED",
+    "org_id": 31534486,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PQND5289JNDN",
+  "ppon_literal": "GB-PPON-PQND-5289-JNDN",
+  "ppon_names": [
+   "Clarion Housing Association Ltd",
+   "Clarion Housing Group",
+   "Clarion Housing Group Limited"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBMPR28038R",
+  "registry_literal": "GB-MPR-28038R",
+  "registry_names": [
+   "CLARION HOUSING GROUP LIMITED"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 14,
+  "witness_publications": [
+   "091257-2026",
+   "091272-2026",
+   "051546-2025"
+  ],
+  "witnesses": 14
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "THRIVE HOMES LIMITED",
+   "Thrive Homes"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30915060,
+  "key": "GB-MPR:GBMPR30398R~PHBB8926WHGM",
+  "loser": 30916354,
+  "members": [
+   {
+    "identifier": "GBMPR30398R",
+    "kind": "national",
+    "name": "Thrive Homes Limited",
+    "org_id": 30915060,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPHBB8926WHGM",
+    "kind": "national",
+    "name": "Thrive Homes",
+    "org_id": 30916354,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PHBB8926WHGM",
+  "ppon_literal": "GB-PPON-PHBB-8926-WHGM",
+  "ppon_names": [
+   "Thrive",
+   "Thrive Homes",
+   "Thrive Homes Ltd"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBMPR30398R",
+  "registry_literal": "GB-MPR-30398R",
+  "registry_names": [
+   "THRIVE HOMES LIMITED"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 5,
+  "witness_publications": [
+   "030586-2025",
+   "030589-2025",
+   "039269-2025"
+  ],
+  "witnesses": 5
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Your Housing Group Limited",
+   "Your Housing Group"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30929619,
+  "key": "GB-MPR:GBMPR30666R~PCBB6493RNBZ",
+  "loser": 30915907,
+  "members": [
+   {
+    "identifier": "GBPPONPCBB6493RNBZ",
+    "kind": "national",
+    "name": "Your Housing Group",
+    "org_id": 30915907,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBMPR30666R",
+    "kind": "national",
+    "name": "Your Housing Group Limited",
+    "org_id": 30929619,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PCBB6493RNBZ",
+  "ppon_literal": "GB-PPON-PCBB-6493-RNBZ",
+  "ppon_names": [
+   "Your Housing Group",
+   "Your Housing Group Limited"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBMPR30666R",
+  "registry_literal": "GB-MPR-30666R",
+  "registry_names": [
+   "Your Housing Group Limited"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 13,
+  "witness_publications": [
+   "085780-2026",
+   "087572-2026",
+   "090952-2026"
+  ],
+  "witnesses": 13
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Dimensions UK Limited",
+   "Dimensions (UK) Ltd"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31545510,
+  "key": "GB-MPR:GBMPR31192R~PWVC1443BCQH",
+  "loser": 31563993,
+  "members": [
+   {
+    "identifier": "GBMPR31192R",
+    "kind": "national",
+    "name": "Dimensions (UK) Limited",
+    "org_id": 31545510,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPWVC1443BCQH",
+    "kind": "national",
+    "name": "Dimensions (UK) Ltd",
+    "org_id": 31563993,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PWVC1443BCQH",
+  "ppon_literal": "GB-PPON-PWVC-1443-BCQH",
+  "ppon_names": [
+   "Dimensions (UK) Ltd"
+  ],
+  "ppon_partners": 1,
+  "publishers": 5,
+  "registry": "GBMPR31192R",
+  "registry_literal": "GB-MPR-31192R",
+  "registry_names": [
+   "Dimensions UK Limited"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "059142-2025",
+   "061161-2025",
+   "065483-2025"
+  ],
+  "witnesses": 8
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Cross Keys Homes",
+   "Cross Keys Homes"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30968692,
+  "key": "GB-MPR:GBMPR7643~PDHG6361YQXW",
+  "loser": 31554487,
+  "members": [
+   {
+    "identifier": "GBMPR7643",
+    "kind": "national",
+    "name": "Cross Keys Homes",
+    "org_id": 30968692,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPDHG6361YQXW",
+    "kind": "national",
+    "name": "Cross Keys Homes",
+    "org_id": 31554487,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PDHG6361YQXW",
+  "ppon_literal": "GB-PPON-PDHG-6361-YQXW",
+  "ppon_names": [
+   "Cross Keys Homes"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBMPR7643",
+  "registry_literal": "GB-MPR-7643",
+  "registry_names": [
+   "Cross Keys Homes"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 6,
+  "witness_publications": [
+   "088151-2026",
+   "089505-2026",
+   "084834-2025"
+  ],
+  "witnesses": 6
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Livv Maintenance Limited (part of Livv Housing Group)",
+   "Livv Maintenance Limited (part of Livv Housing Group)"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30933260,
+  "key": "GB-MPR:GBMPR7773~PDPR4361WLZP",
+  "loser": 31538427,
+  "members": [
+   {
+    "identifier": "GBMPR7773",
+    "kind": "national",
+    "name": "Livv Housing Group",
+    "org_id": 30933260,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPDPR4361WLZP",
+    "kind": "national",
+    "name": "Livv Housing Group",
+    "org_id": 31538427,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PDPR4361WLZP",
+  "ppon_literal": "GB-PPON-PDPR-4361-WLZP",
+  "ppon_names": [
+   "Livv Housing Group",
+   "Livv Maintenance Limited (part of Livv Housing Group)"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBMPR7773",
+  "registry_literal": "GB-MPR-7773",
+  "registry_names": [
+   "Livv Maintenance Limited (part of Livv Housing Group)"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 20,
+  "witness_publications": [
+   "087085-2026",
+   "046819-2025",
+   "051340-2025"
+  ],
+  "witnesses": 20
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Anchor Hanover Group",
+   "Anchor Hanover Group"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30917184,
+  "key": "GB-MPR:GBMPR7843~PYBH1339MTCJ",
+  "loser": 30914476,
+  "members": [
+   {
+    "identifier": "GBPPONPYBH1339MTCJ",
+    "kind": "national",
+    "name": "Anchor Hanover Group",
+    "org_id": 30914476,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBMPR7843",
+    "kind": "national",
+    "name": "Anchor Hanover Group",
+    "org_id": 30917184,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PYBH1339MTCJ",
+  "ppon_literal": "GB-PPON-PYBH-1339-MTCJ",
+  "ppon_names": [
+   "Anchor Hanover Group"
+  ],
+  "ppon_partners": 1,
+  "publishers": 6,
+  "registry": "GBMPR7843",
+  "registry_literal": "GB-MPR-7843",
+  "registry_names": [
+   "Anchor Hanover Group"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 104,
+  "witness_publications": [
+   "034079-2025",
+   "034095-2025",
+   "089328-2026"
+  ],
+  "witnesses": 106
+ },
+ {
+  "coherent": false,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Delta Housing Limited",
+   "Delta Housing Limited"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30915659,
+  "key": "GB-MPR:GBMPR8112~PCMV1277LCTG",
+  "loser": 31573385,
+  "members": [
+   {
+    "identifier": "GBMPR8112",
+    "kind": "national",
+    "name": "Chelmer Housing Partnership Limited",
+    "org_id": 30915659,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPCMV1277LCTG",
+    "kind": "national",
+    "name": "Delta Housing Limited",
+    "org_id": 31573385,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PCMV1277LCTG",
+  "ppon_literal": "GB-PPON-PCMV-1277-LCTG",
+  "ppon_names": [
+   "Delta Housing Limited"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBMPR8112",
+  "registry_literal": "GB-MPR-8112",
+  "registry_names": [
+   "Chelmer Housing Partnership Limited",
+   "Delta Housing Limited"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 40,
+  "witness_publications": [
+   "031540-2025",
+   "031553-2025",
+   "085283-2026"
+  ],
+  "witnesses": 40
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Southern Housing",
+   "Southern Housing"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30953695,
+  "key": "GB-MPR:GBMPR8983~PXJP9994BJBR",
+  "loser": 30967562,
+  "members": [
+   {
+    "identifier": "GBMPR8983",
+    "kind": "national",
+    "name": "Southern Housing",
+    "org_id": 30953695,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPXJP9994BJBR",
+    "kind": "national",
+    "name": "Southern Housing",
+    "org_id": 30967562,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PXJP9994BJBR",
+  "ppon_literal": "GB-PPON-PXJP-9994-BJBR",
+  "ppon_names": [
+   "Southern Housing"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBMPR8983",
+  "registry_literal": "GB-MPR-8983",
+  "registry_names": [
+   "Southern Housing"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 67,
+  "witness_publications": [
+   "087391-2026",
+   "089520-2026",
+   "091407-2026"
+  ],
+  "witnesses": 67
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Inspire North",
+   "Inspire North"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30919598,
+  "key": "GB-MPR:GBMPR9518~PZHB3385JTPM",
+  "loser": 31574895,
+  "members": [
+   {
+    "identifier": "GBMPR9518",
+    "kind": "national",
+    "name": "Inspire North (Community Benefit Society)",
+    "org_id": 30919598,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPZHB3385JTPM",
+    "kind": "national",
+    "name": "Inspire North",
+    "org_id": 31574895,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PZHB3385JTPM",
+  "ppon_literal": "GB-PPON-PZHB-3385-JTPM",
+  "ppon_names": [
+   "Inspire North"
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBMPR9518",
+  "registry_literal": "GB-MPR-9518",
+  "registry_names": [
+   "Inspire North",
+   "Inspire North (Community Benefit Society)"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "062835-2025",
+   "077594-2025",
+   "077850-2025"
+  ],
+  "witnesses": 8
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Connexus Homes Limited",
+   "Connexus Homes Limited"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31536226,
+  "key": "GB-MPR:GBMPRRS008376~PZTX9645HPZJ",
+  "loser": 30917221,
+  "members": [
+   {
+    "identifier": "GBPPONPZTX9645HPZJ",
+    "kind": "national",
+    "name": "Connexus Homes Limited",
+    "org_id": 30917221,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBMPRRS008376",
+    "kind": "national",
+    "name": "Connexus Homes Limited",
+    "org_id": 31536226,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PZTX9645HPZJ",
+  "ppon_literal": "GB-PPON-PZTX-9645-HPZJ",
+  "ppon_names": [
+   "Connexus Group Limited",
+   "Connexus Homes Limited"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBMPRRS008376",
+  "registry_literal": "GB-MPR-RS008376",
+  "registry_names": [
+   "Connexus Homes Limited"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-MPR",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "039282-2025",
+   "080107-2025",
+   "030562-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Coalisland Training Services Ltd",
+   "Coalisland Training Services Ltd"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31539293,
+  "key": "GB-NIC:GBNICNI100770~PLPQ1249DXWG",
+  "loser": 31542330,
+  "members": [
+   {
+    "identifier": "GBNICNI100770",
+    "kind": "national",
+    "name": "Coalisland Training Services Ltd",
+    "org_id": 31539293,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPLPQ1249DXWG",
+    "kind": "national",
+    "name": "COALISLAND TRAINING SERVICES LIMITED",
+    "org_id": 31542330,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PLPQ1249DXWG",
+  "ppon_literal": "GB-PPON-PLPQ-1249-DXWG",
+  "ppon_names": [
+   "Coalisland Training Services Ltd"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBNICNI100770",
+  "registry_literal": "GB-NIC-NI 100770",
+  "registry_names": [
+   "Coalisland Training Services Ltd"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-NIC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "045276-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "University of Edinburgh",
+   "University of Edinburgh"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30953699,
+  "key": "GB-SC:GBSCSC005336~PGGY6115PNHD",
+  "loser": 31563999,
+  "members": [
+   {
+    "identifier": "GBSCSC005336",
+    "kind": "national",
+    "name": "The University of Edinburgh",
+    "org_id": 30953699,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPGGY6115PNHD",
+    "kind": "national",
+    "name": "University of Edinburgh",
+    "org_id": 31563999,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PGGY6115PNHD",
+  "ppon_literal": "GB-PPON-PGGY-6115-PNHD",
+  "ppon_names": [
+   "University of Edinburgh",
+   "The University of Edinburgh (EPCC)"
+  ],
+  "ppon_partners": 1,
+  "publishers": 5,
+  "registry": "GBSCSC005336",
+  "registry_literal": "GB-SC-SC005336",
+  "registry_names": [
+   "University of Edinburgh"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-SC",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "087395-2026",
+   "087954-2026",
+   "040539-2025"
+  ],
+  "witnesses": 9
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "The University of Strathclyde",
+   "University of Strathclyde"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30953700,
+  "key": "GB-SC:GBSCSC015263~PGVP7923NDTW",
+  "loser": 31544520,
+  "members": [
+   {
+    "identifier": "GBSCSC015263",
+    "kind": "national",
+    "name": "University of Strathclyde",
+    "org_id": 30953700,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPGVP7923NDTW",
+    "kind": "national",
+    "name": "University of Strathclyde",
+    "org_id": 31544520,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PGVP7923NDTW",
+  "ppon_literal": "GB-PPON-PGVP-7923-NDTW",
+  "ppon_names": [
+   "University of Strathclyde"
+  ],
+  "ppon_partners": 1,
+  "publishers": 6,
+  "registry": "GBSCSC015263",
+  "registry_literal": "GB-SC-SC015263",
+  "registry_names": [
+   "The University of Strathclyde"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-SC",
+  "scheme": "GB:altid",
+  "self": 17,
+  "witness_publications": [
+   "087395-2026",
+   "053003-2025",
+   "065522-2025"
+  ],
+  "witnesses": 24
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "ASKHAM BRYAN COLLEGE",
+   "Askham Bryan College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30968718,
+  "key": "GB-UKPRN:GBUKPRN10000415~PPBG8518ZJJN",
+  "loser": 31551769,
+  "members": [
+   {
+    "identifier": "GBUKPRN10000415",
+    "kind": "national",
+    "name": "Askham Bryan College",
+    "org_id": 30968718,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPPBG8518ZJJN",
+    "kind": "national",
+    "name": "Askham Bryan College",
+    "org_id": 31551769,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PPBG8518ZJJN",
+  "ppon_literal": "GB-PPON-PPBG-8518-ZJJN",
+  "ppon_names": [
+   "Askham Bryan College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10000415",
+  "registry_literal": "GB-UKPRN-10000415",
+  "registry_names": [
+   "ASKHAM BRYAN COLLEGE"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 9,
+  "witness_publications": [
+   "088199-2026",
+   "044502-2025",
+   "048015-2025"
+  ],
+  "witnesses": 9
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Bath Spa University",
+   "Bath Spa University"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30929647,
+  "key": "GB-UKPRN:GBUKPRN10000571~PBMW5596NRJW",
+  "loser": 31541432,
+  "members": [
+   {
+    "identifier": "GBUKPRN10000571",
+    "kind": "national",
+    "name": "Bath Spa University",
+    "org_id": 30929647,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPBMW5596NRJW",
+    "kind": "national",
+    "name": "Bath Spa University",
+    "org_id": 31541432,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PBMW5596NRJW",
+  "ppon_literal": "GB-PPON-PBMW-5596-NRJW",
+  "ppon_names": [
+   "Bath Spa University"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10000571",
+  "registry_literal": "GB-UKPRN-10000571",
+  "registry_names": [
+   "Bath Spa University"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 41,
+  "witness_publications": [
+   "085827-2026",
+   "085863-2026",
+   "085867-2026"
+  ],
+  "witnesses": 41
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Bradford College",
+   "Bradford College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30928147,
+  "key": "GB-UKPRN:GBUKPRN10000840~PRQR6323DRZQ",
+  "loser": 30969231,
+  "members": [
+   {
+    "identifier": "GBUKPRN10000840",
+    "kind": "national",
+    "name": "Bradford College",
+    "org_id": 30928147,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPRQR6323DRZQ",
+    "kind": "national",
+    "name": "Bradford College",
+    "org_id": 30969231,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PRQR6323DRZQ",
+  "ppon_literal": "GB-PPON-PRQR-6323-DRZQ",
+  "ppon_names": [
+   "Bradford College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10000840",
+  "registry_literal": "GB-UKPRN-10000840",
+  "registry_names": [
+   "Bradford College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 11,
+  "witness_publications": [
+   "085216-2026",
+   "019846-2026",
+   "019910-2026"
+  ],
+  "witnesses": 11
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "BRIDGWATER AND TAUNTON COLLEGE",
+   "Bridgwater & Taunton College "
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31576896,
+  "key": "GB-UKPRN:GBUKPRN10000878~PHJQ3398CTLP",
+  "loser": 30929830,
+  "members": [
+   {
+    "identifier": "GBPPONPHJQ3398CTLP",
+    "kind": "national",
+    "name": "University Centre Somerset College Group",
+    "org_id": 30929830,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10000878",
+    "kind": "national",
+    "name": "University Centre Somerset College Group",
+    "org_id": 31576896,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PHJQ3398CTLP",
+  "ppon_literal": "GB-PPON-PHJQ-3398-CTLP",
+  "ppon_names": [
+   "Bridgwater & Taunton College ",
+   "University Centre Somerset College Group"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10000878",
+  "registry_literal": "GB-UKPRN-10000878",
+  "registry_names": [
+   "BRIDGWATER AND TAUNTON COLLEGE"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "054888-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": false,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "CORNWALL COLLEGE",
+   "Cornwall College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31542085,
+  "key": "GB-UKPRN:GBUKPRN10001696~PZGV1935NXDL",
+  "loser": 30913828,
+  "members": [
+   {
+    "identifier": "GBPPONPZGV1935NXDL",
+    "kind": "national",
+    "name": "Cornwall College",
+    "org_id": 30913828,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10001696",
+    "kind": "national",
+    "name": "The Cornwall College Group",
+    "org_id": 31542085,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PZGV1935NXDL",
+  "ppon_literal": "GB-PPON-PZGV-1935-NXDL",
+  "ppon_names": [
+   "Cornwall College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBUKPRN10001696",
+  "registry_literal": "GB-UKPRN-10001696",
+  "registry_names": [
+   "CORNWALL COLLEGE",
+   "The Cornwall College Group"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "061825-2026",
+   "075342-2026",
+   "022617-2025"
+  ],
+  "witnesses": 4
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "East Durham College",
+   "East Durham College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30976012,
+  "key": "GB-UKPRN:GBUKPRN10002111~PXPM1872RCYW",
+  "loser": 30929902,
+  "members": [
+   {
+    "identifier": "GBPPONPXPM1872RCYW",
+    "kind": "national",
+    "name": "East Durham College",
+    "org_id": 30929902,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10002111",
+    "kind": "national",
+    "name": "East Durham College",
+    "org_id": 30976012,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PXPM1872RCYW",
+  "ppon_literal": "GB-PPON-PXPM-1872-RCYW",
+  "ppon_names": [
+   "East Durham College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10002111",
+  "registry_literal": "GB-UKPRN-10002111",
+  "registry_names": [
+   "East Durham College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 28,
+  "witness_publications": [
+   "090477-2026",
+   "090928-2026",
+   "040430-2025"
+  ],
+  "witnesses": 29
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "GATESHEAD COLLEGE",
+   "Gateshead College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30919578,
+  "key": "GB-UKPRN:GBUKPRN10002638~PYVZ5892TRVV",
+  "loser": 30932984,
+  "members": [
+   {
+    "identifier": "GBUKPRN10002638",
+    "kind": "national",
+    "name": "Gateshead College",
+    "org_id": 30919578,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPYVZ5892TRVV",
+    "kind": "national",
+    "name": "Gateshead College",
+    "org_id": 30932984,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PYVZ5892TRVV",
+  "ppon_literal": "GB-PPON-PYVZ-5892-TRVV",
+  "ppon_names": [
+   "Gateshead College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10002638",
+  "registry_literal": "GB-UKPRN-10002638",
+  "registry_names": [
+   "GATESHEAD COLLEGE"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "084425-2026",
+   "087879-2026",
+   "074407-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Gloucestershire College",
+   "Gloucestershire College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31565169,
+  "key": "GB-UKPRN:GBUKPRN10002696~PQWN9858ZCJM",
+  "loser": 31544144,
+  "members": [
+   {
+    "identifier": "GBPPONPQWN9858ZCJM",
+    "kind": "national",
+    "name": "Gloucestershire College",
+    "org_id": 31544144,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10002696",
+    "kind": "national",
+    "name": "Gloucestershire College",
+    "org_id": 31565169,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PQWN9858ZCJM",
+  "ppon_literal": "GB-PPON-PQWN-9858-ZCJM",
+  "ppon_names": [
+   "Gloucestershire College",
+   "Gloucestershire College (Pelican)"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10002696",
+  "registry_literal": "GB-UKPRN-10002696",
+  "registry_names": [
+   "Gloucestershire College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "019238-2026",
+   "061825-2026",
+   "093449-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "GRANTHAM COLLEGE",
+   "GRANTHAM COLLEGE"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31578778,
+  "key": "GB-UKPRN:GBUKPRN10002743~PPDR6933XHHH",
+  "loser": 31554601,
+  "members": [
+   {
+    "identifier": "GBPPONPPDR6933XHHH",
+    "kind": "national",
+    "name": "Grantham College",
+    "org_id": 31554601,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10002743",
+    "kind": "national",
+    "name": "Grantham College",
+    "org_id": 31578778,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PPDR6933XHHH",
+  "ppon_literal": "GB-PPON-PPDR-6933-XHHH",
+  "ppon_names": [
+   "GRANTHAM COLLEGE"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10002743",
+  "registry_literal": "GB-UKPRN-10002743",
+  "registry_names": [
+   "GRANTHAM COLLEGE"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "060333-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Hartlepool College of Further Education",
+   "Hartlepool College of Further Education"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31559949,
+  "key": "GB-UKPRN:GBUKPRN10002917~PYRB9815YDNY",
+  "loser": 31536264,
+  "members": [
+   {
+    "identifier": "GBPPONPYRB9815YDNY",
+    "kind": "national",
+    "name": "Hartlepool College of Further Education",
+    "org_id": 31536264,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10002917",
+    "kind": "national",
+    "name": "Hartlepool College of Further Education",
+    "org_id": 31559949,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PYRB9815YDNY",
+  "ppon_literal": "GB-PPON-PYRB-9815-YDNY",
+  "ppon_names": [
+   "Hartlepool College of Further Education"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10002917",
+  "registry_literal": "GB-UKPRN-10002917",
+  "registry_names": [
+   "Hartlepool College of Further Education"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 14,
+  "witness_publications": [
+   "005690-2026",
+   "012964-2026",
+   "027888-2026"
+  ],
+  "witnesses": 15
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Joseph Chamberlain Sixth Form College",
+   "Joseph Chamberlain Sixth Form College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31561664,
+  "key": "GB-UKPRN:GBUKPRN10003511~PHVG7323DLDR",
+  "loser": 31535654,
+  "members": [
+   {
+    "identifier": "GBPPONPHVG7323DLDR",
+    "kind": "national",
+    "name": "Joseph Chamberlain Sixth Form College",
+    "org_id": 31535654,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10003511",
+    "kind": "national",
+    "name": "Joseph Chamberlain Sixth Form College",
+    "org_id": 31561664,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PHVG7323DLDR",
+  "ppon_literal": "GB-PPON-PHVG-7323-DLDR",
+  "ppon_names": [
+   "Joseph Chamberlain College",
+   "Joseph Chamberlain Sixth Form College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10003511",
+  "registry_literal": "GB-UKPRN-10003511",
+  "registry_names": [
+   "Joseph Chamberlain Sixth Form College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 4,
+  "witness_publications": [
+   "010313-2026",
+   "043457-2026",
+   "046653-2026"
+  ],
+  "witnesses": 4
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Kendal College",
+   "Kendal College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30914868,
+  "key": "GB-UKPRN:GBUKPRN10003558~PLPX8427RLLH",
+  "loser": 31551135,
+  "members": [
+   {
+    "identifier": "GBUKPRN10003558",
+    "kind": "national",
+    "name": "Kendal College",
+    "org_id": 30914868,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPLPX8427RLLH",
+    "kind": "national",
+    "name": "Kendal College",
+    "org_id": 31551135,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PLPX8427RLLH",
+  "ppon_literal": "GB-PPON-PLPX-8427-RLLH",
+  "ppon_names": [
+   "Kendal College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10003558",
+  "registry_literal": "GB-UKPRN-10003558",
+  "registry_names": [
+   "Kendal College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 5,
+  "witness_publications": [
+   "030526-2025",
+   "047129-2025",
+   "050959-2025"
+  ],
+  "witnesses": 5
+ },
+ {
+  "coherent": false,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Lincoln College",
+   "LINCOLN COLLEGE"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30915120,
+  "key": "GB-UKPRN:GBUKPRN10003928~PNXC4137QGWD",
+  "loser": 30973248,
+  "members": [
+   {
+    "identifier": "GBUKPRN10003928",
+    "kind": "national",
+    "name": "Lincoln College Group",
+    "org_id": 30915120,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPNXC4137QGWD",
+    "kind": "national",
+    "name": "LINCOLN COLLEGE",
+    "org_id": 30973248,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PNXC4137QGWD",
+  "ppon_literal": "GB-PPON-PNXC-4137-QGWD",
+  "ppon_names": [
+   "LINCOLN COLLEGE"
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBUKPRN10003928",
+  "registry_literal": "GB-UKPRN-10003928",
+  "registry_names": [
+   "Lincoln College",
+   "Lincoln College Group"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 11,
+  "witness_publications": [
+   "030690-2025",
+   "033896-2025",
+   "033912-2025"
+  ],
+  "witnesses": 11
+ },
+ {
+  "coherent": false,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "LIVERPOOL JOHN MOORES UNIVERSITY",
+   "Liverpool John Moores University"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30914142,
+  "key": "GB-UKPRN:GBUKPRN10003957~PVBW3417ZCNN",
+  "loser": 31545575,
+  "members": [
+   {
+    "identifier": "GBUKPRN10003957",
+    "kind": "national",
+    "name": "Liverpool John Moores University",
+    "org_id": 30914142,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPVBW3417ZCNN",
+    "kind": "national",
+    "name": "Liverpool John Moore University",
+    "org_id": 31545575,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PVBW3417ZCNN",
+  "ppon_literal": "GB-PPON-PVBW-3417-ZCNN",
+  "ppon_names": [
+   "Liverpool John Moore University",
+   "Liverpool John Moores",
+   "Liverpool John Moores University"
+  ],
+  "ppon_partners": 1,
+  "publishers": 4,
+  "registry": "GBUKPRN10003957",
+  "registry_literal": "GB-UKPRN-10003957",
+  "registry_names": [
+   "LIVERPOOL JOHN MOORES UNIVERSITY"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 75,
+  "witness_publications": [
+   "029649-2025",
+   "032348-2025",
+   "034110-2025"
+  ],
+  "witnesses": 78
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "MIDDLESBROUGH COLLEGE T/A Northern Skills Group",
+   "Middlesbrough College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31540516,
+  "key": "GB-UKPRN:GBUKPRN10004344~PWYW4583DRYJ",
+  "loser": 31542192,
+  "members": [
+   {
+    "identifier": "GBUKPRN10004344",
+    "kind": "national",
+    "name": "Middlesbrough College",
+    "org_id": 31540516,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPWYW4583DRYJ",
+    "kind": "national",
+    "name": "Middlesbrough College",
+    "org_id": 31542192,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PWYW4583DRYJ",
+  "ppon_literal": "GB-PPON-PWYW-4583-DRYJ",
+  "ppon_names": [
+   "Middlesbrough College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10004344",
+  "registry_literal": "GB-UKPRN-10004344",
+  "registry_names": [
+   "MIDDLESBROUGH COLLEGE T/A Northern Skills Group"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "047707-2025",
+   "074407-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "MILTON KEYNES COLLEGE",
+   "Milton Keynes College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30917084,
+  "key": "GB-UKPRN:GBUKPRN10004375~PMNN7576BCQG",
+  "loser": 30974559,
+  "members": [
+   {
+    "identifier": "GBUKPRN10004375",
+    "kind": "national",
+    "name": "Milton Keynes College",
+    "org_id": 30917084,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPMNN7576BCQG",
+    "kind": "national",
+    "name": "Milton Keynes College",
+    "org_id": 30974559,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PMNN7576BCQG",
+  "ppon_literal": "GB-PPON-PMNN-7576-BCQG",
+  "ppon_names": [
+   "Milton Keynes College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10004375",
+  "registry_literal": "GB-UKPRN-10004375",
+  "registry_names": [
+   "MILTON KEYNES COLLEGE"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 13,
+  "witness_publications": [
+   "033923-2025",
+   "001243-2026",
+   "025171-2026"
+  ],
+  "witnesses": 13
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "New College Swindon",
+   "New College Swindon"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31537265,
+  "key": "GB-UKPRN:GBUKPRN10004579~PLQC2725XCGX",
+  "loser": 30916392,
+  "members": [
+   {
+    "identifier": "GBPPONPLQC2725XCGX",
+    "kind": "national",
+    "name": "New College Swindon",
+    "org_id": 30916392,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10004579",
+    "kind": "national",
+    "name": "New College Swindon",
+    "org_id": 31537265,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PLQC2725XCGX",
+  "ppon_literal": "GB-PPON-PLQC-2725-XCGX",
+  "ppon_names": [
+   "New College Swindon"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10004579",
+  "registry_literal": "GB-UKPRN-10004579",
+  "registry_names": [
+   "New College Swindon"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 2,
+  "witness_publications": [
+   "041449-2025",
+   "046447-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "NCG Corporation",
+   "NCG Corporation"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30919579,
+  "key": "GB-UKPRN:GBUKPRN10004599~PJDY1333MXVZ",
+  "loser": 31535020,
+  "members": [
+   {
+    "identifier": "GBUKPRN10004599",
+    "kind": "national",
+    "name": "NCG",
+    "org_id": 30919579,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPJDY1333MXVZ",
+    "kind": "national",
+    "name": "NCG",
+    "org_id": 31535020,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PJDY1333MXVZ",
+  "ppon_literal": "GB-PPON-PJDY-1333-MXVZ",
+  "ppon_names": [
+   "NCG",
+   "NCG Corporation",
+   "NEWCASTLE COLLEGE GROUP (NCG"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10004599",
+  "registry_literal": "GB-UKPRN-10004599",
+  "registry_names": [
+   "NCG Corporation"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "084425-2026",
+   "087879-2026",
+   "019238-2026"
+  ],
+  "witnesses": 5
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "DN COLLEGES GROUP T/A North Lindsey College",
+   "DN Colleges Group"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30914058,
+  "key": "GB-UKPRN:GBUKPRN10004695~PZBH4782ZMWY",
+  "loser": 30926948,
+  "members": [
+   {
+    "identifier": "GBUKPRN10004695",
+    "kind": "national",
+    "name": "DN Colleges Group",
+    "org_id": 30914058,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPZBH4782ZMWY",
+    "kind": "national",
+    "name": "DN Colleges Group",
+    "org_id": 30926948,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PZBH4782ZMWY",
+  "ppon_literal": "GB-PPON-PZBH-4782-ZMWY",
+  "ppon_names": [
+   "DN Colleges Group"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10004695",
+  "registry_literal": "GB-UKPRN-10004695",
+  "registry_names": [
+   "DN COLLEGES GROUP T/A North Lindsey College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 6,
+  "witness_publications": [
+   "029526-2025",
+   "067124-2025",
+   "067383-2025"
+  ],
+  "witnesses": 6
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Oxford Brookes University",
+   "Oxford Brookes University"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30917249,
+  "key": "GB-UKPRN:GBUKPRN10004930~PPGL1164DJLT",
+  "loser": 31536033,
+  "members": [
+   {
+    "identifier": "GBUKPRN10004930",
+    "kind": "national",
+    "name": "Oxford Brookes University",
+    "org_id": 30917249,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPPGL1164DJLT",
+    "kind": "national",
+    "name": "Oxford Brookes University",
+    "org_id": 31536033,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PPGL1164DJLT",
+  "ppon_literal": "GB-PPON-PPGL-1164-DJLT",
+  "ppon_names": [
+   "Oxford Brookes University"
+  ],
+  "ppon_partners": 1,
+  "publishers": 6,
+  "registry": "GBUKPRN10004930",
+  "registry_literal": "GB-UKPRN-10004930",
+  "registry_names": [
+   "Oxford Brookes University"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 41,
+  "witness_publications": [
+   "034248-2025",
+   "034991-2025",
+   "035761-2025"
+  ],
+  "witnesses": 46
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Inspire Education Group",
+   "INSPIRE EDUCATION GROUP"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30926870,
+  "key": "GB-UKPRN:GBUKPRN10005077~PJNP6361TPWJ",
+  "loser": 31554598,
+  "members": [
+   {
+    "identifier": "GBUKPRN10005077",
+    "kind": "national",
+    "name": "INSPIRE EDUCATION GROUP",
+    "org_id": 30926870,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPJNP6361TPWJ",
+    "kind": "national",
+    "name": "Inspire Education Group",
+    "org_id": 31554598,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PJNP6361TPWJ",
+  "ppon_literal": "GB-PPON-PJNP-6361-TPWJ",
+  "ppon_names": [
+   "INSPIRE EDUCATION GROUP"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10005077",
+  "registry_literal": "GB-UKPRN-10005077",
+  "registry_names": [
+   "Inspire Education Group"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "060333-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Plumpton College",
+   "Plumpton College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31543302,
+  "key": "GB-UKPRN:GBUKPRN10005124~PPHN6972VWCP",
+  "loser": 31549316,
+  "members": [
+   {
+    "identifier": "GBUKPRN10005124",
+    "kind": "national",
+    "name": "Plumpton College",
+    "org_id": 31543302,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPPHN6972VWCP",
+    "kind": "national",
+    "name": "Plumpton College",
+    "org_id": 31549316,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PPHN6972VWCP",
+  "ppon_literal": "GB-PPON-PPHN-6972-VWCP",
+  "ppon_names": [
+   "Plumpton College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10005124",
+  "registry_literal": "GB-UKPRN-10005124",
+  "registry_names": [
+   "Plumpton College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "065296-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "City College Plymouth",
+   "City College Plymouth"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31539386,
+  "key": "GB-UKPRN:GBUKPRN10005128~PQHV9439HHDJ",
+  "loser": 30953590,
+  "members": [
+   {
+    "identifier": "GBPPONPQHV9439HHDJ",
+    "kind": "national",
+    "name": "City College Plymouth",
+    "org_id": 30953590,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10005128",
+    "kind": "national",
+    "name": "City College Plymouth",
+    "org_id": 31539386,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PQHV9439HHDJ",
+  "ppon_literal": "GB-PPON-PQHV-9439-HHDJ",
+  "ppon_names": [
+   "City College Plymouth"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10005128",
+  "registry_literal": "GB-UKPRN-10005128",
+  "registry_names": [
+   "City College Plymouth"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 14,
+  "witness_publications": [
+   "045447-2025",
+   "069651-2025",
+   "079494-2025"
+  ],
+  "witnesses": 19
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "RNN GROUP",
+   "RNN GROUP"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30916741,
+  "key": "GB-UKPRN:GBUKPRN10005534~PYQV1457QZDD",
+  "loser": 31546777,
+  "members": [
+   {
+    "identifier": "GBUKPRN10005534",
+    "kind": "national",
+    "name": "RNN GROUP",
+    "org_id": 30916741,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPYQV1457QZDD",
+    "kind": "national",
+    "name": "RNN Group",
+    "org_id": 31546777,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PYQV1457QZDD",
+  "ppon_literal": "GB-PPON-PYQV-1457-QZDD",
+  "ppon_names": [
+   "RNN GROUP"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10005534",
+  "registry_literal": "GB-UKPRN-10005534",
+  "registry_names": [
+   "RNN GROUP"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "039484-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Sheffield Hallam University",
+   "Sheffield Hallam University"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30915632,
+  "key": "GB-UKPRN:GBUKPRN10005790~PVMW4512JZYY",
+  "loser": 31535088,
+  "members": [
+   {
+    "identifier": "GBUKPRN10005790",
+    "kind": "national",
+    "name": "Sheffield Hallam University",
+    "org_id": 30915632,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPVMW4512JZYY",
+    "kind": "national",
+    "name": "Sheffield Hallam University",
+    "org_id": 31535088,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PVMW4512JZYY",
+  "ppon_literal": "GB-PPON-PVMW-4512-JZYY",
+  "ppon_names": [
+   "Centre for Behavioural Science and Applied Psychology, Sheffield Hallam University",
+   "Sheffield Hallam University",
+   "Sheffield Hallam University (CRESR)",
+   "Sheffield Hallam University Enterprises Ltd",
+   "Sheffield Polytechnic",
+   "University of Sheffield"
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBUKPRN10005790",
+  "registry_literal": "GB-UKPRN-10005790",
+  "registry_names": [
+   "Access UK Ltd",
+   "Sheffield Hallam University"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 72,
+  "witness_publications": [
+   "033480-2025",
+   "034463-2025",
+   "036153-2025"
+  ],
+  "witnesses": 76
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Tyne Coast College",
+   "Tyne Coast College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30915694,
+  "key": "GB-UKPRN:GBUKPRN10005999~PVYH4724YLXW",
+  "loser": 31588199,
+  "members": [
+   {
+    "identifier": "GBUKPRN10005999",
+    "kind": "national",
+    "name": "Tyne Coast College",
+    "org_id": 30915694,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPVYH4724YLXW",
+    "kind": "national",
+    "name": "Tyne Coast College",
+    "org_id": 31588199,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PVYH4724YLXW",
+  "ppon_literal": "GB-PPON-PVYH-4724-YLXW",
+  "ppon_names": [
+   "Tyne Coast College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10005999",
+  "registry_literal": "GB-UKPRN-10005999",
+  "registry_names": [
+   "Tyne Coast College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 7,
+  "witness_publications": [
+   "031598-2025",
+   "032222-2025",
+   "045416-2025"
+  ],
+  "witnesses": 7
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "St Helens College",
+   "St Helens College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31536921,
+  "key": "GB-UKPRN:GBUKPRN10006174~PPLZ2597YGWD",
+  "loser": 31541597,
+  "members": [
+   {
+    "identifier": "GBUKPRN10006174",
+    "kind": "national",
+    "name": "St Helens College",
+    "org_id": 31536921,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPPLZ2597YGWD",
+    "kind": "national",
+    "name": "St Helens College",
+    "org_id": 31541597,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PPLZ2597YGWD",
+  "ppon_literal": "GB-PPON-PPLZ-2597-YGWD",
+  "ppon_names": [
+   "St Helens College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10006174",
+  "registry_literal": "GB-UKPRN-10006174",
+  "registry_names": [
+   "St Helens College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 16,
+  "witness_publications": [
+   "040770-2025",
+   "041887-2025",
+   "043896-2025"
+  ],
+  "witnesses": 16
+ },
+ {
+  "coherent": false,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "STAFFORDSHIRE UNIVERSITY",
+   "Staffordshire University"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30919588,
+  "key": "GB-UKPRN:GBUKPRN10006299~PGTX1922RJNX",
+  "loser": 30974621,
+  "members": [
+   {
+    "identifier": "GBUKPRN10006299",
+    "kind": "national",
+    "name": "University of Staffordshire",
+    "org_id": 30919588,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPGTX1922RJNX",
+    "kind": "national",
+    "name": "Staffordshire University",
+    "org_id": 30974621,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PGTX1922RJNX",
+  "ppon_literal": "GB-PPON-PGTX-1922-RJNX",
+  "ppon_names": [
+   "Staffordshire University"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10006299",
+  "registry_literal": "GB-UKPRN-10006299",
+  "registry_names": [
+   "STAFFORDSHIRE UNIVERSITY",
+   "University of Staffordshire"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 31,
+  "witness_publications": [
+   "057018-2025",
+   "057615-2025",
+   "059573-2025"
+  ],
+  "witnesses": 32
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "The Heathland School",
+   "The Heathland School"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31535812,
+  "key": "GB-UKPRN:GBUKPRN10006687~PJNV8655BTTY",
+  "loser": 31575359,
+  "members": [
+   {
+    "identifier": "GBUKPRN10006687",
+    "kind": "national",
+    "name": "The Heathland School",
+    "org_id": 31535812,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPJNV8655BTTY",
+    "kind": "national",
+    "name": "The Heathland School",
+    "org_id": 31575359,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PJNV8655BTTY",
+  "ppon_literal": "GB-PPON-PJNV-8655-BTTY",
+  "ppon_names": [
+   "The Heathland School"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10006687",
+  "registry_literal": "GB-UKPRN-10006687",
+  "registry_names": [
+   "The Heathland School"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 2,
+  "witness_publications": [
+   "038383-2025",
+   "021492-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Birmingham City University",
+   "Birmingham City University"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31541046,
+  "key": "GB-UKPRN:GBUKPRN10007140~PMDM3781JGCD",
+  "loser": 31562487,
+  "members": [
+   {
+    "identifier": "GBUKPRN10007140",
+    "kind": "national",
+    "name": "Birmingham City University",
+    "org_id": 31541046,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPMDM3781JGCD",
+    "kind": "national",
+    "name": "Birmingham City University",
+    "org_id": 31562487,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PMDM3781JGCD",
+  "ppon_literal": "GB-PPON-PMDM-3781-JGCD",
+  "ppon_names": [
+   "Birmingham City University"
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBUKPRN10007140",
+  "registry_literal": "GB-UKPRN-10007140",
+  "registry_names": [
+   "Birmingham City University"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 19,
+  "witness_publications": [
+   "049001-2025",
+   "004013-2026",
+   "013815-2026"
+  ],
+  "witnesses": 21
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "University of Central Lancashire",
+   "University of Central Lancashire"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31542244,
+  "key": "GB-UKPRN:GBUKPRN10007141~PXZY8464ZLQL",
+  "loser": 31542308,
+  "members": [
+   {
+    "identifier": "GBUKPRN10007141",
+    "kind": "national",
+    "name": "University of Lancashire",
+    "org_id": 31542244,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPXZY8464ZLQL",
+    "kind": "national",
+    "name": "University of Central Lancashire",
+    "org_id": 31542308,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PXZY8464ZLQL",
+  "ppon_literal": "GB-PPON-PXZY-8464-ZLQL",
+  "ppon_names": [
+   "University of Central Lancashire",
+   "University of Lancashire",
+   "UNIVERSITY OF LANCASHIRE HOLDINGS LIMITED"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10007141",
+  "registry_literal": "GB-UKPRN-10007141",
+  "registry_names": [
+   "University of Central Lancashire",
+   "University of Lancashire"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "051942-2025",
+   "051960-2025",
+   "042228-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "UNIVERSITY OF HERTFORDSHIRE T/A University of Hertfordshire",
+   "University of Hertfordshire"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30975939,
+  "key": "GB-UKPRN:GBUKPRN10007147~PHWL7636TRBG",
+  "loser": 30974629,
+  "members": [
+   {
+    "identifier": "GBPPONPHWL7636TRBG",
+    "kind": "national",
+    "name": "University of Hertfordshire Higher Education Corporation",
+    "org_id": 30974629,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10007147",
+    "kind": "national",
+    "name": "University of Hertfordshire Higher Education Corporation",
+    "org_id": 30975939,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PHWL7636TRBG",
+  "ppon_literal": "GB-PPON-PHWL-7636-TRBG",
+  "ppon_names": [
+   "University of Hertfordshire",
+   "University of Hertfordshire Higher Education Corporation"
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBUKPRN10007147",
+  "registry_literal": "GB-UKPRN-10007147",
+  "registry_names": [
+   "UNIVERSITY OF HERTFORDSHIRE T/A University of Hertfordshire",
+   "University of Hertfordshire Higher Education Corporation"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 2,
+  "witness_publications": [
+   "090365-2026",
+   "070732-2025",
+   "009086-2026"
+  ],
+  "witnesses": 4
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "THE UNIVERSITY OF KENT",
+   "University of Kent"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30913766,
+  "key": "GB-UKPRN:GBUKPRN10007150~PDYN9654JPQJ",
+  "loser": 31537451,
+  "members": [
+   {
+    "identifier": "GBUKPRN10007150",
+    "kind": "national",
+    "name": "The University Of Kent",
+    "org_id": 30913766,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPDYN9654JPQJ",
+    "kind": "national",
+    "name": "University of Kent",
+    "org_id": 31537451,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PDYN9654JPQJ",
+  "ppon_literal": "GB-PPON-PDYN-9654-JPQJ",
+  "ppon_names": [
+   "University of Kent"
+  ],
+  "ppon_partners": 1,
+  "publishers": 5,
+  "registry": "GBUKPRN10007150",
+  "registry_literal": "GB-UKPRN-10007150",
+  "registry_names": [
+   "THE UNIVERSITY OF KENT"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 188,
+  "witness_publications": [
+   "029161-2025",
+   "029163-2025",
+   "032600-2025"
+  ],
+  "witnesses": 190
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "University of Portsmouth",
+   "University of Portsmouth"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30928411,
+  "key": "GB-UKPRN:GBUKPRN10007155~PTVH5678HHZV",
+  "loser": 31577500,
+  "members": [
+   {
+    "identifier": "GBUKPRN10007155",
+    "kind": "national",
+    "name": "University of Portsmouth Higher Education Corporation",
+    "org_id": 30928411,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPTVH5678HHZV",
+    "kind": "national",
+    "name": "University of Portsmouth",
+    "org_id": 31577500,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PTVH5678HHZV",
+  "ppon_literal": "GB-PPON-PTVH-5678-HHZV",
+  "ppon_names": [
+   "University of Portsmouth"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10007155",
+  "registry_literal": "GB-UKPRN-10007155",
+  "registry_names": [
+   "University of Portsmouth",
+   "University of Portsmouth Higher Education Corporation"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "062861-2025",
+   "094815-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "UNIVERSITY OF SOUTHAMPTON",
+   "University of Southampton"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31558830,
+  "key": "GB-UKPRN:GBUKPRN10007158~PLJL3977CCGG",
+  "loser": 31537324,
+  "members": [
+   {
+    "identifier": "GBPPONPLJL3977CCGG",
+    "kind": "national",
+    "name": "University of Southampton",
+    "org_id": 31537324,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10007158",
+    "kind": "national",
+    "name": "University of Southampton",
+    "org_id": 31558830,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PLJL3977CCGG",
+  "ppon_literal": "GB-PPON-PLJL-3977-CCGG",
+  "ppon_names": [
+   "University of Southampton"
+  ],
+  "ppon_partners": 1,
+  "publishers": 6,
+  "registry": "GBUKPRN10007158",
+  "registry_literal": "GB-UKPRN-10007158",
+  "registry_names": [
+   "UNIVERSITY OF SOUTHAMPTON"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 2,
+  "witness_publications": [
+   "003227-2026",
+   "004381-2026",
+   "014980-2026"
+  ],
+  "witnesses": 7
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "TEESSIDE UNIVERSITY",
+   "Teesside University"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30919543,
+  "key": "GB-UKPRN:GBUKPRN10007161~PNHW8344ZGMY",
+  "loser": 31577499,
+  "members": [
+   {
+    "identifier": "GBUKPRN10007161",
+    "kind": "national",
+    "name": "TEESSIDE UNIVERSITY",
+    "org_id": 30919543,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPNHW8344ZGMY",
+    "kind": "national",
+    "name": "Teesside University",
+    "org_id": 31577499,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PNHW8344ZGMY",
+  "ppon_literal": "GB-PPON-PNHW-8344-ZGMY",
+  "ppon_names": [
+   "Teeside University",
+   "Teesside University"
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBUKPRN10007161",
+  "registry_literal": "GB-UKPRN-10007161",
+  "registry_names": [
+   "Anglia Ruskin University",
+   "TEESSIDE UNIVERSITY"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "084381-2026",
+   "051144-2025",
+   "052699-2025"
+  ],
+  "witnesses": 6
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "University of York",
+   "University of York"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30917206,
+  "key": "GB-UKPRN:GBUKPRN10007167~PRDQ5539WTHX",
+  "loser": 30953635,
+  "members": [
+   {
+    "identifier": "GBUKPRN10007167",
+    "kind": "national",
+    "name": "University of York",
+    "org_id": 30917206,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPRDQ5539WTHX",
+    "kind": "national",
+    "name": "University of York",
+    "org_id": 30953635,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PRDQ5539WTHX",
+  "ppon_literal": "GB-PPON-PRDQ-5539-WTHX",
+  "ppon_names": [
+   "University of York",
+   "University Of York (Pelican)"
+  ],
+  "ppon_partners": 1,
+  "publishers": 6,
+  "registry": "GBUKPRN10007167",
+  "registry_literal": "GB-UKPRN-10007167",
+  "registry_names": [
+   "University of York"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 43,
+  "witness_publications": [
+   "034968-2025",
+   "090198-2026",
+   "045764-2025"
+  ],
+  "witnesses": 49
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Waltham Forest College",
+   "Waltham Forest College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31561339,
+  "key": "GB-UKPRN:GBUKPRN10007321~PPZD2983XRBH",
+  "loser": 30914498,
+  "members": [
+   {
+    "identifier": "GBPPONPPZD2983XRBH",
+    "kind": "national",
+    "name": "Waltham Forest College",
+    "org_id": 30914498,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10007321",
+    "kind": "national",
+    "name": "Waltham Forest College",
+    "org_id": 31561339,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PPZD2983XRBH",
+  "ppon_literal": "GB-PPON-PPZD-2983-XRBH",
+  "ppon_names": [
+   "Waltham Forest College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10007321",
+  "registry_literal": "GB-UKPRN-10007321",
+  "registry_names": [
+   "Waltham Forest College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 3,
+  "witness_publications": [
+   "009295-2026",
+   "012695-2026",
+   "012695-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "City of Wolverhampton College",
+   "City of Wolverhampton College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31557738,
+  "key": "GB-UKPRN:GBUKPRN10007578~PCGV6666ZWYD",
+  "loser": 31541862,
+  "members": [
+   {
+    "identifier": "GBPPONPCGV6666ZWYD",
+    "kind": "national",
+    "name": "City of Wolverhampton College",
+    "org_id": 31541862,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10007578",
+    "kind": "national",
+    "name": "City of Wolverhampton College",
+    "org_id": 31557738,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PCGV6666ZWYD",
+  "ppon_literal": "GB-PPON-PCGV-6666-ZWYD",
+  "ppon_names": [
+   "City of Wolverhampton College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10007578",
+  "registry_literal": "GB-UKPRN-10007578",
+  "registry_names": [
+   "City of Wolverhampton College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 2,
+  "witness_publications": [
+   "000644-2026",
+   "066241-2026",
+   "067054-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Yeovil College",
+   "Yeovil College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31579303,
+  "key": "GB-UKPRN:GBUKPRN10007696~PRRD2679CZWR",
+  "loser": 31537861,
+  "members": [
+   {
+    "identifier": "GBPPONPRRD2679CZWR",
+    "kind": "national",
+    "name": "Yeovil College",
+    "org_id": 31537861,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10007696",
+    "kind": "national",
+    "name": "Yeovil College",
+    "org_id": 31579303,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PRRD2679CZWR",
+  "ppon_literal": "GB-PPON-PRRD-2679-CZWR",
+  "ppon_names": [
+   "Yeovil College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10007696",
+  "registry_literal": "GB-UKPRN-10007696",
+  "registry_names": [
+   "Yeovil College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "061825-2026",
+   "072932-2026",
+   "072934-2026"
+  ],
+  "witnesses": 7
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "University of Oxford",
+   "University of Oxford"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30918126,
+  "key": "GB-UKPRN:GBUKPRN10007774~PTVC9174PZNM",
+  "loser": 30926767,
+  "members": [
+   {
+    "identifier": "GBUKPRN10007774",
+    "kind": "national",
+    "name": "University of Oxford",
+    "org_id": 30918126,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPTVC9174PZNM",
+    "kind": "national",
+    "name": "University of Oxford (Centre for Genomic Pathogen Surveillance)",
+    "org_id": 30926767,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PTVC9174PZNM",
+  "ppon_literal": "GB-PPON-PTVC-9174-PZNM",
+  "ppon_names": [
+   "OXFORD UNIVERSITY TRADING LIMITED",
+   "University of Oxford",
+   "University of Oxford (Centre for Genomic Pathogen Surveillance)"
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBUKPRN10007774",
+  "registry_literal": "GB-UKPRN-10007774",
+  "registry_names": [
+   "The Global Health Network",
+   "University of Oxford"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 6,
+  "witness_publications": [
+   "035863-2025",
+   "054405-2025",
+   "061919-2025"
+  ],
+  "witnesses": 7
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "University of Cambridge",
+   "University of Cambridge"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31549754,
+  "key": "GB-UKPRN:GBUKPRN10007788~PMCX4817NTNG",
+  "loser": 31569620,
+  "members": [
+   {
+    "identifier": "GBUKPRN10007788",
+    "kind": "national",
+    "name": "UNIVERSITY OF CAMBRIDGE",
+    "org_id": 31549754,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPMCX4817NTNG",
+    "kind": "national",
+    "name": "The University of Cambridge",
+    "org_id": 31569620,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PMCX4817NTNG",
+  "ppon_literal": "GB-PPON-PMCX-4817-NTNG",
+  "ppon_names": [
+   "University of Cambridge"
+  ],
+  "ppon_partners": 1,
+  "publishers": 4,
+  "registry": "GBUKPRN10007788",
+  "registry_literal": "GB-UKPRN-10007788",
+  "registry_names": [
+   "The Chancellor, Masters and Scholars of the University of Cambridge",
+   "University of Cambridge"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "068051-2025",
+   "070033-2025",
+   "007698-2026"
+  ],
+  "witnesses": 4
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "UNIVERSITY OF PLYMOUTH",
+   "University of Plymouth"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30914461,
+  "key": "GB-UKPRN:GBUKPRN10007801~PQHL4825PGGL",
+  "loser": 30930105,
+  "members": [
+   {
+    "identifier": "GBUKPRN10007801",
+    "kind": "national",
+    "name": "University of Plymouth",
+    "org_id": 30914461,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPQHL4825PGGL",
+    "kind": "national",
+    "name": "University of Plymouth",
+    "org_id": 30930105,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PQHL4825PGGL",
+  "ppon_literal": "GB-PPON-PQHL-4825-PGGL",
+  "ppon_names": [
+   "University of Plymouth"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10007801",
+  "registry_literal": "GB-UKPRN-10007801",
+  "registry_names": [
+   "UNIVERSITY OF PLYMOUTH"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 68,
+  "witness_publications": [
+   "030001-2025",
+   "030130-2025",
+   "030141-2025"
+  ],
+  "witnesses": 71
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Chichester College Group",
+   "Chichester College Group"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30917699,
+  "key": "GB-UKPRN:GBUKPRN10007817~PNTH7125HMDM",
+  "loser": 30928159,
+  "members": [
+   {
+    "identifier": "GBUKPRN10007817",
+    "kind": "national",
+    "name": "Chichester College Group",
+    "org_id": 30917699,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPNTH7125HMDM",
+    "kind": "national",
+    "name": "Chichester College Group",
+    "org_id": 30928159,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PNTH7125HMDM",
+  "ppon_literal": "GB-PPON-PNTH-7125-HMDM",
+  "ppon_names": [
+   "Chichester College Group"
+  ],
+  "ppon_partners": 1,
+  "publishers": 3,
+  "registry": "GBUKPRN10007817",
+  "registry_literal": "GB-UKPRN-10007817",
+  "registry_names": [
+   "Chichester College Group"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "035066-2025",
+   "007110-2026",
+   "044088-2026"
+  ],
+  "witnesses": 5
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "EDGE HILL UNIVERSITY",
+   "Edge Hill University\t"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31571816,
+  "key": "GB-UKPRN:GBUKPRN10007823~PHYP8666RBNG",
+  "loser": 31541751,
+  "members": [
+   {
+    "identifier": "GBPPONPHYP8666RBNG",
+    "kind": "national",
+    "name": "Edge Hill University\t",
+    "org_id": 31541751,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10007823",
+    "kind": "national",
+    "name": "Edge Hill University",
+    "org_id": 31571816,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PHYP8666RBNG",
+  "ppon_literal": "GB-PPON-PHYP-8666-RBNG",
+  "ppon_names": [
+   "Edge Hill University\t"
+  ],
+  "ppon_partners": 1,
+  "publishers": 11,
+  "registry": "GBUKPRN10007823",
+  "registry_literal": "GB-UKPRN-10007823",
+  "registry_names": [
+   "EDGE HILL UNIVERSITY"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 3,
+  "witness_publications": [
+   "036759-2026",
+   "036782-2026",
+   "041109-2026"
+  ],
+  "witnesses": 6
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "LTE Group",
+   "LTE Group"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31539563,
+  "key": "GB-UKPRN:GBUKPRN10023139~PGJB2915QCHM",
+  "loser": 31551167,
+  "members": [
+   {
+    "identifier": "GBUKPRN10023139",
+    "kind": "national",
+    "name": "LTE Group",
+    "org_id": 31539563,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPGJB2915QCHM",
+    "kind": "national",
+    "name": "LTE Group",
+    "org_id": 31551167,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PGJB2915QCHM",
+  "ppon_literal": "GB-PPON-PGJB-2915-QCHM",
+  "ppon_names": [
+   "LTE Group"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10023139",
+  "registry_literal": "GB-UKPRN-10023139",
+  "registry_names": [
+   "LTE Group"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 7,
+  "witness_publications": [
+   "045756-2025",
+   "056178-2025",
+   "058425-2025"
+  ],
+  "witnesses": 7
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Cheshire West and Chester Council",
+   "Cheshire West and Chester Council"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30973174,
+  "key": "GB-UKPRN:GBUKPRN10024294~PCJB2814BHZP",
+  "loser": 30914299,
+  "members": [
+   {
+    "identifier": "GBPPONPCJB2814BHZP",
+    "kind": "national",
+    "name": "Cheshire West and Chester Council",
+    "org_id": 30914299,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10024294",
+    "kind": "national",
+    "name": "Cheshire West and Chester Council",
+    "org_id": 30973174,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PCJB2814BHZP",
+  "ppon_literal": "GB-PPON-PCJB-2814-BHZP",
+  "ppon_names": [
+   "Cheshire West and Chester Council",
+   "Cheshire West and Chester Council (as Administering Authority of the Cheshire Pension Fund)",
+   "HealthCare Matters",
+   "SLC Care UK Ltd",
+   "SLC Care Ltd"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10024294",
+  "registry_literal": "GB-UKPRN-10024294",
+  "registry_names": [
+   "Cheshire West and Chester Council"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 5,
+  "witness_publications": [
+   "089408-2026",
+   "092107-2026",
+   "092513-2026"
+  ],
+  "witnesses": 5
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Merseyside Fire and Rescue Authority",
+   "Merseyside Fire and Rescue Authority"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31564275,
+  "key": "GB-UKPRN:GBUKPRN10034301~PNJC6862YTRY",
+  "loser": 30913875,
+  "members": [
+   {
+    "identifier": "GBPPONPNJC6862YTRY",
+    "kind": "national",
+    "name": "Merseyside Fire and Rescue Authority",
+    "org_id": 30913875,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10034301",
+    "kind": "national",
+    "name": "Merseyside Fire and Rescue Authority",
+    "org_id": 31564275,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PNJC6862YTRY",
+  "ppon_literal": "GB-PPON-PNJC-6862-YTRY",
+  "ppon_names": [
+   "Merseyside Fire and Rescue Authority",
+   "Merseyside Fire & Rescue Service"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10034301",
+  "registry_literal": "GB-UKPRN-10034301",
+  "registry_names": [
+   "Merseyside Fire and Rescue Authority"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 12,
+  "witness_publications": [
+   "017460-2026",
+   "026751-2026",
+   "031364-2026"
+  ],
+  "witnesses": 13
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Saint John Bosco College",
+   "Saint John Bosco College"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31546215,
+  "key": "GB-UKPRN:GBUKPRN10035180~PLPT9129NCMD",
+  "loser": 30974625,
+  "members": [
+   {
+    "identifier": "GBPPONPLPT9129NCMD",
+    "kind": "national",
+    "name": "Saint John Bosco College",
+    "org_id": 30974625,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10035180",
+    "kind": "national",
+    "name": "Saint John Bosco College",
+    "org_id": 31546215,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PLPT9129NCMD",
+  "ppon_literal": "GB-PPON-PLPT-9129-NCMD",
+  "ppon_names": [
+   "Saint John Bosco College"
+  ],
+  "ppon_partners": 1,
+  "publishers": 1,
+  "registry": "GBUKPRN10035180",
+  "registry_literal": "GB-UKPRN-10035180",
+  "registry_names": [
+   "Saint John Bosco College"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 3,
+  "witness_publications": [
+   "060334-2025",
+   "017288-2025",
+   "017295-2025"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Academy Transformation Trust",
+   "Academy Transformation Trust"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31555168,
+  "key": "GB-UKPRN:GBUKPRN10039859~PZZT9217WDTL",
+  "loser": 31559471,
+  "members": [
+   {
+    "identifier": "GBUKPRN10039859",
+    "kind": "national",
+    "name": "Academy Transformation Trust",
+    "org_id": 31555168,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPZZT9217WDTL",
+    "kind": "national",
+    "name": "Academy Transformation Trust",
+    "org_id": 31559471,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PZZT9217WDTL",
+  "ppon_literal": "GB-PPON-PZZT-9217-WDTL",
+  "ppon_names": [
+   "Academy Transformation Trust"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10039859",
+  "registry_literal": "GB-UKPRN-10039859",
+  "registry_names": [
+   "Academy Transformation Trust"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 13,
+  "witness_publications": [
+   "081090-2025",
+   "081097-2025",
+   "082918-2025"
+  ],
+  "witnesses": 13
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "BRIGHT FUTURES EDUCATIONAL TRUST",
+   "Bright Futures Educational Trust"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30933059,
+  "key": "GB-UKPRN:GBUKPRN10046414~PLMG9927NZNP",
+  "loser": 31572388,
+  "members": [
+   {
+    "identifier": "GBUKPRN10046414",
+    "kind": "national",
+    "name": "BRIGHT FUTURES EDUCATIONAL TRUST",
+    "org_id": 30933059,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPLMG9927NZNP",
+    "kind": "national",
+    "name": "Bright Futures Educational Trust",
+    "org_id": 31572388,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PLMG9927NZNP",
+  "ppon_literal": "GB-PPON-PLMG-9927-NZNP",
+  "ppon_names": [
+   "Bright Futures Educational Trust"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10046414",
+  "registry_literal": "GB-UKPRN-10046414",
+  "registry_names": [
+   "BRIGHT FUTURES EDUCATIONAL TRUST"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 2,
+  "witness_publications": [
+   "086971-2026",
+   "056535-2026",
+   "064380-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "The Riverside Group Ltd (Care & Support)",
+   "The Riverside Group"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 30975003,
+  "key": "GB-UKPRN:GBUKPRN10047762~PLNV2765HCWJ",
+  "loser": 31548647,
+  "members": [
+   {
+    "identifier": "GBUKPRN10047762",
+    "kind": "national",
+    "name": "The Riverside Group Ltd (Care & Support)",
+    "org_id": 30975003,
+    "side": "registry"
+   },
+   {
+    "identifier": "GBPPONPLNV2765HCWJ",
+    "kind": "national",
+    "name": "The Riverside Group LTD",
+    "org_id": 31548647,
+    "side": "ppon"
+   }
+  ],
+  "ppon": "PLNV2765HCWJ",
+  "ppon_literal": "GB-PPON-PLNV-2765-HCWJ",
+  "ppon_names": [
+   "The Riverside Group",
+   "The Riverside Group Limited"
+  ],
+  "ppon_partners": 1,
+  "publishers": 7,
+  "registry": "GBUKPRN10047762",
+  "registry_literal": "GB-UKPRN-10047762",
+  "registry_names": [
+   "The Riverside Group Ltd (Care & Support)"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 0,
+  "witness_publications": [
+   "090358-2026",
+   "086133-2025",
+   "005320-2026"
+  ],
+  "witnesses": 14
+ },
+ {
+  "coherent": true,
+  "cooccurring": 0,
+  "corroborated_by": [
+   "THE WHITE HILLS PARK TRUST LTD",
+   "The White Hills Park Trust"
+  ],
+  "country": "GB",
+  "gate": "plan",
+  "keep": 31575717,
+  "key": "GB-UKPRN:GBUKPRN10060053~PQQC4436QQBJ",
+  "loser": 31565945,
+  "members": [
+   {
+    "identifier": "GBPPONPQQC4436QQBJ",
+    "kind": "national",
+    "name": "The White Hills Park Trust",
+    "org_id": 31565945,
+    "side": "ppon"
+   },
+   {
+    "identifier": "GBUKPRN10060053",
+    "kind": "national",
+    "name": "THE WHITE HILLS PARK TRUST LTD",
+    "org_id": 31575717,
+    "side": "registry"
+   }
+  ],
+  "ppon": "PQQC4436QQBJ",
+  "ppon_literal": "GB-PPON-PQQC-4436-QQBJ",
+  "ppon_names": [
+   "The White Hills Park Trust"
+  ],
+  "ppon_partners": 1,
+  "publishers": 2,
+  "registry": "GBUKPRN10060053",
+  "registry_literal": "GB-UKPRN-10060053",
+  "registry_names": [
+   "THE WHITE HILLS PARK TRUST LTD"
+  ],
+  "registry_partners": 1,
+  "registry_scheme": "GB-UKPRN",
+  "scheme": "GB:altid",
+  "self": 1,
+  "witness_publications": [
+   "051877-2026"
+  ],
+  "witnesses": 1
+ }
+]
