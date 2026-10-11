@@ -2607,11 +2607,12 @@ async fn the_change_feed_names_every_filter_it_does_not_apply() {
 }
 
 /// Issue 517: the change feed resumes from `since`. A `cursor` (the list routes'
-/// spelling) was dropped as a pagination control and a `since` that did not parse
-/// read as 0, so either replayed the whole log from the start with
-/// `ignored_filters: []`. Both are refused now, naming what to send.
+/// spelling) was dropped as a pagination control, so it replayed the whole log
+/// from the start with `ignored_filters: []`. It is refused now, naming what to
+/// send. An unparseable `since` VALUE keeps its deliberate lenience (issues 216
+/// and 392; pinned by `the_poll_feed_resets_a_cursor_past_its_head_but_not_at_it`).
 #[tokio::test]
-async fn a_cursor_or_an_unparseable_since_on_the_change_feed_is_refused() {
+async fn a_cursor_on_the_change_feed_is_refused_naming_since() {
     let server = Server::start("changes-resume-param").await;
     server.ingest_chain().await;
     let mut last = "0".to_owned();
@@ -2627,11 +2628,10 @@ async fn a_cursor_or_an_unparseable_since_on_the_change_feed_is_refused() {
     let (status, body) = server.get_with_status(&format!("/v1/changes?cursor={last}&limit=5")).await;
     assert_eq!(status, 400, "a cursor must not replay from 0: {body}");
     assert!(body.to_string().contains("since"), "the refusal names `since`: {body}");
-    for bad in ["abc", "12.5", "1e3", "0x10"] {
-        let (status, body) = server.get_with_status(&format!("/v1/changes?since={bad}&limit=5")).await;
-        assert_eq!(status, 400, "since={bad} must not read as 0: {body}");
-    }
-    // Absent, empty and well-formed values keep their meaning.
+    // …with `since` beside it too: the name is the mistake, whatever else is sent.
+    let (status, _) = server.get_with_status(&format!("/v1/changes?since={last}&cursor={last}&limit=5")).await;
+    assert_eq!(status, 400);
+    // Absent, empty and well-formed `since` values keep their meaning.
     for start in ["/v1/changes?limit=5", "/v1/changes?since=&limit=5", "/v1/changes?since=0&limit=5"] {
         let page = server.get(start).await;
         assert_eq!(page["events"][0]["cursor"], "1", "{start} reads from the start: {page}");

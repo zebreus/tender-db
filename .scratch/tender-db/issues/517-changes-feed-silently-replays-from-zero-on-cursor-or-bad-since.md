@@ -1,7 +1,14 @@
 # 517 — `/v1/changes` silently replays the whole feed from 0 on `?cursor=` or an unparseable `since`
 
-Status: built 2026-10-11 — handler refuses both (v1/mod.rs `changes`, `Params::since`), test
-`a_cursor_or_an_unparseable_since_on_the_change_feed_is_refused`, docs + CHANGELOG; waits for the gate and deploy.
+Status: built 2026-10-11, NARROWED — only the `cursor` half ships: `/v1/changes?cursor=` is a 400 naming `since`
+(test `a_cursor_on_the_change_feed_is_refused_naming_since`). The unparseable-`since` half was REVERTED after the
+first gate (GATE-EXIT=101): `the_poll_feed_resets_a_cursor_past_its_head_but_not_at_it` pins that lenience as a
+decision on the record (issues 216 and 392: "an unparseable cursor restarts visibly rather than strands", SSE alike;
+"if triage does decide to tighten unparseable `since`, it should move together with `/v1/tenders?cursor=` and issue
+216's doc comment, not alone"). This issue had not read those. The two halves differ in kind: `cursor` is a
+misspelled parameter NAME (the class `deny_unknown_fields` refuses everywhere; it slipped through only because
+`Params` is shared), while `since=abc` is a VALUE under a deliberate policy. Tightening values stays a cross-route
+decision, not taken here.
 Was: ready-for-agent — filed 2026-10-11 from an hourly audit (reading the change feed after issue 516's merges).
 Kind: API correctness (public /v1)
 Relates to: 392 (resume verdicts: a cursor the feed never issued resets instead of stalling), 399 (a route names what

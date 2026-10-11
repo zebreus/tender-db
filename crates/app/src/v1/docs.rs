@@ -391,8 +391,8 @@ endpoint with <code>Accept: text/event-stream</code>, which does apply them.
 Loop, passing <code>last_cursor</code> as the next <code>since</code>, until
 <code>more</code> is false; then poll periodically for new ones. The resume
 parameter is <code>since</code>: a <code>cursor</code> (the list routes'
-spelling) is answered <code>400</code>, and so is a <code>since</code> that is
-not an integer, rather than either replaying the log from the start. A page with
+spelling) is answered <code>400</code> rather than silently replaying the log
+from the start. A page with
 <code>more: false</code> has read to the end, and its <code>last_cursor</code>
 is the feed head &mdash; the value <code>GET /v1</code> reports &mdash; even
 when the log's newest rows are kinds this feed does not carry.

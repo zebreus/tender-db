@@ -1036,18 +1036,8 @@ impl Params {
         }
     }
 
-    /// The change feed's resume position: absent (or empty) is 0, "from the start".
-    /// A value that is not an integer is refused (issue 517): it used to read as 0 and
-    /// replay the whole log as if the client had asked for it.
-    fn since(&self) -> Result<i64, ApiError> {
-        match self.since.as_deref().map(str::trim) {
-            None | Some("") => Ok(0),
-            Some(raw) => raw.parse().map_err(|_| {
-                ApiError::bad_request(format!(
-                    "since must be the integer `last_cursor` of an earlier page, not {raw:?}"
-                ))
-            }),
-        }
+    fn since(&self) -> i64 {
+        self.since.as_deref().and_then(|c| c.parse().ok()).unwrap_or(0)
     }
 
     /// The filter parameters the client actually set, by their client-facing name.
@@ -1934,13 +1924,16 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
     // Issue 517: this route resumes from `since`. `cursor` is the list routes' (and
     // SSE's) spelling, and the shared `Params` accepted it here only to drop it: the
     // page then started at 0 — the whole log — with `ignored_filters: []`, because a
-    // pagination control is never named as a filter. Refused, naming what to send.
+    // pagination control is never named as a filter. A misspelled parameter NAME is
+    // what `deny_unknown_fields` refuses everywhere else, so it is refused here too,
+    // naming what to send. (An unparseable `since` VALUE stays lenient — issues 216
+    // and 392 decided that on the record, together with the list cursor.)
     if params.cursor.is_some() {
         return Err(ApiError::bad_request(
             "/v1/changes resumes from `since`, not `cursor`: send the `last_cursor` you stored as `since`",
         ));
     }
-    let since = params.since()?;
+    let since = params.since();
     let limit = params.limit()?;
     let reader = state.readers.get().await?;
     let generation = read::feed_generation(&reader).await?;
