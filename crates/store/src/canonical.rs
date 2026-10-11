@@ -5752,6 +5752,57 @@ pub struct RegistryMember {
 /// How many `both_distinct` registry pairs per scheme the altid report samples.
 pub const REGISTRY_SAMPLE_PER_SCHEME: usize = 30;
 
+/// Issue 513 unit 1: one GB-NHS register ↔ PPON pair of the altid harvest, listed
+/// whatever its class, so each code can be checked against the NHS ODS API offline.
+/// `registry_sample` shows at most 30 `both_distinct` pairs per scheme, which left the
+/// letter-only (no identity) values and the multi-target codes invisible.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RegistryNhsEntry {
+    /// The register literal as first published (lowest notice id).
+    pub literal: String,
+    /// Its uppercase alphanumerics: the harvest's key for the value.
+    pub value: String,
+    /// `register_identity`'s value for the literal; `None` when it mints none (the
+    /// pair counted `no_identity`).
+    pub identity: Option<String>,
+    /// Unit 1's owner class for the pair, the one its counts took: `already_one`,
+    /// `both_distinct`, `no_target_registry`, `no_target_ppon`, `no_target_both` or
+    /// `multi_target`.
+    pub class: &'static str,
+    /// The PPON key.
+    pub ppon: String,
+    /// The register side's holders, ascending id: the first
+    /// [`REGISTRY_NHS_REGISTER_HOLDERS`]; `registry_holder_count` counts them all.
+    pub registry_holders: Vec<RegistryNhsHolder>,
+    pub registry_holder_count: u64,
+    /// The PPON side's holders, ascending id: the first [`REGISTRY_NHS_PPON_HOLDERS`];
+    /// `ppon_holder_count` counts them all.
+    pub ppon_holders: Vec<RegistryNhsHolder>,
+    pub ppon_holder_count: u64,
+    /// Distinct notices witnessing the pair, and the first three's publication ids.
+    pub witnesses: u64,
+    pub witness_publications: Vec<String>,
+}
+
+/// One holder org of a [`RegistryNhsEntry`] side: a primary-key read of its row
+/// (empty name, no identifier and not provisional for an org that no longer stands).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RegistryNhsHolder {
+    pub org_id: i64,
+    pub kind: Option<String>,
+    pub identifier: Option<String>,
+    pub name: String,
+    pub provisional: bool,
+}
+
+/// Issue 513 unit 1: how many GB-NHS pairs the altid dry run lists — above the 195 job
+/// 2163 measured, so `registry_nhs_listing_truncated` should never bind.
+pub const REGISTRY_NHS_LISTING_CAP: usize = 2_000;
+/// Issue 513 unit 1: the register-side holders a listed GB-NHS pair names.
+pub const REGISTRY_NHS_REGISTER_HOLDERS: usize = 5;
+/// Issue 513 unit 1: the PPON-side holders a listed GB-NHS pair names.
+pub const REGISTRY_NHS_PPON_HOLDERS: usize = 3;
+
 /// Issue 469 U4: where one scheme's `both_distinct` register pairs landed in the DRY
 /// register planner — the company-number arm's gate counts, kept per scheme and apart
 /// from them, so no company-number count moves. Every candidate lands in exactly one
@@ -5990,6 +6041,13 @@ pub struct AltIdMergeReport {
     /// Up to [`REGISTRY_SAMPLE_PER_SCHEME`] `both_distinct` registry pairs per scheme,
     /// with both orgs' names, for review.
     pub registry_sample: Vec<RegistrySample>,
+    /// Issue 513 unit 1 (measurement only, dry runs only): EVERY `GB-NHS` register ↔
+    /// PPON pair, whatever its class, in harvest order (value, then PPON key), up to
+    /// [`REGISTRY_NHS_LISTING_CAP`] — each with its identity (or none), the class unit 1
+    /// counted it under, and both sides' holders. Read beside the counts, never into
+    /// them. Empty on a wet run, which holds the writer through its plan.
+    pub registry_nhs_listing: Vec<RegistryNhsEntry>,
+    pub registry_nhs_listing_truncated: bool,
     // ---- Issue 469 U4: the register graph — planned on BOTH runs since U5: a wet run
     // re-plans it live under the writer, as it re-plans the company-number graph.
     /// Per scheme, where its `both_distinct` pairs landed.
@@ -6387,6 +6445,60 @@ async fn publications(
         }
     }
     Ok(out)
+}
+
+/// Issue 513 unit 1: one GB-NHS pair's listing entry. The class and both holder sets
+/// are the caller's — unit 1's classification loop decided them — so nothing here
+/// re-derives a class; it only reads, by primary key, the first holders of each side,
+/// and the first three witnesses' publication ids.
+async fn registry_nhs_entry(
+    conn: &Connection,
+    value: &str,
+    ppon: &str,
+    pair: &AltIdRegPair,
+    class: &'static str,
+    register_holders: &[i64],
+    ppon_holders: &[i64],
+) -> turso::Result<RegistryNhsEntry> {
+    async fn holder(conn: &Connection, org: i64) -> turso::Result<RegistryNhsHolder> {
+        let mut rows = conn
+            .query(
+                "SELECT identifier_kind, identifier, name, provisional FROM organizations WHERE id = ?",
+                (Value::Integer(org),),
+            )
+            .await?;
+        Ok(match rows.next().await? {
+            Some(row) => RegistryNhsHolder {
+                org_id: org,
+                kind: opt_text_of(&row, 0),
+                identifier: opt_text_of(&row, 1),
+                name: opt_text_of(&row, 2).unwrap_or_default(),
+                provisional: int(&row, 3) != 0,
+            },
+            None => RegistryNhsHolder { org_id: org, kind: None, identifier: None, name: String::new(), provisional: false },
+        })
+    }
+    let mut registry = Vec::new();
+    for &org in register_holders.iter().take(REGISTRY_NHS_REGISTER_HOLDERS) {
+        registry.push(holder(conn, org).await?);
+    }
+    let mut ppons = Vec::new();
+    for &org in ppon_holders.iter().take(REGISTRY_NHS_PPON_HOLDERS) {
+        ppons.push(holder(conn, org).await?);
+    }
+    Ok(RegistryNhsEntry {
+        literal: pair.registry_literal.clone(),
+        value: value.to_owned(),
+        identity: pair.identity.as_ref().map(|id| id.value.clone()),
+        class,
+        ppon: ppon.to_owned(),
+        registry_holders: registry,
+        registry_holder_count: register_holders.len() as u64,
+        ppon_holders: ppons,
+        ppon_holder_count: ppon_holders.len() as u64,
+        witnesses: pair.witnesses.len() as u64,
+        witness_publications: publications(conn, pair.witnesses.iter().copied()).await?,
+    })
 }
 
 /// Issue 469 U4: one org row as the register planner reads it — its listing member,
@@ -22970,12 +23082,29 @@ impl Db {
             }
             let counts = report.registry_pairs.entry(scheme.clone()).or_default();
             counts.pairs += 1;
-            match (r.as_slice(), p.as_slice()) {
-                _ if carried => counts.already_one += 1,
-                ([], []) => counts.no_target_both += 1,
-                ([], [_]) => counts.no_target_registry += 1,
-                ([_], []) => counts.no_target_ppon += 1,
-                ([a], [b]) if a == b => counts.already_one += 1,
+            // Issue 513 unit 1: each arm names the class it counted, so the NHS listing
+            // below carries this decision rather than a second derivation of it.
+            let class: &'static str = match (r.as_slice(), p.as_slice()) {
+                _ if carried => {
+                    counts.already_one += 1;
+                    "already_one"
+                }
+                ([], []) => {
+                    counts.no_target_both += 1;
+                    "no_target_both"
+                }
+                ([], [_]) => {
+                    counts.no_target_registry += 1;
+                    "no_target_registry"
+                }
+                ([_], []) => {
+                    counts.no_target_ppon += 1;
+                    "no_target_ppon"
+                }
+                ([a], [b]) if a == b => {
+                    counts.already_one += 1;
+                    "already_one"
+                }
                 ([a], [b]) => {
                     counts.both_distinct += 1;
                     registry_candidates.push((scheme.clone(), value.clone(), pk.clone(), *a, *b));
@@ -22990,8 +23119,26 @@ impl Db {
                             notices: publications(conn, pair.witnesses.iter().copied()).await?,
                         });
                     }
+                    "both_distinct"
                 }
-                _ => counts.multi_target += 1,
+                _ => {
+                    counts.multi_target += 1;
+                    "multi_target"
+                }
+            };
+            // Issue 513 unit 1: every GB-NHS pair, listed with the class just counted and
+            // the holders that decided it, so the owner can check each code against the
+            // ODS API offline — the 131 that mint no identity and the 73 multi-target
+            // codes appear in no sample. A dry run only: a wet run plans under the writer,
+            // and the listing is a measurement the stored dry plan carries. Boxed, so its
+            // primary-key reads keep their frame off this future.
+            if args.dry_run && scheme == "GB-NHS" {
+                if report.registry_nhs_listing.len() < REGISTRY_NHS_LISTING_CAP {
+                    let entry = Box::pin(registry_nhs_entry(conn, value, pk, pair, class, &r, &p)).await?;
+                    report.registry_nhs_listing.push(entry);
+                } else {
+                    report.registry_nhs_listing_truncated = true;
+                }
             }
         }
         // Two spellings of one identity are two harvest pairs and one merged key.

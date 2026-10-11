@@ -1,6 +1,7 @@
 # 513 — letter-only NHS ODS codes (`GB-NHS-RTH`) mint no identity, so their parties bind by name and never pair
 
-Status: ready-for-agent — triaged 2026-10-11 with issue 469 U2's evidence. NEXT: unit 1, measure (an in-app read of the
+Status: ready-for-agent — unit 1 BUILT 2026-10-11 (uncommitted→committed for the gate): the altid dry run stores `registry_nhs_listing` — every GB-NHS ↔ PPON pair (literal, minted identity or null, the unit-1 class, ≤5 register / ≤3 PPON holders with provisional flags, witnesses), dry runs only, no count moves. NEXT: gate + deploy (after the 491 drain), a dry run, then the ODS read of every code (organisation vs site, active, name match, multi-target name variants vs different bodies) and the unit-2 decision.
+Was: ready-for-agent — triaged 2026-10-11 with issue 469 U2's evidence. NEXT: unit 1, measure (an in-app read of the
 letter-only GB-NHS values and the 73 multi-target codes; ODS lookups from the agent container, as U2's fetcher did).
 Was: needs-triage — filed 2026-10-11 from issue 469's unit-2 decision (`../469-registry-pairs/unit2-decision.md`, "NHS").
 Kind: data quality (organization identity)
@@ -31,7 +32,10 @@ code name-bound to several provisional orgs).
 - In U2's 30-pair NHS sample, 14 codes mint no identity. Seven are letter-only ICB codes (`QGH`, `QMM`, `QOC`, `QPM`,
   `QUA`, `QVV`, `QWU`). The other seven are trust codes (`RBD`, `RBT`, `RBV`, `RCB`, `RCD`, `RCF` and `R0B`) whose
   register org carries NO identifier. `R0B` has a digit, so the digit rule alone does not explain it. Unit 1 must
-  find out why `GB-NHS-R0B` (South Tyneside and Sunderland NHS FT, org 13569138) minted nothing. Possibly the org
+  find out why `GB-NHS-R0B` (South Tyneside and Sunderland NHS FT, org 13569138) minted nothing. ANSWERED
+  2026-10-11 (unit 1's build): the all-zero filler rule (project.rs `normalise_identifier`, ~8715) refuses a value whose
+  only digit is `0`, so `GBNHSR0B` mints nothing and its party binds by name — the same digit-rule family as the
+  letter-only codes, so unit 2's exemption must cover it too. Possibly the org
   predates the code's first mention, or the mention bound by name.
 - ODS (fetcher `.scratch/tender-db/469-registry-pairs/u2/registers/ods.json`) answers all of them as Active
   organisation-level codes (ICB = `STRATEGIC PARTNERSHIP`, trust = `NHS TRUST`). So letter-only codes are org-level

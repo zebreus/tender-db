@@ -2835,8 +2835,53 @@ fn altid_registry_json(r: &store::AltIdMergeReport, dry_run: bool) -> serde_json
     out.insert("registry_edges_written".into(), r.registry_edges_written.into());
     out.insert("registry_merged".into(), serde_json::Value::Array(merged));
     out.insert("registry_regrown".into(), serde_json::json!(r.registry_regrown));
-    debug_assert_eq!(out.len(), 20, "a register field inserted twice");
+    // ---- Issue 513 unit 1: every GB-NHS pair, dry runs only — the stored dry plan is
+    // what the owner reads offline against the ODS API; a wet run's residual leaves it
+    // out (its report carries none).
+    if dry_run {
+        out.insert("registry_nhs_listing".into(), altid_nhs_listing_json(&r.registry_nhs_listing));
+        out.insert("registry_nhs_listing_truncated".into(), r.registry_nhs_listing_truncated.into());
+    }
+    debug_assert_eq!(out.len(), if dry_run { 22 } else { 20 }, "a register field inserted twice");
     out
+}
+
+/// Issue 513 unit 1: the GB-NHS listing as `altid-merge-plan` stores it — per pair the
+/// literal, its uppercase alphanumerics (`value`), the identity the resolver mints (null
+/// for a value that mints none), unit 1's `class`, the `ppon` key, both sides' first
+/// holders (`org_id`, `kind`, `identifier`, `name`, `provisional`) with their totals, and
+/// the witness count with up to three publication ids. Sync, like
+/// [`altid_registry_json`], and the holders are built before the entry's `json!` so no
+/// literal nests deep enough to reach the macro's recursion limit.
+fn altid_nhs_listing_json(listing: &[store::RegistryNhsEntry]) -> serde_json::Value {
+    let holders = |hs: &[store::RegistryNhsHolder]| {
+        hs.iter()
+            .map(|h| {
+                serde_json::json!({
+                    "org_id": h.org_id, "kind": h.kind, "identifier": h.identifier,
+                    "name": h.name, "provisional": h.provisional,
+                })
+            })
+            .collect::<Vec<_>>()
+    };
+    serde_json::Value::Array(
+        listing
+            .iter()
+            .map(|e| {
+                let (registry_holders, ppon_holders) = (holders(&e.registry_holders), holders(&e.ppon_holders));
+                serde_json::json!({
+                    "literal": e.literal, "value": e.value, "identity": e.identity,
+                    "class": e.class, "ppon": e.ppon,
+                    "registry_holders": registry_holders,
+                    "registry_holder_count": e.registry_holder_count,
+                    "ppon_holders": ppon_holders,
+                    "ppon_holder_count": e.ppon_holder_count,
+                    "witnesses": e.witnesses,
+                    "witness_publications": e.witness_publications,
+                })
+            })
+            .collect(),
+    )
 }
 
 /// Issue 469: the register clause of the altid job's counts line — unit 1's split
@@ -16924,6 +16969,128 @@ mod tests {
         assert_eq!(v["registry_pairs"]["GB-UKPRN"]["already_one"], 1, "{body}");
         assert_eq!(v["registry_pairs_planned"], serde_json::json!([]), "{body}");
         assert_eq!(v["registry_regrown"], serde_json::json!([]), "{body}");
+        remove_db(&path);
+    }
+
+    /// Issue 513 unit 1, through the PRODUCTION normaliser: beside the fixture's
+    /// company-number pair, two NHS trusts each split across a register org and a PPON
+    /// org. `GB-NHS-RR8` mints `GBNHSRR8`; `GB-NHS-R0B` mints nothing — its one digit is a
+    /// zero, and the normaliser's all-zero filler rule refuses it, so its party bound a
+    /// provisional org by name (469 U2's open question). The dry run stores both pairs in
+    /// `registry_nhs_listing` with their identity, class and holders; the wet run's
+    /// residual leaves the listing out.
+    #[tokio::test]
+    async fn an_altid_dry_run_stores_every_nhs_pair_and_a_wet_run_does_not() {
+        let (db, conn, path) = altid_fixture("registry-nhs").await;
+        altid_satellite(&conn).await;
+        let org = "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at) VALUES";
+        let notice = "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at) VALUES";
+        let id = "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) VALUES";
+        let mention = "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme) VALUES";
+        let stsft = "South Tyneside and Sunderland NHS Foundation Trust";
+        let leeds = "Leeds Teaching Hospitals NHS Trust";
+        for sql in [
+            format!("{org} (5, 'GB', NULL, NULL, '{stsft}', 'x', 1, 0)"),
+            format!("{org} (6, 'GB', 'national', 'GBPPONPYDR3797LZLJ', '{stsft}', 'x', 0, 0)"),
+            format!("{org} (7, 'GB', 'national', 'GBNHSRR8', '{leeds}', 'x', 0, 0)"),
+            format!("{org} (8, 'GB', 'national', 'GBPPONPDTR3338MNPG', '{leeds}', 'x', 0, 0)"),
+            format!("{notice} (14, 'fts', 'ocds-e', 'h', 'fts:ocds-1.1', 1, 'e', 0)"),
+            format!("{notice} (15, 'fts', 'ocds-f', 'h', 'fts:ocds-1.1', 1, 'f', 0)"),
+            format!("{notice} (16, 'fts', 'ocds-g', 'h', 'fts:ocds-1.1', 1, 'g', 0)"),
+            format!("{notice} (17, 'fts', 'ocds-h', 'h', 'fts:ocds-1.1', 1, 'h', 0)"),
+            format!("{id} (14, 'ORG-E', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-R0B', 0)"),
+            format!("{id} (14, 'ORG-E', 'BT-501-Organization-Company', 1, 'GB-PPON', 'GB-PPON-PYDR-3797-LZLJ', 0)"),
+            format!("{id} (15, 'ORG-F', 'BT-501-Organization-Company', 0, 'GB-PPON', 'GB-PPON-PYDR-3797-LZLJ', 0)"),
+            format!("{id} (16, 'ORG-G', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-RR8', 0)"),
+            format!("{id} (16, 'ORG-G', 'BT-501-Organization-Company', 1, 'GB-PPON', 'GB-PPON-PDTR-3338-MNPG', 0)"),
+            format!("{id} (17, 'ORG-H', 'BT-501-Organization-Company', 0, 'GB-PPON', 'GB-PPON-PDTR-3338-MNPG', 0)"),
+            format!("{mention} (14, 'ORG-E', 5, '{stsft}', 'GB', 'GB-NHS-R0B', 'GB-NHS')"),
+            format!("{mention} (15, 'ORG-F', 6, '{stsft}', 'GB', 'GB-PPON-PYDR-3797-LZLJ', 'GB-PPON')"),
+            format!("{mention} (16, 'ORG-G', 7, '{leeds}', 'GB', 'GB-NHS-RR8', 'GB-NHS')"),
+            format!("{mention} (17, 'ORG-H', 8, '{leeds}', 'GB', 'GB-PPON-PDTR-3338-MNPG', 'GB-PPON')"),
+        ] {
+            conn.execute(sql.as_str(), ()).await.unwrap();
+        }
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let plan = || {
+            let sup = &sup;
+            async move {
+                let (body, _) = sup.db().latest_report("altid-merge-plan").await.unwrap().expect("recorded");
+                (serde_json::from_str::<serde_json::Value>(&body).unwrap(), body)
+            }
+        };
+
+        let msg = sup.run_spec(&altid_job(3, true)).await.expect("dry plans");
+        assert!(msg.contains("GB-NHS 2 of 2 two orgs (denied 2 registry-shape)"), "{msg}");
+        let (v, body) = plan().await;
+        assert_eq!(v["registry_pairs"]["GB-NHS"]["no_identity"], 1, "{body}");
+        assert_eq!(v["registry_nhs_listing_truncated"], false, "{body}");
+        let listing = v["registry_nhs_listing"].as_array().expect("listed");
+        let held = |hs: &serde_json::Value| -> Vec<(i64, serde_json::Value, bool)> {
+            hs.as_array()
+                .unwrap()
+                .iter()
+                .map(|h| (h["org_id"].as_i64().unwrap(), h["identifier"].clone(), h["provisional"].as_bool().unwrap()))
+                .collect()
+        };
+        let row = |e: &serde_json::Value| {
+            (
+                e["literal"].as_str().unwrap().to_owned(),
+                e["value"].as_str().unwrap().to_owned(),
+                e["identity"].clone(),
+                e["class"].as_str().unwrap().to_owned(),
+                e["ppon"].as_str().unwrap().to_owned(),
+                held(&e["registry_holders"]),
+                held(&e["ppon_holders"]),
+                e["witness_publications"].clone(),
+            )
+        };
+        let rows: Vec<_> = listing.iter().map(row).collect();
+        assert_eq!(
+            rows,
+            vec![
+                (
+                    "GB-NHS-R0B".to_owned(),
+                    "GBNHSR0B".to_owned(),
+                    serde_json::Value::Null,
+                    "both_distinct".to_owned(),
+                    "PYDR3797LZLJ".to_owned(),
+                    vec![(5, serde_json::Value::Null, true)],
+                    vec![(6, "GBPPONPYDR3797LZLJ".into(), false)],
+                    serde_json::json!(["ocds-e"]),
+                ),
+                (
+                    "GB-NHS-RR8".to_owned(),
+                    "GBNHSRR8".to_owned(),
+                    "GBNHSRR8".into(),
+                    "both_distinct".to_owned(),
+                    "PDTR3338MNPG".to_owned(),
+                    vec![(7, "GBNHSRR8".into(), false)],
+                    vec![(8, "GBPPONPDTR3338MNPG".into(), false)],
+                    serde_json::json!(["ocds-g"]),
+                ),
+            ],
+            "{body}"
+        );
+        assert_eq!(listing[0]["registry_holders"][0]["name"], stsft, "{body}");
+        assert_eq!(
+            (listing[0]["registry_holder_count"].clone(), listing[0]["ppon_holder_count"].clone(), listing[0]["witnesses"].clone()),
+            (1.into(), 1.into(), 1.into()),
+            "{body}"
+        );
+        // The listing moves nothing: the company-number plan is the fixture's one pair.
+        assert_eq!(v["pairs"], serde_json::json!(["03914810~PHDQ2359NZMP"]), "{body}");
+        assert_eq!(v["registry_pairs_planned"], serde_json::json!([]), "{body}");
+
+        // The wet run's residual carries no listing.
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let msg = sup.run_spec(&altid_job(4, false)).await.expect("wet merges");
+        assert!(msg.contains("WET: merged 1 of 1 reviewed live pairs"), "{msg}");
+        let (v, body) = plan().await;
+        assert_eq!(v["residual_of_wet_run"], true, "{body}");
+        assert!(v.get("registry_nhs_listing").is_none(), "{body}");
+        assert!(v.get("registry_nhs_listing_truncated").is_none(), "{body}");
         remove_db(&path);
     }
 

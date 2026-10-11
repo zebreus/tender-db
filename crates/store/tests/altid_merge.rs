@@ -247,6 +247,31 @@ fn assert_registry_accounting(r: &store::AltIdMergeReport) {
     );
 }
 
+/// Issue 513 unit 1, on every dry plan: the GB-NHS listing is one entry per pair unit 1
+/// counted, in harvest order (value, then PPON key), its classes are the counts' classes
+/// and its null identities are `no_identity` — the listing carries the loop's decision.
+fn assert_nhs_listing_matches_counts(r: &store::AltIdMergeReport) {
+    let c = r.registry_pairs.get("GB-NHS").cloned().unwrap_or_default();
+    let l = &r.registry_nhs_listing;
+    assert!(!r.registry_nhs_listing_truncated, "{r:#?}");
+    assert_eq!(l.len() as u64, c.pairs, "{r:#?}");
+    let class = |name: &str| l.iter().filter(|e| e.class == name).count() as u64;
+    assert_eq!(
+        [
+            class("already_one"),
+            class("both_distinct"),
+            class("no_target_registry"),
+            class("no_target_ppon"),
+            class("no_target_both"),
+            class("multi_target"),
+        ],
+        [c.already_one, c.both_distinct, c.no_target_registry, c.no_target_ppon, c.no_target_both, c.multi_target],
+        "{r:#?}"
+    );
+    assert_eq!(l.iter().filter(|e| e.identity.is_none()).count() as u64, c.no_identity, "{r:#?}");
+    assert!(l.windows(2).all(|w| (&w[0].value, &w[0].ppon) < (&w[1].value, &w[1].ppon)), "{r:#?}");
+}
+
 /// A pair's stored-plan key, from the literals.
 fn pk(coh: &str, ppon: &str) -> String {
     format!("{}~{}", k(coh), k(ppon))
@@ -543,6 +568,8 @@ impl Bed {
         // Issue 469 U4: every register split is a register candidate, and every register
         // candidate lands in exactly one place too.
         assert_registry_accounting(&r);
+        // Issue 513 unit 1: and every counted GB-NHS pair is listed, under its counted class.
+        assert_nhs_listing_matches_counts(&r);
         r
     }
 
@@ -2139,6 +2166,25 @@ async fn an_nhs_ppon_pair_is_counted_and_never_planned() {
     assert_eq!(r.registry_denied_listing.len(), 1);
     let d = &r.registry_denied_listing[0];
     assert_eq!((d.key(), d.gate.as_str()), (format!("GB-NHS:GBNHSRR8~{}", k(PPON_Q)), "registry-shape"));
+    // Issue 513 unit 1: the NHS pair is listed with its identity, the class it was
+    // counted under and both holders; no other scheme's pair is listed.
+    assert_eq!(r.registry_nhs_listing.len(), 1, "{r:#?}");
+    assert!(!r.registry_nhs_listing_truncated);
+    let e = &r.registry_nhs_listing[0];
+    assert_eq!(
+        (e.literal.as_str(), e.value.as_str(), e.identity.as_deref(), e.class, e.ppon.clone()),
+        ("GB-NHS-RR8", "GBNHSRR8", Some("GBNHSRR8"), "both_distinct", k(PPON_Q))
+    );
+    let leeds = "Leeds Teaching Hospitals NHS Trust";
+    assert_eq!(holders(&e.registry_holders), vec![(10, Some("GBNHSRR8".to_owned()), leeds.to_owned(), false)]);
+    assert_eq!(holders(&e.ppon_holders), vec![(11, Some(minted(PPON_Q)), leeds.to_owned(), false)]);
+    assert_eq!((e.registry_holder_count, e.ppon_holder_count, e.witnesses), (1, 1, 1));
+    assert_eq!(e.witness_publications, vec!["pub-200".to_owned()]);
+}
+
+/// Issue 513 unit 1: a listed holder as (org id, identifier, name, provisional).
+fn holders(hs: &[store::RegistryNhsHolder]) -> Vec<(i64, Option<String>, String, bool)> {
+    hs.iter().map(|h| (h.org_id, h.identifier.clone(), h.name.clone(), h.provisional)).collect()
 }
 
 /// Issue 469 review: a register value the resolver mints no identity for (a
@@ -2194,6 +2240,77 @@ async fn a_register_value_with_no_identity_is_held_by_the_org_its_mention_bound(
     assert!(r.registry_pairs_planned.is_empty(), "{r:#?}");
     let barts = r.registry_denied_listing.iter().find(|l| l.registry_literal == "GB-NHS-QWO").expect("Barts listed");
     assert_eq!((barts.gate.as_str(), barts.registry.as_str()), ("registry-shape", "GBNHSQWO"));
+    // Issue 513 unit 1: BOTH NHS pairs are listed, in value order — the split one the
+    // sample showed and the one-org one it did not — each with no identity and the
+    // class unit 1 counted; Barts's register side is the provisional org its mention
+    // bound by name, carrying no identifier.
+    let listed: Vec<(&str, Option<&str>, &str, String)> = r
+        .registry_nhs_listing
+        .iter()
+        .map(|e| (e.literal.as_str(), e.identity.as_deref(), e.class, e.ppon.clone()))
+        .collect();
+    assert_eq!(
+        listed,
+        vec![("GB-NHS-QWO", None, "both_distinct", k(PPON_P)), ("GB-NHS-RXH", None, "already_one", k(PPON_Q))],
+        "{r:#?}"
+    );
+    let (barts, brighton) = (&r.registry_nhs_listing[0], &r.registry_nhs_listing[1]);
+    assert_eq!(barts.value, "GBNHSQWO");
+    assert_eq!(holders(&barts.registry_holders), vec![(30, None, "Barts Health NHS Trust".to_owned(), true)]);
+    assert_eq!(holders(&barts.ppon_holders), vec![(31, Some(minted(PPON_P)), "Barts Health NHS Trust".to_owned(), false)]);
+    assert_eq!(barts.witness_publications, vec!["pub-500".to_owned()]);
+    let one = vec![(40, Some(minted(PPON_Q)), "Brighton Hospitals".to_owned(), false)];
+    assert_eq!((holders(&brighton.registry_holders), holders(&brighton.ppon_holders)), (one.clone(), one));
+}
+
+/// Issue 513 unit 1: a letter-only code bound by name to several provisional orgs —
+/// spellings of one trust's name, each its own org — is `multi_target`, which no sample
+/// shows. The listing names every holder up to its cap of five, and counts all six, so
+/// the owner can tell name variants of one body from different bodies under one code.
+#[tokio::test]
+async fn a_multi_target_nhs_code_lists_each_holder() {
+    let b = bed("registry-nhs-multi").await;
+    let names = [
+        "Oxford University Hospitals NHS Foundation Trust",
+        "Oxford University Hospitals NHS FT",
+        "OUH NHS Foundation Trust",
+        "Oxford University Hospitals",
+        "Oxford Univ Hospitals NHS Trust",
+        "John Radcliffe Hospital",
+    ];
+    for (i, name) in names.iter().enumerate() {
+        let (org, notice) = (90 + i as i64, 1000 + i as i64);
+        b.provisional(org, name).await;
+        b.notice(notice, "fts:ocds-1.1").await;
+        b.party(notice, &format!("O{i}"), Some(org), "GB", &["GB-NHS-RTH"]).await;
+    }
+    // The trust's PPON org, and the one notice pairing the two (PPON-first).
+    b.org(99, PPON_P, "Oxford University Hospitals NHS Foundation Trust").await;
+    b.notice(1100, "fts:ocds-1.1").await;
+    b.party(1100, "P", Some(99), "GB", &[PPON_P, "GB-NHS-RTH"]).await;
+
+    let r = b.plan().await;
+    let nhs = r.registry_pairs.get("GB-NHS").expect("NHS counted");
+    assert_eq!((nhs.pairs, nhs.no_identity, nhs.multi_target), (1, 1, 1), "{nhs:#?}");
+    assert!(r.registry_sample.is_empty(), "a multi-target pair is never sampled: {r:#?}");
+    assert_eq!(r.registry_nhs_listing.len(), 1, "{r:#?}");
+    let e = &r.registry_nhs_listing[0];
+    assert_eq!(
+        (e.literal.as_str(), e.identity.as_deref(), e.class, e.ppon.clone()),
+        ("GB-NHS-RTH", None, "multi_target", k(PPON_P))
+    );
+    let expected: Vec<(i64, Option<String>, String, bool)> =
+        names.iter().take(5).enumerate().map(|(i, n)| (90 + i as i64, None, (*n).to_owned(), true)).collect();
+    assert_eq!(holders(&e.registry_holders), expected, "the first five, ascending");
+    assert_eq!(e.registry_holder_count, 6, "the cap is honest about the sixth");
+    assert_eq!(
+        holders(&e.ppon_holders),
+        vec![(99, Some(minted(PPON_P)), "Oxford University Hospitals NHS Foundation Trust".to_owned(), false)]
+    );
+    assert_eq!((e.ppon_holder_count, e.witnesses), (1, 1));
+    assert_eq!(e.witness_publications, vec!["pub-1100".to_owned()]);
+    // A measurement: nothing plans.
+    assert!(r.registry_pairs_planned.is_empty(), "{r:#?}");
 }
 
 /// Issue 469 review 2: a side is held by every org a mention bound where that side
@@ -2484,6 +2601,9 @@ fn coh_view(r: &store::AltIdMergeReport) -> String {
     r.unkeyed_scheme.clear();
     r.registry_pairs.clear();
     r.registry_sample.clear();
+    // Issue 513 unit 1: the GB-NHS listing, a register field.
+    r.registry_nhs_listing.clear();
+    r.registry_nhs_listing_truncated = false;
     r.registry_gates.clear();
     r.registry_cross_register_ppons = 0;
     r.registry_cross_register_denied_ppons = 0;
@@ -2564,6 +2684,9 @@ async fn registry_pairs_never_change_the_coh_plan() {
     assert_eq!(outcome("GB-CHC"), (1, 0, 1, 0, 0));
     assert_eq!(outcome("GB-NHS"), (1, 0, 0, 1, 0));
     assert_eq!(outcome("GB-MPR"), (1, 0, 0, 0, 1));
+    // Issue 513 unit 1: the NHS listing stands beside the plan, and moves none of it.
+    let listed: Vec<(&str, &str)> = dry.registry_nhs_listing.iter().map(|e| (e.literal.as_str(), e.class)).collect();
+    assert_eq!(listed, vec![("GB-NHS-RR8", "both_distinct")], "{dry:#?}");
     assert_eq!(coh_view(&dry), before, "the register graph moved a company-number count");
 
     let unkeyed = b
@@ -2576,6 +2699,7 @@ async fn registry_pairs_never_change_the_coh_plan() {
 
     let wet = b.wet(&dry.pairs).await;
     assert_eq!(wet.merged_pairs, 1, "{wet:#?}");
+    assert!(wet.registry_nhs_listing.is_empty(), "issue 513: a wet run lists no NHS pair: {wet:#?}");
     assert_eq!(wet.registry_pairs_planned, vec![rk(UKPRN_A, PPON_R)], "the live register plan: {wet:#?}");
     assert_eq!((wet.registry_deferred_unreviewed, wet.registry_merged_pairs), (1, 0), "{wet:#?}");
     assert_eq!(wet.registry_deferred_pairs, vec![rk(UKPRN_A, PPON_R)]);

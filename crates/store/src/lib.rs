@@ -62,6 +62,7 @@ pub use canonical::{
     AddressStrip, NamePollutionReport, PollutedName,
     MintedCountryFix, MintedCountryReport,
     AltIdAliasCounts, AltIdAliasRules, AltIdListing, AltIdMergeArgs, AltIdMergeReport, RegistryMember, RegistryPairCounts, RegistrySample,
+    RegistryNhsEntry, RegistryNhsHolder, REGISTRY_NHS_LISTING_CAP, REGISTRY_NHS_PPON_HOLDERS, REGISTRY_NHS_REGISTER_HOLDERS,
     RegistryGateCounts, RegistryPairListing, AltIdRegistryAliasCounts, RegistryMerged,
     REGISTRY_SAMPLE_PER_SCHEME, ALTID_REGISTRY_CONFIRMED_COHORT_PREFIX,
     ALTID_ALIAS_LEDGER_SQL, ALTID_ALIAS_OWNER_MENTIONS, ALTID_ALIAS_OWNER_MENTION_NAMES_SQL, ALTID_NEXT_PROFILE_SQL, ALTID_PARTY_IDS_SQL, ALTID_PARTY_MENTIONS_SQL,
