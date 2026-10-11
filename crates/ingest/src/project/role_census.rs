@@ -531,35 +531,16 @@ impl Party {
 /// id while being a real supplier. Precision over recall (ADR-0003). The 63 samples of
 /// the three classes this covers were all the buyer's own party (issue 484's sample read).
 ///
-/// The name rule refuses a fold that is a placeholder rather than a name
-/// ([`NON_NAME_FOLDS`]: `N/A`, `Unknown`, `Confidential`, …): two withheld names on one
-/// notice say nothing about the two parties being one.
+/// The name rule refuses a name that is no name at all ([`crate::partyname::not_a_name`]:
+/// `N/A`, `Unknown`, `Confidential`, `Various`, …): two withheld names on one notice say
+/// nothing about the two parties being one. Issue 511 §6 retired 484's own fold list
+/// (`NON_NAME_FOLDS`) for the predicate — one list, one fold, no drift. The fold drops
+/// most such parties before this is asked; the check stays for the ones it keeps (a blank
+/// party with an identifier, an award summary, a scoped word in another language).
 fn buyer_equal(buyer: &Party, winner: &Party) -> bool {
-    buyer.section == winner.section || (buyer.same_name(winner) && !NON_NAME_FOLDS.contains(&buyer.folded.as_str()))
+    buyer.section == winner.section
+        || (buyer.same_name(winner) && crate::partyname::not_a_name(&buyer.name).is_none())
 }
-
-/// Issue 484 unit 3 (review): folded names ([`fold`]) that stand for a withheld or
-/// missing name, not an organization — never "the same name" for the winner flag.
-/// Literal and short, like `crate::partyname`'s lists: a fold matches whole, so a
-/// company whose name merely contains one of these words is untouched. Not measured
-/// against the corpus; each entry is a withholding wording publishers use.
-const NON_NAME_FOLDS: [&str; 15] = [
-    "n a",
-    "na",
-    "nil",
-    "none",
-    "unknown",
-    "not known",
-    "confidential",
-    "withheld",
-    "not published",
-    "not disclosed",
-    "not applicable",
-    "not specified",
-    "not provided",
-    "various",
-    "x",
-];
 
 /// Issue 484 unit 3: the winner sections of one notice that are buyer-equal
 /// ([`buyer_equal`]) to one of its buyer mentions. `buyers` and `winners` are `(outermost
@@ -2048,5 +2029,36 @@ mod tests {
             let winner = roles.iter().find(|r| r.0 == TENDERER).map(|r| (r.1, r.2)).unwrap();
             assert_eq!(flagged(buyer, winner), expect, "{class}");
         }
+    }
+
+    /// Issue 511 §6: the name rule refuses every class the predicate reads — the folds the
+    /// retired `NON_NAME_FOLDS` listed, the new blank and placeholder words, the raw-name
+    /// arm and an award summary — while `nil` (NIL SAS) and a real name stay names. One
+    /// section is still one party, whatever its name.
+    #[test]
+    fn buyer_equal_refuses_every_non_name() {
+        let flagged = |buyer: (&str, &str), winner: (&str, &str)| !buyer_equal_winners(&[buyer], &[winner]).is_empty();
+        for non_name in [
+            "N/A",
+            "Unknown",
+            "Withheld",
+            "Not published",
+            "Not applicable",
+            "Various",
+            "x",
+            "nie dotyczy",
+            "Néant",
+            "TBC",
+            "Keine Angabe",
+            ".",
+            "0",
+            "siehe oben: NEB Betriebsgesellschaft mbH",
+            "Lot 1) Dupont. Lot 2) infructueux",
+        ] {
+            assert!(!flagged(("ORG-1", non_name), ("ORG-2", non_name)), "{non_name}");
+            assert!(flagged(("ORG-1", non_name), ("ORG-1", non_name)), "{non_name}: one section");
+        }
+        assert!(flagged(("ORG-1", "NIL"), ("ORG-2", "nil")), "a real company named NIL");
+        assert!(flagged(("ORG-1", "Ingen"), ("ORG-2", "INGEN")), "a scoped word needs a language the census has none of");
     }
 }

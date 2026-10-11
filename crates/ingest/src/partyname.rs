@@ -10,38 +10,76 @@
 //! Same contract as [`crate::orgid`]: parsers store what was published, the projection
 //! decides. One definition serves every era — the text parser's early drop and the fold.
 //!
-//! **Two classes, decided separately.**
-//! - [`NotAName::VoidLot`] — a statement that the lot was not awarded. The fold drops
-//!   such a party in every era and role (no organization, no role, no result winner, no
-//!   bid party), and a legacy result left with no real winner reads `clos-nw`.
-//! - [`NotAName::Placeholder`] — a pointer, a withheld name, a summary of the award, or a
-//!   void phrase inside a name that also names an award ([`names_an_award`]: the lot was
-//!   then awarded to a named company, or the "name" is a per-lot summary listing the
-//!   winners of the other lots beside the void one). The text parser refuses it; the fold
-//!   leaves it for issue 511, because these sit mostly in review, mediation and buyer
-//!   slots, and a winner WAS chosen. Dropping such a summary would turn its real awards
-//!   into `clos-nw` — the first drain's dry run (2026-10-10, job 2164) found them among
-//!   the matches: `Lot 1) Sarl Bremond. Lot 2) S.A. Les Rapides Varois. Lot 3) Déclaré
-//!   Infructueux …`.
+//! **Four classes** (issue 510, widened by issue 511's unit-1 decision,
+//! `.scratch/tender-db/511-placeholders/unit1-decision.md`). The fold drops a party whose
+//! every published name is one of the first three ([`crate::project`]'s
+//! `dropped_party_sections`), in every era and role; the class decides only what a legacy
+//! or sdk-0.1 result left with no real winner reads:
+//! - [`NotAName::VoidLot`] — a statement that the lot was not awarded: `clos-nw`.
+//! - [`NotAName::Placeholder`] — a winner exists; its name is elsewhere (a pointer: `See
+//!   Section VI.3`, `siehe oben`), withheld (`Withheld Section94 Supplier`, `keine Angabe`),
+//!   missing (`TBC`, `Unknown`) or plural (`Various suppliers`): `selec-w`, no winner bound.
+//! - [`NotAName::Blank`] — the slot holds nothing (`N/A`, `nie dotyczy`, `néant`, `.`): no
+//!   marker, so the result's other evidence decides, as if the slot were empty.
+//! - [`NotAName::AwardSummary`] — a non-name phrase beside a name: the void phrase in a
+//!   summary that names an award ([`names_an_award`]: `Lot 1) Sarl Bremond. Lot 2)
+//!   Infructueux`, `Infructueux … attribué à la Société X`), a pointer followed by the body
+//!   it points at (`siehe oben: NEB Betriebsgesellschaft mbH`), or a placeholder inside a
+//!   list. The text parser refuses it, but the fold KEEPS it: it is the only place the real
+//!   winners' names reach the served Tender until per-lot parsing exists (510's drain found
+//!   them among the matches, job 2164; 511 §5).
 //!
 //! **Matching.** On the role census's fold (case, Latin accents and every non-alphanumeric
 //! run folded to one space; [`fold`]). A stem matches at a left word boundary and may end
 //! mid-word (`infructu` catches `infructueux`, `infructueuse`, `infructuosité`); a whole
 //! value matches only the entire folded name, after one trailing lot qualifier
-//! (`(lote 3)`, `(lots 2 et 4)`) is stripped. Every entry is a 2026-10-10 prod
+//! (`(lote 3)`, `(lots 2 et 4)`) is stripped — for issue 511's values, a bare one only
+//! ([`bare_lot_qualifier`]). Every void entry is a 2026-10-10 prod
 //! measurement (`.scratch/tender-db/510-void-names/unit1-decision.md` §2): each whole
 //! value says the lot was not awarded, has 20 or more winner-role mentions, and no real
-//! company with that exact fold. The real names beside the phrases stay names —
-//! `Desierto OÜ`, `DESERTOT`, `VÁRIOS MUNDOS`, `NIL d.o.o.`, `N/A s.r.o.`,
-//! `Void arhitektura`, `Gestiver Información SL` — pinned by the tests below.
+//! company with that exact fold. Issue 511's entries are its 2026-10-11 census (§4), with
+//! four guards for the real names beside them:
+//! - every new single word or abbreviation is a whole value (`N/A s. r. o.`, `NIL d.o.o.`,
+//!   `Diverse Care Services Ltd`, `Brake` stay names);
+//! - issue 511's stems open the name ([`StemAt::Start`], after one optional lot designator),
+//!   so `Siemens – see section VI.3` is a name; and a pointer followed by a name is an
+//!   [`NotAName::AwardSummary`] ([`pointer_names`]);
+//! - the three short words with measured real-name collisions (`ingen`, `inget`, `nd`) need
+//!   the notice's language and a plain case ([`not_a_name_in`], [`SCOPED_WHOLE`]: `Ingen` FR,
+//!   `InGen`);
+//! - the fold keeps a [`NotAName::Blank`] party that carries an identifier unless the
+//!   identifier echoes a non-name (the projection's guard, not this module's).
+//!
+//! The real names beside the phrases stay names — `Desierto OÜ`, `DESERTOT`, `VÁRIOS
+//! MUNDOS`, `NIL d.o.o.`, `N/A s.r.o.`, `Void arhitektura`, `Gestiver Información SL`,
+//! `Bank of America, N.A.`, `X Corp` — pinned by the tests below.
 
 /// What a non-name is ([`not_a_name`]).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum NotAName {
     /// The lot was not awarded.
     VoidLot,
-    /// A pointer, a withheld name or a summary; a winner may well exist.
+    /// Issue 511: a winner exists; its name is elsewhere, withheld, missing or plural.
     Placeholder,
+    /// Issue 511: the slot holds nothing (`n/a`, `none`, `néant`, punctuation only).
+    Blank,
+    /// Issue 511: a non-name phrase beside a name (the award, the company or the body it
+    /// names). Never dropped by the fold; refused by the text parser.
+    AwardSummary,
+}
+
+/// Where an issue-511 stem must sit on the fold. 510's own stems match at any left word
+/// boundary; issue 511 anchors its stems at the start (after one optional lot designator,
+/// [`after_lot_designator`]), because a stem matched anywhere drops a real name followed by
+/// the phrase (`Firma Handlowa Jan Kowalski – nie dotyczy`, `Siemens – see section VI.3`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum StemAt {
+    /// The stem opens the name.
+    Start,
+    /// At any left word boundary, as in 510: the phrases that never open a name (`Véase /
+    /// Ver perfil del contratante`, `Disclosure would prejudice …`). Anchoring `would
+    /// prejudice` would retire it from the fold and the text parser alike.
+    Boundary,
 }
 
 /// Stems that say the lot was not awarded, matched at a left word boundary on the
@@ -129,21 +167,194 @@ const VOID_WHOLE: [&str; 50] = [
     "ugovor nije sklopljen",
 ];
 
-/// Pointer and withheld-value stems (the rest of the 508 text list), padded like
-/// [`VOID_STEMS`].
-const PLACEHOLDER_STEMS: [&str; 8] = [
-    " would prejudice",
-    " not applicable",
+/// Pointer and withheld-value stems (the rest of the 508 text list, and issue 511's
+/// census, §4), padded like [`VOID_STEMS`]. ` not applicable` moved to [`BLANK_STEMS`]
+/// (issue 511: it says the slot holds nothing).
+const PLACEHOLDER_STEMS: [(&str, StemAt); 11] = [
+    (" see section", StemAt::Start),
+    (" voir autres informations", StemAt::Start),
+    (" voir renseignements", StemAt::Start),
+    (" ver informaci", StemAt::Start),
+    (" perfil del contratante", StemAt::Boundary),
+    (" perfil de contratante", StemAt::Boundary),
+    (" would prejudice", StemAt::Boundary),
+    // `Withheld Section94 Supplier` (one PPON on all 123 mentions), `Withheld for
+    // Security Reasons`.
+    (" withheld", StemAt::Start),
+    (" see contracts finder", StemAt::Start),
+    (" siehe oben", StemAt::Start),
+    // The usual German and Austrian wording for a withheld winner (216 lot results read,
+    // all `selec-w`, none with a co-winner): a stem, so `keine Angaben` and `keine Angabe
+    // aus Gründen des Wettbewerbs` come with it.
+    (" keine angabe", StemAt::Start),
+];
+
+/// The pointer stems among [`PLACEHOLDER_STEMS`]: the ones a name may follow
+/// ([`pointer_names`]: `siehe oben: NEB Betriebsgesellschaft mbH`).
+const POINTER_STEMS: [&str; 8] = [
     " see section",
-    " perfil del contratante",
-    " perfil de contratante",
+    " siehe oben",
+    " see contracts finder",
     " voir autres informations",
     " voir renseignements",
     " ver informaci",
+    " perfil del contratante",
+    " perfil de contratante",
 ];
 
-/// Placeholder whole values.
-const PLACEHOLDER_WHOLE: [&str; 1] = ["various"];
+/// Issue 511: stems that say the slot holds nothing, every one anchored ([`StemAt::Start`]):
+/// `Nie dotyczy - brak`, `Lot 3: not applicable`, `Niet van toepassing (perceel 2)`.
+const BLANK_STEMS: [&str; 3] = [" nie dotyczy", " not applicable", " niet van toepassing"];
+
+/// Placeholder whole values: a winner exists and its name is missing, pending, withheld,
+/// elsewhere or plural. Classed by what each says in a winner slot (issue 511 §1): `tbc`,
+/// `unknown` and the other "name missing" words moved here from [`BLANK_WHOLE`] (66
+/// winner/bidder rows between them, none with an identifier).
+const PLACEHOLDER_WHOLE: [&str; 64] = [
+    // The name is missing or pending.
+    "k a",
+    "ka",
+    "tbc",
+    "tba",
+    "to be confirmed",
+    "not provided",
+    "not specified",
+    "not available",
+    "unknown",
+    "not known",
+    "nicht bekannt",
+    "niet bekend",
+    "non connu",
+    "non noto",
+    "desconocido",
+    "non renseigne",
+    "brak danych",
+    // A pointer; the DE hub `s.o.` is *siehe oben*.
+    "s o",
+    "see below",
+    "please see below",
+    "see attached",
+    "see attached list",
+    "see list below",
+    "see additional information",
+    "see vi 3",
+    "siehe unten",
+    "siehe vergabeunterlagen",
+    // Withheld.
+    "confidential",
+    "redacted",
+    "commercially sensitive",
+    "not published",
+    "not disclosed",
+    "non communique",
+    // Plural: the award went to several, named nowhere.
+    "various",
+    "various suppliers",
+    "various contractors",
+    "various providers",
+    "various companies",
+    "various organisations",
+    "various see below",
+    "multiple",
+    "multiple suppliers",
+    "multiple providers",
+    "multiple contractors",
+    "varios",
+    "varias",
+    "varios adjudicatarios",
+    "varios licitadores",
+    "varios proveedores",
+    "varios contratistas",
+    "varias empresas",
+    "diversos",
+    "diverse",
+    "diverse firmen",
+    "diverse bieter",
+    "diverse ditte",
+    "diversi",
+    "divers",
+    "verschiedene",
+    "verschiedene firmen",
+    "mehrere",
+    "mehrere bieter",
+    "ditte varie",
+    "varie",
+];
+
+/// Issue 511: whole values that say the slot holds nothing — "not applicable", "none", a
+/// filler. The "nobody" words (`ingen`, `neant`, `geen`, `aucun`) stay here, not in
+/// [`VOID_WHOLE`]: they fill review and mediation slots as often as winner slots, and
+/// promoting one needs 510's per-word value/date table (511 §8.7). `n a`, `na`, `nc`, `n d`
+/// and `none specified` are ambiguous in a winner slot and stay here, asserting nothing.
+const BLANK_WHOLE: [&str; 56] = [
+    "n a",
+    "no procede",
+    "x",
+    "xx",
+    "xxx",
+    "entfallt",
+    "entfaellt",
+    "neant",
+    "keine",
+    "nicht vorhanden",
+    "nicht zutreffend",
+    "nicht anwendbar",
+    "nicht relevant",
+    "ohne",
+    "nein",
+    "na",
+    "none",
+    "none specified",
+    "not required",
+    "not relevant",
+    "n v t",
+    "nvt",
+    "geen",
+    "brak",
+    "n d",
+    "sans objet",
+    "so",
+    "sans",
+    "non",
+    "nc",
+    "n c",
+    "aucun",
+    "aucune",
+    "non concerne",
+    "non applicable",
+    "nessuno",
+    "nessuna",
+    "non previsto",
+    "non applicabile",
+    "ninguno",
+    "ninguna",
+    "no aplica",
+    "no hay",
+    "no",
+    "null",
+    "ikke relevant",
+    "ikke aktuelt",
+    "ej aktuellt",
+    "nao aplicavel",
+    "nao se aplica",
+    "δεν εφαρμοζεται",
+    "δεν απαιτειται",
+    "nu este cazul",
+    "nem relevans",
+    "neni",
+    "ei ole",
+];
+
+/// Issue 511 guard 2: the short whole values with measured real-name collisions, `Blank`
+/// only in the listed notice languages (the fold's 639-2/T tags,
+/// [`crate::project::original_lang`]) and only in a plain case ([`plain_case`]). An unknown
+/// language never matches, so the party is kept: 1188404 `Ingen` FR (134 mentions, likely a
+/// French firm), the two `InGen` orgs (by case), `ND` HR (by language).
+const SCOPED_WHOLE: [(&str, &[&str]); 3] = [
+    ("ingen", &["DAN", "SWE", "NOR", "NOB", "NNO"]),
+    ("inget", &["DAN", "SWE", "NOR", "NOB", "NNO"]),
+    ("nd", &["POL", "ITA"]),
+];
 
 /// The words that open a trailing lot qualifier ([`strip_lot_qualifier`]).
 const LOT_WORDS: [&str; 6] = ["lot", "lots", "lote", "lotes", "lotto", "lotti"];
@@ -276,8 +487,33 @@ pub fn fold(name: &str) -> String {
     store::buyer_name_fold(&crate::project::match_norm(name))
 }
 
-/// What `name` is when it is not a name; `None` for a name.
+/// What `name` is when it is not a name; `None` for a name. No notice language, so the
+/// scoped words ([`SCOPED_WHOLE`]) never match: the text parser, the role census's
+/// `buyer_equal` and the drain's org walk read it this way ([`not_a_name_in`]).
 pub fn not_a_name(name: &str) -> Option<NotAName> {
+    not_a_name_in(name, None)
+}
+
+/// [`not_a_name`] as the fold reads it, with the notice's original language (`lang`,
+/// [`crate::project::original_lang`]'s 639-2/T tag) for the scoped words. Issue 511 §4:
+/// 1. a non-empty name with no alphanumeric character, or only zeros (`.`, `-/-`, `0`,
+///    `000`), is [`NotAName::Blank`] — before the fold, which is empty for punctuation;
+///    other digit-only names (`1`, `360`, `24/7`) stay names;
+/// 2. a void stem: [`NotAName::AwardSummary`] when the name also names an award, else
+///    [`NotAName::VoidLot`] (510);
+/// 3. a placeholder stem: [`NotAName::AwardSummary`] when a pointer is followed by a name
+///    ([`pointer_names`]), a boundary stem follows one ([`named_before_stem`]) or the name
+///    has a summary's shape ([`summary_shape`]), else [`NotAName::Placeholder`];
+/// 4. a blank stem: [`NotAName::AwardSummary`] for a summary's shape, else
+///    [`NotAName::Blank`];
+/// 5. the whole values: 510's void ones first (with its reason and prefix rules), then
+///    [`PLACEHOLDER_WHOLE`], [`BLANK_WHOLE`], and [`SCOPED_WHOLE`] in its languages and a
+///    plain case — after a bare lot qualifier only; one that names a company or a list is
+///    an [`NotAName::AwardSummary`] ([`bare_lot_qualifier`]).
+pub fn not_a_name_in(name: &str, lang: Option<&str>) -> Option<NotAName> {
+    if blank_raw(name) {
+        return Some(NotAName::Blank);
+    }
     let full = fold(name);
     if full.is_empty() {
         return None;
@@ -286,15 +522,40 @@ pub fn not_a_name(name: &str) -> Option<NotAName> {
     if VOID_STEMS.iter().any(|stem| padded.contains(stem)) {
         // "Lot déclaré infructueux … puis attribué à la Société X", "Lot 1) Sarl Bremond.
         // Lot 2) Infructueux": an award IS named beside the void lot. Reading it as no
-        // award would contradict the publisher, so it is a placeholder (the fold leaves it).
-        return Some(if names_an_award(name, &full) { NotAName::Placeholder } else { NotAName::VoidLot });
+        // award would contradict the publisher, so it is a summary (the fold keeps it).
+        return Some(if names_an_award(name, &full) { NotAName::AwardSummary } else { NotAName::VoidLot });
     }
-    if PLACEHOLDER_STEMS.iter().any(|stem| padded.contains(stem)) {
-        return Some(NotAName::Placeholder);
+    // Issue 511: the anchor. The stems open the name, after one optional lot designator
+    // (`Lot 3: not applicable`); the head is a suffix of `padded` that keeps its boundary
+    // space, so nothing is built per name for it.
+    let rest = after_lot_designator(&full);
+    let head = match rest.len() {
+        0 => "",
+        n if n == full.len() => padded.as_str(),
+        n => &padded[full.len() - n..],
+    };
+    let hit = PLACEHOLDER_STEMS.iter().find_map(|(stem, at)| match at {
+        StemAt::Start => head.starts_with(stem).then(|| (*stem, *at, padded.len() - head.len())),
+        StemAt::Boundary => padded.find(stem).map(|pos| (*stem, *at, pos)),
+    });
+    if let Some((stem, at, pos)) = hit {
+        let pointer = POINTER_STEMS.contains(&stem) && pointer_names(name, &padded, stem, pos);
+        // A boundary stem may close a name, so what precedes it is read too (the unit-2
+        // review: `Ayuntamiento de Madrid (véase perfil del contratante)`).
+        let named_before = at == StemAt::Boundary && named_before_stem(name, &padded, pos);
+        return Some(if pointer || named_before || summary_shape(name, &full) {
+            NotAName::AwardSummary
+        } else {
+            NotAName::Placeholder
+        });
+    }
+    if BLANK_STEMS.iter().any(|stem| head.starts_with(stem)) {
+        return Some(if summary_shape(name, &full) { NotAName::AwardSummary } else { NotAName::Blank });
     }
     // Folded again only when a lot qualifier came off: the fold already drops leading and
     // trailing punctuation and space, so an unstripped name folds to `full`.
-    let stripped = strip_lot_qualifier(name).map(fold);
+    let qualifier = lot_qualifier(name);
+    let stripped = qualifier.map(|(head, _)| fold(head));
     let whole = stripped.as_deref().unwrap_or(&full);
     if VOID_WHOLE.contains(&whole) {
         return Some(NotAName::VoidLot);
@@ -306,10 +567,355 @@ pub fn not_a_name(name: &str) -> Option<NotAName> {
     if reason_head(name).is_some_and(|head| VOID_WHOLE.contains(&fold(head).as_str())) || void_prefix(name) {
         return (!names_an_award(name, &full)).then_some(NotAName::VoidLot);
     }
-    if PLACEHOLDER_WHOLE.contains(&whole) {
-        return Some(NotAName::Placeholder);
+    let scoped = SCOPED_WHOLE.iter().find(|(word, _)| *word == whole);
+    let class = if PLACEHOLDER_WHOLE.contains(&whole) {
+        Some(NotAName::Placeholder)
+    } else if BLANK_WHOLE.contains(&whole)
+        || scoped.is_some_and(|(_, langs)| lang.is_some_and(|l| langs.contains(&l)) && plain_case(name))
+    {
+        Some(NotAName::Blank)
+    } else {
+        None
+    };
+    match qualifier {
+        // Issue 511 (the unit-2 review): its whole values come off a BARE lot qualifier only
+        // (`N/A (lot 2)`, `Néant (lots 2 et 4)`). A qualifier that says more is more text,
+        // not a qualifier: a summary when it names a company or a list (`N/A (lot 2 attribué
+        // à Dupont SARL)`, `Various (Lot 1: ACME Ltd, Lot 2: Beta Ltd)`), else the name read
+        // whole, which no list holds. 510's void values above keep any lot qualifier.
+        Some((_, group)) if class.is_some() && !bare_lot_qualifier(group) => {
+            summary_shape(group, &fold(group)).then_some(NotAName::AwardSummary)
+        }
+        _ => class,
     }
-    None
+}
+
+/// Issue 511's raw-name arm: a non-empty name with no alphanumeric character (`.`, `-`,
+/// `-/-`, `_`) or only zeros (`0` to `0000`). Any other digit is a name: `1` holds 176
+/// internal-ojs winner rows on one org, `360` FR is six orgs with distinct national ids.
+fn blank_raw(name: &str) -> bool {
+    let t = name.trim();
+    !t.is_empty() && (!t.chars().any(char::is_alphanumeric) || matches!(t, "0" | "00" | "000" | "0000"))
+}
+
+/// Whether `raw` has no lowercase letter directly followed by an uppercase one (issue 511
+/// guard 2): `INGEN` and `Ingen` are plain, `InGen` is a brand.
+pub fn plain_case(raw: &str) -> bool {
+    !raw.chars().zip(raw.chars().skip(1)).any(|(a, b)| a.is_lowercase() && b.is_uppercase())
+}
+
+/// The scoped word ([`SCOPED_WHOLE`]) `name` folds to, whatever the language or case — the
+/// drain's dry plan splits these hits by the org's country, a proxy for the notice language.
+/// After a bare lot qualifier only ([`bare_lot_qualifier`]), as [`not_a_name_in`] reads it.
+pub fn scoped_word(name: &str) -> Option<&'static str> {
+    let full = fold(name);
+    let stripped = lot_qualifier(name).filter(|(_, group)| bare_lot_qualifier(group)).map(|(head, _)| fold(head));
+    let whole = stripped.as_deref().unwrap_or(&full);
+    SCOPED_WHOLE.iter().find(|(word, _)| *word == whole).map(|(word, _)| *word)
+}
+
+/// Issue 511: whether `name`'s first word is a scoped word ([`SCOPED_WHOLE`]) — the
+/// decider's cheap test before it reads the notice language for [`not_a_name_in`]. Every
+/// name the scope can class opens with its word, whatever lot qualifier follows (`INGEN
+/// (lots 1, 2, 3, 4, 5 og 6)`): the first word of the lot-stripped fold is the first
+/// alphanumeric run, folded.
+pub fn opens_with_scoped_word(name: &str) -> bool {
+    let first = name.split(|c: char| !c.is_alphanumeric()).find(|w| !w.is_empty()).unwrap_or("");
+    // The longest scoped word is five letters; a run past a few bytes cannot fold to one.
+    if first.len() > 12 {
+        return false;
+    }
+    let first = fold(first);
+    SCOPED_WHOLE.iter().any(|(word, _)| *word == first)
+}
+
+/// The languages a scoped word ([`scoped_word`]) is `Blank` in.
+pub fn scoped_languages(word: &str) -> &'static [&'static str] {
+    SCOPED_WHOLE.iter().find(|(w, _)| *w == word).map(|(_, langs)| *langs).unwrap_or(&[])
+}
+
+/// The walk's net for issue 511's `refold-placeholder-names` (an injectable `fn(&str) ->
+/// bool`, as [`mentions_void`] is 510's): the raw-name arm, any placeholder or blank stem
+/// at ANY left word boundary, and any whole value, scoped words included — before the
+/// anchor, the pointer keep rule, [`summary_shape`] and the language scope. The job
+/// re-queues every hit [`not_a_name`] does not read as an [`NotAName::AwardSummary`], so
+/// the fold decides the anchor, the scope and the identifier guard, and its dry plan lists
+/// the hits the anchor refuses.
+pub fn mentions_placeholder(name: &str) -> bool {
+    if blank_raw(name) {
+        return true;
+    }
+    let full = fold(name);
+    if full.is_empty() {
+        return false;
+    }
+    let padded = format!(" {full}");
+    if PLACEHOLDER_STEMS.iter().any(|(stem, _)| padded.contains(stem)) || BLANK_STEMS.iter().any(|stem| padded.contains(stem)) {
+        return true;
+    }
+    let stripped = strip_lot_qualifier(name).map(fold);
+    let whole = stripped.as_deref().unwrap_or(&full);
+    PLACEHOLDER_WHOLE.contains(&whole) || BLANK_WHOLE.contains(&whole) || SCOPED_WHOLE.iter().any(|(w, _)| *w == whole)
+}
+
+/// Whether `name` is exactly an issue-511 lexicon entry: the raw-name arm, a whole value,
+/// or a stem's own words and nothing else (`Siehe oben`). The drain's dry plan must read
+/// every hit that is NOT (511 §8.2: stem hits with more text, mid-string hits the anchor
+/// refuses, keep-rule and summary names). Compared on the FULL fold: a lot qualifier is
+/// more text, so `N/A (lot 2)` (`Blank`) is read too — the unit-2 review found
+/// placeholders whose qualifier named the suppliers.
+pub fn is_exact_entry(name: &str) -> bool {
+    if blank_raw(name) {
+        return true;
+    }
+    let full = fold(name);
+    let whole = full.as_str();
+    PLACEHOLDER_WHOLE.contains(&whole)
+        || BLANK_WHOLE.contains(&whole)
+        || SCOPED_WHOLE.iter().any(|(w, _)| *w == whole)
+        || PLACEHOLDER_STEMS.iter().map(|(stem, _)| *stem).chain(BLANK_STEMS).any(|stem| stem[1..] == full)
+}
+
+/// The fold after one optional leading lot designator — a [`LOT_DESIGNATORS`] word, up to
+/// two [`NUMBER_MARKS`], and a number with its dotted parts (`lot 3 not applicable`, `lote n
+/// 2 …`, `lot 6 01 01 …`) — or the whole fold when it opens with none. A suffix of `full`.
+fn after_lot_designator(full: &str) -> &str {
+    if !full.split(' ').next().is_some_and(|w| LOT_DESIGNATORS.contains(&w)) {
+        return full;
+    }
+    let words: Vec<&str> = full.split(' ').collect();
+    let mut j = 1;
+    while j < words.len() && j <= 2 && NUMBER_MARKS.contains(&words[j]) {
+        j += 1;
+    }
+    let numbered = words.get(j).is_some_and(|w| w.bytes().any(|b| b.is_ascii_digit()) || ROMAN.contains(w));
+    if !numbered {
+        return full;
+    }
+    j += 1;
+    while j < words.len() && !words[j].is_empty() && words[j].bytes().all(|b| b.is_ascii_digit()) {
+        j += 1;
+    }
+    // Every word is one alphanumeric run and one space apart, so the suffix starts after
+    // the first `j` words and their spaces.
+    let skipped: usize = words[..j].iter().map(|w| w.len() + 1).sum();
+    full.get(skipped..).unwrap_or("")
+}
+
+/// Issue 511's pointer keep rule: whether the text after a pointer stem (`stem`, found at
+/// byte `pos` of `padded`, the space-padded fold of `raw`) names something, so the name is
+/// a pointer followed by the body it points at (`siehe oben: NEB Betriebsgesellschaft mbH`,
+/// `siehe oben (Vergabekammer Südbayern)`, `Siehe oben – VKS`):
+/// 1. the rest of `raw` after the stem and the word it ends in;
+/// 2. its section references stripped ([`strip_references`]: `VI.4.1`, `VI.3)`, `Ziffer`,
+///    `unter`, `below`, one `Lot 2`);
+/// 3. when it then opens with a separator (`:`, ` - `, `–`, `—`, `(`), stripped again — a
+///    reference's own trailing `:` counts (`See section VI.4.1: High Court of Justice`);
+/// 4. what remains names something ([`names_something`]).
+///
+/// Without a separator nothing follows the pointer but its own words (`See Section VI.3)
+/// Additional information`, `See Contracts Finder Notice for full supplier list`) — except
+/// a `see section` with no reference at all, which names its body directly (`see section
+/// Royal Courts of Justice`).
+fn pointer_names(raw: &str, padded: &str, stem: &str, pos: usize) -> bool {
+    // The fold's words are the raw name's alphanumeric runs, one for one (`match_norm`
+    // spaces every non-alphanumeric run; the Latin fold maps char to char).
+    let runs = alphanumeric_runs(raw);
+    let first = padded[..pos].matches(' ').count();
+    let last = first + stem.trim_start().split(' ').count() - 1;
+    let Some(&(_, end)) = runs.get(last).filter(|_| runs.len() == padded.trim_start().split(' ').count()) else {
+        return false;
+    };
+    let (rest, referenced) = strip_references(&raw[end..]);
+    let rest = match open_separator(rest) {
+        Some(after) => strip_references(after).0,
+        None if stem == " see section" && !referenced => rest,
+        None => return false,
+    };
+    names_something(rest)
+}
+
+/// The words that lead into a [`StemAt::Boundary`] stem as part of its phrase (`Véase /
+/// Ver perfil del contratante`, `Disclosure would prejudice …`), on the fold: read off the
+/// end of the text before the stem, so they never count as a name there.
+const BOUNDARY_LEAD_INS: [&str; 6] = ["ver", "vease", "veanse", "consultar", "consulte", "disclosure"];
+
+/// Issue 511's keep rule for a [`StemAt::Boundary`] stem (found at byte `pos` of `padded`,
+/// the space-padded fold of `raw`), which may close a name as well as open one: whether the
+/// text BEFORE it, once the phrase's own lead-in words are off ([`BOUNDARY_LEAD_INS`]),
+/// names something ([`names_something`]) or has a summary's shape ([`summary_shape`]) —
+/// `Ayuntamiento de Madrid (véase perfil del contratante)`, `Junta de Andalucía - ver perfil
+/// de contratante`, `Serco — disclosure would prejudice commercial interests`. The bare
+/// phrases (`Ver perfil del contratante`, `Disclosure would prejudice …`) have nothing left.
+fn named_before_stem(raw: &str, padded: &str, pos: usize) -> bool {
+    let runs = alphanumeric_runs(raw);
+    if runs.len() != padded.trim_start().split(' ').count() {
+        return false;
+    }
+    // The stem's first word, by the fold's words (one per alphanumeric run of `raw`).
+    let mut words = padded[..pos].matches(' ').count();
+    while words > 0 && BOUNDARY_LEAD_INS.contains(&fold(&raw[runs[words - 1].0..runs[words - 1].1]).as_str()) {
+        words -= 1;
+    }
+    if words == 0 {
+        return false;
+    }
+    let before = &raw[..runs[words - 1].1];
+    names_something(before) || summary_shape(before, &fold(before))
+}
+
+/// The byte ranges of `raw`'s alphanumeric runs: the fold's words, in order.
+fn alphanumeric_runs(raw: &str) -> Vec<(usize, usize)> {
+    let mut runs = Vec::new();
+    let mut start: Option<usize> = None;
+    for (at, c) in raw.char_indices() {
+        match (c.is_alphanumeric(), start) {
+            (true, None) => start = Some(at),
+            (false, Some(from)) => {
+                runs.push((from, at));
+                start = None;
+            }
+            _ => {}
+        }
+    }
+    if let Some(from) = start {
+        runs.push((from, raw.len()));
+    }
+    runs
+}
+
+/// The words a pointer's section reference is written with (`siehe oben unter Ziffer
+/// VI.4.1`, `Nr. 3`, `see section below`), compared lowercased without trailing punctuation.
+const REFERENCE_WORDS: [&str; 10] = ["ziff", "ziffer", "punkt", "abschnitt", "unter", "nr", "below", "above", "unten", "oben"];
+
+/// `s` without its leading section references — section numbers (`VI.4.1`, `VI.3)`, `1)`,
+/// `II`), [`REFERENCE_WORDS`], and one lot designator with its number (`Lot 2`, `lot n° 2`,
+/// `Lot 1A`) — and whether any came off. A reference that ends in `:` hands the colon on
+/// (the rest starts at it), so the keep rule's step 3 sees its separator: `See section
+/// VI.4.1: High Court of Justice` names the court, as `See section VI.4.1 - High Court` does.
+fn strip_references(s: &str) -> (&str, bool) {
+    let mut s = s;
+    let (mut stripped, mut lot) = (false, false);
+    loop {
+        let t = s.trim_start();
+        let end = t.find(char::is_whitespace).unwrap_or(t.len());
+        let token = &t[..end];
+        if token.is_empty() {
+            return (t, stripped);
+        }
+        let word = token.trim_end_matches(['.', ',', ';', ':', ')']).to_lowercase();
+        if section_number(token) || REFERENCE_WORDS.contains(&word.as_str()) {
+            if token.ends_with(':') {
+                return (&t[end - 1..], true);
+            }
+            s = &t[end..];
+            stripped = true;
+            continue;
+        }
+        if !lot && LOT_DESIGNATORS.contains(&word.as_str()) {
+            // The designator, up to two number marks, and the number.
+            let mut after = &t[end..];
+            for _ in 0..3 {
+                let u = after.trim_start();
+                let end = u.find(char::is_whitespace).unwrap_or(u.len());
+                let next = &u[..end];
+                if section_number(next) || lettered_lot_number(next) {
+                    if next.ends_with(':') {
+                        return (&u[end - 1..], true);
+                    }
+                    s = &u[end..];
+                    stripped = true;
+                    lot = true;
+                    break;
+                }
+                if !NUMBER_MARKS.contains(&next.trim_end_matches(['.', ':']).to_lowercase().as_str()) {
+                    break;
+                }
+                after = &u[end..];
+            }
+            if lot {
+                continue;
+            }
+        }
+        return (t, stripped);
+    }
+}
+
+/// A lot number with a sub-lot letter (`1A`, `12b)`, `3a:`): digits, then one letter, with
+/// trailing punctuation — after a lot designator only ([`strip_references`]).
+fn lettered_lot_number(token: &str) -> bool {
+    let core = token.trim_end_matches(['.', ',', ';', ':', ')']);
+    let digits = core.bytes().take_while(u8::is_ascii_digit).count();
+    digits > 0 && core.len() == digits + 1 && core.as_bytes()[digits].is_ascii_alphabetic()
+}
+
+/// A section number token (`VI.4.1`, `VI.3)`, `1)`, `II.2.4.`, `6`): dot-separated parts,
+/// each digits or a [`ROMAN`] numeral, with trailing punctuation.
+fn section_number(token: &str) -> bool {
+    let core = token.trim_end_matches(['.', ',', ';', ':', ')']);
+    !core.is_empty()
+        && core.split('.').all(|part| {
+            !part.is_empty()
+                && (part.bytes().all(|b| b.is_ascii_digit()) || ROMAN.contains(&part.to_lowercase().as_str()))
+        })
+}
+
+/// `s` after the separator it opens with (`:`, `(`, an en or em dash, or a hyphen followed
+/// by a space), or `None`.
+fn open_separator(s: &str) -> Option<&str> {
+    let t = s.trim_start();
+    let c = t.chars().next()?;
+    match c {
+        ':' | '(' | '–' | '—' => Some(&t[c.len_utf8()..]),
+        '-' if t[1..].chars().next().is_none_or(char::is_whitespace) => Some(&t[1..]),
+        _ => None,
+    }
+}
+
+/// Whether the text after a pointer names something: a word of two or more letters that
+/// starts with a capital (`NEB`, `Vergabekammer`, `VKS`), or a legal form (`mbH`, `e.V.`,
+/// [`company_token`]'s forms). A Roman numeral with digits glued on is a malformed section
+/// reference, not a name (`See Section VI3.2`, `IV2`: [`roman_with_digits`]).
+fn names_something(s: &str) -> bool {
+    s.split(|c: char| !c.is_alphanumeric())
+        .filter(|w| !roman_with_digits(w))
+        .any(|w| w.chars().next().is_some_and(char::is_uppercase) && w.chars().filter(|c| c.is_alphabetic()).count() >= 2)
+        || company_token(s)
+        || s.split_whitespace()
+            .any(|t| matches!(t.trim_matches(|c: char| !c.is_alphanumeric() && c != '.'), "mbH" | "e.V." | "e.V" | "gGmbH"))
+}
+
+/// A [`ROMAN`] numeral with digits attached (`VI3`, `V1`, `IV2`): the letters, then nothing
+/// but ASCII digits.
+fn roman_with_digits(word: &str) -> bool {
+    let letters = word.bytes().take_while(u8::is_ascii_alphabetic).count();
+    letters > 0
+        && letters < word.len()
+        && word[letters..].bytes().all(|b| b.is_ascii_digit())
+        && ROMAN.contains(&word[..letters].to_ascii_lowercase().as_str())
+}
+
+/// Issue 511: a name shaped like a summary of several parties — a company form
+/// ([`company_token`], [`polish_company_form`]), several numbered lots ([`several_lots`]),
+/// numbered or lettered entries ([`numbered_entries`], [`lettered_entries`]). It guards
+/// every non-void stem: a stem inside such a name is an [`NotAName::AwardSummary`], kept by
+/// the fold (`Lot 2: not applicable. Lot 1: ACME Ltd`, `Nie dotyczy (część 2); część 1: X
+/// sp. z o.o.`). [`names_an_award`] without its award-word tests ([`award_clause`],
+/// [`awardee_noun`]): those would read "the list of **awarded** suppliers" inside a
+/// pointer as an award. A list of placeholders only stays a summary too, erring toward
+/// keeping the party as 510's exemption does.
+fn summary_shape(raw: &str, folded: &str) -> bool {
+    let words: Vec<&str> = folded.split(' ').collect();
+    company_token(raw)
+        || polish_company_form(&format!(" {folded}"))
+        || several_lots(&words)
+        || numbered_entries(raw)
+        || lettered_entries(raw)
+}
+
+/// A Polish company form on the space-padded fold (`Olprint Sp. z o.o.`, `spółka`).
+fn polish_company_form(padded: &str) -> bool {
+    [" sp z o o", " sp z oo", " spolka ", " spolki "].iter().any(|form| format!("{padded} ").contains(form))
 }
 
 /// Whether `name` says the lot was not awarded ([`NotAName::VoidLot`]) — the fold's rule,
@@ -412,7 +1018,7 @@ fn names_an_award(raw: &str, folded: &str) -> bool {
         || several_lots(&words)
         || mixed_segments(raw)
         || company_token(raw)
-        || [" sp z o o", " sp z oo", " spolka ", " spolki "].iter().any(|form| format!("{padded} ").contains(form))
+        || polish_company_form(&padded)
         || AWARD_PHRASES.iter().any(|phrase| padded.contains(phrase))
         || only_an_earlier_void(&padded)
         || SUPPLIER_HEADINGS.iter().any(|heading| {
@@ -713,6 +1319,12 @@ fn award_clause(folded: &str) -> bool {
 /// none. Only for the whole-value compare: `Desierto (lotes VIII y IX)` is the whole value
 /// `desierto`, while `ACME (lot 3)` stays the name `ACME`.
 fn strip_lot_qualifier(name: &str) -> Option<&str> {
+    lot_qualifier(name).map(|(head, _)| head)
+}
+
+/// [`strip_lot_qualifier`] with the group it took off: `(the name before it, the text
+/// inside the parentheses)`.
+fn lot_qualifier(name: &str) -> Option<(&str, &str)> {
     let trimmed = name.trim().trim_end_matches(|c: char| c.is_whitespace() || ".,;:".contains(c));
     let inner = trimmed.strip_suffix(')')?;
     let open = inner.rfind('(')?;
@@ -721,12 +1333,35 @@ fn strip_lot_qualifier(name: &str) -> Option<&str> {
         return None;
     }
     let first = group.trim_start().split(|c: char| !c.is_alphanumeric()).next().unwrap_or("");
-    LOT_WORDS.iter().any(|w| first.eq_ignore_ascii_case(w)).then(|| inner[..open].trim_end())
+    LOT_WORDS.iter().any(|w| first.eq_ignore_ascii_case(w)).then(|| (inner[..open].trim_end(), group))
+}
+
+/// The words a bare lot qualifier joins its numbers with, on the fold (`(lots 2 et 4)`,
+/// `(lotes VIII y IX)`, `(lots 1 à 3)`, `(Lose 1 und 2)`).
+const LOT_CONJUNCTIONS: [&str; 15] =
+    ["et", "and", "y", "e", "und", "en", "i", "o", "ou", "or", "og", "och", "oraz", "a", "bis"];
+
+/// Issue 511: whether a lot qualifier's `group` says nothing but which lots — designators,
+/// number marks, numbers (digits, a sub-lot letter, a Roman numeral, a lone letter) and
+/// conjunctions: `lot 2`, `lots 2 et 4`, `lot n° 3`, `lotes VIII y IX`, `lot 9/10`. Not `lot
+/// 2 attribué à Dupont SARL`, which names who won another lot.
+fn bare_lot_qualifier(group: &str) -> bool {
+    fold(group).split(' ').filter(|w| !w.is_empty()).all(|w| {
+        LOT_DESIGNATORS.contains(&w)
+            || NUMBER_MARKS.contains(&w)
+            || LOT_CONJUNCTIONS.contains(&w)
+            || ROMAN.contains(&w)
+            || w.bytes().any(|b| b.is_ascii_digit())
+            || w.chars().count() == 1
+    })
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{NotAName, PLACEHOLDER_STEMS, PLACEHOLDER_WHOLE, VOID_STEMS, VOID_WHOLE, fold, not_a_name};
+    use super::{
+        BLANK_STEMS, BLANK_WHOLE, NotAName, PLACEHOLDER_STEMS, PLACEHOLDER_WHOLE, POINTER_STEMS, SCOPED_WHOLE, VOID_STEMS,
+        VOID_WHOLE, fold, is_exact_entry, mentions_placeholder, not_a_name, not_a_name_in,
+    };
 
     /// One prod specimen per entry, and the spellings the 508 lists missed.
     #[test]
@@ -783,26 +1418,28 @@ mod tests {
         }
     }
 
-    /// A void phrase that goes on to name the company the lot was then awarded to.
+    /// A void phrase that goes on to name the company the lot was then awarded to: an award
+    /// summary (issue 511 split it out of `Placeholder`; the fold keeps it).
     #[test]
-    fn a_void_phrase_that_goes_on_to_name_an_award_is_a_placeholder() {
+    fn a_void_phrase_that_goes_on_to_name_an_award_is_an_award_summary() {
         for awarded in [
             "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Sandoz",
             "Infructueux, marché attribué à: Berthelet",
             "lot infructueux, relancé et attribuée à LD Bio Diagnostics",
             "Sans suite, marché passé avec la société Dupont",
         ] {
-            assert_eq!(not_a_name(awarded), Some(NotAName::Placeholder), "{awarded}");
+            assert_eq!(not_a_name(awarded), Some(NotAName::AwardSummary), "{awarded}");
         }
         assert_eq!(not_a_name("Non attribué à ce jour"), Some(NotAName::VoidLot), "a negated award is no award");
     }
 
     /// The first drain's dry run (job 2164): a "name" that summarises several lots, or
     /// names a company beside the void phrase, is not a void lot — dropping it would turn
-    /// the real awards it lists into `clos-nw`. Each is a prod specimen. The pure void
-    /// sentences beside them (French possessive `sa` included) stay void.
+    /// the real awards it lists into `clos-nw`. Each is a prod specimen, and an award
+    /// summary since issue 511 (kept by the fold until per-lot parsing exists). The pure
+    /// void sentences beside them (French possessive `sa` included) stay void.
     #[test]
-    fn a_summary_that_names_an_award_beside_a_void_lot_is_a_placeholder() {
+    fn a_summary_that_names_an_award_beside_a_void_lot_is_an_award_summary() {
         for summary in [
             "Lot 1) Sarl Bremond. Lot 2) S.A. Les Rapides Varois. Lot 3) Déclaré Infructueux. Lot 4) Déclaré Infructueux",
             "Lot 1: Yvelin SA. Lot 2: infructueux",
@@ -862,7 +1499,7 @@ mod tests {
             "Olprint Sp. z o.o. unieważnienie art. 94 ust. 1 pkt 4",
             "Lot 2 infructueux. V.1) Award and contract value V.1.1) Name and address of successful supplier: Dupont",
         ] {
-            assert_eq!(not_a_name(summary), Some(NotAName::Placeholder), "{summary}");
+            assert_eq!(not_a_name(summary), Some(NotAName::AwardSummary), "{summary}");
         }
         for void in [
             "Lot déclaré \"sans suite\" par l'Assemblée Départementale, lors de sa séance publique du 18.7.2011",
@@ -927,7 +1564,7 @@ mod tests {
         }
         assert_eq!(
             not_a_name("Sublote 9.1: Declarado desierto. Sublote 9.2: Declarado desierto."),
-            Some(NotAName::Placeholder),
+            Some(NotAName::AwardSummary),
             "a summary of void lots only is kept — the accepted cost (a junk name, never a lost award)"
         );
         assert!(super::mentions_void("Lot 1) Dupont. Lot 2) infructueux"), "the walk's net still catches a summary");
@@ -956,7 +1593,6 @@ mod tests {
             "Véase perfil del contratante",
             "Ver información adicional",
             "Voir autres informations",
-            "Not applicable",
             "Disclosure would prejudice commercial interests",
             "Various",
             "VARIOUS",
@@ -1002,6 +1638,16 @@ mod tests {
             "Aufgehoben Bau GmbH",
             "ACME (lot 3)",
             "Acme Ltd",
+            // Issue 511's traps: whole values only, the deferred words, digit-only names.
+            "NIL",
+            "N/A s. r. o.",
+            "Bank of America, N.A.",
+            "X Corp",
+            "VARI, a.s.",
+            "EI",
+            "SIN",
+            "365",
+            "24/7",
         ] {
             assert_eq!(not_a_name(name), None, "{name}");
         }
@@ -1016,7 +1662,37 @@ mod tests {
         assert_eq!(not_a_name("Desierto, S.L."), None, "a company form: a company named like the phrase");
         assert_eq!(not_a_name("Desierto OÜ"), None, "no break: a company's name");
         assert_eq!(not_a_name(""), None);
-        assert_eq!(not_a_name("  ...  "), None);
+        assert_eq!(not_a_name("  ...  "), Some(NotAName::Blank), "issue 511: punctuation only is a blank slot");
+    }
+
+    /// Issue 511 (the unit-2 review): its whole values come off a BARE lot qualifier only;
+    /// one that names who won another lot is a summary the fold keeps. Any qualifier is more
+    /// text, so the dry plan reads every qualified hit (`is_exact_entry` is the full fold).
+    #[test]
+    fn a_lot_qualifier_that_names_a_winner_is_an_award_summary() {
+        use NotAName::{AwardSummary, Blank, Placeholder};
+        for summary in
+            ["N/A (lot 2 attribué à Dupont SARL)", "Néant (lot 3 : Société Martin SAS)", "Various (Lot 1: ACME Ltd, Lot 2: Beta Ltd)"]
+        {
+            assert_eq!(not_a_name(summary), Some(AwardSummary), "{summary}");
+            assert!(mentions_placeholder(summary), "the net still lists {summary}");
+            assert!(!is_exact_entry(summary), "{summary}");
+        }
+        for (bare, class) in [
+            ("N/A (lot 2)", Blank),
+            ("Néant (lots 2 et 4)", Blank),
+            ("Various (lotes VIII y IX)", Placeholder),
+            ("TBC (lot n° 3)", Placeholder),
+        ] {
+            assert_eq!(not_a_name(bare), Some(class), "{bare}");
+            assert!(!is_exact_entry(bare), "{bare}: a qualifier is more text, read before the wet run (511 §8.2)");
+        }
+        assert_eq!(not_a_name("Néant (lot 3 sans attributaire)"), None, "more text naming nothing: read whole, no list holds it");
+        assert_eq!(not_a_name_in("INGEN (lots 1, 2, 3, 4, 5 og 6)", Some("DAN")), Some(Blank), "a scoped word too");
+        assert_eq!(super::scoped_word("INGEN (lots 1, 2, 3, 4, 5 og 6)"), Some("ingen"));
+        assert_eq!(super::scoped_word("Ingen (lot 2 til Dupont SARL)"), None, "the plan's split reads as the fold does");
+        assert!(super::opens_with_scoped_word("INGEN (lots 1, 2, 3, 4, 5 og 6)") && super::opens_with_scoped_word("nd."));
+        assert!(!super::opens_with_scoped_word("Ingenieurbüro Müller") && !super::opens_with_scoped_word("N.D."));
     }
 
     /// The fold is the role census's (`role_census::fold`), so the two lists can never
@@ -1032,12 +1708,392 @@ mod tests {
     /// stem carries its boundary space (the match is a bare `contains`).
     #[test]
     fn every_entry_is_folded_and_every_stem_padded() {
-        for stem in VOID_STEMS.iter().chain(&PLACEHOLDER_STEMS) {
+        let placeholder_stems: Vec<&str> = PLACEHOLDER_STEMS.iter().map(|(stem, _)| *stem).collect();
+        for stem in VOID_STEMS.iter().chain(&placeholder_stems).chain(&BLANK_STEMS).chain(&POINTER_STEMS) {
             let bare = stem.strip_prefix(' ').unwrap_or_else(|| panic!("{stem:?} lacks its boundary space"));
             assert_eq!(fold(bare), bare, "{stem:?}");
         }
-        for whole in VOID_WHOLE.iter().chain(&PLACEHOLDER_WHOLE) {
-            assert_eq!(fold(whole), *whole, "{whole:?}");
+        for pointer in POINTER_STEMS {
+            assert!(placeholder_stems.contains(&pointer), "{pointer:?} is a placeholder stem");
         }
+        let scoped: Vec<&str> = SCOPED_WHOLE.iter().map(|(word, _)| *word).collect();
+        let wholes: Vec<&str> =
+            VOID_WHOLE.iter().chain(&PLACEHOLDER_WHOLE).chain(&BLANK_WHOLE).chain(&scoped).copied().collect();
+        for whole in &wholes {
+            assert_eq!(fold(whole), *whole, "{whole:?}");
+            assert_eq!(wholes.iter().filter(|w| *w == whole).count(), 1, "{whole:?} is in one list only");
+        }
+    }
+
+    /// Issue 511: one prod specimen per lexicon entry (the census of 2026-10-11 and the
+    /// review's reads), each with its class, each caught by the drain's net and, the
+    /// qualified ones aside, an exact entry.
+    #[test]
+    fn every_measured_placeholder_spelling_has_its_class() {
+        use NotAName::{Blank, Placeholder};
+        let placeholders = [
+            // Stems.
+            "See section VI.4.1",
+            "See Section VI.3 Additional information",
+            "See Section VI.3) Additional information",
+            "See section VI.3 below",
+            "voir autres informations",
+            "Voir renseignements complémentaires",
+            "Ver información adicional",
+            "Ver perfil del contratante",
+            "Véase perfil de contratante",
+            "Disclosure would prejudice commercial interests",
+            "Withheld",
+            "Withheld Section94 Supplier",
+            "Withheld Section 94 Supplier",
+            "See Contracts Finder Notice for full supplier list",
+            "Siehe oben",
+            "Siehe oben.",
+            "keine Angabe.",
+            "Keine Angaben",
+            // The review's `keine Angabe` winners: a withheld winner, never a void lot.
+            "Keine Angabe - der Zuschlag ging an mehrere Bieter, die weiterhin im Wettbewerb stehen",
+            "keine Angabe nach § 39 (6) 2 VgV, Bieter Nummer 1/2/3",
+            "Keine Angabe gemäß § 61 Abs 4 / § 62 Abs. 3 BVergG 2018",
+            "keine Angabe aus Gründen des Wettbewerbs",
+            // Whole values: the name is missing or pending.
+            "k.A.",
+            "K. A.",
+            "kA",
+            "TBC",
+            "TBA",
+            "To be confirmed",
+            "Not Provided",
+            "Not Specified",
+            "Not available",
+            "Unknown",
+            "Not Known",
+            "nicht bekannt",
+            "Niet bekend",
+            "non connu",
+            "NON NOTO",
+            "desconocido",
+            "non renseigné",
+            "brak danych",
+            // A pointer.
+            "s.o.",
+            "S/O",
+            "See below",
+            "Please see below",
+            "See attached",
+            "See attached list",
+            "See list below",
+            "See Additional Information",
+            "See VI.3",
+            "Siehe unten",
+            "Siehe Vergabeunterlagen",
+            // Withheld.
+            "Confidential.",
+            "Redacted",
+            "Commercially sensitive",
+            "Not published",
+            "Not disclosed",
+            "Non communiqué.",
+            // Plural.
+            "Various",
+            "Various Suppliers",
+            "Various contractors",
+            "Various Providers",
+            "Various companies",
+            "Various organisations",
+            "Various - see below",
+            "Multiple",
+            "Multiple Suppliers",
+            "Multiple providers",
+            "Multiple Contractors",
+            "Varios",
+            "Vários",
+            "Varias",
+            "Varios adjudicatarios",
+            "VARIOS LICITADORES",
+            "Varios proveedores",
+            "Varios contratistas",
+            "Varias Empresas",
+            "Diversos",
+            "Diverse",
+            "Diverse Firmen",
+            "diverse Bieter",
+            "Diverse ditte",
+            "Diversi",
+            "Divers",
+            "Verschiedene",
+            "Verschiedene Firmen",
+            "mehrere",
+            "mehrere Bieter",
+            "Ditte varie",
+            "varie",
+        ];
+        let blanks = [
+            // The raw-name arm.
+            ".",
+            "-",
+            "--",
+            "---",
+            "/",
+            "/.",
+            "*",
+            "?",
+            "./.",
+            "-/-",
+            "0",
+            // Stems.
+            "Nie dotyczy.",
+            "Not Applicable",
+            "Niet van toepassing.",
+            // Whole values.
+            "N/A",
+            "N.A.",
+            "N/ A",
+            "N /A",
+            "(N/a)",
+            "No procede",
+            "x.",
+            "XX",
+            "Xxx",
+            "Entfällt.",
+            "-entfällt-",
+            "- entfällt -",
+            "Entfaellt",
+            "Néant.",
+            "NEANT",
+            "Keine",
+            "Nicht vorhanden",
+            "nicht zutreffend",
+            "Nicht anwendbar",
+            "Nicht relevant",
+            "Ohne",
+            "Nein",
+            "NA",
+            "NONE",
+            "None specified",
+            "Not Required",
+            "Not relevant",
+            "n.v.t.",
+            "NVT",
+            "Geen",
+            "Brak",
+            "n/d",
+            "N.D.",
+            "Sans objet",
+            "SO",
+            "Sans",
+            "Non",
+            "NC",
+            "N/C",
+            "Aucun",
+            "Aucune",
+            "Non concerné",
+            "Non applicable",
+            "Nessuno",
+            "Nessuna",
+            "Non previsto",
+            "non applicabile",
+            "Ninguno",
+            "NINGUNA",
+            "No aplica",
+            "No hay",
+            "NO",
+            "null",
+            "Ikke relevant",
+            "Ikke aktuelt",
+            "Ej aktuellt",
+            "Não aplicável",
+            "Não se aplica",
+            "Δεν εφαρμόζεται.",
+            "Δεν απαιτείται",
+            "nu este cazul",
+            "Nem releváns.",
+            "není",
+            "ei ole",
+        ];
+        for (names, class) in [(&placeholders[..], Placeholder), (&blanks[..], Blank)] {
+            for name in names {
+                assert_eq!(not_a_name(name), Some(class), "{name}");
+                assert!(mentions_placeholder(name), "the walk's net catches {name}");
+            }
+        }
+        for exact in ["Siehe oben", "N/A", "Néant.", "Various Suppliers", "-/-", "0", "Withheld", "Nie dotyczy."] {
+            assert!(is_exact_entry(exact), "{exact}");
+        }
+        for qualified in ["Withheld Section94 Supplier", "See Section VI.3 Additional information", "Siehe oben (VI.4.1)"] {
+            assert!(!is_exact_entry(qualified), "{qualified} is read before the wet run (511 §8.2)");
+        }
+        // `lettered_entries` stays quiet on a section number's `VI.3)`: no summary shape.
+        assert!(!super::lettered_entries("See Section VI.3) Additional information"));
+        assert!(!mentions_placeholder("Acme Ltd") && !mentions_placeholder("1") && !mentions_placeholder("Tennessee Section"));
+    }
+
+    /// Issue 511: a slot of punctuation or zeros holds nothing; any other digit is a name,
+    /// and an empty or blank string is no name at all.
+    #[test]
+    fn punctuation_only_names_are_blank() {
+        for blank in [".", "-/-", "..", "_", "0", "000", "0000", " - "] {
+            assert_eq!(not_a_name(blank), Some(NotAName::Blank), "{blank:?}");
+        }
+        for nothing in ["", "  "] {
+            assert_eq!(not_a_name(nothing), None, "{nothing:?}");
+        }
+        for name in ["1", "360", "24/7", "2000", "00001", "0.0"] {
+            assert_eq!(not_a_name(name), None, "{name:?} stays a name");
+        }
+    }
+
+    /// Issue 511 guard 2: `ingen`, `inget` and `nd` are blank only in their languages and in
+    /// a plain case; with no language they are names (the text parser, the walk's class).
+    #[test]
+    fn scoped_words_need_their_language_and_a_plain_case() {
+        assert_eq!(not_a_name_in("Ingen", Some("DAN")), Some(NotAName::Blank));
+        assert_eq!(not_a_name_in("INGEN", Some("SWE")), Some(NotAName::Blank));
+        assert_eq!(not_a_name_in("Inget", Some("NOR")), Some(NotAName::Blank));
+        assert_eq!(not_a_name_in("Ingen", Some("FRA")), None, "1188404 `Ingen` FR is likely a French firm");
+        assert_eq!(not_a_name_in("Ingen", None), None, "an unknown language keeps the party");
+        assert_eq!(not_a_name("Ingen"), None);
+        assert_eq!(not_a_name_in("InGen", Some("DAN")), None, "a brand's case");
+        assert_eq!(not_a_name_in("nd.", Some("POL")), Some(NotAName::Blank));
+        assert_eq!(not_a_name_in("ND", Some("ITA")), Some(NotAName::Blank));
+        assert_eq!(not_a_name_in("ND", Some("HRV")), None, "`ND` HR carries an OIB");
+        assert_eq!(super::scoped_word("INGEN"), Some("ingen"));
+        assert_eq!(super::scoped_word("Acme"), None);
+        assert!(mentions_placeholder("InGen"), "the net takes every scoped spelling; the fold decides");
+    }
+
+    /// Issue 511: the stems open the name (after one lot designator), so a real name
+    /// followed by the phrase stays a name. The two phrases that never open a name keep
+    /// 510's match anywhere.
+    #[test]
+    fn stems_open_the_name() {
+        for name in [
+            "Firma Handlowa Jan Kowalski – nie dotyczy",
+            "Siemens – see section VI.3",
+            "Acme GmbH, siehe oben",
+            // One per anchored stem, with no company form for `summary_shape` to rescue (the
+            // unit-2 review: unanchoring any one of these passed every test).
+            "Stadtwerke Kiel – keine Angabe",
+            "Jan Kowalski – withheld",
+            "Mairie de Lyon – voir autres informations",
+            "Mairie de Lyon – voir renseignements",
+            "Ayuntamiento de Vigo – ver información",
+            "Kent County Council – see Contracts Finder",
+        ] {
+            assert_eq!(not_a_name(name), None, "{name}");
+            assert!(mentions_placeholder(name), "the net still lists {name}");
+        }
+        assert_eq!(not_a_name("Nie dotyczy - brak"), Some(NotAName::Blank));
+        assert_eq!(not_a_name("Lot 3: not applicable"), Some(NotAName::Blank));
+        assert_eq!(not_a_name("Lote nº 2: no procede"), None, "a whole value is compared whole");
+        assert_eq!(not_a_name("Lot 3º"), None, "a designator with nothing after it");
+        assert_eq!(not_a_name("Withheld for Security Reasons"), Some(NotAName::Placeholder));
+        assert_eq!(not_a_name("Disclosure would prejudice commercial interests"), Some(NotAName::Placeholder));
+        assert_eq!(not_a_name("Véase perfil del contratante"), Some(NotAName::Placeholder));
+    }
+
+    /// Issue 511's keep rule: a pointer followed by the body it points at names that body
+    /// (the review's prefix reads: NEB, Vergabekammer Südbayern, VKS, Royal Courts); a
+    /// pointer followed only by its own section reference or description does not.
+    #[test]
+    fn a_pointer_followed_by_a_name_is_kept() {
+        for kept in [
+            "siehe oben: NEB Betriebsgesellschaft mbH (die hiesige Angabe ist Pflicht)",
+            "siehe oben (Vergabekammer Südbayern)",
+            "see section Royal Courts of Justice",
+            "Siehe oben – VKS",
+            "Siehe oben — WSA Toenning",
+            // The unit-2 review: a `:` right after the section reference is the separator.
+            "See section VI.4.1: High Court of Justice",
+            "Siehe oben Ziffer VI.4.1: Vergabekammer Südbayern",
+            "siehe oben VI.4.1: Vergabekammer des Bundes",
+        ] {
+            assert_eq!(not_a_name(kept), Some(NotAName::AwardSummary), "{kept}");
+        }
+        for pointer in [
+            "siehe oben (VI.4.1)",
+            "siehe oben unter Ziffer VI.4.1",
+            "See section VI.3 - Lot 2",
+            "See Section VI.3) Additional information",
+            "See Contracts Finder Notice for full supplier list",
+            "See section VI.3 below",
+            "siehe oben Nr. 3",
+            // A colon with nothing that names after it.
+            "siehe oben: VI.4.1",
+            "See Section VI: complementary information",
+            // A malformed section reference and a lettered lot are no names (the unit-2 review).
+            "See Section VI3.2",
+            "See section VI.3 - Lot 1A",
+        ] {
+            assert_eq!(not_a_name(pointer), Some(NotAName::Placeholder), "{pointer}");
+        }
+        assert!(!super::names_something("VI3.2 V1 IV2") && super::names_something("Vergabekammer"));
+        assert!(super::names_something("MI5") && !super::roman_with_digits("VI") && !super::roman_with_digits("VIa3"));
+    }
+
+    /// Issue 511 (the unit-2 review): the three boundary stems may close a name as well as
+    /// open one, so the text before one keeps the party when it names something; the bare
+    /// phrases, their lead-in words included, stay placeholders.
+    #[test]
+    fn a_name_before_a_boundary_stem_is_kept() {
+        for kept in [
+            "Ayuntamiento de Madrid (véase perfil del contratante)",
+            "Junta de Andalucía - ver perfil de contratante",
+            "Serco — disclosure would prejudice commercial interests",
+        ] {
+            assert_eq!(not_a_name(kept), Some(NotAName::AwardSummary), "{kept}");
+            assert!(!is_exact_entry(kept), "{kept}: read before the wet run");
+        }
+        for bare in [
+            "Véase perfil del contratante",
+            "Ver perfil de contratante",
+            "Ver Perfil del Contratante.",
+            "Disclosure would prejudice commercial interests",
+        ] {
+            assert_eq!(not_a_name(bare), Some(NotAName::Placeholder), "{bare}");
+        }
+    }
+
+    /// Issue 511: a stem inside a summary of several parties is an award summary, which the
+    /// fold keeps; a stem the anchor misses leaves the name a name, as today.
+    #[test]
+    fn a_stem_inside_a_summary_is_an_award_summary() {
+        assert_eq!(not_a_name("Lot 2: not applicable. Lot 1: ACME Ltd"), Some(NotAName::AwardSummary));
+        assert_eq!(not_a_name("Nie dotyczy (część 2); część 1: X sp. z o.o."), Some(NotAName::AwardSummary));
+        assert_eq!(not_a_name("Lot 1: ACME Ltd; Lot 2: not applicable"), None, "the anchor misses it");
+        assert!(mentions_placeholder("Lot 1: ACME Ltd; Lot 2: not applicable"), "and the dry plan lists it");
+        assert_eq!(not_a_name("Keine Angabe (Bietergemeinschaft Muster GmbH)"), Some(NotAName::AwardSummary));
+    }
+
+    /// Issue 511 §6: every fold of the retired `role_census::NON_NAME_FOLDS` is a non-name
+    /// now — except `nil`, which is NIL SAS (FR SIRET) and found only in award slots.
+    #[test]
+    fn the_former_non_name_folds_are_classified() {
+        for fold in [
+            "n a",
+            "na",
+            "none",
+            "unknown",
+            "not known",
+            "confidential",
+            "withheld",
+            "not published",
+            "not disclosed",
+            "not applicable",
+            "not specified",
+            "not provided",
+            "various",
+            "x",
+        ] {
+            assert!(not_a_name(fold).is_some(), "{fold}");
+        }
+        assert_eq!(not_a_name("nil"), None, "deferred: a real company");
+    }
+
+    /// Issue 511: `Not applicable` moved from 510's placeholder stems to the blank ones.
+    #[test]
+    fn not_applicable_is_a_blank_slot() {
+        assert_eq!(not_a_name("Not applicable"), Some(NotAName::Blank));
+        assert_eq!(not_a_name("Not applicable (lot 2)"), Some(NotAName::Blank));
     }
 }

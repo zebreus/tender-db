@@ -1714,16 +1714,16 @@ A party slot that says the lot was not awarded — `Infructueux`, `Lot déclaré
 measurements in `.scratch/tender-db/510-void-names/unit1-decision.md`), and the fold applies its
 `VoidLot` class in every era and role: such a party mints no organization, carries no role, result winner
 or bid party, and a legacy or sdk-0.1 result left with no real winner reads `clos-nw` (the void phrase
-used to be the "winner" and manufacture `selec-w`). eForms keeps the publisher's BT-142. The
-`Placeholder` class (pointers, withheld names, `Various`) is refused by the text parser only; the fold
-leaves it for issue 511.
+used to be the "winner" and manufacture `selec-w`). eForms keeps the publisher's BT-142. Issue 511
+widened the rule to placeholders and blank slots (next section); a void phrase beside an award
+(`Lot 1) Sarl Bremond. Lot 2) Infructueux`) is an `AwardSummary` the fold keeps.
 
 A refold of a notice that still has a recorded void mention RETIRES it (`Db::retire_mentions`): the
 mention and the party / bid-party rows naming it are deleted and their Tenders stamped stale, in one
 transaction that also writes ADR-0017 D5's correction rows for the deleted party rows (the fold's
 compare reads after the delete, so a Tender whose only void footprint was a party row would otherwise
-change silently); the fold's line reads `N void-lot mention(s) retired, M correction row(s) announced
-— issue 510` and queues the orphan sweep. `refold-void-names` finds the standing ones:
+change silently); the fold's line reads `N non-name mention(s) retired, M correction row(s) announced
+— issues 510/511` and queues the orphan sweep. `refold-void-names` finds the standing ones:
 
 ```sh
 /root/aj.sh /admin/jobs '{"kind":"refold-void-names"}'                             # dry: counts
@@ -1747,6 +1747,87 @@ an exemption** if an identifier-bearing or legal-form org reads as a company. We
 run's notice count) and aborts, writing nothing, when it finds more than a quarter above it. Then read the
 fold's `retired` count (≈ the dry mention count), and run `sweep-orphan-orgs` dry → read → wet (above
 10,000 orphans the auto sweep only records the plan).
+
+### Placeholder and blank party names and `refold-placeholder-names` (issue 511)
+
+A party slot that names no organization is not a party either: a pointer (`See section VI.3`, `siehe
+oben`, `Véase perfil del contratante`, `See Contracts Finder Notice for full supplier list`), a withheld
+or missing name (`Withheld Section94 Supplier`, `keine Angabe`, `TBC`, `Unknown`), a plural (`Various
+suppliers`, `Diverse Firmen`) — the `Placeholder` class — or an empty slot (`N/A`, `nie dotyczy`,
+`néant`, `no procede`, `.`, `0`) — the `Blank` class. `ingest::partyname::not_a_name_in` decides it
+(decision, lexicon and guards in `.scratch/tender-db/511-placeholders/unit1-decision.md`), and the fold
+drops the party in every role and era, the buyer slot included: no organization, no role, no result
+winner, no bid party. What a legacy or sdk-0.1 result left with no real winner reads depends on the
+class: `Placeholder` → `selec-w` with no winner (the text says a winner exists); `Blank` → no marker, so
+the evidence rule decides (a value selects, no date closes, a date alone stays NULL; sdk-0.1 stays NULL
+unless coded). eForms keeps the publisher's BT-142 and the Bid. A placeholder buyer leaves the notice
+with no buyer tokens and no buyer key — the designed "names no buyer" — and its signatories are not read
+on their own.
+
+What the fold keeps, by design: an `AwardSummary` (a pointer followed by a name, `siehe oben: NEB
+Betriebsgesellschaft mbH`; a stem inside a list or beside a company form); a `Blank` party carrying an
+identifier the gate admits that does not echo the non-name (guard 3: `0` with a CVR, a DE platform GUID
+on `.`); `ingen` / `inget` / `nd` outside a Danish, Swedish, Norwegian (resp. Polish, Italian) notice or
+in a brand's case (`InGen`); and a stem that does not open the name (`Siemens – see section VI.3`).
+
+Every fold's job row carries `dropped parties (issue 511): N void, N placeholder (N with an identifier:
+<sample>), N blank` — the daily rate, and up to 20 identified placeholders (`notice/section 'name'
+[identifier]`). **Between the deploy and the wet run, read that sample on every daily fold**: look up the
+organization each identifier keys (`organizations_identity`) and stop if one is a real supplier — that
+shape needs an identifier guard on `Placeholder` first. A small dip in `data_quality`'s winner-chain
+rate is expected (withheld results become `selec-w` with no winner, dated blank ones NULL).
+
+`refold-placeholder-names` is `refold-void-names` generalised by class (one fn, `run_refold_non_names`):
+
+```sh
+/root/aj.sh /admin/jobs '{"kind":"refold-placeholder-names"}'                             # dry, straight after deploy
+/root/aj.sh /admin/reports/placeholder-names-refold | jq -r .body \
+  | jq '{orgs, mentions, notices, notices_by_profile, by_class, buyer_rows, read_before_wet,
+         identified: (.identified|length), identified_blank: (.identified_blank|length),
+         non_exact: (.non_exact|length), scoped: (.scoped|map_values(length)), exempted: (.exempted|length)}'
+/root/aj.sh /admin/jobs '{"kind":"refold-placeholder-names","dry_run":false,"expect":N}'  # wet + the fold
+```
+
+The walk's net (`partyname::mentions_placeholder`) is the raw-name arm, any placeholder or blank stem at
+any word boundary and every whole value, scoped words included; every hit but an `AwardSummary` is
+re-queued, so the fold — not the walk — decides the anchor, the language scope and guard 3, and a hit
+the fold keeps costs a refold and nothing else. `exempted` lists the award summaries, never re-queued.
+Its index reads (`tender_version_parties_org_role`, `tenders_procedure_key`, `tender_versions_notice`)
+are deferred indexes: **never run it during a full rebuild**. The two role-split readers send `IN` lists
+512 ids wide (`IN_CHUNK`); `the_placeholder_plan_readers_seek_the_org_role_index_at_the_chunk_width` pins
+`SEARCH … USING INDEX tender_version_parties_org_role` at that width (511's plan-width rule). Run the dry
+straight after the deploy, or
+add the intervening folds' `retired` counts back (those folds retire placeholder mentions and their auto
+sweeps take the one-mention tail).
+
+1. **Dry, then read** (mandatory, all of them; `read_before_wet` names the lists):
+   - `non_exact`: every distinct fold that is not exactly a lexicon entry (stem hits with more text,
+     mid-string hits the anchor refuses, keep-rule and summary names), with classes, spellings, orgs,
+     mentions and roles. If it ever proves unreadable, the floor is 200 random plus every one with
+     winner, Tenderer or buyer rows, and reading less than all is recorded with its reason;
+   - `identified` (placeholders with an identifier) and `identified_blank` (blank slots with an
+     identifier, `echo: false` = guard 3 keeps it), with the identifier values — 23186509's VAT among them;
+   - `legal_form` and `digit_only` (the zeros the raw-name arm takes; any other digit-only name is a name);
+   - `scoped`: `in_scope` (DK/SE/NO/FI for `ingen`/`inget`, PL/IT for `nd`, by the org's country as a
+     proxy), `out_of_scope` (expected kept: 1188404 FR, `InGen`) and `unknown` (no country).
+
+   **Stop and add a keep test** if any of them reads as a real party. **Stop** if orgs fall below ~6,450
+   or mentions below ~37,000 after the add-back (the predicate or the walk regressed), or if `buyer_rows`
+   exceeds 1,000 (the net reached real buyers).
+2. **Buyer canary.** `buyer_notices` (each with its Tender and procedure key, as `Ident` reads it) and
+   `key_families` (each key's Tenders, refused splits included, and their notices;
+   `key_families_over_cap` names a family past 200 Tenders for a read by hand) are the pre-image. Run
+   `refold-notices` on the buyer notices (cap 1,000), let its fold run, and re-read the same rows with
+   bounded `/v1/sql` reads. **Stop** if more than 10 % of the buyer notices changed Tender or any key
+   family changed beyond them; read each change before the main run.
+3. **Wet.** `expect` is the dry run's notice count (it aborts, writing nothing, above +25 %); its paired
+   fold's `retired` must reach the dry re-queued mentions minus the `identified_blank` mentions with a
+   gated identifier and the `scoped.out_of_scope` / `unknown` mentions — below that floor, stop and read
+   the gap. Above the dry mentions is a read trigger, not a stop (touched-expansion notices, identifier-
+   bound mentions on real-headed orgs): read the excess, starting with the fold's identified sample.
+   `dropped` (void + placeholder + blank) is at least `retired`.
+4. **Sweep.** The fold queues `sweep-orphan-orgs` (auto); above 10,000 orphans it only records the plan
+   (read `protected`, then run wet).
 
 ### The buyer-role demote and `refold-buyer-roles` (issue 483 unit 2)
 
@@ -2116,7 +2197,7 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 Report kinds do NOT always match the job kind that writes them. `fusion-census`
 stores under `fusion-candidates`, and `GET /admin/reports/<kind>` answers an
 unknown kind with "no report of that kind has been computed" — which reads as
-"the job never ran". The kinds are, exhaustively (read off `put_report` in the supervisor, 2026-09-06; `altid-merge-plan` since issue 448, `rekey-plan` since issue 453, `merged-identifier-backfill` since issue 460, `tender-link-backfill` since issue 481, `procedure-key-census` since issue 482, `buyer-role-census` since issue 483): `altid-merge-plan`, `anchor-wall-census`, `buyer-role-census`, `case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-cluster-census`, `country-cluster-packet`, `country-fold`, `country-typo-census`, `country-typo-repair`, `country-verdict-plan`, `data-quality`, `data-quality-headlines`, `data-quality-presence`, `disk-census`, `drop-orphan-satellites`, `duplicate-identity-census`, `e0-merge-plan`, `fusion-candidates`, `generic-statistic-census`, `generic-wall-census`, `ghost-census`, `label-prefix-repair`, `member-twin-census`, `member-twin-repair`, `merged-identifier-backfill`, `minted-country-repair`, `name-attribution-probe`, `name-pollution-census`, `notice-instant-repair`, `org-edge-census`, `org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`, `org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `orphan-org-sweep-plan`, `procedure-key-census`, `provisional-echo-census`, `provisional-echo-plan`, `provisional-name-norm-plan`, `r2-census`, `r2-merge-plan`, `r3-census`, `r3-merge-plan`, `registry-contiguity`, `rehash-cursor`, `rehash-probe`, `rehoming-packet`, `rehoming-plan`, `rekey-plan`, `renormalise-repair`, `reveal-cursor`, `reveal-recheck`, `reveal-wrap`, `satellite-orphans`, `tender-link-backfill`, `void-names-refold` (issue 510), `xb-packet`, `nhs-body-plan` (issue 513 U2).
+"the job never ran". The kinds are, exhaustively (read off `put_report` in the supervisor, 2026-09-06; `altid-merge-plan` since issue 448, `rekey-plan` since issue 453, `merged-identifier-backfill` since issue 460, `tender-link-backfill` since issue 481, `procedure-key-census` since issue 482, `buyer-role-census` since issue 483): `altid-merge-plan`, `anchor-wall-census`, `buyer-role-census`, `case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-cluster-census`, `country-cluster-packet`, `country-fold`, `country-typo-census`, `country-typo-repair`, `country-verdict-plan`, `data-quality`, `data-quality-headlines`, `data-quality-presence`, `disk-census`, `drop-orphan-satellites`, `duplicate-identity-census`, `e0-merge-plan`, `fusion-candidates`, `generic-statistic-census`, `generic-wall-census`, `ghost-census`, `label-prefix-repair`, `member-twin-census`, `member-twin-repair`, `merged-identifier-backfill`, `minted-country-repair`, `name-attribution-probe`, `name-pollution-census`, `notice-instant-repair`, `org-edge-census`, `org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`, `org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `orphan-org-sweep-plan`, `procedure-key-census`, `provisional-echo-census`, `provisional-echo-plan`, `provisional-name-norm-plan`, `r2-census`, `r2-merge-plan`, `r3-census`, `r3-merge-plan`, `registry-contiguity`, `rehash-cursor`, `rehash-probe`, `rehoming-packet`, `rehoming-plan`, `rekey-plan`, `renormalise-repair`, `reveal-cursor`, `reveal-recheck`, `reveal-wrap`, `satellite-orphans`, `tender-link-backfill`, `void-names-refold` (issue 510), `placeholder-names-refold` (issue 511), `xb-packet`, `nhs-body-plan` (issue 513 U2).
 
 ### The admin surface beyond jobs (issues 230, 335, 348, 356)
 

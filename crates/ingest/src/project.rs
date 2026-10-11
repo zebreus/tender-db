@@ -34,6 +34,7 @@
 //! which has both the old and the new version in hand.
 
 use crate::fts::parse::CONTRACT_VALUE as FTS_CONTRACT_VALUE;
+use crate::partyname::NotAName;
 use crate::r209::rules;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -45,8 +46,9 @@ use store::{
     NoticeValue, Parsed, QUALITY_WITHHELD, Round, TenderProjection, TenderVersion,
 };
 
-/// What a projection run did.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// What a projection run did. Not `Copy` since issue 511: [`Report::dropped`] carries a
+/// bounded sample.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Report {
     pub notices: u64,
     pub tenders: u64,
@@ -78,8 +80,11 @@ pub struct Report {
     pub mentions_refreshed: u64,
     pub mentions_rebound: u64,
     /// Issue 510: recorded mentions of void-lot parties retired this run
-    /// ([`store::Db::retire_mentions`]); their organizations are the orphan sweep's.
+    /// ([`store::Db::retire_mentions`]); their organizations are the orphan sweep's. Since
+    /// issue 511 every dropped class: placeholders and blank slots too.
     pub mentions_retired: u64,
+    /// Issue 511: the parties the decider dropped this run, per class ([`DroppedParties`]).
+    pub dropped: DroppedParties,
     /// Issue 448 unit 3: what the resolver's altid alias did — PPON-first
     /// mentions asked, bound to the company-number org, refused. Durable for
     /// the reason `wall` is; `armed: false` when no resolver was opened.
@@ -111,6 +116,65 @@ pub struct Report {
     /// procedure type, published only values the closed table does not map, or
     /// published none. A full fold — the backfill — makes this the corpus census.
     pub procedure: ProcedureTally,
+}
+
+/// How many identified placeholders [`DroppedParties::sample`] keeps per run.
+pub const DROPPED_SAMPLE: usize = 20;
+
+/// Issue 511: the parties the fold's decider dropped ([`dropped_party_sections`]) across the
+/// notices whose mentions this run read, per class, on OUTERMOST sections only (the
+/// decider's map also holds their nested inner halves). The daily fold's measure: a run
+/// retires at most [`DroppedParties::total`] recorded mentions, since only these keys are
+/// handed to [`store::Db::retire_mentions`].
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct DroppedParties {
+    pub void: u64,
+    pub placeholder: u64,
+    pub blank: u64,
+    /// The `Placeholder` parties dropped while they carry an identifier the gate admits.
+    /// The evidence that a placeholder's identifier is the placeholder's own (one PPON on
+    /// every `Withheld Section94 Supplier`) came from orgs headed by the placeholder, so
+    /// 511 §8.1 reads these before the drain's wet run: one that keys a real supplier needs
+    /// an identifier guard on `Placeholder` first.
+    pub placeholder_identified: u64,
+    /// Up to [`DROPPED_SAMPLE`] of those, first seen: (notice, section, name, raw identifier).
+    pub sample: Vec<(i64, String, String, String)>,
+}
+
+impl DroppedParties {
+    /// Every dropped party, all classes.
+    pub fn total(&self) -> u64 {
+        self.void + self.placeholder + self.blank
+    }
+
+    /// One dropped party of `notice`.
+    fn count(&mut self, notice: i64, section: &str, class: NotAName, name: &str, identifier: Option<&str>) {
+        match class {
+            NotAName::VoidLot => self.void += 1,
+            NotAName::Placeholder => {
+                self.placeholder += 1;
+                if let Some(identifier) = identifier {
+                    self.placeholder_identified += 1;
+                    if self.sample.len() < DROPPED_SAMPLE {
+                        self.sample.push((notice, section.to_owned(), name.to_owned(), identifier.to_owned()));
+                    }
+                }
+            }
+            NotAName::Blank => self.blank += 1,
+            // Never dropped: the decider keeps every party with an award summary.
+            NotAName::AwardSummary => {}
+        }
+    }
+
+    /// Another tally into this one, the sample still bounded.
+    pub fn add(&mut self, other: DroppedParties) {
+        self.void += other.void;
+        self.placeholder += other.placeholder;
+        self.blank += other.blank;
+        self.placeholder_identified += other.placeholder_identified;
+        let room = DROPPED_SAMPLE.saturating_sub(self.sample.len());
+        self.sample.extend(other.sample.into_iter().take(room));
+    }
 }
 
 /// The canonical fields this layer carries, as data. Source field ids are
@@ -1823,9 +1887,10 @@ pub async fn project_with_progress_phase2_stoppable(
              skipping Phase-1 and re-running grouping + Phase-2 (salvage)"
         );
     } else {
-        let (notices, mentions, stopped, citations, f14, procedure, refresh, alias) =
+        let (notices, mentions, stopped, citations, f14, procedure, refresh, alias, dropped) =
             build_plan(db, now, total, &mut on_progress, stop).await?;
         report.alias = alias;
+        report.dropped = dropped;
         report.stopped = stopped;
         report.notices = notices;
         report.mentions = mentions;
@@ -2026,6 +2091,7 @@ async fn build_plan(
     ProcedureTally,
     store::MentionRefresh,
     store::AltIdAliasCounts,
+    DroppedParties,
 )> {
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
@@ -2052,8 +2118,11 @@ async fn build_plan(
         guard_sections: Vec<Vec<String>>,
         mentions: Vec<Mention>,
         /// Issue 510: the `(notice, section)` of each void-lot party the chunk's
-        /// mentions skipped, for [`store::Db::retire_mentions`].
+        /// mentions skipped, for [`store::Db::retire_mentions`] (every dropped class since
+        /// issue 511).
         void: Vec<(i64, String)>,
+        /// Issue 511: those parties per class, summed by the writer half.
+        dropped: DroppedParties,
         /// Issue 364's per-kind tally for this chunk's notices, summed by the
         /// writer half — the sweep is where `Ident::read` runs.
         citations: CitationGate,
@@ -2104,6 +2173,7 @@ async fn build_plan(
                     after_id = last.id;
                     let mut mentions: Vec<Mention> = Vec::new();
                     let mut void: Vec<(i64, String)> = Vec::new();
+                    let mut dropped = DroppedParties::default();
                     let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
                     let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(chunk.len());
                     let mut citations = CitationGate::default();
@@ -2111,9 +2181,11 @@ async fn build_plan(
                     let mut procedure = ProcedureTally::default();
                     for (notice, parsed) in &chunk {
                         let ident = Ident::read(notice, parsed);
-                        let (notice_mentions, skipped) = NoticeState::mentions_and_void(ident.sdk01, notice.id, parsed);
+                        let (notice_mentions, skipped, notice_dropped) =
+                            NoticeState::mentions_and_dropped(ident.sdk01, notice.id, parsed);
                         mentions.extend(notice_mentions);
                         void.extend(skipped.into_iter().map(|section| (notice.id, section)));
+                        dropped.add(notice_dropped);
                         citations.add(ident.citations);
                         f14.add(ident.f14_targets);
                         procedure.add(ident.procedure);
@@ -2123,7 +2195,10 @@ async fn build_plan(
                     }
                     SweepClock::add(&clock.decode_ns, decode);
                     let send = std::time::Instant::now();
-                    if tx.send(Ok(PlanChunk { rows, guard_sections, mentions, void, citations, f14, procedure })).is_err() {
+                    if tx
+                        .send(Ok(PlanChunk { rows, guard_sections, mentions, void, dropped, citations, f14, procedure }))
+                        .is_err()
+                    {
                         return; // the writer half bailed on an error
                     }
                     SweepClock::add(&clock.send_wait_ns, send);
@@ -2133,6 +2208,7 @@ async fn build_plan(
     };
 
     let (mut notices, mut mentions_total) = (0u64, 0u64);
+    let mut dropped = DroppedParties::default();
     let mut citations = CitationGate::default();
     let mut f14 = F14TargetGate::default();
     let mut procedure = ProcedureTally::default();
@@ -2162,6 +2238,7 @@ async fn build_plan(
             }
         };
         notices += chunk.rows.len() as u64;
+        dropped.add(std::mem::take(&mut chunk.dropped));
         citations.add(chunk.citations);
         f14.add(chunk.f14);
         procedure.add(chunk.procedure);
@@ -2271,8 +2348,8 @@ async fn build_plan(
     }
     eprintln!(
         "[project] plan: {notices} notices, {mentions_total} mentions resolved \
-         ({} recorded mention(s) refreshed, {} re-bound — issue 434; {} void-lot mention(s) retired, \
-         {} correction row(s) announced — issue 510) in {:.1}s{}",
+         ({} recorded mention(s) refreshed, {} re-bound — issue 434; {} non-name mention(s) retired, \
+         {} correction row(s) announced — issues 510/511) in {:.1}s{}",
         refresh.refreshed,
         refresh.rebound,
         refresh.retired,
@@ -2280,7 +2357,7 @@ async fn build_plan(
         t0.elapsed().as_secs_f64(),
         if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
-    Ok((notices, mentions_total, stopped, citations, f14, procedure, refresh, alias))
+    Ok((notices, mentions_total, stopped, citations, f14, procedure, refresh, alias, dropped))
 }
 
 /// Run only the interruptible PREFIX of a full rebuild — clear the canonical
@@ -2295,7 +2372,7 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
         db.clear_canonical().await?;
         db.strip_organization_indexes().await?;
         let total = db.parsed_notice_count().await?;
-        let (notices, mentions, _, citations, f14_targets, procedure, refresh, alias) =
+        let (notices, mentions, _, citations, f14_targets, procedure, refresh, alias, dropped) =
             build_plan(db, store::now_unix(), total, |_| {}, &|| false).await?;
         Ok::<Report, turso::Error>(Report {
             notices,
@@ -2306,6 +2383,7 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
             mentions_refreshed: refresh.refreshed,
             mentions_rebound: refresh.rebound,
             mentions_retired: refresh.retired,
+            dropped,
             alias,
             ..Default::default()
         })
@@ -3122,14 +3200,16 @@ fn incremental_plan_rows(
     let mut rows: Vec<store::PlanRow> = Vec::with_capacity(parsed.len());
     let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(parsed.len());
     let mut mentions: Vec<Mention> = Vec::new();
-    // Issue 510: the void-lot parties the delta's mentions skipped.
+    // Issue 510: the void-lot parties the delta's mentions skipped (every dropped class
+    // since issue 511, counted per class into the run's `dropped`).
     let mut void: Vec<(i64, String)> = Vec::new();
     for (notice, p) in parsed {
         let ident = Ident::read(notice, p);
         if changed_set.contains(&notice.id) {
-            let (notice_mentions, skipped) = NoticeState::mentions_and_void(ident.sdk01, notice.id, p);
+            let (notice_mentions, skipped, dropped) = NoticeState::mentions_and_dropped(ident.sdk01, notice.id, p);
             mentions.extend(notice_mentions);
             void.extend(skipped.into_iter().map(|section| (notice.id, section)));
+            report.dropped.add(dropped);
         }
         // Issue 364: counted in the PLAN build only — pass 1 reads the same
         // notices' identity again, and counting there too would double every
@@ -3414,7 +3494,7 @@ pub async fn project_incremental_chunked_observed(
         db.advance_legacy_adjacency(*max).await?;
     }
     stage(&format!(
-        "pass-2 plan build ({} mentions resolved, {} recorded mention(s) refreshed, {} re-bound, {} void-lot retired, \
+        "pass-2 plan build ({} mentions resolved, {} recorded mention(s) refreshed, {} re-bound, {} non-name retired, \
          {} correction row(s) announced for their party rows)",
         report.mentions, report.mentions_refreshed, report.mentions_rebound, report.mentions_retired, refresh.retire_corrections
     ));
@@ -4362,29 +4442,71 @@ fn party_names<'a>(
     names
 }
 
-/// Issue 510: the party sections of a notice whose EVERY published name says the lot was
-/// not awarded ([`crate::partyname::NotAName::VoidLot`]) — each outermost party section,
-/// plus the nested inner halves of one ([`nested_org_aliases`]), so a role or result
-/// reference to either half is caught. A party with one real name among its names is not
-/// void; a party with no name is not void — except a party that prints four or more names
-/// at least half of which are void: TED's own "not awarded" in two dozen languages, whose
-/// translations vary by year (`No se ha adjudicado`, `Kontraktet har inte tilldelats.`,
-/// `mhux mogħtija`) beyond any list (the drain's Verify, 2026-10-11). A real party's
-/// translated names never include a void phrase.
+/// Issue 510, widened by issue 511 (unit1-decision §1, §4): the party sections of a notice
+/// whose EVERY published name is a dropping non-name ([`NotAName::VoidLot`],
+/// [`NotAName::Placeholder`] or [`NotAName::Blank`]), each with its class — each outermost
+/// party section, plus the nested inner halves of one ([`nested_org_aliases`]), so a role
+/// or result reference to either half is caught.
 ///
-/// The ONE place the fold decides "void": [`NoticeState::mentions`] skips these parties
-/// (no organization is minted) and [`NoticeState::read`] drops every role, result winner
-/// and bid party that names them (which holds even while a recorded mention row still
-/// exists, because Phase 2 binds through the recorded mentions).
-fn void_party_sections(
+/// - A party with one real name among its names is kept; a party with no name is kept.
+/// - A party with any [`NotAName::AwardSummary`] name is kept, whatever its other names
+///   are: the summary is the only place its real winners' names reach the Tender (511 §5).
+/// - 510's majority rule is the one other way in, `VoidLot`-only: four or more names at
+///   least half of which are void — TED's own "not awarded" in two dozen languages, whose
+///   translations vary by year (`No se ha adjudicado`, `Kontraktet har inte tilldelats.`,
+///   `mhux mogħtija`) beyond any list (the drain's Verify, 2026-10-11). A real party's
+///   translated names never include a void phrase.
+/// - Among the dropping names the party takes `Placeholder` over `VoidLot` over `Blank`: a
+///   withheld winner beside a void phrase means a winner exists.
+/// - Guard 3: a `Blank` party that carries an identifier the gate admits
+///   ([`gated_identifier`]) is kept — a real party with a missing name (the DE platform
+///   GUIDs on `.` and `-`, `0` DK with its CVR) — unless the identifier echoes a non-name
+///   ([`identifier_echoes`]: `.` on `.`, `KEINE…` on `keine`). A `Placeholder` gets no such
+///   guard: its text says the identity is withheld or elsewhere, so an identifier beside it
+///   is the placeholder's (`Withheld Section94 Supplier` carries one PPON on all 123
+///   mentions).
+///
+/// The ONE place the fold decides "not a party": [`NoticeState::mentions`] skips these
+/// parties (no organization is minted) and [`NoticeState::read`] drops every role, result
+/// winner and bid party that names them (which holds even while a recorded mention row
+/// still exists, because Phase 2 binds through the recorded mentions); the class decides
+/// only what a legacy or sdk-0.1 result left with no real winner reads.
+fn dropped_party_sections(
     sdk01: bool,
     sections: &HashMap<&str, &store::Section>,
     alias: &HashMap<String, String>,
     parsed: &Parsed,
-) -> BTreeSet<String> {
+) -> BTreeMap<String, NotAName> {
+    drop_decision(sdk01, sections, alias, parsed).sections
+}
+
+/// Issue 511: what [`dropped_party_sections`] decided, with the outermost dropped parties
+/// spelled out for [`Report::dropped`].
+struct DropDecision {
+    /// Every dropped party section and its class, inner halves included.
+    sections: BTreeMap<String, NotAName>,
+    /// The outermost dropped parties: (section, class, first name, the raw identifier when
+    /// one passed the gate).
+    outer: Vec<(String, NotAName, String, Option<String>)>,
+}
+
+/// [`dropped_party_sections`]' decision; see there.
+fn drop_decision(
+    sdk01: bool,
+    sections: &HashMap<&str, &store::Section>,
+    alias: &HashMap<String, String>,
+    parsed: &Parsed,
+) -> DropDecision {
     let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
-    // Outermost party → (void names, names).
-    let mut tally: HashMap<String, (usize, usize)> = HashMap::new();
+    // The notice's language, read once and only when a name needs it: guard 2's scoped
+    // words (`ingen`, `nd`) and guard 3's echo test. `not_a_name` and `not_a_name_in`
+    // agree on every other name, so the plain read decides first and only a name whose
+    // first word is a scoped word asks for the language — every name the scope classes
+    // opens with its word, whatever lot qualifier follows (`INGEN (lots 1, 2, 3, 4, 5 og
+    // 6)`; a length cutoff missed it, the unit-2 review).
+    let mut lang: Option<Option<String>> = None;
+    // Outermost party → its names, each with its class.
+    let mut tally: HashMap<&str, Vec<(&str, Option<NotAName>)>> = HashMap::new();
     for value in &parsed.values {
         let NoticeValue::Text { value: name, .. } = &value.value else { continue };
         if name.trim().is_empty() || !party_name_field(sdk01, &value.field_id) {
@@ -4392,19 +4514,135 @@ fn void_party_sections(
         }
         let Some(owner) = enclosing(sections, &value.section_id, kinds) else { continue };
         let owner = alias.get(owner).map_or(owner, |o| o.as_str());
-        let void = crate::partyname::not_a_name(name) == Some(crate::partyname::NotAName::VoidLot);
-        let entry = tally.entry(owner.to_owned()).or_default();
-        entry.0 += usize::from(void);
-        entry.1 += 1;
+        let class = crate::partyname::not_a_name(name).or_else(|| {
+            crate::partyname::opens_with_scoped_word(name)
+                .then(|| {
+                    crate::partyname::not_a_name_in(name, lang.get_or_insert_with(|| original_lang(parsed)).as_deref())
+                })
+                .flatten()
+        });
+        tally.entry(owner).or_default().push((name.as_str(), class));
     }
-    let mut out: BTreeSet<String> = tally
-        .into_iter()
-        .filter(|(_, (void, names))| *void == *names || (*names >= 4 && 2 * *void >= *names))
-        .map(|(s, _)| s)
+    let mut decided: Vec<(&str, NotAName)> = Vec::new();
+    for (owner, names) in &tally {
+        if names.iter().any(|(_, class)| *class == Some(NotAName::AwardSummary)) {
+            continue;
+        }
+        let void = names.iter().filter(|(_, class)| *class == Some(NotAName::VoidLot)).count();
+        let class = if names.iter().all(|(_, class)| class.is_some()) {
+            if names.iter().any(|(_, class)| *class == Some(NotAName::Placeholder)) {
+                NotAName::Placeholder
+            } else if void > 0 {
+                NotAName::VoidLot
+            } else {
+                NotAName::Blank
+            }
+        } else if names.len() >= 4 && 2 * void >= names.len() {
+            NotAName::VoidLot
+        } else {
+            continue;
+        };
+        decided.push((*owner, class));
+    }
+    // The identifiers, read only when a party may need them: guard 3 for a `Blank` party,
+    // and `Report::dropped.placeholder_identified` for a `Placeholder` one. Read exactly as
+    // `mentions_and_void` reads a mention's (the first identifier and country in the
+    // party's subtree); sdk-0.1 publishes none there.
+    let mut identity: HashMap<&str, (Option<&str>, Option<&str>, Option<&str>)> = HashMap::new();
+    if !sdk01 && decided.iter().any(|(_, class)| matches!(class, NotAName::Blank | NotAName::Placeholder)) {
+        for (owner, _) in &decided {
+            identity.insert(*owner, (None, None, None));
+        }
+        for value in &parsed.values {
+            let Some(owner) = enclosing(sections, &value.section_id, kinds) else { continue };
+            let owner = alias.get(owner).map_or(owner, |o| o.as_str());
+            let Some(entry) = identity.get_mut(owner) else { continue };
+            let field = value.field_id.as_str();
+            match &value.value {
+                NoticeValue::Id { value, scheme, .. }
+                    if (field == ORG_IDENTIFIER_FIELD || field == ORG_NATIONALID_FIELD) && entry.0.is_none() =>
+                {
+                    entry.0 = Some(value.as_str());
+                    entry.1 = scheme.as_deref();
+                }
+                NoticeValue::Code { code, .. }
+                    if (field == ORG_COUNTRY_FIELD || ORG_COUNTRY_FIELDS.contains(&field)) && entry.2.is_none() =>
+                {
+                    entry.2 = Some(code.as_str());
+                }
+                _ => {}
+            }
+        }
+    }
+    let mut out = DropDecision { sections: BTreeMap::new(), outer: Vec::new() };
+    for (owner, class) in decided {
+        let names = &tally[owner];
+        let gated = identity.get(owner).and_then(|(raw, scheme, country)| {
+            let country = country.map(canonical_country);
+            gated_identifier(*raw, *scheme, country.as_deref()).and(*raw)
+        });
+        if class == NotAName::Blank
+            && let Some(raw) = gated
+            && !identifier_echoes(raw, names, lang.get_or_insert_with(|| original_lang(parsed)).as_deref())
+        {
+            continue;
+        }
+        out.outer.push((owner.to_owned(), class, names[0].0.to_owned(), gated.map(str::to_owned)));
+        out.sections.insert(owner.to_owned(), class);
+    }
+    out.outer.sort();
+    let inner: Vec<(String, NotAName)> = alias
+        .iter()
+        .filter_map(|(inner, outer)| out.sections.get(outer).map(|class| (inner.clone(), *class)))
         .collect();
-    let inner: Vec<String> = alias.iter().filter(|(_, outer)| out.contains(*outer)).map(|(i, _)| i.clone()).collect();
-    out.extend(inner);
+    out.sections.extend(inner);
     out
+}
+
+/// Issue 511 guard 3's refusal: whether a `Blank` party's identifier only echoes a
+/// non-name, so it carries no identity — it is itself a non-name (`.`, `N/A`, `ENTFAELLT`,
+/// read in the notice's language), or its space-free fold contains a party name's
+/// space-free fold, for a name with a letter and at least [`ECHO_MIN`] characters squeezed
+/// (`KEINEANGABE…` on `keine`, `NIEDOTYCZY` on `nie dotyczy`). A name with no letter echoes
+/// nothing, so `0` keeps its CVR `38160540`; nor does a shorter one, whose letters turn up
+/// in unrelated identifiers (`NO` in the VAT `NO974760673MVA`, `x` in `DE811569869X`; the
+/// unit-2 review).
+fn identifier_echoes(raw: &str, names: &[(&str, Option<NotAName>)], lang: Option<&str>) -> bool {
+    if crate::partyname::not_a_name_in(raw, lang).is_some() {
+        return true;
+    }
+    let squeeze = |s: &str| -> String { crate::partyname::fold(s).replace(' ', "") };
+    let id = squeeze(raw);
+    names.iter().any(|(name, _)| {
+        let name = squeeze(name);
+        name.chars().any(char::is_alphabetic) && name.chars().count() >= ECHO_MIN && id.contains(&name)
+    })
+}
+
+/// Guard 3's containment arm reads a name of at least this many characters, squeezed
+/// ([`identifier_echoes`]): `keine` and `niedotyczy` echo, `no`, `na`, `nc`, `x` cannot.
+const ECHO_MIN: usize = 4;
+
+/// [`identifier_echoes`] for one organization's head name, without a notice language —
+/// issue 511's `refold-placeholder-names` dry plan marks each identified blank org with
+/// it (`identified_blank`), so the operator sees which ones guard 3 keeps.
+pub fn blank_identifier_echoes(identifier: &str, name: &str) -> bool {
+    identifier_echoes(identifier, &[(name, None)], None)
+}
+
+/// The identifier a mention may key a merge on: its raw value, unless the publisher's
+/// declared scheme is never a register (issue 365 unit 4), through the plausibility gate
+/// ([`normalise_identifier`]) under the mention's alpha-2 country. Factored out of
+/// [`NoticeState::mentions_and_void`] (issue 511) so the decider's guard 3 reads the same
+/// identity the mention would carry.
+///
+/// Deliberately gated on the scheme HERE rather than inside `normalise_identifier`. The
+/// issue proposed threading the scheme into the normaliser, but that is a 78-call-site
+/// signature change for a question the normaliser should not be asked: it converts a
+/// STRING to an identifier, while this is a decision about whether a MENTION's identifier
+/// may key a merge.
+fn gated_identifier(raw: Option<&str>, scheme: Option<&str>, country: Option<&str>) -> Option<Identifier> {
+    raw.filter(|_| !scheme_never_keys(scheme)).and_then(|raw| normalise_identifier(raw, country))
 }
 
 /// A normalised OJS publication key `(year, number)`. The display form is not
@@ -4753,12 +4991,13 @@ impl NoticeState {
         // A role or winner reference may name the inner half of a nested party
         // (issue 259); both halves must bind to the one Organization.
         let org_alias = nested_org_aliases(&sections, if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] });
-        // Issue 510: a void-lot party carries no role, no result winner and no bid party,
-        // in every role and era — decided here from the parse, so a mention row recorded
-        // before the rule (still read by Phase 2's binding) binds nothing.
-        let void = void_party_sections(sdk01, &sections, &org_alias, parsed);
-        if !void.is_empty() {
-            raw_roles.retain(|(_, _, _, target)| !void.contains(target));
+        // Issues 510 and 511: a party that names no organization (a void lot, a placeholder,
+        // a blank slot) carries no role, no result winner and no bid party, in every role
+        // and era — decided here from the parse, so a mention row recorded before the rule
+        // (still read by Phase 2's binding) binds nothing.
+        let dropped = dropped_party_sections(sdk01, &sections, &org_alias, parsed);
+        if !dropped.is_empty() {
+            raw_roles.retain(|(_, _, _, target)| !dropped.contains_key(target));
         }
         // Issue 483 unit 2: a review body or platform vendor in the buyer slot loses the
         // buyer role (or yields it to the real buyer the notice names elsewhere) — the
@@ -4770,7 +5009,7 @@ impl NoticeState {
             if sdk01 || legacy { "buyer" } else { "Procedure-Buyer" },
         );
 
-        let mut raw_results = read_results(&sections, parsed, legacy, sdk01, &void);
+        let mut raw_results = read_results(&sections, parsed, legacy, sdk01, &dropped);
         // Issue 484 unit 3: which winner sections are the notice's own buyer — judged
         // against the buyers the fix above left, so a demoted review body is no buyer
         // and a promoted real buyer is one. Award notices only.
@@ -4849,10 +5088,18 @@ impl NoticeState {
     }
 
     /// [`Self::mentions`], and the outermost party sections it skipped because every name
-    /// they publish says the lot was not awarded (issue 510, [`void_party_sections`]) —
-    /// the keys a fold hands to [`store::Db::retire_mentions`], so a mention recorded
-    /// before the rule is retired rather than left standing.
+    /// they publish is a dropping non-name (issues 510 and 511, [`dropped_party_sections`])
+    /// — the keys a fold hands to [`store::Db::retire_mentions`], so a mention recorded
+    /// before the rule is retired rather than left standing. Every class rides one list:
+    /// the retirement is class-blind.
     fn mentions_and_void(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<Mention>, Vec<String>) {
+        let (mentions, skipped, _) = Self::mentions_and_dropped(sdk01, notice_id, parsed);
+        (mentions, skipped)
+    }
+
+    /// [`Self::mentions_and_void`], and the skipped parties counted per class for
+    /// [`Report::dropped`] (issue 511) — what the plan sweeps read.
+    fn mentions_and_dropped(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<Mention>, Vec<String>, DroppedParties) {
         let sections: HashMap<&str, &store::Section> =
             parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
 
@@ -4865,19 +5112,24 @@ impl NoticeState {
         // Organization sections for it (issue 259). The inner ones are aliases, not
         // parties of their own.
         let alias = nested_org_aliases(&sections, mention_kinds);
-        // Issue 510: a party whose every name says the lot was not awarded mints nothing.
-        let void = void_party_sections(sdk01, &sections, &alias, parsed);
+        // Issues 510 and 511: a party whose every name is a dropping non-name mints nothing.
+        let decision = drop_decision(sdk01, &sections, &alias, parsed);
+        let void = &decision.sections;
         let skipped: Vec<String> = parsed
             .sections
             .iter()
-            .filter(|s| mention_kinds.contains(&s.kind.as_str()) && !alias.contains_key(&s.id) && void.contains(&s.id))
+            .filter(|s| mention_kinds.contains(&s.kind.as_str()) && !alias.contains_key(&s.id) && void.contains_key(&s.id))
             .map(|s| s.id.clone())
             .collect();
+        let mut dropped = DroppedParties::default();
+        for (section, class, name, identifier) in &decision.outer {
+            dropped.count(notice_id, section, *class, name, identifier.as_deref());
+        }
 
         let mut mentions: BTreeMap<&str, Mention> = parsed
             .sections
             .iter()
-            .filter(|s| mention_kinds.contains(&s.kind.as_str()) && !alias.contains_key(&s.id) && !void.contains(&s.id))
+            .filter(|s| mention_kinds.contains(&s.kind.as_str()) && !alias.contains_key(&s.id) && !void.contains_key(&s.id))
             .map(|s| {
                 (
                     s.id.as_str(),
@@ -4957,24 +5209,13 @@ impl NoticeState {
                 // already captured onto the mention and then never consulted, so
                 // "this scheme is never a register" was inexpressible — and no
                 // value-shape rule can substitute, because the values under such
-                // a scheme are arbitrary.
-                //
-                // Deliberately gated HERE rather than inside
-                // `normalise_identifier`. The issue proposed threading the scheme
-                // into the normaliser, but that is a 78-call-site signature change
-                // for a question the normaliser should not be asked: it converts a
-                // STRING to an identifier, while this is a decision about whether
-                // a MENTION's identifier may key a merge. The scheme is already in
-                // scope on `m` at exactly this point.
-                m.identifier = m
-                    .raw_identifier
-                    .as_deref()
-                    .filter(|_| !scheme_never_keys(m.scheme.as_deref()))
-                    .and_then(|raw| normalise_identifier(raw, m.country.as_deref()));
+                // a scheme are arbitrary. One gate for the mention and the
+                // decider's guard 3 (issue 511, [`gated_identifier`]).
+                m.identifier = gated_identifier(m.raw_identifier.as_deref(), m.scheme.as_deref(), m.country.as_deref());
                 m
             })
             .collect();
-        (mentions, skipped)
+        (mentions, skipped, dropped)
     }
 
     /// Turn the notice-local role references into party facts — and the
@@ -5869,6 +6110,10 @@ struct RawLotResult {
     /// Issue 510: the block named a party whose every name says the lot was not awarded
     /// (`Infructueux`, `Desierto`) — an explicit no-award statement.
     void_lot: bool,
+    /// Issue 511: the block named a placeholder party (`Withheld`, `keine Angabe`, `See
+    /// Section VI.3`) — a winner exists and its name is withheld or elsewhere, so the
+    /// result is `selec-w` with no winner bound.
+    withheld_winner: bool,
     direct_cents: Option<i64>,
     direct_currency: Option<String>,
 }
@@ -5907,18 +6152,21 @@ struct RawParty {
     members: Vec<(String, String)>,
 }
 
+/// The results graph of one notice. `dropped` is the decider's verdict
+/// ([`dropped_party_sections`]): a dropped party is no winner and no tenderer, and in the
+/// legacy and sdk-0.1 dialects its class marks the result (issue 511).
 fn read_results(
     sections: &HashMap<&str, &store::Section>,
     parsed: &Parsed,
     legacy: bool,
     sdk01: bool,
-    void: &BTreeSet<String>,
+    dropped: &BTreeMap<String, NotAName>,
 ) -> RawResults {
     if legacy {
-        return read_legacy_results(sections, parsed, void);
+        return read_legacy_results(sections, parsed, dropped);
     }
     if sdk01 {
-        return read_sdk01_results(parsed, void);
+        return read_sdk01_results(parsed, dropped);
     }
     // Issue 372: BT-720 is the figure buyers withhold most, and it reaches the
     // canonical layer here rather than through the amount table, so the marker
@@ -6018,12 +6266,13 @@ fn read_results(
             "TenderingParty" => {
                 let Some(p) = raw.parties.iter_mut().find(|p| p.key == owner) else { continue };
                 match (row.field_id.as_str(), &row.value) {
-                    // Issue 510: a void-lot party is no tenderer; the Bid and the
-                    // publisher's BT-142 stay.
-                    ("OPT-300-Tenderer", NoticeValue::Id { value, .. }) if !void.contains(value) => {
+                    // Issues 510 and 511: a dropped party (void, placeholder or blank)
+                    // is no tenderer; the Bid and the publisher's BT-142 stay — Section94's
+                    // withheld suppliers keep the publisher's decision and bind no winner.
+                    ("OPT-300-Tenderer", NoticeValue::Id { value, .. }) if !dropped.contains_key(value) => {
                         p.members.push(("tenderer".to_owned(), value.clone()));
                     }
-                    ("OPT-301-Tenderer-SubCont", NoticeValue::Id { value, .. }) if !void.contains(value) => {
+                    ("OPT-301-Tenderer-SubCont", NoticeValue::Id { value, .. }) if !dropped.contains_key(value) => {
                         p.members.push(("subcontractor".to_owned(), value.clone()));
                     }
                     _ => {}
@@ -6062,7 +6311,7 @@ fn read_results(
 fn read_legacy_results(
     sections: &HashMap<&str, &store::Section>,
     parsed: &Parsed,
-    void: &BTreeSet<String>,
+    dropped: &BTreeMap<String, NotAName>,
 ) -> RawResults {
     let mut raw = RawResults::default();
     for s in &parsed.sections {
@@ -6099,11 +6348,14 @@ fn read_legacy_results(
             (_, NoticeValue::Id { value: org, is_ref: true, scheme })
                 if scheme.as_deref() != Some("ojs") =>
             {
-                // Issue 510: a void-lot "winner" is the publisher saying no award.
-                if void.contains(org) {
-                    r.void_lot = true;
-                } else {
-                    r.direct_winners.push(org.clone());
+                // Issue 510: a void-lot "winner" is the publisher saying no award. Issue 511:
+                // a placeholder says a winner exists, withheld or named elsewhere; a blank
+                // slot says nothing, so the block's other evidence decides.
+                match dropped.get(org) {
+                    Some(NotAName::VoidLot) => r.void_lot = true,
+                    Some(NotAName::Placeholder) => r.withheld_winner = true,
+                    Some(_) => {}
+                    None => r.direct_winners.push(org.clone()),
                 }
             }
             ("TED-LOT_NO" | "TED-LOT_NUMBER" | "TED-ITEM", NoticeValue::Id { value: no, .. }) => {
@@ -6157,11 +6409,16 @@ fn read_legacy_results(
     // explicit no-award statement, like `NO_AWARDED_CONTRACT`: with no real winner beside
     // it, it outranks a value (often 0) or a date. Before, the phrase was itself the
     // "winner" and manufactured `selec-w`.
+    //
+    // Issue 511: a placeholder in the winner slot (`Withheld`, `keine Angabe`) ranks with
+    // the real winners — the text says a winner exists, so `selec-w` with none bound, where
+    // a dateless block would otherwise read `clos-nw` against the publisher. A blank slot
+    // (`N/A`, `néant`) carries no marker: the rule below decides as if it were empty.
     for r in &mut raw.lot_results {
         r.direct_winners.sort();
         r.direct_winners.dedup();
         if r.decision.is_none() {
-            if !r.direct_winners.is_empty() {
+            if !r.direct_winners.is_empty() || r.withheld_winner {
                 r.decision = Some("selec-w".to_owned());
             } else if r.void_lot {
                 r.decision = Some("clos-nw".to_owned());
@@ -6190,7 +6447,7 @@ fn read_legacy_results(
 /// day of the award, no code, no winner, no value. So the winner shortfall this
 /// era shows is the publisher's, not ours — where a `WinningParty` IS published
 /// we resolve it, and every one of them carried a `PartyName` to resolve.
-fn read_sdk01_results(parsed: &Parsed, void: &BTreeSet<String>) -> RawResults {
+fn read_sdk01_results(parsed: &Parsed, dropped: &BTreeMap<String, NotAName>) -> RawResults {
     let mut raw = RawResults::default();
     for s in &parsed.sections {
         if s.kind == SDK01_RESULT_KIND {
@@ -6223,11 +6480,13 @@ fn read_sdk01_results(parsed: &Parsed, void: &BTreeSet<String>) -> RawResults {
             && let Some(parent) = &s.parent
             && let Some(r) = raw.lot_results.iter_mut().find(|r| &r.key == parent)
         {
-            // Issue 510: a void-lot WinningParty is the publisher saying no award.
-            if void.contains(&s.id) {
-                r.void_lot = true;
-            } else {
-                r.direct_winners.push(s.id.clone());
+            // Issue 510: a void-lot WinningParty is the publisher saying no award; issue 511:
+            // a placeholder one says a winner exists, a blank one says nothing.
+            match dropped.get(&s.id) {
+                Some(NotAName::VoidLot) => r.void_lot = true,
+                Some(NotAName::Placeholder) => r.withheld_winner = true,
+                Some(_) => {}
+                None => r.direct_winners.push(s.id.clone()),
             }
         }
     }
@@ -6242,7 +6501,11 @@ fn read_sdk01_results(parsed: &Parsed, void: &BTreeSet<String>) -> RawResults {
         // carrying an AwardDate and nothing else. That fabricated a positive claim
         // of "no award" on ~125k notices which state the day the award was made
         // (issue 257). Unstated is now NULL, and the date it does state is kept.
-        if r.decision.is_none() && !r.direct_winners.is_empty() {
+        //
+        // Issue 511: a placeholder WinningParty ranks with the real winners (`selec-w`, none
+        // bound); a blank one carries no marker, so the result stays NULL unless the
+        // `TenderResultCode` states a decision — "nobody" is no positive `clos-nw` claim.
+        if r.decision.is_none() && (!r.direct_winners.is_empty() || r.withheld_winner) {
             r.decision = Some("selec-w".to_owned());
         } else if r.decision.is_none() && r.void_lot {
             // Issue 510: a void-lot WinningParty and no real one — the explicit
@@ -7522,7 +7785,7 @@ fn buyer_side_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<sto
         signatories.retain(|s| !outer(s));
         sections.extend(fix.promote.iter().map(String::as_str));
     }
-    mentions.into_iter().fold(
+    let (buyers, signing) = mentions.into_iter().fold(
         (Vec::new(), Vec::new()),
         |(mut buyers, mut signing), m| {
             if sections.contains(m.section_id.as_str()) {
@@ -7532,7 +7795,15 @@ fn buyer_side_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<sto
             }
             (buyers, signing)
         },
-    )
+    );
+    // Issue 511 §3 (481 2c): a buyer slot whose every party the fold dropped (`.`, `N/A`,
+    // `Keine Angabe.`: no mention survives) or the census demoted with no promotion names
+    // no buyer, so a separate, real signatory must not make the notice known on its own —
+    // the early return above, for references that resolve to nothing.
+    if buyers.is_empty() {
+        return (Vec::new(), Vec::new());
+    }
+    (buyers, signing)
 }
 
 /// A buyer mention's identifier key, `country:kind:value` — the strong key: country-
@@ -8404,6 +8675,23 @@ fn procedure_key(parsed: &Parsed, sdk01: bool, de1: bool) -> Option<String> {
     folder.and_then(|field| first_id(parsed, field).filter(|k| is_uuid(k)))
 }
 
+/// Issue 511's buyer canary: each of `ids`' procedure key as the projection's own
+/// [`Ident`] reads it (after the DE-1 normalisation the plan sweeps apply), as issue 482's
+/// census reads it — the key families `refold-placeholder-names`' dry plan names beside the
+/// placeholder-buyer notices, so the canary can record them before and after. `None` for a
+/// notice that publishes no key (an island); an id with no parse is absent.
+pub async fn procedure_keys_of_notices(db: &Db, ids: &[i64]) -> turso::Result<BTreeMap<i64, Option<String>>> {
+    let mut out = BTreeMap::new();
+    for batch in ids.chunks(500) {
+        let mut notices = db.parsed_by_ids(batch).await?;
+        normalise_de1(&mut notices);
+        for (notice, parsed) in &notices {
+            out.insert(notice.id, Ident::read(notice, parsed).procedure_key);
+        }
+    }
+    Ok(out)
+}
+
 /// A genuine uuid (`8-4-4-4-12` hex). Only these sdk-0.1 folder ids are strong
 /// enough to merge Tenders across Sources.
 fn is_uuid(s: &str) -> bool {
@@ -9133,7 +9421,7 @@ mod tests {
             };
             let sections: HashMap<&str, &store::Section> =
                 parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
-            read_results(&sections, &parsed, false, false, &BTreeSet::new()).bind(1, None, &HashMap::new())
+            read_results(&sections, &parsed, false, false, &BTreeMap::new()).bind(1, None, &HashMap::new())
         };
 
         let settled = round("028961-2025");
@@ -13610,6 +13898,444 @@ mod tests {
         );
     }
 
+    /// Issue 511's fixtures: a notice's sections, values and the fold's two readings of it.
+    mod placeholder_511 {
+        use super::*;
+
+        pub(super) fn section(id: &str, kind: &str, parent: Option<&str>) -> store::Section {
+            store::Section { id: id.into(), kind: kind.into(), parent: parent.map(Into::into) }
+        }
+
+        pub(super) fn row(section: &str, field: &str, value: NoticeValue) -> store::ValueRow {
+            store::ValueRow { section_id: section.into(), field_id: field.into(), ordinal: 0, value }
+        }
+
+        pub(super) fn id_ref(section: &str, field: &str, target: &str) -> store::ValueRow {
+            row(section, field, NoticeValue::Id { scheme: None, value: target.into(), is_ref: true })
+        }
+
+        pub(super) fn id_val(section: &str, field: &str, value: &str) -> store::ValueRow {
+            row(section, field, NoticeValue::Id { scheme: None, value: value.into(), is_ref: false })
+        }
+
+        pub(super) fn code(section: &str, field: &str, value: &str) -> store::ValueRow {
+            row(section, field, NoticeValue::Code { list: None, code: value.into() })
+        }
+
+        /// A legacy (r209) award: one award block `RES-1`, its winner refs, a buyer
+        /// `ORG-9` (Ville de Lyon), and `orgs` as (section, names…).
+        pub(super) fn legacy(orgs: &[(&str, &[&str])], winners: &[&str], extra: Vec<store::ValueRow>) -> Parsed {
+            let mut p = Parsed {
+                sections: vec![section("PROC", "Notice", None), section("RES-1", "LotResult", None)],
+                values: extra,
+            };
+            for (id, names) in orgs {
+                p.sections.push(section(id, ORGANIZATION_KIND, None));
+                for (i, n) in names.iter().enumerate() {
+                    p.values.push(store::ValueRow { ordinal: i as i64, ..text_value(id, "TED-OFFICIALNAME", 0, None, n) });
+                }
+            }
+            for w in winners {
+                p.values.push(id_ref("RES-1", "TED-ADDRESS_CONTRACTOR", w));
+            }
+            p.values.push(id_ref("PROC", "TED-ADDRESS_CONTRACTING_BODY", "ORG-9"));
+            p.sections.push(section("ORG-9", ORGANIZATION_KIND, None));
+            p.values.push(text_value("ORG-9", "TED-OFFICIALNAME", 0, None, "Ville de Lyon"));
+            p
+        }
+
+        pub(super) fn notice(profile: &str) -> store::NoticeRef {
+            store::NoticeRef { id: 9, source: "ted".into(), publication_id: "000009-2020".into(), profile: profile.into() }
+        }
+
+        /// `NoticeState::read` and `bind_organizations` with every party section bound
+        /// (`ORG-n` / `WP-n` → org 1000 + n): Phase 2 binding through a mention row
+        /// recorded before the rule, which a dropped party must still not use.
+        pub(super) fn bound(profile: &str, parsed: &Parsed) -> NoticeState {
+            let mut state = NoticeState::read(&notice(profile), parsed);
+            let orgs: HashMap<String, i64> = parsed
+                .sections
+                .iter()
+                .filter(|s| s.kind == ORGANIZATION_KIND || SDK01_PARTY_KINDS.contains(&s.kind.as_str()))
+                .map(|s| {
+                    let n = s.id.rsplit('-').next().and_then(|n| n.parse::<i64>().ok()).expect("numbered section");
+                    (s.id.clone(), 1_000 + n)
+                })
+                .collect();
+            state.bind_organizations(&orgs);
+            state
+        }
+
+        /// (decision, winners) per result, in result order.
+        pub(super) fn results(state: &NoticeState) -> Vec<(Option<String>, Vec<i64>)> {
+            let round = state.round.as_ref().expect("an award notice binds a round");
+            round.lot_results.iter().map(|r| (r.decision.clone(), r.winners.clone())).collect()
+        }
+
+        /// Every organization a party fact names, Tender- and lot-scoped.
+        pub(super) fn party_orgs(state: &NoticeState) -> BTreeSet<i64> {
+            state
+                .facts
+                .iter()
+                .chain(state.lots.iter().flat_map(|l| l.facts.iter()))
+                .filter_map(|f| match f {
+                    Fact::Party { organization_id, .. } => Some(*organization_id),
+                    _ => None,
+                })
+                .collect()
+        }
+
+        /// The decider's verdict on a parse.
+        pub(super) fn decided(sdk01: bool, parsed: &Parsed) -> BTreeMap<String, NotAName> {
+            let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+            let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
+            dropped_party_sections(sdk01, &sections, &nested_org_aliases(&sections, kinds), parsed)
+        }
+
+        /// An eForms notice of `parties` as (role, name, country, raw identifier), each
+        /// `ORG-n` in order, referenced from `PROC` by `OPT-300-<role>`; `lang` its
+        /// original language (`BT-702(a)-notice`).
+        pub(super) fn eforms(parties: &[(&str, &str, &str, &str)], lang: Option<&str>) -> Parsed {
+            let mut p = Parsed { sections: vec![section("PROC", "Notice", None)], values: Vec::new() };
+            if let Some(lang) = lang {
+                p.values.push(code("PROC", "BT-702(a)-notice", lang));
+            }
+            for (i, (role, name, country, raw)) in parties.iter().enumerate() {
+                let id = format!("ORG-{}", i + 1);
+                p.sections.push(section(&id, ORGANIZATION_KIND, None));
+                p.values.push(id_ref("PROC", &format!("OPT-300-{role}"), &id));
+                p.values.push(text_value(&id, ORG_NAME_FIELD, 0, None, name));
+                p.values.push(code(&id, ORG_COUNTRY_FIELD, country));
+                if !raw.is_empty() {
+                    p.values.push(id_val(&id, ORG_IDENTIFIER_FIELD, raw));
+                }
+            }
+            p
+        }
+    }
+
+    /// Issue 511 §1: a party enters the drop map only when every name is a dropping class;
+    /// an award summary keeps it whatever else it names, and so does one real name. Among
+    /// the dropping names a withheld winner outranks a void phrase.
+    #[test]
+    fn the_decider_never_drops_an_award_summary() {
+        use placeholder_511::*;
+        let summary = "Lot 1) Sarl Bremond. Lot 2) Infructueux";
+        let parsed = legacy(
+            &[
+                ("ORG-1", &[summary]),
+                ("ORG-2", &[summary, "Infructueux"]),
+                ("ORG-3", &[summary, "Withheld"]),
+                ("ORG-4", &["ACME SA", "N/A"]),
+                ("ORG-5", &["Withheld", "Infructueux"]),
+                ("ORG-6", &["N/A", "Infructueux"]),
+                ("ORG-7", &["N/A", "Néant"]),
+            ],
+            &["ORG-1", "ORG-2", "ORG-3", "ORG-4", "ORG-5", "ORG-6", "ORG-7"],
+            vec![],
+        );
+        assert_eq!(
+            decided(false, &parsed),
+            BTreeMap::from([
+                ("ORG-5".to_owned(), NotAName::Placeholder),
+                ("ORG-6".to_owned(), NotAName::VoidLot),
+                ("ORG-7".to_owned(), NotAName::Blank),
+            ])
+        );
+        let state = bound("ted-export-r209", &parsed);
+        assert_eq!(
+            results(&state),
+            vec![(Some("selec-w".into()), vec![1_001, 1_002, 1_003, 1_004])],
+            "the summaries and the real name keep their winners"
+        );
+        // 510's majority rule stays VoidLot-only: an award summary among four names blocks it.
+        let ted = legacy(&[("ORG-1", &["not awarded", "ikke tildelt", "non aggiudicato", summary])], &["ORG-1"], vec![]);
+        assert!(decided(false, &ted).is_empty(), "an award summary keeps even a majority-void party");
+        // …and it counts VoidLot names only: three blank translations beside one real name are
+        // a real party (the unit-2 review: counting every dropping class dropped it silently).
+        let translated =
+            legacy(&[("ORG-1", &["Not applicable", "Nie dotyczy", "Nicht zutreffend", "Région Bretagne"])], &["ORG-1"], vec![]);
+        assert!(decided(false, &translated).is_empty(), "a real name among blank translations keeps the party");
+        let placeholders = legacy(&[("ORG-1", &["Withheld", "Various", "TBC", "Région Bretagne"])], &["ORG-1"], vec![]);
+        assert!(decided(false, &placeholders).is_empty(), "nor do placeholders count toward the majority");
+    }
+
+    /// Issue 511 §1: a placeholder in a legacy winner slot says a winner exists — `selec-w`
+    /// with none bound, where a dateless block would otherwise read `clos-nw`.
+    #[test]
+    fn a_withheld_winner_keeps_the_result_selected_with_no_winner() {
+        use placeholder_511::*;
+        for withheld in ["Withheld", "Keine Angabe - der Zuschlag ging an mehrere Bieter, die weiterhin im Wettbewerb stehen"] {
+            let parsed = legacy(&[("ORG-1", &[withheld])], &["ORG-1"], vec![]);
+            let state = bound("ted-export-r209", &parsed);
+            assert_eq!(results(&state), vec![(Some("selec-w".into()), vec![])], "{withheld}");
+            assert_eq!(party_orgs(&state), BTreeSet::from([1_009]), "{withheld}: no winner party");
+            // Beside a real co-winner: the real one binds, the result stays selected.
+            let co = legacy(&[("ORG-1", &[withheld]), ("ORG-2", &["ACME SA"])], &["ORG-1", "ORG-2"], vec![]);
+            assert_eq!(results(&bound("ted-export-r209", &co)), vec![(Some("selec-w".into()), vec![1_002])]);
+            // Beside a void phrase: the withheld winner outranks it.
+            let void = legacy(&[("ORG-1", &[withheld]), ("ORG-2", &["Infructueux"])], &["ORG-1", "ORG-2"], vec![]);
+            assert_eq!(results(&bound("ted-export-r209", &void)), vec![(Some("selec-w".into()), vec![])], "{withheld}");
+        }
+        // sdk-0.1: a withheld WinningParty selects too.
+        let sdk01 = Parsed {
+            sections: vec![
+                section("PROC", "Notice", None),
+                section("CP-9", SDK01_BUYER_KIND, None),
+                section("TR-1", SDK01_RESULT_KIND, None),
+                section("WP-1", SDK01_WINNER_KIND, Some("TR-1")),
+            ],
+            values: vec![
+                text_value("CP-9", "SDK01-ContractingParty-Party-PartyName-Name", 0, None, "Stadt Graz"),
+                text_value("WP-1", "SDK01-TenderResult-WinningParty-Party-PartyName-Name", 0, None, "keine Angabe"),
+            ],
+        };
+        assert_eq!(results(&bound("eforms:eforms-sdk-0.1", &sdk01)), vec![(Some("selec-w".into()), vec![])]);
+    }
+
+    /// Issue 511 §1: a blank winner slot carries no marker — the legacy evidence rule decides
+    /// as if the slot were empty (a value selects, no date closes, a date alone stays NULL),
+    /// and sdk-0.1 stays NULL unless its `TenderResultCode` states a decision.
+    #[test]
+    fn a_blank_winner_is_judged_on_the_results_other_evidence() {
+        use placeholder_511::*;
+        let value = row("RES-1", "TED-VAL_TOTAL", NoticeValue::Amount { cents: 100_000, currency: "EUR".into() });
+        let date =
+            row("RES-1", LEGACY_AWARD_DATE_FIELD, NoticeValue::Date { utc_seconds: 1_600_000_000, offset_minutes: 0, has_time: false });
+        for blank in ["N/A", "néant", "."] {
+            let read = |extra: Vec<store::ValueRow>| results(&bound("ted-export-r209", &legacy(&[("ORG-1", &[blank])], &["ORG-1"], extra)));
+            assert_eq!(read(vec![value.clone()]), vec![(Some("selec-w".into()), vec![])], "{blank}: a value is an award");
+            assert_eq!(read(vec![]), vec![(Some("clos-nw".into()), vec![])], "{blank}: no evidence at all");
+            assert_eq!(read(vec![date.clone()]), vec![(None, vec![])], "{blank}: an award date alone is silence");
+        }
+        let sdk01 = |result_code: Option<&str>| -> Parsed {
+            let mut p = Parsed {
+                sections: vec![
+                    section("PROC", "Notice", None),
+                    section("CP-9", SDK01_BUYER_KIND, None),
+                    section("TR-1", SDK01_RESULT_KIND, None),
+                    section("WP-1", SDK01_WINNER_KIND, Some("TR-1")),
+                ],
+                values: vec![
+                    text_value("CP-9", "SDK01-ContractingParty-Party-PartyName-Name", 0, None, "Stadt Graz"),
+                    text_value("WP-1", "SDK01-TenderResult-WinningParty-Party-PartyName-Name", 0, None, "entfällt"),
+                ],
+            };
+            if let Some(c) = result_code {
+                p.values.push(code("TR-1", SDK01_RESULT_CODE_FIELD, c));
+            }
+            p
+        };
+        let sdk = "eforms:eforms-sdk-0.1";
+        assert_eq!(results(&bound(sdk, &sdk01(None))), vec![(None, vec![])], "sdk-0.1: 'nobody' is no clos-nw claim");
+        assert_eq!(results(&bound(sdk, &sdk01(Some("clos-nw")))), vec![(Some("clos-nw".into()), vec![])], "coded");
+        assert_eq!(party_orgs(&bound(sdk, &sdk01(None))), BTreeSet::from([1_009]), "only the buyer is a party");
+    }
+
+    /// Issue 511 §2: a placeholder in a review or mediation slot (eForms `nie dotyczy`
+    /// mediator, the 1215973 hub's shape) mints no organization and no role.
+    #[test]
+    fn a_placeholder_review_body_mints_nothing() {
+        use placeholder_511::*;
+        let mut parsed = eforms(&[("Procedure-Buyer", "Gmina Kraków", "POL", "")], Some("POL"));
+        parsed.sections.push(section("LOT-1", "Lot", None));
+        parsed.sections.push(section("ORG-2", ORGANIZATION_KIND, None));
+        parsed.sections.push(section("ORG-3", ORGANIZATION_KIND, None));
+        parsed.values.push(id_ref("LOT-1", "OPT-301-Lot-Mediator", "ORG-2"));
+        parsed.values.push(id_ref("LOT-1", "OPT-301-Lot-ReviewOrg", "ORG-3"));
+        parsed.values.push(text_value("ORG-2", ORG_NAME_FIELD, 0, None, "nie dotyczy"));
+        parsed.values.push(text_value("ORG-3", ORG_NAME_FIELD, 0, None, "Krajowa Izba Odwoławcza"));
+        let (mentions, skipped) = NoticeState::mentions_and_void(false, 9, &parsed);
+        assert_eq!(mentions.iter().map(|m| m.section_id.as_str()).collect::<Vec<_>>(), vec!["ORG-1", "ORG-3"]);
+        assert_eq!(skipped, vec!["ORG-2".to_owned()]);
+        assert_eq!(party_orgs(&bound("eforms:eforms-sdk-1.10", &parsed)), BTreeSet::from([1_001, 1_003]));
+    }
+
+    /// Issue 511 guard 3: a blank party that carries an identifier the gate admits is a real
+    /// party with a missing name, and is kept — unless the identifier only echoes a
+    /// non-name: it is itself one (`keine Angabe gem. § 62 …` on `entfällt`), or it holds the
+    /// name (`KEINE…` on `keine`). 11063's `.` on `.` and `NIEDOTYCZY` on `nie dotyczy` are
+    /// dropped too, but by the gate, which admits neither identifier; the echo would refuse
+    /// both. A name under four letters echoes nothing (`NO` beside the VAT `NO974760673MVA`).
+    #[test]
+    fn a_blank_party_with_a_gated_identifier_is_kept() {
+        use placeholder_511::*;
+        assert!(normalise_identifier("38160540", Some("DK")).is_some(), "premise: a CVR the gate admits");
+        let kept = eforms(&[("Procedure-Buyer", "Morsø Kommune", "DNK", ""), ("Tenderer", "0", "DNK", "38160540")], Some("DAN"));
+        assert!(decided(false, &kept).is_empty(), "`0` with its CVR is a party");
+        let (mentions, _) = NoticeState::mentions_and_void(false, 9, &kept);
+        assert_eq!(mentions.len(), 2);
+        for (name, raw, country, gated) in [
+            (".", ".", "AUT", false),
+            ("keine", "KEINEANGABEGEM62ABS3BVERGG2018", "DEU", true),
+            ("nie dotyczy", "NIEDOTYCZY", "POL", false),
+            // Refused by the first arm alone: the identifier is itself a non-name, and holds
+            // nothing of the party's own name.
+            ("entfällt", "keine Angabe gem. § 62 Abs. 3 BVergG 2018", "DEU", true),
+        ] {
+            let alpha2 = canonical_country(country);
+            assert_eq!(gated_identifier(Some(raw), None, Some(alpha2.as_str())).is_some(), gated, "{name} / {raw}: the gate");
+            let parsed = eforms(&[("Procedure-Buyer", "Stadt Wien", "AUT", ""), ("Lot-ReviewOrg", name, country, raw)], None);
+            assert_eq!(decided(false, &parsed).get("ORG-2"), Some(&NotAName::Blank), "{name} / {raw}: dropped");
+            let names = [(name, Some(NotAName::Blank))];
+            assert!(identifier_echoes(raw, &names, None), "{name} / {raw}: the identifier echoes the non-name");
+        }
+        assert!(crate::partyname::not_a_name("keine Angabe gem. § 62 Abs. 3 BVergG 2018").is_some());
+        assert!(!"keineangabegem62abs3bvergg2018".contains("entfallt"), "premise: the containment arm stays quiet");
+        assert!(!identifier_echoes("38160540", &[("0", Some(NotAName::Blank))], None), "a name with no letter echoes nothing");
+        assert!(!identifier_echoes("T04089980", &[("Nicht vorhanden", Some(NotAName::Blank))], None));
+        // The unit-2 review: a one- or two-letter blank word turns up in unrelated identifiers
+        // (a country prefix, a check letter), so the containment arm needs four.
+        for (name, raw, country, lang) in [
+            ("NO", "NO974760673MVA", "NOR", "NOR"),
+            ("x", "DE811569869X", "DEU", "DEU"),
+            ("N/A", "NA000123", "GBR", "ENG"),
+            ("na", "NA000123", "GBR", "ENG"),
+        ] {
+            assert!(gated_identifier(Some(raw), None, Some(canonical_country(country).as_str())).is_some(), "premise: {raw}");
+            let parsed = eforms(&[("Procedure-Buyer", "Oslo kommune", "NOR", ""), ("Tenderer", name, country, raw)], Some(lang));
+            assert!(decided(false, &parsed).is_empty(), "{name} / {raw}: a party with a missing name, kept");
+            assert!(!identifier_echoes(raw, &[(name, Some(NotAName::Blank))], Some(lang)), "{name} / {raw}");
+        }
+    }
+
+    /// Issue 511: a placeholder gets no identifier guard — its text says the identity is
+    /// withheld or elsewhere — but the fold counts each one it drops with an identifier,
+    /// and keeps a bounded sample for 511 §8.1's read.
+    #[test]
+    fn a_placeholder_party_with_an_identifier_is_dropped() {
+        use placeholder_511::*;
+        assert!(normalise_identifier("GB553298332", Some("GB")).is_some(), "premise");
+        let parsed = eforms(
+            &[
+                ("Procedure-Buyer", "NHS Supply Chain", "GBR", ""),
+                ("Tenderer", "Withheld Section94 Supplier", "GBR", "GB553298332"),
+                ("Tenderer", "Various suppliers", "GBR", ""),
+                ("Tenderer", "N/A", "GBR", ""),
+            ],
+            Some("ENG"),
+        );
+        assert_eq!(
+            decided(false, &parsed),
+            BTreeMap::from([
+                ("ORG-2".to_owned(), NotAName::Placeholder),
+                ("ORG-3".to_owned(), NotAName::Placeholder),
+                ("ORG-4".to_owned(), NotAName::Blank),
+            ])
+        );
+        let (mentions, skipped, dropped) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        assert_eq!(mentions.len(), 1, "only the buyer mints");
+        assert_eq!(skipped.len(), 3);
+        assert_eq!((dropped.void, dropped.placeholder, dropped.blank, dropped.placeholder_identified), (0, 2, 1, 1));
+        assert_eq!(
+            dropped.sample,
+            vec![(9, "ORG-2".to_owned(), "Withheld Section94 Supplier".to_owned(), "GB553298332".to_owned())]
+        );
+        // The sample stays bounded across notices.
+        let mut total = DroppedParties::default();
+        for _ in 0..(DROPPED_SAMPLE + 5) {
+            total.add(dropped.clone());
+        }
+        assert_eq!(total.placeholder_identified, (DROPPED_SAMPLE + 5) as u64);
+        assert_eq!(total.sample.len(), DROPPED_SAMPLE);
+        assert_eq!(total.total(), 3 * (DROPPED_SAMPLE + 5) as u64);
+    }
+
+    /// Issue 511 §3: a placeholder buyer is dropped like any other party, so it leaves no
+    /// buyer token and no buyer key — the designed "names no buyer" — and a separate, real
+    /// contract signatory does not make the notice known on its own (481 2c).
+    #[test]
+    fn a_placeholder_buyer_leaves_no_buyer_tokens() {
+        use placeholder_511::*;
+        const B: &str = "Procedure-Buyer";
+        const S: &str = "Contract-Signatory";
+        let side = |parties: &[(&str, &str, &str, &str)]| {
+            let parsed = eforms(parties, Some("DEU"));
+            let guard = GuardSide::read(false, 9, &parsed);
+            let key = buyer_key_of(guard.buyers());
+            (guard.tokens(), key)
+        };
+        for placeholder in [(B, ".", "AUT", "."), (B, "N/A", "GBR", ""), (B, "Keine Angabe.", "DEU", "")] {
+            assert_eq!(side(&[placeholder]), (vec![], None), "{placeholder:?}");
+            assert_eq!(side(&[placeholder, (S, "Bundesministerium für Inneres", "AUT", "")]), (vec![], None), "{placeholder:?} + a signatory");
+            let (tokens, key) = side(&[placeholder, (B, "Stadt Wien", "AUT", "")]);
+            assert_eq!((tokens, key.clone()), side(&[(B, "Stadt Wien", "AUT", "")]), "{placeholder:?}: only the real buyer");
+            assert_eq!(key.as_deref(), Some("n2:AT:stadt wien"));
+        }
+        // Before the drop, `N/A` GB keyed every such notice as one buyer.
+        assert_eq!(buyer_key(false, 9, &eforms(&[(B, "N/A", "GBR", "")], None)), None);
+    }
+
+    /// Issue 511 guard 2: `Ingen` is blank only on a Danish, Swedish or Norwegian notice;
+    /// on a French one, or one with no language, the party mints (1188404 `Ingen` FR).
+    #[test]
+    fn a_scoped_word_follows_the_notice_language() {
+        use placeholder_511::*;
+        let parties = [("Procedure-Buyer", "Region Hovedstaden", "DNK", ""), ("Tenderer", "Ingen", "DNK", "")];
+        for (lang, dropped) in [(Some("DAN"), true), (Some("SWE"), true), (Some("FRA"), false), (None, false)] {
+            let (mentions, skipped) = NoticeState::mentions_and_void(false, 9, &eforms(&parties, lang));
+            assert_eq!(skipped.len(), usize::from(dropped), "{lang:?}");
+            assert_eq!(mentions.len(), 2 - usize::from(dropped), "{lang:?}");
+        }
+        let brand = [("Procedure-Buyer", "Region Hovedstaden", "DNK", ""), ("Tenderer", "InGen", "DNK", "")];
+        assert!(NoticeState::mentions_and_void(false, 9, &eforms(&brand, Some("DAN"))).1.is_empty(), "a brand's case");
+        // The decider asks for the language whatever lot qualifier follows the word (the
+        // unit-2 review: a 24-byte cutoff kept this one while the predicate dropped it).
+        let long = "INGEN (lots 1, 2, 3, 4, 5 og 6)";
+        assert_eq!(crate::partyname::not_a_name_in(long, Some("DAN")), Some(NotAName::Blank), "premise");
+        let qualified = [("Procedure-Buyer", "Region Hovedstaden", "DNK", ""), ("Tenderer", long, "DNK", "")];
+        assert_eq!(decided(false, &eforms(&qualified, Some("DAN"))), BTreeMap::from([("ORG-2".to_owned(), NotAName::Blank)]));
+        assert!(decided(false, &eforms(&qualified, Some("FRA"))).is_empty(), "and keeps it on a French notice");
+    }
+
+    /// Issue 511 §2: an eForms placeholder tenderer (Section94's `Withheld Section94
+    /// Supplier`) is no tenderer and no winner, but the publisher's BT-142 and the Bid stay.
+    #[test]
+    fn an_eforms_placeholder_tenderer_keeps_the_publishers_decision() {
+        use placeholder_511::*;
+        let mut parsed = eforms(&[("Procedure-Buyer", "NHS Supply Chain", "GBR", "")], Some("ENG"));
+        for s in [
+            section("ORG-2", ORGANIZATION_KIND, None),
+            section("LOT-0", "Lot", None),
+            section("RES-0", "LotResult", None),
+            section("TEN-0", "LotTender", None),
+            section("TPA-0", "TenderingParty", None),
+        ] {
+            parsed.sections.push(s);
+        }
+        parsed.values.extend([
+            code("RES-0", "BT-142-LotResult", "selec-w"),
+            id_val("RES-0", "BT-13713-LotResult", "LOT-0"),
+            id_ref("RES-0", "OPT-320-LotResult", "TEN-0"),
+            id_val("TEN-0", "BT-13714-Tender", "LOT-0"),
+            id_ref("TEN-0", "OPT-310-Tender", "TPA-0"),
+            id_ref("TPA-0", "OPT-300-Tenderer", "ORG-2"),
+            text_value("ORG-2", ORG_NAME_FIELD, 0, None, "Withheld Section94 Supplier"),
+        ]);
+        let state = bound("eforms:eforms-sdk-1.10", &parsed);
+        assert_eq!(results(&state), vec![(Some("selec-w".into()), vec![])], "the publisher's decision, no winner");
+        let round = state.round.as_ref().unwrap();
+        assert_eq!(round.bids.len(), 1, "the Bid stays");
+        assert!(round.bids[0].parties.is_empty(), "no placeholder bid party: {:?}", round.bids[0].parties);
+        assert_eq!(party_orgs(&state), BTreeSet::from([1_001]));
+    }
+
+    /// Issue 511: `Report::dropped` counts outermost sections only — a dropped party named
+    /// through its nested inner half counts once, though the decider's map holds both.
+    #[test]
+    fn the_dropped_report_counts_outer_sections() {
+        use placeholder_511::*;
+        let mut parsed = legacy(&[], &["ORG-2"], vec![]);
+        parsed.sections.push(section("ORG-1", ORGANIZATION_KIND, Some("RES-1")));
+        parsed.sections.push(section("ORG-2", ORGANIZATION_KIND, Some("ORG-1")));
+        parsed.values.push(text_value("ORG-2", "TED-OFFICIALNAME", 0, None, "N/A"));
+        assert_eq!(decided(false, &parsed).len(), 2, "the outer section and its inner half");
+        let (_, skipped, dropped) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        assert_eq!(skipped, vec!["ORG-1".to_owned()]);
+        assert_eq!((dropped.blank, dropped.total()), (1, 1));
+        assert_eq!(results(&bound("ted-export-r209", &parsed)), vec![(Some("clos-nw".into()), vec![])]);
+    }
+
     /// Issue 512: the text parser stores the "every tender was rejected" marker as a Code
     /// on its award skeleton, beside the award date. Read as the Integer only, a dated text
     /// rejection decided nothing (NULL); both spellings now close the result.
@@ -13633,7 +14359,7 @@ mod tests {
                 values: vec![row(LEGACY_NO_AWARD_MARKER, marker.clone()), row(LEGACY_AWARD_DATE_FIELD, date.clone())],
             };
             let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
-            let raw = read_results(&sections, &parsed, true, false, &BTreeSet::new());
+            let raw = read_results(&sections, &parsed, true, false, &BTreeMap::new());
             assert_eq!(raw.lot_results[0].decision.as_deref(), Some("clos-nw"), "{marker:?}");
         }
         // The date alone stays NULL: an announced award with no outcome is silence (issue 257).
@@ -13642,6 +14368,6 @@ mod tests {
             values: vec![row(LEGACY_AWARD_DATE_FIELD, date)],
         };
         let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
-        assert_eq!(read_results(&sections, &parsed, true, false, &BTreeSet::new()).lot_results[0].decision, None);
+        assert_eq!(read_results(&sections, &parsed, true, false, &BTreeMap::new()).lot_results[0].decision, None);
     }
 }

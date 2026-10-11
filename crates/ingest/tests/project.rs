@@ -6239,3 +6239,58 @@ async fn an_incremental_refold_retires_a_standing_void_mention() {
 async fn a_full_fold_retires_a_standing_void_mention() {
     a_standing_void_mention_is_retired_by_a_refold(Refold::Full).await;
 }
+
+/// Issue 511: a winner fixed into a placeholder by a re-parse (`Withheld`, the shape of
+/// every standing placeholder mention when the rule deploys) is retired by the refold, as
+/// 510's void ones are — mention, party row and result winner gone — but its result stays
+/// `selec-w`: the text says a winner exists, withheld. The run's `dropped` counts it as a
+/// placeholder; a second refold retires nothing.
+async fn a_standing_placeholder_mention_is_retired_by_a_refold(refold: Refold) {
+    let (db, fetch_id, path) = scratch(&format!("511-retire-{refold:?}")).await;
+    let (notice, original, withheld) = defence_award_with_winner(fetch_id, "Withheld");
+    db.record_notice(&notice, &Parse::Parsed(original)).await.expect("record");
+    project::project(&db, false).await.expect("first fold");
+    let winner = scalar(&db, "SELECT organization_id FROM tender_version_result_winners").await;
+    assert_eq!(query_text(&db, "SELECT decision FROM tender_version_lot_results").await.as_deref(), Some("selec-w"));
+
+    db.reparse_notice(&notice, &withheld).await.expect("reparse");
+    let report = match refold {
+        Refold::Incremental => project::project_incremental(&db).await.expect("refold"),
+        Refold::Full => project::project(&db, false).await.expect("full refold"),
+    };
+    assert_eq!(report.mentions_retired, 1, "{refold:?}: the recorded winner mention was retired");
+    assert_eq!((report.dropped.placeholder, report.dropped.void, report.dropped.blank), (1, 0, 0), "{refold:?}");
+    assert_eq!(report.dropped.placeholder_identified, 0, "{refold:?}: the fixture's winner carries no identifier");
+    assert_eq!(scalar(&db, &format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {winner}")).await, 0);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organization_mentions WHERE name = 'Withheld'").await, 0, "{refold:?}");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await, 0, "{refold:?}");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_parties WHERE role = 'winner'").await, 0, "{refold:?}");
+    assert_eq!(
+        query_text(&db, "SELECT decision FROM tender_version_lot_results").await.as_deref(),
+        Some("selec-w"),
+        "{refold:?}: a withheld winner is still a selection"
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            &format!("SELECT COUNT(*) FROM tenders WHERE projection_epoch <> {}", store::canonical::PROJECTION_EPOCH)
+        )
+        .await,
+        0,
+        "{refold:?}: the stamp was consumed by this run's Phase 2"
+    );
+
+    let again = project::project_incremental(&db).await.expect("second refold");
+    assert_eq!(again.mentions_retired, 0, "nothing left to retire");
+    let _ = std::fs::remove_file(&path);
+}
+
+#[tokio::test]
+async fn an_incremental_refold_retires_a_standing_placeholder_mention() {
+    a_standing_placeholder_mention_is_retired_by_a_refold(Refold::Incremental).await;
+}
+
+#[tokio::test]
+async fn a_full_fold_retires_a_standing_placeholder_mention() {
+    a_standing_placeholder_mention_is_retired_by_a_refold(Refold::Full).await;
+}

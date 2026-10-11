@@ -2812,6 +2812,10 @@ pub(crate) fn refused_key_range(key: &str) -> (String, String) {
 /// `tenders`' procedure-key index.
 pub(crate) const REFUSED_TENDERS_SQL: &str = "SELECT id FROM tenders WHERE procedure_key >= ? AND procedure_key < ?";
 
+/// [`REFUSED_TENDERS_SQL`] with each Tender's own key (issue 511's canary pre-image).
+const REFUSED_TENDERS_KEYS_SQL: &str =
+    "SELECT id, procedure_key FROM tenders WHERE procedure_key >= ? AND procedure_key < ?";
+
 /// The keys a link merged a refused key's groups into, by [`refused_key_range`]: a range
 /// seek on `tender_key_merges`' PRIMARY KEY.
 pub(crate) const REFUSED_MERGE_TARGETS_SQL: &str =
@@ -10906,6 +10910,30 @@ fn rekey_target(
     None
 }
 
+/// One organization a name walk matched ([`Db::orgs_named_window`]): `(id, name,
+/// identifier, country)`.
+pub type NamedOrg = (i64, String, Option<String>, Option<String>);
+
+/// [`Db::party_role_counts_of_orgs`]' statement for `n` ids — one place, so the plan guard
+/// (`the_placeholder_plan_readers_seek_the_org_role_index_at_the_chunk_width`) EXPLAINs
+/// exactly what runs, at [`IN_CHUNK`] ids (issue 511's plan-width rule).
+fn party_role_counts_sql(n: usize) -> String {
+    format!(
+        "SELECT organization_id, role, COUNT(*) FROM tender_version_parties \
+          WHERE organization_id IN ({}) GROUP BY organization_id, role",
+        placeholders(n)
+    )
+}
+
+/// [`Db::buyer_notices_of_orgs`]' statement for `n` ids, under the same plan guard.
+fn buyer_notices_sql(n: usize) -> String {
+    format!(
+        "SELECT DISTINCT mention_notice_id, tender_id FROM tender_version_parties \
+          WHERE organization_id IN ({}) AND role IN ('buyer', 'Procedure-Buyer')",
+        placeholders(n)
+    )
+}
+
 /// What the resolver's issue-434 refresh did this run: recorded mentions whose
 /// stored facts disagreed with the parse and were rewritten in place, how many
 /// of those the re-resolve moved to another organization, and how many Tenders
@@ -17119,22 +17147,24 @@ impl Db {
         Ok(ids)
     }
 
-    /// Issue 510's `refold-void-names` walk: one window of `organizations` by id (after
-    /// `after`, at most `limit` rows), keeping the rows whose head name `matches` — the
-    /// caller injects `partyname::not_a_name(..) == VoidLot`, the SAME predicate the fold
-    /// applies, so the store holds no language. Returns the matches as
-    /// `(id, name, identifier)` and the last id read (`None` once the walk is past the
-    /// end). A primary-key range read on a reader connection.
+    /// Issue 510's `refold-void-names` walk (and issue 511's `refold-placeholder-names`):
+    /// one window of `organizations` by id (after `after`, at most `limit` rows), keeping
+    /// the rows whose head name `matches` — the caller injects the class's net
+    /// (`partyname::mentions_void`, `partyname::mentions_placeholder`), the SAME predicate
+    /// family the fold applies, so the store holds no language. Returns the matches as
+    /// `(id, name, identifier, country)` — the country for 511's scoped words, read by the
+    /// org's country as a proxy for the notice language — and the last id read (`None` once
+    /// the walk is past the end). A primary-key range read on a reader connection.
     pub async fn orgs_named_window(
         &self,
         after: i64,
         limit: i64,
         matches: fn(&str) -> bool,
-    ) -> turso::Result<(Vec<(i64, String, Option<String>)>, Option<i64>)> {
+    ) -> turso::Result<(Vec<NamedOrg>, Option<i64>)> {
         let conn = self.reader().await?;
         let mut rows = conn
             .query(
-                "SELECT id, name, identifier FROM organizations WHERE id > ? ORDER BY id LIMIT ?",
+                "SELECT id, name, identifier, country FROM organizations WHERE id > ? ORDER BY id LIMIT ?",
                 (Value::Integer(after), Value::Integer(limit)),
             )
             .await?;
@@ -17145,7 +17175,7 @@ impl Db {
             if let Some(name) = opt_text_of(&row, 1)
                 && matches(&name)
             {
-                found.push((id, name, opt_text_of(&row, 2)));
+                found.push((id, name, opt_text_of(&row, 2), opt_text_of(&row, 3)));
             }
         }
         Ok((found, last))
@@ -17184,9 +17214,96 @@ impl Db {
         Ok(out)
     }
 
+    /// Issue 511's dry plan: the party rows of `orgs` per role, `(organization, role,
+    /// rows)` — `SELECT organization_id, role, COUNT(*) … GROUP BY organization_id, role` on
+    /// `tender_version_parties_org_role` in IN chunks, a covering seek (the census's own
+    /// plan-checked shape). That index is one of `DEFERRED_TENDER_INDEXES`, which a full
+    /// rebuild drops: never run this during one.
+    pub async fn party_role_counts_of_orgs(&self, orgs: &[i64]) -> turso::Result<Vec<(i64, String, u64)>> {
+        let conn = self.reader().await?;
+        let mut out = Vec::new();
+        for chunk in orgs.chunks(IN_CHUNK) {
+            let sql = party_role_counts_sql(chunk.len());
+            let mut rows = conn.query(&sql, chunk.iter().map(|id| Value::Integer(*id)).collect::<Vec<_>>()).await?;
+            while let Some(row) = rows.next().await? {
+                out.push((int(&row, 0), opt_text_of(&row, 1).unwrap_or_default(), int(&row, 2) as u64));
+            }
+        }
+        out.sort();
+        Ok(out)
+    }
+
+    /// Issue 511's buyer canary: the `(notice, tender)` of every buyer-slot party row of
+    /// `orgs` (`buyer`, `Procedure-Buyer`), distinct — a seek on
+    /// `tender_version_parties_org_role` that is NOT covering (`mention_notice_id` costs a
+    /// table lookup per row, cheap at the ~290 rows the census counted). The index is
+    /// deferred: never run this during a full rebuild.
+    pub async fn buyer_notices_of_orgs(&self, orgs: &[i64]) -> turso::Result<Vec<(i64, i64)>> {
+        let conn = self.reader().await?;
+        let mut out = Vec::new();
+        for chunk in orgs.chunks(IN_CHUNK) {
+            let sql = buyer_notices_sql(chunk.len());
+            let mut rows = conn.query(&sql, chunk.iter().map(|id| Value::Integer(*id)).collect::<Vec<_>>()).await?;
+            while let Some(row) = rows.next().await? {
+                out.push((int(&row, 0), int(&row, 1)));
+            }
+        }
+        out.sort_unstable();
+        out.dedup();
+        Ok(out)
+    }
+
+    /// Issue 511's buyer-canary pre-image: for each procedure `key`, its family — the Tender
+    /// it keys (a seek on `tenders_procedure_key`) and the groups a refusal split it into
+    /// (a range seek on [`refused_key_range`]) — with the notices each Tender holds
+    /// (`tender_versions`' primary key), as `(key, tender, the Tender's own key, notice)`,
+    /// sorted. At most `cap` Tenders per key: a key with more is named in the second list
+    /// for a read by hand. Both key indexes are deferred: never run this during a full
+    /// rebuild.
+    pub async fn procedure_key_families(
+        &self,
+        keys: &[String],
+        cap: usize,
+    ) -> turso::Result<(Vec<(String, i64, String, i64)>, Vec<String>)> {
+        let conn = self.reader().await?;
+        let mut exact = conn.prepare("SELECT id, procedure_key FROM tenders WHERE procedure_key = ?").await?;
+        let mut ranged = conn.prepare(REFUSED_TENDERS_KEYS_SQL).await?;
+        let mut versions =
+            conn.prepare("SELECT DISTINCT caused_by_notice_id FROM tender_versions WHERE tender_id = ?").await?;
+        let (mut out, mut over) = (Vec::new(), Vec::new());
+        for key in keys {
+            let mut tenders: Vec<(i64, String)> = Vec::new();
+            let mut rows = exact.query((t(key),)).await?;
+            while let Some(row) = rows.next().await? {
+                tenders.push((int(&row, 0), text(&row, 1)));
+            }
+            drop(rows);
+            let (lo, hi) = refused_key_range(key);
+            let mut rows = ranged.query((t(&lo), t(&hi))).await?;
+            while let Some(row) = rows.next().await? {
+                tenders.push((int(&row, 0), text(&row, 1)));
+            }
+            drop(rows);
+            if tenders.len() > cap {
+                over.push(key.clone());
+                tenders.truncate(cap);
+            }
+            for (tender, own) in tenders {
+                let mut rows = versions.query((Value::Integer(tender),)).await?;
+                while let Some(row) = rows.next().await? {
+                    out.push((key.clone(), tender, own.clone(), int(&row, 0)));
+                }
+            }
+        }
+        out.sort();
+        out.dedup();
+        Ok((out, over))
+    }
+
     /// Issue 510: retire the recorded mentions of void-lot parties — `keys` are the
     /// `(notice, section)` of parties whose every published name says the lot was not
     /// awarded (`partyname::not_a_name`, decided in ingest; the store holds no language).
+    /// Class-blind: since issue 511 the keys also name placeholder and blank parties.
     ///
     /// The fold no longer builds a mention for such a party, so a recorded row would
     /// otherwise stand for good: the resolver never sees it again, the issue-434 refresh
@@ -37129,6 +37246,46 @@ mod tests {
                     "{sql} ends its range with an index comparison: {ops:#?}"
                 );
             }
+        }
+        drop(conn);
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// Issue 511 U2c: both dry-plan readers planned at the width they SEND — `IN_CHUNK`
+    /// ids. Its unit-1 decision's Basis records every read at its sent width: the census
+    /// planned the role split at 100 ids and its review at 229, and an IN plan can flip
+    /// with width (issue 323's poison reproduced only at 100+). Each must seek
+    /// `tender_version_parties_org_role` and scan nothing. The index is deferred, built here
+    /// as the fold's end builds it on prod.
+    #[tokio::test]
+    async fn the_placeholder_plan_readers_seek_the_org_role_index_at_the_chunk_width() {
+        let path = format!("/tmp/tender-db-511-eqp-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = crate::Db::open(&path).await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let ids: Vec<turso::Value> = (1..=super::IN_CHUNK as i64).map(turso::Value::Integer).collect();
+        for (reader, sql) in [
+            ("party_role_counts_of_orgs", super::party_role_counts_sql(super::IN_CHUNK)),
+            ("buyer_notices_of_orgs", super::buyer_notices_sql(super::IN_CHUNK)),
+        ] {
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), ids.clone()).await.unwrap();
+            let mut plan = String::new();
+            while let Some(r) = rows.next().await.unwrap() {
+                plan.push_str(&r.get_value(3).ok().and_then(|v| v.as_text().cloned()).unwrap_or_default());
+                plan.push('\n');
+            }
+            println!("PLAN {reader} at {} ids:\n{plan}", super::IN_CHUNK);
+            assert!(
+                plan.lines().any(|l| l.contains("SEARCH") && l.contains("USING INDEX tender_version_parties_org_role")),
+                "{reader} must seek tender_version_parties_org_role at {} ids — plan was:\n{plan}",
+                super::IN_CHUNK
+            );
+            assert!(!plan.lines().any(|l| l.trim_start().starts_with("SCAN ")), "{reader} scans — plan was:\n{plan}");
         }
         drop(conn);
         for suffix in ["", "-wal", "-shm"] {

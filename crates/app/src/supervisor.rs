@@ -580,6 +580,13 @@ enum Spec {
     /// those notices with their Tenders stamped epoch-stale, so the next incremental fold
     /// retires the mentions. Dry (the default) counts and stores `void-names-refold`.
     RefoldVoidNames { dry_run: bool, expect: Option<u64> },
+    /// Issue 511: 510's walk generalised by class — every organization whose head name
+    /// the placeholder net catches (`ingest::partyname::mentions_placeholder`: a pointer,
+    /// a withheld or blank slot, punctuation only) and the notices that mention one; a
+    /// wet run (which needs `expect`) re-queues every hit the predicate does not read as
+    /// an award summary, so the fold decides the anchor, the scope and the identifier
+    /// guard and retires the mentions. Dry (the default) stores `placeholder-names-refold`.
+    RefoldPlaceholderNames { dry_run: bool, expect: Option<u64> },
     /// Issue 443 step 3: the sweep a fold queues after it re-bound mentions
     /// (every re-bind can empty the row it left). It counts, then sweeps in
     /// the same job when the count is at most `cap`; above it (an era-scale
@@ -2106,30 +2113,25 @@ impl Supervisor {
                 let params = if dry_run { "refold-buyer-roles dry-run" } else { "refold-buyer-roles" }.to_owned();
                 Ok(vec![self.push("refold-buyer-roles", params, Spec::RefoldBuyerRoles { dry_run }).await])
             }
-            // Issue 510: dry unless asked; a wet run needs `expect` (the dry run's notice
-            // count) and is paired with the fold that retires the mentions.
-            "refold-void-names" => {
+            // Issues 510 and 511: dry unless asked; a wet run needs `expect` (the dry run's
+            // notice count) and is paired with the fold that retires the mentions.
+            "refold-void-names" | "refold-placeholder-names" => {
+                // `push` takes a `'static` kind.
+                let kind = if req.kind == "refold-void-names" { "refold-void-names" } else { "refold-placeholder-names" };
                 let dry_run = req.dry_run.unwrap_or(true);
                 if !dry_run && req.expect.is_none() {
-                    return Err("refold-void-names wet needs `expect` — the dry run's notice count".into());
+                    return Err(format!("{kind} wet needs `expect` — the dry run's notice count"));
                 }
+                let spec = if kind == "refold-void-names" {
+                    Spec::RefoldVoidNames { dry_run, expect: req.expect }
+                } else {
+                    Spec::RefoldPlaceholderNames { dry_run, expect: req.expect }
+                };
                 if dry_run {
-                    return Ok(vec![
-                        self.push(
-                            "refold-void-names",
-                            "refold-void-names dry-run".into(),
-                            Spec::RefoldVoidNames { dry_run, expect: req.expect },
-                        )
-                        .await,
-                    ]);
+                    return Ok(vec![self.push(kind, format!("{kind} dry-run"), spec).await]);
                 }
                 Ok(vec![
-                    self.push(
-                        "refold-void-names",
-                        format!("refold-void-names expect {}", req.expect.unwrap_or(0)),
-                        Spec::RefoldVoidNames { dry_run, expect: req.expect },
-                    )
-                    .await,
+                    self.push(kind, format!("{kind} expect {}", req.expect.unwrap_or(0)), spec).await,
                     self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
                         .await,
                 ])
@@ -2643,6 +2645,30 @@ fn wall_suffix(w: &store::WallCounts) -> String {
         // say either way.
         String::new()
     }
+}
+
+/// Issue 511: a fold's dropped parties ([`ingest::project::DroppedParties`]) for its durable
+/// log row — per class, the identified placeholders, and their bounded sample as
+/// `notice/section 'name' [identifier]`, names clipped. Empty when the fold dropped nothing.
+fn dropped_suffix(dropped: &ingest::project::DroppedParties) -> String {
+    if dropped.total() == 0 {
+        return String::new();
+    }
+    let clip = |s: &str| -> String { s.chars().take(60).collect() };
+    let sample = dropped
+        .sample
+        .iter()
+        .map(|(notice, section, name, identifier)| format!("{notice}/{section} '{}' [{}]", clip(name), clip(identifier)))
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!(
+        "; dropped parties (issue 511): {} void, {} placeholder ({} with an identifier{}), {} blank",
+        dropped.void,
+        dropped.placeholder,
+        dropped.placeholder_identified,
+        if sample.is_empty() { String::new() } else { format!(": {sample}") },
+        dropped.blank
+    )
 }
 
 /// Issue 448 unit 3: what the resolver's altid alias did this fold, as the suffix
@@ -3397,6 +3423,77 @@ const BUYER_ROLE_REFOLD_REPORT: &str = "buyer-role-refold";
 /// orgs and the top orgs by mentions.
 const VOID_NAMES_REFOLD_REPORT: &str = "void-names-refold";
 
+/// Issue 511: the report `refold-placeholder-names` stores — 510's sections plus the
+/// placeholder plan's (`Supervisor::placeholder_plan`).
+const PLACEHOLDER_NAMES_REFOLD_REPORT: &str = "placeholder-names-refold";
+
+/// Issue 511: the non-name class one `run_refold_non_names` walk drains — 510's void lots
+/// or 511's placeholders (pointers, withheld or missing names, blank slots).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum NonNames {
+    Void,
+    Placeholder,
+}
+
+impl NonNames {
+    fn kind(self) -> &'static str {
+        match self {
+            NonNames::Void => "refold-void-names",
+            NonNames::Placeholder => "refold-placeholder-names",
+        }
+    }
+
+    fn issue(self) -> &'static str {
+        match self {
+            NonNames::Void => "510",
+            NonNames::Placeholder => "511",
+        }
+    }
+
+    fn report(self) -> &'static str {
+        match self {
+            NonNames::Void => VOID_NAMES_REFOLD_REPORT,
+            NonNames::Placeholder => PLACEHOLDER_NAMES_REFOLD_REPORT,
+        }
+    }
+
+    fn noun(self) -> &'static str {
+        match self {
+            NonNames::Void => "void-lot",
+            NonNames::Placeholder => "placeholder",
+        }
+    }
+
+    /// The walk's net: every head name carrying one of the class's phrases, before the
+    /// fold's exemptions, so the plan lists what they keep beside what the fold drops.
+    fn net(self) -> fn(&str) -> bool {
+        match self {
+            NonNames::Void => ingest::partyname::mentions_void,
+            NonNames::Placeholder => ingest::partyname::mentions_placeholder,
+        }
+    }
+
+    /// Whether a hit is re-queued rather than exempted. 510: the void lots the fold drops
+    /// (`is_void_lot`). 511: every hit but an award summary — the fold, not the walk,
+    /// decides the anchor, the scope and the identifier guard, so a hit the fold keeps
+    /// costs a refold and nothing else.
+    fn requeues(self, name: &str) -> bool {
+        match self {
+            NonNames::Void => ingest::partyname::is_void_lot(name),
+            NonNames::Placeholder => {
+                ingest::partyname::not_a_name(name) != Some(ingest::partyname::NotAName::AwardSummary)
+            }
+        }
+    }
+}
+
+/// Issue 511: [`Supervisor::placeholder_plan`]'s answer — the summary clause for the job
+/// row and the sections the stored report gains.
+struct PlaceholderPlan {
+    summary: String,
+    fields: serde_json::Map<String, serde_json::Value>,
+}
+
 /// The hub Tender ids of a stored `procedure-key-census` report body (issue 482 unit 2).
 fn hub_tender_ids(body: &str) -> Result<Vec<i64>, String> {
     let report: serde_json::Value = serde_json::from_str(body).map_err(|e| format!("census report: {e}"))?;
@@ -3625,6 +3722,8 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 510: read between organization windows; a stop writes nothing (the wet
     // re-queue starts only after the whole walk) and stores no report.
     "refold-void-names",
+    // Issue 511: the same walk generalised by class, the same checkpoints.
+    "refold-placeholder-names",
     // Issue 429: read between tables; a stop still refreshes the readers.
     "analyze",
     // Issue 477 unit 3: read before every by-id request; every answer is already in
@@ -4874,12 +4973,15 @@ impl Supervisor {
         } else {
             String::new()
         };
-        // Issue 510: void-lot mentions retired, silent at zero.
+        // Issue 510: void-lot mentions retired, silent at zero (every dropped class since 511).
         let retired = if report.mentions_retired > 0 {
-            format!("; {} void-lot mention(s) retired (issue 510)", report.mentions_retired)
+            format!("; {} non-name mention(s) retired (issues 510/511)", report.mentions_retired)
         } else {
             String::new()
         };
+        // Issue 511: the parties the decider dropped, per class, and the identified
+        // placeholders' sample — 511 §8.1's read before the drain's wet run. Silent at zero.
+        let dropped = dropped_suffix(&report.dropped);
         let citations = format!(
             "{}{}{}{}{}{}",
             citation_suffix(&report.citations),
@@ -4912,7 +5014,7 @@ impl Supervisor {
         // Issue 495 unit 3: the shadow compare's tally, when a stale Tender was compared.
         let compare = report.applied.compare_line().map(|line| format!("; {line}")).unwrap_or_default();
         Ok(format!(
-            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{compare}{wall}{alias}{refreshed}{retired}{sweep}{citations}",
+            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{compare}{wall}{alias}{refreshed}{retired}{dropped}{sweep}{citations}",
             report.notices,
             report.tenders,
             report.islands,
@@ -5119,42 +5221,52 @@ impl Supervisor {
         ))
     }
 
-    /// Issue 510's `refold-void-names`, its own fn through `off_frame` (issue 467). Walks
-    /// `organizations` by id window with the fold's own predicate
-    /// (`ingest::partyname::is_void_lot`, never SQL `LIKE`), then reads each match's
+    /// Issue 510's `refold-void-names` and issue 511's `refold-placeholder-names`, one fn
+    /// through `off_frame` (issue 467), generalised by class ([`NonNames`]). Walks
+    /// `organizations` by id window with the class's net (`ingest::partyname::mentions_void`
+    /// or `mentions_placeholder`, never SQL `LIKE`), splits the hits by the fold's own rule
+    /// (re-queued or exempted, [`NonNames::requeues`]), then reads each re-queued org's
     /// mention notices through `organization_mentions_org`. Dry counts; wet holds the
     /// notice count to `expect` (aborting, with nothing written, when it is above it by
-    /// more than a quarter: a predicate change caught before it re-queues the corpus),
-    /// then re-queues the notices and stamps their Tenders epoch-stale in chunks (the
-    /// issue-179 pair), for the paired fold to retire the mentions. Stoppable between
-    /// windows; a stopped run writes nothing and stores no report. A finished run stores
-    /// `void-names-refold`.
-    async fn run_refold_void_names(&self, job: &Job, dry_run: bool, expect: Option<u64>) -> Result<String, String> {
+    /// more than a quarter: a predicate change caught before it re-queues the corpus), then
+    /// re-queues the notices and stamps their Tenders epoch-stale in chunks (the issue-179
+    /// pair), for the paired fold to retire the mentions. Stoppable between windows; a
+    /// stopped run writes nothing and stores no report. A finished run stores
+    /// `void-names-refold` or `placeholder-names-refold`; the placeholder plan adds what
+    /// 511 §8.2 must read before the wet run ([`Self::placeholder_plan`]).
+    async fn run_refold_non_names(
+        &self,
+        job: &Job,
+        class: NonNames,
+        dry_run: bool,
+        expect: Option<u64>,
+    ) -> Result<String, String> {
         const WINDOW: i64 = 20_000;
         // A void name longer than this is listed in full for the operator: the composite
         // summaries the first dry run found ran to hundreds of characters, a void phrase
         // to a few dozen.
         const LONG_VOID_NAME: usize = 120;
+        let (kind, issue) = (class.kind(), class.issue());
         let mode = if dry_run { " DRY RUN — nothing written" } else { "" };
-        let mut orgs: Vec<(i64, String, Option<String>)> = Vec::new();
-        // Matched a void phrase, kept by `partyname::names_an_award` (a summary that names an
-        // award beside the void lot): never re-queued, listed for the operator.
-        let mut exempted: Vec<(i64, String, Option<String>)> = Vec::new();
+        let mut orgs: Vec<store::NamedOrg> = Vec::new();
+        // Matched the net, kept by the fold (510: a summary that names an award beside the
+        // void lot; 511: any award summary — a pointer followed by a name, a list): never
+        // re-queued, listed for the operator.
+        let mut exempted: Vec<store::NamedOrg> = Vec::new();
         let (mut after, mut walked) = (0i64, 0u64);
         loop {
             if self.cancelled(job.id) {
                 return Ok(format!(
-                    "refold-void-names (issue 510){mode}: STOPPED by cancel at organization id {after} — \
+                    "{kind} (issue {issue}){mode}: STOPPED by cancel at organization id {after} — \
                      nothing written, no report stored"
                 ));
             }
-            // The walk's net is every void phrase; the fold's own rule splits it below, so
-            // the plan lists what the award exemption keeps beside what the fold drops.
-            let (found, last) = Box::pin(self.db.orgs_named_window(after, WINDOW, ingest::partyname::mentions_void))
-                .await
-                .map_err(|e| e.to_string())?;
+            // The walk's net is every phrase of the class; the fold's own rule splits it
+            // below, so the plan lists what the exemption keeps beside what the fold drops.
+            let (found, last) =
+                Box::pin(self.db.orgs_named_window(after, WINDOW, class.net())).await.map_err(|e| e.to_string())?;
             for org in found {
-                if ingest::partyname::is_void_lot(&org.1) {
+                if class.requeues(&org.1) {
                     orgs.push(org);
                 } else {
                     exempted.push(org);
@@ -5167,10 +5279,10 @@ impl Supervisor {
                 "counting",
                 Some(walked),
                 None,
-                format!("organization id {after}: {} void-lot org(s) so far", orgs.len()),
+                format!("organization id {after}: {} {} org(s) so far", orgs.len(), class.noun()),
             );
         }
-        let ids: Vec<i64> = orgs.iter().map(|(id, _, _)| *id).collect();
+        let ids: Vec<i64> = orgs.iter().map(|(id, ..)| *id).collect();
         let pairs = Box::pin(self.db.mention_notices_of_orgs(&ids)).await.map_err(|e| e.to_string())?;
         let mut per_org: std::collections::HashMap<i64, u64> = std::collections::HashMap::new();
         for (org, _) in &pairs {
@@ -5181,16 +5293,16 @@ impl Supervisor {
         notices.dedup();
         let identified: Vec<serde_json::Value> = orgs
             .iter()
-            .filter(|(_, _, identifier)| identifier.is_some())
-            .map(|(id, name, identifier)| serde_json::json!({ "org": id, "name": name, "identifier": identifier }))
+            .filter(|(_, _, identifier, _)| identifier.is_some())
+            .map(|(id, name, identifier, _)| serde_json::json!({ "org": id, "name": name, "identifier": identifier }))
             .collect();
-        // The design's stand-in for a legal-form guard (unit1-decision §5.3): a match that
-        // also holds a commercial legal form is listed, every one, for the operator to
+        // The design's stand-in for a legal-form guard (510 unit1-decision §5.3): a match
+        // that also holds a commercial legal form is listed, every one, for the operator to
         // read before the wet run. Its stop rule: such an org that reads as a company.
         let legal_form: Vec<serde_json::Value> = orgs
             .iter()
-            .filter(|(_, name, _)| ingest::project::role_census::has_commercial_form(name))
-            .map(|(id, name, identifier)| {
+            .filter(|(_, name, ..)| ingest::project::role_census::has_commercial_form(name))
+            .map(|(id, name, identifier, _)| {
                 serde_json::json!({
                     "org": id,
                     "name": name,
@@ -5202,16 +5314,16 @@ impl Supervisor {
         let by_profile = Box::pin(self.db.notice_profile_counts(&notices)).await.map_err(|e| e.to_string())?;
         // What the operator reads before the wet run (issue 510's drain review): every
         // exempted org; every void name long enough to be a summary the exemption missed;
-        // and the void names by fold, so the whole cohort is readable in one report.
+        // and the names by fold, so the whole cohort is readable in one report.
         let clip = |name: &str, max: usize| -> String { name.chars().take(max).collect() };
-        let exempted_ids: Vec<i64> = exempted.iter().map(|(id, _, _)| *id).collect();
+        let exempted_ids: Vec<i64> = exempted.iter().map(|(id, ..)| *id).collect();
         let mut exempted_mentions: std::collections::HashMap<i64, u64> = std::collections::HashMap::new();
         for (org, _) in Box::pin(self.db.mention_notices_of_orgs(&exempted_ids)).await.map_err(|e| e.to_string())? {
             *exempted_mentions.entry(org).or_default() += 1;
         }
         let exempted_list: Vec<serde_json::Value> = exempted
             .iter()
-            .map(|(id, name, _)| {
+            .map(|(id, name, ..)| {
                 serde_json::json!({
                     "org": id,
                     "name": clip(name, 300),
@@ -5221,13 +5333,13 @@ impl Supervisor {
             .collect();
         let long: Vec<serde_json::Value> = orgs
             .iter()
-            .filter(|(_, name, _)| name.chars().count() > LONG_VOID_NAME)
-            .map(|(id, name, _)| {
+            .filter(|(_, name, ..)| name.chars().count() > LONG_VOID_NAME)
+            .map(|(id, name, ..)| {
                 serde_json::json!({ "org": id, "name": clip(name, 400), "mentions": per_org.get(id).copied().unwrap_or(0) })
             })
             .collect();
         let mut by_fold: std::collections::BTreeMap<String, (u64, u64)> = std::collections::BTreeMap::new();
-        for (id, name, _) in &orgs {
+        for (id, name, ..) in &orgs {
             let entry = by_fold.entry(clip(&ingest::partyname::fold(name), 120)).or_default();
             entry.0 += 1;
             entry.1 += per_org.get(id).copied().unwrap_or(0);
@@ -5235,17 +5347,27 @@ impl Supervisor {
         let mut distinct: Vec<(String, u64, u64)> = by_fold.into_iter().map(|(fold, (o, m))| (fold, o, m)).collect();
         distinct.sort_by(|a, b| b.1.cmp(&a.1).then(b.2.cmp(&a.2)).then(a.0.cmp(&b.0)));
         let mut top: Vec<(i64, &str, u64)> =
-            orgs.iter().map(|(id, name, _)| (*id, name.as_str(), per_org.get(id).copied().unwrap_or(0))).collect();
+            orgs.iter().map(|(id, name, ..)| (*id, name.as_str(), per_org.get(id).copied().unwrap_or(0))).collect();
         top.sort_by(|a, b| b.2.cmp(&a.2).then(a.0.cmp(&b.0)));
         top.truncate(20);
+        // Issue 511: the placeholder plan's own sections, read before anything is written.
+        let plan = match class {
+            NonNames::Void => None,
+            NonNames::Placeholder => Some(
+                Box::pin(self.placeholder_plan(&orgs, &exempted, &per_org, &exempted_mentions))
+                    .await
+                    .map_err(|e| e.to_string())?,
+            ),
+        };
         let found = notices.len() as u64;
         let (mut requeued, mut stamped) = (0u64, 0u64);
         if !dry_run {
-            let expect = expect.ok_or("refold-void-names wet needs `expect`")?;
+            let expect = expect.ok_or(format!("{kind} wet needs `expect`"))?;
             if found > expect.saturating_add(expect / 4) {
                 return Err(format!(
-                    "refold-void-names aborted: {found} notices mention a void-lot org, expected ~{expect} — \
-                     re-run dry and read it (nothing was written)"
+                    "{kind} aborted: {found} notices mention a {} org, expected ~{expect} — \
+                     re-run dry and read it (nothing was written)",
+                    class.noun()
                 ));
             }
             for chunk in notices.chunks(1_000) {
@@ -5259,7 +5381,7 @@ impl Supervisor {
                 );
             }
         }
-        let body = serde_json::json!({
+        let mut body = serde_json::json!({
             "dry_run": dry_run,
             "orgs": orgs.len(),
             "mentions": pairs.len(),
@@ -5274,24 +5396,269 @@ impl Supervisor {
             "distinct": distinct.iter().map(|(fold, o, m)| serde_json::json!({ "fold": fold, "orgs": o, "mentions": m })).collect::<Vec<_>>(),
             "top": top.iter().map(|(id, name, n)| serde_json::json!({ "org": id, "name": name, "mentions": n })).collect::<Vec<_>>(),
         });
-        self.db
-            .put_report(VOID_NAMES_REFOLD_REPORT, &body.to_string(), store::now_unix())
-            .await
-            .map_err(|e| e.to_string())?;
-        Ok(format!(
-            "refold-void-names (issue 510){mode}: {} void-lot org(s) ({} with an identifier, {} with a legal form, \
-             {} long; {} more exempted as naming an award), {} mention(s) on {found} notice(s) ({}); {} {}, stamped \
-             {stamped} tender(s) epoch-stale — the fold retires the mentions, then run sweep-orphan-orgs",
-            orgs.len(),
+        let summary = plan.as_ref().map(|plan| plan.summary.clone());
+        if let (Some(plan), Some(fields)) = (plan, body.as_object_mut()) {
+            // 511 §8.2: `identified` is the placeholders' alone (the void plan's covers
+            // every match); the blank ones are their own list, with guard 3's verdict.
+            fields.extend(plan.fields);
+        }
+        self.db.put_report(class.report(), &body.to_string(), store::now_unix()).await.map_err(|e| e.to_string())?;
+        let profiles = by_profile.iter().map(|(profile, n)| format!("{profile} {n}")).collect::<Vec<_>>().join(", ");
+        let action = if dry_run { "would re-queue" } else { "re-queued" };
+        let count = if dry_run { found } else { requeued };
+        Ok(match summary {
+            None => format!(
+                "{kind} (issue {issue}){mode}: {} void-lot org(s) ({} with an identifier, {} with a legal form, \
+                 {} long; {} more exempted as naming an award), {} mention(s) on {found} notice(s) ({profiles}); \
+                 {action} {count}, stamped {stamped} tender(s) epoch-stale — the fold retires the mentions, then run \
+                 sweep-orphan-orgs",
+                orgs.len(),
+                identified.len(),
+                legal_form.len(),
+                long.len(),
+                exempted.len(),
+                pairs.len(),
+            ),
+            Some(summary) => format!(
+                "{kind} (issue {issue}){mode}: {} org(s) the net caught and the fold decides ({summary}, {} with a \
+                 legal form, {} long; {} more exempted as award summaries), {} mention(s) on {found} notice(s) \
+                 ({profiles}); {action} {count}, stamped {stamped} tender(s) epoch-stale — read the plan's \
+                 read_before_wet lists, then the wet run's fold retires the mentions, then sweep-orphan-orgs",
+                orgs.len(),
+                legal_form.len(),
+                long.len(),
+                exempted.len(),
+                pairs.len(),
+            ),
+        })
+    }
+
+    /// Issue 511 §7 U2d: the placeholder dry plan's own sections — what 511 §8.2 must read
+    /// before the wet run, and the buyer canary's pre-image (§8.3):
+    /// - `by_class`: orgs and mentions per class as [`ingest::partyname::not_a_name`] reads
+    ///   the head name with no language (`name`: a hit the anchor or the scope keeps);
+    /// - `identified`: the `Placeholder` orgs with an identifier, with its value;
+    /// - `identified_blank`: the `Blank` orgs with an identifier — a plain-case scoped word
+    ///   included, whatever its country — with its value and whether guard 3's echo test
+    ///   refuses it (`echo: false` is a party the fold keeps);
+    /// - `scoped`: the scoped-word hits (`ingen`, `inget`, `nd`) split by the org's country,
+    ///   a proxy for the notice language (`in_scope`, `out_of_scope` — another country or a
+    ///   brand's case, expected kept — and `unknown`, no country), each with its identifier;
+    /// - `non_exact`: every distinct fold that is not exactly a lexicon entry (stem hits,
+    ///   mid-string hits the anchor refuses, keep-rule and summary names), exempted ones
+    ///   included, with its classes, spellings, orgs, mentions and roles;
+    /// - `digit_only`: every hit with digits and no letter (the zeros the raw-name arm takes);
+    /// - `roles`: the re-queued orgs' party rows per role (U2c's covering seek);
+    /// - `buyer_notices`: the re-queued orgs' buyer-slot notices, each with its Tender and
+    ///   its procedure key as the projection's own `Ident` reads it, and `key_families`:
+    ///   each key's Tenders (refused splits included) and their notices.
+    ///
+    /// Every read is bounded and indexed; `tender_version_parties_org_role`,
+    /// `tenders_procedure_key` and `tender_versions_notice` are deferred indexes, so the
+    /// job must not run during a full rebuild (511 §8.2).
+    async fn placeholder_plan(
+        &self,
+        orgs: &[store::NamedOrg],
+        exempted: &[store::NamedOrg],
+        per_org: &std::collections::HashMap<i64, u64>,
+        exempted_mentions: &std::collections::HashMap<i64, u64>,
+    ) -> turso::Result<PlaceholderPlan> {
+        use ingest::partyname::{NotAName, is_exact_entry, not_a_name, plain_case, scoped_languages, scoped_word};
+        // A key family larger than this is named for a read by hand (a UUID hub).
+        const FAMILY_CAP: usize = 200;
+        let clip = |name: &str, max: usize| -> String { name.chars().take(max).collect() };
+        let label = |class: Option<NotAName>| match class {
+            Some(NotAName::VoidLot) => "void",
+            Some(NotAName::Placeholder) => "placeholder",
+            Some(NotAName::Blank) => "blank",
+            Some(NotAName::AwardSummary) => "award_summary",
+            None => "name",
+        };
+        let mentions = |id: &i64| per_org.get(id).or_else(|| exempted_mentions.get(id)).copied().unwrap_or(0);
+        let mut by_class: std::collections::BTreeMap<&str, (u64, u64)> = std::collections::BTreeMap::new();
+        for (id, name, ..) in orgs.iter().chain(exempted) {
+            let entry = by_class.entry(label(not_a_name(name))).or_default();
+            entry.0 += 1;
+            entry.1 += mentions(id);
+        }
+        // A scoped word in a plain case (`ND`, `Ingen`, `nd.`) reads `None` with no language,
+        // but the fold reads it `Blank` in its languages and guard 3 then decides — so it
+        // counts as `Blank` here, or `ND` HR (an OIB) would sit in no identifier list (the
+        // unit-2 review).
+        let class_of = |name: &str| match not_a_name(name) {
+            None if scoped_word(name).is_some() && plain_case(name) => Some(NotAName::Blank),
+            class => class,
+        };
+        let classed = move |want: NotAName| {
+            orgs.iter().filter(move |(_, name, identifier, _)| identifier.is_some() && class_of(name) == Some(want))
+        };
+        let identified: Vec<serde_json::Value> = classed(NotAName::Placeholder)
+            .map(|(id, name, identifier, country)| {
+                serde_json::json!({ "org": id, "name": clip(name, 300), "identifier": identifier, "country": country, "mentions": mentions(id) })
+            })
+            .collect();
+        let identified_blank: Vec<serde_json::Value> = classed(NotAName::Blank)
+            .map(|(id, name, identifier, country)| {
+                let echo = identifier.as_deref().is_some_and(|raw| ingest::project::blank_identifier_echoes(raw, name));
+                serde_json::json!({
+                    "org": id, "name": clip(name, 300), "identifier": identifier, "country": country,
+                    "mentions": mentions(id), "echo": echo,
+                })
+            })
+            .collect();
+        // Guard 2's proxy: the countries whose notices are in a scoped word's languages (a
+        // FI `Ingen` is Swedish).
+        let in_scope = |word: &str, country: &str| {
+            scoped_languages(word).iter().any(|lang| match *lang {
+                "DAN" => country == "DK",
+                "SWE" => matches!(country, "SE" | "FI"),
+                "NOR" | "NOB" | "NNO" => country == "NO",
+                "POL" => country == "PL",
+                "ITA" => country == "IT",
+                _ => false,
+            })
+        };
+        let mut scoped: std::collections::BTreeMap<&str, Vec<serde_json::Value>> =
+            [("in_scope", Vec::new()), ("out_of_scope", Vec::new()), ("unknown", Vec::new())].into_iter().collect();
+        for (id, name, identifier, country) in orgs {
+            let Some(word) = scoped_word(name) else { continue };
+            let bucket = match country.as_deref().map(str::trim).filter(|c| !c.is_empty()) {
+                _ if !plain_case(name) => "out_of_scope",
+                None => "unknown",
+                Some(c) if in_scope(word, c) => "in_scope",
+                Some(_) => "out_of_scope",
+            };
+            scoped.entry(bucket).or_default().push(serde_json::json!({
+                "org": id, "name": name, "identifier": identifier, "country": country, "mentions": mentions(id),
+            }));
+        }
+        let digit_only: Vec<serde_json::Value> = orgs
+            .iter()
+            .chain(exempted)
+            .filter(|(_, name, ..)| name.chars().any(|c| c.is_ascii_digit()) && !name.chars().any(char::is_alphabetic))
+            .map(|(id, name, ..)| serde_json::json!({ "org": id, "name": name, "mentions": mentions(id) }))
+            .collect();
+        // The roles of every hit the non-exact list names, and of every re-queued org.
+        let non_exact_orgs: Vec<&store::NamedOrg> = orgs.iter().chain(exempted).filter(|(_, name, ..)| !is_exact_entry(name)).collect();
+        let mut role_ids: Vec<i64> = orgs.iter().map(|(id, ..)| *id).chain(non_exact_orgs.iter().map(|(id, ..)| *id)).collect();
+        role_ids.sort_unstable();
+        role_ids.dedup();
+        let role_rows = Box::pin(self.db.party_role_counts_of_orgs(&role_ids)).await?;
+        let mut roles_of: std::collections::HashMap<i64, Vec<(&str, u64)>> = std::collections::HashMap::new();
+        for (org, role, rows) in &role_rows {
+            roles_of.entry(*org).or_default().push((role.as_str(), *rows));
+        }
+        struct Group<'a> {
+            classes: std::collections::BTreeSet<&'static str>,
+            names: Vec<&'a str>,
+            orgs: u64,
+            mentions: u64,
+            roles: std::collections::BTreeMap<&'a str, u64>,
+        }
+        let mut groups: std::collections::BTreeMap<String, Group> = std::collections::BTreeMap::new();
+        for (id, name, ..) in &non_exact_orgs {
+            let group = groups.entry(clip(&ingest::partyname::fold(name), 120)).or_insert_with(|| Group {
+                classes: Default::default(),
+                names: Vec::new(),
+                orgs: 0,
+                mentions: 0,
+                roles: Default::default(),
+            });
+            group.classes.insert(label(not_a_name(name)));
+            if group.names.len() < 3 && !group.names.contains(&name.as_str()) {
+                group.names.push(name.as_str());
+            }
+            group.orgs += 1;
+            group.mentions += mentions(id);
+            for (role, rows) in roles_of.get(id).map(Vec::as_slice).unwrap_or(&[]) {
+                *group.roles.entry(role).or_default() += rows;
+            }
+        }
+        let mut non_exact: Vec<(String, Group)> = groups.into_iter().collect();
+        non_exact.sort_by(|a, b| b.1.mentions.cmp(&a.1.mentions).then(a.0.cmp(&b.0)));
+        let requeued: std::collections::HashSet<i64> = orgs.iter().map(|(id, ..)| *id).collect();
+        let mut roles: std::collections::BTreeMap<&str, u64> = std::collections::BTreeMap::new();
+        let mut buyer_orgs: Vec<i64> = Vec::new();
+        for (org, role, rows) in &role_rows {
+            if !requeued.contains(org) {
+                continue;
+            }
+            *roles.entry(role.as_str()).or_default() += rows;
+            if matches!(role.as_str(), "buyer" | "Procedure-Buyer") {
+                buyer_orgs.push(*org);
+            }
+        }
+        buyer_orgs.dedup();
+        let buyer_rows: u64 =
+            roles.iter().filter(|(role, _)| matches!(**role, "buyer" | "Procedure-Buyer")).map(|(_, n)| *n).sum();
+        let buyer_notices = Box::pin(self.db.buyer_notices_of_orgs(&buyer_orgs)).await?;
+        let notice_ids: Vec<i64> = buyer_notices.iter().map(|(notice, _)| *notice).collect();
+        let keys = Box::pin(ingest::project::procedure_keys_of_notices(&self.db, &notice_ids)).await?;
+        let mut family_keys: Vec<String> = keys.values().flatten().cloned().collect();
+        family_keys.sort_unstable();
+        family_keys.dedup();
+        let (families, over_cap) = Box::pin(self.db.procedure_key_families(&family_keys, FAMILY_CAP)).await?;
+        let summary = format!(
+            "{}; {} identified placeholder(s), {} identified blank(s) ({} kept by guard 3), {} scoped ({} in scope), \
+             {} non-exact fold(s), {} digit-only; {buyer_rows} buyer row(s) on {} notice(s) under {} procedure key(s)",
+            by_class.iter().map(|(class, (o, m))| format!("{class} {o} orgs/{m} mentions")).collect::<Vec<_>>().join(", "),
             identified.len(),
-            legal_form.len(),
-            long.len(),
-            exempted.len(),
-            pairs.len(),
-            by_profile.iter().map(|(profile, n)| format!("{profile} {n}")).collect::<Vec<_>>().join(", "),
-            if dry_run { "would re-queue" } else { "re-queued" },
-            if dry_run { found } else { requeued },
-        ))
+            identified_blank.len(),
+            identified_blank.iter().filter(|v| v["echo"] == false).count(),
+            scoped.values().map(Vec::len).sum::<usize>(),
+            scoped.get("in_scope").map_or(0, Vec::len),
+            non_exact.len(),
+            digit_only.len(),
+            buyer_notices.len(),
+            family_keys.len(),
+        );
+        let fields: serde_json::Map<String, serde_json::Value> = [
+            (
+                "read_before_wet",
+                serde_json::json!(["non_exact", "identified", "identified_blank", "legal_form", "digit_only", "buyer_notices", "key_families"]),
+            ),
+            (
+                "by_class",
+                serde_json::json!(by_class.iter().map(|(class, (o, m))| (class.to_string(), serde_json::json!({ "orgs": o, "mentions": m }))).collect::<serde_json::Map<_, _>>()),
+            ),
+            ("identified", serde_json::json!(identified)),
+            ("identified_blank", serde_json::json!(identified_blank)),
+            ("scoped", serde_json::json!(scoped)),
+            (
+                "non_exact",
+                serde_json::json!(non_exact
+                    .iter()
+                    .map(|(fold, g)| serde_json::json!({
+                        "fold": fold, "classes": g.classes, "names": g.names, "orgs": g.orgs,
+                        "mentions": g.mentions, "roles": g.roles,
+                    }))
+                    .collect::<Vec<_>>()),
+            ),
+            ("digit_only", serde_json::json!(digit_only)),
+            ("roles", serde_json::json!(roles)),
+            ("buyer_rows", serde_json::json!(buyer_rows)),
+            (
+                "buyer_notices",
+                serde_json::json!(buyer_notices
+                    .iter()
+                    .map(|(notice, tender)| serde_json::json!({
+                        "notice": notice, "tender": tender, "procedure_key": keys.get(notice).cloned().flatten(),
+                    }))
+                    .collect::<Vec<_>>()),
+            ),
+            (
+                "key_families",
+                serde_json::json!(families
+                    .iter()
+                    .map(|(key, tender, own, notice)| serde_json::json!({ "key": key, "tender": tender, "tender_key": own, "notice": notice }))
+                    .collect::<Vec<_>>()),
+            ),
+            ("key_families_over_cap", serde_json::json!(over_cap)),
+        ]
+        .into_iter()
+        .map(|(k, v)| (k.to_owned(), v))
+        .collect();
+        Ok(PlaceholderPlan { summary, fields })
     }
 
     /// Issue 483 unit 2's `refold-buyer-roles`, its own fn through `off_frame` (issue 467).
@@ -5546,7 +5913,16 @@ impl Supervisor {
             Spec::RequeueUuidHubs { dry_run } => off_frame(|| self.run_requeue_uuid_hubs(*dry_run)).await,
             Spec::RefoldBuyerRoles { dry_run } => off_frame(|| self.run_refold_buyer_roles(job, *dry_run)).await,
             Spec::RefoldVoidNames { dry_run, expect } => {
-                off_frame(|| self.run_refold_void_names(job, *dry_run, *expect)).await
+                off_frame(|| self.run_refold_non_names(job, NonNames::Void, *dry_run, *expect)).await
+            }
+            // Issue 511: the arm's body goes on the heap (CLAUDE.md's `run_spec` stack note)
+            // as well as through `off_frame`: one async match holds every arm's locals.
+            Spec::RefoldPlaceholderNames { dry_run, expect } => {
+                let (dry_run, expect) = (*dry_run, *expect);
+                Box::pin(async move {
+                    off_frame(|| self.run_refold_non_names(job, NonNames::Placeholder, dry_run, expect)).await
+                })
+                .await
             }
             Spec::Analyze => off_frame(|| self.run_analyze(job)).await,
             Spec::AuditFtsIds { dry_run, max_ids, recheck_absent_days } => {
@@ -14326,6 +14702,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "requeue-uuid-hubs"
             | "refold-buyer-roles"
             | "refold-void-names"
+            | "refold-placeholder-names"
             | "refold-value-band"
             | "rederive-eur"
             | "rederive-eur-recent"
@@ -15226,6 +15603,9 @@ mod tests {
                 // Issue 510: `run_refold_void_names` reads the flag before every
                 // organization window; a stopped run writes nothing.
                 "refold-void-names",
+                // Issue 511: `run_refold_non_names` (the generalised walk) reads it the
+                // same way for the placeholder class.
+                "refold-placeholder-names",
                 // Issue 429: `run_analyze` reads the flag before every table, and a
                 // stopped run still drops `organizations` statistics and refreshes
                 // the readers.
@@ -16154,6 +16534,227 @@ mod tests {
         let msg = sup.run_spec(&job(3, false, Some(1))).await.expect("wet");
         assert!(msg.contains("re-queued 1") && msg.contains("stamped 1"), "{msg}");
         assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap().len(), 1, "re-queued for the fold");
+    }
+
+    /// Issue 511: `refold-placeholder-names` routes beside `refold-void-names` (dry unless
+    /// asked, wet needs `expect`, each kind to its own class), walks with the placeholder
+    /// net, exempts award summaries, and stores the placeholder plan — classes, identified
+    /// orgs with guard 3's verdict, the scoped split, the non-exact folds with their roles,
+    /// and the buyer canary's notices with their Tenders and procedure keys. The two U2c
+    /// readers are read here against one buyer row and one mediation row.
+    #[tokio::test]
+    async fn refold_placeholder_names_plans_dry_refuses_over_expect_and_requeues() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        for kind in ["refold-placeholder-names", "refold-void-names"] {
+            sup.enqueue_request(&JobRequest { kind: kind.into(), ..Default::default() }).await.unwrap();
+            let wet_without_expect = JobRequest { kind: kind.into(), dry_run: Some(false), ..Default::default() };
+            let err = sup.enqueue_request(&wet_without_expect).await.expect_err("wet needs expect");
+            assert!(err.contains(kind) && err.contains("expect"), "{err}");
+        }
+        sup.enqueue_request(&JobRequest {
+            kind: "refold-placeholder-names".into(),
+            dry_run: Some(false),
+            expect: Some(3),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            assert!(matches!(queue[0].spec, Spec::RefoldPlaceholderNames { dry_run: true, expect: None }), "dry unless asked");
+            assert_eq!(queue[0].params, "refold-placeholder-names dry-run");
+            assert!(matches!(queue[1].spec, Spec::RefoldVoidNames { dry_run: true, expect: None }), "510's kind keeps its class");
+            assert!(matches!(queue[2].spec, Spec::RefoldPlaceholderNames { dry_run: false, expect: Some(3) }));
+            assert_eq!(queue[2].params, "refold-placeholder-names expect 3");
+            assert!(matches!(queue[3].spec, Spec::Project { rebuild: false, .. }), "the wet run's paired fold");
+        }
+
+        // One notice folded with real names: a buyer and a lot mediator. Their orgs then take
+        // the placeholder names a parse once carried (`N/A`, `nie dotyczy`).
+        let fetch_id = seed_fetch(&db).await;
+        let text = |section: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: "BT-500-Organization-Company".into(),
+            ordinal: 0,
+            value: store::NoticeValue::Text { value: value.into(), lang: None },
+        };
+        let id_ref = |section: &str, field: &str, target: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: store::NoticeValue::Id { scheme: None, value: target.into(), is_ref: true },
+        };
+        let parsed = store::Parsed {
+            sections: vec![
+                store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                store::Section { id: "LOT-0001".into(), kind: "Lot".into(), parent: None },
+                store::Section { id: "ORG-1".into(), kind: "Organization".into(), parent: None },
+                store::Section { id: "ORG-2".into(), kind: "Organization".into(), parent: None },
+            ],
+            values: vec![
+                text("ORG-1", "Stadt Wien"),
+                text("ORG-2", "Schlichtungsstelle Wien"),
+                id_ref("PROCEDURE", "OPT-300-Procedure-Buyer", "ORG-1"),
+                id_ref("LOT-0001", "OPT-301-Lot-Mediator", "ORG-2"),
+            ],
+        };
+        db.record_notice(
+            &store::Notice {
+                source: "ted".into(),
+                publication_id: "00511001-2024".into(),
+                content_hash: "h511".into(),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id,
+                member_path: "m511".into(),
+                ingested_at: 0,
+                published_at: Some(store::Stamp::utc(0)),
+                dispatched_at: None,
+            },
+            &store::Parse::Parsed(parsed),
+        )
+        .await
+        .unwrap();
+        ingest::project::project(&db, false).await.expect("fold");
+        let org_of = async |section: &str| {
+            match db.scalar(&format!("SELECT organization_id FROM organization_mentions WHERE section_id = '{section}'")).await {
+                Ok(Some(store::turso::Value::Integer(id))) => id,
+                other => panic!("{section}: {other:?}"),
+            }
+        };
+        let (buyer, mediator) = (org_of("ORG-1").await, org_of("ORG-2").await);
+        let roles = db.party_role_counts_of_orgs(&[buyer, mediator]).await.unwrap();
+        let mut want = vec![(buyer, "Procedure-Buyer".to_owned(), 1), (mediator, "Lot-Mediator".to_owned(), 1)];
+        want.sort();
+        assert_eq!(roles, want, "one row per org and role");
+        let buyer_notices = db.buyer_notices_of_orgs(&[buyer, mediator]).await.unwrap();
+        assert_eq!(buyer_notices.len(), 1, "the buyer row only: {buyer_notices:?}");
+        assert!(db.buyer_notices_of_orgs(&[mediator]).await.unwrap().is_empty(), "a mediator is no buyer");
+        db.execute_for_test(&format!("UPDATE organizations SET name = 'N/A' WHERE id = {buyer}")).await.unwrap();
+        db.execute_for_test(&format!("UPDATE organizations SET name = 'nie dotyczy' WHERE id = {mediator}")).await.unwrap();
+        // Hits mentioned nowhere: an award summary (exempted), a mid-string pointer the anchor
+        // refuses (re-queued, listed as non-exact), guard 3's `0` with a CVR, an in-scope
+        // `Ingen`, an identified placeholder, `ND` HR with its OIB (a scoped word: blank for
+        // the identifier list, out of scope by country); and a real name the net leaves alone.
+        db.execute_for_test(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (99520, 'DE', NULL, NULL, 'siehe oben: NEB Betriebsgesellschaft mbH', 'x', 1, 0),
+                    (99521, 'DE', NULL, NULL, 'Siemens – see section VI.3', 'x', 1, 0),
+                    (99522, 'DK', 'national', '38160540', '0', 'x', 1, 0),
+                    (99523, 'DK', NULL, NULL, 'Ingen', 'x', 1, 0),
+                    (99524, 'GB', 'vat', 'GB553298332', 'Withheld Section94 Supplier', 'x', 1, 0),
+                    (99525, 'GB', NULL, NULL, 'Acme Ltd', 'x', 1, 0),
+                    (99526, 'HR', 'national', '19645926433', 'ND', 'x', 1, 0)",
+        )
+        .await
+        .unwrap();
+
+        let job = |id: u64, dry_run: bool, expect: Option<u64>| Job {
+            id,
+            kind: "refold-placeholder-names".into(),
+            params: String::new(),
+            spec: Spec::RefoldPlaceholderNames { dry_run, expect },
+            resume_after: None,
+        };
+        let msg = sup.run_spec(&job(1, true, None)).await.expect("dry");
+        assert!(
+            msg.starts_with("refold-placeholder-names (issue 511) DRY RUN")
+                && msg.contains("7 org(s) the net caught")
+                && msg.contains("1 more exempted as award summaries")
+                && msg.contains("1 identified placeholder(s), 2 identified blank(s) (2 kept by guard 3)")
+                && msg.contains("1 buyer row(s) on 1 notice(s)")
+                && msg.contains("on 1 notice(s) (eforms:eforms-sdk-1.13 1)")
+                && msg.contains("would re-queue 1"),
+            "{msg}"
+        );
+        let (body, _) = db.latest_report(PLACEHOLDER_NAMES_REFOLD_REPORT).await.unwrap().expect("report");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(report["orgs"], 7, "{body}");
+        assert_eq!(report["mentions"], 2, "{body}");
+        assert_eq!(
+            report["by_class"],
+            serde_json::json!({
+                "award_summary": { "orgs": 1, "mentions": 0 },
+                "blank": { "orgs": 3, "mentions": 2 },
+                "name": { "orgs": 3, "mentions": 0 },
+                "placeholder": { "orgs": 1, "mentions": 0 },
+            }),
+            "{body}"
+        );
+        assert_eq!(
+            report["identified"],
+            serde_json::json!([{ "org": 99524, "name": "Withheld Section94 Supplier", "identifier": "GB553298332", "country": "GB", "mentions": 0 }]),
+            "{body}"
+        );
+        assert_eq!(
+            report["identified_blank"],
+            serde_json::json!([
+                { "org": 99522, "name": "0", "identifier": "38160540", "country": "DK", "mentions": 0, "echo": false },
+                { "org": 99526, "name": "ND", "identifier": "19645926433", "country": "HR", "mentions": 0, "echo": false },
+            ]),
+            "the plain-case scoped word is listed with its identifier {body}"
+        );
+        assert_eq!(
+            report["scoped"]["in_scope"],
+            serde_json::json!([{ "org": 99523, "name": "Ingen", "identifier": null, "country": "DK", "mentions": 0 }]),
+            "{body}"
+        );
+        assert_eq!(
+            report["scoped"]["out_of_scope"],
+            serde_json::json!([{ "org": 99526, "name": "ND", "identifier": "19645926433", "country": "HR", "mentions": 0 }]),
+            "{body}"
+        );
+        assert_eq!(report["exempted"], serde_json::json!([{ "org": 99520, "name": "siehe oben: NEB Betriebsgesellschaft mbH", "mentions": 0 }]), "{body}");
+        let non_exact: Vec<&str> = report["non_exact"].as_array().unwrap().iter().map(|g| g["fold"].as_str().unwrap()).collect();
+        assert_eq!(
+            non_exact,
+            vec!["siehe oben neb betriebsgesellschaft mbh", "siemens see section vi 3", "withheld section94 supplier"],
+            "{body}"
+        );
+        assert_eq!(report["digit_only"], serde_json::json!([{ "org": 99522, "name": "0", "mentions": 0 }]), "{body}");
+        assert_eq!(report["roles"], serde_json::json!({ "Lot-Mediator": 1, "Procedure-Buyer": 1 }), "{body}");
+        let notice = buyer_notices[0];
+        assert_eq!(
+            report["buyer_notices"],
+            serde_json::json!([{ "notice": notice.0, "tender": notice.1, "procedure_key": null }]),
+            "an island: no key family {body}"
+        );
+        assert_eq!(report["key_families"], serde_json::json!([]), "{body}");
+        assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "dry writes nothing");
+
+        let err = sup.run_spec(&job(2, false, Some(0))).await.expect_err("over expect");
+        assert!(err.contains("aborted") && err.contains("nothing was written"), "{err}");
+        let msg = sup.run_spec(&job(3, false, Some(1))).await.expect("wet");
+        assert!(msg.contains("re-queued 1") && msg.contains("stamped 1"), "{msg}");
+        assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap().len(), 1, "re-queued for the fold");
+    }
+
+    /// Issue 511 §8.1: the fold's job row is the only place the operator reads
+    /// `Report.dropped` and its identified-placeholder sample before the wet run, so a
+    /// silent suffix would read as "nothing to stop on" (the unit-2 review). Empty when the
+    /// fold dropped nothing; otherwise every count and the sample, names clipped.
+    #[test]
+    fn the_dropped_suffix_names_every_class_and_the_identified_sample() {
+        assert_eq!(dropped_suffix(&ingest::project::DroppedParties::default()), "", "nothing dropped: silent");
+        let mut dropped = ingest::project::DroppedParties {
+            void: 1,
+            placeholder: 2,
+            blank: 3,
+            placeholder_identified: 1,
+            sample: vec![(9, "ORG-2".into(), "Withheld Section94 Supplier".into(), "GB553298332".into())],
+        };
+        assert_eq!(
+            dropped_suffix(&dropped),
+            "; dropped parties (issue 511): 1 void, 2 placeholder (1 with an identifier: \
+             9/ORG-2 'Withheld Section94 Supplier' [GB553298332]), 3 blank"
+        );
+        dropped.placeholder_identified = 0;
+        dropped.sample.clear();
+        assert_eq!(dropped_suffix(&dropped), "; dropped parties (issue 511): 1 void, 2 placeholder (0 with an identifier), 3 blank");
+        let long = "x".repeat(80);
+        dropped.sample = vec![(7, "ORG-1".into(), long.clone(), long)];
+        assert!(dropped_suffix(&dropped).contains(&format!("7/ORG-1 '{0}' [{0}]", "x".repeat(60))), "names and identifiers clipped");
     }
 
     /// Issue 483 unit 2: `refold-buyer-roles` enqueues dry unless asked, runs through
@@ -18723,6 +19324,9 @@ mod tests {
             "refold-sections",
             "build-org-match-keys",
             "scan-org-match-keys",
+            // Issues 510/511: the drains re-queue tens of thousands of notices.
+            "refold-void-names",
+            "refold-placeholder-names",
         ] {
             sup.set_current(Some(progress(kind)));
             assert!(sup.heavy_write_in_progress(), "{kind} checkpoints per batch — coverage must stand down");

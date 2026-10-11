@@ -140,9 +140,11 @@ const ITEM_STOPS: [&str; 8] =
 /// - **it must not be the era's word for "no single answer".** `6.  Supplier(s): Various.`
 ///   appears four times in the committed 1993 daily alone. Compared whole, not as a
 ///   substring, so a company whose name contains the word is untouched.
-/// - **it must not be a non-name** ([`crate::partyname::not_a_name`], issue 510): a void
-///   lot (`Infructueux`, `Desierto`) or a pointer, a withheld value or `Various`. Both
-///   classes are refused here, before a section exists; the fold drops only void lots.
+/// - **it must not be a non-name** ([`crate::partyname::not_a_name`], issues 510 and 511):
+///   a void lot (`Infructueux`, `Desierto`), a placeholder (a pointer, a withheld value,
+///   `Various`), a blank slot (`N/A`, `néant`) or an award summary. Every class is refused
+///   here, before a section exists; the fold keeps an award summary (510 §4's accepted
+///   asymmetry). No language is passed, so the scoped words (`Ingen`, `nd`) stay names.
 fn plausible_name(name: &str) -> bool {
     if name.is_empty() || !name.chars().any(char::is_alphabetic) {
         return false;
