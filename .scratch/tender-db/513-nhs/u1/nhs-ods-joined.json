@@ -1,0 +1,9723 @@
+[
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-06H",
+  "value": "GBNHS06H",
+  "identity": "GBNHS06H",
+  "ppon": "PNJC6453ZWZN",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "06H",
+  "shape": "99A",
+  "ods": {
+   "found": true,
+   "name": "NHS CENTRAL EAST ICB - 06H",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "CLINICAL COMMISSIONING GROUP",
+   "active_roles": [
+    "CLINICAL COMMISSIONING GROUP",
+    "SUB ICB LOCATION"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31537455,
+    "Cambridgeshire & Peterborough Integrated Care Board",
+    "GBNHS06H",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31535193,
+    "NHS Cambridgeshire and Peterborough Integrated Care Board",
+    "GBPPONPNJC6453ZWZN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.0
+  ],
+  "ppon_sim": [
+   0.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-0AR",
+  "value": "GBNHS0AR",
+  "identity": null,
+  "ppon": "PJGL8154MTZX",
+  "witnesses": 15,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "0AR",
+  "shape": "9AA",
+  "ods": {
+   "found": true,
+   "name": "NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "COMMISSIONING SUPPORT UNIT",
+   "active_roles": [
+    "COMMISSIONING SUPPORT UNIT"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    4058565,
+    "NHS North of England Commissioning Support Unit",
+    null,
+    true
+   ],
+   [
+    31592074,
+    "NHS North of England Commissioning Support Unit (hosted by NHS England)",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30929531,
+    "NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT",
+    "GBPPONPJGL8154MTZX",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.71
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-0CX",
+  "value": "GBNHS0CX",
+  "identity": null,
+  "ppon": "PGTM4634DGZQ",
+  "witnesses": 36,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "0CX",
+  "shape": "9AA",
+  "ods": {
+   "found": true,
+   "name": "NHS MIDLANDS AND LANCASHIRE COMMISSIONING SUPPORT UNIT",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "COMMISSIONING SUPPORT UNIT",
+   "active_roles": [
+    "COMMISSIONING SUPPORT UNIT"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    5694794,
+    "NHS Midlands and Lancashire Commissioning Support Unit",
+    null,
+    true
+   ],
+   [
+    6191087,
+    "Midlands and Lancashire Commissioning Support Unit",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31572637,
+    "TEST",
+    "GBPPONPGTM4634DGZQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   0.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-0DE",
+  "value": "GBNHS0DE",
+  "identity": null,
+  "ppon": "PLVR6647BVMM",
+  "witnesses": 2,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "0DE",
+  "shape": "9AA",
+  "ods": {
+   "found": true,
+   "name": "NHS ARDEN AND GREATER EAST MIDLANDS COMMISSIONING SUPPORT UNIT",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "COMMISSIONING SUPPORT UNIT",
+   "active_roles": [
+    "COMMISSIONING SUPPORT UNIT"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    6340194,
+    "NHS Arden and Greater East Midlands Commissioning Support Unit",
+    null,
+    true
+   ],
+   [
+    7501468,
+    "NHS Arden & GEM Commissioning Support Unit",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916122,
+    "NHS Arden and Greater East Midlands Commissioning Support Unit",
+    "GBPPONPLVR6647BVMM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.5
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-0DF",
+  "value": "GBNHS0DF",
+  "identity": null,
+  "ppon": "PXTZ5316XWPW",
+  "witnesses": 60,
+  "registry_holder_count": 4,
+  "ppon_holder_count": 1,
+  "code": "0DF",
+  "shape": "9AA",
+  "ods": {
+   "found": true,
+   "name": "NHS SOUTH, CENTRAL AND WEST COMMISSIONING SUPPORT UNIT",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "COMMISSIONING SUPPORT UNIT",
+   "active_roles": [
+    "COMMISSIONING SUPPORT UNIT"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    13252367,
+    "NHS South Central and West Commissioning Support Unit",
+    null,
+    true
+   ],
+   [
+    30930432,
+    "NHS South Central and West CSU",
+    null,
+    true
+   ],
+   [
+    30968729,
+    "NHS SOUTH CENTRAL AND WEST COMMISSIONING SUPPORT",
+    null,
+    true
+   ],
+   [
+    31538082,
+    "NHS South, Central and West Commissioning Support Unit (hosted by NHS England)",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915590,
+    "NHS South, Central and West Commissioning Support Unit (hosted by NHS England)",
+    "GBPPONPXTZ5316XWPW",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.43,
+   0.83,
+   0.67
+  ],
+  "ppon_sim": [
+   0.67
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-11x",
+  "value": "GBNHS11X",
+  "identity": "GBNHS11X",
+  "ppon": "PVCT5176QPXH",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "11X",
+  "shape": "99A",
+  "ods": {
+   "found": true,
+   "name": "NHS SOMERSET ICB - 11X",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "CLINICAL COMMISSIONING GROUP",
+   "active_roles": [
+    "CLINICAL COMMISSIONING GROUP",
+    "SUB ICB LOCATION"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30916970,
+    "NHS Somerset Integrated Care Board",
+    "GBNHS11X",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   0.5
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-8HN02",
+  "value": "GBNHS8HN02",
+  "identity": "GBNHS8HN02",
+  "ppon": "PBJZ7139JTHN",
+  "witnesses": 30,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "8HN02",
+  "shape": "9AA99",
+  "ods": {
+   "found": true,
+   "name": "CARE QUALITY COMMISSION",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NON-NHS ORGANISATION",
+   "active_roles": [
+    "NON-NHS ORGANISATION"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915404,
+    "Care Quality Commission",
+    "GBNHS8HN02",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31537372,
+    "Care Quality Commission, Newcastle",
+    "GBPPONPBJZ7139JTHN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.67
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-A0V4D",
+  "value": "GBNHSA0V4D",
+  "identity": "GBNHSA0V4D",
+  "ppon": "PCZG5287NRDZ",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "A0V4D",
+  "shape": "A9A9A",
+  "ods": {
+   "found": true,
+   "name": "NHS ELECT",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS SUPPORT AGENCY",
+   "active_roles": [
+    "NHS SUPPORT AGENCY"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31555825,
+    "NHS Elect",
+    "GBNHSA0V4D",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31566767,
+    "NHS Elect",
+    "GBPPONPCZG5287NRDZ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "no_target_registry",
+  "literal": "GB-NHS-DQF",
+  "value": "GBNHSDQF",
+  "identity": null,
+  "ppon": "PHPR3762LPLP",
+  "witnesses": 1,
+  "registry_holder_count": 0,
+  "ppon_holder_count": 1,
+  "code": "DQF",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "CALDERDALE AND HUDDERSFIELD SOLUTIONS LIMITED",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "INDEPENDENT SECTOR HEALTHCARE PROVIDER",
+   "active_roles": [
+    "INDEPENDENT SECTOR HEALTHCARE PROVIDER"
+   ],
+   "successors": []
+  },
+  "reg_names": [],
+  "ppon_names": [
+   [
+    31550606,
+    "CALDERDALE AND HUDDERSFIELD SOLUTIONS LTD",
+    "GBCOH11258001",
+    false
+   ]
+  ],
+  "reg_sim": [],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-G6V2S",
+  "value": "GBNHSG6V2S",
+  "identity": "GBNHSG6V2S",
+  "ppon": "PHMP5392DVTW",
+  "witnesses": 78,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "G6V2S",
+  "shape": "A9A9A",
+  "ods": {
+   "found": true,
+   "name": "NORTH LONDON NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30914786,
+    "North London Foundation Trust",
+    "GBNHSG6V2S",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30976583,
+    "North London NHS Foundation Trust ",
+    "GBPPONPHMP5392DVTW",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-H6A5H",
+  "value": "GBNHSH6A5H",
+  "identity": "GBNHSH6A5H",
+  "ppon": "PXMB9766NLTH",
+  "witnesses": 13,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "H6A5H",
+  "shape": "A9A9A",
+  "ods": {
+   "found": true,
+   "name": "EAST OF ENGLAND NHS COLLABORATIVE PROCUREMENT HUB",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS SUPPORT AGENCY",
+   "active_roles": [
+    "NHS SUPPORT AGENCY"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30953460,
+    "East of England NHS collaborative Procurement Hub",
+    "GBNHSH6A5H",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917376,
+    "East Of England NHS Collaborative Hub",
+    "GBPPONPXMB9766NLTH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.8
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-M81057",
+  "value": "GBNHSM81057",
+  "identity": "GBNHSM81057",
+  "ppon": "PYBM7493LPLG",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "M81057",
+  "shape": "A99999",
+  "ods": {
+   "found": true,
+   "name": "BEWDLEY MEDICAL CENTRE",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "PRESCRIBING COST CENTRE",
+   "active_roles": [
+    "PRESCRIBING COST CENTRE",
+    "GP PRACTICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31590128,
+    "Wyre Forest Health Partnership",
+    "GBNHSM81057",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   0.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-NCS04",
+  "value": "GBNHSNCS04",
+  "identity": "GBNHSNCS04",
+  "ppon": "PCGC8557XYGT",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "NCS04",
+  "shape": "AAA99",
+  "ods": {
+   "found": true,
+   "name": "NHS PROPERTY SERVICES - REGENT HOUSE",
+   "status": "Active",
+   "rc": "RC2",
+   "primary": "INDEPENDENT SECTOR H/C PROVIDER SITE",
+   "active_roles": [
+    "INDEPENDENT SECTOR H/C PROVIDER SITE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31545209,
+    "NHS Property Services",
+    "GBNHSNCS04",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913771,
+    "NHS Property Services",
+    "GBPPONPCGC8557XYGT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.5
+  ],
+  "ppon_sim": [
+   0.5
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-NHS Cheshire and Merseyside ICB",
+  "value": "GBNHSNHSCHESHIREANDMERSEYSIDEICB",
+  "identity": null,
+  "ppon": "PMYD9553QJQN",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "NHSCHESHIREANDMERSEYSIDEICB",
+  "shape": "AAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "ods": {
+   "found": false,
+   "http": "404"
+  },
+  "reg_names": [
+   [
+    30916196,
+    "NHS Cheshire and Merseyside ICB",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [],
+  "ppon_sim": []
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-PHHT-9556-BWJJ",
+  "value": "GBNHSPHHT9556BWJJ",
+  "identity": "GBNHSPHHT9556BWJJ",
+  "ppon": "PNRD8632DGQJ",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "PHHT9556BWJJ",
+  "shape": "AAAA9999AAAA",
+  "ods": {
+   "found": false,
+   "http": "404"
+  },
+  "reg_names": [
+   [
+    31550843,
+    "North East London NHS Foundation Trust",
+    "GBNHSPHHT9556BWJJ",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-PWNJ-1991-NGDW",
+  "value": "GBNHSPWNJ1991NGDW",
+  "identity": "GBNHSPWNJ1991NGDW",
+  "ppon": "PCQH8657NGMT",
+  "witnesses": 44,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "PWNJ1991NGDW",
+  "shape": "AAAA9999AAAA",
+  "ods": {
+   "found": false,
+   "http": "404"
+  },
+  "reg_names": [
+   [
+    30953773,
+    "Business Services Organisation ITS",
+    "GBNHSPWNJ1991NGDW",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915904,
+    "Business Services Organisation",
+    "GBPPONPCQH8657NGMT",
+    false
+   ]
+  ],
+  "reg_sim": [],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QE1",
+  "value": "GBNHSQE1",
+  "identity": "GBNHSQE1",
+  "ppon": "PBWM8336DJRG",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QE1",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "NHS LANCASHIRE AND SOUTH CUMBRIA INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915463,
+    "NHS Lancashire and South Cumbria Integrated Care Board",
+    "GBNHSQE1",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31569664,
+    "NHS Lancashire and South Cumbria Integrated Care Board",
+    "GBPPONPBWM8336DJRG",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QF7",
+  "value": "GBNHSQF7",
+  "identity": "GBNHSQF7",
+  "ppon": "PPTG3156TGWG",
+  "witnesses": 5,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QF7",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "NHS SOUTH YORKSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31538551,
+    "NHS SOUTH YORKSHIRE INTEGRATED CARE BOARD",
+    "GBNHSQF7",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30918122,
+    "NHS South Yorkshire Integrated Care Board",
+    "GBPPONPPTG3156TGWG",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QGH",
+  "value": "GBNHSQGH",
+  "identity": null,
+  "ppon": "PNMN7243RQRR",
+  "witnesses": 15,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QGH",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS HEREFORDSHIRE AND WORCESTERSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30916931,
+    "NHS Herefordshire and Worcestershire Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31542355,
+    "NHS Herefordshire and Worcestershire Integrated Care Board",
+    "GBPPONPNMN7243RQRR",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QHL",
+  "value": "GBNHSQHL",
+  "identity": null,
+  "ppon": "PWQY9673JBYN",
+  "witnesses": 4,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "QHL",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915737,
+    "NHS Birmingham and Solihull ICB",
+    null,
+    true
+   ],
+   [
+    30915738,
+    "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916123,
+    "NHS Birmingham and Solihull Integrated Care Board",
+    "GBPPONPWQY9673JBYN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QHM",
+  "value": "GBNHSQHM",
+  "identity": null,
+  "ppon": "PMYZ6944BYLH",
+  "witnesses": 48,
+  "registry_holder_count": 16,
+  "ppon_holder_count": 1,
+  "code": "QHM",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    3257070,
+    "North of England Commissioning Support",
+    null,
+    true
+   ],
+   [
+    30915134,
+    "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD",
+    null,
+    true
+   ],
+   [
+    30930129,
+    "North East and North Cumbria Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30976504,
+    "North East North Cumbria Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    31538425,
+    "NHS North East and North Cumbria ICB",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31556600,
+    "NHS North East and North Cumbria Integrated Care Board",
+    "GBPPONPMYZ6944BYLH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.17,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QJ2",
+  "value": "GBNHSQJ2",
+  "identity": "GBNHSQJ2",
+  "ppon": "PXJD6284VTGG",
+  "witnesses": 10,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QJ2",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "NHS DERBY AND DERBYSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31545866,
+    "NHS DERBY AND DERBYSHIRE INTEGRATED CARE BOARD",
+    "GBNHSQJ2",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916864,
+    "NHS Derby & Derbyshire Integrated Care Board",
+    "GBPPONPXJD6284VTGG",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QJG",
+  "value": "GBNHSQJG",
+  "identity": null,
+  "ppon": "PQPJ8718HQTJ",
+  "witnesses": 5,
+  "registry_holder_count": 4,
+  "ppon_holder_count": 0,
+  "code": "QJG",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS SUFFOLK AND NORTH EAST ESSEX INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": [
+    "D7T5G",
+    "T6Y0W"
+   ]
+  },
+  "reg_names": [
+   [
+    30914144,
+    "NHS Suffolk and North East Essex Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30914161,
+    "Suffolk and North East Essex Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30917668,
+    "NHS Suffolk and North East Essex ICB",
+    null,
+    true
+   ],
+   [
+    31602019,
+    "North East Essex Crisis Alternative Service",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0,
+   1.0,
+   1.0,
+   0.43
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QJK",
+  "value": "GBNHSQJK",
+  "identity": null,
+  "ppon": "PRDC6266CBRR",
+  "witnesses": 33,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "QJK",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS DEVON INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30914151,
+    "NHS Devon Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30914271,
+    "NHS Devon Integrated Care Board (ICB)",
+    null,
+    true
+   ],
+   [
+    30914831,
+    "NHS Devon ICB",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917049,
+    "NHS DEVON INTEGRATED CARE BOARD",
+    "GBPPONPRDC6266CBRR",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QK1",
+  "value": "GBNHSQK1",
+  "identity": "GBNHSQK1",
+  "ppon": "PCLY6219YPTV",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QK1",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "NHS LEICESTER, LEICESTERSHIRE AND RUTLAND INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30916103,
+    "NHS Leicester, Leicestershire and Rutland Integrated Commissioning Board (LLR ICB)",
+    "GBNHSQK1",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31542352,
+    "NHS Leicester, Leicestershire and Rutland Integrated Care Board",
+    "GBPPONPCLY6219YPTV",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.6
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QKK",
+  "value": "GBNHSQKK",
+  "identity": null,
+  "ppon": "PCXT8262NYRV",
+  "witnesses": 13,
+  "registry_holder_count": 8,
+  "ppon_holder_count": 1,
+  "code": "QKK",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS SOUTH EAST LONDON INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30914447,
+    "NHS South East London Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30914670,
+    "NHS North East London Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30928152,
+    "NHS South East London Integrated Care Board London",
+    null,
+    true
+   ],
+   [
+    31534497,
+    "NHS South East London ICB",
+    null,
+    true
+   ],
+   [
+    31544853,
+    "South East London Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31576333,
+    "NHS North East London Integrated Care Board",
+    "GBPPONPCXT8262NYRV",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.5,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   0.5
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QMF",
+  "value": "GBNHSQMF",
+  "identity": null,
+  "ppon": "PMLZ8385VMTM",
+  "witnesses": 16,
+  "registry_holder_count": 10,
+  "ppon_holder_count": 1,
+  "code": "QMF",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS NORTH EAST LONDON INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    5132172,
+    "Barking, Havering and Redbridge University Hospitals NHS Trust",
+    null,
+    true
+   ],
+   [
+    30914670,
+    "NHS North East London Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30915099,
+    "NHS London Commercial Hub",
+    null,
+    true
+   ],
+   [
+    30976288,
+    "NHS North East London ICB",
+    null,
+    true
+   ],
+   [
+    31542989,
+    "North East London ICB",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31561974,
+    "NHS South East London Integrated Care Board",
+    "GBPPONPMLZ8385VMTM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.0,
+   1.0,
+   0.2,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   0.5
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QMJ",
+  "value": "GBNHSQMJ",
+  "identity": null,
+  "ppon": "PWBN7811DGVX",
+  "witnesses": 10,
+  "registry_holder_count": 6,
+  "ppon_holder_count": 1,
+  "code": "QMJ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": [
+    "Z9B2Z"
+   ]
+  },
+  "reg_names": [
+   [
+    30915099,
+    "NHS London Commercial Hub",
+    null,
+    true
+   ],
+   [
+    30915101,
+    "NHS North Central London Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30915993,
+    "NHS North Central London ICB",
+    null,
+    true
+   ],
+   [
+    31536734,
+    "NHS North Central London Integrated Care Board  London",
+    null,
+    true
+   ],
+   [
+    31593612,
+    "North Central London Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916245,
+    "NHS North Central London Integrated Care Board",
+    "GBPPONPWBN7811DGVX",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.2,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QMM",
+  "value": "GBNHSQMM",
+  "identity": null,
+  "ppon": "PZYC6286DWHT",
+  "witnesses": 6,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QMM",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": [
+    "T6Y0W"
+   ]
+  },
+  "reg_names": [
+   [
+    30915248,
+    "NHS Norfolk and Waveney Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31542073,
+    "NHS Norfolk and Waveney Integrated Care Board",
+    "GBPPONPZYC6286DWHT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QNQ",
+  "value": "GBNHSQNQ",
+  "identity": null,
+  "ppon": "PLMH6718XNVJ",
+  "witnesses": 2,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "QNQ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS FRIMLEY INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": [
+    "S0E4D",
+    "S9B9J",
+    "QRL"
+   ]
+  },
+  "reg_names": [
+   [
+    30913842,
+    "NHS Frimley Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30916858,
+    "NHS Frimley ICB",
+    null,
+    true
+   ],
+   [
+    31540924,
+    "NHS Frimley Integrated Care Board (ICB)",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31552078,
+    "NHS Frimley Integrated Care Board",
+    "GBPPONPLMH6718XNVJ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QOC",
+  "value": "GBNHSQOC",
+  "identity": null,
+  "ppon": "PGZQ6523JGTT",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QOC",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS SHROPSHIRE, TELFORD AND WREKIN INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915757,
+    "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31542354,
+    "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+    "GBPPONPGZQ6523JGTT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QOQ",
+  "value": "GBNHSQOQ",
+  "identity": null,
+  "ppon": "PBCG3899RLCL",
+  "witnesses": 22,
+  "registry_holder_count": 7,
+  "ppon_holder_count": 1,
+  "code": "QOQ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30913653,
+    "NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD",
+    null,
+    true
+   ],
+   [
+    31535385,
+    "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+    null,
+    true
+   ],
+   [
+    31552257,
+    "NHS Humber and North Yorkshire ICB",
+    null,
+    true
+   ],
+   [
+    31570883,
+    "NHS Humber North Yorkshire ICB",
+    null,
+    true
+   ],
+   [
+    31587871,
+    "NHS Humber North Yorkshire Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31573365,
+    "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+    "GBPPONPBCG3899RLCL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-QOX",
+  "value": "GBNHSQOX",
+  "identity": null,
+  "ppon": "PJHW9333YPZP",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "QOX",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS BATH AND NORTH EAST SOMERSET, SWINDON AND WILTSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30913839,
+    "NHS Bath and North East Somerset, Swindon and Wiltshire Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QPM",
+  "value": "GBNHSQPM",
+  "identity": null,
+  "ppon": "PWCM9262VJDY",
+  "witnesses": 14,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QPM",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS NORTHAMPTONSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30916368,
+    "NHS NORTHAMPTONSHIRE INTEGRATED CARE BOARD",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31542357,
+    "NHS Northamptonshire Integrated Care Board",
+    "GBPPONPWCM9262VJDY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-QR1",
+  "value": "GBNHSQR1",
+  "identity": "GBNHSQR1",
+  "ppon": "PYQM9666VXBD",
+  "witnesses": 9,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "QR1",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "NHS GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915679,
+    "NHS GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+    "GBNHSQR1",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QRL",
+  "value": "GBNHSQRL",
+  "identity": null,
+  "ppon": "PBQZ2117NPPD",
+  "witnesses": 17,
+  "registry_holder_count": 8,
+  "ppon_holder_count": 1,
+  "code": "QRL",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS HAMPSHIRE AND ISLE OF WIGHT INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    20902603,
+    "NHS Hampshire and Isle of Wight Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30913796,
+    "NHS HAMPSHIRE AND THE ISLE OF WIGHT INTEGRATED CARE BOARD",
+    null,
+    true
+   ],
+   [
+    31543410,
+    "NHS Hampshire and Isle of Wight Integrated Care Board (ICB)",
+    null,
+    true
+   ],
+   [
+    31567317,
+    "NHS Hampshire and Isle of Wight ICB",
+    null,
+    true
+   ],
+   [
+    31580931,
+    "Hampshire and Isle of Wight ICB",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31552077,
+    "NHS Hampshire and Isle of Wight Integrated Care Board",
+    "GBPPONPBQZ2117NPPD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QUA",
+  "value": "GBNHSQUA",
+  "identity": null,
+  "ppon": "PCXW1342CXYV",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QUA",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS BLACK COUNTRY INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30917129,
+    "NHS Black Country Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31542353,
+    "NHS Black Country Integrated Care Board",
+    "GBPPONPCXW1342CXYV",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QUY",
+  "value": "GBNHSQUY",
+  "identity": null,
+  "ppon": "PPCD6597HCDW",
+  "witnesses": 25,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "QUY",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30914356,
+    "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+    null,
+    true
+   ],
+   [
+    31609946,
+    "NHS Bristol, North East Somerset and South Gloucestershire Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31536069,
+    "NHS Bristol North Somerset & South Gloucestershire Integrated Care Board",
+    "GBPPONPPCD6597HCDW",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.83
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QVV",
+  "value": "GBNHSQVV",
+  "identity": null,
+  "ppon": "PGWM4538ZGJR",
+  "witnesses": 21,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QVV",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS DORSET INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30914398,
+    "NHS Dorset Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31571396,
+    "NHS Dorset Integrated Care Board",
+    "GBPPONPGWM4538ZGJR",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QWE",
+  "value": "GBNHSQWE",
+  "identity": null,
+  "ppon": "PVVY4762MPRZ",
+  "witnesses": 38,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 0,
+  "code": "QWE",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS SOUTH WEST LONDON INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915087,
+    "NHS South West London Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    31536736,
+    "NHS South West London Integrated Care Board  London",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QWO",
+  "value": "GBNHSQWO",
+  "identity": null,
+  "ppon": "PMTJ1118QVJH",
+  "witnesses": 7,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "QWO",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS WEST YORKSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30914544,
+    "NHS West Yorkshire Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    30933188,
+    "NHS WEST YORKSHIRE ICB",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917022,
+    "NHS West Yorkshire Integrated Care Board",
+    "GBPPONPMTJ1118QVJH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-QWU",
+  "value": "GBNHSQWU",
+  "identity": null,
+  "ppon": "PBZT7637QJTP",
+  "witnesses": 8,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "QWU",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31534829,
+    "NHS Coventry and Warwickshire Integrated Care Board",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31542351,
+    "NHS Coventry and Warwickshire Integrated Care Board",
+    "GBPPONPBZT7637QJTP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QXU",
+  "value": "GBNHSQXU",
+  "identity": null,
+  "ppon": "PTCP5774GNNH",
+  "witnesses": 5,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "QXU",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS SURREY HEARTLANDS INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": [
+    "S9B9J"
+   ]
+  },
+  "reg_names": [
+   [
+    21990238,
+    "NHS Surrey Heartlands ICB",
+    null,
+    true
+   ],
+   [
+    30916138,
+    "NHS Surrey Heartlands Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    31543412,
+    "NHS Surrey Heartlands Integrated Care Board (ICB)",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31552079,
+    "NHS Surrey Heartlands Integrated Care Board",
+    "GBPPONPTCP5774GNNH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-QYG",
+  "value": "GBNHSQYG",
+  "identity": null,
+  "ppon": "PMYD9553QJQN",
+  "witnesses": 1,
+  "registry_holder_count": 11,
+  "ppon_holder_count": 0,
+  "code": "QYG",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30913962,
+    "NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD",
+    null,
+    true
+   ],
+   [
+    30916196,
+    "NHS Cheshire and Merseyside ICB",
+    null,
+    true
+   ],
+   [
+    30916198,
+    "Cheshire and Merseyside Integrated Care Board",
+    null,
+    true
+   ],
+   [
+    31541032,
+    "NHS Cheshire and Merseyside Integrated Care Board (ICB)",
+    null,
+    true
+   ],
+   [
+    31546209,
+    "NHS Cheshire & Merseyside Integrated Care Board (ICB)",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-R0A",
+  "value": "GBNHSR0A",
+  "identity": null,
+  "ppon": "PXQG2592VYYY",
+  "witnesses": 5,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "R0A",
+  "shape": "A9A",
+  "ods": {
+   "found": true,
+   "name": "MANCHESTER UNIVERSITY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "FOUNDATION TRUST",
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    10874685,
+    "Manchester University NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31587675,
+    "MANCHESTER UNIVERSITY NHS FT",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913561,
+    "Manchester University NHS Foundation Trust",
+    "GBPPONPXQG2592VYYY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-R0B",
+  "value": "GBNHSR0B",
+  "identity": null,
+  "ppon": "PRTW2132HYWJ",
+  "witnesses": 27,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "R0B",
+  "shape": "A9A",
+  "ods": {
+   "found": true,
+   "name": "SOUTH TYNESIDE AND SUNDERLAND NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "FOUNDATION TRUST",
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    13569138,
+    "South Tyneside and Sunderland NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31567351,
+    "South Tyneside & Sunderland NHSFT",
+    "GBPPONPRTW2132HYWJ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.75
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-R0D",
+  "value": "GBNHSR0D",
+  "identity": null,
+  "ppon": "PBGQ3462MVRD",
+  "witnesses": 3,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "R0D",
+  "shape": "A9A",
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITALS DORSET NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "FOUNDATION TRUST",
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1240944,
+    "Dorset HealthCare University NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31551277,
+    "UNIVERSITY HOSPITALS DORSET NHS FOUNDATION TRUST",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914100,
+    "University Hospitals Dorset NHS Foundation Trust",
+    "GBPPONPBGQ3462MVRD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.5,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-R1A",
+  "value": "GBNHSR1A",
+  "identity": "GBNHSR1A",
+  "ppon": "PPVD8623XLTW",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "R1A",
+  "shape": "A9A",
+  "ods": {
+   "found": true,
+   "name": "HEREFORDSHIRE AND WORCESTERSHIRE HEALTH AND CARE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31540738,
+    "Herefordshire and Worcestershire Health and Care NHS Trust",
+    "GBNHSR1A",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30972162,
+    "Herefordshire and Worcestershire Health and Care NHS Trust",
+    "GBPPONPPVD8623XLTW",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-R1F",
+  "value": "GBNHSR1F",
+  "identity": "GBNHSR1F",
+  "ppon": "PRBY9272TQGX",
+  "witnesses": 27,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "R1F",
+  "shape": "A9A",
+  "ods": {
+   "found": true,
+   "name": "ISLE OF WIGHT NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31542853,
+    "ISLE OF WIGHT NHS TRUST",
+    "GBNHSR1F",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31571667,
+    "Isle of Wight NHS Trust",
+    "GBPPONPRBY9272TQGX",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-R1L",
+  "value": "GBNHSR1L",
+  "identity": "GBNHSR1L",
+  "ppon": "PRRJ6511ZDJL",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "R1L",
+  "shape": "A9A",
+  "ods": {
+   "found": true,
+   "name": "ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "FOUNDATION TRUST",
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31537837,
+    "ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+    "GBNHSR1L",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30968981,
+    "Essex Partnership University NHS Foundation Trust",
+    "GBPPONPRRJ6511ZDJL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RA2",
+  "value": "GBNHSRA2",
+  "identity": "GBNHSRA2",
+  "ppon": "PBND1678TCRM",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RA2",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "ROYAL SURREY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31538055,
+    "ROYAL SURREY COUNTY HOSPITAL NHS FOUNDATION TRUST",
+    "GBNHSRA2",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915589,
+    "NHS Buckinghamshire Oxfordshire & Berkshire West Integrated Care Board",
+    "GBPPONPBND1678TCRM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.5
+  ],
+  "ppon_sim": [
+   0.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RAE",
+  "value": "GBNHSRAE",
+  "identity": null,
+  "ppon": "PMJZ5573HMPZ",
+  "witnesses": 4,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RAE",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "BRADFORD TEACHING HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1165568,
+    "Bradford Teaching Hospitals NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31565965,
+    "Leeds Teaching Hospital Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914102,
+    "Bradford Teaching Hospitals NHS Foundation Trust",
+    "GBPPONPMJZ5573HMPZ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.2
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RAJ",
+  "value": "GBNHSRAJ",
+  "identity": null,
+  "ppon": "PBVJ9475ZCMD",
+  "witnesses": 16,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RAJ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "MID AND SOUTH ESSEX NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    17455495,
+    "Mid and South Essex NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31536222,
+    "Mid South Essex NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914265,
+    "Mid and South Essex NHS Foundation Trust",
+    "GBPPONPBVJ9475ZCMD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RAL",
+  "value": "GBNHSRAL",
+  "identity": null,
+  "ppon": "PVGT8567VYHL",
+  "witnesses": 3,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RAL",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "ROYAL FREE LONDON NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    2200541,
+    "Royal Free London NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31555826,
+    "Royal Free London NHS Foundation Trust T/AS Transformation Partners in Health and Care",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31566777,
+    "Royal Free London NHS Foundation Trust T/AS Transformation Partners in Health and Care",
+    "GBPPONPVGT8567VYHL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.33
+  ],
+  "ppon_sim": [
+   0.33
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RAT",
+  "value": "GBNHSRAT",
+  "identity": null,
+  "ppon": "PHHT9556BWJJ",
+  "witnesses": 117,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RAT",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NORTH EAST LONDON NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1264733,
+    "East London NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    1612066,
+    "North East London NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31535216,
+    "North East London NHS Foundation Trust",
+    "GBPPONPHHT9556BWJJ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.67,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RBD",
+  "value": "GBNHSRBD",
+  "identity": null,
+  "ppon": "PLCW3715PZWM",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RBD",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "DORSET COUNTY HOSPITAL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1466780,
+    "Dorset County Hospital NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31599890,
+    "Dorset County Hospital NHS Foundation Trust",
+    "GBPPONPLCW3715PZWM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RBL",
+  "value": "GBNHSRBL",
+  "identity": null,
+  "ppon": "PBMG2481MDJP",
+  "witnesses": 22,
+  "registry_holder_count": 6,
+  "ppon_holder_count": 1,
+  "code": "RBL",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "WIRRAL UNIVERSITY TEACHING HOSPITAL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1311180,
+    "Wirral University Teaching Hospital NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    2298423,
+    "Wirral University Teaching Hospital",
+    null,
+    true
+   ],
+   [
+    15465415,
+    "Wirral University Teaching Hospitals NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31535437,
+    "Wirral University Teaching Hospital NHS FT",
+    null,
+    true
+   ],
+   [
+    31571625,
+    "Wirral University Teaching Hospital NHS Foundation Trust (WUTH)",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31587299,
+    "Wirral University Teaching Hospital NHS Foundation Trust",
+    "GBPPONPBMG2481MDJP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   0.6,
+   1.0,
+   0.8
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RBN",
+  "value": "GBNHSRBN",
+  "identity": null,
+  "ppon": "PRYN5195GTQJ",
+  "witnesses": 180,
+  "registry_holder_count": 6,
+  "ppon_holder_count": 1,
+  "code": "RBN",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "MERSEY AND WEST LANCASHIRE TEACHING HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30914735,
+    "MERSEY AND WEST LANCASHIRE TEACHING HOSPITALS NHS TRUST",
+    null,
+    true
+   ],
+   [
+    30917279,
+    "Mersey & West Lancashire Teaching Hospitals NHS Trust",
+    null,
+    true
+   ],
+   [
+    31543386,
+    "Mersey and West Lancashire Teaching Hospital NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31563641,
+    "NHS Mersey & West Lancashire NHS Teaching Hospitals NHS Trust",
+    null,
+    true
+   ],
+   [
+    31618482,
+    "Mersey and West Lancashire Teaching Hospitals NHS Tru",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31536800,
+    "Mersey and West Lancashire Teaching Hospitals NHS Trust",
+    "GBPPONPRYN5195GTQJ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   0.67,
+   1.0,
+   0.83
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RBQ",
+  "value": "GBNHSRBQ",
+  "identity": null,
+  "ppon": "PZVQ2197NJGG",
+  "witnesses": 30,
+  "registry_holder_count": 5,
+  "ppon_holder_count": 1,
+  "code": "RBQ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "LIVERPOOL HEART AND CHEST HOSPITAL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1766980,
+    "Liverpool Heart and Chest Hospital NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    6851948,
+    "Liverpool Heart and Chest NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31568217,
+    "LIVERPOOL HEART AND CHESH HOSPITAL NHS FOUNDATION TRUST",
+    null,
+    true
+   ],
+   [
+    31571042,
+    "LIVERPOOL HEART & CHEST HOSPITAL NHS TRUST",
+    null,
+    true
+   ],
+   [
+    31605524,
+    "Liverpool Heart & Chest NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30918289,
+    "Liverpool Heart and Chest Hospital NHS Foundation Trust",
+    "GBPPONPZVQ2197NJGG",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.75,
+   0.6,
+   1.0,
+   0.75
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RBS",
+  "value": "GBNHSRBS",
+  "identity": null,
+  "ppon": "PXDB2967MWLG",
+  "witnesses": 11,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RBS",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "ALDER HEY CHILDREN'S NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1183914,
+    "Alder Hey Children's NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31592492,
+    "Alder Hey Children's NHS FT",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31545296,
+    "Alder Hey Children's NHS Foundation Trust",
+    "GBPPONPXDB2967MWLG",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RBT",
+  "value": "GBNHSRBT",
+  "identity": null,
+  "ppon": "PZZX1928RJQT",
+  "witnesses": 72,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RBT",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "MID CHESHIRE HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1271280,
+    "Mid Cheshire Hospitals NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30918302,
+    "Mid Cheshire Hospitals NHS Foundation Trust",
+    "GBPPONPZZX1928RJQT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RBV",
+  "value": "GBNHSRBV",
+  "identity": null,
+  "ppon": "PTTQ9511YPYH",
+  "witnesses": 36,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RBV",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "THE CHRISTIE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1285461,
+    "The Christie NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30919619,
+    "The Christie NHS Foundation Trust",
+    "GBPPONPTTQ9511YPYH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RC9",
+  "value": "GBNHSRC9",
+  "identity": "GBNHSRC9",
+  "ppon": "PTQH2444LZZX",
+  "witnesses": 6,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RC9",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "BEDFORDSHIRE HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31588187,
+    "BEDFORDSHIRE HOSPITALS NHS FOUNDATION TRUST",
+    "GBNHSRC9",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913603,
+    "Catering for Staff Summer Engagement Event 2025",
+    "GBPPONPTQH2444LZZX",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RCB",
+  "value": "GBNHSRCB",
+  "identity": null,
+  "ppon": "PNMY9834ZYJT",
+  "witnesses": 37,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RCB",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30916881,
+    "YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31535291,
+    "York and Scarborough Teaching Hospital NHS Foundation Trust",
+    "GBPPONPNMY9834ZYJT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.6
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RCD",
+  "value": "GBNHSRCD",
+  "identity": null,
+  "ppon": "PMWJ9355XBGP",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RCD",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "HARROGATE AND DISTRICT NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1381987,
+    "Harrogate and District NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31549348,
+    "Harrogate and District NHS Foundation Trust",
+    "GBPPONPMWJ9355XBGP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RCF",
+  "value": "GBNHSRCF",
+  "identity": null,
+  "ppon": "PWVB9664WPWP",
+  "witnesses": 37,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RCF",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "AIREDALE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1369100,
+    "Airedale NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31535616,
+    "Airedale NHS Foundation Trust",
+    "GBPPONPWVB9664WPWP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RCU",
+  "value": "GBNHSRCU",
+  "identity": null,
+  "ppon": "PTWR5281TMPQ",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RCU",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "SHEFFIELD CHILDREN'S NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1250550,
+    "Sheffield Children's NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30930095,
+    "Sheffield Children's NHS Foundation Trust",
+    "GBPPONPTWR5281TMPQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RCX",
+  "value": "GBNHSRCX",
+  "identity": null,
+  "ppon": "PQCT9574RQTZ",
+  "witnesses": 1,
+  "registry_holder_count": 5,
+  "ppon_holder_count": 1,
+  "code": "RCX",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "THE QUEEN ELIZABETH HOSPITAL, KING'S LYNN, NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1929574,
+    "The Queen Elizabeth Hospital Kings Lynn NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    2728937,
+    "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31594811,
+    "Queen Elizabeth Hospital FT",
+    null,
+    true
+   ],
+   [
+    31598591,
+    "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust (QEH) 2022 - 2027 / QEH 2022-2027",
+    null,
+    true
+   ],
+   [
+    31648953,
+    "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust (QEH)",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914684,
+    "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust",
+    "GBPPONPQCT9574RQTZ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.57,
+   1.0,
+   0.5,
+   0.67,
+   0.86
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RD1",
+  "value": "GBNHSRD1",
+  "identity": "GBNHSRD1",
+  "ppon": "PXRL3879BBGR",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RD1",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "ROYAL UNITED HOSPITALS BATH NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31599324,
+    "The Royal United Hospital Bath NHS Foundation Trust",
+    "GBNHSRD1",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915634,
+    "Royal United Hospitals Bath NHS Foundation Trust",
+    "GBPPONPXRL3879BBGR",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.6
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RDE",
+  "value": "GBNHSRDE",
+  "identity": null,
+  "ppon": "PJQH1423GWPM",
+  "witnesses": 6,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RDE",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "EAST SUFFOLK AND NORTH ESSEX NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    11944973,
+    "East Suffolk and North Essex NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    30914160,
+    "East Suffolk and North East Essex NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31535010,
+    "East Suffolk and North Essex NHS Foundation Trust",
+    "GBPPONPJQH1423GWPM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RDU",
+  "value": "GBNHSRDU",
+  "identity": null,
+  "ppon": "PLMQ6855CXLL",
+  "witnesses": 61,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RDU",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "FRIMLEY HEALTH NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    5766088,
+    "Frimley Health NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30919333,
+    "Frimley Health NHS Foundation Trust",
+    "GBPPONPLMQ6855CXLL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RDY",
+  "value": "GBNHSRDY",
+  "identity": null,
+  "ppon": "PNYJ1818YVWW",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RDY",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "DORSET HEALTHCARE UNIVERSITY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1240944,
+    "Dorset HealthCare University NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916623,
+    "Dorset HealthCare University NHS Foundation Trust",
+    "GBPPONPNYJ1818YVWW",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-REF",
+  "value": "GBNHSREF",
+  "identity": null,
+  "ppon": "PGXP9455TXGR",
+  "witnesses": 15,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "REF",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "ROYAL CORNWALL HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1251123,
+    "Royal Cornwall Hospitals Nhs Trust",
+    null,
+    true
+   ],
+   [
+    2306139,
+    "Royal Cornwall Hospital Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916407,
+    "Royal Cornwall Hospitals NHS Trust",
+    "GBPPONPGXP9455TXGR",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.5
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-REM",
+  "value": "GBNHSREM",
+  "identity": null,
+  "ppon": "PGJT9638TWQR",
+  "witnesses": 2,
+  "registry_holder_count": 4,
+  "ppon_holder_count": 1,
+  "code": "REM",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "LIVERPOOL UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    14475224,
+    "Liverpool University Hospitals NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    30916254,
+    "University Hospitals of Liverpool Group",
+    null,
+    true
+   ],
+   [
+    31572888,
+    "NHS University Hospitals of Liverpool Group",
+    null,
+    true
+   ],
+   [
+    31598155,
+    "LIVERPOOL UNIVERSOTY HOSPITALS NHS FOUNDATION TRUST",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30919565,
+    "Liverpool University Hospitals NHS Foundation Trust",
+    "GBPPONPGJT9638TWQR",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.75,
+   0.75,
+   0.5
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-REN",
+  "value": "GBNHSREN",
+  "identity": null,
+  "ppon": "PDWJ7913VWXQ",
+  "witnesses": 17,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "REN",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "THE CLATTERBRIDGE CANCER CENTRE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1371484,
+    "The Walton Centre NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    2965244,
+    "The Clatterbridge Cancer Centre NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    4275910,
+    "The Walton Centre",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916762,
+    "The Clatterbridge Cancer Centre NHS Foundation Trust",
+    "GBPPONPDWJ7913VWXQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.25,
+   1.0,
+   0.25
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-REP",
+  "value": "GBNHSREP",
+  "identity": null,
+  "ppon": "PVNM7611RDDL",
+  "witnesses": 4,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "REP",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "LIVERPOOL WOMEN'S NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1223655,
+    "Liverpool Women's NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    9160536,
+    "Liverpool Women's Hospital NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31536256,
+    "Liverpool Women's NHS Foundation Trust",
+    "GBPPONPVNM7611RDDL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.75
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RET",
+  "value": "GBNHSRET",
+  "identity": null,
+  "ppon": "PYLD6221NJVP",
+  "witnesses": 17,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "RET",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "THE WALTON CENTRE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1371484,
+    "The Walton Centre NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    4275910,
+    "The Walton Centre",
+    null,
+    true
+   ],
+   [
+    30968741,
+    "Alder Hey",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31549806,
+    "The Walton Centre NHS Foundation Trust",
+    "GBPPONPYLD6221NJVP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   0.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RF4",
+  "value": "GBNHSRF4",
+  "identity": "GBNHSRF4",
+  "ppon": "PBMX8832GMZL",
+  "witnesses": 6,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RF4",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "BARKING, HAVERING AND REDBRIDGE UNIVERSITY HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31541219,
+    "BARKING, HAVERING AND REDBRIDGE UNIVERSITY HOSPITALS NHS TRUST",
+    "GBNHSRF4",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30919572,
+    "Barking, Havering and Redbridge University Hospitals NHS Trust",
+    "GBPPONPBMX8832GMZL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RGD",
+  "value": "GBNHSRGD",
+  "identity": null,
+  "ppon": "PTWP8794GHJN",
+  "witnesses": 1,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RGD",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "LEEDS AND YORK PARTNERSHIP NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    5476801,
+    "Leeds and York Partnership NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    30919688,
+    "Leeds and York Partnership NHS Foundation Trust, trading as North of England NHS Commercial Procurement Collaborative (\"NOE CPC\")",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30926718,
+    "Leeds and York Partnership NHS Foundation Trust",
+    "GBPPONPTWP8794GHJN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.25
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RGM",
+  "value": "GBNHSRGM",
+  "identity": null,
+  "ppon": "PDNZ7768RRQQ",
+  "witnesses": 6,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RGM",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "ROYAL PAPWORTH HOSPITAL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30916977,
+    "Royal Papworth Hospital NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914473,
+    "Royal Papworth Hospital NHS Foundation Trust",
+    "GBPPONPDNZ7768RRQQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RGN",
+  "value": "GBNHSRGN",
+  "identity": null,
+  "ppon": "PGZM4323VGQT",
+  "witnesses": 6,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RGN",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NORTH WEST ANGLIA NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31537918,
+    "NORTH WEST ANGLIA NHS FOUNDATION TRUST",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30929970,
+    "North West Anglia NHS Foundation Trust",
+    "GBPPONPGZM4323VGQT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RGR",
+  "value": "GBNHSRGR",
+  "identity": null,
+  "ppon": "PZXH6286HYJQ",
+  "witnesses": 1,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RGR",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "WEST SUFFOLK NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    2228352,
+    "West Suffolk NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    7192624,
+    "West Suffolk Hospital NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916897,
+    "West Suffolk NHS Foundation Trust",
+    "GBPPONPZXH6286HYJQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.67
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RGT",
+  "value": "GBNHSRGT",
+  "identity": null,
+  "ppon": "PPCP8863HDGN",
+  "witnesses": 806,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RGT",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "CAMBRIDGE UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1168300,
+    "Cambridge University Hospitals NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31549426,
+    "Teleflex Group Ltd T/A Teleflex Medical",
+    "GBPPONPPCP8863HDGN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RH5",
+  "value": "GBNHSRH5",
+  "identity": "GBNHSRH5",
+  "ppon": "PNWR4212QWHQ",
+  "witnesses": 260,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RH5",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "SOMERSET NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30930410,
+    "SOMERSET NHS FOUNDATION TRUST",
+    "GBNHSRH5",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913999,
+    "Somerset NHS Foundation Trust",
+    "GBPPONPNWR4212QWHQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RH8",
+  "value": "GBNHSRH8",
+  "identity": "GBNHSRH8",
+  "ppon": "PCPD2769HGXT",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RH8",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "ROYAL DEVON UNIVERSITY HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31542271,
+    "Royal Devon University Healthcare NHS Foundation Trust",
+    "GBNHSRH8",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914002,
+    "Royal Devon University Healthcare NHS Foundation Trust",
+    "GBPPONPCPD2769HGXT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RHA",
+  "value": "GBNHSRHA",
+  "identity": null,
+  "ppon": "PJTT4587BLBM",
+  "witnesses": 10,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "RHA",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NOTTINGHAMSHIRE HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1437921,
+    "Nottinghamshire Healthcare NHS Trust",
+    null,
+    true
+   ],
+   [
+    6362440,
+    "Nottinghamshire Healthcare NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    30915065,
+    "NHS Skills Development Network",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916974,
+    "Nottinghamshire Healthcare NHS Foundation Trust",
+    "GBPPONPJTT4587BLBM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   0.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RHM",
+  "value": "GBNHSRHM",
+  "identity": null,
+  "ppon": "PTRZ1736CQVH",
+  "witnesses": 10,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "RHM",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITAL SOUTHAMPTON NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    2181541,
+    "University Hospital Southampton NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    30926652,
+    "Coroners Adult Post-Mortem and Forensic services",
+    null,
+    true
+   ],
+   [
+    31624750,
+    "University Hospitals Southampton NHS",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30926769,
+    "University Hospital Southampton",
+    "GBPPONPTRZ1736CQVH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.0,
+   0.5
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RHQ",
+  "value": "GBNHSRHQ",
+  "identity": null,
+  "ppon": "PYZV3517VQCJ",
+  "witnesses": 17,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RHQ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "SHEFFIELD TEACHING HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1321678,
+    "Sheffield Teaching Hospitals NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31546261,
+    "SHEFFIELD TEACHING HOSPITALS NHS FOUNDATION TRUST (Devices for Dignity)",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916153,
+    "Sheffield Teaching Hospitals NHS Foundation Trust",
+    "GBPPONPYZV3517VQCJ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.6
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RHW",
+  "value": "GBNHSRHW",
+  "identity": null,
+  "ppon": "PNTT7613TTHD",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RHW",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "ROYAL BERKSHIRE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1269928,
+    "Royal Berkshire NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917496,
+    "Royal Berkshire NHS Foundation Trust",
+    "GBPPONPNTT7613TTHD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RJ1",
+  "value": "GBNHSRJ1",
+  "identity": "GBNHSRJ1",
+  "ppon": "PDZC6438DGPX",
+  "witnesses": 6,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RJ1",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "GUY'S AND ST THOMAS' NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31538354,
+    "Guy's and St Thomas' NHS Foundation Trust",
+    "GBNHSRJ1",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914633,
+    "Guy's and St Thomas' NHS Foundation Trust",
+    "GBPPONPDZC6438DGPX",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RJ2",
+  "value": "GBNHSRJ2",
+  "identity": "GBNHSRJ2",
+  "ppon": "PXWX8443ZQYT",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RJ2",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "LEWISHAM AND GREENWICH NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31538105,
+    "Lewisham and Greenwich NHS Trust",
+    "GBNHSRJ2",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916365,
+    "Lewisham and Greenwich NHS Trust",
+    "GBPPONPXWX8443ZQYT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RJ7",
+  "value": "GBNHSRJ7",
+  "identity": "GBNHSRJ7",
+  "ppon": "PDCW3725ZVCP",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RJ7",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "ST GEORGE'S UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31537925,
+    "KINGSTON AND RICHMOND NHS FOUNDATION TRUST",
+    "GBNHSRJ7",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30932956,
+    "St George's University Hospitals NHS Foundation Trust",
+    "GBPPONPDCW3725ZVCP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-RJ8",
+  "value": "GBNHSRJ8",
+  "identity": "GBNHSRJ8",
+  "ppon": "PRDC5432XZPZ",
+  "witnesses": 10,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "RJ8",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "CORNWALL PARTNERSHIP NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31543796,
+    "CORNWALL PARTNERSHIP NHS FOUNDATION TRUST",
+    "GBNHSRJ8",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RJE",
+  "value": "GBNHSRJE",
+  "identity": null,
+  "ppon": "PHBX7757YPYD",
+  "witnesses": 3,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RJE",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITALS OF NORTH MIDLANDS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1167736,
+    "University Hospitals Birmingham NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    5879895,
+    "University Hospitals of North Midlands NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913980,
+    "University Hospitals of North Midlands NHS Trust",
+    "GBPPONPHBX7757YPYD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.4,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RJL",
+  "value": "GBNHSRJL",
+  "identity": null,
+  "ppon": "PDBX2232TZVV",
+  "witnesses": 42,
+  "registry_holder_count": 4,
+  "ppon_holder_count": 1,
+  "code": "RJL",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NORTHERN LINCOLNSHIRE AND GOOLE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    4616701,
+    "Northern Lincolnshire & Goole NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    4944993,
+    "Northern Lincolnshire and Goole NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31609338,
+    "Diana, Princess of Wales Hospital",
+    null,
+    true
+   ],
+   [
+    31647875,
+    "Diana, Princess of Wales Hospital , Grimsby",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31550622,
+    "Northern Lincolnshire and Goole NHS Foundation Trust",
+    "GBPPONPDBX2232TZVV",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   0.0,
+   0.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RJN",
+  "value": "GBNHSRJN",
+  "identity": null,
+  "ppon": "PZCB3169CXLR",
+  "witnesses": 26,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 0,
+  "code": "RJN",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "EAST CHESHIRE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    2267508,
+    "East Cheshire NHS Trust",
+    null,
+    true
+   ],
+   [
+    7138160,
+    "The Countess of Chester NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0,
+   0.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RJR",
+  "value": "GBNHSRJR",
+  "identity": null,
+  "ppon": "PGCG2135TXWL",
+  "witnesses": 207,
+  "registry_holder_count": 5,
+  "ppon_holder_count": 1,
+  "code": "RJR",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "COUNTESS OF CHESTER HOSPITAL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1615245,
+    "Countess of Chester Hospital NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    6851983,
+    "Countess of Chester NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    13725605,
+    "Countess of Chester",
+    null,
+    true
+   ],
+   [
+    31542216,
+    "All Relevant Authorities as defined in section 12ZB(7) of the National Health Service Act 2006 (and any successor bodies) shall be eligible users of this framework.",
+    null,
+    true
+   ],
+   [
+    31543387,
+    "Countess of Chester Hospitals NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31581032,
+    "Countess of Chester Hospital NHS Foundation Trust",
+    "GBPPONPGCG2135TXWL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.67,
+   0.67,
+   0.0,
+   0.5
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RJZ",
+  "value": "GBNHSRJZ",
+  "identity": null,
+  "ppon": "PXLV9225PRBN",
+  "witnesses": 4,
+  "registry_holder_count": 6,
+  "ppon_holder_count": 1,
+  "code": "RJZ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "KING'S COLLEGE HOSPITAL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1346181,
+    "King's College Hospital NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    1432862,
+    "Kettering General Hospital NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    1687357,
+    "Kings College Hospital NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31535103,
+    "Community Health and Eyecare Limited",
+    null,
+    true
+   ],
+   [
+    31560728,
+    "King's College London NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913914,
+    "King's College Hospital NHS Foundation Trust",
+    "GBPPONPXLV9225PRBN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.17,
+   0.4,
+   0.0,
+   0.6
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RK5",
+  "value": "GBNHSRK5",
+  "identity": "GBNHSRK5",
+  "ppon": "PMCH6281ZQDP",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RK5",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "SHERWOOD FOREST HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31540198,
+    "SHERWOOD FOREST HOSPITALS NHS FOUNDATION TRUST",
+    "GBNHSRK5",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31578194,
+    "Sherwood Forest Hospitals NHS Foundation Trust",
+    "GBPPONPMCH6281ZQDP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RK9",
+  "value": "GBNHSRK9",
+  "identity": "GBNHSRK9",
+  "ppon": "PWJW1642HQRM",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RK9",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITALS PLYMOUTH NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31562973,
+    "University Hospitals Plymouth NHS Trust",
+    "GBNHSRK9",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31556168,
+    "University Hospitals Plymouth",
+    "GBPPONPWJW1642HQRM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RLY",
+  "value": "GBNHSRLY",
+  "identity": null,
+  "ppon": "PRXC6549RWBT",
+  "witnesses": 7,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RLY",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NORTH STAFFORDSHIRE COMBINED HEALTHCARE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1388955,
+    "North Staffordshire Combined Healthcare NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917613,
+    "North Staffordshire Combined Healthcare NHS Trust",
+    "GBPPONPRXC6549RWBT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RM1",
+  "value": "GBNHSRM1",
+  "identity": "GBNHSRM1",
+  "ppon": "PQLV1688MQYV",
+  "witnesses": 18,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RM1",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "NORFOLK AND NORWICH UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915905,
+    "Norfolk and Norwich University Hospitals NHS Foundation Trust",
+    "GBNHSRM1",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913682,
+    "Norfolk and Norwich University Hospitals NHS Foundation Trust",
+    "GBPPONPQLV1688MQYV",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RM3",
+  "value": "GBNHSRM3",
+  "identity": "GBNHSRM3",
+  "ppon": "PMHJ8663WHQL",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RM3",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "NORTHERN CARE ALLIANCE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31544680,
+    "Norther Care alliance NHS Foundation Trust",
+    "GBNHSRM3",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31568454,
+    "The Northern Care Alliance NHS Foundation Trust",
+    "GBPPONPMHJ8663WHQL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.33
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RMC",
+  "value": "GBNHSRMC",
+  "identity": null,
+  "ppon": "PTGM8148JHHN",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RMC",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "BOLTON NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1779271,
+    "Bolton NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917930,
+    "Bolton NHS Foundation Trust",
+    "GBPPONPTGM8148JHHN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RN5",
+  "value": "GBNHSRN5",
+  "identity": "GBNHSRN5",
+  "ppon": "PJTP4913PWMN",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RN5",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "HAMPSHIRE HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30968685,
+    "HAMPSHIRE HOSPITALS NHS FOUNDATION TRUST",
+    "GBNHSRN5",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31574190,
+    "HAMPSHIRE HOSPITALS NHS FOUNDATION TRUST",
+    "GBPPONPJTP4913PWMN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RNA",
+  "value": "GBNHSRNA",
+  "identity": null,
+  "ppon": "PRGP5218PVYD",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RNA",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "THE DUDLEY GROUP NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    2473797,
+    "The Dudley Group NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31565549,
+    "The Dudley Group NHS Foundation Trust",
+    "GBPPONPRGP5218PVYD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RNK",
+  "value": "GBNHSRNK",
+  "identity": null,
+  "ppon": "PGGT9642DYWY",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RNK",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "TAVISTOCK AND PORTMAN NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": [
+    "G6V2S"
+   ]
+  },
+  "reg_names": [
+   [
+    1538916,
+    "Tavistock and Portman NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31554431,
+    "Tavistock and Portman NHS Trust",
+    "GBPPONPGGT9642DYWY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RNN",
+  "value": "GBNHSRNN",
+  "identity": null,
+  "ppon": "PDXN7482RVVM",
+  "witnesses": 7,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RNN",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NORTH CUMBRIA INTEGRATED CARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    14205876,
+    "North Cumbria Integrated Care NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30969250,
+    "North Cumbria Integrated Care NHS Foundation Trust",
+    "GBPPONPDXN7482RVVM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RNQ",
+  "value": "GBNHSRNQ",
+  "identity": null,
+  "ppon": "PCPL4765VNRN",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RNQ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "KETTERING GENERAL HOSPITAL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1432862,
+    "Kettering General Hospital NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915885,
+    "Kettering General Hospital NHS Foundation Trust",
+    "GBPPONPCPL4765VNRN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RNS",
+  "value": "GBNHSRNS",
+  "identity": null,
+  "ppon": "PQBY8547GYGP",
+  "witnesses": 5,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RNS",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NORTHAMPTON GENERAL HOSPITAL NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1251847,
+    "Northampton General Hospital NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913740,
+    "Northampton General Hospital NHS Trust",
+    "GBPPONPQBY8547GYGP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RNZ",
+  "value": "GBNHSRNZ",
+  "identity": null,
+  "ppon": "PHNB6299PVMY",
+  "witnesses": 3,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RNZ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "SALISBURY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1262730,
+    "Salisbury NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31632712,
+    "SALISBURY NHS FOUNDATION TRUST in partnership with Carbon and Energy Fund",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30972038,
+    "Salisbury NHS Foundation Trust",
+    "GBPPONPHNB6299PVMY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.14
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-RP1",
+  "value": "GBNHSRP1",
+  "identity": "GBNHSRP1",
+  "ppon": "PXHG3999PPMT",
+  "witnesses": 11,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "RP1",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "NORTHAMPTONSHIRE HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31561465,
+    "NORTHAMPTONSHIRE HEALTHCARE NHS FOUNDATION TRUST",
+    "GBNHSRP1",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RP7",
+  "value": "GBNHSRP7",
+  "identity": "GBNHSRP7",
+  "ppon": "PYGP2439CCHG",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RP7",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "LINCOLNSHIRE PARTNERSHIP NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915784,
+    "LINCOLNSHIRE PARTNERSHIP NHS FOUNDATION TRUST",
+    "GBNHSRP7",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917763,
+    "Lincolnshire Partnership NHS Foundation Trust",
+    "GBPPONPYGP2439CCHG",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RPA",
+  "value": "GBNHSRPA",
+  "identity": null,
+  "ppon": "PGVY4831CRNZ",
+  "witnesses": 222,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RPA",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "MEDWAY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1291482,
+    "Medway NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917062,
+    "Medway NHS Foundation Trust",
+    "GBPPONPGVY4831CRNZ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RPG",
+  "value": "GBNHSRPG",
+  "identity": null,
+  "ppon": "PMGB6764GLGQ",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RPG",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "OXLEAS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1346825,
+    "Oxleas NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917846,
+    "Oxleas NHS Foundation Trust",
+    "GBPPONPMGB6764GLGQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RPY",
+  "value": "GBNHSRPY",
+  "identity": null,
+  "ppon": "PXLT9823WVCY",
+  "witnesses": 1,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RPY",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "THE ROYAL MARSDEN NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1206891,
+    "The Royal Marsden NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    6454935,
+    "Royal Marsden Hospital NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30926647,
+    "The Royal Marsden NHS Foundation Trust",
+    "GBPPONPXLT9823WVCY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.67
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RQ3",
+  "value": "GBNHSRQ3",
+  "identity": "GBNHSRQ3",
+  "ppon": "PNXM2771CPCW",
+  "witnesses": 7,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RQ3",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "BIRMINGHAM WOMEN'S AND CHILDREN'S NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30932864,
+    "BIRMINGHAM WOMEN'S AND CHILDREN'S NHS FOUNDATION TRUST",
+    "GBNHSRQ3",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914076,
+    "Birmingham Women's and Children's NHS Foundation Trust",
+    "GBPPONPNXM2771CPCW",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RQX",
+  "value": "GBNHSRQX",
+  "identity": null,
+  "ppon": "PMGT9179VJHQ",
+  "witnesses": 1,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "RQX",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "HOMERTON HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1238214,
+    "Homerton University Hospital NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    30976496,
+    "Homerton Healthcare NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31571651,
+    "Homerton Healthcare NHS FT",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30976286,
+    "Homerton University Hospital NHS Foundation Trust",
+    "GBPPONPMGT9179VJHQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.25,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   0.25
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RR7",
+  "value": "GBNHSRR7",
+  "identity": "GBNHSRR7",
+  "ppon": "PBLN7375RYXJ",
+  "witnesses": 26,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RR7",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "GATESHEAD HEALTH NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915201,
+    "Gateshead Health NHS Foundation Trust",
+    "GBNHSRR7",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31535006,
+    "Gateshead Health NHS Foundation Trust",
+    "GBPPONPBLN7375RYXJ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RR8",
+  "value": "GBNHSRR8",
+  "identity": "GBNHSRR8",
+  "ppon": "PNQG8433QXBP",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RR8",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "LEEDS TEACHING HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31540413,
+    "LEEDS TEACHING HOSPITALS NHS TRUST",
+    "GBNHSRR8",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913623,
+    "Leeds Teaching Hospitals NHS Trust",
+    "GBPPONPNQG8433QXBP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RRJ",
+  "value": "GBNHSRRJ",
+  "identity": null,
+  "ppon": "PXBY9749ZCLX",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RRJ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "THE ROYAL ORTHOPAEDIC HOSPITAL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31543239,
+    "THE ROYAL ORTHOPAEDIC HOSPITAL NHS FOUNDATION TRUST",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917859,
+    "The Royal Orthopaedic Hospital NHS Foundation Trust",
+    "GBPPONPXBY9749ZCLX",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RRK",
+  "value": "GBNHSRRK",
+  "identity": null,
+  "ppon": "PWVL6877BXXV",
+  "witnesses": 13,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RRK",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITALS BIRMINGHAM NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1167736,
+    "University Hospitals Birmingham NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    1232155,
+    "University Hospitals Birmingham",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914077,
+    "University Hospitals Birmingham NHS Foundation Trust",
+    "GBPPONPWVL6877BXXV",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RRU",
+  "value": "GBNHSRRU",
+  "identity": null,
+  "ppon": "PGJC9175DMRR",
+  "witnesses": 11,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RRU",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "LONDON AMBULANCE SERVICE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1755985,
+    "London Ambulance Service NHS Trust",
+    null,
+    true
+   ],
+   [
+    31552166,
+    "London Ambulance Service NHS Trust (LAS)",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915545,
+    "London Ambulance Service NHS Trust",
+    "GBPPONPGJC9175DMRR",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.75
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RRV",
+  "value": "GBNHSRRV",
+  "identity": null,
+  "ppon": "PYRL5371BNMH",
+  "witnesses": 8,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RRV",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY COLLEGE LONDON HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1791116,
+    "University College London Hospitals NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916969,
+    "University College London Hospitals NHS FT",
+    "GBPPONPYRL5371BNMH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RT1",
+  "value": "GBNHSRT1",
+  "identity": "GBNHSRT1",
+  "ppon": "PNRQ9434BBDP",
+  "witnesses": 10,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RT1",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "CAMBRIDGESHIRE AND PETERBOROUGH NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30916587,
+    "Cambridgeshire & Peterborough NHS Foundation Trust",
+    "GBNHSRT1",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31566565,
+    "Cambridgeshire & Peterborough Foundation Trust",
+    "GBPPONPNRQ9434BBDP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RT4",
+  "value": "GBNHSRT4",
+  "identity": "GBNHSRT4",
+  "ppon": "PGRH6439XWLV",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RT4",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "WELSH AMBULANCE SERVICES NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31537572,
+    "Welsh Ambulance Services NHS Trust",
+    "GBNHSRT4",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30976491,
+    "Welsh Ambulance Services NHS Trust",
+    "GBPPONPGRH6439XWLV",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RT5",
+  "value": "GBNHSRT5",
+  "identity": "GBNHSRT5",
+  "ppon": "PPBC2775WXPX",
+  "witnesses": 8,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RT5",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "LEICESTERSHIRE PARTNERSHIP NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30976042,
+    "LEICESTERSHIRE PARTNERSHIP NHS TRUST",
+    "GBNHSRT5",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31537637,
+    "Leicestershire Partnership NHS Trust",
+    "GBPPONPPBC2775WXPX",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RTD",
+  "value": "GBNHSRTD",
+  "identity": null,
+  "ppon": "PDCY5582YRHQ",
+  "witnesses": 19,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RTD",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "THE NEWCASTLE UPON TYNE HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1166415,
+    "The Newcastle upon Tyne Hospitals NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31543973,
+    "The Newcastle Upon Tyne Hospitals Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917018,
+    "The Newcastle Upon Tyne Hospitals NHS Foundation Trust",
+    "GBPPONPDCY5582YRHQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RTE",
+  "value": "GBNHSRTE",
+  "identity": null,
+  "ppon": "PYHT5943VXGV",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RTE",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "GLOUCESTERSHIRE HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1168733,
+    "Gloucestershire Hospitals NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913986,
+    "Gloucestershire Hospitals NHS Foundation Trust",
+    "GBPPONPYHT5943VXGV",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RTF",
+  "value": "GBNHSRTF",
+  "identity": null,
+  "ppon": "PLMV4859MQXP",
+  "witnesses": 21,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RTF",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NORTHUMBRIA HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1172050,
+    "Northumbria Healthcare NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    4474166,
+    "University Hospitals of Leicester NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914055,
+    "Northumbria Healthcare Facilities Management",
+    "GBPPONPLMV4859MQXP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.0
+  ],
+  "ppon_sim": [
+   0.5
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RTG",
+  "value": "GBNHSRTG",
+  "identity": null,
+  "ppon": "PQZD7532NDHL",
+  "witnesses": 142,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "RTG",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITALS OF DERBY AND BURTON NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    12215491,
+    "University Hospitals of Derby and Burton NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    30953527,
+    "University Hospital of Derby and Burton NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31559358,
+    "University Hospitals of Derby & Burton NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915285,
+    "University Hospitals of Derby and Burton NHS Foundation Trust",
+    "GBPPONPQZD7532NDHL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.6,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RTQ",
+  "value": "GBNHSRTQ",
+  "identity": null,
+  "ppon": "PBGV6466NHDM",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RTQ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "GLOUCESTERSHIRE HEALTH AND CARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    15046714,
+    "Gloucestershire Health and Care NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916324,
+    "Gloucestershire Health and Care NHS Foundation Trust",
+    "GBPPONPBGV6466NHDM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RTR",
+  "value": "GBNHSRTR",
+  "identity": null,
+  "ppon": "PZDC7131GJTH",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RTR",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "SOUTH TEES HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1243666,
+    "South Tees Hospitals NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31556601,
+    "South Tees Hospitals NHS Foundation Trust",
+    "GBPPONPZDC7131GJTH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RTX",
+  "value": "GBNHSRTX",
+  "identity": null,
+  "ppon": "PGWW7958CHJD",
+  "witnesses": 7,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RTX",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITALS OF MORECAMBE BAY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1745182,
+    "University Hospitals of Morecambe Bay NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30930144,
+    "University Hospitals of Morecambe Bay NHS Foundation Trust",
+    "GBPPONPGWW7958CHJD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RV3",
+  "value": "GBNHSRV3",
+  "identity": "GBNHSRV3",
+  "ppon": "PQNQ2236WRPR",
+  "witnesses": 7,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RV3",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "CENTRAL AND NORTH WEST LONDON NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915996,
+    "CENTRAL AND NORTH WEST LONDON NHS FOUNDATION TRUST",
+    "GBNHSRV3",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917605,
+    "Central and North West London NHS Foundation Trust",
+    "GBPPONPQNQ2236WRPR",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RV9",
+  "value": "GBNHSRV9",
+  "identity": "GBNHSRV9",
+  "ppon": "PLYP5457LQCD",
+  "witnesses": 189,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RV9",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "HUMBER TEACHING NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915072,
+    "HUMBER TEACHING NHS FOUNDATION TRUST",
+    "GBNHSRV9",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31544250,
+    "Humber Teaching NHS Foundation Trust",
+    "GBPPONPLYP5457LQCD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RVV",
+  "value": "GBNHSRVV",
+  "identity": null,
+  "ppon": "PYBV2474CMNH",
+  "witnesses": 6,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RVV",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "EAST KENT HOSPITALS UNIVERSITY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1926457,
+    "East Kent Hospitals University NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31537490,
+    "East Kent Hospital Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917064,
+    "East Kent Hospitals University NHS Foundation Trust",
+    "GBPPONPYBV2474CMNH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.4
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RVW",
+  "value": "GBNHSRVW",
+  "identity": null,
+  "ppon": "PJDT5353JMRJ",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RVW",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NORTH TEES AND HARTLEPOOL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    2748062,
+    "North Tees and Hartlepool NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31556599,
+    "North Tees and Hartlepool NHS Foundation Trust",
+    "GBPPONPJDT5353JMRJ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RW1",
+  "value": "GBNHSRW1",
+  "identity": "GBNHSRW1",
+  "ppon": "PWDC9239CLWX",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RW1",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "HAMPSHIRE AND ISLE OF WIGHT HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31567457,
+    "Hampshire and Isle of Wight Healthcare NHS Foundation Trust (HIOW NHSFT)",
+    "GBNHSRW1",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915169,
+    "Hampshire and Isle of Wight Healthcare NHS Foundation Trust",
+    "GBPPONPWDC9239CLWX",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.67
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-RW4",
+  "value": "GBNHSRW4",
+  "identity": "GBNHSRW4",
+  "ppon": "PDQP9649WYGM",
+  "witnesses": 5,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "RW4",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "MERSEY CARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915592,
+    "mersey care nhs foundation trust",
+    "GBNHSRW4",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RWA",
+  "value": "GBNHSRWA",
+  "identity": null,
+  "ppon": "PHNT9958NGDZ",
+  "witnesses": 130,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RWA",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "HULL UNIVERSITY TEACHING HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    13228851,
+    "Hull University Teaching Hospitals NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915216,
+    "Hull University Teaching Hospitals NHS Trust",
+    "GBPPONPHNT9958NGDZ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RWD",
+  "value": "GBNHSRWD",
+  "identity": null,
+  "ppon": "PTYN5349TLTT",
+  "witnesses": 6,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RWD",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "UNITED LINCOLNSHIRE TEACHING HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915785,
+    "UNITED LINCOLNSHIRE TEACHING HOSPITALS NHS TRUST",
+    null,
+    true
+   ],
+   [
+    31604037,
+    "United Lincolnshire NHS Hospital Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913995,
+    "United Lincolnshire Teaching Hospitals NHS Trust",
+    "GBPPONPTYN5349TLTT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.4
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RWE",
+  "value": "GBNHSRWE",
+  "identity": null,
+  "ppon": "PWXN8614MPHH",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RWE",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITALS OF LEICESTER NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    4474166,
+    "University Hospitals of Leicester NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30930117,
+    "University Hospitals of Leicester NHS Trust",
+    "GBPPONPWXN8614MPHH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RWF",
+  "value": "GBNHSRWF",
+  "identity": null,
+  "ppon": "PLWZ5628VQPM",
+  "witnesses": 2,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RWF",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "MAIDSTONE AND TUNBRIDGE WELLS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1517322,
+    "Maidstone and Tunbridge Wells NHS Trust",
+    null,
+    true
+   ],
+   [
+    31610393,
+    "Sustainable Energy First Limited C/O Maidstone and Tunbridge Wells NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913981,
+    "Maidstone and Tunbridge Wells NHS Trust",
+    "GBPPONPLWZ5628VQPM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.38
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RWG",
+  "value": "GBNHSRWG",
+  "identity": null,
+  "ppon": "PQPL8842GLBD",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RWG",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "WEST HERTFORDSHIRE TEACHING HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31537155,
+    "WEST HERTFORDSHIRE TEACHING HOSPITALS NHS TRUST",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913934,
+    "West Hertfordshire Teaching Hospitals NHS Trust",
+    "GBPPONPQPL8842GLBD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RWJ",
+  "value": "GBNHSRWJ",
+  "identity": null,
+  "ppon": "PHJH5159PMBG",
+  "witnesses": 2,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RWJ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "STOCKPORT NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1193388,
+    "Stockport NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31604158,
+    "Stockport N H S Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31574798,
+    "Stockport NHS Foundation Trust",
+    "GBPPONPHJH5159PMBG",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.25
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RWP",
+  "value": "GBNHSRWP",
+  "identity": null,
+  "ppon": "PPWB7691MHZW",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RWP",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "WORCESTERSHIRE ACUTE HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1385205,
+    "Worcestershire Acute Hospitals NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916584,
+    "Worcestershire Acute Hospitals NHS Trust",
+    "GBPPONPPWB7691MHZW",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RWV",
+  "value": "GBNHSRWV",
+  "identity": null,
+  "ppon": "PNWB6144XTMH",
+  "witnesses": 1,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RWV",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "DEVON PARTNERSHIP NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    3793356,
+    "Devon Partnership NHS Trust",
+    null,
+    true
+   ],
+   [
+    9420410,
+    "Devon Partnership Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31541155,
+    "Devon Partnership NHS Trust",
+    "GBPPONPNWB6144XTMH",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RWW",
+  "value": "GBNHSRWW",
+  "identity": null,
+  "ppon": "PBMJ3394DBQQ",
+  "witnesses": 93,
+  "registry_holder_count": 6,
+  "ppon_holder_count": 1,
+  "code": "RWW",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "NORTH CHESHIRE AND MERSEY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    3793356,
+    "Devon Partnership NHS Trust",
+    null,
+    true
+   ],
+   [
+    15410940,
+    "Warrington and Halton Teaching Hospitals NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31538397,
+    "Warrington and Halton Teaching Hospitals NHS Trust",
+    null,
+    true
+   ],
+   [
+    31571325,
+    "North Cheshire and Mersey NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31598258,
+    "Warrington & Halton Teaching Hospitals NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31564277,
+    "Warrington and Halton Teaching Hospitals NHS Foundation Trust",
+    "GBPPONPBMJ3394DBQQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.0,
+   0.0,
+   0.0,
+   1.0,
+   0.0
+  ],
+  "ppon_sim": [
+   0.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RWX",
+  "value": "GBNHSRWX",
+  "identity": null,
+  "ppon": "PVLX5425VJZN",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RWX",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "BERKSHIRE HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    2159849,
+    "Berkshire Healthcare NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31537631,
+    "Berkshire Healthcare NHS Foundation Trust",
+    "GBPPONPVLX5425VJZN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RWY",
+  "value": "GBNHSRWY",
+  "identity": null,
+  "ppon": "PRVB1661VNRY",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RWY",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "CALDERDALE AND HUDDERSFIELD NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1287488,
+    "Calderdale and Huddersfield NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31535615,
+    "Calderdale and Huddersfield NHS Foundation Trust",
+    "GBPPONPRVB1661VNRY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RX1",
+  "value": "GBNHSRX1",
+  "identity": "GBNHSRX1",
+  "ppon": "PVQC9261WGRM",
+  "witnesses": 65,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RX1",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "NOTTINGHAM UNIVERSITY HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31540199,
+    "NOTTINGHAM UNIVERSITY HOSPITALS NHS TRUST",
+    "GBNHSRX1",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913873,
+    "Nottingham University Hospital NHS Trust",
+    "GBPPONPVQC9261WGRM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.5
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RX4",
+  "value": "GBNHSRX4",
+  "identity": "GBNHSRX4",
+  "ppon": "PDBW5798GPLT",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RX4",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "CUMBRIA, NORTHUMBERLAND, TYNE AND WEAR NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30916541,
+    "CUMBRIA, NORTHUMBERLAND, TYNE AND WEAR NHS FOUNDATION TRUST",
+    "GBNHSRX4",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31546270,
+    "Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust",
+    "GBPPONPDBW5798GPLT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RX7",
+  "value": "GBNHSRX7",
+  "identity": "GBNHSRX7",
+  "ppon": "PGTN2617YXZW",
+  "witnesses": 25,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RX7",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "NORTH WEST AMBULANCE SERVICE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30930368,
+    "NORTH WEST AMBULANCE SERVICE NHS TRUST",
+    "GBNHSRX7",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31541571,
+    "North West Ambulance Service NHS Trust",
+    "GBPPONPGTN2617YXZW",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RX8",
+  "value": "GBNHSRX8",
+  "identity": "GBNHSRX8",
+  "ppon": "PXHX4264BLQJ",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RX8",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "YORKSHIRE AMBULANCE SERVICE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31537573,
+    "YORKSHIRE AMBULANCE SERVICE NHS TRUST",
+    "GBNHSRX8",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914088,
+    "Yorkshire Ambulance Service NHS Trust",
+    "GBPPONPXHX4264BLQJ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RX9",
+  "value": "GBNHSRX9",
+  "identity": "GBNHSRX9",
+  "ppon": "PYQW9421PXDP",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RX9",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "EAST MIDLANDS AMBULANCE SERVICE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31537574,
+    "EAST MIDLANDS AMBULANCE SERVICE NHS TRUST",
+    "GBNHSRX9",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30953565,
+    "East Midlands Ambulance Service NHS Trust",
+    "GBPPONPYQW9421PXDP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RXA",
+  "value": "GBNHSRXA",
+  "identity": null,
+  "ppon": "PGZV5874HRZD",
+  "witnesses": 37,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RXA",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "CHESHIRE AND WIRRAL PARTNERSHIP NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1604072,
+    "Cheshire and Wirral Partnership NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    2267512,
+    "Cheshire & Wirral Partnership NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31552751,
+    "Cheshire and Wirral Partnership NHS Foundation Trust",
+    "GBPPONPGZV5874HRZD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RXC",
+  "value": "GBNHSRXC",
+  "identity": null,
+  "ppon": "PYLX2324XVVV",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RXC",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "EAST SUSSEX HEALTHCARE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1383983,
+    "East Sussex Healthcare NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31573474,
+    "East Sussex Healthcare NHS Trust",
+    "GBPPONPYLX2324XVVV",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RXE",
+  "value": "GBNHSRXE",
+  "identity": null,
+  "ppon": "PBGD2746GXHP",
+  "witnesses": 33,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RXE",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "ROTHERHAM DONCASTER AND SOUTH HUMBER NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    4141289,
+    "Rotherham Doncaster and South Humber NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31534939,
+    "Rotherham, Doncaster & South Humber NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31535064,
+    "Rotherham Doncaster and South Humber NHS Foundation Trust",
+    "GBPPONPBGD2746GXHP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RXF",
+  "value": "GBNHSRXF",
+  "identity": null,
+  "ppon": "PTPB4248VJQT",
+  "witnesses": 6,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RXF",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "MID YORKSHIRE TEACHING NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31539005,
+    "MID YORKSHIRE TEACHING NHS TRUST",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917291,
+    "Mid Yorkshire Hospitals NHS Trust",
+    "GBPPONPTPB4248VJQT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.5
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RXK",
+  "value": "GBNHSRXK",
+  "identity": null,
+  "ppon": "PYHH6963BGQM",
+  "witnesses": 1,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RXK",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "SANDWELL AND WEST BIRMINGHAM HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1396633,
+    "Sandwell and West Birmingham Hospitals NHS Trust",
+    null,
+    true
+   ],
+   [
+    31621139,
+    "Sandwell & West Birmingham Hospitals N H S Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917614,
+    "Sandwell and West Birmingham Hospitals NHS Trust",
+    "GBPPONPYHH6963BGQM",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.57
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RXL",
+  "value": "GBNHSRXL",
+  "identity": null,
+  "ppon": "PZRP9598QTHD",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RXL",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "BLACKPOOL TEACHING HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    2004062,
+    "Blackpool Teaching Hospitals NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30968791,
+    "Blackpool Teaching Hospitals NHS Foundation Trust",
+    "GBPPONPZRP9598QTHD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-RXM",
+  "value": "GBNHSRXM",
+  "identity": null,
+  "ppon": "PHYX9381JDQT",
+  "witnesses": 5,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "RXM",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "DERBYSHIRE HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1409547,
+    "Derbyshire Healthcare NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RXP",
+  "value": "GBNHSRXP",
+  "identity": null,
+  "ppon": "PQLT2871PCJY",
+  "witnesses": 20,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RXP",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "COUNTY DURHAM AND DARLINGTON NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1165278,
+    "County Durham and Darlington NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913742,
+    "County Durham and Darlington NHS Foundation Trust",
+    "GBPPONPQLT2871PCJY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RXQ",
+  "value": "GBNHSRXQ",
+  "identity": null,
+  "ppon": "PHNT5649ZYQJ",
+  "witnesses": 22,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RXQ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "BUCKINGHAMSHIRE HEALTHCARE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1185447,
+    "Buckinghamshire Healthcare NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31537782,
+    "Buckinghamshire Healthcare NHS Trust",
+    "GBPPONPHNT5649ZYQJ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RXT",
+  "value": "GBNHSRXT",
+  "identity": null,
+  "ppon": "PTMC2127TPCV",
+  "witnesses": 5,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "RXT",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "BIRMINGHAM AND SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    10958945,
+    "Birmingham & Solihull Mental Health NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    13043614,
+    "Birmingham Women's and Children's Hospital NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    30932865,
+    "Birmingham and Solihull Mental Health Foundation NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30926645,
+    "Birmingham & Solihull Mental Health Foundation Trust",
+    "GBPPONPTMC2127TPCV",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.12,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RXV",
+  "value": "GBNHSRXV",
+  "identity": null,
+  "ppon": "PGCZ7958BVXT",
+  "witnesses": 3,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RXV",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "GREATER MANCHESTER MENTAL HEALTH NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    10374035,
+    "Greater Manchester Mental Health NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31569803,
+    "Greater Manchester Mental Health NHS Foundation Trust",
+    "GBPPONPGCZ7958BVXT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RXW",
+  "value": "GBNHSRXW",
+  "identity": null,
+  "ppon": "PMRB7317GVDL",
+  "witnesses": 1,
+  "registry_holder_count": 3,
+  "ppon_holder_count": 1,
+  "code": "RXW",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "THE SHREWSBURY AND TELFORD HOSPITAL NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1470141,
+    "Shrewsbury & Telford Hospital NHS Trust",
+    null,
+    true
+   ],
+   [
+    12053291,
+    "The Shrewsbury and Telford Hospital NHS Trust",
+    null,
+    true
+   ],
+   [
+    12431017,
+    "Shrewsbury and Telford Hospital NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913590,
+    "The Shrewsbury and Telford Hospital NHS Trust",
+    "GBPPONPMRB7317GVDL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RXX",
+  "value": "GBNHSRXX",
+  "identity": null,
+  "ppon": "PBCW8913JCZL",
+  "witnesses": 1,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RXX",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "SURREY AND BORDERS PARTNERSHIP NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    2022375,
+    "Sussex Partnership NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    2409657,
+    "Surrey and Borders Partnership NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916802,
+    "SUSSEX PARTNERSHIP NHS FOUNDATION TRUST",
+    "GBPPONPBCW8913JCZL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.25,
+   1.0
+  ],
+  "ppon_sim": [
+   0.25
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-RY2",
+  "value": "GBNHSRY2",
+  "identity": "GBNHSRY2",
+  "ppon": "PGHY5799LRTH",
+  "witnesses": 5,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "RY2",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "BRIDGEWATER COMMUNITY HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": [
+    "RWW"
+   ]
+  },
+  "reg_names": [
+   [
+    31543388,
+    "Bridgewater Community Healthcare NHS Foundation Trust",
+    "GBNHSRY2",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-RY 4",
+  "value": "GBNHSRY4",
+  "identity": "GBNHSRY4",
+  "ppon": "PDPJ7797WNXZ",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "RY4",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "HERTFORDSHIRE COMMUNITY NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30929529,
+    "Hertfordshire Community  NHS Trust",
+    "GBNHSRY4",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RY6",
+  "value": "GBNHSRY6",
+  "identity": "GBNHSRY6",
+  "ppon": "PZXV8867VHCQ",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RY6",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "LEEDS COMMUNITY HEALTHCARE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31542502,
+    "Leeds Community Healthcare NHS Trust",
+    "GBNHSRY6",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30928162,
+    "Leeds Community Healthcare NHS Trust",
+    "GBPPONPZXV8867VHCQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-RY7",
+  "value": "GBNHSRY7",
+  "identity": "GBNHSRY7",
+  "ppon": "PDMT2223WYCR",
+  "witnesses": 5,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "RY7",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "WIRRAL COMMUNITY HEALTH AND CARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31539451,
+    "WIRRAL COMMUNITY HEALTH AND CARE NHS FOUNDATION TRUST",
+    "GBNHSRY7",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RY8",
+  "value": "GBNHSRY8",
+  "identity": "GBNHSRY8",
+  "ppon": "PDVQ1486BNXY",
+  "witnesses": 19,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RY8",
+  "shape": "AA9",
+  "ods": {
+   "found": true,
+   "name": "DERBYSHIRE COMMUNITY HEALTH SERVICES NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31558091,
+    "Derbyshire Community Health Services NHS Foundation Trust",
+    "GBNHSRY8",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31554134,
+    "Derbyshire Community Health Services NHS Foundation Trust",
+    "GBPPONPDVQ1486BNXY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RYA",
+  "value": "GBNHSRYA",
+  "identity": null,
+  "ppon": "PNDY4353CMWY",
+  "witnesses": 1,
+  "registry_holder_count": 5,
+  "ppon_holder_count": 1,
+  "code": "RYA",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "WEST MIDLANDS AMBULANCE SERVICE UNIVERSITY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    6384818,
+    "West Midlands Ambulance Service",
+    null,
+    true
+   ],
+   [
+    12508548,
+    "West Midlands Ambulance Service University NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    13335820,
+    "West Midlands Ambulance Service University NHS FT",
+    null,
+    true
+   ],
+   [
+    31567619,
+    "West Midland Ambulance Service University NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31626603,
+    "West Midlands Service University NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913621,
+    "West Midlands Ambulance Service University NHS Foundation Trust",
+    "GBPPONPNDY4353CMWY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.8,
+   1.0,
+   1.0,
+   0.67,
+   0.8
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RYC",
+  "value": "GBNHSRYC",
+  "identity": null,
+  "ppon": "PBNZ4155WXBZ",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RYC",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "EAST OF ENGLAND AMBULANCE SERVICE NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1263180,
+    "East of England Ambulance Service NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916110,
+    "East of England Ambulance Service NHS Trust Headquarters",
+    "GBPPONPBNZ4155WXBZ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.8
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RYD",
+  "value": "GBNHSRYD",
+  "identity": null,
+  "ppon": "PGNR3396MRLQ",
+  "witnesses": 2,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RYD",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "SOUTH EAST COAST AMBULANCE SERVICE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    2332253,
+    "South East Coast Ambulance Service NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    5824298,
+    "South East Coast Ambulance Service",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30918360,
+    "South East Coast Ambulance Service NHS Foundation Trust",
+    "GBPPONPGNR3396MRLQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RYE",
+  "value": "GBNHSRYE",
+  "identity": null,
+  "ppon": "PVXR6533XJPY",
+  "witnesses": 15,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RYE",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "SOUTH CENTRAL AMBULANCE SERVICE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1391882,
+    "South Central Ambulance Service",
+    null,
+    true
+   ],
+   [
+    2442353,
+    "South Central Ambulance Service NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915164,
+    "South Central Ambulance Service NHS Foundation Trust",
+    "GBPPONPVXR6533XJPY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RYF",
+  "value": "GBNHSRYF",
+  "identity": null,
+  "ppon": "PQXD1311BRXL",
+  "witnesses": 64,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RYF",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "SOUTH WESTERN AMBULANCE SERVICE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1430119,
+    "South Western Ambulance Service NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916200,
+    "South Western Ambulance Service NHS Foundation Trust",
+    "GBPPONPQXD1311BRXL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RYG",
+  "value": "GBNHSRYG",
+  "identity": null,
+  "ppon": "PPBB6627GXNQ",
+  "witnesses": 2,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RYG",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "COVENTRY AND WARWICKSHIRE PARTNERSHIP NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    1691021,
+    "Coventry and Warwickshire Partnership NHS Trust",
+    null,
+    true
+   ],
+   [
+    4648675,
+    "Coventry and Warwickshire Partnership Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30918096,
+    "Coventry & Warwickshire Partnership Trust",
+    "GBPPONPPBB6627GXNQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RYV",
+  "value": "GBNHSRYV",
+  "identity": null,
+  "ppon": "PHQR1485BDJQ",
+  "witnesses": 26,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "RYV",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "CAMBRIDGESHIRE COMMUNITY SERVICES NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": [
+    "RY3"
+   ]
+  },
+  "reg_names": [
+   [
+    5447323,
+    "Cambridgeshire Community Services NHS Trust",
+    null,
+    true
+   ],
+   [
+    5654151,
+    "Cambridge Community Services NHS Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31557115,
+    "Cambridgeshire Community Services NHS Trust",
+    "GBPPONPHQR1485BDJQ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.5
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-RYW",
+  "value": "GBNHSRYW",
+  "identity": null,
+  "ppon": "PLVW7764XPRN",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "RYW",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "BIRMINGHAM COMMUNITY HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    8042570,
+    "Birmingham Community Healthcare NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916580,
+    "Birmingham Community Healthcare Trust Headquarters",
+    "GBPPONPLVW7764XPRN",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.75
+  ]
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-RYY",
+  "value": "GBNHSRYY",
+  "identity": null,
+  "ppon": "PHVC1716LBDJ",
+  "witnesses": 37,
+  "registry_holder_count": 4,
+  "ppon_holder_count": 1,
+  "code": "RYY",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "KENT COMMUNITY HEALTH NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    6676127,
+    "Kent Community Health NHS Foundation Trust",
+    null,
+    true
+   ],
+   [
+    31560119,
+    "Kent Community Health NHS Foundation Trust (KCHFT)",
+    null,
+    true
+   ],
+   [
+    31604013,
+    "Kent Community Foundation Hospitals Trust",
+    null,
+    true
+   ],
+   [
+    31649007,
+    "Kent Community Healthcare NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30916727,
+    "Kent Community Health NHS Foundation Trust",
+    "GBPPONPHVC1716LBDJ",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0,
+   0.75,
+   0.5,
+   0.5
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-T1150",
+  "value": "GBNHST1150",
+  "identity": "GBNHST1150",
+  "ppon": "PPZC7945VBHW",
+  "witnesses": 6,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "T1150",
+  "shape": "A9999",
+  "ods": {
+   "found": true,
+   "name": "NHS RESOLUTION",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "SPECIAL HEALTH AUTHORITY (SPHA)",
+   "active_roles": [
+    "SPECIAL HEALTH AUTHORITY (SPHA)"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30915502,
+    "NHS Resolution",
+    "GBNHST1150",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30929925,
+    "NHS Litigation Authority",
+    "GBPPONPPZC7945VBHW",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   0.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-T1460",
+  "value": "GBNHST1460",
+  "identity": "GBNHST1460",
+  "ppon": "PDBY6395VWBP",
+  "witnesses": 5,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "T1460",
+  "shape": "A9999",
+  "ods": {
+   "found": true,
+   "name": "NHS BLOOD AND TRANSPLANT",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "SPECIAL HEALTH AUTHORITY (SPHA)",
+   "active_roles": [
+    "SPECIAL HEALTH AUTHORITY (SPHA)"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31554901,
+    "NHSBT",
+    "GBNHST1460",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30915199,
+    "NHS Blood and Transplant",
+    "GBPPONPDBY6395VWBP",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-T1480",
+  "value": "GBNHST1480",
+  "identity": "GBNHST1480",
+  "ppon": "PNBN5148DWJQ",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "T1480",
+  "shape": "A9999",
+  "ods": {
+   "found": true,
+   "name": "HEALTH RESEARCH AUTHORITY",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "SPECIAL HEALTH AUTHORITY (SPHA)",
+   "active_roles": [
+    "SPECIAL HEALTH AUTHORITY (SPHA)"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30976501,
+    "Health Research Authority",
+    "GBNHST1480",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-T1550",
+  "value": "GBNHST1550",
+  "identity": "GBNHST1550",
+  "ppon": "PGDP9934LXYL",
+  "witnesses": 12,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "T1550",
+  "shape": "A9999",
+  "ods": {
+   "found": true,
+   "name": "COMMUNITY HEALTH PARTNERSHIPS LTD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "SPECIAL HEALTH AUTHORITY (SPHA)",
+   "active_roles": [
+    "SPECIAL HEALTH AUTHORITY (SPHA)"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31567640,
+    "Community Health Partnerships Limited",
+    "GBNHST1550",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30967345,
+    "Community Health Partnerships Limited",
+    "GBPPONPGDP9934LXYL",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-TAD",
+  "value": "GBNHSTAD",
+  "identity": null,
+  "ppon": "PPRG6967RHTD",
+  "witnesses": 1,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "TAD",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "BRADFORD DISTRICT CARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "CARE TRUST",
+   "active_roles": [
+    "CARE TRUST",
+    "NHS TRUST DERIVED",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    9107193,
+    "Bradford District Care NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31600268,
+    "Bradford District Care NHS Foundation Trust",
+    "GBPPONPPRG6967RHTD",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-TAJ",
+  "value": "GBNHSTAJ",
+  "identity": null,
+  "ppon": "PRPV1569HTLT",
+  "witnesses": 4,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "TAJ",
+  "shape": "AAA",
+  "ods": {
+   "found": true,
+   "name": "BLACK COUNTRY HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "CARE TRUST",
+   "active_roles": [
+    "CARE TRUST",
+    "FOUNDATION TRUST",
+    "NHS TRUST DERIVED"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30968798,
+    "Black Country Healthcare NHS Foundation Trust",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    30917612,
+    "Black Country Healthcare NHS Foundation Trust",
+    "GBPPONPRPV1569HTLT",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-U6N4T",
+  "value": "GBNHSU6N4T",
+  "identity": "GBNHSU6N4T",
+  "ppon": "PBMQ7576DVGW",
+  "witnesses": 13,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "U6N4T",
+  "shape": "A9A9A",
+  "ods": {
+   "found": true,
+   "name": "UKHSA - LONDON REGION",
+   "status": "Active",
+   "rc": "RC2",
+   "primary": "EXECUTIVE AGENCY SITE",
+   "active_roles": [
+    "EXECUTIVE AGENCY SITE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    31543636,
+    "UK Health Security Agency",
+    "GBNHSU6N4T",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30914819,
+    "UK Health Security Agency",
+    "GBPPONPBMQ7576DVGW",
+    false
+   ]
+  ],
+  "reg_sim": [
+   0.0
+  ],
+  "ppon_sim": [
+   0.0
+  ]
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-ukn06",
+  "value": "GBNHSUKN06",
+  "identity": "GBNHSUKN06",
+  "ppon": "PTNY7183GXBY",
+  "witnesses": 11,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "UKN06",
+  "shape": "AAA99",
+  "ods": {
+   "found": false,
+   "http": "404"
+  },
+  "reg_names": [
+   [
+    30915329,
+    "Northern Ireland Blood Transfusion Service",
+    "GBNHSUKN06",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    31559449,
+    "Northern Ireland Blood Transfusion Service",
+    "GBPPONPTNY7183GXBY",
+    false
+   ]
+  ],
+  "reg_sim": [],
+  "ppon_sim": []
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-VL82P",
+  "value": "GBNHSVL82P",
+  "identity": "GBNHSVL82P",
+  "ppon": "PRBR2772VYBY",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "VL82P",
+  "shape": "AA99A",
+  "ods": {
+   "found": true,
+   "name": "AUCKLANDS CARE",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "SOCIAL CARE SITE",
+   "active_roles": [
+    "SOCIAL CARE SITE",
+    "CARE HOME",
+    "DOMICILIARY CARE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30953511,
+    "Mrs Lynn Georgina Hart T/A Aucklands Care",
+    "GBNHSVL82P",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   0.14
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "no_target_ppon",
+  "literal": "GB-NHS-VN370",
+  "value": "GBNHSVN370",
+  "identity": "GBNHSVN370",
+  "ppon": "PBRQ8152MCNY",
+  "witnesses": 2,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 0,
+  "code": "VN370",
+  "shape": "AA999",
+  "ods": {
+   "found": true,
+   "name": "WISTERIA CARE",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "SOCIAL CARE SITE",
+   "active_roles": [
+    "SOCIAL CARE SITE",
+    "DOMICILIARY CARE"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30953512,
+    "Wisteria Care",
+    "GBNHSVN370",
+    false
+   ]
+  ],
+  "ppon_names": [],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": []
+ },
+ {
+  "class": "multi_target",
+  "literal": "GB-NHS-west midlands Ambulance Service",
+  "value": "GBNHSWESTMIDLANDSAMBULANCESERVICE",
+  "identity": null,
+  "ppon": "PNTW1429NVGH",
+  "witnesses": 2,
+  "registry_holder_count": 2,
+  "ppon_holder_count": 1,
+  "code": "WESTMIDLANDSAMBULANCESERVICE",
+  "shape": "AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "ods": {
+   "found": false,
+   "http": "404"
+  },
+  "reg_names": [
+   [
+    6384818,
+    "West Midlands Ambulance Service",
+    null,
+    true
+   ],
+   [
+    13335820,
+    "West Midlands Ambulance Service University NHS FT",
+    null,
+    true
+   ]
+  ],
+  "ppon_names": [
+   [
+    31574837,
+    "West Midlands Ambulance Service University NHS Foundation Trust",
+    "GBPPONPNTW1429NVGH",
+    false
+   ]
+  ],
+  "reg_sim": [],
+  "ppon_sim": []
+ },
+ {
+  "class": "both_distinct",
+  "literal": "GB-NHS-X24",
+  "value": "GBNHSX24",
+  "identity": "GBNHSX24",
+  "ppon": "PDPT3135BWWY",
+  "witnesses": 65,
+  "registry_holder_count": 1,
+  "ppon_holder_count": 1,
+  "code": "X24",
+  "shape": "A99",
+  "ods": {
+   "found": true,
+   "name": "NHS ENGLAND",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "OTHER STATUTORY AUTHORITY (OSA)",
+   "active_roles": [
+    "OTHER STATUTORY AUTHORITY (OSA)"
+   ],
+   "successors": []
+  },
+  "reg_names": [
+   [
+    30929530,
+    "NHS ENGLAND",
+    "GBNHSX24",
+    false
+   ]
+  ],
+  "ppon_names": [
+   [
+    30913629,
+    "NHS England",
+    "GBPPONPDPT3135BWWY",
+    false
+   ]
+  ],
+  "reg_sim": [
+   1.0
+  ],
+  "ppon_sim": [
+   1.0
+  ]
+ }
+]

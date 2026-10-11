@@ -1,0 +1,648 @@
+[
+ {
+  "code": "QHL",
+  "class": "multi_target",
+  "witnesses": 4,
+  "ods": {
+   "found": true,
+   "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 30915737,
+    "name": "NHS Birmingham and Solihull ICB",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30915738,
+    "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PWQY9673JBYN",
+  "ppon_holders": [
+   {
+    "org_id": 30916123,
+    "name": "NHS Birmingham and Solihull Integrated Care Board",
+    "identifier": "GBPPONPWQY9673JBYN",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "QMF",
+  "class": "multi_target",
+  "witnesses": 16,
+  "ods": {
+   "found": true,
+   "name": "NHS NORTH EAST LONDON INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 5132172,
+    "name": "Barking, Havering and Redbridge University Hospitals NHS Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30914670,
+    "name": "NHS North East London Integrated Care Board",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30915099,
+    "name": "NHS London Commercial Hub",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30976288,
+    "name": "NHS North East London ICB",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31542989,
+    "name": "North East London ICB",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PMLZ8385VMTM",
+  "ppon_holders": [
+   {
+    "org_id": 31561974,
+    "name": "NHS South East London Integrated Care Board",
+    "identifier": "GBPPONPMLZ8385VMTM",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "QUY",
+  "class": "multi_target",
+  "witnesses": 25,
+  "ods": {
+   "found": true,
+   "name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 30914356,
+    "name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31609946,
+    "name": "NHS Bristol, North East Somerset and South Gloucestershire Integrated Care Board",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PPCD6597HCDW",
+  "ppon_holders": [
+   {
+    "org_id": 31536069,
+    "name": "NHS Bristol North Somerset & South Gloucestershire Integrated Care Board",
+    "identifier": "GBPPONPPCD6597HCDW",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "R0A",
+  "class": "multi_target",
+  "witnesses": 5,
+  "ods": {
+   "found": true,
+   "name": "MANCHESTER UNIVERSITY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "FOUNDATION TRUST",
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 10874685,
+    "name": "Manchester University NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31587675,
+    "name": "MANCHESTER UNIVERSITY NHS FT",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PXQG2592VYYY",
+  "ppon_holders": [
+   {
+    "org_id": 30913561,
+    "name": "Manchester University NHS Foundation Trust",
+    "identifier": "GBPPONPXQG2592VYYY",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RAT",
+  "class": "multi_target",
+  "witnesses": 117,
+  "ods": {
+   "found": true,
+   "name": "NORTH EAST LONDON NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1264733,
+    "name": "East London NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 1612066,
+    "name": "North East London NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PHHT9556BWJJ",
+  "ppon_holders": [
+   {
+    "org_id": 31535216,
+    "name": "North East London NHS Foundation Trust",
+    "identifier": "GBPPONPHHT9556BWJJ",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RCX",
+  "class": "multi_target",
+  "witnesses": 1,
+  "ods": {
+   "found": true,
+   "name": "THE QUEEN ELIZABETH HOSPITAL, KING'S LYNN, NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1929574,
+    "name": "The Queen Elizabeth Hospital Kings Lynn NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 2728937,
+    "name": "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31594811,
+    "name": "Queen Elizabeth Hospital FT",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31598591,
+    "name": "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust (QEH) 2022 - 2027 / QEH 2022-2027",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31648953,
+    "name": "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust (QEH)",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PQCT9574RQTZ",
+  "ppon_holders": [
+   {
+    "org_id": 30914684,
+    "name": "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust",
+    "identifier": "GBPPONPQCT9574RQTZ",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "REP",
+  "class": "multi_target",
+  "witnesses": 4,
+  "ods": {
+   "found": true,
+   "name": "LIVERPOOL WOMEN'S NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1223655,
+    "name": "Liverpool Women's NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 9160536,
+    "name": "Liverpool Women's Hospital NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PVNM7611RDDL",
+  "ppon_holders": [
+   {
+    "org_id": 31536256,
+    "name": "Liverpool Women's NHS Foundation Trust",
+    "identifier": "GBPPONPVNM7611RDDL",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RHM",
+  "class": "multi_target",
+  "witnesses": 10,
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITAL SOUTHAMPTON NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 2181541,
+    "name": "University Hospital Southampton NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30926652,
+    "name": "Coroners Adult Post-Mortem and Forensic services",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31624750,
+    "name": "University Hospitals Southampton NHS",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PTRZ1736CQVH",
+  "ppon_holders": [
+   {
+    "org_id": 30926769,
+    "name": "University Hospital Southampton",
+    "identifier": "GBPPONPTRZ1736CQVH",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RJR",
+  "class": "multi_target",
+  "witnesses": 207,
+  "ods": {
+   "found": true,
+   "name": "COUNTESS OF CHESTER HOSPITAL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1615245,
+    "name": "Countess of Chester Hospital NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 6851983,
+    "name": "Countess of Chester NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 13725605,
+    "name": "Countess of Chester",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31542216,
+    "name": "All Relevant Authorities as defined in section 12ZB(7) of the National Health Service Act 2006 (and any successor bodies) shall be eligible users of this framework.",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31543387,
+    "name": "Countess of Chester Hospitals NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PGCG2135TXWL",
+  "ppon_holders": [
+   {
+    "org_id": 31581032,
+    "name": "Countess of Chester Hospital NHS Foundation Trust",
+    "identifier": "GBPPONPGCG2135TXWL",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RRK",
+  "class": "multi_target",
+  "witnesses": 13,
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITALS BIRMINGHAM NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1167736,
+    "name": "University Hospitals Birmingham NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 1232155,
+    "name": "University Hospitals Birmingham",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PWVL6877BXXV",
+  "ppon_holders": [
+   {
+    "org_id": 30914077,
+    "name": "University Hospitals Birmingham NHS Foundation Trust",
+    "identifier": "GBPPONPWVL6877BXXV",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RVV",
+  "class": "multi_target",
+  "witnesses": 6,
+  "ods": {
+   "found": true,
+   "name": "EAST KENT HOSPITALS UNIVERSITY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1926457,
+    "name": "East Kent Hospitals University NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31537490,
+    "name": "East Kent Hospital Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PYBV2474CMNH",
+  "ppon_holders": [
+   {
+    "org_id": 30917064,
+    "name": "East Kent Hospitals University NHS Foundation Trust",
+    "identifier": "GBPPONPYBV2474CMNH",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RWW",
+  "class": "multi_target",
+  "witnesses": 93,
+  "ods": {
+   "found": true,
+   "name": "NORTH CHESHIRE AND MERSEY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 3793356,
+    "name": "Devon Partnership NHS Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 15410940,
+    "name": "Warrington and Halton Teaching Hospitals NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31538397,
+    "name": "Warrington and Halton Teaching Hospitals NHS Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31571325,
+    "name": "North Cheshire and Mersey NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31598258,
+    "name": "Warrington & Halton Teaching Hospitals NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PBMJ3394DBQQ",
+  "ppon_holders": [
+   {
+    "org_id": 31564277,
+    "name": "Warrington and Halton Teaching Hospitals NHS Foundation Trust",
+    "identifier": "GBPPONPBMJ3394DBQQ",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RXW",
+  "class": "multi_target",
+  "witnesses": 1,
+  "ods": {
+   "found": true,
+   "name": "THE SHREWSBURY AND TELFORD HOSPITAL NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1470141,
+    "name": "Shrewsbury & Telford Hospital NHS Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 12053291,
+    "name": "The Shrewsbury and Telford Hospital NHS Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 12431017,
+    "name": "Shrewsbury and Telford Hospital NHS Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PMRB7317GVDL",
+  "ppon_holders": [
+   {
+    "org_id": 30913590,
+    "name": "The Shrewsbury and Telford Hospital NHS Trust",
+    "identifier": "GBPPONPMRB7317GVDL",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RYG",
+  "class": "multi_target",
+  "witnesses": 2,
+  "ods": {
+   "found": true,
+   "name": "COVENTRY AND WARWICKSHIRE PARTNERSHIP NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1691021,
+    "name": "Coventry and Warwickshire Partnership NHS Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 4648675,
+    "name": "Coventry and Warwickshire Partnership Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PPBB6627GXNQ",
+  "ppon_holders": [
+   {
+    "org_id": 30918096,
+    "name": "Coventry & Warwickshire Partnership Trust",
+    "identifier": "GBPPONPPBB6627GXNQ",
+    "provisional": false
+   }
+  ]
+ }
+]

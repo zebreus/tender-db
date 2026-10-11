@@ -1,0 +1,669 @@
+[
+ {
+  "code": "0CX",
+  "class": "multi_target",
+  "witnesses": 36,
+  "ods": {
+   "found": true,
+   "name": "NHS MIDLANDS AND LANCASHIRE COMMISSIONING SUPPORT UNIT",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "COMMISSIONING SUPPORT UNIT",
+   "active_roles": [
+    "COMMISSIONING SUPPORT UNIT"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 5694794,
+    "name": "NHS Midlands and Lancashire Commissioning Support Unit",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 6191087,
+    "name": "Midlands and Lancashire Commissioning Support Unit",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PGTM4634DGZQ",
+  "ppon_holders": [
+   {
+    "org_id": 31572637,
+    "name": "TEST",
+    "identifier": "GBPPONPGTM4634DGZQ",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "QJG",
+  "class": "multi_target",
+  "witnesses": 5,
+  "ods": {
+   "found": true,
+   "name": "NHS SUFFOLK AND NORTH EAST ESSEX INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": [
+    "D7T5G",
+    "T6Y0W"
+   ]
+  },
+  "registry_holders": [
+   {
+    "org_id": 30914144,
+    "name": "NHS Suffolk and North East Essex Integrated Care Board",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30914161,
+    "name": "Suffolk and North East Essex Integrated Care Board",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30917668,
+    "name": "NHS Suffolk and North East Essex ICB",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31602019,
+    "name": "North East Essex Crisis Alternative Service",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PQPJ8718HQTJ",
+  "ppon_holders": []
+ },
+ {
+  "code": "QNQ",
+  "class": "multi_target",
+  "witnesses": 2,
+  "ods": {
+   "found": true,
+   "name": "NHS FRIMLEY INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": [
+    "S0E4D",
+    "S9B9J",
+    "QRL"
+   ]
+  },
+  "registry_holders": [
+   {
+    "org_id": 30913842,
+    "name": "NHS Frimley Integrated Care Board",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30916858,
+    "name": "NHS Frimley ICB",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31540924,
+    "name": "NHS Frimley Integrated Care Board (ICB)",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PLMH6718XNVJ",
+  "ppon_holders": [
+   {
+    "org_id": 31552078,
+    "name": "NHS Frimley Integrated Care Board",
+    "identifier": "GBPPONPLMH6718XNVJ",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "QWO",
+  "class": "multi_target",
+  "witnesses": 7,
+  "ods": {
+   "found": true,
+   "name": "NHS WEST YORKSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 30914544,
+    "name": "NHS West Yorkshire Integrated Care Board",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30933188,
+    "name": "NHS WEST YORKSHIRE ICB",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PMTJ1118QVJH",
+  "ppon_holders": [
+   {
+    "org_id": 30917022,
+    "name": "NHS West Yorkshire Integrated Care Board",
+    "identifier": "GBPPONPMTJ1118QVJH",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RAE",
+  "class": "multi_target",
+  "witnesses": 4,
+  "ods": {
+   "found": true,
+   "name": "BRADFORD TEACHING HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1165568,
+    "name": "Bradford Teaching Hospitals NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31565965,
+    "name": "Leeds Teaching Hospital Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PMJZ5573HMPZ",
+  "ppon_holders": [
+   {
+    "org_id": 30914102,
+    "name": "Bradford Teaching Hospitals NHS Foundation Trust",
+    "identifier": "GBPPONPMJZ5573HMPZ",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RBN",
+  "class": "multi_target",
+  "witnesses": 180,
+  "ods": {
+   "found": true,
+   "name": "MERSEY AND WEST LANCASHIRE TEACHING HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 30914735,
+    "name": "MERSEY AND WEST LANCASHIRE TEACHING HOSPITALS NHS TRUST",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30917279,
+    "name": "Mersey & West Lancashire Teaching Hospitals NHS Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31543386,
+    "name": "Mersey and West Lancashire Teaching Hospital NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31563641,
+    "name": "NHS Mersey & West Lancashire NHS Teaching Hospitals NHS Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31618482,
+    "name": "Mersey and West Lancashire Teaching Hospitals NHS Tru",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PRYN5195GTQJ",
+  "ppon_holders": [
+   {
+    "org_id": 31536800,
+    "name": "Mersey and West Lancashire Teaching Hospitals NHS Trust",
+    "identifier": "GBPPONPRYN5195GTQJ",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "REF",
+  "class": "multi_target",
+  "witnesses": 15,
+  "ods": {
+   "found": true,
+   "name": "ROYAL CORNWALL HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1251123,
+    "name": "Royal Cornwall Hospitals Nhs Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 2306139,
+    "name": "Royal Cornwall Hospital Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PGXP9455TXGR",
+  "ppon_holders": [
+   {
+    "org_id": 30916407,
+    "name": "Royal Cornwall Hospitals NHS Trust",
+    "identifier": "GBPPONPGXP9455TXGR",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RGD",
+  "class": "multi_target",
+  "witnesses": 1,
+  "ods": {
+   "found": true,
+   "name": "LEEDS AND YORK PARTNERSHIP NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 5476801,
+    "name": "Leeds and York Partnership NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30919688,
+    "name": "Leeds and York Partnership NHS Foundation Trust, trading as North of England NHS Commercial Procurement Collaborative (\"NOE CPC\")",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PTWP8794GHJN",
+  "ppon_holders": [
+   {
+    "org_id": 30926718,
+    "name": "Leeds and York Partnership NHS Foundation Trust",
+    "identifier": "GBPPONPTWP8794GHJN",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RJE",
+  "class": "multi_target",
+  "witnesses": 3,
+  "ods": {
+   "found": true,
+   "name": "UNIVERSITY HOSPITALS OF NORTH MIDLANDS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1167736,
+    "name": "University Hospitals Birmingham NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 5879895,
+    "name": "University Hospitals of North Midlands NHS Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PHBX7757YPYD",
+  "ppon_holders": [
+   {
+    "org_id": 30913980,
+    "name": "University Hospitals of North Midlands NHS Trust",
+    "identifier": "GBPPONPHBX7757YPYD",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RNZ",
+  "class": "multi_target",
+  "witnesses": 3,
+  "ods": {
+   "found": true,
+   "name": "SALISBURY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1262730,
+    "name": "Salisbury NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31632712,
+    "name": "SALISBURY NHS FOUNDATION TRUST in partnership with Carbon and Energy Fund",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PHNB6299PVMY",
+  "ppon_holders": [
+   {
+    "org_id": 30972038,
+    "name": "Salisbury NHS Foundation Trust",
+    "identifier": "GBPPONPHNB6299PVMY",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RTD",
+  "class": "multi_target",
+  "witnesses": 19,
+  "ods": {
+   "found": true,
+   "name": "THE NEWCASTLE UPON TYNE HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1166415,
+    "name": "The Newcastle upon Tyne Hospitals NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31543973,
+    "name": "The Newcastle Upon Tyne Hospitals Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PDCY5582YRHQ",
+  "ppon_holders": [
+   {
+    "org_id": 30917018,
+    "name": "The Newcastle Upon Tyne Hospitals NHS Foundation Trust",
+    "identifier": "GBPPONPDCY5582YRHQ",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RWF",
+  "class": "multi_target",
+  "witnesses": 2,
+  "ods": {
+   "found": true,
+   "name": "MAIDSTONE AND TUNBRIDGE WELLS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1517322,
+    "name": "Maidstone and Tunbridge Wells NHS Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31610393,
+    "name": "Sustainable Energy First Limited C/O Maidstone and Tunbridge Wells NHS Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PLWZ5628VQPM",
+  "ppon_holders": [
+   {
+    "org_id": 30913981,
+    "name": "Maidstone and Tunbridge Wells NHS Trust",
+    "identifier": "GBPPONPLWZ5628VQPM",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RXE",
+  "class": "multi_target",
+  "witnesses": 33,
+  "ods": {
+   "found": true,
+   "name": "ROTHERHAM DONCASTER AND SOUTH HUMBER NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 4141289,
+    "name": "Rotherham Doncaster and South Humber NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31534939,
+    "name": "Rotherham, Doncaster & South Humber NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PBGD2746GXHP",
+  "ppon_holders": [
+   {
+    "org_id": 31535064,
+    "name": "Rotherham Doncaster and South Humber NHS Foundation Trust",
+    "identifier": "GBPPONPBGD2746GXHP",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RYA",
+  "class": "multi_target",
+  "witnesses": 1,
+  "ods": {
+   "found": true,
+   "name": "WEST MIDLANDS AMBULANCE SERVICE UNIVERSITY NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 6384818,
+    "name": "West Midlands Ambulance Service",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 12508548,
+    "name": "West Midlands Ambulance Service University NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 13335820,
+    "name": "West Midlands Ambulance Service University NHS FT",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31567619,
+    "name": "West Midland Ambulance Service University NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31626603,
+    "name": "West Midlands Service University NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PNDY4353CMWY",
+  "ppon_holders": [
+   {
+    "org_id": 30913621,
+    "name": "West Midlands Ambulance Service University NHS Foundation Trust",
+    "identifier": "GBPPONPNDY4353CMWY",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RYY",
+  "class": "multi_target",
+  "witnesses": 37,
+  "ods": {
+   "found": true,
+   "name": "KENT COMMUNITY HEALTH NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 6676127,
+    "name": "Kent Community Health NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31560119,
+    "name": "Kent Community Health NHS Foundation Trust (KCHFT)",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31604013,
+    "name": "Kent Community Foundation Hospitals Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31649007,
+    "name": "Kent Community Healthcare NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PHVC1716LBDJ",
+  "ppon_holders": [
+   {
+    "org_id": 30916727,
+    "name": "Kent Community Health NHS Foundation Trust",
+    "identifier": "GBPPONPHVC1716LBDJ",
+    "provisional": false
+   }
+  ]
+ }
+]

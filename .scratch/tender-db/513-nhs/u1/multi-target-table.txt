@@ -1,0 +1,354 @@
+0AR    w= 15 ODS=NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT [Active/COMMISSIONING SUPPORT UNIT] succ=[]
+     R   4058565 1.0 NHS North of England Commissioning Support Unit
+     R  31592074 0.71 NHS North of England Commissioning Support Unit (hosted by NHS England)
+     P  30929531 1.0 NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT
+0CX    w= 36 ODS=NHS MIDLANDS AND LANCASHIRE COMMISSIONING SUPPORT UNIT [Active/COMMISSIONING SUPPORT UNIT] succ=[]
+     R   5694794 1.0 NHS Midlands and Lancashire Commissioning Support Unit
+     R   6191087 1.0 Midlands and Lancashire Commissioning Support Unit
+     P  31572637 0.0 TEST
+0DE    w=  2 ODS=NHS ARDEN AND GREATER EAST MIDLANDS COMMISSIONING SUPPORT UNIT [Active/COMMISSIONING SUPPORT UNIT] succ=[]
+     R   6340194 1.0 NHS Arden and Greater East Midlands Commissioning Support Unit
+     R   7501468 0.5 NHS Arden & GEM Commissioning Support Unit
+     P  30916122 1.0 NHS Arden and Greater East Midlands Commissioning Support Unit
+0DF    w= 60 ODS=NHS SOUTH, CENTRAL AND WEST COMMISSIONING SUPPORT UNIT [Active/COMMISSIONING SUPPORT UNIT] succ=[]
+     R  13252367 1.0 NHS South Central and West Commissioning Support Unit
+     R  30930432 0.43 NHS South Central and West CSU
+     R  30968729 0.83 NHS SOUTH CENTRAL AND WEST COMMISSIONING SUPPORT
+     R  31538082 0.67 NHS South, Central and West Commissioning Support Unit (hosted by NHS England)
+     P  30915590 0.67 NHS South, Central and West Commissioning Support Unit (hosted by NHS England)
+QHL    w=  4 ODS=NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R  30915737 1.0 NHS Birmingham and Solihull ICB
+     R  30915738 1.0 NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD
+     P  30916123 1.0 NHS Birmingham and Solihull Integrated Care Board
+QHM    w= 48 ODS=NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R   3257070 0.17 North of England Commissioning Support
+     R  30915134 1.0 NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD
+     R  30930129 1.0 North East and North Cumbria Integrated Care Board
+     R  30976504 1.0 North East North Cumbria Integrated Care Board
+     R  31538425 1.0 NHS North East and North Cumbria ICB
+     P  31556600 1.0 NHS North East and North Cumbria Integrated Care Board
+QJG    w=  5 ODS=NHS SUFFOLK AND NORTH EAST ESSEX INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=['D7T5G', 'T6Y0W']
+     R  30914144 1.0 NHS Suffolk and North East Essex Integrated Care Board
+     R  30914161 1.0 Suffolk and North East Essex Integrated Care Board
+     R  30917668 1.0 NHS Suffolk and North East Essex ICB
+     R  31602019 0.43 North East Essex Crisis Alternative Service
+QJK    w= 33 ODS=NHS DEVON INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R  30914151 1.0 NHS Devon Integrated Care Board
+     R  30914271 1.0 NHS Devon Integrated Care Board (ICB)
+     R  30914831 1.0 NHS Devon ICB
+     P  30917049 1.0 NHS DEVON INTEGRATED CARE BOARD
+QKK    w= 13 ODS=NHS SOUTH EAST LONDON INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R  30914447 1.0 NHS South East London Integrated Care Board
+     R  30914670 0.5 NHS North East London Integrated Care Board
+     R  30928152 1.0 NHS South East London Integrated Care Board London
+     R  31534497 1.0 NHS South East London ICB
+     R  31544853 1.0 South East London Integrated Care Board
+     P  31576333 0.5 NHS North East London Integrated Care Board
+QMF    w= 16 ODS=NHS NORTH EAST LONDON INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R   5132172 0.0 Barking, Havering and Redbridge University Hospitals NHS Trust
+     R  30914670 1.0 NHS North East London Integrated Care Board
+     R  30915099 0.2 NHS London Commercial Hub
+     R  30976288 1.0 NHS North East London ICB
+     R  31542989 1.0 North East London ICB
+     P  31561974 0.5 NHS South East London Integrated Care Board
+QMJ    w= 10 ODS=NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=['Z9B2Z']
+     R  30915099 0.2 NHS London Commercial Hub
+     R  30915101 1.0 NHS North Central London Integrated Care Board
+     R  30915993 1.0 NHS North Central London ICB
+     R  31536734 1.0 NHS North Central London Integrated Care Board  London
+     R  31593612 1.0 North Central London Integrated Care Board
+     P  30916245 1.0 NHS North Central London Integrated Care Board
+QNQ    w=  2 ODS=NHS FRIMLEY INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=['S0E4D', 'S9B9J', 'QRL']
+     R  30913842 1.0 NHS Frimley Integrated Care Board
+     R  30916858 1.0 NHS Frimley ICB
+     R  31540924 1.0 NHS Frimley Integrated Care Board (ICB)
+     P  31552078 1.0 NHS Frimley Integrated Care Board
+QOQ    w= 22 ODS=NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R  30913653 1.0 NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD
+     R  31535385 1.0 NHS Humber and North Yorkshire Integrated Care Board (ICB)
+     R  31552257 1.0 NHS Humber and North Yorkshire ICB
+     R  31570883 1.0 NHS Humber North Yorkshire ICB
+     R  31587871 1.0 NHS Humber North Yorkshire Integrated Care Board
+     P  31573365 1.0 NHS Humber and North Yorkshire Integrated Care Board (ICB)
+QRL    w= 17 ODS=NHS HAMPSHIRE AND ISLE OF WIGHT INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R  20902603 1.0 NHS Hampshire and Isle of Wight Integrated Care Board
+     R  30913796 1.0 NHS HAMPSHIRE AND THE ISLE OF WIGHT INTEGRATED CARE BOARD
+     R  31543410 1.0 NHS Hampshire and Isle of Wight Integrated Care Board (ICB)
+     R  31567317 1.0 NHS Hampshire and Isle of Wight ICB
+     R  31580931 1.0 Hampshire and Isle of Wight ICB
+     P  31552077 1.0 NHS Hampshire and Isle of Wight Integrated Care Board
+QUY    w= 25 ODS=NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R  30914356 1.0 NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD
+     R  31609946 0.83 NHS Bristol, North East Somerset and South Gloucestershire Integrated Care Board
+     P  31536069 1.0 NHS Bristol North Somerset & South Gloucestershire Integrated Care Board
+QWE    w= 38 ODS=NHS SOUTH WEST LONDON INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R  30915087 1.0 NHS South West London Integrated Care Board
+     R  31536736 1.0 NHS South West London Integrated Care Board  London
+QWO    w=  7 ODS=NHS WEST YORKSHIRE INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R  30914544 1.0 NHS West Yorkshire Integrated Care Board
+     R  30933188 1.0 NHS WEST YORKSHIRE ICB
+     P  30917022 1.0 NHS West Yorkshire Integrated Care Board
+QXU    w=  5 ODS=NHS SURREY HEARTLANDS INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=['S9B9J']
+     R  21990238 1.0 NHS Surrey Heartlands ICB
+     R  30916138 1.0 NHS Surrey Heartlands Integrated Care Board
+     R  31543412 1.0 NHS Surrey Heartlands Integrated Care Board (ICB)
+     P  31552079 1.0 NHS Surrey Heartlands Integrated Care Board
+QYG    w=  1 ODS=NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD [Active/STRATEGIC PARTNERSHIP] succ=[]
+     R  30913962 1.0 NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD
+     R  30916196 1.0 NHS Cheshire and Merseyside ICB
+     R  30916198 1.0 Cheshire and Merseyside Integrated Care Board
+     R  31541032 1.0 NHS Cheshire and Merseyside Integrated Care Board (ICB)
+     R  31546209 1.0 NHS Cheshire & Merseyside Integrated Care Board (ICB)
+R0A    w=  5 ODS=MANCHESTER UNIVERSITY NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R  10874685 1.0 Manchester University NHS Foundation Trust
+     R  31587675 1.0 MANCHESTER UNIVERSITY NHS FT
+     P  30913561 1.0 Manchester University NHS Foundation Trust
+R0D    w=  3 ODS=UNIVERSITY HOSPITALS DORSET NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1240944 0.5 Dorset HealthCare University NHS Foundation Trust
+     R  31551277 1.0 UNIVERSITY HOSPITALS DORSET NHS FOUNDATION TRUST
+     P  30914100 1.0 University Hospitals Dorset NHS Foundation Trust
+RAE    w=  4 ODS=BRADFORD TEACHING HOSPITALS NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1165568 1.0 Bradford Teaching Hospitals NHS Foundation Trust
+     R  31565965 0.2 Leeds Teaching Hospital Trust
+     P  30914102 1.0 Bradford Teaching Hospitals NHS Foundation Trust
+RAJ    w= 16 ODS=MID AND SOUTH ESSEX NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R  17455495 1.0 Mid and South Essex NHS Foundation Trust
+     R  31536222 1.0 Mid South Essex NHS Foundation Trust
+     P  30914265 1.0 Mid and South Essex NHS Foundation Trust
+RAL    w=  3 ODS=ROYAL FREE LONDON NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   2200541 1.0 Royal Free London NHS Foundation Trust
+     R  31555826 0.33 Royal Free London NHS Foundation Trust T/AS Transformation Partners in Health and Care
+     P  31566777 0.33 Royal Free London NHS Foundation Trust T/AS Transformation Partners in Health and Care
+RAT    w=117 ODS=NORTH EAST LONDON NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1264733 0.67 East London NHS Foundation Trust
+     R   1612066 1.0 North East London NHS Foundation Trust
+     P  31535216 1.0 North East London NHS Foundation Trust
+RBL    w= 22 ODS=WIRRAL UNIVERSITY TEACHING HOSPITAL NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1311180 1.0 Wirral University Teaching Hospital NHS Foundation Trust
+     R   2298423 1.0 Wirral University Teaching Hospital
+     R  15465415 0.6 Wirral University Teaching Hospitals NHS Foundation Trust
+     R  31535437 1.0 Wirral University Teaching Hospital NHS FT
+     R  31571625 0.8 Wirral University Teaching Hospital NHS Foundation Trust (WUTH)
+     P  31587299 1.0 Wirral University Teaching Hospital NHS Foundation Trust
+RBN    w=180 ODS=MERSEY AND WEST LANCASHIRE TEACHING HOSPITALS NHS TRUST [Active/NHS TRUST] succ=[]
+     R  30914735 1.0 MERSEY AND WEST LANCASHIRE TEACHING HOSPITALS NHS TRUST
+     R  30917279 1.0 Mersey & West Lancashire Teaching Hospitals NHS Trust
+     R  31543386 0.67 Mersey and West Lancashire Teaching Hospital NHS Foundation Trust
+     R  31563641 1.0 NHS Mersey & West Lancashire NHS Teaching Hospitals NHS Trust
+     R  31618482 0.83 Mersey and West Lancashire Teaching Hospitals NHS Tru
+     P  31536800 1.0 Mersey and West Lancashire Teaching Hospitals NHS Trust
+RBQ    w= 30 ODS=LIVERPOOL HEART AND CHEST HOSPITAL NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1766980 1.0 Liverpool Heart and Chest Hospital NHS Foundation Trust
+     R   6851948 0.75 Liverpool Heart and Chest NHS Foundation Trust
+     R  31568217 0.6 LIVERPOOL HEART AND CHESH HOSPITAL NHS FOUNDATION TRUST
+     R  31571042 1.0 LIVERPOOL HEART & CHEST HOSPITAL NHS TRUST
+     R  31605524 0.75 Liverpool Heart & Chest NHS Foundation Trust
+     P  30918289 1.0 Liverpool Heart and Chest Hospital NHS Foundation Trust
+RBS    w= 11 ODS=ALDER HEY CHILDREN'S NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1183914 1.0 Alder Hey Children's NHS Foundation Trust
+     R  31592492 1.0 Alder Hey Children's NHS FT
+     P  31545296 1.0 Alder Hey Children's NHS Foundation Trust
+RCX    w=  1 ODS=THE QUEEN ELIZABETH HOSPITAL, KING'S LYNN, NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1929574 0.57 The Queen Elizabeth Hospital Kings Lynn NHS Foundation Trust
+     R   2728937 1.0 The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust
+     R  31594811 0.5 Queen Elizabeth Hospital FT
+     R  31598591 0.67 The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust (QEH) 2022 - 2027 / QEH 2022-2027
+     R  31648953 0.86 The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust (QEH)
+     P  30914684 1.0 The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust
+RDE    w=  6 ODS=EAST SUFFOLK AND NORTH ESSEX NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R  11944973 1.0 East Suffolk and North Essex NHS Foundation Trust
+     R  30914160 1.0 East Suffolk and North East Essex NHS Foundation Trust
+     P  31535010 1.0 East Suffolk and North Essex NHS Foundation Trust
+REF    w= 15 ODS=ROYAL CORNWALL HOSPITALS NHS TRUST [Active/NHS TRUST] succ=[]
+     R   1251123 1.0 Royal Cornwall Hospitals Nhs Trust
+     R   2306139 0.5 Royal Cornwall Hospital Trust
+     P  30916407 1.0 Royal Cornwall Hospitals NHS Trust
+REM    w=  2 ODS=LIVERPOOL UNIVERSITY HOSPITALS NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R  14475224 1.0 Liverpool University Hospitals NHS Foundation Trust
+     R  30916254 0.75 University Hospitals of Liverpool Group
+     R  31572888 0.75 NHS University Hospitals of Liverpool Group
+     R  31598155 0.5 LIVERPOOL UNIVERSOTY HOSPITALS NHS FOUNDATION TRUST
+     P  30919565 1.0 Liverpool University Hospitals NHS Foundation Trust
+REN    w= 17 ODS=THE CLATTERBRIDGE CANCER CENTRE NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1371484 0.25 The Walton Centre NHS Foundation Trust
+     R   2965244 1.0 The Clatterbridge Cancer Centre NHS Foundation Trust
+     R   4275910 0.25 The Walton Centre
+     P  30916762 1.0 The Clatterbridge Cancer Centre NHS Foundation Trust
+REP    w=  4 ODS=LIVERPOOL WOMEN'S NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1223655 1.0 Liverpool Women's NHS Foundation Trust
+     R   9160536 0.75 Liverpool Women's Hospital NHS Foundation Trust
+     P  31536256 1.0 Liverpool Women's NHS Foundation Trust
+RET    w= 17 ODS=THE WALTON CENTRE NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1371484 1.0 The Walton Centre NHS Foundation Trust
+     R   4275910 1.0 The Walton Centre
+     R  30968741 0.0 Alder Hey
+     P  31549806 1.0 The Walton Centre NHS Foundation Trust
+RGD    w=  1 ODS=LEEDS AND YORK PARTNERSHIP NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   5476801 1.0 Leeds and York Partnership NHS Foundation Trust
+     R  30919688 0.25 Leeds and York Partnership NHS Foundation Trust, trading as North of England NHS Commercial Procurement Collaborative ("NOE CPC")
+     P  30926718 1.0 Leeds and York Partnership NHS Foundation Trust
+RGR    w=  1 ODS=WEST SUFFOLK NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   2228352 1.0 West Suffolk NHS Foundation Trust
+     R   7192624 0.67 West Suffolk Hospital NHS Foundation Trust
+     P  30916897 1.0 West Suffolk NHS Foundation Trust
+RHA    w= 10 ODS=NOTTINGHAMSHIRE HEALTHCARE NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1437921 1.0 Nottinghamshire Healthcare NHS Trust
+     R   6362440 1.0 Nottinghamshire Healthcare NHS Foundation Trust
+     R  30915065 0.0 NHS Skills Development Network
+     P  30916974 1.0 Nottinghamshire Healthcare NHS Foundation Trust
+RHM    w= 10 ODS=UNIVERSITY HOSPITAL SOUTHAMPTON NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   2181541 1.0 University Hospital Southampton NHS Foundation Trust
+     R  30926652 0.0 Coroners Adult Post-Mortem and Forensic services
+     R  31624750 0.5 University Hospitals Southampton NHS
+     P  30926769 1.0 University Hospital Southampton
+RHQ    w= 17 ODS=SHEFFIELD TEACHING HOSPITALS NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1321678 1.0 Sheffield Teaching Hospitals NHS Foundation Trust
+     R  31546261 0.6 SHEFFIELD TEACHING HOSPITALS NHS FOUNDATION TRUST (Devices for Dignity)
+     P  30916153 1.0 Sheffield Teaching Hospitals NHS Foundation Trust
+RJE    w=  3 ODS=UNIVERSITY HOSPITALS OF NORTH MIDLANDS NHS TRUST [Active/NHS TRUST] succ=[]
+     R   1167736 0.4 University Hospitals Birmingham NHS Foundation Trust
+     R   5879895 1.0 University Hospitals of North Midlands NHS Trust
+     P  30913980 1.0 University Hospitals of North Midlands NHS Trust
+RJL    w= 42 ODS=NORTHERN LINCOLNSHIRE AND GOOLE NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   4616701 1.0 Northern Lincolnshire & Goole NHS Foundation Trust
+     R   4944993 1.0 Northern Lincolnshire and Goole NHS Foundation Trust
+     R  31609338 0.0 Diana, Princess of Wales Hospital
+     R  31647875 0.0 Diana, Princess of Wales Hospital , Grimsby
+     P  31550622 1.0 Northern Lincolnshire and Goole NHS Foundation Trust
+RJN    w= 26 ODS=EAST CHESHIRE NHS TRUST [Active/NHS TRUST] succ=[]
+     R   2267508 1.0 East Cheshire NHS Trust
+     R   7138160 0.0 The Countess of Chester NHS Foundation Trust
+RJR    w=207 ODS=COUNTESS OF CHESTER HOSPITAL NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1615245 1.0 Countess of Chester Hospital NHS Foundation Trust
+     R   6851983 0.67 Countess of Chester NHS Foundation Trust
+     R  13725605 0.67 Countess of Chester
+     R  31542216 0.0 All Relevant Authorities as defined in section 12ZB(7) of the National Health Service Act 2006 (and any successor bodies) shall be eligible users of this framework.
+     R  31543387 0.5 Countess of Chester Hospitals NHS Foundation Trust
+     P  31581032 1.0 Countess of Chester Hospital NHS Foundation Trust
+RJZ    w=  4 ODS=KING'S COLLEGE HOSPITAL NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1346181 1.0 King's College Hospital NHS Foundation Trust
+     R   1432862 0.17 Kettering General Hospital NHS Foundation Trust
+     R   1687357 0.4 Kings College Hospital NHS Foundation Trust
+     R  31535103 0.0 Community Health and Eyecare Limited
+     R  31560728 0.6 King's College London NHS Foundation Trust
+     P  30913914 1.0 King's College Hospital NHS Foundation Trust
+RNZ    w=  3 ODS=SALISBURY NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1262730 1.0 Salisbury NHS Foundation Trust
+     R  31632712 0.14 SALISBURY NHS FOUNDATION TRUST in partnership with Carbon and Energy Fund
+     P  30972038 1.0 Salisbury NHS Foundation Trust
+RPY    w=  1 ODS=THE ROYAL MARSDEN NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1206891 1.0 The Royal Marsden NHS Foundation Trust
+     R   6454935 0.67 Royal Marsden Hospital NHS Foundation Trust
+     P  30926647 1.0 The Royal Marsden NHS Foundation Trust
+RQX    w=  1 ODS=HOMERTON HEALTHCARE NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1238214 0.25 Homerton University Hospital NHS Foundation Trust
+     R  30976496 1.0 Homerton Healthcare NHS Foundation Trust
+     R  31571651 1.0 Homerton Healthcare NHS FT
+     P  30976286 0.25 Homerton University Hospital NHS Foundation Trust
+RRK    w= 13 ODS=UNIVERSITY HOSPITALS BIRMINGHAM NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1167736 1.0 University Hospitals Birmingham NHS Foundation Trust
+     R   1232155 1.0 University Hospitals Birmingham
+     P  30914077 1.0 University Hospitals Birmingham NHS Foundation Trust
+RRU    w= 11 ODS=LONDON AMBULANCE SERVICE NHS TRUST [Active/NHS TRUST] succ=[]
+     R   1755985 1.0 London Ambulance Service NHS Trust
+     R  31552166 0.75 London Ambulance Service NHS Trust (LAS)
+     P  30915545 1.0 London Ambulance Service NHS Trust
+RTD    w= 19 ODS=THE NEWCASTLE UPON TYNE HOSPITALS NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1166415 1.0 The Newcastle upon Tyne Hospitals NHS Foundation Trust
+     R  31543973 1.0 The Newcastle Upon Tyne Hospitals Foundation Trust
+     P  30917018 1.0 The Newcastle Upon Tyne Hospitals NHS Foundation Trust
+RTF    w= 21 ODS=NORTHUMBRIA HEALTHCARE NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1172050 1.0 Northumbria Healthcare NHS Foundation Trust
+     R   4474166 0.0 University Hospitals of Leicester NHS Trust
+     P  30914055 0.5 Northumbria Healthcare Facilities Management
+RTG    w=142 ODS=UNIVERSITY HOSPITALS OF DERBY AND BURTON NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R  12215491 1.0 University Hospitals of Derby and Burton NHS Foundation Trust
+     R  30953527 0.6 University Hospital of Derby and Burton NHS Foundation Trust
+     R  31559358 1.0 University Hospitals of Derby & Burton NHS Foundation Trust
+     P  30915285 1.0 University Hospitals of Derby and Burton NHS Foundation Trust
+RVV    w=  6 ODS=EAST KENT HOSPITALS UNIVERSITY NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1926457 1.0 East Kent Hospitals University NHS Foundation Trust
+     R  31537490 0.4 East Kent Hospital Foundation Trust
+     P  30917064 1.0 East Kent Hospitals University NHS Foundation Trust
+RWD    w=  6 ODS=UNITED LINCOLNSHIRE TEACHING HOSPITALS NHS TRUST [Active/NHS TRUST] succ=[]
+     R  30915785 1.0 UNITED LINCOLNSHIRE TEACHING HOSPITALS NHS TRUST
+     R  31604037 0.4 United Lincolnshire NHS Hospital Trust
+     P  30913995 1.0 United Lincolnshire Teaching Hospitals NHS Trust
+RWF    w=  2 ODS=MAIDSTONE AND TUNBRIDGE WELLS NHS TRUST [Active/NHS TRUST] succ=[]
+     R   1517322 1.0 Maidstone and Tunbridge Wells NHS Trust
+     R  31610393 0.38 Sustainable Energy First Limited C/O Maidstone and Tunbridge Wells NHS Trust
+     P  30913981 1.0 Maidstone and Tunbridge Wells NHS Trust
+RWJ    w=  2 ODS=STOCKPORT NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1193388 1.0 Stockport NHS Foundation Trust
+     R  31604158 0.25 Stockport N H S Foundation Trust
+     P  31574798 1.0 Stockport NHS Foundation Trust
+RWV    w=  1 ODS=DEVON PARTNERSHIP NHS TRUST [Active/NHS TRUST] succ=[]
+     R   3793356 1.0 Devon Partnership NHS Trust
+     R   9420410 1.0 Devon Partnership Trust
+     P  31541155 1.0 Devon Partnership NHS Trust
+RWW    w= 93 ODS=NORTH CHESHIRE AND MERSEY NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   3793356 0.0 Devon Partnership NHS Trust
+     R  15410940 0.0 Warrington and Halton Teaching Hospitals NHS Foundation Trust
+     R  31538397 0.0 Warrington and Halton Teaching Hospitals NHS Trust
+     R  31571325 1.0 North Cheshire and Mersey NHS Foundation Trust
+     R  31598258 0.0 Warrington & Halton Teaching Hospitals NHS Foundation Trust
+     P  31564277 0.0 Warrington and Halton Teaching Hospitals NHS Foundation Trust
+RXA    w= 37 ODS=CHESHIRE AND WIRRAL PARTNERSHIP NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1604072 1.0 Cheshire and Wirral Partnership NHS Foundation Trust
+     R   2267512 1.0 Cheshire & Wirral Partnership NHS Foundation Trust
+     P  31552751 1.0 Cheshire and Wirral Partnership NHS Foundation Trust
+RXE    w= 33 ODS=ROTHERHAM DONCASTER AND SOUTH HUMBER NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   4141289 1.0 Rotherham Doncaster and South Humber NHS Foundation Trust
+     R  31534939 1.0 Rotherham, Doncaster & South Humber NHS Foundation Trust
+     P  31535064 1.0 Rotherham Doncaster and South Humber NHS Foundation Trust
+RXK    w=  1 ODS=SANDWELL AND WEST BIRMINGHAM HOSPITALS NHS TRUST [Active/NHS TRUST] succ=[]
+     R   1396633 1.0 Sandwell and West Birmingham Hospitals NHS Trust
+     R  31621139 0.57 Sandwell & West Birmingham Hospitals N H S Trust
+     P  30917614 1.0 Sandwell and West Birmingham Hospitals NHS Trust
+RXT    w=  5 ODS=BIRMINGHAM AND SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R  10958945 1.0 Birmingham & Solihull Mental Health NHS Foundation Trust
+     R  13043614 0.12 Birmingham Women's and Children's Hospital NHS Foundation Trust
+     R  30932865 1.0 Birmingham and Solihull Mental Health Foundation NHS Trust
+     P  30926645 1.0 Birmingham & Solihull Mental Health Foundation Trust
+RXW    w=  1 ODS=THE SHREWSBURY AND TELFORD HOSPITAL NHS TRUST [Active/NHS TRUST] succ=[]
+     R   1470141 1.0 Shrewsbury & Telford Hospital NHS Trust
+     R  12053291 1.0 The Shrewsbury and Telford Hospital NHS Trust
+     R  12431017 1.0 Shrewsbury and Telford Hospital NHS Trust
+     P  30913590 1.0 The Shrewsbury and Telford Hospital NHS Trust
+RXX    w=  1 ODS=SURREY AND BORDERS PARTNERSHIP NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   2022375 0.25 Sussex Partnership NHS Foundation Trust
+     R   2409657 1.0 Surrey and Borders Partnership NHS Foundation Trust
+     P  30916802 0.25 SUSSEX PARTNERSHIP NHS FOUNDATION TRUST
+RYA    w=  1 ODS=WEST MIDLANDS AMBULANCE SERVICE UNIVERSITY NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   6384818 0.8 West Midlands Ambulance Service
+     R  12508548 1.0 West Midlands Ambulance Service University NHS Foundation Trust
+     R  13335820 1.0 West Midlands Ambulance Service University NHS FT
+     R  31567619 0.67 West Midland Ambulance Service University NHS Foundation Trust
+     R  31626603 0.8 West Midlands Service University NHS Foundation Trust
+     P  30913621 1.0 West Midlands Ambulance Service University NHS Foundation Trust
+RYD    w=  2 ODS=SOUTH EAST COAST AMBULANCE SERVICE NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   2332253 1.0 South East Coast Ambulance Service NHS Foundation Trust
+     R   5824298 1.0 South East Coast Ambulance Service
+     P  30918360 1.0 South East Coast Ambulance Service NHS Foundation Trust
+RYE    w= 15 ODS=SOUTH CENTRAL AMBULANCE SERVICE NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   1391882 1.0 South Central Ambulance Service
+     R   2442353 1.0 South Central Ambulance Service NHS Foundation Trust
+     P  30915164 1.0 South Central Ambulance Service NHS Foundation Trust
+RYG    w=  2 ODS=COVENTRY AND WARWICKSHIRE PARTNERSHIP NHS TRUST [Active/NHS TRUST] succ=[]
+     R   1691021 1.0 Coventry and Warwickshire Partnership NHS Trust
+     R   4648675 1.0 Coventry and Warwickshire Partnership Trust
+     P  30918096 1.0 Coventry & Warwickshire Partnership Trust
+RYV    w= 26 ODS=CAMBRIDGESHIRE COMMUNITY SERVICES NHS TRUST [Active/NHS TRUST] succ=['RY3']
+     R   5447323 1.0 Cambridgeshire Community Services NHS Trust
+     R   5654151 0.5 Cambridge Community Services NHS Trust
+     P  31557115 1.0 Cambridgeshire Community Services NHS Trust
+RYY    w= 37 ODS=KENT COMMUNITY HEALTH NHS FOUNDATION TRUST [Active/NHS TRUST] succ=[]
+     R   6676127 1.0 Kent Community Health NHS Foundation Trust
+     R  31560119 0.75 Kent Community Health NHS Foundation Trust (KCHFT)
+     R  31604013 0.5 Kent Community Foundation Hospitals Trust
+     R  31649007 0.5 Kent Community Healthcare NHS Foundation Trust
+     P  30916727 1.0 Kent Community Health NHS Foundation Trust
+WESTMIDLANDSAMBULANCESERVICE w=  2 ODS=None [None/None] succ=None
+     R   6384818 None West Midlands Ambulance Service
+     R  13335820 None West Midlands Ambulance Service University NHS FT
+     P  31574837 None West Midlands Ambulance Service University NHS Foundation Trust

@@ -1,0 +1,7162 @@
+{
+ "computed_at": 1791726833,
+ "job": 2236,
+ "truncated": false,
+ "listing": [
+  {
+   "class": "both_distinct",
+   "identity": "GBNHS06H",
+   "literal": "GB-NHS-06H",
+   "ppon": "PNJC6453ZWZN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNJC6453ZWZN",
+     "kind": "national",
+     "name": "NHS Cambridgeshire and Peterborough Integrated Care Board",
+     "org_id": 31535193,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHS06H",
+     "kind": "national",
+     "name": "Cambridgeshire & Peterborough Integrated Care Board",
+     "org_id": 31537455,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHS06H",
+   "witness_publications": [
+    "043047-2025",
+    "064312-2025",
+    "008213-2025"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-0AR",
+   "ppon": "PJGL8154MTZX",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPJGL8154MTZX",
+     "kind": "national",
+     "name": "NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT",
+     "org_id": 30929531,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS North of England Commissioning Support Unit",
+     "org_id": 4058565,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS North of England Commissioning Support Unit (hosted by NHS England)",
+     "org_id": 31592074,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHS0AR",
+   "witness_publications": [
+    "089353-2026",
+    "056059-2025",
+    "078191-2025"
+   ],
+   "witnesses": 15
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-0CX",
+   "ppon": "PGTM4634DGZQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGTM4634DGZQ",
+     "kind": "national",
+     "name": "TEST",
+     "org_id": 31572637,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Midlands and Lancashire Commissioning Support Unit",
+     "org_id": 5694794,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Midlands and Lancashire Commissioning Support Unit",
+     "org_id": 6191087,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHS0CX",
+   "witness_publications": [
+    "032144-2025",
+    "032145-2025",
+    "032294-2025"
+   ],
+   "witnesses": 36
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-0DE",
+   "ppon": "PLVR6647BVMM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPLVR6647BVMM",
+     "kind": "national",
+     "name": "NHS Arden and Greater East Midlands Commissioning Support Unit",
+     "org_id": 30916122,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Arden and Greater East Midlands Commissioning Support Unit",
+     "org_id": 6340194,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Arden & GEM Commissioning Support Unit",
+     "org_id": 7501468,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHS0DE",
+   "witness_publications": [
+    "031644-2025",
+    "058882-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-0DF",
+   "ppon": "PXTZ5316XWPW",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXTZ5316XWPW",
+     "kind": "national",
+     "name": "NHS South, Central and West Commissioning Support Unit (hosted by NHS England)",
+     "org_id": 30915590,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 4,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS South Central and West Commissioning Support Unit",
+     "org_id": 13252367,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS South Central and West CSU",
+     "org_id": 30930432,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS SOUTH CENTRAL AND WEST COMMISSIONING SUPPORT",
+     "org_id": 30968729,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS South, Central and West Commissioning Support Unit (hosted by NHS England)",
+     "org_id": 31538082,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHS0DF",
+   "witness_publications": [
+    "033828-2025",
+    "035886-2025",
+    "086609-2026"
+   ],
+   "witnesses": 60
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHS11X",
+   "literal": "GB-NHS-11x",
+   "ppon": "PVCT5176QPXH",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHS11X",
+     "kind": "national",
+     "name": "NHS Somerset Integrated Care Board",
+     "org_id": 30916970,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHS11X",
+   "witness_publications": [
+    "088218-2026",
+    "081977-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHS8HN02",
+   "literal": "GB-NHS-8HN02",
+   "ppon": "PBJZ7139JTHN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBJZ7139JTHN",
+     "kind": "national",
+     "name": "Care Quality Commission, Newcastle",
+     "org_id": 31537372,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHS8HN02",
+     "kind": "national",
+     "name": "Care Quality Commission",
+     "org_id": 30915404,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHS8HN02",
+   "witness_publications": [
+    "031144-2025",
+    "056094-2025",
+    "063840-2025"
+   ],
+   "witnesses": 30
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSA0V4D",
+   "literal": "GB-NHS-A0V4D",
+   "ppon": "PCZG5287NRDZ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPCZG5287NRDZ",
+     "kind": "national",
+     "name": "NHS Elect",
+     "org_id": 31566767,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSA0V4D",
+     "kind": "national",
+     "name": "NHS Elect",
+     "org_id": 31555825,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSA0V4D",
+   "witness_publications": [
+    "082573-2025",
+    "026006-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "no_target_registry",
+   "identity": null,
+   "literal": "GB-NHS-DQF",
+   "ppon": "PHPR3762LPLP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBCOH11258001",
+     "kind": "national",
+     "name": "CALDERDALE AND HUDDERSFIELD SOLUTIONS LTD",
+     "org_id": 31550606,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 0,
+   "registry_holders": [],
+   "value": "GBNHSDQF",
+   "witness_publications": [
+    "075098-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSG6V2S",
+   "literal": "GB-NHS-G6V2S",
+   "ppon": "PHMP5392DVTW",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPHMP5392DVTW",
+     "kind": "national",
+     "name": "North London NHS Foundation Trust ",
+     "org_id": 30976583,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSG6V2S",
+     "kind": "national",
+     "name": "North London Foundation Trust",
+     "org_id": 30914786,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSG6V2S",
+   "witness_publications": [
+    "030433-2025",
+    "036055-2025",
+    "086402-2026"
+   ],
+   "witnesses": 78
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSH6A5H",
+   "literal": "GB-NHS-H6A5H",
+   "ppon": "PXMB9766NLTH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXMB9766NLTH",
+     "kind": "national",
+     "name": "East Of England NHS Collaborative Hub",
+     "org_id": 30917376,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSH6A5H",
+     "kind": "national",
+     "name": "East of England NHS collaborative Procurement Hub",
+     "org_id": 30953460,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSH6A5H",
+   "witness_publications": [
+    "087189-2026",
+    "076240-2025",
+    "080232-2025"
+   ],
+   "witnesses": 13
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSM81057",
+   "literal": "GB-NHS-M81057",
+   "ppon": "PYBM7493LPLG",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSM81057",
+     "kind": "national",
+     "name": "Wyre Forest Health Partnership",
+     "org_id": 31590128,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSM81057",
+   "witness_publications": [
+    "081530-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSNCS04",
+   "literal": "GB-NHS-NCS04",
+   "ppon": "PCGC8557XYGT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPCGC8557XYGT",
+     "kind": "national",
+     "name": "NHS Property Services",
+     "org_id": 30913771,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSNCS04",
+     "kind": "national",
+     "name": "NHS Property Services",
+     "org_id": 31545209,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSNCS04",
+   "witness_publications": [
+    "058356-2025",
+    "059385-2026",
+    "059392-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": null,
+   "literal": "GB-NHS-NHS Cheshire and Merseyside ICB",
+   "ppon": "PMYD9553QJQN",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Cheshire and Merseyside ICB",
+     "org_id": 30916196,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSNHSCHESHIREANDMERSEYSIDEICB",
+   "witness_publications": [
+    "009243-2025",
+    "016255-2025",
+    "016809-2025"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSPHHT9556BWJJ",
+   "literal": "GB-NHS-PHHT-9556-BWJJ",
+   "ppon": "PNRD8632DGQJ",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSPHHT9556BWJJ",
+     "kind": "national",
+     "name": "North East London NHS Foundation Trust",
+     "org_id": 31550843,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSPHHT9556BWJJ",
+   "witness_publications": [
+    "070839-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSPWNJ1991NGDW",
+   "literal": "GB-NHS-PWNJ-1991-NGDW",
+   "ppon": "PCQH8657NGMT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPCQH8657NGMT",
+     "kind": "national",
+     "name": "Business Services Organisation",
+     "org_id": 30915904,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSPWNJ1991NGDW",
+     "kind": "national",
+     "name": "Business Services Organisation ITS",
+     "org_id": 30953773,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSPWNJ1991NGDW",
+   "witness_publications": [
+    "087481-2026",
+    "087493-2026",
+    "038228-2025"
+   ],
+   "witnesses": 44
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSQE1",
+   "literal": "GB-NHS-QE1",
+   "ppon": "PBWM8336DJRG",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBWM8336DJRG",
+     "kind": "national",
+     "name": "NHS Lancashire and South Cumbria Integrated Care Board",
+     "org_id": 31569664,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSQE1",
+     "kind": "national",
+     "name": "NHS Lancashire and South Cumbria Integrated Care Board",
+     "org_id": 30915463,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSQE1",
+   "witness_publications": [
+    "044668-2026",
+    "046130-2026",
+    "009245-2025"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSQF7",
+   "literal": "GB-NHS-QF7",
+   "ppon": "PPTG3156TGWG",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPPTG3156TGWG",
+     "kind": "national",
+     "name": "NHS South Yorkshire Integrated Care Board",
+     "org_id": 30918122,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSQF7",
+     "kind": "national",
+     "name": "NHS SOUTH YORKSHIRE INTEGRATED CARE BOARD",
+     "org_id": 31538551,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSQF7",
+   "witness_publications": [
+    "044027-2025",
+    "044940-2025",
+    "036277-2026"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-QGH",
+   "ppon": "PNMN7243RQRR",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNMN7243RQRR",
+     "kind": "national",
+     "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+     "org_id": 31542355,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+     "org_id": 30916931,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQGH",
+   "witness_publications": [
+    "037297-2025",
+    "053541-2025",
+    "061508-2025"
+   ],
+   "witnesses": 15
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QHL",
+   "ppon": "PWQY9673JBYN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPWQY9673JBYN",
+     "kind": "national",
+     "name": "NHS Birmingham and Solihull Integrated Care Board",
+     "org_id": 30916123,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Birmingham and Solihull ICB",
+     "org_id": 30915737,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+     "org_id": 30915738,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQHL",
+   "witness_publications": [
+    "017312-2026",
+    "060896-2026",
+    "061251-2026"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QHM",
+   "ppon": "PMYZ6944BYLH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPMYZ6944BYLH",
+     "kind": "national",
+     "name": "NHS North East and North Cumbria Integrated Care Board",
+     "org_id": 31556600,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 16,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North of England Commissioning Support",
+     "org_id": 3257070,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD",
+     "org_id": 30915134,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North East and North Cumbria Integrated Care Board",
+     "org_id": 30930129,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North East North Cumbria Integrated Care Board",
+     "org_id": 30976504,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS North East and North Cumbria ICB",
+     "org_id": 31538425,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQHM",
+   "witness_publications": [
+    "031217-2025",
+    "031311-2025",
+    "033969-2025"
+   ],
+   "witnesses": 48
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSQJ2",
+   "literal": "GB-NHS-QJ2",
+   "ppon": "PXJD6284VTGG",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXJD6284VTGG",
+     "kind": "national",
+     "name": "NHS Derby & Derbyshire Integrated Care Board",
+     "org_id": 30916864,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSQJ2",
+     "kind": "national",
+     "name": "NHS DERBY AND DERBYSHIRE INTEGRATED CARE BOARD",
+     "org_id": 31545866,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSQJ2",
+   "witness_publications": [
+    "059843-2025",
+    "060949-2025",
+    "060950-2025"
+   ],
+   "witnesses": 10
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QJG",
+   "ppon": "PQPJ8718HQTJ",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 4,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Suffolk and North East Essex Integrated Care Board",
+     "org_id": 30914144,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Suffolk and North East Essex Integrated Care Board",
+     "org_id": 30914161,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Suffolk and North East Essex ICB",
+     "org_id": 30917668,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North East Essex Crisis Alternative Service",
+     "org_id": 31602019,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQJG",
+   "witness_publications": [
+    "073772-2025",
+    "073773-2025",
+    "073786-2025"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QJK",
+   "ppon": "PRDC6266CBRR",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPRDC6266CBRR",
+     "kind": "national",
+     "name": "NHS DEVON INTEGRATED CARE BOARD",
+     "org_id": 30917049,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Devon Integrated Care Board",
+     "org_id": 30914151,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Devon Integrated Care Board (ICB)",
+     "org_id": 30914271,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Devon ICB",
+     "org_id": 30914831,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQJK",
+   "witness_publications": [
+    "087940-2026",
+    "088015-2026",
+    "090318-2026"
+   ],
+   "witnesses": 33
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSQK1",
+   "literal": "GB-NHS-QK1",
+   "ppon": "PCLY6219YPTV",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPCLY6219YPTV",
+     "kind": "national",
+     "name": "NHS Leicester, Leicestershire and Rutland Integrated Care Board",
+     "org_id": 31542352,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSQK1",
+     "kind": "national",
+     "name": "NHS Leicester, Leicestershire and Rutland Integrated Commissioning Board (LLR ICB)",
+     "org_id": 30916103,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSQK1",
+   "witness_publications": [
+    "032396-2025",
+    "086164-2025",
+    "039004-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QKK",
+   "ppon": "PCXT8262NYRV",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPCXT8262NYRV",
+     "kind": "national",
+     "name": "NHS North East London Integrated Care Board",
+     "org_id": 31576333,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 8,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS South East London Integrated Care Board",
+     "org_id": 30914447,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS North East London Integrated Care Board",
+     "org_id": 30914670,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS South East London Integrated Care Board London",
+     "org_id": 30928152,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS South East London ICB",
+     "org_id": 31534497,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "South East London Integrated Care Board",
+     "org_id": 31544853,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQKK",
+   "witness_publications": [
+    "033033-2025",
+    "041616-2025",
+    "042734-2025"
+   ],
+   "witnesses": 13
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QMF",
+   "ppon": "PMLZ8385VMTM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPMLZ8385VMTM",
+     "kind": "national",
+     "name": "NHS South East London Integrated Care Board",
+     "org_id": 31561974,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 10,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Barking, Havering and Redbridge University Hospitals NHS Trust",
+     "org_id": 5132172,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS North East London Integrated Care Board",
+     "org_id": 30914670,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS London Commercial Hub",
+     "org_id": 30915099,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS North East London ICB",
+     "org_id": 30976288,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North East London ICB",
+     "org_id": 31542989,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQMF",
+   "witness_publications": [
+    "033194-2025",
+    "033199-2025",
+    "091170-2026"
+   ],
+   "witnesses": 16
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QMJ",
+   "ppon": "PWBN7811DGVX",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPWBN7811DGVX",
+     "kind": "national",
+     "name": "NHS North Central London Integrated Care Board",
+     "org_id": 30916245,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 6,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS London Commercial Hub",
+     "org_id": 30915099,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS North Central London Integrated Care Board",
+     "org_id": 30915101,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS North Central London ICB",
+     "org_id": 30915993,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS North Central London Integrated Care Board  London",
+     "org_id": 31536734,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North Central London Integrated Care Board",
+     "org_id": 31593612,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQMJ",
+   "witness_publications": [
+    "039717-2025",
+    "052567-2025",
+    "053244-2025"
+   ],
+   "witnesses": 10
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-QMM",
+   "ppon": "PZYC6286DWHT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPZYC6286DWHT",
+     "kind": "national",
+     "name": "NHS Norfolk and Waveney Integrated Care Board",
+     "org_id": 31542073,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Norfolk and Waveney Integrated Care Board",
+     "org_id": 30915248,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQMM",
+   "witness_publications": [
+    "062442-2025",
+    "062790-2025",
+    "062959-2025"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QNQ",
+   "ppon": "PLMH6718XNVJ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPLMH6718XNVJ",
+     "kind": "national",
+     "name": "NHS Frimley Integrated Care Board",
+     "org_id": 31552078,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Frimley Integrated Care Board",
+     "org_id": 30913842,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Frimley ICB",
+     "org_id": 30916858,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Frimley Integrated Care Board (ICB)",
+     "org_id": 31540924,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQNQ",
+   "witness_publications": [
+    "044942-2025",
+    "079953-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-QOC",
+   "ppon": "PGZQ6523JGTT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGZQ6523JGTT",
+     "kind": "national",
+     "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+     "org_id": 31542354,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+     "org_id": 30915757,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQOC",
+   "witness_publications": [
+    "046463-2025",
+    "046598-2025",
+    "055132-2025"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QOQ",
+   "ppon": "PBCG3899RLCL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBCG3899RLCL",
+     "kind": "national",
+     "name": "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+     "org_id": 31573365,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 7,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD",
+     "org_id": 30913653,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+     "org_id": 31535385,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Humber and North Yorkshire ICB",
+     "org_id": 31552257,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Humber North Yorkshire ICB",
+     "org_id": 31570883,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Humber North Yorkshire Integrated Care Board",
+     "org_id": 31587871,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQOQ",
+   "witness_publications": [
+    "029053-2025",
+    "042658-2025",
+    "057884-2025"
+   ],
+   "witnesses": 22
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": null,
+   "literal": "GB-NHS-QOX",
+   "ppon": "PJHW9333YPZP",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Bath and North East Somerset, Swindon and Wiltshire Integrated Care Board",
+     "org_id": 30913839,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQOX",
+   "witness_publications": [
+    "089994-2026",
+    "072439-2025",
+    "034381-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-QPM",
+   "ppon": "PWCM9262VJDY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPWCM9262VJDY",
+     "kind": "national",
+     "name": "NHS Northamptonshire Integrated Care Board",
+     "org_id": 31542357,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS NORTHAMPTONSHIRE INTEGRATED CARE BOARD",
+     "org_id": 30916368,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQPM",
+   "witness_publications": [
+    "032733-2025",
+    "032734-2025",
+    "032935-2025"
+   ],
+   "witnesses": 14
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSQR1",
+   "literal": "GB-NHS-QR1",
+   "ppon": "PYQM9666VXBD",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSQR1",
+     "kind": "national",
+     "name": "NHS GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+     "org_id": 30915679,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSQR1",
+   "witness_publications": [
+    "086609-2026",
+    "087113-2026",
+    "041286-2025"
+   ],
+   "witnesses": 9
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QRL",
+   "ppon": "PBQZ2117NPPD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBQZ2117NPPD",
+     "kind": "national",
+     "name": "NHS Hampshire and Isle of Wight Integrated Care Board",
+     "org_id": 31552077,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 8,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Hampshire and Isle of Wight Integrated Care Board",
+     "org_id": 20902603,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS HAMPSHIRE AND THE ISLE OF WIGHT INTEGRATED CARE BOARD",
+     "org_id": 30913796,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Hampshire and Isle of Wight Integrated Care Board (ICB)",
+     "org_id": 31543410,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Hampshire and Isle of Wight ICB",
+     "org_id": 31567317,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Hampshire and Isle of Wight ICB",
+     "org_id": 31580931,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQRL",
+   "witness_publications": [
+    "029205-2025",
+    "041701-2025",
+    "053853-2025"
+   ],
+   "witnesses": 17
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-QUA",
+   "ppon": "PCXW1342CXYV",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPCXW1342CXYV",
+     "kind": "national",
+     "name": "NHS Black Country Integrated Care Board",
+     "org_id": 31542353,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Black Country Integrated Care Board",
+     "org_id": 30917129,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQUA",
+   "witness_publications": [
+    "017312-2026",
+    "060896-2026",
+    "061251-2026"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QUY",
+   "ppon": "PPCD6597HCDW",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPPCD6597HCDW",
+     "kind": "national",
+     "name": "NHS Bristol North Somerset & South Gloucestershire Integrated Care Board",
+     "org_id": 31536069,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+     "org_id": 30914356,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Bristol, North East Somerset and South Gloucestershire Integrated Care Board",
+     "org_id": 31609946,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQUY",
+   "witness_publications": [
+    "035886-2025",
+    "086609-2026",
+    "087113-2026"
+   ],
+   "witnesses": 25
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-QVV",
+   "ppon": "PGWM4538ZGJR",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGWM4538ZGJR",
+     "kind": "national",
+     "name": "NHS Dorset Integrated Care Board",
+     "org_id": 31571396,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Dorset Integrated Care Board",
+     "org_id": 30914398,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQVV",
+   "witness_publications": [
+    "035745-2025",
+    "091306-2026",
+    "039784-2025"
+   ],
+   "witnesses": 21
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QWE",
+   "ppon": "PVVY4762MPRZ",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS South West London Integrated Care Board",
+     "org_id": 30915087,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS South West London Integrated Care Board  London",
+     "org_id": 31536736,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQWE",
+   "witness_publications": [
+    "046802-2025",
+    "063561-2025",
+    "066991-2025"
+   ],
+   "witnesses": 38
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QWO",
+   "ppon": "PMTJ1118QVJH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPMTJ1118QVJH",
+     "kind": "national",
+     "name": "NHS West Yorkshire Integrated Care Board",
+     "org_id": 30917022,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS West Yorkshire Integrated Care Board",
+     "org_id": 30914544,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS WEST YORKSHIRE ICB",
+     "org_id": 30933188,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQWO",
+   "witness_publications": [
+    "062248-2025",
+    "062443-2025",
+    "066040-2025"
+   ],
+   "witnesses": 7
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-QWU",
+   "ppon": "PBZT7637QJTP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBZT7637QJTP",
+     "kind": "national",
+     "name": "NHS Coventry and Warwickshire Integrated Care Board",
+     "org_id": 31542351,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Coventry and Warwickshire Integrated Care Board",
+     "org_id": 31534829,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQWU",
+   "witness_publications": [
+    "058164-2025",
+    "061566-2025",
+    "076174-2025"
+   ],
+   "witnesses": 8
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QXU",
+   "ppon": "PTCP5774GNNH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTCP5774GNNH",
+     "kind": "national",
+     "name": "NHS Surrey Heartlands Integrated Care Board",
+     "org_id": 31552079,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Surrey Heartlands ICB",
+     "org_id": 21990238,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Surrey Heartlands Integrated Care Board",
+     "org_id": 30916138,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Surrey Heartlands Integrated Care Board (ICB)",
+     "org_id": 31543412,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQXU",
+   "witness_publications": [
+    "051461-2025",
+    "052744-2025",
+    "059429-2025"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-QYG",
+   "ppon": "PMYD9553QJQN",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 11,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD",
+     "org_id": 30913962,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Cheshire and Merseyside ICB",
+     "org_id": 30916196,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Cheshire and Merseyside Integrated Care Board",
+     "org_id": 30916198,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Cheshire and Merseyside Integrated Care Board (ICB)",
+     "org_id": 31541032,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Cheshire & Merseyside Integrated Care Board (ICB)",
+     "org_id": 31546209,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSQYG",
+   "witness_publications": [
+    "066676-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-R0A",
+   "ppon": "PXQG2592VYYY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXQG2592VYYY",
+     "kind": "national",
+     "name": "Manchester University NHS Foundation Trust",
+     "org_id": 30913561,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Manchester University NHS Foundation Trust",
+     "org_id": 10874685,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "MANCHESTER UNIVERSITY NHS FT",
+     "org_id": 31587675,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSR0A",
+   "witness_publications": [
+    "008571-2025",
+    "009721-2025",
+    "011912-2025"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-R0B",
+   "ppon": "PRTW2132HYWJ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPRTW2132HYWJ",
+     "kind": "national",
+     "name": "South Tyneside & Sunderland NHSFT",
+     "org_id": 31567351,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "South Tyneside and Sunderland NHS Foundation Trust",
+     "org_id": 13569138,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSR0B",
+   "witness_publications": [
+    "035420-2025",
+    "084531-2026",
+    "071445-2025"
+   ],
+   "witnesses": 27
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-R0D",
+   "ppon": "PBGQ3462MVRD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBGQ3462MVRD",
+     "kind": "national",
+     "name": "University Hospitals Dorset NHS Foundation Trust",
+     "org_id": 30914100,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Dorset HealthCare University NHS Foundation Trust",
+     "org_id": 1240944,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "UNIVERSITY HOSPITALS DORSET NHS FOUNDATION TRUST",
+     "org_id": 31551277,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSR0D",
+   "witness_publications": [
+    "064467-2026",
+    "064487-2026",
+    "068480-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSR1A",
+   "literal": "GB-NHS-R1A",
+   "ppon": "PPVD8623XLTW",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPPVD8623XLTW",
+     "kind": "national",
+     "name": "Herefordshire and Worcestershire Health and Care NHS Trust",
+     "org_id": 30972162,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSR1A",
+     "kind": "national",
+     "name": "Herefordshire and Worcestershire Health and Care NHS Trust",
+     "org_id": 31540738,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSR1A",
+   "witness_publications": [
+    "069377-2026",
+    "091635-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSR1F",
+   "literal": "GB-NHS-R1F",
+   "ppon": "PRBY9272TQGX",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPRBY9272TQGX",
+     "kind": "national",
+     "name": "Isle of Wight NHS Trust",
+     "org_id": 31571667,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSR1F",
+     "kind": "national",
+     "name": "ISLE OF WIGHT NHS TRUST",
+     "org_id": 31542853,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSR1F",
+   "witness_publications": [
+    "053235-2025",
+    "077327-2025",
+    "077478-2025"
+   ],
+   "witnesses": 27
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSR1L",
+   "literal": "GB-NHS-R1L",
+   "ppon": "PRRJ6511ZDJL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPRRJ6511ZDJL",
+     "kind": "national",
+     "name": "Essex Partnership University NHS Foundation Trust",
+     "org_id": 30968981,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSR1L",
+     "kind": "national",
+     "name": "ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+     "org_id": 31537837,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSR1L",
+   "witness_publications": [
+    "042502-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRA2",
+   "literal": "GB-NHS-RA2",
+   "ppon": "PBND1678TCRM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBND1678TCRM",
+     "kind": "national",
+     "name": "NHS Buckinghamshire Oxfordshire & Berkshire West Integrated Care Board",
+     "org_id": 30915589,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRA2",
+     "kind": "national",
+     "name": "ROYAL SURREY COUNTY HOSPITAL NHS FOUNDATION TRUST",
+     "org_id": 31538055,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRA2",
+   "witness_publications": [
+    "044053-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RAE",
+   "ppon": "PMJZ5573HMPZ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPMJZ5573HMPZ",
+     "kind": "national",
+     "name": "Bradford Teaching Hospitals NHS Foundation Trust",
+     "org_id": 30914102,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Bradford Teaching Hospitals NHS Foundation Trust",
+     "org_id": 1165568,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Leeds Teaching Hospital Trust",
+     "org_id": 31565965,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRAE",
+   "witness_publications": [
+    "002063-2026",
+    "005039-2026",
+    "007304-2026"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RAJ",
+   "ppon": "PBVJ9475ZCMD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBVJ9475ZCMD",
+     "kind": "national",
+     "name": "Mid and South Essex NHS Foundation Trust",
+     "org_id": 30914265,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Mid and South Essex NHS Foundation Trust",
+     "org_id": 17455495,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Mid South Essex NHS Foundation Trust",
+     "org_id": 31536222,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRAJ",
+   "witness_publications": [
+    "086255-2026",
+    "047635-2025",
+    "049557-2025"
+   ],
+   "witnesses": 16
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RAL",
+   "ppon": "PVGT8567VYHL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPVGT8567VYHL",
+     "kind": "national",
+     "name": "Royal Free London NHS Foundation Trust T/AS Transformation Partners in Health and Care",
+     "org_id": 31566777,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Royal Free London NHS Foundation Trust",
+     "org_id": 2200541,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Royal Free London NHS Foundation Trust T/AS Transformation Partners in Health and Care",
+     "org_id": 31555826,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRAL",
+   "witness_publications": [
+    "082573-2025",
+    "003666-2026",
+    "005355-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RAT",
+   "ppon": "PHHT9556BWJJ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPHHT9556BWJJ",
+     "kind": "national",
+     "name": "North East London NHS Foundation Trust",
+     "org_id": 31535216,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "East London NHS Foundation Trust",
+     "org_id": 1264733,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North East London NHS Foundation Trust",
+     "org_id": 1612066,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRAT",
+   "witness_publications": [
+    "033934-2025",
+    "034915-2025",
+    "036055-2025"
+   ],
+   "witnesses": 117
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RBD",
+   "ppon": "PLCW3715PZWM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPLCW3715PZWM",
+     "kind": "national",
+     "name": "Dorset County Hospital NHS Foundation Trust",
+     "org_id": 31599890,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Dorset County Hospital NHS Foundation Trust",
+     "org_id": 1466780,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRBD",
+   "witness_publications": [
+    "064467-2026",
+    "064487-2026",
+    "068480-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RBL",
+   "ppon": "PBMG2481MDJP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBMG2481MDJP",
+     "kind": "national",
+     "name": "Wirral University Teaching Hospital NHS Foundation Trust",
+     "org_id": 31587299,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 6,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Wirral University Teaching Hospital NHS Foundation Trust",
+     "org_id": 1311180,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Wirral University Teaching Hospital",
+     "org_id": 2298423,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Wirral University Teaching Hospitals NHS Foundation Trust",
+     "org_id": 15465415,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Wirral University Teaching Hospital NHS FT",
+     "org_id": 31535437,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Wirral University Teaching Hospital NHS Foundation Trust (WUTH)",
+     "org_id": 31571625,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRBL",
+   "witness_publications": [
+    "037787-2025",
+    "037797-2025",
+    "039172-2025"
+   ],
+   "witnesses": 22
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RBN",
+   "ppon": "PRYN5195GTQJ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPRYN5195GTQJ",
+     "kind": "national",
+     "name": "Mersey and West Lancashire Teaching Hospitals NHS Trust",
+     "org_id": 31536800,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 6,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "MERSEY AND WEST LANCASHIRE TEACHING HOSPITALS NHS TRUST",
+     "org_id": 30914735,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Mersey & West Lancashire Teaching Hospitals NHS Trust",
+     "org_id": 30917279,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Mersey and West Lancashire Teaching Hospital NHS Foundation Trust",
+     "org_id": 31543386,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Mersey & West Lancashire NHS Teaching Hospitals NHS Trust",
+     "org_id": 31563641,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Mersey and West Lancashire Teaching Hospitals NHS Tru",
+     "org_id": 31618482,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRBN",
+   "witness_publications": [
+    "030380-2025",
+    "030701-2025",
+    "031436-2025"
+   ],
+   "witnesses": 180
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RBQ",
+   "ppon": "PZVQ2197NJGG",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPZVQ2197NJGG",
+     "kind": "national",
+     "name": "Liverpool Heart and Chest Hospital NHS Foundation Trust",
+     "org_id": 30918289,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 5,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Liverpool Heart and Chest Hospital NHS Foundation Trust",
+     "org_id": 1766980,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Liverpool Heart and Chest NHS Foundation Trust",
+     "org_id": 6851948,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "LIVERPOOL HEART AND CHESH HOSPITAL NHS FOUNDATION TRUST",
+     "org_id": 31568217,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "LIVERPOOL HEART & CHEST HOSPITAL NHS TRUST",
+     "org_id": 31571042,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Liverpool Heart & Chest NHS Foundation Trust",
+     "org_id": 31605524,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRBQ",
+   "witness_publications": [
+    "018955-2026",
+    "025484-2026",
+    "028123-2026"
+   ],
+   "witnesses": 30
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RBS",
+   "ppon": "PXDB2967MWLG",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXDB2967MWLG",
+     "kind": "national",
+     "name": "Alder Hey Children's NHS Foundation Trust",
+     "org_id": 31545296,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Alder Hey Children's NHS Foundation Trust",
+     "org_id": 1183914,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Alder Hey Children's NHS FT",
+     "org_id": 31592492,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRBS",
+   "witness_publications": [
+    "023635-2026",
+    "062394-2026",
+    "062417-2026"
+   ],
+   "witnesses": 11
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RBT",
+   "ppon": "PZZX1928RJQT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPZZX1928RJQT",
+     "kind": "national",
+     "name": "Mid Cheshire Hospitals NHS Foundation Trust",
+     "org_id": 30918302,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Mid Cheshire Hospitals NHS Foundation Trust",
+     "org_id": 1271280,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRBT",
+   "witness_publications": [
+    "031170-2025",
+    "033768-2025",
+    "033838-2025"
+   ],
+   "witnesses": 72
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RBV",
+   "ppon": "PTTQ9511YPYH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTTQ9511YPYH",
+     "kind": "national",
+     "name": "The Christie NHS Foundation Trust",
+     "org_id": 30919619,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Christie NHS Foundation Trust",
+     "org_id": 1285461,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRBV",
+   "witness_publications": [
+    "031183-2025",
+    "031190-2025",
+    "032259-2025"
+   ],
+   "witnesses": 36
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRC9",
+   "literal": "GB-NHS-RC9",
+   "ppon": "PTQH2444LZZX",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTQH2444LZZX",
+     "kind": "national",
+     "name": "Catering for Staff Summer Engagement Event 2025",
+     "org_id": 30913603,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRC9",
+     "kind": "national",
+     "name": "BEDFORDSHIRE HOSPITALS NHS FOUNDATION TRUST",
+     "org_id": 31588187,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRC9",
+   "witness_publications": [
+    "074373-2026",
+    "074378-2026",
+    "009456-2025"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RCB",
+   "ppon": "PNMY9834ZYJT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNMY9834ZYJT",
+     "kind": "national",
+     "name": "York and Scarborough Teaching Hospital NHS Foundation Trust",
+     "org_id": 31535291,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST",
+     "org_id": 30916881,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRCB",
+   "witness_publications": [
+    "033563-2025",
+    "033958-2025",
+    "033963-2025"
+   ],
+   "witnesses": 37
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RCD",
+   "ppon": "PMWJ9355XBGP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPMWJ9355XBGP",
+     "kind": "national",
+     "name": "Harrogate and District NHS Foundation Trust",
+     "org_id": 31549348,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Harrogate and District NHS Foundation Trust",
+     "org_id": 1381987,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRCD",
+   "witness_publications": [
+    "071445-2025",
+    "081478-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RCF",
+   "ppon": "PWVB9664WPWP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPWVB9664WPWP",
+     "kind": "national",
+     "name": "Airedale NHS Foundation Trust",
+     "org_id": 31535616,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Airedale NHS Foundation Trust",
+     "org_id": 1369100,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRCF",
+   "witness_publications": [
+    "050217-2025",
+    "051189-2025",
+    "068889-2025"
+   ],
+   "witnesses": 37
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RCU",
+   "ppon": "PTWR5281TMPQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTWR5281TMPQ",
+     "kind": "national",
+     "name": "Sheffield Children's NHS Foundation Trust",
+     "org_id": 30930095,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Sheffield Children's NHS Foundation Trust",
+     "org_id": 1250550,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRCU",
+   "witness_publications": [
+    "048136-2025",
+    "032069-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RCX",
+   "ppon": "PQCT9574RQTZ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPQCT9574RQTZ",
+     "kind": "national",
+     "name": "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust",
+     "org_id": 30914684,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 5,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Queen Elizabeth Hospital Kings Lynn NHS Foundation Trust",
+     "org_id": 1929574,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust",
+     "org_id": 2728937,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Queen Elizabeth Hospital FT",
+     "org_id": 31594811,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust (QEH) 2022 - 2027 / QEH 2022-2027",
+     "org_id": 31598591,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust (QEH)",
+     "org_id": 31648953,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRCX",
+   "witness_publications": [
+    "021893-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRD1",
+   "literal": "GB-NHS-RD1",
+   "ppon": "PXRL3879BBGR",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXRL3879BBGR",
+     "kind": "national",
+     "name": "Royal United Hospitals Bath NHS Foundation Trust",
+     "org_id": 30915634,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRD1",
+     "kind": "national",
+     "name": "The Royal United Hospital Bath NHS Foundation Trust",
+     "org_id": 31599324,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRD1",
+   "witness_publications": [
+    "022159-2025",
+    "028705-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RDE",
+   "ppon": "PJQH1423GWPM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPJQH1423GWPM",
+     "kind": "national",
+     "name": "East Suffolk and North Essex NHS Foundation Trust",
+     "org_id": 31535010,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "East Suffolk and North Essex NHS Foundation Trust",
+     "org_id": 11944973,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "East Suffolk and North East Essex NHS Foundation Trust",
+     "org_id": 30914160,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRDE",
+   "witness_publications": [
+    "087457-2026",
+    "049713-2025",
+    "048467-2026"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RDU",
+   "ppon": "PLMQ6855CXLL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPLMQ6855CXLL",
+     "kind": "national",
+     "name": "Frimley Health NHS Foundation Trust",
+     "org_id": 30919333,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Frimley Health NHS Foundation Trust",
+     "org_id": 5766088,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRDU",
+   "witness_publications": [
+    "030334-2025",
+    "033965-2025",
+    "033972-2025"
+   ],
+   "witnesses": 61
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RDY",
+   "ppon": "PNYJ1818YVWW",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNYJ1818YVWW",
+     "kind": "national",
+     "name": "Dorset HealthCare University NHS Foundation Trust",
+     "org_id": 30916623,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Dorset HealthCare University NHS Foundation Trust",
+     "org_id": 1240944,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRDY",
+   "witness_publications": [
+    "064467-2026",
+    "064487-2026",
+    "068480-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-REF",
+   "ppon": "PGXP9455TXGR",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGXP9455TXGR",
+     "kind": "national",
+     "name": "Royal Cornwall Hospitals NHS Trust",
+     "org_id": 30916407,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Royal Cornwall Hospitals Nhs Trust",
+     "org_id": 1251123,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Royal Cornwall Hospital Trust",
+     "org_id": 2306139,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSREF",
+   "witness_publications": [
+    "030576-2025",
+    "036413-2025",
+    "036422-2025"
+   ],
+   "witnesses": 15
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-REM",
+   "ppon": "PGJT9638TWQR",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGJT9638TWQR",
+     "kind": "national",
+     "name": "Liverpool University Hospitals NHS Foundation Trust",
+     "org_id": 30919565,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 4,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Liverpool University Hospitals NHS Foundation Trust",
+     "org_id": 14475224,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals of Liverpool Group",
+     "org_id": 30916254,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS University Hospitals of Liverpool Group",
+     "org_id": 31572888,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "LIVERPOOL UNIVERSOTY HOSPITALS NHS FOUNDATION TRUST",
+     "org_id": 31598155,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSREM",
+   "witness_publications": [
+    "020313-2026",
+    "055407-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-REN",
+   "ppon": "PDWJ7913VWXQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDWJ7913VWXQ",
+     "kind": "national",
+     "name": "The Clatterbridge Cancer Centre NHS Foundation Trust",
+     "org_id": 30916762,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Walton Centre NHS Foundation Trust",
+     "org_id": 1371484,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Clatterbridge Cancer Centre NHS Foundation Trust",
+     "org_id": 2965244,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Walton Centre",
+     "org_id": 4275910,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSREN",
+   "witness_publications": [
+    "084443-2026",
+    "005945-2026",
+    "009660-2026"
+   ],
+   "witnesses": 17
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-REP",
+   "ppon": "PVNM7611RDDL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPVNM7611RDDL",
+     "kind": "national",
+     "name": "Liverpool Women's NHS Foundation Trust",
+     "org_id": 31536256,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Liverpool Women's NHS Foundation Trust",
+     "org_id": 1223655,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Liverpool Women's Hospital NHS Foundation Trust",
+     "org_id": 9160536,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSREP",
+   "witness_publications": [
+    "049048-2025",
+    "012114-2026",
+    "012530-2026"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RET",
+   "ppon": "PYLD6221NJVP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPYLD6221NJVP",
+     "kind": "national",
+     "name": "The Walton Centre NHS Foundation Trust",
+     "org_id": 31549806,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Walton Centre NHS Foundation Trust",
+     "org_id": 1371484,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Walton Centre",
+     "org_id": 4275910,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Alder Hey",
+     "org_id": 30968741,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRET",
+   "witness_publications": [
+    "088239-2026",
+    "009677-2026",
+    "009683-2026"
+   ],
+   "witnesses": 17
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRF4",
+   "literal": "GB-NHS-RF4",
+   "ppon": "PBMX8832GMZL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBMX8832GMZL",
+     "kind": "national",
+     "name": "Barking, Havering and Redbridge University Hospitals NHS Trust",
+     "org_id": 30919572,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRF4",
+     "kind": "national",
+     "name": "BARKING, HAVERING AND REDBRIDGE UNIVERSITY HOSPITALS NHS TRUST",
+     "org_id": 31541219,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRF4",
+   "witness_publications": [
+    "049406-2025",
+    "049433-2025",
+    "055471-2025"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RGD",
+   "ppon": "PTWP8794GHJN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTWP8794GHJN",
+     "kind": "national",
+     "name": "Leeds and York Partnership NHS Foundation Trust",
+     "org_id": 30926718,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Leeds and York Partnership NHS Foundation Trust",
+     "org_id": 5476801,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Leeds and York Partnership NHS Foundation Trust, trading as North of England NHS Commercial Procurement Collaborative (\"NOE CPC\")",
+     "org_id": 30919688,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRGD",
+   "witness_publications": [
+    "018478-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RGM",
+   "ppon": "PDNZ7768RRQQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDNZ7768RRQQ",
+     "kind": "national",
+     "name": "Royal Papworth Hospital NHS Foundation Trust",
+     "org_id": 30914473,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Royal Papworth Hospital NHS Foundation Trust",
+     "org_id": 30916977,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRGM",
+   "witness_publications": [
+    "067335-2025",
+    "009821-2025",
+    "009828-2025"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RGN",
+   "ppon": "PGZM4323VGQT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGZM4323VGQT",
+     "kind": "national",
+     "name": "North West Anglia NHS Foundation Trust",
+     "org_id": 30929970,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NORTH WEST ANGLIA NHS FOUNDATION TRUST",
+     "org_id": 31537918,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRGN",
+   "witness_publications": [
+    "079453-2025",
+    "079974-2025",
+    "081040-2025"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RGR",
+   "ppon": "PZXH6286HYJQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPZXH6286HYJQ",
+     "kind": "national",
+     "name": "West Suffolk NHS Foundation Trust",
+     "org_id": 30916897,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "West Suffolk NHS Foundation Trust",
+     "org_id": 2228352,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "West Suffolk Hospital NHS Foundation Trust",
+     "org_id": 7192624,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRGR",
+   "witness_publications": [
+    "085550-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RGT",
+   "ppon": "PPCP8863HDGN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPPCP8863HDGN",
+     "kind": "national",
+     "name": "Teleflex Group Ltd T/A Teleflex Medical",
+     "org_id": 31549426,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Cambridge University Hospitals NHS Foundation Trust",
+     "org_id": 1168300,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRGT",
+   "witness_publications": [
+    "029413-2025",
+    "029435-2025",
+    "029470-2025"
+   ],
+   "witnesses": 806
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRH5",
+   "literal": "GB-NHS-RH5",
+   "ppon": "PNWR4212QWHQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNWR4212QWHQ",
+     "kind": "national",
+     "name": "Somerset NHS Foundation Trust",
+     "org_id": 30913999,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRH5",
+     "kind": "national",
+     "name": "SOMERSET NHS FOUNDATION TRUST",
+     "org_id": 30930410,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRH5",
+   "witness_publications": [
+    "086563-2026",
+    "086613-2026",
+    "087162-2026"
+   ],
+   "witnesses": 260
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRH8",
+   "literal": "GB-NHS-RH8",
+   "ppon": "PCPD2769HGXT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPCPD2769HGXT",
+     "kind": "national",
+     "name": "Royal Devon University Healthcare NHS Foundation Trust",
+     "org_id": 30914002,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRH8",
+     "kind": "national",
+     "name": "Royal Devon University Healthcare NHS Foundation Trust",
+     "org_id": 31542271,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRH8",
+   "witness_publications": [
+    "042318-2026",
+    "029081-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RHA",
+   "ppon": "PJTT4587BLBM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPJTT4587BLBM",
+     "kind": "national",
+     "name": "Nottinghamshire Healthcare NHS Foundation Trust",
+     "org_id": 30916974,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Nottinghamshire Healthcare NHS Trust",
+     "org_id": 1437921,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Nottinghamshire Healthcare NHS Foundation Trust",
+     "org_id": 6362440,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "NHS Skills Development Network",
+     "org_id": 30915065,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRHA",
+   "witness_publications": [
+    "030595-2025",
+    "033773-2025",
+    "047037-2025"
+   ],
+   "witnesses": 10
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RHM",
+   "ppon": "PTRZ1736CQVH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTRZ1736CQVH",
+     "kind": "national",
+     "name": "University Hospital Southampton",
+     "org_id": 30926769,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospital Southampton NHS Foundation Trust",
+     "org_id": 2181541,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Coroners Adult Post-Mortem and Forensic services",
+     "org_id": 30926652,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals Southampton NHS",
+     "org_id": 31624750,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRHM",
+   "witness_publications": [
+    "087624-2026",
+    "009948-2026",
+    "009955-2026"
+   ],
+   "witnesses": 10
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RHQ",
+   "ppon": "PYZV3517VQCJ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPYZV3517VQCJ",
+     "kind": "national",
+     "name": "Sheffield Teaching Hospitals NHS Foundation Trust",
+     "org_id": 30916153,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Sheffield Teaching Hospitals NHS Foundation Trust",
+     "org_id": 1321678,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "SHEFFIELD TEACHING HOSPITALS NHS FOUNDATION TRUST (Devices for Dignity)",
+     "org_id": 31546261,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRHQ",
+   "witness_publications": [
+    "045274-2025",
+    "059734-2025",
+    "060096-2025"
+   ],
+   "witnesses": 17
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RHW",
+   "ppon": "PNTT7613TTHD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNTT7613TTHD",
+     "kind": "national",
+     "name": "Royal Berkshire NHS Foundation Trust",
+     "org_id": 30917496,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Royal Berkshire NHS Foundation Trust",
+     "org_id": 1269928,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRHW",
+   "witness_publications": [
+    "071551-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRJ1",
+   "literal": "GB-NHS-RJ1",
+   "ppon": "PDZC6438DGPX",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDZC6438DGPX",
+     "kind": "national",
+     "name": "Guy's and St Thomas' NHS Foundation Trust",
+     "org_id": 30914633,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRJ1",
+     "kind": "national",
+     "name": "Guy's and St Thomas' NHS Foundation Trust",
+     "org_id": 31538354,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRJ1",
+   "witness_publications": [
+    "066098-2025",
+    "067168-2025",
+    "080822-2025"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRJ2",
+   "literal": "GB-NHS-RJ2",
+   "ppon": "PXWX8443ZQYT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXWX8443ZQYT",
+     "kind": "national",
+     "name": "Lewisham and Greenwich NHS Trust",
+     "org_id": 30916365,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRJ2",
+     "kind": "national",
+     "name": "Lewisham and Greenwich NHS Trust",
+     "org_id": 31538105,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRJ2",
+   "witness_publications": [
+    "067663-2026",
+    "073015-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRJ7",
+   "literal": "GB-NHS-RJ7",
+   "ppon": "PDCW3725ZVCP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDCW3725ZVCP",
+     "kind": "national",
+     "name": "St George's University Hospitals NHS Foundation Trust",
+     "org_id": 30932956,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRJ7",
+     "kind": "national",
+     "name": "KINGSTON AND RICHMOND NHS FOUNDATION TRUST",
+     "org_id": 31537925,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRJ7",
+   "witness_publications": [
+    "048112-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSRJ8",
+   "literal": "GB-NHS-RJ8",
+   "ppon": "PRDC5432XZPZ",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRJ8",
+     "kind": "national",
+     "name": "CORNWALL PARTNERSHIP NHS FOUNDATION TRUST",
+     "org_id": 31543796,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRJ8",
+   "witness_publications": [
+    "055104-2025",
+    "056303-2025",
+    "060609-2025"
+   ],
+   "witnesses": 10
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RJE",
+   "ppon": "PHBX7757YPYD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPHBX7757YPYD",
+     "kind": "national",
+     "name": "University Hospitals of North Midlands NHS Trust",
+     "org_id": 30913980,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals Birmingham NHS Foundation Trust",
+     "org_id": 1167736,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals of North Midlands NHS Trust",
+     "org_id": 5879895,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRJE",
+   "witness_publications": [
+    "086876-2026",
+    "060269-2025",
+    "077416-2025"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RJL",
+   "ppon": "PDBX2232TZVV",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDBX2232TZVV",
+     "kind": "national",
+     "name": "Northern Lincolnshire and Goole NHS Foundation Trust",
+     "org_id": 31550622,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 4,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Northern Lincolnshire & Goole NHS Foundation Trust",
+     "org_id": 4616701,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Northern Lincolnshire and Goole NHS Foundation Trust",
+     "org_id": 4944993,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Diana, Princess of Wales Hospital",
+     "org_id": 31609338,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Diana, Princess of Wales Hospital , Grimsby",
+     "org_id": 31647875,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRJL",
+   "witness_publications": [
+    "032779-2025",
+    "033901-2025",
+    "033958-2025"
+   ],
+   "witnesses": 42
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RJN",
+   "ppon": "PZCB3169CXLR",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "East Cheshire NHS Trust",
+     "org_id": 2267508,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Countess of Chester NHS Foundation Trust",
+     "org_id": 7138160,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRJN",
+   "witness_publications": [
+    "030364-2025",
+    "030891-2025",
+    "030924-2025"
+   ],
+   "witnesses": 26
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RJR",
+   "ppon": "PGCG2135TXWL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGCG2135TXWL",
+     "kind": "national",
+     "name": "Countess of Chester Hospital NHS Foundation Trust",
+     "org_id": 31581032,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 5,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Countess of Chester Hospital NHS Foundation Trust",
+     "org_id": 1615245,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Countess of Chester NHS Foundation Trust",
+     "org_id": 6851983,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Countess of Chester",
+     "org_id": 13725605,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "All Relevant Authorities as defined in section 12ZB(7) of the National Health Service Act 2006 (and any successor bodies) shall be eligible users of this framework.",
+     "org_id": 31542216,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Countess of Chester Hospitals NHS Foundation Trust",
+     "org_id": 31543387,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRJR",
+   "witness_publications": [
+    "029387-2025",
+    "030482-2025",
+    "031623-2025"
+   ],
+   "witnesses": 207
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RJZ",
+   "ppon": "PXLV9225PRBN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXLV9225PRBN",
+     "kind": "national",
+     "name": "King's College Hospital NHS Foundation Trust",
+     "org_id": 30913914,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 6,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "King's College Hospital NHS Foundation Trust",
+     "org_id": 1346181,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Kettering General Hospital NHS Foundation Trust",
+     "org_id": 1432862,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Kings College Hospital NHS Foundation Trust",
+     "org_id": 1687357,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Community Health and Eyecare Limited",
+     "org_id": 31535103,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "King's College London NHS Foundation Trust",
+     "org_id": 31560728,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRJZ",
+   "witness_publications": [
+    "049491-2025",
+    "024854-2026",
+    "056818-2026"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRK5",
+   "literal": "GB-NHS-RK5",
+   "ppon": "PMCH6281ZQDP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPMCH6281ZQDP",
+     "kind": "national",
+     "name": "Sherwood Forest Hospitals NHS Foundation Trust",
+     "org_id": 31578194,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRK5",
+     "kind": "national",
+     "name": "SHERWOOD FOREST HOSPITALS NHS FOUNDATION TRUST",
+     "org_id": 31540198,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRK5",
+   "witness_publications": [
+    "047037-2025",
+    "047047-2025",
+    "055776-2025"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRK9",
+   "literal": "GB-NHS-RK9",
+   "ppon": "PWJW1642HQRM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPWJW1642HQRM",
+     "kind": "national",
+     "name": "University Hospitals Plymouth",
+     "org_id": 31556168,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRK9",
+     "kind": "national",
+     "name": "University Hospitals Plymouth NHS Trust",
+     "org_id": 31562973,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRK9",
+   "witness_publications": [
+    "042029-2026",
+    "064109-2026",
+    "069571-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RLY",
+   "ppon": "PRXC6549RWBT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPRXC6549RWBT",
+     "kind": "national",
+     "name": "North Staffordshire Combined Healthcare NHS Trust",
+     "org_id": 30917613,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North Staffordshire Combined Healthcare NHS Trust",
+     "org_id": 1388955,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRLY",
+   "witness_publications": [
+    "068278-2025",
+    "076884-2025",
+    "081481-2025"
+   ],
+   "witnesses": 7
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRM1",
+   "literal": "GB-NHS-RM1",
+   "ppon": "PQLV1688MQYV",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPQLV1688MQYV",
+     "kind": "national",
+     "name": "Norfolk and Norwich University Hospitals NHS Foundation Trust",
+     "org_id": 30913682,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRM1",
+     "kind": "national",
+     "name": "Norfolk and Norwich University Hospitals NHS Foundation Trust",
+     "org_id": 30915905,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRM1",
+   "witness_publications": [
+    "084736-2026",
+    "084746-2026",
+    "089889-2026"
+   ],
+   "witnesses": 18
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRM3",
+   "literal": "GB-NHS-RM3",
+   "ppon": "PMHJ8663WHQL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPMHJ8663WHQL",
+     "kind": "national",
+     "name": "The Northern Care Alliance NHS Foundation Trust",
+     "org_id": 31568454,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRM3",
+     "kind": "national",
+     "name": "Norther Care alliance NHS Foundation Trust",
+     "org_id": 31544680,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRM3",
+   "witness_publications": [
+    "084727-2025",
+    "024743-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RMC",
+   "ppon": "PTGM8148JHHN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTGM8148JHHN",
+     "kind": "national",
+     "name": "Bolton NHS Foundation Trust",
+     "org_id": 30917930,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Bolton NHS Foundation Trust",
+     "org_id": 1779271,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRMC",
+   "witness_publications": [
+    "084619-2026",
+    "085579-2026",
+    "085580-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRN5",
+   "literal": "GB-NHS-RN5",
+   "ppon": "PJTP4913PWMN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPJTP4913PWMN",
+     "kind": "national",
+     "name": "HAMPSHIRE HOSPITALS NHS FOUNDATION TRUST",
+     "org_id": 31574190,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRN5",
+     "kind": "national",
+     "name": "HAMPSHIRE HOSPITALS NHS FOUNDATION TRUST",
+     "org_id": 30968685,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRN5",
+   "witness_publications": [
+    "004263-2026",
+    "004280-2026",
+    "027310-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RNA",
+   "ppon": "PRGP5218PVYD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPRGP5218PVYD",
+     "kind": "national",
+     "name": "The Dudley Group NHS Foundation Trust",
+     "org_id": 31565549,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Dudley Group NHS Foundation Trust",
+     "org_id": 2473797,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRNA",
+   "witness_publications": [
+    "035346-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RNK",
+   "ppon": "PGGT9642DYWY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGGT9642DYWY",
+     "kind": "national",
+     "name": "Tavistock and Portman NHS Trust",
+     "org_id": 31554431,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Tavistock and Portman NHS Foundation Trust",
+     "org_id": 1538916,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRNK",
+   "witness_publications": [
+    "082573-2025",
+    "026006-2026",
+    "007522-2025"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RNN",
+   "ppon": "PDXN7482RVVM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDXN7482RVVM",
+     "kind": "national",
+     "name": "North Cumbria Integrated Care NHS Foundation Trust",
+     "org_id": 30969250,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North Cumbria Integrated Care NHS Foundation Trust",
+     "org_id": 14205876,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRNN",
+   "witness_publications": [
+    "062952-2025",
+    "012448-2026",
+    "034639-2026"
+   ],
+   "witnesses": 7
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RNQ",
+   "ppon": "PCPL4765VNRN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPCPL4765VNRN",
+     "kind": "national",
+     "name": "Kettering General Hospital NHS Foundation Trust",
+     "org_id": 30915885,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Kettering General Hospital NHS Foundation Trust",
+     "org_id": 1432862,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRNQ",
+   "witness_publications": [
+    "029986-2026",
+    "030005-2026",
+    "030014-2026"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RNS",
+   "ppon": "PQBY8547GYGP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPQBY8547GYGP",
+     "kind": "national",
+     "name": "Northampton General Hospital NHS Trust",
+     "org_id": 30913740,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Northampton General Hospital NHS Trust",
+     "org_id": 1251847,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRNS",
+   "witness_publications": [
+    "038182-2025",
+    "029986-2026",
+    "030005-2026"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RNZ",
+   "ppon": "PHNB6299PVMY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPHNB6299PVMY",
+     "kind": "national",
+     "name": "Salisbury NHS Foundation Trust",
+     "org_id": 30972038,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Salisbury NHS Foundation Trust",
+     "org_id": 1262730,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "SALISBURY NHS FOUNDATION TRUST in partnership with Carbon and Energy Fund",
+     "org_id": 31632712,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRNZ",
+   "witness_publications": [
+    "047258-2026",
+    "014672-2025",
+    "021784-2025"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSRP1",
+   "literal": "GB-NHS-RP1",
+   "ppon": "PXHG3999PPMT",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRP1",
+     "kind": "national",
+     "name": "NORTHAMPTONSHIRE HEALTHCARE NHS FOUNDATION TRUST",
+     "org_id": 31561465,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRP1",
+   "witness_publications": [
+    "009732-2026",
+    "027103-2026",
+    "039522-2026"
+   ],
+   "witnesses": 11
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRP7",
+   "literal": "GB-NHS-RP7",
+   "ppon": "PYGP2439CCHG",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPYGP2439CCHG",
+     "kind": "national",
+     "name": "Lincolnshire Partnership NHS Foundation Trust",
+     "org_id": 30917763,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRP7",
+     "kind": "national",
+     "name": "LINCOLNSHIRE PARTNERSHIP NHS FOUNDATION TRUST",
+     "org_id": 30915784,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRP7",
+   "witness_publications": [
+    "031742-2025",
+    "020079-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RPA",
+   "ppon": "PGVY4831CRNZ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGVY4831CRNZ",
+     "kind": "national",
+     "name": "Medway NHS Foundation Trust",
+     "org_id": 30917062,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Medway NHS Foundation Trust",
+     "org_id": 1291482,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRPA",
+   "witness_publications": [
+    "029059-2025",
+    "029359-2025",
+    "029378-2025"
+   ],
+   "witnesses": 222
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RPG",
+   "ppon": "PMGB6764GLGQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPMGB6764GLGQ",
+     "kind": "national",
+     "name": "Oxleas NHS Foundation Trust",
+     "org_id": 30917846,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Oxleas NHS Foundation Trust",
+     "org_id": 1346825,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRPG",
+   "witness_publications": [
+    "036351-2026",
+    "043197-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RPY",
+   "ppon": "PXLT9823WVCY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXLT9823WVCY",
+     "kind": "national",
+     "name": "The Royal Marsden NHS Foundation Trust",
+     "org_id": 30926647,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Royal Marsden NHS Foundation Trust",
+     "org_id": 1206891,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Royal Marsden Hospital NHS Foundation Trust",
+     "org_id": 6454935,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRPY",
+   "witness_publications": [
+    "050472-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRQ3",
+   "literal": "GB-NHS-RQ3",
+   "ppon": "PNXM2771CPCW",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNXM2771CPCW",
+     "kind": "national",
+     "name": "Birmingham Women's and Children's NHS Foundation Trust",
+     "org_id": 30914076,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRQ3",
+     "kind": "national",
+     "name": "BIRMINGHAM WOMEN'S AND CHILDREN'S NHS FOUNDATION TRUST",
+     "org_id": 30932864,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRQ3",
+   "witness_publications": [
+    "081481-2025",
+    "085738-2025",
+    "001298-2026"
+   ],
+   "witnesses": 7
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RQX",
+   "ppon": "PMGT9179VJHQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPMGT9179VJHQ",
+     "kind": "national",
+     "name": "Homerton University Hospital NHS Foundation Trust",
+     "org_id": 30976286,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Homerton University Hospital NHS Foundation Trust",
+     "org_id": 1238214,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Homerton Healthcare NHS Foundation Trust",
+     "org_id": 30976496,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Homerton Healthcare NHS FT",
+     "org_id": 31571651,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRQX",
+   "witness_publications": [
+    "008375-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRR7",
+   "literal": "GB-NHS-RR7",
+   "ppon": "PBLN7375RYXJ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBLN7375RYXJ",
+     "kind": "national",
+     "name": "Gateshead Health NHS Foundation Trust",
+     "org_id": 31535006,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRR7",
+     "kind": "national",
+     "name": "Gateshead Health NHS Foundation Trust",
+     "org_id": 30915201,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRR7",
+   "witness_publications": [
+    "030785-2025",
+    "030788-2025",
+    "084531-2026"
+   ],
+   "witnesses": 26
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRR8",
+   "literal": "GB-NHS-RR8",
+   "ppon": "PNQG8433QXBP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNQG8433QXBP",
+     "kind": "national",
+     "name": "Leeds Teaching Hospitals NHS Trust",
+     "org_id": 30913623,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRR8",
+     "kind": "national",
+     "name": "LEEDS TEACHING HOSPITALS NHS TRUST",
+     "org_id": 31540413,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRR8",
+   "witness_publications": [
+    "047574-2025",
+    "054847-2025",
+    "067359-2025"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RRJ",
+   "ppon": "PXBY9749ZCLX",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXBY9749ZCLX",
+     "kind": "national",
+     "name": "The Royal Orthopaedic Hospital NHS Foundation Trust",
+     "org_id": 30917859,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "THE ROYAL ORTHOPAEDIC HOSPITAL NHS FOUNDATION TRUST",
+     "org_id": 31543239,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRRJ",
+   "witness_publications": [
+    "054014-2025",
+    "054226-2025",
+    "061548-2025"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RRK",
+   "ppon": "PWVL6877BXXV",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPWVL6877BXXV",
+     "kind": "national",
+     "name": "University Hospitals Birmingham NHS Foundation Trust",
+     "org_id": 30914077,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals Birmingham NHS Foundation Trust",
+     "org_id": 1167736,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals Birmingham",
+     "org_id": 1232155,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRRK",
+   "witness_publications": [
+    "054226-2025",
+    "055734-2025",
+    "055759-2025"
+   ],
+   "witnesses": 13
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RRU",
+   "ppon": "PGJC9175DMRR",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGJC9175DMRR",
+     "kind": "national",
+     "name": "London Ambulance Service NHS Trust",
+     "org_id": 30915545,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "London Ambulance Service NHS Trust",
+     "org_id": 1755985,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "London Ambulance Service NHS Trust (LAS)",
+     "org_id": 31552166,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRRU",
+   "witness_publications": [
+    "090638-2026",
+    "041997-2025",
+    "044335-2025"
+   ],
+   "witnesses": 11
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RRV",
+   "ppon": "PYRL5371BNMH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPYRL5371BNMH",
+     "kind": "national",
+     "name": "University College London Hospitals NHS FT",
+     "org_id": 30916969,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University College London Hospitals NHS Foundation Trust",
+     "org_id": 1791116,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRRV",
+   "witness_publications": [
+    "058852-2025",
+    "058869-2025",
+    "059014-2025"
+   ],
+   "witnesses": 8
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRT1",
+   "literal": "GB-NHS-RT1",
+   "ppon": "PNRQ9434BBDP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNRQ9434BBDP",
+     "kind": "national",
+     "name": "Cambridgeshire & Peterborough Foundation Trust",
+     "org_id": 31566565,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRT1",
+     "kind": "national",
+     "name": "Cambridgeshire & Peterborough NHS Foundation Trust",
+     "org_id": 30916587,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRT1",
+   "witness_publications": [
+    "032957-2025",
+    "036346-2025",
+    "056068-2025"
+   ],
+   "witnesses": 10
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRT4",
+   "literal": "GB-NHS-RT4",
+   "ppon": "PGRH6439XWLV",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGRH6439XWLV",
+     "kind": "national",
+     "name": "Welsh Ambulance Services NHS Trust",
+     "org_id": 30976491,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRT4",
+     "kind": "national",
+     "name": "Welsh Ambulance Services NHS Trust",
+     "org_id": 31537572,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRT4",
+   "witness_publications": [
+    "041997-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRT5",
+   "literal": "GB-NHS-RT5",
+   "ppon": "PPBC2775WXPX",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPPBC2775WXPX",
+     "kind": "national",
+     "name": "Leicestershire Partnership NHS Trust",
+     "org_id": 31537637,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRT5",
+     "kind": "national",
+     "name": "LEICESTERSHIRE PARTNERSHIP NHS TRUST",
+     "org_id": 30976042,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRT5",
+   "witness_publications": [
+    "044711-2025",
+    "047081-2025",
+    "084799-2025"
+   ],
+   "witnesses": 8
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RTD",
+   "ppon": "PDCY5582YRHQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDCY5582YRHQ",
+     "kind": "national",
+     "name": "The Newcastle Upon Tyne Hospitals NHS Foundation Trust",
+     "org_id": 30917018,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Newcastle upon Tyne Hospitals NHS Foundation Trust",
+     "org_id": 1166415,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Newcastle Upon Tyne Hospitals Foundation Trust",
+     "org_id": 31543973,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRTD",
+   "witness_publications": [
+    "084531-2026",
+    "089843-2026",
+    "091068-2026"
+   ],
+   "witnesses": 19
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RTE",
+   "ppon": "PYHT5943VXGV",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPYHT5943VXGV",
+     "kind": "national",
+     "name": "Gloucestershire Hospitals NHS Foundation Trust",
+     "org_id": 30913986,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Gloucestershire Hospitals NHS Foundation Trust",
+     "org_id": 1168733,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRTE",
+   "witness_publications": [
+    "071208-2025",
+    "071343-2025",
+    "022159-2025"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RTF",
+   "ppon": "PLMV4859MQXP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPLMV4859MQXP",
+     "kind": "national",
+     "name": "Northumbria Healthcare Facilities Management",
+     "org_id": 30914055,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Northumbria Healthcare NHS Foundation Trust",
+     "org_id": 1172050,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals of Leicester NHS Trust",
+     "org_id": 4474166,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRTF",
+   "witness_publications": [
+    "028981-2025",
+    "089396-2026",
+    "089407-2026"
+   ],
+   "witnesses": 21
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RTG",
+   "ppon": "PQZD7532NDHL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPQZD7532NDHL",
+     "kind": "national",
+     "name": "University Hospitals of Derby and Burton NHS Foundation Trust",
+     "org_id": 30915285,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals of Derby and Burton NHS Foundation Trust",
+     "org_id": 12215491,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospital of Derby and Burton NHS Foundation Trust",
+     "org_id": 30953527,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals of Derby & Burton NHS Foundation Trust",
+     "org_id": 31559358,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRTG",
+   "witness_publications": [
+    "030167-2025",
+    "030197-2025",
+    "030312-2025"
+   ],
+   "witnesses": 142
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RTQ",
+   "ppon": "PBGV6466NHDM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBGV6466NHDM",
+     "kind": "national",
+     "name": "Gloucestershire Health and Care NHS Foundation Trust",
+     "org_id": 30916324,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Gloucestershire Health and Care NHS Foundation Trust",
+     "org_id": 15046714,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRTQ",
+   "witness_publications": [
+    "016269-2025",
+    "016558-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RTR",
+   "ppon": "PZDC7131GJTH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPZDC7131GJTH",
+     "kind": "national",
+     "name": "South Tees Hospitals NHS Foundation Trust",
+     "org_id": 31556601,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "South Tees Hospitals NHS Foundation Trust",
+     "org_id": 1243666,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRTR",
+   "witness_publications": [
+    "027439-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RTX",
+   "ppon": "PGWW7958CHJD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGWW7958CHJD",
+     "kind": "national",
+     "name": "University Hospitals of Morecambe Bay NHS Foundation Trust",
+     "org_id": 30930144,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals of Morecambe Bay NHS Foundation Trust",
+     "org_id": 1745182,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRTX",
+   "witness_publications": [
+    "017892-2026",
+    "017934-2026",
+    "029195-2026"
+   ],
+   "witnesses": 7
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRV3",
+   "literal": "GB-NHS-RV3",
+   "ppon": "PQNQ2236WRPR",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPQNQ2236WRPR",
+     "kind": "national",
+     "name": "Central and North West London NHS Foundation Trust",
+     "org_id": 30917605,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRV3",
+     "kind": "national",
+     "name": "CENTRAL AND NORTH WEST LONDON NHS FOUNDATION TRUST",
+     "org_id": 30915996,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRV3",
+   "witness_publications": [
+    "032131-2025",
+    "086402-2026",
+    "043237-2025"
+   ],
+   "witnesses": 7
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRV9",
+   "literal": "GB-NHS-RV9",
+   "ppon": "PLYP5457LQCD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPLYP5457LQCD",
+     "kind": "national",
+     "name": "Humber Teaching NHS Foundation Trust",
+     "org_id": 31544250,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRV9",
+     "kind": "national",
+     "name": "HUMBER TEACHING NHS FOUNDATION TRUST",
+     "org_id": 30915072,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRV9",
+   "witness_publications": [
+    "030608-2025",
+    "030620-2025",
+    "030657-2025"
+   ],
+   "witnesses": 189
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RVV",
+   "ppon": "PYBV2474CMNH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPYBV2474CMNH",
+     "kind": "national",
+     "name": "East Kent Hospitals University NHS Foundation Trust",
+     "org_id": 30917064,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "East Kent Hospitals University NHS Foundation Trust",
+     "org_id": 1926457,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "East Kent Hospital Foundation Trust",
+     "org_id": 31537490,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRVV",
+   "witness_publications": [
+    "073341-2025",
+    "075765-2025",
+    "081189-2025"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RVW",
+   "ppon": "PJDT5353JMRJ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPJDT5353JMRJ",
+     "kind": "national",
+     "name": "North Tees and Hartlepool NHS Foundation Trust",
+     "org_id": 31556599,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North Tees and Hartlepool NHS Foundation Trust",
+     "org_id": 2748062,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRVW",
+   "witness_publications": [
+    "044722-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRW1",
+   "literal": "GB-NHS-RW1",
+   "ppon": "PWDC9239CLWX",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPWDC9239CLWX",
+     "kind": "national",
+     "name": "Hampshire and Isle of Wight Healthcare NHS Foundation Trust",
+     "org_id": 30915169,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRW1",
+     "kind": "national",
+     "name": "Hampshire and Isle of Wight Healthcare NHS Foundation Trust (HIOW NHSFT)",
+     "org_id": 31567457,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRW1",
+   "witness_publications": [
+    "078976-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSRW4",
+   "literal": "GB-NHS-RW4",
+   "ppon": "PDQP9649WYGM",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRW4",
+     "kind": "national",
+     "name": "mersey care nhs foundation trust",
+     "org_id": 30915592,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRW4",
+   "witness_publications": [
+    "004552-2026",
+    "013893-2026",
+    "028336-2026"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RWA",
+   "ppon": "PHNT9958NGDZ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPHNT9958NGDZ",
+     "kind": "national",
+     "name": "Hull University Teaching Hospitals NHS Trust",
+     "org_id": 30915216,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Hull University Teaching Hospitals NHS Trust",
+     "org_id": 13228851,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWA",
+   "witness_publications": [
+    "029496-2025",
+    "032779-2025",
+    "033758-2025"
+   ],
+   "witnesses": 130
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RWD",
+   "ppon": "PTYN5349TLTT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTYN5349TLTT",
+     "kind": "national",
+     "name": "United Lincolnshire Teaching Hospitals NHS Trust",
+     "org_id": 30913995,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "UNITED LINCOLNSHIRE TEACHING HOSPITALS NHS TRUST",
+     "org_id": 30915785,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "United Lincolnshire NHS Hospital Trust",
+     "org_id": 31604037,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWD",
+   "witness_publications": [
+    "031742-2025",
+    "075937-2025",
+    "007160-2026"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RWE",
+   "ppon": "PWXN8614MPHH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPWXN8614MPHH",
+     "kind": "national",
+     "name": "University Hospitals of Leicester NHS Trust",
+     "org_id": 30930117,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "University Hospitals of Leicester NHS Trust",
+     "org_id": 4474166,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWE",
+   "witness_publications": [
+    "085308-2025",
+    "038264-2026",
+    "058978-2026"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RWF",
+   "ppon": "PLWZ5628VQPM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPLWZ5628VQPM",
+     "kind": "national",
+     "name": "Maidstone and Tunbridge Wells NHS Trust",
+     "org_id": 30913981,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Maidstone and Tunbridge Wells NHS Trust",
+     "org_id": 1517322,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Sustainable Energy First Limited C/O Maidstone and Tunbridge Wells NHS Trust",
+     "org_id": 31610393,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWF",
+   "witness_publications": [
+    "071346-2025",
+    "071355-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RWG",
+   "ppon": "PQPL8842GLBD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPQPL8842GLBD",
+     "kind": "national",
+     "name": "West Hertfordshire Teaching Hospitals NHS Trust",
+     "org_id": 30913934,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "WEST HERTFORDSHIRE TEACHING HOSPITALS NHS TRUST",
+     "org_id": 31537155,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWG",
+   "witness_publications": [
+    "051236-2025",
+    "051263-2025",
+    "054627-2025"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RWJ",
+   "ppon": "PHJH5159PMBG",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPHJH5159PMBG",
+     "kind": "national",
+     "name": "Stockport NHS Foundation Trust",
+     "org_id": 31574798,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Stockport NHS Foundation Trust",
+     "org_id": 1193388,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Stockport N H S Foundation Trust",
+     "org_id": 31604158,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWJ",
+   "witness_publications": [
+    "062272-2025",
+    "022261-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RWP",
+   "ppon": "PPWB7691MHZW",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPPWB7691MHZW",
+     "kind": "national",
+     "name": "Worcestershire Acute Hospitals NHS Trust",
+     "org_id": 30916584,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Worcestershire Acute Hospitals NHS Trust",
+     "org_id": 1385205,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWP",
+   "witness_publications": [
+    "065660-2025",
+    "065673-2025",
+    "069751-2025"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RWV",
+   "ppon": "PNWB6144XTMH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNWB6144XTMH",
+     "kind": "national",
+     "name": "Devon Partnership NHS Trust",
+     "org_id": 31541155,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Devon Partnership NHS Trust",
+     "org_id": 3793356,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Devon Partnership Trust",
+     "org_id": 9420410,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWV",
+   "witness_publications": [
+    "041229-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RWW",
+   "ppon": "PBMJ3394DBQQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBMJ3394DBQQ",
+     "kind": "national",
+     "name": "Warrington and Halton Teaching Hospitals NHS Foundation Trust",
+     "org_id": 31564277,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 6,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Devon Partnership NHS Trust",
+     "org_id": 3793356,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Warrington and Halton Teaching Hospitals NHS Foundation Trust",
+     "org_id": 15410940,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Warrington and Halton Teaching Hospitals NHS Trust",
+     "org_id": 31538397,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "North Cheshire and Mersey NHS Foundation Trust",
+     "org_id": 31571325,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Warrington & Halton Teaching Hospitals NHS Foundation Trust",
+     "org_id": 31598258,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWW",
+   "witness_publications": [
+    "039749-2025",
+    "041097-2025",
+    "045685-2025"
+   ],
+   "witnesses": 93
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RWX",
+   "ppon": "PVLX5425VJZN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPVLX5425VJZN",
+     "kind": "national",
+     "name": "Berkshire Healthcare NHS Foundation Trust",
+     "org_id": 31537631,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Berkshire Healthcare NHS Foundation Trust",
+     "org_id": 2159849,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWX",
+   "witness_publications": [
+    "073502-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RWY",
+   "ppon": "PRVB1661VNRY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPRVB1661VNRY",
+     "kind": "national",
+     "name": "Calderdale and Huddersfield NHS Foundation Trust",
+     "org_id": 31535615,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Calderdale and Huddersfield NHS Foundation Trust",
+     "org_id": 1287488,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRWY",
+   "witness_publications": [
+    "002063-2026",
+    "005039-2026",
+    "007304-2026"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRX1",
+   "literal": "GB-NHS-RX1",
+   "ppon": "PVQC9261WGRM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPVQC9261WGRM",
+     "kind": "national",
+     "name": "Nottingham University Hospital NHS Trust",
+     "org_id": 30913873,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRX1",
+     "kind": "national",
+     "name": "NOTTINGHAM UNIVERSITY HOSPITALS NHS TRUST",
+     "org_id": 31540199,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRX1",
+   "witness_publications": [
+    "047037-2025",
+    "047047-2025",
+    "050063-2025"
+   ],
+   "witnesses": 65
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRX4",
+   "literal": "GB-NHS-RX4",
+   "ppon": "PDBW5798GPLT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDBW5798GPLT",
+     "kind": "national",
+     "name": "Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust",
+     "org_id": 31546270,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRX4",
+     "kind": "national",
+     "name": "CUMBRIA, NORTHUMBERLAND, TYNE AND WEAR NHS FOUNDATION TRUST",
+     "org_id": 30916541,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRX4",
+   "witness_publications": [
+    "032887-2025",
+    "023590-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRX7",
+   "literal": "GB-NHS-RX7",
+   "ppon": "PGTN2617YXZW",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGTN2617YXZW",
+     "kind": "national",
+     "name": "North West Ambulance Service NHS Trust",
+     "org_id": 31541571,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRX7",
+     "kind": "national",
+     "name": "NORTH WEST AMBULANCE SERVICE NHS TRUST",
+     "org_id": 30930368,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRX7",
+   "witness_publications": [
+    "086459-2026",
+    "039414-2025",
+    "041997-2025"
+   ],
+   "witnesses": 25
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRX8",
+   "literal": "GB-NHS-RX8",
+   "ppon": "PXHX4264BLQJ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPXHX4264BLQJ",
+     "kind": "national",
+     "name": "Yorkshire Ambulance Service NHS Trust",
+     "org_id": 30914088,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRX8",
+     "kind": "national",
+     "name": "YORKSHIRE AMBULANCE SERVICE NHS TRUST",
+     "org_id": 31537573,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRX8",
+   "witness_publications": [
+    "041997-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRX9",
+   "literal": "GB-NHS-RX9",
+   "ppon": "PYQW9421PXDP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPYQW9421PXDP",
+     "kind": "national",
+     "name": "East Midlands Ambulance Service NHS Trust",
+     "org_id": 30953565,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRX9",
+     "kind": "national",
+     "name": "EAST MIDLANDS AMBULANCE SERVICE NHS TRUST",
+     "org_id": 31537574,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRX9",
+   "witness_publications": [
+    "041997-2025",
+    "051262-2025",
+    "056664-2025"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RXA",
+   "ppon": "PGZV5874HRZD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGZV5874HRZD",
+     "kind": "national",
+     "name": "Cheshire and Wirral Partnership NHS Foundation Trust",
+     "org_id": 31552751,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Cheshire and Wirral Partnership NHS Foundation Trust",
+     "org_id": 1604072,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Cheshire & Wirral Partnership NHS Foundation Trust",
+     "org_id": 2267512,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXA",
+   "witness_publications": [
+    "033996-2025",
+    "034301-2025",
+    "034374-2025"
+   ],
+   "witnesses": 37
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RXC",
+   "ppon": "PYLX2324XVVV",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPYLX2324XVVV",
+     "kind": "national",
+     "name": "East Sussex Healthcare NHS Trust",
+     "org_id": 31573474,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "East Sussex Healthcare NHS Trust",
+     "org_id": 1383983,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXC",
+   "witness_publications": [
+    "060740-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RXE",
+   "ppon": "PBGD2746GXHP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBGD2746GXHP",
+     "kind": "national",
+     "name": "Rotherham Doncaster and South Humber NHS Foundation Trust",
+     "org_id": 31535064,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Rotherham Doncaster and South Humber NHS Foundation Trust",
+     "org_id": 4141289,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Rotherham, Doncaster & South Humber NHS Foundation Trust",
+     "org_id": 31534939,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXE",
+   "witness_publications": [
+    "070162-2025",
+    "083674-2025",
+    "085379-2025"
+   ],
+   "witnesses": 33
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RXF",
+   "ppon": "PTPB4248VJQT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTPB4248VJQT",
+     "kind": "national",
+     "name": "Mid Yorkshire Hospitals NHS Trust",
+     "org_id": 30917291,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "MID YORKSHIRE TEACHING NHS TRUST",
+     "org_id": 31539005,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXF",
+   "witness_publications": [
+    "044793-2025",
+    "018478-2025",
+    "026721-2025"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RXK",
+   "ppon": "PYHH6963BGQM",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPYHH6963BGQM",
+     "kind": "national",
+     "name": "Sandwell and West Birmingham Hospitals NHS Trust",
+     "org_id": 30917614,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Sandwell and West Birmingham Hospitals NHS Trust",
+     "org_id": 1396633,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Sandwell & West Birmingham Hospitals N H S Trust",
+     "org_id": 31621139,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXK",
+   "witness_publications": [
+    "035346-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RXL",
+   "ppon": "PZRP9598QTHD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPZRP9598QTHD",
+     "kind": "national",
+     "name": "Blackpool Teaching Hospitals NHS Foundation Trust",
+     "org_id": 30968791,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Blackpool Teaching Hospitals NHS Foundation Trust",
+     "org_id": 2004062,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXL",
+   "witness_publications": [
+    "043422-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": null,
+   "literal": "GB-NHS-RXM",
+   "ppon": "PHYX9381JDQT",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Derbyshire Healthcare NHS Foundation Trust",
+     "org_id": 1409547,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXM",
+   "witness_publications": [
+    "013447-2026",
+    "054138-2026",
+    "055145-2026"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RXP",
+   "ppon": "PQLT2871PCJY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPQLT2871PCJY",
+     "kind": "national",
+     "name": "County Durham and Darlington NHS Foundation Trust",
+     "org_id": 30913742,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "County Durham and Darlington NHS Foundation Trust",
+     "org_id": 1165278,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXP",
+   "witness_publications": [
+    "084259-2026",
+    "085693-2026",
+    "086822-2026"
+   ],
+   "witnesses": 20
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RXQ",
+   "ppon": "PHNT5649ZYQJ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPHNT5649ZYQJ",
+     "kind": "national",
+     "name": "Buckinghamshire Healthcare NHS Trust",
+     "org_id": 31537782,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Buckinghamshire Healthcare NHS Trust",
+     "org_id": 1185447,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXQ",
+   "witness_publications": [
+    "062370-2025",
+    "063251-2025",
+    "064379-2025"
+   ],
+   "witnesses": 22
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RXT",
+   "ppon": "PTMC2127TPCV",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTMC2127TPCV",
+     "kind": "national",
+     "name": "Birmingham & Solihull Mental Health Foundation Trust",
+     "org_id": 30926645,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Birmingham & Solihull Mental Health NHS Foundation Trust",
+     "org_id": 10958945,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Birmingham Women's and Children's Hospital NHS Foundation Trust",
+     "org_id": 13043614,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Birmingham and Solihull Mental Health Foundation NHS Trust",
+     "org_id": 30932865,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXT",
+   "witness_publications": [
+    "068815-2025",
+    "070139-2025",
+    "070147-2025"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RXV",
+   "ppon": "PGCZ7958BVXT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGCZ7958BVXT",
+     "kind": "national",
+     "name": "Greater Manchester Mental Health NHS Foundation Trust",
+     "org_id": 31569803,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Greater Manchester Mental Health NHS Foundation Trust",
+     "org_id": 10374035,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXV",
+   "witness_publications": [
+    "058775-2025",
+    "013893-2026",
+    "057470-2026"
+   ],
+   "witnesses": 3
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RXW",
+   "ppon": "PMRB7317GVDL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPMRB7317GVDL",
+     "kind": "national",
+     "name": "The Shrewsbury and Telford Hospital NHS Trust",
+     "org_id": 30913590,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 3,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Shrewsbury & Telford Hospital NHS Trust",
+     "org_id": 1470141,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "The Shrewsbury and Telford Hospital NHS Trust",
+     "org_id": 12053291,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Shrewsbury and Telford Hospital NHS Trust",
+     "org_id": 12431017,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXW",
+   "witness_publications": [
+    "070099-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RXX",
+   "ppon": "PBCW8913JCZL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBCW8913JCZL",
+     "kind": "national",
+     "name": "SUSSEX PARTNERSHIP NHS FOUNDATION TRUST",
+     "org_id": 30916802,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Sussex Partnership NHS Foundation Trust",
+     "org_id": 2022375,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Surrey and Borders Partnership NHS Foundation Trust",
+     "org_id": 2409657,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRXX",
+   "witness_publications": [
+    "024094-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSRY2",
+   "literal": "GB-NHS-RY2",
+   "ppon": "PGHY5799LRTH",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRY2",
+     "kind": "national",
+     "name": "Bridgewater Community Healthcare NHS Foundation Trust",
+     "org_id": 31543388,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRY2",
+   "witness_publications": [
+    "068793-2025",
+    "008367-2025",
+    "009523-2025"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSRY4",
+   "literal": "GB-NHS-RY 4",
+   "ppon": "PDPJ7797WNXZ",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRY4",
+     "kind": "national",
+     "name": "Hertfordshire Community  NHS Trust",
+     "org_id": 30929529,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRY4",
+   "witness_publications": [
+    "085695-2026",
+    "089353-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRY6",
+   "literal": "GB-NHS-RY6",
+   "ppon": "PZXV8867VHCQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPZXV8867VHCQ",
+     "kind": "national",
+     "name": "Leeds Community Healthcare NHS Trust",
+     "org_id": 30928162,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRY6",
+     "kind": "national",
+     "name": "Leeds Community Healthcare NHS Trust",
+     "org_id": 31542502,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRY6",
+   "witness_publications": [
+    "018478-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSRY7",
+   "literal": "GB-NHS-RY7",
+   "ppon": "PDMT2223WYCR",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRY7",
+     "kind": "national",
+     "name": "WIRRAL COMMUNITY HEALTH AND CARE NHS FOUNDATION TRUST",
+     "org_id": 31539451,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRY7",
+   "witness_publications": [
+    "045573-2025",
+    "050083-2025",
+    "071425-2026"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSRY8",
+   "literal": "GB-NHS-RY8",
+   "ppon": "PDVQ1486BNXY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDVQ1486BNXY",
+     "kind": "national",
+     "name": "Derbyshire Community Health Services NHS Foundation Trust",
+     "org_id": 31554134,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSRY8",
+     "kind": "national",
+     "name": "Derbyshire Community Health Services NHS Foundation Trust",
+     "org_id": 31558091,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSRY8",
+   "witness_publications": [
+    "055145-2026",
+    "058502-2026",
+    "060446-2026"
+   ],
+   "witnesses": 19
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RYA",
+   "ppon": "PNDY4353CMWY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNDY4353CMWY",
+     "kind": "national",
+     "name": "West Midlands Ambulance Service University NHS Foundation Trust",
+     "org_id": 30913621,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 5,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "West Midlands Ambulance Service",
+     "org_id": 6384818,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "West Midlands Ambulance Service University NHS Foundation Trust",
+     "org_id": 12508548,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "West Midlands Ambulance Service University NHS FT",
+     "org_id": 13335820,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "West Midland Ambulance Service University NHS Foundation Trust",
+     "org_id": 31567619,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "West Midlands Service University NHS Foundation Trust",
+     "org_id": 31626603,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRYA",
+   "witness_publications": [
+    "069508-2026"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RYC",
+   "ppon": "PBNZ4155WXBZ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBNZ4155WXBZ",
+     "kind": "national",
+     "name": "East of England Ambulance Service NHS Trust Headquarters",
+     "org_id": 30916110,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "East of England Ambulance Service NHS Trust",
+     "org_id": 1263180,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRYC",
+   "witness_publications": [
+    "041997-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RYD",
+   "ppon": "PGNR3396MRLQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGNR3396MRLQ",
+     "kind": "national",
+     "name": "South East Coast Ambulance Service NHS Foundation Trust",
+     "org_id": 30918360,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "South East Coast Ambulance Service NHS Foundation Trust",
+     "org_id": 2332253,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "South East Coast Ambulance Service",
+     "org_id": 5824298,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRYD",
+   "witness_publications": [
+    "086620-2026",
+    "041997-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RYE",
+   "ppon": "PVXR6533XJPY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPVXR6533XJPY",
+     "kind": "national",
+     "name": "South Central Ambulance Service NHS Foundation Trust",
+     "org_id": 30915164,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "South Central Ambulance Service",
+     "org_id": 1391882,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "South Central Ambulance Service NHS Foundation Trust",
+     "org_id": 2442353,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRYE",
+   "witness_publications": [
+    "086620-2026",
+    "086681-2026",
+    "088265-2026"
+   ],
+   "witnesses": 15
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RYF",
+   "ppon": "PQXD1311BRXL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPQXD1311BRXL",
+     "kind": "national",
+     "name": "South Western Ambulance Service NHS Foundation Trust",
+     "org_id": 30916200,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "South Western Ambulance Service NHS Foundation Trust",
+     "org_id": 1430119,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRYF",
+   "witness_publications": [
+    "088172-2026",
+    "038907-2025",
+    "038956-2025"
+   ],
+   "witnesses": 64
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RYG",
+   "ppon": "PPBB6627GXNQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPPBB6627GXNQ",
+     "kind": "national",
+     "name": "Coventry & Warwickshire Partnership Trust",
+     "org_id": 30918096,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Coventry and Warwickshire Partnership NHS Trust",
+     "org_id": 1691021,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Coventry and Warwickshire Partnership Trust",
+     "org_id": 4648675,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRYG",
+   "witness_publications": [
+    "067384-2026",
+    "016462-2025"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RYV",
+   "ppon": "PHQR1485BDJQ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPHQR1485BDJQ",
+     "kind": "national",
+     "name": "Cambridgeshire Community Services NHS Trust",
+     "org_id": 31557115,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Cambridgeshire Community Services NHS Trust",
+     "org_id": 5447323,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Cambridge Community Services NHS Trust",
+     "org_id": 5654151,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRYV",
+   "witness_publications": [
+    "031135-2025",
+    "031140-2025",
+    "034914-2025"
+   ],
+   "witnesses": 26
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-RYW",
+   "ppon": "PLVW7764XPRN",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPLVW7764XPRN",
+     "kind": "national",
+     "name": "Birmingham Community Healthcare Trust Headquarters",
+     "org_id": 30916580,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Birmingham Community Healthcare NHS Foundation Trust",
+     "org_id": 8042570,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRYW",
+   "witness_publications": [
+    "012957-2026",
+    "026352-2026",
+    "062352-2026"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-RYY",
+   "ppon": "PHVC1716LBDJ",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPHVC1716LBDJ",
+     "kind": "national",
+     "name": "Kent Community Health NHS Foundation Trust",
+     "org_id": 30916727,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 4,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Kent Community Health NHS Foundation Trust",
+     "org_id": 6676127,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Kent Community Health NHS Foundation Trust (KCHFT)",
+     "org_id": 31560119,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Kent Community Foundation Hospitals Trust",
+     "org_id": 31604013,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Kent Community Healthcare NHS Foundation Trust",
+     "org_id": 31649007,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSRYY",
+   "witness_publications": [
+    "084928-2026",
+    "091113-2026",
+    "044711-2025"
+   ],
+   "witnesses": 37
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHST1150",
+   "literal": "GB-NHS-T1150",
+   "ppon": "PPZC7945VBHW",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPPZC7945VBHW",
+     "kind": "national",
+     "name": "NHS Litigation Authority",
+     "org_id": 30929925,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHST1150",
+     "kind": "national",
+     "name": "NHS Resolution",
+     "org_id": 30915502,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHST1150",
+   "witness_publications": [
+    "031284-2025",
+    "031609-2025",
+    "031624-2025"
+   ],
+   "witnesses": 6
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHST1460",
+   "literal": "GB-NHS-T1460",
+   "ppon": "PDBY6395VWBP",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDBY6395VWBP",
+     "kind": "national",
+     "name": "NHS Blood and Transplant",
+     "org_id": 30915199,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHST1460",
+     "kind": "national",
+     "name": "NHSBT",
+     "org_id": 31554901,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHST1460",
+   "witness_publications": [
+    "025940-2026",
+    "026316-2026",
+    "031626-2026"
+   ],
+   "witnesses": 5
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHST1480",
+   "literal": "GB-NHS-T1480",
+   "ppon": "PNBN5148DWJQ",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHST1480",
+     "kind": "national",
+     "name": "Health Research Authority",
+     "org_id": 30976501,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHST1480",
+   "witness_publications": [
+    "091025-2026",
+    "015350-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHST1550",
+   "literal": "GB-NHS-T1550",
+   "ppon": "PGDP9934LXYL",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPGDP9934LXYL",
+     "kind": "national",
+     "name": "Community Health Partnerships Limited",
+     "org_id": 30967345,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHST1550",
+     "kind": "national",
+     "name": "Community Health Partnerships Limited",
+     "org_id": 31567640,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHST1550",
+   "witness_publications": [
+    "025320-2026",
+    "025343-2026",
+    "027485-2026"
+   ],
+   "witnesses": 12
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-TAD",
+   "ppon": "PPRG6967RHTD",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPPRG6967RHTD",
+     "kind": "national",
+     "name": "Bradford District Care NHS Foundation Trust",
+     "org_id": 31600268,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Bradford District Care NHS Foundation Trust",
+     "org_id": 9107193,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSTAD",
+   "witness_publications": [
+    "018478-2025"
+   ],
+   "witnesses": 1
+  },
+  {
+   "class": "both_distinct",
+   "identity": null,
+   "literal": "GB-NHS-TAJ",
+   "ppon": "PRPV1569HTLT",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPRPV1569HTLT",
+     "kind": "national",
+     "name": "Black Country Healthcare NHS Foundation Trust",
+     "org_id": 30917612,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "Black Country Healthcare NHS Foundation Trust",
+     "org_id": 30968798,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSTAJ",
+   "witness_publications": [
+    "081481-2025",
+    "085738-2025",
+    "001298-2026"
+   ],
+   "witnesses": 4
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSU6N4T",
+   "literal": "GB-NHS-U6N4T",
+   "ppon": "PBMQ7576DVGW",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPBMQ7576DVGW",
+     "kind": "national",
+     "name": "UK Health Security Agency",
+     "org_id": 30914819,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSU6N4T",
+     "kind": "national",
+     "name": "UK Health Security Agency",
+     "org_id": 31543636,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSU6N4T",
+   "witness_publications": [
+    "054928-2025",
+    "064035-2025",
+    "064047-2025"
+   ],
+   "witnesses": 13
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSUKN06",
+   "literal": "GB-NHS-ukn06",
+   "ppon": "PTNY7183GXBY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPTNY7183GXBY",
+     "kind": "national",
+     "name": "Northern Ireland Blood Transfusion Service",
+     "org_id": 31559449,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSUKN06",
+     "kind": "national",
+     "name": "Northern Ireland Blood Transfusion Service",
+     "org_id": 30915329,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSUKN06",
+   "witness_publications": [
+    "031017-2025",
+    "051892-2025",
+    "082441-2025"
+   ],
+   "witnesses": 11
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSVL82P",
+   "literal": "GB-NHS-VL82P",
+   "ppon": "PRBR2772VYBY",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSVL82P",
+     "kind": "national",
+     "name": "Mrs Lynn Georgina Hart T/A Aucklands Care",
+     "org_id": 30953511,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSVL82P",
+   "witness_publications": [
+    "087209-2026",
+    "077233-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "no_target_ppon",
+   "identity": "GBNHSVN370",
+   "literal": "GB-NHS-VN370",
+   "ppon": "PBRQ8152MCNY",
+   "ppon_holder_count": 0,
+   "ppon_holders": [],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSVN370",
+     "kind": "national",
+     "name": "Wisteria Care",
+     "org_id": 30953512,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSVN370",
+   "witness_publications": [
+    "087209-2026",
+    "077233-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "multi_target",
+   "identity": null,
+   "literal": "GB-NHS-west midlands Ambulance Service",
+   "ppon": "PNTW1429NVGH",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPNTW1429NVGH",
+     "kind": "national",
+     "name": "West Midlands Ambulance Service University NHS Foundation Trust",
+     "org_id": 31574837,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 2,
+   "registry_holders": [
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "West Midlands Ambulance Service",
+     "org_id": 6384818,
+     "provisional": true
+    },
+    {
+     "identifier": null,
+     "kind": null,
+     "name": "West Midlands Ambulance Service University NHS FT",
+     "org_id": 13335820,
+     "provisional": true
+    }
+   ],
+   "value": "GBNHSWESTMIDLANDSAMBULANCESERVICE",
+   "witness_publications": [
+    "062092-2026",
+    "062872-2026"
+   ],
+   "witnesses": 2
+  },
+  {
+   "class": "both_distinct",
+   "identity": "GBNHSX24",
+   "literal": "GB-NHS-X24",
+   "ppon": "PDPT3135BWWY",
+   "ppon_holder_count": 1,
+   "ppon_holders": [
+    {
+     "identifier": "GBPPONPDPT3135BWWY",
+     "kind": "national",
+     "name": "NHS England",
+     "org_id": 30913629,
+     "provisional": false
+    }
+   ],
+   "registry_holder_count": 1,
+   "registry_holders": [
+    {
+     "identifier": "GBNHSX24",
+     "kind": "national",
+     "name": "NHS ENGLAND",
+     "org_id": 30929530,
+     "provisional": false
+    }
+   ],
+   "value": "GBNHSX24",
+   "witness_publications": [
+    "085695-2026",
+    "086694-2026",
+    "086738-2026"
+   ],
+   "witnesses": 65
+  }
+ ]
+}

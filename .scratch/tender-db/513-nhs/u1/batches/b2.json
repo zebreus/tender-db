@@ -1,0 +1,675 @@
+[
+ {
+  "code": "0DE",
+  "class": "multi_target",
+  "witnesses": 2,
+  "ods": {
+   "found": true,
+   "name": "NHS ARDEN AND GREATER EAST MIDLANDS COMMISSIONING SUPPORT UNIT",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "COMMISSIONING SUPPORT UNIT",
+   "active_roles": [
+    "COMMISSIONING SUPPORT UNIT"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 6340194,
+    "name": "NHS Arden and Greater East Midlands Commissioning Support Unit",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 7501468,
+    "name": "NHS Arden & GEM Commissioning Support Unit",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PLVR6647BVMM",
+  "ppon_holders": [
+   {
+    "org_id": 30916122,
+    "name": "NHS Arden and Greater East Midlands Commissioning Support Unit",
+    "identifier": "GBPPONPLVR6647BVMM",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "QJK",
+  "class": "multi_target",
+  "witnesses": 33,
+  "ods": {
+   "found": true,
+   "name": "NHS DEVON INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 30914151,
+    "name": "NHS Devon Integrated Care Board",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30914271,
+    "name": "NHS Devon Integrated Care Board (ICB)",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30914831,
+    "name": "NHS Devon ICB",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PRDC6266CBRR",
+  "ppon_holders": [
+   {
+    "org_id": 30917049,
+    "name": "NHS DEVON INTEGRATED CARE BOARD",
+    "identifier": "GBPPONPRDC6266CBRR",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "QOQ",
+  "class": "multi_target",
+  "witnesses": 22,
+  "ods": {
+   "found": true,
+   "name": "NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 30913653,
+    "name": "NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31535385,
+    "name": "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31552257,
+    "name": "NHS Humber and North Yorkshire ICB",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31570883,
+    "name": "NHS Humber North Yorkshire ICB",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31587871,
+    "name": "NHS Humber North Yorkshire Integrated Care Board",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PBCG3899RLCL",
+  "ppon_holders": [
+   {
+    "org_id": 31573365,
+    "name": "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+    "identifier": "GBPPONPBCG3899RLCL",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "QXU",
+  "class": "multi_target",
+  "witnesses": 5,
+  "ods": {
+   "found": true,
+   "name": "NHS SURREY HEARTLANDS INTEGRATED CARE BOARD",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "STRATEGIC PARTNERSHIP",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP",
+    "INTEGRATED CARE BOARD"
+   ],
+   "successors": [
+    "S9B9J"
+   ]
+  },
+  "registry_holders": [
+   {
+    "org_id": 21990238,
+    "name": "NHS Surrey Heartlands ICB",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30916138,
+    "name": "NHS Surrey Heartlands Integrated Care Board",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31543412,
+    "name": "NHS Surrey Heartlands Integrated Care Board (ICB)",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PTCP5774GNNH",
+  "ppon_holders": [
+   {
+    "org_id": 31552079,
+    "name": "NHS Surrey Heartlands Integrated Care Board",
+    "identifier": "GBPPONPTCP5774GNNH",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RAJ",
+  "class": "multi_target",
+  "witnesses": 16,
+  "ods": {
+   "found": true,
+   "name": "MID AND SOUTH ESSEX NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 17455495,
+    "name": "Mid and South Essex NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31536222,
+    "name": "Mid South Essex NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PBVJ9475ZCMD",
+  "ppon_holders": [
+   {
+    "org_id": 30914265,
+    "name": "Mid and South Essex NHS Foundation Trust",
+    "identifier": "GBPPONPBVJ9475ZCMD",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RBQ",
+  "class": "multi_target",
+  "witnesses": 30,
+  "ods": {
+   "found": true,
+   "name": "LIVERPOOL HEART AND CHEST HOSPITAL NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1766980,
+    "name": "Liverpool Heart and Chest Hospital NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 6851948,
+    "name": "Liverpool Heart and Chest NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31568217,
+    "name": "LIVERPOOL HEART AND CHESH HOSPITAL NHS FOUNDATION TRUST",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31571042,
+    "name": "LIVERPOOL HEART & CHEST HOSPITAL NHS TRUST",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31605524,
+    "name": "Liverpool Heart & Chest NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PZVQ2197NJGG",
+  "ppon_holders": [
+   {
+    "org_id": 30918289,
+    "name": "Liverpool Heart and Chest Hospital NHS Foundation Trust",
+    "identifier": "GBPPONPZVQ2197NJGG",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "REM",
+  "class": "multi_target",
+  "witnesses": 2,
+  "ods": {
+   "found": true,
+   "name": "LIVERPOOL UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 14475224,
+    "name": "Liverpool University Hospitals NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 30916254,
+    "name": "University Hospitals of Liverpool Group",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31572888,
+    "name": "NHS University Hospitals of Liverpool Group",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31598155,
+    "name": "LIVERPOOL UNIVERSOTY HOSPITALS NHS FOUNDATION TRUST",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PGJT9638TWQR",
+  "ppon_holders": [
+   {
+    "org_id": 30919565,
+    "name": "Liverpool University Hospitals NHS Foundation Trust",
+    "identifier": "GBPPONPGJT9638TWQR",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RGR",
+  "class": "multi_target",
+  "witnesses": 1,
+  "ods": {
+   "found": true,
+   "name": "WEST SUFFOLK NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "HOSPICE",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 2228352,
+    "name": "West Suffolk NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 7192624,
+    "name": "West Suffolk Hospital NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PZXH6286HYJQ",
+  "ppon_holders": [
+   {
+    "org_id": 30916897,
+    "name": "West Suffolk NHS Foundation Trust",
+    "identifier": "GBPPONPZXH6286HYJQ",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RJL",
+  "class": "multi_target",
+  "witnesses": 42,
+  "ods": {
+   "found": true,
+   "name": "NORTHERN LINCOLNSHIRE AND GOOLE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 4616701,
+    "name": "Northern Lincolnshire & Goole NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 4944993,
+    "name": "Northern Lincolnshire and Goole NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31609338,
+    "name": "Diana, Princess of Wales Hospital",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31647875,
+    "name": "Diana, Princess of Wales Hospital , Grimsby",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PDBX2232TZVV",
+  "ppon_holders": [
+   {
+    "org_id": 31550622,
+    "name": "Northern Lincolnshire and Goole NHS Foundation Trust",
+    "identifier": "GBPPONPDBX2232TZVV",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RPY",
+  "class": "multi_target",
+  "witnesses": 1,
+  "ods": {
+   "found": true,
+   "name": "THE ROYAL MARSDEN NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1206891,
+    "name": "The Royal Marsden NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 6454935,
+    "name": "Royal Marsden Hospital NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PXLT9823WVCY",
+  "ppon_holders": [
+   {
+    "org_id": 30926647,
+    "name": "The Royal Marsden NHS Foundation Trust",
+    "identifier": "GBPPONPXLT9823WVCY",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RTF",
+  "class": "multi_target",
+  "witnesses": 21,
+  "ods": {
+   "found": true,
+   "name": "NORTHUMBRIA HEALTHCARE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1172050,
+    "name": "Northumbria Healthcare NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 4474166,
+    "name": "University Hospitals of Leicester NHS Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PLMV4859MQXP",
+  "ppon_holders": [
+   {
+    "org_id": 30914055,
+    "name": "Northumbria Healthcare Facilities Management",
+    "identifier": "GBPPONPLMV4859MQXP",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RWJ",
+  "class": "multi_target",
+  "witnesses": 2,
+  "ods": {
+   "found": true,
+   "name": "STOCKPORT NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST",
+    "MEDICINE SUPPLIER"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1193388,
+    "name": "Stockport NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31604158,
+    "name": "Stockport N H S Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PHJH5159PMBG",
+  "ppon_holders": [
+   {
+    "org_id": 31574798,
+    "name": "Stockport NHS Foundation Trust",
+    "identifier": "GBPPONPHJH5159PMBG",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RXK",
+  "class": "multi_target",
+  "witnesses": 1,
+  "ods": {
+   "found": true,
+   "name": "SANDWELL AND WEST BIRMINGHAM HOSPITALS NHS TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 1396633,
+    "name": "Sandwell and West Birmingham Hospitals NHS Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 31621139,
+    "name": "Sandwell & West Birmingham Hospitals N H S Trust",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PYHH6963BGQM",
+  "ppon_holders": [
+   {
+    "org_id": 30917614,
+    "name": "Sandwell and West Birmingham Hospitals NHS Trust",
+    "identifier": "GBPPONPYHH6963BGQM",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "RYD",
+  "class": "multi_target",
+  "witnesses": 2,
+  "ods": {
+   "found": true,
+   "name": "SOUTH EAST COAST AMBULANCE SERVICE NHS FOUNDATION TRUST",
+   "status": "Active",
+   "rc": "RC1",
+   "primary": "NHS TRUST",
+   "active_roles": [
+    "NHS TRUST",
+    "FOUNDATION TRUST"
+   ],
+   "successors": []
+  },
+  "registry_holders": [
+   {
+    "org_id": 2332253,
+    "name": "South East Coast Ambulance Service NHS Foundation Trust",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 5824298,
+    "name": "South East Coast Ambulance Service",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PGNR3396MRLQ",
+  "ppon_holders": [
+   {
+    "org_id": 30918360,
+    "name": "South East Coast Ambulance Service NHS Foundation Trust",
+    "identifier": "GBPPONPGNR3396MRLQ",
+    "provisional": false
+   }
+  ]
+ },
+ {
+  "code": "WESTMIDLANDSAMBULANCESERVICE",
+  "class": "multi_target",
+  "witnesses": 2,
+  "ods": {
+   "found": false,
+   "name": null,
+   "status": null,
+   "rc": null,
+   "primary": null,
+   "active_roles": null,
+   "successors": null
+  },
+  "registry_holders": [
+   {
+    "org_id": 6384818,
+    "name": "West Midlands Ambulance Service",
+    "identifier": null,
+    "provisional": true
+   },
+   {
+    "org_id": 13335820,
+    "name": "West Midlands Ambulance Service University NHS FT",
+    "identifier": null,
+    "provisional": true
+   }
+  ],
+  "ppon": "PNTW1429NVGH",
+  "ppon_holders": [
+   {
+    "org_id": 31574837,
+    "name": "West Midlands Ambulance Service University NHS Foundation Trust",
+    "identifier": "GBPPONPNTW1429NVGH",
+    "provisional": false
+   }
+  ]
+ }
+]
