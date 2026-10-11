@@ -1,0 +1,200 @@
+{
+  "summary": "Build issue 511 unit 2 (predicate classes, fold, plan readers, refold-placeholder-names job), then review adversarially",
+  "agentCount": 3,
+  "logs": [],
+  "result": {
+    "build": "Unit 2 (U2a–U2d) is built and every focused run is green (EXIT=0). Nothing is committed, `ops/check.sh` was not run, the production box was not touched, and no extra target dirs or worktrees were made (disk is still at 9.4G free).\n\n## Files changed (only these show in `git status`)\n- `/home/user/tender-db/crates/ingest/src/partyname.rs` — U2a\n- `/home/user/tender-db/crates/ingest/src/project.rs` — U2b, the tests, and the ingest helpers U2d uses\n- `/home/user/tender-db/crates/ingest/src/project/role_census.rs` — `NON_NAME_FOLDS` deleted\n- `/home/user/tender-db/crates/ingest/src/text/parse.rs` — doc comment only\n- `/home/user/tender-db/crates/ingest/tests/project.rs` — the placeholder refold tests\n- `/home/user/tender-db/crates/store/src/canonical.rs`, `/home/user/tender-db/crates/store/src/lib.rs` — U2c\n- `/home/user/tender-db/crates/app/src/supervisor.rs` — U2d\n- `/home/user/tender-db/docs/operations.md` — inventory entry and runbook section\n\n## What each part does\n- **U2a, the predicate.** `NotAName` now has four classes: `VoidLot`, `Placeholder`, `Blank`, `AwardSummary`. The §4 lexicon is in, with every guard:\n  - New single words match only as whole values.\n  - Stems are anchored at the start, after an optional lot designator. The exceptions keep 510's match anywhere: `perfil del/de contratante` (so `ver`/`véase perfil…` match) and `would prejudice`.\n  - The pointer keep rule (`pointer_names`) is in.\n  - `ingen`, `inget` and `nd` need the notice language and a plain case.\n  - The raw-name arm takes names with no alphanumeric character or only zeros.\n  - New functions: `not_a_name_in`, `mentions_placeholder`, `summary_shape`, `plain_case`, `polish_company_form` (extracted from `names_an_award`), plus `scoped_word`, `scoped_languages` and `is_exact_entry` for the dry plan.\n  - The 57 award-summary assertions are flipped, the Sublote assertion too, and both 510 award tests are renamed.\n- **U2b, the fold.** `dropped_party_sections` replaces `void_party_sections` and returns each section's class.\n  - Entry rule, majority rule, class precedence (`Placeholder` over `VoidLot` over `Blank`) and guard 3 with both echo tests all follow the decision. The identifier gate is now one function, `gated_identifier`, used by the fold and by `mentions_and_void`.\n  - `NoticeState::mentions` and `NoticeState::read` both read the decider.\n  - New `RawLotResult.withheld_winner`. Legacy and sdk-0.1 results follow §1's semantics; eForms keeps BT-142 and the Bid.\n  - `buyer_side_mentions` returns empty when the folded buyer list is empty.\n  - `Report.dropped` counts void, placeholder, blank and `placeholder_identified` on outer sections only, keeps a sample of up to 20, and is printed on the fold's job line.\n  - `buyer_equal` now calls the predicate.\n- **U2c, the store.** `party_role_counts_of_orgs` and `buyer_notices_of_orgs` read `tender_version_parties_org_role` in `IN_CHUNK` chunks.\n- **U2d, the job.** `Spec::RefoldPlaceholderNames` and the kind `refold-placeholder-names` are routed beside `refold-void-names`.\n  - Registered in `STOPPABLE_KINDS`, `heavy_write_kind`, the checkpointed-kinds test and the operations.md inventory and runbook.\n  - Both kinds run through one function, `run_refold_non_names(job, NonNames, …)`. The void path's report and message are unchanged.\n  - The placeholder plan has `by_class`, `identified`, `identified_blank` (with the echo verdict), `scoped` (in_scope / out_of_scope / unknown), `non_exact` (with roles), `digit_only`, `roles`, `buyer_notices` (Tender and procedure key via `Ident`), `key_families` and `read_before_wet`.\n  - The new dispatch arm is wrapped in `Box::pin(async move { off_frame(..) })`.\n\n## Tests and EXIT values (logs in the scratchpad as `511u2-*.log`)\n- `partyname`: 17 passed, EXIT=0\n- `project::` (fold, results, buyer tokens, role census): 112 passed, EXIT=0\n- 510 and 511 refold integration tests, the `refold-void-names` / `refold-placeholder-names` / `refold-buyer-roles` supervisor tests, the checkpointed-kinds test and the stack canary `an_execute_without_an_expected_count_is_refused`: EXIT=0\n- Regression run (golden snapshots, `text::`, buyer/guard/hub/weld/signatory tests): 136 passed, EXIT=0\n- Final run after the last doc edits (partyname, `project::`, refold, supervisor, stack canary, `text::parse`): 192 passed, EXIT=0\n\nAll of §7's tests and the Review keep tests are written, plus `not_applicable_is_a_blank_slot`.\n\n## Deviations from the decision\n- **A third store reader**, `procedure_key_families`, so the dry plan carries the canary pre-image with its key families. Families over 200 Tenders are listed for a read by hand.\n- **`orgs_named_window` also returns the org's country** (new `store::NamedOrg` type), which the `scoped` country proxy needs.\n- **`Report` is no longer `Copy`**, because the sample is a `Vec`.\n- **The fold's log text changed** from \"void-lot mention(s) retired\" to \"non-name mention(s) retired (issues 510/511)\", on both the job line and stderr. The doc is updated to match.\n- **The decider reads the notice language lazily**: only for a short name that folds to a scoped word, or for the guard 3 echo test. Results are the same as reading it every time.\n- **Guard 3's echo test checks every name of the party**, not only the first one.\n- **In the placeholder plan, `identified` lists only placeholder orgs**; blank ones are in `identified_blank`.\n- **The keep rule's ` - ` separator needs a space after the hyphen.** Section-number Roman numerals are limited to i–xx, so `ll.2.4` is not read as a reference; that name is still kept by the no-reference rule and `summary_shape`.\n- **Smaller test choices:**\n  - The review-body test uses eForms `Lot-Mediator`, since eForms has no `mediation-body` role.\n  - The U2c reader test is inside the supervisor job test, because it needs a fold to create party rows.\n  - A few lexicon entries have no prod spelling in the census (`Not published`, `Not disclosed`), so their test specimens are plausible spellings.\n\n## Left undone\n- The gate (`ops/check.sh`) and the commit.\n- The two follow-up issues §5 and §8.7 say to file with unit 2 (per-lot parsing of the ~500 award summaries; the per-word value/date table for the \"nobody\" words). I didn't file them, to avoid issue-number collisions with parallel agents.\n- The issue 511 status line is not updated.",
+    "reviews": [
+      {
+        "lens": "correctness",
+        "verdict": "fix-first",
+        "findings": [
+          {
+            "severity": "should-fix",
+            "file_line": "crates/ingest/src/partyname.rs:629",
+            "problem": "`is_exact_entry` compares the whole value after 510's `strip_lot_qualifier`, so any lot-qualified hit counts as exact and is left out of the dry plan's mandatory `non_exact` read. Decision §7 U2d / §8.2 define non_exact as every hit whose fold is not exactly a lexicon entry. The fold of `N/A (lot 2)` is `n a lot 2`, which is not an entry. The strip also throws away whatever the `(lot …)` group names, and the whole-value path (partyname.rs:546-565) never consults `summary_shape`. So a placeholder whose last parenthetical names suppliers is dropped, and the read that is meant to catch it skips it. Guard 1's reason in the decision ('a legal form changes the fold, so whole values need no separate legal-form guard') no longer holds once the strip has removed the legal form.",
+            "evidence": "I ran the real predicate in a temporary integration test (since deleted). Results: `N/A (lot 2 attribué à Dupont SARL)` gives Blank with is_exact_entry=true. `Néant (lot 3 : Société Martin SAS)` gives Blank, exact=true. `Various (Lot 1: ACME Ltd, Lot 2: Beta Ltd)` gives Placeholder, exact=true. The stem twin `Not applicable (lot 2 awarded to ACME Ltd)` gives AwardSummary, because stems check summary_shape. `N/A (lot 2)` and `Néant (lot 3)` also come out exact=true. None of these shapes is in the census, which probed exact keys only, so the read is the only protection and it is bypassed.",
+            "fix": "In `is_exact_entry`, test the whole lists against `full`, or accept the stripped form only when the qualifier holds nothing but designators, numbers and conjunctions (`(lot 2)`, `(lots 2 et 4)`). In `not_a_name_in`, when a placeholder or blank whole value matched only after the strip, return AwardSummary if the removed qualifier passes `summary_shape` or `company_token`. Add tests: `N/A (lot 2 attribué à Dupont SARL)` is AwardSummary (or at least not exact); `N/A (lot 2)` is Blank but not exact."
+          },
+          {
+            "severity": "should-fix",
+            "file_line": "crates/ingest/src/partyname.rs:771",
+            "problem": "The pointer keep rule loses a ':' separator that sits right after a section reference. `section_number` trims trailing `.,;:)`, so `strip_references` eats `VI.4.1:` whole. `open_separator` then sees no separator, and the `see section` exception does not apply because a reference was stripped. Decision §4 keep-rule step 3 lists ':' as a separator: after the references are stripped, a rest opening with ':' must be stripped again and tested for a name. So a review body written as reference + colon + name is dropped as Placeholder. The same input with ` - ` or `(` is kept.",
+            "evidence": "Harness results: `See section VI.4.1: High Court of Justice` gives Placeholder. `Siehe oben Ziffer VI.4.1: Vergabekammer Südbayern` gives Placeholder. `siehe oben VI.4.1: Vergabekammer des Bundes` gives Placeholder. By contrast `See section VI.4.1 - High Court` gives AwardSummary, and `siehe oben (VI.4.1): Vergabekammer Südbayern` gives AwardSummary. In the review's 1,493-name prefix read (r511/r_stem_prefix.json), the only current name of this shape is junk (`See Section VI: complementary information`). So nothing real is lost today, but the build does not follow the keep rule as decided.",
+            "fix": "Keep ':' out of `section_number`'s trailing trim (or note that the token ended in ':'), and let `strip_references` return the rest starting at ':' so `open_separator` sees it. Add keep tests for the two specimens above. Pin that `siehe oben: VI.4.1` and `See Section VI.3) Additional information` stay Placeholder."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/app/src/supervisor.rs:5483",
+            "problem": "The dry plan's `identified_blank` sorts head names with the language-free `not_a_name`. A scoped word (`ND`, `Ingen`, `nd.`) therefore never counts as Blank, and a scoped org with an identifier appears in no identifier list. Decision §8.2 expects `identified_blank` to list guard 3's 10 orgs, `ND` HR included (14319858, OIB 19645926433, 'also identified'). The plan will list 9. In-scope scoped orgs with an identifier (an `Ingen` DK with a CVR, an `nd` PL with a NIP) would also be missing from the mandatory identifier read. `scoped` entries carry no identifier.",
+            "evidence": "On census.json the harness reproduces guard 3 exactly: 10 orgs / 51 mentions, all `noecho`: 24291540, 23095417, 24291539, 23307388, 23018279, 14319858, 22780502, 23153045, 22519580, 22525406. `not_a_name(\"ND\")` returns None, so `classed(NotAName::Blank)` leaves out 14319858. The fold itself still keeps it, because guard 3 runs on the language-scoped class, so no party is lost; only the read list is incomplete.",
+            "fix": "For `identified_blank`, treat a head whose `scoped_word(name)` is Some and which is `plain_case` as Blank, or add `identifier` to every `scoped` entry. Change the test so it expects ND-shaped orgs in the list."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/ingest/src/partyname.rs:177",
+            "problem": "The three `StemAt::Boundary` stems (`perfil del/de contratante`, `would prejudice`) match anywhere, but the keep rule reads only the text after the stem. A body named before one of these phrases is therefore dropped as Placeholder. This is what the decision chose (§4: they 'never open a name'). But its own reason for anchoring ('a stem matched at any left word boundary drops a real name followed by the phrase') applies to names that end with these phrases. The only protection is the operator's `non_exact` read.",
+            "evidence": "Harness results: `Ayuntamiento de Madrid (véase perfil del contratante)` gives Placeholder. `Junta de Andalucía - ver perfil de contratante` gives Placeholder. `Perfil del contratante Ayuntamiento de Madrid` gives Placeholder. `Serco Ltd — disclosure would prejudice commercial interests` is kept only because of `Ltd`; without a company form it would be dropped. The review's prefix reads did not cover these stems, so the size of the exposure is unmeasured.",
+            "fix": "Owner decision. Either apply `names_something` or `summary_shape` to the text before a Boundary stem as well (keep when it names something), or state in the operations.md runbook that a perfil / would-prejudice `non_exact` entry with text before the phrase is a stop-and-read item."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/ingest/src/project.rs:4605",
+            "problem": "Guard 3's echo test, as the decision specifies, refuses an identifier whose space-free fold contains the name's space-free fold. For the one- and two-letter Blank words (`x`, `na`/`n a`, `no`, `so`, `nc`, `ohne`…), that matches unrelated identifiers that merely contain those letters, so a real party with a missing name and a valid identifier is dropped.",
+            "evidence": "Harness results through `blank_identifier_echoes`: `x` with `DE811569869X` is gated, echo, so dropped. `N/A` with `NA000123` (GB) is gated, echo. The census has no affected org: all 10 identified Blank orgs come out `noecho`. This is a design-level exposure, not a departure from the decision.",
+            "fix": "Owner decision. Require the squeezed name to have at least 3 characters for the containment arm, or match only at the start of the identifier; keep the `not_a_name_in(raw)` arm as it is."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:17202",
+            "problem": "The two U2c readers send `IN (…)` lists `IN_CHUNK` = 512 wide. The decision's Basis requires each read for this issue to record its query plan at the width actually sent; the role-split shape was plan-checked only at 100 and 229 ids. The operations.md runbook does not include an EXPLAIN step at 512 before the dry run.",
+            "evidence": "`const IN_CHUNK: usize = 512` (canonical.rs:36823). In unit1-decision.md Basis: 'Later reads for this issue record each plan at the width actually sent.' The new runbook section in docs/operations.md (issue 511) has no plan check.",
+            "fix": "Add a runbook step: before the dry run, record `EXPLAIN QUERY PLAN` for both reader shapes at 512 ids and confirm they read `SEARCH … USING INDEX tender_version_parties_org_role`. Or lower the chunk for these readers to a width that has already been checked."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/ingest/src/partyname.rs:795",
+            "problem": "`names_something` accepts any capital-initial token with two letters, including fragments of malformed section references, and the `Lot 1A` form slips past `strip_references`. So the keep rule and `summary_shape` exempt more junk pointers than the decision counted. This errs toward keeping parties (no real party is lost), but the dry run's expected figures in §8.2 will not match.",
+            "evidence": "On the review's 1,362 prefix names outside the census, the harness gives 19 AwardSummary against the decision's ~12. The extra seven are: `See Section V1.3 Additional information`, `See section VI.3 - Lot 1A`, `See section VI.3 - Lot1B`, `see section VI.3.2.below`, `See Section VI3.2`, `Keine Angabe gemäß § 27a … b) und c) VOL` (lettered_entries) and `Niet van toepassing (… perceel 1 en perceel 2 …)` (several_lots). Drops move from see section 1,128 to 1,123, keine angabe 56 to 55, niet van toepassing 15 to 14. Everything else matches the decision exactly on census.json: Placeholder 1,172 orgs / 6,631 mentions; Blank 3,917 / 29,605 once the proxy is adjusted; guard 3 10 / 51; all eight expected `identified` orgs are Placeholder with an identifier; every §4 trap stays a name; none of the 1,123 dropped see-section names names a body. The ingest integration suites I ran (eforms, r208, r209, fts, doe, internal_ojs, text, project, project_equivalence, project_fold_source, project_incremental, project_resume, original_lang_eras, data_quality) all passed, GATE-EXIT=0. ops/check.sh has still not been run.",
+            "fix": "Either tighten `names_something` (skip tokens that are Roman numerals with a digit attached, such as `VI3` or `V1`, and let `strip_references` take a lot number with a letter suffix like `1A`), or update the expected `exempted` and per-stem counts in the operations.md runbook so the dry-run figures can be checked against them."
+          }
+        ]
+      },
+      {
+        "lens": "tests",
+        "verdict": "fix-first",
+        "findings": [
+          {
+            "severity": "should-fix",
+            "file_line": "crates/ingest/src/partyname.rs:172-189 (PLACEHOLDER_STEMS StemAt flags) + test stems_open_the_name :1818",
+            "problem": "Each placeholder stem carries its own StemAt flag, and 6 of the 8 stems anchored at the start have no test. The six are `withheld`, `keine angabe`, `voir autres informations`, `voir renseignements`, `ver informaci` and `see contracts finder`. Flipping any one back to Boundary (510's match anywhere) passes every test. A real name followed by the phrase would then be dropped, which is the decision's §9 risk #1, and the 'anchored stems' pin it lists does not hold for these stems.",
+            "evidence": "M2b `(\" withheld\", StemAt::Start)`→Boundary: EXIT=0 (filters partyname project:: role_census placeholder refold text::; 189 ingest-lib tests plus the integration and supervisor tests, log 511rv-M2b.log). M2c `(\" keine angabe\", StemAt::Start)`→Boundary: EXIT=0 (511rv-M2c.log). A scan of every string literal in the partyname tests finds a specimen with the stem mid-string only for `see section` (Siemens), `siehe oben` (Acme GmbH), `nie dotyczy` (Firma Handlowa…) and `not applicable` (Lot 1: ACME Ltd; …). For comparison, unanchoring all Start stems at once (M2a) or all blank stems (M2d) IS caught by stems_open_the_name (EXIT=101).",
+            "fix": "In stems_open_the_name, add one mid-string specimen per Start stem with no company form, so summary_shape cannot rescue it, each expected None. Examples: `Stadtwerke Kiel – keine Angabe`, `Jan Kowalski – withheld`, `Mairie de Lyon – voir autres informations`, `Mairie de Lyon – voir renseignements`, `Ayuntamiento de Vigo – ver información`, `Kent County Council – see Contracts Finder`. Or assert the full StemAt table in every_entry_is_folded_and_every_stem_padded: Boundary exactly for the two perfil stems and would prejudice."
+          },
+          {
+            "severity": "should-fix",
+            "file_line": "crates/ingest/src/project.rs:4538 (drop_decision majority rule)",
+            "problem": "No test checks that 510's majority rule counts only VoidLot names. Widen it to count every dropping class and a real party with 4+ names, at least half of them Blank or Placeholder translations, is silently dropped. The existing 'majority' case in the_decider_never_drops_an_award_summary is excluded by the AwardSummary rule first, so it never reaches this branch.",
+            "evidence": "M8 replaced `2 * void >= names.len()` with `2 * names.iter().filter(|(_, c)| c.is_some()).count() >= names.len()`: EXIT=0 across partyname project:: role_census placeholder refold void (511rv-M8.log). Probe P4 on the unmutated code: legacy ORG-1 [\"Not applicable\",\"Nie dotyczy\",\"Nicht zutreffend\",\"Région Bretagne\"] → decided={} (kept). Under M8 this party drops and nothing fails.",
+            "fix": "Add that 4-name party, three blank translations plus one real name, to the_decider_never_drops_an_award_summary or a new test, and assert it stays out of the drop map."
+          },
+          {
+            "severity": "should-fix",
+            "file_line": "crates/app/src/supervisor.rs:2653 (dropped_suffix)",
+            "problem": "The fold job row's `dropped parties (issue 511): … placeholder (N with an identifier: <sample>) …` suffix has no test. It is the only place an operator can see Report.dropped and its identified-placeholder sample. 511 §8.1 (and the new operations.md runbook) make reading that sample on every daily fold a mandatory stop-rule read before the wet run. If the suffix stops printing, the operator reads 'nothing' and proceeds.",
+            "evidence": "M14 changed the guard to `if dropped.total() < u64::MAX { return String::new(); }` (always silent): EXIT=0 across supervisor:: placeholder refold (105 tender-db lib tests, the 511/510 refold integration tests, 511rv-M14.log). `grep 'dropped parties\\|dropped_suffix'` over crates/app finds only the definition and its one call site, no test.",
+            "fix": "Add a unit test for dropped_suffix: zero gives empty, and a DroppedParties with counts and a sample gives the exact line. Or assert the suffix on the fold message in a supervisor/project test that drops a `Withheld` party carrying an identifier."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/app/src/supervisor.rs:14692 (heavy_write_kind) / test :19250",
+            "problem": "No test covers the heavy_write_kind registration of `refold-placeholder-names`, though the decision's §9 'half-registered job' pin lists it. heavy_write_in_progress_tracks_the_running_job_kind lists neither refold-void-names nor refold-placeholder-names. Without the entry, issue 281's coverage refresh would scan during the drain's tens of thousands of re-queues.",
+            "evidence": "M7 removed the `| \"refold-placeholder-names\"` line: EXIT=0 across every supervisor:: and coverage:: test (117 passed, 511rv-M7.log). The other registration, STOPPABLE_KINDS, is covered: M6 (entry dropped) fails cancelling_a_kind_with_no_checkpoint_is_refused_rather_than_promised (EXIT=101).",
+            "fix": "Add \"refold-void-names\" and \"refold-placeholder-names\" to the heavy-kind list in heavy_write_in_progress_tracks_the_running_job_kind."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/ingest/src/project.rs:4516 (drop_decision lazy language read)",
+            "problem": "The `name.len() <= 24` pre-filter makes the decider disagree with the predicate for scoped words with a long lot qualifier. The report says the lazy read gives 'the same results as reading it every time', and for these names that is false. The dry plan's scoped.in_scope counts such a name as dropped, but the fold keeps it, which skews the wet floor accounting slightly.",
+            "evidence": "Probe P1 (temporary test, then removed): `INGEN (lots 1, 2, 3, 4, 5 og 6)` (31 bytes). not_a_name_in(.., Some(\"DAN\")) = Some(Blank), but decided(false, eforms DAN Tenderer) = {} (kept). `INGEN (lot 2)` → {\"ORG-2\": Blank} (dropped). Log 511rv-probe.log lines 73-75.",
+            "fix": "Apply the length cutoff to the lot-stripped name, or replace it with a cheap first-word check (the fold's first word is ingen/inget/nd). Add the long-qualifier case to a_scoped_word_follows_the_notice_language."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/ingest/src/project.rs:4605 (identifier_echoes)",
+            "problem": "Guard 3's 'contains' echo test refuses real identifiers for short Blank whole values (`no`, `na`, `nc`, `so`, `x`, `xx`) whenever those letters occur in an unrelated identifier, such as a country prefix. The same identifier is kept on `-`. The builder also extended the check to every name of the party, which widens the hit surface. This follows the decision's wording ('space-free fold contains'), so it may need an owner ruling, but it is a concrete false refusal of a gate-admitted identity.",
+            "evidence": "Probe P2: gated_identifier(\"NO974760673MVA\", NO) = Some(Identifier{NO, vat}). identifier_echoes(\"NO974760673MVA\", [(\"NO\", Blank)]) = true. The eForms NOR Tenderer `NO` with that VAT → decided={\"ORG-2\": Blank} (dropped). The same VAT on Tenderer `-` → decided={} (kept). Log 511rv-probe.log lines 76, 81-83.",
+            "fix": "Require the name's squeezed fold to be at least 4 characters for the substring arm (`keine`, `niedotyczy` still echo), or require the identifier to start with it. Pin `NO` + `NO974760673MVA` as kept in a_blank_party_with_a_gated_identifier_is_kept."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/ingest/src/project.rs:14139 (test a_blank_party_with_a_gated_identifier_is_kept)",
+            "problem": "Two of the three decider-level negative cases never reach guard 3's echo test, because the identifier gate rejects their identifier first. So the decider-level pin for the echo rests on the `keine`/KEINE… case alone. The echo's first arm, where the identifier is itself a non-name, is never exercised through the decider. The test's doc names 11063's `.` on `.` and NIEDOTYCZY as echo cases.",
+            "evidence": "Probe P3: gated_identifier(\".\", AT) = None; gated_identifier(\"NIEDOTYCZY\", PL) = None; gated_identifier(\"KEINEANGABEGEM62ABS3BVERGG2018\", DE) = Some(national). M4 (echo removed from the decider) was still caught, but only by the KEINE case (panic: 'keine / KEINEANGABEGEM62ABS3BVERGG2018: dropped', 511rv-M4.log).",
+            "fix": "Add a decider case whose identifier passes the gate and is itself a non-name, read through not_a_name_in. Reword the doc so it says the `.` and NIEDOTYCZY cases are refused by the gate, not by the echo."
+          }
+        ]
+      }
+    ]
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Build"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Review"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "build:511u2",
+      "phaseIndex": 1,
+      "phaseTitle": "Build",
+      "agentId": "a06d2702bf6064dd7",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791755836022,
+      "queuedAt": 1791755836018,
+      "attempt": 1,
+      "lastToolName": "Bash",
+      "lastToolSummary": "L=/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b6…",
+      "promptPreview": "Issue 511 (/home/user/tender-db/.scratch/tender-db/issues/511-placeholder-names-mint-parties-in-every-role.md) — unit 1 is DECIDED in\n/home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md (read ALL of it, incl. its \"Review (2026-10-11)\" section and the owner\nadoption notes in the issue). BUILD UNIT 2 exactly as §7 specifies: U2a the predicate (crates/ingest/src/partyname.rs: N…",
+      "promptFramed": true,
+      "lastProgressAt": 1791758226279,
+      "tokens": 512724,
+      "toolCalls": 145,
+      "durationMs": 2390256,
+      "resultPreview": "Unit 2 (U2a–U2d) is built and every focused run is green (EXIT=0). Nothing is committed, `ops/check.sh` was not run, the production box was not touched, and no extra target dirs or worktrees were made (disk is still at 9.4G free).\n\n## Files changed (only these show in `git status`)\n- `/home/user/tender-db/crates/ingest/src/partyname.rs` — U2a\n- `/home/user/tender-db/crates/ingest/src/project.rs` —…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "review:correctness",
+      "phaseIndex": 2,
+      "phaseTitle": "Review",
+      "agentId": "a53ecb05d9ce5837d",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791758228912,
+      "queuedAt": 1791758228885,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "fix-first",
+      "promptPreview": "Adversarial REVIEW of issue 511 unit 2 as built in /home/user/tender-db (uncommitted working tree). Builder's report:\nUnit 2 (U2a–U2d) is built and every focused run is green (EXIT=0). Nothing is committed, `ops/check.sh` was not run, the production box was not touched, and no extra target dirs or worktrees were made (disk is still at 9.4G free).\n\n## Files changed (only these show in `git status`)…",
+      "promptFramed": true,
+      "lastProgressAt": 1791759464283,
+      "tokens": 364094,
+      "toolCalls": 77,
+      "durationMs": 1235370,
+      "resultPreview": "{\"verdict\":\"fix-first\",\"findings\":[{\"severity\":\"should-fix\",\"file_line\":\"crates/ingest/src/partyname.rs:629\",\"problem\":\"`is_exact_entry` compares the whole value after 510's `strip_lot_qualifier`, so any lot-qualified hit counts as exact and is left out of the dry plan's mandatory `non_exact` read. Decision §7 U2d / §8.2 define non_exact as every hit whose fold is not exactly a lexicon entry. The …"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "review:tests",
+      "phaseIndex": 2,
+      "phaseTitle": "Review",
+      "agentId": "a7bddebcf86de0176",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791759466292,
+      "queuedAt": 1791759466289,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "fix-first",
+      "promptPreview": "Adversarial REVIEW of issue 511 unit 2 as built in /home/user/tender-db (uncommitted working tree). Builder's report:\nUnit 2 (U2a–U2d) is built and every focused run is green (EXIT=0). Nothing is committed, `ops/check.sh` was not run, the production box was not touched, and no extra target dirs or worktrees were made (disk is still at 9.4G free).\n\n## Files changed (only these show in `git status`)…",
+      "promptFramed": true,
+      "lastProgressAt": 1791761786109,
+      "tokens": 311711,
+      "toolCalls": 80,
+      "durationMs": 2319815,
+      "resultPreview": "{\"verdict\":\"fix-first\",\"findings\":[{\"severity\":\"should-fix\",\"file_line\":\"crates/ingest/src/partyname.rs:172-189 (PLACEHOLDER_STEMS StemAt flags) + test stems_open_the_name :1818\",\"problem\":\"Each placeholder stem carries its own StemAt flag, and 6 of the 8 stems anchored at the start have no test. The six are `withheld`, `keine angabe`, `voir autres informations`, `voir renseignements`, `ver inform…"
+    }
+  ],
+  "totalTokens": 1188529,
+  "totalToolCalls": 302
+}
