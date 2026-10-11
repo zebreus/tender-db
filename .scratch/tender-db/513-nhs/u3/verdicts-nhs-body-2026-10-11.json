@@ -1,0 +1,2742 @@
+{
+ "cohort": "nhs-body-ods-confirmed-2026-10-11",
+ "verdicts": [
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "0AR",
+   "members": [
+    4058565,
+    30929531,
+    31592074
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Every holder is NHS North of England CSU (0AR, RO213, Active, no legal end). The PPON org 30929531 survives. No denials and no keys owned elsewhere. reviewed_holders = [4058565, 30929531, 31592074], exactly as given.",
+   "reviewed_holders": [
+    4058565,
+    30929531,
+    31592074
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "0CX",
+   "members": [
+    5694794,
+    6191087,
+    31616128
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Three spellings of NHS Midlands and Lancashire CSU (0CX, RO213, Active). The only PPON holder is the NOT_ORG 'TEST' org, so there is no SAME PPON org. The survivor is the largest SAME cluster, 6191087, as a provisional anchor. Members have no keys owned elsewhere: the 8477963 key belongs to the excluded TEST holder. reviewed_holders = [5694794, 6191087, 31572637, 31616128], exactly as given. Excluded holders: 31572637=NOT_ORG",
+   "reviewed_holders": [
+    5694794,
+    6191087,
+    31572637,
+    31616128
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "0DE",
+   "members": [
+    6340194,
+    7501468,
+    30916122
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All holders are NHS Arden & GEM CSU (0DE, RO213, Active; predecessors 0AA and 0AK). The PPON org 30916122 survives. No denials and no keys owned elsewhere. reviewed_holders = [6340194, 7501468, 30916122], exactly as given.",
+   "reviewed_holders": [
+    6340194,
+    7501468,
+    30916122
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "0DF",
+   "members": [
+    13087055,
+    13252367,
+    30915590,
+    30930432,
+    30968729,
+    31538082
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All six holders are NHS South, Central and West CSU (0DF, RO213, Active; predecessors 0AC and 0AW). The PPON org 30915590 survives. No denials and no keys owned elsewhere. reviewed_holders = [13087055, 13252367, 30915590, 30930432, 30968729, 31538082], exactly as given.",
+   "reviewed_holders": [
+    13087055,
+    13252367,
+    30915590,
+    30930432,
+    30968729,
+    31538082
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QGH",
+   "members": [
+    30916931,
+    31542355
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are QGH's ICB (RO261, Active, no legal end). The PPON org 31542355 survives. No denials and no keys owned elsewhere. reviewed_holders = [30916931, 31542355], exactly as given.",
+   "reviewed_holders": [
+    30916931,
+    31542355
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QHG",
+   "members": [
+    30918226
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). A 1-member verdict that records the code. QHG legally ended on 2026-03-31 (successor S1Y5D), and 0 coded notices fall after that date. The holder carries QHG's own name, so D6's successor rule does not bar it. There is no PPON, so the provisional anchor 30918226 stands as the survivor. reviewed_holders = [30918226], exactly as given.",
+   "reviewed_holders": [
+    30918226
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QHL",
+   "members": [
+    30915737,
+    30915738,
+    30916123
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All holders are NHS Birmingham and Solihull ICB (QHL, RO261, Active). The PPON org 30916123 survives. No denials and no keys owned elsewhere. reviewed_holders = [30915737, 30915738, 30916123], exactly as given.",
+   "reviewed_holders": [
+    30915737,
+    30915738,
+    30916123
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QHM",
+   "members": [
+    30915134,
+    30930129,
+    30976504,
+    31538425,
+    31556600,
+    31565552,
+    31593327,
+    31595235,
+    31604957,
+    31608998
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). NHS North East and North Cumbria ICB (QHM, RO261, Active; predecessors QMK, QT8, QVP). Ten SAME holders are members, and the PPON org 31556600 survives. Five holders are DIFFERENT: NECS 0AR, GP practices A82055 and A86022, NHS England X24, and pharmacy FX194. Two are places (84H, 16C), classed HOSTED_OR_SITE. None of the non-members is SAME, so nothing needs a hold. No member has a structural denial or a key owned elsewhere. reviewed_holders = [3257070, 30915134, 30930129, 30976504, 31538425, 31547927, 31548114, 31556600, 31565552, 31577547, 31593327, 31595235, 31603816, 31604957, 31605903, 31608998, 31645251], exactly as given. Excluded holders: 3257070=DIFFERENT, 31547927=DIFFERENT, 31548114=DIFFERENT, 31577547=DIFFERENT, 31603816=HOSTED_OR_SITE, 31605903=HOSTED_OR_SITE, 31645251=DIFFERENT",
+   "reviewed_holders": [
+    3257070,
+    30915134,
+    30930129,
+    30976504,
+    31538425,
+    31547927,
+    31548114,
+    31556600,
+    31565552,
+    31577547,
+    31593327,
+    31595235,
+    31603816,
+    31604957,
+    31605903,
+    31608998,
+    31645251
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QJG",
+   "members": [
+    30914144,
+    30914161,
+    30917668
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). ODS QJG is NHS Suffolk and North East Essex ICB (RO261), legally ended 2026-03-31. ORD lists two successors: D7T5G NHS Essex ICB and T6Y0W NHS Norfolk and Suffolk ICB. No holder carries a successor name, so D6's successor bar excludes nobody. Three holders are the ODS name, the name without NHS, and the ICB abbreviation, all SAME and undenied. One holder is a service title (NOT_ORG). The code's PPON PQPJ8718HQTJ has no standing PPON-org holder, so the survivor is the largest SAME cluster, 30914144, as a provisional anchor. No key is owned elsewhere. reviewed_holders = holder_ids exactly: [30914144, 30914161, 30917668, 31602019]. Excluded holders: 31602019=NOT_ORG",
+   "reviewed_holders": [
+    30914144,
+    30914161,
+    30917668,
+    31602019
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QJK",
+   "members": [
+    30914151,
+    30914271,
+    30914831,
+    30917049
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). ODS QJK is NHS Devon ICB (RO261), Active, with no legal end. All four holders are spellings of the one body: the exact name, '(ICB)', the 'ICB' abbreviation, and the PPON org PRDC6266CBRR under the exact name. All are undenied, and no key is owned elsewhere. The survivor is the PPON org 30917049. reviewed_holders = holder_ids exactly: [30914151, 30914271, 30914831, 30917049].",
+   "reviewed_holders": [
+    30914151,
+    30914271,
+    30914831,
+    30917049
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QKS",
+   "members": [
+    30914448,
+    31543411
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). ODS QKS is NHS Kent and Medway ICB (RO261), Active, with no legal end. Both holders are the exact name and the name with '(ICB)' appended: SAME, undenied, no elsewhere-owned keys. There is no PPON holder, so the anchor survivor is 30914448. reviewed_holders = holder_ids exactly: [30914448, 31543411].",
+   "reviewed_holders": [
+    30914448,
+    31543411
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QMM",
+   "members": [
+    30915248,
+    31542073
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders bear QMM's own ODS name: the party cluster and QMM's PPON org. QMM's legal record ended 2026-03-31 (successor T6Y0W, NHS Norfolk and Suffolk ICB), but neither holder carries the successor's name. 1 coded notice after the legal end. No denials, keys owned elsewhere or flags.",
+   "reviewed_holders": [
+    30915248,
+    31542073
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QNC",
+   "members": [
+    30915109,
+    30915110,
+    31539307,
+    31544907,
+    31595208,
+    31595209,
+    31607403
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All 7 holders are spellings of QNC's ODS name, and the check admits every one. No PPON. No denials, keys owned elsewhere or flags.",
+   "reviewed_holders": [
+    30915109,
+    30915110,
+    31539307,
+    31544907,
+    31595208,
+    31595209,
+    31607403
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QNQ",
+   "members": [
+    30913842,
+    30916858,
+    31540924,
+    31552078
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All 4 holders are QNQ's own Frimley ICB name, including its PPON org. QNQ legally ended 2026-03-31 (successors QRL, S0E4D, S9B9J), and no holder carries a successor's name. No denials, keys owned elsewhere or flags.",
+   "reviewed_holders": [
+    30913842,
+    30916858,
+    31540924,
+    31552078
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QNX",
+   "members": [
+    30917229,
+    30917230,
+    31541150,
+    31607703,
+    31632269
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). 5 SAME members. 8569067 (SCW CSU, ODS 0DF) is DIFFERENT, a procuring agent carrying its client's code once. 31632073 'NHS SUSSEX' is SAME but left out of members: the check ties it with RDR, a tie refuses (D3), and no ODS rename or predecessor record covers it. That keeps the members-exact rule, not a hold. Members' eligibility = structural, plus check admission or cited ODS rename/predecessor evidence. QNX legally ended 2026-03-31 (successor S9B9J, NHS Surrey and Sussex ICB); no holder carries that name; 5 coded notices after the legal end. No denials or keys owned elsewhere. Excluded holders: 8569067=DIFFERENT, 31632073=SAME",
+   "reviewed_holders": [
+    8569067,
+    30917229,
+    30917230,
+    31541150,
+    31607703,
+    31632073,
+    31632269
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QOC",
+   "members": [
+    30915757,
+    31542354
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are QOC's own ODS name, the party cluster and QOC's PPON org. No denials, keys owned elsewhere or flags.",
+   "reviewed_holders": [
+    30915757,
+    31542354
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QOQ",
+   "members": [
+    30913653,
+    31535385,
+    31552257,
+    31570883,
+    31573365,
+    31587871,
+    31591474,
+    31592886
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All 8 holders are spellings of QOQ's ODS name ('&', ICB, dropped 'and', '(ICB)'), including its PPON org. Unit 1 adjudicated 6 of them SAME/SAME. No denials, keys owned elsewhere or flags.",
+   "reviewed_holders": [
+    30913653,
+    31535385,
+    31552257,
+    31570883,
+    31573365,
+    31587871,
+    31591474,
+    31592886
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QOX",
+   "members": [
+    30913839
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). A 1-member verdict that records the code. The single holder is QOX's own ODS name (2 raws carry the O/0 typo Q0X, folded). QOX's PPON PJHW9333YPZP has no standing holder in the listing. No denials or flags.",
+   "reviewed_holders": [
+    30913839
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QPM",
+   "members": [
+    30916368,
+    31542357
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are QPM's own ODS name, the party cluster and QPM's PPON org. No denials, keys owned elsewhere or flags.",
+   "reviewed_holders": [
+    30916368,
+    31542357
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QRL",
+   "members": [
+    20902603,
+    30913796,
+    31543410,
+    31552077,
+    31567317,
+    31580931,
+    31591850,
+    31605716,
+    31630906
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All 9 holders are spellings or typos of QRL's ODS name ('the', '(ICB)', no NHS prefix, 'Integrate', 'Integrated Commissioning'), including its PPON org. The check admits every one, and unit 1 adjudicated 6 SAME/SAME. QRL is itself a successor of QNQ, which does not affect its own body. No denials, keys owned elsewhere or flags.",
+   "reviewed_holders": [
+    20902603,
+    30913796,
+    31543410,
+    31552077,
+    31567317,
+    31580931,
+    31591850,
+    31605716,
+    31630906
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QRV",
+   "members": [
+    30914264
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). reviewed_holders=[30914264,31534509]. A 1-member verdict that records GBNHSQRV on the NWL ICB cluster. The tie on the member's check is fully explained by ODS: Z9B2Z lists QRV as a predecessor and the name matches exactly. The successor-named holder is excluded under D6. No keys owned elsewhere. Excluded holders: 31534509=SUCCESSOR",
+   "reviewed_holders": [
+    30914264,
+    31534509
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QSL",
+   "members": [
+    30967505
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). reviewed_holders=[30967505]. A single SAME holder, so this 1-member verdict records the code. No PPON org, no denials, no keys owned elsewhere.",
+   "reviewed_holders": [
+    30967505
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QUA",
+   "members": [
+    30917129,
+    31542353
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). reviewed_holders=[30917129,31542353]. The provisional cluster folds into the body's PPON org. Both names are exact ODS matches. No denials, no keys owned elsewhere.",
+   "reviewed_holders": [
+    30917129,
+    31542353
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QUE",
+   "members": [
+    31542038,
+    31555514,
+    31603041
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). reviewed_holders=[31542038,31555514,31603041]. QUE ended legally on 2026-03-31 with successor S1Y5D (NHS Central East ICB), but no holder carries the successor's name. The 2 coded notices after the legal end still use the C&P name, and the decision accepts that ended codes have no date fence. No PPON org, no denials, no keys owned elsewhere. The survivor is the largest cluster, 31542038.",
+   "reviewed_holders": [
+    31542038,
+    31555514,
+    31603041
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QVV",
+   "members": [
+    30914398,
+    31571396
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). reviewed_holders=[30914398,31571396]. The cluster folds into the PPON org. Both names are exact. No denials, no keys owned elsewhere.",
+   "reviewed_holders": [
+    30914398,
+    31571396
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QWE",
+   "members": [
+    30915087,
+    31536736
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). reviewed_holders=[30915087,31536736]. Both are SAME. The code lists PPON PVVY4762MPRZ, but no PPON org stands as a holder (u1 also showed ppon_holders empty). The survivor is therefore the largest cluster, 30915087, as a provisional anchor. No denials, no keys owned elsewhere.",
+   "reviewed_holders": [
+    30915087,
+    31536736
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QWO",
+   "members": [
+    30914544,
+    30917022,
+    30933188
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). reviewed_holders=[30914544,30917022,30933188]. All three are spellings of West Yorkshire ICB, and they fold into the PPON org. No denials, no keys owned elsewhere.",
+   "reviewed_holders": [
+    30914544,
+    30917022,
+    30933188
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QWU",
+   "members": [
+    31534829,
+    31542351
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). reviewed_holders=[31534829,31542351]. The cluster folds into the PPON org. The single tender-title mention spelling under the PPON org does not change its identity. No denials, no keys owned elsewhere.",
+   "reviewed_holders": [
+    31534829,
+    31542351
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QXU",
+   "members": [
+    21990238,
+    30916138,
+    31543412,
+    31552079
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). reviewed_holders=[21990238,30916138,31543412,31552079]. QXU ended legally on 2026-03-31 with successor S9B9J, which ORD names NHS SURREY AND SUSSEX ICB. No holder carries the successor's name, and all are Surrey Heartlands spellings. The 24 coded notices after the legal end still name Surrey Heartlands, and the decision accepts no date fence. Everything folds into the PPON org. No denials, no keys owned elsewhere.",
+   "reviewed_holders": [
+    21990238,
+    30916138,
+    31543412,
+    31552079
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "R0A",
+   "members": [
+    10874685,
+    30913561,
+    31587675
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Two SAME clusters fold into Manchester University NHS FT's PPON org 30913561. Holder 31544656 is a UKHSA party (X36) carrying the trust's name in brackets. It is DIFFERENT and stays out. Nothing is denied, and no member's key is owned elsewhere. Excluded holders: 31544656=DIFFERENT",
+   "reviewed_holders": [
+    10874685,
+    30913561,
+    31544656,
+    31587675
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "R0B",
+   "members": [
+    13569138,
+    31567351
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). South Tyneside and Sunderland NHS FT: the coded cluster folds into its PPON org 31567351. Both holders are SAME and eligible, nothing is denied, and no member's key is owned elsewhere.",
+   "reviewed_holders": [
+    13569138,
+    31567351
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "R0D",
+   "members": [
+    30914100,
+    31551277
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). University Hospitals Dorset: the SAME cluster folds into its PPON org 30914100. Dorset HealthCare (RDY) is a different trust that picked the code once, and it stays out. Nothing is denied, and no member's key is owned elsewhere. Excluded holders: 1240944=DIFFERENT",
+   "reviewed_holders": [
+    1240944,
+    30914100,
+    31551277
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RAE",
+   "members": [
+    1165568,
+    30914102
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Bradford Teaching Hospitals: the SAME cluster folds into its PPON org 30914102. Leeds Teaching Hospital Trust (RR8) is a neighbour's name and stays out. Nothing is denied, and no member's key is owned elsewhere. Excluded holders: 31565965=DIFFERENT",
+   "reviewed_holders": [
+    1165568,
+    30914102,
+    31565965
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RAJ",
+   "members": [
+    17455495,
+    30914265,
+    31536222
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Mid and South Essex NHS FT: two SAME clusters fold into its PPON org 30914265. All three holders are SAME and eligible, nothing is denied, and no member's key is owned elsewhere.",
+   "reviewed_holders": [
+    17455495,
+    30914265,
+    31536222
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RAL",
+   "members": [
+    2200541
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Royal Free London: a 1-member verdict that records the code on cluster 2200541, which anchors as a provisional org. Both TPHC holders, the T/AS cluster and the TPHC PPON org, are hosted (D6) and stay out. U3 posts a 469 keep verdict for the RAL PPON pair. Nothing is denied, and no member's key is owned elsewhere. Excluded holders: 31555826=HOSTED_OR_SITE, 31566777=HOSTED_OR_SITE",
+   "reviewed_holders": [
+    2200541,
+    31555826,
+    31566777
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RAS",
+   "members": [
+    1425012
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). The Hillingdon Hospitals NHS FT: its only holder is SAME, so this is a 1-member verdict that records the code. There is no PPON, nothing is denied, and the member's key is not owned elsewhere.",
+   "reviewed_holders": [
+    1425012
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RAT",
+   "members": [
+    1612066,
+    31535216
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). North East London NHS FT: the SAME cluster folds into its PPON org 31535216. East London NHS FT (RWK) is a different trust and stays out. Nothing is denied, and no member's key is owned elsewhere. Excluded holders: 1264733=DIFFERENT",
+   "reviewed_holders": [
+    1264733,
+    1612066,
+    31535216
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RAX",
+   "members": [
+    31548954
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Kingston and Richmond NHS FT: a 1-member verdict that records the code on cluster 31548954. Guy's and St Thomas' (RJ1) and Ashford and St Peter's (RTK) each picked the code by mistake once, and they are DIFFERENT. There is no PPON, nothing is denied, and the member's key is not owned elsewhere. Excluded holders: 2079229=DIFFERENT, 31552337=DIFFERENT",
+   "reviewed_holders": [
+    2079229,
+    31548954,
+    31552337
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RBD",
+   "members": [
+    1466780,
+    31599890
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Dorset County Hospital NHS FT (RO197, Active, no legal end): the coded cluster and its PPON org. reviewed_holders = [1466780, 31599890].",
+   "reviewed_holders": [
+    1466780,
+    31599890
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RBK",
+   "members": [
+    1217952
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). 1-member verdict that records the code on Walsall Healthcare NHS Trust. The BWC holder is a stray (RQ3) and stays untouched. No PPON was published for RBK. reviewed_holders = [1217952, 9434941]. Excluded holders: 9434941=DIFFERENT",
+   "reviewed_holders": [
+    1217952,
+    9434941
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RBL",
+   "members": [
+    1311180,
+    2298423,
+    15465415,
+    31535437,
+    31571625,
+    31587299,
+    31647910
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All 7 holders are WUTH (RO197, Active, no legal end), including the PPON org. The only check-refused holder (31647910, 'coverage') is the exact trust name plus ODS's registered address for RBL, cited above. No denials and no keys owned elsewhere. reviewed_holders = [1311180, 2298423, 15465415, 31535437, 31571625, 31587299, 31647910].",
+   "reviewed_holders": [
+    1311180,
+    2298423,
+    15465415,
+    31535437,
+    31571625,
+    31587299,
+    31647910
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RBN",
+   "members": [
+    30914735,
+    30917279,
+    31536800,
+    31543386,
+    31563641,
+    31618482,
+    31747048
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All 7 holders are MWL (RO197, Active). ORD names RVY (Southport and Ormskirk) as its predecessor from 2023-07-01, but no holder carries an RVY or old St Helens and Knowsley name. No denials and no keys owned elsewhere. reviewed_holders = [30914735, 30917279, 31536800, 31543386, 31563641, 31618482, 31747048].",
+   "reviewed_holders": [
+    30914735,
+    30917279,
+    31536800,
+    31543386,
+    31563641,
+    31618482,
+    31747048
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RBQ",
+   "members": [
+    1766980,
+    6851948,
+    30918289,
+    31568217,
+    31571042,
+    31605524
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All 6 holders are LHCH (RO197, Active, no legal end), including the PPON org. No denials and no keys owned elsewhere. reviewed_holders = [1766980, 6851948, 30918289, 31568217, 31571042, 31605524].",
+   "reviewed_holders": [
+    1766980,
+    6851948,
+    30918289,
+    31568217,
+    31571042,
+    31605524
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RBS",
+   "members": [
+    1183914,
+    31545296,
+    31592492
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All 3 holders are Alder Hey (RO197, Active). No denials and no keys owned elsewhere. reviewed_holders = [1183914, 31545296, 31592492].",
+   "reviewed_holders": [
+    1183914,
+    31545296,
+    31592492
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RBT",
+   "members": [
+    1271280,
+    30918302
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Mid Cheshire Hospitals NHS FT (RO197, Active). reviewed_holders = [1271280, 30918302].",
+   "reviewed_holders": [
+    1271280,
+    30918302
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RBV",
+   "members": [
+    1285461,
+    30919619
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are The Christie NHS FT (RO197, Active). reviewed_holders = [1285461, 30919619].",
+   "reviewed_holders": [
+    1285461,
+    30919619
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RCD",
+   "members": [
+    1381987,
+    31549348
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Harrogate and District NHS FT (RO197, Active). No denials and no keys owned elsewhere. reviewed_holders = [1381987, 31549348].",
+   "reviewed_holders": [
+    1381987,
+    31549348
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RCF",
+   "members": [
+    1369100,
+    31535616
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Airedale NHS FT: the party cluster and its PPON org. No denials, no keys owned elsewhere, no legal end. Survivor is the PPON org 31535616. reviewed_holders=[1369100,31535616].",
+   "reviewed_holders": [
+    1369100,
+    31535616
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RCU",
+   "members": [
+    1250550,
+    30930095
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Sheffield Children's NHS FT (party cluster plus PPON org). No flags, denials or keys owned elsewhere. reviewed_holders=[1250550,30930095].",
+   "reviewed_holders": [
+    1250550,
+    30930095
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RCX",
+   "members": [
+    1929574,
+    2728937,
+    30914684,
+    31598591,
+    31648953
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All six holders are the King's Lynn trust. 31594811 'Queen Elizabeth Hospital FT' is SAME but held out of the members by D3: the check refuses it (Better, RG2) and ODS has no rename evidence. The decision itself names this hold, so I dropped the member and did not hold the body; the other five merge into the PPON org 30914684. If the orchestrator wants any D3-held SAME holder to hold the whole body, flip this verdict to 'hold'. No structural denials, no keys owned elsewhere. reviewed_holders=[1929574,2728937,30914684,31594811,31598591,31648953]. Excluded holders: 31594811=SAME",
+   "reviewed_holders": [
+    1929574,
+    2728937,
+    30914684,
+    31594811,
+    31598591,
+    31648953
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RDE",
+   "members": [
+    11944973,
+    30914160,
+    31535010
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are ESNEFT: the main cluster, a 'North East Essex' typo cluster and the PPON org. No flags, denials or keys owned elsewhere. Survivor is PPON org 31535010. reviewed_holders=[11944973,30914160,31535010].",
+   "reviewed_holders": [
+    11944973,
+    30914160,
+    31535010
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RDR",
+   "members": [
+    8299523
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Single holder, the code's own trust. The 1-member verdict records the code and folds nothing. No PPON was published beside it, so the survivor is this provisional cluster (anchor). reviewed_holders=[8299523].",
+   "reviewed_holders": [
+    8299523
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RDU",
+   "members": [
+    5766088,
+    30919333
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Frimley Health NHS FT. The PPON org carries one stray 'Intuitive Limited' mention (a supplier name published with Frimley's PPON), worth a note but not a blocker, since alias keys are the head name_norms only. reviewed_holders=[5766088,30919333].",
+   "reviewed_holders": [
+    5766088,
+    30919333
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RDY",
+   "members": [
+    1240944,
+    30916623
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Dorset HealthCare University NHS FT. 1240944's single stray R0D tail is a neighbour-code typo. It belongs here and must not join R0D's body. No keys owned elsewhere. reviewed_holders=[1240944,30916623].",
+   "reviewed_holders": [
+    1240944,
+    30916623
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "REF",
+   "members": [
+    1251123,
+    2306139,
+    30916407
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are Royal Cornwall Hospitals NHS Trust. No flags, denials or keys owned elsewhere. Survivor is PPON org 30916407. reviewed_holders=[1251123,2306139,30916407].",
+   "reviewed_holders": [
+    1251123,
+    2306139,
+    30916407
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "REM",
+   "members": [
+    14475224,
+    30919565,
+    31598155
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Three SAME holders are LUHFT: the main cluster, the PPON org and a typo cluster. The two 'University Hospitals of Liverpool Group' holders are the multi-trust group brand (REM+REP), HOSTED_OR_SITE, and are excluded under D6. Survivor is PPON org 30919565. No keys owned elsewhere. reviewed_holders=[14475224,30916254,30919565,31572888,31598155]. Excluded holders: 30916254=HOSTED_OR_SITE, 31572888=HOSTED_OR_SITE",
+   "reviewed_holders": [
+    14475224,
+    30916254,
+    30919565,
+    31572888,
+    31598155
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "REN",
+   "members": [
+    2965244,
+    30916762
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Clatterbridge's own cluster and PPON org merge. The two Walton Centre holders (a REN/RET neighbour-code mix-up) are DIFFERENT (RET) and never members. Survivor is PPON org 30916762. No denials or keys owned elsewhere. reviewed_holders=[1371484,2965244,4275910,30916762]. Excluded holders: 1371484=DIFFERENT, 4275910=DIFFERENT",
+   "reviewed_holders": [
+    1371484,
+    2965244,
+    4275910,
+    30916762
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "REP",
+   "members": [
+    1223655,
+    9160536,
+    31536256
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are Liverpool Women's NHS FT (REP): the exact name, a variant that adds 'Hospital', and the trust's PPON org. None has a denial, and no key is owned elsewhere. This agrees with the u1 adjudication.",
+   "reviewed_holders": [
+    1223655,
+    9160536,
+    31536256
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RET",
+   "members": [
+    1371484,
+    4275910,
+    31549806
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Three holders are the Walton Centre: the exact name, the short name and the PPON org. 'Alder Hey' (30968741) is a different trust, RBS, so it is not a member. 1371484 and 4275910 also hold REN (Clatterbridge) by mistake, and REN's reviewer must class them DIFFERENT. No key is owned elsewhere. This agrees with the u1 adjudication. Side note: the PPON org carries one mention named 'alder hey'. Excluded holders: 30968741=DIFFERENT",
+   "reviewed_holders": [
+    1371484,
+    4275910,
+    30968741,
+    31549806
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RFR",
+   "members": [
+    31648228
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). The single holder is the Rotherham NHS FT under a reworded name. A 1-member verdict records the code. No denial and no key owned elsewhere.",
+   "reviewed_holders": [
+    31648228
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RFS",
+   "members": [
+    5888684
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). The single holder is the trust's name without its legal suffix. The RCU67 and RTG10 sites of the same name are other trusts' units at that hospital, and none would appear as a buyer. A 1-member verdict records the code. No denial and no key owned elsewhere.",
+   "reviewed_holders": [
+    5888684
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RGD",
+   "members": [
+    5476801,
+    30926718
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). The trust's own cluster and its PPON org are members. The NOE CPC trading-as cluster (74 mentions) is a hosted collaborative and stays separate under D6. No key is owned elsewhere. Excluded holders: 30919688=HOSTED_OR_SITE",
+   "reviewed_holders": [
+    5476801,
+    30919688,
+    30926718
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RGM",
+   "members": [
+    30914473,
+    30916977
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Royal Papworth Hospital NHS FT: the PPON org and the provisional cluster, both under the exact name. No denial and no key owned elsewhere.",
+   "reviewed_holders": [
+    30914473,
+    30916977
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RGN",
+   "members": [
+    30929970,
+    31537918
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are North West Anglia NHS FT. No holder is named after the predecessor RQQ (Hinchingbrooke). No denial and no key owned elsewhere.",
+   "reviewed_holders": [
+    30929970,
+    31537918
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RGP",
+   "members": [
+    1280779,
+    31597478,
+    31598092,
+    31599086
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All four holders are James Paget University Hospitals NHS FT. Two are refused by the check as coverage, an artefact of town and address text appended to the full, exact ODS name. Under D3 they are members with HIGH confidence and cited ODS evidence: the ORD record for RGP gives LOWESTOFT ROAD, GORLESTON, GREAT YARMOUTH, NR31 6LA. No rename is involved and no rival body fits. No structural denial and no key owned elsewhere.",
+   "reviewed_holders": [
+    1280779,
+    31597478,
+    31598092,
+    31599086
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RGR",
+   "members": [
+    2228352,
+    7192624,
+    30916897
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are West Suffolk NHS FT: the exact name, a variant that adds 'Hospital' and the PPON org. No denial and no key owned elsewhere. This agrees with the u1 adjudication.",
+   "reviewed_holders": [
+    2228352,
+    7192624,
+    30916897
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RGT",
+   "members": [
+    1168300
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). One SAME eligible holder, so this is a 1-member verdict that records the code. The PPON-side holder is a supplier-headed org with a contaminated PPON, so it is not a member. The survivor stays the provisional anchor 1168300. Excluded holders: 31549426=DIFFERENT",
+   "reviewed_holders": [
+    1168300,
+    31549426
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RHA",
+   "members": [
+    1437921,
+    6362440,
+    30916974
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Two name-variant clusters (pre-FT and FT names) plus the SAME PPON org fold into the PPON survivor. The hosted SDN unit stays separate. Excluded holders: 30915065=HOSTED_OR_SITE",
+   "reviewed_holders": [
+    1437921,
+    6362440,
+    30915065,
+    30916974
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RHQ",
+   "members": [
+    1321678,
+    30916153
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). The main cluster folds into the SAME PPON org. The hosted Devices for Dignity unit stays separate. Excluded holders: 31546261=HOSTED_OR_SITE",
+   "reviewed_holders": [
+    1321678,
+    30916153,
+    31546261
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RHU",
+   "members": [
+    15706218
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). One SAME holder and no PPON, so this is a 1-member verdict that records the code on provisional anchor 15706218. Both procurement-service holders are the hosted SoEPS site, which ODS confirms as RHU0B. Excluded holders: 4690515=HOSTED_OR_SITE, 31558313=HOSTED_OR_SITE",
+   "reviewed_holders": [
+    4690515,
+    15706218,
+    31558313
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RHW",
+   "members": [
+    1269928,
+    30917496
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). One name cluster plus the SAME PPON org. There are no strays.",
+   "reviewed_holders": [
+    1269928,
+    30917496
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RJC",
+   "members": [
+    30953523,
+    31591979
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Two spellings of one trust. There is no PPON, so the provisional anchor is the larger cluster, 30953523.",
+   "reviewed_holders": [
+    30953523,
+    31591979
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RJE",
+   "members": [
+    5879895,
+    30913980
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). The UHNM cluster folds into its PPON org. UHB (RRK) is a neighbour body that picked RJE by mistake, so it is excluded. Excluded holders: 1167736=DIFFERENT",
+   "reviewed_holders": [
+    1167736,
+    5879895,
+    30913980
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RJL",
+   "members": [
+    4616701,
+    4944993,
+    31550622
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Two spellings of the trust plus the SAME PPON org. The two DPoW hospital-site holders stay separate. Excluded holders: 31609338=HOSTED_OR_SITE, 31647875=HOSTED_OR_SITE",
+   "reviewed_holders": [
+    4616701,
+    4944993,
+    31550622,
+    31609338,
+    31647875
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RJN",
+   "members": [
+    2267508
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). One SAME holder and no PPON holder in the listing, so this is a 1-member verdict that records the code. The Countess of Chester (RJR) is a stray and is excluded. Excluded holders: 7138160=DIFFERENT",
+   "reviewed_holders": [
+    2267508,
+    7138160
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RJR",
+   "members": [
+    1615245,
+    6851983,
+    13725605,
+    31543387,
+    31581032
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Countess of Chester Hospital NHS Foundation Trust (RJR, RO197, no legal end). Five holders are spellings of the one trust plus its PPON org; the sixth (31542216) is framework boilerplate, NOT_ORG. No denials, no flags, no keys owned elsewhere. reviewed_holders = [1615245, 6851983, 13725605, 31542216, 31543387, 31581032]. Excluded holders: 31542216=NOT_ORG",
+   "reviewed_holders": [
+    1615245,
+    6851983,
+    13725605,
+    31542216,
+    31543387,
+    31581032
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RJZ",
+   "members": [
+    1346181,
+    1687357,
+    30913914,
+    31560728,
+    31603496
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). King's College Hospital NHS Foundation Trust (RJZ, RO197). Five SAME holders: three spellings, the PPON org and the 'King's College London NHS FT' typo. Two DIFFERENT holders with a single stray RJZ mention each: Kettering General (RNQ) and Community Health and Eyecare Ltd (AAV), both ODS-verified. No denials, flags or keys owned elsewhere. The only judgement call is 31560728 (1 mention); it is SAME because the NHS FT legal form and the RJZ code both name KCH. reviewed_holders = [1346181, 1432862, 1687357, 30913914, 31535103, 31560728, 31603496]. Excluded holders: 1432862=DIFFERENT, 31535103=DIFFERENT",
+   "reviewed_holders": [
+    1346181,
+    1432862,
+    1687357,
+    30913914,
+    31535103,
+    31560728,
+    31603496
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RKB",
+   "members": [
+    1415721
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Single SAME holder; this 1-member verdict records the code. ODS predecessors RBJ and REL are not involved. reviewed_holders = [1415721].",
+   "reviewed_holders": [
+    1415721
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RKE",
+   "members": [
+    4121972
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Single SAME holder; 1-member verdict. reviewed_holders = [4121972].",
+   "reviewed_holders": [
+    4121972
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RLQ",
+   "members": [
+    3103774
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Single SAME holder; 1-member verdict. reviewed_holders = [3103774].",
+   "reviewed_holders": [
+    3103774
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RLT",
+   "members": [
+    4119504
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Single SAME holder; 1-member verdict. reviewed_holders = [4119504].",
+   "reviewed_holders": [
+    4119504
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RLY",
+   "members": [
+    1388955,
+    30917613
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). The trust's provisional cluster plus its PPON org, no other holders. No flags, denials or keys owned elsewhere. reviewed_holders = [1388955, 30917613].",
+   "reviewed_holders": [
+    1388955,
+    30917613
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RMC",
+   "members": [
+    1779271,
+    30917930
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). The trust's cluster plus its PPON org. No flags, denials or keys owned elsewhere. reviewed_holders = [1779271, 30917930].",
+   "reviewed_holders": [
+    1779271,
+    30917930
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RMP",
+   "members": [
+    31587766
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Single SAME holder, a truncated spelling; 1-member verdict. reviewed_holders = [31587766].",
+   "reviewed_holders": [
+    31587766
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RMY",
+   "members": [
+    2829886
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Single SAME holder; 1-member verdict. ODS predecessor RT6 is not involved. reviewed_holders = [2829886].",
+   "reviewed_holders": [
+    2829886
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RNA",
+   "members": [
+    2473797,
+    31565549
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are The Dudley Group NHS FT, which matches the ODS name exactly. Neither has a flag, a denial or an elsewhere-owned key. The PPON org survives and the provisional cluster folds into it.",
+   "reviewed_holders": [
+    2473797,
+    31565549
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RNN",
+   "members": [
+    14205876,
+    30969250
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are North Cumbria Integrated Care NHS FT, an exact ODS name match; ODS lists predecessors RE7 and RLF. There are no flags, denials or elsewhere-owned keys.",
+   "reviewed_holders": [
+    14205876,
+    30969250
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RNQ",
+   "members": [
+    1432862,
+    30915885
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Kettering General Hospital NHS FT. Cluster 1432862 also holds RJZ through one mistaken mention. That does not affect RNQ, but the RJZ verdict must exclude it.",
+   "reviewed_holders": [
+    1432862,
+    30915885
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RNS",
+   "members": [
+    1251847,
+    30913740
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Northampton General Hospital NHS Trust, an exact ODS name match. There are no flags, denials or elsewhere-owned keys.",
+   "reviewed_holders": [
+    1251847,
+    30913740
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RNU",
+   "members": [
+    1862654
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). There is one holder, the RNU body itself, and no PPON org. The 1-member verdict only records the code on the provisional anchor.",
+   "reviewed_holders": [
+    1862654
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RNZ",
+   "members": [
+    1262730,
+    30972038
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). The cluster and the PPON org are Salisbury NHS FT exactly. The one-mention partnership label is the same contracting body, but D3 (check-refused, no rename evidence) and D6 (joint name) keep it out of the members. The rules settle the exclusion and it is safe, so the body does not need a hold for it. Excluded holders: 31632712=SAME",
+   "reviewed_holders": [
+    1262730,
+    30972038,
+    31632712
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RPA",
+   "members": [
+    1291482,
+    30917062
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Medway NHS FT, an exact ODS name match. There are no flags, denials or elsewhere-owned keys.",
+   "reviewed_holders": [
+    1291482,
+    30917062
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RPC",
+   "members": [
+    1379961
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). There is one holder, the RPC body itself, and no PPON. The 1-member verdict only records the code.",
+   "reviewed_holders": [
+    1379961
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RPG",
+   "members": [
+    1346825,
+    30917846
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Oxleas NHS FT, an exact ODS name match. There are no flags, denials or elsewhere-owned keys.",
+   "reviewed_holders": [
+    1346825,
+    30917846
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RPY",
+   "members": [
+    1206891,
+    6454935,
+    30926647
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are the Royal Marsden FT (u1 adjudication agreed on all three). The survivor is the PPON org 30926647. There are no denials and no elsewhere-owned keys. reviewed_holders = [1206891, 6454935, 30926647].",
+   "reviewed_holders": [
+    1206891,
+    6454935,
+    30926647
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RQF",
+   "members": [
+    13080608
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Only one holder is Velindre itself: 13080608 'Velindre University NHS Trust' (ODS RQF reads VELINDRE NHS TRUST; renamed 2018). It is admitted, with no denials, flags or elsewhere-owned keys. This is a 1-member verdict that records GBNHSRQF on it; there is no PPON for RQF. 24 holders are NWSSP spellings (a hosted division of Velindre with no ODS org code) or the Welsh Blood Service (ODS site RQF5B). Under D6 and the NOE CPC / London Commercial Hub precedent they are HOSTED_OR_SITE and stay separate. The two HEIW holders (12008955, 31547740) are DIFFERENT, being Special Health Authority T1530. 31544734 'NHS Shared Services' is most likely NWSSP; it is not SAME in any reading, so the member set is certain. reviewed_holders = the census holder_ids, all 28, unchanged. Excluded holders: 1178447=HOSTED_OR_SITE, 1264053=HOSTED_OR_SITE, 1721255=HOSTED_OR_SITE, 7444653=HOSTED_OR_SITE, 8540581=HOSTED_OR_SITE, 10766419=HOSTED_OR_SITE, 12008955=DIFFERENT, 15641552=HOSTED_OR_SITE, 15693878=HOSTED_OR_SITE, 30915473=HOSTED_OR_SITE, 31541477=HOSTED_OR_SITE, 31544734=HOSTED_OR_SITE, 31547581=HOSTED_OR_SITE, 31547740=DIFFERENT, 31548395=HOSTED_OR_SITE, 31549671=HOSTED_OR_SITE, 31550182=HOSTED",
+   "reviewed_holders": [
+    1178447,
+    1264053,
+    1721255,
+    7444653,
+    8540581,
+    10766419,
+    12008955,
+    13080608,
+    15641552,
+    15693878,
+    30915473,
+    31541477,
+    31544734,
+    31547581,
+    31547740,
+    31548395,
+    31549671,
+    31550182,
+    31564434,
+    31564845,
+    31569517,
+    31570228,
+    31570494,
+    31573635,
+    31575191,
+    31581564,
+    31597187,
+    31764086
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RQM",
+   "members": [
+    3465906
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). There is a single SAME holder with the exact ODS name and no PPON. This 1-member verdict records the code. reviewed_holders = [3465906].",
+   "reviewed_holders": [
+    3465906
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RQX",
+   "members": [
+    1238214,
+    30976286,
+    30976496,
+    31571651
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All four holders are the Homerton trust (current name, former name, FT abbreviation, PPON org), which agrees with u1's adjudication. The survivor is the PPON org 30976286. There are no denials and no elsewhere-owned keys. reviewed_holders = [1238214, 30976286, 30976496, 31571651].",
+   "reviewed_holders": [
+    1238214,
+    30976286,
+    30976496,
+    31571651
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RQY",
+   "members": [
+    3793368
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). There is a single SAME holder with the exact ODS name and no PPON. This 1-member verdict records the code. reviewed_holders = [3793368].",
+   "reviewed_holders": [
+    3793368
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RRE",
+   "members": [
+    11951117,
+    30915714
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). There are two SAME clusters: the pre-2023 name and the current ODS name. NHS Inclusion is a hosted service and stays separate under D6. There is no PPON, so the survivor is the largest SAME cluster as a provisional anchor. No holder is named after a predecessor (RBG/RBH/RNG). There are no denials and no elsewhere-owned keys. reviewed_holders = [11951117, 30915714, 30916057]. Excluded holders: 30916057=HOSTED_OR_SITE",
+   "reviewed_holders": [
+    11951117,
+    30915714,
+    30916057
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RRF",
+   "members": [
+    31587761
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Single holder, a typo spelling of RRF's own trust name, eligible. 1-member verdict that records the code. No PPON, so the survivor is this provisional cluster as anchor.",
+   "reviewed_holders": [
+    31587761
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RRJ",
+   "members": [
+    30917859,
+    31543239
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are RRJ's own trust. The PPON org 30917859 is the survivor. No denials and no keys owned elsewhere.",
+   "reviewed_holders": [
+    30917859,
+    31543239
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RRK",
+   "members": [
+    1167736,
+    1232155,
+    30914077
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are UHB, RRK's own body. The PPON org 30914077 is the survivor. 1167736's RJE strays are for RJE's batch to handle (DIFFERENT there).",
+   "reviewed_holders": [
+    1167736,
+    1232155,
+    30914077
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RRU",
+   "members": [
+    1755985,
+    30915545,
+    31552166
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are London Ambulance Service NHS Trust, so all fold into the PPON org 30915545. No denials and no keys owned elsewhere.",
+   "reviewed_holders": [
+    1755985,
+    30915545,
+    31552166
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RTD",
+   "members": [
+    1166415,
+    30917018,
+    31543973
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are Newcastle upon Tyne Hospitals NHS FT, so all fold into the PPON org 30917018. No denials.",
+   "reviewed_holders": [
+    1166415,
+    30917018,
+    31543973
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RTE",
+   "members": [
+    1168733,
+    30913986
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are RTE's own trust. The PPON org 30913986 is the survivor.",
+   "reviewed_holders": [
+    1168733,
+    30913986
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RTF",
+   "members": [
+    1172050
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Only 1172050 is RTF's own legal body. The Leicester trust (RWE) and the NHFM subsidiary PPON org (8J129) stay out. No SAME PPON org, so the survivor is 1172050 as a provisional anchor. 1-member verdict that records the code. Excluded holders: 4474166=DIFFERENT, 30914055=DIFFERENT",
+   "reviewed_holders": [
+    1172050,
+    4474166,
+    30914055
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RTG",
+   "members": [
+    12215491,
+    30915285,
+    30953527,
+    31559358
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All four holders are UHDB spellings, so all fold into the PPON org 30915285. No denials and no keys owned elsewhere.",
+   "reviewed_holders": [
+    12215491,
+    30915285,
+    30953527,
+    31559358
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RTK",
+   "members": [
+    1717475,
+    8620874,
+    11883235,
+    31084569
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All four holders are Ashford and St Peter's Hospitals (RTK) spellings, including its pre-FT 'NHS Trust' name. No PPON org, so the largest SAME cluster is the provisional anchor. No denials and no keys owned elsewhere.",
+   "reviewed_holders": [
+    1717475,
+    8620874,
+    11883235,
+    31084569
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RTP",
+   "members": [
+    1202625,
+    2228288,
+    31091573
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Three spellings of Surrey and Sussex Healthcare NHS Trust are SAME and eligible. The UHNM stray (RJE) is DIFFERENT and stays out. No key is owned elsewhere and no holder is denied. The holders here are exactly reviewed_holders [1202625,2228288,31091573,31583670]. Excluded holders: 31583670=DIFFERENT",
+   "reviewed_holders": [
+    1202625,
+    2228288,
+    31091573,
+    31583670
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RTQ",
+   "members": [
+    15046714,
+    30916324
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Gloucestershire Health and Care NHS FT: the provisional coded cluster and the PPON org, which is the survivor. No denials and no key owned elsewhere. reviewed_holders [15046714,30916324].",
+   "reviewed_holders": [
+    15046714,
+    30916324
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RTR",
+   "members": [
+    1243666,
+    31556601
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are South Tees Hospitals NHS FT: one provisional cluster plus the PPON survivor. No flags. reviewed_holders [1243666,31556601].",
+   "reviewed_holders": [
+    1243666,
+    31556601
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RTX",
+   "members": [
+    1745182,
+    30930144
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are UHMB NHS FT: the provisional cluster plus the PPON survivor. No flags. reviewed_holders [1745182,30930144].",
+   "reviewed_holders": [
+    1745182,
+    30930144
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RVJ",
+   "members": [
+    1268048
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). RVJ legally ended on 2026-06-30. ODS shows RA7 'BRISTOL NHS FOUNDATION TRUST' with RVJ as its predecessor from 2026-07-01, and 0 coded notices fall after the legal end. North Bristol NHS Trust is the code's own body, a 1-member verdict that records the code. The BWPC consortium is HOSTED_OR_SITE, denied, and excluded. No key is owned elsewhere. reviewed_holders [1261126,1268048]. Excluded holders: 1261126=HOSTED_OR_SITE",
+   "reviewed_holders": [
+    1261126,
+    1268048
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RVR",
+   "members": [
+    2231053
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Epsom and St Helier is the sole SAME holder: a 1-member verdict. The Surrey Downs Health & Care collaborative is a hosted unit and stays separate. No flags and no key owned elsewhere. reviewed_holders [2231053,31544125]. Excluded holders: 31544125=HOSTED_OR_SITE",
+   "reviewed_holders": [
+    2231053,
+    31544125
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RVV",
+   "members": [
+    1926457,
+    30917064,
+    31537490
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are East Kent Hospitals University NHS FT, with the PPON org as survivor. No denials and no key owned elsewhere. reviewed_holders [1926457,30917064,31537490].",
+   "reviewed_holders": [
+    1926457,
+    30917064,
+    31537490
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RVW",
+   "members": [
+    2748062,
+    31556599
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are North Tees and Hartlepool NHS FT: one cluster plus the PPON survivor. No flags. reviewed_holders [2748062,31556599].",
+   "reviewed_holders": [
+    2748062,
+    31556599
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWA",
+   "members": [
+    13228851,
+    30915216
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are Hull University Teaching Hospitals NHS Trust: one cluster plus the PPON survivor. No flags and no key owned elsewhere. reviewed_holders [13228851,30915216].",
+   "reviewed_holders": [
+    13228851,
+    30915216
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWD",
+   "members": [
+    30913995,
+    30915785,
+    31604037
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Reviewed holders [30913995, 30915785, 31604037], all SAME and all eligible: the PPON org plus two spellings of ULTH. No denials and no keys owned elsewhere. Survivor is the PPON org 30913995.",
+   "reviewed_holders": [
+    30913995,
+    30915785,
+    31604037
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWE",
+   "members": [
+    4474166,
+    30930117
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are UHL: the party cluster and the PPON org. 4474166's single GB-NHS-RTF raw is a stray and does not change its identity. No denials and no keys owned elsewhere. Survivor is the PPON org 30930117.",
+   "reviewed_holders": [
+    4474166,
+    30930117
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWF",
+   "members": [
+    1517322,
+    30913981
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Two SAME holders: the MTW party cluster and the PPON org. The third holder is an agent company (Sustainable Energy First Ltd c/o MTW): DIFFERENT, refused by the check (agent), and excluded. No keys owned elsewhere. Survivor is the PPON org 30913981. Excluded holders: 31610393=DIFFERENT",
+   "reviewed_holders": [
+    1517322,
+    30913981,
+    31610393
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWG",
+   "members": [
+    30913934,
+    31537155
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are WHTH: the PPON org and the party cluster. No denials and no keys owned elsewhere. Survivor is the PPON org 30913934.",
+   "reviewed_holders": [
+    30913934,
+    31537155
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWJ",
+   "members": [
+    1193388,
+    31574798,
+    31604158
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are Stockport NHS FT spellings or its PPON org. No denials and no keys owned elsewhere. Survivor is the PPON org 31574798.",
+   "reviewed_holders": [
+    1193388,
+    31574798,
+    31604158
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWK",
+   "members": [
+    1264733
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). This is a 1-member verdict that only records the code against ELFT's anchor cluster. There is no PPON org, so the cluster is a provisional anchor. No denials and no keys owned elsewhere.",
+   "reviewed_holders": [
+    1264733
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWP",
+   "members": [
+    1385205,
+    30916584
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are WAHT: the party cluster and the PPON org. No denials and no keys owned elsewhere. Survivor is the PPON org 30916584.",
+   "reviewed_holders": [
+    1385205,
+    30916584
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWR",
+   "members": [
+    4840892,
+    5359917,
+    31549588
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are HPFT: its former name, its current name, and its former name with the code and registered office address. The coverage refusal on 31549588 comes from the address tail; the ODS RWR address matches it verbatim, which is the cited evidence. No structural denials, no PPON org (provisional anchor), no keys owned elsewhere.",
+   "reviewed_holders": [
+    4840892,
+    5359917,
+    31549588
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWV",
+   "members": [
+    3793356,
+    9420410,
+    31541155
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are Devon Partnership NHS Trust: two party clusters and the PPON org. 3793356's stray GB-NHS-RWW raw is a typo; this body is its home. No denials and no keys owned elsewhere. Survivor is the PPON org 31541155.",
+   "reviewed_holders": [
+    3793356,
+    9420410,
+    31541155
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWW",
+   "members": [
+    15410940,
+    31538397,
+    31564277,
+    31571325,
+    31598258,
+    31618484
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). RWW is not legally ended: it is the continuing code, renamed on 2026-04-01 when Bridgewater (RY2) merged in as a predecessor (ODS Succs). So the Warrington and Halton names are the same code's predecessor names, which makes them SAME, not successor names. Six SAME holders, including the PPON org 31564277, which is the survivor. 3793356 (Devon Partnership, RWV) is an adjacent-code stray: DIFFERENT, excluded. No Bridgewater-named holder, no denials, no keys owned elsewhere. Reviewed holders [3793356, 15410940, 31538397, 31564277, 31571325, 31598258, 31618484] as given. Excluded holders: 3793356=DIFFERENT",
+   "reviewed_holders": [
+    3793356,
+    15410940,
+    31538397,
+    31564277,
+    31571325,
+    31598258,
+    31618484
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWX",
+   "members": [
+    2159849,
+    31537631
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are the RWX trust under its exact ODS name: a provisional cluster and the trust's PPON org. Both are eligible, there are no key owners elsewhere, and the holder list is not truncated. Fold into the PPON org.",
+   "reviewed_holders": [
+    2159849,
+    31537631
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RWY",
+   "members": [
+    1287488,
+    31535615
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are the RWY trust under its exact ODS name: a provisional cluster and the code's PPON org. Both are eligible, there are no key owners elsewhere, and the list is not truncated.",
+   "reviewed_holders": [
+    1287488,
+    31535615
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXA",
+   "members": [
+    1604072,
+    2267512,
+    31552751
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). There are three holders, all one body: two spellings of the trust name ('and' vs '&') and the trust's PPON org. All are eligible, there are no key owners elsewhere, and the list is not truncated.",
+   "reviewed_holders": [
+    1604072,
+    2267512,
+    31552751
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXC",
+   "members": [
+    1383983,
+    31573474
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are the RXC trust under its exact ODS name: a provisional cluster and the code's PPON org. Both are eligible and there are no key owners elsewhere.",
+   "reviewed_holders": [
+    1383983,
+    31573474
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXE",
+   "members": [
+    4141289,
+    31534939,
+    31535064
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are RDaSH: two spellings of the trust and its PPON org. One PPON-org mention names the charitable fund but uses the trust's PPON, so the holder stays SAME. All are eligible, there are no key owners elsewhere, and the list is not truncated.",
+   "reviewed_holders": [
+    4141289,
+    31534939,
+    31535064
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXG",
+   "members": [
+    1228924
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). There is a single SAME holder, the trust under its pre-'Teaching' name. No PPON is listed for this code. A 1-member verdict records the code, with this cluster as the provisional anchor.",
+   "reviewed_holders": [
+    1228924
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXK",
+   "members": [
+    1396633,
+    30917614,
+    31621139
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are the RXK trust: two spellings and its PPON org. All are eligible, there are no key owners elsewhere, and the list is not truncated.",
+   "reviewed_holders": [
+    1396633,
+    30917614,
+    31621139
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXL",
+   "members": [
+    2004062,
+    30968791
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are the RXL trust: a provisional cluster and its PPON org. The provisional's single stray RMB mention is an Inactive legacy code and does not change the holder's identity. Both are eligible, with no key owners elsewhere.",
+   "reviewed_holders": [
+    2004062,
+    30968791
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXM",
+   "members": [
+    1409547
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). There is a single SAME holder under the exact ODS name. The code lists PPON PHYX9381JDQT, but no standing PPON holder appears in holder_ids, so this cluster is the provisional anchor. A 1-member verdict records the code. Worth checking later why the PPON org is not among the holders.",
+   "reviewed_holders": [
+    1409547
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXP",
+   "members": [
+    1165278,
+    30913742
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are the RXP trust under its exact ODS name. No denials, no keys owned elsewhere. Survivor is the PPON org 30913742.",
+   "reviewed_holders": [
+    1165278,
+    30913742
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXQ",
+   "members": [
+    1185447,
+    31537782
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are the RXQ trust under its exact name. No denials, no keys owned elsewhere. Survivor is the PPON org 31537782.",
+   "reviewed_holders": [
+    1185447,
+    31537782
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXV",
+   "members": [
+    10374035,
+    31569803
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are the RXV trust under its exact name. No denials, no keys owned elsewhere. Survivor is the PPON org 31569803.",
+   "reviewed_holders": [
+    10374035,
+    31569803
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXW",
+   "members": [
+    1470141,
+    12053291,
+    12431017,
+    30913590
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All four holders are spellings of The Shrewsbury and Telford Hospital NHS Trust: three provisional clusters plus the PPON org. No denials, no keys owned elsewhere. Survivor is the PPON org 30913590.",
+   "reviewed_holders": [
+    1470141,
+    12053291,
+    12431017,
+    30913590
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXX",
+   "members": [
+    2409657
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Only Surrey and Borders 2409657 is SAME. The stray coded cluster and the PPON org both belong to Sussex Partnership (RX2), which agrees with u1 (RXX -> RX2). This 1-member verdict records the code on the provisional anchor 2409657. The RXX PPON pair (2409657 vs 30916802) should get the 469 keep verdict. Excluded holders: 2022375=DIFFERENT, 30916802=DIFFERENT",
+   "reviewed_holders": [
+    2022375,
+    2409657,
+    30916802
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXY",
+   "members": [
+    9260274
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). There is one holder, and it is the RXY trust under its pre-rename name. This 1-member verdict records the code. No PPON org is listed for the code.",
+   "reviewed_holders": [
+    9260274
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYA",
+   "members": [
+    6384818,
+    12508548,
+    13335820,
+    30913621,
+    31567619,
+    31626603
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All six holders are the West Midlands Ambulance Service University NHS FT. No denials, no keys owned elsewhere. Survivor is the real code's PPON org 30913621 (D1). u1 found a second WMAS PPON org, 31574837, through the text code 'WESTMIDLANDSAMBULANCESERVICE'. It is not an RYA holder here, so this verdict does not touch it.",
+   "reviewed_holders": [
+    6384818,
+    12508548,
+    13335820,
+    30913621,
+    31567619,
+    31626603
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYD",
+   "members": [
+    2332253,
+    5824298,
+    30918360
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are the RYD trust. No denials, no keys owned elsewhere. Survivor is the PPON org 30918360.",
+   "reviewed_holders": [
+    2332253,
+    5824298,
+    30918360
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYE",
+   "members": [
+    1391882,
+    2442353,
+    30915164
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All three holders are spellings of RYE or its PPON org. None has a denial, a key owned elsewhere or a successor issue. The survivor is PPON org 30915164. reviewed_holders = [1391882, 2442353, 30915164] as given.",
+   "reviewed_holders": [
+    1391882,
+    2442353,
+    30915164
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYF",
+   "members": [
+    1430119,
+    30916200
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). One body: the registry cluster plus its PPON org. No denials and no keys owned elsewhere. The survivor is PPON org 30916200. reviewed_holders = [1430119, 30916200].",
+   "reviewed_holders": [
+    1430119,
+    30916200
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYJ",
+   "members": [
+    1168120
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). A single SAME holder, so this 1-member verdict only records the code. There is no PPON. reviewed_holders = [1168120].",
+   "reviewed_holders": [
+    1168120
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYR",
+   "members": [
+    30919601
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). A single SAME holder, so this 1-member verdict only records the code. There is no PPON. reviewed_holders = [30919601].",
+   "reviewed_holders": [
+    30919601
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYT",
+   "members": [
+    5410843,
+    7897539,
+    31540818
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Three spellings of PHW. NWSSP (15641552) is Velindre's (RQF) hosted unit and stays out (D6). There is no PPON, so the survivor is the largest SAME cluster, 5410843, as a provisional anchor. No denials and no keys owned elsewhere. reviewed_holders = [5410843, 7897539, 15641552, 31540818]. Excluded holders: 15641552=DIFFERENT",
+   "reviewed_holders": [
+    5410843,
+    7897539,
+    15641552,
+    31540818
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYV",
+   "members": [
+    5447323,
+    5654151,
+    31557115
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). RYV's legal end is 2026-03-31. ODS confirms successor RY3, now named East of England Community Health and Care NHS Trust. No holder carries the successor's name, so D6 excludes nobody. All three holders are CCS itself. One coded notice postdates the legal end, which the decision's no-date-fence trade-off accepts. The survivor is PPON org 31557115. reviewed_holders = [5447323, 5654151, 31557115].",
+   "reviewed_holders": [
+    5447323,
+    5654151,
+    31557115
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYW",
+   "members": [
+    8042570,
+    30916580
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). One body: the registry cluster plus its PPON org. No denials and no keys owned elsewhere. The survivor is PPON org 30916580. reviewed_holders = [8042570, 30916580].",
+   "reviewed_holders": [
+    8042570,
+    30916580
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYX",
+   "members": [
+    3435558
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). A single SAME holder, so this 1-member verdict only records the code. There is no PPON. reviewed_holders = [3435558].",
+   "reviewed_holders": [
+    3435558
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYY",
+   "members": [
+    6676127,
+    30916727,
+    31560119,
+    31604013,
+    31649007
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). All five holders are spellings of KCHFT or its PPON org. No denials, no keys owned elsewhere and no successor issue. The survivor is PPON org 30916727. reviewed_holders = [6676127, 30916727, 31560119, 31604013, 31649007].",
+   "reviewed_holders": [
+    6676127,
+    30916727,
+    31560119,
+    31604013,
+    31649007
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "TAD",
+   "members": [
+    9107193,
+    31600268
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are the same legal body as TAD, Bradford District Care NHS FT (confirmed live: ORD RO107, Active, predecessor RCE, no legal end, no successors). They are a provisional party cluster and the PPON org. Both spell the ODS name exactly, both are admitted by the check, and neither has a structural denial or a D6 flag. reviewed_holders = [9107193, 31600268] as given. Survivor = PPON org 31600268.",
+   "reviewed_holders": [
+    9107193,
+    31600268
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "TAJ",
+   "members": [
+    30917612,
+    30968798
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewer + challenger agree (wf_126dc78d-0f3, census 2261, ODS ods-2026-10-11). Both holders are the same legal body as TAJ, Black Country Healthcare NHS FT (confirmed live: ORD RO107, Active, predecessor RQ4, no legal end, no successors). The PPON holder is 30917612, matching the owner's D6 correction. Both spell the ODS name exactly, both are admitted by the check, and neither has a structural denial or a D6 flag. reviewed_holders = [30917612, 30968798] as given. Survivor = PPON org 30917612.",
+   "reviewed_holders": [
+    30917612,
+    30968798
+   ]
+  }
+ ]
+}
