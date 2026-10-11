@@ -1,0 +1,193 @@
+{
+  "summary": "Build issue 513 U2 (dry nhs-body planner + census + reviewed_holders verdict schema), then review adversarially",
+  "agentCount": 3,
+  "logs": [],
+  "result": {
+    "build": "U2 is built: the dry `nhs-body` census job, the store planner behind it, and the `reviewed_holders` verdict schema. Every focused run passed with EXIT=0. Nothing is committed, `ops/check.sh` was not run, and the production box was not touched.\n\n## Files changed\n- `crates/store/src/canonical.rs`\n  - Verdict schema: `reviewed_holders TEXT` added as the last column of `org_merge_verdicts` (so fresh and migrated tables have the same column order).\n  - `MergeVerdict.reviewed_holders: Option<Vec<i64>>` and the constant `NHS_BODY_SCHEME = \"GB:nhs-body\"`.\n  - New `MergeVerdict::validate()` holds the recording rules. `GB:nhs-body` allows one member, must be keyed `GB` plus a three-character code, and a `merge` must carry `reviewed_holders` that contains every member. Every other scheme still needs two members, and sending `reviewed_holders` there is refused.\n  - `record_merge_verdicts` writes and upserts the column. `merge_verdict_for` reads it into `MergeVerdictRow`; R2, E0, altid and rekey never look at it.\n  - New `review_keep_set_but(conn, skip_scheme)`. The existing `review_keep_set` calls it with no skip, so its behaviour is unchanged.\n  - The `NhsBody*` types, five exported SQL constants, the helpers `nhs_org_facts`, `notice_published`, `unix_year` and `legal_end_unix` (with a unit test), and `Db::plan_nhs_bodies`, placed after `plan_registry_pairs`.\n- `crates/store/src/lib.rs`: the ALTER statement added to `MIGRATIONS` (array length 33 → 34), and the new names re-exported.\n- `crates/ingest/src/nhs_ods.rs`: two adapters that convert to the store's types, `census_code` → `store::NhsOdsCode` and `census_check` → `store::NhsNameCheck`, plus a test. The module doc now says U2 reads it.\n- `crates/app/src/supervisor.rs`:\n  - New `Spec::MatchOrgIdentifiersNhsBody { dry_run }` and the `\"nhs-body\"` rule. A wet request is refused at enqueue with `NHS_BODY_WET_REFUSAL` (\"…nhs-body wet path is U4; not built…\"), and the unknown-rule message now lists nhs-body.\n  - The job arm is wrapped in `Box::pin`. It refuses wet runs itself, refuses like altid while a key build is in flight or the key epoch has drifted, wires every injected fn to the real `nhs_ods`, crosswalk and normaliser, stores `nhs-body-plan` via `put_report` (adding `dry_run` and `generic_wall_readable`), and returns the `nhs_body_summary` counts line.\n- `crates/app/src/admin.rs`: `POST /admin/merge-verdicts` accepts `reviewed_holders`, passes it through, and calls `validate()`, so a malformed nhs-body verdict gets a 400 rather than the store's 500.\n- `docs/operations.md`: a row for the nhs-body rule, `nhs-body-plan` added to the list of report kinds, and a note on the merge-verdicts endpoint.\n- Tests: new `crates/store/tests/nhs_body.rs`, new tests in `r2_name_gate.rs`, `altid_merge.rs`, `supervisor.rs` and `crates/app/tests/admin.rs`, and `reviewed_holders: None` added to existing `MergeVerdict` literals in `fts.rs`, `r2_merge.rs` and `rekey.rs`.\n\n## What the `nhs-body-plan` report contains\n- **Top level:**\n  - `ods_version`, `dry_run`, `generic_wall_readable`.\n  - Harvest counts: `fts_notices`, `party_sections`, `unfolded_sections`, `coded_parties`, `coded_parties_allowlisted`, `folded_parties`, `ppon_pairs`.\n  - Parties counted but never taken as holders, each with a sample: `countryless_parties`, `non_gb_parties`, `other_nhs_values` (GB-NHS rows with no three-character tail).\n  - Bodies: `codes_seen`, `codes[]`, `codes_truncated`, `holders`, `holders_listed`, `holders_truncated`, `multi_code_orgs`.\n  - Off the allowlist: `off_allowlist_seen`, `off_allowlist[]`, `off_allowlist_truncated`.\n  - Denials and verdicts: `denied` (count per reason), `eligible_holders`, `contested_orgs`, `key_owned_elsewhere`, `admitted_verdict`, `verdict_stale`, `verdict_keep`, `verdict_status` (count per status).\n  - `coded_share_by_year[]` (`year`, `coded`, `mentions`), `coded_share_partial`, `stopped`.\n- **Per code (`codes[]`):** `code`; `ods` (name, role, active, allow, predecessors, successors, legal_end); `tails[]` (tail, parties, folded); `coded_parties`; `coded_notices_after_legal_end`; `ppons`; `holder_ids` (never cut — this is the set a verdict is held to); `holders[]`; `holders_truncated`; `eligible`; `verdict` (cohort, action, confidence, members, reviewed_holders, status, newcomers, departed).\n- **Verdict status** is one of: `admitted`, `keep`, `applied`, `not-high`, `no-reviewed-holders`, `holders-unlisted`, `stale`, `members-not-live`, `contested`, `member-denied`.\n- **Per holder:**\n  - Source: `org_id`, `via` (`party`, `ppon` or `party+ppon`), `coded_parties`, `ppons`.\n  - The org row: `stands`, `provisional`, `country`, `identifier_kind`, `identifier`, `name`, `name_norm`, `merged_identifiers`.\n  - Mentions: `mentions` (exact count), `mentions_read` / `mentions_capped` (newest 4,096), `raw_identifiers`, `name_norms` (up to 64), `names_capped`, `other_codes`.\n  - Review aids: `check` (verdict and rival) and `key_owners_elsewhere`.\n  - Flags: `under_review`, `generic`, `consortium`, `successor_name`, `minted_identity`, `holder_of`, `contested`.\n  - `denied`: any of `minted-identity`, `generic`, `consortium`, `successor-name`, `contested`.\n- **Off-allowlist tails:** `tail`, `value`, `parties`, `holders`, `ppons`, `top_names` (up to five), and `ods` (the table's row for the tail, if it has one).\n- **Caps:** `NhsBodyCaps::PRODUCTION` is 2,000 codes, 10,000 holder entries, 4,096 mentions and 64 names per holder, 2,000 off-allowlist tails, 50 per sample, 8 key owners. Every cut is flagged in the report and logged with `eprintln!(\"[store] nhs-body: …\")`.\n\n## Tests and EXIT values\nAll runs used the CLAUDE.md flags and package set; logs are in the scratchpad.\n\n| Run | Log | EXIT |\n|---|---|---|\n| Build every test binary (`--no-run`) | `u2-build1.log` | 0 |\n| Focused tests | `u2-run1.log` | 0 |\n| Wider regression: all lib tests (ingest 430, store 181, tender-db 196) plus `altid_merge` 81, `r2_merge`, `r2_name_gate`, `rekey`, `nhs_body` 12, `orphan_org_sweep`, `satellite_column_migration`, `fts`, `admin` | `u2-run2.log` | 0, no failures |\n| Focused tests again, after line-wrapping edits | `u2-run3.log` | 0 |\n| Mutation check | `u2-mut1.log` | 101 (expected) |\n\nThe mutation check deliberately broke three things: a sorter in the holder-mention SQL, the newcomer check, and the consortium denial. The three matching tests each failed, and `canonical.rs` was then restored byte for byte from a backup.\n\nTests added:\n- In `nhs_body.rs`, all the tests you listed: `a_body_plan_lists_every_holder_uncapped`, `a_tail_off_the_allowlist_is_listed_not_planned`, `an_o0_tail_folds_into_its_code`, `a_newcomer_holder_makes_the_body_verdict_stale`, `a_one_member_nhs_body_verdict_is_accepted_and_other_schemes_still_need_two`, `a_member_holding_a_minted_identity_is_denied` (also covers the generic, consortium and under-review flags), `an_org_proposed_for_two_codes_is_contested`, `a_successor_name_member_is_denied`, and `the_census_reads_seek_their_indexes` (the EXPLAIN guard).\n- Also in `nhs_body.rs`: `the_census_cuts_are_honest`, `the_census_counts_what_it_takes_no_holder_from`, `an_existing_verdict_table_gains_the_reviewed_holders_column`.\n- `r2_verdicts_ignore_reviewed_holders` in `r2_name_gate.rs` and `altid_verdicts_ignore_reviewed_holders` in `altid_merge.rs`.\n- Supervisor: `the_unknown_rule_message_lists_nhs_body_and_a_wet_nhs_body_run_is_refused`, and `an_nhs_body_census_lists_every_holder_and_admits_a_reviewed_verdict` (runs on the real `nhs_ods`: dry run, post verdict, dry run shows `admitted_verdict` 1).\n- `admin_api_drives_ingestion_end_to_end` now posts nhs-body verdicts (200 and two 400s), checks the wet refusal returns 400, runs the dry job, and reads `/admin/reports/nhs-body-plan`.\n- Unit tests: `the_census_adapters_carry_the_row_and_the_answer` and `the_census_dates_agree_with_the_calendar`.\n- The stack canary `an_execute_without_an_expected_count_is_refused` stays green.\n\n## Deviations from the spec, and why\n- **\"Contested\" means two codes' merge verdicts name the org**, not that the org holds two codes. A holder of two codes is only flagged (`holder_of`, `multi_code_orgs`, `other_codes`). Otherwise one stray coded notice would block a real cluster from its own body forever (the Walton cluster holding a single REN-coded notice).\n- **Holders come only from the raw identifier on the party's own record**, which is the party's first published identifier. A party that publishes the PPON first and the NHS code second reaches the code through the PPON-holder path instead. This follows unit 1's holder walk.\n- **The ODS name is on the code entry, not repeated on each holder.** Each holder carries its `check` result.\n- **`r2_and_altid_verdicts_ignore_reviewed_holders` is two tests**, one per file, because the R2 and altid fixtures live in different test files.\n- **The one-line summary** reports ODS version, harvest counts, codes and holders, off-allowlist count, denials, eligible count, keys owned elsewhere, verdict counts, and any cut or blind generic wall.\n- **Additions beyond the task:**\n  - Verdict statuses `holders-unlisted` (a code's holder listing was cut, so its verdict is never admitted) and `member-denied`.\n  - `key_owners_elsewhere` for D4.\n  - `coded_notices_after_legal_end`, which U1's doc promised.\n  - `merged_identifiers` per holder.\n  - The operations.md entries.\n- **Other judgment calls:**\n  - `under_review` ignores `GB:nhs-body` verdicts, otherwise every reviewed member would be flagged.\n  - The admin endpoint caps `reviewed_holders` at 10,000 ids.\n  - Notice years are UTC, so a date-only notice of 1 January published east of UTC counts in the previous year (documented in the code).\n\n## Left undone\n- The wet path, alias, merge, unwind and the `nhs_body_merged` / `nhs_body_regrown` reports are U4, as instructed.\n- The gate, the commit and the deploy are still to do.\n- `crates/store/src/canonical.rs` and `crates/app/src/supervisor.rs` are files the 491 3(b) work also touches. My changes there are in contiguous blocks, but check `git diff` before staging in case someone else is mid-edit.",
+    "reviews": [
+      {
+        "lens": "correctness",
+        "verdict": "fix-first",
+        "findings": [
+          {
+            "severity": "should-fix",
+            "file_line": "crates/store/src/canonical.rs:25000-25056 (plan_nhs_bodies harvest loop)",
+            "problem": "The harvest misses some holders. A party becomes a holder only when its mention's raw identifier is the code, or through a keyed GB-PPON pair. Consider a GB party that publishes a three-character GB-NHS code at ordinal 1 or later, behind a non-PPON first identifier (GB-COH, GB-CHC, or a PPON that altid_pair_key does not key as E1). Its tail lands in party_tails, but with no keyed PPON no pair forms. It is not a coded party, not countryless or non-GB, not in other_nhs_values, and not in any sample. So the census never lists, counts or samples the org that party's mention bound. The live holder set that `reviewed_holders` must equal is therefore not 'every holder', which undermines S0 ('no verdict for a body with an unread holder'): such a holder can never make a verdict stale, and a verdict reviewed without it reads `admitted`. The same gap affects the non-GB and country-less counts, which also only look at the raw identifier.",
+            "evidence": "The coded-party path reads only `raw` (`if let Some(raw) = raw { ... (args.tail)(&value)`, ~25002). The pair path pairs party_tails only with `GB-PPON` rows that altid_pair_key returns as `(\"GB:ppon\", key, true, _)` (~25036-25055). ingest/src/project.rs:4940 sets `raw_identifier` to the FIRST BT-501 Id. fts/parse.rs:228 emits `identifier` then `additionalIdentifiers` as successive BT-501 rows. A concrete exposed code is DQF, which is on the allowlist (sdk/nhs-ods.tsv: `DQF A RC1 RO172 1 ... CALDERDALE AND HUDDERSFIELD SOLUTIONS LIMITED`) and is a company, so it plausibly publishes GB-COH first. I did not verify on prod how often this shape occurs (no box access).",
+            "fix": "In the ids loop, for a GB party with no raw tail (or a raw tail that differs) whose party_tails is non-empty: add the org its mention bound as a holder of each such tail, with a distinct `via` (e.g. `party-later`), so a holder is not missed. At minimum, count and sample these parties (e.g. `later_coded_parties` and a sample) and give each affected code a flag so the reviewer knows the holder set is partial. Count non-GB and country-less parties over all ordinals as well. Add a test with [GB-COH-…, GB-NHS-RTH] showing the bound org is listed or counted. Decide this before U3 posts verdicts: widening the holder set afterwards stales every posted verdict."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:27513-27518 (verdict_rows \"merge\")",
+            "problem": "The only way to read org_merge_verdicts back is `GET /admin/case-reviews?table=merge`, because the table is not on the /v1/sql allow-list. Its fixed column list still omits the new `reviewed_holders`. U3 cannot read back the holder set it posted, except through `nhs-body-plan`, and the plan only shows verdicts for codes the harvest saw.",
+            "evidence": "`\"merge\" => (\"org_merge_verdicts\", &[\"country\", \"scheme\", \"key\", \"cohort\", \"members\", \"action\", \"rationale\", \"confidence\", \"reviewed_at\", \"applied_at\", \"applied_action\", \"job_id\"], ...)` has no reviewed_holders. docs/operations.md lists this endpoint as the read-back of a verdict store.",
+            "fix": "Append `reviewed_holders` to the merge column list in verdict_rows. It is the last column, so existing readers by position are unaffected."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:25259-25300 and 25370-25390 (denials and verdict status)",
+            "problem": "A holder whose org row no longer stands (`stands: false`) is neither denied nor kept out of admission. Its facts are empty, so minted_identity, generic, consortium and successor_name are all false. A verdict naming a vanished org as a member is reported `admitted`. This can happen inside one run: the reader is not one snapshot across statements, so a concurrent wet merge or sweep can delete an org between the minutes-long harvest and the per-holder reads.",
+            "evidence": "nhs_org_facts returns `NhsOrgFacts::default()` (stands=false) when the PK read misses. `is_generic` requires `f.stands`, `successor_name` is None when `!f.stands`, and `identifier` is None, so `denied` is empty and the org joins `entry.eligible`. The status ladder checks only stale, members-not-live, contested and member-denied.",
+            "fix": "Deny a non-standing holder structurally (e.g. a `gone` reason), or add a `member-gone` verdict status, so `admitted_verdict` never counts a verdict over an org that does not exist."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:25303 and 25370-25390",
+            "problem": "The `admitted` status ignores D4. A member whose 234 key belongs to a standing identifier-NULL row outside the body is listed in `key_owners_elsewhere`, but the verdict still counts as `admitted`. U4 must hold that member (D4: `alias_key_owned_elsewhere`, member held), so `admitted_verdict` overstates what the wet path can fold, and that is the count S0 ('0 elsewhere-owned keys admitted') is read from.",
+            "evidence": "`key_owners_elsewhere` only increments `report.key_owned_elsewhere` and is never added to `denied`. The status ladder does not consult it.",
+            "fix": "Add a status such as `member-key-owned-elsewhere` before `admitted`, or a holder flag that the ladder checks, so an admitted verdict means U4 can fold every member."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:7002",
+            "problem": "The `consortium` denial, which no verdict can override, fires on any single mention spelling read (up to 4,096), not only the head name. The report does not say which spelling triggered it. One stray consortium-shaped mention on the body's PPON org (the intended survivor) denies it, and if that spelling is not among the 64 most frequent name_norms, the reviewer cannot see why.",
+            "evidence": "`f.consortium = consortium(&f.name) || spelling.values().any(|name| consortium(name));`. `spelling` covers every distinct name_norm read, before `name_norms` is truncated to `caps.names`.",
+            "fix": "Record the spelling(s) that triggered the flag on the holder (e.g. `consortium_names`, capped), or limit the denial to the head name and keep the mention-spelling hit as a flag only."
+          }
+        ]
+      },
+      {
+        "lens": "tests",
+        "verdict": "fix-first",
+        "findings": [
+          {
+            "severity": "should-fix",
+            "file_line": "crates/store/src/canonical.rs:26798 (record_merge_verdicts upsert); test crates/store/tests/nhs_body.rs:515",
+            "problem": "No test checks that posting again to the same (country, scheme, key, cohort) replaces `reviewed_holders`. If `reviewed_holders = excluded.reviewed_holders` is dropped from the ON CONFLICT clause, every test still passes. That is the exact step U3/U6 takes after a newcomer: post the verdict again with the new holder set. Under that regression, the old set is kept and the body stays `stale` forever, with nothing saying why.",
+            "evidence": "Mutation M9 deleted the `reviewed_holders = excluded.reviewed_holders` line from the ON CONFLICT clause. All 20 focused tests passed with EXIT=0 (scratchpad/review/M9.log). The newcomer test does post again in the same cohort, but as `medium`, so its `not-high` status comes out the same whatever the holder set says.",
+            "fix": "In a_newcomer_holder_makes_the_body_verdict_stale, after the stale assertion, post `b.verdict(\"RTH\", vec![1,2], Some(vec![1,2,3]), \"merge\", \"high\")` in the same cohort `513-u2-test`. Then assert status `admitted` and that `SELECT reviewed_holders ... WHERE key='RTH'` reads `[1,2,3]`."
+          },
+          {
+            "severity": "should-fix",
+            "file_line": "crates/store/src/canonical.rs:25379",
+            "problem": "Only the newcomer half of the members-exact rule is tested. The 'departed' half has no test: a reviewed holder that is no longer a live holder. If the check becomes `if !newcomers.is_empty()`, a verdict whose `reviewed_holders` is a strict superset of the live set is ADMITTED. That breaks the spec's \"reviewed_holders equals the live holder set exactly\", and the report's `departed` field is never asserted.",
+            "evidence": "Mutation M2b replaced the condition with `if !newcomers.is_empty() {`. All 20 tests passed with EXIT=0 (M2b.log). By contrast, removing the whole stale check (M2) is caught by a_newcomer_holder_makes_the_body_verdict_stale (M2.log).",
+            "fix": "Add a case where live holders are {1,2} and the verdict is `members [1,2], reviewed_holders [1,2,99]`. `validate()` accepts it, because members are a subset of reviewed. Assert status `stale`, `departed == [99]`, `newcomers == []`, and `admitted_verdict == 0`."
+          },
+          {
+            "severity": "should-fix",
+            "file_line": "crates/store/src/canonical.rs:25094-25110 (PPON holder paths in plan_nhs_bodies)",
+            "problem": "The census can reach a code's PPON holders in four ways. No single one has a test of its own: the PPON-first party walk, the own-triple seek (`orgs_with_triple`), the merged-identifier seek, and the withheld filter. Both fixtures that have a PPON org (in nhs_body.rs and the supervisor test) reach it through both the PPON-first party AND its own triple, so each path hides the loss of the other. The merged-identifier and withheld paths have no fixture at all. The holder set is the set every verdict's `reviewed_holders` must equal exactly. If it silently grows or shrinks, every reviewed body goes stale, or a holder the reviewer never read goes unseen (S0).",
+            "evidence": "Each of these mutations passed all 20 tests with EXIT=0. M15 swapped `orgs_with_triple(...)` for an empty Vec (M15.log). M16 dropped `ppon_first` and started owners from an empty set (M16.log). M17 disabled the merged-identifier holders (`if false && same_triple ...`, M17.log). M18 removed both `!withheld.contains(&org)` filters (M18.log).",
+            "fix": "Add store fixtures for: (a) a code-first party `[GB-NHS-RTH, PPON]` bound to a cluster, plus a PPON org carrying the triple that no PPON-first FTS party names, so it is a holder via the triple only; (b) a survivor carrying the PPON only in organization_merged_identifiers, which must be a holder; (c) an org_identifier_verdicts `wrong` row on the PPON org's triple, which must not be a holder; (d) a PPON-first party bound to an org without the triple, which must be a holder via ppon_first only. Assert `holder_ids` and `via` for each."
+          },
+          {
+            "severity": "should-fix",
+            "file_line": "crates/store/src/canonical.rs:7005 (nhs_org_facts key-owner probe); test crates/store/tests/nhs_body.rs:386",
+            "problem": "`key_owners_elsewhere` / `key_owned_elsewhere` (D4, the evidence for S0's \"0 elsewhere-owned keys admitted\") is only ever asserted empty. Removing the probe altogether passes every test, so the census could report no foreign key owners even when they exist.",
+            "evidence": "Mutation M27 added `&& false` to the `if let Some(country) = f.country.as_deref() && !f.name_norm.is_empty()` guard, so the probe never runs. All 20 tests passed with EXIT=0 (M27.log). grep shows the only assertions are `ppon_org.key_owners_elsewhere.is_empty()` and `r.key_owned_elsewhere == 0`.",
+            "fix": "Add a positive case: a PPON holder whose head name_norm equals the key of a standing identifier-NULL GB org that holds no code (not a holder). Assert that holder's `key_owners_elsewhere == [that id]` and `report.key_owned_elsewhere == 1`. Keep the existing in-body case asserting empty."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:25217; test crates/store/tests/nhs_body.rs:695",
+            "problem": "The test does not pin which side of the legal end `coded_notices_after_legal_end` counts. The fixture has exactly one coded notice before QNQ's legal end and one after, so counting the wrong side gives the same 1.",
+            "evidence": "Mutation M28 changed `.is_some_and(|at| at >= end)` to `.is_some_and(|at| at < end)`. All 20 tests passed with EXIT=0 (M28.log). a_successor_name_member_is_denied asserts `coded_notices_after_legal_end == 1`, and both directions give 1.",
+            "fix": "Make the counts unequal, e.g. add a second pre-end coded QNQ notice (2025) and keep one after (2026-05). Assert 1, which the inverted mutation would report as 2."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/app/src/supervisor.rs:9807",
+            "problem": "The production-wiring test never exercises the O/0 fold. Swapping the injected `ingest::nhs_ods::survivor_code` for an allowlist lookup that never folds passes every test. The store's own handling of `folded` IS pinned: dropping folded tails in the planner (M4) fails an_o0_tail_folds_into_its_code.",
+            "evidence": "Mutation M4b wired `survivor_code: |t: &str| ingest::nhs_ods::org(t).filter(|o| o.allow).map(|o| (o.code, false))`. It compiled and all 20 tests passed with EXIT=0 (M4b.log). The nhs_body.rs module doc says the production wiring is pinned \"by the supervisor's nhs-body tests\".",
+            "fix": "In an_nhs_body_census_lists_every_holder_and_admits_a_reviewed_verdict, add a `GB-NHS-ROB` party bound to a South Tyneside and Sunderland cluster. The real table has no O/0 twin, so ROB folds uniquely to R0B. Assert `folded_parties == 1` and that the R0B entry's tail ROB has `folded: true`."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/app/src/supervisor.rs:9784-9800",
+            "problem": "No test covers the nhs-body arm's own refusals while a key build is in flight (`watermark != 0`) or the key epoch has drifted. Both can be disabled with every test still green. The census's generic-wall flag would then quietly read a half-built or superseded keyspace.",
+            "evidence": "Mutation M36 prefixed both `if watermark != 0` and `if keys > 0 && epoch != NAME_KEY_EPOCH` in the nhs-body arm with `false &&`. All 20 tests passed with EXIT=0 (M36.log).",
+            "fix": "Add a supervisor test that sets org_match_keys_state to a nonzero watermark, or to a foreign epoch with keys present, then runs `nhs_body_job(n, true)`. Assert the `nhs-body REFUSED` message and that no `nhs-body-plan` report is stored, mirroring altid's refusal test."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:27514-27516 (verdict_rows \"merge\" column list)",
+            "problem": "The only read-back of the merge-verdict store is `GET /admin/case-reviews?table=merge`, and its column list leaves out the new `reviewed_holders`. The table is not on /v1/sql, so U3 cannot check the holder set it posted except through the census report, and that shows a verdict only for codes the harvest still sees.",
+            "evidence": "The column list is fixed: `&[\"country\", \"scheme\", \"key\", \"cohort\", \"members\", \"action\", \"rationale\", \"confidence\", \"reviewed_at\", \"applied_at\", \"applied_action\", \"job_id\"]`, with no `reviewed_holders`. docs/operations.md says this endpoint is how verdict stores are read back (issue 356).",
+            "fix": "Add `\"reviewed_holders\"` to the merge column list. It is NULL for R2 and altid rows. Extend the admin test to read it back with `GET /admin/case-reviews?table=merge&cohort=nhs-body-ods-confirmed-test`."
+          }
+        ]
+      }
+    ]
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Build"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Review"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "build:u2",
+      "phaseIndex": 1,
+      "phaseTitle": "Build",
+      "agentId": "ae684715819c04250",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791739956721,
+      "queuedAt": 1791739956719,
+      "attempt": 1,
+      "lastToolName": "TaskUpdate",
+      "lastToolSummary": "46",
+      "promptPreview": "Issue 513 (/home/user/tender-db/.scratch/tender-db/issues/513-letter-only-nhs-ods-codes-mint-no-identity.md): read \"Decision (unit 2, second)\"\n(D1-D8, Units, Stop rules) and \"U1 — built\". The FULL design is design C in /home/user/tender-db/.scratch/tender-db/513-nhs/u1/design-panel-wf_75976f73.json\n(result.designs[key=C]: units U2..U5 with code sites, and refold_invariance) — read its U2 and U5 ca…",
+      "promptFramed": true,
+      "lastProgressAt": 1791742561099,
+      "tokens": 482701,
+      "toolCalls": 171,
+      "durationMs": 2604377,
+      "resultPreview": "U2 is built: the dry `nhs-body` census job, the store planner behind it, and the `reviewed_holders` verdict schema. Every focused run passed with EXIT=0. Nothing is committed, `ops/check.sh` was not run, and the production box was not touched.\n\n## Files changed\n- `crates/store/src/canonical.rs`\n  - Verdict schema: `reviewed_holders TEXT` added as the last column of `org_merge_verdicts` (so fresh a…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "review:correctness",
+      "phaseIndex": 2,
+      "phaseTitle": "Review",
+      "agentId": "a9384b9dd6dd6e7aa",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791742563816,
+      "queuedAt": 1791742563782,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "fix-first",
+      "promptPreview": "Adversarial REVIEW of issue 513 U2 as built in /home/user/tender-db (uncommitted working tree). Builder's report:\nU2 is built: the dry `nhs-body` census job, the store planner behind it, and the `reviewed_holders` verdict schema. Every focused run passed with EXIT=0. Nothing is committed, `ops/check.sh` was not run, and the production box was not touched.\n\n## Files changed\n- `crates/store/src/cano…",
+      "promptFramed": true,
+      "lastProgressAt": 1791743262882,
+      "tokens": 255702,
+      "toolCalls": 73,
+      "durationMs": 699065,
+      "resultPreview": "{\"verdict\":\"fix-first\",\"findings\":[{\"severity\":\"should-fix\",\"file_line\":\"crates/store/src/canonical.rs:25000-25056 (plan_nhs_bodies harvest loop)\",\"problem\":\"The harvest misses some holders. A party becomes a holder only when its mention's raw identifier is the code, or through a keyed GB-PPON pair. Consider a GB party that publishes a three-character GB-NHS code at ordinal 1 or later, behind a no…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "review:tests",
+      "phaseIndex": 2,
+      "phaseTitle": "Review",
+      "agentId": "a5b2600616b0764dd",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791743264944,
+      "queuedAt": 1791743264940,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "fix-first",
+      "promptPreview": "Adversarial REVIEW of issue 513 U2 as built in /home/user/tender-db (uncommitted working tree). Builder's report:\nU2 is built: the dry `nhs-body` census job, the store planner behind it, and the `reviewed_holders` verdict schema. Every focused run passed with EXIT=0. Nothing is committed, `ops/check.sh` was not run, and the production box was not touched.\n\n## Files changed\n- `crates/store/src/cano…",
+      "promptFramed": true,
+      "lastProgressAt": 1791747722112,
+      "tokens": 256299,
+      "toolCalls": 70,
+      "durationMs": 4457167,
+      "resultPreview": "{\"verdict\":\"fix-first\",\"findings\":[{\"severity\":\"should-fix\",\"file_line\":\"crates/store/src/canonical.rs:26798 (record_merge_verdicts upsert); test crates/store/tests/nhs_body.rs:515\",\"problem\":\"No test checks that posting again to the same (country, scheme, key, cohort) replaces `reviewed_holders`. If `reviewed_holders = excluded.reviewed_holders` is dropped from the ON CONFLICT clause, every test …"
+    }
+  ],
+  "totalTokens": 994702,
+  "totalToolCalls": 314
+}
