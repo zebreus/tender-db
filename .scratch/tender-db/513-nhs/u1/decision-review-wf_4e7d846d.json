@@ -1,0 +1,310 @@
+{
+  "summary": "Adversarially review the issue-513 unit-2 decision: code claims, data claims, design soundness",
+  "agentCount": 3,
+  "logs": [],
+  "result": [
+    {
+      "lens": "code",
+      "verdict": "sound-with-fixes",
+      "findings": [
+        {
+          "severity": "should-fix",
+          "claim": "D3: \"A provisional cluster left empty is reclaimed through the standing reclaim, which stamps ledger rows (old ids redirect through the ledger).\"",
+          "problem": "No standing reclaim writes a ledger row. The only path that removes an org nobody mentions is the issue-443 orphan sweep. It writes a pre-image to org_sweep_log and a 'removed' change, and nothing in org_merge_log. Redirects follow org_merge_log only, so an emptied cluster's id would resolve to Unknown (a 404, and an empty ?winner= page), not to the identity org. The sweep also skips any org that party, bid-party or winner rows still name, so the moved mentions' tenders must be refolded before the cluster can go. D3 does not say who stamps them stale. The phrase \"standing reclaim\" appears nowhere else in the repo.",
+          "evidence": "canonical.rs:32747-32795 (sweep_orphans_tx: INSERT INTO org_sweep_log at 32759, DELETE, append_change 'removed' at 32792; no org_merge_log). read.rs:4841-4869 (resolve_org reads only org_merge_log; the doc at 4817-4822 says merges are what make old ids resolve). canonical.rs:11448-11464 (chase_merged_org, the same). The sweep's reference check is at canonical.rs:32695-32707. The comment at 32611-32612 says issue 434's refresh \"re-binds a mention in place and leaves the row it left\". The 234 backfill (18485, 18586-18588) also deletes without a ledger row. The only org_merge_log writers are r2 (19685), r3 (22394), altid (24582), rekey (26128) and the p0/p1 fold (29272). The rehoming precedent stamps tenders stale and re-queues them (24873-24878).",
+          "fix": "Specify unit 3's retirement step. For a cluster the job empties completely, use a merge-shaped delete in the job's own transaction: repoint_org_references(keep=identity org, loser=cluster), DELETE the cluster, INSERT org_merge_log with a new rule (e.g. 'nhs-rebind') and job_id. Also stamp the affected tenders stale, as apply_rehoming does. Otherwise drop the redirect claim and accept 'removed' ids."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "D1: the exemption covers zero-only tails (R0B, 0AR). Sub-ICB location codes (\\d\\d[A-Z]) are out of scope and filed as 519.",
+          "problem": "As written, D1 exempts any three-character tail whose only digits are 0. That includes the 00[A-Z] sub-ICB location codes (00N South Tyneside, 00P Sunderland). The all-zero rule refuses those today, so D1 would newly mint them. Unit 3 would then move ICB mentions into new sub-ICB identity orgs, which is the split issue 519 describes, now made larger by this issue.",
+          "evidence": "project.rs:8715-8717 (the all-zero rule is the only thing refusing GBNHS00N today). In mention-counts-by-org.jsonl, org 30915134 (NHS North East and North Cumbria ICB, a QHM SAME holder) carries GB-NHS-00N x5 and GB-NHS-00P x8, and org 31538425 (the same ICB) carries GB-NHS-00P x2: 15 mentions. The issue's own text (lines 46-47, 100) says the \\d\\d[A-Z] form is a sub-ICB location, not an organisation.",
+          "fix": "Exclude tails that match [0-9][0-9][A-Z] (at minimum 00[A-Z]) from the exemption, and test it. Have the unit-3 dry plan report any 00X value it would mint."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "D1: \"the placeholder risk sits in the tail, which the denylist covers\" (TBC TBA TBD NHS NIL NON UNK XXX ZZZ AAA and same-letter runs).",
+          "problem": "I read only the 393 adjudicated holders, and D1 would already mint tails there that are not ODS organisation codes and that the denylist misses. The worst is GB-NHS-ICB, carried by two different ICBs. Under D2's name-blind exact-triple bind, both ICBs' mentions would land on one GBNHSICB org, a cross-body fusion. Others are O/0 and letter typos that each mint a split identity: ROB for R0B, Q0X for QOX, OYG for QYG, ODX. There are also hospital abbreviations: KGH, NGH, UHS. NHS codes get no O/0 fold; the issue-470 fold exists only for GB:coh.",
+          "evidence": "mention-counts-by-org.jsonl. GB-NHS-ICB is on orgs 30915134 (NENC ICB) and 30916368 (Northamptonshire ICB). ROB x2 is on 13569138 (South Tyneside and Sunderland FT, real code R0B). Q0X x2 is on 30913839 (BSW ICB, real code QOX). OYG x3 is on 30913962 and 30916196 (Cheshire and Merseyside ICB, real code QYG). ODX x6 is on 6191087 (Midlands and Lancashire CSU). KGH is on 1432862, NGH on 1251847, UHS on 1262730. None of these tails is among the 129 ODS-checked codes. The O/0 fold is crosswalk.rs:400-424 (GB:coh only).",
+          "fix": "Add NHS-domain words to the denylist (ICB, CCG, CSU, GP and similar), with a test that GB-NHS-ICB mints nothing. Or require the tail to be in an ODS-verified set or lead-letter set. Either way, make S2 sample the tails that unit 3's dry plan would actually mint, including these, not only the newly ODS-listed codes."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "u1-results: the adjudication covers \"every holder of the 131 identity-null codes\". D3/D4 build on its 238 SAME holders, 7,408 coded mentions, 0.96% strays and ~36 empty clusters.",
+          "problem": "The listing caps register-side holders at 5 per pair. Eleven identity-null codes have more holders than that, so 35 holders were never listed or adjudicated. These are the multi-holder ICB and trust codes where the strays concentrate (QHM, QKK and QMF are named as stray sources). Every derived number is therefore a lower bound, and the 0.96% that S1's 3% threshold is set against may be biased low.",
+          "evidence": "canonical.rs:5802 sets REGISTRY_NHS_REGISTER_HOLDERS = 5. Computed from nhs-listing-2236.json, registry_holder_count against listed holders: QHM 16/5, QYG 11/5, QMF 10/5, QKK 8/5, QRL 8/5, QOQ 7/5, QMJ, RBL, RBN, RJZ and RWW 6/5 each. That is 11 codes and 35 unlisted holders.",
+          "fix": "Before unit 3, list the uncapped holders for those 11 codes, or have the D4 dry plan recompute the class split and the stray rate corpus-wide. Restate S1's baseline from that."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "D2: \"Strays stay identifier-verdict material (452's withheld-identifier path), as for every other scheme.\"",
+          "problem": "That path cannot separate a stray from its host. Verdicts apply to a whole triple, so a 'wrong' verdict on (GB, national, GBNHSRET) would withhold the true body's identity org, which also holds the stray Alder Hey mentions under that triple. 452's name-gated binding works on canonical keys only, and GBNHS values have none, so a withheld GBNHS triple still binds name-blind. Per-mention rehoming (issue 317) is not consulted by the resolver, so a rebuild re-binds a rehomed stray by exact triple. Under D2+D3, strays now correctly bound by name (for example Alder Hey's 16 mentions under RET) move into the neighbour's identity org with no working way back.",
+          "evidence": "canonical.rs:7267-7305 (\"Verdicts are triple-wide\"; withheld_identifier_orgs returns every org carrying the triple). canonical.rs:15643-15656 and 16823-16838 (guarded keys are canonical keys, `if let Some((ck, false)) = keyed`). canonical.rs:15622-15624 (\"The exact triple below still binds\"). crosswalk.rs:400-433 (for GBNHSxxx the remainder after stripping GB is NHSxxx, 6 non-digit characters, so `_ => None`). org_mention_rehoming is not read by the resolver (only by 19970, 20521, 24922 and 32556).",
+          "fix": "Drop or restate the remedy claim. Either say strays are accepted as permanent under literal binding, or have unit 3 leave adjudicated DIFFERENT-class mentions in place and accept that a rebuild re-binds them."
+        },
+        {
+          "severity": "minor",
+          "claim": "D1: \"The arm still runs under the v2 gate\" / \"any tail that idgate::condemns condemns\" is excluded.",
+          "problem": "idgate::condemns can never return true for a value of the shape GBNHS plus three alphanumerics, so the gate adds nothing here and the denylist is the arm's only filter. Also, condemns reads the whole value, not the tail.",
+          "evidence": "idgate.rs:389-399 is the OR of the following components, each false for the shape. lexicon_hit (439-487) needs NIMAT, ORG, BT, OPT or OPP, all digits, or a 1234 lead. sequence needs at least 5 digits (493-496). short_vat is VAT-only. phone needs a leading t (227-231). routing_scope needs LEITWEG or BERICHT (436, 148). bare_four_digit needs length 4 (149-155). notice_number needs four leading digits (270-284). The checksum scheme is 'other'/Unknown under GB (171-213).",
+          "fix": "Say in the decision and in the tests that the denylist is the whole gate for this arm. Do not count condemns as protection."
+        },
+        {
+          "severity": "minor",
+          "claim": "D3: \"Expected result: 131 identity orgs hold the 7,408 coded mentions now spread over 238 SAME clusters. About 36 clusters empty out.\"",
+          "problem": "D1 itself refuses the two typed names, and DQF has no register-side holder. So the listed codes yield at most 128 identity orgs holding 7,402 SAME coded mentions from 235 clusters. The job moves every coded mention, not only SAME ones, so 47 listed holders empty out, not 36. Separately, 492 'other' mentions on SAME holders (bare `RTD` x29 on 1166415, `RGT` x12 on 1168300, …) are out of D1's reach and stay on the twin.",
+          "evidence": "From adjudication-rows.json (registry side): the SAME typed-name holders are WESTMIDLANDSAMBULANCESERVICE on 6384818 (1 coded) and 13335820 (2), and NHSCHESHIREANDMERSEYSIDEICB on 30916196 (3). There are 130 registry-side codes, and GBNHSDQF has registry_holder_count 0. Holders with uncoded=0 and other=0 on three-character codes: 36 SAME + 6 HOSTED_OR_SITE + 3 DIFFERENT + 2 NOT_ORG = 47. Bare codes are refused by length < 4 at project.rs:8710, and the scheme is deliberately not passed to the normaliser (project.rs:4962-4973).",
+          "fix": "Correct the expected counts, or let the D4 dry plan state them, and name the bare-code residue."
+        },
+        {
+          "severity": "minor",
+          "claim": "D1: normalise_identifier \"mints a GB national identity\".",
+          "problem": "The arm would scope the identity by the mention's own country, not GB. A country-less mention mints (NULL, national, GBNHSxxx), a second identity for the same code. No anchor can reach it, because checksum_anchors returns nothing for a value with letters. The 469 register planner and registry_mention_key both require GB, so U7 would never pair it.",
+          "evidence": "project.rs:8677 and 8788-8792 (national() uses the mapped mention country). canonical.rs:16986-16987 (the anchor path applies only when the identifier has no country). idgate.rs:802-808 (empty result for a letter-bearing value). canonical.rs:23971-23976 (own_row requires country 'GB'). crosswalk.rs:1244.",
+          "fix": "Have the arm set the country to GB, since the value declares it (as the VAT arm canonicalises its prefix at project.rs:8861). Or have the dry plan count country-less GB-NHS mentions."
+        },
+        {
+          "severity": "minor",
+          "claim": "D3: \"Such a mention moves to the identity org, which its first mention mints.\"",
+          "problem": "A mint takes the binding mention's name as the org's head name, and no code ever re-elects a head name. So the identity org is named after whichever coded mention reaches the resolver first: job order, or the first new notice after D1 deploys. That could be a stray (Alder Hey under RET) or a typo. The head name is what the API serves and what the 469 legal-form vetoes read.",
+          "evidence": "canonical.rs:17270-17283 (INSERT ... t(&m.name)). There is no `UPDATE organizations SET ... name` anywhere in crates/store/src. Head-against-head reads are at canonical.rs:16168-16174 and 24010-24016.",
+          "fix": "Have unit 3 mint each identity org itself, under the dry plan's most frequent SAME name, before moving mentions. Decide what happens when ingest mints one first, between the D1 deploy and unit 3."
+        },
+        {
+          "severity": "minor",
+          "claim": "Unit 2's build: \"normaliser arm + tests\".",
+          "problem": "Existing tests that run the production normaliser assert the very behaviour D1 changes. The store-side stub documents the old rule as production behaviour. Once they are flipped, the no_identity class needs a new exemplar.",
+          "evidence": "supervisor.rs:16975-17026 and 17053-17054 (asserts GB-NHS-R0B mints nothing and no_identity == 1, through the production normaliser). ingest/tests/fts.rs:839-918 (GB-NHS-QWO as the no-identity case; register_identity is normalise_identifier at 633, 750 and 883). store/tests/altid_merge.rs:145-155 (stub doc: \"a letter-only NHS code (`GB-NHS-QWO`) mints none\").",
+          "fix": "Re-base these fixtures on a value D1 still refuses (a typed name or a five-character letter-only code) and update the stub's rule and doc."
+        }
+      ]
+    },
+    {
+      "lens": "data",
+      "verdict": "sound-with-fixes",
+      "findings": [
+        {
+          "severity": "blocking",
+          "claim": "D1: mint for any GBNHS + 3 alphanumerics, no ODS check, a placeholder denylist and no lead-letter list. The 'Why' is that ODS answers all 129 measured codes as Active organisations, and 'the placeholder risk sits in the tail, which the denylist covers'.",
+          "problem": "The 129 codes are a selected sample: the codes that sit beside a PPON in registry-PPON pairs. The 380 holder orgs' own mentions already contain 20 more three-character tails that D1 would mint. 18 of them are not an Active ODS organisation of the body that carries them. The denylist misses 'ICB', and the zero-only exemption lets sub-ICB locations through, the class the issue itself says is not an organisation (line 46-47) and filed as 519. S2 guards only unit 3's re-bind. The normaliser change ships in unit 2 and goes live for new ingest and any rebuild with no gate.",
+          "evidence": "Scratch script s9.py run over mention-counts-by-org.jsonl, plus 20 read-only ODS GETs saved to scratchpad/odsx/. ODS returns 404 for 13 of them: ICB, OYG, OYD, 0YD, ODX, ROB, Q0X, QYC, QKJ, QLG, RGY, UHS, KGH. RCN (on Harrogate org 1381987) and RMB (on Blackpool org 2004062) are Inactive trusts that closed in 2002 and 2003. 00N and 00P are SUB ICB LOCATION records, carried by NENC ICB orgs 30915134 and 31538425 (15 mentions). NGH is ODS 'AMPLIFON HQ' but sits on Northampton General Hospital org 1251847. GB-NHS-ICB sits on both Northamptonshire ICB (30916368) and NENC ICB (30915134), so GBNHSICB would bind two different ICBs to one identity. That is 18 bad tails out of 148 distinct D1 tails, or 12%. At that rate the odds that S2 (more than 2 failures in 50) fires are about 0.95. Only RWK and AAV are real codes.",
+          "fix": "Before D1 ships, run a census of every distinct GBNHS + 3-character tail in the corpus against ODS. Mint only for ODS-confirmed RC1 organisation codes (a frozen allowlist refreshed from ODS), or at least: drop `00[A-Z]` from the zero-only exemption, add ICB, CCG and CSU to the denylist, and refuse O-led tails. Move S2 ahead of the normaliser change, not after it."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "u1-results line 10-11 says the adjudication covers 'every holder of the 131 identity-null codes'. The class table (238/117, 19/5, ...), the 0.96% stray rate, '61 of 73 have 2-5 SAME holders' and 'about 36 clusters empty out' all rest on it.",
+          "problem": "The listing caps registry holders at 5 and keeps the lowest org ids. 35 of the 304 registry holders (11.5%) were never listed, adjudicated or counted. They sit in the most-split, most stray-prone codes. The '2-5' upper bound is the cap, not a finding.",
+          "evidence": "In nhs-listing-2236.json the registry_holder_count values sum to 304, but only 269 holders are listed. 11 codes are capped: QHM 16, QYG 11, QMF 10, QKK 8, QRL 8, QOQ 7, and QMJ, RBL, RBN, RJZ and RWW at 6 each. Holders are listed in ascending org_id order (QHM: 3257070, 30915134, ...). In the capped codes, 7 of the 55 listed holders are DIFFERENT (13%), against 22 of 269 overall (8%). The capped set includes QKK and QMF, the London ICB swap.",
+          "fix": "Run bounded reads of the 35 unlisted holders, by code, and adjudicate them before unit 3. Restate the table, the 0.96% and the 36 empties as covering the listed subset, or recompute them over all 304."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "D2/D3 justify name-blind literal binding with the corpus-wide 0.96% stray rate. D3 says about 36 clusters empty out and that empty clusters are reclaimed with ledger redirects.",
+          "problem": "Strays bunch up in a few codes. For REN and RET, most of the mentions the re-bind would move belong to another trust, so the minted org ('which its first mention mints') can take the wrong body's name. S1 is measured corpus-wide and cannot see this. Also, 11 clusters outside SAME empty out completely, so wrong bodies would be reclaimed into, and redirected to, another trust's identity.",
+          "evidence": "From adjudication-rows.json, coded registry mentions per code. REN: 15 of 22 are the Walton Centre (68%). RET: 16 of 25 are Alder Hey (64%). RXX: 1 of 2. RAE: 3 of 7 (Leeds). Full emptiness was checked against the raw identifiers in mention-counts (s9.py): 47 listed clusters empty, of which 36 are SAME, 3 DIFFERENT, 2 NOT_ORG and 6 HOSTED. The 3 DIFFERENT ones: Alder Hey 30968741 holds only GB-NHS-RET x16 and would go to the Walton Centre; Leeds Teaching Hospital Trust 31565965 holds only RAE x3 and would go to Bradford; Sustainable Energy First Ltd 31610393 holds only RWF x3 and would go to MTW.",
+          "fix": "Add a per-code stop: hold any code whose moved mentions are more than about 25% adjudicated or disjoint-name. Name the minted org from ODS or from the code's most frequent SAME name, not from the first mention. Have the dry plan list clusters that empty out but are not SAME, and send them to verdicts instead of reclaim-with-redirect."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "D4 S1: stop if more than 3% of moved mentions carry a name sharing no core token with the code's top name. 'The listing measured about 1% of strays, most of them with overlapping names.'",
+          "problem": "'Core token' is not defined. Under the repo's own core-token test, the NHS words count as core tokens, so S1 sees only about a quarter of the adjudicated strays. 3% would then fire only at a true stray rate near 11%. 'Most overlap' describes how weak the test is, not how close the names are.",
+          "evidence": "canonical.rs:35255 `name_cores_disjoint`: NAME_STOP_TOKENS (canonical.rs ~35285) contains no NHS words, so 'nhs', 'trust' and 'foundation' are core tokens. With that rule, only 19 of the 72 adjudicated stray mentions share no core token with the top SAME name (Alder Hey 16, Community Health and Eyecare 1, the coroners title 1, the framework wording 1), and 0 of 7,408 SAME mentions do. That puts S1's baseline at 0.25%. If generic NHS words are also stopped (hospital(s), university, teaching, north/east/london, centre, partnership), only 7 of 72 strays share a token.",
+          "fix": "Define S1's token rule explicitly, with an NHS stoplist. Set the threshold against the baseline measured under that same rule, about 0.25% today, and make it per code as well as corpus-wide."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "D3 expected result: '131 identity orgs hold the 7,408 coded mentions now spread over 238 SAME clusters'. And: 'After 469 U7 pairs each identity with its PPON org (53 of 54 both_distinct codes are one body)'.",
+          "problem": "D1 itself excludes the two typed names, so it mints 129 identities, not 131. The name-blind re-bind also moves the stray, hosted and NOT_ORG mentions. 238 is a count of rows, not orgs. The U7 claim covers only the 54 both_distinct codes. It leaves out the multi-target codes' PPON holders, 6 of which are not the code's own body. The worst case is the swapped London ICB pair, which has strong witness support.",
+          "evidence": "The SAME coded mentions under NHSCHESHIREANDMERSEYSIDEICB and WESTMIDLANDSAMBULANCESERVICE total 6, and they stay put. Non-SAME coded mentions under the 129 codes total 87 (68 DIFFERENT, 15 HOSTED, 4 NOT_ORG). The 238 SAME rows are 235 distinct orgs, because 6384818, 13335820 and 30916196 are listed under both a typed name and a real code. QKK's PPON PCXT8262NYRV (13 witnesses) is held by NHS North East London ICB 31576333. QMF's PPON PMLZ8385VMTM (16 witnesses) is held by NHS South East London ICB 31561974. RXX's PPON belongs to Sussex Partnership, RTF's to Northumbria Healthcare Facilities Management (a separate company), 0CX's to 'TEST', and RAL's to the TPHC trading-as.",
+          "fix": "Restate the result as 129 identities receiving about 7,402 SAME + 87 non-SAME coded mentions plus the unlisted holders. Give the U7 numbers over all 124 PPON holders (117 SAME), and flag QKK/QMF, RXX, RTF, 0CX and RAL to U7's gates."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "'ODS answers every one of the 129 measured codes as an Active organisation-level record.' S2 counts codes ODS does not answer as an 'Active organisation'.",
+          "problem": "7 of the 129 codes reached a legal end on 2026-03-31 and have successors, even though their top-level Status still reads Active. S2 does not say which reading it uses. If 'Active' means not legally ended, the measured core set alone fails at 5.4%, and S2 becomes a coin flip.",
+          "evidence": "From ods/*.json: QJG goes to D7T5G and T6Y0W, QMJ to Z9B2Z, QMM to T6Y0W, QNQ to S0E4D, S9B9J and QRL, QXU to S9B9J, RNK to G6V2S, and RYV to RY3. Each has Date Legal End 2026-03-31 and Status 'Active'. At 7/129 the odds that S2 sees more than 2 failures in 50 are about 0.51.",
+          "fix": "Pin S2 to an exact ODS test (Status=Active and RC1, with or without a legal end). Decide whether a legally ended predecessor code mints, and how it relates to its successor's code (some successors, such as G6V2S, already mint)."
+        },
+        {
+          "severity": "minor",
+          "claim": "u1-results arithmetic: §2 'NHS TRUST: 98'. §4 'Only 36 holders have no uncoded mention' and '48,360 uncoded'. §3 'The other 12 have one SAME holder plus strays'.",
+          "problem": "These are small count and wording errors.",
+          "evidence": "The ODS primary roles are NHS TRUST 99, SPA 23, CSU 4, CARE TRUST 2 and ISHP 1, which sum to 129. With 98 trusts the row sums to 128. 37 SAME rows have uncoded=0. 36 empty out completely, because 31571625 also holds GB-NHS-WUTH. The 48,360 counts the uncoded mentions of the 3 doubly listed orgs twice (893); the distinct-org total is 47,467. Of the 12 single-SAME codes, RAL, RGD and RHQ are a SAME holder plus a hosted unit, with no stray.",
+          "fix": "Correct the counts in u1-results §2-§4."
+        },
+        {
+          "severity": "minor",
+          "claim": "Spot-check of the SAME and DIFFERENT adjudications. D2's characterisation that strays are 'almost all a neighbour's code picked by mistake'.",
+          "problem": "I checked 12+ low-similarity SAME verdicts and none looks wrong. One rests on a false premise. The 'neighbour picked by mistake' story does not fit the two largest strays.",
+          "evidence": "s7.py: RWW x4 (Warrington & Halton) is right, because ODS RWW lists RY2 as Predecessor from 2026-04-01 and the code was kept and renamed. RQX Homerton (a rename), RWJ 'N H S', RJZ 'Kings'/'King's College London', RWD, RVV, RYV 'Cambridge', RYY 'Kent Community Foundation Hospitals', REM 'UNIVERSOTY' and RNZ Salisbury + Carbon and Energy Fund are all the same body. The RNZ row is SAME while the analogous RAL and RGD 'T/AS' rows are HOSTED, which is inconsistent but makes no difference under D3. RCX 'Queen Elizabeth Hospital FT' is probably right, but r2's claim that the other QE Hospitals belong to non-FT trusts is false: Gateshead Health NHS FT and UHB NHS FT are both FTs. All 24 DIFFERENT verdicts check out. The fetched ODS records confirm two of them: RWK is ELFT and AAV is Community Health and Eyecare. The largest strays, Alder Hey under RET (16, no shared token) and NECS under QHM (14, a CSU acting for the ICB), make up 30 of 72 stray mentions, and neither is a neighbouring code.",
+          "fix": "Correct RCX's reasoning. Reword D2 to 'about half are near-neighbour codes; the rest are agents, co-located trusts or non-bodies'."
+        }
+      ]
+    },
+    {
+      "lens": "design",
+      "verdict": "sound-with-fixes",
+      "findings": [
+        {
+          "severity": "blocking",
+          "claim": "D1 says it covers zero-only tails such as `R0B` and `0AR`. That exemption also covers the 18 `00[A-Z]` sub-ICB location codes, which the issue itself says are not organisations.",
+          "problem": "The issue (513:46-47) and 519 both say the `\\d\\d[A-Z]` form is a sub-ICB location that splits its ICB. D1's all-zero exemption (513:53-55) still admits `00C`…`00Y`, because their only digit is 0. Today these values are refused, so their mentions bind by name to the right ICB's cluster. Under D1 plus D3, those mentions move to new identity orgs, which creates fresh 519 splits.",
+          "evidence": "ODS RO98 list, fetched 2026-10-11: 18 three-character CCG/sub-ICB codes have no digit except 0 (10 Active). In `mention-counts-by-org.jsonl`, `GB-NHS-00P` has 10 mentions (orgs 31538425 and 30915134) and `GB-NHS-00N` has 5 (org 30915134), all on NENC ICB (QHM) clusters. ODS: 00P is \"NHS NORTH EAST AND NORTH CUMBRIA ICB - 00P\", primary role RO98, Active RC1; 00N is the same. The rule being exempted is project.rs:8715.",
+          "fix": "Limit the zero-only exemption to codes in an ODS organisation-role allowlist, or at minimum exclude `^0\\d[A-Z]$`. Add a test pinning that `GBNHS00P` mints nothing."
+        },
+        {
+          "severity": "blocking",
+          "claim": "D1 is backed by 'ODS answers every one of the 129 measured codes', but those were only codes published next to a PPON. The holders' own mentions carry 22 more three-character tails, most of which are typos, acronyms or placeholders the denylist misses. One of them would merge two ICBs.",
+          "problem": "The 129 come from `registry_nhs_listing`, which holds only GB-NHS↔PPON pairs. D1 is a pure shape rule, so it mints every `GBNHS???` value in the corpus. The denylist (513:61) leaves out `ICB`, acronyms (`UHS`, `KGH`, `NGH`) and O/0 lookalikes. Under D2's name-blind binding, `GB-NHS-ICB` from two different ICBs lands on one identity org, which is a false merge (300 §0: a false merge corrupts served data). `ROB`/`R0B` and `Q0X`/`QOX` each mint two identities for one body: the issue-470 class, recreated.",
+          "evidence": "Raw values on the 269 listed registry holders (`mention-counts-by-org.jsonl`) include 22 three-character GB-NHS tails that are not in the listing. Live ODS ORD lookups on 2026-10-11:\n- 15 return 404: ODX, OYG, ROB, Q0X, ICB, UHS, KGH, RGY, NHS, QYC, QKJ, TBC, QLG, 0YD, OYD.\n- 2 are inactive codes of other trusts: RCN on Harrogate 1381987, RMB on Blackpool 2004062.\n- 2 are sub-ICB locations: 00N, 00P.\n- NGH is Active \"AMPLIFON HQ\" but sits on Northampton General 1251847.\n- Only RWK and AAV are the holder's own code.\n`GB-NHS-ICB` sits on 30915134 (NENC ICB) and 30916368 (Northamptonshire ICB). `GB-NHS-ROB` sits on 13569138, whose code is R0B; `GB-NHS-Q0X` sits on 30913839, whose code is QOX. Across 634 three-character ODS trust, ICB and CSU codes, no real O/0 twin pair exists, so an O→0 fold of the tail cannot collide.",
+          "fix": "Gate D1 on an ODS-derived allowlist of three-character organisation codes (trust RO197, ICB, CSU RO213, care trust, measured IS providers), frozen like the countries.rs table and the 469 U3 shapes. U7 needs ODS confirmation anyway (469 status: 'U7 must confirm against ODS'), so it is not a second register. Also fold O→0 in the tail, and size the problem first with a dry census of every distinct `GBNHS???` raw value, not just the PPON-paired ones."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "The stop rules are checked at unit 3, after D1/D2 have already gone live as prevention in unit 2.",
+          "problem": "S1 and S2 are unit-3 dry-plan rules (513:92-97). The normaliser arm deploys in unit 2 and starts minting and literally binding every new coded mention right away. A 434 re-parse also re-resolves changed mentions. Tripping S1 or S2 then stops the re-bind but does not undo mints already made, and 'revisit D2' would need a reverse re-bind.",
+          "evidence": "513:3 sets the order: unit 2 build (normaliser arm), then unit 3 (dry → read → wet); D4 is headed 'stop rules for unit 3'. The resolver re-resolves recorded mentions whose facts change (canonical.rs MentionRefresh, ~10205).",
+          "fix": "Make S2, on the full census of distinct values, a precondition for deploying D1. Or ship D1 behind a flag that unit 3's reading turns on."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "S1 cannot see the strays it is meant to guard against, and S2 tests whether a code exists, not whether it belongs to the right body.",
+          "problem": "The in-app 'core token' (name_cores_disjoint) keeps nhs, trust, foundation, hospital, care and board as core tokens, so nearly any two NHS names share one. D2 itself says strays pass a core-token gate (513:70-72), then S1 measures with that same instrument. The 3% threshold is unreachable at any plausible stray rate. S2's 'Active organisation' passes Active RC1 sub-ICB codes (00N/00P) and wrong-body codes (NGH = Amplifon).",
+          "evidence": "canonical.rs:35255 and :35279: NAME_STOP_TOKENS holds only legal-form and role words. I simulated S1 on adjudication-rows.json (most frequent name per code as anchor):\n- In-app token rules flag 14 of 7,495 moved coded mentions (0.19%), only 1 of the 68 DIFFERENT ones.\n- An NHS-aware stopword list still flags only 28 (0.37%), 11 of 68.\nReaching 3% would take roughly 10-17× the measured stray rate.",
+          "fix": "Redefine S1 as the share of moved mentions whose name best-matches a different ODS code's name (see the next finding). Redefine S2 as: primary role in the allowlisted set AND the ODS name agrees with the moved names."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "D2 rejects any name gate by attacking `altid_keys_agree`. A cheap best-match gate against ODS names catches about 93% of strays and refuses few true variants.",
+          "problem": "The rule: refuse the literal bind (fall back to today's name binding) when another three-character ODS code's name matches the mention name strictly better than this code's ODS name does. This separates the neighbour pattern (south vs north east London, Leeds vs Bradford), and abbreviations such as ICB and FT normalise away. A refusal is a missed merge, which is recoverable. The gate is deterministic per mention against a frozen table, so it is refold-invariant; a table change is re-run with the 345 standing tool. The resolver already does name-gated binds for 470's folded keys.",
+          "evidence": "Simulated on adjudication-rows.json against 931 ODS three-character names (RO197/RO261/RO213/RO98, fetched 2026-10-11):\n- Refuses 16 of 19 DIFFERENT registry holders: 63 of 68 stray coded mentions.\n- Refuses 6 of 235 SAME holders: 109 of 7,402 coded mentions (1.5%).\n- 106 of those 109 are RWW, which ODS renamed on 2026-04-10 to 'NORTH CHESHIRE AND MERSEY NHS FOUNDATION TRUST'; the ODS record carries Succs [RKC, RJS, RY2].\nScript: scratchpad/scripts/gate_sim.py.",
+          "fix": "Evaluate a best-match ODS-name gate (with predecessor/rename names and a zero-score refusal) before settling on name-blind binding. If D2 stands, record the measured trade-off."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "D2's remedy for strays (\"452's withheld-identifier path\") cannot remove a stray mention.",
+          "problem": "452 verdicts are keyed by identity triple and classify the number the org carries. Under D2, the identity org's code is correct for that org; the stray is another body's mention inside it. A verdict would be `right`, leaving the strays bound, or `wrong`, withholding the correct body's own code. Even when withheld, 'the exact triple still binds', so strays re-bind on every new notice. Today those 72 mentions sit in clusters named for the right body (Alder Hey, Walton Centre, Sussex Partnership).",
+          "evidence": "452 lines 177-190: keyed by the identity triple; '**The exact triple still binds**'. The DIFFERENT rows in adjudication-rows.json (e.g. RET/Alder Hey 16, QHM/NoE CSU 14, REN/Walton 9+6).",
+          "fix": "Name a mention-level remedy (a dissolve or rehome verdict that pins specific mentions to the right body and survives refold), or adopt the gate above."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "D2 and D3 hand 469 U7 cross-body register pairs that its gates will not stop.",
+          "problem": "D3 turns multi-target codes, which U4's single-owner gate denies, into single-owner identity orgs. For 4 codes, the only PPON ever published beside the code belongs to a different body, and that PPON partners no other code, so the cross-register and multi-PPON gates stay silent. U7's planner corroborates using mention names (518:21), and D2 puts the stray's name into the identity org. D3's '53 of 54 both_distinct are one body' leaves these out, and 469 says no undo exists for register identities.",
+          "evidence": "From the listing (one PPON per code) and adjudication-rows.json:\n- QKK pairs with PCXT8262NYRV, whose holder is 'NHS North East London ICB' (real code QMF).\n- QMF pairs with PMLZ8385VMTM, whose holder is 'NHS South East London ICB'.\n- RXX pairs with PBCW8913JCZL (Sussex Partnership, real code RX2).\n- RTF pairs with PLMV4859MQXP ('Northumbria Healthcare Facilities Management', ODS 8J129, a separate company).\nThe RXX identity org would hold exactly 2 coded mentions: one Surrey and Borders (2409657), one Sussex Partnership (2022375). The Sussex mention's name exactly matches the PPON org's name.",
+          "fix": "U7 should hard-deny, or send to review, any pair whose code was multi-target before D3 or whose PPON holder was adjudicated DIFFERENT, NOT_ORG or HOSTED. Pin RXX as a test."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "The net effect is weaker than D3 states, and for 13 codes it is worse than today even after U7.",
+          "problem": "D3 says the result is 'no more orgs than today'. That holds only after U7, and not for every code. Until U7 runs, entity count rises 26%. For most codes the count is unchanged; the split just moves from 'PPON vs code' to 'coded FTS vs uncoded older history'. That breaks the cross-era continuity that 202 spelling clusters have today. `?identifier=GBNHS…` will return a canonical org holding a median of about 10% of the body's mentions, with nothing pointing to its twins.",
+          "evidence": "Computed from adjudication-rows.json, counting SAME registry clusters plus distinct SAME PPON orgs per code:\n- Today: 355. After D3, before U7: 448. After U7: 332.\n- Per code after U7: 92 unchanged, 26 better, 13 worse (0CX, QJG, QKK, QMF, QOX, QYG, RAL, RGT, RJN, RTF, RXM, RXX, the typed C&M name).\n- Median coded share of a body's SAME registry mentions: 9.7%; 65 of 130 codes are below 10%.\nAlso, '131 identity orgs' (513:86) should be at most 129, because the two typed names do not mint.",
+          "fix": "State the trade-off honestly in D3. Hold the wet re-bind until U7 is ready to follow within the same window. Expose the twin↔canonical relation (an E3 edge or 'see also') on the API."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "The unit-1 evidence is truncated: 35 of 304 registry holders were never adjudicated, yet the results say 'every holder'.",
+          "problem": "The listing caps register holders at 5. The 11 truncated codes are the most multi-target ones and carry more strays. Every D2 and D3 figure (0.96%, 7,408, 238, ~36 emptied) comes from the truncated set.",
+          "evidence": "canonical.rs:5802 sets REGISTRY_NHS_REGISTER_HOLDERS = 5. In nhs-listing-2236.json, 11 identity-null codes have registry_holder_count > listed (QHM 16/5, QYG 11/5, QMF 10/5, …): 304 counted against 269 listed. Those 11 codes have 7 DIFFERENT among 55 visible holders (12.7%), against 12 among the other 214 (5.6%). u1-results.md:10-11 says 'every holder of the 131 identity-null codes' and :48 says '393 holders'.",
+          "fix": "Adjudicate uncapped holders (or the dry plan's full per-code name list) before unit 3. Correct the results text."
+        },
+        {
+          "severity": "should-fix",
+          "claim": "D3 covers mention moves and the reclaim but leaves out party repointing, the change feed and webhooks.",
+          "problem": "Party, bid-party and winner rows are derived by the fold. Moving `organization_mentions` rows does not repoint them. Until the affected Tenders refold, `?buyer=<identity>` is empty, /v1/changes and webhooks announce nothing, and the orphan sweep keeps 'emptied' clusters as referenced. 202 partially moved clusters lose tenders with no redirect.",
+          "evidence": "canonical.rs:5258-5261: referenced orphans are 'derived rows the fold has not moved yet… the sweep after the next fold of their tenders takes them'. The 434 refresh stamps tenders stale for exactly this (stamp_tenders_of_notices_stale, canonical.rs ~10277). ADR-0017 D5 requires in-place walks to announce corrections.",
+          "fix": "Unit 3 stamps the Tenders of moved mentions stale (or rewrites them in place with D5 correction rows), and the dry plan reports the Tenders touched."
+        },
+        {
+          "severity": "minor",
+          "claim": "It is undefined which mention names the identity org, and the choice is not refold-invariant.",
+          "problem": "'Which its first mention mints' (513:80) gives no ordering. A re-bind walking org or rowid order and a rebuild walking notice order can pick different first mentions. With strays, the canonical row can carry another body's name.",
+          "evidence": "In RXX's identity org, the stray and the true body each have 1 coded mention. Under QHM, the stray org 3257070 (NoE CSU) has a lower id than NENC 30915134.",
+          "fix": "Name the identity org from the earliest notice, matching rebuild order, or from the ODS name. Pin the choice in a test."
+        },
+        {
+          "severity": "minor",
+          "claim": "D3 re-decides recorded mentions whose published facts have not changed, which the resolver avoids on purpose.",
+          "problem": "Rehomings, dissolves and case verdicts place mentions deliberately. D3's filter ('org has no identifier') does not exclude mentions those tables placed, so the re-bind could undo them.",
+          "evidence": "canonical.rs:10258-10263, the comment on publishes(): re-deciding unchanged mentions 'would undo them all'. The orphan sweep treats rehoming and case tables as protected (canonical.rs ~5262).",
+          "fix": "Exclude mentions whose current binding was set by a rehoming, dissolve or case verdict, or list them separately in the dry plan for a decision."
+        }
+      ]
+    }
+  ],
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Review"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "review:code",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "a6e934ed6348f1201",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791729130438,
+      "queuedAt": 1791729130404,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "sound-with-fixes",
+      "promptPreview": "Read the issue /home/user/tender-db/.scratch/tender-db/issues/513-letter-only-nhs-ods-codes-mint-no-identity.md (focus on \"Decision (unit 2)\") and the results /home/user/tender-db/.scratch/tender-db/513-nhs/u1/u1-results.md. You are a SKEPTIC: try to find\nwhat is wrong, not to agree. Report only findings you have evidence for (file:line or a computed number). Do not edit any file.\nDo not touch the…",
+      "promptFramed": true,
+      "lastProgressAt": 1791729881226,
+      "tokens": 271296,
+      "toolCalls": 81,
+      "durationMs": 750785,
+      "resultPreview": "{\"verdict\":\"sound-with-fixes\",\"findings\":[{\"severity\":\"should-fix\",\"claim\":\"D3: \\\"A provisional cluster left empty is reclaimed through the standing reclaim, which stamps ledger rows (old ids redirect through the ledger).\\\"\",\"problem\":\"No standing reclaim writes a ledger row. The only path that removes an org nobody mentions is the issue-443 orphan sweep. It writes a pre-image to org_sweep_log and…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "review:data",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "acfdd2bae9e972976",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791729130439,
+      "queuedAt": 1791729130404,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "sound-with-fixes",
+      "promptPreview": "Read the issue /home/user/tender-db/.scratch/tender-db/issues/513-letter-only-nhs-ods-codes-mint-no-identity.md (focus on \"Decision (unit 2)\") and the results /home/user/tender-db/.scratch/tender-db/513-nhs/u1/u1-results.md. You are a SKEPTIC: try to find\nwhat is wrong, not to agree. Report only findings you have evidence for (file:line or a computed number). Do not edit any file.\nDo not touch the…",
+      "promptFramed": true,
+      "lastProgressAt": 1791729789843,
+      "tokens": 180800,
+      "toolCalls": 39,
+      "durationMs": 656399,
+      "resultPreview": "{\"verdict\":\"sound-with-fixes\",\"findings\":[{\"severity\":\"blocking\",\"claim\":\"D1: mint for any GBNHS + 3 alphanumerics, no ODS check, a placeholder denylist and no lead-letter list. The 'Why' is that ODS answers all 129 measured codes as Active organisations, and 'the placeholder risk sits in the tail, which the denylist covers'.\",\"problem\":\"The 129 codes are a selected sample: the codes that sit besi…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "review:design",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "ae364e48258e1e366",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791729791997,
+      "queuedAt": 1791729130405,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "sound-with-fixes",
+      "promptPreview": "Read the issue /home/user/tender-db/.scratch/tender-db/issues/513-letter-only-nhs-ods-codes-mint-no-identity.md (focus on \"Decision (unit 2)\") and the results /home/user/tender-db/.scratch/tender-db/513-nhs/u1/u1-results.md. You are a SKEPTIC: try to find\nwhat is wrong, not to agree. Report only findings you have evidence for (file:line or a computed number). Do not edit any file.\nDo not touch the…",
+      "promptFramed": true,
+      "lastProgressAt": 1791730811930,
+      "tokens": 233843,
+      "toolCalls": 68,
+      "durationMs": 1019931,
+      "resultPreview": "{\"verdict\":\"sound-with-fixes\",\"findings\":[{\"severity\":\"blocking\",\"claim\":\"D1 says it covers zero-only tails such as `R0B` and `0AR`. That exemption also covers the 18 `00[A-Z]` sub-ICB location codes, which the issue itself says are not organisations.\",\"problem\":\"The issue (513:46-47) and 519 both say the `\\\\d\\\\d[A-Z]` form is a sub-ICB location that splits its ICB. D1's all-zero exemption (513:53…"
+    }
+  ],
+  "totalTokens": 685939,
+  "totalToolCalls": 188
+}

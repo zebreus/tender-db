@@ -7,7 +7,10 @@ Inputs, all in this directory:
   session scratchpad). 190 were found; 5 were not: the typed names `NHSCHESHIREANDMERSEYSIDEICB` and
   `WESTMIDLANDSAMBULANCESERVICE`, two PPONs typed under GB-NHS (`PHHT9556BWJJ`, `PWNJ1991NGDW`), and the NUTS code `UKN06`.
 - `nhs-ods-joined.json` (`ods_classify.py`): the listing joined with ODS.
-- `adjudication-wf_a168eb50.json` → `adjudication-rows.json`: every holder of the 131 identity-null codes. Each was
+- `adjudication-wf_a168eb50.json` → `adjudication-rows.json`: every LISTED holder of the 131 identity-null codes. The listing caps
+  registry holders at 5 (`REGISTRY_NHS_REGISTER_HOLDERS`), so 35 of 304 registry holders, in 11 codes, were never listed
+  or adjudicated: QHM 16, QYG 11, QMF 10, QKK 8, QRL 8, QOQ 7, and QMJ, RBL, RBN, RJZ and RWW at 6. Every figure below
+  is over the listed subset, and the strays may be under-counted (review wf_4e7d846d).. Each was
   classified by one agent and re-checked by an independent skeptic told to refute it (workflow wf_a168eb50-548,
   14 agents). 392 of 393 claims agreed and 0 were disputed. One was left unverified (TAJ's PPON holder, Black Country
   Healthcare NHS FT, which is TAJ's own name), so it counts as SAME.
@@ -84,6 +87,32 @@ That is already the state of every digit-coded NHS body. Bounded `name_norm` see
 
 The sub-ICB location codes and the typo codes are filed separately as issue 519.
 
-## 5. Unit 2 decision
+## 5. Wider tails on the same orgs (review wf_4e7d846d, verified)
 
-See issue 513, "Decision (unit 2)".
+The holders' own mentions carry 22 three-character digit-rule-family tails that are not in the PPON-paired listing.
+Only `RWK` and `AAV` are the holder's real code. The others:
+- 404 at ODS: `ICB` (on two different ICBs), `NHS`, `TBC`, `OYG`, `ROB`, `Q0X`, `ODX`, `QYC`, `QKJ`, `QLG`, `0YD`, `OYD`,
+  `UHS`, `KGH`, `RGY`;
+- inactive trust codes on other trusts: `RCN`, `RMB`;
+- sub-ICB locations: `00N`, `00P`;
+- another body's code: `NGH` (Amplifon HQ).
+
+So the 129 ODS-confirmed codes are a selected sample. A shape rule alone would mint junk identities, and one of them
+(`ICB`) would fuse two bodies.
+
+## 6. Coverage of a body by its coded mentions (review wf_4e7d846d)
+
+The median coded share of a body's SAME registry mentions is 9.7%; 65 of 130 codes sit below 10%. Org counts (SAME
+registry clusters plus distinct SAME PPON orgs):
+
+| | orgs |
+|---|---:|
+| today | 355 |
+| after a mint and mention re-bind, before 469 U7 | 448 |
+| after U7 | 332 |
+
+Per code after U7: 92 unchanged, 26 better, 13 worse.
+
+## 7. Unit 2 decision
+
+See issue 513. The first decision was withdrawn after review.

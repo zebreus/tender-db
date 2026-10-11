@@ -1,6 +1,7 @@
 # 513 — letter-only NHS ODS codes (`GB-NHS-RTH`) mint no identity, so their parties bind by name and never pair
 
-Status: ready-for-agent — UNIT 1 DONE 2026-10-11 (`../513-nhs/u1/u1-results.md`): all 129 three-character identity-null codes are Active RC1 ODS organisations; multi-target holders are one body's spellings (238 SAME holders), and strays are 0.96% of coded mentions. UNIT 2 DECIDED (below, "Decision (unit 2)"): exempt the three-character ODS organisation form from the digit and all-zero rules, bind literally, and repair by a refold-invariant mention re-bind, dry first. NEXT: unit 2's build (normaliser arm + tests), then unit 3 (the re-bind job, dry → read → wet), then 469 U7.
+Status: ready-for-agent — UNIT 1 DONE 2026-10-11 (`../513-nhs/u1/u1-results.md`). The first unit-2 decision (below) was WITHDRAWN the same day after a three-lens adversarial review (wf_4e7d846d; findings in `../513-nhs/u1/decision-review-wf_4e7d846d.json`, summary under "Review of the first decision"). Its shape rule would mint junk tails (`ICB` on two ICBs, O/0 typos, `00N`/`00P` sub-ICB codes). Its reclaim writes no redirect. And a mint moves only the coded ~10% of each body's mentions. NEXT: a design panel over (A) an ODS-allowlist mint with literal binding, (B) the same with a best-match ODS-name gate, and (C) no mint: verdict-driven consolidation of the SAME clusters with the PPON org under the 469 register machinery. Then the decision, then the build.
+Was: ready-for-agent — UNIT 1 DONE 2026-10-11 (`../513-nhs/u1/u1-results.md`): all 129 three-character identity-null codes are Active RC1 ODS organisations; multi-target holders are one body's spellings (238 SAME holders), and strays are 0.96% of coded mentions. UNIT 2 DECIDED (below, "Decision (unit 2)"): exempt the three-character ODS organisation form from the digit and all-zero rules, bind literally, and repair by a refold-invariant mention re-bind, dry first. NEXT: unit 2's build (normaliser arm + tests), then unit 3 (the re-bind job, dry → read → wet), then 469 U7.
 Was: ready-for-agent — unit 1 BUILT 2026-10-11 (9e8e123, gate green, two-lens review wf_d682d870-832 found nothing; on main, deploy waits for the 491 drain): the altid dry run stores `registry_nhs_listing` — every GB-NHS ↔ PPON pair (literal, minted identity or null, the unit-1 class, ≤5 register / ≤3 PPON holders with provisional flags, witnesses), dry runs only, no count moves. NEXT: gate + deploy (after the 491 drain), a dry run, then the ODS read of every code (organisation vs site, active, name match, multi-target name variants vs different bodies) and the unit-2 decision.
 Was: ready-for-agent — triaged 2026-10-11 with issue 469 U2's evidence. NEXT: unit 1, measure (an in-app read of the
 letter-only GB-NHS values and the 73 multi-target codes; ODS lookups from the agent container, as U2's fetcher did).
@@ -46,7 +47,7 @@ code name-bound to several provisional orgs).
   ODS-confirmed, or limited to the 3-character trust and ICB forms (`R??`, `Q??`). The 3-character `\d\d[A-Z]` form
   (`06H`) is a sub-ICB location, not an organisation.
 
-## Decision (unit 2) — 2026-10-11
+## Decision (unit 2) — 2026-10-11 — WITHDRAWN (see "Review of the first decision" below)
 
 The evidence is `../513-nhs/u1/u1-results.md`. The owner decides as follows.
 
@@ -99,3 +100,35 @@ clusters left empty, and the distinct names moved, with the most frequent first.
 
 **Out of scope, filed as 519:** sub-ICB location codes (`03N`, `15M`) and transposed typo codes (`RF1` for `R1F`).
 Both already mint identities that split their body.
+
+## Review of the first decision (2026-10-11, wf_4e7d846d — code, data and design lenses; all "sound-with-fixes")
+
+Verified findings that withdraw it:
+1. **The shape rule mints junk (blocking).** The 129 codes were only the PPON-paired ones. The same orgs' mentions carry
+   20 further tails that would mint, and only RWK and AAV are real (u1-results §5). `GBNHSICB` would fuse two ICBs, and
+   the zero-only exemption admits the 18 `00[A-Z]` sub-ICB codes. `idgate::condemns` can never fire on this shape
+   (idgate.rs:389), so the denylist would be the only gate.
+   - Fix direction: an ODS-derived frozen allowlist of three-character organisation codes (trust RO197, ICB, CSU RO213,
+     care trust, measured IS providers), plus an O→0 fold of the tail. Across 634 such codes no O/0 twin pair
+     collides. Size it with a dry census of every distinct `GBNHS???` raw value first.
+2. **No redirect on reclaim.** The orphan sweep writes `org_sweep_log` and a `removed` change, never `org_merge_log`
+   (canonical.rs ~32747). An emptied cluster's id would 404. Retiring a cluster needs a merge-shaped delete with its own
+   rule, plus stale-stamping of the affected Tenders, as apply_rehoming does (~24873).
+3. **The net effect is weak.** Coded mentions are a median 9.7% of a body's mentions. Orgs go 355 → 448 → 332, and only
+   after U7 (13 codes end worse). The canonical row would hold about a tenth of the body.
+4. **Strays have no remedy.** 452 verdicts are triple-wide, and a withheld triple still binds by exact triple
+   (canonical.rs ~7267, ~15622). `org_mention_rehoming` is not read by the resolver. Name-blind literal binding would
+   move about 70 correctly-bound stray mentions into neighbours, with no way back.
+   - Measured alternative (design lens): a best-match gate against ODS names refuses a bind when another code's ODS
+     name fits the mention's name better. It refuses 63 of 68 stray mentions and 109 of 7,402 SAME ones; 106 of those
+     are RWW's 2026-04 rename, which predecessor names would cover.
+5. **Stop rules.** S1's core-token test cannot see strays, because NHS words are core tokens: the baseline is 0.19%,
+   and 1 of 68 DIFFERENT mentions is flagged. S2 passes Active sub-ICB codes and wrong-body codes. Both ran after the
+   normaliser had gone live. Any census gate must come before prevention ships.
+6. **U7 hazards.** QKK ↔ QMF (swapped London ICBs), RXX (Sussex Partnership PPON) and RTF (NHFM PPON) would reach U7
+   as single-owner cross-body pairs. U7 must hard-deny pairs whose code was multi-target, or whose PPON holder was
+   adjudicated non-SAME.
+7. **Coverage.** The listing capped registry holders at 5, so 35 of 304 were never adjudicated. They sit in 11 codes
+   with a higher stray rate: 12.7% against 5.6%.
+8. **Smaller points.** Name the minted org from ODS or from the earliest notice, not "the first mention". Exclude
+   mentions placed by rehoming, dissolve or case verdicts (canonical.rs ~10258). A mint yields at most 129 identities.
