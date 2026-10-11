@@ -631,6 +631,8 @@ async fn a_supplier_the_altid_arm_merged_stays_one_org_through_the_next_fold_and
         key: ingest::crosswalk::canonical_key_flat,
         mention_key: ingest::crosswalk::mention_key,
         register_identity: ingest::project::normalise_identifier,
+        registry_pair_key: ingest::crosswalk::registry_pair_key,
+        registry_mention_key: ingest::crosswalk::registry_mention_key,
         condemns: ingest::idgate::condemns,
         consortium: ingest::crosswalk::consortium_name,
         legal_family: ingest::crosswalk::gb_legal_family,
@@ -741,6 +743,8 @@ async fn a_letter_only_nhs_code_beside_a_ppon_is_measured_as_a_split() {
         key: ingest::crosswalk::canonical_key_flat,
         mention_key: ingest::crosswalk::mention_key,
         register_identity: ingest::project::normalise_identifier,
+        registry_pair_key: ingest::crosswalk::registry_pair_key,
+        registry_mention_key: ingest::crosswalk::registry_mention_key,
         condemns: ingest::idgate::condemns,
         consortium: ingest::crosswalk::consortium_name,
         legal_family: ingest::crosswalk::gb_legal_family,
@@ -759,6 +763,10 @@ async fn a_letter_only_nhs_code_beside_a_ppon_is_measured_as_a_split() {
     };
     let dry = db.match_org_altid_pairs(args).await.expect("dry plan");
     assert!(dry.pairs.is_empty(), "a register pair is measured, never planned: {dry:#?}");
+    // Issue 469 U4: a letter-only code mints no identity, so the register planner
+    // denies it on shape and plans nothing either.
+    assert!(dry.registry_pairs_planned.is_empty(), "{dry:#?}");
+    assert_eq!(dry.registry_gates.get("GB-NHS").map(|g| (g.candidates, g.denied_registry_shape)), Some((1, 1)));
     let nhs = dry.registry_pairs.get("GB-NHS").expect("NHS measured");
     assert_eq!(
         (nhs.pairs, nhs.no_identity, nhs.both_distinct, nhs.no_target_registry),

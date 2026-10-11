@@ -158,12 +158,43 @@ fn consortium(name: &str) -> bool {
     norm(name).split(' ').any(|t| t == "consortium")
 }
 
+/// `crosswalk::registry_mention_key` in small (issue 469 U4): under GB only and never a
+/// condemned value, a minted value led by one of the five register tokens with a digit
+/// after it keys to that register's series — as the identity `register_identity` mints.
+fn registry_mention_key(country: Option<&str>, raw: &str) -> Option<(&'static str, String)> {
+    if country != Some("GB") || condemns(country, "national", raw) {
+        return None;
+    }
+    let value = minted(raw);
+    [("GBUKPRN", "GB:ukprn"), ("GBCHC", "GB:chc"), ("GBMPR", "GB:mpr"), ("GBSC", "GB:sc"), ("GBNIC", "GB:nic")]
+        .iter()
+        .find_map(|(token, series)| {
+            value.strip_prefix(token).filter(|n| n.chars().any(|c| c.is_ascii_digit())).map(|_| (*series, value.clone()))
+        })
+}
+
+/// `crosswalk::registry_pair_key` in small: the publisher's scheme names the series, and
+/// only the five registers key (NHS waits for U7).
+fn registry_pair_key(scheme: &str, literal: &str, country: Option<&str>) -> Option<(&'static str, String)> {
+    let series = match scheme {
+        "GB-UKPRN" => "GB:ukprn",
+        "GB-CHC" => "GB:chc",
+        "GB-MPR" => "GB:mpr",
+        "GB-SC" => "GB:sc",
+        "GB-NIC" => "GB:nic",
+        _ => return None,
+    };
+    registry_mention_key(country, literal).filter(|(s, _)| *s == series)
+}
+
 fn args<'a>(stoplist_cap: usize) -> store::AltIdMergeArgs<'a> {
     store::AltIdMergeArgs {
         pair_key,
         key,
         mention_key,
         register_identity,
+        registry_pair_key,
+        registry_mention_key,
         condemns,
         consortium,
         legal_family,
@@ -203,6 +234,18 @@ const PPON_P: &str = "GB-PPON-PHDQ-2359-NZMP";
 const PPON_Q: &str = "GB-PPON-PBZB-4962-TVLR";
 const PPON_R: &str = "GB-PPON-PDTR-3338-MNPG";
 const PPON_S: &str = "GB-PPON-PYDR-3797-LZLJ";
+const PPON_T: &str = "GB-PPON-PTTT-1111-AAAA";
+const PPON_U: &str = "GB-PPON-PUUU-2222-BBBB";
+
+// ---- Issue 469 U4: register literals, each minting its register's identity.
+const UKPRN_A: &str = "GB-UKPRN-10007798";
+const UKPRN_B: &str = "GB-UKPRN-10001111";
+const UKPRN_C: &str = "GB-UKPRN-10002222";
+const CHC_X: &str = "GB-CHC-1044521";
+const CHC_Y: &str = "GB-CHC-207043";
+const CHC_Z: &str = "GB-CHC-202918";
+const MPR_M: &str = "GB-MPR-30938R";
+const MPR_N: &str = "GB-MPR-7522";
 
 /// A literal's stored org identifier, the way the resolver mints it: the
 /// normaliser's uppercase alphanumerics.
@@ -213,6 +256,17 @@ fn minted(literal: &str) -> String {
 /// A literal's key, for asserting on listings.
 fn k(literal: &str) -> String {
     gb_key(literal).expect("fixture literal keys").1
+}
+
+/// The publisher's scheme of an FTS literal (`GB-UKPRN-10007798` → `GB-UKPRN`).
+fn scheme_of(literal: &str) -> String {
+    literal.splitn(3, '-').take(2).collect::<Vec<_>>().join("-")
+}
+
+/// Issue 469 U4: a register pair's verdict key, from the literals —
+/// `<scheme>:<identity>~<ppon>`.
+fn rk(reg: &str, ppon: &str) -> String {
+    format!("{}:{}~{}", scheme_of(reg), minted(reg), k(ppon))
 }
 
 struct Bed {
@@ -457,6 +511,19 @@ impl Bed {
             r.plan_pairs + r.denied_pairs() + r.conflicts,
             "every both-distinct pair lands in exactly one place: {r:#?}"
         );
+        // Issue 469 U4: every register split is a register candidate, and every register
+        // candidate lands in exactly one place too.
+        for (scheme, c) in &r.registry_pairs {
+            let g = r.registry_gates.get(scheme).cloned().unwrap_or_default();
+            assert_eq!(c.both_distinct, g.candidates, "{scheme}: {r:#?}");
+            assert_eq!(g.candidates, g.planned + g.denied() + g.conflicts, "{scheme}: {g:#?}");
+        }
+        assert!(r.registry_gates.keys().all(|s| r.registry_pairs.contains_key(s)), "{r:#?}");
+        assert_eq!(
+            r.registry_pairs_planned.len() as u64,
+            r.registry_gates.values().map(|g| g.planned).sum::<u64>(),
+            "{r:#?}"
+        );
         r
     }
 
@@ -468,6 +535,43 @@ impl Bed {
                     country: "GB".into(),
                     scheme: "GB:altid".into(),
                     key: format!("{}~{}", k(coh), k(ppon)),
+                    members,
+                    action: action.into(),
+                    rationale: "fixture".into(),
+                    confidence: confidence.into(),
+                }],
+                0,
+            )
+            .await
+            .unwrap();
+    }
+
+    /// Issue 469 U4, the register pair's common shape: a register-first party bound to
+    /// the register org on `notice` (both ids), and a PPON-first party bound to the PPON
+    /// org on `notice + 1`. Both orgs stand.
+    async fn registry_split(
+        &self,
+        notice: i64,
+        (reg_org, reg, reg_name): (i64, &str, &str),
+        (ppon_org, ppon, ppon_name): (i64, &str, &str),
+    ) {
+        self.org(reg_org, reg, reg_name).await;
+        self.org(ppon_org, ppon, ppon_name).await;
+        self.notice(notice, "fts:ocds-1.1").await;
+        self.party(notice, &format!("R{notice}"), Some(reg_org), "GB", &[reg, ppon]).await;
+        self.notice(notice + 1, "fts:ocds-1.1").await;
+        self.party(notice + 1, &format!("P{notice}"), Some(ppon_org), "GB", &[ppon]).await;
+    }
+
+    /// A merge verdict under (`GB`, `GB:altid`) on a register key ([`rk`]).
+    async fn registry_verdict(&self, key: &str, members: Vec<i64>, action: &str, confidence: &str) {
+        self.db
+            .record_merge_verdicts(
+                "469-registry-test",
+                &[store::MergeVerdict {
+                    country: "GB".into(),
+                    scheme: "GB:altid".into(),
+                    key: key.into(),
                     members,
                     action: action.into(),
                     rationale: "fixture".into(),
@@ -1048,6 +1152,18 @@ async fn the_harvest_seeks_notices_profile_and_the_notice_ids_pk() {
     // over the e2-altid rows, never a walk of the whole merge ledger.
     let ledger = plan(store::ALTID_ALIAS_LEDGER_SQL, vec![]).await;
     assert!(ledger.contains("org_merge_log_e2_altid") && !ledger.contains("SCAN org_merge_log\n"), "{ledger}");
+    // Issue 469 U4: the register planner's two reads — a witness notice's buyers by
+    // issue 483's two seeks, and a PPON holder's merged identifiers by its org.
+    b.db.build_tender_indexes().await.unwrap();
+    let buyers = plan(store::ALTID_WITNESS_BUYERS_SQL, vec![Value::Integer(1)]).await;
+    assert!(
+        buyers.contains("tender_versions_notice")
+            && buyers.contains("tender_version_parties_version")
+            && !buyers.contains("SCAN"),
+        "{buyers}"
+    );
+    let merged = plan(store::ALTID_MERGED_IDS_OF_ORG_SQL, vec![Value::Integer(1)]).await;
+    assert!(merged.contains("organization_merged_identifiers_org") && !merged.contains("SCAN"), "{merged}");
 }
 
 // ---- Unit 2: the wet run.
@@ -1927,6 +2043,15 @@ async fn an_nhs_ppon_pair_is_counted_and_never_planned() {
         "R2's listing shape: the register org first"
     );
     assert_eq!(s.notices, vec!["pub-200".to_owned()]);
+    // Issue 469 U4: NHS waits for U7, so the register planner denies it on shape and
+    // plans nothing; the other schemes have no split to plan.
+    assert!(r.registry_pairs_planned.is_empty(), "{r:#?}");
+    assert_eq!(r.registry_gates.keys().collect::<Vec<_>>(), vec!["GB-NHS"]);
+    let g = &r.registry_gates["GB-NHS"];
+    assert_eq!((g.candidates, g.denied_registry_shape), (1, 1), "{g:#?}");
+    assert_eq!(r.registry_denied_listing.len(), 1);
+    let d = &r.registry_denied_listing[0];
+    assert_eq!((d.key(), d.gate.as_str()), (format!("GB-NHS:GBNHSRR8~{}", k(PPON_Q)), "registry-shape"));
 }
 
 /// Issue 469 review: a register value the resolver mints no identity for (a
@@ -1977,6 +2102,11 @@ async fn a_register_value_with_no_identity_is_held_by_the_org_its_mention_bound(
     assert_eq!(s.key, format!("GB-NHS-QWO~{}", k(PPON_P)));
     let members: Vec<(i64, Option<&str>)> = s.members.iter().map(|m| (m.org_id, m.identifier.as_deref())).collect();
     assert_eq!(members, vec![(30, None), (31, Some(minted(PPON_P).as_str()))]);
+    // Issue 469 U4: a value that mints no identity fails the shape gate, its listing
+    // keyed by the value's uppercase alphanumerics.
+    assert!(r.registry_pairs_planned.is_empty(), "{r:#?}");
+    let barts = r.registry_denied_listing.iter().find(|l| l.registry_literal == "GB-NHS-QWO").expect("Barts listed");
+    assert_eq!((barts.gate.as_str(), barts.registry.as_str()), ("registry-shape", "GBNHSQWO"));
 }
 
 /// Issue 469 review 2: a side is held by every org a mention bound where that side
@@ -2024,4 +2154,400 @@ async fn a_side_is_held_through_its_own_notices_and_through_a_merge() {
         .map(|s| (s.scheme.as_str(), s.members.iter().map(|m| m.org_id).collect()))
         .collect();
     assert_eq!(held, vec![("GB-CHC", vec![81, 80]), ("GB-NHS", vec![70, 71])]);
+}
+
+// ---- Issue 469 U4: the dry register planner.
+
+/// The issue's register shape, planned: one college split across its UKPRN org and its
+/// PPON org, names agreeing. The register org survives (U5's rule) though it has the
+/// HIGHER id, and the members still list ascending so the listing round-trips into a
+/// merge verdict. The college is its own witness notice's buyer: one publisher, and a
+/// self-statement. The company-number side sees nothing.
+#[tokio::test]
+async fn an_ukprn_ppon_pair_is_planned_and_keeps_the_ukprn_org() {
+    let b = bed("registry-plan").await;
+    b.registry_split(100, (2, UKPRN_A, "Leeds City College"), (1, PPON_P, "LEEDS CITY COLLEGE")).await;
+    for sql in [
+        "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+         VALUES (7, 1, 100, 0, 'pub-100')",
+        "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (7, 1, 'buyer', 2, 100, 'ORG-R100')",
+    ] {
+        b.conn.execute(sql, ()).await.unwrap();
+    }
+
+    let r = b.plan().await;
+    assert_eq!(r.registry_pairs_planned, vec![rk(UKPRN_A, PPON_P)], "{r:#?}");
+    assert_eq!(rk(UKPRN_A, PPON_P), format!("GB-UKPRN:GBUKPRN10007798~{}", k(PPON_P)));
+    let l = &r.registry_plan_listing[0];
+    assert_eq!((l.gate.as_str(), l.keep, l.loser), ("plan", Some(2), Some(1)), "{l:#?}");
+    assert_eq!(l.members.iter().map(|m| m.org_id).collect::<Vec<_>>(), vec![1, 2], "ascending, verdict-ready");
+    assert_eq!(l.key(), rk(UKPRN_A, PPON_P));
+    assert_eq!(
+        (l.registry_scheme.as_str(), l.registry.as_str(), l.registry_literal.as_str()),
+        ("GB-UKPRN", "GBUKPRN10007798", UKPRN_A)
+    );
+    assert_eq!((l.ppon.clone(), l.ppon_literal.as_str()), (k(PPON_P), PPON_P));
+    assert_eq!((l.witnesses, l.publishers, l.self_stated), (1, 1, 1), "{l:#?}");
+    assert_eq!((l.ppon_partners, l.registry_partners, l.cooccurring), (1, 1, 0));
+    assert!(l.coherent && l.corroborated_by.is_some(), "{l:#?}");
+    assert_eq!(l.witness_publications, vec!["pub-100".to_owned()]);
+    let g = &r.registry_gates["GB-UKPRN"];
+    assert_eq!((g.candidates, g.planned, g.denied(), g.conflicts), (1, 1, 0, 0), "{g:#?}");
+    assert!(r.registry_denied_listing.is_empty(), "{r:#?}");
+    assert!(r.pairs.is_empty() && r.plan_pairs == 0 && r.both_distinct == 0, "the company-number side is untouched");
+}
+
+/// A PPON beside a company number AND a register is the charitable-company shape, a hard
+/// deny whichever way it shows: (a) on one party; (b) across the graph, one party pairing
+/// the PPON with the charity and another with a company number; (c) through the holder,
+/// a 448 survivor that holds the PPON as a merged identifier, though no party shows the
+/// two together. (c)'s holder also carries company-number mentions, so the gate ORDER is
+/// pinned: the graph gates run first and it reads `triple`, not `loser-incoherent`.
+#[tokio::test]
+async fn a_ppon_beside_a_company_number_and_a_charity_is_a_triple() {
+    let b = bed("registry-triple").await;
+    // (a) The party form.
+    b.org(1, CHC_X, "Helping Hands Trust").await;
+    b.org(2, PPON_P, "Helping Hands Trust").await;
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party(100, "A1", Some(1), "GB", &[CHC_X, PPON_P, COH_A]).await;
+    b.notice(101, "fts:ocds-1.1").await;
+    b.party(101, "A2", Some(2), "GB", &[PPON_P]).await;
+    // (b) The graph form.
+    b.org(3, CHC_Y, "Riverside Care").await;
+    b.org(4, PPON_Q, "Riverside Care").await;
+    b.provisional(5, "Riverside Care Ltd").await;
+    b.notice(200, "fts:ocds-1.1").await;
+    b.party(200, "B1", Some(3), "GB", &[CHC_Y, PPON_Q]).await;
+    b.notice(201, "fts:ocds-1.1").await;
+    b.party(201, "B2", Some(4), "GB", &[PPON_Q]).await;
+    b.notice(202, "fts:ocds-1.1").await;
+    b.party(202, "B3", Some(5), "GB", &[COH_B, PPON_Q]).await;
+    // (c) The merged-holder form.
+    b.org(80, COH_C, "Oxfam GB").await;
+    b.org(81, CHC_Z, "Oxfam").await;
+    b.conn
+        .execute(
+            "INSERT INTO organization_merged_identifiers (identifier, identifier_kind, country, org_id, loser, rule)
+             VALUES (?, 'national', 'GB', 80, 999, 'e2-altid')",
+            (Value::Text(minted(PPON_R)),),
+        )
+        .await
+        .unwrap();
+    b.notice(300, "fts:ocds-1.1").await;
+    b.party(300, "C1", Some(81), "GB", &[CHC_Z, PPON_R]).await;
+    b.notice(301, "fts:ocds-1.1").await;
+    b.party(301, "C2", Some(80), "GB", &[COH_C]).await;
+
+    let r = b.plan().await;
+    assert_eq!(r.registry_pairs["GB-CHC"].ppon_beside_coh, 1, "unit 1 reads the party form only");
+    assert_eq!(r.registry_triple_ppons, 2, "the party and graph forms show a company number beside the PPON");
+    let g = &r.registry_gates["GB-CHC"];
+    assert_eq!((g.candidates, g.denied_triple, g.denied_loser_incoherent, g.planned), (3, 3, 0, 0), "{g:#?}");
+    let mut gates: Vec<(String, &str)> =
+        r.registry_denied_listing.iter().map(|l| (l.ppon.clone(), l.gate.as_str())).collect();
+    gates.sort();
+    let mut want = vec![(k(PPON_P), "triple"), (k(PPON_Q), "triple"), (k(PPON_R), "triple")];
+    want.sort();
+    assert_eq!(gates, want);
+    let held = r.registry_denied_listing.iter().find(|l| l.ppon == k(PPON_R)).expect("listed");
+    assert_eq!((held.keep, held.loser), (Some(81), Some(80)), "the 448 survivor would have been the loser");
+}
+
+/// One PPON beside two registers (a housing association's number on one notice, a
+/// college's on another) is two statements of which one is wrong: a structural deny for
+/// both pairs, which no verdict overrides.
+#[tokio::test]
+async fn a_ppon_beside_two_registers_is_cross_register() {
+    let b = bed("registry-cross").await;
+    b.org(1, MPR_M, "Riverside Housing").await;
+    b.org(3, UKPRN_A, "Riverside College").await;
+    b.org(9, PPON_P, "Riverside Housing").await;
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party(100, "M", Some(1), "GB", &[MPR_M, PPON_P]).await;
+    b.notice(200, "fts:ocds-1.1").await;
+    b.party(200, "U", Some(3), "GB", &[UKPRN_A, PPON_P]).await;
+    b.notice(300, "fts:ocds-1.1").await;
+    b.party(300, "P", Some(9), "GB", &[PPON_P]).await;
+    b.registry_verdict(&rk(MPR_M, PPON_P), vec![1, 9], "merge", "high").await;
+
+    let r = b.plan().await;
+    assert_eq!((r.registry_cross_register_ppons, r.registry_cross_register_denied_ppons), (1, 1));
+    for scheme in ["GB-MPR", "GB-UKPRN"] {
+        let g = &r.registry_gates[scheme];
+        assert_eq!((g.candidates, g.denied_cross_register, g.admitted_verdict, g.planned), (1, 1, 0, 0), "{scheme}");
+    }
+    assert_eq!(r.registry_denied_listing.len(), 2);
+    assert!(
+        r.registry_denied_listing.iter().all(|l| l.gate == "cross-register" && l.ppon_partners == 2),
+        "{:#?}",
+        r.registry_denied_listing
+    );
+    assert!(r.registry_pairs_planned.is_empty());
+}
+
+/// One party publishing two UKPRNs beside a PPON (unit 1's per-party
+/// `ppon_beside_two_values`). The decision named this a conflict; U2 made the
+/// PPON's partner set a STRUCTURAL gate, so both pairs are `cross-register` and a
+/// reviewer's HIGH verdict cannot admit either. (The judgment flag is the mirror,
+/// `registry-multi-ppon`: `a_ukprn_beside_two_ppons_is_a_conflict_a_high_verdict_admits_it`.)
+#[tokio::test]
+async fn a_ppon_beside_two_ukprns_is_a_conflict() {
+    let b = bed("registry-two-ukprns").await;
+    b.org(1, UKPRN_A, "Leeds City College").await;
+    b.org(2, PPON_P, "Leeds City College").await;
+    b.org(3, UKPRN_B, "Leeds City College").await;
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party(100, "X", Some(1), "GB", &[UKPRN_A, UKPRN_B, PPON_P]).await;
+    b.notice(101, "fts:ocds-1.1").await;
+    b.party(101, "P", Some(2), "GB", &[PPON_P]).await;
+    b.registry_verdict(&rk(UKPRN_A, PPON_P), vec![1, 2], "merge", "high").await;
+
+    let r = b.plan().await;
+    assert_eq!(r.registry_pairs["GB-UKPRN"].ppon_beside_two_values, 1, "unit 1's per-party reading");
+    let g = &r.registry_gates["GB-UKPRN"];
+    assert_eq!(
+        (g.candidates, g.denied_cross_register, g.admitted_verdict, g.conflicts, g.planned),
+        (2, 2, 0, 0, 0),
+        "{g:#?}"
+    );
+    assert!(r.registry_denied_listing.iter().all(|l| l.gate == "cross-register"));
+}
+
+/// A register side held only by the org a mention bound to by name — no org carries
+/// the identity — is a split unit 1 counts, but it never plans: the register org U5
+/// would keep must hold the number itself.
+#[tokio::test]
+async fn a_register_side_held_only_by_the_name_bound_org_never_plans() {
+    let b = bed("registry-name-bound").await;
+    b.provisional(30, "Leeds City College").await;
+    b.org(31, PPON_P, "Leeds City College").await;
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party(100, "R", Some(30), "GB", &[UKPRN_A, PPON_P]).await;
+    b.notice(101, "fts:ocds-1.1").await;
+    b.party(101, "P", Some(31), "GB", &[PPON_P]).await;
+
+    let r = b.plan().await;
+    assert_eq!(r.registry_pairs["GB-UKPRN"].both_distinct, 1, "unit 1 counts the split");
+    let g = &r.registry_gates["GB-UKPRN"];
+    assert_eq!((g.denied_single_owner, g.planned), (1, 0), "{g:#?}");
+    assert_eq!(r.registry_denied_listing[0].gate, "single-owner");
+}
+
+/// Issue 452's withholding reaches the register family on both sides: a `wrong`
+/// verdict on the register org's number, or on the PPON org's, leaves that side held
+/// only by the org its own notice bound — still a split, never planned.
+#[tokio::test]
+async fn a_withheld_register_owner_never_plans() {
+    let b = bed("registry-withheld").await;
+    b.registry_split(100, (2, UKPRN_A, "Leeds City College"), (1, PPON_P, "Leeds City College")).await;
+    assert_eq!(b.plan().await.registry_pairs_planned, vec![rk(UKPRN_A, PPON_P)], "the control: planned");
+
+    b.identifier_verdict(2, &minted(UKPRN_A), "wrong").await;
+    let r = b.plan().await;
+    assert_eq!(r.registry_pairs["GB-UKPRN"].both_distinct, 1, "its own notice still binds it: {r:#?}");
+    assert_eq!((r.registry_gates["GB-UKPRN"].denied_single_owner, r.registry_pairs_planned.len()), (1, 0));
+
+    // A re-review clears it; then the PPON org's number is the wrong one.
+    b.identifier_verdict(2, &minted(UKPRN_A), "right").await;
+    assert_eq!(b.plan().await.registry_pairs_planned.len(), 1);
+    b.identifier_verdict(1, &minted(PPON_P), "wrong").await;
+    let r = b.plan().await;
+    assert_eq!((r.registry_gates["GB-UKPRN"].denied_single_owner, r.registry_pairs_planned.len()), (1, 0), "{r:#?}");
+}
+
+/// The register channel of the evidence wall: the company-number channel keys no
+/// register raw, so without it two different UKPRNs pass. The PPON org naming another
+/// UKPRN is `loser-incoherent`; the register org naming a third one as well is two
+/// registrations in one series, `evidence-wall`.
+#[tokio::test]
+async fn the_register_wall_denies_two_different_ukprns() {
+    let b = bed("registry-wall").await;
+    b.registry_split(100, (1, UKPRN_A, "Leeds City College"), (2, PPON_P, "Leeds City College")).await;
+    assert_eq!(b.plan().await.registry_gates["GB-UKPRN"].planned, 1, "the control");
+
+    b.notice(103, "fts:ocds-1.1").await;
+    b.party(103, "W2", Some(2), "GB", &[UKPRN_C]).await;
+    let r = b.plan().await;
+    let g = &r.registry_gates["GB-UKPRN"];
+    assert_eq!((g.denied_loser_incoherent, g.denied_evidence_wall, g.planned), (1, 0, 0), "{g:#?}");
+
+    b.notice(102, "fts:ocds-1.1").await;
+    b.party(102, "W1", Some(1), "GB", &[UKPRN_B]).await;
+    let r = b.plan().await;
+    let g = &r.registry_gates["GB-UKPRN"];
+    assert_eq!((g.denied_evidence_wall, g.denied_loser_incoherent, g.planned), (1, 0, 0), "{g:#?}");
+
+    let blind = b
+        .db
+        .match_org_altid_pairs(store::AltIdMergeArgs { registry_mention_key: |_, _| None, ..args(20) })
+        .await
+        .unwrap();
+    assert_eq!(blind.registry_gates["GB-UKPRN"].planned, 1, "only the register channel sees them: {blind:#?}");
+}
+
+/// The company-number half of a report: everything but the register fields and the
+/// harvest counters that added notices and orgs move.
+fn coh_view(r: &store::AltIdMergeReport) -> String {
+    let mut r = r.clone();
+    r.fts_notices = 0;
+    r.party_sections = 0;
+    r.scanned = 0;
+    r.unkeyed_scheme.clear();
+    r.registry_pairs.clear();
+    r.registry_sample.clear();
+    r.registry_gates.clear();
+    r.registry_cross_register_ppons = 0;
+    r.registry_cross_register_denied_ppons = 0;
+    r.registry_triple_ppons = 0;
+    r.registry_pairs_planned.clear();
+    r.registry_plan_listing.clear();
+    r.registry_plan_listing_truncated = false;
+    r.registry_denied_listing.clear();
+    r.registry_denied_listing_truncated = false;
+    format!("{r:#?}")
+}
+
+/// Unit 1's contract, kept by U4: the register graph never moves a company-number count.
+/// A company-number fixture with a planned pair, a legal-form denial and a
+/// `ppon-multi-coh` conflict reads the same before and after register pairs of every
+/// outcome land beside it — one of them on the planned pair's own PPON — and the same
+/// again with the register key disabled. The wet run merges only the company-number
+/// pair, and plans no register.
+#[tokio::test]
+async fn registry_pairs_never_change_the_coh_plan() {
+    let b = bed("registry-coh-parity").await;
+    b.split(100, (1, COH_A, "Acme Widgets Ltd"), (2, PPON_P, "ACME WIDGETS LTD")).await;
+    b.split(200, (3, COH_B, "Northgate plc"), (4, PPON_Q, "Northgate Ltd")).await;
+    b.split(300, (5, COH_C, "Southgate Ltd"), (6, PPON_S, "Southgate Ltd")).await;
+    b.org(7, COH_D, "Southgate Ltd").await;
+    b.notice(302, "fts:ocds-1.1").await;
+    b.party(302, "D", Some(7), "GB", &[COH_D, PPON_S]).await;
+    let first = b.plan().await;
+    assert_eq!(
+        (first.plan_pairs, first.denied_legal_form, first.conflict_ppon_multi_coh),
+        (1, 1, 2),
+        "{first:#?}"
+    );
+    assert!(first.registry_pairs.is_empty());
+    let before = coh_view(&first);
+
+    // A planned UKPRN pair.
+    b.registry_split(400, (10, UKPRN_A, "Leeds City College"), (11, PPON_R, "Leeds City College")).await;
+    // A charity beside the planned company-number pair's own PPON: a triple.
+    b.org(12, CHC_X, "Acme Widgets Trust").await;
+    b.notice(500, "fts:ocds-1.1").await;
+    b.party(500, "H", Some(12), "GB", &[CHC_X, PPON_P]).await;
+    // An NHS pair: registry-shape.
+    let leeds = "Leeds Teaching Hospitals NHS Trust";
+    b.registry_split(600, (13, "GB-NHS-RR8", leeds), (14, PPON_T, leeds)).await;
+    // A PPON beside two registers: cross-register.
+    b.org(15, MPR_M, "Riverside Housing").await;
+    b.org(16, UKPRN_C, "Riverside College").await;
+    b.org(17, PPON_U, "Riverside Housing").await;
+    b.notice(700, "fts:ocds-1.1").await;
+    b.party(700, "M", Some(15), "GB", &[MPR_M, PPON_U]).await;
+    b.notice(701, "fts:ocds-1.1").await;
+    b.party(701, "U", Some(16), "GB", &[UKPRN_C, PPON_U]).await;
+    b.notice(702, "fts:ocds-1.1").await;
+    b.party(702, "P", Some(17), "GB", &[PPON_U]).await;
+
+    let dry = b.plan().await;
+    assert_eq!(dry.registry_pairs_planned, vec![rk(UKPRN_A, PPON_R)], "{dry:#?}");
+    let outcome = |s: &str| {
+        let g = &dry.registry_gates[s];
+        (g.candidates, g.planned, g.denied_triple, g.denied_registry_shape, g.denied_cross_register)
+    };
+    assert_eq!(outcome("GB-UKPRN"), (2, 1, 0, 0, 1));
+    assert_eq!(outcome("GB-CHC"), (1, 0, 1, 0, 0));
+    assert_eq!(outcome("GB-NHS"), (1, 0, 0, 1, 0));
+    assert_eq!(outcome("GB-MPR"), (1, 0, 0, 0, 1));
+    assert_eq!(coh_view(&dry), before, "the register graph moved a company-number count");
+
+    let unkeyed = b
+        .db
+        .match_org_altid_pairs(store::AltIdMergeArgs { registry_pair_key: |_, _, _| None, ..args(20) })
+        .await
+        .unwrap();
+    assert!(unkeyed.registry_pairs_planned.is_empty(), "{unkeyed:#?}");
+    assert_eq!(coh_view(&unkeyed), before);
+
+    let wet = b.wet(&dry.pairs).await;
+    assert_eq!(wet.merged_pairs, 1, "{wet:#?}");
+    assert!(wet.registry_pairs_planned.is_empty() && wet.registry_gates.is_empty(), "the wet path plans no register");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id BETWEEN 10 AND 17").await, 8);
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 1);
+    assert_eq!(
+        b.count("SELECT COUNT(*) FROM org_merge_log WHERE json_extract(evidence, '$.coh') IS NULL").await,
+        0,
+        "every ledger row is a company-number merge"
+    );
+}
+
+/// U2's consortium agent: Northern Housing Consortium states each member's register
+/// number beside its own PPON, one member per notice — so unit 1's per-party
+/// `ppon_beside_two_values` reads 0, and only the PPON's partner set across parties
+/// sees it. The agent's PPON org is headed like the first member, so that pair would
+/// corroborate; no consortium word appears anywhere, and a HIGH verdict changes
+/// nothing. The named form (a consortium PPON org beside ONE member) is the consortium
+/// veto's.
+#[tokio::test]
+async fn a_consortium_ppon_beside_two_members_on_different_notices_is_cross_register() {
+    let b = bed("registry-consortium").await;
+    b.org(1, MPR_M, "Riverside Group Ltd").await;
+    b.org(3, MPR_N, "Thirteen Housing Group Ltd").await;
+    b.org(9, PPON_P, "Riverside Group Ltd").await;
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party(100, "M1", Some(1), "GB", &[MPR_M, PPON_P]).await;
+    b.notice(200, "fts:ocds-1.1").await;
+    b.party(200, "M2", Some(3), "GB", &[MPR_N, PPON_P]).await;
+    b.notice(300, "fts:ocds-1.1").await;
+    b.party(300, "A", Some(9), "GB", &[PPON_P]).await;
+    b.registry_verdict(&rk(MPR_N, PPON_P), vec![3, 9], "merge", "high").await;
+    b.registry_split(400, (20, UKPRN_A, "Gateshead College"), (21, PPON_Q, "Northern Housing Consortium Ltd")).await;
+
+    let r = b.plan().await;
+    assert_eq!(r.registry_pairs["GB-MPR"].ppon_beside_two_values, 0, "U0's blind spot: one member per party");
+    assert_eq!((r.registry_cross_register_ppons, r.registry_cross_register_denied_ppons), (1, 1));
+    let mpr = &r.registry_gates["GB-MPR"];
+    assert_eq!(
+        (mpr.candidates, mpr.denied_cross_register, mpr.admitted_verdict, mpr.planned),
+        (2, 2, 0, 0),
+        "{mpr:#?}"
+    );
+    let ukprn = &r.registry_gates["GB-UKPRN"];
+    assert_eq!((ukprn.denied_consortium, ukprn.planned), (1, 0), "{ukprn:#?}");
+    assert!(r.registry_pairs_planned.is_empty(), "{r:#?}");
+}
+
+/// The mirror of cross-register is judgment, not structure: one UKPRN beside two PPONs
+/// (a college's own PPON and, say, its trading company's) is a `registry-multi-ppon`
+/// conflict, listed for review — and a reviewer's HIGH verdict over exactly the live
+/// pair admits it.
+#[tokio::test]
+async fn a_ukprn_beside_two_ppons_is_a_conflict_a_high_verdict_admits_it() {
+    let b = bed("registry-multi-ppon").await;
+    b.registry_split(100, (1, UKPRN_A, "Leeds City College"), (2, PPON_P, "Leeds City College")).await;
+    b.org(3, PPON_Q, "Leeds City College").await;
+    b.notice(200, "fts:ocds-1.1").await;
+    b.party(200, "R2", Some(1), "GB", &[UKPRN_A, PPON_Q]).await;
+    b.notice(201, "fts:ocds-1.1").await;
+    b.party(201, "P2", Some(3), "GB", &[PPON_Q]).await;
+
+    let r = b.plan().await;
+    let g = &r.registry_gates["GB-UKPRN"];
+    assert_eq!((g.candidates, g.conflicts, g.conflict_registry_multi_ppon, g.planned), (2, 2, 2, 0), "{g:#?}");
+    assert!(
+        r.registry_denied_listing.iter().all(|l| l.gate == "registry-multi-ppon" && l.registry_partners == 2),
+        "{:#?}",
+        r.registry_denied_listing
+    );
+
+    b.registry_verdict(&rk(UKPRN_A, PPON_P), vec![1, 2], "merge", "high").await;
+    let r = b.plan().await;
+    let g = &r.registry_gates["GB-UKPRN"];
+    assert_eq!((g.admitted_verdict, g.planned, g.conflicts), (1, 1, 1), "{g:#?}");
+    assert_eq!(r.registry_pairs_planned, vec![rk(UKPRN_A, PPON_P)]);
+    assert_eq!(r.registry_plan_listing[0].corroborated_by, None, "a verdict stood in for the judgment");
 }

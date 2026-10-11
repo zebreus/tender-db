@@ -2666,6 +2666,184 @@ fn alias_suffix(a: &store::AltIdAliasCounts) -> String {
     )
 }
 
+/// Issue 469 U4: the register plan's fields of `altid-merge-plan`, which only a DRY run
+/// computes. A wet run re-records the plan (the residual) but plans no register — U5
+/// lifts that — so it copies these verbatim from the stored plan it was held against:
+/// the stored `registry_pairs_planned` always names the latest dry plan's register set,
+/// and nothing reads it to merge yet.
+const ALTID_REGISTRY_PLAN_FIELDS: [&str; 9] = [
+    "registry_pairs_planned",
+    "registry_plan",
+    "registry_plan_truncated",
+    "registry_denied",
+    "registry_denied_truncated",
+    "registry_gates",
+    "registry_cross_register_ppons",
+    "registry_cross_register_denied_ppons",
+    "registry_triple_ppons",
+];
+
+/// Issue 469 U4: the register plan as `altid-merge-plan` stores it, exactly the
+/// [`ALTID_REGISTRY_PLAN_FIELDS`]. A sync free fn, so its temporaries stay off the boxed
+/// altid arm's poll frame (issue 467's lesson). Each listing entry is R2's verdict
+/// shape — `country` `GB`, `scheme` `GB:altid`, `key` `<registry scheme>:<identity>~<ppon>`,
+/// `members` ascending, each tagged with its `side` — so it round-trips into
+/// `POST /admin/merge-verdicts` as listed; the register's own scheme is
+/// `registry_scheme`, because `scheme` is the verdict's.
+fn altid_registry_json(r: &store::AltIdMergeReport) -> serde_json::Map<String, serde_json::Value> {
+    let listing = |ls: &[store::RegistryPairListing]| {
+        ls.iter()
+            .map(|l| {
+                // Two `json!` objects merged: one literal this wide overruns the macro's
+                // recursion limit.
+                let mut entry = serde_json::json!({
+                    "country": "GB", "scheme": "GB:altid", "key": l.key(),
+                    "registry_scheme": l.registry_scheme, "registry": l.registry,
+                    "registry_literal": l.registry_literal,
+                    "ppon": l.ppon, "ppon_literal": l.ppon_literal,
+                    "gate": l.gate, "keep": l.keep, "loser": l.loser,
+                    "members": l.members.iter().map(|m| {
+                        serde_json::json!({
+                            "org_id": m.org_id, "kind": m.kind,
+                            "identifier": m.identifier, "name": m.name,
+                            "side": if Some(m.org_id) == l.keep { "registry" } else { "ppon" },
+                        })
+                    }).collect::<Vec<_>>(),
+                });
+                // What a reviewer judges the statement by: k, p, self, coherent — listed,
+                // never gated — and the names corroboration read.
+                let evidence = serde_json::json!({
+                    "witnesses": l.witnesses,
+                    "witness_publications": l.witness_publications,
+                    "publishers": l.publishers,
+                    "self": l.self_stated,
+                    "coherent": l.coherent,
+                    "ppon_partners": l.ppon_partners,
+                    "registry_partners": l.registry_partners,
+                    "registry_names": l.registry_names,
+                    "ppon_names": l.ppon_names,
+                    "corroborated_by": l.corroborated_by,
+                    "cooccurring": l.cooccurring,
+                });
+                if let (Some(all), serde_json::Value::Object(fields)) = (entry.as_object_mut(), evidence) {
+                    all.extend(fields);
+                }
+                entry
+            })
+            .collect::<Vec<_>>()
+    };
+    let gates: serde_json::Map<String, serde_json::Value> = r
+        .registry_gates
+        .iter()
+        .map(|(scheme, g)| {
+            let mut counts = serde_json::json!({
+                "candidates": g.candidates,
+                // Structural, in gate order.
+                "denied_registry_shape": g.denied_registry_shape,
+                "denied_single_owner": g.denied_single_owner,
+                "denied_triple": g.denied_triple,
+                "denied_cross_register": g.denied_cross_register,
+                "denied_gate": g.denied_gate,
+                "denied_consortium": g.denied_consortium,
+                "denied_legal_form": g.denied_legal_form,
+                "denied_evidence_wall": g.denied_evidence_wall,
+                "denied_loser_incoherent": g.denied_loser_incoherent,
+            });
+            let judged = serde_json::json!({
+                "denied_verdict": g.denied_verdict,
+                "admitted_verdict": g.admitted_verdict,
+                "verdict_stale": g.verdict_stale,
+                "conflicts": g.conflicts,
+                "conflict_registry_multi_ppon": g.conflict_registry_multi_ppon,
+                "party_ambiguous": g.party_ambiguous,
+                "denied_form_conflict": g.denied_form_conflict,
+                "denied_witness_only": g.denied_witness_only,
+                "uncorroborated_disjoint": g.uncorroborated_disjoint,
+                "uncorroborated_overlap": g.uncorroborated_overlap,
+                "denied_generic": g.denied_generic,
+                "denied": g.denied(),
+                "planned": g.planned,
+            });
+            if let (Some(all), serde_json::Value::Object(fields)) = (counts.as_object_mut(), judged) {
+                all.extend(fields);
+            }
+            (scheme.clone(), counts)
+        })
+        .collect();
+    let mut out = serde_json::Map::new();
+    // The planned keys, sorted and uncapped: the set U5's wet path will hold its register
+    // family to.
+    out.insert("registry_pairs_planned".into(), serde_json::json!(r.registry_pairs_planned));
+    out.insert("registry_plan".into(), serde_json::Value::Array(listing(&r.registry_plan_listing)));
+    out.insert("registry_plan_truncated".into(), r.registry_plan_listing_truncated.into());
+    out.insert("registry_denied".into(), serde_json::Value::Array(listing(&r.registry_denied_listing)));
+    out.insert("registry_denied_truncated".into(), r.registry_denied_listing_truncated.into());
+    out.insert("registry_gates".into(), serde_json::Value::Object(gates));
+    out.insert("registry_cross_register_ppons".into(), r.registry_cross_register_ppons.into());
+    out.insert("registry_cross_register_denied_ppons".into(), r.registry_cross_register_denied_ppons.into());
+    out.insert("registry_triple_ppons".into(), r.registry_triple_ppons.into());
+    debug_assert!(ALTID_REGISTRY_PLAN_FIELDS.iter().all(|f| out.contains_key(*f)) && out.len() == 9);
+    out
+}
+
+/// Issue 469: the register clause of the altid job's counts line — unit 1's split
+/// counts per scheme and, on a dry run, U4's register plan beside each (the plan, the
+/// nonzero denials in gate order, the conflicts, the verdict-admitted; empty clauses
+/// left out), then the graph-level cross-register and triple counts. A wet run plans no
+/// register and says which plan it carried (`carried`: the stored plan's register key
+/// count, `None` when it holds none). Empty when no party paired a register at all.
+fn altid_registry_summary(r: &store::AltIdMergeReport, dry_run: bool, carried: Option<usize>) -> String {
+    if r.registry_pairs.is_empty() {
+        return String::new();
+    }
+    let schemes: Vec<String> = r
+        .registry_pairs
+        .iter()
+        .map(|(scheme, c)| {
+            let head = format!("{scheme} {} of {} two orgs", c.both_distinct, c.pairs);
+            let Some(g) = r.registry_gates.get(scheme).filter(|_| dry_run) else {
+                return head;
+            };
+            let mut clauses: Vec<String> = Vec::new();
+            if g.planned > 0 {
+                clauses.push(format!("plan {}", g.planned));
+            }
+            let denied: Vec<String> =
+                g.gates().iter().filter(|(_, n)| *n > 0).map(|(gate, n)| format!("{n} {gate}")).collect();
+            if !denied.is_empty() {
+                clauses.push(format!("denied {}", denied.join(", ")));
+            }
+            if g.conflicts > 0 {
+                clauses.push(format!("{} conflicts", g.conflicts));
+            }
+            if g.admitted_verdict > 0 {
+                clauses.push(format!("{} verdict-admitted", g.admitted_verdict));
+            }
+            if clauses.is_empty() { head } else { format!("{head} ({})", clauses.join("; ")) }
+        })
+        .collect();
+    if dry_run {
+        format!(
+            "; other registers paired with a PPON (issue 469 U4: planned dry, never merged): {}; {} \
+             PPON(s) partnered with two or more register values across parties ({} denied \
+             cross-register), {} beside a company number",
+            schemes.join(", "),
+            r.registry_cross_register_ppons,
+            r.registry_cross_register_denied_ppons,
+            r.registry_triple_ppons,
+        )
+    } else {
+        let plan = match carried {
+            Some(n) => format!("register plan carried from the last dry plan ({n} pairs)"),
+            None => "no dry register plan on file to carry".to_owned(),
+        };
+        format!(
+            "; other registers paired with a PPON (issue 469: measured, never merged; {plan}): {}",
+            schemes.join(", ")
+        )
+    }
+}
+
 /// Issue 364: what the legacy previous-publication kind gate did this run, as the
 /// suffix that rides the DURABLE job row — the `wall_suffix` pattern, and for the
 /// same reason (the journal rotates; the job row is what `/admin/jobs` keeps).
@@ -8984,8 +9162,10 @@ impl Supervisor {
                 // live re-plan is held against (max(2%, 5) symmetric drift aborts
                 // before any write).
                 let mut known_deferred: Vec<String> = Vec::new();
-                let expect_pairs = if dry_run {
-                    None
+                // Issue 469 U4: the stored plan itself is kept on a wet run, whose
+                // re-recorded residual carries its register plan forward (C14).
+                let (expect_pairs, stored_plan) = if dry_run {
+                    (None, None)
                 } else {
                     let (body, _) = self
                         .db
@@ -9019,7 +9199,7 @@ impl Supervisor {
                             .map(|a| a.iter().filter_map(|p| p.as_str().map(str::to_owned)).collect())
                             .unwrap_or_default();
                     }
-                    Some(pairs)
+                    (Some(pairs), Some(v))
                 };
                 // Issue 442: the wet loop deletes organizations with foreign keys ON.
                 if !dry_run {
@@ -9041,6 +9221,8 @@ impl Supervisor {
                         key: ingest::crosswalk::canonical_key_flat,
                         mention_key: ingest::crosswalk::mention_key,
                         register_identity: ingest::project::normalise_identifier,
+                        registry_pair_key: ingest::crosswalk::registry_pair_key,
+                        registry_mention_key: ingest::crosswalk::registry_mention_key,
                         condemns: ingest::idgate::condemns,
                         consortium: ingest::crosswalk::consortium_name,
                         legal_family: ingest::crosswalk::gb_legal_family,
@@ -9259,12 +9441,27 @@ impl Supervisor {
                     "conflict_listing": listing(&r.conflict_listing),
                     "no_target_sample": listing(&r.no_target_sample),
                 });
+                // Issue 469 U4: the register plan. A dry run records its own; a wet run
+                // plans no register, so it carries the stored dry plan's verbatim (C14) —
+                // nothing reads it to merge until U5.
+                let registry_plan: serde_json::Map<String, serde_json::Value> = match &stored_plan {
+                    None => altid_registry_json(&r),
+                    Some(stored) => ALTID_REGISTRY_PLAN_FIELDS
+                        .iter()
+                        .filter_map(|f| stored.get(*f).map(|v| ((*f).to_owned(), v.clone())))
+                        .collect(),
+                };
+                let carried = stored_plan
+                    .as_ref()
+                    .and_then(|v| v["registry_pairs_planned"].as_array())
+                    .map(Vec::len);
                 if let Some(all) = plan.as_object_mut() {
                     for part in [gates, wet, listings] {
                         if let serde_json::Value::Object(fields) = part {
                             all.extend(fields);
                         }
                     }
+                    all.extend(registry_plan);
                 }
                 self.db
                     .put_report("altid-merge-plan", &plan.to_string(), store::now_unix())
@@ -9317,17 +9514,9 @@ impl Supervisor {
                         ""
                     }
                 );
-                // Issue 469 unit 1: each register's split pairs, measured only.
-                let registries: Vec<String> = r
-                    .registry_pairs
-                    .iter()
-                    .map(|(scheme, c)| format!("{scheme} {} of {} two orgs", c.both_distinct, c.pairs))
-                    .collect();
-                let summary = if registries.is_empty() {
-                    summary
-                } else {
-                    format!("{summary}; other registers paired with a PPON (issue 469, not planned): {}", registries.join(", "))
-                };
+                // Issue 469: each register's split pairs (unit 1) and, on a dry run, U4's
+                // register plan beside them.
+                let summary = format!("{summary}{}", altid_registry_summary(&r, dry_run, carried));
                 if dry_run {
                     return Ok(format!(
                         "match-org-identifiers altid (issue 448) DRY RUN — plan recorded, nothing \
@@ -16441,6 +16630,107 @@ mod tests {
         let msg = sup.run_spec(&altid_job(6, false)).await.expect("re-run");
         assert!(msg.contains("merged 0 of 0"), "{msg}");
         assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 1);
+        remove_db(&path);
+    }
+
+    /// Issue 469 U4, end to end through the PRODUCTION rules (the real
+    /// `registry_pair_key`, `registry_mention_key` and normaliser): beside the
+    /// company-number pair, a college split across its UKPRN org and its PPON org. The
+    /// dry run plans it in the register family and lists it in the verdict shape; the
+    /// wet run merges only the company-number pair and carries the register plan into
+    /// the residual; and a `keep` built from the carried listing's own `country` /
+    /// `scheme` / `key` / `members`, recorded as a merge verdict, denies the pair on the
+    /// next dry run.
+    #[tokio::test]
+    async fn an_altid_dry_run_lists_a_register_pair_that_round_trips_into_a_verdict() {
+        let (db, conn, path) = altid_fixture("registry").await;
+        altid_satellite(&conn).await;
+        for sql in [
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
+             VALUES (3, 'GB', 'national', 'GBUKPRN10007798', 'Leeds City College', 'leeds city college', 0, 0)",
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
+             VALUES (4, 'GB', 'national', 'GBPPONPBZB4962TVLR', 'LEEDS CITY COLLEGE', 'leeds city college', 0, 0)",
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at) \
+             VALUES (12, 'fts', 'ocds-c', 'h', 'fts:ocds-1.1', 1, 'c', 0)",
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at) \
+             VALUES (13, 'fts', 'ocds-d', 'h', 'fts:ocds-1.1', 1, 'd', 0)",
+            "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) \
+             VALUES (12, 'ORG-C', 'BT-501-Organization-Company', 0, 'GB-UKPRN', 'GB-UKPRN-10007798', 0)",
+            "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) \
+             VALUES (12, 'ORG-C', 'BT-501-Organization-Company', 1, 'GB-PPON', 'GB-PPON-PBZB-4962-TVLR', 0)",
+            "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) \
+             VALUES (13, 'ORG-D', 'BT-501-Organization-Company', 0, 'GB-PPON', 'GB-PPON-PBZB-4962-TVLR', 0)",
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme) \
+             VALUES (12, 'ORG-C', 3, 'Leeds City College', 'GB', 'GB-UKPRN-10007798', 'GB-UKPRN')",
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme) \
+             VALUES (13, 'ORG-D', 4, 'LEEDS CITY COLLEGE', 'GB', 'GB-PPON-PBZB-4962-TVLR', 'GB-PPON')",
+        ] {
+            conn.execute(sql, ()).await.unwrap();
+        }
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let key = "GB-UKPRN:GBUKPRN10007798~PBZB4962TVLR";
+        let plan = || {
+            let sup = &sup;
+            async move {
+                let (body, _) = sup.db().latest_report("altid-merge-plan").await.unwrap().expect("recorded");
+                (serde_json::from_str::<serde_json::Value>(&body).unwrap(), body)
+            }
+        };
+
+        // 1. The dry run plans it beside the company-number pair, which it leaves alone.
+        let msg = sup.run_spec(&altid_job(3, true)).await.expect("dry plans");
+        assert!(msg.contains("GB-UKPRN 1 of 1 two orgs (plan 1)"), "{msg}");
+        let (v, body) = plan().await;
+        assert_eq!(v["pairs"], serde_json::json!(["03914810~PHDQ2359NZMP"]), "{body}");
+        assert_eq!(v["registry_pairs_planned"], serde_json::json!([key]), "{body}");
+        assert_eq!(v["registry_gates"]["GB-UKPRN"]["planned"], 1, "{body}");
+        let l = &v["registry_plan"][0];
+        assert_eq!(
+            (l["country"].clone(), l["scheme"].clone(), l["key"].clone(), l["registry_scheme"].clone()),
+            ("GB".into(), "GB:altid".into(), key.into(), "GB-UKPRN".into()),
+            "{body}"
+        );
+        assert_eq!((l["keep"].clone(), l["loser"].clone()), (3.into(), 4.into()), "{body}");
+        let members: Vec<(i64, &str)> = l["members"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|m| (m["org_id"].as_i64().unwrap(), m["side"].as_str().unwrap()))
+            .collect();
+        assert_eq!(members, vec![(3, "registry"), (4, "ppon")], "ascending, verdict-ready: {body}");
+        assert_eq!((l["self"].clone(), l["coherent"].clone()), (0.into(), true.into()), "{body}");
+        assert_eq!(l["witness_publications"], serde_json::json!(["ocds-c"]), "{body}");
+
+        // 2. The wet run merges the company-number pair only, and carries the plan.
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let msg = sup.run_spec(&altid_job(4, false)).await.expect("wet merges");
+        assert!(msg.contains("WET: merged 1 of 1 reviewed live pairs"), "{msg}");
+        assert!(msg.contains("register plan carried from the last dry plan (1 pairs)"), "{msg}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (3, 4)").await, 2);
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_log").await, 1);
+        let (v, body) = plan().await;
+        assert_eq!(v["residual_of_wet_run"], true, "{body}");
+        assert_eq!(v["registry_pairs_planned"], serde_json::json!([key]), "the dry register plan, carried: {body}");
+
+        // 3. A reviewer's `keep`, built from the carried listing as an operator would
+        // POST it, denies the pair on the next dry run.
+        let l = &v["registry_plan"][0];
+        let verdict = store::MergeVerdict {
+            country: l["country"].as_str().unwrap().to_owned(),
+            scheme: l["scheme"].as_str().unwrap().to_owned(),
+            key: l["key"].as_str().unwrap().to_owned(),
+            members: l["members"].as_array().unwrap().iter().map(|m| m["org_id"].as_i64().unwrap()).collect(),
+            action: "keep".into(),
+            rationale: "fixture".into(),
+            confidence: "high".into(),
+        };
+        db.record_merge_verdicts("469-u4-test", &[verdict], store::now_unix()).await.unwrap();
+        let msg = sup.run_spec(&altid_job(5, true)).await.expect("dry re-plans");
+        assert!(msg.contains("GB-UKPRN 1 of 1 two orgs (denied 1 verdict-keep)"), "{msg}");
+        let (v, body) = plan().await;
+        assert_eq!(v["registry_denied"][0]["gate"], "verdict-keep", "{body}");
+        assert_eq!(v["registry_pairs_planned"], serde_json::json!([]), "{body}");
         remove_db(&path);
     }
 

@@ -5541,6 +5541,14 @@ pub struct AltIdMergeArgs<'a> {
     /// country (`project::normalise_identifier`) — `None` for a value it mints no
     /// identity for (no digit, condemned, a placeholder), which then binds by name.
     pub register_identity: fn(&str, Option<&str>) -> Option<Identifier>,
+    /// Issue 469 U4: `crosswalk::registry_pair_key` — one register side of a register ↔
+    /// PPON pairing (publisher scheme, literal, party country) to `(series, identity)`;
+    /// keys only GB-UKPRN / CHC / MPR / SC / NIC. `None` is the registry-shape gate.
+    pub registry_pair_key: fn(&str, &str, Option<&str>) -> Option<(&'static str, String)>,
+    /// Issue 469 U4: `crosswalk::registry_mention_key` — the register channel of the
+    /// register graph's evidence wall and loser-incoherent gate. The company-number graph
+    /// never reads it.
+    pub registry_mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String)>,
     /// Consortium/groupement name detection, over every name of both orgs.
     pub consortium: fn(&str) -> bool,
     /// `crosswalk::gb_legal_family` — Ltd, plc or LLP, head against head.
@@ -5682,6 +5690,9 @@ pub struct RegistryPairCounts {
     /// Either side is held by two or more orgs.
     pub multi_target: u64,
     /// Distinct PPONs published beside two or more values of this scheme on one party.
+    /// Per party, so NOT the cross-register gate's input: a consortium agent states one
+    /// member's number per notice, each on a different party, and reads 0 here (U2;
+    /// [`AltIdMergeReport::registry_cross_register_ppons`] is the graph-level count).
     pub ppon_beside_two_values: u64,
     /// Distinct PPONs published beside this scheme AND a company number on one party
     /// (the charitable-company shape).
@@ -5711,6 +5722,172 @@ pub struct RegistryMember {
 
 /// How many `both_distinct` registry pairs per scheme the altid report samples.
 pub const REGISTRY_SAMPLE_PER_SCHEME: usize = 30;
+
+/// Issue 469 U4: where one scheme's `both_distinct` register pairs landed in the DRY
+/// register planner — the company-number arm's gate counts, kept per scheme and apart
+/// from them, so no company-number count moves. Every candidate lands in exactly one
+/// place: `candidates == planned + denied() + conflicts`.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct RegistryGateCounts {
+    /// Unit 1's `both_distinct` for the scheme: the planner's input.
+    pub candidates: u64,
+    // ---- Structural gates, in gate order; no verdict overrides these.
+    /// U3's `registry_pair_key` refused the value (NHS, a mislabelled number, a shape
+    /// the register does not issue), or its identity is not the one the resolver mints.
+    pub denied_registry_shape: u64,
+    /// A side is not held by exactly one non-withheld org through its own or a merged
+    /// identifier — a side held only by the orgs its mentions bound to never plans.
+    pub denied_single_owner: u64,
+    /// A GB party published the PPON beside a company number, or the PPON's holder
+    /// carries a company number of its own or as a merged identifier (a 448 survivor).
+    pub denied_triple: u64,
+    /// The PPON is partnered with two or more register values across every GB party,
+    /// any scheme (U2's binding requirement: a consortium agent states each member's
+    /// number on a different notice).
+    pub denied_cross_register: u64,
+    pub denied_gate: u64,
+    pub denied_consortium: u64,
+    pub denied_legal_form: u64,
+    pub denied_evidence_wall: u64,
+    pub denied_loser_incoherent: u64,
+    // ---- The reviewer's verdict (`GB`, `GB:altid`, `<scheme>:<identity>~<ppon>`).
+    pub denied_verdict: u64,
+    pub admitted_verdict: u64,
+    pub verdict_stale: u64,
+    // ---- Judgment gates.
+    /// Pairs denied by a conflict flag, and how often each flag was carried among them.
+    pub conflicts: u64,
+    /// The register value is partnered with two or more PPONs.
+    pub conflict_registry_multi_ppon: u64,
+    pub party_ambiguous: u64,
+    pub denied_form_conflict: u64,
+    pub denied_witness_only: u64,
+    pub uncorroborated_disjoint: u64,
+    pub uncorroborated_overlap: u64,
+    pub denied_generic: u64,
+    pub planned: u64,
+}
+
+impl RegistryGateCounts {
+    /// Every denial `(listing gate label, count)`, in gate order: the structural gates,
+    /// the `keep` verdict, then the judgment classes. The conflicts are apart.
+    pub fn gates(&self) -> [(&'static str, u64); 15] {
+        [
+            ("registry-shape", self.denied_registry_shape),
+            ("single-owner", self.denied_single_owner),
+            ("triple", self.denied_triple),
+            ("cross-register", self.denied_cross_register),
+            ("gate", self.denied_gate),
+            ("consortium", self.denied_consortium),
+            ("legal-form", self.denied_legal_form),
+            ("evidence-wall", self.denied_evidence_wall),
+            ("loser-incoherent", self.denied_loser_incoherent),
+            ("verdict-keep", self.denied_verdict),
+            ("form-conflict", self.denied_form_conflict),
+            ("witness-only", self.denied_witness_only),
+            ("uncorroborated-disjoint", self.uncorroborated_disjoint),
+            ("uncorroborated-overlap", self.uncorroborated_overlap),
+            ("generic", self.denied_generic),
+        ]
+    }
+
+    /// Every candidate a gate or a `keep` verdict denied.
+    pub fn denied(&self) -> u64 {
+        self.gates().iter().map(|(_, n)| n).sum()
+    }
+
+    /// Count one candidate under its listing label (`plan`, a gate, a conflict flag).
+    fn bump(&mut self, label: &str) {
+        let slot = match label {
+            "plan" => &mut self.planned,
+            "registry-shape" => &mut self.denied_registry_shape,
+            "single-owner" => &mut self.denied_single_owner,
+            "triple" => &mut self.denied_triple,
+            "cross-register" => &mut self.denied_cross_register,
+            "gate" => &mut self.denied_gate,
+            "consortium" => &mut self.denied_consortium,
+            "legal-form" => &mut self.denied_legal_form,
+            "evidence-wall" => &mut self.denied_evidence_wall,
+            "loser-incoherent" => &mut self.denied_loser_incoherent,
+            "verdict-keep" => &mut self.denied_verdict,
+            "form-conflict" => &mut self.denied_form_conflict,
+            "witness-only" => &mut self.denied_witness_only,
+            "uncorroborated-disjoint" => &mut self.uncorroborated_disjoint,
+            "uncorroborated-overlap" => &mut self.uncorroborated_overlap,
+            "generic" => &mut self.denied_generic,
+            "registry-multi-ppon" => &mut self.conflict_registry_multi_ppon,
+            "party-ambiguous" => &mut self.party_ambiguous,
+            other => {
+                debug_assert!(false, "unknown register gate label {other:?}");
+                return;
+            }
+        };
+        *slot += 1;
+    }
+}
+
+/// Issue 469 U4: one register ↔ PPON pair as the dry register plan lists it — R2's
+/// listing shape (`country` `GB`, `scheme` `GB:altid`, [`Self::key`], `members`
+/// ascending), so a listed pair round-trips into `POST /admin/merge-verdicts` with
+/// `members` as listed, plus what a reviewer judges a publisher's statement by.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct RegistryPairListing {
+    /// The publisher's scheme (`GB-UKPRN`). Not `scheme`: in the listing's JSON that
+    /// key is the verdict scheme, `GB:altid`.
+    pub registry_scheme: String,
+    /// `registry_pair_key`'s identity (`GBUKPRN10007798`); for a registry-shape denial
+    /// the resolver's identity, else the value's uppercase alphanumerics.
+    pub registry: String,
+    /// The literals as first published (lowest notice id).
+    pub registry_literal: String,
+    /// The PPON key (its serial).
+    pub ppon: String,
+    pub ppon_literal: String,
+    /// `plan`, the structural gate that denied it, `verdict-keep`, the conflict flags
+    /// joined by `+`, or the judgment class.
+    pub gate: String,
+    /// The register org: the survivor U5 will keep.
+    pub keep: Option<i64>,
+    /// The PPON org: the loser U5 will fold.
+    pub loser: Option<i64>,
+    /// Both orgs, ASCENDING id — the order a merge verdict's members must take (the
+    /// register org has the higher id in 44 of the 124 sampled pairs).
+    pub members: Vec<RegistryMember>,
+    /// `k`: distinct notices publishing the pair, and the first three's publication ids.
+    pub witnesses: u64,
+    pub witness_publications: Vec<String>,
+    /// `p`: distinct buyer orgs over every witness notice.
+    pub publishers: u64,
+    /// Witness notices whose buyers include either org: the organisation stated its own
+    /// register number and PPON (JSON `self`).
+    pub self_stated: u64,
+    /// Both orgs' designated names (head and satellites, witnesses included) corroborate
+    /// under `altid_corroborates`. Listed, never gated.
+    pub coherent: bool,
+    /// Distinct register values (any scheme) beside the PPON, across every GB party.
+    pub ppon_partners: u64,
+    /// Distinct PPONs beside this register value, across every GB party.
+    pub registry_partners: u64,
+    /// The witness-free names each side's corroboration read, the first
+    /// `ALTID_LISTING_NAMES` in key order.
+    pub registry_names: Vec<String>,
+    pub ppon_names: Vec<String>,
+    /// The (register side, PPON side) names that cleared the generic wall; `None` for a
+    /// denied pair and a verdict-admitted one.
+    pub corroborated_by: Option<(String, String)>,
+    /// Notices, the witnesses excepted, where both orgs carry a mention. Listed, never
+    /// gated.
+    pub cooccurring: u64,
+}
+
+impl RegistryPairListing {
+    /// The verdict key under (`GB`, `GB:altid`): `<registry scheme>:<identity>~<ppon>`.
+    /// It never collides with a company-number key (`<coh>~<ppon>` carries no `:`), and
+    /// its longest well-formed form is 37 characters, under the admin endpoint's 64.
+    pub fn key(&self) -> String {
+        format!("{}:{}~{}", self.registry_scheme, self.registry, self.ppon)
+    }
+}
 
 /// What the issue-448 altid planner found. Every both-distinct pair lands in
 /// exactly one of the plan, a denial, or the conflicts:
@@ -5757,6 +5934,27 @@ pub struct AltIdMergeReport {
     /// Up to [`REGISTRY_SAMPLE_PER_SCHEME`] `both_distinct` registry pairs per scheme,
     /// with both orgs' names, for review.
     pub registry_sample: Vec<RegistrySample>,
+    // ---- Issue 469 U4: the register graph, planned on DRY runs only (all empty on a
+    // wet run); the wet path never reads it.
+    /// Per scheme, where its `both_distinct` pairs landed.
+    pub registry_gates: std::collections::BTreeMap<String, RegistryGateCounts>,
+    /// Distinct keyed PPONs partnered with two or more register values (any scheme)
+    /// across every GB party — ungated, the measurement U0 believed it had.
+    pub registry_cross_register_ppons: u64,
+    /// …of those, the distinct PPONs among candidates the cross-register gate denied.
+    pub registry_cross_register_denied_ppons: u64,
+    /// Distinct register-paired PPONs some GB party published beside a company-number
+    /// row.
+    pub registry_triple_ppons: u64,
+    /// The planned `<scheme>:<identity>~<ppon>` keys, sorted and UNCAPPED — the set U5's
+    /// wet path will hold its register family to.
+    pub registry_pairs_planned: Vec<String>,
+    /// Capped at `AltIdMergeArgs::plan_listing_cap`, like the company-number plan.
+    pub registry_plan_listing: Vec<RegistryPairListing>,
+    pub registry_plan_listing_truncated: bool,
+    /// Every denied and conflicting pair, capped at [`R2_PLAN_LISTING_CAP`].
+    pub registry_denied_listing: Vec<RegistryPairListing>,
+    pub registry_denied_listing_truncated: bool,
     // ---- The owners.
     /// Identifier-bearing org rows walked.
     pub scanned: u64,
@@ -5940,6 +6138,20 @@ pub const ALTID_PARTY_IDS_SQL: &str = "SELECT section_id, ordinal, scheme, value
 pub const ALTID_PARTY_MENTIONS_SQL: &str = "SELECT section_id, country, organization_id FROM organization_mentions \
      WHERE notice_id = ? AND section_id >= 'ORG-' AND section_id < 'ORG.'";
 
+/// Issue 469 U4: one witness notice's buyer orgs, for a register pair's `publishers` (p)
+/// and `self` — issue 483's two seeks (`tender_versions_notice`, then the version's
+/// parties through `tender_version_parties_version`), one notice per statement. Not
+/// DISTINCT: deduplicated in Rust.
+pub const ALTID_WITNESS_BUYERS_SQL: &str = "SELECT p.organization_id FROM tender_versions v \
+     JOIN tender_version_parties p ON p.tender_id = v.tender_id AND p.seq = v.seq \
+    WHERE v.caused_by_notice_id = ? AND p.mention_notice_id = v.caused_by_notice_id \
+      AND p.role IN ('buyer', 'Procedure-Buyer')";
+
+/// Issue 469 U4: one org's merged identifiers — the register triple gate's holder form
+/// (a 448 survivor holding the PPON) — a seek on `organization_merged_identifiers_org`.
+pub const ALTID_MERGED_IDS_OF_ORG_SQL: &str =
+    "SELECT country, identifier_kind, identifier FROM organization_merged_identifiers WHERE org_id = ?";
+
 /// Issue 448 unit 2: pairs per merge transaction — R2's `MERGE_TXN_GROUPS`.
 const ALTID_MERGE_TXN_PAIRS: usize = 50;
 
@@ -5975,6 +6187,158 @@ struct AltIdDenied {
     coh_org: i64,
     ppon_org: i64,
     listing: AltIdListing,
+}
+
+/// Issue 469: one (scheme, register value, PPON key) pair of the altid harvest — unit
+/// 1's measurement, and since U4 the register planner's graph edge.
+struct AltIdRegPair {
+    /// The literals as first published (lowest notice id).
+    registry_literal: String,
+    ppon_literal: String,
+    /// The resolver's identity for the register value, if it mints one.
+    identity: Option<Identifier>,
+    /// U4: `registry_pair_key` of the first witness party's literal, under its
+    /// country (like `identity`); `None` fails the registry-shape gate.
+    registry_key: Option<(&'static str, String)>,
+    witnesses: BTreeSet<i64>,
+}
+
+/// Issue 469 U4: what [`Db::plan_registry_pairs`] reads of the altid harvest — the
+/// register graph, kept apart from the company-number graph so none of its counts move.
+struct AltIdRegistryGraph<'g> {
+    pairs: &'g std::collections::BTreeMap<(String, String, String), AltIdRegPair>,
+    /// Unit 1's `both_distinct` pairs, in graph order: (scheme, value, PPON key,
+    /// register org, PPON org).
+    candidates: &'g [(String, String, String, i64, i64)],
+    /// (kind, identity) → the non-withheld orgs holding the register identity as their
+    /// own or a merged identifier — never the name-bound `first_bound` orgs.
+    reg_owners: &'g std::collections::HashMap<(String, String), Vec<i64>>,
+    /// PPON key → the non-withheld orgs holding it, the same two ways.
+    reg_ppon_owners: &'g std::collections::HashMap<String, Vec<i64>>,
+    /// Every keyed PPON some GB party published beside a company-number row — the
+    /// triple gate's graph-level input, a superset of unit 1's `reg_beside_coh`.
+    ppon_with_coh: &'g std::collections::HashSet<String>,
+    /// The keys an ambiguous party named (`party-ambiguous`).
+    tainted: &'g std::collections::HashSet<(&'static str, String)>,
+}
+
+/// Up to three notices' publication ids, for the altid listings.
+async fn publications(
+    conn: &Connection,
+    notices: impl Iterator<Item = i64>,
+) -> turso::Result<Vec<String>> {
+    let mut out = Vec::new();
+    for notice in notices.take(3) {
+        let mut rows = conn
+            .query("SELECT publication_id FROM notices WHERE id = ?", (Value::Integer(notice),))
+            .await?;
+        if let Some(row) = rows.next().await? {
+            out.push(text(&row, 0));
+        }
+    }
+    Ok(out)
+}
+
+/// Issue 469 U4: one org row as the register planner reads it — its listing member,
+/// the v2 gate's literal, and the triple gate's own-identifier test.
+struct AltIdOrgRow {
+    country: Option<String>,
+    kind: Option<String>,
+    identifier: Option<String>,
+    name: String,
+}
+
+/// One primary-key seek of `organizations`; `None` for an org that no longer stands.
+async fn altid_org_row(conn: &Connection, org: i64) -> turso::Result<Option<AltIdOrgRow>> {
+    let mut rows = conn
+        .query(
+            "SELECT country, identifier_kind, identifier, name FROM organizations WHERE id = ?",
+            (Value::Integer(org),),
+        )
+        .await?;
+    Ok(rows.next().await?.map(|row| AltIdOrgRow {
+        country: opt_text_of(&row, 0),
+        kind: opt_text_of(&row, 1),
+        identifier: opt_text_of(&row, 2),
+        name: opt_text_of(&row, 3).unwrap_or_default(),
+    }))
+}
+
+/// Issue 469 U4, the triple gate's holder form: whether `org`'s own identifier, or any
+/// identifier a merge left on it, keys to `GB:coh` (E1 or a pad) — a 448 survivor that
+/// holds the PPON beside its company number. Folding such an org into a register org
+/// would reverse 448's survivor (the decision's survivor-reversal hazard).
+async fn altid_holds_coh(
+    conn: &Connection,
+    org: i64,
+    row: Option<&AltIdOrgRow>,
+    key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+) -> turso::Result<bool> {
+    let coh = |country: Option<&str>, kind: Option<&str>, identifier: &str| {
+        matches!(key(country, kind.unwrap_or("national"), identifier), Some(("GB:coh", _, _, _)))
+    };
+    if let Some(r) = row
+        && let Some(identifier) = &r.identifier
+        && coh(r.country.as_deref(), r.kind.as_deref(), identifier)
+    {
+        return Ok(true);
+    }
+    let mut rows = conn.query(ALTID_MERGED_IDS_OF_ORG_SQL, (Value::Integer(org),)).await?;
+    while let Some(row) = rows.next().await? {
+        if coh(opt_text_of(&row, 0).as_deref(), opt_text_of(&row, 1).as_deref(), &text(&row, 2)) {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+/// Issue 469 U4: one org's mention evidence for the register graph — the company-number
+/// planner's `mention_rows` read, each raw identifier keyed through BOTH channels
+/// (`mention_key`, then `registry_mention_key`) under the mention's country, else the
+/// org's — and its names with the notice each came from.
+#[allow(clippy::type_complexity)]
+async fn altid_registry_evidence(
+    conn: &Connection,
+    org: i64,
+    org_country: &str,
+    mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool, bool)>,
+    registry_mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String)>,
+) -> turso::Result<(Vec<(&'static str, String)>, Vec<(i64, String)>)> {
+    let (mut keys, mut names) = (Vec::new(), Vec::new());
+    let mut rows = conn
+        .query(
+            "SELECT notice_id, name, country, raw_identifier FROM organization_mentions \
+              WHERE organization_id = ?",
+            (Value::Integer(org),),
+        )
+        .await?;
+    while let Some(row) = rows.next().await? {
+        // Nameless mentions are kept (as ""), as `mention_rows` keeps them.
+        names.push((int(&row, 0), opt_text_of(&row, 1).unwrap_or_default()));
+        let Some(raw) = opt_text_of(&row, 3) else { continue };
+        let mcountry = opt_text_of(&row, 2);
+        let country = Some(mcountry.as_deref().unwrap_or(org_country));
+        if let Some((scheme, key, _, _)) = mention_key(country, &raw) {
+            keys.push((scheme, key));
+        }
+        if let Some(key) = registry_mention_key(country, &raw) {
+            keys.push(key);
+        }
+    }
+    Ok((keys, names))
+}
+
+/// Issue 469 U4: one witness notice's buyer orgs ([`ALTID_WITNESS_BUYERS_SQL`]),
+/// sorted and deduplicated.
+async fn altid_witness_buyers(conn: &Connection, notice: i64) -> turso::Result<Vec<i64>> {
+    let mut out = Vec::new();
+    let mut rows = conn.query(ALTID_WITNESS_BUYERS_SQL, (Value::Integer(notice),)).await?;
+    while let Some(row) = rows.next().await? {
+        out.push(int(&row, 0));
+    }
+    out.sort_unstable();
+    out.dedup();
+    Ok(out)
 }
 
 /// Issue 448 unit 3 (the campaign's prerequisite): how many planned pairs the
@@ -21461,6 +21825,10 @@ impl Db {
     /// 6. JUDGMENT: the conflict flags; then positive corroboration — one
     ///    altid name key equal across both orgs' heads and satellites; then the
     ///    generic-name wall on the corroborating names.
+    /// 7. REGISTER pairs (issue 469 U4), dry runs only: every other GB register's
+    ///    `both_distinct` pairs with a PPON, gated as their own graph by
+    ///    [`Self::plan_registry_pairs`] into `registry_pairs_planned` — which no wet
+    ///    run reads yet (U5).
     ///
     /// Survivor: always the company-number org; the PPON org is the loser.
     pub async fn match_org_altid_pairs(
@@ -21536,16 +21904,10 @@ impl Db {
         let mut padded: HashSet<(String, String)> = HashSet::new();
         let mut condemned: HashSet<(String, String)> = HashSet::new();
         let mut unkeyed: HashSet<(String, String)> = HashSet::new();
-        // Issue 469 unit 1: (scheme, register identity, PPON key) → the pair's literals
+        // Issue 469 unit 1: (scheme, register value, PPON key) → the pair's literals
         // and witness notices; per scheme, the distinct literal pairs and the PPONs seen
         // beside two values of the scheme or beside a company number.
-        struct RegPair {
-            registry_literal: String,
-            /// The resolver's identity for the register value, if it mints one.
-            identity: Option<Identifier>,
-            witnesses: BTreeSet<i64>,
-        }
-        let mut reg_pairs: BTreeMap<(String, String, String), RegPair> = BTreeMap::new();
+        let mut reg_pairs: BTreeMap<(String, String, String), AltIdRegPair> = BTreeMap::new();
         // (scheme, value) → the orgs every GB party's mention bound to where that
         // value came first — a register's uppercase alphanumerics under its scheme, a
         // keyed PPON under `GB-PPON` — whether or not the party paired it with
@@ -21555,6 +21917,11 @@ impl Db {
         let mut reg_literal: HashSet<(String, String, String)> = HashSet::new();
         let mut reg_two_values: HashSet<(String, String)> = HashSet::new();
         let mut reg_beside_coh: HashSet<(String, String)> = HashSet::new();
+        // Issue 469 U4: every keyed PPON any GB party published beside a company-number
+        // row, register or not — the register triple gate reads the graph, not one party
+        // (U2's ruling for cross-register, applied to the triple), so a PPON in the
+        // company-number graph never plans in the register family.
+        let mut ppon_with_coh: HashSet<String> = HashSet::new();
         // Prepared once and re-bound per notice: two statements per FTS notice,
         // and no re-prepare of either.
         let mut ids_stmt = conn.prepare(ALTID_PARTY_IDS_SQL).await?;
@@ -21675,13 +22042,18 @@ impl Db {
                 // of the party binds the party's FIRST identifier, so it names the
                 // register's org on a register-first party and the PPON's on a
                 // PPON-first one — the org a value with no identity bound to by name.
-                let keyed_ppons: Vec<(&String, i64)> = ppon
+                let keyed_ppons: Vec<(&String, i64, &String)> = ppon
                     .iter()
-                    .filter_map(|(o, _, s)| match s {
-                        Side::E1(k) => Some((k, *o)),
+                    .filter_map(|(o, l, s)| match s {
+                        Side::E1(k) => Some((k, *o, l)),
                         _ => None,
                     })
                     .collect();
+                // The same `!coh.is_empty()` rule as `reg_beside_coh` below, on every
+                // party rather than the register-bearing ones.
+                if !coh.is_empty() {
+                    ppon_with_coh.extend(keyed_ppons.iter().map(|(pk, _, _)| (*pk).clone()));
+                }
                 if let Some(&org) = bound_of.get(&section) {
                     // The fold binds the party's ordinal-0 identifier (the witness
                     // flags' test below).
@@ -21690,7 +22062,7 @@ impl Db {
                             first_bound.entry((scheme.clone(), value.clone())).or_default().insert(org);
                         }
                     }
-                    for (pk, ppon_ordinal) in &keyed_ppons {
+                    for (pk, ppon_ordinal, _) in &keyed_ppons {
                         if *ppon_ordinal == 0 {
                             first_bound.entry(("GB-PPON".to_owned(), (*pk).clone())).or_default().insert(org);
                         }
@@ -21705,7 +22077,7 @@ impl Db {
                         for (_, pl, _) in &ppon {
                             reg_literal.insert((scheme.clone(), literal.clone(), pl.clone()));
                         }
-                        for (pk, _) in &keyed_ppons {
+                        for (pk, _, pl) in &keyed_ppons {
                             if values_of.get(scheme.as_str()).is_some_and(|v| v.len() > 1) {
                                 reg_two_values.insert((scheme.clone(), (*pk).clone()));
                             }
@@ -21714,9 +22086,11 @@ impl Db {
                             }
                             reg_pairs
                                 .entry((scheme.clone(), value.clone(), (*pk).clone()))
-                                .or_insert_with(|| RegPair {
+                                .or_insert_with(|| AltIdRegPair {
                                     registry_literal: literal.clone(),
+                                    ppon_literal: (*pl).clone(),
                                     identity: (args.register_identity)(literal, country.as_deref()),
+                                    registry_key: (args.registry_pair_key)(scheme, literal, country.as_deref()),
                                     witnesses: BTreeSet::new(),
                                 })
                                 .witnesses
@@ -21975,6 +22349,8 @@ impl Db {
         }
         let mut sides: HashMap<i64, (HashSet<String>, HashSet<String>)> = HashMap::new();
         let mut sampled: HashMap<String, usize> = HashMap::new();
+        // Issue 469 U4: the `both_distinct` pairs, exactly — the register planner's input.
+        let mut registry_candidates: Vec<(String, String, String, i64, i64)> = Vec::new();
         for ((scheme, value, pk), pair) in &reg_pairs {
             if (args.stop)() {
                 report.stopped = true;
@@ -22023,6 +22399,7 @@ impl Db {
                 ([a], [b]) if a == b => counts.already_one += 1,
                 ([a], [b]) => {
                     counts.both_distinct += 1;
+                    registry_candidates.push((scheme.clone(), value.clone(), pk.clone(), *a, *b));
                     let n = sampled.entry(scheme.clone()).or_default();
                     if *n < REGISTRY_SAMPLE_PER_SCHEME {
                         *n += 1;
@@ -22075,22 +22452,8 @@ impl Db {
             }
             Ok((keys, names))
         }
-        // Up to three notices' publication ids, for the listings.
-        async fn publications(
-            conn: &Connection,
-            notices: impl Iterator<Item = i64>,
-        ) -> turso::Result<Vec<String>> {
-            let mut out = Vec::new();
-            for notice in notices.take(3) {
-                let mut rows = conn
-                    .query("SELECT publication_id FROM notices WHERE id = ?", (Value::Integer(notice),))
-                    .await?;
-                if let Some(row) = rows.next().await? {
-                    out.push(text(&row, 0));
-                }
-            }
-            Ok(out)
-        }
+        // Up to three notices' publication ids: the module's `publications` (hoisted
+        // for the register planner, issue 469 U4).
         async fn witness_publications(conn: &Connection, pair: &Pair) -> turso::Result<Vec<String>> {
             publications(conn, pair.witnesses.keys().copied()).await
         }
@@ -22598,10 +22961,446 @@ impl Db {
         }
         report.pairs.sort();
         if args.dry_run {
+            // ---- 7. REGISTER pairs (issue 469 U4): a separate graph, planned DRY only
+            // (U5 lifts this). After the company-number loop, so none of its counts can
+            // move; boxed, so its state and poll frame stay off this future's (CLAUDE.md).
+            Box::pin(self.plan_registry_pairs(
+                conn,
+                &args,
+                AltIdRegistryGraph {
+                    pairs: &reg_pairs,
+                    candidates: &registry_candidates,
+                    reg_owners: &reg_owners,
+                    reg_ppon_owners: &reg_ppon_owners,
+                    ppon_with_coh: &ppon_with_coh,
+                    tainted: &tainted,
+                },
+                &mut report,
+            ))
+            .await?;
             return Ok(report);
         }
         self.altid_wet(conn, &args, &mut report, planned, denied).await?;
         Ok(report)
+    }
+
+    /// Issue 469 U4: the DRY register planner, step 7 of [`Self::match_org_altid_pairs`].
+    /// Unit 1's `both_distinct` register ↔ PPON pairs are E2 statements like the
+    /// company-number pairs (`.scratch/tender-db/469-registry-pairs/unit2-decision.md`),
+    /// gated as their own graph so no company-number count moves, and keyed
+    /// `<scheme>:<identity>~<ppon>` under (`GB`, `GB:altid`). It writes nothing and plans
+    /// only: `registry_pairs_planned` is the set U5's wet path will hold its register
+    /// family to.
+    ///
+    /// 1. STRUCTURAL gates, which no verdict overrides — the graph gates first, so a
+    ///    merged-holder triple reads `triple` rather than the loser-incoherent it also is
+    ///    (all are structural: the order moves attribution, never the plan):
+    ///    `registry-shape` (U3's key refused the value, or its identity is not the one
+    ///    the resolver mints); `single-owner` (each side held exactly, as an own or a
+    ///    merged identifier, by one non-withheld org — a side only name-bound mentions
+    ///    hold never plans); `triple` (a GB party showed the PPON beside a company
+    ///    number, or the PPON's holder carries one: 448's survivor would be folded into
+    ///    a register org); `cross-register` (the PPON's WHOLE partner set across parties
+    ///    holds two or more register values — U2's consortium agent, who states one
+    ///    member's number per notice); then the company-number arm's own order: the v2
+    ///    gate, consortium, legal form head against head, the evidence wall and
+    ///    loser-incoherent, both read through the company-number AND the register
+    ///    channel, so two different UKPRNs are two registrations.
+    /// 2. VERDICT: `keep` denies; a HIGH, unapplied `merge` whose members are exactly the
+    ///    live pair skips 3.
+    /// 3. JUDGMENT: the conflict flags (`registry-multi-ppon`, `party-ambiguous`); then
+    ///    `altid_corroborates` over each org's witness-free names; then the generic wall.
+    ///
+    /// The control flow duplicates the company-number loop's rather than sharing it, so
+    /// that loop stays exactly as it was; only its pure predicates are shared. Listed,
+    /// never gated: `witnesses` (k), `publishers` (p, the witness notices' distinct buyer
+    /// orgs), `self`, `coherent`, `cooccurring`. Survivor (U5): the register org.
+    async fn plan_registry_pairs(
+        &self,
+        conn: &Connection,
+        args: &AltIdMergeArgs<'_>,
+        g: AltIdRegistryGraph<'_>,
+        report: &mut AltIdMergeReport,
+    ) -> turso::Result<()> {
+        use std::collections::{BTreeMap, HashMap, HashSet};
+        // ---- The graph: each side's partners over every pair, owned or not and of
+        // every scheme — an NHS code or a value that mints no identity is a partner too.
+        let mut ppon_registers: HashMap<&str, BTreeSet<(&str, &str)>> = HashMap::new();
+        let mut register_ppons: HashMap<(&str, &str), BTreeSet<&str>> = HashMap::new();
+        for (scheme, value, pk) in g.pairs.keys() {
+            ppon_registers.entry(pk.as_str()).or_default().insert((scheme.as_str(), value.as_str()));
+            register_ppons.entry((scheme.as_str(), value.as_str())).or_default().insert(pk.as_str());
+        }
+        report.registry_cross_register_ppons = ppon_registers.values().filter(|r| r.len() > 1).count() as u64;
+        report.registry_triple_ppons =
+            ppon_registers.keys().filter(|pk| g.ppon_with_coh.contains(**pk)).count() as u64;
+
+        // A capped listing: the publication ids are read only for what fits.
+        async fn push(
+            conn: &Connection,
+            list: &mut Vec<RegistryPairListing>,
+            truncated: &mut bool,
+            cap: usize,
+            mut listing: RegistryPairListing,
+            witnesses: &BTreeSet<i64>,
+        ) -> turso::Result<()> {
+            if list.len() >= cap {
+                *truncated = true;
+                return Ok(());
+            }
+            listing.witness_publications = publications(conn, witnesses.iter().copied()).await?;
+            list.push(listing);
+            Ok(())
+        }
+        // One denial: counted under its gate and listed (R2's cap).
+        async fn deny(
+            conn: &Connection,
+            report: &mut AltIdMergeReport,
+            scheme: &str,
+            gate: &str,
+            mut listing: RegistryPairListing,
+            witnesses: &BTreeSet<i64>,
+        ) -> turso::Result<()> {
+            report.registry_gates.entry(scheme.to_owned()).or_default().bump(gate);
+            listing.gate = gate.to_owned();
+            push(
+                conn,
+                &mut report.registry_denied_listing,
+                &mut report.registry_denied_listing_truncated,
+                R2_PLAN_LISTING_CAP,
+                listing,
+                witnesses,
+            )
+            .await
+        }
+
+        let mut org_rows: HashMap<i64, Option<AltIdOrgRow>> = HashMap::new();
+        let mut names: HashMap<i64, Vec<String>> = HashMap::new();
+        #[allow(clippy::type_complexity)]
+        let mut evidence: HashMap<i64, (Vec<(&'static str, String)>, Vec<(i64, String)>)> = HashMap::new();
+        let mut buyers_of: HashMap<i64, Vec<i64>> = HashMap::new();
+        let mut generic: HashMap<String, bool> = HashMap::new();
+        let mut cross_denied: BTreeSet<&str> = BTreeSet::new();
+        for (scheme, value, pk, a, b) in g.candidates {
+            if (args.stop)() {
+                report.stopped = true;
+                return Ok(());
+            }
+            let (a, b) = (*a, *b);
+            let pair = &g.pairs[&(scheme.clone(), value.clone(), pk.clone())];
+            report.registry_gates.entry(scheme.clone()).or_default().candidates += 1;
+            for o in [a, b] {
+                if !org_rows.contains_key(&o) {
+                    org_rows.insert(o, altid_org_row(conn, o).await?);
+                }
+                if !names.contains_key(&o) {
+                    names.insert(o, self.org_all_names(o).await?);
+                }
+                if !evidence.contains_key(&o) {
+                    let country =
+                        org_rows[&o].as_ref().and_then(|r| r.country.clone()).unwrap_or_else(|| "GB".to_owned());
+                    let read =
+                        altid_registry_evidence(conn, o, &country, args.mention_key, args.registry_mention_key).await?;
+                    evidence.insert(o, read);
+                }
+            }
+            // `publishers` (p) and `self`, off the witness notices' buyers only.
+            let mut publishers: BTreeSet<i64> = BTreeSet::new();
+            let mut self_stated = 0u64;
+            for &notice in &pair.witnesses {
+                if !buyers_of.contains_key(&notice) {
+                    buyers_of.insert(notice, altid_witness_buyers(conn, notice).await?);
+                }
+                let buyers = &buyers_of[&notice];
+                publishers.extend(buyers.iter().copied());
+                if buyers.contains(&a) || buyers.contains(&b) {
+                    self_stated += 1;
+                }
+            }
+            let (a_names, b_names) = (&names[&a], &names[&b]);
+            let ((a_keys, a_rows), (b_keys, b_rows)) = (&evidence[&a], &evidence[&b]);
+            // `coherent`: the designated names (head and satellites, witnesses included)
+            // corroborate. Listed for every candidate, never gated: it informs exactly
+            // where the gate did not run (verdict-admitted) or denied (`witness-only`).
+            let (dr, dp) = (altid_keyed(a_names.iter(), args.name_key), altid_keyed(b_names.iter(), args.name_key));
+            let coherent =
+                matches!(altid_corroborates(&dr, &dp, args.names_agree, args.legal_family), AltIdNames::Corroborated(_));
+            // Both orgs as distinct parties of one notice, the pair's witnesses excepted.
+            let a_notices: HashSet<i64> = a_rows.iter().map(|(n, _)| *n).collect();
+            let cooccurring = b_rows
+                .iter()
+                .map(|(n, _)| *n)
+                .filter(|n| a_notices.contains(n) && !pair.witnesses.contains(n))
+                .collect::<BTreeSet<i64>>()
+                .len() as u64;
+            // The names corroboration reads: the company-number loop's witness-free rule
+            // (unit 1b) — mentions outside the witnesses, else the witness mentions of an
+            // org made of them, else the designated names.
+            let side = |rows: &[(i64, String)], designated: &[String]| -> BTreeMap<String, String> {
+                if rows.iter().any(|(n, _)| !pair.witnesses.contains(n)) {
+                    altid_keyed(
+                        rows.iter().filter(|(n, _)| !pair.witnesses.contains(n)).map(|(_, name)| name),
+                        args.name_key,
+                    )
+                } else if !rows.is_empty() {
+                    altid_keyed(rows.iter().map(|(_, name)| name), args.name_key)
+                } else {
+                    altid_keyed(designated.iter(), args.name_key)
+                }
+            };
+            let (rs, ps) = (side(a_rows, a_names), side(b_rows, b_names));
+            let member = |o: i64| match &org_rows[&o] {
+                Some(r) => RegistryMember {
+                    org_id: o,
+                    kind: r.kind.clone(),
+                    identifier: r.identifier.clone(),
+                    name: r.name.clone(),
+                },
+                None => RegistryMember { org_id: o, kind: None, identifier: None, name: String::new() },
+            };
+            let mut members = vec![member(a), member(b)];
+            members.sort_by_key(|m| m.org_id);
+            let mut listing = RegistryPairListing {
+                registry_scheme: scheme.clone(),
+                // The resolver's identity — `registry_pair_key`'s, once the shape gate
+                // passes — else the value's uppercase alphanumerics.
+                registry: pair.identity.as_ref().map_or_else(|| value.clone(), |i| i.value.clone()),
+                registry_literal: pair.registry_literal.clone(),
+                ppon: pk.clone(),
+                ppon_literal: pair.ppon_literal.clone(),
+                keep: Some(a),
+                loser: Some(b),
+                members,
+                witnesses: pair.witnesses.len() as u64,
+                publishers: publishers.len() as u64,
+                self_stated,
+                coherent,
+                ppon_partners: ppon_registers.get(pk.as_str()).map_or(0, |r| r.len() as u64),
+                registry_partners: register_ppons.get(&(scheme.as_str(), value.as_str())).map_or(0, |p| p.len() as u64),
+                registry_names: rs.values().take(ALTID_LISTING_NAMES).cloned().collect(),
+                ppon_names: ps.values().take(ALTID_LISTING_NAMES).cloned().collect(),
+                cooccurring,
+                ..RegistryPairListing::default()
+            };
+
+            // ---- 1. STRUCTURAL gates.
+            let structural: Option<&'static str> = 'gates: {
+                // Registry-shape: U3 refused the value, or its identity is not the one the
+                // resolver mints (a Scottish charity without its `SC` mints a VAT).
+                let Some((series, identity)) = pair
+                    .registry_key
+                    .as_ref()
+                    .filter(|(_, id)| pair.identity.as_ref().is_some_and(|i| i.kind == "national" && &i.value == id))
+                else {
+                    break 'gates Some("registry-shape");
+                };
+                // Single-owner: each side held EXACTLY, as an own or a merged identifier,
+                // by one non-withheld org (both owner maps already leave withheld orgs
+                // out). A side held only through `first_bound` fails: a provisional org a
+                // mention bound by name, or a withheld or 448-aliased holder the walk
+                // never saw — the survivor-reversal hazard on the PPON side.
+                let held: BTreeSet<i64> = g
+                    .reg_owners
+                    .get(&("national".to_owned(), identity.clone()))
+                    .into_iter()
+                    .flatten()
+                    .copied()
+                    .collect();
+                let ppon_held: BTreeSet<i64> = g.reg_ppon_owners.get(pk).into_iter().flatten().copied().collect();
+                if held != BTreeSet::from([a]) || ppon_held != BTreeSet::from([b]) {
+                    break 'gates Some("single-owner");
+                }
+                // Triple: any GB party showed the PPON beside a company number (the
+                // graph, not one party), or its holder carries a company number of its own
+                // or through merged identifiers — the charitable-company shape, settled by
+                // issue 515's cross-walk, never here.
+                if g.ppon_with_coh.contains(pk) || altid_holds_coh(conn, b, org_rows[&b].as_ref(), args.key).await? {
+                    break 'gates Some("triple");
+                }
+                // Cross-register (U2's binding requirement): the PPON's WHOLE partner set,
+                // so an agent stating one member's number per notice is caught with no
+                // consortium word in its name.
+                if ppon_registers.get(pk.as_str()).is_some_and(|r| r.len() > 1) {
+                    cross_denied.insert(pk.as_str());
+                    break 'gates Some("cross-register");
+                }
+                // From here, the company-number arm's gates in its order: the v2 gate on
+                // both orgs' stored identifiers…
+                let condemned = |o: i64| {
+                    org_rows[&o].as_ref().is_some_and(|r| {
+                        r.identifier.as_deref().is_some_and(|id| {
+                            (args.condemns)(r.country.as_deref(), r.kind.as_deref().unwrap_or("national"), id)
+                        })
+                    })
+                };
+                if condemned(a) || condemned(b) {
+                    break 'gates Some("gate");
+                }
+                // …the consortium veto over every name of both orgs…
+                if a_names.iter().chain(b_names.iter()).any(|n| (args.consortium)(n)) {
+                    break 'gates Some("consortium");
+                }
+                // …GB legal forms head against head…
+                if let (Some(x), Some(y)) = (
+                    a_names.first().and_then(|n| (args.legal_family)(n)),
+                    b_names.first().and_then(|n| (args.legal_family)(n)),
+                ) && x != y
+                {
+                    break 'gates Some("legal-form");
+                }
+                // …the mention-evidence wall over BOTH channels, the pair's own two keys
+                // stripped (the statement under test): two non-empty, disjoint key sets in
+                // one scheme are two registrations…
+                let strip = |keys: &[(&'static str, String)]| {
+                    let mut out: HashMap<&'static str, BTreeSet<String>> = HashMap::new();
+                    for (s, k) in keys {
+                        if (*s == "GB:ppon" && k == pk) || (s == series && k == identity) {
+                            continue;
+                        }
+                        out.entry(*s).or_default().insert(k.clone());
+                    }
+                    out
+                };
+                let (ak, bk) = (strip(a_keys), strip(b_keys));
+                if ak.iter().any(|(s, x)| bk.get(s).is_some_and(|y| !x.is_empty() && !y.is_empty() && x.is_disjoint(y)))
+                {
+                    break 'gates Some("evidence-wall");
+                }
+                // …and the PPON org, the loser, naming another GB registration of any
+                // series, register keys included: it is already more than one supplier.
+                if bk.keys().any(|s| s.starts_with("GB:")) {
+                    break 'gates Some("loser-incoherent");
+                }
+                None
+            };
+            if let Some(gate) = structural {
+                deny(conn, report, scheme, gate, listing, &pair.witnesses).await?;
+                continue;
+            }
+
+            // ---- 2. VERDICT: the reviewer's word on exactly this pair.
+            let key = listing.key();
+            let live = vec![a.min(b), a.max(b)];
+            let mut admitted = false;
+            if let Some(v) = self.merge_verdict_for("GB", "GB:altid", &key).await? {
+                if v.action == "keep" {
+                    deny(conn, report, scheme, "verdict-keep", listing, &pair.witnesses).await?;
+                    continue;
+                }
+                let counts = report.registry_gates.entry(scheme.clone()).or_default();
+                if v.confidence == "high" && !v.applied && v.members == live {
+                    admitted = true;
+                    counts.admitted_verdict += 1;
+                } else {
+                    counts.verdict_stale += 1;
+                }
+            }
+
+            // ---- 3. JUDGMENT, which a HIGH merge verdict stands in for.
+            if !admitted {
+                // The conflict flags: a register value beside two PPONs, or a PPON an
+                // ambiguous party named. One statement is wrong and the arm cannot say
+                // which.
+                let mut flags: Vec<&'static str> = Vec::new();
+                if listing.registry_partners > 1 {
+                    flags.push("registry-multi-ppon");
+                }
+                if g.tainted.contains(&("GB:ppon", pk.clone())) {
+                    flags.push("party-ambiguous");
+                }
+                if !flags.is_empty() {
+                    let counts = report.registry_gates.entry(scheme.clone()).or_default();
+                    counts.conflicts += 1;
+                    for flag in &flags {
+                        counts.bump(flag);
+                    }
+                    listing.gate = flags.join("+");
+                    push(
+                        conn,
+                        &mut report.registry_denied_listing,
+                        &mut report.registry_denied_listing_truncated,
+                        R2_PLAN_LISTING_CAP,
+                        listing,
+                        &pair.witnesses,
+                    )
+                    .await?;
+                    continue;
+                }
+                // Positive corroboration over the witness-free names, the ONE predicate
+                // the company-number loop and the resolver alias share.
+                let corroborating = match altid_corroborates(&rs, &ps, args.names_agree, args.legal_family) {
+                    AltIdNames::Corroborated(pairs) => pairs,
+                    AltIdNames::FormConflict => {
+                        deny(conn, report, scheme, "form-conflict", listing, &pair.witnesses).await?;
+                        continue;
+                    }
+                    AltIdNames::Uncorroborated => {
+                        // The company-number loop's classes: only a witness's own name
+                        // joined the designated names, names sharing a core token, or none.
+                        let gate = if !altid_agreeing(&dr, &dp, args.names_agree).is_empty() {
+                            "witness-only"
+                        } else if dr.keys().all(|x| dp.keys().all(|y| name_cores_disjoint(&[x.clone(), y.clone()]))) {
+                            "uncorroborated-disjoint"
+                        } else {
+                            "uncorroborated-overlap"
+                        };
+                        deny(conn, report, scheme, gate, listing, &pair.witnesses).await?;
+                        continue;
+                    }
+                };
+                // The generic-name wall on the corroborating names' N2 keys; one pair
+                // whose two names are both under the cap is enough.
+                let mut clear = false;
+                for (x, y) in &corroborating {
+                    let mut over = false;
+                    for n in [x.as_str(), y.as_str()] {
+                        let k2 = altid_wall_key(n, args.trim, args.norm);
+                        let is_generic = match generic.get(&k2) {
+                            Some(known) => *known,
+                            None => {
+                                let found = self.name_key_is_generic("n2", &k2, args.stoplist_cap).await?;
+                                generic.insert(k2, found);
+                                found
+                            }
+                        };
+                        over |= is_generic;
+                    }
+                    if !over {
+                        clear = true;
+                        listing.corroborated_by = Some((x.clone(), y.clone()));
+                        break;
+                    }
+                }
+                if !clear {
+                    deny(conn, report, scheme, "generic", listing, &pair.witnesses).await?;
+                    continue;
+                }
+            }
+
+            // ---- The plan: U5 folds the PPON org into the register org.
+            report.registry_gates.entry(scheme.clone()).or_default().bump("plan");
+            report.registry_pairs_planned.push(key);
+            listing.gate = "plan".to_owned();
+            push(
+                conn,
+                &mut report.registry_plan_listing,
+                &mut report.registry_plan_listing_truncated,
+                args.plan_listing_cap,
+                listing,
+                &pair.witnesses,
+            )
+            .await?;
+        }
+        report.registry_cross_register_denied_ppons = cross_denied.len() as u64;
+        report.registry_pairs_planned.sort();
+        // Unique by construction: two spellings of one identity sharing a PPON are each
+        // other's partners, so the cross-register gate denies both.
+        debug_assert!(
+            report.registry_pairs_planned.windows(2).all(|w| w[0] < w[1]),
+            "a register key planned twice: {:?}",
+            report.registry_pairs_planned
+        );
+        Ok(())
     }
 
     /// Issue 448 unit 2: the altid WET run, on the writer the live re-plan was
