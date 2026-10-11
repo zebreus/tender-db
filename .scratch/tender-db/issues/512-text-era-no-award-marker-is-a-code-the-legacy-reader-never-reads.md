@@ -1,7 +1,7 @@
 # 512 — the text era's "all tenders rejected" marker is stored as a Code, and the legacy reader only reads an Integer
 
-Status: ready-for-agent — filed 2026-10-10 from issue 510's adversarial build review (a finding confirmed by its
-refuter, pre-existing, not a 510 regression). NEXT: unit 1, measure the carriers.
+Status: ready-for-agent — UNIT 1 MEASURED, UNIT 2 BUILT (4791168, gated, on main) 2026-10-11. Sizing job 2188 (`refold-fields` over the field on `notice_codes`, `expect:1`): **9 notices** carry the Code marker. The reader now takes either spelling (`NoticeValue::Integer(_) | NoticeValue::Code { .. }`) and `has_destination` lists it on `Channel::Code`; test `a_text_era_rejection_with_an_award_date_closes_its_result`. NEXT: deploy when the queue is idle (the Sunday weekly jobs were running), then `refold-fields` `{"profiles":["TED-NO_AWARDED_CONTRACT"],"tables":["notice_codes"],"expect":9}` and the Verify.
+Was: ready-for-agent — filed 2026-10-10 from issue 510's adversarial build review.
 Kind: data quality (results; text era)
 Relates to: 257 (the "silence is not closure" rule), 244 slice 9 (the text award skeleton), 510 (unit1-decision §3's
 text-era note, corrected by this finding)
