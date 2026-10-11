@@ -1,0 +1,97 @@
+{
+ "GB-MPR-RS008376": {
+  "scheme": "GB-MPR",
+  "value": "RS008376",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/30651",
+  "found": true,
+  "name": "Connexus Homes Limited",
+  "status": "Registered",
+  "other_names": [
+   "Connexus Housing Two Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "8376",
+   "register_display_number": "8376",
+   "match_rule": "RS-prefix_to_bare_2014Act_number",
+   "fca_society_id": 30651,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2020-04-01",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "The Gateway, The Auction Yard, Craven Arms, Shropshire, SY7 9BW",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2021-04-06",
+     "previous_name": "Connexus Housing Two Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2021-04-01",
+     "society_name": "Connexus Housing Three Limited",
+     "society_number": "30241",
+     "transfer_type": "Full"
+    },
+    {
+     "date": "2021-04-01",
+     "society_name": "Connexus Housing One Limited",
+     "society_number": "27191",
+     "transfer_type": "Full"
+    },
+    {
+     "date": "2021-04-01",
+     "society_name": "Connexus Housing Limited",
+     "society_number": "30269",
+     "transfer_type": "Full"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [
+    "8376R"
+   ],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=RS008376",
+    "http": 200,
+    "results": 0,
+    "hits": []
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "8376",
+     "name": "Connexus Homes Limited",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2020-04-01",
+     "deregistration_date": null,
+     "matched_name": "Connexus Homes Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Connexus Homes Limited",
+     "organisation_name": "Connexus Homes Limited",
+     "rp_code": "LH4353",
+     "rp_registration_date": "2002-11-14",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published \"RS008376\" is the RS00nnnn rendering (as used by Companies House) of a society registered under the 2014 Act; the FCA register lists it as number \"8376\" with no suffix. (In the FCA register the suffix \"RS\" marks Scottish societies; no \"8376RS\" exists.) The register also holds a different society under the same society number with a suffix: 8376R (Burnhope Ivy Leaf Club and Institute Limited, Deregistered, registered 1920-12-14, deregistered 2016-12-07). Register: \"Connexus Homes Limited\", status Registered, Community Benefit Society, registered 2020-04-01. Name changes: 2021-04-06 previously \"Connexus Housing Two Limited\". 3 transfer(s) received (latest 2021-04-01 from 30241 Connexus Housing Three Limited). The website search for the string \"RS008376\" returns 0 result(s) and does not list 8376; the society was reached by searching \"8376\". RSH list (corroboration only, name match): Connexus Homes Limited = LH4353, Registered society."
+ },
+ "_meta": {
+  "method": "FCA Mutuals Public Register (https://mutuals.fca.org.uk/). (1) Downloaded the register-wide CSV https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv (HTTP 200, 7.3 MB, Last-Modified 2026-10-11, 32,449 rows; columns Society Number, Society Suffix, Full Registation Number, name, Registered As, dates, Act, status) and matched each published value against Full Registation Number: case-insensitive exact match; \"RS0*n\" -> bare post-2014-Act number n (the CSV gives those societies an empty suffix, while its own \"RS\" suffix marks Scottish societies); \"IP0*n[R]\" -> \"nR\" or NI \"nIP\". (2) For every matched number, read the public website: GET /Search/Search?SearchTerm=<value> (the search accepts names or registration numbers; results carry /Search/Society/<id> links), then the society details page /Search/Society/<id> (status, registered as, registration date/Act, address, SIC, deregistration date/method, transferred-to) and its two JSON feeds /Societies/GetNameChanges?societyId=<id> (previous names) and /Societies/GetTransfers?societyId=<id> (engagements received; TE = transfer of engagements, AM = amalgamation). ~1.2 s between requests. http/source are the details page (or, when no number matched, the website search for the published value). (3) Corroboration only: the Regulator of Social Housing \"List of registered providers - 17 September 2026\" (https://assets.publishing.service.gov.uk/media/6aad16bcce3f006bd4346c9b/List_of_registered_providers_17_September_2026.xlsx, from https://www.gov.uk/government/publications/registered-providers-of-social-housing), matched by normalised name (register current name, previous names, and the member names) to RP code and corporate form; it carries no FCA society number, so it never decides \"found\". name_search_hits match the member names against current names in the CSV only.",
+  "failures": [],
+  "duplicate_value_entries": {},
+  "extra_values_from_gb_chc": {},
+  "scripts": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/u6fetch/mpr/{fetch.py,build.py,xlsx.py}",
+  "fetched_at": "2026-10-11"
+ }
+}

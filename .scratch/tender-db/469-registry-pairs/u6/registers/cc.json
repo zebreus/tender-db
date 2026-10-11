@@ -1,0 +1,76 @@
+{
+ "GB-CHC-287780": {
+  "scheme": "GB-CHC",
+  "value": "287780",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "THE BRITISH FILM INSTITUTE",
+  "status": "Registered",
+  "other_names": [
+   "BFI"
+  ],
+  "linked": {
+   "organisation_number": 287780,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "1983-09-07",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Working name": [
+     "BFI"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=287780, linked_charity_number=0) found in the 2026-10-11 extract: \"THE BRITISH FILM INSTITUTE\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-292786": {
+  "scheme": "GB-CHC",
+  "value": "292786",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "THE BRITISH COMPUTER SOCIETY",
+  "status": "Registered",
+  "other_names": [
+   "BCS",
+   "THE CHARTERED INSTITUTE FOR IT"
+  ],
+  "linked": {
+   "organisation_number": 292786,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "1985-12-10",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Working name": [
+     "BCS",
+     "THE CHARTERED INSTITUTE FOR IT"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=292786, linked_charity_number=0) found in the 2026-10-11 extract: \"THE BRITISH COMPUTER SOCIETY\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "_meta": {
+  "method": "Downloaded the Charity Commission for England and Wales full-register JSON bulk extract (https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip, HTTP 200, 56.9 MB zip, date_of_extract 2026-10-11, 398681 rows incl. linked charities) and https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity_other_names.zip (HTTP 200, 175062 rows); streamed the JSON from the zips without extracting, indexed by registered_charity_number. Main record = linked_charity_number 0; rows with linked_charity_number > 0 are linked (subsidiary) charities sharing the number. The JSON spells the registration status as \"Registered\"/\"Removed\" (R/RM in the text extract). other_names = the main record's rows in charity_other_names (\"Previous name\"/\"Working name\"; the extract has no separate trading-name type). Both U6 values are plain charity numbers and each has a main record, so no name search was needed. Same fetcher as U2 (scripts copied from u2fetch/cc). http is the bulk-file fetch status; found is from the file.",
+  "failures": [],
+  "duplicate_value_entries": {},
+  "scripts": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/u6fetch/cc/{index.py,build.py}"
+ }
+}

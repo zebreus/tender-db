@@ -1,0 +1,17 @@
+{
+ "cohort": "altid-registry-2026-10-11",
+ "verdicts": [
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR30398R~PHBB8926WHGM",
+   "members": [
+    30915060,
+    30916354
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Reviewed (reviewer + challenger, HIGH): FCA 30398R is Thrive Homes Limited with status \"Registered - Transferred Engagements\": its details page records a full transfer to 30183R Watford Community Housing Trust, which is what replaced it. Both orgs are Thrive Homes, and witness 030586-2025 (June 2025) publishes \"Thrive Homes Limited\" with GB-MPR-30398R and this PPON on one party, so the pair is the same body. Routing anything to the successor 30183R is a separate question."
+  }
+ ]
+}

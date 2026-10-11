@@ -1,0 +1,1134 @@
+{
+ "GB-UKPRN-10005790": {
+  "scheme": "GB-UKPRN",
+  "value": "10005790",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10005790",
+  "found": true,
+  "name": "SHEFFIELD HALLAM UNIVERSITY",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "City Campus, Pond Street, Sheffield, South Yorkshire, S1 1WB",
+   "ukrlp_trading_address": "CITY CAMPUS, HOWARD STREET, SHEFFIELD, S1 1WB",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "Sheffield Hallam University",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "1989",
+     "Date that use of 'university' was granted": "1992"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133871",
+     "EstablishmentName": "Sheffield Hallam University",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "S1 1WB"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10005790: legal name 'SHEFFIELD HALLAM UNIVERSITY'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10005790 as 'Sheffield Hallam University', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10005790 on URN 133871 'Sheffield Hallam University' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10005790",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10005790&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10005790&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10005999": {
+  "scheme": "GB-UKPRN",
+  "value": "10005999",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10005999",
+  "found": true,
+  "name": "TYNE COAST COLLEGE",
+  "status": "active",
+  "other_names": [
+   "South Tyneside College",
+   "South Shields Marine School",
+   "Tyne Metropolitan College"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "ST. GEORGES AVENUE, SOUTH SHIELDS, TYNE AND WEAR, NE34 6ET",
+   "ukrlp_trading_address": "ST. GEORGES AVENUE, SOUTH SHIELDS, TYNE AND WEAR, NE34 6ET",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "Tyne Coast College",
+     "trading_names": [
+      "South Tyneside College",
+      "South Shields Marine School",
+      "Tyne Metropolitan College"
+     ],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "Not applicable",
+     "Date that use of 'university' was granted": "Not applicable"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "130555",
+     "EstablishmentName": "Tyne Coast College",
+     "TypeOfEstablishment (name)": "Further education",
+     "FurtherEducationType (name)": "General Further Education College",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "NE34 6ET"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10005999: legal name 'TYNE COAST COLLEGE'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10005999 as 'Tyne Coast College', trading names: South Tyneside College; South Shields Marine School; Tyne Metropolitan College; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10005999 on URN 130555 'Tyne Coast College' (Further education, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10005999",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10005999&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10005999&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10006174": {
+  "scheme": "GB-UKPRN",
+  "value": "10006174",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10006174",
+  "found": true,
+  "name": "ST HELENS COLLEGE",
+  "status": "active",
+  "other_names": [
+   "SK College Group"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "WATER STREET, ST. HELENS, MERSEYSIDE, WA10 1PP",
+   "ukrlp_trading_address": "Water Street, St. Helens, Merseyside, WA10 1PP",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "St Helens College",
+     "trading_names": [
+      "SK College Group"
+     ],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "Not applicable",
+     "Date that use of 'university' was granted": "Not applicable"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "130488",
+     "EstablishmentName": "St Helens College",
+     "TypeOfEstablishment (name)": "Further education",
+     "FurtherEducationType (name)": "General Further Education College",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "WA10 1PP"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10006174: legal name 'ST HELENS COLLEGE'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10006174 as 'St Helens College', trading names: SK College Group; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10006174 on URN 130488 'St Helens College' (Further education, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10006174",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10006174&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10006174&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10006299": {
+  "scheme": "GB-UKPRN",
+  "value": "10006299",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10006299",
+  "found": true,
+  "name": "UNIVERSITY OF STAFFORDSHIRE",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "COLLEGE ROAD, STOKE-ON-TRENT, ST4 2DE",
+   "ukrlp_trading_address": "College Road, Stoke-On-Trent, ST4 2DE",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "University of Staffordshire",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "1992",
+     "Date that use of 'university' was granted": "1992"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133882",
+     "EstablishmentName": "University of Staffordshire",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "ST4 2DE"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10006299: legal name 'UNIVERSITY OF STAFFORDSHIRE'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': University of Staffordshire. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10006299 as 'University of Staffordshire', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10006299 on URN 133882 'University of Staffordshire' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10006299",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10006299&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10006299&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10006687": {
+  "scheme": "GB-UKPRN",
+  "value": "10006687",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10006687",
+  "found": true,
+  "name": "THE HEATHLAND SCHOOL",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "WELLINGTON ROAD SOUTH, HOUNSLOW, TW4 5JD",
+   "ukrlp_trading_address": "Wellington Road South, Hounslow, TW4 5JD",
+   "gias": [
+    {
+     "URN": "102539",
+     "EstablishmentName": "The Heathland School",
+     "TypeOfEstablishment (name)": "Community school",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "TW4 5JD"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10006687: legal name 'THE HEATHLAND SCHOOL'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. Not in the OfS Register download (any sheet). GIAS lists UKPRN 10006687 on URN 102539 'The Heathland School' (Community school, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10006687",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10006687&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10006687&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007140": {
+  "scheme": "GB-UKPRN",
+  "value": "10007140",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007140",
+  "found": true,
+  "name": "BIRMINGHAM CITY UNIVERSITY",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "15 BARTHOLOMEW ROW, BIRMINGHAM, B5 5JU",
+   "ukrlp_trading_address": "4 Cardigan Street, Birmingham, B4 7BD",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "Birmingham City University",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "1992",
+     "Date that use of 'university' was granted": "1992"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133788",
+     "EstablishmentName": "Birmingham City University",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "B5 5JU"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007140: legal name 'BIRMINGHAM CITY UNIVERSITY'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007140 as 'Birmingham City University', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007140 on URN 133788 'Birmingham City University' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007140",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007140&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007140&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007141": {
+  "scheme": "GB-UKPRN",
+  "value": "10007141",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007141",
+  "found": true,
+  "name": "University of Central Lancashire",
+  "status": "active",
+  "other_names": [
+   "UNIVERSITY OF LANCASHIRE"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "Adelphi Building, Preston, Lancashire, PR1 2HE",
+   "ukrlp_trading_address": "PRESTON, PR1 2HE",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "University of Lancashire",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "1992",
+     "Date that use of 'university' was granted": "1992"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133869",
+     "EstablishmentName": "University of Central Lancashire",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "PR1 2HE"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007141: legal name 'University of Central Lancashire'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': UNIVERSITY OF LANCASHIRE. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007141 as 'University of Lancashire', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007141 on URN 133869 'University of Central Lancashire' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007141",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007141&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007141&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007147": {
+  "scheme": "GB-UKPRN",
+  "value": "10007147",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007147",
+  "found": true,
+  "name": "UNIVERSITY OF HERTFORDSHIRE",
+  "status": "active",
+  "other_names": [
+   "University of Hertfordshire Higher Education Corporation",
+   "UH"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "Hatfield Campus, College Lane, Hatfield, Hertfordshire, AL10 9AB",
+   "ukrlp_trading_address": "College Lane, Hatfield, Hertfordshire, AL10 9AB",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "University of Hertfordshire Higher Education Corporation",
+     "trading_names": [
+      "University of Hertfordshire",
+      "UH"
+     ],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "1992",
+     "Date that use of 'university' was granted": "1992"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133783",
+     "EstablishmentName": "University of Hertfordshire",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "AL10 9AB"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007147: legal name 'UNIVERSITY OF HERTFORDSHIRE'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': University of Hertfordshire. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007147 as 'University of Hertfordshire Higher Education Corporation', trading names: University of Hertfordshire; UH; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007147 on URN 133783 'University of Hertfordshire' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007147",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007147&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007147&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007150": {
+  "scheme": "GB-UKPRN",
+  "value": "10007150",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007150",
+  "found": true,
+  "name": "University of Kent (part of London and South East University Group)",
+  "status": "active",
+  "other_names": [
+   "The University of Kent",
+   "University of Kent"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "THE REGISTRY, CANTERBURY, KENT, CT2 7NZ",
+   "ukrlp_trading_address": "THE REGISTRY, CANTERBURY, KENT, CT2 7NZ",
+   "ofs_register": [
+    {
+     "sheet": "de-registration_under_s.22",
+     "legal_name": "The University of Kent",
+     "trading_names": [],
+     "Date of registration": "2018-10-08",
+     "Date of voluntary deregistration": "2026-09-23",
+     "Date of removal from the OfS Register": "2026-09-30",
+     "reason": "The provider has merged with the University of Greenwich on 1 August 2026. Upon completion of the merger, the University of Greenwich changed its name to London and South East University Group."
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133807",
+     "EstablishmentName": "University of Kent",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "CT2 7NZ"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007150: legal name 'University of Kent (part of London and South East University Group)'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register sheet 'de-registration_under_s.22' lists UKPRN 10007150 as 'The University of Kent' (removed 2026-09-30; reason given: The provider has merged with the University of Greenwich on 1 August 2026. Upon completion of the merger, the University of Greenwich changed its name to London and South East University Group.). GIAS lists UKPRN 10007150 on URN 133807 'University of Kent' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007150",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007150&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007150&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007155": {
+  "scheme": "GB-UKPRN",
+  "value": "10007155",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007155",
+  "found": true,
+  "name": "UNIVERSITY OF PORTSMOUTH",
+  "status": "active",
+  "other_names": [
+   "University of Portsmouth Higher Education Corporation",
+   "Portsmouth University"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "MERCANTILE HOUSE, HAMPSHIRE TERRACE, PORTSMOUTH, PO1 2EG",
+   "ukrlp_trading_address": "MERCANTILE HOUSE, HAMPSHIRE TERRACE, PORTSMOUTH, PO1 2EG",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "University of Portsmouth Higher Education Corporation",
+     "trading_names": [
+      "University of Portsmouth",
+      "Portsmouth University"
+     ],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "1992",
+     "Date that use of 'university' was granted": "1992"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133867",
+     "EstablishmentName": "University of Portsmouth",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "PO1 2EG"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007155: legal name 'UNIVERSITY OF PORTSMOUTH'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007155 as 'University of Portsmouth Higher Education Corporation', trading names: University of Portsmouth; Portsmouth University; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007155 on URN 133867 'University of Portsmouth' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007155",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007155&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007155&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007158": {
+  "scheme": "GB-UKPRN",
+  "value": "10007158",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007158",
+  "found": true,
+  "name": "UNIVERSITY OF SOUTHAMPTON",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "Highfield, Southampton, Hampshire, SO17 1BJ",
+   "ukrlp_trading_address": "University Road, Southampton, SO17 1BJ",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "University of Southampton",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "1952",
+     "Date that use of 'university' was granted": "1952"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133879",
+     "EstablishmentName": "University of Southampton",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "SO17 1BJ"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007158: legal name 'UNIVERSITY OF SOUTHAMPTON'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007158 as 'University of Southampton', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007158 on URN 133879 'University of Southampton' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007158",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007158&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007158&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007161": {
+  "scheme": "GB-UKPRN",
+  "value": "10007161",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007161",
+  "found": true,
+  "name": "TEESSIDE UNIVERSITY",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "Borough Road, Middlesbrough, TS1 3BA",
+   "ukrlp_trading_address": "Teesside University, Middlesbrough, TS1 3BX",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "Teesside University",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "1992",
+     "Date that use of 'university' was granted": "1992"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133894",
+     "EstablishmentName": "Teesside University",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "TS1 3BA"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007161: legal name 'TEESSIDE UNIVERSITY'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007161 as 'Teesside University', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007161 on URN 133894 'Teesside University' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007161",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007161&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007161&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007167": {
+  "scheme": "GB-UKPRN",
+  "value": "10007167",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007167",
+  "found": true,
+  "name": "UNIVERSITY OF YORK",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "Heslington, York, North Yorkshire, YO10 5DD",
+   "ukrlp_trading_address": "HESLINGTON, YORK, YO10 5DD",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "University of York",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "1963",
+     "Date that use of 'university' was granted": "1963"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133913",
+     "EstablishmentName": "University of York",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "YO10 5DD"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007167: legal name 'UNIVERSITY OF YORK'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007167 as 'University of York', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007167 on URN 133913 'University of York' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007167",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007167&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007167&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007321": {
+  "scheme": "GB-UKPRN",
+  "value": "10007321",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007321",
+  "found": true,
+  "name": "WALTHAM FOREST COLLEGE",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "Forest Road, Walthamstow, London, E17 4JB",
+   "ukrlp_trading_address": "707, FOREST ROAD, LONDON, E17 4JB",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "Waltham Forest College",
+     "trading_names": [
+      "Waltham Forest College"
+     ],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Not applicable",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "Not applicable",
+     "Date that use of 'university' was granted": "Not applicable"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "130456",
+     "EstablishmentName": "Waltham Forest College",
+     "TypeOfEstablishment (name)": "Further education",
+     "FurtherEducationType (name)": "General Further Education College",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "E17 4JB"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007321: legal name 'WALTHAM FOREST COLLEGE'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': WALTHAM FOREST COLLEGE. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007321 as 'Waltham Forest College', trading names: Waltham Forest College; charity status Not applicable; category Approved (fee cap). GIAS lists UKPRN 10007321 on URN 130456 'Waltham Forest College' (Further education, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007321",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007321&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007321&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007578": {
+  "scheme": "GB-UKPRN",
+  "value": "10007578",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007578",
+  "found": true,
+  "name": "CITY OF WOLVERHAMPTON COLLEGE",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "Wellington Road, Bilston, Wolverhampton, West Midlands, WV14 6BT",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "City of Wolverhampton College",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "Not applicable",
+     "Date that use of 'university' was granted": "Not applicable"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "130484",
+     "EstablishmentName": "City of Wolverhampton College",
+     "TypeOfEstablishment (name)": "Further education",
+     "FurtherEducationType (name)": "General Further Education College",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "WV14 6BT"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007578: legal name 'CITY OF WOLVERHAMPTON COLLEGE'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007578 as 'City of Wolverhampton College', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007578 on URN 130484 'City of Wolverhampton College' (Further education, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007578",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007578&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007578&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007696": {
+  "scheme": "GB-UKPRN",
+  "value": "10007696",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007696",
+  "found": true,
+  "name": "YEOVIL COLLEGE",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "MUDFORD ROAD, YEOVIL, SOMERSET, BA21 4DR",
+   "ukrlp_trading_address": "MUDFORD ROAD, YEOVIL, SOMERSET, BA21 4DR",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "Yeovil College",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "Not applicable",
+     "Date that use of 'university' was granted": "Not applicable"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "130805",
+     "EstablishmentName": "Yeovil College",
+     "TypeOfEstablishment (name)": "Further education",
+     "FurtherEducationType (name)": "General Further Education College",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "BA21 4DR"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007696: legal name 'YEOVIL COLLEGE'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007696 as 'Yeovil College', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007696 on URN 130805 'Yeovil College' (Further education, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007696",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007696&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007696&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007774": {
+  "scheme": "GB-UKPRN",
+  "value": "10007774",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007774",
+  "found": true,
+  "name": "UNIVERSITY OF OXFORD",
+  "status": "active",
+  "other_names": [
+   "Oxford University",
+   "The Chancellor, Masters and Scholars of the University of Oxford",
+   "The University of Oxford"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "University Offices, Wellington Square, Oxford, Oxfordshire, OX1 2JD",
+   "ukrlp_trading_address": "UNIVERSITY OFFICES, WELLINGTON SQUARE, OXFORD, OX1 2JD",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "The Chancellor, Masters and Scholars of the University of Oxford",
+     "trading_names": [
+      "Oxford University",
+      "The University of Oxford"
+     ],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date that use of 'university' was granted": "First Chancellor appointed: 1214\nAct of Parliament: 1571"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133863",
+     "EstablishmentName": "University of Oxford",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "OX1 2JD"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007774: legal name 'UNIVERSITY OF OXFORD'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': Oxford University. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007774 as 'The Chancellor, Masters and Scholars of the University of Oxford', trading names: Oxford University; The University of Oxford; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007774 on URN 133863 'University of Oxford' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007774",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007774&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007774&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007788": {
+  "scheme": "GB-UKPRN",
+  "value": "10007788",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007788",
+  "found": true,
+  "name": "UNIVERSITY OF CAMBRIDGE",
+  "status": "active",
+  "other_names": [
+   "Cambridge University",
+   "The Chancellor, Masters, and Scholars of the University of Cambridge",
+   "The University of Cambridge"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "THE OLD SCHOOLS, TRINITY LANE, CAMBRIDGE, CB2 1TN",
+   "ukrlp_trading_address": "The Old Schools, Trinity Lane, Cambridge, CB2 1TN",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "The Chancellor, Masters, and Scholars of the University of Cambridge",
+     "trading_names": [
+      "The University of Cambridge",
+      "Cambridge University"
+     ],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date that use of 'university' was granted": "Date of foundation: 1209\nAct of Parliament: 1571"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133801",
+     "EstablishmentName": "University of Cambridge",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "CB2 1TN"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007788: legal name 'UNIVERSITY OF CAMBRIDGE'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': University of Cambridge; Cambridge University. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007788 as 'The Chancellor, Masters, and Scholars of the University of Cambridge', trading names: The University of Cambridge; Cambridge University; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007788 on URN 133801 'University of Cambridge' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007788",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007788&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007788&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007801": {
+  "scheme": "GB-UKPRN",
+  "value": "10007801",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007801",
+  "found": true,
+  "name": "UNIVERSITY OF PLYMOUTH",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "Drake Circus, Plymouth, Devon, PL4 8AA",
+   "ukrlp_trading_address": "Drake Circus, Plymouth, PL4 8AA",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "University of Plymouth",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "1992",
+     "Date that use of 'university' was granted": "1992"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133865",
+     "EstablishmentName": "University of Plymouth",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "PL4 8AA"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007801: legal name 'UNIVERSITY OF PLYMOUTH'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007801 as 'University of Plymouth', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007801 on URN 133865 'University of Plymouth' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007801",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007801&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007801&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007817": {
+  "scheme": "GB-UKPRN",
+  "value": "10007817",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007817",
+  "found": true,
+  "name": "CHICHESTER COLLEGE GROUP",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "WESTGATE FIELDS, CHICHESTER, WEST SUSSEX, PO19 1SB",
+   "ukrlp_trading_address": "Chichester College, Avenue DE Chartres, Chichester, West Sussex, PO19 1SB",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "Chichester College Group",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "Not applicable",
+     "Date that use of 'university' was granted": "Not applicable"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "130843",
+     "EstablishmentName": "Chichester College Group",
+     "TypeOfEstablishment (name)": "Further education",
+     "FurtherEducationType (name)": "General Further Education College",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "PO19 1SB"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007817: legal name 'CHICHESTER COLLEGE GROUP'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007817 as 'Chichester College Group', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007817 on URN 130843 'Chichester College Group' (Further education, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007817",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007817&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007817&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10007823": {
+  "scheme": "GB-UKPRN",
+  "value": "10007823",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10007823",
+  "found": true,
+  "name": "EDGE HILL UNIVERSITY",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "ST. HELENS ROAD, ORMSKIRK, LANCASHIRE, L39 4QP",
+   "ukrlp_trading_address": "ST. HELENS ROAD, ORMSKIRK, LANCASHIRE, L39 4QP",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "Edge Hill University",
+     "trading_names": [],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "2007",
+     "Date that use of 'university' was granted": "2006"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "133828",
+     "EstablishmentName": "Edge Hill University",
+     "TypeOfEstablishment (name)": "Higher education institutions",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "L39 4QP"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10007823: legal name 'EDGE HILL UNIVERSITY'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10007823 as 'Edge Hill University', no trading names; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10007823 on URN 133828 'Edge Hill University' (Higher education institutions, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10007823",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10007823&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10007823&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10023139": {
+  "scheme": "GB-UKPRN",
+  "value": "10023139",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10023139",
+  "found": true,
+  "name": "LTE GROUP",
+  "status": "active",
+  "other_names": [
+   "Novus",
+   "UCEN Manchester",
+   "The Manchester College",
+   "MOL",
+   "Total People Limited",
+   "Novus Cambria"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "Whitworth House, Whitworth St, Openshaw, Manchester, Greater Manchester, M11 2WH",
+   "ukrlp_trading_address": "ASHTON OLD ROAD, MANCHESTER, M11 2WH",
+   "ofs_register": [
+    {
+     "sheet": "Register",
+     "legal_name": "LTE Group",
+     "trading_names": [
+      "The Manchester College",
+      "UCEN Manchester",
+      "Novus",
+      "MOL",
+      "Total People Limited",
+      "Novus Cambria"
+     ],
+     "embedded_colleges": "Not applicable",
+     "charity_status": "Exempt",
+     "registered_category": "Approved (fee cap)",
+     "Date of award of these degree awarding powers": "2025",
+     "Date that use of 'university' was granted": "Not applicable"
+    }
+   ],
+   "gias": [
+    {
+     "URN": "135524",
+     "EstablishmentName": "LTE Group",
+     "TypeOfEstablishment (name)": "Further education",
+     "FurtherEducationType (name)": "General Further Education College",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "M11 2WH"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10023139: legal name 'LTE GROUP'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': Novus; UCEN Manchester; The Manchester College. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. OfS Register (current) lists UKPRN 10023139 as 'LTE Group', trading names: The Manchester College; UCEN Manchester; Novus; MOL; Total People Limited; Novus Cambria; charity status Exempt; category Approved (fee cap). GIAS lists UKPRN 10023139 on URN 135524 'LTE Group' (Further education, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10023139",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10023139&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10023139&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10024294": {
+  "scheme": "GB-UKPRN",
+  "value": "10024294",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10024294",
+  "found": true,
+  "name": "CHESHIRE WEST AND CHESTER COUNCIL",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "58 NICHOLAS STREET, CHESTER, CH1 2NP",
+   "ukrlp_trading_address": "The Portal, Wellington Road, Ellesmere Port, CH65 0BA"
+  },
+  "notes": "UKRLP provider page holds UKPRN 10024294: legal name 'CHESHIRE WEST AND CHESTER COUNCIL'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. Not in the OfS Register download (any sheet). No GIAS establishment carries this UKPRN.",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10024294",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10024294&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10024294&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10034301": {
+  "scheme": "GB-UKPRN",
+  "value": "10034301",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10034301",
+  "found": true,
+  "name": "MERSEYSIDE FIRE AND RESCUE AUTHORITY",
+  "status": "active",
+  "other_names": [
+   "Merseyside Fire & Rescue Service"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "FIRE BRIGADE HEADQUARTERS, BRIDLE ROAD, BOOTLE, MERSEYSIDE, L30 4YD",
+   "ukrlp_trading_address": "FIRE BRIGADE HEADQUARTERS, BRIDLE ROAD, BOOTLE, MERSEYSIDE, L30 4YD"
+  },
+  "notes": "UKRLP provider page holds UKPRN 10034301: legal name 'MERSEYSIDE FIRE AND RESCUE AUTHORITY'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': Merseyside Fire & Rescue Service. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. Not in the OfS Register download (any sheet). No GIAS establishment carries this UKPRN.",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10034301",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10034301&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10034301&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10035180": {
+  "scheme": "GB-UKPRN",
+  "value": "10035180",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10035180",
+  "found": true,
+  "name": "SAINT JOHN BOSCO COLLEGE",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "Parkham Street, Battersea, London, SW11 3DQ",
+   "ukrlp_trading_address": "PARKHAM STREET, LONDON, SW11 3DQ",
+   "gias": [
+    {
+     "URN": "135762",
+     "EstablishmentName": "Saint John Bosco College",
+     "TypeOfEstablishment (name)": "Voluntary aided school",
+     "FurtherEducationType (name)": "Not applicable",
+     "EstablishmentStatus (name)": "Open",
+     "Postcode": "SW11 3DQ"
+    }
+   ]
+  },
+  "notes": "UKRLP provider page holds UKPRN 10035180: legal name 'SAINT JOHN BOSCO COLLEGE'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. Not in the OfS Register download (any sheet). GIAS lists UKPRN 10035180 on URN 135762 'Saint John Bosco College' (Voluntary aided school, Open).",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10035180",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10035180&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10035180&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10039859": {
+  "scheme": "GB-UKPRN",
+  "value": "10039859",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10039859",
+  "found": true,
+  "name": "ACADEMY TRANSFORMATION TRUST",
+  "status": "active",
+  "other_names": [
+   "Academy Transformation Trust Further Education"
+  ],
+  "linked": {},
+  "notes": "UKRLP provider page holds UKPRN 10039859: legal name 'ACADEMY TRANSFORMATION TRUST'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': Academy Transformation Trust Further Education. UKRLP detail page shows only legal name and contact (no UKPRN heading, no address); the UKPRN search result lists it with UKPRN 10039859 as 'ACADEMY TRANSFORMATION TRUST'. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. Not in the OfS Register download (any sheet). No GIAS establishment carries this UKPRN.",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10039859",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10039859&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10039859&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10046414": {
+  "scheme": "GB-UKPRN",
+  "value": "10046414",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10046414",
+  "found": true,
+  "name": "BRIGHT FUTURES EDUCATIONAL TRUST",
+  "status": "active",
+  "other_names": [
+   "The Greater Manchester Bright Futures SCITT",
+   "BRIGHT FUTURES EDUCATIONAL TRUST (Academy Trust)"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "THE HUB 144 IRLAM ROAD, URMSTON, MANCHESTER, M41 6NA",
+   "ukrlp_trading_address": "CAVENDISH ROAD, BOWDON, ALTRINCHAM, CHESHIRE, WA14 2NJ"
+  },
+  "notes": "UKRLP provider page holds UKPRN 10046414: legal name 'BRIGHT FUTURES EDUCATIONAL TRUST'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': The Greater Manchester Bright Futures SCITT; BRIGHT FUTURES EDUCATIONAL TRUST (Academy Trust). The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. Not in the OfS Register download (any sheet). No GIAS establishment carries this UKPRN.",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10046414",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10046414&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10046414&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10047762": {
+  "scheme": "GB-UKPRN",
+  "value": "10047762",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10047762",
+  "found": true,
+  "name": "THE RIVERSIDE GROUP LIMITED",
+  "status": "active",
+  "other_names": [],
+  "linked": {
+   "ukrlp_legal_address": "2 ESTUARY BOULEVARD, SPEKE, LIVERPOOL, L24 8RF",
+   "ukrlp_trading_address": "2, ESTUARY BOULEVARD, SPEKE, LIVERPOOL, L24 8RF"
+  },
+  "notes": "UKRLP provider page holds UKPRN 10047762: legal name 'THE RIVERSIDE GROUP LIMITED'; listed under the Active provider filter (not under Deactivated). UKRLP shows no trading names. The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. Not in the OfS Register download (any sheet). No GIAS establishment carries this UKPRN.",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10047762",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10047762&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10047762&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "GB-UKPRN-10060053": {
+  "scheme": "GB-UKPRN",
+  "value": "10060053",
+  "http": 200,
+  "source": "https://ukrlp.education.gov.uk/search/provider/10060053",
+  "found": true,
+  "name": "THE WHITE HILLS PARK TRUST LTD",
+  "status": "active",
+  "other_names": [
+   "THE WHITE HILLS PARK FEDERATION TRUST (Academy Trust)"
+  ],
+  "linked": {
+   "ukrlp_legal_address": "BRAMCOTE COLLEGE MOOR LANE, BRAMCOTE, NOTTINGHAM, NOTTINGHAMSHIRE, NG9 3GA"
+  },
+  "notes": "UKRLP provider page holds UKPRN 10060053: legal name 'THE WHITE HILLS PARK TRUST LTD'; listed under the Active provider filter (not under Deactivated). UKRLP 'Trading names': THE WHITE HILLS PARK FEDERATION TRUST (Academy Trust). The public UKRLP page shows no company number, charity number, verification source, or previous names/aliases. Not in the OfS Register download (any sheet). No GIAS establishment carries this UKPRN.",
+  "sources": {
+   "ukrlp_detail": "https://ukrlp.education.gov.uk/search/provider/10060053",
+   "ukrlp_search_active": "https://ukrlp.education.gov.uk/search?SearchTerm=10060053&UKPRNStatusFilter=active&Page=1",
+   "ukrlp_search_deactivated": "https://ukrlp.education.gov.uk/search?SearchTerm=10060053&UKPRNStatusFilter=deactivated&Page=1"
+  }
+ },
+ "_meta": {
+  "fetched": "2026-10-11",
+  "method": "UKRLP (https://ukrlp.education.gov.uk), read per value with three plain GETs, no cookie or token needed, ~1 req/s: (1) details page GET /search/provider/<UKPRN> (legal name, legal/trading address, 'Trading names', primary contact; a missing UKPRN returns HTTP 200 with title 'Provider not found'); (2) GET /search?SearchTerm=<UKPRN>&UKPRNStatusFilter=active&Page=1 and (3) the same with UKPRNStatusFilter=deactivated, giving status from which filter lists the UKPRN. These GET URLs are the redirect target of the results page's own POST /search form. found = the details page holds the record AND a status-filtered search lists that exact UKPRN. The public UKRLP page shows no company/charity number, verification source or alias list, so other_names and linked are filled in from two bulk downloads that state UKPRN, with the source named in notes and linked: the OfS Register xlsx (https://register-api.officeforstudents.org.uk/api/Download/, all sheets including the de-registered ones) and GIAS edubasealldata20261011.csv (https://ea-edubase-api-prod.azurewebsites.net/edubase/downloads/public/edubasealldata20261011.csv). OfS date serials converted to ISO dates. U6 (issue 469) reused U2's fetcher unchanged in method: both bulk files were downloaded afresh on 2026-10-11 and are byte-identical to U2's same-day copies.",
+  "dead_ends": [
+   "(Found by U2 on 2026-10-11; U6 did not retry these.) The home page form POST /Home/Search (query + __RequestVerificationToken + antiforgery cookie) returns a WAF-style HTTP 404 'The specified URL cannot be found', whatever the UA, Origin or Referer.",
+   "(Found by U2 on 2026-10-11; not retried in U6.) The UKRLP SOAP ProviderQueryService (ws.ukrlp.co.uk / webservices.ukrlp.co.uk) is unreachable from here (proxy CONNECT 502), so ProviderStatus, VerificationDetails and ProviderAliases could not be read."
+  ],
+  "failures": [],
+  "duplicate_input_keys": []
+ }
+}

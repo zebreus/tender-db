@@ -1,0 +1,1133 @@
+{
+ "cohort": "altid-registry-confirmed-2026-10-11",
+ "verdicts": [
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1044521~PZRZ3969DNNT",
+   "members": [
+    31564094,
+    31583635
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1044521 is OASIS CARE AND TRAINING AGENCY (OCTA), Registered (previous name SOMALI REFUGEE ACTION GROUP). Witness 033450-2026 publishes exactly that name with the charity number and the PPON. Both orgs are named 'Oasis Care and Training Agency', so this is the same body."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1077722~PYWT7232MXMX",
+   "members": [
+    31545512,
+    31547023
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1077722 is now Coram Family Lives, Registered (company 03817762), and lists FAMILY LIVES, FAMILYLIVES and PARENTLINE PLUS as previous names. Both orgs carry the previous name 'Family Lives', and witness 061751-2025 publishes 'FAMILY LIVES' with both numbers. This is a true pair under the charity's former name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1079675~PZJW8184GHXX",
+   "members": [
+    31535076,
+    31553465
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1079675 is THE KING'S TRUST, Registered (RC000772, previous name THE PRINCE'S TRUST); its one linked charity was removed in 2005 and does not matter here. Both orgs are 'The King's Trust', so this is a straight name match on a live number."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1079797~PNGT9457RTMH",
+   "members": [
+    31537664,
+    31544500
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1079797 is THE CHARTERED INSTITUTE OF PERSONNEL AND DEVELOPMENT, Registered (RC000758, working name CIPD). The PPON org 'Chartered Institute of Personnel and Development' is the register's own previous-name form, and both orgs sit on the same 3 winner tenders."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1091434~PHCH9173QTMH",
+   "members": [
+    30915093,
+    30915966
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1091434 is NURSING AND MIDWIFERY COUNCIL, Registered. The PPON org 'The Nursing and Midwifery Council' is the same name with a leading 'The', and both orgs appear only as buyers (34 and 7 tenders), as the regulator would."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1096908~PHBZ6759CZRZ",
+   "members": [
+    30926776,
+    31542369
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1096908 is AFGHANISTAN & CENTRAL ASIAN ASSOCIATION, Registered (previous names include AFGHAN COMMUNITY ORGANISATION OF LONDON). Both orgs carry that exact name, so this is the same body."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1107013~PWXN7778TJJG",
+   "members": [
+    31553021,
+    31589350
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1107013 is Forum CIO, a Registered CIO and not dissolved (formerly North Bank Forum for Voluntary Organisations). Both orgs are named exactly 'Forum CIO', and the witnesses publish the charity number and the PPON for that one party."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1139250~PDTH9328QRQP",
+   "members": [
+    30918375,
+    31552217
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1139250 is MUSEUM OF LONDON, Registered, with working name LONDON MUSEUM; its 3 registered linked charities are London Museum trust funds and are not in play. Both orgs are 'London Museum', which is the register's working name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1140312~PCWX4677HTMN",
+   "members": [
+    30914105,
+    30919521
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1140312 is UNIVERSITY OF SOUTH WALES/PRIFYSGOL DE CYMRU, Registered (formerly University of Glamorgan). Witness 031651-2025 lists 'UNIVERSITY OF SOUTH WALES - Including RWCMD' with this charity number and this PPON. Each Welsh university in that notice carries its own number and its own PPON, so there is no cross-attachment."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1140762~PPNB5569JLHH",
+   "members": [
+    30914980,
+    30915727
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1140762 is CARDIFF METROPOLITAN UNIVERSITY, Registered (formerly UWIC). Witness 031651-2025 gives this party its own number and PPON. The PPON org (85 mentions) carries the same name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1145141~PDMD5638NXMT",
+   "members": [
+    30915728,
+    30968735
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1145141 is PRIFYSGOL ABERYSTWYTH, Registered (RC000641), with working name ABERYSTWYTH UNIVERSITY. That working name is exactly the PPON org's name, and witness 031651-2025 publishes 'PRIFYSGOL ABERYSTWYTH UNIVERSITY' with both numbers."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1149535~PCRP2139LPXM",
+   "members": [
+    30915729,
+    30919672
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CC 1149535 is UNIVERSITY OF WALES:TRINITY SAINT DAVID, Registered (working names UWTSD and PRIFYSGOL CYMRU: Y DRINDOD DEWI SANT). The PPON org 'University of Wales Trinity Saint David' is that name without the colon, and witness 031651-2025 gives this party its own number and PPON."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1161921~PRHY4184BBDM",
+   "members": [
+    31541488,
+    31554980
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The Charity Commission has 1161921 as a Registered CIO named \"Step 2 Young People's Health\" (previous name STEP 2 YOUNG PEOPLE'S HEALTH PROJECT), the same name the PPON org carries word for word. Both orgs have the same 2 mentions and the same winner/bidder footprint, so this is one charity."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC1175616~PDXH7241QMQH",
+   "members": [
+    31565792,
+    31566916
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The register has 1175616 as a Registered CIO, \"SHINE LINCOLNSHIRE\", an exact match for the PPON org's name \"Shine Lincolnshire\". Both orgs are winners only, with no buyer role, which fits one charity supplier."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC207076~PZJG5765BRHD",
+   "members": [
+    31587889,
+    31589220
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The register has 207076 as Registered (RC000521), \"ROYAL SOCIETY FOR THE PROTECTION OF BIRDS\", with working names THE RSPB and R S P B. The PPON org's \"The Royal Society for the Protection of Birds\" is the same name with a leading article."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC209617~PGQC5728VHDY",
+   "members": [
+    30967402,
+    31590269
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The register has 209617 as a Registered charitable company (CH 00291646), \"THE GUIDE DOGS FOR THE BLIND ASSOCIATION\". The PPON org has the identical name in mixed case, and neither side holds a trading-company name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC210252~PVMC1756WQNH",
+   "members": [
+    31556347,
+    31580864
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The register has 210252 as Registered, \"THE INSTITUTION OF CIVIL ENGINEERS\" (working name ICE). The PPON org's \"Institution of Civil Engineers\" is the same name without the article, and the 33 linked charities are medal and bequest funds, not this party."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC212808~PJNX8831LRZX",
+   "members": [
+    31575435,
+    31578267
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The register has 212808 as Registered, \"ROYAL COLLEGE OF SURGEONS OF ENGLAND\", and the PPON org's \"The Royal College of Surgeons of England\" adds only the article. The 99 linked charities on the number are named funds, and the PPON carries the main college's name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC287780~PZCD7428WWBG",
+   "members": [
+    30913601,
+    31568664
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The Charity Commission extract dated 2026-10-11 has 287780 as the main record \"THE BRITISH FILM INSTITUTE\". It has been Registered since 1983-09-07 with no removal date, its working name is \"BFI\", and it has no linked charities or company number, so this cannot be a linked charity or a trading company. The PPON org's only name is \"The British Film Institute\", the register's name exactly, and the API shows it has just 2 mentions next to 73 on the charity org, with no stray names, so the PPON is the charity."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-CHC:GBCHC292786~PGHM9562ZBPZ",
+   "members": [
+    30917771,
+    31560892
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The Charity Commission extract dated 2026-10-11 has 292786 as the main record \"THE BRITISH COMPUTER SOCIETY\". It has been Registered since 1985-12-10 with working names \"BCS\" and \"THE CHARTERED INSTITUTE FOR IT\", and it has no linked charities or company number. The PPON org's names are \"BCS\", \"BCS, The Chartered Institute for IT\" and \"British Computer Society\" (with a trailing space), which are exactly the register's name and working names. None of them points to a trading subsidiary such as BCS Learning & Development Ltd, so the PPON is the charity."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR12871R~PLDT3146ZNQQ",
+   "members": [
+    31550992,
+    31573778
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: FCA 12871R is \"Sussex Housing and Care\", Registered (formerly Sussex Housing Association for the Aged; RSH LH0079), and both orgs are named \"Sussex Housing & Care\", a plain &/and spelling variant. The single witness, 043208-2026, pairs the number and the PPON on one party, and neither side carries a stray name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR15210R~PDVR1783RWJX",
+   "members": [
+    31540541,
+    31557064
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: FCA 15210R is \"Salvation Army Housing Association\", Registered (renamed from \"... Limited\" in 1993; RSH LH2429), and both orgs carry exactly that name. Witness 085887-2025 (Islington supported-accommodation framework) lists SAHA as a tenderer with GB-MPR-15210R and GB-PPON-PDVR-1783-RWJX on the same party."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR16337R~PMCL4972LYCY",
+   "members": [
+    30976449,
+    31538068
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: FCA 16337R is Metropolitan Housing Trust Limited, Registered, which received Thames Valley Charitable HA's engagements on 2018-10-08. \"Metropolitan Thames Valley Housing\" is the merged body's working name, and Companies House has no company by that name, only IP16337R. Witness 059125-2025 publishes one party, \"Metropolitan Housing Trust Limited\", carrying both GB-MPR-16337R and this PPON, and its description says the properties are owned by \"Metropolitan Thames Valley Housing\". Thames Valley Housing Association Limited (17375R) is still a separate live society."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR16460R~PGDJ9755ZNCY",
+   "members": [
+    30916416,
+    31569638
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: FCA 16460R is \"Orwell Housing Association Limited\", Registered (RSH L0028), and the orgs are named \"Orwell Housing Association Ltd\" and \"... Limited\", a pure Ltd/Limited form variant. Three witnesses pair the number with the PPON, and neither side has a stray."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR20755R~PGZD6448RDPL",
+   "members": [
+    30915945,
+    30919585
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: FCA 20755R is \"Southdown Housing Association Limited\", Registered (formerly Brighton and Hove Area Group HA, renamed 1996; RSH L1829), and both orgs are \"Southdown Housing Association\". Three witnesses pair them, and both orgs have the same buyer/winner profile (4 buyer, 2-3 winner)."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR21186R~PLHD1176CCXP",
+   "members": [
+    30917457,
+    31535363
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The published \"21186r\" differs from FCA 21186R only in letter case, and 21186R is \"Waltham Forest Housing Association Limited\", Registered (RSH L0461), so the value is not mislabelled. Both orgs are named \"Waltham Forest Housing Association\", paired on witness 017087-2025."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR26278R~PWND8621RJPR",
+   "members": [
+    30916785,
+    31564029
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: FCA 26278R is \"West Kent Housing Association\", Registered (dropped \"Limited\" in 2000; RSH LH3827), and both orgs carry exactly that name. Three witnesses pair the number and the PPON, and neither side has a stray."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR27440R~PQBH3597XBJD",
+   "members": [
+    30913929,
+    31553186
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: FCA 27440R is \"Creative Support Limited\", Registered (formerly Manchester Housing Consortium Limited, renamed 1994), matching the orgs \"Creative Support\" and \"CREATIVE SUPPORT LIMITED\". Witness 076240-2025 publishes a \"CREATIVE SUPPORT LIMITED\" party with GB-PPON-PQBH-3597-XBJD and GB-MPR-27440R together, and both orgs are winners, consistent with a care provider."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR28038R~PQND5289JNDN",
+   "members": [
+    30914385,
+    31534486
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: FCA 28038R is \"Clarion Housing Group Limited\", Registered (formerly Affinity Sutton Group; took Circle Anglia's engagements in 2016), and the PPON org is \"Clarion Housing Group\". Witness 051546-2025 publishes \"CLARION HOUSING GROUP LIMITED\" with GB-MPR-28038R and this PPON on one party. The separate member society Clarion Housing Association Limited (7686) is not the body here."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR30666R~PCBB6493RNBZ",
+   "members": [
+    30915907,
+    30929619
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: FCA 30666R is \"Your Housing Group Limited\", Registered (formerly Harvest Housing Group Limited, renamed 2012), and the PPON org is \"Your Housing Group\". Witness 085780-2026 publishes \"Your Housing Group Limited\" with GB-MPR-30666R and this PPON on one party. The member society Your Housing Limited (17704R) is separate and is not the body here."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR31192R~PWVC1443BCQH",
+   "members": [
+    31545510,
+    31563993
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: FCA 31192R is Dimensions (UK) Limited, status Registered (a registered society, 2011 amalgamation; RSH 4648). The PPON org's name 'Dimensions (UK) Ltd' differs only in the Ltd/Limited form, and both orgs sit on the supplier side (winner/bidder), so this is one body."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR7643~PDHG6361YQXW",
+   "members": [
+    30968692,
+    31554487
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: Bare FCA 7643 is Cross Keys Homes Limited, a community benefit society (Peterborough) with status Registered; the RSH lists it as LH4428. Both orgs are named 'Cross Keys Homes' and are buyers only, a plain name match without the Limited."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR7773~PDPR4361WLZP",
+   "members": [
+    30933260,
+    31538427
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: Bare FCA 7773 is Livv Housing Group, status Registered (renamed from Knowsley Housing Trust Limited 2020-04-01; RSH LH4343); 7773R is an unrelated deregistered farmers' society. Both orgs are named exactly 'Livv Housing Group' and are buyers only."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR7843~PYBH1339MTCJ",
+   "members": [
+    30914476,
+    30917184
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: Bare FCA 7843 is Anchor Hanover Group, a community benefit society with status Registered; it took in Hanover Housing Association 2018-11-29, and the RSH lists it as LH4095. Both orgs are named exactly 'Anchor Hanover Group' and are heavy buyers (50+ tenders each), the same body under two identifiers."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR8112~PCMV1277LCTG",
+   "members": [
+    30915659,
+    31573385
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: Bare FCA 8112 is now Delta Housing Limited, status Registered, renamed from Chelmer Housing Partnership Limited on 2026-03-31, when Estuary Housing Association transferred its engagements in; Companies House mirrors it as RS008112 'DELTA HOUSING LIMITED'. The register org's head (Chelmer Housing Partnership Limited) is the previous name and the PPON org's head (Delta Housing Limited) is the current name, and the witnesses span both eras (2025 and 2026), so this is one society."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR8983~PXJP9994BJBR",
+   "members": [
+    30953695,
+    30967562
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: Bare FCA 8983 is Southern Housing, status Registered, formed 2022-12-16 by amalgamating Southern Housing Group and Optivo (RSH 5171). Both orgs are named exactly 'Southern Housing' and are buyers, so the PPON is the society's."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPR9518~PZHB3385JTPM",
+   "members": [
+    30919598,
+    31574895
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: Bare FCA 9518 is Inspire North, a community benefit society with status Registered, formed 2025-03-31 by amalgamating Inspire North 2024, Foundation and Community Links (Northern); 9518R is an unrelated British Legion club and must not be read for it. The PPON org 'Inspire North' matches the register name, and the register org's 'Inspire North (Community Benefit Society)' is the same name plus a legal-form gloss; both are on the supplier side."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-MPR:GBMPRRS008376~PZTX9645HPZJ",
+   "members": [
+    30917221,
+    31536226
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The FCA Mutuals register lists RS008376 as society 8376, \"Connexus Homes Limited\": Registered, a Community Benefit Society registered 2020-04-01, formerly Connexus Housing Two Limited. In 2021 it absorbed the old group parent Connexus Housing Limited (30269) and Connexus Housing One and Three, all deregistered 2021-07-06, and RSH lists it as LH4353. The PPON org's names are \"Connexus Homes Limited\" (exact match) and the group brand \"Connexus Group Limited\". The API shows both orgs as the same Shropshire/Herefordshire housing-association buyer, and the PPON's insurance procurement is published once as \"...to Connexus Group\" and once as \"...to Connexus Homes Limited\", so no separate group body survives. Note for the planner: a third org, GBMPR8376 (31546143, also \"Connexus Homes Limited\"), carries the same society under its bare number."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-NIC:GBNICNI100770~PLPQ1249DXWG",
+   "members": [
+    31539293,
+    31542330
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: CCNI charity 100770 is COALISLAND TRAINING SERVICES LIMITED (registered 2015-01-30, status 'Received: on time'), and the PPON org's only name is that name exactly; witness notice 045276-2025 lists one party, 'Coalisland Training Services Ltd', carrying both GB-NIC-NI 100770 and GB-PPON-PLPQ-1249-DXWG. The 'NI ' prefix is just formatting (the charity's accounts write NIC100770, and CH has no NI100770, which returns 404), so the value is a real CCNI number and not mislabelled; the IPS link to CH NP000271 'CTS LIMITED' is the same charity's society registration and does not affect this pair."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-SC:GBSCSC005336~PGGY6115PNHD",
+   "members": [
+    30953699,
+    31563999
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: OSCR SC005336 is 'University Of Edinburgh', Active, a statutory corporation registered in 1902, and the PPON org's name 'University of Edinburgh' matches it. In witness notice 087395-2026 'The University of Edinburgh' carries both GB-SC-SC005336 and GB-PPON-PGGY-6115-PNHD, while the other universities in that notice carry their own numbers and PPONs. Its subsidiary charity, Edinburgh University Press Limited (SC035813), does not appear on either side."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-SC:GBSCSC015263~PGVP7923NDTW",
+   "members": [
+    30953700,
+    31544520
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: OSCR SC015263 is 'University Of Strathclyde', Active, registered 1965, and both orgs are named 'University of Strathclyde' exactly. Witness notice 087395-2026 lists that party with GB-SC-SC015263 and its own PPON, separate from Edinburgh's PPON; the PPON org appears only as a winner or bidder, with no stray names, so nothing points to a consortium or a subsidiary."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10000415~PPBG8518ZJJN",
+   "members": [
+    30968718,
+    31551769
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP holds 10000415 as ASKHAM BRYAN COLLEGE, Active, and both OfS (trading name University Centre Askham Bryan) and GIAS (URN 130595, Open) back it. The PPON org is named 'Askham Bryan College', an exact match, and both orgs are mostly buyers (6 and 4 tenders), which fits one college."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10000571~PBMW5596NRJW",
+   "members": [
+    30929647,
+    31541432
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP holds 10000571 as BATH SPA UNIVERSITY, Active, and OfS and GIAS (URN 133790) agree. The PPON org 'Bath Spa University' is an exact name match and, like the UKPRN org, appears only as a buyer."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10000840~PRQR6323DRZQ",
+   "members": [
+    30928147,
+    30969231
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP holds 10000840 as BRADFORD COLLEGE, Active, and OfS and GIAS (URN 130532, General FE College) agree. The PPON org 'Bradford College' (13 mentions, buyer on 6 tenders) is an exact match to the register name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10000878~PHJQ3398CTLP",
+   "members": [
+    30929830,
+    31576896
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP holds 10000878 as UNIVERSITY CENTRE SOMERSET COLLEGE GROUP, Active. OfS lists its trading names (Bridgwater, Taunton, Cannington, Strode College, UCS College Group), and GIAS URN 130803 agrees. The PPON org carries the identical name 'University Centre Somerset College Group', so the PPON belongs to the register body."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10001696~PZGV1935NXDL",
+   "members": [
+    30913828,
+    31542085
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP holds 10001696 as CORNWALL COLLEGE, Active, and OfS gives 'The Cornwall College Group' as its trading name, which is the UKPRN org's name. The PPON org is 'Cornwall College', the register's legal name. In witness 061825-2026 one party, 'Bicton College (CORNWALL COLLEGE FURTHER EDUCATION CORPORATION)', carries both identifiers; Bicton is a campus name of the same corporation."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10002111~PXPM1872RCYW",
+   "members": [
+    30929902,
+    30976012
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP holds 10002111 as EAST DURHAM COLLEGE, Active, and GIAS URN 131859 (General FE College, Open) agrees; it is not on the OfS Register, which is normal for an FE college. The PPON org 'East Durham College' is an exact name match, and both orgs appear only as buyers."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10002638~PYVZ5892TRVV",
+   "members": [
+    30919578,
+    30932984
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP holds 10002638 as GATESHEAD COLLEGE, Active, and OfS and GIAS URN 130551 agree. The PPON org 'Gateshead College' (14 mentions, buyer on 5 tenders) is an exact match. This is the college, not Gateshead Council (10002639), so the two do not get mixed up."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10002696~PQWN9858ZCJM",
+   "members": [
+    31544144,
+    31565169
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP holds 10002696 as GLOUCESTERSHIRE COLLEGE, Active, and OfS and GIAS URN 130683 agree. The PPON org 'Gloucestershire College' is an exact match. In witness 061825-2026 (Devon Skills for Growth framework) the party 'Gloucestershire College' carries both its own UKPRN and this PPON, next to separate parties for the other colleges."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10002743~PPDR6933XHHH",
+   "members": [
+    31554601,
+    31578778
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP holds 10002743 as GRANTHAM COLLEGE, Active, and OfS and GIAS URN 130759 agree. The PPON org 'Grantham College' is an exact match with the same profile (winner on 2 tenders) as the UKPRN org."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10002917~PYRB9815YDNY",
+   "members": [
+    31536264,
+    31559949
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP holds 10002917 as HARTLEPOOL COLLEGE OF FURTHER EDUCATION, Active, and GIAS URN 130567 (General FE College, Open) agrees. The PPON org carries the identical full name, and both orgs appear only as buyers."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10003511~PHVG7323DLDR",
+   "members": [
+    31535654,
+    31561664
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10003511 as Active under the legal name JOSEPH CHAMBERLAIN SIXTH FORM COLLEGE, and GIAS URN 130468 shows it Open; the PPON org has exactly the same name, and both orgs act only as buyers (3 and 2 tenders). The OfS 2021 entry is only a voluntary de-registration from the OfS Register, not a closure, so the PPON is this college's."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10003558~PLPX8427RLLH",
+   "members": [
+    30914868,
+    31551135
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10003558 as Active as KENDAL COLLEGE, and the OfS Register and GIAS URN 130631 (Open) agree. The PPON org is named 'Kendal College' exactly, and both orgs are buyers on similar numbers of tenders, so this is one body."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10003928~PNXC4137QGWD",
+   "members": [
+    30915120,
+    30973248
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10003928 as Active under the legal name LINCOLN COLLEGE, which is exactly the PPON org's name; the register org's name 'Lincoln College Group' is the college's group brand, not a separate legal body. The PPON org's awards are Lincolnshire adult-skills call-offs and the LCC Training Framework (NUTS UKF3), so it is the Lincoln FE college, not Lincoln College, Oxford."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10003957~PVBW3417ZCNN",
+   "members": [
+    30914142,
+    31545575
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP, the OfS Register and GIAS URN 133827 all list UKPRN 10003957 as LIVERPOOL JOHN MOORES UNIVERSITY, Active. The PPON name 'Liverpool John Moore University' is a clear misspelling (the 's' is missing) of the same university."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10004344~PWYW4583DRYJ",
+   "members": [
+    31540516,
+    31542192
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10004344 as Active as MIDDLESBROUGH COLLEGE, and OfS and GIAS URN 130570 (Open) agree. The PPON org has exactly the same name and the same buyer role, so the PPON is this college's."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10004375~PMNN7576BCQG",
+   "members": [
+    30917084,
+    30974559
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10004375 as Active as MILTON KEYNES COLLEGE, and OfS and GIAS URN 130609 agree. The PPON org has exactly the same name, and both orgs are buyers (8 and 7 tenders), so this is one body."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10004579~PLQC2725XCGX",
+   "members": [
+    30916392,
+    31537265
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10004579 as Active as NEW COLLEGE SWINDON (also its trading name), and OfS and GIAS URN 130851 agree. The PPON org has exactly the same name and is the busier buyer (17 tenders), so this is one college."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10004599~PJDY1333MXVZ",
+   "members": [
+    30919579,
+    31535020
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10004599 as Active under the legal name NCG, with trading names Newcastle College, West Lancashire College, Kidderminster College and Carlisle College. The PPON org 'NCG' buys 'Bus Transport Service for West Lancashire College' and 'Pre-employment Check Services for NCG', so it is this FE corporation and not some other NCG."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10004695~PZBH4782ZMWY",
+   "members": [
+    30914058,
+    30926948
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: The UKRLP search lists UKPRN 10004695 as Active as DN COLLEGES GROUP, and OfS (trading names Doncaster College and University Campus North Lincolnshire) and GIAS URN 130587 agree. The PPON org has exactly the same name, and both orgs are buyers, so this is one body."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10004930~PPGL1164DJLT",
+   "members": [
+    30917249,
+    31536033
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP, OfS and GIAS URN 133864 all list UKPRN 10004930 as OXFORD BROOKES UNIVERSITY, Active. The PPON org has exactly the same name, with buyer and winner counts close to the register org's, so this is one university."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10005077~PJNP6361TPWJ",
+   "members": [
+    30926870,
+    31554598
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10005077 as Active under the legal name INSPIRE EDUCATION GROUP, with trading names Stamford College and Peterborough College, and GIAS URN 130613 shows it Open. The OfS 2022 entry is only a voluntary de-registration from the OfS Register. The PPON name 'Inspire Education Group' is the same name in different case."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10005124~PPHN6972VWCP",
+   "members": [
+    31543302,
+    31549316
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10005124 as Active as PLUMPTON COLLEGE, and OfS and GIAS URN 130667 agree. The PPON org has exactly the same name, so the PPON is this college's."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10005128~PQHV9439HHDJ",
+   "members": [
+    30953590,
+    31539386
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10005128 as Active as CITY COLLEGE PLYMOUTH, and OfS and GIAS URN 130649 agree. The PPON org has exactly the same name and the same buyer and winner roles, so this is one college."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10005534~PYQV1457QZDD",
+   "members": [
+    30916741,
+    31546777
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists UKPRN 10005534 as Active under the legal name RNN GROUP, and OfS and GIAS URN 130527 ('RNN Group', Open) agree. The PPON name 'RNN Group' is the same name in different case, so the PPON is this FE corporation's."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10005790~PVMW4512JZYY",
+   "members": [
+    30915632,
+    31535088
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10005790 as SHEFFIELD HALLAM UNIVERSITY (Active), and the OfS Register and GIAS URN 133871 agree. The PPON org is 'Sheffield Hallam University' and 72 of the 76 witnesses are the university publishing its own notices with both numbers; the other PPON names are a former name (Sheffield Polytechnic), departments (CRESR, Centre for Behavioural Science), one subsidiary name (SHU Enterprises Ltd) and one stray ('University of Sheffield'), none of which outweighs the self-published pair."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10005999~PVYH4724YLXW",
+   "members": [
+    30915694,
+    31588199
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10005999 as TYNE COAST COLLEGE (Active), and the OfS Register (trading names South Tyneside College, Tyne Metropolitan College) and GIAS URN 130555 agree. Both orgs and all their witness-free names are exactly 'Tyne Coast College', and all 7 witnesses are self-published."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10006174~PPLZ2597YGWD",
+   "members": [
+    31536921,
+    31541597
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10006174 as ST HELENS COLLEGE (Active), and the OfS Register (trading name SK College Group) and GIAS URN 130488 agree. Both orgs are exactly 'St Helens College', and all 16 witnesses are the college's own notices."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10006299~PGTX1922RJNX",
+   "members": [
+    30919588,
+    30974621
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10006299 as UNIVERSITY OF STAFFORDSHIRE (Active), and the OfS Register and GIAS URN 133882 agree; this is the university's new name. The PPON org carries the previous name 'Staffordshire University', which the register org also carries, and 31 of 32 witnesses are self-published, so the two orgs are one body under its old and new names."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10006687~PJNV8655BTTY",
+   "members": [
+    31535812,
+    31575359
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10006687 as THE HEATHLAND SCHOOL (Active), and GIAS URN 102539 (Community school, Open, Hounslow TW4 5JD) agrees; the school is not in the OfS Register, which is expected for a school. Both orgs are exactly 'The Heathland School', and both witnesses are the school's own notices."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007140~PMDM3781JGCD",
+   "members": [
+    31541046,
+    31562487
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007140 as BIRMINGHAM CITY UNIVERSITY (Active), and the OfS Register and GIAS URN 133788 agree. Both orgs and their witness-free names are exactly 'Birmingham City University', and 19 of 21 witnesses are self-published."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007141~PXZY8464ZLQL",
+   "members": [
+    31542244,
+    31542308
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007141 as University of Central Lancashire (Active) with the trading name UNIVERSITY OF LANCASHIRE, and the OfS Register now gives 'University of Lancashire' as the legal name; this is the 2025 rename. The PPON org is 'University of Central Lancashire', and witness 051942-2025 (London Fire Brigade) names the tenderer 'University of Lancashire' with GB-UKPRN-10007141 first and this PPON second, the shape of the supplier's own platform record; the one 'UNIVERSITY OF LANCASHIRE HOLDINGS LIMITED' name on the PPON is a stray subsidiary name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007147~PHWL7636TRBG",
+   "members": [
+    30974629,
+    30975939
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007147 as UNIVERSITY OF HERTFORDSHIRE (Active). The OfS Register gives the legal name 'University of Hertfordshire Higher Education Corporation' with trading names University of Hertfordshire and UH, and both orgs carry exactly those two names."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007150~PDYN9654JPQJ",
+   "members": [
+    30913766,
+    31537451
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007150 as 'University of Kent (part of London and South East University Group)' (Active). The OfS Register removed 'The University of Kent' on 2026-09-30 after its 1 August 2026 merger with Greenwich, which renamed itself London and South East University Group; even so, both orgs are the University of Kent, and 188 of 190 witnesses are Kent's own 2025 notices carrying both numbers, so the PPON is the body behind this UKPRN."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007155~PTVH5678HHZV",
+   "members": [
+    30928411,
+    31577500
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007155 as UNIVERSITY OF PORTSMOUTH (Active). The OfS Register gives the legal name 'University of Portsmouth Higher Education Corporation' with trading name University of Portsmouth, which matches the register org's head and the PPON org's only name, and GIAS URN 133867 agrees."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007158~PLJL3977CCGG",
+   "members": [
+    31537324,
+    31558830
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007158 as UNIVERSITY OF SOUTHAMPTON (Active), and the OfS Register and GIAS URN 133879 agree. Both orgs are exactly 'University of Southampton', and 6 different publishers assert the pair."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007161~PNHW8344ZGMY",
+   "members": [
+    30919543,
+    31577499
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007161 as TEESSIDE UNIVERSITY (Active), and the OfS Register and GIAS URN 133894 agree. The PPON org's names are 'Teesside University' and the misspelling 'Teeside University'; the one 'Anglia Ruskin University' name sits on the register side as a stray and has no bearing on whose PPON this is."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007167~PRDQ5539WTHX",
+   "members": [
+    30917206,
+    30953635
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007167 as UNIVERSITY OF YORK (Active), and the OfS Register and GIAS URN 133913 agree. Both orgs are 'University of York', and 43 of 49 witnesses are self-published; the 'University Of York (Pelican)' variant is a qualifier on the same name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007321~PPZD2983XRBH",
+   "members": [
+    30914498,
+    31561339
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007321 as WALTHAM FOREST COLLEGE (Active, trading name the same), and the OfS Register and GIAS URN 130456 agree. Both orgs are exactly 'Waltham Forest College', and all 3 witnesses are self-published."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007578~PCGV6666ZWYD",
+   "members": [
+    31541862,
+    31557738
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007578 as CITY OF WOLVERHAMPTON COLLEGE (Active), and the OfS Register and GIAS URN 130484 agree. Both orgs are exactly 'City of Wolverhampton College', and 2 of the 3 witnesses are the college's own notices."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007696~PRRD2679CZWR",
+   "members": [
+    31537861,
+    31579303
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007696 as YEOVIL COLLEGE, active, and OfS and GIAS (URN 130805, FE college, open) give the same name. Both orgs and both name sets read exactly 'Yeovil College' across 7 witnesses from 2 publishers, with no strays."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007774~PTVC9174PZNM",
+   "members": [
+    30918126,
+    30926767
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007774 as UNIVERSITY OF OXFORD, active (OfS: The Chancellor, Masters and Scholars of the University of Oxford). On 6 of 7 witnesses the University is itself the buyer, publishing its own estates frameworks (035863-2025, 054405-2025, 061919-2025) with both its UKPRN and this PPON, so the PPON is the University's. The PPON org's head 'Centre for Genomic Pathogen Surveillance' is a department, and its 4 research awards fit that department. One 'OXFORD UNIVERSITY TRADING LIMITED' name is a stray from a publisher, not a sign that the PPON belongs to the subsidiary."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007788~PMCX4817NTNG",
+   "members": [
+    31549754,
+    31569620
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007788 as UNIVERSITY OF CAMBRIDGE, active. OfS gives 'The University of Cambridge' as a trading name, and that is exactly the PPON org's name. The PPON names are only 'University of Cambridge', across 4 witnesses from 4 publishers."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007801~PQHL4825PGGL",
+   "members": [
+    30914461,
+    30930105
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007801 as UNIVERSITY OF PLYMOUTH, active, and OfS and GIAS agree. 71 witnesses, 68 of them self-published by the University as buyer, state this UKPRN with this PPON, and both name sets are 'University of Plymouth'."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007817~PNTH7125HMDM",
+   "members": [
+    30917699,
+    30928159
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007817 as CHICHESTER COLLEGE GROUP, active, and OfS and GIAS (URN 130843, open) agree. Both orgs are named exactly 'Chichester College Group' across 5 witnesses from 3 publishers, with no strays."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10007823~PHYP8666RBNG",
+   "members": [
+    31541751,
+    31571816
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10007823 as EDGE HILL UNIVERSITY, active, and OfS and GIAS agree. The PPON org's only name is 'Edge Hill University' with a trailing tab, the same name with a whitespace artefact, across 6 witnesses."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10023139~PGJB2915QCHM",
+   "members": [
+    31539563,
+    31551167
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10023139 as LTE GROUP, active, with trading names Novus, UCEN Manchester and The Manchester College; OfS and GIAS give the same name. Both orgs are named 'LTE Group', and all 7 witnesses are self-published by LTE Group as buyer."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10024294~PCJB2814BHZP",
+   "members": [
+    30914299,
+    30973174
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10024294 as CHESHIRE WEST AND CHESTER COUNCIL, active. All 5 witnesses are self-published by the council as buyer and state its own UKPRN with this PPON; the PPON org has 289 mentions under the council's name, including 'as Administering Authority of the Cheshire Pension Fund', which is the same legal body. 'HealthCare Matters' and 'SLC Care (UK) Ltd' are strays where the council's PPON was pasted onto care providers. They do not change whose PPON this is."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10034301~PNJC6862YTRY",
+   "members": [
+    30913875,
+    31564275
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10034301 as MERSEYSIDE FIRE AND RESCUE AUTHORITY, active, with trading name 'Merseyside Fire & Rescue Service'. Those are exactly the two PPON names, and 12 of 13 witnesses are self-published by the Authority."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10035180~PLPT9129NCMD",
+   "members": [
+    30974625,
+    31546215
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10035180 as SAINT JOHN BOSCO COLLEGE, active, and GIAS has it on URN 135762, a voluntary aided school that is open. Both orgs are named 'Saint John Bosco College' on 3 self-published witnesses."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10039859~PZZT9217WDTL",
+   "members": [
+    31555168,
+    31559471
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10039859 as ACADEMY TRANSFORMATION TRUST, active, with trading name Academy Transformation Trust Further Education. The details page shows no address, but the UKPRN search confirms the number. Both orgs are named 'Academy Transformation Trust', and all 13 witnesses are self-published by the trust."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10046414~PLMG9927NZNP",
+   "members": [
+    30933059,
+    31572388
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10046414 as BRIGHT FUTURES EDUCATIONAL TRUST, active, with trading names including 'BRIGHT FUTURES EDUCATIONAL TRUST (Academy Trust)'. The PPON's only name, 'Bright Futures Educational Trust', is the same name in different case, across 3 witnesses."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10047762~PLNV2765HCWJ",
+   "members": [
+    30975003,
+    31548647
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10047762 as THE RIVERSIDE GROUP LIMITED, active, and the PPON names are 'The Riverside Group' and 'The Riverside Group Limited', so they match the register's legal name. The UKPRN org's head '(Care & Support)' is a service-division label of the same legal entity, not a group member. 14 witnesses from 7 publishers agree, with no co-occurrence."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "GB-UKPRN:GBUKPRN10060053~PQQC4436QQBJ",
+   "members": [
+    31565945,
+    31575717
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Register-confirmed: UKRLP lists 10060053 as THE WHITE HILLS PARK TRUST LTD, active, with trading name 'THE WHITE HILLS PARK FEDERATION TRUST (Academy Trust)'. The PPON name 'The White Hills Park Trust' is the same body without 'Ltd'. There is only one witness, but the trust published it itself as buyer, stating both its own identifiers."
+  }
+ ]
+}
