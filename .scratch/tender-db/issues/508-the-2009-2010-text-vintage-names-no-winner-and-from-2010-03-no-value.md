@@ -156,3 +156,14 @@ Each would be one organization collecting every award that printed it. **Fixed**
 `Deserto`). A 300k-name scan over 1997–2010 found no real name among the matches. The same junk is stored across
 1997–2009, which is filed as **issue 509** (an era re-parse). Both rounds of this issue are re-drained with the fix.
 
+## Watch read (2026-10-11, data-quality 2263)
+
+- **Section 3** (text era, 1993–2010): 1,306,514 award notices; 1,271,389 with lot_results (97.3%); 1,245,887 with a
+  winner; 25,502 closed or n/a; named density 100.0%. The watch holds.
+- **Section 16** (head band ≥ €10 bn) gained two text rows from this issue's 2010 value claims. Both are in the band
+  for review, not adjudicated:
+  - 4117501, 138636-2010 (notice 4099595, Poland, Bilfinger Berger): `TED-VAL_TOTAL` reads 13,374,813,655.00 EUR.
+    That is implausible for the contract and looks like a decimal-comma or currency slip. Read the body before any
+    verdict.
+  - 4092286, 220001-2010 (Unicredit banking): a 10,000,000,000 EUR head beside awards of 1.6 and 2.5 bn EUR.
+
