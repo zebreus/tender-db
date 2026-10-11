@@ -1,0 +1,2632 @@
+{
+ "GB-MPR-12871R": {
+  "scheme": "GB-MPR",
+  "value": "12871R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/14810",
+  "found": true,
+  "name": "Sussex Housing and Care",
+  "status": "Registered",
+  "other_names": [
+   "Sussex Housing Association for the Aged"
+  ],
+  "linked": {
+   "register_full_registration_number": "12871R",
+   "register_display_number": "12871R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 14810,
+   "society_type": "Registered Society",
+   "registration_date": "1946-02-19",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Ronald Simson House, 24 Sutton Avenue, SEAFORD, East Sussex, BN25 4LG",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "1999-10-06",
+     "previous_name": "Sussex Housing Association for the Aged"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2009-01-31",
+     "society_name": "Soroptimist (Eastbourne) Housing Association Limited",
+     "society_number": "16076",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2008-07-01",
+     "society_name": "Gundreda Housing Association Limited",
+     "society_number": "18360",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2003-03-19",
+     "society_name": "Saxon Homes Limited",
+     "society_number": "17205",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2000-04-11",
+     "society_name": "SHAA Retirement Homes Limited",
+     "society_number": "23209",
+     "transfer_type": "transfer of engagements"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=12871R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "12871R Sussex Housing and Care (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "12871R",
+     "name": "Sussex Housing and Care",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1946-02-19",
+     "deregistration_date": null,
+     "matched_name": "Sussex Housing & Care"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Sussex Housing and Care",
+     "organisation_name": "Sussex Housing and Care",
+     "rp_code": "LH0079",
+     "rp_registration_date": "1975-05-13",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Sussex Housing and Care\", status Registered, Registered Society, registered 1946-02-19. Name changes: 1999-10-06 previously \"Sussex Housing Association for the Aged\". 4 transfer(s) received (latest 2009-01-31 from 16076 Soroptimist (Eastbourne) Housing Association Limited). RSH list (corroboration only, name match): Sussex Housing and Care = LH0079, Registered society."
+ },
+ "GB-MPR-15210R": {
+  "scheme": "GB-MPR",
+  "value": "15210R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/17904",
+  "found": true,
+  "name": "Salvation Army Housing Association",
+  "status": "Registered",
+  "other_names": [
+   "Salvation Army Housing Association Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "15210R",
+   "register_display_number": "15210R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 17904,
+   "society_type": "Registered Society",
+   "registration_date": "1959-05-01",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Salvation Army Housing Association Limited, 1 Champion Park, London, SE5 8FJ",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "1993-01-18",
+     "previous_name": "Salvation Army Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2017-09-30",
+     "society_name": "Chapter 1 Charity Limited",
+     "society_number": "7601",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2010-04-01",
+     "society_name": "Willesden Free Church Housing Association Limited",
+     "society_number": "15985",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1998-01-16",
+     "society_name": "Warrington House Project Limited",
+     "society_number": "21134",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1992-07-13",
+     "society_name": "Clacton Housing Society Limited",
+     "society_number": "14971",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1990-05-18",
+     "society_name": "Dartford Churches Housing Association Limited",
+     "society_number": "17394",
+     "transfer_type": "transfer of engagements"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=15210R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "15210R Salvation Army Housing Association (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "15210R",
+     "name": "Salvation Army Housing Association",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1959-05-01",
+     "deregistration_date": null,
+     "matched_name": "Salvation Army Housing Association"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Salvation Army Housing Association",
+     "organisation_name": "Salvation Army Housing Association",
+     "rp_code": "LH2429",
+     "rp_registration_date": "1977-07-11",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Salvation Army Housing Association\", status Registered, Registered Society, registered 1959-05-01. Name changes: 1993-01-18 previously \"Salvation Army Housing Association Limited\". 5 transfer(s) received (latest 2017-09-30 from 7601 Chapter 1 Charity Limited). RSH list (corroboration only, name match): Salvation Army Housing Association = LH2429, Registered society."
+ },
+ "GB-MPR-16337R": {
+  "scheme": "GB-MPR",
+  "value": "16337R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/28016",
+  "found": true,
+  "name": "Metropolitan Housing Trust Limited",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "16337R",
+   "register_display_number": "16337R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 28016,
+   "society_type": "Registered Society",
+   "registration_date": "1963-04-26",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "The Grange, 100 High Street, London, N14 6PW",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [
+    {
+     "date": "2018-10-08",
+     "society_name": "Thames Valley Charitable Housing Association Limited",
+     "society_number": "25301",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2017-01-26",
+     "society_name": "Clapham Park Homes Limited",
+     "society_number": "7451",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2015-01-05",
+     "society_name": "Metropolitan Support Trust Limited",
+     "society_number": "7042",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2012-03-30",
+     "society_name": "Spirita Limited",
+     "society_number": "30151",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2012-03-30",
+     "society_name": "Granta Housing Society Limited",
+     "society_number": "21287",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2006-03-30",
+     "society_name": "Llangattock Housing Association Limited",
+     "society_number": "20163",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2004-05-14",
+     "society_name": "Metropolitan Home Ownership Limited",
+     "society_number": "23203",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1992-07-16",
+     "society_name": "South East Regional Housing Association Limited",
+     "society_number": "18698",
+     "transfer_type": "transfer of engagements"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=16337R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "16337R Metropolitan Housing Trust Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "16337R",
+     "name": "Metropolitan Housing Trust Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1963-04-26",
+     "deregistration_date": null,
+     "matched_name": "Metropolitan Housing Trust Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Metropolitan Housing Trust Limited",
+     "organisation_name": "Metropolitan Housing Trust Limited",
+     "rp_code": "L0726",
+     "rp_registration_date": "1975-10-14",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Metropolitan Housing Trust Limited\", status Registered, Registered Society, registered 1963-04-26. 8 transfer(s) received (latest 2018-10-08 from 25301 Thames Valley Charitable Housing Association Limited). RSH list (corroboration only, name match): Metropolitan Housing Trust Limited = L0726, Registered society."
+ },
+ "GB-MPR-16460R": {
+  "scheme": "GB-MPR",
+  "value": "16460R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/7349",
+  "found": true,
+  "name": "Orwell Housing Association Limited",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "16460R",
+   "register_display_number": "16460R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 7349,
+   "society_type": "Registered Society",
+   "registration_date": "1963-09-18",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Crane Hill Lodge, 325 London Road, IPSWICH, IP2 0BE",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [
+    {
+     "date": "2001-08-09",
+     "society_name": "Soroptimist Housing (Ipswich) Limited",
+     "society_number": "17433",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1998-07-23",
+     "society_name": "Suffolk Rural Housing Association Limited",
+     "society_number": "24789",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1993-07-06",
+     "society_name": "Ipswich (C.W.L.) Housing Society Limited",
+     "society_number": "16152",
+     "transfer_type": "transfer of engagements"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=16460R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "16460R Orwell Housing Association Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "16460R",
+     "name": "Orwell Housing Association Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1963-09-18",
+     "deregistration_date": null,
+     "matched_name": "Orwell Housing Association Ltd"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Orwell Housing Association Limited",
+     "organisation_name": "Orwell Housing Association Limited",
+     "rp_code": "L0028",
+     "rp_registration_date": "1975-03-25",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Orwell Housing Association Limited\", status Registered, Registered Society, registered 1963-09-18. 3 transfer(s) received (latest 2001-08-09 from 17433 Soroptimist Housing (Ipswich) Limited). RSH list (corroboration only, name match): Orwell Housing Association Limited = L0028, Registered society."
+ },
+ "GB-MPR-20755R": {
+  "scheme": "GB-MPR",
+  "value": "20755R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/24203",
+  "found": true,
+  "name": "Southdown Housing Association Limited",
+  "status": "Registered",
+  "other_names": [
+   "Brighton and Hove Area Group Housing Association Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "20755R",
+   "register_display_number": "20755R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 24203,
+   "society_type": "Registered Society",
+   "registration_date": "1973-06-25",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "2 Bell Lane,, Lewes,, East Sussex, BN7 1JU",
+   "sic": "87200 - Residential care activities for learning difficulties, mental health and substance abuse",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "1996-08-28",
+     "previous_name": "Brighton and Hove Area Group Housing Association Limited"
+    }
+   ],
+   "transfers_in": [],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=20755R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "20755R Southdown Housing Association Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "20755R",
+     "name": "Southdown Housing Association Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1973-06-25",
+     "deregistration_date": null,
+     "matched_name": "Southdown Housing Association"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Southdown Housing Association Limited",
+     "organisation_name": "Southdown Housing Association Limited",
+     "rp_code": "L1829",
+     "rp_registration_date": "1976-05-10",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Southdown Housing Association Limited\", status Registered, Registered Society, registered 1973-06-25. Name changes: 1996-08-28 previously \"Brighton and Hove Area Group Housing Association Limited\". RSH list (corroboration only, name match): Southdown Housing Association Limited = L1829, Registered society."
+ },
+ "GB-MPR-21186r": {
+  "scheme": "GB-MPR",
+  "value": "21186r",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/11346",
+  "found": true,
+  "name": "Waltham Forest Housing Association Limited",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "21186R",
+   "register_display_number": "21186R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 11346,
+   "society_type": "Registered Society",
+   "registration_date": "1974-06-04",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "31 Church Hill, Walthamstow, London, E17 3RU",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=21186r",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "21186R Waltham Forest Housing Association Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "21186R",
+     "name": "Waltham Forest Housing Association Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1974-06-04",
+     "deregistration_date": null,
+     "matched_name": "Waltham Forest Housing Association"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Waltham Forest Housing Association Limited",
+     "organisation_name": "Waltham Forest Housing Association Limited",
+     "rp_code": "L0461",
+     "rp_registration_date": "1975-08-28",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published \"21186r\" differs from the register number \"21186R\" only in letter case. Register: \"Waltham Forest Housing Association Limited\", status Registered, Registered Society, registered 1974-06-04. RSH list (corroboration only, name match): Waltham Forest Housing Association Limited = L0461, Registered society."
+ },
+ "GB-MPR-26278R": {
+  "scheme": "GB-MPR",
+  "value": "26278R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/1401",
+  "found": true,
+  "name": "West Kent Housing Association",
+  "status": "Registered",
+  "other_names": [
+   "West Kent Housing Association Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "26278R",
+   "register_display_number": "26278R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 1401,
+   "society_type": "Registered Society",
+   "registration_date": "1988-09-14",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "101 London Road, SEVENOAKS, Kent, TN13 1AX",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2000-06-23",
+     "previous_name": "West Kent Housing Association Limited"
+    }
+   ],
+   "transfers_in": [],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=26278R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "26278R West Kent Housing Association (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "26278R",
+     "name": "West Kent Housing Association",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1988-09-14",
+     "deregistration_date": null,
+     "matched_name": "West Kent Housing Association"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "West Kent Housing Association",
+     "organisation_name": "West Kent Housing Association",
+     "rp_code": "LH3827",
+     "rp_registration_date": "1989-01-30",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"West Kent Housing Association\", status Registered, Registered Society, registered 1988-09-14. Name changes: 2000-06-23 previously \"West Kent Housing Association Limited\". RSH list (corroboration only, name match): West Kent Housing Association = LH3827, Registered society."
+ },
+ "GB-MPR-27440R": {
+  "scheme": "GB-MPR",
+  "value": "27440R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/7264",
+  "found": true,
+  "name": "Creative Support Limited",
+  "status": "Registered",
+  "other_names": [
+   "Manchester Housing Consortium Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "27440R",
+   "register_display_number": "27440R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 7264,
+   "society_type": "Registered Society",
+   "registration_date": "1991-08-01",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Wellington House, 131 Wellington Road South, Stockport, SK1 3TS",
+   "sic": "87200 - Residential care activities for learning difficulties, mental health and substance abuse",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "1994-02-24",
+     "previous_name": "Manchester Housing Consortium Limited"
+    }
+   ],
+   "transfers_in": [],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=27440R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "27440R Creative Support Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "27440R",
+     "name": "Creative Support Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1991-08-01",
+     "deregistration_date": null,
+     "matched_name": "Creative Support"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Creative Support Limited",
+     "organisation_name": "Creative Support Limited",
+     "rp_code": "4689",
+     "rp_registration_date": "2012-01-12",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Creative Support Limited\", status Registered, Registered Society, registered 1991-08-01. Name changes: 1994-02-24 previously \"Manchester Housing Consortium Limited\". RSH list (corroboration only, name match): Creative Support Limited = 4689, Registered society."
+ },
+ "GB-MPR-28038R": {
+  "scheme": "GB-MPR",
+  "value": "28038R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/4027",
+  "found": true,
+  "name": "Clarion Housing Group Limited",
+  "status": "Registered",
+  "other_names": [
+   "Affinity Sutton Group Limited",
+   "The Affinity Homes Group Limited",
+   "Downland Affinity Group Limited",
+   "Downland Housing Group Limited",
+   "Argus Housing Association Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "28038R",
+   "register_display_number": "28038R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 4027,
+   "society_type": "Registered Society",
+   "registration_date": "1994-09-01",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "5th Floor, Greater London House, Hampstead Road, London, NW1 7QX",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2016-11-29",
+     "previous_name": "Affinity Sutton Group Limited"
+    },
+    {
+     "date": "2006-10-02",
+     "previous_name": "The Affinity Homes Group Limited"
+    },
+    {
+     "date": "2004-04-05",
+     "previous_name": "Downland Affinity Group Limited"
+    },
+    {
+     "date": "2003-04-01",
+     "previous_name": "Downland Housing Group Limited"
+    },
+    {
+     "date": "1995-11-01",
+     "previous_name": "Argus Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2016-11-29",
+     "society_name": "Circle Anglia Limited",
+     "society_number": "27604",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2003-12-17",
+     "society_name": "The Affinity Homes Group Limited",
+     "society_number": "29318",
+     "transfer_type": "transfer of engagements"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=28038R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "28038R Clarion Housing Group Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "28038R",
+     "name": "Clarion Housing Group Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1994-09-01",
+     "deregistration_date": null,
+     "matched_name": "CLARION HOUSING GROUP LIMITED"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Clarion Housing Group Limited",
+     "organisation_name": "Clarion Housing Group Limited",
+     "rp_code": "LH4087",
+     "rp_registration_date": "1996-01-25",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Clarion Housing Group Limited\", status Registered, Registered Society, registered 1994-09-01. Name changes: 2016-11-29 previously \"Affinity Sutton Group Limited\"; 2006-10-02 previously \"The Affinity Homes Group Limited\"; 2004-04-05 previously \"Downland Affinity Group Limited\"; 2003-04-01 previously \"Downland Housing Group Limited\"; 1995-11-01 previously \"Argus Housing Association Limited\". 2 transfer(s) received (latest 2016-11-29 from 27604 Circle Anglia Limited). RSH list (corroboration only, name match): Clarion Housing Group Limited = LH4087, Registered society."
+ },
+ "GB-MPR-28414R": {
+  "scheme": "GB-MPR",
+  "value": "28414R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/3687",
+  "found": true,
+  "name": "The Pioneer Housing and Community Group Limited",
+  "status": "Registered",
+  "other_names": [
+   "The Castle Vale Community Housing Association Limited",
+   "The Castle Vale Community Association Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "28414R",
+   "register_display_number": "28414R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 3687,
+   "society_type": "Registered Society",
+   "registration_date": "1996-07-22",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "11 High Street, Castle Vale, BIRMINGHAM, B35 7PR",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2015-07-30",
+     "previous_name": "The Castle Vale Community Housing Association Limited"
+    },
+    {
+     "date": "1997-01-10",
+     "previous_name": "The Castle Vale Community Association Limited"
+    }
+   ],
+   "transfers_in": [],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=28414R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "28414R The Pioneer Housing and Community Group Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "28414R",
+     "name": "The Pioneer Housing and Community Group Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1996-07-22",
+     "deregistration_date": null,
+     "matched_name": "The Pioneer Housing and Community Group Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "The Pioneer Housing and Community Group Limited",
+     "organisation_name": "The Pioneer Housing and Community Group Limited",
+     "rp_code": "L4118",
+     "rp_registration_date": "1997-01-22",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"The Pioneer Housing and Community Group Limited\", status Registered, Registered Society, registered 1996-07-22. Name changes: 2015-07-30 previously \"The Castle Vale Community Housing Association Limited\"; 1997-01-10 previously \"The Castle Vale Community Association Limited\". RSH list (corroboration only, name match): The Pioneer Housing and Community Group Limited = L4118, Registered society."
+ },
+ "GB-MPR-30045R": {
+  "scheme": "GB-MPR",
+  "value": "30045R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/8441",
+  "found": true,
+  "name": "Great Places Housing Group Limited",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "30045R",
+   "register_display_number": "30045R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 8441,
+   "society_type": "Registered Society",
+   "registration_date": "2006-02-21",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "2A Derwent Avenue, Manchester, M21 7QP",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30045R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "30045R Great Places Housing Group Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "30045R",
+     "name": "Great Places Housing Group Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "2006-02-21",
+     "deregistration_date": null,
+     "matched_name": "Great Places Housing Group Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Great Places Housing Group Limited",
+     "organisation_name": "Great Places Housing Group Limited",
+     "rp_code": "L4465",
+     "rp_registration_date": "2006-03-21",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Great Places Housing Group Limited\", status Registered, Registered Society, registered 2006-02-21. RSH list (corroboration only, name match): Great Places Housing Group Limited = L4465, Registered society."
+ },
+ "GB-MPR-30398R": {
+  "scheme": "GB-MPR",
+  "value": "30398R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/4132",
+  "found": true,
+  "name": "Thrive Homes Limited",
+  "status": "Registered - Transferred Engagements",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "30398R",
+   "register_display_number": "30398R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 4132,
+   "society_type": "Registered Society",
+   "registration_date": "2007-12-19",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Westside, London Road, Hemel Hempstead, HP3 9TD",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered - Transferred Engagements",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": "30183R",
+   "transferred_to_name": "Watford Community Housing Trust",
+   "transfer_method": "Full",
+   "name_changes": [],
+   "transfers_in": [],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30398R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "30398R Thrive Homes Limited (Registered - Transferred Engagements)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "30398R",
+     "name": "Thrive Homes Limited",
+     "status": "Registered - Transferred Engagements",
+     "registered_as": "Registered Society",
+     "registration_date": "2007-12-19",
+     "deregistration_date": null,
+     "matched_name": "Thrive Homes Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Thrive Homes Limited",
+     "organisation_name": "Thrive Homes Limited",
+     "rp_code": "L4520",
+     "rp_registration_date": "2008-02-26",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Thrive Homes Limited\", status Registered - Transferred Engagements, Registered Society, registered 2007-12-19. Details page: transferred to society/company 30183R \"Watford Community Housing Trust\" (transfer method Full). RSH list (corroboration only, name match): Thrive Homes Limited = L4520, Registered society."
+ },
+ "GB-MPR-30666R": {
+  "scheme": "GB-MPR",
+  "value": "30666R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/8663",
+  "found": true,
+  "name": "Your Housing Group Limited",
+  "status": "Registered",
+  "other_names": [
+   "Harvest Housing Group Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "30666R",
+   "register_display_number": "30666R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 8663,
+   "society_type": "Registered Society",
+   "registration_date": "2009-04-01",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Youggle House, 130 Birchwood Boulevard, Birchwood, Warrington, Cheshire, WA3 7QH",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2012-04-23",
+     "previous_name": "Harvest Housing Group Limited"
+    }
+   ],
+   "transfers_in": [],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30666R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "30666R Your Housing Group Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "30666R",
+     "name": "Your Housing Group Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "2009-04-01",
+     "deregistration_date": null,
+     "matched_name": "Your Housing Group Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Your Housing Group Limited",
+     "organisation_name": "Your Housing Group Limited",
+     "rp_code": "L4203",
+     "rp_registration_date": "1999-02-25",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Your Housing Group Limited\", status Registered, Registered Society, registered 2009-04-01. Name changes: 2012-04-23 previously \"Harvest Housing Group Limited\". RSH list (corroboration only, name match): Your Housing Group Limited = L4203, Registered society."
+ },
+ "GB-MPR-30938R": {
+  "scheme": "GB-MPR",
+  "value": "30938R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/26655",
+  "found": true,
+  "name": "The Riverside Group Limited",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "30938R",
+   "register_display_number": "30938R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 26655,
+   "society_type": "Registered Society",
+   "registration_date": "2010-03-31",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "2 Estuary Boulevard, Estuary Commerce Park, Speke, Liverpool, L24 8RF",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [
+    {
+     "date": "2026-03-31",
+     "society_name": "Evolve TRGL Limited",
+     "society_number": "9708",
+     "transfer_type": "Full"
+    },
+    {
+     "date": "2023-03-31",
+     "society_name": "One Housing Group Limited",
+     "society_number": "20453",
+     "transfer_type": "Full"
+    },
+    {
+     "date": "2023-03-31",
+     "society_name": "TPHA Limited",
+     "society_number": "23381",
+     "transfer_type": "Full"
+    },
+    {
+     "date": "2020-03-31",
+     "society_name": "Impact Housing Association Limited",
+     "society_number": "21411",
+     "transfer_type": "Full"
+    },
+    {
+     "date": "2010-03-31",
+     "society_name": "TRGL No 1 Limited",
+     "society_number": "30670",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2010-03-31",
+     "society_name": "English Churches Housing Group Limited",
+     "society_number": "10022",
+     "transfer_type": "amalgamation"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30938R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "30938R The Riverside Group  Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "30938R",
+     "name": "The Riverside Group Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "2010-03-31",
+     "deregistration_date": null,
+     "matched_name": "The Riverside Group Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "The Riverside Group Limited",
+     "organisation_name": "The Riverside Group Limited",
+     "rp_code": "L4552",
+     "rp_registration_date": "2010-03-31",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"The Riverside Group Limited\", status Registered, Registered Society, registered 2010-03-31. 6 transfer(s) received (latest 2026-03-31 from 9708 Evolve TRGL Limited). RSH list (corroboration only, name match): The Riverside Group Limited = L4552, Registered society."
+ },
+ "GB-MPR-31192R": {
+  "scheme": "GB-MPR",
+  "value": "31192R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/5519",
+  "found": true,
+  "name": "Dimensions (UK) Limited",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "31192R",
+   "register_display_number": "31192R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 5519,
+   "society_type": "Registered Society",
+   "registration_date": "2011-03-14",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Ground Floor, Building 1230, Arlington Business Park, Theale, Reading, Berkshire, RG7 4SA",
+   "sic": "87200 - Residential care activities for learning difficulties, mental health and substance abuse",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [
+    {
+     "date": "2020-08-10",
+     "society_name": "Waymarks Limited",
+     "society_number": "8402",
+     "transfer_type": "Full"
+    },
+    {
+     "date": "2011-03-14",
+     "society_name": "Dimensions (NDG) Limited",
+     "society_number": "29175",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2011-03-14",
+     "society_name": "Dimensions (UK) Limited",
+     "society_number": "21550",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2011-03-14",
+     "society_name": "Dimensions (Owl) Limited",
+     "society_number": "27206",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2011-03-14",
+     "society_name": "Dimensions (ADP) Limited",
+     "society_number": "31134",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2011-03-14",
+     "society_name": "Dimensions (NSO) Limited",
+     "society_number": "26554",
+     "transfer_type": "amalgamation"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=31192R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "31192R Dimensions (UK) Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "31192R",
+     "name": "Dimensions (UK) Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "2011-03-14",
+     "deregistration_date": null,
+     "matched_name": "Dimensions (UK) Limited"
+    },
+    {
+     "registration_number": "21550R",
+     "name": "Dimensions (UK) Limited",
+     "status": "Deregistered",
+     "registered_as": "Registered Society",
+     "registration_date": "1975-11-06",
+     "deregistration_date": "2011-03-31",
+     "matched_name": "Dimensions (UK) Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Dimensions (UK) Limited",
+     "organisation_name": "Dimensions (UK) Limited",
+     "rp_code": "4648",
+     "rp_registration_date": "2011-03-14",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Dimensions (UK) Limited\", status Registered, Registered Society, registered 2011-03-14. 6 transfer(s) received (latest 2020-08-10 from 8402 Waymarks Limited). RSH list (corroboration only, name match): Dimensions (UK) Limited = 4648, Registered society."
+ },
+ "GB-MPR-31211R": {
+  "scheme": "GB-MPR",
+  "value": "31211R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/24248",
+  "found": true,
+  "name": "Flagship Housing Limited",
+  "status": "Registered",
+  "other_names": [
+   "Flagship Housing Group Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "31211R",
+   "register_display_number": "31211R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 24248,
+   "society_type": "Registered Society",
+   "registration_date": "2011-04-01",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "31 King Street, Norwich, Norfolk, NR1 1PD",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2025-02-28",
+     "previous_name": "Flagship Housing Group Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2020-12-31",
+     "society_name": "Victory Housing Trust",
+     "society_number": "8423",
+     "transfer_type": "Full"
+    },
+    {
+     "date": "2020-01-31",
+     "society_name": "Suffolk Housing Society Limited",
+     "society_number": "21198",
+     "transfer_type": "Full"
+    },
+    {
+     "date": "2011-04-01",
+     "society_name": "Peddars Way Housing Association Limited",
+     "society_number": "27582",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2011-04-01",
+     "society_name": "Kings' Forest Housing Limited",
+     "society_number": "28461",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2011-04-01",
+     "society_name": "Suffolk Heritage Housing Association Limited",
+     "society_number": "27245",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2011-04-01",
+     "society_name": "Flagship Housing Group Limited",
+     "society_number": "28460",
+     "transfer_type": "amalgamation"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=31211R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "31211R Flagship Housing Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "31211R",
+     "name": "Flagship Housing Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "2011-04-01",
+     "deregistration_date": null,
+     "matched_name": "Flagship Housing Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Flagship Housing Limited",
+     "organisation_name": "Flagship Housing Limited",
+     "rp_code": "4651",
+     "rp_registration_date": "2011-04-01",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Flagship Housing Limited\", status Registered, Registered Society, registered 2011-04-01. Name changes: 2025-02-28 previously \"Flagship Housing Group Limited\". 6 transfer(s) received (latest 2020-12-31 from 8423 Victory Housing Trust). RSH list (corroboration only, name match): Flagship Housing Limited = 4651, Registered society."
+ },
+ "GB-MPR-31419R": {
+  "scheme": "GB-MPR",
+  "value": "31419R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/26402",
+  "found": true,
+  "name": "South Lakes Housing",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "31419R",
+   "register_display_number": "31419R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 26402,
+   "society_type": "Registered Society",
+   "registration_date": "2011-09-30",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Bridge Mills Business Centre, Stramongate, Kendal, Cumbria, LA9 4BD",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [
+    {
+     "date": "2026-03-31",
+     "society_name": "Lune Valley Rural Housing Association Limited",
+     "society_number": "26654",
+     "transfer_type": "Full"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=31419R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "31419R South Lakes Housing (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "31419R",
+     "name": "South Lakes Housing",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "2011-09-30",
+     "deregistration_date": null,
+     "matched_name": "South Lakes Housing"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "South Lakes Housing",
+     "organisation_name": "South Lakes Housing",
+     "rp_code": "4686",
+     "rp_registration_date": "2012-01-12",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"South Lakes Housing\", status Registered, Registered Society, registered 2011-09-30. 1 transfer(s) received (latest 2026-03-31 from 26654 Lune Valley Rural Housing Association Limited). RSH list (corroboration only, name match): South Lakes Housing = 4686, Registered society."
+ },
+ "GB-MPR-7522": {
+  "scheme": "GB-MPR",
+  "value": "7522",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/21229",
+  "found": true,
+  "name": "Thirteen Housing Group Limited",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "7522",
+   "register_display_number": "7522",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 21229,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2017-03-31",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "2 Hudson Quay, Windward Way, Middlesbrough, TS2 1QG",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [
+    {
+     "date": "2017-06-30",
+     "society_name": "Erimus Housing Limited",
+     "society_number": "7563",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2017-06-30",
+     "society_name": "Thirteen Care and Support Limited",
+     "society_number": "7547",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2017-06-30",
+     "society_name": "Tristar Homes Limited",
+     "society_number": "7562",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2017-06-30",
+     "society_name": "Housing Hartlepool Limited",
+     "society_number": "7564",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2017-06-30",
+     "society_name": "Tees Valley Housing Limited",
+     "society_number": "17594",
+     "transfer_type": "transfer of engagements"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [
+    "7522R"
+   ],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=7522",
+    "http": 200,
+    "results": 3,
+    "hits": [
+     "7522R Abernant Allotment Holders and Cottage Gardeners Association Limited (Deregistered)",
+     "27522R Southern Trout Limited (Deregistered)",
+     "7522 Thirteen Housing Group Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "7522",
+     "name": "Thirteen Housing Group Limited",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2017-03-31",
+     "deregistration_date": null,
+     "matched_name": "Thirteen Housing Group Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Thirteen Housing Group Limited",
+     "organisation_name": "Thirteen Housing Group Limited",
+     "rp_code": "L4522",
+     "rp_registration_date": "2008-03-18",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Bare \"7522\" equals the register number \"7522\" (a post-2014-Act number, no suffix); the register also holds a different society under 7522R (Abernant Allotment Holders and Cottage Gardeners Association Limited, Deregistered). Register: \"Thirteen Housing Group Limited\", status Registered, Community Benefit Society, registered 2017-03-31. 5 transfer(s) received (latest 2017-06-30 from 7563 Erimus Housing Limited). RSH list (corroboration only, name match): Thirteen Housing Group Limited = L4522, Registered society."
+ },
+ "GB-MPR-7643": {
+  "scheme": "GB-MPR",
+  "value": "7643",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/10237",
+  "found": true,
+  "name": "Cross Keys Homes Limited",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "7643",
+   "register_display_number": "7643",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 10237,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2017-10-12",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Shrewsbury Avenue, Peterborough, PE2 7BZ",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=7643",
+    "http": 200,
+    "results": 3,
+    "hits": [
+     "7643 Cross Keys Homes Limited (Registered)",
+     "27643R Leeds Action to Create Homes Limited (Registered)",
+     "17643R The Park Social Club Limited (Deregistered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "7643",
+     "name": "Cross Keys Homes Limited",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2017-10-12",
+     "deregistration_date": null,
+     "matched_name": "Cross Keys Homes"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Cross Keys Homes Limited",
+     "organisation_name": "Cross Keys Homes Limited",
+     "rp_code": "LH4428",
+     "rp_registration_date": "2004-09-28",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Cross Keys Homes Limited\", status Registered, Community Benefit Society, registered 2017-10-12. RSH list (corroboration only, name match): Cross Keys Homes Limited = LH4428, Registered society."
+ },
+ "GB-MPR-7711": {
+  "scheme": "GB-MPR",
+  "value": "7711",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/19750",
+  "found": true,
+  "name": "Bernicia Group",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "7711",
+   "register_display_number": "7711",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 19750,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2018-02-01",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Oakwood Way, Ashwood Business Park, Ashington, Northumberland, NE63 0XF",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [
+    {
+     "date": "2018-02-01",
+     "society_name": "Cheviot Housing Association Limited",
+     "society_number": "19086",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2018-02-01",
+     "society_name": "Wansbeck Homes Limited",
+     "society_number": "30079",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2018-02-01",
+     "society_name": "Three Rivers Housing Association Limited",
+     "society_number": "17315",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2018-02-01",
+     "society_name": "Berwick Borough Housing Limited",
+     "society_number": "30537",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2018-02-01",
+     "society_name": "Bernicia 2018 Limited",
+     "society_number": "30268",
+     "transfer_type": "amalgamation"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=7711",
+    "http": 200,
+    "results": 3,
+    "hits": [
+     "7711 Bernicia Group (Registered)",
+     "17711R Cheltenham Help the Aged Housing Association Limited (Deregistered)",
+     "27711R Osmani Housing Association Limited (Deregistered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "7711",
+     "name": "Bernicia Group",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2018-02-01",
+     "deregistration_date": null,
+     "matched_name": "Bernicia Group"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Bernicia Group",
+     "organisation_name": "Bernicia Group",
+     "rp_code": "4868",
+     "rp_registration_date": "2018-02-20",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Bernicia Group\", status Registered, Community Benefit Society, registered 2018-02-01. 5 transfer(s) received (latest 2018-02-01 from 19086 Cheviot Housing Association Limited). RSH list (corroboration only, name match): Bernicia Group = 4868, Registered society."
+ },
+ "GB-MPR-7773": {
+  "scheme": "GB-MPR",
+  "value": "7773",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/26726",
+  "found": true,
+  "name": "Livv Housing Group",
+  "status": "Registered",
+  "other_names": [
+   "Knowsley Housing Trust Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "7773",
+   "register_display_number": "7773",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 26726,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2018-05-21",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Lakeview, Kings Business Park, Prescot, Merseyside, L34 1PJ",
+   "sic": "55900 - Other accommodation",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2020-04-01",
+     "previous_name": "Knowsley Housing Trust Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2020-04-01",
+     "society_name": "First Ark Limited",
+     "society_number": "8298",
+     "transfer_type": "Full"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [
+    "7773R"
+   ],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=7773",
+    "http": 200,
+    "results": 3,
+    "hits": [
+     "27773R 1999 Housing Society Limited (Deregistered)",
+     "7773R Cumberland and Westmorland Farmers Limited (Deregistered)",
+     "7773 Livv Housing Group (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "7773",
+     "name": "Livv Housing Group",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2018-05-21",
+     "deregistration_date": null,
+     "matched_name": "Livv Housing Group"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Livv Housing Group",
+     "organisation_name": "Livv Housing Group",
+     "rp_code": "LH4343",
+     "rp_registration_date": "2002-07-09",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Bare \"7773\" equals the register number \"7773\" (a post-2014-Act number, no suffix); the register also holds a different society under 7773R (Cumberland and Westmorland Farmers Limited, Deregistered). Register: \"Livv Housing Group\", status Registered, Community Benefit Society, registered 2018-05-21. Name changes: 2020-04-01 previously \"Knowsley Housing Trust Limited\". 1 transfer(s) received (latest 2020-04-01 from 8298 First Ark Limited). RSH list (corroboration only, name match): Livv Housing Group = LH4343, Registered society."
+ },
+ "GB-MPR-7814": {
+  "scheme": "GB-MPR",
+  "value": "7814",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/24101",
+  "found": true,
+  "name": "Beyond Housing Limited",
+  "status": "Registered",
+  "other_names": [
+   "Yorkshire Coast Homes Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "7814",
+   "register_display_number": "7814",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 24101,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2018-07-27",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Brook House, 4 Gladstone Road, Scarborough, North Yorkshire, YO12 7BH",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2018-10-01",
+     "previous_name": "Yorkshire Coast Homes Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2018-10-01",
+     "society_name": "Coast & Country Housing Limited",
+     "society_number": "7093",
+     "transfer_type": "transfer of engagements"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=7814",
+    "http": 200,
+    "results": 3,
+    "hits": [
+     "7814 Beyond Housing Limited (Registered)",
+     "27814R Norwich \"Door to Door\" Limited (Registered)",
+     "17814R Pant Social Club (Dowlais) Limited (Deregistered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "7814",
+     "name": "Beyond Housing Limited",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2018-07-27",
+     "deregistration_date": null,
+     "matched_name": "Beyond Housing Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Beyond Housing Limited",
+     "organisation_name": "Beyond Housing Limited",
+     "rp_code": "LH4401",
+     "rp_registration_date": "2003-11-13",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Beyond Housing Limited\", status Registered, Community Benefit Society, registered 2018-07-27. Name changes: 2018-10-01 previously \"Yorkshire Coast Homes Limited\". 1 transfer(s) received (latest 2018-10-01 from 7093 Coast & Country Housing Limited). RSH list (corroboration only, name match): Beyond Housing Limited = LH4401, Registered society."
+ },
+ "GB-MPR-7843": {
+  "scheme": "GB-MPR",
+  "value": "7843",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/25446",
+  "found": true,
+  "name": "Anchor Hanover Group",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "7843",
+   "register_display_number": "7843",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 25446,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2018-09-12",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "2 Godwin Street, Bradford, BD1 2ST",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2018-11-29",
+     "previous_name": null
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2018-11-29",
+     "society_name": "Hanover Housing Association",
+     "society_number": "16324",
+     "transfer_type": "Full"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=7843",
+    "http": 200,
+    "results": 2,
+    "hits": [
+     "7843 Anchor Hanover Group (Registered)",
+     "27843R Derwentside Market Traders Co-operative Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "7843",
+     "name": "Anchor Hanover Group",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2018-09-12",
+     "deregistration_date": null,
+     "matched_name": "Anchor Hanover Group"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Anchor Hanover Group",
+     "organisation_name": "Anchor Hanover Group",
+     "rp_code": "LH4095",
+     "rp_registration_date": "1996-03-21",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Anchor Hanover Group\", status Registered, Community Benefit Society, registered 2018-09-12. Name changes: 2018-11-29 (previous name blank in the register). 1 transfer(s) received (latest 2018-11-29 from 16324 Hanover Housing Association). RSH list (corroboration only, name match): Anchor Hanover Group = LH4095, Registered society."
+ },
+ "GB-MPR-8112": {
+  "scheme": "GB-MPR",
+  "value": "8112",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/30375",
+  "found": true,
+  "name": "Delta Housing Limited",
+  "status": "Registered",
+  "other_names": [
+   "Chelmer Housing Partnership Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "8112",
+   "register_display_number": "8112",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 30375,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2019-05-08",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Myriad House, 33 Springfield Lyons Approach, Springfield, Chelmsford, CM2 5LB",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2026-03-31",
+     "previous_name": "Chelmer Housing Partnership Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2026-03-31",
+     "society_name": "Estuary Housing Association Limited",
+     "society_number": "23240",
+     "transfer_type": "Full"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=8112",
+    "http": 200,
+    "results": 2,
+    "hits": [
+     "8112 Delta Housing Limited (Registered)",
+     "28112R The Midcounties Co-operative Properties Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "8112",
+     "name": "Delta Housing Limited",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2019-05-08",
+     "deregistration_date": null,
+     "matched_name": "Delta Housing Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Delta Housing Limited",
+     "organisation_name": "Delta Housing Limited",
+     "rp_code": "L4331",
+     "rp_registration_date": "2002-02-13",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Delta Housing Limited\", status Registered, Community Benefit Society, registered 2019-05-08. Name changes: 2026-03-31 previously \"Chelmer Housing Partnership Limited\". 1 transfer(s) received (latest 2026-03-31 from 23240 Estuary Housing Association Limited). RSH list (corroboration only, name match): Delta Housing Limited = L4331, Registered society."
+ },
+ "GB-MPR-8983": {
+  "scheme": "GB-MPR",
+  "value": "8983",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/31332",
+  "found": true,
+  "name": "Southern Housing",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "8983",
+   "register_display_number": "8983",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 31332,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2022-12-16",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Fleet House, 59-61 Clerkenwell Road, London, EC1M 5LA",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [
+    {
+     "date": "2022-12-16",
+     "society_name": "Southern Housing Group Limited",
+     "society_number": "31055",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2022-12-16",
+     "society_name": "Optivo",
+     "society_number": "7561",
+     "transfer_type": "amalgamation"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=8983",
+    "http": 200,
+    "results": 2,
+    "hits": [
+     "8983 Southern Housing (Registered)",
+     "28983R Tower Management Organisation, E8 Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "8983",
+     "name": "Southern Housing",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2022-12-16",
+     "deregistration_date": null,
+     "matched_name": "Southern Housing"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Southern Housing",
+     "organisation_name": "Southern Housing",
+     "rp_code": "5171",
+     "rp_registration_date": "2023-01-04",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Register: \"Southern Housing\", status Registered, Community Benefit Society, registered 2022-12-16. 2 transfer(s) received (latest 2022-12-16 from 31055 Southern Housing Group Limited). RSH list (corroboration only, name match): Southern Housing = 5171, Registered society."
+ },
+ "GB-MPR-9518": {
+  "scheme": "GB-MPR",
+  "value": "9518",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/31976",
+  "found": true,
+  "name": "Inspire North",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "9518",
+   "register_display_number": "9518",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 31976,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2025-03-31",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "3 Limewood Way, Leeds, LS14 1AB",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [
+    {
+     "date": "2025-03-31",
+     "society_name": "Inspire North 2024 Limited",
+     "society_number": "9412",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2025-03-31",
+     "society_name": "Foundation",
+     "society_number": "9407",
+     "transfer_type": "amalgamation"
+    },
+    {
+     "date": "2025-03-31",
+     "society_name": "Community Links (Northern)",
+     "society_number": "9408",
+     "transfer_type": "amalgamation"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [
+    "9518R"
+   ],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=9518",
+    "http": 200,
+    "results": 4,
+    "hits": [
+     "29518R Elmtree Housing Co-operative Limited (Deregistered)",
+     "9518 Inspire North (Registered)",
+     "19518R Quickabuild Limited (Deregistered)",
+     "9518R Royal British Legion (Melbourne) Branch Club Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "9518",
+     "name": "Inspire North",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2025-03-31",
+     "deregistration_date": null,
+     "matched_name": "Inspire North"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Inspire North",
+     "organisation_name": "Inspire North",
+     "rp_code": "5223",
+     "rp_registration_date": "2025-05-20",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Bare \"9518\" equals the register number \"9518\" (a post-2014-Act number, no suffix); the register also holds a different society under 9518R (Royal British Legion (Melbourne) Branch Club Limited, Registered). Register: \"Inspire North\", status Registered, Community Benefit Society, registered 2025-03-31. 3 transfer(s) received (latest 2025-03-31 from 9412 Inspire North 2024 Limited). RSH list (corroboration only, name match): Inspire North = 5223, Registered society."
+ },
+ "GB-MPR-ip6243r": {
+  "scheme": "GB-MPR",
+  "value": "ip6243r",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=ip6243r",
+  "found": false,
+  "name": null,
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "register_numbers_with_same_digits": [],
+   "website_searches": [
+    "\"ip6243r\" -> HTTP 200, 0 result(s)",
+    "\"6243\" -> HTTP 200, 2 result(s): 26243R Fullers Slade Self Build Housing Association Limited (Deregistered); 16243R Hastoe Housing Association Limited (Registered)"
+   ],
+   "name_search_hits": [
+    {
+     "registration_number": "16243R",
+     "name": "Hastoe Housing Association Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1962-12-04",
+     "deregistration_date": null,
+     "matched_name": "Hastoe Housing Association Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Hastoe Housing Association Limited",
+     "organisation_name": "Hastoe Housing Association Limited",
+     "rp_code": "L0018",
+     "rp_registration_date": "1975-03-25",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published \"ip6243r\" read as the Companies House-style IP prefix + society number \"6243R\" (and as a Northern Ireland \"6243IP\" number): the register has no society with number 6243 under any suffix (SocietyList.csv, 2026-10-10). Website search: \"ip6243r\" -> HTTP 200, 0 result(s) | \"6243\" -> HTTP 200, 2 result(s): 26243R Fullers Slade Self Build Housing Association Limited (Deregistered); 16243R Hastoe Housing Association Limited (Registered). Name search of the register CSV (current names, normalised, LIMITED/LTD/THE dropped) for \"Hastoe Housing Association Limited\" / \"Hastoe Housing Association Ltd\": 16243R Hastoe Housing Association Limited (Registered)."
+ },
+ "GB-MPR-RS007639": {
+  "scheme": "GB-MPR",
+  "value": "RS007639",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/7855",
+  "found": true,
+  "name": "Ongo Homes Limited",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "7639",
+   "register_display_number": "7639",
+   "match_rule": "RS-prefix_to_bare_2014Act_number",
+   "fca_society_id": 7855,
+   "society_type": "Community Benefit Society",
+   "registration_date": "2017-10-01",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Ongo House, High Street, Scunthorpe, DN15 6AT",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [
+    {
+     "date": "2023-03-31",
+     "society_name": "Ongo Partnership Limited",
+     "society_number": "8945",
+     "transfer_type": "Full"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=RS007639",
+    "http": 200,
+    "results": 0,
+    "hits": []
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "7639",
+     "name": "Ongo Homes Limited",
+     "status": "Registered",
+     "registered_as": "Community Benefit Society",
+     "registration_date": "2017-10-01",
+     "deregistration_date": null,
+     "matched_name": "Ongo Homes Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Ongo Homes Limited",
+     "organisation_name": "Ongo Homes Limited",
+     "rp_code": "L4486",
+     "rp_registration_date": "2007-01-30",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published \"RS007639\" is the RS00nnnn rendering (as used by Companies House) of a society registered under the 2014 Act; the FCA register lists it as number \"7639\" with no suffix. (In the FCA register the suffix \"RS\" marks Scottish societies; no \"7639RS\" exists.) Register: \"Ongo Homes Limited\", status Registered, Community Benefit Society, registered 2017-10-01. 1 transfer(s) received (latest 2023-03-31 from 8945 Ongo Partnership Limited). The website search for the string \"RS007639\" returns 0 result(s) and does not list 7639; the society was reached by searching \"7639\". RSH list (corroboration only, name match): Ongo Homes Limited = L4486, Registered society."
+ },
+ "GB-CHC-10433R": {
+  "scheme": "GB-CHC",
+  "value": "10433R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/8967",
+  "found": true,
+  "name": "Gateway Housing Association Limited",
+  "status": "Registered",
+  "other_names": [
+   "Bethnal Green and Victoria Park Housing Association Limited",
+   "Bethnal Green and East London Housing Association Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "10433R",
+   "register_display_number": "10433R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 8967,
+   "society_type": "Registered Society",
+   "registration_date": "1926-11-18",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "409-413 Mile End Road, London, E3 4PB",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2008-04-01",
+     "previous_name": "Bethnal Green and Victoria Park Housing Association Limited"
+    },
+    {
+     "date": "1992-07-09",
+     "previous_name": "Bethnal Green and East London Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2008-03-31",
+     "society_name": "Labo Housing Association Limited",
+     "society_number": "25731",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2006-11-30",
+     "society_name": "Victoria Park Home Ownership Limited",
+     "society_number": "23201",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1994-05-26",
+     "society_name": "Oxford House Housing Association Limited",
+     "society_number": "21437",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1993-02-17",
+     "society_name": "Victoria Park Housing Association Limited",
+     "society_number": "19976",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1991-10-24",
+     "society_name": "Westminster Homes Limited",
+     "society_number": "11723",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1984-12-03",
+     "society_name": "Stepney Housing Trust Limited",
+     "society_number": "11071",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "1982-02-19",
+     "society_name": "Isle Of Dogs Housing Society Limited",
+     "society_number": "11149",
+     "transfer_type": "transfer of engagements"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=10433R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "10433R Gateway Housing Association Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "10433R",
+     "name": "Gateway Housing Association Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1926-11-18",
+     "deregistration_date": null,
+     "matched_name": "Gateway Housing Association"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Gateway Housing Association Limited",
+     "organisation_name": "Gateway Housing Association Limited",
+     "rp_code": "L0517",
+     "rp_registration_date": "1975-09-12",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Published under GB-CHC; looked up as the FCA society number 10433R. Register: \"Gateway Housing Association Limited\", status Registered, Registered Society, registered 1926-11-18. Name changes: 2008-04-01 previously \"Bethnal Green and Victoria Park Housing Association Limited\"; 1992-07-09 previously \"Bethnal Green and East London Housing Association Limited\". 7 transfer(s) received (latest 2008-03-31 from 25731 Labo Housing Association Limited). RSH list (corroboration only, name match): Gateway Housing Association Limited = L0517, Registered society."
+ },
+ "GB-CHC-17434R": {
+  "scheme": "GB-CHC",
+  "value": "17434R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/7935",
+  "found": true,
+  "name": "Moat Homes Limited",
+  "status": "Registered",
+  "other_names": [
+   "Moat Housing Group-South Limited",
+   "Moat Housing Society Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "17434R",
+   "register_display_number": "17434R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 7935,
+   "society_type": "Registered Society",
+   "registration_date": "1966-04-01",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Mariner House, Galleon Boulevard, Dartford, Kent, DA2 6QE",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2006-03-31",
+     "previous_name": "Moat Housing Group-South Limited"
+    },
+    {
+     "date": "2004-02-26",
+     "previous_name": "Moat Housing Society Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2011-12-16",
+     "society_name": "Bourne Housing Society Limited",
+     "society_number": "17098",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2007-03-30",
+     "society_name": "Pollards Hill Housing Association Limited",
+     "society_number": "28634",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2006-05-19",
+     "society_name": "Moat Housing Group-East Limited",
+     "society_number": "26700",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2002-10-15",
+     "society_name": "Moat Care and Repair Limited",
+     "society_number": "28778",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2002-10-15",
+     "society_name": "Bailey Housing Association Limited",
+     "society_number": "18383",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "",
+     "society_name": "Moat Home Ownership Limited",
+     "society_number": "28518",
+     "transfer_type": "transfer of engagements"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=17434R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "17434R Moat Homes Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "17434R",
+     "name": "Moat Homes Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1966-04-01",
+     "deregistration_date": null,
+     "matched_name": "Moat Homes Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Moat Homes Limited",
+     "organisation_name": "Moat Homes Limited",
+     "rp_code": "L0386",
+     "rp_registration_date": "1975-08-12",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Published under GB-CHC; looked up as the FCA society number 17434R. Register: \"Moat Homes Limited\", status Registered, Registered Society, registered 1966-04-01. Name changes: 2006-03-31 previously \"Moat Housing Group-South Limited\"; 2004-02-26 previously \"Moat Housing Society Limited\". 6 transfer(s) received (latest 2011-12-16 from 17098 Bourne Housing Society Limited). RSH list (corroboration only, name match): Moat Homes Limited = L0386, Registered society."
+ },
+ "GB-CHC-28258R": {
+  "scheme": "GB-CHC",
+  "value": "28258R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/16725",
+  "found": true,
+  "name": "Cetra Housing Co-operative Limited",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "register_full_registration_number": "28258R",
+   "register_display_number": "28258R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 16725,
+   "society_type": "Registered Society",
+   "registration_date": "1995-09-18",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "27 Cedars Road, LONDON, SW4 0PN",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Co-operative",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [],
+   "transfers_in": [],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=28258R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "28258R Cetra Housing Co-operative Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "28258R",
+     "name": "Cetra Housing Co-operative Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1995-09-18",
+     "deregistration_date": null,
+     "matched_name": "CETRA Housing Co-operative Limited"
+    }
+   ],
+   "rsh_corroboration": []
+  },
+  "notes": "Published value is the register number exactly. Published under GB-CHC; looked up as the FCA society number 28258R. Register: \"Cetra Housing Co-operative Limited\", status Registered, Registered Society, registered 1995-09-18. RSH list (corroboration only): no name match."
+ },
+ "GB-CHC-28687R": {
+  "scheme": "GB-CHC",
+  "value": "28687R",
+  "http": 200,
+  "source": "https://mutuals.fca.org.uk/Search/Society/6145",
+  "found": true,
+  "name": "Together Housing Association Limited",
+  "status": "Registered",
+  "other_names": [
+   "Chevin Housing Association Limited"
+  ],
+  "linked": {
+   "register_full_registration_number": "28687R",
+   "register_display_number": "28687R",
+   "match_rule": "exact_case_insensitive",
+   "fca_society_id": 6145,
+   "society_type": "Registered Society",
+   "registration_date": "1998-02-16",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "address": "Bull Green House, Bull Green, Halifax, HX1 2EB",
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "csv_status": "Registered",
+   "csv_statistics_condition": "Community Benefit",
+   "deregistration_date": null,
+   "deregistration_method": null,
+   "transferred_to_number": null,
+   "transferred_to_name": null,
+   "transfer_method": null,
+   "name_changes": [
+    {
+     "date": "2016-03-31",
+     "previous_name": "Chevin Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "2016-03-31",
+     "society_name": "Housing Pendle Limited",
+     "society_number": "30105",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2016-03-31",
+     "society_name": "Twin Valley Homes Limited",
+     "society_number": "31842",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2016-03-31",
+     "society_name": "Green Vale Homes Limited",
+     "society_number": "30035",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2016-03-31",
+     "society_name": "Pennine Housing 2000 Limited",
+     "society_number": "31839",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2005-03-03",
+     "society_name": "Hallam Housing Society Limited",
+     "society_number": "17539",
+     "transfer_type": "transfer of engagements"
+    },
+    {
+     "date": "2003-11-18",
+     "society_name": "Chantry Housing Association Limited",
+     "society_number": "20625",
+     "transfer_type": "transfer of engagements"
+    }
+   ],
+   "other_register_numbers_with_same_digits": [],
+   "website_search_published_value": {
+    "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=28687R",
+    "http": 200,
+    "results": 1,
+    "hits": [
+     "28687R Together Housing Association Limited (Registered)"
+    ]
+   },
+   "name_search_hits": [
+    {
+     "registration_number": "28687R",
+     "name": "Together Housing Association Limited",
+     "status": "Registered",
+     "registered_as": "Registered Society",
+     "registration_date": "1998-02-16",
+     "deregistration_date": null,
+     "matched_name": "Together Housing Association Limited"
+    }
+   ],
+   "rsh_corroboration": [
+    {
+     "matched_name": "Together Housing Association Limited",
+     "organisation_name": "Together Housing Association Limited",
+     "rp_code": "L4160",
+     "rp_registration_date": "1998-02-17",
+     "designation": "Non-profit",
+     "corporate_form": "Registered society"
+    }
+   ]
+  },
+  "notes": "Published value is the register number exactly. Published under GB-CHC; looked up as the FCA society number 28687R. Register: \"Together Housing Association Limited\", status Registered, Registered Society, registered 1998-02-16. Name changes: 2016-03-31 previously \"Chevin Housing Association Limited\". 6 transfer(s) received (latest 2016-03-31 from 30105 Housing Pendle Limited). RSH list (corroboration only, name match): Together Housing Association Limited = L4160, Registered society."
+ },
+ "_meta": {
+  "method": "FCA Mutuals Public Register (https://mutuals.fca.org.uk/). (1) Downloaded the register-wide CSV https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv (HTTP 200, 7.3 MB, Last-Modified 2026-10-10, 32,449 rows; columns Society Number, Society Suffix, Full Registation Number, name, Registered As, dates, Act, status) and matched each published value against Full Registation Number: case-insensitive exact match; \"RS0*n\" -> bare post-2014-Act number n (the CSV gives those societies an empty suffix, while its own \"RS\" suffix marks Scottish societies); \"IP0*n[R]\" -> \"nR\" or NI \"nIP\". (2) For every matched number, read the public website: GET /Search/Search?SearchTerm=<value> (the search accepts names or registration numbers; results carry /Search/Society/<id> links), then the society details page /Search/Society/<id> (status, registered as, registration date/Act, address, SIC, deregistration date/method, transferred-to) and its two JSON feeds /Societies/GetNameChanges?societyId=<id> (previous names) and /Societies/GetTransfers?societyId=<id> (engagements received; TE = transfer of engagements, AM = amalgamation). ~1.2 s between requests. http/source are the details page (or, when no number matched, the website search for the published value). (3) Corroboration only: the Regulator of Social Housing \"List of registered providers - 17 September 2026\" (https://assets.publishing.service.gov.uk/media/6aad16bcce3f006bd4346c9b/List_of_registered_providers_17_September_2026.xlsx, from https://www.gov.uk/government/publications/registered-providers-of-social-housing), matched by normalised name (register current name, previous names, and the member names) to RP code and corporate form; it carries no FCA society number, so it never decides \"found\". name_search_hits match the member names against current names in the CSV only.",
+  "failures": [],
+  "duplicate_value_entries": {
+   "GB-MPR-30938R": [
+    [
+     "The Riverside Group Limited",
+     "Northern Housing Consortium Ltd"
+    ],
+    [
+     "The Riverside Group Limited",
+     "The Riverside Group Limited"
+    ]
+   ],
+   "GB-MPR-31211R": [
+    [
+     "Flagship Housing Limited",
+     "Northern Housing Consortium Ltd"
+    ],
+    [
+     "Flagship Housing Limited",
+     "Flagship Housing Limited"
+    ]
+   ]
+  },
+  "extra_values_from_gb_chc": {
+   "GB-CHC-10433R": "Gateway Housing Association",
+   "GB-CHC-17434R": "Moat Homes Limited",
+   "GB-CHC-28258R": "CETRA Housing Co-operative Limited",
+   "GB-CHC-28687R": "Together Housing Association Limited"
+  },
+  "scripts": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/u2fetch/mpr/{fetch.py,build.py,xlsx.py}",
+  "fetched_at": "2026-10-11"
+ }
+}

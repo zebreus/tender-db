@@ -1,0 +1,4728 @@
+{
+ "1271280": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 1271280,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 277,
+   "merged_identifiers": [],
+   "name": "Mid Cheshire Hospitals NHS Foundation Trust",
+   "provisional": true
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 14,
+  "winner_more": false,
+  "bidder": 9,
+  "bidder_more": false
+ },
+ "1285461": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 1285461,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 298,
+   "merged_identifiers": [],
+   "name": "The Christie NHS Foundation Trust",
+   "provisional": true
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 11,
+  "winner_more": false,
+  "bidder": 9,
+  "bidder_more": false
+ },
+ "1369100": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 1369100,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 156,
+   "merged_identifiers": [],
+   "name": "Airedale NHS Foundation Trust",
+   "provisional": true
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 12,
+  "winner_more": false,
+  "bidder": 8,
+  "bidder_more": false
+ },
+ "1381987": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 1381987,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 72,
+   "merged_identifiers": [],
+   "name": "Harrogate and District NHS Foundation Trust",
+   "provisional": true
+  },
+  "buyer": 26,
+  "buyer_more": false,
+  "winner": 29,
+  "winner_more": false,
+  "bidder": 18,
+  "bidder_more": false
+ },
+ "1466780": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 1466780,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 89,
+   "merged_identifiers": [],
+   "name": "Dorset County Hospital NHS Foundation Trust",
+   "provisional": true
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 6,
+  "winner_more": false,
+  "bidder": 5,
+  "bidder_more": false
+ },
+ "13569138": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 13569138,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 65,
+   "merged_identifiers": [],
+   "name": "South Tyneside and Sunderland NHS Foundation Trust",
+   "provisional": true
+  },
+  "buyer": 33,
+  "buyer_more": false,
+  "winner": 18,
+  "winner_more": false,
+  "bidder": 16,
+  "bidder_more": false
+ },
+ "30913564": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30913564,
+   "identifier": "GBCHC28687R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 73,
+   "merged_identifiers": [],
+   "name": "Together Housing Association Limited",
+   "provisional": false
+  },
+  "buyer": 46,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30913603": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30913603,
+   "identifier": "GBPPONPTQH2444LZZX",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 22,
+   "merged_identifiers": [],
+   "name": "Catering for Staff Summer Engagement Event 2025",
+   "provisional": false
+  },
+  "buyer": 20,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30913771": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30913771,
+   "identifier": "GBPPONPCGC8557XYGT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 545,
+   "merged_identifiers": [],
+   "name": "NHS Property Services",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30913828": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30913828,
+   "identifier": "GBPPONPZGV1935NXDL",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Cornwall College",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30913929": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30913929,
+   "identifier": "GBMPR27440R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Creative Support",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30914058": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914058,
+   "identifier": "GBUKPRN10004695",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 7,
+   "merged_identifiers": [],
+   "name": "DN Colleges Group",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30914105": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914105,
+   "identifier": "GBCHC1140312",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 148,
+   "merged_identifiers": [],
+   "name": "University of South Wales",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30914142": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914142,
+   "identifier": "GBUKPRN10003957",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 84,
+   "merged_identifiers": [],
+   "name": "Liverpool John Moores University",
+   "provisional": false
+  },
+  "buyer": 45,
+  "buyer_more": false,
+  "winner": 4,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "30914147": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914147,
+   "identifier": "GBPPONPXGT2943TQCV",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 21,
+   "merged_identifiers": [],
+   "name": "Hastoe Housing Association Ltd",
+   "provisional": false
+  },
+  "buyer": 18,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30914255": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914255,
+   "identifier": "GBCHC1130461",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 44,
+   "merged_identifiers": [],
+   "name": "CRESCENT PURCHASING LIMITED",
+   "provisional": false
+  },
+  "buyer": 34,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30914385": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914385,
+   "identifier": "GBPPONPQND5289JNDN",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 123,
+   "merged_identifiers": [],
+   "name": "Clarion Housing Group",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30914398": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914398,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 154,
+   "merged_identifiers": [],
+   "name": "NHS Dorset Integrated Care Board",
+   "provisional": true
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30914476": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914476,
+   "identifier": "GBPPONPYBH1339MTCJ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 126,
+   "merged_identifiers": [],
+   "name": "Anchor Hanover Group",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30914487": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914487,
+   "identifier": "GBMPR30938R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 116,
+   "merged_identifiers": [],
+   "name": "The Riverside Group Limited",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30914694": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914694,
+   "identifier": "GBMPR7522",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 138,
+   "merged_identifiers": [],
+   "name": "Thirteen Housing Group Limited",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 6,
+  "winner_more": false,
+  "bidder": 6,
+  "bidder_more": false
+ },
+ "30914767": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914767,
+   "identifier": "GBCHC2204085",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 12,
+   "merged_identifiers": [],
+   "name": "Sports and Leisure Management Ltd",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 6,
+  "winner_more": false,
+  "bidder": 6,
+  "bidder_more": false
+ },
+ "30914786": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914786,
+   "identifier": "GBNHSG6V2S",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 79,
+   "merged_identifiers": [],
+   "name": "North London Foundation Trust",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30914868": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914868,
+   "identifier": "GBUKPRN10003558",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "Kendal College",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30914980": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30914980,
+   "identifier": "GBPPONPPNB5569JLHH",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 85,
+   "merged_identifiers": [],
+   "name": "Cardiff Metropolitan University",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 4,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "30915060": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915060,
+   "identifier": "GBMPR30398R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 11,
+   "merged_identifiers": [],
+   "name": "Thrive Homes Limited",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915093": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915093,
+   "identifier": "GBCHC1091434",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 46,
+   "merged_identifiers": [],
+   "name": "NURSING AND MIDWIFERY COUNCIL",
+   "provisional": false
+  },
+  "buyer": 34,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915120": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915120,
+   "identifier": "GBUKPRN10003928",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 26,
+   "merged_identifiers": [],
+   "name": "Lincoln College Group",
+   "provisional": false
+  },
+  "buyer": 12,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30915248": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915248,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 104,
+   "merged_identifiers": [],
+   "name": "NHS Norfolk and Waveney Integrated Care Board",
+   "provisional": true
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30915404": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915404,
+   "identifier": "GBNHS8HN02",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 32,
+   "merged_identifiers": [],
+   "name": "Care Quality Commission",
+   "provisional": false
+  },
+  "buyer": 18,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915433": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915433,
+   "identifier": "GBCHC28258R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "CETRA Housing Co-operative Limited",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915463": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915463,
+   "identifier": "GBNHSQE1",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 359,
+   "merged_identifiers": [],
+   "name": "NHS Lancashire and South Cumbria Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915589": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915589,
+   "identifier": "GBPPONPBND1678TCRM",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 93,
+   "merged_identifiers": [],
+   "name": "NHS Buckinghamshire Oxfordshire & Berkshire West Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30915659": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915659,
+   "identifier": "GBMPR8112",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 44,
+   "merged_identifiers": [],
+   "name": "Chelmer Housing Partnership Limited",
+   "provisional": false
+  },
+  "buyer": 39,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915727": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915727,
+   "identifier": "GBCHC1140762",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "CARDIFF METROPOLITAN UNIVERSITY",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915728": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915728,
+   "identifier": "GBCHC1145141",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 7,
+   "merged_identifiers": [],
+   "name": "PRIFYSGOL ABERYSTWYTH UNIVERSITY",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30915729": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915729,
+   "identifier": "GBCHC1149535",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "UNIVERSITY OF WALES:TRINITY SAINT DAVID",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915757": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915757,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 69,
+   "merged_identifiers": [],
+   "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+   "provisional": true
+  },
+  "buyer": 39,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915776": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915776,
+   "identifier": "GBCHC17434R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 37,
+   "merged_identifiers": [],
+   "name": "Moat Homes Limited",
+   "provisional": false
+  },
+  "buyer": 28,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915904": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915904,
+   "identifier": "GBPPONPCQH8657NGMT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 46,
+   "merged_identifiers": [],
+   "name": "Business Services Organisation",
+   "provisional": false
+  },
+  "buyer": 20,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915907": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915907,
+   "identifier": "GBPPONPCBB6493RNBZ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 29,
+   "merged_identifiers": [],
+   "name": "Your Housing Group",
+   "provisional": false
+  },
+  "buyer": 17,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915945": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915945,
+   "identifier": "GBPPONPGZD6448RDPL",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 11,
+   "merged_identifiers": [],
+   "name": "Southdown Housing Association",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30915966": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915966,
+   "identifier": "GBPPONPHCH9173QTMH",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 9,
+   "merged_identifiers": [],
+   "name": "The Nursing and Midwifery Council",
+   "provisional": false
+  },
+  "buyer": 7,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30915968": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30915968,
+   "identifier": "GBPPONPZPR8554XHNX",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 79,
+   "merged_identifiers": [],
+   "name": "Crescent Purchasing Consortium Limited",
+   "provisional": false
+  },
+  "buyer": 39,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30916015": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916015,
+   "identifier": "GBMPR7711",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 40,
+   "merged_identifiers": [],
+   "name": "Bernicia Group",
+   "provisional": false
+  },
+  "buyer": 23,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30916103": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916103,
+   "identifier": "GBNHSQK1",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 49,
+   "merged_identifiers": [],
+   "name": "NHS Leicester, Leicestershire and Rutland Integrated Commissioning Board (LLR ICB)",
+   "provisional": false
+  },
+  "buyer": 42,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30916319": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916319,
+   "identifier": "GBPPONPPGY1151NJQN",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 95,
+   "merged_identifiers": [],
+   "name": "Gateshead Borough Council",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30916354": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916354,
+   "identifier": "GBPPONPHBB8926WHGM",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 16,
+   "merged_identifiers": [],
+   "name": "Thrive Homes",
+   "provisional": false
+  },
+  "buyer": 11,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30916368": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916368,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 56,
+   "merged_identifiers": [],
+   "name": "NHS NORTHAMPTONSHIRE INTEGRATED CARE BOARD",
+   "provisional": true
+  },
+  "buyer": 31,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30916392": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916392,
+   "identifier": "GBPPONPLQC2725XCGX",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 25,
+   "merged_identifiers": [],
+   "name": "New College Swindon",
+   "provisional": false
+  },
+  "buyer": 17,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30916416": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916416,
+   "identifier": "GBMPR16460R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 28,
+   "merged_identifiers": [],
+   "name": "Orwell Housing Association Ltd",
+   "provisional": false
+  },
+  "buyer": 15,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30916741": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916741,
+   "identifier": "GBUKPRN10005534",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 7,
+   "merged_identifiers": [],
+   "name": "RNN GROUP",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30916785": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916785,
+   "identifier": "GBMPR26278R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 32,
+   "merged_identifiers": [],
+   "name": "West Kent Housing Association",
+   "provisional": false
+  },
+  "buyer": 24,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30916864": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916864,
+   "identifier": "GBPPONPXJD6284VTGG",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 15,
+   "merged_identifiers": [],
+   "name": "NHS Derby & Derbyshire Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 11,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30916881": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916881,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 63,
+   "merged_identifiers": [],
+   "name": "YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST",
+   "provisional": true
+  },
+  "buyer": 36,
+  "buyer_more": false,
+  "winner": 4,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "30916931": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30916931,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 77,
+   "merged_identifiers": [],
+   "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+   "provisional": true
+  },
+  "buyer": 44,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30917080": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30917080,
+   "identifier": "GBMPRRS007639",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 26,
+   "merged_identifiers": [],
+   "name": "Ongo Homes Limited",
+   "provisional": false
+  },
+  "buyer": 23,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30917084": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30917084,
+   "identifier": "GBUKPRN10004375",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 14,
+   "merged_identifiers": [],
+   "name": "Milton Keynes College",
+   "provisional": false
+  },
+  "buyer": 8,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30917129": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30917129,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 66,
+   "merged_identifiers": [],
+   "name": "NHS Black Country Integrated Care Board",
+   "provisional": true
+  },
+  "buyer": 36,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30917184": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30917184,
+   "identifier": "GBMPR7843",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 106,
+   "merged_identifiers": [],
+   "name": "Anchor Hanover Group",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30917249": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30917249,
+   "identifier": "GBUKPRN10004930",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 47,
+   "merged_identifiers": [],
+   "name": "Oxford Brookes University",
+   "provisional": false
+  },
+  "buyer": 37,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "30917376": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30917376,
+   "identifier": "GBPPONPXMB9766NLTH",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 48,
+   "merged_identifiers": [],
+   "name": "East Of England NHS Collaborative Hub",
+   "provisional": false
+  },
+  "buyer": 26,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30917383": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30917383,
+   "identifier": "GBUKPRN10001883",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 43,
+   "merged_identifiers": [],
+   "name": "DE MONTFORT UNIVERSITY",
+   "provisional": false
+  },
+  "buyer": 36,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30917457": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30917457,
+   "identifier": "GBMPR21186R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "Waltham Forest Housing Association",
+   "provisional": false
+  },
+  "buyer": 2,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30917833": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30917833,
+   "identifier": "GBPPONPWQV9217TZPQ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "The Riverside Group Limited",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30918122": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30918122,
+   "identifier": "GBPPONPPTG3156TGWG",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 12,
+   "merged_identifiers": [],
+   "name": "NHS South Yorkshire Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30918169": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30918169,
+   "identifier": "GBPPONPPPG4651TGCG",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 37,
+   "merged_identifiers": [],
+   "name": "Flagship Housing Limited",
+   "provisional": false
+  },
+  "buyer": 22,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30918302": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30918302,
+   "identifier": "GBPPONPZZX1928RJQT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 6,
+   "merged_identifiers": [],
+   "name": "Mid Cheshire Hospitals NHS Foundation Trust",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30918375": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30918375,
+   "identifier": "GBPPONPDTH9328QRQP",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "London Museum",
+   "provisional": false
+  },
+  "buyer": 5,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30919411": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30919411,
+   "identifier": "GBPPONPTCY3946LHDG",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 8,
+   "merged_identifiers": [],
+   "name": "Everyone Active",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 7,
+  "winner_more": false,
+  "bidder": 7,
+  "bidder_more": false
+ },
+ "30919521": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30919521,
+   "identifier": "GBPPONPCWX4677HTMN",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 21,
+   "merged_identifiers": [],
+   "name": "University of South Wales",
+   "provisional": false
+  },
+  "buyer": 11,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "30919545": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30919545,
+   "identifier": "GBPPONPRYW1616TVYT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "Great Places Housing Group",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30919578": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30919578,
+   "identifier": "GBUKPRN10002638",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "Gateshead College",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30919579": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30919579,
+   "identifier": "GBUKPRN10004599",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 8,
+   "merged_identifiers": [],
+   "name": "NCG",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30919585": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30919585,
+   "identifier": "GBMPR20755R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 27,
+   "merged_identifiers": [],
+   "name": "Southdown Housing Association",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "30919598": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30919598,
+   "identifier": "GBMPR9518",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "Inspire North (Community Benefit Society)",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 7,
+  "winner_more": false,
+  "bidder": 7,
+  "bidder_more": false
+ },
+ "30919619": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30919619,
+   "identifier": "GBPPONPTTQ9511YPYH",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 99,
+   "merged_identifiers": [],
+   "name": "The Christie NHS Foundation Trust",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30919654": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30919654,
+   "identifier": "GBUKPRN10002639",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 95,
+   "merged_identifiers": [],
+   "name": "Gateshead Borough Council",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30919672": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30919672,
+   "identifier": "GBPPONPCRP2139LPXM",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 26,
+   "merged_identifiers": [],
+   "name": "University of Wales Trinity Saint David",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 5,
+  "winner_more": false,
+  "bidder": 5,
+  "bidder_more": false
+ },
+ "30926591": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30926591,
+   "identifier": "GBMPR30045R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 65,
+   "merged_identifiers": [],
+   "name": "Great Places Housing Group Limited",
+   "provisional": false
+  },
+  "buyer": 36,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30926649": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30926649,
+   "identifier": "GBPPONPVVY9652WDYM",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Rowan Gate Primary School",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30926776": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30926776,
+   "identifier": "GBPPONPHBZ6759CZRZ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Afghanistan & Central Asian Association",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30926870": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30926870,
+   "identifier": "GBUKPRN10005077",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 12,
+   "merged_identifiers": [],
+   "name": "INSPIRE EDUCATION GROUP",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "30926948": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30926948,
+   "identifier": "GBPPONPZBH4782ZMWY",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 27,
+   "merged_identifiers": [],
+   "name": "DN Colleges Group",
+   "provisional": false
+  },
+  "buyer": 14,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30928147": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30928147,
+   "identifier": "GBUKPRN10000840",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 11,
+   "merged_identifiers": [],
+   "name": "Bradford College",
+   "provisional": false
+  },
+  "buyer": 8,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30928201": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30928201,
+   "identifier": "GBCHC1091035",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "CHARTERED MANAGEMENT INSTITUTE",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "30929619": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30929619,
+   "identifier": "GBMPR30666R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 13,
+   "merged_identifiers": [],
+   "name": "Your Housing Group Limited",
+   "provisional": false
+  },
+  "buyer": 13,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30929647": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30929647,
+   "identifier": "GBUKPRN10000571",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 46,
+   "merged_identifiers": [],
+   "name": "Bath Spa University",
+   "provisional": false
+  },
+  "buyer": 38,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30929830": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30929830,
+   "identifier": "GBPPONPHJQ3398CTLP",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 11,
+   "merged_identifiers": [],
+   "name": "University Centre Somerset College Group",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30929902": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30929902,
+   "identifier": "GBPPONPXPM1872RCYW",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "East Durham College",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30932984": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30932984,
+   "identifier": "GBPPONPYVZ5892TRVV",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 14,
+   "merged_identifiers": [],
+   "name": "Gateshead College",
+   "provisional": false
+  },
+  "buyer": 5,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30933181": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30933181,
+   "identifier": "GBPPONPLDN9458HXQZ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Gateway Housing Association",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30933260": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30933260,
+   "identifier": "GBMPR7773",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 21,
+   "merged_identifiers": [],
+   "name": "Livv Housing Group",
+   "provisional": false
+  },
+  "buyer": 17,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30953460": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30953460,
+   "identifier": "GBNHSH6A5H",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 13,
+   "merged_identifiers": [],
+   "name": "East of England NHS collaborative Procurement Hub",
+   "provisional": false
+  },
+  "buyer": 8,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30953590": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30953590,
+   "identifier": "GBPPONPQHV9439HHDJ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "City College Plymouth",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30953692": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30953692,
+   "identifier": "GBPPONPJXZ4423NDBT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 122,
+   "merged_identifiers": [],
+   "name": "Northern Housing Consortium Ltd",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30953695": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30953695,
+   "identifier": "GBMPR8983",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 90,
+   "merged_identifiers": [],
+   "name": "Southern Housing",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30953699": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30953699,
+   "identifier": "GBSCSC005336",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "The University of Edinburgh",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 8,
+  "winner_more": false,
+  "bidder": 8,
+  "bidder_more": false
+ },
+ "30953700": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30953700,
+   "identifier": "GBSCSC015263",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 25,
+   "merged_identifiers": [],
+   "name": "University of Strathclyde",
+   "provisional": false
+  },
+  "buyer": 12,
+  "buyer_more": false,
+  "winner": 7,
+  "winner_more": false,
+  "bidder": 7,
+  "bidder_more": false
+ },
+ "30953773": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30953773,
+   "identifier": "GBNHSPWNJ1991NGDW",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 44,
+   "merged_identifiers": [],
+   "name": "Business Services Organisation ITS",
+   "provisional": false
+  },
+  "buyer": 18,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30967375": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30967375,
+   "identifier": "GBCOHNP000408",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 107,
+   "merged_identifiers": [
+    {
+     "country": "GB",
+     "identifier": "GBPPONPMZV8413XBMQ",
+     "identifier_kind": "national"
+    }
+   ],
+   "name": "Choice Housing Ireland Limited",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30967402": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30967402,
+   "identifier": "GBCHC209617",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "THE GUIDE DOGS FOR THE BLIND ASSOCIATION",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "30967562": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30967562,
+   "identifier": "GBPPONPXJP9994BJBR",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 37,
+   "merged_identifiers": [],
+   "name": "Southern Housing",
+   "provisional": false
+  },
+  "buyer": 9,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30968692": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30968692,
+   "identifier": "GBMPR7643",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 7,
+   "merged_identifiers": [],
+   "name": "Cross Keys Homes",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30968718": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30968718,
+   "identifier": "GBUKPRN10000415",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "Askham Bryan College",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30968723": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30968723,
+   "identifier": "GBMPR7814",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 6,
+   "merged_identifiers": [],
+   "name": "Beyond Housing Limited",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30968735": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30968735,
+   "identifier": "GBPPONPDMD5638NXMT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 7,
+   "merged_identifiers": [],
+   "name": "Aberystwyth University",
+   "provisional": false
+  },
+  "buyer": 5,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30968981": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30968981,
+   "identifier": "GBPPONPRRJ6511ZDJL",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "Essex Partnership University NHS Foundation Trust",
+   "provisional": false
+  },
+  "buyer": 7,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30969231": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30969231,
+   "identifier": "GBPPONPRQR6323DRZQ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 13,
+   "merged_identifiers": [],
+   "name": "Bradford College",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30972162": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30972162,
+   "identifier": "GBPPONPPVD8623XLTW",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 7,
+   "merged_identifiers": [],
+   "name": "Herefordshire and Worcestershire Health and Care NHS Trust",
+   "provisional": false
+  },
+  "buyer": 5,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30973248": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30973248,
+   "identifier": "GBPPONPNXC4137QGWD",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "LINCOLN COLLEGE",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 4,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "30974559": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30974559,
+   "identifier": "GBPPONPMNN7576BCQG",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 12,
+   "merged_identifiers": [],
+   "name": "Milton Keynes College",
+   "provisional": false
+  },
+  "buyer": 7,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30976012": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30976012,
+   "identifier": "GBUKPRN10002111",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 36,
+   "merged_identifiers": [],
+   "name": "East Durham College",
+   "provisional": false
+  },
+  "buyer": 11,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "30976449": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30976449,
+   "identifier": "GBMPR16337R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 71,
+   "merged_identifiers": [],
+   "name": "Metropolitan Housing Trust Limited",
+   "provisional": false
+  },
+  "buyer": 50,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "30976583": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 30976583,
+   "identifier": "GBPPONPHMP5392DVTW",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 27,
+   "merged_identifiers": [],
+   "name": "North London NHS Foundation Trust ",
+   "provisional": false
+  },
+  "buyer": 12,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31534486": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31534486,
+   "identifier": "GBMPR28038R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 15,
+   "merged_identifiers": [],
+   "name": "CLARION HOUSING GROUP LIMITED",
+   "provisional": false
+  },
+  "buyer": 11,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31534829": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31534829,
+   "identifier": null,
+   "identifier_kind": null,
+   "identifier_status": null,
+   "mentions": 75,
+   "merged_identifiers": [],
+   "name": "NHS Coventry and Warwickshire Integrated Care Board",
+   "provisional": true
+  },
+  "buyer": 49,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31535020": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31535020,
+   "identifier": "GBPPONPJDY1333MXVZ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "NCG",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31535076": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31535076,
+   "identifier": "GBPPONPZJW8184GHXX",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 13,
+   "merged_identifiers": [],
+   "name": "The King's Trust",
+   "provisional": false
+  },
+  "buyer": 10,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31535193": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31535193,
+   "identifier": "GBPPONPNJC6453ZWZN",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "NHS Cambridgeshire and Peterborough Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31535291": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31535291,
+   "identifier": "GBPPONPNMY9834ZYJT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 19,
+   "merged_identifiers": [],
+   "name": "York and Scarborough Teaching Hospital NHS Foundation Trust",
+   "provisional": false
+  },
+  "buyer": 12,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31535363": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31535363,
+   "identifier": "GBPPONPLHD1176CCXP",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 6,
+   "merged_identifiers": [],
+   "name": "Waltham Forest Housing Association",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31535616": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31535616,
+   "identifier": "GBPPONPWVB9664WPWP",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "Airedale NHS Foundation Trust",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31535654": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31535654,
+   "identifier": "GBPPONPHVG7323DLDR",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "Joseph Chamberlain Sixth Form College",
+   "provisional": false
+  },
+  "buyer": 2,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31535979": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31535979,
+   "identifier": "GBPPONPNCG6417GJNY",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 7,
+   "merged_identifiers": [],
+   "name": "Moat Homes Limited",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31536033": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31536033,
+   "identifier": "GBPPONPPGL1164DJLT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 54,
+   "merged_identifiers": [],
+   "name": "Oxford Brookes University",
+   "provisional": false
+  },
+  "buyer": 25,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31536264": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31536264,
+   "identifier": "GBPPONPYRB9815YDNY",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 8,
+   "merged_identifiers": [],
+   "name": "Hartlepool College of Further Education",
+   "provisional": false
+  },
+  "buyer": 6,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31537265": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31537265,
+   "identifier": "GBUKPRN10004579",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "New College Swindon",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31537372": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31537372,
+   "identifier": "GBPPONPBJZ7139JTHN",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 26,
+   "merged_identifiers": [],
+   "name": "Care Quality Commission, Newcastle",
+   "provisional": false
+  },
+  "buyer": 14,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31537455": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31537455,
+   "identifier": "GBNHS06H",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "Cambridgeshire & Peterborough Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 7,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31537664": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31537664,
+   "identifier": "GBCHC1079797",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "THE CHARTERED INSTITUTE OF PERSONNEL AND DEVELOPMENT",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "31537837": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31537837,
+   "identifier": "GBNHSR1L",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31538055": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31538055,
+   "identifier": "GBNHSRA2",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 9,
+   "merged_identifiers": [],
+   "name": "ROYAL SURREY COUNTY HOSPITAL NHS FOUNDATION TRUST",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 4,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "31538068": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31538068,
+   "identifier": "GBPPONPMCL4972LYCY",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 33,
+   "merged_identifiers": [],
+   "name": "Metropolitan Thames Valley Housing Limited",
+   "provisional": false
+  },
+  "buyer": 28,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31538427": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31538427,
+   "identifier": "GBPPONPDPR4361WLZP",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "Livv Housing Group",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31538551": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31538551,
+   "identifier": "GBNHSQF7",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 6,
+   "merged_identifiers": [],
+   "name": "NHS SOUTH YORKSHIRE INTEGRATED CARE BOARD",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31539293": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31539293,
+   "identifier": "GBNICNI100770",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Coalisland Training Services Ltd",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31539386": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31539386,
+   "identifier": "GBUKPRN10005128",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 19,
+   "merged_identifiers": [],
+   "name": "City College Plymouth",
+   "provisional": false
+  },
+  "buyer": 7,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31539737": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31539737,
+   "identifier": "GBPPONPTVZ4148BLMR",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Capital Service Solutions Limited",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31540516": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31540516,
+   "identifier": "GBUKPRN10004344",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "Middlesbrough College",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31540541": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31540541,
+   "identifier": "GBPPONPDVR1783RWJX",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 20,
+   "merged_identifiers": [],
+   "name": "Salvation Army Housing Association",
+   "provisional": false
+  },
+  "buyer": 10,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31540700": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31540700,
+   "identifier": "GBPPONPNMW5582LMGW",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "The Royal Society",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31540738": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31540738,
+   "identifier": "GBNHSR1A",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 9,
+   "merged_identifiers": [],
+   "name": "Herefordshire and Worcestershire Health and Care NHS Trust",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 7,
+  "winner_more": false,
+  "bidder": 7,
+  "bidder_more": false
+ },
+ "31540755": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31540755,
+   "identifier": "GBCHC207043",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "THE ROYAL SOCIETY OF LONDON FOR IMPROVING NATURAL KNOWLEDGE (COMMONLY KNOWN AS THE ROYAL SOCIETY)",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 5,
+  "winner_more": false,
+  "bidder": 5,
+  "bidder_more": false
+ },
+ "31541414": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31541414,
+   "identifier": "GBMPR31211R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "Flagship Housing Limited",
+   "provisional": false
+  },
+  "buyer": 2,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31541432": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31541432,
+   "identifier": "GBPPONPBMW5596NRJW",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "Bath Spa University",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31541488": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31541488,
+   "identifier": "GBCHC1161921",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Step 2 Young People's Health",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31542073": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542073,
+   "identifier": "GBPPONPZYC6286DWHT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 8,
+   "merged_identifiers": [],
+   "name": "NHS Norfolk and Waveney Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31542085": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542085,
+   "identifier": "GBUKPRN10001696",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 7,
+   "merged_identifiers": [],
+   "name": "The Cornwall College Group",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 4,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "31542192": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542192,
+   "identifier": "GBPPONPWYW4583DRYJ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "Middlesbrough College",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31542306": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542306,
+   "identifier": "GBPPONPDZY8857XDBL",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 6,
+   "merged_identifiers": [],
+   "name": "De Montfort University",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31542330": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542330,
+   "identifier": "GBPPONPLPQ1249DXWG",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "COALISLAND TRAINING SERVICES LIMITED",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31542351": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542351,
+   "identifier": "GBPPONPBZT7637QJTP",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 14,
+   "merged_identifiers": [],
+   "name": "NHS Coventry and Warwickshire Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 10,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31542352": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542352,
+   "identifier": "GBPPONPCLY6219YPTV",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "NHS Leicester, Leicestershire and Rutland Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 8,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31542353": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542353,
+   "identifier": "GBPPONPCXW1342CXYV",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 17,
+   "merged_identifiers": [],
+   "name": "NHS Black Country Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 10,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31542354": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542354,
+   "identifier": "GBPPONPGZQ6523JGTT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 8,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31542355": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542355,
+   "identifier": "GBPPONPNMN7243RQRR",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 9,
+   "merged_identifiers": [],
+   "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 8,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31542357": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542357,
+   "identifier": "GBPPONPWCM9262VJDY",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 10,
+   "merged_identifiers": [],
+   "name": "NHS Northamptonshire Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 8,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31542369": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542369,
+   "identifier": "GBCHC1096908",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "AFGHANISTAN & CENTRAL ASIAN ASSOCIATION",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31542853": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31542853,
+   "identifier": "GBNHSR1F",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 28,
+   "merged_identifiers": [],
+   "name": "ISLE OF WIGHT NHS TRUST",
+   "provisional": false
+  },
+  "buyer": 28,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31543302": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31543302,
+   "identifier": "GBUKPRN10005124",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Plumpton College",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31544144": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31544144,
+   "identifier": "GBPPONPQWN9858ZCJM",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "Gloucestershire College",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31544500": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31544500,
+   "identifier": "GBPPONPNGT9457RTMH",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Chartered Institute of Personnel and Development",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "31544520": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31544520,
+   "identifier": "GBPPONPGVP7923NDTW",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 6,
+   "merged_identifiers": [],
+   "name": "University of Strathclyde",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 4,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "31544967": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31544967,
+   "identifier": "GBPPONPCTJ2385BJMM",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "People's Trust for Endangered Species (PTES)",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31545078": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31545078,
+   "identifier": "GBMPR31419R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 6,
+   "merged_identifiers": [],
+   "name": "South Lakes Housing",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31545099": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31545099,
+   "identifier": "GBCHC10433R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Gateway Housing Association Limited",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31545209": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31545209,
+   "identifier": "GBNHSNCS04",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "NHS Property Services",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31545510": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31545510,
+   "identifier": "GBMPR31192R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 9,
+   "merged_identifiers": [],
+   "name": "Dimensions (UK) Limited",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 5,
+  "winner_more": false,
+  "bidder": 5,
+  "bidder_more": false
+ },
+ "31545512": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31545512,
+   "identifier": "GBPPONPYWT7232MXMX",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "Family Lives",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 4,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "31545575": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31545575,
+   "identifier": "GBPPONPVBW3417ZCNN",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 6,
+   "merged_identifiers": [],
+   "name": "Liverpool John Moore University",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "31545767": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31545767,
+   "identifier": "GBCHC1205126",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "RASAC - RAPE AND SEXUAL ABUSE CENTRE",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31545866": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31545866,
+   "identifier": "GBNHSQJ2",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 25,
+   "merged_identifiers": [],
+   "name": "NHS DERBY AND DERBYSHIRE INTEGRATED CARE BOARD",
+   "provisional": false
+  },
+  "buyer": 17,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31546777": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31546777,
+   "identifier": "GBPPONPYQV1457QZDD",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "RNN Group",
+   "provisional": false
+  },
+  "buyer": 2,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31547023": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31547023,
+   "identifier": "GBCHC1077722",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "FAMILY LIVES",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "31549316": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31549316,
+   "identifier": "GBPPONPPHN6972VWCP",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Plumpton College",
+   "provisional": false
+  },
+  "buyer": 2,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31549348": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31549348,
+   "identifier": "GBPPONPMWJ9355XBGP",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 20,
+   "merged_identifiers": [],
+   "name": "Harrogate and District NHS Foundation Trust",
+   "provisional": false
+  },
+  "buyer": 11,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31550992": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31550992,
+   "identifier": "GBPPONPLDT3146ZNQQ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Sussex Housing & Care",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31551135": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31551135,
+   "identifier": "GBPPONPLPX8427RLLH",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "Kendal College",
+   "provisional": false
+  },
+  "buyer": 2,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31551769": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31551769,
+   "identifier": "GBPPONPPBG8518ZJJN",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "Askham Bryan College",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31552217": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31552217,
+   "identifier": "GBCHC1139250",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "London Museum",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31553021": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31553021,
+   "identifier": "GBCHC1107013",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Forum CIO",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31553186": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31553186,
+   "identifier": "GBPPONPQBH3597XBJD",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 7,
+   "merged_identifiers": [],
+   "name": "CREATIVE SUPPORT LIMITED",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "31553465": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31553465,
+   "identifier": "GBCHC1079675",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "THE KING'S TRUST",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31554126": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31554126,
+   "identifier": "GBPPONPBRJ8825CTGR",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "CHARTERED MANAGEMENT INSTITUTE SERVICES LIMITED",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31554487": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31554487,
+   "identifier": "GBPPONPDHG6361YQXW",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Cross Keys Homes",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31554598": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31554598,
+   "identifier": "GBPPONPJNP6361TPWJ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Inspire Education Group",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31554601": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31554601,
+   "identifier": "GBPPONPPDR6933XHHH",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Grantham College",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31554980": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31554980,
+   "identifier": "GBPPONPRHY4184BBDM",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Step 2 Young People's Health",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31555825": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31555825,
+   "identifier": "GBNHSA0V4D",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "NHS Elect",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31556347": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31556347,
+   "identifier": "GBPPONPVMC1756WQNH",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Institution of Civil Engineers",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31557064": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31557064,
+   "identifier": "GBMPR15210R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 9,
+   "merged_identifiers": [],
+   "name": "Salvation Army Housing Association",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 4,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "31557389": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31557389,
+   "identifier": "GBUKPRN10003427",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Itchen Sixth Form College",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "31559949": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31559949,
+   "identifier": "GBUKPRN10002917",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 16,
+   "merged_identifiers": [],
+   "name": "Hartlepool College of Further Education",
+   "provisional": false
+  },
+  "buyer": 11,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31561664": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31561664,
+   "identifier": "GBUKPRN10003511",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "Joseph Chamberlain Sixth Form College",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31563025": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31563025,
+   "identifier": "GBMPRIP6243R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 30,
+   "merged_identifiers": [],
+   "name": "Hastoe Housing Association Limited",
+   "provisional": false
+  },
+  "buyer": 24,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31563654": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31563654,
+   "identifier": "GBPPONPQBJ4894BHQW",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Beyond Housing Limited",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31563993": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31563993,
+   "identifier": "GBPPONPWVC1443BCQH",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "Dimensions (UK) Ltd",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31563999": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31563999,
+   "identifier": "GBPPONPGGY6115PNHD",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "University of Edinburgh",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31564029": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31564029,
+   "identifier": "GBPPONPWND8621RJPR",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "West Kent Housing Association",
+   "provisional": false
+  },
+  "buyer": 2,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31564094": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31564094,
+   "identifier": "GBCHC1044521",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 15,
+   "merged_identifiers": [],
+   "name": "Oasis Care and Training Agency",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "31565169": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31565169,
+   "identifier": "GBUKPRN10002696",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Gloucestershire College",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31565792": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31565792,
+   "identifier": "GBPPONPDXH7241QMQH",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "Shine Lincolnshire",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 3,
+  "winner_more": false,
+  "bidder": 3,
+  "bidder_more": false
+ },
+ "31566767": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31566767,
+   "identifier": "GBPPONPCZG5287NRDZ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "NHS Elect",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31566916": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31566916,
+   "identifier": "GBCHC1175616",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Shine Lincolnshire",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31567351": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31567351,
+   "identifier": "GBPPONPRTW2132HYWJ",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "South Tyneside & Sunderland NHSFT",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31569638": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31569638,
+   "identifier": "GBPPONPGDJ9755ZNCY",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Orwell Housing Association Limited",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31569664": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31569664,
+   "identifier": "GBPPONPBWM8336DJRG",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "NHS Lancashire and South Cumbria Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31571396": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31571396,
+   "identifier": "GBPPONPGWM4538ZGJR",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "NHS Dorset Integrated Care Board",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31571667": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31571667,
+   "identifier": "GBPPONPRBY9272TQGX",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "Isle of Wight NHS Trust",
+   "provisional": false
+  },
+  "buyer": 2,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31573385": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31573385,
+   "identifier": "GBPPONPCMV1277LCTG",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Delta Housing Limited",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31573778": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31573778,
+   "identifier": "GBMPR12871R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Sussex Housing & Care",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31574895": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31574895,
+   "identifier": "GBPPONPZHB3385JTPM",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Inspire North",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31575435": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31575435,
+   "identifier": "GBCHC212808",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "ROYAL COLLEGE OF SURGEONS OF ENGLAND",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 4,
+  "winner_more": false,
+  "bidder": 4,
+  "bidder_more": false
+ },
+ "31575633": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31575633,
+   "identifier": "GBUKPRN10003753",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Lakes College West Cumbria",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31576262": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31576262,
+   "identifier": "GBMPR28414R",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "The Pioneer Housing and Community Group Limited",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31576573": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31576573,
+   "identifier": "GBCHC1172924",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "NORTH EAST YOUNG DADS AND LADS PROJECT CIO",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31576896": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31576896,
+   "identifier": "GBUKPRN10000878",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "University Centre Somerset College Group",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31578267": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31578267,
+   "identifier": "GBPPONPJNX8831LRZX",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 4,
+   "merged_identifiers": [],
+   "name": "The Royal College of Surgeons of England",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31578778": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31578778,
+   "identifier": "GBUKPRN10002743",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Grantham College",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31580320": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31580320,
+   "identifier": "GBPPONPDHV4431PHTR",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 3,
+   "merged_identifiers": [],
+   "name": "Ongo Homes",
+   "provisional": false
+  },
+  "buyer": 3,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31580864": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31580864,
+   "identifier": "GBCHC210252",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "THE INSTITUTION OF CIVIL ENGINEERS",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31581398": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31581398,
+   "identifier": "GBPPONPJHY5881NDWW",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "North East Young Dads and Lads (NEYDL)",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31583635": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31583635,
+   "identifier": "GBPPONPZRZ3969DNNT",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Oasis Care and Training Agency",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31587819": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31587819,
+   "identifier": "GBPPONPDYM9565GXZR",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "RASAC, Rape and sexual abuse centre for Kirklees, Calderdale & Wakefield.",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31587889": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31587889,
+   "identifier": "GBCHC207076",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "ROYAL SOCIETY FOR THE PROTECTION OF BIRDS",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31588187": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31588187,
+   "identifier": "GBNHSRC9",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 6,
+   "merged_identifiers": [],
+   "name": "BEDFORDSHIRE HOSPITALS NHS FOUNDATION TRUST",
+   "provisional": false
+  },
+  "buyer": 4,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31588188": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31588188,
+   "identifier": "GBPPONPVVG6993XTHR",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Itchen College",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31588340": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31588340,
+   "identifier": "GBCHC274206",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "PEOPLE'S TRUST FOR ENDANGERED SPECIES",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31588376": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31588376,
+   "identifier": "GBUKPRN10000018991",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Rowan Gate Primary School",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31589220": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31589220,
+   "identifier": "GBPPONPZJG5765BRHD",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 5,
+   "merged_identifiers": [],
+   "name": "The Royal Society for the Protection of Birds",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 2,
+  "winner_more": false,
+  "bidder": 2,
+  "bidder_more": false
+ },
+ "31589350": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31589350,
+   "identifier": "GBPPONPWXN7778TJJG",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Forum CIO",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31590269": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31590269,
+   "identifier": "GBPPONPGQC5728VHDY",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "The Guide Dogs for the Blind Association",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ },
+ "31593920": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31593920,
+   "identifier": "GBNICNIC100095",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "CHOICE HOUSING IRELAND LIMITED",
+   "provisional": false
+  },
+  "buyer": 2,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31599890": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31599890,
+   "identifier": "GBPPONPLCW3715PZWM",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 1,
+   "merged_identifiers": [],
+   "name": "Dorset County Hospital NHS Foundation Trust",
+   "provisional": false
+  },
+  "buyer": 1,
+  "buyer_more": false,
+  "winner": 0,
+  "winner_more": false,
+  "bidder": 0,
+  "bidder_more": false
+ },
+ "31765421": {
+  "status": 200,
+  "org": {
+   "country": "GB",
+   "id": 31765421,
+   "identifier": "GBPPONPXJR8318GLDG",
+   "identifier_kind": "national",
+   "identifier_status": null,
+   "mentions": 2,
+   "merged_identifiers": [],
+   "name": "Lakes College",
+   "provisional": false
+  },
+  "buyer": 0,
+  "buyer_more": false,
+  "winner": 1,
+  "winner_more": false,
+  "bidder": 1,
+  "bidder_more": false
+ }
+}

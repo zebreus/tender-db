@@ -1,0 +1,614 @@
+{
+ "COH-02204085": {
+  "scheme": "COH",
+  "value": "02204085",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/02204085",
+  "found": true,
+  "name": "SPORTS AND LEISURE MANAGEMENT LTD",
+  "status": "Active",
+  "other_names": [
+   "SPORTS & LEISURE MANAGEMENT (HINCKLEY) LIMITED",
+   "FRESCARN LIMITED"
+  ],
+  "linked": {
+   "company_number": "02204085",
+   "company_type": "Private limited Company",
+   "incorporated_on": "9 December 1987",
+   "registered_office": "2 Watling Drive, Sketchley Meadows, Hinckley, England, LE10 3EY",
+   "sic": [
+    "93110 - Operation of sports facilities"
+   ],
+   "previous_names_with_periods": [
+    {
+     "name": "SPORTS & LEISURE MANAGEMENT (HINCKLEY) LIMITED",
+     "period": "08 Mar 1988 - 10 Jun 1991"
+    },
+    {
+     "name": "FRESCARN LIMITED",
+     "period": "09 Dec 1987 - 08 Mar 1988"
+    }
+   ]
+  },
+  "notes": "Requested as 'Sports and Leisure Management Ltd (02204085)'; the alphabetical index has exactly one company of that name, this one."
+ },
+ "COH-name:CHARTERED MANAGEMENT INSTITUTE SERVICES LIMITED": {
+  "scheme": "COH",
+  "value": "name:CHARTERED MANAGEMENT INSTITUTE SERVICES LIMITED",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=CHARTERED+MANAGEMENT+INSTITUTE+SERVICES+LIMITED",
+  "found": true,
+  "name": "CHARTERED MANAGEMENT INSTITUTE SERVICES LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "04308087",
+   "companies_with_this_exact_name": [
+    {
+     "company_number": "04308087",
+     "name": "CHARTERED MANAGEMENT INSTITUTE SERVICES LIMITED",
+     "status": "Active",
+     "company_type": "Private limited Company",
+     "incorporated_on": "19 October 2001"
+    }
+   ],
+   "companies_with_this_as_previous_name": []
+  },
+  "notes": "CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=CHARTERED+MANAGEMENT+INSTITUTE+SERVICES+LIMITED) rows whose normalised name (LTD=LIMITED, &=AND, leading THE dropped) equals the query: ['04308087']. Name search (https://find-and-update.company-information.service.gov.uk/search/companies?q=CHARTERED+MANAGEMENT+INSTITUTE+SERVICES+LIMITED) companies showing it as a matching previous name: none."
+ },
+ "COH-name:Crescent Purchasing Consortium Limited": {
+  "scheme": "COH",
+  "value": "name:Crescent Purchasing Consortium Limited",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Crescent+Purchasing+Consortium+Limited",
+  "found": false,
+  "name": null,
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "company_number": null,
+   "companies_with_this_exact_name": [],
+   "companies_with_this_as_previous_name": [],
+   "name_search_neighbours_not_matched": [
+    {
+     "company_number": "06774578",
+     "name": "CRESCENT PURCHASING LIMITED",
+     "status": "Active",
+     "company_type": "Private company limited by guarantee without share capital",
+     "incorporated_on": "16 December 2008",
+     "previous_names": [
+      {
+       "name": "CRESCENT FURTHER EDUCATION LIMITED",
+       "period": "16 Dec 2008 - 05 Dec 2009"
+      }
+     ]
+    }
+   ]
+  },
+  "notes": "CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Crescent+Purchasing+Consortium+Limited) rows whose normalised name (LTD=LIMITED, &=AND, leading THE dropped) equals the query: none. Name search (https://find-and-update.company-information.service.gov.uk/search/companies?q=Crescent+Purchasing+Consortium+Limited) companies showing it as a matching previous name: none. No company of this name, current or previous. The index's nearest row is 06774578 CRESCENT PURCHASING LIMITED (previous name CRESCENT FURTHER EDUCATION LIMITED, 16 Dec 2008 - 05 Dec 2009); listed as a neighbour only, not as a match."
+ },
+ "COH-name:Capital Service Solutions Limited": {
+  "scheme": "COH",
+  "value": "name:Capital Service Solutions Limited",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Capital+Service+Solutions+Limited",
+  "found": true,
+  "name": "CAPITAL SERVICE SOLUTIONS LIMITED",
+  "status": "10553445: Dissolved; 13555881: Active",
+  "other_names": [],
+  "linked": {
+   "company_number": null,
+   "companies_with_this_exact_name": [
+    {
+     "company_number": "10553445",
+     "name": "CAPITAL SERVICE SOLUTIONS LIMITED",
+     "status": "Dissolved",
+     "company_type": "Private limited Company",
+     "dissolved_on": "27 August 2019",
+     "incorporated_on": "9 January 2017"
+    },
+    {
+     "company_number": "13555881",
+     "name": "CAPITAL SERVICE SOLUTIONS LIMITED",
+     "status": "Active",
+     "company_type": "Private limited Company",
+     "incorporated_on": "9 August 2021"
+    }
+   ],
+   "companies_with_this_as_previous_name": []
+  },
+  "notes": "CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Capital+Service+Solutions+Limited) rows whose normalised name (LTD=LIMITED, &=AND, leading THE dropped) equals the query: ['10553445', '13555881']. Name search (https://find-and-update.company-information.service.gov.uk/search/companies?q=Capital+Service+Solutions+Limited) companies showing it as a matching previous name: none. Two different companies have carried exactly this name: 13555881 (incorporated 9 Aug 2021, Active) and 10553445 (incorporated 9 Jan 2017, dissolved 27 Aug 2019). company_number left null because the name alone does not single one out."
+ },
+ "COH-name:Northern Housing Consortium Ltd": {
+  "scheme": "COH",
+  "value": "name:Northern Housing Consortium Ltd",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Northern+Housing+Consortium+Ltd",
+  "found": true,
+  "name": "NORTHERN HOUSING CONSORTIUM LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "04361009",
+   "companies_with_this_exact_name": [
+    {
+     "company_number": "04361009",
+     "name": "NORTHERN HOUSING CONSORTIUM LIMITED",
+     "status": "Active",
+     "company_type": "Private company limited by guarantee without share capital",
+     "incorporated_on": "25 January 2002"
+    }
+   ],
+   "companies_with_this_as_previous_name": []
+  },
+  "notes": "CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Northern+Housing+Consortium+Ltd) rows whose normalised name (LTD=LIMITED, &=AND, leading THE dropped) equals the query: ['04361009']. Name search (https://find-and-update.company-information.service.gov.uk/search/companies?q=Northern+Housing+Consortium+Ltd) companies showing it as a matching previous name: none."
+ },
+ "COH-name:Delta Housing Limited": {
+  "scheme": "COH",
+  "value": "name:Delta Housing Limited",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Delta+Housing+Limited",
+  "found": true,
+  "name": "DELTA HOUSING LIMITED",
+  "status": "08688754: Dissolved; RS008112: (blank)",
+  "other_names": [],
+  "linked": {
+   "company_number": null,
+   "companies_with_this_exact_name": [
+    {
+     "company_number": "08688754",
+     "name": "DELTA HOUSING LIMITED",
+     "status": "Dissolved",
+     "company_type": "Private limited Company",
+     "dissolved_on": "28 November 2017",
+     "incorporated_on": "12 September 2013"
+    },
+    {
+     "company_number": "RS008112",
+     "name": "DELTA HOUSING LIMITED",
+     "status": null,
+     "company_type": "Registered society"
+    }
+   ],
+   "companies_with_this_as_previous_name": [
+    {
+     "company_number": "11134470",
+     "name": "D1 HOUSING LIMITED",
+     "status": "Active",
+     "company_type": "Private limited Company",
+     "incorporated_on": "5 January 2018",
+     "previous_names": [
+      {
+       "name": "DELTA HOUSING LIMITED",
+       "period": "05 Jan 2018 - 03 Nov 2025"
+      }
+     ]
+    },
+    {
+     "company_number": "15011869",
+     "name": "GB DEVS SHELCO 1611 LIMITED",
+     "status": "Active",
+     "company_type": "Private company limited by guarantee without share capital",
+     "incorporated_on": "18 July 2023",
+     "previous_names": [
+      {
+       "name": "DELTA HOUSING LIMITED",
+       "period": "03 Nov 2025 - 30 Mar 2026"
+      },
+      {
+       "name": "GB SHELF COMPANY 2 LIMITED",
+       "period": "27 Mar 2024 - 03 Nov 2025"
+      },
+      {
+       "name": "KARIBU COMMUNITY HOMES LIMITED",
+       "period": "31 Oct 2023 - 27 Mar 2024"
+      },
+      {
+       "name": "INWEST COMMUNITY HOMES LTD",
+       "period": "18 Jul 2023 - 31 Oct 2023"
+      }
+     ]
+    }
+   ]
+  },
+  "notes": "CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Delta+Housing+Limited) rows whose normalised name (LTD=LIMITED, &=AND, leading THE dropped) equals the query: ['08688754', 'RS008112']. Name search (https://find-and-update.company-information.service.gov.uk/search/companies?q=Delta+Housing+Limited) companies showing it as a matching previous name: ['11134470', '15011869']. Current holders of the exact name: RS008112 (Registered society; index status column empty) and 08688754 (private limited company, incorporated 12 Sep 2013, dissolved 28 Nov 2017). Former holders: 11134470 (now D1 HOUSING LIMITED; was DELTA HOUSING LIMITED 05 Jan 2018 - 03 Nov 2025) and 15011869 (now GB DEVS SHELCO 1611 LIMITED; was DELTA HOUSING LIMITED 03 Nov 2025 - 30 Mar 2026). company_number left null."
+ },
+ "COH-name:Metropolitan Thames Valley Housing Limited": {
+  "scheme": "COH",
+  "value": "name:Metropolitan Thames Valley Housing Limited",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Metropolitan+Thames+Valley+Housing+Limited",
+  "found": false,
+  "name": null,
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "company_number": null,
+   "companies_with_this_exact_name": [],
+   "companies_with_this_as_previous_name": [],
+   "name_search_neighbours_not_matched": [
+    {
+     "company_number": "IP16337R",
+     "name": "METROPOLITAN HOUSING TRUST LIMITED",
+     "status": "Active",
+     "company_type": "Registered society"
+    },
+    {
+     "company_number": "IP17375R",
+     "name": "THAMES VALLEY HOUSING ASSOCIATION LIMITED",
+     "status": "Active",
+     "company_type": "Registered society"
+    }
+   ]
+  },
+  "notes": "CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Metropolitan+Thames+Valley+Housing+Limited) rows whose normalised name (LTD=LIMITED, &=AND, leading THE dropped) equals the query: none. Name search (https://find-and-update.company-information.service.gov.uk/search/companies?q=Metropolitan+Thames+Valley+Housing+Limited) companies showing it as a matching previous name: none. No CH record currently carries this name and no company lists it as a previous name: the index goes METROPOLITAN SYSTEMS LIMITED -> METROPOLITAN TAVERNS LIMITED, and searches 'Metropolitan Thames Valley Housing' / 'Metropolitan Thames Valley' return no such name. Search neighbours IP16337R METROPOLITAN HOUSING TRUST LIMITED and IP17375R THAMES VALLEY HOUSING ASSOCIATION LIMITED (both Registered society, index status Active) are listed as neighbours only; CH shows no previous names for societies, so CH alone cannot say which (if either) uses the name."
+ },
+ "COH-name:Creative Support Limited": {
+  "scheme": "COH",
+  "value": "name:Creative Support Limited",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Creative+Support+Limited",
+  "found": true,
+  "name": "CREATIVE SUPPORT LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "IP27440R",
+   "companies_with_this_exact_name": [
+    {
+     "company_number": "IP27440R",
+     "name": "CREATIVE SUPPORT LIMITED",
+     "status": "Active",
+     "company_type": "Registered society"
+    }
+   ],
+   "companies_with_this_as_previous_name": []
+  },
+  "notes": "CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Creative+Support+Limited) rows whose normalised name (LTD=LIMITED, &=AND, leading THE dropped) equals the query: ['IP27440R']. Name search (https://find-and-update.company-information.service.gov.uk/search/companies?q=Creative+Support+Limited) companies showing it as a matching previous name: none."
+ },
+ "COH-name:Choice Housing Ireland Limited": {
+  "scheme": "COH",
+  "value": "name:Choice Housing Ireland Limited",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Choice+Housing+Ireland+Limited",
+  "found": true,
+  "name": "CHOICE HOUSING IRELAND LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "NP000408",
+   "companies_with_this_exact_name": [
+    {
+     "company_number": "NP000408",
+     "name": "CHOICE HOUSING IRELAND LIMITED",
+     "status": "Active",
+     "company_type": "Registered society"
+    }
+   ],
+   "companies_with_this_as_previous_name": []
+  },
+  "notes": "CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Choice+Housing+Ireland+Limited) rows whose normalised name (LTD=LIMITED, &=AND, leading THE dropped) equals the query: ['NP000408']. Name search (https://find-and-update.company-information.service.gov.uk/search/companies?q=Choice+Housing+Ireland+Limited) companies showing it as a matching previous name: none."
+ },
+ "COH-name:Coalisland Training Services Ltd": {
+  "scheme": "COH",
+  "value": "name:Coalisland Training Services Ltd",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Coalisland+Training+Services+Ltd",
+  "found": false,
+  "name": null,
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "company_number": null,
+   "companies_with_this_exact_name": [],
+   "companies_with_this_as_previous_name": [],
+   "name_search_neighbours_not_matched": [
+    {
+     "company_number": "NP000271",
+     "name": "CTS LIMITED",
+     "status": "Active",
+     "company_type": "Registered society"
+    }
+   ]
+  },
+  "notes": "CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Coalisland+Training+Services+Ltd) rows whose normalised name (LTD=LIMITED, &=AND, leading THE dropped) equals the query: none. Name search (https://find-and-update.company-information.service.gov.uk/search/companies?q=Coalisland+Training+Services+Ltd) companies showing it as a matching previous name: none. No company of this name, current or previous (index: COALISLAND TAXI'S LIMITED -> COALISLAND USED FONES LTD). NP000271 CTS LIMITED (Registered society, Active) is the CH record whose number matches the 'DETI / IPS Number: IP000271' printed on the CCNI-filed 2025 accounts of CCNI charity 100770 (COALISLAND TRAINING SERVICES LIMITED), whose cover names the body 'CTS Ltd'. See oscr-ccni.json GB-NIC-NI 100770."
+ },
+ "COH-NP000271": {
+  "scheme": "COH",
+  "value": "NP000271",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/NP000271",
+  "found": true,
+  "name": "CTS LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "NP000271",
+   "company_type": "Registered society"
+  },
+  "notes": "Status from the CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=CTS+Limited); the profile page of a Registered society shows no status line. Profile page shows only name, number and type, and refers to the FCA Mutuals Public Register for details."
+ },
+ "COH-NP000408": {
+  "scheme": "COH",
+  "value": "NP000408",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/NP000408",
+  "found": true,
+  "name": "CHOICE HOUSING IRELAND LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "NP000408",
+   "company_type": "Registered society"
+  },
+  "notes": "Status from the CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Choice+Housing+Ireland+Limited); the profile page of a Registered society shows no status line. Profile page shows only name, number and type, and refers to the FCA Mutuals Public Register for details."
+ },
+ "COH-04308087": {
+  "scheme": "COH",
+  "value": "04308087",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/04308087",
+  "found": true,
+  "name": "CHARTERED MANAGEMENT INSTITUTE SERVICES LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "04308087",
+   "company_type": "Private limited Company",
+   "incorporated_on": "19 October 2001",
+   "registered_office": "77 Kingsway, London, WC2B 6SR",
+   "sic": [
+    "94120 - Activities of professional membership organisations"
+   ]
+  },
+  "notes": ""
+ },
+ "COH-06774578": {
+  "scheme": "COH",
+  "value": "06774578",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/06774578",
+  "found": true,
+  "name": "CRESCENT PURCHASING LIMITED",
+  "status": "Active",
+  "other_names": [
+   "CRESCENT FURTHER EDUCATION LIMITED"
+  ],
+  "linked": {
+   "company_number": "06774578",
+   "company_type": "Private company limited by guarantee without share capital",
+   "incorporated_on": "16 December 2008",
+   "registered_office": "Procurement House, Leslie Hough Way, Salford, England, M6 6AJ",
+   "sic": [
+    "94990 - Activities of other membership organisations not elsewhere classified"
+   ],
+   "previous_names_with_periods": [
+    {
+     "name": "CRESCENT FURTHER EDUCATION LIMITED",
+     "period": "16 Dec 2008 - 05 Dec 2009"
+    }
+   ]
+  },
+  "notes": ""
+ },
+ "COH-13555881": {
+  "scheme": "COH",
+  "value": "13555881",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/13555881",
+  "found": true,
+  "name": "CAPITAL SERVICE SOLUTIONS LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "13555881",
+   "company_type": "Private limited Company",
+   "incorporated_on": "9 August 2021",
+   "registered_office": "7 Kinross Drive, Sunbury-On-Thames, England, TW16 7JU",
+   "sic": [
+    "81210 - General cleaning of buildings",
+    "81221 - Window cleaning services",
+    "81222 - Specialised cleaning services"
+   ]
+  },
+  "notes": ""
+ },
+ "COH-10553445": {
+  "scheme": "COH",
+  "value": "10553445",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/10553445",
+  "found": true,
+  "name": "CAPITAL SERVICE SOLUTIONS LIMITED",
+  "status": "Dissolved",
+  "other_names": [],
+  "linked": {
+   "company_number": "10553445",
+   "company_type": "Private limited Company",
+   "dissolved_on": "27 August 2019",
+   "incorporated_on": "9 January 2017",
+   "registered_office": "8 Rochdale Road, Royton, Oldham, England, OL2 6QJ",
+   "sic": [
+    "56102 - Unlicensed restaurants and cafes"
+   ]
+  },
+  "notes": ""
+ },
+ "COH-04361009": {
+  "scheme": "COH",
+  "value": "04361009",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/04361009",
+  "found": true,
+  "name": "NORTHERN HOUSING CONSORTIUM LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "04361009",
+   "company_type": "Private company limited by guarantee without share capital",
+   "incorporated_on": "25 January 2002",
+   "registered_office": "Hope Street Xchange, 1-3 Hind Street, Sunderland, England, SR1 3QD",
+   "sic": [
+    "94110 - Activities of business and employers membership organisations"
+   ]
+  },
+  "notes": ""
+ },
+ "COH-08688754": {
+  "scheme": "COH",
+  "value": "08688754",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/08688754",
+  "found": true,
+  "name": "DELTA HOUSING LIMITED",
+  "status": "Dissolved",
+  "other_names": [],
+  "linked": {
+   "company_number": "08688754",
+   "company_type": "Private limited Company",
+   "dissolved_on": "28 November 2017",
+   "incorporated_on": "12 September 2013",
+   "registered_office": "22 Langdale Road, Sale, M33 4EN",
+   "sic": [
+    "68209 - Other letting and operating of own or leased real estate"
+   ]
+  },
+  "notes": ""
+ },
+ "COH-RS008112": {
+  "scheme": "COH",
+  "value": "RS008112",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/RS008112",
+  "found": true,
+  "name": "DELTA HOUSING LIMITED",
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "company_number": "RS008112",
+   "company_type": "Registered society"
+  },
+  "notes": "CH profile page shows no status line and the alphabetical index row's status column is empty. Profile page shows only name, number and type, and refers to the FCA Mutuals Public Register for details."
+ },
+ "COH-11134470": {
+  "scheme": "COH",
+  "value": "11134470",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/11134470",
+  "found": true,
+  "name": "D1 HOUSING LIMITED",
+  "status": "Active",
+  "other_names": [
+   "DELTA HOUSING LIMITED"
+  ],
+  "linked": {
+   "company_number": "11134470",
+   "company_type": "Private limited Company",
+   "incorporated_on": "5 January 2018",
+   "registered_office": "28 High Worple, Harrow, England, HA2 9SS",
+   "sic": [
+    "68209 - Other letting and operating of own or leased real estate"
+   ],
+   "previous_names_with_periods": [
+    {
+     "name": "DELTA HOUSING LIMITED",
+     "period": "05 Jan 2018 - 03 Nov 2025"
+    }
+   ]
+  },
+  "notes": ""
+ },
+ "COH-15011869": {
+  "scheme": "COH",
+  "value": "15011869",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/15011869",
+  "found": true,
+  "name": "GB DEVS SHELCO 1611 LIMITED",
+  "status": "Active",
+  "other_names": [
+   "DELTA HOUSING LIMITED",
+   "GB SHELF COMPANY 2 LIMITED",
+   "KARIBU COMMUNITY HOMES LIMITED",
+   "INWEST COMMUNITY HOMES LTD"
+  ],
+  "linked": {
+   "company_number": "15011869",
+   "company_type": "Private company limited by guarantee without share capital",
+   "incorporated_on": "18 July 2023",
+   "registered_office": "30 Finsbury Circus, London, England, EC2M 7DT",
+   "sic": [
+    "99999 - Dormant Company"
+   ],
+   "previous_names_with_periods": [
+    {
+     "name": "DELTA HOUSING LIMITED",
+     "period": "03 Nov 2025 - 30 Mar 2026"
+    },
+    {
+     "name": "GB SHELF COMPANY 2 LIMITED",
+     "period": "27 Mar 2024 - 03 Nov 2025"
+    },
+    {
+     "name": "KARIBU COMMUNITY HOMES LIMITED",
+     "period": "31 Oct 2023 - 27 Mar 2024"
+    },
+    {
+     "name": "INWEST COMMUNITY HOMES LTD",
+     "period": "18 Jul 2023 - 31 Oct 2023"
+    }
+   ]
+  },
+  "notes": ""
+ },
+ "COH-IP27440R": {
+  "scheme": "COH",
+  "value": "IP27440R",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/IP27440R",
+  "found": true,
+  "name": "CREATIVE SUPPORT LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "IP27440R",
+   "company_type": "Registered society"
+  },
+  "notes": "Status from the CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=Creative+Support+Limited); the profile page of a Registered society shows no status line. Profile page shows only name, number and type, and refers to the FCA Mutuals Public Register for details."
+ },
+ "COH-IP16337R": {
+  "scheme": "COH",
+  "value": "IP16337R",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/IP16337R",
+  "found": true,
+  "name": "METROPOLITAN HOUSING TRUST LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "IP16337R",
+   "company_type": "Registered society"
+  },
+  "notes": "Status from the CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=METROPOLITAN+HOUSING+TRUST+LIMITED); the profile page of a Registered society shows no status line. Profile page shows only name, number and type, and refers to the FCA Mutuals Public Register for details."
+ },
+ "COH-IP17375R": {
+  "scheme": "COH",
+  "value": "IP17375R",
+  "http": 200,
+  "source": "https://find-and-update.company-information.service.gov.uk/company/IP17375R",
+  "found": true,
+  "name": "THAMES VALLEY HOUSING ASSOCIATION LIMITED",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "company_number": "IP17375R",
+   "company_type": "Registered society"
+  },
+  "notes": "Status from the CH alphabetical index (https://find-and-update.company-information.service.gov.uk/alphabetical-search/get-results?companyName=THAMES+VALLEY+HOUSING+ASSOCIATION+LIMITED); the profile page of a Registered society shows no status line. Profile page shows only name, number and type, and refers to the FCA Mutuals Public Register for details."
+ },
+ "_meta": {
+  "method": "Companies House public web pages only (no API key): profile /company/<number> (name, status, type, incorporation/dissolution dates, registered office, SIC, previous-names table), name search /search/companies?q= (incl. 'Matching previous names'), and the alphabetical index /alphabetical-search/get-results?companyName= used to decide exact-name presence (it lists active and dissolved companies and societies, with a status column). Serial, >=1.5 s between requests, pattern from .scratch/tender-db/448-campaign/ch_fetch.py. Keys: 'COH-<number>' = one CH record; 'COH-name:<name>' = what CH holds for that name (found = some CH record currently carries exactly that name after LTD/LIMITED normalisation; linked lists all exact holders, former holders and unmatched neighbours). Registered societies (IP/RS/NP prefixes) have profile pages with name, number and type only; their status is the alphabetical-index status column.",
+  "failures": [],
+  "scripts": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/u2fetch/oscr-ccni/{oscr_peek.py,text_of.py,csv_show.py,ch.py,ch_searches.py,ch_alpha.py,ch_companies.py,build.py}"
+ }
+}

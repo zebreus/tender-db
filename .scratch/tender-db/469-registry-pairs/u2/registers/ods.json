@@ -1,0 +1,1256 @@
+{
+ "GB-NHS-06H": {
+  "scheme": "GB-NHS",
+  "value": "06H",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/06H",
+  "found": true,
+  "name": "NHS CENTRAL EAST ICB - 06H",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "CLINICAL COMMISSIONING GROUP",
+   "level": "other",
+   "parent": {
+    "code": "S1Y5D",
+    "name": "NHS CENTRAL EAST INTEGRATED CARE BOARD",
+    "role": "STRATEGIC PARTNERSHIP",
+    "relationship": "IS LOCATED IN THE GEOGRAPHY OF",
+    "since": "2026-04-01"
+   },
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "CLINICAL COMMISSIONING GROUP (primary)",
+    "SUB ICB LOCATION"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2011-12-13",
+     "end": null
+    },
+    "legal": {
+     "start": "2013-04-01",
+     "end": null
+    }
+   },
+   "previous_parent": {
+    "code": "QUE",
+    "name": "NHS CAMBRIDGESHIRE AND PETERBOROUGH INTEGRATED CARE BOARD",
+    "until": "2026-03-31"
+   }
+  },
+  "notes": "ODS ORD record 06H: \"NHS CENTRAL EAST ICB - 06H\", Status Active, record class RC1 (HSCOrg), dates Operational 2011-12-13..; Legal 2013-04-01.., LastChangeDate 2026-04-01. Primary role CLINICAL COMMISSIONING GROUP (RO98); active roles: CLINICAL COMMISSIONING GROUP (primary), SUB ICB LOCATION. Not a stand-alone organisation: holds the SUB ICB LOCATION role (a sub-unit of an ICB; the code is a former CCG code, primary role still CLINICAL COMMISSIONING GROUP). Its ICB per the active IS LOCATED IN THE GEOGRAPHY OF relationship is S1Y5D \"NHS CENTRAL EAST INTEGRATED CARE BOARD\" since 2026-04-01. Previous geography/ICB: QUE \"NHS CAMBRIDGESHIRE AND PETERBOROUGH INTEGRATED CARE BOARD\" until 2026-03-31. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-8HN02": {
+  "scheme": "GB-NHS",
+  "value": "8HN02",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/8HN02",
+  "found": true,
+  "name": "CARE QUALITY COMMISSION",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NON-NHS ORGANISATION",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NON-NHS ORGANISATION (primary)"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2009-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QHM",
+    "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD",
+    "since": "2023-06-30"
+   },
+   "predecessors": [
+    {
+     "code": "X03",
+     "role": "OTHER STATUTORY AUTHORITY (OSA)",
+     "legal_start": "2009-04-01"
+    },
+    {
+     "code": "T1230",
+     "role": "SPECIAL HEALTH AUTHORITY (SPHA)",
+     "legal_start": "2009-04-01"
+    }
+   ]
+  },
+  "notes": "ODS ORD record 8HN02: \"CARE QUALITY COMMISSION\", Status Active, record class RC1 (HSCOrg), dates Operational 2009-04-01.., LastChangeDate 2023-09-21. Primary role NON-NHS ORGANISATION (RO157); active roles: NON-NHS ORGANISATION (primary). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF QHM \"NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD\" since 2023-06-30. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-A0V4D": {
+  "scheme": "GB-NHS",
+  "value": "A0V4D",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/A0V4D",
+  "found": true,
+  "name": "NHS ELECT",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS SUPPORT AGENCY",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS SUPPORT AGENCY (primary)"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2020-10-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "Z9B2Z",
+    "name": "NHS WEST AND NORTH LONDON INTEGRATED CARE BOARD",
+    "since": "2026-04-01"
+   }
+  },
+  "notes": "ODS ORD record A0V4D: \"NHS ELECT\", Status Active, record class RC1 (HSCOrg), dates Operational 2020-10-01.., LastChangeDate 2026-04-01. Primary role NHS SUPPORT AGENCY (RO161); active roles: NHS SUPPORT AGENCY (primary). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF Z9B2Z \"NHS WEST AND NORTH LONDON INTEGRATED CARE BOARD\" since 2026-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-G6V2S": {
+  "scheme": "GB-NHS",
+  "value": "G6V2S",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/G6V2S",
+  "found": true,
+  "name": "NORTH LONDON NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)",
+    "FOUNDATION TRUST"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2024-07-10",
+     "end": null
+    },
+    "legal": {
+     "start": "2024-11-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "Z9B2Z",
+    "name": "NHS WEST AND NORTH LONDON INTEGRATED CARE BOARD",
+    "since": "2026-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "Z9B2Z",
+     "name": "NHS WEST AND NORTH LONDON INTEGRATED CARE BOARD"
+    }
+   ],
+   "predecessors": [
+    {
+     "code": "RRP",
+     "role": "NHS TRUST",
+     "legal_start": "2024-11-01"
+    },
+    {
+     "code": "TAF",
+     "role": "CARE TRUST",
+     "legal_start": "2024-11-01"
+    },
+    {
+     "code": "RNK",
+     "role": "NHS TRUST",
+     "legal_start": "2026-04-01"
+    }
+   ]
+  },
+  "notes": "ODS ORD record G6V2S: \"NORTH LONDON NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 2024-07-10..; Legal 2024-11-01.., LastChangeDate 2026-04-10. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary), FOUNDATION TRUST. Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF Z9B2Z \"NHS WEST AND NORTH LONDON INTEGRATED CARE BOARD\" since 2026-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-H6A5H": {
+  "scheme": "GB-NHS",
+  "value": "H6A5H",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/H6A5H",
+  "found": true,
+  "name": "EAST OF ENGLAND NHS COLLABORATIVE PROCUREMENT HUB",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS SUPPORT AGENCY",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS SUPPORT AGENCY (primary)"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2023-10-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "S1Y5D",
+    "name": "NHS CENTRAL EAST INTEGRATED CARE BOARD",
+    "since": "2026-04-01"
+   }
+  },
+  "notes": "ODS ORD record H6A5H: \"EAST OF ENGLAND NHS COLLABORATIVE PROCUREMENT HUB\", Status Active, record class RC1 (HSCOrg), dates Operational 2023-10-01.., LastChangeDate 2026-04-01. Primary role NHS SUPPORT AGENCY (RO161); active roles: NHS SUPPORT AGENCY (primary). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF S1Y5D \"NHS CENTRAL EAST INTEGRATED CARE BOARD\" since 2026-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-NCS04": {
+  "scheme": "GB-NHS",
+  "value": "NCS04",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/NCS04",
+  "found": true,
+  "name": "NHS PROPERTY SERVICES - REGENT HOUSE",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "INDEPENDENT SECTOR H/C PROVIDER SITE",
+   "level": "site",
+   "parent": {
+    "code": "NCS",
+    "name": "NHS PROPERTY SERVICES LIMITED",
+    "role": "INDEPENDENT SECTOR HEALTHCARE PROVIDER",
+    "relationship": "IS OPERATED BY",
+    "since": "2019-03-01"
+   },
+   "successor": null,
+   "record_class": "RC2 HSCSite",
+   "active_roles": [
+    "INDEPENDENT SECTOR H/C PROVIDER SITE (primary)"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2019-03-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QOP",
+    "name": "NHS GREATER MANCHESTER INTEGRATED CARE BOARD",
+    "since": "2020-04-01"
+   }
+  },
+  "notes": "ODS ORD record NCS04: \"NHS PROPERTY SERVICES - REGENT HOUSE\", Status Active, record class RC2 (HSCSite), dates Operational 2019-03-01.., LastChangeDate 2020-04-03. Primary role INDEPENDENT SECTOR H/C PROVIDER SITE (RO176); active roles: INDEPENDENT SECTOR H/C PROVIDER SITE (primary). Site-level code: IS OPERATED BY NCS \"NHS PROPERTY SERVICES LIMITED\" (INDEPENDENT SECTOR HEALTHCARE PROVIDER) since 2019-03-01. IS LOCATED IN THE GEOGRAPHY OF QOP \"NHS GREATER MANCHESTER INTEGRATED CARE BOARD\" since 2020-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-PWNJ-1991-NGDW": {
+  "scheme": "GB-NHS",
+  "value": "PWNJ-1991-NGDW",
+  "http": 404,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/PWNJ1991NGDW",
+  "found": false,
+  "name": null,
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "role": null,
+   "level": null,
+   "parent": null,
+   "successor": null,
+   "also_tried": {
+    "url": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/PWNJ-1991-NGDW",
+    "http": 404
+   },
+   "name_search_hits": [
+    {
+     "code": "Z7906",
+     "name": "BUSINESS SERVICES ORGANISATION",
+     "status": "Active",
+     "record_class": "RC1",
+     "primary_role": "NORTHERN IRELAND NON-HPSS PROVIDER/ORGANISATION",
+     "postcode": "BT2 8DQ",
+     "search_url": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations?Name=BUSINESS%20SERVICES%20ORGANISATION&Limit=50"
+    }
+   ]
+  },
+  "notes": "\"PWNJ-1991-NGDW\" has the PPON shape (XXXX-9999-XXXX), not an ODS code. ORD GET https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/PWNJ1991NGDW returned HTTP 404 {\"errorCode\": 404, \"errorText\": \"Not found\"}; the value as published (https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/PWNJ-1991-NGDW) also returned HTTP 404. Not a code in ODS. Context only: an ORD name search for \"BUSINESS SERVICES ORGANISATION\" returned Z7906 \"BUSINESS SERVICES ORGANISATION\" (Active, RC1, NORTHERN IRELAND NON-HPSS PROVIDER/ORGANISATION, BT2 8DQ)."
+ },
+ "GB-NHS-QE1": {
+  "scheme": "GB-NHS",
+  "value": "QE1",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QE1",
+  "found": true,
+  "name": "NHS LANCASHIRE AND SOUTH CUMBRIA INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y62",
+    "name": "NORTH WEST COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   }
+  },
+  "notes": "ODS ORD record QE1: \"NHS LANCASHIRE AND SOUTH CUMBRIA INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01.., LastChangeDate 2024-03-15. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS A SUB-DIVISION OF Y62 \"NORTH WEST COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-QF7": {
+  "scheme": "GB-NHS",
+  "value": "QF7",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QF7",
+  "found": true,
+  "name": "NHS SOUTH YORKSHIRE INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y63",
+    "name": "NORTH EAST AND YORKSHIRE COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   }
+  },
+  "notes": "ODS ORD record QF7: \"NHS SOUTH YORKSHIRE INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01.., LastChangeDate 2024-09-12. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS A SUB-DIVISION OF Y63 \"NORTH EAST AND YORKSHIRE COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-QGH": {
+  "scheme": "GB-NHS",
+  "value": "QGH",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QGH",
+  "found": true,
+  "name": "NHS HEREFORDSHIRE AND WORCESTERSHIRE INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y60",
+    "name": "MIDLANDS COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   }
+  },
+  "notes": "ODS ORD record QGH: \"NHS HEREFORDSHIRE AND WORCESTERSHIRE INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01.., LastChangeDate 2024-07-31. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS A SUB-DIVISION OF Y60 \"MIDLANDS COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-QJ2": {
+  "scheme": "GB-NHS",
+  "value": "QJ2",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QJ2",
+  "found": true,
+  "name": "NHS DERBY AND DERBYSHIRE INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y60",
+    "name": "MIDLANDS COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   }
+  },
+  "notes": "ODS ORD record QJ2: \"NHS DERBY AND DERBYSHIRE INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01.., LastChangeDate 2024-07-15. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS A SUB-DIVISION OF Y60 \"MIDLANDS COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-QK1": {
+  "scheme": "GB-NHS",
+  "value": "QK1",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QK1",
+  "found": true,
+  "name": "NHS LEICESTER, LEICESTERSHIRE AND RUTLAND INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y60",
+    "name": "MIDLANDS COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   }
+  },
+  "notes": "ODS ORD record QK1: \"NHS LEICESTER, LEICESTERSHIRE AND RUTLAND INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01.., LastChangeDate 2023-06-22. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS A SUB-DIVISION OF Y60 \"MIDLANDS COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-QMM": {
+  "scheme": "GB-NHS",
+  "value": "QMM",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QMM",
+  "found": true,
+  "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": {
+    "code": "T6Y0W",
+    "name": "NHS NORFOLK AND SUFFOLK INTEGRATED CARE BOARD",
+    "role": "STRATEGIC PARTNERSHIP",
+    "legal_start": "2026-04-01"
+   },
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    },
+    "legal": {
+     "start": "2018-04-01",
+     "end": "2026-03-31"
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y61",
+    "name": "EAST OF ENGLAND COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   },
+   "legal_end": "2026-03-31"
+  },
+  "notes": "ODS ORD record QMM: \"NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01..; Legal 2018-04-01..2026-03-31, LastChangeDate 2026-04-08. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). The record Status is still \"Active\" and the operational date is open, but the legal dates end 2026-03-31. Successor: T6Y0W \"NHS NORFOLK AND SUFFOLK INTEGRATED CARE BOARD\" (STRATEGIC PARTNERSHIP) legal from 2026-04-01. IS A SUB-DIVISION OF Y61 \"EAST OF ENGLAND COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-QOC": {
+  "scheme": "GB-NHS",
+  "value": "QOC",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QOC",
+  "found": true,
+  "name": "NHS SHROPSHIRE, TELFORD AND WREKIN INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y60",
+    "name": "MIDLANDS COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   }
+  },
+  "notes": "ODS ORD record QOC: \"NHS SHROPSHIRE, TELFORD AND WREKIN INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01.., LastChangeDate 2024-09-02. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS A SUB-DIVISION OF Y60 \"MIDLANDS COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-QPM": {
+  "scheme": "GB-NHS",
+  "value": "QPM",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QPM",
+  "found": true,
+  "name": "NHS NORTHAMPTONSHIRE INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y60",
+    "name": "MIDLANDS COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   }
+  },
+  "notes": "ODS ORD record QPM: \"NHS NORTHAMPTONSHIRE INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01.., LastChangeDate 2024-03-11. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS A SUB-DIVISION OF Y60 \"MIDLANDS COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-QUA": {
+  "scheme": "GB-NHS",
+  "value": "QUA",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QUA",
+  "found": true,
+  "name": "NHS BLACK COUNTRY INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y60",
+    "name": "MIDLANDS COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   }
+  },
+  "notes": "ODS ORD record QUA: \"NHS BLACK COUNTRY INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01.., LastChangeDate 2023-03-28. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS A SUB-DIVISION OF Y60 \"MIDLANDS COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-QVV": {
+  "scheme": "GB-NHS",
+  "value": "QVV",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QVV",
+  "found": true,
+  "name": "NHS DORSET INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y58",
+    "name": "SOUTH WEST COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   }
+  },
+  "notes": "ODS ORD record QVV: \"NHS DORSET INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01.., LastChangeDate 2023-06-09. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS A SUB-DIVISION OF Y58 \"SOUTH WEST COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-QWU": {
+  "scheme": "GB-NHS",
+  "value": "QWU",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/QWU",
+  "found": true,
+  "name": "NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "STRATEGIC PARTNERSHIP",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "STRATEGIC PARTNERSHIP (primary)",
+    "INTEGRATED CARE BOARD"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30)"
+   ],
+   "sub_division_of": {
+    "code": "Y60",
+    "name": "MIDLANDS COMMISSIONING REGION",
+    "role": "NHS ENGLAND (REGION)"
+   }
+  },
+  "notes": "ODS ORD record QWU: \"NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-04-01.., LastChangeDate 2024-07-10. Primary role STRATEGIC PARTNERSHIP (RO261); active roles: STRATEGIC PARTNERSHIP (primary), INTEGRATED CARE BOARD. Inactive roles: SUSTAINABILITY TRANSFORMATION PARTNERSHIP (ended 2022-06-30). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS A SUB-DIVISION OF Y60 \"MIDLANDS COMMISSIONING REGION\" (NHS ENGLAND (REGION)). The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-R0B": {
+  "scheme": "GB-NHS",
+  "value": "R0B",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/R0B",
+  "found": true,
+  "name": "SOUTH TYNESIDE AND SUNDERLAND NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "FOUNDATION TRUST",
+    "NHS TRUST (primary)"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2019-03-13",
+     "end": null
+    },
+    "legal": {
+     "start": "2019-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QHM",
+    "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD",
+    "since": "2020-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "QHM",
+     "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD"
+    }
+   ],
+   "predecessors": [
+    {
+     "code": "RLN",
+     "role": "NHS TRUST",
+     "legal_start": "2019-04-01"
+    },
+    {
+     "code": "RE9",
+     "role": "NHS TRUST",
+     "legal_start": "2019-04-01"
+    }
+   ]
+  },
+  "notes": "ODS ORD record R0B: \"SOUTH TYNESIDE AND SUNDERLAND NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 2019-03-13..; Legal 2019-04-01.., LastChangeDate 2025-08-19. Primary role NHS TRUST (RO197); active roles: FOUNDATION TRUST, NHS TRUST (primary). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF QHM \"NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD\" since 2020-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-R1A": {
+  "scheme": "GB-NHS",
+  "value": "R1A",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/R1A",
+  "found": true,
+  "name": "HEREFORDSHIRE AND WORCESTERSHIRE HEALTH AND CARE NHS TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2011-06-22",
+     "end": null
+    },
+    "legal": {
+     "start": "2011-07-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QGH",
+    "name": "NHS HEREFORDSHIRE AND WORCESTERSHIRE INTEGRATED CARE BOARD",
+    "since": "2020-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "QGH",
+     "name": "NHS HEREFORDSHIRE AND WORCESTERSHIRE INTEGRATED CARE BOARD"
+    }
+   ],
+   "predecessors": [
+    {
+     "code": "RWQ",
+     "role": "NHS TRUST",
+     "legal_start": "2011-07-01"
+    }
+   ]
+  },
+  "notes": "ODS ORD record R1A: \"HEREFORDSHIRE AND WORCESTERSHIRE HEALTH AND CARE NHS TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 2011-06-22..; Legal 2011-07-01.., LastChangeDate 2023-11-14. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF QGH \"NHS HEREFORDSHIRE AND WORCESTERSHIRE INTEGRATED CARE BOARD\" since 2020-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-R1F": {
+  "scheme": "GB-NHS",
+  "value": "R1F",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/R1F",
+  "found": true,
+  "name": "ISLE OF WIGHT NHS TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2012-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QRL",
+    "name": "NHS HAMPSHIRE AND ISLE OF WIGHT INTEGRATED CARE BOARD",
+    "since": "2020-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "QRL",
+     "name": "NHS HAMPSHIRE AND ISLE OF WIGHT INTEGRATED CARE BOARD"
+    }
+   ]
+  },
+  "notes": "ODS ORD record R1F: \"ISLE OF WIGHT NHS TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 2012-04-01.., LastChangeDate 2023-11-14. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF QRL \"NHS HAMPSHIRE AND ISLE OF WIGHT INTEGRATED CARE BOARD\" since 2020-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-R1L": {
+  "scheme": "GB-NHS",
+  "value": "R1L",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/R1L",
+  "found": true,
+  "name": "ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "FOUNDATION TRUST",
+    "NHS TRUST (primary)"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "2017-01-25",
+     "end": null
+    },
+    "legal": {
+     "start": "2017-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "D7T5G",
+    "name": "NHS ESSEX INTEGRATED CARE BOARD",
+    "since": "2026-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "D7T5G",
+     "name": "NHS ESSEX INTEGRATED CARE BOARD"
+    }
+   ],
+   "predecessors": [
+    {
+     "code": "RRD",
+     "role": "NHS TRUST",
+     "legal_start": "2017-04-01"
+    },
+    {
+     "code": "RWN",
+     "role": "NHS TRUST",
+     "legal_start": "2017-04-01"
+    }
+   ]
+  },
+  "notes": "ODS ORD record R1L: \"ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 2017-01-25..; Legal 2017-04-01.., LastChangeDate 2026-04-01. Primary role NHS TRUST (RO197); active roles: FOUNDATION TRUST, NHS TRUST (primary). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF D7T5G \"NHS ESSEX INTEGRATED CARE BOARD\" since 2026-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-RA2": {
+  "scheme": "GB-NHS",
+  "value": "RA2",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/RA2",
+  "found": true,
+  "name": "ROYAL SURREY NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)",
+    "FOUNDATION TRUST"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "1991-04-01",
+     "end": null
+    }
+   },
+   "inactive_roles": [
+    "HOSPICE (ended 2026-03-31)"
+   ],
+   "located_in_geography_of": {
+    "code": "S9B9J",
+    "name": "NHS SURREY AND SUSSEX INTEGRATED CARE BOARD",
+    "since": "2026-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "S9B9J",
+     "name": "NHS SURREY AND SUSSEX INTEGRATED CARE BOARD"
+    }
+   ]
+  },
+  "notes": "ODS ORD record RA2: \"ROYAL SURREY NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 1991-04-01.., LastChangeDate 2026-07-01. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary), FOUNDATION TRUST. Inactive roles: HOSPICE (ended 2026-03-31). Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF S9B9J \"NHS SURREY AND SUSSEX INTEGRATED CARE BOARD\" since 2026-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-RBD": {
+  "scheme": "GB-NHS",
+  "value": "RBD",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/RBD",
+  "found": true,
+  "name": "DORSET COUNTY HOSPITAL NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "1991-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QVV",
+    "name": "NHS DORSET INTEGRATED CARE BOARD",
+    "since": "2020-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "QVV",
+     "name": "NHS DORSET INTEGRATED CARE BOARD"
+    }
+   ]
+  },
+  "notes": "ODS ORD record RBD: \"DORSET COUNTY HOSPITAL NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 1991-04-01.., LastChangeDate 2023-11-14. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary), FOUNDATION TRUST, HOSPICE. Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF QVV \"NHS DORSET INTEGRATED CARE BOARD\" since 2020-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-RBT": {
+  "scheme": "GB-NHS",
+  "value": "RBT",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/RBT",
+  "found": true,
+  "name": "MID CHESHIRE HOSPITALS NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "1991-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QYG",
+    "name": "NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD",
+    "since": "2020-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "QYG",
+     "name": "NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD"
+    }
+   ]
+  },
+  "notes": "ODS ORD record RBT: \"MID CHESHIRE HOSPITALS NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 1991-04-01.., LastChangeDate 2023-11-14. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary), FOUNDATION TRUST, HOSPICE. Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF QYG \"NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD\" since 2020-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-RBV": {
+  "scheme": "GB-NHS",
+  "value": "RBV",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/RBV",
+  "found": true,
+  "name": "THE CHRISTIE NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "1991-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QOP",
+    "name": "NHS GREATER MANCHESTER INTEGRATED CARE BOARD",
+    "since": "2020-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "QOP",
+     "name": "NHS GREATER MANCHESTER INTEGRATED CARE BOARD"
+    }
+   ]
+  },
+  "notes": "ODS ORD record RBV: \"THE CHRISTIE NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 1991-04-01.., LastChangeDate 2023-11-14. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary), FOUNDATION TRUST, HOSPICE. Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF QOP \"NHS GREATER MANCHESTER INTEGRATED CARE BOARD\" since 2020-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-RC9": {
+  "scheme": "GB-NHS",
+  "value": "RC9",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/RC9",
+  "found": true,
+  "name": "BEDFORDSHIRE HOSPITALS NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "1992-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "S1Y5D",
+    "name": "NHS CENTRAL EAST INTEGRATED CARE BOARD",
+    "since": "2026-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "S1Y5D",
+     "name": "NHS CENTRAL EAST INTEGRATED CARE BOARD"
+    }
+   ],
+   "predecessors": [
+    {
+     "code": "EBA",
+     "role": "DIRECTLY MANAGED UNIT (DMU)",
+     "legal_start": "1992-04-01"
+    },
+    {
+     "code": "RC1",
+     "role": "NHS TRUST",
+     "legal_start": "2020-04-01"
+    }
+   ]
+  },
+  "notes": "ODS ORD record RC9: \"BEDFORDSHIRE HOSPITALS NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 1992-04-01.., LastChangeDate 2026-04-01. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary), FOUNDATION TRUST, HOSPICE. Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF S1Y5D \"NHS CENTRAL EAST INTEGRATED CARE BOARD\" since 2026-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-RCB": {
+  "scheme": "GB-NHS",
+  "value": "RCB",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/RCB",
+  "found": true,
+  "name": "YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "1992-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QOQ",
+    "name": "NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD",
+    "since": "2020-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "QOQ",
+     "name": "NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD"
+    }
+   ],
+   "predecessors": [
+    {
+     "code": "BF1",
+     "role": "DIRECTLY MANAGED UNIT (DMU)",
+     "legal_start": "1992-04-01"
+    },
+    {
+     "code": "RCC",
+     "role": "NHS TRUST",
+     "legal_start": "2012-07-01"
+    }
+   ]
+  },
+  "notes": "ODS ORD record RCB: \"YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 1992-04-01.., LastChangeDate 2023-11-14. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary), FOUNDATION TRUST, HOSPICE. Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF QOQ \"NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD\" since 2020-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-RCD": {
+  "scheme": "GB-NHS",
+  "value": "RCD",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/RCD",
+  "found": true,
+  "name": "HARROGATE AND DISTRICT NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "1992-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QOQ",
+    "name": "NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD",
+    "since": "2020-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "QWO",
+     "name": "NHS WEST YORKSHIRE INTEGRATED CARE BOARD"
+    },
+    {
+     "code": "QOQ",
+     "name": "NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD"
+    }
+   ],
+   "predecessors": [
+    {
+     "code": "BH1",
+     "role": "DIRECTLY MANAGED UNIT (DMU)",
+     "legal_start": "1992-04-01"
+    }
+   ]
+  },
+  "notes": "ODS ORD record RCD: \"HARROGATE AND DISTRICT NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 1992-04-01.., LastChangeDate 2023-11-14. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary), FOUNDATION TRUST, HOSPICE. Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF QOQ \"NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD\" since 2020-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "GB-NHS-RCF": {
+  "scheme": "GB-NHS",
+  "value": "RCF",
+  "http": 200,
+  "source": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/RCF",
+  "found": true,
+  "name": "AIREDALE NHS FOUNDATION TRUST",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "role": "NHS TRUST",
+   "level": "organisation",
+   "parent": null,
+   "successor": null,
+   "record_class": "RC1 HSCOrg",
+   "active_roles": [
+    "NHS TRUST (primary)",
+    "FOUNDATION TRUST",
+    "HOSPICE"
+   ],
+   "org_dates": {
+    "operational": {
+     "start": "1992-04-01",
+     "end": null
+    }
+   },
+   "located_in_geography_of": {
+    "code": "QWO",
+    "name": "NHS WEST YORKSHIRE INTEGRATED CARE BOARD",
+    "since": "2020-04-01"
+   },
+   "partner_to": [
+    {
+     "code": "QWO",
+     "name": "NHS WEST YORKSHIRE INTEGRATED CARE BOARD"
+    }
+   ],
+   "predecessors": [
+    {
+     "code": "BK1",
+     "role": "DIRECTLY MANAGED UNIT (DMU)",
+     "legal_start": "1992-04-01"
+    }
+   ]
+  },
+  "notes": "ODS ORD record RCF: \"AIREDALE NHS FOUNDATION TRUST\", Status Active, record class RC1 (HSCOrg), dates Operational 1992-04-01.., LastChangeDate 2023-11-14. Primary role NHS TRUST (RO197); active roles: NHS TRUST (primary), FOUNDATION TRUST, HOSPICE. Organisation-level code (HSCOrg, no IS OPERATED BY relationship). IS LOCATED IN THE GEOGRAPHY OF QWO \"NHS WEST YORKSHIRE INTEGRATED CARE BOARD\" since 2020-04-01. The ORD API carries no previous/working/trading name history, so other_names is empty."
+ },
+ "_meta": {
+  "method": "NHS ODS ORD API v2-0-0, one GET per code: https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations/<CODE> (JSON, ~1 request per 1.2 s, fetched 2026-10-11T05:14:39Z..2026-10-11T05:17:55Z). Role, relationship and record-class code systems read from /ORD/2-0-0/roles, /rels and /recordclasses to name RO*/RE*/RC* ids. name/status = Organisation.Name/Status as published; linked.role = the primaryRole's display name (ICBs carry primary role STRATEGIC PARTNERSHIP RO261 with active non-primary role INTEGRATED CARE BOARD RO318, listed in active_roles). level: 'site' = record class RC2 HSCSite and/or an active RE6 IS OPERATED BY relationship (parent = its target); 'other' = holds the SUB ICB LOCATION role RO319 (parent = its active RE5 IS LOCATED IN THE GEOGRAPHY OF target, the ICB); else 'organisation'. successor = Succs entries of Type Successor. Codes named by parents, successors, sub-division and geography relationships were fetched too so their names could be recorded. The ODS Status field stays Active for the ICBs abolished on 2026-04-01 (only their Legal end date and a Successor entry show it), so legal_end is recorded separately. The PPON-shaped PWNJ-1991-NGDW was tried as PWNJ1991NGDW and as published, plus one ORD Name search for its DB name (context only). The ORD API has no name history, so other_names is empty throughout.",
+  "failures": [],
+  "scripts": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/u2fetch/ods/{fetch.py,summ.py,build.py}",
+  "manifest": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/u2fetch/ods/manifest.jsonl"
+ }
+}

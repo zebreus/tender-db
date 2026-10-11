@@ -1,0 +1,154 @@
+{
+ "GB-SC-SC005336": {
+  "scheme": "GB-SC",
+  "value": "SC005336",
+  "http": 200,
+  "source": "https://www.oscr.org.uk/download/charity-register",
+  "found": true,
+  "name": "University Of Edinburgh",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "registered_date": "01/01/1902",
+   "constitutional_form": "Statutory corporation (Royal Charter etc)",
+   "previous_constitutional_form": null,
+   "parent_charity_number": null,
+   "parent_charity_name": null,
+   "charities_naming_this_as_parent": [
+    {
+     "charity_number": "SC001097",
+     "name": "The Andrew Grant Bequest",
+     "status": "Active"
+    },
+    {
+     "charity_number": "SC035813",
+     "name": "Edinburgh University Press Limited",
+     "status": "Active"
+    }
+   ],
+   "principal_office": "Old College, South Bridge, Edinburgh",
+   "postcode": "EH8 9YL",
+   "website": "www.ed.ac.uk",
+   "oscr_page": "https://www.oscr.org.uk/about-charities/search-the-register/charity-details?number=SC005336",
+   "oscr_page_http": 200
+  },
+  "notes": "Row in OSCR bulk register CharityExport-11-Oct-2026.csv (24952 rows). 'Known As' is empty; the register download has no previous-name field (the per-charity page shows the same name, status Active, and no other-name section). Register spells the name 'University Of Edinburgh'. 2 other charities in the file give SC005336 as their parent charity number."
+ },
+ "GB-SC-SC015263": {
+  "scheme": "GB-SC",
+  "value": "SC015263",
+  "http": 200,
+  "source": "https://www.oscr.org.uk/download/charity-register",
+  "found": true,
+  "name": "University Of Strathclyde",
+  "status": "Active",
+  "other_names": [],
+  "linked": {
+   "registered_date": "02/04/1965",
+   "constitutional_form": "Statutory corporation (Royal Charter etc)",
+   "previous_constitutional_form": null,
+   "parent_charity_number": null,
+   "parent_charity_name": null,
+   "charities_naming_this_as_parent": [],
+   "principal_office": "Senior Officer's Suite, Principals Office, Royal College Building, 204 George Street, Glasgow",
+   "postcode": "G1 1XW",
+   "website": "www.strath.ac.uk",
+   "oscr_page": "https://www.oscr.org.uk/about-charities/search-the-register/charity-details?number=SC015263",
+   "oscr_page_http": 200
+  },
+  "notes": "Row in OSCR bulk register CharityExport-11-Oct-2026.csv (24952 rows). 'Known As' is empty; the register download has no previous-name field (the per-charity page shows the same name, status Active, and no other-name section). Register spells the name 'University Of Strathclyde'."
+ },
+ "GB-NIC-NI 100770": {
+  "scheme": "GB-NIC",
+  "value": "NI 100770",
+  "http": 200,
+  "source": "https://www.charitycommissionni.org.uk/charity-search/charity-details-page/?regId=100770&subId=0",
+  "found": true,
+  "name": "COALISLAND TRAINING SERVICES LIMITED",
+  "status": "Received: on time",
+  "other_names": [
+   "COALISLAND TRAINING SERVICES LIMITED"
+  ],
+  "linked": {
+   "ccni_charity_number": "100770",
+   "date_registered": "2015-01-30",
+   "governing_document": "Memorandum and Articles",
+   "company_number_on_ccni_register": "0",
+   "public_address": "Mr Richard Thornton, Coalisland Training Services, 51 Dungannon Road, Coalisland, Dungannon, County Tyrone, BT71 4HP",
+   "website": "http://www.coalislandtrainingservices.co.uk",
+   "ccni_search_api": "https://www.charitycommissionni.org.uk/api/charity-search/results?homePageId=c0884e5e-b621-4563-a378-2b313e15c74a&searchText=100770&pageNumber=1",
+   "ccni_search_hit": [
+    {
+     "regNo": "100770",
+     "subNo": "0",
+     "name": "COALISLAND TRAINING SERVICES LIMITED",
+     "orgType": "Up-to-date",
+     "url": "https://www.charitycommissionni.org.uk/charity-search/charity-details-page/?regId=100770&subId=0",
+     "hideStatus": false,
+     "statusLabel": "Received: on time",
+     "statusCssStyle": "status"
+    }
+   ],
+   "ccni_csv_export": "https://www.charitycommissionni.org.uk/api/charity-details/exportToCsv?regId=100770&subId=0",
+   "companies_house": {
+    "company_number": "NP000271",
+    "name": "CTS LIMITED",
+    "status": "Active",
+    "company_type": "Registered society",
+    "url": "https://find-and-update.company-information.service.gov.uk/company/NP000271"
+   },
+   "accounts_cover_2025": {
+    "url": "https://apps.charitycommission.gov.uk/ccni_ar_attachments/0000100770_20250331_CA.pdf",
+    "name_on_accounts": "CTS Ltd",
+    "charity_registration_number": "NIC100770",
+    "deti_ips_number": "IP000271"
+   }
+  },
+  "notes": "CCNI publishes the number as plain '100770' (details page 'Charity no. 100770'); the value as given ('NI 100770') carries a prefix that is not part of the CCNI number, so found is for the digits 100770. Search API for '100770' returns exactly one charity (regNo 100770, subNo 0, orgType 'Up-to-date'). Status is CCNI's reporting status label (a removed charity shows 'Removed' instead). The CCNI 'Company number' field is '0' (i.e. none recorded). It IS a CCNI charity number: CCNI register entry 100770 is COALISLAND TRAINING SERVICES LIMITED (registered 2015-01-30; 'Other name' field repeats the same name; governing document 'Memorandum and Articles'). Companies House has no company named COALISLAND TRAINING SERVICES LIMITED/LTD, current or previous: the CH alphabetical index goes COALISLAND TAXI'S LIMITED -> COALISLAND USED FONES LTD, and name searches ('Coalisland Training Services', 'Coalisland Training') show no matching previous name. The charity's 2025 accounts filed with CCNI (scanned PDF, read visually) are headed 'CTS Ltd', 'Charity Registration Number: NIC100770', 'DETI / IPS Number: IP000271', registered office 51 Dungannon Road, Coalisland (same as the CCNI public address). CH has no IP000271 (404); CH NP000271 is 'CTS LIMITED', company type Registered society, index status Active (NI society numbers carry the NP prefix at CH, e.g. NP000408). The CH record matching the accounts' IPS number and name is NP000271 (CTS LIMITED); CH holds nothing under the CCNI name."
+ },
+ "GB-NIC-NIC 100095": {
+  "scheme": "GB-NIC",
+  "value": "NIC 100095",
+  "http": 200,
+  "source": "https://www.charitycommissionni.org.uk/charity-search/charity-details-page/?regId=100095&subId=0",
+  "found": true,
+  "name": "Choice Housing Ireland Limited",
+  "status": "Received: on time",
+  "other_names": [],
+  "linked": {
+   "ccni_charity_number": "100095",
+   "date_registered": "2014-06-23",
+   "governing_document": "IPS Rules",
+   "company_number_on_ccni_register": "0",
+   "public_address": "Mr Lawrence Jackson, Leslie Morrell House, 37-41 May Street, Belfast, BT1 4DN",
+   "website": "http://www.choice-housing.org",
+   "ccni_search_api": "https://www.charitycommissionni.org.uk/api/charity-search/results?homePageId=c0884e5e-b621-4563-a378-2b313e15c74a&searchText=100095&pageNumber=1",
+   "ccni_search_hit": [
+    {
+     "regNo": "100095",
+     "subNo": "0",
+     "name": "Choice Housing Ireland Limited",
+     "orgType": "Up-to-date",
+     "url": "https://www.charitycommissionni.org.uk/charity-search/charity-details-page/?regId=100095&subId=0",
+     "hideStatus": false,
+     "statusLabel": "Received: on time",
+     "statusCssStyle": "status"
+    }
+   ],
+   "ccni_csv_export": "https://www.charitycommissionni.org.uk/api/charity-details/exportToCsv?regId=100095&subId=0",
+   "companies_house": {
+    "company_number": "NP000408",
+    "name": "CHOICE HOUSING IRELAND LIMITED",
+    "status": "Active",
+    "company_type": "Registered society",
+    "url": "https://find-and-update.company-information.service.gov.uk/company/NP000408"
+   }
+  },
+  "notes": "CCNI publishes the number as plain '100095' (details page 'Charity no. 100095'); the value as given ('NIC 100095') carries a prefix that is not part of the CCNI number, so found is for the digits 100095. Search API for '100095' returns exactly one charity (regNo 100095, subNo 0, orgType 'Up-to-date'). Status is CCNI's reporting status label (a removed charity shows 'Removed' instead). The CCNI 'Company number' field is '0' (i.e. none recorded). Governing document 'IPS Rules'; CCNI 'Other name' field empty (the '14' beside it on the page is the trustee count). Companies House NP000408 = CHOICE HOUSING IRELAND LIMITED, company type Registered society, index status Active, no previous names shown (CH shows none for societies)."
+ },
+ "_meta": {
+  "method": "OSCR: downloaded the full Scottish Charity Register from https://www.oscr.org.uk/download/charity-register (linked from /about-charities/search-the-register/download-the-scottish-charity-register/; HTTP 200, zip CharityExport-11-Oct-2026.csv, 24952 rows), read the CSV from the zip without extracting, matched 'Charity Number' exactly; cross-checked each charity's page /about-charities/search-the-register/charity-details?number=<SC> (HTTP 200, same name/status). CCNI: the site's charity search JSON API (/api/charity-search/results?homePageId=...&searchText=<number>, found in the page's widget config and apps-module.js), the details page /charity-search/charity-details-page/?regId=<n>&subId=0 and its 'Export to CSV' (/api/charity-details/exportToCsv?regId=<n>&subId=0), all HTTP 200; for 100770 also the 2025 accounts PDF linked from the details page (scanned image, cover and company-information pages read visually). Companies House: public pages (/company/<n>, /search/companies?q=, /alphabetical-search/get-results?companyName=) at >=1.5 s per request, pattern from 448-campaign/ch_fetch.py.",
+  "failures": [],
+  "scripts": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/u2fetch/oscr-ccni/{oscr_peek.py,text_of.py,csv_show.py,ch.py,ch_searches.py,ch_alpha.py,ch_companies.py,build.py}"
+ }
+}
