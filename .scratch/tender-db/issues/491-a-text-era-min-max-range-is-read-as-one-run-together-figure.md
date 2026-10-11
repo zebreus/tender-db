@@ -207,3 +207,26 @@ A block whose figure does not parse stores none.
 **Build after 508**, which changes `awarded_value` and the block markers. Measure first: how many tenders' heads
 change once multi-contract notices carry lot award values. Those notices have no head today unless II.2.1 is stated, so
 the head election may start electing from lot awards.
+
+## Unit 3 — M0, the pre-2004 check (2026-10-11)
+
+Text fetch numbers run BACKWARDS in time (200 = 2009-10, 261 = 2004-09; 270–288 = 2003-12 back to 2002-06,
+`508-2010-text-vintage/text-fetch-map-*.txt`), and the reparse reports text packages up to ~400, so the plan's rounds
+(186–269) stop at 2004-01. Bounded 5k-id windows of `notice_texts` (TXT-TX, `PROCEDURE`, ordinal 0):
+
+| window start | bodies | CAN | `\nSECTION V:` | + `Total final value of the contract` | `\nCONTRACT NO` |
+|---:|---:|---:|---:|---:|---:|
+| 1,900,000 | 5,000 | 5 | 4 | 0 | 19 |
+| 1,950,000 | 5,000 | 10 | 9 | 0 | 17 |
+| 2,000,000 | 5,000 | 11 | 11 | 0 | 11 |
+| 2,050,000 | 5,000 | 6 | 6 | 0 | 15 |
+| 2,100,000 | 5,000 | 1,363 | 1,366 | 0 | 1,359 |
+| 2,150,000 | 5,000 | 1,560 | 1,582 | 0 | 1,559 |
+| 2,200,000 | 5,000 | 1,465 | 1,477 | 0 | 1,452 |
+| 2,240,000 | 5,000 | 2,147 | 2,162 | 0 | 2,147 |
+
+From ~2.1M (2003) the 2001/78/EC sectioned award body is common, headed `Contract No:`, with its figure as `V.1.2)
+… Price: 83 470,00.` and the currency on the next line (2150262), which today's notice-level claim already refuses (no
+`TED-VAL_TOTAL` stored for it). So few 2003 blocks will gain a figure, but some may. DECIDED: one extra drain round
+`269:19` (fetches 270–288, ids 1.90M–2.25M, ~350k notices) after the planned rounds, for completeness.
+
