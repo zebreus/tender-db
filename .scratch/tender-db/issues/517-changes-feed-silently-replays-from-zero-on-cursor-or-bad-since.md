@@ -1,6 +1,8 @@
 # 517 — `/v1/changes` silently replays the whole feed from 0 on `?cursor=` or an unparseable `since`
 
-Status: ready-for-agent — filed 2026-10-11 from an hourly audit (reading the change feed after issue 516's merges).
+Status: built 2026-10-11 — handler refuses both (v1/mod.rs `changes`, `Params::since`), test
+`a_cursor_or_an_unparseable_since_on_the_change_feed_is_refused`, docs + CHANGELOG; waits for the gate and deploy.
+Was: ready-for-agent — filed 2026-10-11 from an hourly audit (reading the change feed after issue 516's merges).
 Kind: API correctness (public /v1)
 Relates to: 392 (resume verdicts: a cursor the feed never issued resets instead of stalling), 399 (a route names what
 it ignores), 118 (`ignored_filters`)
@@ -26,14 +28,14 @@ hole for numeric cursors the feed never issued (`cursor_expired` / `cursor_ahead
 On `/v1/changes` (and the SSE route, which shares the resume logic, if it reads `since` the same way):
 - **`cursor` set → 400:** "`/v1/changes` resumes from `since`, not `cursor`; send the `last_cursor` you stored as
   `since`".
-- **`since` set but not a non-negative integer → 400** naming the value. `since` absent stays 0, "from the start".
+- **`since` set but not an integer → 400** naming the value. `since` absent or empty stays 0, "from the start"
+  (a first poll built as `?since=${stored||''}` must keep working); a negative integer keeps 392's `cursor_expired`.
 
 A 400 rather than a reset body: both are client mistakes, not cursors the feed could have issued, and a reset would
 send the client back to 0 as well.
 
 Tests (app v1 tests, `--features server`):
-- `a_cursor_on_the_change_feed_is_refused_naming_since`
-- `an_unparseable_since_is_refused_not_read_as_zero`
+- `a_cursor_or_an_unparseable_since_on_the_change_feed_is_refused` (one test, both refusals)
 - the existing `since=0` / absent `since` tests stay green.
 
 CHANGELOG entry: an observable change for a client that sends either.

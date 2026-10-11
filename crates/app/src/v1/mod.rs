@@ -1036,8 +1036,18 @@ impl Params {
         }
     }
 
-    fn since(&self) -> i64 {
-        self.since.as_deref().and_then(|c| c.parse().ok()).unwrap_or(0)
+    /// The change feed's resume position: absent (or empty) is 0, "from the start".
+    /// A value that is not an integer is refused (issue 517): it used to read as 0 and
+    /// replay the whole log as if the client had asked for it.
+    fn since(&self) -> Result<i64, ApiError> {
+        match self.since.as_deref().map(str::trim) {
+            None | Some("") => Ok(0),
+            Some(raw) => raw.parse().map_err(|_| {
+                ApiError::bad_request(format!(
+                    "since must be the integer `last_cursor` of an earlier page, not {raw:?}"
+                ))
+            }),
+        }
     }
 
     /// The filter parameters the client actually set, by their client-facing name.
@@ -1921,6 +1931,16 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
             "unknown entity {entity:?}; expected one of tender, lot, organization"
         )));
     }
+    // Issue 517: this route resumes from `since`. `cursor` is the list routes' (and
+    // SSE's) spelling, and the shared `Params` accepted it here only to drop it: the
+    // page then started at 0 — the whole log — with `ignored_filters: []`, because a
+    // pagination control is never named as a filter. Refused, naming what to send.
+    if params.cursor.is_some() {
+        return Err(ApiError::bad_request(
+            "/v1/changes resumes from `since`, not `cursor`: send the `last_cursor` you stored as `since`",
+        ));
+    }
+    let since = params.since()?;
     let limit = params.limit()?;
     let reader = state.readers.get().await?;
     let generation = read::feed_generation(&reader).await?;
@@ -1937,7 +1957,6 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
     // Issue 399: this route applies no collection filter at all, so everything
     // the client set is ignored — named rather than silently dropped.
     let ignored = params.provided_filters();
-    let since = params.since();
     let oldest = read::oldest_cursor(&reader).await?;
     // Append-only and never renumbered, so below-the-horizon means pruned. The
     // `oldest > 0` guard keeps an empty log from rejecting `since=0`; the `- 1` is

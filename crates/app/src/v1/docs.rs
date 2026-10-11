@@ -389,7 +389,10 @@ here, and each one you send is named back in <code>ignored_filters</code> rather
 than silently dropped. To follow a filtered subset, subscribe to the collection
 endpoint with <code>Accept: text/event-stream</code>, which does apply them.
 Loop, passing <code>last_cursor</code> as the next <code>since</code>, until
-<code>more</code> is false; then poll periodically for new ones. A page with
+<code>more</code> is false; then poll periodically for new ones. The resume
+parameter is <code>since</code>: a <code>cursor</code> (the list routes'
+spelling) is answered <code>400</code>, and so is a <code>since</code> that is
+not an integer, rather than either replaying the log from the start. A page with
 <code>more: false</code> has read to the end, and its <code>last_cursor</code>
 is the feed head &mdash; the value <code>GET /v1</code> reports &mdash; even
 when the log's newest rows are kinds this feed does not carry.

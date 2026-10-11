@@ -4,6 +4,13 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 517) — `/v1/changes` refuses `cursor` and a non-integer `since`
+
+The change feed resumes from `since`. A request that sent `cursor` instead (the list routes' parameter) or a `since`
+that is not an integer (`since=abc`) was answered from the very start of the log, with `ignored_filters: []`, as if
+the client had asked for everything. Both are now a `400` naming `since`. An absent or empty `since` still reads
+from the start.
+
 ## Unreleased (issue 516) — a supplier that spells out "Public Limited Company" is no longer split from its plc
 
 The Companies House ↔ PPON merge arm (issue 448) read `PUBLIC LIMITED COMPANY` and `LIMITED LIABILITY PARTNERSHIP`

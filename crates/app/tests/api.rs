@@ -2606,6 +2606,41 @@ async fn the_change_feed_names_every_filter_it_does_not_apply() {
     );
 }
 
+/// Issue 517: the change feed resumes from `since`. A `cursor` (the list routes'
+/// spelling) was dropped as a pagination control and a `since` that did not parse
+/// read as 0, so either replayed the whole log from the start with
+/// `ignored_filters: []`. Both are refused now, naming what to send.
+#[tokio::test]
+async fn a_cursor_or_an_unparseable_since_on_the_change_feed_is_refused() {
+    let server = Server::start("changes-resume-param").await;
+    server.ingest_chain().await;
+    let mut last = "0".to_owned();
+    loop {
+        let page = server.get(&format!("/v1/changes?since={last}&limit=500")).await;
+        last = page["last_cursor"].as_str().expect("a cursor").to_owned();
+        if page["more"] != true {
+            break;
+        }
+    }
+    assert!(last != "0", "the chain wrote changes");
+
+    let (status, body) = server.get_with_status(&format!("/v1/changes?cursor={last}&limit=5")).await;
+    assert_eq!(status, 400, "a cursor must not replay from 0: {body}");
+    assert!(body.to_string().contains("since"), "the refusal names `since`: {body}");
+    for bad in ["abc", "12.5", "1e3", "0x10"] {
+        let (status, body) = server.get_with_status(&format!("/v1/changes?since={bad}&limit=5")).await;
+        assert_eq!(status, 400, "since={bad} must not read as 0: {body}");
+    }
+    // Absent, empty and well-formed values keep their meaning.
+    for start in ["/v1/changes?limit=5", "/v1/changes?since=&limit=5", "/v1/changes?since=0&limit=5"] {
+        let page = server.get(start).await;
+        assert_eq!(page["events"][0]["cursor"], "1", "{start} reads from the start: {page}");
+    }
+    let caught_up = server.get(&format!("/v1/changes?since={last}&limit=5")).await;
+    assert_eq!(caught_up["events"].as_array().map(Vec::len), Some(0), "{caught_up}");
+    assert_eq!(caught_up["last_cursor"], last.as_str());
+}
+
 /// Issue 390 unit 1: `country` and `cpv` are code prefixes, not `LIKE` patterns.
 ///
 /// The store binds them into `c.code LIKE ?` as `format!("{value}%")` with no
