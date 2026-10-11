@@ -1,6 +1,7 @@
 # 518 — the 448 alias reads a narrower name set than the planner, so a merged pair grows back
 
-Status: ready-for-agent — filed 2026-10-11 from an hourly audit (the alias counters after issue 516's merges).
+Status: ready-for-agent — unit 2a (class a) BUILT 2026-10-11 as 469 U5's first commit (83608c2 + review fix 6dae917, gated): the alias bar's corroboration reads the owner's designated names ∪ its newest mention names (capped 4,096 rows / 256 names, per-fold cache, skipped while organization_mentions_org is absent); consortium veto and head-against-head stay on designated names. Ships with U5's deploy. NEXT: after a week of daily folds, read the `[issue 448]` refusal counts against the 7.6% baseline; class (b) (space-insensitive agreement) still needs unit 1's measurement.
+Was: ready-for-agent — filed 2026-10-11 from an hourly audit (the alias counters after issue 516's merges).
 NEXT: unit 1, measure the refusal classes.
 Kind: data quality (organization identity; regrowth)
 Relates to:
