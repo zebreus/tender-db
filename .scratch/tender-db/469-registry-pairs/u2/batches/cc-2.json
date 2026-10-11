@@ -1,0 +1,344 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-CHC-1161921~PRHY4184BBDM",
+  "members": [
+   {
+    "identifier": "GBCHC1161921",
+    "kind": "national",
+    "name": "Step 2 Young People's Health",
+    "org_id": 31541488
+   },
+   {
+    "identifier": "GBPPONPRHY4184BBDM",
+    "kind": "national",
+    "name": "Step 2 Young People's Health",
+    "org_id": 31554980
+   }
+  ],
+  "notices": [
+   "050074-2025",
+   "009197-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1172924~PJHY5881NDWW",
+  "members": [
+   {
+    "identifier": "GBCHC1172924",
+    "kind": "national",
+    "name": "NORTH EAST YOUNG DADS AND LADS PROJECT CIO",
+    "org_id": 31576573
+   },
+   {
+    "identifier": "GBPPONPJHY5881NDWW",
+    "kind": "national",
+    "name": "North East Young Dads and Lads (NEYDL)",
+    "org_id": 31581398
+   }
+  ],
+  "notices": [
+   "054377-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1175616~PDXH7241QMQH",
+  "members": [
+   {
+    "identifier": "GBCHC1175616",
+    "kind": "national",
+    "name": "Shine Lincolnshire",
+    "org_id": 31566916
+   },
+   {
+    "identifier": "GBPPONPDXH7241QMQH",
+    "kind": "national",
+    "name": "Shine Lincolnshire",
+    "org_id": 31565792
+   }
+  ],
+  "notices": [
+   "067382-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1205126~PDYM9565GXZR",
+  "members": [
+   {
+    "identifier": "GBCHC1205126",
+    "kind": "national",
+    "name": "RASAC - RAPE AND SEXUAL ABUSE CENTRE",
+    "org_id": 31545767
+   },
+   {
+    "identifier": "GBPPONPDYM9565GXZR",
+    "kind": "national",
+    "name": "RASAC, Rape and sexual abuse centre for Kirklees, Calderdale & Wakefield.",
+    "org_id": 31587819
+   }
+  ],
+  "notices": [
+   "059807-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-17434R~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBCHC17434R",
+    "kind": "national",
+    "name": "Moat Homes Limited",
+    "org_id": 30915776
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "notices": [
+   "049360-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-17434R~PNCG6417GJNY",
+  "members": [
+   {
+    "identifier": "GBCHC17434R",
+    "kind": "national",
+    "name": "Moat Homes Limited",
+    "org_id": 30915776
+   },
+   {
+    "identifier": "GBPPONPNCG6417GJNY",
+    "kind": "national",
+    "name": "Moat Homes Limited",
+    "org_id": 31535979
+   }
+  ],
+  "notices": [
+   "031732-2025",
+   "056909-2025",
+   "080272-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-207043~PNMW5582LMGW",
+  "members": [
+   {
+    "identifier": "GBCHC207043",
+    "kind": "national",
+    "name": "THE ROYAL SOCIETY OF LONDON FOR IMPROVING NATURAL KNOWLEDGE (COMMONLY KNOWN AS THE ROYAL SOCIETY)",
+    "org_id": 31540755
+   },
+   {
+    "identifier": "GBPPONPNMW5582LMGW",
+    "kind": "national",
+    "name": "The Royal Society",
+    "org_id": 31540700
+   }
+  ],
+  "notices": [
+   "048297-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-207076~PZJG5765BRHD",
+  "members": [
+   {
+    "identifier": "GBCHC207076",
+    "kind": "national",
+    "name": "ROYAL SOCIETY FOR THE PROTECTION OF BIRDS",
+    "org_id": 31587889
+   },
+   {
+    "identifier": "GBPPONPZJG5765BRHD",
+    "kind": "national",
+    "name": "The Royal Society for the Protection of Birds",
+    "org_id": 31589220
+   }
+  ],
+  "notices": [
+   "073085-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-209617~PGQC5728VHDY",
+  "members": [
+   {
+    "identifier": "GBCHC209617",
+    "kind": "national",
+    "name": "THE GUIDE DOGS FOR THE BLIND ASSOCIATION",
+    "org_id": 30967402
+   },
+   {
+    "identifier": "GBPPONPGQC5728VHDY",
+    "kind": "national",
+    "name": "The Guide Dogs for the Blind Association",
+    "org_id": 31590269
+   }
+  ],
+  "notices": [
+   "087663-2026",
+   "055112-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-210252~PVMC1756WQNH",
+  "members": [
+   {
+    "identifier": "GBCHC210252",
+    "kind": "national",
+    "name": "THE INSTITUTION OF CIVIL ENGINEERS",
+    "org_id": 31580864
+   },
+   {
+    "identifier": "GBPPONPVMC1756WQNH",
+    "kind": "national",
+    "name": "Institution of Civil Engineers",
+    "org_id": 31556347
+   }
+  ],
+  "notices": [
+   "066429-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-212808~PJNX8831LRZX",
+  "members": [
+   {
+    "identifier": "GBCHC212808",
+    "kind": "national",
+    "name": "ROYAL COLLEGE OF SURGEONS OF ENGLAND",
+    "org_id": 31575435
+   },
+   {
+    "identifier": "GBPPONPJNX8831LRZX",
+    "kind": "national",
+    "name": "The Royal College of Surgeons of England",
+    "org_id": 31578267
+   }
+  ],
+  "notices": [
+   "050653-2026",
+   "061655-2026",
+   "069458-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-2204085~PTCY3946LHDG",
+  "members": [
+   {
+    "identifier": "GBCHC2204085",
+    "kind": "national",
+    "name": "Sports and Leisure Management Ltd",
+    "org_id": 30914767
+   },
+   {
+    "identifier": "GBPPONPTCY3946LHDG",
+    "kind": "national",
+    "name": "Everyone Active",
+    "org_id": 30919411
+   }
+  ],
+  "notices": [
+   "030420-2025",
+   "030421-2025",
+   "032747-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-274206~PCTJ2385BJMM",
+  "members": [
+   {
+    "identifier": "GBCHC274206",
+    "kind": "national",
+    "name": "PEOPLE'S TRUST FOR ENDANGERED SPECIES",
+    "org_id": 31588340
+   },
+   {
+    "identifier": "GBPPONPCTJ2385BJMM",
+    "kind": "national",
+    "name": "People's Trust for Endangered Species (PTES)",
+    "org_id": 31544967
+   }
+  ],
+  "notices": [
+   "075089-2026",
+   "093754-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-28258R~PTVZ4148BLMR",
+  "members": [
+   {
+    "identifier": "GBCHC28258R",
+    "kind": "national",
+    "name": "CETRA Housing Co-operative Limited",
+    "org_id": 30915433
+   },
+   {
+    "identifier": "GBPPONPTVZ4148BLMR",
+    "kind": "national",
+    "name": "Capital Service Solutions Limited",
+    "org_id": 31539737
+   }
+  ],
+  "notices": [
+   "031196-2025",
+   "031316-2025",
+   "046083-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-28687R~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBCHC28687R",
+    "kind": "national",
+    "name": "Together Housing Association Limited",
+    "org_id": 30913564
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "notices": [
+   "032394-2026",
+   "032417-2026"
+  ],
+  "scheme": "GB-CHC"
+ }
+]

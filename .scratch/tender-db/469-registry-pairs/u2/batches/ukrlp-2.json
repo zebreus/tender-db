@@ -1,0 +1,352 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10003511~PHVG7323DLDR",
+  "members": [
+   {
+    "identifier": "GBUKPRN10003511",
+    "kind": "national",
+    "name": "Joseph Chamberlain Sixth Form College",
+    "org_id": 31561664
+   },
+   {
+    "identifier": "GBPPONPHVG7323DLDR",
+    "kind": "national",
+    "name": "Joseph Chamberlain Sixth Form College",
+    "org_id": 31535654
+   }
+  ],
+  "notices": [
+   "010313-2026",
+   "043457-2026",
+   "046653-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10003558~PLPX8427RLLH",
+  "members": [
+   {
+    "identifier": "GBUKPRN10003558",
+    "kind": "national",
+    "name": "Kendal College",
+    "org_id": 30914868
+   },
+   {
+    "identifier": "GBPPONPLPX8427RLLH",
+    "kind": "national",
+    "name": "Kendal College",
+    "org_id": 31551135
+   }
+  ],
+  "notices": [
+   "030526-2025",
+   "047129-2025",
+   "050959-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10003753~PXJR8318GLDG",
+  "members": [
+   {
+    "identifier": "GBUKPRN10003753",
+    "kind": "national",
+    "name": "Lakes College West Cumbria",
+    "org_id": 31575633
+   },
+   {
+    "identifier": "GBPPONPXJR8318GLDG",
+    "kind": "national",
+    "name": "Lakes College",
+    "org_id": 31765421
+   }
+  ],
+  "notices": [
+   "051547-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10003928~PNXC4137QGWD",
+  "members": [
+   {
+    "identifier": "GBUKPRN10003928",
+    "kind": "national",
+    "name": "Lincoln College Group",
+    "org_id": 30915120
+   },
+   {
+    "identifier": "GBPPONPNXC4137QGWD",
+    "kind": "national",
+    "name": "LINCOLN COLLEGE",
+    "org_id": 30973248
+   }
+  ],
+  "notices": [
+   "030690-2025",
+   "033896-2025",
+   "033912-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10003957~PVBW3417ZCNN",
+  "members": [
+   {
+    "identifier": "GBUKPRN10003957",
+    "kind": "national",
+    "name": "Liverpool John Moores University",
+    "org_id": 30914142
+   },
+   {
+    "identifier": "GBPPONPVBW3417ZCNN",
+    "kind": "national",
+    "name": "Liverpool John Moore University",
+    "org_id": 31545575
+   }
+  ],
+  "notices": [
+   "029649-2025",
+   "032348-2025",
+   "034110-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10004344~PWYW4583DRYJ",
+  "members": [
+   {
+    "identifier": "GBUKPRN10004344",
+    "kind": "national",
+    "name": "Middlesbrough College",
+    "org_id": 31540516
+   },
+   {
+    "identifier": "GBPPONPWYW4583DRYJ",
+    "kind": "national",
+    "name": "Middlesbrough College",
+    "org_id": 31542192
+   }
+  ],
+  "notices": [
+   "047707-2025",
+   "074407-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10004375~PMNN7576BCQG",
+  "members": [
+   {
+    "identifier": "GBUKPRN10004375",
+    "kind": "national",
+    "name": "Milton Keynes College",
+    "org_id": 30917084
+   },
+   {
+    "identifier": "GBPPONPMNN7576BCQG",
+    "kind": "national",
+    "name": "Milton Keynes College",
+    "org_id": 30974559
+   }
+  ],
+  "notices": [
+   "033923-2025",
+   "001243-2026",
+   "025171-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10004579~PLQC2725XCGX",
+  "members": [
+   {
+    "identifier": "GBUKPRN10004579",
+    "kind": "national",
+    "name": "New College Swindon",
+    "org_id": 31537265
+   },
+   {
+    "identifier": "GBPPONPLQC2725XCGX",
+    "kind": "national",
+    "name": "New College Swindon",
+    "org_id": 30916392
+   }
+  ],
+  "notices": [
+   "041449-2025",
+   "046447-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10004599~PJDY1333MXVZ",
+  "members": [
+   {
+    "identifier": "GBUKPRN10004599",
+    "kind": "national",
+    "name": "NCG",
+    "org_id": 30919579
+   },
+   {
+    "identifier": "GBPPONPJDY1333MXVZ",
+    "kind": "national",
+    "name": "NCG",
+    "org_id": 31535020
+   }
+  ],
+  "notices": [
+   "084425-2026",
+   "087879-2026",
+   "019238-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10004695~PZBH4782ZMWY",
+  "members": [
+   {
+    "identifier": "GBUKPRN10004695",
+    "kind": "national",
+    "name": "DN Colleges Group",
+    "org_id": 30914058
+   },
+   {
+    "identifier": "GBPPONPZBH4782ZMWY",
+    "kind": "national",
+    "name": "DN Colleges Group",
+    "org_id": 30926948
+   }
+  ],
+  "notices": [
+   "029526-2025",
+   "067124-2025",
+   "067383-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10004930~PPGL1164DJLT",
+  "members": [
+   {
+    "identifier": "GBUKPRN10004930",
+    "kind": "national",
+    "name": "Oxford Brookes University",
+    "org_id": 30917249
+   },
+   {
+    "identifier": "GBPPONPPGL1164DJLT",
+    "kind": "national",
+    "name": "Oxford Brookes University",
+    "org_id": 31536033
+   }
+  ],
+  "notices": [
+   "034248-2025",
+   "034991-2025",
+   "035761-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10005077~PJNP6361TPWJ",
+  "members": [
+   {
+    "identifier": "GBUKPRN10005077",
+    "kind": "national",
+    "name": "INSPIRE EDUCATION GROUP",
+    "org_id": 30926870
+   },
+   {
+    "identifier": "GBPPONPJNP6361TPWJ",
+    "kind": "national",
+    "name": "Inspire Education Group",
+    "org_id": 31554598
+   }
+  ],
+  "notices": [
+   "060333-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10005124~PPHN6972VWCP",
+  "members": [
+   {
+    "identifier": "GBUKPRN10005124",
+    "kind": "national",
+    "name": "Plumpton College",
+    "org_id": 31543302
+   },
+   {
+    "identifier": "GBPPONPPHN6972VWCP",
+    "kind": "national",
+    "name": "Plumpton College",
+    "org_id": 31549316
+   }
+  ],
+  "notices": [
+   "065296-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10005128~PQHV9439HHDJ",
+  "members": [
+   {
+    "identifier": "GBUKPRN10005128",
+    "kind": "national",
+    "name": "City College Plymouth",
+    "org_id": 31539386
+   },
+   {
+    "identifier": "GBPPONPQHV9439HHDJ",
+    "kind": "national",
+    "name": "City College Plymouth",
+    "org_id": 30953590
+   }
+  ],
+  "notices": [
+   "045447-2025",
+   "069651-2025",
+   "079494-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10005534~PYQV1457QZDD",
+  "members": [
+   {
+    "identifier": "GBUKPRN10005534",
+    "kind": "national",
+    "name": "RNN GROUP",
+    "org_id": 30916741
+   },
+   {
+    "identifier": "GBPPONPYQV1457QZDD",
+    "kind": "national",
+    "name": "RNN Group",
+    "org_id": 31546777
+   }
+  ],
+  "notices": [
+   "039484-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ }
+]

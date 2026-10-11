@@ -1,0 +1,356 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-MPR-31192R~PWVC1443BCQH",
+  "members": [
+   {
+    "identifier": "GBMPR31192R",
+    "kind": "national",
+    "name": "Dimensions (UK) Limited",
+    "org_id": 31545510
+   },
+   {
+    "identifier": "GBPPONPWVC1443BCQH",
+    "kind": "national",
+    "name": "Dimensions (UK) Ltd",
+    "org_id": 31563993
+   }
+  ],
+  "notices": [
+   "059142-2025",
+   "061161-2025",
+   "065483-2025"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-31211R~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBMPR31211R",
+    "kind": "national",
+    "name": "Flagship Housing Limited",
+    "org_id": 31541414
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "notices": [
+   "039336-2026",
+   "039468-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-31211R~PPPG4651TGCG",
+  "members": [
+   {
+    "identifier": "GBMPR31211R",
+    "kind": "national",
+    "name": "Flagship Housing Limited",
+    "org_id": 31541414
+   },
+   {
+    "identifier": "GBPPONPPPG4651TGCG",
+    "kind": "national",
+    "name": "Flagship Housing Limited",
+    "org_id": 30918169
+   }
+  ],
+  "notices": [
+   "049869-2025",
+   "025311-2026",
+   "035141-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-31419R~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBMPR31419R",
+    "kind": "national",
+    "name": "South Lakes Housing",
+    "org_id": 31545078
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "notices": [
+   "034898-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-7522~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBMPR7522",
+    "kind": "national",
+    "name": "Thirteen Housing Group Limited",
+    "org_id": 30914694
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "notices": [
+   "036655-2026",
+   "036769-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-7643~PDHG6361YQXW",
+  "members": [
+   {
+    "identifier": "GBMPR7643",
+    "kind": "national",
+    "name": "Cross Keys Homes",
+    "org_id": 30968692
+   },
+   {
+    "identifier": "GBPPONPDHG6361YQXW",
+    "kind": "national",
+    "name": "Cross Keys Homes",
+    "org_id": 31554487
+   }
+  ],
+  "notices": [
+   "088151-2026",
+   "089505-2026",
+   "084834-2025"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-7711~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBMPR7711",
+    "kind": "national",
+    "name": "Bernicia Group",
+    "org_id": 30916015
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "notices": [
+   "093008-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-7773~PDPR4361WLZP",
+  "members": [
+   {
+    "identifier": "GBMPR7773",
+    "kind": "national",
+    "name": "Livv Housing Group",
+    "org_id": 30933260
+   },
+   {
+    "identifier": "GBPPONPDPR4361WLZP",
+    "kind": "national",
+    "name": "Livv Housing Group",
+    "org_id": 31538427
+   }
+  ],
+  "notices": [
+   "087085-2026",
+   "046819-2025",
+   "051340-2025"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-7814~PQBJ4894BHQW",
+  "members": [
+   {
+    "identifier": "GBMPR7814",
+    "kind": "national",
+    "name": "Beyond Housing Limited",
+    "org_id": 30968723
+   },
+   {
+    "identifier": "GBPPONPQBJ4894BHQW",
+    "kind": "national",
+    "name": "Beyond Housing Limited",
+    "org_id": 31563654
+   }
+  ],
+  "notices": [
+   "088196-2026",
+   "090562-2026",
+   "091255-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-7843~PYBH1339MTCJ",
+  "members": [
+   {
+    "identifier": "GBMPR7843",
+    "kind": "national",
+    "name": "Anchor Hanover Group",
+    "org_id": 30917184
+   },
+   {
+    "identifier": "GBPPONPYBH1339MTCJ",
+    "kind": "national",
+    "name": "Anchor Hanover Group",
+    "org_id": 30914476
+   }
+  ],
+  "notices": [
+   "034079-2025",
+   "034095-2025",
+   "089328-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-8112~PCMV1277LCTG",
+  "members": [
+   {
+    "identifier": "GBMPR8112",
+    "kind": "national",
+    "name": "Chelmer Housing Partnership Limited",
+    "org_id": 30915659
+   },
+   {
+    "identifier": "GBPPONPCMV1277LCTG",
+    "kind": "national",
+    "name": "Delta Housing Limited",
+    "org_id": 31573385
+   }
+  ],
+  "notices": [
+   "031540-2025",
+   "031553-2025",
+   "085283-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-8983~PXJP9994BJBR",
+  "members": [
+   {
+    "identifier": "GBMPR8983",
+    "kind": "national",
+    "name": "Southern Housing",
+    "org_id": 30953695
+   },
+   {
+    "identifier": "GBPPONPXJP9994BJBR",
+    "kind": "national",
+    "name": "Southern Housing",
+    "org_id": 30967562
+   }
+  ],
+  "notices": [
+   "087391-2026",
+   "089520-2026",
+   "091407-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-9518~PZHB3385JTPM",
+  "members": [
+   {
+    "identifier": "GBMPR9518",
+    "kind": "national",
+    "name": "Inspire North (Community Benefit Society)",
+    "org_id": 30919598
+   },
+   {
+    "identifier": "GBPPONPZHB3385JTPM",
+    "kind": "national",
+    "name": "Inspire North",
+    "org_id": 31574895
+   }
+  ],
+  "notices": [
+   "062835-2025",
+   "077594-2025",
+   "077850-2025"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-ip6243r~PXGT2943TQCV",
+  "members": [
+   {
+    "identifier": "GBMPRIP6243R",
+    "kind": "national",
+    "name": "Hastoe Housing Association Limited",
+    "org_id": 31563025
+   },
+   {
+    "identifier": "GBPPONPXGT2943TQCV",
+    "kind": "national",
+    "name": "Hastoe Housing Association Ltd",
+    "org_id": 30914147
+   }
+  ],
+  "notices": [
+   "013919-2026",
+   "013948-2026",
+   "014919-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-RS007639~PDHV4431PHTR",
+  "members": [
+   {
+    "identifier": "GBMPRRS007639",
+    "kind": "national",
+    "name": "Ongo Homes Limited",
+    "org_id": 30917080
+   },
+   {
+    "identifier": "GBPPONPDHV4431PHTR",
+    "kind": "national",
+    "name": "Ongo Homes",
+    "org_id": 31580320
+   }
+  ],
+  "notices": [
+   "033917-2025",
+   "037963-2025",
+   "073546-2025"
+  ],
+  "scheme": "GB-MPR"
+ }
+]

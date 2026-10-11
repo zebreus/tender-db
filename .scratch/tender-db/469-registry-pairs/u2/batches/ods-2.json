@@ -1,0 +1,356 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-NHS-QUA~PCXW1342CXYV",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "NHS Black Country Integrated Care Board",
+    "org_id": 30917129
+   },
+   {
+    "identifier": "GBPPONPCXW1342CXYV",
+    "kind": "national",
+    "name": "NHS Black Country Integrated Care Board",
+    "org_id": 31542353
+   }
+  ],
+  "notices": [
+   "017312-2026",
+   "060896-2026",
+   "061251-2026"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-QVV~PGWM4538ZGJR",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "NHS Dorset Integrated Care Board",
+    "org_id": 30914398
+   },
+   {
+    "identifier": "GBPPONPGWM4538ZGJR",
+    "kind": "national",
+    "name": "NHS Dorset Integrated Care Board",
+    "org_id": 31571396
+   }
+  ],
+  "notices": [
+   "035745-2025",
+   "091306-2026",
+   "039784-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-QWU~PBZT7637QJTP",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "NHS Coventry and Warwickshire Integrated Care Board",
+    "org_id": 31534829
+   },
+   {
+    "identifier": "GBPPONPBZT7637QJTP",
+    "kind": "national",
+    "name": "NHS Coventry and Warwickshire Integrated Care Board",
+    "org_id": 31542351
+   }
+  ],
+  "notices": [
+   "058164-2025",
+   "061566-2025",
+   "076174-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-R0B~PRTW2132HYWJ",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "South Tyneside and Sunderland NHS Foundation Trust",
+    "org_id": 13569138
+   },
+   {
+    "identifier": "GBPPONPRTW2132HYWJ",
+    "kind": "national",
+    "name": "South Tyneside & Sunderland NHSFT",
+    "org_id": 31567351
+   }
+  ],
+  "notices": [
+   "035420-2025",
+   "084531-2026",
+   "071445-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-R1A~PPVD8623XLTW",
+  "members": [
+   {
+    "identifier": "GBNHSR1A",
+    "kind": "national",
+    "name": "Herefordshire and Worcestershire Health and Care NHS Trust",
+    "org_id": 31540738
+   },
+   {
+    "identifier": "GBPPONPPVD8623XLTW",
+    "kind": "national",
+    "name": "Herefordshire and Worcestershire Health and Care NHS Trust",
+    "org_id": 30972162
+   }
+  ],
+  "notices": [
+   "069377-2026",
+   "091635-2026"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-R1F~PRBY9272TQGX",
+  "members": [
+   {
+    "identifier": "GBNHSR1F",
+    "kind": "national",
+    "name": "ISLE OF WIGHT NHS TRUST",
+    "org_id": 31542853
+   },
+   {
+    "identifier": "GBPPONPRBY9272TQGX",
+    "kind": "national",
+    "name": "Isle of Wight NHS Trust",
+    "org_id": 31571667
+   }
+  ],
+  "notices": [
+   "053235-2025",
+   "077327-2025",
+   "077478-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-R1L~PRRJ6511ZDJL",
+  "members": [
+   {
+    "identifier": "GBNHSR1L",
+    "kind": "national",
+    "name": "ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+    "org_id": 31537837
+   },
+   {
+    "identifier": "GBPPONPRRJ6511ZDJL",
+    "kind": "national",
+    "name": "Essex Partnership University NHS Foundation Trust",
+    "org_id": 30968981
+   }
+  ],
+  "notices": [
+   "042502-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-RA2~PBND1678TCRM",
+  "members": [
+   {
+    "identifier": "GBNHSRA2",
+    "kind": "national",
+    "name": "ROYAL SURREY COUNTY HOSPITAL NHS FOUNDATION TRUST",
+    "org_id": 31538055
+   },
+   {
+    "identifier": "GBPPONPBND1678TCRM",
+    "kind": "national",
+    "name": "NHS Buckinghamshire Oxfordshire & Berkshire West Integrated Care Board",
+    "org_id": 30915589
+   }
+  ],
+  "notices": [
+   "044053-2026"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-RBD~PLCW3715PZWM",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "Dorset County Hospital NHS Foundation Trust",
+    "org_id": 1466780
+   },
+   {
+    "identifier": "GBPPONPLCW3715PZWM",
+    "kind": "national",
+    "name": "Dorset County Hospital NHS Foundation Trust",
+    "org_id": 31599890
+   }
+  ],
+  "notices": [
+   "064467-2026",
+   "064487-2026",
+   "068480-2026"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-RBT~PZZX1928RJQT",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "Mid Cheshire Hospitals NHS Foundation Trust",
+    "org_id": 1271280
+   },
+   {
+    "identifier": "GBPPONPZZX1928RJQT",
+    "kind": "national",
+    "name": "Mid Cheshire Hospitals NHS Foundation Trust",
+    "org_id": 30918302
+   }
+  ],
+  "notices": [
+   "031170-2025",
+   "033768-2025",
+   "033838-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-RBV~PTTQ9511YPYH",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "The Christie NHS Foundation Trust",
+    "org_id": 1285461
+   },
+   {
+    "identifier": "GBPPONPTTQ9511YPYH",
+    "kind": "national",
+    "name": "The Christie NHS Foundation Trust",
+    "org_id": 30919619
+   }
+  ],
+  "notices": [
+   "031183-2025",
+   "031190-2025",
+   "032259-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-RC9~PTQH2444LZZX",
+  "members": [
+   {
+    "identifier": "GBNHSRC9",
+    "kind": "national",
+    "name": "BEDFORDSHIRE HOSPITALS NHS FOUNDATION TRUST",
+    "org_id": 31588187
+   },
+   {
+    "identifier": "GBPPONPTQH2444LZZX",
+    "kind": "national",
+    "name": "Catering for Staff Summer Engagement Event 2025",
+    "org_id": 30913603
+   }
+  ],
+  "notices": [
+   "074373-2026",
+   "074378-2026",
+   "009456-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-RCB~PNMY9834ZYJT",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST",
+    "org_id": 30916881
+   },
+   {
+    "identifier": "GBPPONPNMY9834ZYJT",
+    "kind": "national",
+    "name": "York and Scarborough Teaching Hospital NHS Foundation Trust",
+    "org_id": 31535291
+   }
+  ],
+  "notices": [
+   "033563-2025",
+   "033958-2025",
+   "033963-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-RCD~PMWJ9355XBGP",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "Harrogate and District NHS Foundation Trust",
+    "org_id": 1381987
+   },
+   {
+    "identifier": "GBPPONPMWJ9355XBGP",
+    "kind": "national",
+    "name": "Harrogate and District NHS Foundation Trust",
+    "org_id": 31549348
+   }
+  ],
+  "notices": [
+   "071445-2025",
+   "081478-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-RCF~PWVB9664WPWP",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "Airedale NHS Foundation Trust",
+    "org_id": 1369100
+   },
+   {
+    "identifier": "GBPPONPWVB9664WPWP",
+    "kind": "national",
+    "name": "Airedale NHS Foundation Trust",
+    "org_id": 31535616
+   }
+  ],
+  "notices": [
+   "050217-2025",
+   "051189-2025",
+   "068889-2025"
+  ],
+  "scheme": "GB-NHS"
+ }
+]

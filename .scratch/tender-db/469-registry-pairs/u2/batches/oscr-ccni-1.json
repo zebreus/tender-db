@@ -1,0 +1,96 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-NIC-NI 100770~PLPQ1249DXWG",
+  "members": [
+   {
+    "identifier": "GBNICNI100770",
+    "kind": "national",
+    "name": "Coalisland Training Services Ltd",
+    "org_id": 31539293
+   },
+   {
+    "identifier": "GBPPONPLPQ1249DXWG",
+    "kind": "national",
+    "name": "COALISLAND TRAINING SERVICES LIMITED",
+    "org_id": 31542330
+   }
+  ],
+  "notices": [
+   "045276-2025"
+  ],
+  "scheme": "GB-NIC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NIC-NIC 100095~PMZV8413XBMQ",
+  "members": [
+   {
+    "identifier": "GBNICNIC100095",
+    "kind": "national",
+    "name": "CHOICE HOUSING IRELAND LIMITED",
+    "org_id": 31593920
+   },
+   {
+    "identifier": "GBCOHNP000408",
+    "kind": "national",
+    "name": "Choice Housing Ireland Limited",
+    "org_id": 30967375
+   }
+  ],
+  "notices": [
+   "059891-2025",
+   "075077-2025",
+   "081079-2025"
+  ],
+  "scheme": "GB-NIC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-SC-SC005336~PGGY6115PNHD",
+  "members": [
+   {
+    "identifier": "GBSCSC005336",
+    "kind": "national",
+    "name": "The University of Edinburgh",
+    "org_id": 30953699
+   },
+   {
+    "identifier": "GBPPONPGGY6115PNHD",
+    "kind": "national",
+    "name": "University of Edinburgh",
+    "org_id": 31563999
+   }
+  ],
+  "notices": [
+   "087395-2026",
+   "087954-2026",
+   "040539-2025"
+  ],
+  "scheme": "GB-SC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-SC-SC015263~PGVP7923NDTW",
+  "members": [
+   {
+    "identifier": "GBSCSC015263",
+    "kind": "national",
+    "name": "University of Strathclyde",
+    "org_id": 30953700
+   },
+   {
+    "identifier": "GBPPONPGVP7923NDTW",
+    "kind": "national",
+    "name": "University of Strathclyde",
+    "org_id": 31544520
+   }
+  ],
+  "notices": [
+   "087395-2026",
+   "053003-2025",
+   "065522-2025"
+  ],
+  "scheme": "GB-SC"
+ }
+]

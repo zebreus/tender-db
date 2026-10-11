@@ -1,0 +1,361 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-NHS-06H~PNJC6453ZWZN",
+  "members": [
+   {
+    "identifier": "GBNHS06H",
+    "kind": "national",
+    "name": "Cambridgeshire & Peterborough Integrated Care Board",
+    "org_id": 31537455
+   },
+   {
+    "identifier": "GBPPONPNJC6453ZWZN",
+    "kind": "national",
+    "name": "NHS Cambridgeshire and Peterborough Integrated Care Board",
+    "org_id": 31535193
+   }
+  ],
+  "notices": [
+   "043047-2025",
+   "064312-2025",
+   "008213-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-8HN02~PBJZ7139JTHN",
+  "members": [
+   {
+    "identifier": "GBNHS8HN02",
+    "kind": "national",
+    "name": "Care Quality Commission",
+    "org_id": 30915404
+   },
+   {
+    "identifier": "GBPPONPBJZ7139JTHN",
+    "kind": "national",
+    "name": "Care Quality Commission, Newcastle",
+    "org_id": 31537372
+   }
+  ],
+  "notices": [
+   "031144-2025",
+   "056094-2025",
+   "063840-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-A0V4D~PCZG5287NRDZ",
+  "members": [
+   {
+    "identifier": "GBNHSA0V4D",
+    "kind": "national",
+    "name": "NHS Elect",
+    "org_id": 31555825
+   },
+   {
+    "identifier": "GBPPONPCZG5287NRDZ",
+    "kind": "national",
+    "name": "NHS Elect",
+    "org_id": 31566767
+   }
+  ],
+  "notices": [
+   "082573-2025",
+   "026006-2026"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-G6V2S~PHMP5392DVTW",
+  "members": [
+   {
+    "identifier": "GBNHSG6V2S",
+    "kind": "national",
+    "name": "North London Foundation Trust",
+    "org_id": 30914786
+   },
+   {
+    "identifier": "GBPPONPHMP5392DVTW",
+    "kind": "national",
+    "name": "North London NHS Foundation Trust ",
+    "org_id": 30976583
+   }
+  ],
+  "notices": [
+   "030433-2025",
+   "036055-2025",
+   "086402-2026"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-H6A5H~PXMB9766NLTH",
+  "members": [
+   {
+    "identifier": "GBNHSH6A5H",
+    "kind": "national",
+    "name": "East of England NHS collaborative Procurement Hub",
+    "org_id": 30953460
+   },
+   {
+    "identifier": "GBPPONPXMB9766NLTH",
+    "kind": "national",
+    "name": "East Of England NHS Collaborative Hub",
+    "org_id": 30917376
+   }
+  ],
+  "notices": [
+   "087189-2026",
+   "076240-2025",
+   "080232-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-NCS04~PCGC8557XYGT",
+  "members": [
+   {
+    "identifier": "GBNHSNCS04",
+    "kind": "national",
+    "name": "NHS Property Services",
+    "org_id": 31545209
+   },
+   {
+    "identifier": "GBPPONPCGC8557XYGT",
+    "kind": "national",
+    "name": "NHS Property Services",
+    "org_id": 30913771
+   }
+  ],
+  "notices": [
+   "058356-2025",
+   "059385-2026",
+   "059392-2026"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-PWNJ-1991-NGDW~PCQH8657NGMT",
+  "members": [
+   {
+    "identifier": "GBNHSPWNJ1991NGDW",
+    "kind": "national",
+    "name": "Business Services Organisation ITS",
+    "org_id": 30953773
+   },
+   {
+    "identifier": "GBPPONPCQH8657NGMT",
+    "kind": "national",
+    "name": "Business Services Organisation",
+    "org_id": 30915904
+   }
+  ],
+  "notices": [
+   "087481-2026",
+   "087493-2026",
+   "038228-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-QE1~PBWM8336DJRG",
+  "members": [
+   {
+    "identifier": "GBNHSQE1",
+    "kind": "national",
+    "name": "NHS Lancashire and South Cumbria Integrated Care Board",
+    "org_id": 30915463
+   },
+   {
+    "identifier": "GBPPONPBWM8336DJRG",
+    "kind": "national",
+    "name": "NHS Lancashire and South Cumbria Integrated Care Board",
+    "org_id": 31569664
+   }
+  ],
+  "notices": [
+   "044668-2026",
+   "046130-2026",
+   "009245-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-QF7~PPTG3156TGWG",
+  "members": [
+   {
+    "identifier": "GBNHSQF7",
+    "kind": "national",
+    "name": "NHS SOUTH YORKSHIRE INTEGRATED CARE BOARD",
+    "org_id": 31538551
+   },
+   {
+    "identifier": "GBPPONPPTG3156TGWG",
+    "kind": "national",
+    "name": "NHS South Yorkshire Integrated Care Board",
+    "org_id": 30918122
+   }
+  ],
+  "notices": [
+   "044027-2025",
+   "044940-2025",
+   "036277-2026"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-QGH~PNMN7243RQRR",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+    "org_id": 30916931
+   },
+   {
+    "identifier": "GBPPONPNMN7243RQRR",
+    "kind": "national",
+    "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+    "org_id": 31542355
+   }
+  ],
+  "notices": [
+   "037297-2025",
+   "053541-2025",
+   "061508-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-QJ2~PXJD6284VTGG",
+  "members": [
+   {
+    "identifier": "GBNHSQJ2",
+    "kind": "national",
+    "name": "NHS DERBY AND DERBYSHIRE INTEGRATED CARE BOARD",
+    "org_id": 31545866
+   },
+   {
+    "identifier": "GBPPONPXJD6284VTGG",
+    "kind": "national",
+    "name": "NHS Derby & Derbyshire Integrated Care Board",
+    "org_id": 30916864
+   }
+  ],
+  "notices": [
+   "059843-2025",
+   "060949-2025",
+   "060950-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-QK1~PCLY6219YPTV",
+  "members": [
+   {
+    "identifier": "GBNHSQK1",
+    "kind": "national",
+    "name": "NHS Leicester, Leicestershire and Rutland Integrated Commissioning Board (LLR ICB)",
+    "org_id": 30916103
+   },
+   {
+    "identifier": "GBPPONPCLY6219YPTV",
+    "kind": "national",
+    "name": "NHS Leicester, Leicestershire and Rutland Integrated Care Board",
+    "org_id": 31542352
+   }
+  ],
+  "notices": [
+   "032396-2025",
+   "086164-2025",
+   "039004-2026"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-QMM~PZYC6286DWHT",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "NHS Norfolk and Waveney Integrated Care Board",
+    "org_id": 30915248
+   },
+   {
+    "identifier": "GBPPONPZYC6286DWHT",
+    "kind": "national",
+    "name": "NHS Norfolk and Waveney Integrated Care Board",
+    "org_id": 31542073
+   }
+  ],
+  "notices": [
+   "062442-2025",
+   "062790-2025",
+   "062959-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-QOC~PGZQ6523JGTT",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+    "org_id": 30915757
+   },
+   {
+    "identifier": "GBPPONPGZQ6523JGTT",
+    "kind": "national",
+    "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+    "org_id": 31542354
+   }
+  ],
+  "notices": [
+   "046463-2025",
+   "046598-2025",
+   "055132-2025"
+  ],
+  "scheme": "GB-NHS"
+ },
+ {
+  "country": "GB",
+  "key": "GB-NHS-QPM~PWCM9262VJDY",
+  "members": [
+   {
+    "identifier": null,
+    "kind": null,
+    "name": "NHS NORTHAMPTONSHIRE INTEGRATED CARE BOARD",
+    "org_id": 30916368
+   },
+   {
+    "identifier": "GBPPONPWCM9262VJDY",
+    "kind": "national",
+    "name": "NHS Northamptonshire Integrated Care Board",
+    "org_id": 31542357
+   }
+  ],
+  "notices": [
+   "032733-2025",
+   "032734-2025",
+   "032935-2025"
+  ],
+  "scheme": "GB-NHS"
+ }
+]

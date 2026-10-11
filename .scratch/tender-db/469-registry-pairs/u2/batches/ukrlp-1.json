@@ -1,0 +1,355 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10000018991~PVVY9652WDYM",
+  "members": [
+   {
+    "identifier": "GBUKPRN10000018991",
+    "kind": "national",
+    "name": "Rowan Gate Primary School",
+    "org_id": 31588376
+   },
+   {
+    "identifier": "GBPPONPVVY9652WDYM",
+    "kind": "national",
+    "name": "Rowan Gate Primary School",
+    "org_id": 30926649
+   }
+  ],
+  "notices": [
+   "075224-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10000415~PPBG8518ZJJN",
+  "members": [
+   {
+    "identifier": "GBUKPRN10000415",
+    "kind": "national",
+    "name": "Askham Bryan College",
+    "org_id": 30968718
+   },
+   {
+    "identifier": "GBPPONPPBG8518ZJJN",
+    "kind": "national",
+    "name": "Askham Bryan College",
+    "org_id": 31551769
+   }
+  ],
+  "notices": [
+   "088199-2026",
+   "044502-2025",
+   "048015-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10000571~PBMW5596NRJW",
+  "members": [
+   {
+    "identifier": "GBUKPRN10000571",
+    "kind": "national",
+    "name": "Bath Spa University",
+    "org_id": 30929647
+   },
+   {
+    "identifier": "GBPPONPBMW5596NRJW",
+    "kind": "national",
+    "name": "Bath Spa University",
+    "org_id": 31541432
+   }
+  ],
+  "notices": [
+   "085827-2026",
+   "085863-2026",
+   "085867-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10000840~PRQR6323DRZQ",
+  "members": [
+   {
+    "identifier": "GBUKPRN10000840",
+    "kind": "national",
+    "name": "Bradford College",
+    "org_id": 30928147
+   },
+   {
+    "identifier": "GBPPONPRQR6323DRZQ",
+    "kind": "national",
+    "name": "Bradford College",
+    "org_id": 30969231
+   }
+  ],
+  "notices": [
+   "085216-2026",
+   "019846-2026",
+   "019910-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10000878~PHJQ3398CTLP",
+  "members": [
+   {
+    "identifier": "GBUKPRN10000878",
+    "kind": "national",
+    "name": "University Centre Somerset College Group",
+    "org_id": 31576896
+   },
+   {
+    "identifier": "GBPPONPHJQ3398CTLP",
+    "kind": "national",
+    "name": "University Centre Somerset College Group",
+    "org_id": 30929830
+   }
+  ],
+  "notices": [
+   "054888-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10001696~PZGV1935NXDL",
+  "members": [
+   {
+    "identifier": "GBUKPRN10001696",
+    "kind": "national",
+    "name": "The Cornwall College Group",
+    "org_id": 31542085
+   },
+   {
+    "identifier": "GBPPONPZGV1935NXDL",
+    "kind": "national",
+    "name": "Cornwall College",
+    "org_id": 30913828
+   }
+  ],
+  "notices": [
+   "061825-2026",
+   "075342-2026",
+   "022617-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10001883~PDZY8857XDBL",
+  "members": [
+   {
+    "identifier": "GBUKPRN10001883",
+    "kind": "national",
+    "name": "DE MONTFORT UNIVERSITY",
+    "org_id": 30917383
+   },
+   {
+    "identifier": "GBPPONPDZY8857XDBL",
+    "kind": "national",
+    "name": "De Montfort University",
+    "org_id": 31542306
+   }
+  ],
+  "notices": [
+   "039954-2025",
+   "040129-2025",
+   "040160-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10002111~PXPM1872RCYW",
+  "members": [
+   {
+    "identifier": "GBUKPRN10002111",
+    "kind": "national",
+    "name": "East Durham College",
+    "org_id": 30976012
+   },
+   {
+    "identifier": "GBPPONPXPM1872RCYW",
+    "kind": "national",
+    "name": "East Durham College",
+    "org_id": 30929902
+   }
+  ],
+  "notices": [
+   "090477-2026",
+   "090928-2026",
+   "040430-2025"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10002638~PYVZ5892TRVV",
+  "members": [
+   {
+    "identifier": "GBUKPRN10002638",
+    "kind": "national",
+    "name": "Gateshead College",
+    "org_id": 30919578
+   },
+   {
+    "identifier": "GBPPONPYVZ5892TRVV",
+    "kind": "national",
+    "name": "Gateshead College",
+    "org_id": 30932984
+   }
+  ],
+  "notices": [
+   "084425-2026",
+   "087879-2026",
+   "074407-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10002639~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBUKPRN10002639",
+    "kind": "national",
+    "name": "Gateshead Borough Council",
+    "org_id": 30919654
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "notices": [
+   "017269-2026",
+   "017269-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10002639~PPGY1151NJQN",
+  "members": [
+   {
+    "identifier": "GBUKPRN10002639",
+    "kind": "national",
+    "name": "Gateshead Borough Council",
+    "org_id": 30919654
+   },
+   {
+    "identifier": "GBPPONPPGY1151NJQN",
+    "kind": "national",
+    "name": "Gateshead Borough Council",
+    "org_id": 30916319
+   }
+  ],
+  "notices": [
+   "084580-2026",
+   "086576-2026",
+   "087140-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10002696~PQWN9858ZCJM",
+  "members": [
+   {
+    "identifier": "GBUKPRN10002696",
+    "kind": "national",
+    "name": "Gloucestershire College",
+    "org_id": 31565169
+   },
+   {
+    "identifier": "GBPPONPQWN9858ZCJM",
+    "kind": "national",
+    "name": "Gloucestershire College",
+    "org_id": 31544144
+   }
+  ],
+  "notices": [
+   "019238-2026",
+   "061825-2026",
+   "093449-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10002743~PPDR6933XHHH",
+  "members": [
+   {
+    "identifier": "GBUKPRN10002743",
+    "kind": "national",
+    "name": "Grantham College",
+    "org_id": 31578778
+   },
+   {
+    "identifier": "GBPPONPPDR6933XHHH",
+    "kind": "national",
+    "name": "Grantham College",
+    "org_id": 31554601
+   }
+  ],
+  "notices": [
+   "060333-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10002917~PYRB9815YDNY",
+  "members": [
+   {
+    "identifier": "GBUKPRN10002917",
+    "kind": "national",
+    "name": "Hartlepool College of Further Education",
+    "org_id": 31559949
+   },
+   {
+    "identifier": "GBPPONPYRB9815YDNY",
+    "kind": "national",
+    "name": "Hartlepool College of Further Education",
+    "org_id": 31536264
+   }
+  ],
+  "notices": [
+   "005690-2026",
+   "012964-2026",
+   "027888-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ },
+ {
+  "country": "GB",
+  "key": "GB-UKPRN-10003427~PVVG6993XTHR",
+  "members": [
+   {
+    "identifier": "GBUKPRN10003427",
+    "kind": "national",
+    "name": "Itchen Sixth Form College",
+    "org_id": 31557389
+   },
+   {
+    "identifier": "GBPPONPVVG6993XTHR",
+    "kind": "national",
+    "name": "Itchen College",
+    "org_id": 31588188
+   }
+  ],
+  "notices": [
+   "086251-2025",
+   "028811-2025",
+   "092234-2026"
+  ],
+  "scheme": "GB-UKPRN"
+ }
+]

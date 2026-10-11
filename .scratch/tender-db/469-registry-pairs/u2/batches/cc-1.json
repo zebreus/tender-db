@@ -1,0 +1,351 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-CHC-10433R~PLDN9458HXQZ",
+  "members": [
+   {
+    "identifier": "GBCHC10433R",
+    "kind": "national",
+    "name": "Gateway Housing Association Limited",
+    "org_id": 31545099
+   },
+   {
+    "identifier": "GBPPONPLDN9458HXQZ",
+    "kind": "national",
+    "name": "Gateway Housing Association",
+    "org_id": 30933181
+   }
+  ],
+  "notices": [
+   "058126-2025",
+   "058128-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1044521~PZRZ3969DNNT",
+  "members": [
+   {
+    "identifier": "GBCHC1044521",
+    "kind": "national",
+    "name": "Oasis Care and Training Agency",
+    "org_id": 31564094
+   },
+   {
+    "identifier": "GBPPONPZRZ3969DNNT",
+    "kind": "national",
+    "name": "Oasis Care and Training Agency",
+    "org_id": 31583635
+   }
+  ],
+  "notices": [
+   "033450-2026",
+   "075430-2026",
+   "084111-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1077722~PYWT7232MXMX",
+  "members": [
+   {
+    "identifier": "GBCHC1077722",
+    "kind": "national",
+    "name": "FAMILY LIVES",
+    "org_id": 31547023
+   },
+   {
+    "identifier": "GBPPONPYWT7232MXMX",
+    "kind": "national",
+    "name": "Family Lives",
+    "org_id": 31545512
+   }
+  ],
+  "notices": [
+   "061751-2025",
+   "050446-2026",
+   "074445-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1079675~PZJW8184GHXX",
+  "members": [
+   {
+    "identifier": "GBCHC1079675",
+    "kind": "national",
+    "name": "THE KING'S TRUST",
+    "org_id": 31553465
+   },
+   {
+    "identifier": "GBPPONPZJW8184GHXX",
+    "kind": "national",
+    "name": "The King's Trust",
+    "org_id": 31535076
+   }
+  ],
+  "notices": [
+   "077104-2025",
+   "019238-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1079797~PNGT9457RTMH",
+  "members": [
+   {
+    "identifier": "GBCHC1079797",
+    "kind": "national",
+    "name": "THE CHARTERED INSTITUTE OF PERSONNEL AND DEVELOPMENT",
+    "org_id": 31537664
+   },
+   {
+    "identifier": "GBPPONPNGT9457RTMH",
+    "kind": "national",
+    "name": "Chartered Institute of Personnel and Development",
+    "org_id": 31544500
+   }
+  ],
+  "notices": [
+   "042234-2025",
+   "047482-2025",
+   "011809-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1091035~PBRJ8825CTGR",
+  "members": [
+   {
+    "identifier": "GBCHC1091035",
+    "kind": "national",
+    "name": "CHARTERED MANAGEMENT INSTITUTE",
+    "org_id": 30928201
+   },
+   {
+    "identifier": "GBPPONPBRJ8825CTGR",
+    "kind": "national",
+    "name": "CHARTERED MANAGEMENT INSTITUTE SERVICES LIMITED",
+    "org_id": 31554126
+   }
+  ],
+  "notices": [
+   "085313-2026",
+   "064742-2025",
+   "012224-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1091434~PHCH9173QTMH",
+  "members": [
+   {
+    "identifier": "GBCHC1091434",
+    "kind": "national",
+    "name": "NURSING AND MIDWIFERY COUNCIL",
+    "org_id": 30915093
+   },
+   {
+    "identifier": "GBPPONPHCH9173QTMH",
+    "kind": "national",
+    "name": "The Nursing and Midwifery Council",
+    "org_id": 30915966
+   }
+  ],
+  "notices": [
+   "030634-2025",
+   "030885-2025",
+   "033605-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1096908~PHBZ6759CZRZ",
+  "members": [
+   {
+    "identifier": "GBCHC1096908",
+    "kind": "national",
+    "name": "AFGHANISTAN & CENTRAL ASIAN ASSOCIATION",
+    "org_id": 31542369
+   },
+   {
+    "identifier": "GBPPONPHBZ6759CZRZ",
+    "kind": "national",
+    "name": "Afghanistan & Central Asian Association",
+    "org_id": 30926776
+   }
+  ],
+  "notices": [
+   "052255-2025",
+   "016911-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1107013~PWXN7778TJJG",
+  "members": [
+   {
+    "identifier": "GBCHC1107013",
+    "kind": "national",
+    "name": "Forum CIO",
+    "org_id": 31553021
+   },
+   {
+    "identifier": "GBPPONPWXN7778TJJG",
+    "kind": "national",
+    "name": "Forum CIO",
+    "org_id": 31589350
+   }
+  ],
+  "notices": [
+   "076240-2025",
+   "001181-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1130461~PZPR8554XHNX",
+  "members": [
+   {
+    "identifier": "GBCHC1130461",
+    "kind": "national",
+    "name": "CRESCENT PURCHASING LIMITED",
+    "org_id": 30914255
+   },
+   {
+    "identifier": "GBPPONPZPR8554XHNX",
+    "kind": "national",
+    "name": "Crescent Purchasing Consortium Limited",
+    "org_id": 30915968
+   }
+  ],
+  "notices": [
+   "029717-2025",
+   "029718-2025",
+   "029789-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1139250~PDTH9328QRQP",
+  "members": [
+   {
+    "identifier": "GBCHC1139250",
+    "kind": "national",
+    "name": "London Museum",
+    "org_id": 31552217
+   },
+   {
+    "identifier": "GBPPONPDTH9328QRQP",
+    "kind": "national",
+    "name": "London Museum",
+    "org_id": 30918375
+   }
+  ],
+  "notices": [
+   "074191-2025",
+   "062754-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1140312~PCWX4677HTMN",
+  "members": [
+   {
+    "identifier": "GBCHC1140312",
+    "kind": "national",
+    "name": "University of South Wales",
+    "org_id": 30914105
+   },
+   {
+    "identifier": "GBPPONPCWX4677HTMN",
+    "kind": "national",
+    "name": "University of South Wales",
+    "org_id": 30919521
+   }
+  ],
+  "notices": [
+   "031651-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1140762~PPNB5569JLHH",
+  "members": [
+   {
+    "identifier": "GBCHC1140762",
+    "kind": "national",
+    "name": "CARDIFF METROPOLITAN UNIVERSITY",
+    "org_id": 30915727
+   },
+   {
+    "identifier": "GBPPONPPNB5569JLHH",
+    "kind": "national",
+    "name": "Cardiff Metropolitan University",
+    "org_id": 30914980
+   }
+  ],
+  "notices": [
+   "031651-2025"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1145141~PDMD5638NXMT",
+  "members": [
+   {
+    "identifier": "GBCHC1145141",
+    "kind": "national",
+    "name": "PRIFYSGOL ABERYSTWYTH UNIVERSITY",
+    "org_id": 30915728
+   },
+   {
+    "identifier": "GBPPONPDMD5638NXMT",
+    "kind": "national",
+    "name": "Aberystwyth University",
+    "org_id": 30968735
+   }
+  ],
+  "notices": [
+   "031651-2025",
+   "062363-2026",
+   "062426-2026"
+  ],
+  "scheme": "GB-CHC"
+ },
+ {
+  "country": "GB",
+  "key": "GB-CHC-1149535~PCRP2139LPXM",
+  "members": [
+   {
+    "identifier": "GBCHC1149535",
+    "kind": "national",
+    "name": "UNIVERSITY OF WALES:TRINITY SAINT DAVID",
+    "org_id": 30915729
+   },
+   {
+    "identifier": "GBPPONPCRP2139LPXM",
+    "kind": "national",
+    "name": "University of Wales Trinity Saint David",
+    "org_id": 30919672
+   }
+  ],
+  "notices": [
+   "031651-2025"
+  ],
+  "scheme": "GB-CHC"
+ }
+]

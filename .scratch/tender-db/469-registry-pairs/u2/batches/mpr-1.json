@@ -1,0 +1,353 @@
+[
+ {
+  "country": "GB",
+  "key": "GB-MPR-12871R~PLDT3146ZNQQ",
+  "members": [
+   {
+    "identifier": "GBMPR12871R",
+    "kind": "national",
+    "name": "Sussex Housing & Care",
+    "org_id": 31573778
+   },
+   {
+    "identifier": "GBPPONPLDT3146ZNQQ",
+    "kind": "national",
+    "name": "Sussex Housing & Care",
+    "org_id": 31550992
+   }
+  ],
+  "notices": [
+   "043208-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-15210R~PDVR1783RWJX",
+  "members": [
+   {
+    "identifier": "GBMPR15210R",
+    "kind": "national",
+    "name": "Salvation Army Housing Association",
+    "org_id": 31557064
+   },
+   {
+    "identifier": "GBPPONPDVR1783RWJX",
+    "kind": "national",
+    "name": "Salvation Army Housing Association",
+    "org_id": 31540541
+   }
+  ],
+  "notices": [
+   "085887-2025",
+   "005320-2026",
+   "029379-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-16337R~PMCL4972LYCY",
+  "members": [
+   {
+    "identifier": "GBMPR16337R",
+    "kind": "national",
+    "name": "Metropolitan Housing Trust Limited",
+    "org_id": 30976449
+   },
+   {
+    "identifier": "GBPPONPMCL4972LYCY",
+    "kind": "national",
+    "name": "Metropolitan Thames Valley Housing Limited",
+    "org_id": 31538068
+   }
+  ],
+  "notices": [
+   "090941-2026",
+   "059125-2025",
+   "073047-2025"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-16460R~PGDJ9755ZNCY",
+  "members": [
+   {
+    "identifier": "GBMPR16460R",
+    "kind": "national",
+    "name": "Orwell Housing Association Ltd",
+    "org_id": 30916416
+   },
+   {
+    "identifier": "GBPPONPGDJ9755ZNCY",
+    "kind": "national",
+    "name": "Orwell Housing Association Limited",
+    "org_id": 31569638
+   }
+  ],
+  "notices": [
+   "032816-2025",
+   "085197-2026",
+   "085404-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-20755R~PGZD6448RDPL",
+  "members": [
+   {
+    "identifier": "GBMPR20755R",
+    "kind": "national",
+    "name": "Southdown Housing Association",
+    "org_id": 30919585
+   },
+   {
+    "identifier": "GBPPONPGZD6448RDPL",
+    "kind": "national",
+    "name": "Southdown Housing Association",
+    "org_id": 30915945
+   }
+  ],
+  "notices": [
+   "037828-2025",
+   "075794-2025",
+   "000300-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-21186r~PLHD1176CCXP",
+  "members": [
+   {
+    "identifier": "GBMPR21186R",
+    "kind": "national",
+    "name": "Waltham Forest Housing Association",
+    "org_id": 30917457
+   },
+   {
+    "identifier": "GBPPONPLHD1176CCXP",
+    "kind": "national",
+    "name": "Waltham Forest Housing Association",
+    "org_id": 31535363
+   }
+  ],
+  "notices": [
+   "017087-2025"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-26278R~PWND8621RJPR",
+  "members": [
+   {
+    "identifier": "GBMPR26278R",
+    "kind": "national",
+    "name": "West Kent Housing Association",
+    "org_id": 30916785
+   },
+   {
+    "identifier": "GBPPONPWND8621RJPR",
+    "kind": "national",
+    "name": "West Kent Housing Association",
+    "org_id": 31564029
+   }
+  ],
+  "notices": [
+   "033354-2025",
+   "084328-2026",
+   "053234-2025"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-27440R~PQBH3597XBJD",
+  "members": [
+   {
+    "identifier": "GBMPR27440R",
+    "kind": "national",
+    "name": "Creative Support",
+    "org_id": 30913929
+   },
+   {
+    "identifier": "GBPPONPQBH3597XBJD",
+    "kind": "national",
+    "name": "CREATIVE SUPPORT LIMITED",
+    "org_id": 31553186
+   }
+  ],
+  "notices": [
+   "076240-2025"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-28038R~PQND5289JNDN",
+  "members": [
+   {
+    "identifier": "GBMPR28038R",
+    "kind": "national",
+    "name": "CLARION HOUSING GROUP LIMITED",
+    "org_id": 31534486
+   },
+   {
+    "identifier": "GBPPONPQND5289JNDN",
+    "kind": "national",
+    "name": "Clarion Housing Group",
+    "org_id": 30914385
+   }
+  ],
+  "notices": [
+   "091257-2026",
+   "091272-2026",
+   "051546-2025"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-28414R~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBMPR28414R",
+    "kind": "national",
+    "name": "The Pioneer Housing and Community Group Limited",
+    "org_id": 31576262
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "notices": [
+   "058651-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-30045R~PRYW1616TVYT",
+  "members": [
+   {
+    "identifier": "GBMPR30045R",
+    "kind": "national",
+    "name": "Great Places Housing Group Limited",
+    "org_id": 30926591
+   },
+   {
+    "identifier": "GBPPONPRYW1616TVYT",
+    "kind": "national",
+    "name": "Great Places Housing Group",
+    "org_id": 30919545
+   }
+  ],
+  "notices": [
+   "084669-2026",
+   "087505-2026",
+   "087601-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-30398R~PHBB8926WHGM",
+  "members": [
+   {
+    "identifier": "GBMPR30398R",
+    "kind": "national",
+    "name": "Thrive Homes Limited",
+    "org_id": 30915060
+   },
+   {
+    "identifier": "GBPPONPHBB8926WHGM",
+    "kind": "national",
+    "name": "Thrive Homes",
+    "org_id": 30916354
+   }
+  ],
+  "notices": [
+   "030586-2025",
+   "030589-2025",
+   "039269-2025"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-30666R~PCBB6493RNBZ",
+  "members": [
+   {
+    "identifier": "GBMPR30666R",
+    "kind": "national",
+    "name": "Your Housing Group Limited",
+    "org_id": 30929619
+   },
+   {
+    "identifier": "GBPPONPCBB6493RNBZ",
+    "kind": "national",
+    "name": "Your Housing Group",
+    "org_id": 30915907
+   }
+  ],
+  "notices": [
+   "085780-2026",
+   "087572-2026",
+   "090952-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-30938R~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBMPR30938R",
+    "kind": "national",
+    "name": "The Riverside Group Limited",
+    "org_id": 30914487
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "notices": [
+   "018570-2026",
+   "019137-2026"
+  ],
+  "scheme": "GB-MPR"
+ },
+ {
+  "country": "GB",
+  "key": "GB-MPR-30938R~PWQV9217TZPQ",
+  "members": [
+   {
+    "identifier": "GBMPR30938R",
+    "kind": "national",
+    "name": "The Riverside Group Limited",
+    "org_id": 30914487
+   },
+   {
+    "identifier": "GBPPONPWQV9217TZPQ",
+    "kind": "national",
+    "name": "The Riverside Group Limited",
+    "org_id": 30917833
+   }
+  ],
+  "notices": [
+   "035457-2025",
+   "035596-2025",
+   "035633-2025"
+  ],
+  "scheme": "GB-MPR"
+ }
+]

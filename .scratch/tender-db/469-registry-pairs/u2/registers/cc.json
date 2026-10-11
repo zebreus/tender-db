@@ -1,0 +1,2665 @@
+{
+ "GB-CHC-10433R": {
+  "scheme": "GB-CHC",
+  "value": "10433R",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": false,
+  "name": null,
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "name_search_hits": []
+  },
+  "notes": "\"10433R\" has a trailing R and is not a registered_charity_number in the extract (CC numbers are plain integers 200000..1220015; the integer 10433 also matches no record). No charity_company_registration_number in the extract contains \"10433\". Name search of charity_name and other names (normalised phrase, LIMITED/LTD dropped, and all-significant-token match) for \"Gateway Housing Association Limited\" / \"Gateway Housing Association\": no record."
+ },
+ "GB-CHC-1044521": {
+  "scheme": "GB-CHC",
+  "value": "1044521",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "OASIS CARE AND TRAINING AGENCY (OCTA)",
+  "status": "Registered",
+  "other_names": [
+   "SOMALI REFUGEE ACTION GROUP"
+  ],
+  "linked": {
+   "organisation_number": 1044521,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "1996-02-16",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "SOMALI REFUGEE ACTION GROUP"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1044521, linked_charity_number=0) found in the 2026-10-11 extract: \"OASIS CARE AND TRAINING AGENCY (OCTA)\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1077722": {
+  "scheme": "GB-CHC",
+  "value": "1077722",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "Coram Family Lives",
+  "status": "Registered",
+  "other_names": [
+   "FAMILYLIVES",
+   "PARENTLINE PLUS",
+   "FAMILY LIVES"
+  ],
+  "linked": {
+   "organisation_number": 3965005,
+   "company_number": "03817762",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "1999-10-08",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "FAMILYLIVES",
+     "PARENTLINE PLUS",
+     "FAMILY LIVES"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1077722, linked_charity_number=0) found in the 2026-10-11 extract: \"Coram Family Lives\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed). charity_company_registration_number=03817762."
+ },
+ "GB-CHC-1079675": {
+  "scheme": "GB-CHC",
+  "value": "1079675",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "THE KING'S TRUST",
+  "status": "Registered",
+  "other_names": [
+   "THE PRINCE'S TRUST",
+   "KING'S TRUST",
+   "THE KING'S TRUST"
+  ],
+  "linked": {
+   "organisation_number": 3969861,
+   "company_number": "RC000772",
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2000-03-02",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "THE PRINCE'S TRUST",
+     "KING'S TRUST",
+     "THE KING'S TRUST"
+    ]
+   },
+   "linked_charities_total": 1,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 1,
+   "linked_charities": [
+    {
+     "linked_charity_number": 1,
+     "name": "THE SYDNEY HILL BIRMINGHAM SCHOOL LEAVERS BUSINESS START UP TRUST",
+     "status": "Removed",
+     "date_of_removal": "2005-09-23",
+     "other_names": []
+    }
+   ]
+  },
+  "notes": "Main record (registered_charity_number=1079675, linked_charity_number=0) found in the 2026-10-11 extract: \"THE KING'S TRUST\", Registered. 1 linked (subsidiary) charities share the number (0 registered, 1 removed). charity_company_registration_number=RC000772."
+ },
+ "GB-CHC-1079797": {
+  "scheme": "GB-CHC",
+  "value": "1079797",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "THE CHARTERED INSTITUTE OF PERSONNEL AND DEVELOPMENT",
+  "status": "Registered",
+  "other_names": [
+   "CHARTERED INSTITUTE OF PERSONNEL AND DEVELOPMENT",
+   "CIPD"
+  ],
+  "linked": {
+   "organisation_number": 3969864,
+   "company_number": "RC000758",
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2000-03-10",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "CHARTERED INSTITUTE OF PERSONNEL AND DEVELOPMENT"
+    ],
+    "Working name": [
+     "CIPD"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1079797, linked_charity_number=0) found in the 2026-10-11 extract: \"THE CHARTERED INSTITUTE OF PERSONNEL AND DEVELOPMENT\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed). charity_company_registration_number=RC000758."
+ },
+ "GB-CHC-1091035": {
+  "scheme": "GB-CHC",
+  "value": "1091035",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "CHARTERED MANAGEMENT INSTITUTE",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "organisation_number": 3989300,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2002-03-11",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {},
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1091035, linked_charity_number=0) found in the 2026-10-11 extract: \"CHARTERED MANAGEMENT INSTITUTE\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1091434": {
+  "scheme": "GB-CHC",
+  "value": "1091434",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "NURSING AND MIDWIFERY COUNCIL",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "organisation_number": 3982968,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2002-03-27",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {},
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1091434, linked_charity_number=0) found in the 2026-10-11 extract: \"NURSING AND MIDWIFERY COUNCIL\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1096908": {
+  "scheme": "GB-CHC",
+  "value": "1096908",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "AFGHANISTAN & CENTRAL ASIAN ASSOCIATION",
+  "status": "Registered",
+  "other_names": [
+   "AFGHAN COMMUNITY ORGANISATION OF LONDON",
+   "AFGHAN COMMUNITY ORGANISATION OF LONDON IN GREAT BRITAIN",
+   "AFGHANISTAN & ASIAN COMMUNITY ORGANISATION"
+  ],
+  "linked": {
+   "organisation_number": 3993692,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2003-04-08",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "AFGHAN COMMUNITY ORGANISATION OF LONDON",
+     "AFGHAN COMMUNITY ORGANISATION OF LONDON IN GREAT BRITAIN",
+     "AFGHANISTAN & ASIAN COMMUNITY ORGANISATION"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1096908, linked_charity_number=0) found in the 2026-10-11 extract: \"AFGHANISTAN & CENTRAL ASIAN ASSOCIATION\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1107013": {
+  "scheme": "GB-CHC",
+  "value": "1107013",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "Forum CIO",
+  "status": "Registered",
+  "other_names": [
+   "NORTH BANK FORUM FOR VOLUNTARY ORGANISATIONS LTD",
+   "NORTHBANK FORUM FOR VOLUNTARY ORGANISATIONS LTD",
+   "NORTHBANK FORUM FOR VOLUNTARY ORGANISATIONS CIO",
+   "NORTH BANK FORUM FOR VOLUNTARY ORGANISATIONS CIO"
+  ],
+  "linked": {
+   "organisation_number": 4010451,
+   "company_number": null,
+   "charity_type": "CIO",
+   "is_cio": true,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2004-11-26",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "NORTH BANK FORUM FOR VOLUNTARY ORGANISATIONS LTD",
+     "NORTHBANK FORUM FOR VOLUNTARY ORGANISATIONS LTD",
+     "NORTHBANK FORUM FOR VOLUNTARY ORGANISATIONS CIO"
+    ],
+    "Working name": [
+     "NORTH BANK FORUM FOR VOLUNTARY ORGANISATIONS CIO"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1107013, linked_charity_number=0) found in the 2026-10-11 extract: \"Forum CIO\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1130461": {
+  "scheme": "GB-CHC",
+  "value": "1130461",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "CRESCENT PURCHASING LIMITED",
+  "status": "Registered",
+  "other_names": [
+   "CRESCENT FURTHER EDUCATION LIMITED"
+  ],
+  "linked": {
+   "organisation_number": 4045138,
+   "company_number": "06774578",
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2009-07-07",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "CRESCENT FURTHER EDUCATION LIMITED"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1130461, linked_charity_number=0) found in the 2026-10-11 extract: \"CRESCENT PURCHASING LIMITED\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed). charity_company_registration_number=06774578."
+ },
+ "GB-CHC-1139250": {
+  "scheme": "GB-CHC",
+  "value": "1139250",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "MUSEUM OF LONDON",
+  "status": "Registered",
+  "other_names": [
+   "MOL",
+   "LONDON MUSEUM"
+  ],
+  "linked": {
+   "organisation_number": 5012018,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2010-12-02",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "MOL"
+    ],
+    "Working name": [
+     "LONDON MUSEUM"
+    ]
+   },
+   "linked_charities_total": 3,
+   "linked_charities_registered": 3,
+   "linked_charities_removed": 0,
+   "linked_charities": [
+    {
+     "linked_charity_number": 1,
+     "name": "THE LONDON MUSEUM TRUST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 2,
+     "name": "JOICEY TRUST FUND (ICW THE LONDON MUSEUM",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 3,
+     "name": "MACKENZIE BELL TRUST FUND (IN CONNECTION WITH THE LONDON MUSEUM )",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    }
+   ]
+  },
+  "notes": "Main record (registered_charity_number=1139250, linked_charity_number=0) found in the 2026-10-11 extract: \"MUSEUM OF LONDON\", Registered. 3 linked (subsidiary) charities share the number (3 registered, 0 removed)."
+ },
+ "GB-CHC-1140312": {
+  "scheme": "GB-CHC",
+  "value": "1140312",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "UNIVERSITY OF SOUTH WALES/PRIFYSGOL DE CYMRU",
+  "status": "Registered",
+  "other_names": [
+   "UNIVERSITY OF GLAMORGAN / PRIFYSGOL MORGANNWG"
+  ],
+  "linked": {
+   "organisation_number": 5011208,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2011-02-09",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "UNIVERSITY OF GLAMORGAN / PRIFYSGOL MORGANNWG"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1140312, linked_charity_number=0) found in the 2026-10-11 extract: \"UNIVERSITY OF SOUTH WALES/PRIFYSGOL DE CYMRU\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1140762": {
+  "scheme": "GB-CHC",
+  "value": "1140762",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "CARDIFF METROPOLITAN UNIVERSITY",
+  "status": "Registered",
+  "other_names": [
+   "UNIVERSITY OF WALES INSTITUTE CARDIFF",
+   "UWIC"
+  ],
+  "linked": {
+   "organisation_number": 5013584,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2011-03-10",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "UNIVERSITY OF WALES INSTITUTE CARDIFF",
+     "UWIC"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1140762, linked_charity_number=0) found in the 2026-10-11 extract: \"CARDIFF METROPOLITAN UNIVERSITY\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1145141": {
+  "scheme": "GB-CHC",
+  "value": "1145141",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "PRIFYSGOL ABERYSTWYTH",
+  "status": "Registered",
+  "other_names": [
+   "ABERYSTWYTH UNIVERSITY"
+  ],
+  "linked": {
+   "organisation_number": 5023194,
+   "company_number": "RC000641",
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2011-12-19",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Working name": [
+     "ABERYSTWYTH UNIVERSITY"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1145141, linked_charity_number=0) found in the 2026-10-11 extract: \"PRIFYSGOL ABERYSTWYTH\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed). charity_company_registration_number=RC000641."
+ },
+ "GB-CHC-1149535": {
+  "scheme": "GB-CHC",
+  "value": "1149535",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "UNIVERSITY OF WALES:TRINITY SAINT DAVID",
+  "status": "Registered",
+  "other_names": [
+   "UWTSD",
+   "PRIFYSGOL CYMRU: Y DRINDOD DEWI SANT"
+  ],
+  "linked": {
+   "organisation_number": 5031795,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2012-10-29",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Working name": [
+     "UWTSD",
+     "PRIFYSGOL CYMRU: Y DRINDOD DEWI SANT"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1149535, linked_charity_number=0) found in the 2026-10-11 extract: \"UNIVERSITY OF WALES:TRINITY SAINT DAVID\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1161921": {
+  "scheme": "GB-CHC",
+  "value": "1161921",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "Step 2 Young People's Health",
+  "status": "Registered",
+  "other_names": [
+   "STEP 2 YOUNG PEOPLE'S HEALTH PROJECT",
+   "Step 2 Young People's Health"
+  ],
+  "linked": {
+   "organisation_number": 5058519,
+   "company_number": null,
+   "charity_type": "CIO",
+   "is_cio": true,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2015-06-01",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "STEP 2 YOUNG PEOPLE'S HEALTH PROJECT"
+    ],
+    "Working name": [
+     "Step 2 Young People's Health"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1161921, linked_charity_number=0) found in the 2026-10-11 extract: \"Step 2 Young People's Health\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1172924": {
+  "scheme": "GB-CHC",
+  "value": "1172924",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "NORTH EAST YOUNG DADS AND LADS PROJECT CIO",
+  "status": "Registered",
+  "other_names": [
+   "NORTH EAST YOUNG LADS AND DADS PROJECT CIO"
+  ],
+  "linked": {
+   "organisation_number": 5096054,
+   "company_number": null,
+   "charity_type": "CIO",
+   "is_cio": true,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2017-05-09",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Previous name": [
+     "NORTH EAST YOUNG LADS AND DADS PROJECT CIO"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1172924, linked_charity_number=0) found in the 2026-10-11 extract: \"NORTH EAST YOUNG DADS AND LADS PROJECT CIO\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1175616": {
+  "scheme": "GB-CHC",
+  "value": "1175616",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "SHINE LINCOLNSHIRE",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "organisation_number": 5103169,
+   "company_number": null,
+   "charity_type": "CIO",
+   "is_cio": true,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2017-11-08",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {},
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1175616, linked_charity_number=0) found in the 2026-10-11 extract: \"SHINE LINCOLNSHIRE\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-1205126": {
+  "scheme": "GB-CHC",
+  "value": "1205126",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "RASAC - RAPE AND SEXUAL ABUSE CENTRE",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "organisation_number": 5227525,
+   "company_number": null,
+   "charity_type": "CIO",
+   "is_cio": true,
+   "cio_is_dissolved": false,
+   "date_of_registration": "2023-10-09",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {},
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=1205126, linked_charity_number=0) found in the 2026-10-11 extract: \"RASAC - RAPE AND SEXUAL ABUSE CENTRE\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-17434R": {
+  "scheme": "GB-CHC",
+  "value": "17434R",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": false,
+  "name": null,
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "name_search_hits": [
+    {
+     "searched_name": "Northern Housing Consortium Ltd",
+     "matched_via": "charity_name",
+     "matched_text": "NORTHERN HOUSING CONSORTIUM CHARITABLE TRUST",
+     "match_kind": "phrase",
+     "registered_charity_number": 1089070,
+     "linked_charity_number": 0,
+     "charity_name": "NORTHERN HOUSING CONSORTIUM CHARITABLE TRUST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "company_number": null,
+     "charity_type": "Trust"
+    }
+   ],
+   "loose_name_hits": {
+    "token": "MOAT",
+    "why": "of the 20 charity names containing the word MOAT, all but one are place names (Moat Mount, Hobs Moat, Old Moat, Moat Hall, Moat House ...); the exception is",
+    "records": [
+     {
+      "registered_charity_number": 1136995,
+      "charity_name": "MOAT FOUNDATION",
+      "status": "Removed",
+      "date_of_registration": "2010-07-21",
+      "date_of_removal": "2020-10-15",
+      "charity_type": "Charitable company",
+      "company_number": null,
+      "other_names": [
+       "BOURNE CHARITY",
+       "MOAT FOUNDATION LIMITED"
+      ]
+     }
+    ]
+   }
+  },
+  "notes": "\"17434R\" has a trailing R and is not a registered_charity_number in the extract (CC numbers are plain integers 200000..1220015; the integer 17434 also matches no record). No charity_company_registration_number in the extract contains \"17434\". Name search of charity_name and other names (normalised phrase, LIMITED/LTD dropped, and all-significant-word match) for \"Moat Homes Limited\" / \"Northern Housing Consortium Ltd\": name-similar records only: Northern Housing Consortium Ltd -> 1089070/0 \"NORTHERN HOUSING CONSORTIUM CHARITABLE TRUST\" (Registered, phrase match via charity_name \"NORTHERN HOUSING CONSORTIUM CHARITABLE TRUST\"). The extract carries nothing (company number, other name) that ties these records to the named body; they are separate charities whose names share the searched words. Loose search on the word MOAT: of the 20 charity names containing the word MOAT, all but one are place names (Moat Mount, Hobs Moat, Old Moat, Moat Hall, Moat House ...); the exception is 1136995 \"MOAT FOUNDATION\" (Removed 2020-10-15, Charitable company, previous/working names: BOURNE CHARITY, MOAT FOUNDATION LIMITED). Nothing in the extract ties it to the named body."
+ },
+ "GB-CHC-207043": {
+  "scheme": "GB-CHC",
+  "value": "207043",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "THE ROYAL SOCIETY OF LONDON FOR IMPROVING NATURAL KNOWLEDGE (COMMONLY KNOWN AS THE ROYAL SOCIETY)",
+  "status": "Registered",
+  "other_names": [
+   "THE ROYAL SOCIETY"
+  ],
+  "linked": {
+   "organisation_number": 207043,
+   "company_number": "RC000519",
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "1963-01-22",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Working name": [
+     "THE ROYAL SOCIETY"
+    ]
+   },
+   "linked_charities_total": 102,
+   "linked_charities_registered": 8,
+   "linked_charities_removed": 94,
+   "linked_charities": [
+    {
+     "linked_charity_number": 1,
+     "name": "ARUNDEL LIBRARY FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 2,
+     "name": "BRADY FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 3,
+     "name": "CHURCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 4,
+     "name": "CURL BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "2009-01-30",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 5,
+     "name": "CRONIAN LECTURE",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 6,
+     "name": "BAKERIAN LECTURE",
+     "status": "Removed",
+     "date_of_removal": "2009-01-30",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 7,
+     "name": "FERRIER LECTURE",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 8,
+     "name": "WILKINS LECTURE",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 9,
+     "name": "BERINGER RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 10,
+     "name": "BROWNE FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 11,
+     "name": "DARWIN FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 12,
+     "name": "DEWRANCE DONATION AND JODRELL",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 13,
+     "name": "BERNAL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 14,
+     "name": "PATTERSON BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 15,
+     "name": "FOLLEY'S BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "2009-01-30",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 16,
+     "name": "MR AND MRS R L HOWE BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 17,
+     "name": "BINMORE KENNER FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 18,
+     "name": "MARSHALL AND ORR BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "2009-01-30",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 19,
+     "name": "WINTRINGHAM FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 20,
+     "name": "YARROW EDUCATIONAL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 21,
+     "name": "S G BROWN FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 22,
+     "name": "COPLEY MEDAL",
+     "status": "Removed",
+     "date_of_removal": "2009-01-30",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 23,
+     "name": "RUMFORD MEDAL",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 24,
+     "name": "DAVY MEDAL",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 25,
+     "name": "BUCHANAN MEDAL",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 26,
+     "name": "GEOGRAPHICAL CONGRESS FUND",
+     "status": "Removed",
+     "date_of_removal": "2005-01-24",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 27,
+     "name": "FIFTH INTERNATIONAL BOTANICAL CONGRESS (EDINBURGH) FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 28,
+     "name": "NAPIER FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-01-30",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 29,
+     "name": "CONWAY FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-01-30",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 30,
+     "name": "EMBOSSED SCIENTIFIC BOOKS FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 31,
+     "name": "FEDERAL COUNCIL OF CHEMISTRY FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 32,
+     "name": "FEE REDUCTION FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 33,
+     "name": "KECK AND R J KNOWLES MEMORIAL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 34,
+     "name": "FLOREY FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 35,
+     "name": "FORSYTH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 36,
+     "name": "FOULERTON FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 37,
+     "name": "FOULERTON GIFT FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 38,
+     "name": "GASSIOT FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 39,
+     "name": "GENERAL RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 40,
+     "name": "GORE FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 41,
+     "name": "YARROW FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 42,
+     "name": "BRUNO MENDEL TRAVELLING FELLOWSHIP",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 43,
+     "name": "HORACE LE MARQUAND AND DUDLEY BRIGG TRUST FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 44,
+     "name": "GUNNING FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 45,
+     "name": "HANDLEY FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 46,
+     "name": "HEAD FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 47,
+     "name": "JAFFE FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 48,
+     "name": "E ALAN JOHNSTON FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 49,
+     "name": "JOULE FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 50,
+     "name": "SYLVESTER MEDAL",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 51,
+     "name": "HUGHES MEDAL",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 52,
+     "name": "LAWRENCE FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 53,
+     "name": "LOCKE FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 54,
+     "name": "MACKINNON FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 55,
+     "name": "MEDICAL RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 56,
+     "name": "LEEUWENLOEK LECTURE",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 57,
+     "name": "MATHEMATICAL TABLES FUND (INCLUDING THE CUNNINGHAM BEQUEST)",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 58,
+     "name": "PARSONS MEMORIAL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 59,
+     "name": "PENSION FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 60,
+     "name": "PETAVEL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 61,
+     "name": "MESSEL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 62,
+     "name": "MOND FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 63,
+     "name": "MOSELEY FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 64,
+     "name": "JOHN MURRAY TRAVELLING STUDENTSHIP FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 65,
+     "name": "THE CLIFFORD PATERSON LECTURE",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 66,
+     "name": "PICKERING RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 67,
+     "name": "ROSENHEIM RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-01-30",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 68,
+     "name": "MAURICE HILL RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 69,
+     "name": "MEDAL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 70,
+     "name": "PEDLER FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 71,
+     "name": "ALBERT RECKITT RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 72,
+     "name": "ROSSE FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 73,
+     "name": "RUTHERFORD MEMORIAL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 74,
+     "name": "RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 75,
+     "name": "ANONYMOUS RESEARCH FUNDS",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 76,
+     "name": "EPA CEPHALOSPORIN RESEARCH",
+     "status": "Removed",
+     "date_of_removal": "2009-01-30",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 77,
+     "name": "EPA CEPHALOSPORIN (1982)",
+     "status": "Removed",
+     "date_of_removal": "2009-01-30",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 78,
+     "name": "INQUA",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 79,
+     "name": "OPTICS",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 80,
+     "name": "WELLCOME FOUNDATION AWARD",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 81,
+     "name": "ROYAL SOCIETY GENERAL TRAVEL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 82,
+     "name": "ROYAL SOCIETY TRAVEL FUND FOR NON-FELLOWS INCLUDING THE L MORDELL TRAVEL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 83,
+     "name": "SCIENTIFIC RADIO FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 84,
+     "name": "SCIENTIFIC RELIEF FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 85,
+     "name": "SCIENTIFIC RESEARCH IN SCHOOL ACCOUNT",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 86,
+     "name": "SCOTT FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 87,
+     "name": "SMITHSON FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 88,
+     "name": "SORLEY FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 89,
+     "name": "STOTHERT FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 90,
+     "name": "SIMONSEN FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 91,
+     "name": "STEAD FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 92,
+     "name": "SCHUSTER FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 93,
+     "name": "GENERAL HERBERT STUDD FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 94,
+     "name": "TOMES FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 95,
+     "name": "TYNDALL FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 96,
+     "name": "WELLCOME RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 97,
+     "name": "WARREN RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "2009-07-16",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 98,
+     "name": "THE ROYAL SOCIETY LIFE SCIENCE FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 99,
+     "name": "THE ROYAL SOCIETY MATHEMATICS AND PHYSICAL SCIENCE FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 100,
+     "name": "THE ROYAL SOCIETY GENERAL FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 101,
+     "name": "THE ROYAL SOCIETY INTERNATIONAL FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 102,
+     "name": "WOLFSON RESEARCH PROFESSORSHIP OF THE ROYAL SOCIETY",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    }
+   ]
+  },
+  "notes": "Main record (registered_charity_number=207043, linked_charity_number=0) found in the 2026-10-11 extract: \"THE ROYAL SOCIETY OF LONDON FOR IMPROVING NATURAL KNOWLEDGE (COMMONLY KNOWN AS THE ROYAL SOCIETY)\", Registered. 102 linked (subsidiary) charities share the number (8 registered, 94 removed). charity_company_registration_number=RC000519."
+ },
+ "GB-CHC-207076": {
+  "scheme": "GB-CHC",
+  "value": "207076",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "ROYAL SOCIETY FOR THE PROTECTION OF BIRDS",
+  "status": "Registered",
+  "other_names": [
+   "R S P B",
+   "THE RSPB"
+  ],
+  "linked": {
+   "organisation_number": 207076,
+   "company_number": "RC000521",
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "1962-09-22",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Working name": [
+     "R S P B",
+     "THE RSPB"
+    ]
+   },
+   "linked_charities_total": 5,
+   "linked_charities_registered": 5,
+   "linked_charities_removed": 0,
+   "linked_charities": [
+    {
+     "linked_charity_number": 1,
+     "name": "EDITH LOUISA HITCHCOCK FOR A BIRD SANCTUARY",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 2,
+     "name": "ARTHUR LEIGH BARKER FOR A SANCTUARY FOR WILD LIFE",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 3,
+     "name": "DUNGENESS BIRD SANCTUARY",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 4,
+     "name": "ENDOWMENT FUND FOR THE FORMER BIRD SANCTUARY KNOWN AS BOWLING ALLEY WOOD",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 5,
+     "name": "BISHOP BEQUEST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    }
+   ]
+  },
+  "notes": "Main record (registered_charity_number=207076, linked_charity_number=0) found in the 2026-10-11 extract: \"ROYAL SOCIETY FOR THE PROTECTION OF BIRDS\", Registered. 5 linked (subsidiary) charities share the number (5 registered, 0 removed). charity_company_registration_number=RC000521."
+ },
+ "GB-CHC-209617": {
+  "scheme": "GB-CHC",
+  "value": "209617",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "THE GUIDE DOGS FOR THE BLIND ASSOCIATION",
+  "status": "Registered",
+  "other_names": [
+   "GDBA",
+   "GUIDE DOGS"
+  ],
+  "linked": {
+   "organisation_number": 209617,
+   "company_number": "00291646",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "1962-11-08",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Working name": [
+     "GDBA",
+     "GUIDE DOGS"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=209617, linked_charity_number=0) found in the 2026-10-11 extract: \"THE GUIDE DOGS FOR THE BLIND ASSOCIATION\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed). charity_company_registration_number=00291646."
+ },
+ "GB-CHC-210252": {
+  "scheme": "GB-CHC",
+  "value": "210252",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "THE INSTITUTION OF CIVIL ENGINEERS",
+  "status": "Registered",
+  "other_names": [
+   "ICE"
+  ],
+  "linked": {
+   "organisation_number": 210252,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "1963-03-04",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Working name": [
+     "ICE"
+    ]
+   },
+   "linked_charities_total": 33,
+   "linked_charities_registered": 33,
+   "linked_charities_removed": 0,
+   "linked_charities": [
+    {
+     "linked_charity_number": 1,
+     "name": "COOPERS HILL WAR MEMORIAL",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 2,
+     "name": "C C LINDSAY CIVIL ENGINEERING SCHOLARSHIP FOUNDATION",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 3,
+     "name": "BAKER MEDAL FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 4,
+     "name": "JAMES ALFRED EWING MEDAL FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 5,
+     "name": "JOHN BAYLISS BEQUEST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 6,
+     "name": "INDIAN FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 7,
+     "name": "VERNON-HARCOURT BEQUEST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 8,
+     "name": "SIR HORACE BOOT FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 9,
+     "name": "CHARLES HAWKSLEY BEQUEST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 10,
+     "name": "HALCROW BEQUEST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 11,
+     "name": "C H ROBERTS BEQUEST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 12,
+     "name": "ROBERT ALFRED CARR BEQUEST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 13,
+     "name": "CIVIL ENGINEERS' AWARDS FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 14,
+     "name": "HOWARD BEQUEST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 15,
+     "name": "TREVITHICK MEMORIAL",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 16,
+     "name": "CRAMPTON BEQUEST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 17,
+     "name": "JAMES FORREST LECTURE FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 18,
+     "name": "G H DENNISON FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 19,
+     "name": "CULMANN FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 20,
+     "name": "WILLIAM CAWTHORNE UNWIN LECTURESHIP",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 21,
+     "name": "UNWIN LIBRARY ENDOWMENT",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 22,
+     "name": "RADLEY SCHOLARSHIP FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 23,
+     "name": "WEBB BEQUEST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 24,
+     "name": "WILLIAM LINDLEY FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 25,
+     "name": "KELVIN MEDAL FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 26,
+     "name": "J D AND E D KNIGHT FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 27,
+     "name": "RUSSELL ALLIN PRIZE",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 28,
+     "name": "FREDERICK PALMER PRIZE",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 29,
+     "name": "PALMER SCHOLARSHIP",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 30,
+     "name": "ALFRED YARROW EDUCATIONAL FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 31,
+     "name": "TELFORD FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 32,
+     "name": "MANBY PREMIUM FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 33,
+     "name": "MILLER FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    }
+   ]
+  },
+  "notes": "Main record (registered_charity_number=210252, linked_charity_number=0) found in the 2026-10-11 extract: \"THE INSTITUTION OF CIVIL ENGINEERS\", Registered. 33 linked (subsidiary) charities share the number (33 registered, 0 removed)."
+ },
+ "GB-CHC-212808": {
+  "scheme": "GB-CHC",
+  "value": "212808",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "ROYAL COLLEGE OF SURGEONS OF ENGLAND",
+  "status": "Registered",
+  "other_names": [],
+  "linked": {
+   "organisation_number": 212808,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "1963-03-15",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {},
+   "linked_charities_total": 99,
+   "linked_charities_registered": 31,
+   "linked_charities_removed": 68,
+   "linked_charities": [
+    {
+     "linked_charity_number": 1,
+     "name": "ANDERSON REID FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 2,
+     "name": "ARMY MEDICAL WAR COLLECTION FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 3,
+     "name": "BEQUEST OF JAMES WILLIAM GROVES",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 4,
+     "name": "MACRAE-WEBB-JOHNSON FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 5,
+     "name": "JOHN GALES ANNUITY",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 6,
+     "name": "JAMES ARNOTT BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 7,
+     "name": "LISTER MEMORIAL FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 8,
+     "name": "THE HUNTERIAN ORATION",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 9,
+     "name": "BRADSHAW LECTURE",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 10,
+     "name": "ARRIS BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 11,
+     "name": "BERKELEY GEORGE ANDREW BARON MOYNIHAN",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 12,
+     "name": "DR MATTHEW BAILLIE TRUST",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 13,
+     "name": "ERASMUS WILSON LECTURE FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 14,
+     "name": "BUCKSTON BROWNE GIFT",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 15,
+     "name": "BERNHARD BARON RESEARCH PROFESSORSHIP",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 16,
+     "name": "NUFFIELD RESEARCH CHAIR OF DENTAL SCIENCE",
+     "status": "Removed",
+     "date_of_removal": "2008-09-25",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 17,
+     "name": "THE BRITISH OXYGEN CHAIR OF ANAESTHESIA",
+     "status": "Removed",
+     "date_of_removal": "2008-09-09",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 18,
+     "name": "WALKER PRIZE",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 19,
+     "name": "CARTWRIGHT MEDAL",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 20,
+     "name": "BEGLEY PRIZE",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 21,
+     "name": "CECIL JOLL PRIZE",
+     "status": "Removed",
+     "date_of_removal": "2002-03-12",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 22,
+     "name": "JAMES BERRY PRIZE",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 23,
+     "name": "HANDCOCK PRIZE",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 24,
+     "name": "LADY CADE MEDAL",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 25,
+     "name": "MACLOGHLIN SCHOLARSHIPS",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 26,
+     "name": "JOHN TOMES PRIZE",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 27,
+     "name": "HALLETT PRIZE",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 28,
+     "name": "BLANE MEDALS",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 29,
+     "name": "TUDOR-EDWARDS FELLOWSHIP",
+     "status": "Removed",
+     "date_of_removal": "1998-06-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 30,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND CANCER RESEARCH ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 31,
+     "name": "SIR CHARLES BLICKE BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 32,
+     "name": "CLEMENT PRICE THOMAS AWARD",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 33,
+     "name": "VICTOR BONNEY TRUST FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 34,
+     "name": "THE PENROSE-MAY TUTORIAL FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 35,
+     "name": "J MENZIES CAMPBELL LECTURE FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-11",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 36,
+     "name": "HAROLD BRIDGES FELLOWSHIP FOR SURGICAL RESEARCH",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 37,
+     "name": "FREDERIC FRANCOIS BURGHARD BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 38,
+     "name": "BESSIE LOUISA HERBERT ASTHMA RESEARCH FUND",
+     "status": "Removed",
+     "date_of_removal": "1994-11-23",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 39,
+     "name": "KATE WEEKS FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 40,
+     "name": "SARAH JANE TRACEY FUND",
+     "status": "Removed",
+     "date_of_removal": "1994-11-23",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 41,
+     "name": "DUDLEY BUXTON PRIZE",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 42,
+     "name": "PROPHIT TRUST",
+     "status": "Removed",
+     "date_of_removal": "1994-11-23",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 43,
+     "name": "HENRY CLINE TRUST",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 44,
+     "name": "LAMING EVANS FELLOWSHIP",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 45,
+     "name": "SIR WILLIAM COLLINS FUND (PATHOLOGY)",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 46,
+     "name": "SIR WILLIAM COLLINS FUND (ANATOMY)",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 47,
+     "name": "SIR WILLIAM COLLINS FUND (SCIENTIFIC DEPARTMENTS)",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 48,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND BIOCHEMICAL RESEARCH FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 49,
+     "name": "VANDERVELL CHAIR OF PHARMACOLOGY",
+     "status": "Removed",
+     "date_of_removal": "2002-03-12",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 50,
+     "name": "SIR ARTHUR SIMS COMMONWEALTH TRAVELLING PROFESSORSHIP",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 51,
+     "name": "JOSEPH HENRY LECTURE",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 52,
+     "name": "GORDON WATSON LECTURE",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 53,
+     "name": "EDRIDGE-GREEN LECTURE",
+     "status": "Removed",
+     "date_of_removal": "1993-09-03",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 54,
+     "name": "EVAN LAMING EVANS TRUST",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 55,
+     "name": "RESEARCH CHAIR IN OPTHALMOLOGY",
+     "status": "Removed",
+     "date_of_removal": "1994-11-23",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 56,
+     "name": "SIR WILLIAM LISTER AWARD IN OPTHALMOLOGY",
+     "status": "Removed",
+     "date_of_removal": "1993-09-03",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 57,
+     "name": "F R MOSER TRUST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 58,
+     "name": "FACULTY OF ANAESTHETISTS NUFFIELD FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 59,
+     "name": "FACULTY OF ANAESTHETISTS FOUNDATION FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 60,
+     "name": "THE ROYAL COLLEGE OF ENGLAND FACULTY OF DENTAL SURGERY COMMEMORATION ENDOWMENT FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 61,
+     "name": "SIR ARTHUR SIMS FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 62,
+     "name": "MITCHINER MEDAL FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 63,
+     "name": "GORDON-TAYLOR MEMORIAL LECTURE FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 64,
+     "name": "BERNARD JOHNSON MEMORIAL FUND (FACULTY OF ANAESTHETISTS)",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 65,
+     "name": "ROBERT JONES NATIONAL MEMORIAL",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 66,
+     "name": "SIR CHARLES TOMES BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "2002-03-12",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 67,
+     "name": "FREDERICK HEWITT LECTURE FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 68,
+     "name": "WATSON-JONES LECTURE",
+     "status": "Removed",
+     "date_of_removal": "1994-11-23",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 69,
+     "name": "JACKSONIAN PRIZE",
+     "status": "Removed",
+     "date_of_removal": "1994-11-23",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 70,
+     "name": "SIR HENRY MORRIS STUDENTSHIP",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 71,
+     "name": "WILLIAM THELWALLTHOMAS BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 72,
+     "name": "MOYNIHAN MEMORIAL FUND",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 73,
+     "name": "CHARLES RYALL BEQUEST",
+     "status": "Removed",
+     "date_of_removal": "1996-10-15",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 74,
+     "name": "ROYAL COLLEGE OF SURGEONS OF ENGLAND COMMON INVESTMENT FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 75,
+     "name": "EVELYN SPRAWSON PRIZE",
+     "status": "Removed",
+     "date_of_removal": "1994-11-23",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 76,
+     "name": "H S MORTON EXCHANGE FELLOWSHIP FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 77,
+     "name": "THE FACULTY OF GENERAL DENTAL PRACTITIONERS' RESEARCH FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 78,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND RESEARCH AND FELLOWSHIP ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 79,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND RESEARCH AND FELLOWSHIP NON ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 80,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND EDUCATION ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 81,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND EDUCATION NON-ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 82,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND LIBRARY ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 83,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND LIBRARY NON-ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 84,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND PRIZE ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 85,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND PRIZE NON-ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 86,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND SCHOLARSHIP ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 87,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND SCHOLARSHIP NON ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 88,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND RESEARCH FOR CANCER NON-ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 89,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND FACULTY OF DENTAL SURGERY COMMEMORATION NON-ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 90,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND MUSEUM ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 91,
+     "name": "THE ROYAL COLLEGE OF SURGEONS OF ENGLAND MUSEUM NON-ENDOWED FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 92,
+     "name": "THE JOHN EDWARD DARLOW FELLOWSHIP FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 93,
+     "name": "THE RANK CHAIR OF PHYSICS IN SURGERY",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 94,
+     "name": "THE RISHWORTH FUND FOR THE ANNALS",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 95,
+     "name": "THE DENTAL SCIENCE FUND",
+     "status": "Removed",
+     "date_of_removal": "2008-09-25",
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 96,
+     "name": "THE GEORGE QVIST FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": [
+      "THE GEORGE QUIST FUND"
+     ]
+    },
+    {
+     "linked_charity_number": 97,
+     "name": "JOHN KINROSS EMERGENCY FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 98,
+     "name": "PRESIDENT'S FINCH FUND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    },
+    {
+     "linked_charity_number": 99,
+     "name": "THE DENTAL SCIENCE RESEARCH FUND OF THE FACULTY OF DENTAL SURGERY AND ROYAL COLLEGE OF SURGEONS OF ENGLAND",
+     "status": "Registered",
+     "date_of_removal": null,
+     "other_names": []
+    }
+   ]
+  },
+  "notes": "Main record (registered_charity_number=212808, linked_charity_number=0) found in the 2026-10-11 extract: \"ROYAL COLLEGE OF SURGEONS OF ENGLAND\", Registered. 99 linked (subsidiary) charities share the number (31 registered, 68 removed)."
+ },
+ "GB-CHC-2204085": {
+  "scheme": "GB-CHC",
+  "value": "2204085",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": false,
+  "name": null,
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "name_search_hits": [
+    {
+     "searched_name": "Everyone Active",
+     "matched_via": "charity_name",
+     "matched_text": "BOLTON ACTIVE DISABILITY GROUP FOR EVERYONE",
+     "match_kind": "all_significant_words",
+     "registered_charity_number": 1131673,
+     "linked_charity_number": 0,
+     "charity_name": "BOLTON ACTIVE DISABILITY GROUP FOR EVERYONE",
+     "status": "Removed",
+     "date_of_removal": "2015-01-22",
+     "company_number": null,
+     "charity_type": "Charitable company"
+    }
+   ]
+  },
+  "notes": "2204085 is above the charity-number range of the extract (main register numbers run 200000..1220015; one anomalous 19262026 row aside) and no record carries it; it is not a registered_charity_number. No charity_company_registration_number in the extract contains \"2204085\" either. Name search of charity_name and other names (normalised phrase, LIMITED/LTD dropped, and all-significant-word match) for \"Sports and Leisure Management Ltd\" / \"Everyone Active\": name-similar records only: Everyone Active -> 1131673/0 \"BOLTON ACTIVE DISABILITY GROUP FOR EVERYONE\" (Removed 2015-01-22, all_significant_words match via charity_name \"BOLTON ACTIVE DISABILITY GROUP FOR EVERYONE\"). The extract carries nothing (company number, other name) that ties these records to the named body; they are separate charities whose names share the searched words."
+ },
+ "GB-CHC-274206": {
+  "scheme": "GB-CHC",
+  "value": "274206",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": true,
+  "name": "PEOPLE'S TRUST FOR ENDANGERED SPECIES",
+  "status": "Registered",
+  "other_names": [
+   "MAMMALS TRUST UK",
+   "MTUK",
+   "P T E S"
+  ],
+  "linked": {
+   "organisation_number": 274206,
+   "company_number": null,
+   "charity_type": "Trust",
+   "is_cio": false,
+   "cio_is_dissolved": false,
+   "date_of_registration": "1977-08-17",
+   "date_of_removal": null,
+   "insolvent": false,
+   "in_administration": false,
+   "other_names_by_type": {
+    "Working name": [
+     "MAMMALS TRUST UK",
+     "MTUK",
+     "P T E S"
+    ]
+   },
+   "linked_charities_total": 0,
+   "linked_charities_registered": 0,
+   "linked_charities_removed": 0,
+   "linked_charities": []
+  },
+  "notes": "Main record (registered_charity_number=274206, linked_charity_number=0) found in the 2026-10-11 extract: \"PEOPLE'S TRUST FOR ENDANGERED SPECIES\", Registered. 0 linked (subsidiary) charities share the number (0 registered, 0 removed)."
+ },
+ "GB-CHC-28258R": {
+  "scheme": "GB-CHC",
+  "value": "28258R",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": false,
+  "name": null,
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "name_search_hits": []
+  },
+  "notes": "\"28258R\" has a trailing R and is not a registered_charity_number in the extract (CC numbers are plain integers 200000..1220015; the integer 28258 also matches no record). No charity_company_registration_number in the extract contains \"28258\". Name search of charity_name and other names (normalised phrase, LIMITED/LTD dropped, and all-significant-token match) for \"CETRA Housing Co-operative Limited\" / \"Capital Service Solutions Limited\": no record."
+ },
+ "GB-CHC-28687R": {
+  "scheme": "GB-CHC",
+  "value": "28687R",
+  "http": 200,
+  "source": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+  "found": false,
+  "name": null,
+  "status": null,
+  "other_names": [],
+  "linked": {
+   "name_search_hits": [
+    {
+     "searched_name": "Northern Housing Consortium Ltd",
+     "matched_via": "charity_name",
+     "matched_text": "NORTHERN HOUSING CONSORTIUM CHARITABLE TRUST",
+     "match_kind": "phrase",
+     "registered_charity_number": 1089070,
+     "linked_charity_number": 0,
+     "charity_name": "NORTHERN HOUSING CONSORTIUM CHARITABLE TRUST",
+     "status": "Registered",
+     "date_of_removal": null,
+     "company_number": null,
+     "charity_type": "Trust"
+    }
+   ]
+  },
+  "notes": "\"28687R\" has a trailing R and is not a registered_charity_number in the extract (CC numbers are plain integers 200000..1220015; the integer 28687 also matches no record). No charity_company_registration_number in the extract contains \"28687\". Name search of charity_name and other names (normalised phrase, LIMITED/LTD dropped, and all-significant-word match) for \"Together Housing Association Limited\" / \"Northern Housing Consortium Ltd\": name-similar records only: Northern Housing Consortium Ltd -> 1089070/0 \"NORTHERN HOUSING CONSORTIUM CHARITABLE TRUST\" (Registered, phrase match via charity_name \"NORTHERN HOUSING CONSORTIUM CHARITABLE TRUST\"). The extract carries nothing (company number, other name) that ties these records to the named body; they are separate charities whose names share the searched words."
+ },
+ "_meta": {
+  "method": "Downloaded the Charity Commission for England and Wales full-register JSON bulk extract (https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip, HTTP 200, 56.9 MB zip, date_of_extract 2026-10-11, 398681 rows incl. linked charities) and https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity_other_names.zip (HTTP 200, 175062 rows); streamed the JSON from the zips without extracting, indexed by registered_charity_number. Main record = linked_charity_number 0; rows with linked_charity_number > 0 are linked (subsidiary) charities sharing the number. The JSON spells the registration status as \"Registered\"/\"Removed\" (R/RM in the text extract). other_names = the main record's rows in charity_other_names (\"Previous name\"/\"Working name\"; the extract has no separate trading-name type). Non-charity-shaped values (trailing R, 2204085) were checked as integers and as substrings of charity_company_registration_number, and the member names were searched against charity_name and other names. http is the bulk-file fetch status; found is from the file.",
+  "failures": [],
+  "duplicate_value_entries": {
+   "GB-CHC-17434R": [
+    [
+     "Moat Homes Limited",
+     "Northern Housing Consortium Ltd"
+    ],
+    [
+     "Moat Homes Limited",
+     "Moat Homes Limited"
+    ]
+   ]
+  },
+  "scripts": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/u2fetch/cc/{index.py,build.py}"
+ }
+}
