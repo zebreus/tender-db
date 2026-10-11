@@ -1,6 +1,7 @@
 # 513 — letter-only NHS ODS codes (`GB-NHS-RTH`) mint no identity, so their parties bind by name and never pair
 
-Status: ready-for-agent — UNIT 2 DECIDED (second decision) 2026-10-11, after the design panel wf_75976f73-b4a (designs A allowlist mint / B ODS-name-gated mint / C reviewed consolidation; correctness, product and engineering judges all ranked C first, scoring 7 against 5/6, 3/4 and 4/6). C mints NO identity. It folds each body's SAME clusters and SAME PPON org into one survivor under a reviewed, ODS-confirmed, members-exact `nhs-body` verdict, ledgered and redirecting, with an alias on the members' own 234 keys. Panel files: `../513-nhs/u2-panel/`, `../513-nhs/u1/design-panel-wf_75976f73.json`. NEXT: U0 (the 300 §10 amendment and the u1 corrections), then U1 (the frozen ODS table and check; pure, no behaviour change).
+Status: ready-for-agent — U1 BUILT 2026-10-11, commit on claude/cool-sagan-5bk0rc, gating. `crates/ingest/src/nhs_ods.rs` + `sdk/nhs-ods.tsv`: 1,062 rows, 215 allowlisted, with predecessors, successors and legal ends. Built by agent (wf_ce5452c7-5ce), reviewed for fidelity and for test strength (mutation runs), review fixes applied. Over the 389 adjudicated holders the check admits 233/235 SAME registry and 116/116 SAME PPON holders, and 0 DIFFERENT/NOT_ORG. NEXT: the gate, then push to main (no deploy needed; nothing calls it), then U2 (the dry census, after the 491 drain).
+Was: ready-for-agent — UNIT 2 DECIDED (second decision) 2026-10-11, after the design panel wf_75976f73-b4a (designs A allowlist mint / B ODS-name-gated mint / C reviewed consolidation; correctness, product and engineering judges all ranked C first, scoring 7 against 5/6, 3/4 and 4/6). C mints NO identity. It folds each body's SAME clusters and SAME PPON org into one survivor under a reviewed, ODS-confirmed, members-exact `nhs-body` verdict, ledgered and redirecting, with an alias on the members' own 234 keys. Panel files: `../513-nhs/u2-panel/`, `../513-nhs/u1/design-panel-wf_75976f73.json`. NEXT: U0 (the 300 §10 amendment and the u1 corrections), then U1 (the frozen ODS table and check; pure, no behaviour change).
 Was: ready-for-agent — UNIT 1 DONE 2026-10-11 (`../513-nhs/u1/u1-results.md`). The first unit-2 decision (below) was WITHDRAWN the same day after a three-lens adversarial review (wf_4e7d846d; findings in `../513-nhs/u1/decision-review-wf_4e7d846d.json`, summary under "Review of the first decision"). Its shape rule would mint junk tails (`ICB` on two ICBs, O/0 typos, `00N`/`00P` sub-ICB codes). Its reclaim writes no redirect. And a mint moves only the coded ~10% of each body's mentions. NEXT: a design panel over (A) an ODS-allowlist mint with literal binding, (B) the same with a best-match ODS-name gate, and (C) no mint: verdict-driven consolidation of the SAME clusters with the PPON org under the 469 register machinery. Then the decision, then the build.
 Was: ready-for-agent — UNIT 1 DONE 2026-10-11 (`../513-nhs/u1/u1-results.md`): all 129 three-character identity-null codes are Active RC1 ODS organisations; multi-target holders are one body's spellings (238 SAME holders), and strays are 0.96% of coded mentions. UNIT 2 DECIDED (below, "Decision (unit 2)"): exempt the three-character ODS organisation form from the digit and all-zero rules, bind literally, and repair by a refold-invariant mention re-bind, dry first. NEXT: unit 2's build (normaliser arm + tests), then unit 3 (the re-bind job, dry → read → wet), then 469 U7.
 Was: ready-for-agent — unit 1 BUILT 2026-10-11 (9e8e123, gate green, two-lens review wf_d682d870-832 found nothing; on main, deploy waits for the 491 drain): the altid dry run stores `registry_nhs_listing` — every GB-NHS ↔ PPON pair (literal, minted identity or null, the unit-1 class, ≤5 register / ≤3 PPON holders with provisional flags, witnesses), dry runs only, no count moves. NEXT: gate + deploy (after the 491 drain), a dry run, then the ODS read of every code (organisation vs site, active, name match, multi-target name variants vs different bodies) and the unit-2 decision.
@@ -212,4 +213,31 @@ Replaces the withdrawn D1–D4. All three judges ranked design C first. Counts a
   - U2 (the dry census) touches canonical.rs, but planner-only, behind `dry_run`, as unit 1 did. It may deploy once the
     491 drain ends.
   - U4 (the wet path) waits for U3's adjudication.
+
+## U1 — built (2026-10-11)
+
+- **Files.**
+  - `crates/ingest/src/nhs_ods.rs` (the module, 25 tests plus an ignored tally harness);
+  - `crates/ingest/sdk/nhs-ods.tsv` (`ods-2026-10-11`);
+  - the generator `../513-nhs/u1-table/gen_nhs_ods_table.py` and its raw ORD cache (`--offline` rebuilds the TSV byte
+    for byte).
+- **The table.**
+  - 1,062 rows: RO197 544, RO107 12, RO261 125, RO213 36, RO98 344, plus RO172 DQF.
+  - 215 allowlisted: trust 163, care trust 4, ICB 39, CSU 8, DQF. The allowlist is 215 rather than 213 because the
+    first RO107 fetch adds TAF and TAH.
+  - No O/0 twin pair anywhere in the table.
+- **The check: two changes beyond the decision's D3 wording, both owner-accepted.**
+  - (a) `university` and `college` yield to `hospital`, the trust naming of University Hospitals Birmingham and
+    King's College Hospital. Hospital charities stay refused through a `charity` marker.
+  - (b) A company code's own legal form is no marker (DQF).
+  - The check admits the REM group brand "University Hospitals of Liverpool Group". D6's adjudication, not the
+    check, keeps that HOSTED holder out.
+- **Legal ends (review finding).** 35 allowlisted codes carry an ODS legal end while ODS still answers them Active,
+  not 7:
+  - the 2026-04 ICB mergers: QJG, QMJ, QMM, QNQ, QXU, RNK, RYV, QHG, QNX, QRV, QUE;
+  - TAF and RRP in 2024 (successor G6V2S);
+  - some long before the GB-NHS scheme existed, e.g. RBF 2011 (successor RTH).
+
+  The TSV now carries `legal_end` and `successors`, so U2's census can flag a code published after its legal end.
+  QRV's own ODS name ties its successor Z9B2Z, so QRV is a Tie flag by construction.
 
