@@ -1,0 +1,5 @@
+== registry {'SAME': {'h': 235, 'c': 7402, 'rh': 2, 'rc': 2}, 'DIFFERENT': {'h': 19, 'c': 68, 'rh': 19, 'rc': 68}, 'HOSTED_OR_SITE': {'h': 9, 'c': 15, 'rh': 6, 'rc': 6}, 'NOT_ORG': {'h': 3, 'c': 4, 'rh': 3, 'rc': 4}}
+    ('REFUSED-SAME', 'RCX', 'Queen Elizabeth Hospital FT', 1, 'better')
+    ('REFUSED-SAME', 'RNZ', 'SALISBURY NHS FOUNDATION TRUST in partnership with Carbon an', 1, 'coverage')
+== ppon {'SAME': {'h': 116, 'c': 0}, 'DIFFERENT': {'h': 5, 'c': 0, 'rh': 5, 'rc': 0}, 'NOT_ORG': {'h': 1, 'c': 0, 'rh': 1, 'rc': 0}, 'HOSTED_OR_SITE': {'h': 1, 'c': 0}}
+synthetic pairs 2933 admitted 0

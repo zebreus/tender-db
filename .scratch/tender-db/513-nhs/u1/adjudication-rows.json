@@ -7060,7 +7060,7 @@
   "code": "TAJ",
   "ods_org_level": true,
   "side": "ppon",
-  "org_id": 31542073,
+  "org_id": 30917612,
   "name": "Black Country Healthcare NHS Foundation Trust",
   "c1": "SAME",
   "c2": null,
@@ -7068,7 +7068,7 @@
   "real_body": null,
   "real_ods_code": null,
   "r1": "Exact name of the TAJ trust.",
-  "r2": null,
+  "r2": " [owner 2026-10-11: org_id corrected from 31542073 (QMM PPON org) to 30917612 per the listing; the skeptic returned no check for the wrong id]",
   "coded": 0,
   "uncoded": 0,
   "other": 8

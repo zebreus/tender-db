@@ -51,3 +51,14 @@ sub-ICB code, and the 469 U7 register pairs would pick up a different org per co
    - (b) keep them apart, since a sub-ICB location is a published buying point, like a site;
    - (c) withhold typo codes through identifier verdicts (452's path).
 3. Do it before or with 469 U7, so the NHS register family pairs one org per body.
+
+## Handoff from 513's second decision (2026-10-11)
+
+513 takes the letter-only and zero-only ODS organisation codes through reviewed body verdicts and mints no identity.
+The following land here:
+- the RO98 sub-ICB location codes, including the 10 Active `00[A-Z]` ones carried by NENC ICB clusters (`00N`, `00P`);
+- the typo codes (`RF1` for `R1F`, and the letter-only `ROB`, `Q0X` and `OYG` that 513's census will list).
+
+Their orgs never join a 513 body. 513 U1's frozen ODS table classifies them. A per-(triple, name_norm) pin is a
+candidate fix: see 513 design A's U2 in `../513-nhs/u1/design-panel-wf_75976f73.json`. This issue should land before
+469 U7 or with it.

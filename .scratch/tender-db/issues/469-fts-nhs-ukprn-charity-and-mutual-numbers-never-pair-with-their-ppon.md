@@ -109,3 +109,15 @@ This checks the last unit, the merge. Unit 1 is read from its new counters in `/
 - **done**: `200 308 200 308`. The PPON orgs 30913623 and 30969231 redirect (issue 455) into the NHS-keyed and
   UKPRN-keyed orgs. Under a different survivor rule (decision 2), the 308 moves to the other org of the pair.
   Either way, each pair answers exactly one 308.
+
+## Handoff from 513's second decision (2026-10-11)
+
+513 consolidates the letter-only and zero-only NHS bodies by reviewed `nhs-body` verdicts and mints no identity.
+For U7 that means:
+- U7 covers digit-bearing GB-NHS codes only, and `REGISTRIES` gets no letter-only shape;
+- U7's ODS confirmation and witness check use 513 U1's frozen ODS table;
+- a 513 survivor counts as a holder through its merged `GBNHS<code>` identifier;
+- the cross-body PPON pairs QKK, QMF, RXX, RTF, RGT, 0CX and RAL get keep verdicts (513 U3), and U7's registry-shape
+  gate denies them too;
+- 519 (sub-ICB and typo codes) lands before U7 or with it.
+
