@@ -1023,6 +1023,19 @@ at volume, or unwatermarked scans. No LEI/DUNS enrichment. Person-id schemes
 (SE personnummer, BG EGN, CZ/SK birth-number DIČ) noted in evidence
 attributes for a future policy.
 
+**Amendment (2026-10-11, owner; issue 513's second decision).** The "No provisional↔canonical capture on name equality"
+line gets ONE scoped exception, under ADR-0003's 2026-10-02 amendment ("Nothing is deliberately forbidden if it is
+correct"). Name equality alone still never captures; that line stands for every other path. The exception:
+- A reviewed `nhs-body` verdict may fold a body's provisional spelling clusters, and its PPON org, into one canonical
+  survivor. The verdict must be HIGH, members-exact, and confirmed against the ODS register through 513's frozen,
+  offline ODS table (no network lookup at run time).
+- It writes `org_merge_log` rows under rule `nhs-body`, so loser ids redirect, and it has a scoped unwind.
+- It may arm an alias for its members' OWN 234 keys (head `name_norm`, GB), and only for keys that no standing
+  identifier-NULL row outside the body owns.
+
+Issue 513 is this exception's only user. Its evidence and stop rules are in
+`513-letter-only-nhs-ods-codes-mint-no-identity.md`, "Decision (unit 2, second)".
+
 ## 11. Why this is safe, in three sentences
 
 The only merge keys added are arithmetic identities and checksum-validated

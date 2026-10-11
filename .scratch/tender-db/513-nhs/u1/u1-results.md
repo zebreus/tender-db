@@ -30,7 +30,7 @@ D (1: `DQF`, an independent-sector provider).
 ## 2. What ODS says
 
 All 129 three-character codes are **Active RC1 organisation-level records**:
-- NHS TRUST: 98;
+- NHS TRUST: 99 (corrected 2026-10-11; first written as 98);
 - STRATEGIC PARTNERSHIP (an ICB): 23;
 - COMMISSIONING SUPPORT UNIT: 4;
 - CARE TRUST: 2;
@@ -68,8 +68,9 @@ Across the 393 holders of the 131 identity-null codes:
 
 ## 4. What the uncoded mentions do
 
-The 238 SAME registry holders carry 7,408 coded mentions and **48,360 uncoded ones**. Only 36 holders have no uncoded
-mention.
+The 238 SAME registry holder rows carry 7,408 coded mentions and **48,360 uncoded ones**. Only 36 holders have no
+uncoded mention. *Corrected 2026-10-11:* over DISTINCT orgs, the SAME clusters are 235 orgs (3 are listed under both a
+typed name and a code) carrying 47,467 uncoded and 7,362 coded mentions.
 
 The resolver binds an identifier-less mention only to a same-name row with `identifier IS NULL` (issue 234,
 canonical.rs ~17346), never to a canonical row. Any identity the exemption mints therefore stands beside a provisional
@@ -115,4 +116,10 @@ Per code after U7: 92 unchanged, 26 better, 13 worse.
 
 ## 7. Unit 2 decision
 
-See issue 513. The first decision was withdrawn after review.
+See issue 513. The first decision was withdrawn after review. The second, adopted 2026-10-11, is reviewed body
+consolidation with no mint (design panel wf_75976f73-b4a).
+
+## 8. Data errata
+
+- `adjudication-rows.json`: TAJ's PPON holder was recorded as 31542073, which is QMM's PPON org. It is corrected to
+  30917612, matching the listing.
