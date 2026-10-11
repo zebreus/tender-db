@@ -1,0 +1,67 @@
+{
+  "summary": "Issue 514 unit 1: measure standing register-number spelling splits per scheme with bounded indexed reads, then verify adversarially",
+  "agentCount": 2,
+  "logs": [],
+  "result": {
+    "measure": "Issue 514 unit 1 found 35 standing splits across the five schemes: 71 orgs and 850 mentions, two or more orgs holding spellings of one register number. It took 29 sequential read-only prod calls; none returned 408 and none was retried. I edited no repo code and made no commit.\n\n**Splits where both stored identifiers start with the scheme's own token**\n\n| Scheme | Identities scanned | With a candidate number | Mentions on scanned | Splits | Orgs | Mentions in splits | Names (read by hand) |\n|---|---|---|---|---|---|---|---|\n| GB-MPR | 135 | 134 | 1,922 | 15 | 30 | 492 | 15 same |\n| GB-NIC | 19 | 13 | 296 | 1 | 2 | 2 | 1 same |\n| GB-UKPRN | 522 | 469 | 4,188 | 5 | 10 | 295 | 4 same, 1 differ |\n| GB-CHC | 748 | 617 | 3,197 | 14 | 29 | 61 | 13 same, 1 partial |\n| GB-SC | 11 (10 national, 1 VAT) | 8 | 64 | 0 | 0 | 0 | none |\n| Total | 1,435 | 1,241 | 9,667 | 35 | 71 | 850 | 33 same |\n\n- **MPR:**\n  - 10 splits are `NNNNNR` against the Companies House spelling `IPNNNNNR` published under GB-MPR.\n  - 4 are bare 4-digit against `RS00NNNN`: 7104, 7528, 7814, 8376.\n  - 1 is the label form `Reg No 30938R`.\n  - The largest are 28038R Clarion (138+6), 30938R Riverside (116+1) and 16337R Metropolitan (104+2).\n  - No bare and R-suffixed pair stands today, so the never-bare-to-R rule decided nothing.\n- **UKPRN:** all 5 are label pollution (`UKPRN: 10005790` and similar). The largest is 10005790 Sheffield Hallam (182+1).\n  - **10007157 is not name-safe.** The bare org (31558903) carries the head name \"Sheffield Hallam University\", but 10007157 is the University of Sheffield, which is what its labelled twin says. The name gate must refuse this pair.\n- **CHC:** 9 are bare against a label, 2 label against label, 3 bare against a charity-plus-company compound. The largest is 216250 Barnardo's (9+1). 1179472 is a three-way split with an unconfirmed rename (\"Living Well UK\").\n- **NIC:** one split, 102575 Radius Housing (`NIC102575` against `Charity Commission No NIC102575`).\n- **SC:** no splits. Only one VAT-minted value stands (`GBSC1234568`), and it is a placeholder, not an OSCR number.\n- **Linked charities:** only 2 published literals have a glued suffix (`1099485-2`, `1169762-2`), and neither has its main charity standing as an org. The other 23 stored values with extra digits are company numbers or UKPRNs once you read the mention literal. The stored value alone can't tell a linked charity apart, so unit 2 has to read the raw literal.\n- **Merged identifiers:** not readable. `organization_merged_identifiers` isn't on `/v1/sql`'s allow-list (call 20 returned HTTP 400). As a stand-in I read every scanned org's mention literals: no org carries its twin's spelling, so no merge has folded any of these pairs yet.\n\n**Same number under other prefixes (reported separately, not counted above).** This covers Companies House mirrors (`GBCOHIP…`, `GBCOHRS…`), legacy bare literals from non-FTS publishers, and numbers published under the wrong scheme's token:\n- MPR: 91 groups, 216 orgs, 3,730 mentions, about 8× the in-scheme mass. It is mostly the Companies House mirror, and 3 groups are a subsidiary on its parent's number (31693R Guinness, 30224R Homes Plus, 14044R IDS Trustees).\n- CHC: 20 groups, 42 orgs, 88 mentions; for example Barnardo's 216250 also stands under GB-NIC.\n- UKPRN: 6 groups, 12 orgs, 300 mentions.\n- NIC: 2 groups, 4 orgs, 43 mentions.\n- SC: none.\n\n**Near-misses the rules leave unmapped:**\n- `GB-MPR-ip6243r`, Hastoe, 30 mentions. Under the rule it maps to 6243R, but Hastoe is 16243R.\n- `RSA007814`, Beyond Housing.\n- Five UKPRNs with a zero dropped or doubled, each with a correct twin standing (Southampton, York, Blackburn College, UCLan, North Humberside).\n\n**Limits:**\n- Orgs left without an identifier after the gate refused their literal don't appear in these index ranges.\n- Legacy bare literals were scanned only under the prefixes IP, RS, UKPRN, CHARITY and NIC.\n- The heavy drain was running during the reads, so counts may move slightly.\n- Name verdicts come from the names alone; I made no register lookups.\n\nFiles are in `/home/user/tender-db/.scratch/tender-db/514-register-spellings/`:\n- `splits.json` — the deliverable\n- `unit1-census.md` — method, rules, the shape and outcome of every call\n- `census.py`\n- `finish.py`\n- `groups.json` — intermediate output\n- `raw/` — the 29 raw responses and `journal.jsonl`",
+    "verify": "VERDICT: sound-with-fixes\n\nAll 35 claimed splits re-derive from the raw rows and none is a false split. Mention counts reconcile and the read discipline was clean. Four things need fixing before unit 2 relies on the census:\n- the 10007157 name verdict is wrong;\n- one in-scheme split was missed;\n- the level-B figures include level A without saying so;\n- several readable legacy ranges were never read, so level B is undercounted (SC's \"none\" is wrong).\n\nI made 15 reads of my own, all sequential and index-served; none returned 408 and none was retried.\n\n**F1. 10007157 is the same entity (correction).** The census read only head names. Read 2, which groups the mentions by name, shows the bare org 31558903 has 15 of its 16 mentions as University of Sheffield, which is what UKPRN 10007157 is. A single \"Sheffield Hallam University\" mention became the head name. So this is one entity with a wrong head name, not a pair the name gate must refuse. A gate that reads only head names would wrongly refuse a true pair; the gate needs to read every name an org carries. Result: 34 splits are the same entity and 1179472 stays partial.\n\n**F2. Missed split: a leading-zero charity number.** `GB-CHC-0518801` (31567375) and `GB-CHC-518801` (31567383) are both Queenscourt Hospice. The census rule needs a leading `[1-9]`, so it filed `0518801` as nonconforming. Corrected CHC: 15 splits, 31 orgs, 63 mentions. Corrected total: 36 splits, 73 orgs, 852 mentions.\n\n**F3. Level B includes level A (reporting).** The summary calls level B \"not counted above\", but every level-A split sits inside it. What the cross-prefix view actually adds:\n\n| Scheme | New groups | Mentions beyond level A |\n|---|---|---|\n| MPR | 76 | 3,238 (6.6× level A, not 8×) |\n| CHC | 6 | 27 |\n| UKPRN | 1 | 5 |\n| NIC | 1 | 41 |\n\n**F4. Ranges the census never read hold more level-B groups.**\n- **`REG…` range:**\n  - MPR gains 9 groups, 18 orgs, 54 mentions: `REGISTEREDSOCIETYREGISTRATIONNUMBERnnnnnR…` beside standing `IP…` orgs.\n  - CHC gains 4 groups, 8 orgs, 15 mentions: Coram, RISE, Royal Society, and Catch22 (two legacy orgs).\n- **Bare `SC0…`:** SC gains 3 name-confirmed groups, 6 orgs, 39 mentions (Glasgow `SC004401`, Edinburgh `SC005336`, Viewpoint `SC005619`), so SC's level B is not \"none\".\n- **`SCO…`:** letter O for zero. `SCO13683` is Aberdeen's `SC013683`, a lookalike class the census checked only for MPR.\n- **`SOCNO28985R`** joins the 28985R group.\n- **No change:** the token-variant sweeps (`GBU…`, `GBM…`, `GBNI…`) returned exactly the census rows (522, 135, 19). `NI1…`, `CHC…`, `GBC…` before `GBCHC`, and `GBCOHSC0…` added nothing.\n\nCorrected level B, still a lower bound and still including level A: MPR 100 groups / 235 orgs; CHC 25 / 52 / 105 mentions; SC 3 / 6 / 39, plus one lookalike pair.\n\n**F5. Near-miss list gaps.**\n- `GBCHCRSA007814` (Beyond Housing, 51 mentions) is missing; only the 1-mention MPR copy is listed. The RSA spelling carries 52 mentions, more than the three `7814` holders combined (16).\n- `IPI6637R` (Metropolitan, 13 mentions) reads I→1 as `16637R`, but Metropolitan is `16337R`. This is a second Hastoe-type trap.\n- `RS0076173` (Castles & Coasts) and `GBCHC277793R` (Greenwich Leisure) are not listed.\n- `GBCHCX1089` (34) and `GBCHCXC1089` (1), both University of Sheffield, are HMRC charity references published under GB-CHC. They aren't CHC register numbers, so not a 514 split, but they are an unnamed split class inside the census's \"nonconforming\".\n\n**F6. Rule hazards, with no false split standing today.**\n- The IP+R rule maps Hastoe's `ip6243r` (30 mentions) to `6243R`, so a fold by shape alone would mint a wrong number. Unit 2 must require a standing twin whose name agrees.\n- `GBNIC1014860` (Triangle HA, 7 digits) is routed to CHC; it is more likely a CCNI number with a stray digit.\n- 4-digit values under GB-CHC are routed to MPR bare (`GBCHC7483` is a transposition of Anchor Hanover's 7843).\n- No R-suffixed number is mapped to bare, no linked suffix is folded into its parent, and no NIC value collides with an unrelated bare 6-digit one. The bare-vs-R overlap is empty.\n\n**(1) Re-derivation.** An independent, looser rule reproduces all 35 groups member for member; the only extras are 518801 and RSA→7814. A live re-read finds all 77 orgs unchanged (the 71 split members plus 6 near-miss orgs), with mention totals identical, and the census's two count reads agree for every org.\n\n**(4) Read discipline.** The census made 29 calls, each logged once with no retries and no 408s. All were index shapes: 15 `organizations_identity` ranges, plus id lists of at most 158 orgs on `organization_mentions_org`. One call got HTTP 400 because the merged-identifiers table isn't queryable. Calls took 1.57–2.53 s and nothing was truncated. Sound.\n\n**Not covered:**\n- Countries other than GB. The brief fixes `country='GB'`, and a party whose address country is `XI` or `IE` would mint its register identity under that country.\n- No register lookups were made.\n- Mention counts for `SCO13683` and `SOCNO28985R` were not read.\n\nFiles are in `/home/user/tender-db/.scratch/tender-db/514-register-spellings/`:\n- `unit1-verify.md`\n- `verify-raw/journal.jsonl`\n- `verify-raw/v01-orgs.out` … `verify-raw/v15-bare-fca.out`\n- `verify-raw/rederive.py`\n- `verify-raw/run.sh`"
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Measure"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Verify"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "measure",
+      "phaseIndex": 1,
+      "phaseTitle": "Measure",
+      "agentId": "a827d1b6dfecb9cd9",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791750709714,
+      "queuedAt": 1791750709711,
+      "attempt": 1,
+      "lastToolName": "Bash",
+      "lastToolSummary": "cd /home/user/tender-db/.scratch/tender-db/514-register-spe…",
+      "promptPreview": "Issue 514: /home/user/tender-db/.scratch/tender-db/issues/514-register-number-spellings-split-one-register-identity.md (read it, and issue 469's\ncrosswalk shapes: /home/user/tender-db/crates/ingest/src/crosswalk.rs REGISTRIES / registry_mention_key, and project.rs normalise_identifier for how a\npublished 'GB-MPR-RS007639' becomes the stored identifier value). Only write under /home/user/tender-db/…",
+      "promptFramed": true,
+      "lastProgressAt": 1791751563561,
+      "tokens": 254192,
+      "toolCalls": 55,
+      "durationMs": 853845,
+      "resultPreview": "Issue 514 unit 1 found 35 standing splits across the five schemes: 71 orgs and 850 mentions, two or more orgs holding spellings of one register number. It took 29 sequential read-only prod calls; none returned 408 and none was retried. I edited no repo code and made no commit.\n\n**Splits where both stored identifiers start with the scheme's own token**\n\n| Scheme | Identities scanned | With a candid…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "verify",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a6cc55615df233c22",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791751565687,
+      "queuedAt": 1791751565682,
+      "attempt": 1,
+      "lastToolName": "Edit",
+      "lastToolSummary": "/home/user/tender-db/.scratch/tender-db/514-register-spelli…",
+      "promptPreview": "Issue 514: /home/user/tender-db/.scratch/tender-db/issues/514-register-number-spellings-split-one-register-identity.md (read it, and issue 469's\ncrosswalk shapes: /home/user/tender-db/crates/ingest/src/crosswalk.rs REGISTRIES / registry_mention_key, and project.rs normalise_identifier for how a\npublished 'GB-MPR-RS007639' becomes the stored identifier value). Only write under /home/user/tender-db/…",
+      "promptFramed": true,
+      "lastProgressAt": 1791752342495,
+      "tokens": 233546,
+      "toolCalls": 53,
+      "durationMs": 776808,
+      "resultPreview": "VERDICT: sound-with-fixes\n\nAll 35 claimed splits re-derive from the raw rows and none is a false split. Mention counts reconcile and the read discipline was clean. Four things need fixing before unit 2 relies on the census:\n- the 10007157 name verdict is wrong;\n- one in-scheme split was missed;\n- the level-B figures include level A without saying so;\n- several readable legacy ranges were never rea…"
+    }
+  ],
+  "totalTokens": 487738,
+  "totalToolCalls": 108
+}
