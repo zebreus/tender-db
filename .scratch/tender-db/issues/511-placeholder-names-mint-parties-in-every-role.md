@@ -19,6 +19,15 @@ review-body 1,782, mediation-body 1,252, winner 1,214, appeal-information 403, L
 RESPONSIBLE_FOR_MEDIATION_PROCEDURES 194, purchasing-body 172, specifications-provider 160, further-information 46,
 Tenderer 46, tender-receipt 35, **buyer 20**.
 
+## Award summaries kept by 510 (2026-10-11)
+
+510's drain keeps, as `Placeholder`, every void-lot name that also names an award
+(`partyname::names_an_award`): ~500 orgs, listed in the `void-names-refold` report's `exempted` (job 2182). Each
+is a summary standing in for real winners — `Lot 1) Sarl Bremond. Lot 2) S.A. Les Rapides Varois. Lot 3) Déclaré
+infructueux`, `lot 43 INFRUCTUEUX - 44 reckitt benckiser 28692.07 - …`, `Infructueux … attribué à l'entreprise
+Promocash`. They belong to this issue: the right outcome is per-lot winners parsed out of the summary (or the
+summary dropped and the result left without a winner), not one organization named after the whole list.
+
 ## The semantics differ from 510
 
 A winner was chosen; its name is elsewhere or withheld. So a result keeps `selec-w`, but nothing should be bound as
