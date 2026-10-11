@@ -6466,6 +6466,58 @@ pub struct AltIdAliasRules {
     pub trim: fn(&str) -> String,
     /// `project::match_norm` — the generic wall's N2 key.
     pub norm: fn(&str) -> String,
+    /// Issue 518: how many of the owner's mentions, newest first, the bar reads for the
+    /// names its corroboration compares — [`ALTID_ALIAS_OWNER_MENTIONS`] in production,
+    /// injectable so a test can show the cut.
+    pub owner_mention_cap: usize,
+}
+
+/// Issue 518: the production [`AltIdAliasRules::owner_mention_cap`]. A cap, because the
+/// bar runs on the writer inside the fold and an owner can carry hundreds of thousands of
+/// mentions; newest first, because the mentions a merge folded in from the PPON org keep
+/// their own rowids and the PPON-era notices (2025 on) carry the highest. ~28 asks per
+/// daily fold on prod (2,294 over 82 folds), so at most ~115k row reads a fold.
+pub const ALTID_ALIAS_OWNER_MENTIONS: usize = 4_096;
+
+/// Issue 518: the distinct mention names kept per owner after the capped read — the
+/// bound on `altid_agreeing`'s cross product, and on the per-fold cache's memory.
+const ALTID_ALIAS_OWNER_NAMES: usize = 256;
+
+/// Issue 518: an owner's mention names, newest first, capped — a reverse walk of
+/// `organization_mentions_org` (its entries are ordered by rowid within an org), so no
+/// sorter reads every row of the owner before the LIMIT: pinned by the plan guard
+/// `the_harvest_seeks_notices_profile_and_the_notice_ids_pk`. Not DISTINCT, which would
+/// sort: deduplicated in Rust. Bound to the owner and to the cap plus one, so a cut is told
+/// apart from an owner with exactly the cap.
+pub const ALTID_ALIAS_OWNER_MENTION_NAMES_SQL: &str =
+    "SELECT name FROM organization_mentions WHERE organization_id = ? ORDER BY rowid DESC LIMIT ?";
+
+/// Issue 518: one owner's mention names as the alias bar reads them —
+/// [`ALTID_ALIAS_OWNER_MENTION_NAMES_SQL`]'s newest `cap` rows, non-empty and distinct, at
+/// most [`ALTID_ALIAS_OWNER_NAMES`] of them — and whether either cap cut the read.
+async fn altid_owner_mention_names(conn: &Connection, owner: i64, cap: usize) -> turso::Result<(Vec<String>, bool)> {
+    let limit = i64::try_from(cap.saturating_add(1)).unwrap_or(i64::MAX);
+    let mut rows = conn.query(ALTID_ALIAS_OWNER_MENTION_NAMES_SQL, (Value::Integer(owner), Value::Integer(limit))).await?;
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let (mut names, mut read, mut capped) = (Vec::new(), 0usize, false);
+    while let Some(row) = rows.next().await? {
+        if read == cap {
+            capped = true;
+            break;
+        }
+        read += 1;
+        let Some(name) = opt_text_of(&row, 0).filter(|n| !n.is_empty()) else { continue };
+        if seen.contains(&name) {
+            continue;
+        }
+        if names.len() == ALTID_ALIAS_OWNER_NAMES {
+            capped = true;
+            break;
+        }
+        seen.insert(name.clone());
+        names.push(name);
+    }
+    Ok((names, capped))
 }
 
 /// What the issue-448 resolver alias did over one resolver's life — the
@@ -6518,6 +6570,11 @@ pub struct AltIdAliasCounts {
     pub refused_names: u64,
     /// …every agreeing name is generic.
     pub refused_generic: u64,
+    /// Issue 518: owners whose mention names the bar read this fold (one capped read
+    /// each, cached for the resolver's life), and of those the reads a cap cut — a large
+    /// share says the cap binds and the bar compares only the newest names.
+    pub owner_name_reads: u64,
+    pub owner_names_capped: u64,
 }
 
 /// The armed alias a [`MentionResolver`] carries: identity to identity
@@ -6532,6 +6589,12 @@ struct AltIdAlias {
     /// found recorded) as a merged identifier this run — one seek per pair,
     /// not per mention.
     recorded: std::collections::HashSet<(String, i64)>,
+    /// Issue 518: each owner's mention names ([`altid_owner_mention_names`]), read once
+    /// per resolver — one fold. Only the mention names: the designated names are re-read
+    /// per ask, because the consortium veto reads them and a name recorded later in the
+    /// fold must still veto, while a mention name the cache misses only leaves the
+    /// corroboration stricter.
+    owner_mention_names: std::collections::HashMap<i64, Vec<String>>,
 }
 
 /// Why the alias refused one mention — each maps to one refusal counter.
@@ -15488,7 +15551,14 @@ impl Db {
              PPON(s) poisoned (merged into two company numbers, never aliased)",
             counts.aliases, counts.ledger_rows, counts.kept, counts.poisoned
         ));
-        resolver.altid = Some(AltIdAlias { rules, alias_of, poisoned, counts, recorded: HashSet::new() });
+        resolver.altid = Some(AltIdAlias {
+            rules,
+            alias_of,
+            poisoned,
+            counts,
+            recorded: HashSet::new(),
+            owner_mention_names: HashMap::new(),
+        });
         Ok(())
     }
 
@@ -15516,7 +15586,9 @@ impl Db {
     ///   the owner's (head and satellites), and the GB legal forms agree head
     ///   against head;
     /// - [`altid_corroborates`], the planner's predicate: no form conflict
-    ///   and one agreeing name pair;
+    ///   and one agreeing name pair — the owner's side read as the planner reads
+    ///   it (issue 518): its designated names AND its mentions' names (capped,
+    ///   newest first, cached per fold);
     /// - the generic wall on that pair through the resolver's memo, lenient
     ///   and counted when the wall is disabled for the run or its probe
     ///   errors (the anchor bind's rule; the arm itself refuses to plan
@@ -15587,9 +15659,30 @@ impl Db {
             {
                 break 'bar Err(AltIdRefusal::Veto);
             }
+            // Issue 518: the owner's MENTION names join its designated ones in the
+            // corroboration. The planner corroborates on mention names (each org's
+            // witness-free mentions), and after a merge the owner holds both former orgs'
+            // mentions — so a PPON-first spelling the planner agreed on was refused here
+            // and the merged pair grew back (Caterlink beside Cater Link Limited, job 2215:
+            // 168 of 2,294 asks). Only the corroboration widens: the consortium veto and
+            // head against head above stay on the designated names, as the planner's own
+            // gates read `org_all_names`; the form check can only grow stricter with more
+            // owner forms. One capped read per owner per fold, on the writer (the owner may
+            // be this batch's mint). Mention names first, so the designated name stands for
+            // a key both carry, exactly as before the widening.
+            if !alias.owner_mention_names.contains_key(&owner) {
+                let (read, capped) = altid_owner_mention_names(conn, owner, rules.owner_mention_cap).await?;
+                alias.counts.owner_name_reads += 1;
+                if capped {
+                    alias.counts.owner_names_capped += 1;
+                }
+                alias.owner_mention_names.insert(owner, read);
+            }
+            let owner_keyed =
+                altid_keyed(alias.owner_mention_names[&owner].iter().chain(owner_names.iter()), rules.name_key);
             let corroborating = match altid_corroborates(
                 &altid_keyed(&mention_names, rules.name_key),
-                &altid_keyed(&owner_names, rules.name_key),
+                &owner_keyed,
                 rules.names_agree,
                 rules.legal_family,
             ) {
@@ -16039,7 +16132,8 @@ impl Db {
                  company-number org ({} with the generic wall unable to answer; {} PPON(s) \
                  recorded as its merged identifier, issue 460), {} refused \
                  ({} poisoned, {} no owner, {} consortium/legal-form veto, {} names disagree, {} \
-                 generic) and minted or bound as without the alias",
+                 generic) and minted or bound as without the alias; owner mention names read for {} \
+                 owner(s), {} cut by the cap (issue 518)",
                 c.asked,
                 c.bound,
                 c.bound_unwalled,
@@ -16049,7 +16143,9 @@ impl Db {
                 c.refused_no_owner,
                 c.refused_veto,
                 c.refused_names,
-                c.refused_generic
+                c.refused_generic,
+                c.owner_name_reads,
+                c.owner_names_capped
             ));
         }
         // Zeros included (the issue-318 rule): a fold's log says the guard was

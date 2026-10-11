@@ -1993,6 +1993,8 @@ fn altid_alias_rules() -> store::AltIdAliasRules {
         names_agree: crate::crosswalk::altid_keys_agree,
         trim: crate::crosswalk::altid_trim,
         norm: crate::project::match_norm,
+        // Issue 518: the owner's newest mention names, as the planner reads names.
+        owner_mention_cap: store::ALTID_ALIAS_OWNER_MENTIONS,
     }
 }
 

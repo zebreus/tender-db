@@ -1164,6 +1164,18 @@ async fn the_harvest_seeks_notices_profile_and_the_notice_ids_pk() {
     );
     let merged = plan(store::ALTID_MERGED_IDS_OF_ORG_SQL, vec![Value::Integer(1)]).await;
     assert!(merged.contains("organization_merged_identifiers_org") && !merged.contains("SCAN"), "{merged}");
+    // Issue 518: the alias bar's owner-name read, on the writer inside every fold — a
+    // seek of the owner's index range walked backwards (`SeekLE`/`Prev`, 2026-10-11),
+    // never a sorter that reads every mention of a large owner before the LIMIT. Turso
+    // names one `USE SORTER FOR ORDER BY` (SQLite: `USE TEMP B-TREE`); either fails.
+    let owner = plan(store::ALTID_ALIAS_OWNER_MENTION_NAMES_SQL, vec![Value::Integer(1), Value::Integer(10)]).await;
+    assert!(
+        owner.contains("organization_mentions_org")
+            && !owner.contains("SCAN")
+            && !owner.contains("SORTER")
+            && !owner.contains("TEMP B-TREE"),
+        "{owner}"
+    );
 }
 
 // ---- Unit 2: the wet run.
@@ -1562,7 +1574,16 @@ async fn a_continuation_does_not_recount_pairs_an_earlier_run_deferred() {
 
 /// The alias's rules, the same miniatures the arm takes above.
 fn alias_rules() -> store::AltIdAliasRules {
-    store::AltIdAliasRules { mention_key, consortium, legal_family, name_key, names_agree, trim, norm }
+    store::AltIdAliasRules {
+        mention_key,
+        consortium,
+        legal_family,
+        name_key,
+        names_agree,
+        trim,
+        norm,
+        owner_mention_cap: store::ALTID_ALIAS_OWNER_MENTIONS,
+    }
 }
 
 /// A PPON-first mention as the fold hands it to the resolver: the party's
@@ -1621,13 +1642,30 @@ impl Bed {
         cap: usize,
         mentions: &[store::Mention],
     ) -> (Vec<i64>, store::AltIdAliasCounts) {
+        self.resolve_ruled(armed.then(alias_rules), hard_scheme, cap, mentions).await
+    }
+
+    /// Issue 518: [`Self::resolve`] armed with the owner-name read capped at
+    /// `owner_mention_cap` rows.
+    async fn resolve_capped(&self, owner_mention_cap: usize, mentions: &[store::Mention]) -> (Vec<i64>, store::AltIdAliasCounts) {
+        let rules = store::AltIdAliasRules { owner_mention_cap, ..alias_rules() };
+        self.resolve_ruled(Some(rules), None, 20, mentions).await
+    }
+
+    async fn resolve_ruled(
+        &self,
+        rules: Option<store::AltIdAliasRules>,
+        hard_scheme: Option<fn(&str) -> bool>,
+        cap: usize,
+        mentions: &[store::Mention],
+    ) -> (Vec<i64>, store::AltIdAliasCounts) {
         let mut resolver = self
             .db
             .mention_resolver(Some(key), Some(consortium), None, Some(norm), None, hard_scheme, cap)
             .await
             .unwrap();
-        if armed {
-            self.db.arm_altid_alias(&mut resolver, alias_rules()).await.unwrap();
+        if let Some(rules) = rules {
+            self.db.arm_altid_alias(&mut resolver, rules).await.unwrap();
         }
         let ids = self.db.resolve_mentions(&mut resolver, mentions, 1).await.unwrap();
         let counts = store::Db::altid_alias_counts(&resolver);
@@ -1677,6 +1715,8 @@ async fn an_armed_resolver_binds_a_ppon_first_mention_to_the_company_number_org_
             bound_unwalled: 1,
             refused: 1,
             refused_names: 1,
+            // Issue 518: one owner, its mention names read once for both asks.
+            owner_name_reads: 1,
             ..Default::default()
         }
     );
@@ -2550,4 +2590,76 @@ async fn a_ukprn_beside_two_ppons_is_a_conflict_a_high_verdict_admits_it() {
     assert_eq!((g.admitted_verdict, g.planned, g.conflicts), (1, 1, 1), "{g:#?}");
     assert_eq!(r.registry_pairs_planned, vec![rk(UKPRN_A, PPON_P)]);
     assert_eq!(r.registry_plan_listing[0].corroborated_by, None, "a verdict stood in for the judgment");
+}
+
+// ---- Issue 518 unit 2a: the alias bar reads the owner's mention names, as the planner does.
+
+/// The Caterlink regression (job 2215). The planner corroborates a pair on each org's
+/// MENTION names, so it merged `Caterlink` into `Cater Link Limited` on the strength of the
+/// company-number org's own `Caterlink Ltd` mention. The alias bar used to read the owner's
+/// DESIGNATED names only — `Cater Link Limited` — so the next PPON-first `Caterlink` had
+/// nothing to agree with, minted a new PPON org, and the merged pair grew back. Reading the
+/// owner's mention names too, it binds; with the read capped to nothing (the old bar) it is
+/// refused, so the test sees the difference.
+#[tokio::test]
+async fn the_alias_reads_the_owners_mention_names_as_the_planner_does() {
+    let b = bed("alias-owner-mentions").await;
+    b.split(100, (2, COH_A, "Cater Link Limited"), (1, PPON_P, "Caterlink")).await;
+    // A company-number mention outside the pair's witnesses, under the other spelling.
+    b.notice(102, "fts:ocds-1.1").await;
+    b.party_named(102, "C102", Some(2), "GB", &[COH_A], "Caterlink Ltd").await;
+    let dry = b.plan().await;
+    assert_eq!(dry.pairs, vec![pk(COH_A, PPON_P)], "{dry:#?}");
+    assert_eq!(
+        dry.plan_listing[0].corroborated_by,
+        Some(("Caterlink Ltd".to_owned(), "Caterlink".to_owned())),
+        "the planner agreed on mention names: {dry:#?}"
+    );
+    b.merge_all().await;
+    assert_eq!(b.text("SELECT name FROM organizations WHERE id = 2").await, "Cater Link Limited");
+    b.fresh(&[300, 301]).await;
+
+    // The old bar: no owner mention name read, only `Cater Link Limited` — refused.
+    let (ids, c) = b.resolve_capped(0, &[ppon_first(300, PPON_P, "Caterlink")]).await;
+    assert_ne!(ids[0], 2, "the designated names alone do not agree");
+    assert_eq!((c.asked, c.refused_names, c.owner_name_reads, c.owner_names_capped), (1, 1, 1, 1), "{c:?}");
+    b.conn.execute("DELETE FROM organization_mentions WHERE notice_id = 300", ()).await.unwrap();
+    b.conn.execute(&format!("DELETE FROM organizations WHERE id = {}", ids[0]), ()).await.unwrap();
+
+    // The fixed bar: the owner's `Caterlink` (the merged-in PPON org's mention) agrees.
+    let (ids, c) = b.resolve(true, &[ppon_first(301, PPON_P, "Caterlink")]).await;
+    assert_eq!(ids[0], 2, "the PPON-first spelling the planner merged now binds");
+    assert_eq!((c.asked, c.bound, c.refused, c.refused_names), (1, 1, 0, 0), "{c:?}");
+    assert_eq!((c.owner_name_reads, c.owner_names_capped), (1, 0), "{c:?}");
+}
+
+/// The owner-name read is capped and walks newest first: an owner whose ONLY agreeing name
+/// is on its OLDEST mention binds when the cap reaches it and is refused when it does not,
+/// and the cut is counted. An owner with exactly the cap's mentions is not counted as cut.
+#[tokio::test]
+async fn the_owner_name_read_is_capped_newest_first_and_says_so() {
+    let b = bed("alias-owner-cap").await;
+    b.org(2, COH_A, "Zeta Group Ltd").await;
+    b.conn
+        .execute(
+            "INSERT INTO org_merge_log (keep, loser, rule, evidence, job_id, at) VALUES (2, 1, 'e2-altid', ?, 77, 1)",
+            (Value::Text(format!("{{\"scheme\":\"GB:altid\",\"coh\":\"{}\",\"ppon\":\"{}\"}}", k(COH_A), k(PPON_P))),),
+        )
+        .await
+        .unwrap();
+    // Oldest first, by rowid: the agreeing name, then two that do not agree.
+    for (notice, name) in [(100, "Caterlink"), (101, "Zeta Group Ltd"), (102, "Zeta Group Limited")] {
+        b.mention(notice, "ORG-Z", 2, "GB", Some(COH_A), name).await;
+    }
+    b.fresh(&[300, 301]).await;
+
+    let (ids, c) = b.resolve_capped(2, &[ppon_first(300, PPON_P, "Caterlink")]).await;
+    assert_ne!(ids[0], 2, "the two newest mentions carry no agreeing name");
+    assert_eq!((c.asked, c.refused_names, c.owner_name_reads, c.owner_names_capped), (1, 1, 1, 1), "{c:?}");
+    b.conn.execute("DELETE FROM organization_mentions WHERE notice_id = 300", ()).await.unwrap();
+    b.conn.execute(&format!("DELETE FROM organizations WHERE id = {}", ids[0]), ()).await.unwrap();
+
+    let (ids, c) = b.resolve_capped(3, &[ppon_first(301, PPON_P, "Caterlink")]).await;
+    assert_eq!(ids[0], 2, "a cap of three reaches the oldest mention");
+    assert_eq!((c.bound, c.owner_name_reads, c.owner_names_capped), (1, 1, 0), "exactly the cap is no cut: {c:?}");
 }
