@@ -1,0 +1,1037 @@
+{
+ "cohort": "altid-469u1-2026-10-11",
+ "verdicts": [
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "03056469~PNJD4733GTBJ",
+   "members": [
+    11709483,
+    31649184
+   ],
+   "action": "keep",
+   "confidence": "low",
+   "rationale": "[keep/medium; challenger: merge/medium] The register is OCS GROUP UK LIMITED, with no previous name like 'OCS UK&I'. The PPON's only name, 'OCS UK&I Ltd', is the exact name of a separate sister company, OCS UK&I LIMITED (06355228, formerly ATALIAN SERVEST LIMITED until Oct 2023, checked on Companies House). The 21 witnesses pairing it with 03056469 could be a supplier or publisher error, so it is medium; the CDP record's company number for the PPON would settle it. | challenger: The witness blocks the reviewer said would settle this (033530-2025, 069526-2025, 075874-2025, three different buyers) are CDP-style supplier records reading OCS GROUP UK LIMITED, 03056469, PNJD-4733-GTBJ, uk.bd.team@ocs.com, so the PPON is registered to the register's company, and it never pairs with OCS UK&I's own number 06355228. 'OCS UK&I Ltd' is the exact name of a real sister at the same Ipswich address (formerly Atalian Servest, renamed 9 Oct 2023), but it is also the group's UK&I brand, so I read it as buyer-typed and give merge at medium rather than keep."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "04358614~PVZP9887JPRL",
+   "members": [
+    30926702,
+    31575553
+   ],
+   "action": "keep",
+   "confidence": "low",
+   "rationale": "[needs-more-evidence/medium; challenger: merge/medium] The PPON's names split three ways: 'The NHS Confederation' (the register name), 'NHS Confederation (Services) Co Ltd' (the head, a subsidiary-style name that suggests a separate company), and 'The NHS Alliance', a different body that is also what corroborated the plan. There is only 1 witness, and the coh side has strays (Diabetes UK). The CDP record's company number for the PPON, or the witness notice's party block, would settle whose PPON it is. | challenger: The witness notice's party block, which the reviewer named as the settler, reads THE NHS CONFEDERATION, 04358614, PVZP-9887-JPRL, contracting@nhsconfed.org, vcse=true (032270-2026, 'Annual membership of the NHS Alliance'), and the PPON alone also appears as 'The NHS Confederation'. 'The NHS Alliance' is that notice's subject used as a name on both sides; the real subsidiary THE NHS CONFEDERATION (SERVICES) COMPANY LIMITED (05252407, formerly NHS Employers Ltd) is one mention under the parent's PPON, so medium rather than high."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "05187882~PMZH5958HBBN",
+   "members": [
+    31577224,
+    31582961
+   ],
+   "action": "keep",
+   "confidence": "low",
+   "rationale": "[keep/medium; challenger: merge/medium] The register is THINK RECRUITMENT (UK) LIMITED (an employment agency, no previous names). The PPON's only name, 'Think Education Partners Ltd', is the exact name of a separate sister company, THINK EDUCATION PARTNERS LIMITED (15118119, renamed from Colmore Services Ltd in May 2025, same Sutton Coldfield site, checked on Companies House). It is medium because there is only 1 witness and Think Recruitment may trade as 'Think Education'; the CDP record's company number for the PPON would settle it. | challenger: The only witness (082763-2026, Midland Heart 'Recruitment Services') carries a CDP-style supplier block reading THINK RECRUITMENT (UK) LIMITED, 2 Trinity Place, dom.hall@thinkrecruitment.co.uk, with 05187882 and PMZH-5958-HBBN, so the PPON is registered to the register's company and never pairs with 15118119. 'Think Education Partners Ltd' is a real sister (15118119, renamed from Colmore Services 21 May 2025, 5 Trinity Place), but publishers attach that name to Think Recruitment's company number as well as its PPON, so both orgs share it; that gives merge at medium, with keep not supported."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "05750134~PCTR9183ZZVH",
+   "members": [
+    31548992,
+    31649121
+   ],
+   "action": "keep",
+   "confidence": "low",
+   "rationale": "[needs-more-evidence/medium; challenger: merge/high] The register name is LANCASHIRE GAS SERVICES LIMITED, but the PPON's only name is now 'Sencat Ltd'. Companies House shows SENCAT LTD is a separate company (09875717) at the same Walton Summit, Preston office, so the two are probably sister companies, and the plan is corroborated only by the sister's name, 'Sencat Ltd' = 'Sencat Ltd'. Against that, the earlier 1691 fold showed the PPON published as 'Lancashire Gas Services Ltd' too. The PPON's CDP registration (its legal name and company number), or the party blocks of witnesses 066113-2025 and 082849-2026, would settle whether it belongs to Sencat or to Lancashire Gas. | challenger: The reviewer named the witness party blocks as the settling evidence, and they settle it for Lancashire Gas: both 066113-2025 (Calico Homes) and 082849-2026 (NHS SBS) publish the party as LANCASHIRE GAS SERVICES LIMITED, Preston PR5 8AJ, with GB-COH 05750134 and GB-PPON PCTR-9183-ZZVH. In the same notice 082849-2026, SENCAT LTD appears as a separate supplier with its own number (09875717) and its own PPON (PZCV-1519-JQRT), so the 'Sencat Ltd' names under PCTR are publisher mislabels by a sister company at the same Walton Summit address, not the PPON's owner."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "00129834~PRGP6331RLDT",
+   "members": [
+    31577328,
+    31630824
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] 'Willliam Birch & Sons Ltd' is a triple-L typo of the register's WILLIAM BIRCH & SONS LIMITED (previously WILLIAM BIRCH AND SONS,LIMITED). It is the PPON's only name and the witness party is named the same. | challenger: 'Willliam Birch & Sons Ltd' is a triple-L typo of the register's WILLIAM BIRCH & SONS LIMITED (previously WILLIAM BIRCH AND SONS,LIMITED), and it is the PPON's only name. Witness 094489-2026 shows the register name, York, with both identifiers."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "00235446~PDXZ8283PNNJ",
+   "members": [
+    13941178,
+    31574879
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] 'Ford Motors UK' is an informal form of Ford's UK legal entity, the register's FORD MOTOR COMPANY LIMITED. It is the PPON's only name, three witnesses pair it with this number, and nothing contradicts it. | challenger: 'Ford Motors UK' is an informal form of Ford's UK operating company, the register's FORD MOTOR COMPANY LIMITED. The witnesses from two separate buyers (Lincolnshire PCC, Government Commercial Agency) show FORD MOTOR COMPANY LIMITED, Laindon SS15 6EE (Dunton), with both identifiers, and nothing contradicts it."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "00414220~PNTG1767GXBV",
+   "members": [
+    9863595,
+    31762791
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The register is PA CONSULTING SERVICES LIMITED, formerly PA CONSULTING GROUP LIMITED, and the PPON's only name, 'PA Consulting', is its well-known brand, which also appears among the coh names. There are 14 witnesses and 0 co-occurrences, so the 'generic' gate is not a real doubt here. | challenger: The PPON's only name, 'PA Consulting', is the brand that the coh side also publishes for 00414220. All readable witnesses (085478-2026, 091210-2026, 042134-2025) name PA CONSULTING SERVICES LIMITED at 10 Bressenden Place with paconsulting.com contacts. The group holding companies at that address (PA CONSULTING GROUP LIMITED 13035335 and PA CONSULTING GROUP HOLDINGS LIMITED 09761378) carry 'Group' in their names and do not contract, so the bare brand clearly belongs to the operating company."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "00463912~PTHC9655VHHR",
+   "members": [
+    31578408,
+    31911548
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name 'F P Hurley' is a plain short form of the register's F.P.HURLEY & SONS LIMITED. The coh side publishes the same variants ('FP Hurley & Sons'), and no other entity is suggested. | challenger: 'F P Hurley' is the short form of F.P.HURLEY & SONS LIMITED and matches the coh side's 'FP Hurley & Sons' and 'F P Hurley & Sons Limited'. A Companies House search finds no other F P Hurley company, and witness 059275-2026 names the register company at Bridgend with an fphurley.co.uk contact."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "00498573~PBLX9844CXHL",
+   "members": [
+    15821950,
+    31583755
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'OCLC (UK) LIMITED', is the register's current name exactly. The coh side's 'OCLC' is the same brand. | challenger: The PPON's only name, 'OCLC (UK) LIMITED', is the register's exact current name, and the coh side's 'OCLC' is its brand. Both witnesses (082638-2026, 095722-2026) name OCLC (UK) LIMITED at its Sheffield office."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "00768173~PVYX9246LZYL",
+   "members": [
+    17861911,
+    31762761
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] 12 witnesses tie the PPON to WILLMOTT DIXON CONSTRUCTION LIMITED's number, with 0 co-occurrences. The only name published under the PPON alone is a single garbled joint-supplier string that begins with the register's exact name ('Willmott Dixon Construction Limited and Be Living Holdings Limited 2 3 4...'), which is a stray, not a different owner. | challenger: All readable witnesses (087925-2026, 012929-2026, 025511-2026, from three different buyers) name WILLMOTT DIXON CONSTRUCTION LIMITED at its Letchworth office with willmottdixon.co.uk contacts, and ppon_partners=1. The single PPON-alone name starts with the register's exact name. Its 'Be Living Holdings Limited' tail is a Willmott Dixon group development company (04208738, same Letchworth office) appearing as a joint party in a garbled list, not a different owner of the PPON."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "00820660~PCYB5589JGCY",
+   "members": [
+    31572519,
+    31646909
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name 'Child Action North West' is the register's CHILD ACTION NORTHWEST with the space split differently. There is no competing name on either side. | challenger: 'Child Action North West' is the register's CHILD ACTION NORTHWEST with the space split differently. Witness 038715-2026 names the register charity with its canw.org.uk contact, and neither side has a competing name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "00929027~PPNX5416TJVQ",
+   "members": [
+    15480766,
+    30972064
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name is the register's exact current name, NATIONAL WESTMINSTER BANK PUBLIC LIMITED COMPANY. The coh side's 'Natwest Bank plc' is the same bank, so the legal-form gate is not a real difference. | challenger: The PPON's only name is the register's exact name, NATIONAL WESTMINSTER BANK PUBLIC LIMITED COMPANY, which witness 031760-2025 also uses. The coh side's 'National Westminster Bank PLC' and 'Natwest Bank plc' are form variants, so the legal-form gate is spurious."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "00935048~PWRY2527LDRY",
+   "members": [
+    11340239,
+    31648933
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name 'Bayer plc' is the plc short form of the register's BAYER PUBLIC LIMITED COMPANY. There are 26 witnesses and 0 co-occurrences. | challenger: 'Bayer plc' is the plc form of BAYER PUBLIC LIMITED COMPANY, and the coh side also publishes it as 'Bayer Plc'. The readable witnesses name the register company at its Reading office with bayer.com contacts."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "01123045~PVDY8643WVHV",
+   "members": [
+    17851373,
+    31583658
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name '3M UNITED KINGDOM PUBLIC LIMITED COMPANY (01123045)' is the register's previous name and even embeds the company number. The register's current name is 3M UNITED KINGDOM LIMITED. | challenger: The PPON's only name, '3M UNITED KINGDOM PUBLIC LIMITED COMPANY (01123045)', is the register's previous name with the company number built in. Witness 059398-2026 names the same previous name, with 01123045, at the 3M Bracknell office."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "01359667~PGYN8154ZBVV",
+   "members": [
+    31587659,
+    31649079
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name 'The Barnes Group T/a Bower Fuller & Barnes Construction' starts with the register's exact name, THE BARNES GROUP LIMITED, followed by trading styles. 'Barnes Construction' is also one of the register's previous names (BARNES CONSTRUCTION LIMITED). | challenger: The PPON's name puts the register's legal entity, THE BARNES GROUP LIMITED, first and its trading styles after 'T/a', and witness 072065-2026 gives a barnesconstruction.co.uk contact. BOWER FULLER LIMITED and BARNES CONSTRUCTION LIMITED both sit at the same Ipswich office, but both are non-trading (SIC 74990) companies that only hold the names."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "01372978~PBQM8122XLCY",
+   "members": [
+    31538437,
+    31557610
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's names 'KONE PLC' and 'kone' are the short form of the register's KONE PUBLIC LIMITED COMPANY. The coh side publishes 'KONE plc' too, and there are 4 witnesses. | challenger: 'KONE PLC' and 'kone' are the short forms of KONE PUBLIC LIMITED COMPANY, which the coh side also publishes as 'KONE plc'. The readable witnesses name the register company with kone.co.uk contacts."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "01415700~PXCV6823YCYP",
+   "members": [
+    31553038,
+    31553190
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] 'Thrive' is the operating name of the gardening charity whose registered name is SOCIETY FOR HORTICULTURAL THERAPY. The PPON's only name is that brand, and 2 witnesses tie it to this number. | challenger: 'Thrive' is the operating name of SOCIETY FOR HORTICULTURAL THERAPY. In witness 076240-2025, a PPON-only party called 'Thrive' carries a thrive.org.uk contact and the charity's Geoffrey Udall Building address in Reading, right beside the party with the register number, which makes the brand plain."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "01428210~PLNM8883CCXP",
+   "members": [
+    7955214,
+    31561793
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's names, 'Specialist Computer Centres PLC' and 'Specialist Computer Centres (SCC) PLC', are the register's current name SPECIALIST COMPUTER CENTRES PLC with and without its brand. The coh side uses the same variants, and there are 16 witnesses. | challenger: The PPON's names are SPECIALIST COMPUTER CENTRES PLC exactly and with its '(SCC)' brand, both of which the coh side also publishes, and the witnesses name the plc at James House, Birmingham. The sister SPECIALIST COMPUTER SERVICES LIMITED has a different name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "01582924~PTYX3163WCNY",
+   "members": [
+    14913348,
+    31649185
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name 'Glen Cleaning' is the register's previous name, GLEN CLEANING COMPANY LIMITED; the company is now GLEN GROUP LTD. The coh side publishes both names, and there are 6 witnesses. | challenger: 'Glen Cleaning' is the register's previous name, GLEN CLEANING COMPANY LIMITED (the company is now GLEN GROUP LTD.), and the coh side publishes both names. The witnesses name GLEN GROUP LTD. with glencleaning.co.uk, and the only other 'Glen Cleaning Limited' was an unrelated Hounslow company dissolved in 2024."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "01800000~PRYC1538TGMN",
+   "members": [
+    8910146,
+    31647094
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's main name, BRITISH TELECOMMUNICATIONS PUBLIC LIMITED COMPANY, is the register's previous name for 01800000, now BRITISH TELECOMMUNICATIONS LIMITED, and 46 witnesses pair the two identifiers. The only other PPON name, 'BT Openreach (CIS) Divert / Connect 57903', is an obvious stray (a BT line label) and is not a second company. | challenger: The PPON's main name is the register's previous name BRITISH TELECOMMUNICATIONS PUBLIC LIMITED COMPANY, and the witness I read (031135-2025) lists exactly that legal name with 01800000 and this PPON; 46 witnesses agree. 'BT Openreach (CIS) Divert / Connect 57903' is a service-line label: Openreach Limited is a separate BT company, but nothing else under the PPON names it."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "01873018~PRYG9563TPLZ",
+   "members": [
+    31563496,
+    31761412
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Delron Services Ltd - awarded Lot 1 Tonbridge Cottage Hospital', is the register's DELRON SERVICES LIMITED with lot text appended. Three witnesses agree and the register shows no previous names, so nothing else could own it. | challenger: 'Delron Services Ltd - awarded Lot 1 Tonbridge Cottage Hospital' is DELRON SERVICES LIMITED (no previous names) with award text appended, and witness 015476-2026 (Medway NHS FT) lists DELRON SERVICES LIMITED with 01873018 and this PPON. Two of the three listed witness publications are the same notice, but the name match alone is plain."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "01991637~PCNG4217XXCQ",
+   "members": [
+    16663747,
+    31544365
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] Companies House shows 01991637 named AXIS EUROPE PLC until 17 Jul 2024 and AXIS EUROPE LIMITED until 23 Sep 2026, when it became AXIS CLC SERVICES LIMITED. That covers the PPON's names 'Axis Europe Ltd' and 'Axis Europe Plc' across the 2025-26 notices, and 21 witnesses agree; no other active company called Axis Europe Limited exists (Axis Europe Holdings 08738271 is the parent and carries a different name). | challenger: Companies House shows 01991637 as AXIS EUROPE PLC until 17 Jul 2024 and AXIS EUROPE LIMITED until 23 Sep 2026 (now AXIS CLC SERVICES LIMITED), which covers both PPON names. Witness 085394-2026 (Sep 2026) lists AXIS EUROPE LIMITED with 01991637 and this PPON, and 21 witnesses agree. No other company holds the Axis Europe name: the parent is AXIS EUROPE HOLDINGS 08738271, and EYERIES HOLDINGS 15609626 was only briefly 'Axis Europe Demergerco'."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02174990~PZRT9169TVMT",
+   "members": [
+    7955213,
+    30933151
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's names, 'Softcat Ltd' and 'Softcat PLC', are the register's current name SOFTCAT PLC and its previous name SOFTCAT LIMITED. 120 witnesses agree, and the pair was denied only on a legal-form difference between the heads. | challenger: 'Softcat Ltd' and 'Softcat PLC' are the register's current SOFTCAT PLC and its previous SOFTCAT LIMITED, and witness 030570-2025 lists SOFTCAT PLC with 02174990 and this PPON; 120 witnesses agree. The denial rested only on the plc-versus-limited heads."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02212959~PHRH6497YBRR",
+   "members": [
+    11180907,
+    31762728
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Arcadis Consulting UK Ltd  2 3 4 5 6 7', is the register's ARCADIS CONSULTING (UK) LIMITED with lot numbers appended. 33 witnesses agree. | challenger: 'Arcadis Consulting UK Ltd 2 3 4 5 6 7' is ARCADIS CONSULTING (UK) LIMITED with lot numbers appended, and witness 030864-2025 lists the exact legal name with 02212959 and this PPON; 33 witnesses agree. The coh side's 'ARCADIS LLP' is a stray on the other side and does not touch the PPON."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02228744~PYQN3218MQDR",
+   "members": [
+    31560134,
+    31764010
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Hamamastsu Photonics UK Ltd', is a one-letter misspelling of the register's HAMAMATSU PHOTONICS UK LIMITED. The witness pairs the PPON with 02228744. | challenger: 'Hamamastsu Photonics UK Ltd' is a one-letter misspelling of HAMAMATSU PHOTONICS UK LIMITED, and the witness (006168-2026, UKRI) lists the exact legal name with 02228744 and this PPON. The name is distinctive and no other name appears on either side."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02255270~PXZB6512CTCP",
+   "members": [
+    30976248,
+    31535961
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON carries the register's exact name 'Luceco UK Limited', and four witnesses pair it with 02255270. The other name, 'Luceco plc (Kingfisher Lighting)', is a loose parent and brand label for the same trading business, and the pair was denied only on a plc-versus-limited head mismatch. | challenger: All three witnesses I read (038689-2025, 039709-2025, 061946-2025) list Luceco UK Limited with 02255270, Telford TF3 3BD and this PPON, and the exact name is also under the PPON alone. 'Luceco plc (Kingfisher Lighting)' names the parent and KINGFISHER LIGHTING LIMITED (02236337), which are separate companies, not one brand as the reviewer put it. It is one label against four full-identity witnesses, so high holds."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02317072~PHCB5365BWVR",
+   "members": [
+    30967571,
+    31649080
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Interclass Plc (6)', is the register's INTERCLASS PUBLIC LIMITED COMPANY with a lot number appended. Three witnesses agree, and the pair was denied only on legal form. | challenger: 'Interclass Plc (6)' is INTERCLASS PUBLIC LIMITED COMPANY with a lot number appended, and witness 087925-2026 lists the exact legal name with 02317072 and this PPON. The denial rested only on legal form."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02491098~PMPD2476DDQG",
+   "members": [
+    10119700,
+    31647022
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'MedScience previously known as Pharmed UK', gives both the register's current name MEDSCIENCE DISTRIBUTION LTD and its previous name PHARMED UK LIMITED. The coh side also carries the earlier name Neurotechnics, so all names belong to one renamed company. | challenger: 'MedScience previously known as Pharmed UK' names both the register's current MEDSCIENCE DISTRIBUTION LTD and its previous PHARMED UK LIMITED, and witness 047859-2025 lists MEDSCIENCE DISTRIBUTION LTD with 02491098 and this PPON. The coh side's 'Omnimed Limited' is a stray on the other side."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02572947~PYBJ3356XHPL",
+   "members": [
+    30930288,
+    30969366
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'APCOA Parking', is the register's APCOA PARKING (UK) LIMITED without its suffix. Five witnesses pair the two identifiers. | challenger: 'APCOA Parking' is APCOA PARKING (UK) LIMITED without its suffix, and witness 086437-2026 lists the exact legal name with 02572947, Uxbridge and this PPON; five witnesses agree. Other UK APCOA companies exist (APCOA PARKING SERVICES (UK) 02492280 and HOLDINGS 05163792), but the witness carries the full identity, so high holds."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02599171~PRZT9281DVQG",
+   "members": [
+    31569570,
+    31648762
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Southside Partnership', is the register's exact current name for 02599171. The coh side's 'Certitude Support (Southside Partnership)' is that same charity's trading name. | challenger: 'Southside Partnership' is the register's exact current name for 02599171, and witness 065009-2026 (Camden) lists SOUTHSIDE PARTNERSHIP with 02599171 and this PPON. The coh side's 'Certitude Support (Southside Partnership)' is that charity's trading name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02605138~PMWL7877TDBZ",
+   "members": [
+    12206965,
+    31762745
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Savills UK Limited 1 2 3 4 5 6 7 8', is the register's SAVILLS (UK) LIMITED with lot numbers appended. 40 witnesses agree. | challenger: 'Savills UK Limited 1 2 3 4 5 6 7 8' is SAVILLS (UK) LIMITED with lot numbers appended, and 40 witnesses pair the PPON with 02605138. Witness 089390-2026 lists the exact legal name, though it is an odd 'Corneal graft material' award (a publisher error about the contract), and it still carries Savills' own number and PPON together."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02880202~PYGL9833RMCV",
+   "members": [
+    10109905,
+    31649105
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'HBC Construction Ltd (2, 6)', is the register's current HBC CONSTRUCTION LIMITED with lot numbers appended. The coh side's 'Henry Boot Construction Limited' is the same company's previous name, and three witnesses agree. | challenger: 'HBC Construction Ltd (2, 6)' is 02880202's current name (renamed from HENRY BOOT CONSTRUCTION LIMITED on 18 Dec 2025), and the DfE framework witnesses (080063-2025, 012929-2026, 033843-2026) list it under the old name with 02880202 and this PPON. On the same day the dormant 02145413 took the name HENRY BOOT CONSTRUCTION LIMITED, so the coh side's old name now belongs to another number. The PPON's own name, HBC Construction, is held only by 02880202."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02905218~PDDG1253XXPY",
+   "members": [
+    13148298,
+    31565753
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] 'ICARE' is a spacing variant of the register's I CARE (GB) LIMITED. Six witnesses pair the PPON with 02905218, and no other name appears on either side. | challenger: 'ICARE' is I CARE (GB) LIMITED without the space and suffix, and witness 075804-2025 (a Westmorland and Furness extra-care contract) lists I CARE (GB) LIMITED with 02905218, Blackpool and this PPON; six witnesses agree. A generic name alone would be weaker, but six consistent witnesses make it plain."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02931254~PLDH9297PCZX",
+   "members": [
+    31536625,
+    31580197
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] 'Elite' is the punctuation-free form of the register's E.L.I.T.E. SUPPORTED EMPLOYMENT AGENCY LTD. The one witness pairs the PPON with 02931254, and neither side has any other name. | challenger: 'Elite' is the punctuation-free form of E.L.I.T.E. SUPPORTED EMPLOYMENT AGENCY LTD, and witness 063795-2026 (LCRCA Supported Employment Quality Framework) lists that exact legal name with 02931254 and this PPON, which fits its trade. A one-word name on one witness would only be medium by itself, but reading the witness makes it plain."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "03128681~PVMZ4123TVXQ",
+   "members": [
+    31560591,
+    31588883
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's main name is exactly the register's current name EAST MIDLANDS CROSSROADS-CARING FOR CARERS (previously Trent Crossroads), and the company-number side publishes the same charity as 'Crossroads Together from Carers Trust 4all'. The PPON's other name, 'Tuvida', is the charity's newer brand (Crossroads Together rebranded as Tuvida), not a different entity. | challenger: The PPON's main name is exactly the register's current name EAST MIDLANDS CROSSROADS-CARING FOR CARERS (formerly Trent Crossroads, Nottingham), and the company-number side publishes the same charity with its Crossroads Together / Carers Trust label. 'Tuvida' fits the TuVida (East Midlands) carers brand, and Companies House holds no TuVida company apart from unrelated dissolved and new firms, so it is a brand and not a competing entity."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "03214465~PMHC9629CWGZ",
+   "members": [
+    17575182,
+    31647091
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's names (ONEADVANCED LIMITED, OneAdvanced, Advanced Business Solutions) are the register's current name and a short form of its previous name ADVANCED BUSINESS SOFTWARE AND SOLUTIONS LIMITED, and 19 witnesses back the pair. The competing number 07851234 (now CSG EQUITYCO LIMITED) held the OneAdvanced and ABSS names only briefly in 2025 during the rename shuffle, so the PPON belongs to this trading company. | challenger: The PPON's names (ONEADVANCED LIMITED, OneAdvanced, Advanced Business Solutions) are 03214465's current name (since 1 May 2025) and a short form of its 2011\u20132025 name ADVANCED BUSINESS SOFTWARE AND SOLUTIONS LIMITED, and 19 witnesses back the pair. Companies House shows the competing 07851234 is a holding company (SIC 64209) that held ONEADVANCED LIMITED only from 8 Jan to 1 May 2025 and ABSS from 1 to 29 May 2025. Its 8 witnesses (all 2025) reflect that mistaken-rename window and do not make it the trading supplier."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "03226403~PLBQ7163MQWL",
+   "members": [
+    15189638,
+    30969128
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] Two of the PPON's three names are the register's current name ESSITY UK LIMITED ('ESSITY UK LIMITED', 'Essity UK Ltd - Health & Medical Solutions', a division label). The third, 'Essity T/A BSN Medical Ltd', puts Essity's BSN brand in a trading-as form. This is the right PPON for 03226403, unlike the NHS trust PPON paired with the same number. | challenger: Two of the PPON's three names are the register's exact current name ESSITY UK LIMITED ('ESSITY UK LIMITED' and 'Essity UK Ltd - Health & Medical Solutions', a division label). The third, 'Essity T/A BSN Medical Ltd', is Essity's own BSN brand in trading-as form, so this is Essity's PPON, unlike the NHS trust PPON on the same number."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "03578140~PRRH8298MPBM",
+   "members": [
+    8455438,
+    31762758
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Seddon Construction Limited a 2 3 h 2 3', is the register's current name SEDDON CONSTRUCTION LIMITED plus lot-number noise, and 19 witnesses with 0 co-occurrences back the pair. The company-number side's 'Sustainable Building Services (UK) Ltd' is a single stray. | challenger: The PPON's only name is the register's exact current name SEDDON CONSTRUCTION LIMITED plus lot-number noise ('a 2 3 h 2 3'), and 19 witnesses with 0 co-occurrences back the pair. The company-number side's 'Sustainable Building Services (UK) Ltd' is a single stray."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "03784486~PBBY1822TZCN",
+   "members": [
+    14894495,
+    30928223
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The register's current name is LANES GROUP LIMITED, with LANES GROUP PLC as a previous name, and the PPON's only name is exactly LANES GROUP LIMITED. The plc/Ltd difference that tripped the legal-form gate is the company's own re-registration, and 8 witnesses back the pair. | challenger: The PPON's only name is exactly the register's current name LANES GROUP LIMITED, and LANES GROUP PLC is one of the company's own previous names, so the plc/Ltd legal-form gate is a re-registration of the same company. 8 witnesses with 0 co-occurrences back the pair."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "03854782~PTVQ9584RCLP",
+   "members": [
+    13171869,
+    31647174
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Powell Engineering UK Ltd T/as Omexom', is the register's exact current name POWELL ENGINEERING UK LIMITED plus its trading brand Omexom (VINCI Energies' brand). The company-number side publishes the same name, so this is one entity. | challenger: The PPON's only name is the register's exact current name POWELL ENGINEERING UK LIMITED plus 'T/as Omexom'. Companies House lists Vinci Energies UK Holding Limited as its PSC, which confirms Omexom, VINCI Energies' power brand, as its trading name. The company-number side publishes the same legal name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "04057460~PPLB6982ZZNX",
+   "members": [
+    31551902,
+    31762753
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'igloo Regeneration Limited a 1 2 h 1', is the register's current name IGLOO REGENERATION LIMITED plus lot-number noise. Nothing on either side points to another entity. | challenger: The PPON's only name is the register's exact current name IGLOO REGENERATION LIMITED plus lot-number noise ('a 1 2 h 1'). Company names are unique on the register, and nothing on either side points to another entity."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "04236707~PYMN8897JPLN",
+   "members": [
+    30915425,
+    31762781
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'CME Medical UK', is the register's previous name CME MEDICAL UK LIMITED for 04236707 (now BECTON DICKINSON (CME) U.K. LIMITED after BD acquired the CME pump business). Five witnesses with 0 co-occurrences back the pair, and nothing points to another BD entity. | challenger: The PPON's only name, 'CME Medical UK', is the register's previous name CME MEDICAL UK LIMITED (4 May 2011 to 1 Feb 2019) for what is now BECTON DICKINSON (CME) U.K. LIMITED. A Companies House search finds no other company holding that name, and 5 witnesses with 0 co-occurrences back the pair."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "04273754~PPZX2842HHPG",
+   "members": [
+    9087207,
+    30967646
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] Both PPON names are the register's current name MORGAN SINDALL CONSTRUCTION & INFRASTRUCTURE LTD (one uses 'and' for '&', one adds a lot number), and 23 witnesses back the pair. The company-number head 'Morgan Sindall plc' is one of this number's own previous names, which explains the legal-form gate. | challenger: Both PPON names are the register's current name MORGAN SINDALL CONSTRUCTION & INFRASTRUCTURE LTD ('and' for '&', and a lot suffix), and 23 witnesses with 0 co-occurrences back the pair. The company-number head 'Morgan Sindall plc' is one of this number's own previous names, which explains the legal-form gate."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "04335541~PJQR2433LTNQ",
+   "members": [
+    31539032,
+    31588415
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, \"Aspire UK\", is a Leicester homecare service that CQC and NHS listings say is run by City & County Care Services Limited, which is the register's current name for 04335541. So it is this company's trading name: two witnesses pair them and they never appear together as separate parties. | challenger: The NHS and CQC pages for location 1-141189208 say \"Aspire UK\" (Peepul Centre, Leicester) is run by City & County Care Services Limited, the current register name for 04335541, and no active Leicester company called Aspire UK appears on Companies House. Both witnesses pair the two orgs and there is no co-occurrence, so the PPON's only name is this company's trading name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "04422108~PTXD3325QHRW",
+   "members": [
+    30953440,
+    31647034
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, \"Cepheid\", is the brand and short form of the register name CEPHEID UK LIMITED (formerly Stretton Scientific). Eleven witnesses pair them and none of the other notices names them as separate parties. | challenger: \"Cepheid\" is the brand and short form of the register name CEPHEID UK LIMITED (formerly Stretton Scientific), and the company-number side is published as \"Cepheid UK Ltd\". Eleven witnesses all give the UK company number with this PPON and there is no co-occurrence, which a US or French Cepheid entity could not explain, since neither has a UK number."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "05019106~PYVQ8793VRCD",
+   "members": [
+    30913961,
+    30972027
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's names \"Tracsis\" and \"Tracsis PLC\" match the register's current name TRACSIS PLC exactly. iBlocks Ltd, a Tracsis subsidiary, is one stray name, and eight witnesses with no co-occurrence support the pair. | challenger: Two of the PPON's three names, \"Tracsis\" and \"Tracsis PLC\", are the register's current name TRACSIS PLC (formerly Tracsis Limited). iBlocks Ltd, a Tracsis subsidiary, is the one stray, and eight witnesses with no co-occurrence back the pair."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "05234413~PTCZ9264VLHR",
+   "members": [
+    14053177,
+    31649040
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] \"TechnologyOne UK Ltd\" differs from the register's TECHNOLOGY ONE UK LIMITED only by spacing. Five witnesses support the pair and the two orgs never appear together as separate parties. | challenger: \"TechnologyOne UK Ltd\" is the register's TECHNOLOGY ONE UK LIMITED (formerly Abbots 332) written in the group's own one-word brand spelling. Five witnesses back the pair and there is no co-occurrence."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "05386273~PNQY3648RQHN",
+   "members": [
+    1323,
+    31647026
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The register's previous name is OXFORD NANOPORE TECHNOLOGIES LIMITED (it re-registered as a plc), and the PPON's names are that Ltd form and the current plc name. Companies House shows no other current company with the ONT Ltd name: 06540938, which once held it, is now Oxford Nanolabs Ltd. | challenger: The register's previous name is OXFORD NANOPORE TECHNOLOGIES LIMITED (renamed when it re-registered as a plc), and the PPON's two names are that Ltd form and the current plc name. Companies House shows no current company with the Ltd name: 06540938 held it only from March to May 2008 and is now the dormant Oxford Nanolabs Ltd, and the other group companies have different names (Holdings, Diagnostics)."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "05850389~PXYN4176VDZJ",
+   "members": [
+    15948648,
+    31647046
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] \"Diagnostics for the Real World Europe Limited\" is the register's DIAGNOSTICS FOR THE REAL WORLD (EUROPE) LIMITED without the parentheses. Four witnesses support the pair and they never appear together as separate parties. | challenger: \"Diagnostics for the Real World Europe Limited\" is the register's DIAGNOSTICS FOR THE REAL WORLD (EUROPE) LIMITED without the parentheses, and the company-number side is published as \"Diagnostics for the Real World (DRW)\". Four witnesses back the pair and there is no co-occurrence."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "06382509~PDBH8317DXXN",
+   "members": [
+    9122216,
+    31762720
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] \"Avison Young UK Ltd\" plus some stray form digits is the register's current name AVISON YOUNG (UK) LIMITED (formerly GVA Grimley Ltd). Twenty-six witnesses support the pair with no co-occurrence. | challenger: \"Avison Young UK Ltd\" plus some stray form digits is the register's current name AVISON YOUNG (UK) LIMITED (formerly GVA Grimley Ltd), and the company-number side even reads \"GVA Grimley Ltd Trading as Avison Young\". Twenty-six witnesses back the pair and there is no co-occurrence."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "06803654~PNDB5777QNWH",
+   "members": [
+    31552310,
+    31761356
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name, Warwick Landscaping Ltd, is exactly the register's current name WARWICK LANDSCAPING LIMITED (formerly Calabasas Landscaping), and \"Warwick Landscape Ltd\" on the company-number side is a spelling variant. Three witnesses support the pair with no co-occurrence. | challenger: The PPON's name, Warwick Landscaping Ltd, is exactly the register's current name WARWICK LANDSCAPING LIMITED (formerly Calabasas Landscaping), which no other company can hold. \"Warwick Landscape Ltd\" on the company-number side is a spelling variant, and three witnesses back the pair with no co-occurrence."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "06937095~PWQW4267XHHJ",
+   "members": [
+    18010674,
+    31762765
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name 'Archus 1  2  3  4  8' is 'Archus' with lot or footnote digits appended by the notice parser, and it matches the register's ARCHUS LIMITED and the coh-side names 'Archus' and 'Archus Limited'. Four witnesses agree, with no co-occurrences. | challenger: 'Archus 1  2  3  4  8' is the brand plus the framework publisher's lot digits, and the coh side publishes the identical 'Archus' and 'Archus Limited' for ARCHUS LIMITED. Four witnesses agree with no co-occurrences, and the other Archus companies at 43 Queen Square (Holdco, Bidco and others incorporated in 2023) are group entities, not rival owners of the brand."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "07559069~PJDT5277YVRW",
+   "members": [
+    8567145,
+    31584687
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'MASTEK SYSTEMS COMPANY LTD', is exactly the register's current name for 07559069. The coh org's name 'Evolutionary systems company limited' is the register's previous name, and two witnesses pair them with no co-occurrences. | challenger: The PPON's only name is exactly the register's current name, MASTEK SYSTEMS COMPANY LTD, and the coh org's 'Evolutionary systems company limited' is its previous name; two witnesses and no co-occurrences. The sister MASTEK (UK) LTD (02731277) already has its own confirmed PPON (PWPZ9495MMZV), so nobody else claims this one."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "07785548~PHVV8164HPXR",
+   "members": [
+    18660065,
+    31581311
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name 'GTD Painting & Property maintenance Ltd' is the register's current name GTD PAINTING & PROPERTY MAINTENANCE LIMITED, differing only in case and Ltd/Limited. The coh side's 'GTD Painting & Property Ltd' is a shortened form of the same company. | challenger: 'GTD Painting & Property maintenance Ltd' is the register's current name, GTD PAINTING & PROPERTY MAINTENANCE LIMITED (formerly GT Decorators), apart from case and Ltd/Limited, and the coh side's 'GTD Painting & Property Ltd' is a shortened form. Companies House shows no other GTD Painting company, so one witness is enough."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "07882874~PMHV3284PRTL",
+   "members": [
+    31558496,
+    31762737
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name 'Place Capital Group 1  2  3  4  5  6  7' is the register name PLACE CAPITAL GROUP LIMITED with lot or footnote digits appended by the parser, the same garbling seen in the sibling Archus, Urban Splash and Rivington PPON orgs. The witness and the PPON-only name agree with the register, and nothing points elsewhere. | challenger: 'Place Capital Group 1  2  3  4  5  6  7' is the register's PLACE CAPITAL GROUP LIMITED plus the framework publisher's lot digits, and the coh side publishes the same register name. Notice 002493-2026 misaligns other rows, but here the PPON name and the register name agree independently on the Group company, not on its sister PLACE CAPITAL MANAGEMENT SERVICES LIMITED."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "08338877~PQJZ6379HTTX",
+   "members": [
+    31559554,
+    31762756
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name is the register-exact 'Urban Splash Developments Limited' followed by parser junk (lot letters and digits), the same artifact as the sibling garbled PPON orgs from that publisher. The one witness agrees, and no other name appears on either side. | challenger: The PPON's only name is the register-exact 'Urban Splash Developments Limited' followed by the framework publisher's lot letters and digits, and the coh side carries the same register name. There is one witness, and no conflicting name on either side."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "08835703~PTYQ7237GHCG",
+   "members": [
+    31543044,
+    31762759
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name 'Rivington Land Ltd 8' is the register's RIVINGTON LAND LIMITED with a trailing footnote digit from the same garbling publisher. The one witness agrees, and nothing points to another entity. | challenger: 'Rivington Land Ltd 8' is the register's RIVINGTON LAND LIMITED with one trailing footnote digit from the same framework publisher, and the coh side carries the same register name. Companies House shows no other Rivington Land company."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "09463681~PCCV5198XPDW",
+   "members": [
+    16683857,
+    31578906
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'RIGHTGREENRECYCLE LIMITED', is exactly the register's current name for 09463681. The company-number side's 'RightGreen Recycle Ltd' is the same name with a space added, so both sides name one company. | challenger: The PPON's only name, RIGHTGREENRECYCLE LIMITED, is exactly the register's current name, and 'RightGreen Recycle Ltd' on the company-number side is only a spacing variant. The witness 082849-2026 (NHS SBS) lists RIGHTGREENRECYCLE LIMITED at Cutler Heights, Bradford, with both 09463681 and PCCV-5198-XPDW."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "10438075~PMWH7281ZRCQ",
+   "members": [
+    31544802,
+    31761366
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'T-Junction Children's Services', is the register's T-JUNCTION CHILDRENS SERVICES LTD with an apostrophe added and the legal form dropped. Six witnesses assert the pair and nothing points elsewhere. | challenger: 'T-Junction Children's Services' is the register's T-JUNCTION CHILDRENS SERVICES LTD with an apostrophe added and the legal form dropped. Witnesses from Coventry (057451-2025, 018160-2026) and Derbyshire (008545-2026) each list it at 27 The Pastures, Narborough, with both identifiers."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "10680422~PNNM5954JTLZ",
+   "members": [
+    31550634,
+    31648984
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Forward Education Trust ~ Catering Tender', is the register's FORWARD EDUCATION TRUST with a procurement label appended. This is the academy trust publishing its own tender under its own identifiers. | challenger: The witness 093146-2026 ('Supply Staff Forward Education Trust') is the trust's own notice, listing FORWARD EDUCATION TRUST as buyer with 10680422 and this PPON. The PPON's only name is the register name with a '~ Catering Tender' procurement label added."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "12656036~PWTD8252JQTZ",
+   "members": [
+    30915302,
+    31571527
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] 142 witness notices consistently pair this PPON with NORWICH CITY SERVICES LIMITED, which is the company's own identifier record as a publishing buyer. The only PPON-only name, the misspelt 'Eastern Counties Scaffodling Services', is a separate supplier (Eastern Counties Scaffolding Services Ltd, 04466206) that one publisher gave the buyer's PPON, an obvious stray. | challenger: The witnesses are Norwich City Services' own notices as buyer (030966, 030968 and 030969-2025, all City Hall, Norwich, with 12656036 and this PPON), 142 of them. The single PPON-only name, the misspelt 'Eastern Counties Scaffodling Services', is a scaffolding supplier to NCSL (030968-2025 is 'Various Scaffolding Works') that one notice gave the buyer's PPON, an obvious stray."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "15028578~PPVV7714XYXQ",
+   "members": [
+    31578925,
+    31647146
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'J& Building Contractors Ltd', is the register's J&B BUILDING CONTRACTORS LIMITED with the 'B' dropped. Three witnesses bind them and neither side carries any other name. | challenger: All three witnesses (060646, 064527 and 067863-2026) carry J&B BUILDING CONTRACTORS LIMITED, 15028578, Westerham TN16, with this PPON. The PPON's only other name, 'J& Building Contractors Ltd', is that name with the 'B' lost, and neither side names anyone else."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "FC016134~PHHL9383NLJL",
+   "members": [
+    30926902,
+    31762621
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'EBSCO INTERNATIONAL INC.', is exactly the register name for FC016134. 21 witnesses agree, and the coh side's other names ('Ebsco Information Services', a typo variant) are the same company's brand and spelling. | challenger: 'EBSCO INTERNATIONAL INC.' is exactly the register name, and the witnesses carry FC016134 with ebsco.com, with 21 notices in agreement. On the coh side, 'Ebsco Information Services' is the brand and 'EBSCO International Incl' a typo."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "FC027405~PYVN7941JMVZ",
+   "members": [
+    31578268,
+    31623404
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'CRISIS PREVENTION INSTITUTE, INC.', is exactly the register's current name. The coh side's 'CPI Inc (Crisis Prevention Institute)' matches its previous name CPI INC. | challenger: 'CRISIS PREVENTION INSTITUTE, INC.' is the register's current name, and witness 094761-2026 carries it with FC027405 and crisisprevention.com. The coh side's 'CPI Inc (Crisis Prevention Institute)' is the register's previous name, CPI INC."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "NI003503~PGTW4456TGCY",
+   "members": [
+    12264652,
+    31762722
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name is 'John Graham Construction Ltd' with lot-number junk appended, exactly the register's JOHN GRAHAM CONSTRUCTION LIMITED (formerly John Graham (Dromore) Limited). 12 witnesses agree. | challenger: The PPON's only name is 'John Graham Construction Ltd' with lot codes appended, exactly the register's JOHN GRAHAM CONSTRUCTION LIMITED. The witnesses carry NI003503 at Hillsborough, and 12 notices agree."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "NI041643~PMQR4417CMCJ",
+   "members": [
+    31539282,
+    31761325
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] Find a Tender award notices name the supplier 'DFPF Ltd t/a People 1st', an NI training and employability provider founded around 2002, which matches the register's D.F.P.F. LIMITED (incorporated Oct 2001). So the PPON's only name, 'People 1st', is this company's trading name. | challenger: Witness 045276-2025 (DfE Skills for Life and Work) carries D.F.P.F. LIMITED, NI041643, Belfast, with url people-1st.co.uk and hello@people-1st.co.uk. So 'People 1st' is the trading name on this company's own record. That settles it, whatever the unrelated GB companies called People 1st are."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "NI628343~PLLY4995WZBW",
+   "members": [
+    30967380,
+    31649065
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'LISNEY NI Ltd.', is the register's previous name LISNEY (NI) LTD. The company was renamed AMBIT CRE LTD, which is the name the coh side publishes. | challenger: 'LISNEY NI Ltd.' is the register's previous name, LISNEY (NI) LTD, and witness 093497-2026 carries the current name, Ambit CRE Limited, with NI628343 and ambit-cre.com. A Companies House search finds no other live Lisney NI company (Lisney Belfast Ltd and Lisney LLP are dissolved)."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "NP000226~PTZH2752JBMM",
+   "members": [
+    31539291,
+    31761337
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Impact Training', is the register's IMPACT TRAINING (N.I) LIMITED without its legal suffix. Two witnesses bind them, one an NI framework notice (045276-2025), and neither side carries a conflicting name. | challenger: Both witnesses carry IMPACT TRAINING (N.I) LIMITED, NP000226, 16 Lanark Way, Belfast, impacttrainingltd.com, with this PPON. 'Impact Training' is that name without its suffix, and nothing on either side conflicts."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC300001~PMLW7292ZXTL",
+   "members": [
+    12015028,
+    31762784
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Ernest & Young LLP', is a misspelling of the register's ERNST & YOUNG LLP, and 52 witnesses agree. The 'KPMG LLP' on the coh side is an obvious stray. | challenger: 'Ernest & Young LLP' is a misspelling of the register's ERNST & YOUNG LLP, and 52 witnesses carry OC300001 with this PPON. The 'KPMG LLP' on the coh side is a stray."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC304688~PPCM1511PDGH",
+   "members": [
+    15336603,
+    31762751
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name is 'Freeths LLP' with lot numbers appended, exactly the register's FREETHS LLP. 7 witnesses agree. | challenger: The PPON's only name is 'Freeths LLP' plus lot numbers, which is the register's FREETHS LLP. The witnesses (for example the LUPC legal framework 054461-2025) carry OC304688 with freeths.co.uk."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC306448~PGVM7475NQYV",
+   "members": [
+    15336602,
+    31762723
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name is 'Browne Jacobson LLP' with lot numbers 1-8 appended, exactly the register's BROWNE JACOBSON LLP. 7 witnesses agree. | challenger: The PPON's only name is 'Browne Jacobson LLP' plus lots 1-8, which is the register's BROWNE JACOBSON LLP. The witnesses carry OC306448 with brownejacobson.com."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC308311~PTNY5134VLPM",
+   "members": [
+    12206867,
+    30927064
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's names are 'Rapleys LLP', 'RAPLEYS LIMITED LIABILITY PARTNERSHIP' and that name with '(OC308311)' attached, all the register's RAPLEYS LIMITED LIABILITY PARTNERSHIP. The legal-form gate only reflects LLP versus its spelled-out form. | challenger: The PPON's names include 'RAPLEYS LIMITED LIABILITY PARTNERSHIP (OC308311)', which quotes this number, and the witnesses carry OC308311 with rapleys.com. The legal-form gate only reflects LLP against the spelled-out form."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC309219~PJMX5523TXZX",
+   "members": [
+    10985758,
+    31762729
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name is 'Bevan Brittan LLP' with lot numbers appended, exactly the register's BEVAN BRITTAN LLP. 25 witnesses agree. | challenger: The PPON's only name is 'Bevan Brittan LLP' plus lot numbers, which is the register's BEVAN BRITTAN LLP. The witnesses (054461-2025, 051212-2025, 089062-2026) carry OC309219 with bevanbrittan.com."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC309501~PLRB9696CVWX",
+   "members": [
+    10985754,
+    31762733
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name is 'Brabners LLP' with lot numbers appended, exactly the register's BRABNERS LLP (formerly Brabners Chaffe Street LLP). The single witness agrees. | challenger: The PPON's only name is 'Brabners LLP' plus lot numbers, which is the register's BRABNERS LLP (formerly Brabners Chaffe Street LLP). The single witness, 079652-2026, carries OC309501 with this PPON."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC310651~PQRQ8342WDHY",
+   "members": [
+    30919433,
+    31561923
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'Daniel Connal Partnership LLP', is the trading form of the register's DANIEL CONNAL LIMITED LIABILITY PARTNERSHIP. The coh side publishes 'Daniel Connal Partnership' too, so the legal-form gate is only a wording difference. | challenger: 'Daniel Connal Partnership LLP' is the register's DANIEL CONNAL LIMITED LIABILITY PARTNERSHIP with LLP abbreviated. The witness carries OC310651 with danielconnal.co.uk, and the coh side publishes 'Daniel Connal Partnership' too."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC325348~PHLR9855THZV",
+   "members": [
+    31584527,
+    31761419
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'RSM UK TAX AND ADVISORY SERVICES LLP', is a previous name on the register. The LLP was renamed RSM UK TAX AND CONSULTING LLP, the name the coh side publishes. | challenger: 'RSM UK TAX AND ADVISORY SERVICES LLP' is a previous name on the register. Witness 094027-2026 carries the current name, RSM UK TAX AND CONSULTING LLP, with OC325348 and rsmuk.com."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC325522~PZRV8111PTBJ",
+   "members": [
+    30930069,
+    31563976
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's names 'Bates Wells', 'Bates Wells Braithwaite' and the typo 'Bate Wells' are the register's BATES WELLS & BRAITHWAITE LONDON LLP and its previous name BATES WELLS LLP. 3 witnesses agree. | challenger: 'Bates Wells', 'Bates Wells Braithwaite' and the typo 'Bate Wells' are the brand and name of BATES WELLS & BRAITHWAITE LONDON LLP, which was named BATES WELLS LLP for its first nine days in 2007. All three witnesses carry OC325522, and a Companies House search finds no other live Bates Wells LLP."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC376271~PVYV9912VRXT",
+   "members": [
+    31537879,
+    31649102
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name is 'LST Projects' with lot numbers, and the coh side independently publishes 'LST Projects' for OC376271. Companies House shows LST PROJECTS LIMITED (10811456) as a dormant company (SIC 99999) at the same Eastleigh address as the register's LST PARTNERSHIP LLP, so the trading LLP holds the brand. | challenger: The coh side publishes 'LST Projects' for OC376271, and the witnesses carry LST PARTNERSHIP LLP with lstprojects.co.uk and tenders@lstprojects.co.uk. LST PROJECTS LIMITED (10811456), at the same Eastleigh address, is SIC 99999 and has filed dormant accounts every year to 30 June 2026, so the brand is the LLP's."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC423384~PMQQ1618DXNP",
+   "members": [
+    17616847,
+    31762743
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name is 'DWF Law LLP' with lot numbers 1-8 appended, exactly the register's DWF LAW LLP (formerly Gage 1 LLP). The coh side's 'DWF LLP' and 'DFW Law LLP' are a sister-LLP stray and a typo. | challenger: The PPON's only name is 'DWF Law LLP' plus lots 1-8, which is the register's DWF LAW LLP (formerly Gage 1 LLP). Witnesses 058891-2026 and 077677-2026 carry OC423384. The coh side's 'DWF LLP' is the sister LLP (which has its own PPON, PZTP2177WBYM) and 'DFW Law LLP' is a typo."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "OC433300~PMMP2131QPLJ",
+   "members": [
+    16866855,
+    31762740
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name is 'Forbes Solicitors LLP' with lot numbers appended, exactly the register's FORBES SOLICITORS LLP. 5 witnesses agree. | challenger: The PPON's only name is 'Forbes Solicitors LLP' plus lot numbers, which is the register's FORBES SOLICITORS LLP. All 5 witnesses agree and carry OC433300 with this PPON."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "RC000057~PJRB3233GTQL",
+   "members": [
+    31561336,
+    31762771
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, 'British Broadcasting Corporation (BBC)', is the register's BRITISH BROADCASTING CORPORATION. The coh side publishes the same name in the reverse order. | challenger: Witness 009284-2026 (UKRI) carries 'BBC (British Broadcasting Corporation)' with RC000057 and bbc.co.uk. The PPON's only name is the register's BRITISH BROADCASTING CORPORATION with the initials in the reverse order."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "RS007826~PJJV4784DLLH",
+   "members": [
+    13089134,
+    31534617
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] Two of the PPON's three names, \"Torus62 Limited\" (its head) and the typo \"Torus62 Limitd\", are the register's TORUS62 LIMITED, and 7 witnesses with no cooccurrence tie the PPON to RS007826. \"TORUS62 Developments LIMITED\" is a stray naming the subsidiary, and the number's other PPON partner is the Northern Housing Consortium (a consortium-gated pair), not a rival Torus PPON. | challenger: The PPON's head \"Torus62 Limited\" is exactly the register's TORUS62 LIMITED, and \"Torus62 Limitd\" is a typo of it. Seven witnesses with 0 cooccurring tie the PPON to RS007826, and the census holds no other Torus PPON. \"TORUS62 Developments LIMITED\" (subsidiary 09687200) is one stray among three names. The altid plan confirms the number's other PPON partner is PJXZ4423NDBT, the Northern Housing Consortium's consortium PPON with 54 names, so the second-PPON doubt behind the earlier campaign's medium is gone and high is warranted."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "SC139953~PRYQ1479GWPT",
+   "members": [
+    22686658,
+    31627823
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's only name, \"Optos plc\", is the register's OPTOS PUBLIC LIMITED COMPANY with the legal form shortened, so it fails only the legal-form gate. Five witnesses tie it to SC139953 with no cooccurrence. | challenger: The PPON's only name, \"Optos plc\", is the register's current OPTOS PUBLIC LIMITED COMPANY with the legal form abbreviated, which is why it failed only the legal-form gate. Five witnesses tie it to SC139953 with 0 cooccurring, and no rival Optos entity appears, so high is warranted."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "SC212151~PTLW2755GDGH",
+   "members": [
+    30914225,
+    31578895
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[merge/high; challenger agreed] The PPON's name is literally \"VIGILANT PROTECT UK LIMITED (SC212151) - t/a Vigilant Security\", which spells out the register's current name and quotes this company number. Its other name, \"Vigilant Security\", is that trading style and matches the register's previous name VIGILANT SECURITY (SCOTLAND) LIMITED. | challenger: The PPON's own published name, \"VIGILANT PROTECT UK LIMITED (SC212151) - t/a Vigilant Security (previously operated as Croma Vigilant)\", spells out the register's current name and quotes this very company number. Its other name, \"Vigilant Security\", matches the trading style and the register's previous name VIGILANT SECURITY (SCOTLAND) LIMITED. That self-identification makes high safe despite the single witness and 0 cooccurring."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "SC347921~PHWZ6349VLXZ",
+   "members": [
+    7940077,
+    31565242
+   ],
+   "action": "keep",
+   "confidence": "low",
+   "rationale": "[469 U1 owner hold] Reviewer merge/medium, challenger agreed: the witnesses register the PPON to the group company, but the PPON org's head names a separate real subsidiary, ROBERTSON CONSTRUCTION NORTH WEST LIMITED (12728498). A merge would move those subsidiary-named mentions onto the parent; held out until they are read. Release with a HIGH merge verdict under the same key."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02296559~PLML4925BDXJ",
+   "members": [
+    14863797,
+    31627747
+   ],
+   "action": "keep",
+   "confidence": "low",
+   "rationale": "[469 U1 owner hold] Reviewer merge/medium, challenger agreed: the witnesses register the PPON to the group company, but the PPON org's head names a separate real subsidiary, B. BRAUN AVITUM UK LIMITED (04153656). A merge would move those subsidiary-named mentions onto the parent; held out until they are read. Release with a HIGH merge verdict under the same key."
+  }
+ ]
+}
