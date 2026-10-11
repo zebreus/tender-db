@@ -2697,6 +2697,27 @@ async fn the_alias_reads_the_owners_mention_names_as_the_planner_does() {
     assert_eq!((c.owner_name_reads, c.owner_names_capped), (1, 0), "{c:?}");
 }
 
+/// Issue 518 (the U5 review): a from-archive rebuild strips `organization_mentions_org` for
+/// all of Phase 1, and without it the owner-name read would scan the whole mention table per
+/// owner. The armed alias sees the index absent and reads the designated names only, as before
+/// issue 518: the Caterlink mention is refused again, and no owner-name read runs.
+#[tokio::test]
+async fn the_owner_name_read_is_skipped_while_its_index_is_absent() {
+    let b = bed("alias-owner-unindexed").await;
+    b.split(100, (2, COH_A, "Cater Link Limited"), (1, PPON_P, "Caterlink")).await;
+    b.notice(102, "fts:ocds-1.1").await;
+    b.party_named(102, "C102", Some(2), "GB", &[COH_A], "Caterlink Ltd").await;
+    let dry = b.plan().await;
+    assert_eq!(dry.pairs, vec![pk(COH_A, PPON_P)], "{dry:#?}");
+    b.merge_all().await;
+    b.fresh(&[300]).await;
+    b.conn.execute("DROP INDEX organization_mentions_org", ()).await.unwrap();
+
+    let (ids, c) = b.resolve(true, &[ppon_first(300, PPON_P, "Caterlink")]).await;
+    assert_ne!(ids[0], 2, "the designated names alone do not agree");
+    assert_eq!((c.asked, c.refused_names, c.owner_name_reads), (1, 1, 0), "no mention scan without the index: {c:?}");
+}
+
 /// The owner-name read is capped and walks newest first: an owner whose ONLY agreeing name
 /// is on its OLDEST mention binds when the cap reaches it and is refused when it does not,
 /// and the cut is counted. An owner with exactly the cap's mentions is not counted as cut.

@@ -6786,6 +6786,13 @@ struct AltIdAlias {
     /// fold must still veto, while a mention name the cache misses only leaves the
     /// corroboration stricter.
     owner_mention_names: std::collections::HashMap<i64, Vec<String>>,
+    /// Issue 518 (the U5 review): whether `organization_mentions_org` stood when the alias
+    /// was armed. A from-archive rebuild strips it for all of Phase 1
+    /// ([`Db::strip_organization_indexes`]), and without it the owner-name read is a
+    /// reverse scan of the whole mention table per owner, on the writer — thousands of
+    /// scans of tens of millions of rows. Absent, the bar reads the designated names only,
+    /// as it did before issue 518 (issue 318's precedent for the generic wall).
+    owner_mentions_indexed: bool,
 }
 
 /// Why the alias refused one mention — each maps to one refusal counter.
@@ -15891,6 +15898,18 @@ impl Db {
             counts.registry.kept,
             counts.poisoned
         ));
+        let owner_mentions_indexed = {
+            let mut rows = conn
+                .query("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'organization_mentions_org'", ())
+                .await?;
+            rows.next().await?.is_some()
+        };
+        if !owner_mentions_indexed {
+            self.log_diag(
+                "[issue 448] resolver alias: organization_mentions_org is absent (a rebuild's Phase 1), so the \
+                 bar reads each owner's DESIGNATED names only, as before issue 518 — no per-owner mention scan",
+            );
+        }
         resolver.altid = Some(Box::new(AltIdAlias {
             rules,
             alias_of,
@@ -15900,6 +15919,7 @@ impl Db {
             counts,
             recorded: HashSet::new(),
             owner_mention_names: HashMap::new(),
+            owner_mentions_indexed,
         }));
         Ok(())
     }
@@ -16047,11 +16067,15 @@ impl Db {
             // and the merged pair grew back (Caterlink beside Cater Link Limited, job 2215:
             // 168 of 2,294 asks). Only the corroboration widens: the consortium veto and
             // head against head above stay on the designated names, as the planner's own
-            // gates read `org_all_names`; the form check can only grow stricter with more
-            // owner forms. One capped read per owner per fold, on the writer (the owner may
-            // be this batch's mint). Mention names first, so the designated name stands for
-            // a key both carry, exactly as before the widening.
-            if !alias.owner_mention_names.contains_key(&owner) {
+            // gates read `org_all_names`. The form check is not monotone in the owner's names:
+            // an owner mention's form can create a conflict the designated names lacked, or
+            // remove one by overlapping the mention's form — in both directions it now matches
+            // the planner's form check, which reads mention names too. One capped read per owner
+            // per fold, on the writer (the owner may be this batch's mint), and none while
+            // `organization_mentions_org` is absent (a rebuild's Phase 1: the read would scan
+            // the whole table). Mention names first, so the designated name stands for a key
+            // both carry, exactly as before the widening.
+            if alias.owner_mentions_indexed && !alias.owner_mention_names.contains_key(&owner) {
                 let (read, capped) = altid_owner_mention_names(conn, owner, rules.owner_mention_cap).await?;
                 alias.counts.owner_name_reads += 1;
                 if capped {
@@ -16059,8 +16083,10 @@ impl Db {
                 }
                 alias.owner_mention_names.insert(owner, read);
             }
-            let owner_keyed =
-                altid_keyed(alias.owner_mention_names[&owner].iter().chain(owner_names.iter()), rules.name_key);
+            let owner_keyed = altid_keyed(
+                alias.owner_mention_names.get(&owner).into_iter().flatten().chain(owner_names.iter()),
+                rules.name_key,
+            );
             let corroborating = match altid_corroborates(
                 &altid_keyed(&mention_names, rules.name_key),
                 &owner_keyed,
