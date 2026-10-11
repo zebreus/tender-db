@@ -1,6 +1,8 @@
 # 513 — letter-only NHS ODS codes (`GB-NHS-RTH`) mint no identity, so their parties bind by name and never pair
 
-Status: needs-triage — filed 2026-10-11 from issue 469's unit-2 decision (`../469-registry-pairs/unit2-decision.md`, "NHS").
+Status: ready-for-agent — triaged 2026-10-11 with issue 469 U2's evidence. NEXT: unit 1, measure (an in-app read of the
+letter-only GB-NHS values and the 73 multi-target codes; ODS lookups from the agent container, as U2's fetcher did).
+Was: needs-triage — filed 2026-10-11 from issue 469's unit-2 decision (`../469-registry-pairs/unit2-decision.md`, "NHS").
 Kind: data quality (organization identity)
 Relates to: 469 (registry ↔ PPON pairs; NHS waits on this), 345 (re-key repair precedent), 300 (identity ladder: a
 provisional ↔ canonical capture is E3, never merges)
@@ -23,3 +25,18 @@ code name-bound to several provisional orgs).
 3. **Ship with a re-key repair** (the 345 pattern): `publishes()` compares only the raw string, so standing
    mentions would not re-bind on a refold alone. Collapsing the multi-target orgs is itself a merge decision with its
    own gates.
+
+## 469 U2 evidence (2026-10-11)
+
+- In U2's 30-pair NHS sample, 14 codes mint no identity. Seven are letter-only ICB codes (`QGH`, `QMM`, `QOC`, `QPM`,
+  `QUA`, `QVV`, `QWU`). The other seven are trust codes (`RBD`, `RBT`, `RBV`, `RCB`, `RCD`, `RCF` and `R0B`) whose
+  register org carries NO identifier. `R0B` has a digit, so the digit rule alone does not explain it. Unit 1 must
+  find out why `GB-NHS-R0B` (South Tyneside and Sunderland NHS FT, org 13569138) minted nothing. Possibly the org
+  predates the code's first mention, or the mention bound by name.
+- ODS (fetcher `.scratch/tender-db/469-registry-pairs/u2/registers/ods.json`) answers all of them as Active
+  organisation-level codes (ICB = `STRATEGIC PARTNERSHIP`, trust = `NHS TRUST`). So letter-only codes are org-level
+  identities in ODS, which argues for the digit-rule exemption in unit 2.
+- Shape cannot tell organisations from sites. 5-character codes include organisations (`8HN02`, `A0V4D`, `G6V2S`,
+  `H6A5H`) and sites (`NCS04`, an NHS Property Services site). A letter-only exemption should therefore be
+  ODS-confirmed, or limited to the 3-character trust and ICB forms (`R??`, `Q??`). The 3-character `\d\d[A-Z]` form
+  (`06H`) is a sub-ICB location, not an organisation.
