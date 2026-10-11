@@ -48,6 +48,18 @@ Two gates in the design already deny the class: cross-register (gate 8, one PPON
 scheme or with two schemes) and the consortium name veto (gate 3, "Consortium"). U4's tests must pin it in both
 forms: one consortium PPON with two members of one scheme, and one with members of two schemes.
 
+**A binding U4 requirement: gate 8 must be read over the PPON's WHOLE partner set, not per party.** Unit 1's
+`ppon_beside_two_values` (canonical.rs, `reg_two_values`) counts "distinct PPONs published beside two or more values of
+this scheme on ONE party". That is why U0 read 0 for every scheme while this sample shows NHC's PPON beside six
+different MPR numbers: NHC states one member's number per notice, each on a different party. Built on that per-party
+test, gate 8 would let this class through. Only the consortium name veto would stop NHC, and an agent whose name
+carries no "consortium" (a framework operator, a managing agent such as Capital Service Solutions beside CETRA) would
+merge into the first member planned. So U4 keys the cross-register test on (PPON → every distinct register identity
+it is paired with on any witness party, across schemes), as the company-number arm's `conflict_ppon_multi_coh` does,
+but structurally (no verdict override). Test: `a_consortium_ppon_beside_two_members_on_different_notices_is_cross_register` (the PPON on notice A beside member 1's MPR number, on notice B beside member 2's) — denied with no
+consortium word in its name. The dry listing also reports how many PPONs it denies this way, which is the measurement
+U0 believed it had.
+
 No other wrong class repeats. The other keeps are:
 - `different-body` once: CETRA Housing Co-operative 28258R beside Capital Service Solutions Ltd, a managing agent. The
   value is mislabelled, so the shape gate refuses it.
