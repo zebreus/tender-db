@@ -1,6 +1,7 @@
 # 516 — the altid legal-form gate denies register-confirmed pairs: spelled-out forms, re-registrations, stray heads
 
-Status: ready-for-agent — (a) DONE 2026-10-11: fix f44b159, gated, deployed 136cff8; dry job 2206 (legal-form 24 → 15, 9 verdict-admitted, plan 9) → wet job 2207 merged 9 of 9 (18 tenders touched); all 9 PPON orgs answer 308. NEXT: (b), a decision (7 pairs).
+Status: done — 2026-10-11. (a) fix f44b159, deployed 136cff8, dry 2206 → wet 2207 merged the 9 pairs (all 9 PPON orgs answer 308). (b) DECIDED: option (i), accept the 7 re-registration / stray-head pairs as splits for now (§ Decision on (b)); revisit on the trigger there.
+Was: ready-for-agent — (a) DONE 2026-10-11 … NEXT: (b), a decision (7 pairs).
 Was: ready-for-agent — filed 2026-10-11 from an audit of issue 469 U1's merges. Part (a) was BUILT and waited for the
 next gate; part (b) needs a decision, and that decision is the next step.
 Kind: data quality (organization identity)
@@ -81,3 +82,32 @@ that a stray `plc` name lets through.
 - After (a)'s deploy and drain, `/v1/organizations/<PPON org>` answers 308 for the 9: 30972064 NatWest, then Bayer,
   3M, KONE, BT, Interclass, Optos, Rapleys and Daniel Connal (read their org ids off the plan's `denied` listing).
 - `denied_legal_form` in the next dry plan falls from 24 by at least 9.
+
+## Decision on (b) — 2026-10-11
+
+**Decision: (i), keep the head-against-head veto structural, and accept the 7 pairs as splits for now.**
+
+Option (ii) — let a HIGH merge verdict override `legal-form` when the two sides' form sets overlap — is safe at the
+merge, but it regrows. The resolver alias (canonical.rs, `arm_altid_alias`'s bar) applies the same head-against-head
+veto to every PPON-first mention after a merge: `(rules.legal_family)(&m.name)` against the surviving org's head.
+After Softcat's merge, the survivor's head stays `Softcat Limited`, so the next notice that publishes `Softcat plc`
+under the PPON alone is refused (`AltIdRefusal::Veto`). It mints a new PPON org, and the next dry plan lists the pair
+again. That loop is issue 469's stop rule S5 ("alias refusals exceed binds … that is an alias defect").
+
+So (ii) needs a second change: the alias honours the pair's verdict and skips its own form veto for a ledger row
+whose evidence carries an admitting HIGH verdict. That is a new path through the resolver's bar, for 7 organizations
+(Softcat, Axis Europe, Lanes Group, Oxford Nanopore, SCC, Morgan Sindall Construction & Infrastructure, Luceco UK). The
+cost and risk are not repaid at that size. (iii) is rejected as in the body: it would plan unreviewed pairs that a
+stray `plc` name lets through.
+
+**Revisit when** either holds:
+- `denied_legal_form` pairs that carry a HIGH `merge` verdict reach 25 or more. Read them off each dry altid plan's
+  `denied` listing against the posted cohorts; 7 on 2026-10-11, out of 15 legal-form denials.
+- Or the alias gains a verdict-aware bar for another reason.
+
+Then build (ii) together with the alias change, in ONE deploy (the U5 rule: merge and alias go live together).
+Tests:
+- a HIGH verdict admits an overlapping-set pair;
+- a disjoint-set pair stays structural with a verdict;
+- `an_admitted_form_pair_binds_the_next_ppon_mention` (the regrowth guard).
+
