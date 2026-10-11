@@ -1,6 +1,8 @@
 # 517 — `/v1/changes` silently replays the whole feed from 0 on `?cursor=` or an unparseable `since`
 
-Status: built 2026-10-11, NARROWED — only the `cursor` half ships: `/v1/changes?cursor=` is a 400 naming `since`
+Status: done — 2026-10-11, deployed 4910f82 (gate green at 4910f82). Verified on prod: `/v1/changes?cursor=1` → 400
+naming `since`; `since=abc` → 200 from the start (the deliberate lenience, unchanged); `since=931236498` resumes there.
+Was: built 2026-10-11, NARROWED — only the `cursor` half ships: `/v1/changes?cursor=` is a 400 naming `since`
 (test `a_cursor_on_the_change_feed_is_refused_naming_since`). The unparseable-`since` half was REVERTED after the
 first gate (GATE-EXIT=101): `the_poll_feed_resets_a_cursor_past_its_head_but_not_at_it` pins that lenience as a
 decision on the record (issues 216 and 392: "an unparseable cursor restarts visibly rather than strands", SSE alike;
