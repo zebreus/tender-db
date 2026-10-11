@@ -236,6 +236,8 @@ def main():
                       and (r['role'] in ALLOW_ROLES or (r['role'] == 'RO261' and code[0] == 'Q')
                            or code in MEASURED_RO172))
         r['preds'] = []
+        r['succs'] = []
+        r['legal_end'] = ''
 
     dropped = collections.Counter()
     mismatch = []
@@ -248,6 +250,9 @@ def main():
         if got != (r['name'], r['status'], r['rc'], r['role']):
             mismatch.append((code, got, (r['name'], r['status'], r['rc'], r['role'])))
         preds = set()
+        r['legal_end'] = next((d.get('End', '') for d in o.get('Date', []) if d.get('Type') == 'Legal'), '')
+        r['succs'] = sorted({s['Target']['OrgId']['extension'] for s in o.get('Succs', {}).get('Succ', [])
+                             if s.get('Type') == 'Successor'})
         for s in o.get('Succs', {}).get('Succ', []):
             if s.get('Type') != 'Predecessor':
                 continue
@@ -290,18 +295,22 @@ def main():
         '# allow: Active, RC1, 3 characters, tail letters-only or zero-only (the digit-rule family), primary role',
         '#   RO197, RO107 or RO213, RO261 with a Q lead, or DQF. Never RO98, never Inactive.',
         '# predecessors: allow rows only; ORD Succs of Type Predecessor whose own row is Inactive.',
+        '# successors: allow rows only; every ORD Succs of Type Successor (in the table or not).',
+        '# legal_end: allow rows only; the ORD record\'s Legal date End (YYYY-MM-DD), empty when open.',
         f'# counts: rows {len(rows)}; allow {len(allow)} '
         + '(' + ', '.join(f'{k} {allow_by_role[k]}' for k in ROLE_NAMES if allow_by_role[k]) + ')'
-        + f'; predecessor links {n_preds} over {with_preds} codes',
+        + f'; predecessor links {n_preds} over {with_preds} codes'
+        + f'; allow rows with a legal end {sum(1 for c in allow if rows[c]["legal_end"])}',
         '# counts by role: ' + '; '.join(
             f'{role} ' + ' '.join(f'{st[0]}{ln}={by_role[(role, st, ln)]}' for st in ('Active', 'Inactive')
                                   for ln in (3, 5) if by_role[(role, st, ln)])
             for role in ROLE_NAMES),
-        '# columns: code, status (A|I), record class, primary role, allow (0|1), predecessors (comma-separated), name',
+        '# columns: code, status (A|I), record class, primary role, allow (0|1), predecessors (comma-separated),',
+        '#   successors (comma-separated), legal_end, name',
     ]
     lines = [
         '\t'.join([c, rows[c]['status'][0], rows[c]['rc'], rows[c]['role'], '1' if rows[c]['allow'] else '0',
-                   ','.join(rows[c]['preds']), rows[c]['name']])
+                   ','.join(rows[c]['preds']), ','.join(rows[c]['succs']), rows[c]['legal_end'], rows[c]['name']])
         for c in sorted(rows)
     ]
     tmp = OUT + '.tmp'
@@ -317,6 +326,8 @@ def main():
                  if by_role[(role, st, ln)]}
         print(f'  {role:6s} rows {sum(parts.values()):4d} {parts} allow {allow_by_role[role]}')
     print(f'predecessor links kept {n_preds} over {with_preds} codes; dropped {dict(dropped)}')
+    ended = sorted(c for c in allow if rows[c]['legal_end'])
+    print(f'allow rows with a legal end: {len(ended)}: ' + ' '.join(f'{c}({rows[c]["legal_end"]}->{"/".join(rows[c]["succs"]) or "-"})' for c in ended))
     print(f'codes of other lengths skipped: {dict(skipped_len)}')
     print(f'O/0 twin pairs anywhere in the table: {len(twins_all)} {twins_all[:12]}; inside the allowlist: 0')
 

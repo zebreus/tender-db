@@ -13,6 +13,7 @@ pub mod fts;
 pub mod crosswalk;
 pub mod idgate;
 pub mod internal_ojs;
+pub mod nhs_ods;
 pub mod orgid;
 pub mod package;
 pub mod partyname;
