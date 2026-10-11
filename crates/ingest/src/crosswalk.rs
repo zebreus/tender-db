@@ -1184,6 +1184,86 @@ pub fn altid_pair_key(
     mention_key(country, value).filter(|(s, _, _, _)| *s == series)
 }
 
+/// Issue 469 U3: the GB registers other than Companies House that the altid arm pairs
+/// with a PPON — publisher scheme, series, the identity's scheme token, and the shape
+/// the number after the token must have.
+///
+/// The shapes are frozen from the registers themselves (the bulk extracts read on
+/// 2026-10-11, `.scratch/tender-db/469-registry-pairs/u2/u2-results.md`), never
+/// stripped or repaired, because a wrong merge has no undo:
+/// - UKPRN: 8 digits starting `1` (every UKPRN in GIAS); `10000018991` (11) fails.
+/// - CHC: 6 digits starting `2`–`9` (200000–900642) or 7 starting `1` (1000000–
+///   1220015, the extract's ranges). A linked charity's glued `-1` fails both, and so
+///   does a company number missing its zero (`2204085`).
+/// - MPR (the FCA Mutuals register): a 2014-Act society's own number is BARE, four
+///   digits (`7522`, Thirteen Housing Group); the old Acts' carry `R` (`30938R`); a few
+///   carry `RS` (`2571RS`); Companies House mirrors the 2014 Act as `RS` + six digits
+///   (`RS007639`). The suffix is identity — `7522R` is a different society — so none
+///   is folded. Every other FCA suffix (friendly societies, credit unions, `IP`) fails.
+/// - SC (OSCR): `SC0` + five digits. Without its `SC` the value mints a VAT
+///   (`GBSC012345`: a two-letter run) and the national-kind test refuses it.
+/// - NIC (CCNI): `1` + five digits, bare or under the `NIC` / `NI` spellings
+///   publishers use (`NIC 100095`, `NI 100770`); three spellings are three identities,
+///   which is issue 514's.
+const REGISTRIES: [(&str, &str, &str, fn(&str) -> bool); 5] = [
+    ("GB-UKPRN", "GB:ukprn", "GBUKPRN", |n| n.len() == 8 && n.starts_with('1') && all_digits(n)),
+    ("GB-CHC", "GB:chc", "GBCHC", |n| {
+        all_digits(n) && ((n.len() == 6 && n.as_bytes()[0] >= b'2') || (n.len() == 7 && n.starts_with('1')))
+    }),
+    ("GB-MPR", "GB:mpr", "GBMPR", |n| {
+        let lead = |d: &str, lens: std::ops::RangeInclusive<usize>| {
+            lens.contains(&d.len()) && !d.starts_with('0') && all_digits(d)
+        };
+        lead(n, 4..=4)
+            || n.strip_suffix("RS").is_some_and(|d| lead(d, 3..=4))
+            || n.strip_suffix('R').is_some_and(|d| lead(d, 3..=5))
+            || n.strip_prefix("RS").is_some_and(|d| d.len() == 6 && all_digits(d))
+    }),
+    ("GB-SC", "GB:sc", "GBSC", |n| n.len() == 8 && n.starts_with("SC0") && all_digits(&n[2..])),
+    ("GB-NIC", "GB:nic", "GBNIC", |n| {
+        let d = n.strip_prefix("NIC").or_else(|| n.strip_prefix("NI")).unwrap_or(n);
+        d.len() == 6 && d.starts_with('1') && all_digits(d)
+    }),
+];
+
+fn all_digits(s: &str) -> bool {
+    !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit())
+}
+
+/// Issue 469 U3: a mention's raw identifier as a GB register identity the altid arm's
+/// register channel reads — `(series, identity)`, the identity exactly as the resolver
+/// mints it (`GBCHC1044521`), or `None`.
+///
+/// [`crate::project::normalise_identifier`] decides (the v2 gate included), and the
+/// identity must be a GB `national` one whose scheme token leads it and whose number
+/// has the register's shape ([`REGISTRIES`]). The evidence wall reads both orgs'
+/// mentions through this, so two different UKPRNs are two keys — [`mention_key`]'s GB
+/// arm keys no register at all (`gb_other_registers_and_vats_key_nothing`).
+pub fn registry_mention_key(country: Option<&str>, raw: &str) -> Option<(&'static str, String)> {
+    let id = crate::project::normalise_identifier(raw, country)?;
+    if id.kind != "national" || id.country.as_deref().map(store::register_jurisdiction) != Some("GB") {
+        return None;
+    }
+    // `GBSC` is a prefix of no other token, and no token is a prefix of another, so the
+    // first match is the only one.
+    REGISTRIES.iter().find_map(|(_, series, token, shape)| {
+        id.value.strip_prefix(token).filter(|n| shape(n)).map(|_| (*series, id.value.clone()))
+    })
+}
+
+/// Issue 469 U3: one register side of a register ↔ PPON pairing an FTS party publishes
+/// — the publisher's scheme and literal (`GB-CHC`, `GB-CHC-1044521`) and the party's
+/// country — as `(series, identity)`, or `None`.
+///
+/// Like [`altid_pair_key`], the publisher's scheme decides: it keys only a row whose
+/// scheme is one of the five registers, and only into that register's own series, so a
+/// society number published as `GB-CHC` (`GB-CHC-17434R`) is refused, not re-routed.
+/// The pairing is E2 evidence, never a key.
+pub fn registry_pair_key(scheme: &str, literal: &str, country: Option<&str>) -> Option<(&'static str, String)> {
+    let (_, series, _, _) = REGISTRIES.iter().find(|(s, _, _, _)| *s == scheme)?;
+    registry_mention_key(country, literal).filter(|(s, _)| s == series)
+}
+
 /// Issue 448: the altid arm's corroboration key — [`n3_key`], then the GB legal
 /// forms folded to `§` markers (`ltd`/`limited` → `§ltd`, `plc` → `§plc`,
 /// `llp` → `§llp`, `lp` → `§lp`, `cic` → `§cic`), then `the` and `and`
@@ -1340,7 +1420,7 @@ pub fn gb_legal_family(name: &str) -> Option<&'static str> {
 mod altid {
     use super::{
         altid_keys_agree, altid_name_key, altid_pair_key, altid_trim, canonical_key_flat, gb_legal_family,
-        mention_key, n3_key,
+        mention_key, n3_key, registry_mention_key, registry_pair_key,
     };
 
     /// The FTS literal forms, as `fts/parse.rs` stores them (`<scheme>-<id>`).
@@ -1471,6 +1551,123 @@ mod altid {
         assert_ne!(gb_legal_family("Acme plc"), gb_legal_family("Acme Ltd"));
         assert_ne!(gb_legal_family("Acme LLP"), gb_legal_family("Acme Limited"));
         assert_eq!(gb_legal_family("Limited Editions plc"), Some("plc"), "the last form wins");
+    }
+
+    /// Issue 469 U3: each register keys its own literals, into its own series, as the
+    /// identity the resolver mints — the publishers' spellings from the U2 sample.
+    #[test]
+    fn registry_pair_key_requires_the_scheme_token_and_a_national_kind() {
+        let gb = Some("GB");
+        for (scheme, literal, series, identity) in [
+            ("GB-UKPRN", "GB-UKPRN-10000840", "GB:ukprn", "GBUKPRN10000840"),
+            ("GB-CHC", "GB-CHC-1044521", "GB:chc", "GBCHC1044521"),
+            ("GB-CHC", "GB-CHC-207043", "GB:chc", "GBCHC207043"),
+            ("GB-MPR", "GB-MPR-30938R", "GB:mpr", "GBMPR30938R"),
+            ("GB-MPR", "GB-MPR-21186r", "GB:mpr", "GBMPR21186R"),
+            ("GB-MPR", "GB-MPR-7522", "GB:mpr", "GBMPR7522"),
+            ("GB-MPR", "GB-MPR-RS007639", "GB:mpr", "GBMPRRS007639"),
+            ("GB-MPR", "GB-MPR-2571RS", "GB:mpr", "GBMPR2571RS"),
+            ("GB-SC", "GB-SC-SC005336", "GB:sc", "GBSCSC005336"),
+            ("GB-NIC", "GB-NIC-NIC 100095", "GB:nic", "GBNICNIC100095"),
+            ("GB-NIC", "GB-NIC-NI 100770", "GB:nic", "GBNICNI100770"),
+        ] {
+            let want = Some((series, identity.to_owned()));
+            assert_eq!(registry_pair_key(scheme, literal, gb), want, "{literal}");
+            assert_eq!(registry_mention_key(gb, literal), want, "{literal}: the wall reads what the pair keys");
+            // The GB arm still keys none of them (issue 448's contract, untouched).
+            assert_eq!(mention_key(gb, literal), None, "{literal}");
+        }
+        // The publisher's scheme decides: a register's literal under another scheme is
+        // refused, not re-routed — `GB-CHC-17434R` is a society number.
+        assert_eq!(registry_pair_key("GB-CHC", "GB-MPR-30938R", gb), None);
+        assert_eq!(registry_pair_key("GB-CHC", "GB-CHC-17434R", gb), None);
+        assert_eq!(registry_pair_key("GB-COH", "GB-UKPRN-10000840", gb), None);
+        assert_eq!(registry_pair_key("GB-NHS", "GB-NHS-RR8", gb), None, "NHS waits for U7");
+        assert_eq!(registry_pair_key("GB-PPON", "GB-PPON-PHDQ-2359-NZMP", gb), None);
+        assert_eq!(registry_mention_key(gb, "GB-COH-03914810"), None);
+        assert_eq!(registry_mention_key(gb, "GB-PPON-PHDQ-2359-NZMP"), None);
+        // The suffix is identity: `7522` (Thirteen Housing Group) and `7522R` (an
+        // allotment society) are two societies, and `RS007639` is not folded to `7639`.
+        assert_ne!(registry_pair_key("GB-MPR", "GB-MPR-7522", gb), registry_pair_key("GB-MPR", "GB-MPR-7522R", gb));
+        assert!(registry_pair_key("GB-MPR", "GB-MPR-7522R", gb).is_some());
+        assert_ne!(registry_pair_key("GB-MPR", "GB-MPR-RS007639", gb), registry_pair_key("GB-MPR", "GB-MPR-7639", gb));
+    }
+
+    /// Issue 469 U3: the values the U2 read found under the wrong label, or broken, all
+    /// fail the shape — refused, never repaired.
+    #[test]
+    fn mislabelled_and_broken_register_values_are_refused() {
+        let gb = Some("GB");
+        for (scheme, literal) in [
+            // FCA society numbers published as charity numbers.
+            ("GB-CHC", "GB-CHC-10433R"),
+            ("GB-CHC", "GB-CHC-28258R"),
+            ("GB-CHC", "GB-CHC-28687R"),
+            // A company number (SLM 02204085) missing its zero, published as a charity's.
+            ("GB-CHC", "GB-CHC-2204085"),
+            // Eleven digits is no UKPRN.
+            ("GB-UKPRN", "GB-UKPRN-10000018991"),
+            ("GB-UKPRN", "GB-UKPRN-2000840"),
+            // Companies House's `IP` spelling with a lost digit (Hastoe is 16243R).
+            ("GB-MPR", "GB-MPR-ip6243r"),
+            // Other FCA suffixes and shapes are not housing or community societies.
+            ("GB-MPR", "GB-MPR-1231W"),
+            ("GB-MPR", "GB-MPR-244IP"),
+            ("GB-MPR", "GB-MPR-07522"),
+            ("GB-MPR", "GB-MPR-75222"),
+            ("GB-MPR", "GB-MPR-RS7639"),
+            // A Scottish company number is not an OSCR number.
+            ("GB-SC", "GB-SC-SC305103"),
+            ("GB-NIC", "GB-NIC-NIC 200095"),
+        ] {
+            assert_eq!(registry_pair_key(scheme, literal, gb), None, "{literal}");
+            assert_eq!(registry_mention_key(gb, literal), None, "{literal}");
+        }
+        // Not a GB party: the identity is not GB's, so no register channel.
+        assert_eq!(registry_pair_key("GB-CHC", "GB-CHC-1044521", Some("IE")), None);
+    }
+
+    /// Issue 469 U3: without its `SC`, an OSCR number reads VAT-shaped (a two-letter
+    /// run after the country: the decision's `kind = vat` hazard; Strathclyde's
+    /// SC015263, a number the v2 gate does not condemn as a placeholder run). Whatever the
+    /// normaliser makes of it — on 2026-10-11 the VAT gate condemns it and it mints
+    /// nothing — it is never a `national` identity, and the register channel refuses it.
+    #[test]
+    fn a_scottish_charity_without_its_sc_prefix_mints_a_vat_and_is_refused() {
+        let gb = Some("GB");
+        let id = crate::project::normalise_identifier("GB-SC-015263", gb);
+        assert!(id.as_ref().is_none_or(|id| id.kind != "national"), "{id:?}");
+        assert_eq!(registry_pair_key("GB-SC", "GB-SC-015263", gb), None);
+        assert_eq!(registry_mention_key(gb, "GB-SC-015263"), None);
+        assert!(registry_pair_key("GB-SC", "GB-SC-SC015263", gb).is_some(), "with it, it is OSCR's");
+    }
+
+    /// Issue 469 U3: a linked charity's `-1` glues onto the number once the dashes go,
+    /// and the result fails both CHC lengths.
+    #[test]
+    fn a_glued_linked_charity_suffix_fails_the_chc_shape() {
+        let gb = Some("GB");
+        assert!(registry_pair_key("GB-CHC", "GB-CHC-1077722", gb).is_some());
+        assert!(registry_pair_key("GB-CHC", "GB-CHC-212808", gb).is_some());
+        for linked in ["GB-CHC-1077722-1", "GB-CHC-212808-1", "GB-CHC-212808-12", "GB-CHC-1077722-01"] {
+            assert_eq!(registry_pair_key("GB-CHC", linked, gb), None, "{linked}");
+        }
+    }
+
+    /// Issue 469 U3: a field label written into the value is refused, never stripped —
+    /// stripping would guess at a number the publisher garbled.
+    #[test]
+    fn label_spellings_are_refused_not_stripped() {
+        let gb = Some("GB");
+        for (scheme, literal) in [
+            ("GB-UKPRN", "GB-UKPRN-UKPRN10007798"),
+            ("GB-UKPRN", "GB-UKPRN-UKPRN: 10007798"),
+            ("GB-CHC", "GB-CHC-Charity Number 216250"),
+            ("GB-CHC", "GB-CHC-CHARITYNUMBER216250"),
+            ("GB-CHC", "GB-CHC-reg. charity 1044521"),
+        ] {
+            assert_eq!(registry_pair_key(scheme, literal, gb), None, "{literal}");
+        }
     }
 
     /// The spelled-out forms are the abbreviations they spell, not a Ltd: the nine
