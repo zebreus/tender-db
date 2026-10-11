@@ -324,6 +324,11 @@ fn the_2005_award_record_carries_the_chain_edge() {
         NoticeValue::Date { utc_seconds: 1_101_340_800, offset_minutes: 0, has_time: false };
     assert_eq!(values(&rec, "TED-CONTRACT_AWARD_DATE"), [&award_date, &award_date]);
 
+    // Issue 491 unit 3: two `Contract No:` award blocks, each naming its winner, and no
+    // value label in either (`V.1) Award and contract value` is a heading, not a figure):
+    // no award figure, and no notice figure either.
+    assert!(values(&rec, "TED-VAL_TOTAL").is_empty());
+
     // Award-side facts: dispatch date, winners prose, no tender deadline.
     assert_eq!(
         *value(&rec, "TXT-DS"),

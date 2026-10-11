@@ -4432,6 +4432,9 @@ impl NoticeState {
         // — a result total — at object scope.
         let has_results =
             parsed.sections.iter().any(|s| RESULT_KINDS.contains(&s.kind.as_str()));
+        // Issue 491 unit 3: a text-era award's own figure is a lot award only (see
+        // `amount_target`).
+        let text = notice.profile == "text";
         let mut facts = BTreeSet::new();
         let mut raw_roles = Vec::new();
         // sdk-0.1 names its buyer by the `ContractingParty` section itself, with
@@ -4607,7 +4610,7 @@ impl NoticeState {
                 }
                 NoticeValue::Amount { cents, currency } => {
                     let deferred = canonical_name(RESULT_LOT_AMOUNTS, field_id);
-                    let fact = deferred.clone().or_else(|| amount_target(field_id, &sections, &value.section_id, has_results)).map(|field| {
+                    let fact = deferred.clone().or_else(|| amount_target(field_id, &sections, &value.section_id, has_results, text)).map(|field| {
                         Fact::Amount {
                             field,
                             cents: *cents,
@@ -7331,8 +7334,23 @@ fn amount_target(
     sections: &HashMap<&str, &store::Section>,
     section_id: &str,
     has_results: bool,
+    text: bool,
 ) -> Option<String> {
     if field_id != "TED-VALUE_COST" {
+        // Issue 491 unit 3 (owner decision 2026-10-11, projection C): the text era's
+        // `TED-VAL_TOTAL` inside a `RES-n` is one award's own V.4 figure, which the parser
+        // reads per award block. It is that result's awarded value (`read_legacy_results`)
+        // and so a lot award and a scale-rule partner, and NOT a tender-scope amount — r208's
+        // award `VALUE_COST` precedent below. Mapped by field id alone, `scope_of` would
+        // file it at Tender scope (a `RES-n` has no Lot ancestor) and make every contract
+        // figure a head candidate: the MAX election would have raised about half of ~29k
+        // single-contract heads (VAT basis, estimate against final) and flipped ~2.6k
+        // currencies. So heads move only by refusal: CAN 143891-2008's EUR 35 bn II.2.1
+        // total (Tender 3427333) now meets its exact x1000 partner, its one contract's
+        // EUR 35 m. The r209 profile's per-award `VAL_TOTAL` keeps its mapping.
+        if text && field_id == "TED-VAL_TOTAL" && enclosing(sections, section_id, RESULT_KINDS).is_some() {
+            return None;
+        }
         return canonical_name(AMOUNTS, field_id);
     }
     if enclosing(sections, section_id, RESULT_KINDS).is_some() {
@@ -10442,6 +10460,109 @@ mod tests {
         // Nothing to judge: no buyer reference at all leaves every result unflagged.
         let buyerless = eforms(&[("ORG-1", "Morsø Kommune")], &[], &["ORG-1"]);
         assert_eq!(flags(&round("eforms:eforms-sdk-1.10", &buyerless, &[])), vec![(1, 0)]);
+    }
+
+    /// Issue 491 unit 3, projection C (owner decision 2026-10-11): a text-era award's own
+    /// figure, which the parser puts inside its `RES-n`, is that result's awarded value and
+    /// nothing else. It is no tender-scope amount, so never a head candidate (r208's award
+    /// `VALUE_COST` precedent): the facts keep only the notice's own `result_value`, and the
+    /// head can move only by the scale rules refusing that total against the award. The body
+    /// is the parse test's model of CAN 143891-2008 (Tender 3427333, notice 3403986).
+    #[test]
+    fn a_text_awards_figure_is_its_results_awarded_value() {
+        let notice = |profile: &str| store::NoticeRef {
+            id: 3_403_986,
+            source: "ted".into(),
+            publication_id: "143891-2008".into(),
+            profile: profile.into(),
+        };
+        let record = |body: &str| -> Parsed {
+            let record = format!(
+                "1.0/000001\nND: 143891-2008\nTD: 7 - Contract award\nTX: {}\n",
+                body.replace('\n', "\n    ")
+            );
+            crate::text::parse::parse(&record).expect("parses")
+        };
+        // The tender-scope amounts as (field, cents, currency), and the bound round.
+        let read = |profile: &str, parsed: &Parsed| -> (Vec<(String, i64, String)>, Round) {
+            let mut state = NoticeState::read(&notice(profile), parsed);
+            let amounts = state
+                .facts
+                .iter()
+                .filter_map(|f| match f {
+                    Fact::Amount { field, cents, currency, .. } => Some((field.clone(), *cents, currency.clone())),
+                    _ => None,
+                })
+                .collect();
+            let orgs: HashMap<String, i64> = parsed
+                .sections
+                .iter()
+                .enumerate()
+                .filter(|(_, s)| s.kind == ORGANIZATION_KIND)
+                .map(|(i, s)| (s.id.clone(), 1_000 + i as i64))
+                .collect();
+            state.bind_organizations(&orgs);
+            (amounts, state.round.expect("an award notice binds a round"))
+        };
+        let cyprus = record(
+            "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+             II.2.1)  Total final value of contract(s): Value: 35 076 200 000 EUR.\n\
+             Excluding VAT.\n\
+             SECTION IV: PROCEDURE\n\
+             SECTION V: AWARD OF CONTRACT\n\
+             CONTRACT NO: 1\n\
+             V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+             AWARDED: Waste Plant Contractor Ltd, 1 Main Street, CY-1000 Nicosia.\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Initial estimated total value of the contract:\n\
+             Value: 35 076 200 EUR.\n\
+             Excluding VAT.\n\
+             Total final value of the contract:\n\
+             Value: 35 076 200 EUR.\n\
+             Excluding VAT.\n\
+             SECTION VI: COMPLEMENTARY INFORMATION",
+        );
+        assert!(
+            cyprus.values.iter().any(|v| v.section_id == "RES-1" && v.field_id == "TED-VAL_TOTAL"),
+            "the parse layer holds the award's figure in its result"
+        );
+        let (amounts, round) = read("text", &cyprus);
+        assert_eq!(
+            amounts,
+            vec![("result_value".to_owned(), 3_507_620_000_000, "EUR".to_owned())],
+            "the notice's total only: the award's figure is no head candidate"
+        );
+        assert_eq!(round.lot_results.len(), 1);
+        let award = &round.lot_results[0];
+        assert_eq!(
+            (award.awarded_cents, award.awarded_currency.as_deref(), award.lot_key.as_deref(), award.decision.as_deref()),
+            (Some(3_507_620_000), Some("EUR"), None, Some("selec-w")),
+            "the award carries its own figure"
+        );
+        assert_eq!(award.winners.len(), 1);
+
+        // Another profile's result-section `TED-VAL_TOTAL` keeps its mapping: the same parse
+        // read as r209 still files the figure at tender scope too (decision (c) of issue 492
+        // handles that shape there).
+        let (amounts, _) = read("ted-export-r209", &cyprus);
+        assert_eq!(amounts.len(), 2, "{amounts:?}");
+
+        // A single contract whose II.2.1 and V.4 state one figure: one `result_value` fact,
+        // and the award carries the figure too.
+        let equal = record(
+            "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+             II.2.1)  Total final value of contract(s): Value: 791 805 EUR.\n\
+             Excluding VAT.\n\
+             SECTION V: AWARD OF CONTRACT\n\
+             CONTRACT NO: 1\n\
+             V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+             AWARDED: Acme Ltd, 1 Road.\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+             Value: 791 805 EUR.\n\
+             Excluding VAT.",
+        );
+        let (amounts, round) = read("text", &equal);
+        assert_eq!(amounts, vec![("result_value".to_owned(), 79_180_500, "EUR".to_owned())]);
+        assert_eq!(round.lot_results[0].awarded_cents, Some(79_180_500));
     }
 
     /// Issue 506: a LotResult's framework values (BT-709, BT-660) reach the Lot its

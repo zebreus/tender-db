@@ -35341,6 +35341,75 @@ mod tests {
         assert!(!rule.refuses_amount("result_value", "EUR", 1_000_000_000_000, 1_000_000_000_000, FigureScope::Procedure), "corroborated");
     }
 
+    /// Issue 491 unit 3, projection C: a text-era award notice's own contract figure is a
+    /// lot award with no lot key (the era publishes no lots) and never a tender-scope amount,
+    /// so it can only partner the notice's total. 3427333's head (CAN 143891-2008): II.2.1
+    /// `35 076 200 000 EUR` as the one `result_value`, its one contract's V.4
+    /// `35 076 200 EUR` as the award. Exact x1000, uncorroborated, at least EUR 1 bn: refused
+    /// by issue 471's rule, and nothing else is admitted, so the head is none.
+    #[test]
+    fn a_text_award_figure_partners_the_notice_total_it_slips_from() {
+        use super::{LotResultState, Round};
+        let rates = crate::rates::RatesLookup::default();
+        let amt = |field: &str, cents: i64| Fact::Amount {
+            field: field.into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        // A text-era head: tender-scope facts, no lots, and one round of lot-key-less awards.
+        let text_head = |facts: Vec<Fact>, awards: &[i64]| TenderVersion {
+            lots: Vec::new(),
+            rounds: vec![Round {
+                notice_id: 1,
+                logical_notice_id: None,
+                lot_results: awards
+                    .iter()
+                    .enumerate()
+                    .map(|(i, cents)| LotResultState {
+                        key: format!("RES-{}", i + 1),
+                        lot_key: None,
+                        decision: Some("selec-w".into()),
+                        reason: None,
+                        awarded_cents: Some(*cents),
+                        awarded_currency: Some("EUR".into()),
+                        decided: None,
+                        winners: Vec::new(),
+                        buyer_winners: Vec::new(),
+                        statistics: Vec::new(),
+                    })
+                    .collect(),
+                bids: Vec::new(),
+                contracts: Vec::new(),
+            }],
+            ..head(facts, Vec::new())
+        };
+        let one = |v: TenderVersion| head_value_eur_cents(std::slice::from_ref(&v), &rates);
+
+        assert_eq!(
+            one(text_head(vec![amt("result_value", 3_507_620_000_000)], &[3_507_620_000])),
+            None,
+            "the EUR 35 bn total is refused against its own contract's EUR 35 m"
+        );
+        // A second field carrying the big figure (a contract notice's estimate) corroborates
+        // it, and it is kept: the gate is 471's, unchanged.
+        assert_eq!(
+            one(text_head(
+                vec![amt("result_value", 3_507_620_000_000), amt("estimated_value", 3_507_620_000_000)],
+                &[3_507_620_000],
+            )),
+            Some(3_507_620_000_000),
+            "corroborated, kept"
+        );
+        // The common case: the award restates the total (one contract, one figure). The
+        // award is no candidate, so nothing is counted twice and the head is the total.
+        assert_eq!(one(text_head(vec![amt("result_value", 79_180_500)], &[79_180_500])), Some(79_180_500));
+        // Several contracts and no II.2.1: the awards elect nothing, as before the parse
+        // change stored them.
+        assert_eq!(one(text_head(Vec::new(), &[400_875_960, 156_050_000])), None);
+    }
+
     /// Issue 492 unit 3, decided 2026-10-09 on the 56 adjudicated EUR 1-10 bn heads with
     /// an exact x100 partner (45 slips, 9 genuine frameworks): a x100 figure (k = 2) of at
     /// least EUR 1 bn is refused unless it is a FRAMEWORK TOTAL: a procedure figure, over a

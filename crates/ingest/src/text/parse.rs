@@ -236,8 +236,9 @@ const VALUE_STOPS: [(&str, Option<&str>); 5] = [
 /// That is notice 3871014, and it settles what the relationship is: the four contract
 /// figures sum to 81 605 403 — EXACTLY the `II.2.1` figure. So a body stating both is not
 /// stating one fact twice and contradicting itself; it is stating a total and its parts.
-/// `TED-VAL_TOTAL` is a notice-scope field, so the aggregate is the one to claim, and the
-/// per-contract figures are a `lot_results`-scope fact this does not yet have a home for.
+/// `TED-VAL_TOTAL` at the root is a notice-scope fact, so the aggregate is the one the
+/// root claims. Each per-contract figure is its own award's fact and goes inside that
+/// award's `RES-n` result section instead ([`awarded_names_and_values`], issue 491).
 ///
 /// Measured on `fetch 200` after slice 7: of 3,656 bodies that state `Total final value`
 /// and still yield no amount, **1,959 state the aggregate with a figure** — the single
@@ -288,6 +289,9 @@ fn count_heading(body: &str, marker: &str) -> usize {
     }
     n
 }
+
+/// A claimed monetary value: cents, currency code, and the tax basis the source states.
+type Money = (i64, String, Option<&'static str>);
 
 /// How a monetary value must be written to be claimed at all.
 ///
@@ -749,19 +753,41 @@ fn trim_sentence_period(name: &str) -> &str {
 /// organization for every spelling variation of the same company ("Zac Satolas Green"
 /// vs "Zac de Satolas Green", both Stryker France, in one notice), which is issue
 /// 234's problem manufactured on purpose.
+///
+/// The parser itself reads the names through [`awarded_names_and_values`], which pairs each
+/// with its award's own figure; this spelling, the names alone, is the tests'.
+#[cfg_attr(not(test), allow(dead_code))]
 fn awarded_names(body: &str) -> Vec<String> {
-    // Gate before allocating anything. Every award body says `AWARD` at least twice —
-    // in `SECTION V: AWARD OF CONTRACT` and again in the label — and a body that says
-    // it nowhere cannot carry either label. This matters because the era is 3.8M
-    // notices: measured on prod, doing the flatten-and-scan unconditionally made a
-    // package's re-parse SEVEN TIMES slower (1,012 members in 148 s became 1 member a
-    // second, CPU-pegged), which is most of an era's re-parse spent on notices that
-    // are not awards at all.
-    if find_ascii_ci(body, "AWARD").is_none() && find_ascii_ci(body, "PROVIDER").is_none() {
+    if !may_award(body) {
         return Vec::new();
     }
-    let flat = flatten(body);
-    let authority = awarding_authority(&flat);
+    let (flat, line_starts) = flatten_lines(body);
+    awarded_names_at(body, &flat, &line_starts).into_iter().map(|(_, name)| name).collect()
+}
+
+/// Whether a body can carry a winner label at all: the gate in front of the flatten.
+///
+/// Every award body says `AWARD` at least twice — in `SECTION V: AWARD OF CONTRACT` and
+/// again in the label — and a body that says it nowhere cannot carry either label. This
+/// matters because the era is 3.8M notices: measured on prod, doing the flatten-and-scan
+/// unconditionally made a package's re-parse SEVEN TIMES slower (1,012 members in 148 s
+/// became 1 member a second, CPU-pegged), which is most of an era's re-parse spent on
+/// notices that are not awards at all.
+fn may_award(body: &str) -> bool {
+    find_ascii_ci(body, "AWARD").is_some() || find_ascii_ci(body, "PROVIDER").is_some()
+}
+
+/// [`awarded_names`]' names, in the same order, each with WHERE it was read: the offset
+/// in `flat` (the body as [`flatten_lines`] gives it, with its `line_starts`) that
+/// [`award_blocks`] places it by (issue 491).
+///
+/// A label name sits where its value starts, past a `CONTRACT NO <ref>:` hop — not at the
+/// label, so a name printed under its own label's `Contract No` line lands in that line's
+/// block. A 2010-print name sits at the start of its line ([`line_awarded_names`]). The
+/// names of one value share one place, which is what tells the pairing that a block names
+/// several winners.
+fn awarded_names_at(body: &str, flat: &str, line_starts: &[usize]) -> Vec<(usize, String)> {
+    let authority = awarding_authority(flat);
 
     let mut names = Vec::new();
     let mut at = 0usize;
@@ -779,7 +805,8 @@ fn awarded_names(body: &str) -> Vec<String> {
         let rest = &flat[value_at..];
         // Hop a leading `Contract No <ref>:` before bounding the value — see
         // `contract_no_prefix_len` for why this must run before the ITEM_STOPS scan.
-        let rest = &rest[contract_no_prefix_len(rest)..];
+        let hop = contract_no_prefix_len(rest);
+        let rest = &rest[hop..];
         // Where the value ends. Two shapes (issue 484):
         //
         // - the pre-2004 NUMBERED form (`6.  Supplier(s): …`) ends the value at its own
@@ -811,7 +838,7 @@ fn awarded_names(body: &str) -> Vec<String> {
         // between — `8.  Price(s): 1: STERLING 400 000` read as a winner. So: the next
         // item marker of ANY higher number (n+1 first, up to n+4), cut earlier only by
         // a sectioned stop; no marker found means the old window, unchanged.
-        let numbered = numbered_item_before(&flat, start).and_then(|n| {
+        let numbered = numbered_item_before(flat, start).and_then(|n| {
             let wide = &rest[..char_bound(rest, NUMBERED_VALUE_MAX)];
             let succ = successor_marker(wide, n)?;
             let stop = SECTIONED_STOPS.iter().filter_map(|stop| find_ascii_ci(wide, stop)).min();
@@ -825,10 +852,11 @@ fn awarded_names(body: &str) -> Vec<String> {
                 (&window[..item_end.unwrap_or(window.len())], item_end)
             }
         };
-        names.extend(names_in_value(value, item_end.is_some(), authority.as_ref()));
+        let place = value_at + hop;
+        names.extend(names_in_value(value, item_end.is_some(), authority.as_ref()).into_iter().map(|n| (place, n)));
         at = value_at;
     }
-    names.extend(line_awarded_names(body, authority.as_ref()));
+    names.extend(line_awarded_names(body, authority.as_ref(), line_starts));
     names
 }
 
@@ -918,7 +946,10 @@ const LINE_AWARD_HEADING: &str = "HAS BEEN TAKEN";
 ///   4,101,615). Cut at the wrap, each mints a second spelling of an identifier-less
 ///   company (issue 234). [`wrapped_continuation`] joins the next line only where the
 ///   wrapper must have broken the name.
-fn line_awarded_names(body: &str, authority: Option<&Authority>) -> Vec<String> {
+///
+/// Each name comes with the `line_starts` entry of the line it was read from (the first,
+/// for a wrapped name): where [`award_blocks`] places it (issue 491).
+fn line_awarded_names(body: &str, authority: Option<&Authority>, line_starts: &[usize]) -> Vec<(usize, String)> {
     // Gate before collecting lines: the line pass runs on every award body of a
     // 3.8M-notice era, and only the 2010 print carries the heading.
     if find_ascii_ci(body, LINE_AWARD_HEADING).is_none() {
@@ -944,11 +975,13 @@ fn line_awarded_names(body: &str, authority: Option<&Authority>) -> Vec<String> 
         if opens_an_item(next) || is_country(next) {
             continue;
         }
+        let place = line_starts[i];
         i += 1;
-        match wrapped_continuation(next, lines.get(i).copied(), width) {
-            Some(rest) => names.extend(names_in_value(&format!("{next} {rest}"), true, authority)),
-            None => names.extend(names_in_value(next, true, authority)),
-        }
+        let read = match wrapped_continuation(next, lines.get(i).copied(), width) {
+            Some(rest) => names_in_value(&format!("{next} {rest}"), true, authority),
+            None => names_in_value(next, true, authority),
+        };
+        names.extend(read.into_iter().map(|name| (place, name)));
     }
     names
 }
@@ -1236,46 +1269,14 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
     // whether two claims at that scope disagreed (issue 244 slice 8).
     let mut claim: [Option<(i64, String, Option<&'static str>)>; 2] = [None, None];
     let mut conflict = [false, false];
-    let mut at = 0usize;
-    while at < flat.len() {
-        let Some((start, label)) = VALUE_LABELS
-            .iter()
-            .filter_map(|l| find_ascii_ci(&flat[at..], l).map(|i| (at + i, *l)))
-            .min_by_key(|(i, _)| *i)
-        else {
-            break;
-        };
-        let value_at = start + label.len();
-        let rest = &flat[value_at..];
-        let window = &rest[..char_bound(rest, NAME_WINDOW)];
-        // Which scope this occurrence states, read from the words right after the label
-        // and before the colon skip below eats them.
-        let scope = usize::from(find_ascii_ci(window.trim_start(), AGGREGATE_SCOPE) == Some(0));
-        // `VALUE OF WINNING AWARD` is matched without its `(s):` tail, since the era writes
-        // both the plural and the singular. Skip to just past the colon that ends the
-        // heading — by position, so `(s):` and `(S):` behave the same. The bound keeps this
-        // from running to some later item's colon when the label already ended in one.
-        let window = match window.find(':') {
-            Some(colon) if colon <= 4 => &window[colon + 1..],
-            _ => window,
-        };
-        // The value item is 4, 8 or 9 depending on the form, so the item that FOLLOWS it
-        // is 5, 9 or 10 — [`ITEM_STOPS`], which is aimed at the winner item, does not
-        // bound this. Any numbered item does.
-        let end = next_item_marker(window);
-        let item = &window[..end.unwrap_or(window.len())];
-        let money = read_value_item(item)
-            .or_else(|| if label == COLONLESS_TOTAL_LABEL { colonless_total(item) } else { None });
-        if let Some(money) = money {
-            match &claim[scope] {
-                // Two labels agreeing is one fact stated twice; two disagreeing AT THE
-                // SAME SCOPE is a notice this cannot read.
-                Some(seen) if *seen != money => conflict[scope] = true,
-                Some(_) => {}
-                None => claim[scope] = Some(money),
-            }
+    for (scope, money) in value_claims(&flat) {
+        match &claim[scope] {
+            // Two labels agreeing is one fact stated twice; two disagreeing AT THE
+            // SAME SCOPE is a notice this cannot read.
+            Some(seen) if *seen != money => conflict[scope] = true,
+            Some(_) => {}
+            None => claim[scope] = Some(money),
         }
-        at = value_at;
     }
     // A per-contract figure is the NOTICE's total only when the notice awards ONE
     // contract. With several, one contract's value is a PART: notice 3871014 awards four
@@ -1307,6 +1308,204 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
         .rev()
         .find_map(|(scope, held)| held.as_ref().map(|money| (scope, money)))
         .and_then(|(scope, money)| (!conflict[scope]).then(|| money.clone()))
+}
+
+/// Every value label in a flattened body that yields a figure, in document order, each with
+/// the scope it states (0 = one contract, 1 = the whole notice; issue 244 slice 8). A label
+/// whose value does not parse yields nothing here, so it never poisons a scope.
+///
+/// [`awarded_value`] folds these over the whole body into the notice's one claim, and
+/// [`block_value`] over one award block into that award's (issue 491). One scan for both,
+/// so the root claim and an award's figure can never read a label differently.
+fn value_claims(flat: &str) -> Vec<(usize, Money)> {
+    let mut claims = Vec::new();
+    let mut at = 0usize;
+    while at < flat.len() {
+        let Some((start, label)) = VALUE_LABELS
+            .iter()
+            .filter_map(|l| find_ascii_ci(&flat[at..], l).map(|i| (at + i, *l)))
+            .min_by_key(|(i, _)| *i)
+        else {
+            break;
+        };
+        let value_at = start + label.len();
+        let rest = &flat[value_at..];
+        let window = &rest[..char_bound(rest, NAME_WINDOW)];
+        // Which scope this occurrence states, read from the words right after the label
+        // and before the colon skip below eats them.
+        let scope = usize::from(find_ascii_ci(window.trim_start(), AGGREGATE_SCOPE) == Some(0));
+        // `VALUE OF WINNING AWARD` is matched without its `(s):` tail, since the era writes
+        // both the plural and the singular. Skip to just past the colon that ends the
+        // heading — by position, so `(s):` and `(S):` behave the same. The bound keeps this
+        // from running to some later item's colon when the label already ended in one.
+        let window = match window.find(':') {
+            Some(colon) if colon <= 4 => &window[colon + 1..],
+            _ => window,
+        };
+        // The value item is 4, 8 or 9 depending on the form, so the item that FOLLOWS it
+        // is 5, 9 or 10 — [`ITEM_STOPS`], which is aimed at the winner item, does not
+        // bound this. Any numbered item does.
+        let end = next_item_marker(window);
+        let item = &window[..end.unwrap_or(window.len())];
+        let money = read_value_item(item)
+            .or_else(|| if label == COLONLESS_TOTAL_LABEL { colonless_total(item) } else { None });
+        if let Some(money) = money {
+            claims.push((scope, money));
+        }
+        at = value_at;
+    }
+    claims
+}
+
+/// Each winner name a body yields, with its own award's figure where the body states one
+/// that can be attributed to it (issue 491 unit 3). The names are exactly
+/// [`awarded_names`]' in the same order, so the `RES-n` and `ORG-n` numbering never moves.
+///
+/// The figure is the award block's own `V.4` total. CAN 143891-2008 (Tender 3427333, notice
+/// 3403986) is why it is stored at all: its II.2.1 prints `35 076 200 000 EUR` and its one
+/// contract's V.4 prints `35 076 200 EUR`, twice. [`awarded_value`] keeps the wider scope,
+/// so the V.4 figure was dropped and the exact x1000 pair the scale rules judge (issue
+/// 471) was never seen. Stored inside the award's result section, it is that award's
+/// `awarded` value. 3871014's four contract figures are each one award's, and they sum to
+/// its II.2.1 exactly.
+///
+/// Results are minted per NAME and a slot can name nobody (a void lot, a pointer, a bare
+/// country), so a figure read in document order would shift onto the wrong award. Instead
+/// the body is cut into award blocks ([`award_blocks`]) and a block gives its figure only
+/// when all of this holds:
+///
+/// - exactly one name was read inside it: a block naming two winners is a joint award,
+///   and one naming none has nobody to give its figure to (it is then stored nowhere);
+/// - it holds no nested award: one `LOT NO` and one V.3 heading at most, so a contract
+///   with two lots never hands the second lot's figure to the first lot's winner;
+/// - its own figures agree ([`block_value`]): none, or two that differ, give none.
+///
+/// Everything else keeps its name and gets no figure, which costs a fact and never
+/// misattributes one. Slicing at the block boundary is also what makes the figures readable:
+/// 4040506 and 4300188 print no stop between one award's total and the next award's
+/// heading, so in the whole body every total but the last ran on and refused.
+fn awarded_names_and_values(body: &str) -> Vec<(String, Option<Money>)> {
+    if !may_award(body) {
+        return Vec::new();
+    }
+    let (flat, line_starts) = flatten_lines(body);
+    let named = awarded_names_at(body, &flat, &line_starts);
+    // No name, or no money word at all ([`awarded_value`]'s own gate): nothing to pair.
+    let blocks = if named.is_empty() || (find_ascii_ci(body, "PRICE").is_none() && find_ascii_ci(body, "VALUE").is_none())
+    {
+        Vec::new()
+    } else {
+        award_blocks(body, &flat, &line_starts)
+    };
+    // The block a place falls in: the spans are disjoint and in order, so a binary search.
+    let home = |at: usize| {
+        let i = blocks.partition_point(|b| b.span.start <= at);
+        (i > 0 && at < blocks[i - 1].span.end).then(|| i - 1)
+    };
+    let homes: Vec<Option<usize>> = named.iter().map(|(at, _)| home(*at)).collect();
+    let mut names_in = vec![0usize; blocks.len()];
+    for b in homes.iter().flatten() {
+        names_in[*b] += 1;
+    }
+    named
+        .into_iter()
+        .zip(homes)
+        .map(|((_, name), home)| {
+            let value = home
+                .filter(|&b| names_in[b] == 1 && !blocks[b].nested)
+                .and_then(|b| block_value(&flat[blocks[b].span.clone()]));
+            (name, value)
+        })
+        .collect()
+}
+
+/// One award block of a sectioned body: its span in the flattened body, and whether a
+/// second award heading sits inside it (issue 491).
+struct AwardBlock {
+    span: std::ops::Range<usize>,
+    nested: bool,
+}
+
+/// The award blocks of a sectioned body, in order, as spans of `flat` (the body as
+/// [`flatten_lines`] gives it, with its `line_starts`); empty when the body has none
+/// (issue 491).
+///
+/// The headings are issue 508's award markers, read per line the way [`count_heading`]
+/// reads them (at the very start of a line, not continued by a letter), and only after the
+/// line that opens `SECTION V` — not `SECTION VI`, and not a mid-line "see Section V", so
+/// the pre-2004 numbered form, which never opens a line with that heading, has no blocks
+/// and keeps its output exactly. One family of headings cuts the blocks, by priority:
+///
+/// 1. `CONTRACT NO` lines (3871014's four contracts);
+/// 2. else `LOT NO` lines (4040506's sixteen lots, no contract numbers);
+/// 3. else each V.3 winner heading (4300188's three awards, no heading at all), taken from
+///    the `V.3)` in front of it so the previous award's figure is not followed by a stray
+///    `V.3)` token, which [`parse_money`] refuses.
+///
+/// Priority, not count, so a joint or framework contract (one `CONTRACT NO`, two V.3, one
+/// V.4) stays one block; the second V.3 then marks it nested. One `LOT NO` and one V.3
+/// inside a contract block are its own (4101747 heads each of its contracts with both), so
+/// only a second of either is a nested award. A contract whose heading is missing degrades
+/// safely: its name falls into no block or into a block already holding a name, and gets no
+/// figure. Each block runs to the next one, and the last to the `SECTION VI` line after it
+/// or to the end of the body.
+fn award_blocks(body: &str, flat: &str, line_starts: &[usize]) -> Vec<AwardBlock> {
+    let opens = |line: &str, marker: &str| {
+        let (b, m) = (line.as_bytes(), marker.as_bytes());
+        b.len() >= m.len() && b[..m.len()].eq_ignore_ascii_case(m) && !b.get(m.len()).is_some_and(u8::is_ascii_alphabetic)
+    };
+    let lines: Vec<&str> = body.lines().collect();
+    let Some(sv) = lines.iter().position(|l| opens(l, "SECTION V")) else { return Vec::new() };
+    let heads = |marker: &str| -> Vec<usize> {
+        (sv + 1..lines.len()).filter(|&i| opens(lines[i], marker)).map(|i| line_starts[i]).collect()
+    };
+    let contract = heads("CONTRACT NO");
+    let lot = heads("LOT NO");
+    let mut v3 = Vec::new();
+    let mut at = line_starts[sv];
+    while let Some(i) = find_ascii_ci(&flat[at..], AWARD_BLOCK_HEADING) {
+        let found = at + i;
+        let prefixed = found >= 5 && flat.as_bytes()[found - 5..found].eq_ignore_ascii_case(b"V.3) ");
+        v3.push(if prefixed { found - 5 } else { found });
+        at = found + AWARD_BLOCK_HEADING.len();
+    }
+    let Some(starts) = [&contract, &lot, &v3].into_iter().find(|s| !s.is_empty()) else { return Vec::new() };
+    let last = starts[starts.len() - 1];
+    let end = (sv + 1..lines.len())
+        .find(|&i| line_starts[i] > last && opens(lines[i], "SECTION VI"))
+        .map_or(flat.len(), |i| line_starts[i]);
+    // How many of `heads` fall inside `span`: both lists are in document order.
+    let within = |heads: &[usize], span: &std::ops::Range<usize>| {
+        heads.partition_point(|&h| h < span.end) - heads.partition_point(|&h| h < span.start)
+    };
+    starts
+        .iter()
+        .enumerate()
+        .map(|(n, &start)| {
+            let span = start..starts.get(n + 1).copied().unwrap_or(end);
+            let nested = within(&v3, &span) > 1 || within(&lot, &span) > 1;
+            AwardBlock { span, nested }
+        })
+        .collect()
+}
+
+/// The figure one award block states as its own: its one-contract (`V.4`) claims, read by
+/// [`value_claims`] over the block alone, when they all agree; `None` when there are none
+/// or two disagree — the rule [`awarded_value`] applies per scope, within one award
+/// (issue 491). A notice-scope claim inside a block is no award's own figure.
+fn block_value(block: &str) -> Option<Money> {
+    let mut held: Option<Money> = None;
+    for (scope, money) in value_claims(block) {
+        if scope != 0 {
+            continue;
+        }
+        match &held {
+            Some(seen) if *seen != money => return None,
+            Some(_) => {}
+            None => held = Some(money),
+        }
+    }
+    held
 }
 
 /// One value item: the figure it states, whether or not a sub-label stands in front of
@@ -1429,6 +1628,31 @@ fn flatten(body: &str) -> String {
     flat
 }
 
+/// [`flatten`], and where each line of the body landed in it: one entry per
+/// `body.lines()` line, the offset of that line's first word (for a line with none, the
+/// offset reached so far). The string is exactly `flatten(body)`, since a newline is
+/// whitespace and no word spans one. What lets the per-award pairing (issue 491) place a
+/// heading or a 2010-print name, both read per line, in the flattened body the value
+/// labels are read in.
+fn flatten_lines(body: &str) -> (String, Vec<usize>) {
+    let mut flat = String::with_capacity(body.len());
+    let mut line_starts = Vec::new();
+    for line in body.lines() {
+        let mut start = flat.len();
+        for (n, word) in line.split_whitespace().enumerate() {
+            if !flat.is_empty() {
+                flat.push(' ');
+            }
+            if n == 0 {
+                start = flat.len();
+            }
+            flat.push_str(word);
+        }
+        line_starts.push(start);
+    }
+    (flat, line_starts)
+}
+
 /// The largest char boundary at or below `at`, so a window can be cut by byte length
 /// without splitting a character.
 fn char_bound(s: &str, at: usize) -> usize {
@@ -1549,6 +1773,8 @@ pub fn parse(text: &str) -> Result<Parsed, Rejected> {
     }
     claim_award_skeleton(&mut emit);
     claim_awarded_value(&mut emit);
+    // After the notice's own claim, so its `TED-VAL_TOTAL` keeps ordinal 0.
+    claim_award_values(&mut emit);
     claim_award_date(&mut emit);
     claim_tenders_received(&mut emit);
     home_authority_descriptors(&mut emit);
@@ -1581,23 +1807,6 @@ fn home_authority_descriptors(emit: &mut Emit) {
     }
 }
 
-/// The contract's price, claimed after the whole record is read (issue 244).
-///
-/// A post-pass rather than a hook in the prose flush, for one reason that matters: the
-/// claim is only legitimate on an **award** notice, and the document-type code `TD` may
-/// be consumed before or after the `TX` body depending on the record's field order. A
-/// post-pass sees both regardless.
-///
-/// Why the gate is needed: measured over `fetch 300`, of the 3,250 bodies stating a price
-/// label, 3,227 are `TD:7` awards — but 18 are `TD:3` invitations to tender, 4 are `TD:0`
-/// and 1 is a `TD:2` corrigendum. A notice with no result must not carry a
-/// `result_value`, so those 23 are exactly the wrong facts this refuses to write. (The
-/// winner labels needed no such gate: all 3,857 bodies carrying one are `TD:7`.)
-///
-/// Notice scope, not the LotResult: the price is stated once per notice while a notice
-/// can name several winners, so attaching it to the first result would hand one of them a
-/// whole contract. `TED-VAL_TOTAL` at root is already mapped to `result_value` in the
-/// projection's `AMOUNTS`, so this needs no mapping change.
 /// How the era labels the date the contract was awarded (issue 255 slice 3, issue 244).
 ///
 /// Two spellings cover both forms, and the shorter one is a prefix of the numbered form's
@@ -1891,6 +2100,25 @@ fn claim_award_date(emit: &mut Emit) {
     }
 }
 
+/// The contract's price, claimed after the whole record is read (issue 244).
+///
+/// A post-pass rather than a hook in the prose flush, for one reason that matters: the
+/// claim is only legitimate on an **award** notice, and the document-type code `TD` may
+/// be consumed before or after the `TX` body depending on the record's field order. A
+/// post-pass sees both regardless.
+///
+/// Why the gate is needed: measured over `fetch 300`, of the 3,250 bodies stating a price
+/// label, 3,227 are `TD:7` awards — but 18 are `TD:3` invitations to tender, 4 are `TD:0`
+/// and 1 is a `TD:2` corrigendum. A notice with no result must not carry a
+/// `result_value`, so those 23 are exactly the wrong facts this refuses to write. (The
+/// winner labels needed no such gate: all 3,857 bodies carrying one are `TD:7`.)
+///
+/// Notice scope, not the LotResult: the price is stated once per notice while a notice
+/// can name several winners, so attaching it to the first result would hand one of them a
+/// whole contract. `TED-VAL_TOTAL` at root is already mapped to `result_value` in the
+/// projection's `AMOUNTS`, so this needs no mapping change. Each award's OWN figure, read
+/// per award block, goes inside its result instead ([`claim_award_values`], issue 491);
+/// this claim is unchanged by it, so a single-contract notice carries both.
 fn claim_awarded_value(emit: &mut Emit) {
     let is_award = emit.parsed.values.iter().any(|v| {
         v.field_id == "TXT-TD" && matches!(&v.value, NoticeValue::Code { code, .. } if code == "7")
@@ -1912,6 +2140,33 @@ fn claim_awarded_value(emit: &mut Emit) {
         .and_then(awarded_value);
     if let Some((cents, currency, basis)) = money {
         emit.value(cents, currency, basis);
+    }
+}
+
+/// Whether the record is an award notice (`TD: 7`).
+fn is_award(emit: &Emit) -> bool {
+    emit.parsed.values.iter().any(|v| {
+        v.field_id == "TXT-TD" && matches!(&v.value, NoticeValue::Code { code, .. } if code == "7")
+    })
+}
+
+/// Each award's own figure, inside the result section [`flush`] minted for it (issue 491
+/// unit 3): `TED-VAL_TOTAL`, and its tax basis when one is stated, in that `RES-n`. The
+/// projection folds a `TED-VAL_TOTAL` inside a result section as that result's awarded
+/// value (`read_legacy_results`), so this reaches `lot_results.awarded` and the scale
+/// rules' partners with no new reader. 3427333's one contract now carries its
+/// `35 076 200 EUR` there, beside the notice's `35 076 200 000 EUR` total at the root.
+///
+/// The same `TD: 7` gate as [`claim_awarded_value`], for the same reason (23 non-award
+/// bodies of `fetch 300` state a price): the figures were collected in the flush, before
+/// the record's `TD` may have been read, and are dropped here unless it says award.
+fn claim_award_values(emit: &mut Emit) {
+    let values = std::mem::take(&mut emit.award_values);
+    if !is_award(emit) {
+        return;
+    }
+    for (result, (cents, currency, basis)) in values {
+        emit.value_in(&result, cents, currency, basis);
     }
 }
 
@@ -1953,11 +2208,15 @@ fn flush(emit: &mut Emit, field: Option<Field>) -> Result<(), Rejected> {
             if !text.is_empty() {
                 // `TX` is the English body, and from 2004 it carries the award
                 // block the era publishes no section for (issue 244). The prose
-                // is emitted whole either way — the winners are derived from it,
-                // not moved out of it.
+                // is emitted whole either way — the winners, and each award's own
+                // figure (issue 491), are derived from it, not moved out of it.
+                // The figures wait for `claim_award_values`, which knows the TD.
                 if field.code == "TX" {
-                    for name in awarded_names(&text) {
-                        emit.award(name);
+                    for (name, value) in awarded_names_and_values(&text) {
+                        let result = emit.award(name);
+                        if let Some(money) = value {
+                            emit.award_values.push((result, money));
+                        }
                     }
                 }
                 emit.text(&id, lang, text);
@@ -2120,6 +2379,9 @@ fn drop_nature_atoms(emit: &mut Emit) {
 struct Emit {
     parsed: Parsed,
     ordinals: std::collections::HashMap<String, i64>,
+    /// Each award's own figure, by the `RES-n` it belongs to, held from the `TX` flush
+    /// until [`claim_award_values`] has the record's `TD` (issue 491).
+    award_values: Vec<(String, Money)>,
 }
 
 impl Emit {
@@ -2197,8 +2459,9 @@ impl Emit {
     ///
     /// Ids are numbered per award so a notice awarding several contracts gets several
     /// results, and the organization ids continue past `ORG-1` — the buyer's — so the
-    /// two never collide.
-    fn award(&mut self, name: String) {
+    /// two never collide. Returns the result's id, where that award's own figure goes
+    /// (issue 491).
+    fn award(&mut self, name: String) -> String {
         self.root();
         let n = self.parsed.sections.iter().filter(|s| s.kind == "LotResult").count() + 1;
         let result = format!("RES-{n}");
@@ -2226,21 +2489,30 @@ impl Emit {
         // in one notice. The buyer's `TXT-AU` has neither problem — it is in that list
         // and it is not also a root value.
         self.push_into(&org, "TED-OFFICIALNAME", NoticeValue::Text { lang: None, value: name });
+        result
     }
 
     /// The contract's price, at notice scope (issue 244). `TED-VAL_TOTAL` is already in
     /// the projection's `AMOUNTS` map as `result_value`, so this reaches
     /// `tender_version_amounts` with no mapping change — it is the same fact the r209
     /// era publishes under the same field id, arrived at from prose instead of a tag.
+    /// One award's own figure goes to [`Emit::value_in`] its result instead (issue 491).
     fn value(&mut self, cents: i64, currency: String, basis: Option<&'static str>) {
-        self.push("TED-VAL_TOTAL", NoticeValue::Amount { cents, currency });
+        self.root();
+        self.value_in(SECTION, cents, currency, basis);
+    }
+
+    /// A figure and its stated tax basis in `section`: the root for the notice's price
+    /// ([`Emit::value`]), or an award's `RES-n` for that award's own figure (issue 491).
+    fn value_in(&mut self, section: &str, cents: i64, currency: String, basis: Option<&'static str>) {
+        self.push_into(section, "TED-VAL_TOTAL", NoticeValue::Amount { cents, currency });
         // The tax basis the source states, captured in the parse layer even though the
         // canonical layer has nowhere to put it yet (issue 251). Recording it now means
         // that when a destination exists, the era does not have to be re-parsed to learn
         // what it already said — and a reader of the parse layer can already tell an
         // inclusive figure from an exclusive one.
         if let Some(basis) = basis {
-            self.push("TED-VAL_TOTAL_TAX_BASIS", NoticeValue::Code {
+            self.push_into(section, "TED-VAL_TOTAL_TAX_BASIS", NoticeValue::Code {
                 list: None,
                 code: basis.to_owned(),
             });
@@ -4115,6 +4387,11 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
                     Excluding VAT.";
         assert_eq!(awarded_names(body), vec!["Mike Priwitzer".to_owned()]);
         assert_eq!(awarded_value(body), Some((5_975_200, "EUR".to_owned(), Some("excl"))));
+        // Issue 491: one award, so its own figure is the notice's, and lands on its result.
+        assert_eq!(
+            awarded_names_and_values(body),
+            vec![("Mike Priwitzer".to_owned(), Some((5_975_200, "EUR".to_owned(), Some("excl"))))]
+        );
     }
 
     /// Issue 508: from the 2010-03 package the same heading ends its line with no colon, the name is
@@ -4166,6 +4443,13 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         let amount = p.values.iter().find(|v| v.field_id == "TED-VAL_TOTAL").expect("the total");
         assert_eq!(amount.section_id, SECTION);
         assert_eq!(amount.value, NoticeValue::Amount { cents: 8_051_500, currency: "EUR".to_owned() });
+        // Issue 491: the one contract's own figure, and its `Including VAT`, land on its
+        // result too (`CONTRACT NO` and `LOT NO` head one block: no nested award).
+        let at_result = |field: &str| -> Vec<&NoticeValue> {
+            p.values.iter().filter(|v| v.field_id == field && v.section_id == "RES-1").map(|v| &v.value).collect()
+        };
+        assert_eq!(at_result("TED-VAL_TOTAL"), [&NoticeValue::Amount { cents: 8_051_500, currency: "EUR".to_owned() }]);
+        assert_eq!(at_result("TED-VAL_TOTAL_TAX_BASIS"), [&NoticeValue::Code { list: None, code: "incl".to_owned() }]);
     }
 
     /// Issue 508: a 2010 body awarding five contracts (notice 4,101,747, the first two and
@@ -4207,6 +4491,15 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
             vec!["Stryker Polska Sp. z o.o.".to_owned(), "Biomet Polska Sp. z o.o.".to_owned()]
         );
         assert_eq!(awarded_value(body), Some((113_918_500, "PLN".to_owned(), Some("excl"))));
+        // Issue 491: each contract's own figure on its own award; the aggregate is unchanged.
+        let pln = |cents: i64| Some((cents, "PLN".to_owned(), Some("excl")));
+        assert_eq!(
+            awarded_names_and_values(body),
+            vec![
+                ("Stryker Polska Sp. z o.o.".to_owned(), pln(35_905_000)),
+                ("Biomet Polska Sp. z o.o.".to_owned(), pln(2_820_000)),
+            ]
+        );
     }
 
     /// Issue 508: a 2010 body heading its awards `LOT NO: n` with no `CONTRACT NO` (notice
@@ -4253,6 +4546,17 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
             ]
         );
         assert_eq!(awarded_value(body), None);
+        // Issue 491: cut at each `LOT NO`, every lot's total reads, not only the last one's
+        // (in the whole body the others run on into the next lot's heading and refuse).
+        let eur = |cents: i64| Some((cents, "EUR".to_owned(), None));
+        assert_eq!(
+            awarded_names_and_values(body),
+            vec![
+                ("Entreprise ITE".to_owned(), eur(191_213_800)),
+                ("Entreprise SRBG".to_owned(), eur(60_782_270)),
+                ("GC Cuisines (Groupe LANEF PRO)".to_owned(), eur(14_779_573)),
+            ]
+        );
         // The numbered form's own `Lot No` lines are not award headings: without a
         // `SECTION V`, a body's one price stays claimed whatever lot lines it prints.
         let numbered = "6.  Supplier(s):\n\
@@ -4376,6 +4680,11 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
                     If annual or monthly value number of months 36";
         assert_eq!(awarded_names(body), vec!["Bailey Maintenance Ltd".to_owned()]);
         assert_eq!(awarded_value(body), Some((14_967_714, "GBP".to_owned(), Some("excl"))));
+        // Issue 491: nor is it a block heading; the one contract keeps its figure.
+        assert_eq!(
+            awarded_names_and_values(body),
+            vec![("Bailey Maintenance Ltd".to_owned(), Some((14_967_714, "GBP".to_owned(), Some("excl"))))]
+        );
         assert_eq!(count_heading(body, CONTRACT_MARKER), 1);
         assert_eq!(count_heading("\nLot not awarded\nLOT NO: 2\nLOT NO:  - TITLE x", LOT_MARKER), 2);
     }
@@ -4406,9 +4715,14 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         );
         assert_eq!(awarded_names(&body).len(), 3);
         assert_eq!(awarded_value(&body), None);
+        // Issue 491: cut at each V.3 heading (from its `V.3)`, so no stray token trails the
+        // figure before it), every award's own figure reads; the notice total stays none.
+        let sas = |cents: i64| ("SAS Nouvelle Technique du Bâtiment".to_owned(), Some((cents, "EUR".to_owned(), None)));
+        assert_eq!(awarded_names_and_values(&body), vec![sas(18_565_000), sas(714_000), sas(10_383_500)]);
         // One block is one award, and its figure is the notice's.
         let one = format!("SECTION V: AWARD OF CONTRACT\n{}", block("103 835"));
         assert_eq!(awarded_value(&one), Some((10_383_500, "EUR".to_owned(), None)));
+        assert_eq!(awarded_names_and_values(&one), vec![sas(10_383_500)]);
     }
 
     /// Issue 508: the non-names the 2010 print put in the winner slot are refused,
@@ -4456,5 +4770,476 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
                     Véase perfil del contratante\n\
                     V.4)  INFORMATION ON VALUE OF CONTRACT";
         assert!(awarded_names(body).is_empty());
+    }
+
+    // ---------------------------------------------- issue 491 unit 3: each award's figure
+
+    /// A `TD: 7` record carrying `body` as its `TX`, parsed.
+    fn award_record(body: &str) -> Parsed {
+        let record =
+            format!("1.0/000001\nND: 1-2008\nTD: 7 - Contract award\nTX: {}\n", body.replace('\n', "\n    "));
+        parse(&record).expect("parses")
+    }
+
+    /// Every `field` row of a record as (section, ordinal, value), in emission order.
+    fn rows<'p>(p: &'p Parsed, field: &str) -> Vec<(&'p str, i64, &'p NoticeValue)> {
+        p.values.iter().filter(|v| v.field_id == field).map(|v| (v.section_id.as_str(), v.ordinal, &v.value)).collect()
+    }
+
+    fn amount(cents: i64, currency: &str) -> NoticeValue {
+        NoticeValue::Amount { cents, currency: currency.to_owned() }
+    }
+
+    /// Issue 491 unit 3: CAN 143891-2008 (Tender 3427333, notice 3403986) states its single
+    /// contract's value twice over: II.2.1 `35 076 200 000 EUR`, V.4 `35 076 200 EUR`
+    /// (initial and final). The root keeps the notice total as before, and the contract's
+    /// own figure now lands on its result, where the scale rules meet the exact x1000 pair
+    /// (issue 471). Modelled on 3871013's verbatim layout with the figures recorded on issue
+    /// 491; the winner's name and address are placeholders.
+    #[test]
+    fn a_single_contracts_figure_lands_on_its_result_beside_the_notice_total() {
+        let body = "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+                    II.2.1)  Total final value of contract(s): Value: 35 076 200 000 EUR.\n\
+                    Excluding VAT.\n\
+                    SECTION IV: PROCEDURE\n\
+                    SECTION V: AWARD OF CONTRACT\n\
+                    CONTRACT NO: 1\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                    AWARDED: Waste Plant Contractor Ltd, 1 Main Street, CY-1000 Nicosia.\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT Initial estimated total value of the contract:\n\
+                    Value: 35 076 200 EUR.\n\
+                    Excluding VAT.\n\
+                    Total final value of the contract:\n\
+                    Value: 35 076 200 EUR.\n\
+                    Excluding VAT.\n\
+                    SECTION VI: COMPLEMENTARY INFORMATION";
+        let excl = |cents: i64| Some((cents, "EUR".to_owned(), Some("excl")));
+        assert_eq!(awarded_value(body), excl(3_507_620_000_000), "the notice's own total, as before");
+        assert_eq!(awarded_names_and_values(body), vec![("Waste Plant Contractor Ltd".to_owned(), excl(3_507_620_000))]);
+
+        // The record: the root row keeps ordinal 0, and the result's row follows it.
+        let p = award_record(body);
+        assert_eq!(
+            rows(&p, "TED-VAL_TOTAL"),
+            vec![(SECTION, 0, &amount(3_507_620_000_000, "EUR")), ("RES-1", 1, &amount(3_507_620_000, "EUR"))]
+        );
+        let basis = NoticeValue::Code { list: None, code: "excl".to_owned() };
+        assert_eq!(rows(&p, "TED-VAL_TOTAL_TAX_BASIS"), vec![(SECTION, 0, &basis), ("RES-1", 1, &basis)]);
+
+        // Not an award, or not known to be one: no figure anywhere, the result still minted.
+        for td in ["TD: 3 - Invitation to tender\n", ""] {
+            let record = format!("1.0/000001\nND: 143891-2008\n{td}TX: {}\n", body.replace('\n', "\n    "));
+            let p = parse(&record).expect("parses");
+            assert!(p.sections.iter().any(|s| s.id == "RES-1"), "{td:?}");
+            assert!(rows(&p, "TED-VAL_TOTAL").is_empty(), "{td:?}");
+            assert!(rows(&p, "TED-VAL_TOTAL_TAX_BASIS").is_empty(), "{td:?}");
+        }
+    }
+
+    /// Issue 491 unit 3: 3871014's four contracts each carry their own figure, the four sum
+    /// to the II.2.1 total exactly, and the root still claims that total. The figures are the
+    /// verbatim body's (see `the_notice_scope_total_outranks_one_contracts_share`); the V.3
+    /// winner lines are modelled.
+    #[test]
+    fn four_contracts_carry_their_own_figures_and_the_total_is_unchanged() {
+        let contract = |n: u32, name: &str, total: &str| {
+            format!(
+                "CONTRACT NO: {n}\n\
+                 V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                 AWARDED: {name}, Box {n}, SE-111 2{n} Stockholm.\n\
+                 V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+                 Value: {total} SEK.\n\
+                 Excluding VAT.\n"
+            )
+        };
+        let body = format!(
+            "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+             II.2.1)  Total final value of contract(s): Value: 81 605 403,00 SEK.\n\
+             Excluding VAT.\n\
+             SECTION V: AWARD OF CONTRACT\n{}{}{}{}",
+            contract(1, "Alfa Bygg AB", "40 087 596,00"),
+            contract(2, "Beta Entreprenad AB", "15 605 000,00"),
+            contract(3, "Gamma Anläggning AB", "14 700 772,00"),
+            contract(4, "Delta Mark AB", "11 212 035,00"),
+        );
+        let sek = |cents: i64| Some((cents, "SEK".to_owned(), Some("excl")));
+        let pairs = awarded_names_and_values(&body);
+        assert_eq!(
+            pairs,
+            vec![
+                ("Alfa Bygg AB".to_owned(), sek(4_008_759_600)),
+                ("Beta Entreprenad AB".to_owned(), sek(1_560_500_000)),
+                ("Gamma Anläggning AB".to_owned(), sek(1_470_077_200)),
+                ("Delta Mark AB".to_owned(), sek(1_121_203_500)),
+            ]
+        );
+        let parts: i64 = pairs.iter().filter_map(|(_, v)| v.as_ref().map(|m| m.0)).sum();
+        assert_eq!(parts, 8_160_540_300, "the parts sum to the total");
+        assert_eq!(awarded_value(&body), sek(8_160_540_300), "the root claim is unchanged");
+
+        let p = award_record(&body);
+        let homes: Vec<(&str, i64)> = rows(&p, "TED-VAL_TOTAL").iter().map(|(s, o, _)| (*s, *o)).collect();
+        assert_eq!(homes, vec![(SECTION, 0), ("RES-1", 1), ("RES-2", 2), ("RES-3", 3), ("RES-4", 4)]);
+    }
+
+    /// Issue 491 unit 3: a block whose own figure does not parse stores none, and the blocks
+    /// around it keep theirs. B's total is 3870959's range that lost its second figure at
+    /// source; the second variant is a zero (4101508), which is no figure either.
+    #[test]
+    fn a_block_whose_figure_does_not_parse_stores_none() {
+        let contract = |n: u32, name: &str, total: &str| {
+            format!(
+                "CONTRACT NO: {n}\n\
+                 V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                 AWARDED: {name}, ul. Prosta {n}, PL-00-001 Warszawa.\n\
+                 V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract: {total}\n\
+                 Excluding VAT.\n"
+            )
+        };
+        let pln = |cents: i64| Some((cents, "PLN".to_owned(), Some("excl")));
+        for b in ["Lowest offer: 16 184 142,63 /\nhighest offer: PLN.", "Value: 0 PLN."] {
+            let body = format!(
+                "SECTION V: AWARD OF CONTRACT\n{}{}{}",
+                contract(1, "Alfa Sp. z o.o.", "Value: 100 000 PLN."),
+                contract(2, "Beta Sp. z o.o.", b),
+                contract(3, "Gamma Sp. z o.o.", "Value: 300 000 PLN."),
+            );
+            assert_eq!(
+                awarded_names_and_values(&body),
+                vec![
+                    ("Alfa Sp. z o.o.".to_owned(), pln(10_000_000)),
+                    ("Beta Sp. z o.o.".to_owned(), None),
+                    ("Gamma Sp. z o.o.".to_owned(), pln(30_000_000)),
+                ],
+                "{b}"
+            );
+        }
+    }
+
+    /// Issue 491 unit 3: results are minted per NAME, so a slot that names nobody must not
+    /// shift the figures after it onto the wrong award. The void lot's figure is stored
+    /// nowhere (three awards and no II.2.1: the root claims none either), in the colon print
+    /// and in the 2010 print, with a bare country (4201806) or a pointer in the slot.
+    #[test]
+    fn a_name_that_is_not_a_name_does_not_shift_later_figures() {
+        let colon = |n: u32, slot: &str, total: &str| {
+            format!(
+                "CONTRACT NO: {n}\n\
+                 V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                 AWARDED: {slot}\n\
+                 V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+                 Value: {total} EUR.\n"
+            )
+        };
+        let body = format!(
+            "SECTION V: AWARD OF CONTRACT\n{}{}{}",
+            colon(1, "Acme Ltd, 1 Road.", "100 000"),
+            colon(2, "Lot déclaré infructueux.", "200 000"),
+            colon(3, "Bolt GmbH, Ring 1.", "300 000"),
+        );
+        let eur = |cents: i64| Some((cents, "EUR".to_owned(), None));
+        let expected = vec![("Acme Ltd".to_owned(), eur(10_000_000)), ("Bolt GmbH".to_owned(), eur(30_000_000))];
+        assert_eq!(awarded_names_and_values(&body), expected);
+        assert_eq!(awarded_value(&body), None);
+        let p = award_record(&body);
+        assert_eq!(
+            rows(&p, "TED-VAL_TOTAL"),
+            vec![("RES-1", 0, &amount(10_000_000, "EUR")), ("RES-2", 1, &amount(30_000_000, "EUR"))],
+            "200 000 is stored nowhere"
+        );
+
+        let print = |n: u32, slot: &str, total: &str| {
+            format!(
+                "CONTRACT NO: {n}\n\
+                 LOT NO: {n}\n\
+                 V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+                 AWARD DECISION HAS BEEN TAKEN\n\
+                 {slot}\n\
+                 V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                 Total final value of the contract\n\
+                 Value {total} EUR\n"
+            )
+        };
+        for void in ["GERMANY", "Véase perfil del contratante"] {
+            let body = format!(
+                "SECTION V: AWARD OF CONTRACT\n{}{}{}",
+                print(1, "Acme Ltd\n1 Road\nUNITED KINGDOM", "100 000"),
+                print(2, void, "200 000"),
+                print(3, "Bolt GmbH\nRing 1\nGERMANY", "300 000"),
+            );
+            assert_eq!(awarded_names_and_values(&body), expected, "{void}");
+        }
+    }
+
+    /// Issue 491 unit 3: one block naming two winners is a joint award, so neither gets the
+    /// figure (each keeps its result, as before). One award heading, so the root keeps it.
+    #[test]
+    fn a_block_naming_two_winners_carries_no_figure() {
+        let body = "SECTION V: AWARD OF CONTRACT\n\
+                    CONTRACT NO: 1\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                    AWARDED: Acme Ltd, Wood Street; Bolt GmbH, Ring 1.\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+                    Value: 500 000 EUR.\n\
+                    Excluding VAT.";
+        assert_eq!(awarded_names_and_values(body), vec![("Acme Ltd".to_owned(), None), ("Bolt GmbH".to_owned(), None)]);
+        assert_eq!(awarded_value(body), Some((50_000_000, "EUR".to_owned(), Some("excl"))));
+        let p = award_record(body);
+        assert_eq!(p.sections.iter().filter(|s| s.kind == "LotResult").count(), 2);
+        assert_eq!(rows(&p, "TED-VAL_TOTAL"), vec![(SECTION, 0, &amount(50_000_000, "EUR"))]);
+    }
+
+    /// Issue 491 unit 3: a contract awarding two lots under one `CONTRACT NO` is a nested
+    /// award. Its one V.4 belongs to lot 2, which was not awarded, so handing it to lot 1's
+    /// winner — the only name in the block — would be a wrong figure. It gets none.
+    #[test]
+    fn a_contract_with_two_lots_carries_no_figure() {
+        let body = "SECTION V: AWARD OF CONTRACT\n\
+                    CONTRACT NO: 1\n\
+                    LOT NO: 1\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN: Acme Ltd, 1 Road.\n\
+                    LOT NO: 2\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN: Infructueux.\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract: Value: 200 000 EUR.";
+        assert_eq!(awarded_names_and_values(body), vec![("Acme Ltd".to_owned(), None)]);
+    }
+
+    /// Issue 491 unit 3: a name read before the first contract heading falls in no block and
+    /// keeps no figure; the contract after it keeps its own.
+    #[test]
+    fn a_name_before_the_first_contract_heading_keeps_no_figure() {
+        let body = "SECTION V: AWARD OF CONTRACT\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                    AWARDED: Early Ltd, 1 Road.\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+                    Value: 100 000 EUR.\n\
+                    CONTRACT NO: 2\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                    AWARDED: Late Ltd, 2 Road.\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+                    Value: 200 000 EUR.";
+        assert_eq!(
+            awarded_names_and_values(body),
+            vec![("Early Ltd".to_owned(), None), ("Late Ltd".to_owned(), Some((20_000_000, "EUR".to_owned(), None)))]
+        );
+    }
+
+    /// Issue 491 unit 3: the pre-2004 numbered form never opens a line with `SECTION V`, so
+    /// it has no award blocks and its output is exactly what it was: names, no figure on any
+    /// result, and only the root's price. Bodies verbatim from the tests above (redcar,
+    /// lyon, staffanstorp, the numbered `Lot No` body) plus a numbered body that says "see
+    /// Section V" mid-line beside a line opening `Contract No`.
+    #[test]
+    fn the_numbered_form_is_unchanged() {
+        let redcar = "1.  Awarding authority: Redcar and Cleveland Borough Council, Economic
+                      Development Department, Cargo Fleet Offices, Middlesbrough Road, PO Box
+                      South Bank 20, UK-Middlesbrough TS6 6EL.
+                      3.  Date of award: 30.3.2001.
+                      5.  Tenders received: 2.
+                      6.  Successful contractor(s): Mill Group, 3 Burlington Mews, UK-London
+                      W1R 8QA.
+                      7.  Works provided: CPV: 45210000, 74222000, 74873100.";
+        let lyon = "1.  Awarding authority: Communauté urbaine de Lyon, délégation générale\n\
+                    aux services urbains et à la proximité, F-69399 Lyon Cedex 03. \n\
+                    6.  Successful contractor(s): Groupement d'entreprises CGEV \n\
+                    Rhône-Alpes/Parcs et Sports.\n\
+                    7.  Works provided: CPV: 45112430, 77321000.\n\
+                    8.  Price: 5 301 802,22 FRF TTC.";
+        let staffanstorp = "1.  Awarding authority: Staffanstorps kommun,  S-245 80 Staffanstorp.\n\
+                            Tel. (046) 25 11 00. Facsimile (046) 25 55 70.\n\
+                            6.  Tenders received: 9.\n\
+                            7.  Service provider(s): 1: Staffanstorps kommun, Städservice, S-245 80 \n\
+                            Staffanstorp, tel. (046) 25 14 27, facsimile (046) 25 11 66.\n\
+                            2: Clean Service System AB, Box 41, S-291 21 Kristianstad, tel. (044) 10 \n\
+                            60 38, facsimile (044) 10 60 39.\n\
+                            8.  Price(s): Prices (for the duration of the contract):\n\
+                            1: 2 750 000 SEK; 2: 245 000 SEK.\n\
+                            9.\n\
+                            10.\n\
+                            11.  Notice published on: 21. 10. 1997.";
+        let lots = "6.  Supplier(s):\n\
+                    Lot No 1: Acme Ltd.\n\
+                    Lot No 2: Acme Ltd.\n\
+                    8.  Price: 1 000 000 EUR.\n\
+                    9.  Other information: None.";
+        let mention = "3.  Date of award: 24.4.2001.\n\
+                       6.  Successful contractor(s): AS Anlegg, Arvid Lindmans vei 1, N-0001 Oslo (see Section V\n\
+                       of the contract documents).\n\
+                       Contract No 710-7009.\n\
+                       8.  Price: 15 887 897 NOK.";
+        for body in [redcar, lyon, staffanstorp, lots, mention] {
+            let pairs = awarded_names_and_values(body);
+            assert_eq!(pairs.iter().map(|(name, _)| name.clone()).collect::<Vec<_>>(), awarded_names(body), "{body}");
+            assert!(pairs.iter().all(|(_, value)| value.is_none()), "{pairs:?}");
+            let p = award_record(body);
+            assert!(rows(&p, "TED-VAL_TOTAL").iter().all(|(section, _, _)| *section == SECTION), "{body}");
+        }
+        assert_eq!(awarded_value(mention), Some((1_588_789_700, "NOK".to_owned(), None)), "the root price stands");
+    }
+
+    /// Issue 491 unit 3: the winner-silent skeleton names nobody, so it has no award figure
+    /// to carry. Its `RES-1` holds the closure and no `TED-VAL_TOTAL`; the V.4 figure stays
+    /// the root's, as before. Likewise 17,438's `Various`, which states no price at all.
+    #[test]
+    fn the_rejection_skeleton_carries_no_figure() {
+        let rejected = "SECTION V: AWARD OF CONTRACT\n\
+                        V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR: All tenders \n\
+                        were rejected.\n\
+                        V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract: Value: 100 000 EUR.";
+        let p = award_record(rejected);
+        assert!(p.values.iter().any(|v| v.section_id == "RES-1" && v.field_id == "TED-NO_AWARDED_CONTRACT"));
+        assert_eq!(rows(&p, "TED-VAL_TOTAL"), vec![(SECTION, 0, &amount(10_000_000, "EUR"))]);
+
+        let various = "2. (a)  Award procedure: Restricted.\n\
+                       3.  Date of award: 1. 12. 1992.\n\
+                       5.  Tenders received: 8.\n\
+                       6.  Supplier(s): Various.\n\
+                       7.  Goods supplied: IV and irrigation fluids.";
+        let p = award_record(various);
+        assert!(p.sections.iter().any(|s| s.id == "RES-1"));
+        assert!(rows(&p, "TED-VAL_TOTAL").is_empty());
+    }
+
+    /// Issue 491 unit 3: the pairing never changes WHICH names a body yields — so the
+    /// `RES-n`/`ORG-n` numbering and every mention's section id stay as they were — and the
+    /// line-aware flatten is the old flatten exactly, tabs, NBSP, CRLF and blank lines
+    /// included, with each line's offset at its first word.
+    #[test]
+    fn names_are_read_exactly_as_before() {
+        let bodies = [
+            "",
+            "\n\n  \n",
+            "CONTRACT AWARD NOTICE\n\
+             SECTION V: AWARD OF CONTRACT\n\
+             V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+             AWARDED: Gagneraud Construction, 198 chemin des Eucalyptus, F-06160 \n\
+             Antibes-Juan-les-Pins.\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:",
+            "V.1)  Award and contract value\n\
+             V.1.1)  Name and address of successful supplier, contractor or service \n\
+             provider: Eurovia Méditerranée, Att: Christophe Verweirde, Route de Gréoux\n\
+             V.1.2)  Information on value of contract",
+            "SECTION V: AWARD OF CONTRACT\n\
+             CONTRACT NO: 088273\n\
+             V.3)  NAME AND ADDRESS ... HAS BEEN AWARDED: Stryker France, Zac Satolas \n\
+             Green, F-69881 Meyzieu Cedex. Tel. 04 72 45 36 00.\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Value: 303 504,79 EUR.\n\
+             CONTRACT NO: 080050\n\
+             V.3)  NAME AND ADDRESS ... HAS BEEN AWARDED: Stryker France, Zac de \n\
+             Satolas Green, F-69881 Meyzieu Cedex.",
+            "SECTION V: AWARD OF CONTRACT\n\
+             CONTRACT NO: AS/0030/10\n\
+             LOT NO:  - TITLE Tractors for OPW.\n\
+             V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+             AWARD DECISION HAS BEEN TAKEN\n\
+             Clarke Machinery Ltd.\n\
+             New Inn, Ballyjamesduff, Co. Cavan\n\
+             IRELAND\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+             Total final value of the contract\n\
+             Value 80 515 EUR\n\
+             Including VAT. VAT rate (%) 21\n\
+             SECTION VI: COMPLEMENTARY INFORMATION",
+            "SECTION V: AWARD OF CONTRACT\n\
+             LOT NO: 01\n\
+             V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN\n\
+             Entreprise ITE\n\
+             FRANCE\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+             Total final value of the contract\n\
+             Value 1 912 138 EUR\n\
+             LOT NO: 16\n\
+             V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT AWARD DECISION HAS BEEN TAKEN\n\
+             GC Cuisines (Groupe LANEF PRO)\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+             Total final value of the contract\n\
+             Value 147 795,73 EUR",
+            "SECTION V: AWARD OF CONTRACT\n\
+             CONTRACT NO: LOC957/AJ/TSS/06\n\
+             V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+             AWARDED: AWETU, Att: Suzanne Smith. 41a, Lower Cathedral Road, UK-Cardiff \n\
+             CF11 6LW. Tel. 0044 2920 394141. Fax 0044 2920 644615.\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:",
+            "1.  Contracting entity: Stadtwerke Wiesbaden AG, Postfach 55 40, D-65045\n\
+             Wiesbaden.\n\
+             9.  Supplier(s), contractor(s) or service provider(s): BP, Hamburg; \n\
+             Thelen, Mainz.\n\
+             10.  \n\
+             11.  Other information: Auftragsart: Lieferauftrag.",
+            "SECTION V: AWARD OF CONTRACT\r\n\
+             CONTRACT NO:\t1\r\n\
+             \r\n\
+             V.3)\u{a0} NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN\t\r\n\
+             AWARDED: Acme\u{a0}Ltd, 1\tRoad.\r\n\
+             V.4)  Total final value of the contract: Value: 1 000 EUR.\r\n\
+             \t \r\n",
+            "SECTION V: AWARD OF CONTRACT\n\
+             Contract No:\n\
+             V.1)  Award and contract value\n\
+             V.1.1)  Name and address of successful supplier, contractor or service \n\
+             provider: Grahams Engineering Ltd.\n\
+             Contract No: 30000306860 for supply of grouting\n\
+             V.1)  Award and contract value\n\
+             V.1.1)  Name and address of successful supplier, contractor or service \n\
+             provider: NSG Environmental Ltd.\n\
+             SECTION VI: OTHER INFORMATION",
+            "V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+             AWARD DECISION HAS BEEN TAKEN\n\
+             Konsorcjum: MDT Sp. z o.o. i Centrum Badawczo-Konstrukcyjne Obrabiarek Sp.\n\
+             z o.o.\n\
+             ul. Barcelońska 3/95\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT",
+            "SECTION V: AWARD OF CONTRACT\n\
+             CONTRACT NO: 1\n\
+             V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR IN FAVOUR OF WHOM A CONTRACT\n\
+             AWARD DECISION HAS BEEN TAKEN\n\
+             GERMANY\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+             Total final value of the contract\n\
+             Value 12 060,50 EUR",
+            "V.3)  Bakırköy Belediyesi tender … HAS BEEN AWARDED: Çınar İnşaat A.Ş., \n\
+             Bakırköy, TR-34140 İstanbul.",
+            "SECTION V: AWARD OF CONTRACT\n\
+             CONTRACT NO: 1\n\
+             V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+             AWARDED: Acme Ltd, Wood Street; Bolt GmbH, Ring 1.\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract: Value: 500 000 EUR.",
+        ];
+        let runaway = format!("SECTION V: AWARD OF CONTRACT\nV.3)  HAS BEEN AWARDED: {}", "x".repeat(400));
+        for body in bodies.iter().copied().chain([runaway.as_str()]) {
+            let (flat, line_starts) = flatten_lines(body);
+            assert_eq!(flat, flatten(body), "{body:?}");
+            assert_eq!(line_starts.len(), body.lines().count(), "{body:?}");
+            for (line, &at) in body.lines().zip(&line_starts) {
+                if let Some(word) = line.split_whitespace().next() {
+                    assert!(flat[at..].starts_with(word), "{line:?} at {at} in {body:?}");
+                }
+            }
+            let names: Vec<String> = awarded_names_and_values(body).into_iter().map(|(name, _)| name).collect();
+            assert_eq!(names, awarded_names(body), "{body:?}");
+        }
+        // The CRLF body's one award still reads its figure through the tab and the NBSP.
+        assert_eq!(
+            awarded_names_and_values(bodies[9]),
+            vec![("Acme Ltd".to_owned(), Some((100_000, "EUR".to_owned(), None)))]
+        );
+    }
+
+    /// Issue 491 unit 3: the pairing stays linear in the body. 400 contract blocks, the
+    /// shape `a_long_body_with_many_awards_stays_cheap_and_never_invents_a_name` keeps cheap
+    /// for the names alone: one binary search per name and one value scan per block.
+    #[test]
+    fn four_hundred_sectioned_blocks_stay_linear() {
+        let one = "CONTRACT NO: 1\n\
+                   V.3)  … HAS BEEN AWARDED: Acme Ltd, 1 Road.\n\
+                   V.4)  … Total final value of the contract: Value: 1 000 EUR.\n";
+        let body = format!("SECTION V: AWARD OF CONTRACT\n{}", one.repeat(400));
+        let pairs = awarded_names_and_values(&body);
+        assert_eq!(pairs.len(), 400, "every award is read");
+        assert!(
+            pairs.iter().all(|(name, value)| name == "Acme Ltd" && *value == Some((100_000, "EUR".to_owned(), None))),
+            "{:?}",
+            &pairs[..3]
+        );
     }
 }
