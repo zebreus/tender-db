@@ -194,3 +194,26 @@ From `../511-placeholders/u45/reads-wf_63890637.json` (the readers' notes):
 5. **'V.1) AWARD AND CONTRACT VALUE:'** (2,629 orgs, one mention each) and 'siehe VI.4.1' (2,550 orgs) never collapse
    to one org. Each slot keys on something else, perhaps an address or identifier. Check what mints them separately.
 
+6. **TED template wordings and multilingual residue** (residual dry 2310, `../511-placeholders/u45/plan-residual.json`:
+   434 placeholder orgs / 734 mentions and 49 blank / 185 still kept).
+   - Notice 19530163 ORG-10 (org 10601576, 140 mentions) survives the wet. TED's earlier template words its copies
+     differently from 12516947's:
+     - PT 'Consultar o ponto';
+     - SL 'Glejte oddelek';
+     - HU 'Lásd a VI.3. szakaszt';
+     - MT 'Ara t-Taqsima';
+     - ET 'Vt punkti';
+     - DA 'Se del';
+     - GA 'Féach Alt';
+     - LV 'Skatīt VI.3. iedaļu'.
+     An unlisted opener keeps the party.
+   - Proposed: a TED-template signal. When a party has ten or more language-labelled copies carrying the bare
+     English seed's section token, and none of them has a legal form, sweep them whatever their opener; plus the
+     openers and titles above.
+   - The 'same as (in point) VI.x', 'please refer to VI.x', 'as in (point) VI.x' and 'voir point VI.x' parties are
+     kept by a sibling copy. Read which copy.
+   - The unit-4 canary (refold 12516947 and 19530163, assert no ORG-2 / ORG-10 mention) was not run before the units
+     4+5 wet. It is mandatory before the unit 6 wet.
+7. **Junk head names on real orgs.** 22713056 is headed 's.o.' but its 28 remaining mentions are 'Vergabekammer bei
+   der Bezirksregierung', bound by the chamber's phone number 0251411691. 30914328 is headed 'Withheld Section94
+   Supplier' (see 522). A head-name refresh after drops would fix the served name.
