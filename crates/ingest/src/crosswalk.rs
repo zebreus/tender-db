@@ -748,6 +748,11 @@ mod tests {
         for other in ["GB-UKPRN-10007789", "GB-CHC-1089464", "GB-NHS-RJ100", "GB-MPR-12345"] {
             assert_eq!(key(Some("GB"), "national", other), None, "{other} is its own register");
         }
+        // Issue 514 unit 2: the register-spelling rewrite's outputs keep their token, so
+        // none becomes a company key (a bare 6-7 digit charity number would pad to E2).
+        for canonical in ["GBUKPRN10007798", "GBCHC216250", "GBCHC1088835", "GBNICNIC102575", "GBMPR16337R", "GBMPR30938R"] {
+            assert_eq!(key(Some("GB"), "national", canonical), None, "{canonical} is its own register");
+        }
         // A real GB VAT: nine digits after the prefix, `kind = "vat"`.
         assert_eq!(key(Some("GB"), "vat", "GB553298332"), None);
         // Northern Ireland keeps its own code and never folds to GB, so it
@@ -1205,6 +1210,16 @@ pub fn altid_pair_key(
 /// - NIC (CCNI): `1` + five digits, bare or under the `NIC` / `NI` spellings
 ///   publishers use (`NIC 100095`, `NI 100770`); three spellings are three identities,
 ///   which is issue 514's.
+///
+/// Issue 514 unit 2: the shapes are still never stripped HERE. The live normaliser
+/// (`project::register_spelling`) rewrites a closed set of label spellings
+/// (`GB-UKPRN-UKPRN 10007798`, `GB-CHC-Registered Charity No. 1088835`, `GB-MPR-IP16337R`)
+/// into the scheme token plus the number, and only when the number after the token
+/// fails its shape on input and passes it on output (invariant I1, through
+/// [`registry_number_shaped`], so the two read one table). The keys below therefore see
+/// the canonical identity of a label spelling, and every value 469's arm refused for a
+/// broken number (`ip6243r`, a glued `-1`, a dropped zero) stays refused. The three NIC
+/// spellings stay three identities (owner ruling 2).
 const REGISTRIES: [(&str, &str, &str, fn(&str) -> bool); 5] = [
     ("GB-UKPRN", "GB:ukprn", "GBUKPRN", |n| n.len() == 8 && n.starts_with('1') && all_digits(n)),
     ("GB-CHC", "GB:chc", "GBCHC", |n| {
@@ -1228,6 +1243,14 @@ const REGISTRIES: [(&str, &str, &str, fn(&str) -> bool); 5] = [
 
 fn all_digits(s: &str) -> bool {
     !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit())
+}
+
+/// Issue 514 unit 2: whether `number` — the characters after a register's scheme token
+/// (`GBUKPRN`, `GBCHC`, `GBMPR`, `GBSC`, `GBNIC`) — has that register's [`REGISTRIES`]
+/// shape. `false` for an unknown token. The normaliser's register-spelling rewrite reads
+/// its invariant I1 through this, so the rewrite and the register keys share one table.
+pub(crate) fn registry_number_shaped(token: &str, number: &str) -> bool {
+    REGISTRIES.iter().any(|(_, _, t, shape)| *t == token && shape(number))
 }
 
 /// Issue 469 U3: a mention's raw identifier as a GB register identity the altid arm's
@@ -1654,20 +1677,35 @@ mod altid {
         }
     }
 
-    /// Issue 469 U3: a field label written into the value is refused, never stripped —
-    /// stripping would guess at a number the publisher garbled.
+    /// Issue 469 U3 refused a field label written into the value. Issue 514 unit 2: the
+    /// live normaliser now rewrites the closed label set into the token plus the number
+    /// (I1: unshaped in, shaped out), so a label spelling keys as its canonical identity —
+    /// the identity its bare twin keys as — through the pair key and the wall alike. A
+    /// label outside the set (`reg. charity`) is still refused, never stripped.
     #[test]
-    fn label_spellings_are_refused_not_stripped() {
+    fn label_spellings_key_as_their_canonical_identity() {
         let gb = Some("GB");
-        for (scheme, literal) in [
-            ("GB-UKPRN", "GB-UKPRN-UKPRN10007798"),
-            ("GB-UKPRN", "GB-UKPRN-UKPRN: 10007798"),
-            ("GB-CHC", "GB-CHC-Charity Number 216250"),
-            ("GB-CHC", "GB-CHC-CHARITYNUMBER216250"),
-            ("GB-CHC", "GB-CHC-reg. charity 1044521"),
+        for (scheme, literal, series, identity) in [
+            ("GB-UKPRN", "GB-UKPRN-UKPRN10007798", "GB:ukprn", "GBUKPRN10007798"),
+            ("GB-UKPRN", "GB-UKPRN-UKPRN: 10007798", "GB:ukprn", "GBUKPRN10007798"),
+            ("GB-UKPRN", "GB-UKPRN-GB-UKPRN10004116", "GB:ukprn", "GBUKPRN10004116"),
+            ("GB-CHC", "GB-CHC-Charity Number 216250", "GB:chc", "GBCHC216250"),
+            ("GB-CHC", "GB-CHC-CHARITYNUMBER216250", "GB:chc", "GBCHC216250"),
+            ("GB-CHC", "GB-CHC-Registered Charity No. 1088835", "GB:chc", "GBCHC1088835"),
+            ("GB-NIC", "GB-NIC-Charity Commission No NIC102575", "GB:nic", "GBNICNIC102575"),
+            ("GB-MPR", "GB-MPR-IP16337R", "GB:mpr", "GBMPR16337R"),
+            ("GB-MPR", "GB-MPR-Reg No 30938R", "GB:mpr", "GBMPR30938R"),
         ] {
-            assert_eq!(registry_pair_key(scheme, literal, gb), None, "{literal}");
+            let want = Some((series, identity.to_owned()));
+            assert_eq!(registry_pair_key(scheme, literal, gb), want, "{literal}");
+            assert_eq!(registry_mention_key(gb, literal), want, "{literal}: the wall reads what the pair keys");
+            let twin = format!("{scheme}-{}", &identity[scheme.len() - 1..]);
+            assert_eq!(registry_mention_key(gb, &twin), want, "{literal}: its bare twin {twin}");
         }
+        assert_eq!(registry_pair_key("GB-CHC", "GB-CHC-reg. charity 1044521", gb), None);
+        assert_eq!(registry_mention_key(gb, "GB-CHC-reg. charity 1044521"), None);
+        // Outside GB nothing is rewritten, so the label spelling still keys nothing.
+        assert_eq!(registry_mention_key(Some("IE"), "GB-UKPRN-UKPRN10007798"), None);
     }
 
     /// The spelled-out forms are the abbreviations they spell, not a Ltd: the nine

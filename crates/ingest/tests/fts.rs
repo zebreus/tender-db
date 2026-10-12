@@ -924,3 +924,197 @@ async fn a_letter_only_nhs_code_beside_a_ppon_is_measured_as_a_split() {
 
     let _ = std::fs::remove_dir_all(&archive);
 }
+
+/// Issue 514 unit 2, prevention end to end through the real normaliser and the real fold:
+/// a college published bare on one notice and behind a repeated `UKPRN` label on another
+/// binds ONE org, and the label spelling stays on its mention as published.
+#[tokio::test]
+async fn a_ukprn_label_spelling_binds_the_bare_spellings_org() {
+    const NAME: &str = "Leeds City College";
+    let bare = party_release("ocds-t-514-1", "910301-2026", 1, &[("GB-UKPRN", "10007798")], NAME);
+    let label = party_release("ocds-t-514-2", "910302-2026", 2, &[("GB-UKPRN", "UKPRN 10007798")], NAME);
+    let members: [(&str, &[u8]); 2] = [("910301-2026.json", &bare), ("910302-2026.json", &label)];
+    let (archive, db) = fixture_of("fts-514-ukprn", &members).await;
+    assert_eq!(run(&db, &archive).await.parsed, 2);
+    project::project(&db, false).await.expect("fold");
+    assert_eq!(cell_i64(&db, "SELECT COUNT(*) FROM organizations WHERE identifier LIKE 'GBUKPRN%'").await, 1);
+    assert_eq!(cell_i64(&db, "SELECT COUNT(*) FROM organizations WHERE identifier = 'GBUKPRN10007798'").await, 1);
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(DISTINCT organization_id) FROM organization_mentions WHERE raw_identifier LIKE 'GB-UKPRN-%'").await,
+        1,
+        "both notices on one org"
+    );
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM organization_mentions WHERE raw_identifier = 'GB-UKPRN-UKPRN 10007798'").await,
+        1,
+        "the published spelling survives on the mention"
+    );
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Issue 514 unit 2: a typo of ANOTHER number is never rewritten — Hastoe's `ip6243r`
+/// (four digits: its number is 16243R) beside the correct `16243R` stays two orgs.
+#[tokio::test]
+async fn a_society_number_typo_stays_its_own_org() {
+    const NAME: &str = "Hastoe Housing Association";
+    let right = party_release("ocds-t-514-3", "910303-2026", 1, &[("GB-MPR", "16243R")], NAME);
+    let typo = party_release("ocds-t-514-4", "910304-2026", 2, &[("GB-MPR", "ip6243r")], NAME);
+    let members: [(&str, &[u8]); 2] = [("910303-2026.json", &right), ("910304-2026.json", &typo)];
+    let (archive, db) = fixture_of("fts-514-typo", &members).await;
+    assert_eq!(run(&db, &archive).await.parsed, 2);
+    project::project(&db, false).await.expect("fold");
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM organizations WHERE identifier IN ('GBMPR16243R', 'GBMPRIP6243R')").await,
+        2
+    );
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Issue 514 unit 2, the stock repair end to end through the production rules: a label
+/// spelling minted before the rewrite (simulated by splitting the label notice's mention
+/// onto its own `GBUKPRNUKPRN10007798` row) is re-keyed by the 345 job bound to its dry
+/// plan, reunited with its twin by E0 — the wall reading `registry_mention_key` (W6), the
+/// wet run bound to the dry run's listing (G1) — and its old spelling stays findable on
+/// the survivor (G5). The next day's label mention binds the survivor directly.
+#[tokio::test]
+async fn a_label_spelling_split_is_re_keyed_and_reunited_through_the_production_rules() {
+    const NAME: &str = "Leeds City College";
+    let bare = party_release("ocds-t-514-5", "910305-2026", 1, &[("GB-UKPRN", "10007798")], NAME);
+    let label = party_release("ocds-t-514-6", "910306-2026", 2, &[("GB-UKPRN", "UKPRN 10007798")], NAME);
+    let members: [(&str, &[u8]); 2] = [("910305-2026.json", &bare), ("910306-2026.json", &label)];
+    let (archive, db) = fixture_of("fts-514-stock", &members).await;
+    assert_eq!(run(&db, &archive).await.parsed, 2);
+    project::project(&db, false).await.expect("fold");
+    let twin = cell_i64(&db, "SELECT id FROM organizations WHERE identifier = 'GBUKPRN10007798'").await;
+
+    // The pre-514 stock: the label notice's mention on a row of its own, minted under
+    // the published spelling (a higher id, as every mover in the census but A9's).
+    let raw = store::turso::Builder::new_local(archive.join("test.db").to_str().unwrap()).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    let mover = twin + 1000;
+    conn.execute(
+        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+         VALUES (?, 'GB', 'national', 'GBUKPRNUKPRN10007798', ?, ?, 0, 0)",
+        (
+            store::turso::Value::Integer(mover),
+            store::turso::Value::Text(NAME.into()),
+            store::turso::Value::Text(NAME.to_lowercase()),
+        ),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "UPDATE organization_mentions SET organization_id = ? \
+          WHERE notice_id = (SELECT id FROM notices WHERE publication_id = '910306-2026')",
+        (store::turso::Value::Integer(mover),),
+    )
+    .await
+    .unwrap();
+    assert_eq!(cell_i64(&db, "SELECT COUNT(*) FROM organizations WHERE identifier LIKE 'GBUKPRN%'").await, 2, "the split");
+
+    // 345, dry then wet over its plan.
+    let before = |value: &str, country: Option<&str>| {
+        project::normalise_identifier_before_folds(value, country).map(|id| (id.kind, id.country, id.value))
+    };
+    let live = |value: &str, country: Option<&str>| {
+        project::normalise_identifier(value, country).map(|id| (id.kind, id.country, id.value))
+    };
+    let never = || false;
+    let p = db.repair_renormalised_identifiers(before, live, true, None, None, &never).await.unwrap();
+    let planned: Vec<(i64, &str, &str)> =
+        p.plan.iter().map(|f| (f.org, f.from_identifier.as_str(), f.to_identifier.as_str())).collect();
+    assert_eq!(planned, vec![(mover, "GBUKPRNUKPRN10007798", "GBUKPRN10007798")], "{p:?}");
+    assert_eq!(p.reunions, 1);
+    let plan: std::collections::HashSet<store::LabelFix> = p.plan.iter().cloned().collect();
+    let w = db.repair_renormalised_identifiers(before, live, false, Some(p.rows), Some(&plan), &never).await.unwrap();
+    assert_eq!((w.applied, w.held_unplanned, w.preimages), (1, 0, 1), "{w:?}");
+
+    // E0 through the production rules.
+    fn e0(
+        dry_run: bool,
+        expect_groups: Option<u64>,
+        listing: Option<&std::collections::HashMap<(String, String, String), Vec<i64>>>,
+    ) -> store::R2MergeArgs<'_> {
+        store::R2MergeArgs {
+            key: ingest::crosswalk::e0_key_flat,
+            name_key: ingest::crosswalk::altid_name_key,
+            names_agree: ingest::crosswalk::altid_keys_agree,
+            trim: ingest::crosswalk::altid_trim,
+            norm: project::match_norm,
+            condemns: ingest::idgate::condemns,
+            consortium: ingest::crosswalk::consortium_name,
+            legal_form: ingest::crosswalk::legal_form_family,
+            rule: "e0",
+            n3: ingest::crosswalk::n3_key,
+            stoplist_cap: ingest::idgate::STOPLIST_CAP,
+            dry_run,
+            max_groups: None,
+            expect_groups,
+            register_identity: Some(ingest::crosswalk::registry_mention_key),
+            expect_listing: listing,
+            job_id: None,
+            stop: &|| false,
+        }
+    }
+    let dry = db.match_org_identifiers_r2(e0(true, None, None)).await.unwrap();
+    assert_eq!((dry.plan_groups, dry.denied_group_vat, dry.wall_strip_admitted), (1, 0, 1), "{dry:?}");
+    let listing: std::collections::HashMap<(String, String, String), Vec<i64>> = dry
+        .merge_listing
+        .iter()
+        .map(|(c, s, k, m)| ((c.clone(), (*s).to_owned(), k.clone()), m.clone()))
+        .collect();
+    assert_eq!(
+        listing.get(&("GB".to_owned(), "E0".to_owned(), "national:GBUKPRN10007798".to_owned())),
+        Some(&vec![twin, mover])
+    );
+    let wet = db.match_org_identifiers_r2(e0(false, Some(1), Some(&listing))).await.unwrap();
+    assert_eq!((wet.merged_groups, wet.held_unplanned, wet.removed), (1, 0, 1), "{wet:?}");
+    assert_eq!(cell_i64(&db, "SELECT COUNT(*) FROM organizations WHERE identifier LIKE 'GBUKPRN%'").await, 1);
+    assert_eq!(
+        cell_i64(
+            &db,
+            &format!(
+                "SELECT COUNT(*) FROM organization_merged_identifiers WHERE identifier = 'GBUKPRNUKPRN10007798' \
+                  AND org_id = {twin} AND rule = 'renormalise'"
+            )
+        )
+        .await,
+        1,
+        "the old spelling answers the survivor"
+    );
+
+    // The next day: another label spelling binds the survivor through the live normaliser.
+    let next = party_release("ocds-t-514-7", "910307-2026", 3, &[("GB-UKPRN", "UKPRN: 10007798")], NAME);
+    let zip = archive.join("fts/daily/2026-09-04.zip");
+    {
+        let mut w = zip::ZipWriter::new(std::fs::File::create(&zip).unwrap());
+        w.start_file("910307-2026.json", zip::write::SimpleFileOptions::default()).unwrap();
+        w.write_all(&next).unwrap();
+        w.finish().unwrap().flush().unwrap();
+    }
+    db.record_fetch(&store::Fetch {
+        source: "fts".into(),
+        kind: "daily".into(),
+        period: "2026-09-04".into(),
+        url: "https://x".into(),
+        sha256: ingest::sha256_hex(&std::fs::read(&zip).unwrap()),
+        bytes: std::fs::metadata(&zip).unwrap().len() as i64,
+        fetched_at: 2,
+        path: "fts/daily/2026-09-04.zip".into(),
+    })
+    .await
+    .unwrap();
+    assert_eq!(run(&db, &archive).await.parsed, 1);
+    project::project(&db, false).await.expect("next fold");
+    assert_eq!(cell_i64(&db, "SELECT COUNT(*) FROM organizations WHERE identifier LIKE 'GBUKPRN%'").await, 1);
+    assert_eq!(
+        cell_i64(
+            &db,
+            "SELECT m.organization_id FROM organization_mentions m JOIN notices n ON n.id = m.notice_id \
+              WHERE n.publication_id = '910307-2026'"
+        )
+        .await,
+        twin
+    );
+    let _ = std::fs::remove_dir_all(&archive);
+}

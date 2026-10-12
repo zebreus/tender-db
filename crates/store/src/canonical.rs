@@ -5344,11 +5344,31 @@ pub struct R2MergeArgs<'a> {
     /// T4 parity: the dry run's recorded plan-group count; a wet recompute
     /// diverging beyond max(2%, 50) aborts before any write.
     pub expect_groups: Option<u64>,
+    /// Issue 514 unit 2 (W6): `crosswalk::registry_mention_key` on the E0 arm, `None`
+    /// on every other. Under rule `e0`, for a GB group, the VAT-group wall skips a
+    /// mention raw this keys to the group's OWN register identity (`national:` +
+    /// identity equals the group key) — the publisher's other spelling of the number
+    /// that formed the group, extending catch (a) of step 5. Without it the wall reads
+    /// `vat:GBUKPRNUKPRN10007798` beside `vat:GBUKPRN10007798` as two numbers and
+    /// denies every register-spelling reunion (measured: `denied_group_vat` 1).
+    pub register_identity: Option<fn(Option<&str>, &str) -> Option<(&'static str, String)>>,
+    /// Issue 514 unit 2 (G1): the stored, COMPLETE `e0-merge-listing` — every planned
+    /// group as `(country, scheme, key) → members ascending`. A wet run merges only a
+    /// group whose key and exact member set it lists; any other is counted
+    /// [`R2MergeReport::held_unplanned`] and left standing (the rekey arm's "live ∩
+    /// stored" rule). `None` — R2, a truncated listing, a dry run — leaves parity alone.
+    pub expect_listing: Option<&'a std::collections::HashMap<(String, String, String), Vec<i64>>>,
     /// Recorded into org_merge_log rows.
     pub job_id: Option<i64>,
     /// Cooperative stop, polled between preload windows and merge txns.
     pub stop: &'a (dyn Fn() -> bool + Sync),
 }
+
+/// Issue 514 unit 2 (G1): the most groups an E0 dry run lists in
+/// [`R2MergeReport::merge_listing`] (`e0-merge-listing`) — keys and member ids only,
+/// so a full listing is a few hundred kilobytes. Past it the listing says
+/// `truncated` and the wet run falls back to parity alone.
+pub const E0_MERGE_LISTING_CAP: usize = 10_000;
 
 /// What the R2 merge (or its dry-run) found and did.
 #[derive(Debug, Default, Clone)]
@@ -5472,6 +5492,27 @@ pub struct R2MergeReport {
     /// [`R2_PLAN_LISTING_CAP`].
     pub fold_listing: Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>,
     pub fold_listing_truncated: bool,
+    /// Issue 514 unit 2 (G1): rule `e0` dry runs only — every plan group as `(country,
+    /// scheme, key, members ascending)`, the supervisor's `e0-merge-listing`, capped at
+    /// [`E0_MERGE_LISTING_CAP`]. Complete unless [`Self::merge_listing_truncated`].
+    pub merge_listing: Vec<(String, &'static str, String, Vec<i64>)>,
+    pub merge_listing_truncated: bool,
+    /// Issue 514 unit 2 (G1): wet runs bound by [`R2MergeArgs::expect_listing`] — plan
+    /// groups the stored listing does not name with exactly these members, left
+    /// standing. They stay in [`Self::plan_groups`], so the residual re-record keeps
+    /// parity with the next recompute.
+    pub held_unplanned: u64,
+    /// Issue 514 unit 2: rule `e0` dry runs only — the groups the VAT-group wall denied,
+    /// listed in the 4c shape (the name rule's E0 denials go to [`Self::denied_listing`]),
+    /// capped at [`R2_PLAN_LISTING_CAP`]. Before this, an E0 wall denial was a count.
+    pub denied_wall_listing: Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>,
+    pub denied_wall_listing_truncated: bool,
+    /// Issue 514 unit 2 (W6's footprint, stop rule S9a): groups whose wall verdict the
+    /// own-identity strip CHANGED — admitted where the unstripped wall would deny (a
+    /// register-spelling reunion), and denied where it would admit (two different
+    /// PPONs the shared register raw used to mask). Zero without `register_identity`.
+    pub wall_strip_admitted: u64,
+    pub wall_strip_denied: u64,
 }
 
 /// Inputs to the issue-300 Stage-3 R3 merge (NULL-country rescue).
@@ -10300,7 +10341,10 @@ pub struct NameAttributionReport {
 }
 
 /// One row whose identifier carries a publisher label (issue 328).
-#[derive(Debug, Default, Clone)]
+///
+/// `Eq + Hash` since issue 514 unit 2: the 345 wet run is bound to the stored dry plan,
+/// read back as a set of these.
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct LabelFix {
     pub org: i64,
     pub from_identifier: String,
@@ -10359,8 +10403,21 @@ pub struct RenormaliseRepairReport {
     pub plan: Vec<LabelFix>,
     pub applied: u64,
     pub skipped_moved: u64,
+    /// Issue 514 unit 2 (G2): wet rows the recompute planned but the stored dry plan
+    /// does not list as exactly this `(org, from, to)` — left standing, never moved.
+    pub held_unplanned: u64,
+    /// Issue 514 unit 2 (G5): applied moves whose pre-image was written as a merged
+    /// identifier of the moved row (rule [`RENORMALISE_RULE`]), so `?identifier=` still
+    /// answers the published spelling; a move whose pre-image already stood writes none.
+    pub preimages: u64,
     pub stopped: bool,
 }
+
+/// Issue 514 unit 2 (G5): the `organization_merged_identifiers.rule` of a 345 move's
+/// pre-image — the identifier the row stood on before the re-key, recorded with
+/// `loser` = the row itself (460 D5's and 513 U4's shape). An E0 merge of the moved row
+/// carries it to the survivor like any other merged identifier.
+pub const RENORMALISE_RULE: &str = "renormalise";
 
 /// One notice row whose stored instants disagree with the resolver (issue 367).
 /// The pre-image rides along because the wet arm re-checks it before writing —
@@ -20932,6 +20989,17 @@ impl Db {
             std::collections::HashMap::new();
         // The fold gate's wall memo, `n2 key -> generic` (rule 3b).
         let mut fold_generic: std::collections::HashMap<String, bool> = std::collections::HashMap::new();
+        // A listed group's members in the 4c shape `(id, kind, literal, head name)`.
+        #[allow(clippy::type_complexity)]
+        let listed = |members: &[Member],
+                      meta: &[(i64, Option<String>, Option<String>, Option<String>, String)]|
+         -> Vec<(i64, String, String, String)> {
+            let name_of: std::collections::HashMap<i64, &str> = meta.iter().map(|m| (m.0, m.4.as_str())).collect();
+            members
+                .iter()
+                .map(|m| (m.id, m.kind.clone(), m.literal.clone(), name_of.get(&m.id).map(|n| (*n).to_owned()).unwrap_or_default()))
+                .collect()
+        };
         'group: for (gk, members) in groups {
             if (args.stop)() {
                 report.stopped = true;
@@ -21224,6 +21292,15 @@ impl Db {
                 }
                 if deny {
                     report.denied_names += 1;
+                    // Issue 514 unit 2: an E0 name denial is listed like R2's (4c), so a
+                    // group nobody foresaw can be read and reviewed, not just counted.
+                    if args.dry_run {
+                        if report.denied_listing.len() < R2_PLAN_LISTING_CAP {
+                            report.denied_listing.push((gk.0.clone(), gk.1, gk.2.clone(), listed(&members, &meta)));
+                        } else {
+                            report.denied_listing_truncated = true;
+                        }
+                    }
                     continue 'group;
                 }
             } else if keys.len() >= 2 {
@@ -21292,10 +21369,31 @@ impl Db {
             // (pad-derived) keys are inadmissible as MERGE evidence but fine
             // as CONFLICT evidence — a deny is the safe direction — so the
             // wall accepts any tier.
-            let mut member_keys: std::collections::HashMap<
-                i64,
-                std::collections::HashMap<&'static str, BTreeSet<String>>,
-            > = std::collections::HashMap::new();
+            //
+            // Issue 514 unit 2 (W6) extends catch (a) on the E0 arm, for a GB group
+            // only: a raw `register_identity` (`registry_mention_key`) keys to the
+            // group's OWN register identity is the publisher's other spelling of the
+            // number that formed the group (`GB-UKPRN-UKPRN 10007798` on a
+            // `national:GBUKPRN10007798` group), so it is stripped too. The two-letter
+            // lead reads every FTS raw as a VAT, and before this the mover's
+            // `vat:GBUKPRNUKPRN10007798` and the twin's `vat:GBUKPRN10007798` were
+            // disjoint: every reunion was walled, and a verdict cannot lift the wall.
+            // The strip removes only evidence that AGREES with the group, so it can
+            // also tighten: two members on two different PPONs, which the shared
+            // register raw used to mask, are now walled (the subsidiary shape). Both
+            // directions are counted (S9a).
+            let own_identity = |country: Option<&str>, raw: &str| -> bool {
+                args.rule == "e0"
+                    && gk.0 == "GB"
+                    && args.register_identity.is_some_and(|identity| {
+                        identity(country, raw).is_some_and(|(_, id)| gk.2.strip_prefix("national:") == Some(id.as_str()))
+                    })
+            };
+            let strip_active = args.rule == "e0" && gk.0 == "GB" && args.register_identity.is_some();
+            type MemberKeys = std::collections::HashMap<i64, std::collections::HashMap<&'static str, BTreeSet<String>>>;
+            let mut member_keys: MemberKeys = std::collections::HashMap::new();
+            // The same evidence without the W6 strip, read only to count its footprint.
+            let mut unstripped_keys: MemberKeys = std::collections::HashMap::new();
             for chunk in ids.chunks(512) {
                 let sql = format!(
                     "SELECT organization_id, country, raw_identifier \
@@ -21326,6 +21424,13 @@ impl Db {
                         if scheme == gk.1 && key == gk.2 {
                             continue;
                         }
+                        if strip_active {
+                            unstripped_keys.entry(org).or_default().entry(scheme).or_default().insert(key.clone());
+                        }
+                        // W6: the group's own register identity, spelled otherwise.
+                        if own_identity(country, &raw) {
+                            continue;
+                        }
                         member_keys
                             .entry(org)
                             .or_default()
@@ -21335,21 +21440,35 @@ impl Db {
                     }
                 }
             }
-            let mks: Vec<&std::collections::HashMap<&'static str, BTreeSet<String>>> =
-                member_keys.values().collect();
-            for i in 0..mks.len() {
-                for j in i + 1..mks.len() {
-                    for (scheme, a) in mks[i] {
-                        if let Some(b) = mks[j].get(scheme)
-                            && !a.is_empty()
-                            && !b.is_empty()
-                            && a.is_disjoint(b)
-                        {
-                            report.denied_group_vat += 1;
-                            continue 'group;
-                        }
+            let walled = |keys: &MemberKeys| -> bool {
+                let mks: Vec<&std::collections::HashMap<&'static str, BTreeSet<String>>> = keys.values().collect();
+                (0..mks.len()).any(|i| {
+                    (i + 1..mks.len()).any(|j| {
+                        mks[i].iter().any(|(scheme, a)| {
+                            mks[j].get(scheme).is_some_and(|b| !a.is_empty() && !b.is_empty() && a.is_disjoint(b))
+                        })
+                    })
+                })
+            };
+            let wall = walled(&member_keys);
+            if strip_active {
+                match (walled(&unstripped_keys), wall) {
+                    (true, false) => report.wall_strip_admitted += 1,
+                    (false, true) => report.wall_strip_denied += 1,
+                    _ => {}
+                }
+            }
+            if wall {
+                report.denied_group_vat += 1;
+                // Issue 514 unit 2: an E0 wall denial is listed (4c shape).
+                if args.dry_run && args.rule == "e0" {
+                    if report.denied_wall_listing.len() < R2_PLAN_LISTING_CAP {
+                        report.denied_wall_listing.push((gk.0.clone(), gk.1, gk.2.clone(), listed(&members, &meta)));
+                    } else {
+                        report.denied_wall_listing_truncated = true;
                     }
                 }
+                continue 'group;
             }
             // Dry-run blast-radius honesty (the Stage-1 preview lesson,
             // re-learned by a verifier here): the org-level counts ARE what
@@ -21450,11 +21569,22 @@ impl Db {
                     ));
                 }
             }
+            // Issue 514 unit 2 (G1): the complete E0 listing a wet run is bound to.
+            if args.dry_run && args.rule == "e0" {
+                if report.merge_listing.len() < E0_MERGE_LISTING_CAP {
+                    let mut ids: Vec<i64> = members.iter().map(|m| m.id).collect();
+                    ids.sort_unstable();
+                    report.merge_listing.push((gk.0.clone(), gk.1, gk.2.clone(), ids));
+                } else {
+                    report.merge_listing_truncated = true;
+                }
+            }
             plan.push((gk, members));
         }
         // Deterministic order: merges land smallest-key-first, so a capped
         // run and its continuation cover a stable prefix.
         plan.sort_by(|a, b| a.0.cmp(&b.0));
+        report.merge_listing.sort();
         report.plan_groups = plan.len() as u64;
 
         // T4 parity: the wet run recomputed the plan from live data; if it
@@ -21491,6 +21621,19 @@ impl Db {
                 })
                 .collect();
             return Ok(report);
+        }
+        // Issue 514 unit 2 (G1): a wet run bound to the dry run's complete listing
+        // merges only what it listed, member for member — a group that appeared, or
+        // gained or lost a member, since the review is held, never merged. Parity
+        // above still guards the whole plan.
+        if let Some(listing) = args.expect_listing {
+            let before = plan.len();
+            plan.retain(|((country, scheme, key), members)| {
+                let mut ids: Vec<i64> = members.iter().map(|m| m.id).collect();
+                ids.sort_unstable();
+                listing.get(&(country.clone(), (*scheme).to_owned(), key.clone())) == Some(&ids)
+            });
+            report.held_unplanned = (before - plan.len()) as u64;
         }
 
         let cap = args.max_groups.unwrap_or(u64::MAX);
@@ -31412,12 +31555,21 @@ impl Db {
     /// repairs of issues 325/326 never read as disagreements; only (kind, value)
     /// can differ, and only through the folds. `now_refused` counts witnesses
     /// the v2 gate now rejects outright (the dissolve's domain, untouched here).
+    ///
+    /// Issue 514 unit 2 changes the wet run twice. G2: with `expect_plan` (the stored dry
+    /// plan, which the supervisor refuses when truncated) it moves only the recomputed
+    /// rows that plan lists as exactly this `(org, from, to)`; any other is counted
+    /// `held_unplanned` and left standing — parity on `expect_rows` alone allowed
+    /// max(2%, 5) unreviewed moves. G5: each move records its pre-image as a merged
+    /// identifier of the row under [`RENORMALISE_RULE`], so a published label spelling
+    /// keeps answering `?identifier=` after the re-key and the E0 merge that follows.
     pub async fn repair_renormalised_identifiers(
         &self,
         before: fn(&str, Option<&str>) -> Option<(String, Option<String>, String)>,
         live: fn(&str, Option<&str>) -> Option<(String, Option<String>, String)>,
         dry_run: bool,
         expect_rows: Option<u64>,
+        expect_plan: Option<&std::collections::HashSet<LabelFix>>,
         stop: &(dyn Fn() -> bool + Sync),
     ) -> turso::Result<RenormaliseRepairReport> {
         let mut report = RenormaliseRepairReport::default();
@@ -31548,6 +31700,11 @@ impl Db {
                     report.stopped = true;
                     break;
                 }
+                // G2: only a row the reviewed plan lists, exactly.
+                if expect_plan.is_some_and(|p| !p.contains(f)) {
+                    report.held_unplanned += 1;
+                    continue;
+                }
                 // Only move a row that still says what the plan says (the
                 // reader-to-writer window, as in 328).
                 let mut current: Option<(Option<String>, String, String)> = None;
@@ -31587,6 +31744,15 @@ impl Db {
                     ),
                 )
                 .await?;
+                // G5: the pre-image stays findable, in the same transaction.
+                let pre = Identifier {
+                    country: f.from_country.clone(),
+                    kind: f.from_kind.clone(),
+                    value: f.from_identifier.clone(),
+                };
+                if record_alias_identifier_as(&conn, &pre, f.org, RENORMALISE_RULE).await? {
+                    report.preimages += 1;
+                }
                 append_change(&conn, "organization", f.org, None, "changed", now).await?;
                 report.applied += 1;
             }

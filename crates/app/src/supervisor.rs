@@ -7831,8 +7831,11 @@ impl Supervisor {
                     "issue 345: re-parsing published identifier strings through the live normaliser"
                         .to_owned(),
                 );
-                let expect_rows = if dry_run {
-                    None
+                // Issue 514 unit 2 (G2, owner ruling 7): the wet pass moves only the
+                // `(org, from, to)` rows of the stored dry plan, so the plan must be
+                // complete: a truncated one is refused rather than half-honoured.
+                let (expect_rows, expect_plan) = if dry_run {
+                    (None, None)
                 } else {
                     let (body, _) = self
                         .db
@@ -7847,7 +7850,30 @@ impl Supervisor {
                                     reviewed plan — run the dry pass again"
                             .to_owned());
                     }
-                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
+                    if v["plan_truncated"] != serde_json::Value::Bool(false) {
+                        return Err("the stored renormalise-repair plan is TRUNCATED (or carries no \
+                                    plan_truncated flag): since issue 514 the wet pass moves only \
+                                    the rows its plan lists, so it needs the whole plan — refused, \
+                                    nothing moved"
+                            .to_owned());
+                    }
+                    let mut plan: std::collections::HashSet<store::LabelFix> = std::collections::HashSet::new();
+                    for f in v["plan"].as_array().ok_or_else(|| "plan lacks plan")? {
+                        let text = |side: &str, k: &str| {
+                            f[side][k].as_str().map(str::to_owned).ok_or_else(|| format!("plan row lacks {side}.{k}"))
+                        };
+                        let country = |side: &str| f[side]["country"].as_str().map(str::to_owned);
+                        plan.insert(store::LabelFix {
+                            org: f["org"].as_i64().ok_or_else(|| "plan row lacks org".to_owned())?,
+                            from_identifier: text("from", "identifier")?,
+                            from_kind: text("from", "kind")?,
+                            from_country: country("from"),
+                            to_identifier: text("to", "identifier")?,
+                            to_kind: text("to", "kind")?,
+                            to_country: country("to"),
+                        });
+                    }
+                    (Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?), Some(plan))
                 };
                 let r = self
                     .db
@@ -7862,6 +7888,7 @@ impl Supervisor {
                         },
                         dry_run,
                         expect_rows,
+                        expect_plan.as_ref(),
                         &stop,
                     )
                     .await
@@ -7883,6 +7910,10 @@ impl Supervisor {
                     "reunions": r.reunions,
                     "applied": r.applied,
                     "skipped_moved": r.skipped_moved,
+                    // Issue 514 unit 2: rows outside the stored plan (G2), and the
+                    // pre-images recorded under rule `renormalise` (G5).
+                    "held_unplanned": r.held_unplanned,
+                    "preimages": r.preimages,
                     "stopped": r.stopped,
                     "plan_truncated": r.plan.len() > PLAN_CAP,
                     "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
@@ -7916,7 +7947,11 @@ impl Supervisor {
                     if dry_run {
                         String::new()
                     } else {
-                        format!(" Applied {} ({} skipped: moved since the plan).", r.applied, r.skipped_moved)
+                        format!(
+                            " Applied {} ({} skipped: moved since the plan; {} held: not in the stored \
+                             plan; {} pre-image(s) recorded as merged identifiers, rule renormalise).",
+                            r.applied, r.skipped_moved, r.held_unplanned, r.preimages
+                        )
                     },
                 ))
             })
@@ -9132,9 +9167,10 @@ impl Supervisor {
                 );
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
-                let r = self
-                    .db
-                    .match_org_identifiers_r2(store::R2MergeArgs {
+                // Boxed (issue 467's rule): the store walk's future is the deepest
+                // await in this family fn, and issue 514's W6/G1 locals pushed the fn
+                // past its size budget when it sat inline.
+                let r = Box::pin(self.db.match_org_identifiers_r2(store::R2MergeArgs {
                         key: ingest::crosswalk::canonical_key_flat,
                         // Issue 470's fold gate: the re-key arm's name test.
                         name_key: ingest::crosswalk::altid_name_key,
@@ -9150,9 +9186,12 @@ impl Supervisor {
                         dry_run,
                         max_groups: *max_groups,
                         expect_groups,
+                        // Issue 514 unit 2: W6 and the listing bound are E0's alone.
+                        register_identity: None,
+                        expect_listing: None,
                         job_id: Some(job_id as i64),
                         stop: &stop,
-                    })
+                    }))
                     .await
                     .map_err(|e| e.to_string())?;
                 // Keep the recorded plan CURRENT (verifier catch: a capped or
@@ -9338,9 +9377,10 @@ impl Supervisor {
             Spec::MatchOrgIdentifiersE0 { dry_run, max_groups } => Box::pin(async move {
                 let dry_run = *dry_run;
                 // The ingest-side rules, handed across as plain fns (the
-                // idgate/dissolve pattern); the flat crosswalk is the SAME fn
-                // the resolver's prevention hook injects, so repair and
-                // prevention cannot drift apart.
+                // idgate/dissolve pattern). `e0_key_flat` keys an org's exact
+                // triple only where `canonical_key_flat` — the fn the resolver's
+                // prevention hook injects — keys nothing, so E0 and R2 never
+                // both own a group.
                 // A wet run REQUIRES the recorded dry plan: the T4 parity
                 // input, and the ladder's guarantee that nothing merges
                 // un-previewed.
@@ -9363,6 +9403,47 @@ impl Supervisor {
                             .ok_or_else(|| "e0-merge-plan lacks plan_groups".to_owned())?,
                     )
                 };
+                // Issue 514 unit 2 (G1, owner ruling 6): every wet run is bound to the
+                // dry run's complete `e0-merge-listing` — it merges only a group listed
+                // with exactly its live members, and holds the rest. A missing listing
+                // (a dry run from before the bound) refuses; a TRUNCATED one falls back
+                // to parity alone, and the summary says so. Wet runs never write the
+                // listing, so a capped continuation stays bound to the reviewed one.
+                let listing: Option<std::collections::HashMap<(String, String, String), Vec<i64>>> = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("e0-merge-listing")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored e0-merge-listing — run the dry run first (issue 514: every \
+                             E0 wet run is bound to its dry run's listing)"
+                                .to_owned()
+                        })?;
+                    let v: serde_json::Value = serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["truncated"].as_bool().ok_or_else(|| "e0-merge-listing lacks truncated".to_owned())? {
+                        None
+                    } else {
+                        let groups = v["groups"].as_array().ok_or_else(|| "e0-merge-listing lacks groups".to_owned())?;
+                        let mut map = std::collections::HashMap::new();
+                        for g in groups {
+                            let text = |k: &str| {
+                                g[k].as_str().map(str::to_owned).ok_or_else(|| format!("e0-merge-listing group lacks {k}"))
+                            };
+                            let mut members = g["members"]
+                                .as_array()
+                                .ok_or_else(|| "e0-merge-listing group lacks members".to_owned())?
+                                .iter()
+                                .map(|m| m.as_i64().ok_or_else(|| "e0-merge-listing member is not an id".to_owned()))
+                                .collect::<Result<Vec<i64>, String>>()?;
+                            members.sort_unstable();
+                            map.insert((text("country")?, text("scheme")?, text("key")?), members);
+                        }
+                        Some(map)
+                    }
+                };
                 // Issue 442: the wet loop deletes organizations with foreign keys ON.
                 if !dry_run {
                     Box::pin(self.refuse_without_org_fk_indexes("match-org-identifiers e0")).await?;
@@ -9378,9 +9459,14 @@ impl Supervisor {
                 let r = self
                     .db
                     .match_org_identifiers_r2(store::R2MergeArgs {
+                        // `e0_key_flat` keys the groups AND the wall's mention
+                        // evidence: every raw lands in the one `"E0"` bucket under
+                        // the kind its two-letter lead suggests (`vat:` for every
+                        // FTS raw), which is why the wall needs `register_identity`
+                        // below to recognise a register's other spelling. It never
+                        // folds, so the fold gate never runs here and the four
+                        // slots that follow carry R2's rules unused.
                         key: ingest::crosswalk::e0_key_flat,
-                        // `e0_key_flat` never folds, so the fold gate never
-                        // runs here; the slots carry R2's rules regardless.
                         name_key: ingest::crosswalk::altid_name_key,
                         names_agree: ingest::crosswalk::altid_keys_agree,
                         trim: ingest::crosswalk::altid_trim,
@@ -9394,6 +9480,10 @@ impl Supervisor {
                         dry_run,
                         max_groups: *max_groups,
                         expect_groups,
+                        // Issue 514 unit 2 (W6, owner ruling 5): the wall strips a
+                        // raw that keys to the group's own GB register identity.
+                        register_identity: Some(ingest::crosswalk::registry_mention_key),
+                        expect_listing: listing.as_ref(),
                         job_id: Some(job_id as i64),
                         stop: &stop,
                     })
@@ -9416,6 +9506,24 @@ impl Supervisor {
                 // first committed transaction, not "nothing planned".)
                 if !(r.stopped && r.merged_groups == 0) {
                     let now = store::now_unix();
+                    // A 4c-shaped listing as JSON — outside the `json!` below, whose
+                    // expansion is at the macro recursion limit.
+                    #[allow(clippy::type_complexity)]
+                    let listed = |l: &Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>| {
+                        l.iter()
+                            .map(|(country, scheme, key, members)| {
+                                serde_json::json!({
+                                    "country": country, "scheme": scheme, "key": key,
+                                    "members": members.iter().map(|(id, kind, literal, name)| {
+                                        serde_json::json!({
+                                            "org_id": id, "kind": kind,
+                                            "identifier": literal, "name": name,
+                                        })
+                                    }).collect::<Vec<_>>(),
+                                })
+                            })
+                            .collect::<Vec<_>>()
+                    };
                     let plan = serde_json::json!({
                         "plan_groups": r.plan_groups - r.merged_groups,
                         "scanned": r.scanned, "withheld": r.withheld, "keyed": r.keyed, "groups": r.groups,
@@ -9430,6 +9538,12 @@ impl Supervisor {
                         "denied_verdict": r.denied_verdict,
                         "admitted_verdict": r.admitted_verdict,
                         "verdict_stale": r.verdict_stale,
+                        // Issue 514 unit 2: W6's footprint both ways (S9a), and the
+                        // groups a listing-bound wet run held.
+                        "wall_strip_admitted": r.wall_strip_admitted,
+                        "wall_strip_denied": r.wall_strip_denied,
+                        "held_unplanned": r.held_unplanned,
+                        "listing_bound": listing.is_some(),
                         "merged_this_run": r.merged_groups,
                         "residual_of_wet_run": !dry_run,
                         // Dry-run blast-radius preview (the Stage-1 lesson):
@@ -9466,12 +9580,38 @@ impl Supervisor {
                                 }).collect::<Vec<_>>(),
                             })
                         }).collect::<Vec<_>>(),
+                        // Issue 514 unit 2: the name rule's and the wall's denials,
+                        // listed in R2's 4c shape (dry runs only; empty on wet
+                        // re-records).
+                        "denied_listing_truncated": r.denied_listing_truncated,
+                        "denied": listed(&r.denied_listing),
+                        "denied_wall_listing_truncated": r.denied_wall_listing_truncated,
+                        "denied_wall": listed(&r.denied_wall_listing),
                     })
                     .to_string();
                     self.db
                         .put_report("e0-merge-plan", &plan, now)
                         .await
                         .map_err(|e| e.to_string())?;
+                    // Issue 514 unit 2 (G1): the complete listing a wet run is bound
+                    // to, written by a DRY run only — under the same guard as the plan,
+                    // so the two always come from one run.
+                    if dry_run {
+                        let listing = serde_json::json!({
+                            "plan_groups": r.plan_groups,
+                            "truncated": r.merge_listing_truncated,
+                            "groups": r.merge_listing.iter().map(|(country, scheme, key, members)| {
+                                serde_json::json!({
+                                    "country": country, "scheme": scheme, "key": key, "members": members,
+                                })
+                            }).collect::<Vec<_>>(),
+                        })
+                        .to_string();
+                        self.db
+                            .put_report("e0-merge-listing", &listing, now)
+                            .await
+                            .map_err(|e| e.to_string())?;
+                    }
                 }
                 if r.stopped {
                     // The same condition as the re-record guard above: a stop
@@ -9498,11 +9638,23 @@ impl Supervisor {
                      ({} withheld by a wrong-number or unapplied related verdict), {} E0-grouped, {} groups >=2; \
                      denied: {} cap, {} gate, {} consortium \
                      ({} members excluded member-scoped), \
-                     {} legal-form, {} vat-group-wall, {} names ({} echo admitted), {} verdict-keep, \
-                     {} verdict-merge; plan {} groups; merged {} groups \
+                     {} legal-form, {} vat-group-wall ({} admitted and {} walled by the issue-514 own-register strip), \
+                     {} names ({} echo admitted), {} verdict-keep, \
+                     {} verdict-merge; plan {} groups{}; merged {} groups \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
-                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    if dry_run {
+                        format!(
+                            " DRY RUN — plan recorded{}, nothing written",
+                            if r.merge_listing_truncated {
+                                " (e0-merge-listing TRUNCATED: a wet run is bound by parity alone)"
+                            } else {
+                                " with its complete e0-merge-listing"
+                            }
+                        )
+                    } else {
+                        String::new()
+                    },
                     r.scanned,
                     r.withheld,
                     r.keyed,
@@ -9513,11 +9665,21 @@ impl Supervisor {
                     r.consortium_excluded,
                     r.denied_legal_form,
                     r.denied_group_vat,
+                    r.wall_strip_admitted,
+                    r.wall_strip_denied,
                     r.denied_names,
                     r.admitted_echo,
                     r.denied_verdict,
                     r.admitted_verdict,
                     r.plan_groups,
+                    match (dry_run, listing.is_some()) {
+                        (true, _) => String::new(),
+                        (false, true) => format!(
+                            " (bound to the stored e0-merge-listing: {} held as unlisted or changed since the dry run)",
+                            r.held_unplanned
+                        ),
+                        (false, false) => " (the stored e0-merge-listing is TRUNCATED: bound by parity alone)".to_owned(),
+                    },
                     r.merged_groups,
                     r.removed,
                     r.mentions,
@@ -21324,6 +21486,149 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(bulk.len(), 1, "reclaim_only enqueues only the reclaim, no fold");
+    }
+    /// Issue 514 unit 2: a scratch store holding GB register rows and their published
+    /// mentions, `(id, identifier, raw)`, fixture rows through a raw connection with
+    /// foreign keys off, organization indexes built (an E0 wet run refuses without them).
+    async fn seed_514(name: &str, rows: &[(i64, &str, &str)]) -> (Arc<store::Db>, store::turso::Connection) {
+        let path = format!("/tmp/tender-db-sup-514-{name}-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        db.build_organization_indexes().await.unwrap();
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        for (id, identifier, raw) in rows {
+            seed_514_row(&conn, *id, identifier, raw).await;
+        }
+        (db, conn)
+    }
+
+    async fn seed_514_row(conn: &store::turso::Connection, id: i64, identifier: &str, raw: &str) {
+        conn.execute(
+            &format!(
+                "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
+                 VALUES ({id}, 'GB', 'national', '{identifier}', 'Leeds City College', 'leeds city college', 0, 0)"
+            ),
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            &format!(
+                "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier) \
+                 VALUES ({id}, 'ORG-1', {id}, 'Leeds City College', 'GB', '{raw}')"
+            ),
+            (),
+        )
+        .await
+        .unwrap();
+    }
+
+    async fn org_identifier(db: &store::Db, id: i64) -> Option<String> {
+        match db.scalar(&format!("SELECT identifier FROM organizations WHERE id = {id}")).await.unwrap() {
+            Some(store::turso::Value::Text(s)) => Some(s),
+            _ => None,
+        }
+    }
+
+    async fn report_json(db: &store::Db, kind: &str) -> serde_json::Value {
+        let (body, _) = db.latest_report(kind).await.unwrap().unwrap_or_else(|| panic!("{kind}"));
+        serde_json::from_str(&body).unwrap()
+    }
+
+    /// Issue 514 unit 2 (G1, W6) through the E0 arm: a wet run refuses without a stored
+    /// listing; the dry run writes `e0-merge-listing` beside its plan, and the W6 strip
+    /// admits the register-spelling reunion; the wet run then merges only the listed group
+    /// and holds the one that appeared after the review.
+    #[tokio::test]
+    async fn an_e0_wet_run_is_bound_to_its_dry_runs_listing() {
+        let (db, conn) = seed_514(
+            "e0",
+            &[(10, "GBUKPRN10007798", "GB-UKPRN-10007798"), (11, "GBUKPRN10007798", "GB-UKPRN-UKPRN 10007798")],
+        )
+        .await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let e0 = |dry_run: bool| job(Spec::MatchOrgIdentifiersE0 { dry_run, max_groups: None });
+
+        // A plan from before the bound, and no listing: refused, nothing written.
+        db.put_report("e0-merge-plan", r#"{"plan_groups":1}"#, store::now_unix()).await.unwrap();
+        let err = sup.run_spec(&e0(false)).await.expect_err("no listing");
+        assert!(err.contains("no stored e0-merge-listing"), "{err}");
+        assert_eq!(org_identifier(&db, 11).await.as_deref(), Some("GBUKPRN10007798"), "nothing merged");
+
+        let dry = sup.run_spec(&e0(true)).await.unwrap();
+        assert!(dry.contains("with its complete e0-merge-listing") && dry.contains("(1 admitted and 0 walled"), "{dry}");
+        let listing = report_json(&db, "e0-merge-listing").await;
+        assert_eq!(listing["truncated"], false);
+        assert_eq!(
+            listing["groups"],
+            serde_json::json!([{"country": "GB", "scheme": "E0", "key": "national:GBUKPRN10007798", "members": [10, 11]}])
+        );
+        let plan = report_json(&db, "e0-merge-plan").await;
+        assert_eq!((plan["plan_groups"].as_u64(), plan["wall_strip_admitted"].as_u64()), (Some(1), Some(1)), "{plan}");
+
+        // A group nobody reviewed appears before the wet run.
+        seed_514_row(&conn, 20, "GBUKPRN10004116", "GB-UKPRN-10004116").await;
+        seed_514_row(&conn, 21, "GBUKPRN10004116", "GB-UKPRN-GB-UKPRN10004116").await;
+        let wet = sup.run_spec(&e0(false)).await.unwrap();
+        assert!(wet.contains("bound to the stored e0-merge-listing: 1 held") && wet.contains("merged 1 groups"), "{wet}");
+        assert_eq!(org_identifier(&db, 11).await, None, "the listed loser is gone");
+        assert_eq!(org_identifier(&db, 10).await.as_deref(), Some("GBUKPRN10007798"));
+        assert_eq!(org_identifier(&db, 21).await.as_deref(), Some("GBUKPRN10004116"), "the unlisted group is held");
+        let plan = report_json(&db, "e0-merge-plan").await;
+        assert_eq!((plan["held_unplanned"].as_u64(), plan["listing_bound"].as_bool()), (Some(1), Some(true)), "{plan}");
+        assert_eq!(report_json(&db, "e0-merge-listing").await, listing, "a wet run never rewrites the listing");
+    }
+
+    /// Issue 514 unit 2 (G2, G5) through the 345 arm, with the real normaliser: a
+    /// truncated stored plan is refused; the wet pass moves only the rows the stored plan
+    /// lists (here a plan a reviewer left one row out of) and records each pre-image.
+    #[tokio::test]
+    async fn the_renormalise_wet_pass_moves_only_its_stored_plan() {
+        let (db, _conn) = seed_514(
+            "renorm",
+            &[(30, "GBUKPRNUKPRN10007798", "GB-UKPRN-UKPRN 10007798"), (31, "GBMPRIP16337R", "GB-MPR-IP16337R")],
+        )
+        .await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let renorm = |dry_run: bool| job(Spec::RepairRenormalisedIdentifiers { dry_run });
+
+        db.put_report(
+            "renormalise-repair",
+            r#"{"dry_run":true,"rows":2,"plan_truncated":true,"plan":[]}"#,
+            store::now_unix(),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&renorm(false)).await.expect_err("truncated");
+        assert!(err.contains("TRUNCATED"), "{err}");
+
+        sup.run_spec(&renorm(true)).await.unwrap();
+        let mut v = report_json(&db, "renormalise-repair").await;
+        let to: Vec<(i64, &str)> = v["plan"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|f| (f["org"].as_i64().unwrap(), f["to"]["identifier"].as_str().unwrap()))
+            .collect();
+        assert_eq!(to, vec![(30, "GBUKPRN10007798"), (31, "GBMPR16337R")], "{v}");
+        // The reviewed plan keeps 30 and drops 31; `rows` stays for parity.
+        v["plan"].as_array_mut().unwrap().retain(|f| f["org"] == 30);
+        db.put_report("renormalise-repair", &v.to_string(), store::now_unix()).await.unwrap();
+
+        let wet = sup.run_spec(&renorm(false)).await.unwrap();
+        assert!(wet.contains("Applied 1") && wet.contains("1 held") && wet.contains("1 pre-image"), "{wet}");
+        assert_eq!(org_identifier(&db, 30).await.as_deref(), Some("GBUKPRN10007798"));
+        assert_eq!(org_identifier(&db, 31).await.as_deref(), Some("GBMPRIP16337R"), "not in the stored plan: held");
+        assert_eq!(
+            db.scalar(
+                "SELECT COUNT(*) FROM organization_merged_identifiers WHERE identifier = 'GBUKPRNUKPRN10007798' \
+                  AND org_id = 30 AND loser = 30 AND rule = 'renormalise'"
+            )
+            .await
+            .unwrap(),
+            Some(store::turso::Value::Integer(1))
+        );
     }
 }
 

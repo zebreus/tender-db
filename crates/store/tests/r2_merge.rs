@@ -241,6 +241,8 @@ fn args(dry_run: bool, expect_groups: Option<u64>) -> store::R2MergeArgs<'static
         dry_run,
         max_groups: None,
         expect_groups,
+        register_identity: None,
+        expect_listing: None,
         job_id: Some(7),
         stop: &|| false,
     }

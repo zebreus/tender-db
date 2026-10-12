@@ -9009,6 +9009,125 @@ fn strip_ro_subunit(raw: &str) -> &str {
     raw
 }
 
+/// Issue 514 unit 2 (§3.3, G3): canonical register identities the register-spelling
+/// rewrite must never PRODUCE, because the reviewed register record for the number names
+/// someone other than the org publishing the spelling. A held number's label spelling stays
+/// as published, its own identity, so new polluted mentions never bind to the holder.
+///
+/// - `GBCHC279057` — L14, org 31594820 "Birmingham Citizens Advice Bureaux" publishes
+///   `GB-CHC-Registered charity number 279057`, which is the NATIONAL Citizens Advice
+///   charity; Birmingham's own is 519639 (review wf_d1abdb0b-672, reviewer and
+///   challenger agree; `.scratch/tender-db/514-register-spellings/u2-review/review.md`).
+///
+/// One entry, so S11 (two or more register mismatches stop the unit) did not fire. Each
+/// entry is pinned by `a_held_number_is_never_rewritten`.
+const REGISTER_SPELLING_HOLDS: &[&str] = &["GBCHC279057"];
+
+/// Issue 514 unit 2: a GB register identity's LABEL spelling, rewritten to the scheme
+/// token plus the number — [`register_spelling_with`] under [`REGISTER_SPELLING_HOLDS`].
+fn register_spelling(value: &str) -> Option<String> {
+    register_spelling_with(value, REGISTER_SPELLING_HOLDS)
+}
+
+/// Issue 514 unit 2 (decision §1.3): one register number published under several
+/// spellings minted several identities (`GBUKPRN10007798` and `GBUKPRNUKPRN10007798`,
+/// 36 in-scheme splits measured on 2026-10-11). This rewrites a closed set of label
+/// spellings, and nothing else, of the upper-cased alphanumeric `value`:
+///
+/// - UKPRN: one or more repeated `UKPRN` / `GBUKPRN` tokens before an 8-digit `1…`
+///   number (`GBUKPRNUKPRN10007798`, `GBUKPRNGBUKPRN10004116`) → `GBUKPRN10007798`.
+/// - CHC: one of nine CHARITY labels (`REGISTEREDCHARITYNO`, `CHARITYNUMBER`, …) before a
+///   CHC-shaped number → `GBCHC1088835`. Generic labels (`NO`, `REGISTRATIONNO`: a
+///   company number that lost its zero passes the 7-digit shape), compounds, a leading
+///   zero and HMRC `X…` references are refused.
+/// - NIC: one of three labels before a NIC-shaped number, KEEPING the published
+///   `NIC` / `NI` / bare spelling (owner ruling 2) → `GBNICNIC102575`.
+/// - MPR: Companies House's exact society form `IP` + five digits + `R` (`IP16337R` →
+///   `GBMPR16337R`), and `REGNO` before an R-number. No `RS00NNNN` → bare and no `IP0…`
+///   (an inferred R): both deferred to unit 3.
+/// - SC: nothing.
+///
+/// Returns `None` (the value stays as published) unless every invariant holds, checked
+/// here and pinned by tests:
+/// - I1: the number after the token fails that register's shape on input and passes it
+///   on output ([`crate::crosswalk::registry_number_shaped`], the one table), so no
+///   identity any register channel already accepts can move — no e2-altid register
+///   target, and no typo of another number (`ip6243r`, `RSA007814`, a dropped zero);
+/// - I2: the output keeps its scheme token — a token-less output would key as a company
+///   number in the GB arm (6-7 digits pad to `GB:coh`);
+/// - I3: no digit is added, removed or changed and no `R`/`RS` added or removed: the
+///   output's number is the input's own tail, and only digit-free label text goes;
+/// - I4: the output is not on `holds`.
+fn register_spelling_with(value: &str, holds: &[&str]) -> Option<String> {
+    use crate::crosswalk::registry_number_shaped as shaped;
+    // Longest first, as the decision lists them; the all-digit tail makes the order
+    // immaterial, but a shorter label can then never shadow a longer one by accident.
+    const CHC_LABELS: [&str; 9] = [
+        "CHARITYREGISTRATIONNUMBER",
+        "REGISTEREDCHARITYNUMBER",
+        "CHARITYREGISTRATIONNO",
+        "REGISTEREDCHARITYNO",
+        "CHARITYCOMMISSIONNO",
+        "REGISTEREDCHARITY",
+        "CHARITYNUMBER",
+        "CHARITYREGNO",
+        "CHARITYNO",
+    ];
+    const NIC_LABELS: [&str; 3] = ["CHARITYCOMMISSIONNO", "CHARITYNUMBER", "CHARITYNO"];
+    let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+    let (token, number): (&str, &str) = if let Some(mut rest) = value.strip_prefix("GBUKPRN") {
+        // `^GBUKPRN(?:(?:GB)?UKPRN)+(1\d{7})$`
+        let mut labels = 0;
+        while let Some(r) = rest.strip_prefix("GBUKPRN").or_else(|| rest.strip_prefix("UKPRN")) {
+            rest = r;
+            labels += 1;
+        }
+        if labels == 0 || !(rest.len() == 8 && rest.starts_with('1') && digits(rest)) {
+            return None;
+        }
+        ("GBUKPRN", rest)
+    } else if let Some(rest) = value.strip_prefix("GBCHC") {
+        // `^GBCHC(L)(\d+)$`, `$2` CHC-shaped.
+        let n = CHC_LABELS.iter().find_map(|l| rest.strip_prefix(l).filter(|n| digits(n)))?;
+        ("GBCHC", n)
+    } else if let Some(rest) = value.strip_prefix("GBNIC") {
+        // `^GBNIC(L)((?:NIC|NI)?1\d{5})$`: the remainder is exactly the NIC shape.
+        let n = NIC_LABELS.iter().find_map(|l| rest.strip_prefix(l).filter(|n| shaped("GBNIC", n)))?;
+        ("GBNIC", n)
+    } else if let Some(rest) = value.strip_prefix("GBMPR") {
+        // (a) `^GBMPRIP([1-9]\d{4}R)$` — the 8-character Companies House form only.
+        // (b) `^GBMPRREGNO([1-9]\d{2,4}R)$`.
+        let r_number = |n: &str, lens: std::ops::RangeInclusive<usize>| {
+            n.strip_suffix('R').is_some_and(|d| lens.contains(&d.len()) && !d.starts_with('0') && digits(d))
+        };
+        let n = match (rest.strip_prefix("IP"), rest.strip_prefix("REGNO")) {
+            (Some(n), _) if r_number(n, 5..=5) => n,
+            (_, Some(n)) if r_number(n, 3..=5) => n,
+            _ => return None,
+        };
+        ("GBMPR", n)
+    } else {
+        return None;
+    };
+    let input = &value[token.len()..];
+    // I1: unshaped in, shaped out.
+    if shaped(token, input) || !shaped(token, number) {
+        return None;
+    }
+    // I3: the number is the input's own tail; only label text (no digit) is dropped.
+    let Some(dropped) = input.strip_suffix(number) else { return None };
+    if dropped.bytes().any(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    // I2: the token leads the output.
+    let out = format!("{token}{number}");
+    // I4: a held number is never produced.
+    if holds.contains(&out.as_str()) {
+        return None;
+    }
+    Some(out)
+}
+
 /// A VAT id carries its country in its own prefix and is scoped by it; a
 /// national registry number is only unique inside its country, so it is scoped
 /// by the mention's country and stays separate when that is unknown.
@@ -9021,6 +9140,12 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
 /// string through both — a row moves only when this one reproduces what is
 /// stored (so the sampled mention is the one that minted the row, not one an
 /// R2/R3 merge brought in) and [`normalise_identifier`] now says otherwise.
+///
+/// Issue 514 unit 2: the GB register-spelling rewrite ([`register_spelling`]) sits
+/// behind the same switch, so this still returns the PUBLISHED label spelling
+/// (`GB-UKPRN-UKPRN 10007798` → `GBUKPRNUKPRN10007798`) — the stored value of every
+/// row minted before the rewrite, which is the witness the 345 re-key needs to move
+/// it onto `GBUKPRN10007798`.
 pub fn normalise_identifier_before_folds(raw: &str, country: Option<&str>) -> Option<Identifier> {
     normalise_identifier_with(raw, country, false)
 }
@@ -9077,6 +9202,17 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
     if value.chars().skip(1).all(|c| c == value.as_bytes()[0] as char) {
         return None;
     }
+    // Issue 514 unit 2: a GB register's label spelling (`GBCHCREGISTEREDCHARITYNO1088835`)
+    // is rewritten to the token plus the number (`GBCHC1088835`), so the publisher's two
+    // spellings of one register number bind one identity. Behind `folds` (the 345 witness
+    // above) and GB only, where `country` is the register jurisdiction. It runs before
+    // the 328 label block, which has no `G` entry, so no other value moves; the output
+    // still passes the VAT/national test and the v2 gate below, and the letter run after
+    // `GB` keeps it national.
+    let value = match country {
+        Some("GB") if folds => register_spelling(&value).unwrap_or(value),
+        _ => value,
+    };
 
     // ISSUE 328: a publisher label written in FRONT of the identifier.
     // `USTIDDE329214156` is `USt-IdNr. DE329214156` — the number is fine, the
@@ -14766,5 +14902,309 @@ mod tests {
         };
         let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
         assert_eq!(read_results(&sections, &parsed, true, false, &BTreeMap::new()).lot_results[0].decision, None);
+    }
+
+    // ---- Issue 514 unit 2: the GB register-spelling rewrite (decision §6) ----
+
+    /// The census movers' published literals (`.scratch/tender-db/514-register-spellings/
+    /// u2-review/groups.json`: the 26 groups' movers and the 27 lone movers, org id beside
+    /// each) with the identity the rewrite gives them. L14's `279057` is held and is not
+    /// here (`a_held_number_is_never_rewritten`).
+    const REGISTER_SPELLING_CENSUS: [(&str, &str); 55] = [
+        ("GB-CHC-Registered Charity No. 1088835", "GBCHC1088835"), // 31594929
+        ("GB-CHC-Registered Charity No. 1104951", "GBCHC1104951"), // 31562628
+        ("GB-CHC-Charity number: 1122831", "GBCHC1122831"), // 31562660
+        ("GB-CHC-Registered Charity No: 1122831", "GBCHC1122831"), // 31594752
+        ("GB-CHC-Charity Number 1159706", "GBCHC1159706"), // 31542854
+        ("GB-CHC-Registered Charity 1185092", "GBCHC1185092"), // 31562679
+        ("GB-CHC-Registered Charity No. 208078", "GBCHC208078"), // 31594774
+        ("GB-CHC-charity number 216250", "GBCHC216250"), // 31594691
+        ("GB-CHC-Charity Registration No. 221124", "GBCHC221124"), // 31562686
+        ("GB-CHC-Registered Charity 271028", "GBCHC271028"), // 31594839
+        ("GB-MPR-IP16337R", "GBMPR16337R"), // 31553962
+        ("GB-MPR-IP17437R", "GBMPR17437R"), // 31593260
+        ("GB-MPR-IP19059R", "GBMPR19059R"), // 31619954
+        ("GB-MPR-IP19341R", "GBMPR19341R"), // 31550337
+        ("GB-MPR-IP21256R", "GBMPR21256R"), // 31622550
+        ("GB-MPR-IP27440R", "GBMPR27440R"), // 31543018
+        ("GB-MPR-IP27793R", "GBMPR27793R"), // 31614098
+        ("GB-MPR-IP28038R", "GBMPR28038R"), // 31596599
+        ("GB-MPR-IP30167R", "GBMPR30167R"), // 31604789
+        ("GB-MPR-IP30301R", "GBMPR30301R"), // 31551790
+        ("GB-MPR-Reg No 30938R", "GBMPR30938R"), // 31591848
+        ("GB-NIC-Charity Commission No NIC102575", "GBNICNIC102575"), // 31631048
+        ("GB-UKPRN-GB-UKPRN10004116", "GBUKPRN10004116"), // 31622719
+        ("GB-UKPRN-UKPRN: 10005790", "GBUKPRN10005790"), // 31624379
+        ("GB-UKPRN-UKPRN 10007157", "GBUKPRN10007157"), // 31630773
+        ("GB-UKPRN-UKPRN: 10007788", "GBUKPRN10007788"), // 31633713
+        ("GB-UKPRN-UKPRN 10007798", "GBUKPRN10007798"), // 31612560
+        ("GB-UKPRN-UKPRN10007798", "GBUKPRN10007798"), // 31612560
+        ("GB-CHC-registered charity no. 1003906", "GBCHC1003906"), // 31562667
+        ("GB-CHC-registered charity (no. 1003906)", "GBCHC1003906"), // 31562667
+        ("GB-CHC-Registered charity no. 1034581", "GBCHC1034581"), // 31562630
+        ("GB-CHC-Charity number: 1068106", "GBCHC1068106"), // 31608050
+        ("GB-CHC-Registered Charity No. 1072258", "GBCHC1072258"), // 31562627
+        ("GB-CHC-Charity No: 1073926", "GBCHC1073926"), // 31594822
+        ("GB-CHC-Registered Charity No 1077607", "GBCHC1077607"), // 31618870
+        ("GB-CHC-Charity No.1094458", "GBCHC1094458"), // 31594819
+        ("GB-CHC-Charity Registration Number 1107830", "GBCHC1107830"), // 31537995
+        ("GB-CHC-Registered Charity 1133510", "GBCHC1133510"), // 31594841
+        ("GB-CHC-Registered charity number 1175670", "GBCHC1175670"), // 31598277
+        ("GB-CHC-Charity Number 1179376", "GBCHC1179376"), // 31594828
+        ("GB-CHC-Charity number: 1179683", "GBCHC1179683"), // 31562625
+        ("GB-CHC-Charity number: 1205036", "GBCHC1205036"), // 31537996
+        ("GB-CHC-Registered Charity Number 517077", "GBCHC517077"), // 31562629
+        ("GB-CHC-Registered charity number 518048", "GBCHC518048"), // 31562674
+        ("GB-CHC-Charity number: 518610", "GBCHC518610"), // 31575623
+        ("GB-CHC-Registered Charity No. 518753", "GBCHC518753"), // 31594838
+        ("GB-MPR-IP16243R", "GBMPR16243R"), // 31613230
+        ("GB-MPR-IP17704R", "GBMPR17704R"), // 30975000
+        ("GB-MPR-IP19229R", "GBMPR19229R"), // 31601449
+        ("GB-MPR-IP21180R", "GBMPR21180R"), // 31567617
+        ("GB-MPR-IP26511R", "GBMPR26511R"), // 31609584
+        ("GB-MPR-IP27566R", "GBMPR27566R"), // 31600628
+        ("GB-MPR-IP29840R", "GBMPR29840R"), // 31573433
+        ("GB-MPR-IP30178R", "GBMPR30178R"), // 31575842
+        ("GB-UKPRN-UKPRN 10007339", "GBUKPRN10007339"), // 31572226
+    ];
+
+    fn upper_alnum(raw: &str) -> String {
+        raw.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect()
+    }
+
+    /// The literal under `country` reads exactly as it did before the rewrite existed:
+    /// the pre-fold normaliser is today's minus the folds, and GB has no other fold.
+    fn stays_as_published(raw: &str, country: Option<&str>) {
+        assert_eq!(
+            normalise_identifier(raw, country),
+            normalise_identifier_before_folds(raw, country),
+            "{raw} under {country:?}"
+        );
+        if country == Some("GB") {
+            assert_eq!(register_spelling(&upper_alnum(raw)), None, "{raw}");
+        }
+    }
+
+    const REGISTER_TOKENS: [(&str, &str); 4] =
+        [("GBUKPRN", "GB-UKPRN-"), ("GBCHC", "GB-CHC-"), ("GBNIC", "GB-NIC-"), ("GBMPR", "GB-MPR-")];
+
+    /// Every census literal binds the identity its bare twin binds — one register number,
+    /// one GB `national` identity — in all four schemes the rewrite acts on.
+    #[test]
+    fn register_spellings_fold_to_one_identity_per_scheme() {
+        let gb = Some("GB");
+        let want = |value: &str| Some(Identifier { country: Some("GB".into()), kind: "national".into(), value: value.into() });
+        for (raw, canonical) in REGISTER_SPELLING_CENSUS {
+            assert_eq!(normalise_identifier(raw, gb), want(canonical), "{raw}");
+            let (token, scheme) = REGISTER_TOKENS.iter().find(|(t, _)| canonical.starts_with(t)).expect("a register token");
+            let twin = format!("{scheme}{}", &canonical[token.len()..]);
+            assert_eq!(normalise_identifier(&twin, gb), want(canonical), "{raw}: the bare twin {twin}");
+        }
+        // The decision's named examples, scheme by scheme.
+        for (raw, canonical) in [
+            ("GB-UKPRN-UKPRN 10007798", "GBUKPRN10007798"),
+            ("GB-UKPRN-GB-UKPRN10004116", "GBUKPRN10004116"),
+            ("GB-CHC-registered charity (no. 1003906)", "GBCHC1003906"),
+            ("GB-NIC-Charity Commission No NIC102575", "GBNICNIC102575"),
+            ("GB-MPR-IP28038R", "GBMPR28038R"),
+            ("GB-MPR-Reg No 30938R", "GBMPR30938R"),
+        ] {
+            assert_eq!(normalise_identifier(raw, gb), want(canonical), "{raw}");
+        }
+        let per_scheme = |t: &str| REGISTER_SPELLING_CENSUS.iter().filter(|(_, c)| c.starts_with(t)).count();
+        assert_eq!(
+            (per_scheme("GBUKPRN"), per_scheme("GBCHC"), per_scheme("GBNIC"), per_scheme("GBMPR")),
+            (7, 28, 1, 19),
+            "54 census rows less L14, two of them with two published spellings each"
+        );
+    }
+
+    /// I1, I3 and idempotence over every census literal: the number after the token fails
+    /// its register's shape going in and passes it coming out, no digit and no `R` is
+    /// added, removed or changed, and the output is a fixed point.
+    #[test]
+    fn every_rewrite_moves_from_unshaped_to_shaped() {
+        use crate::crosswalk::registry_number_shaped as shaped;
+        for (raw, canonical) in REGISTER_SPELLING_CENSUS {
+            let value = upper_alnum(raw);
+            let out = register_spelling(&value).unwrap_or_else(|| panic!("{raw} is rewritten"));
+            assert_eq!(out, canonical, "{raw}");
+            let (token, _) = REGISTER_TOKENS.iter().find(|(t, _)| out.starts_with(t)).expect("I2: the token leads");
+            assert!(value.starts_with(token), "{raw}: the token is the input's own");
+            assert!(!shaped(token, &value[token.len()..]), "I1: {raw} fails the shape going in");
+            assert!(shaped(token, &out[token.len()..]), "I1: {out} passes it coming out");
+            let digits = |s: &str| s.chars().filter(char::is_ascii_digit).collect::<String>();
+            assert_eq!(digits(&value), digits(&out), "I3: {raw} keeps every digit");
+            assert!(value.ends_with(&out[token.len()..]), "I3: {raw}'s number, R included, is its own tail");
+            assert_eq!(register_spelling(&out), None, "{out} is a fixed point");
+            assert_eq!(normalise_identifier(&out, Some("GB")).map(|id| id.value), Some(out.clone()), "{out}");
+        }
+    }
+
+    /// The typo spellings of ANOTHER number the census found: each fails its shape after
+    /// any strip, so it stays its own identity rather than binding the wrong register
+    /// entry (Hastoe is 16243R, Metropolitan 16337R; Beyond Housing's `RSA007814`; the
+    /// UKPRNs with a zero dropped or doubled).
+    #[test]
+    fn typo_spellings_of_another_number_stay_as_published() {
+        let gb = Some("GB");
+        for raw in [
+            "GB-MPR-ip6243r",
+            "GB-MPR-IPI6637R",
+            "GB-MPR-IPR16337R",
+            "GB-MPR-IPSNO27793",
+            "GB-MPR-RSA007814",
+            "GB-CHC-RSA007814",
+            "GB-MPR-RS0076173",
+        ] {
+            stays_as_published(raw, gb);
+        }
+        for typo in ["100007158", "100007167", "100000747", "100009085", "1007141", "1000457", "100026620"] {
+            stays_as_published(&format!("GB-UKPRN-{typo}"), gb);
+            stays_as_published(&format!("GB-UKPRN-UKPRN {typo}"), gb);
+            stays_as_published(&format!("GB-UKPRN-UKPRN: {typo}"), gb);
+        }
+        assert_eq!(gb_value_of("GB-MPR-ip6243r"), Some("GBMPRIP6243R".into()), "the 7-character typo is minted as published");
+    }
+
+    fn gb_value_of(raw: &str) -> Option<String> {
+        normalise_identifier(raw, Some("GB")).map(|id| id.value)
+    }
+
+    /// HMRC charity references published under GB-CHC are not charity numbers, with a
+    /// label in front or not.
+    #[test]
+    fn hmrc_references_under_gb_chc_are_not_charity_numbers() {
+        for raw in ["GB-CHC-X1089", "GB-CHC-XC1089", "GB-CHC-XN85208", "GB-CHC-XR6326", "GB-CHC-Charity No X1089"] {
+            stays_as_published(raw, Some("GB"));
+        }
+    }
+
+    /// A subsidiary published on its parent's number (Guinness Developments on 31693R,
+    /// Homes Plus on 30224R, IDS Trustees on 14044R) is cross-prefix or `IP0`-shaped, and
+    /// the token-scoped rules never read it: no R is inferred, nothing re-routes.
+    #[test]
+    fn subsidiary_literals_on_a_parents_number_are_untouched() {
+        for raw in ["GBMPRIP031693", "GBCHCIP031693", "GBCHC30224R", "GBCHCIP14044R", "GB-COH-IP031693"] {
+            stays_as_published(raw, Some("GB"));
+        }
+    }
+
+    /// `7522` (Thirteen Housing Group) and `7522R` (an allotment society) are two
+    /// societies; no spelling of either is rewritten into the other, and five literals
+    /// stay five identities.
+    #[test]
+    fn bare_and_r_suffixed_society_numbers_never_meet() {
+        let literals = ["GB-MPR-7522", "GB-MPR-7522R", "GB-MPR-REGNO7522", "GB-MPR-IP07522R", "GB-MPR-RS007522"];
+        let mut values = BTreeSet::new();
+        for raw in literals {
+            stays_as_published(raw, Some("GB"));
+            values.insert(gb_value_of(raw).unwrap_or_else(|| panic!("{raw} mints")));
+        }
+        assert_eq!(values.len(), literals.len(), "{values:?}");
+    }
+
+    /// A linked charity's glued `-N` makes 7 digits starting 2-9 or 8 digits, which fail
+    /// the CHC shape, so even behind a label the suffix is never stripped.
+    #[test]
+    fn glued_linked_charity_suffixes_are_never_stripped() {
+        for raw in [
+            "GB-CHC-1099485-2",
+            "GB-CHC-1169762-2",
+            "GB-CHC-Registered Charity No. 216250-1",
+            "GB-CHC-Charity Number 1099485-2",
+        ] {
+            stays_as_published(raw, Some("GB"));
+        }
+    }
+
+    /// Deferred by owner rulings 2, 3 and 9: generic labels (`NO`, `REGISTRATIONNO`), the
+    /// census's three charity+company compounds, the leading zero, `RS00NNNN`, the NIC
+    /// `NI` spelling and Triangle's `-0`.
+    #[test]
+    fn generic_labels_compounds_padding_rs_and_nic_spellings_are_deferred() {
+        for raw in [
+            "GB-CHC-No 1179472",
+            "GB-CHC-NO1089503",
+            "GB-CHC-Registration No 1003906",
+            "GB-CHC-Registration Number 1139925",
+            "GB-CHC-Charity Number 1171446 Company Number 10342980",
+            "GB-CHC-Charity number is 1123520 company registration number is 06498920",
+            "GB-CHC-Company Number CE005376 Charity Number 1165512",
+            "GB-CHC-0518801",
+            "GB-MPR-RS008376",
+            "GB-NIC-NI100770",
+            "GB-NIC-NI 100770",
+            "GB-NIC-101486-0",
+        ] {
+            stays_as_published(raw, Some("GB"));
+        }
+    }
+
+    /// I2 end to end: every output keeps its token, so the GB arm keys none of them as a
+    /// company number (a bare 6-7 digit number would pad to `GB:coh`) and each is the
+    /// E0 key of its own exact triple.
+    #[test]
+    fn the_rewrite_keeps_the_token_so_no_company_key_appears() {
+        for (raw, canonical) in REGISTER_SPELLING_CENSUS {
+            let id = normalise_identifier(raw, Some("GB")).expect("mints");
+            assert_eq!(crate::crosswalk::canonical_key_flat(id.country.as_deref(), &id.kind, &id.value), None, "{raw}");
+            assert_eq!(
+                crate::crosswalk::e0_key_flat(id.country.as_deref(), &id.kind, &id.value),
+                Some(("E0", format!("national:{canonical}"), true, false)),
+                "{raw}"
+            );
+        }
+    }
+
+    /// The rules are token-scoped: Companies House mirrors, bare legacy literals and other
+    /// registers are never read.
+    #[test]
+    fn the_rewrite_never_reads_another_token_or_a_bare_legacy_literal() {
+        for raw in ["GBCOHIP16791R", "IP16791R", "RS007843", "CHARITYNO298028", "NIC100166", "SC005336", "SCO13683"] {
+            stays_as_published(raw, Some("GB"));
+        }
+    }
+
+    /// GB only (owner ruling 12: XI is out of scope until measured): the census literals
+    /// under XI, IE and no country read as they always did.
+    #[test]
+    fn the_register_fold_is_gb_only() {
+        for country in [Some("XI"), Some("IE"), None] {
+            for (raw, canonical) in REGISTER_SPELLING_CENSUS {
+                stays_as_published(raw, country);
+                assert_ne!(normalise_identifier(raw, country).map(|id| id.value), Some(canonical.to_owned()), "{raw}");
+            }
+        }
+        assert_eq!(gb_value_of("GB-UKPRN-UKPRN 10007798"), Some("GBUKPRN10007798".into()));
+    }
+
+    /// The 345 witness: the pre-fold normaliser still returns every published label
+    /// spelling, i.e. the stored value of every row minted before the rewrite.
+    #[test]
+    fn before_folds_keeps_the_published_register_spelling() {
+        for (raw, canonical) in REGISTER_SPELLING_CENSUS {
+            let before = normalise_identifier_before_folds(raw, Some("GB")).expect("mints");
+            assert_eq!(before.value, upper_alnum(raw), "{raw}");
+            assert_ne!(before.value, canonical, "{raw}");
+            assert_eq!(normalise_identifier(raw, Some("GB")).map(|id| id.value), Some(canonical.to_owned()), "{raw}");
+        }
+    }
+
+    /// I4 and the hold list (§3.3): a held number's label spelling is never rewritten.
+    /// L14 is pinned by name: Birmingham CAB's mention publishes the national Citizens
+    /// Advice number, so it must not bind to the national charity's identity.
+    #[test]
+    fn a_held_number_is_never_rewritten() {
+        assert_eq!(REGISTER_SPELLING_HOLDS, &["GBCHC279057"], "a test pins each entry");
+        assert_eq!(register_spelling_with("GBCHCCHARITYNUMBER216250", &[]), Some("GBCHC216250".into()));
+        assert_eq!(register_spelling_with("GBCHCCHARITYNUMBER216250", &["GBCHC216250"]), None);
+        assert_eq!(register_spelling_with("GBUKPRNUKPRN10007798", &["GBUKPRN10007798"]), None);
+        // L14 through the live normaliser: its spelling stays as published…
+        let l14 = "GB-CHC-Registered charity number 279057";
+        stays_as_published(l14, Some("GB"));
+        assert_eq!(gb_value_of(l14), Some("GBCHCREGISTEREDCHARITYNUMBER279057".into()));
+        // …while the number published bare is still the national charity's own identity.
+        assert_eq!(gb_value_of("GB-CHC-279057"), Some("GBCHC279057".into()));
     }
 }
