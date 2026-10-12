@@ -1,0 +1,317 @@
+{
+ "cohort": "514-spellings-2026-10-12",
+ "verdicts": [
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBCHC1088835",
+   "members": [
+    31537211,
+    31594929
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G01 GBCHC1088835. Register: CC 1088835 NO LIMITS (SOUTH), Registered, co 04183173, prev names NO LIMITS SOUTH / NO LIMITS (SOUTHAMPTON), web nolimitshelp.org.uk. 31537211: 'No Limits Safe Haven' 2/2, a sourced service (holder's own site, the CC web address: 'Safe Haven Southampton' under Our Services, at 35 The Avenue SO17 1XN = CC address, footer Charity No. 1088835 / Co. 04183173; saved in u2-review/reviewer-0/). 31594929: 'No Limits' 1/1, the holder's brand. (c) nothing. Caveat: 'No Limits' is also the name of unrelated CC 1015507 (Halesowen church, GBP 11k); the published number 1088835 decides it."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBCHC1104951",
+   "members": [
+    31562628,
+    31607602
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G02 GBCHC1104951. Register: CC 1104951 'ST ANDREW'S HEALTHCARE', Registered; exact match for both members (apostrophe aside). Rule (a): CC 1104951 has a single holder, ST ANDREW'S HEALTHCARE (Registered, charitable company 05176998, previous name ST ANDREW'S GROUP OF HOSPITALS). Rule (b): mover 31562628 has 'St Andrews Healthcare' on 2 of 2 mentions (100%, raw 'GB-CHC-Registered Charity No. 1104951'). Twin 31607602 has 'St Andrews Healthcare' on 1 of 1 (100%). Rule (c): no other entity's name on either member. Linked charity 1104951-1 ST ANDREW'S HOSPITAL is a fund under the same number and appears in no mention. Reviewer 1 re-read the names in its own bounded prod call (reviewer1/r1-mnames.out), which matches prod/02 exactly. Each canonical value has one holder (prod/05, prod/06). Merge, HIGH. The survivor is mover 31562628; the head name is identical, so this is cosmetic."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBCHC1122831",
+   "members": [
+    31562660,
+    31594752
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G03 GBCHC1122831. Register: CC 1122831 ACACIA FAMILY SUPPORT (Registered, charitable company 06217626): 3/3 mentions name the holder as 'Arcacia' (a misspelling); no conflicting entity. E0 key national:GBCHC1122831. Both members are movers: 31562660 (GBCHCCHARITYNUMBER1122831, 1 mention) and 31594752 (GBCHCREGISTEREDCHARITYNO1122831, 2 mentions). Every mention (3 of 3) carries one name, 'Arcacia Family Support', which is the register name ACACIA FAMILY SUPPORT with one letter added. (a) The register names one holder. (b) Each member's weighted share naming the holder is 1.0. (c) No other entity appears on any mention, and the full CC extract (charity and other_names) has no charity named ARCACIA. Context: all 3 notices (46788391, 46868971, 46869241) are BSMHFT perinatal mental-health PSR awards in Birmingham and Solihull, which matches Acacia (B72 1PH). Reviewer 2's re-read on 2026-10-12 found 34 rows for this slice with no drift. The survivor 31562660 keeps the misspelled head name, which is cosmetic."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBCHC1159706",
+   "members": [
+    30916610,
+    31542854
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G04 GBCHC1159706. Register: CC 1159706 ANAWIM - BIRMINGHAM'S CENTRE FOR WOMEN LIMITED, Registered, company 09322109; working name 'ANAWIM OR ANAWIM - WWT' (cc-extract-rows.json). Both members name the holder 100%. 30916610 is 'Anawim' on 1 of 1 mentions. 31542854 is 'Anawim' on 5 of 5 (raw GB-CHC-Charity Number 1159706). That matches the register's working name. Rule (c): no other entity named. Survivor: 30916610 (twin, lower id). Mention names re-read from prod/02 and match the packet."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBCHC1185092",
+   "members": [
+    31562679,
+    31571677
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G05 GBCHC1185092. Register: CC 1185092 FIRST STEPS ED, Registered CIO (2019-08-29), Derby DE1 1UL, web firststepsed.co.uk; CC activities text: 'First Steps ED is a national eating disorder charity'. (a) The register names one holder. (b) Mover 31562679 has 'First Steps ED' on 1/1 mentions, which is the exact register name (notice 46788439 is BSMHFT's 'Eating Disorders Service'). Twin 31571677 has 'First Steps ED' 2/3 plus 'First Steps Eating Disorder (ED)' 1/3, so 3/3; the spelled-out form is sourced from the CC activities text. (c) Neither member carries another entity's name. The survivor is mover 31562679 (lower id), and both head names are the same. Caveat: the existing-verdict listing (P0 #3) is still unread. Under S8, a standing keep would deny this group."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBCHC208078",
+   "members": [
+    31564669,
+    31594774
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G06 GBCHC208078. Register: CC 208078 Cruse Bereavement Support: Registered, charitable company 00638709. Previous names CRUSE BEREAVEMENT CARE, CRUSE BEREAVEMENT CARE LIMITED and CRUSE CLUBS LIMITED. No linked charities.. (a) The register names one holder. (b) 31564669: all 3 of 3 mentions name the holder. 'Cruse Bereavement Support' 1 is the register name, 'Cruse Bereavement Care' 1 is a previous name, and 'CRUSE' 1 is the short form (BNSSG notice 46793467 is titled 'CRUSE Bereavement Support'). 31594774: 'Cruse Bereavement Support' 1 of 1 (BSMHFT bereavement counselling, notice 46869034). (c) No other entity name appears. Survivor is 31564669, the standing twin. Out of scope here: Cruse is also split across GBCOH00638709, GBCOH638709, a PPON and an NHS code (519 name-twins file), which is altid work. Prod re-read r5-01 matches the packet; files are in u2-review/reviewer5/."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBCHC216250",
+   "members": [
+    31561821,
+    31594691
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G07 GBCHC216250. Register: CC 216250 BARNARDO'S, Registered, co 00061625; bare number = main charity (linked charities are 216250-N). 31561821 9/9 holder: Barnardo's 5, Barnardos 2, Barnados 1 (typo), Barnardo's Central Region 1 (a region, not a linked charity). 31594691 'Barnardos' 1/1. (c) nothing. Packet nit: the two 'previous names' belong to linked charities 84 and 86, not the main charity."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBCHC221124",
+   "members": [
+    31562686,
+    31645298
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G08 GBCHC221124. Register: CC 221124 'CHURCH OF ENGLAND CHILDREN'S SOCIETY', working name 'THE CHILDREN'S SOCIETY'; both members name it. Rule (a): CC 221124 has a single holder, CHURCH OF ENGLAND CHILDREN'S SOCIETY (Registered, company 00040004), working name THE CHILDREN'S SOCIETY. Rule (b): mover 31562686 has 'The Children's Society' on 1 of 1 mentions (100%), which is the register's working name. Twin 31645298 has 'Church of England Children's Society T/a The Children's Society' on 1 and 'The Children's Society' on 1, so 2 of 2 (100%) name the holder. Rule (c): no other entity's name. The 33 linked charities (for example 221124-35 THE CHILDREN'S SOCIETY FUND) are subsidiary funds and appear in no mention. Reviewer 1's independent prod read matches. Merge, HIGH. The survivor is mover 31562686, with the same head name as the twin."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBCHC271028",
+   "members": [
+    31535844,
+    31594839
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G09 GBCHC271028. Register: CC 271028 Rethink Mental Illness (Registered, company 01227970; working name RETHINK): twin 6/6 name the holder; mover 'Rethink - Redwoods' 1/1, where Redwoods is a CQC location run by Rethink Mental Illness (CQC 1-130502608, Rednal, Birmingham). E0 key national:GBCHC271028. The twin 31535844 (GBCHC271028) names the holder on 6 of 6 mentions: 'Rethink Mental Illness' 4, 'Rethink' 1 (the CC working name RETHINK) and 'Rethink Mental Illness Brighton and Hove' 1 (a branch; no charity of that name in the CC extract). The mover 31594839 has 1 of 1 mentions as 'Rethink - Redwoods'. A5 is now sourced. Notice 46869227 is a BSMHFT PSR award for 'residential support for mental health patients registered with Birmingham and Solihull GPs'. CQC location 1-130502608 is 'Redwoods', 26 Chapelfields Road, Rednal, Birmingham B45 9NU, with registered provider 'Rethink Mental Illness' (provider 1-102643140). NHS.uk says 'This service is run by Rethink Mental Illness'. So Redwoods is a sourced service of the holder, not a separate legal entity. The CC extract has no Redwoods charity in Birmingham, and the holder's linked charities are Befriending Visitors Service and Carefund. (a) One holder. (b) Sourced share 1.0 for both members. (c) No other entity."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR16337R",
+   "members": [
+    30976449,
+    31553962
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G10 GBMPR16337R. Register: FCA 16337R Metropolitan Housing Trust Limited, Registered Society (SocietyList.csv and page); no name changes; Thames Valley Charitable HA (25301) transferred engagements 2018-10-08. 30976449: the register name and its variants are on 89 of 104 mentions (85.6%): 'Metropolitan Housing Trust Limited' 69, 'Metropolitan Housing Trust Ltd' 8, 'Metropolitan Housing Trust' 7, all caps 5. 'Metropolitan Thames Valley Housing (Limited)' is on 15 of 104 (14.4%). That is the body's trading name since the 2018 Thames Valley transfer of engagements. Read as a separate entity it would still be under the 1/5 floor. 31553962: 'Metropolitan Housing Trust Limited' on 2 of 2. Survivor: 30976449 (twin, lower id, and already the survivor of the 469 U6 altid merge)."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR17437R",
+   "members": [
+    31593260,
+    31631085
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G11 GBMPR17437R. Register: FCA 17437R Gold Hill Housing Association Limited, Registered Society (1966-04-01), no name changes or transfers, SIC 87300 residential care for elderly/disabled, Chalfont St Peter SL9 9RF. (a) The register names one holder. (b) Mover 31593260 (7 mentions): 'Gold Hill HA' 3, 'GOLD HILL HA' 1, 'Gold Hill HA (B2G)' 1 and 'GOLD HILL HA (B2G)' 1 make 6/7 (86%) naming the holder. HA stands for Housing Association, and B2G is the framework: notices 46932435 and 47179017 are 'B2G Pitched and Solar Roofing' and 'B2G MWX: Minor Works'. Twin 31631085 has 'Gold Hill HA' on 3/3. (c) 'Gold Hill Care (B2G)' is 1/7 (14%), on the same B2G MWX framework (notice 46904090). It is an unsourced care brand of a society whose SIC is care, and at 14% it is below the 1/5 floor even if it were a separate body. The survivor is mover 31593260, headed 'GOLD HILL HA (B2G)', which is cosmetic (decision risk 9). P0 #3 caveat as for G05."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR19059R",
+   "members": [
+    31564048,
+    31619954
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G12 GBMPR19059R. Register: FCA 19059R Sanctuary Housing Association: Registered Society, registered 1969-05-05. No name changes; none of the transfers in is relevant to these names.. (b) 31564048: 'SANCTUARY HOUSING ASSOCIATION' 1 plus 'Sanctuary Housing Association' 1, so 2 of 2 carry the exact register name (KPMG external-audit notices 46792127 and 47193334). 31619954: 'Sanctuary Housing Association' 1 of 1 (South Tyneside housing-related support, notice 46938925). (c) No subsidiary name appears (Sanctuary Scotland, Sanctuary Affordable or Sanctuary Care), so there is nothing to floor. Survivor is 31564048, the standing twin."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR19341R",
+   "members": [
+    31550337,
+    31613175
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G13 GBMPR19341R. Register: FCA 19341R Habinteg Housing Association Limited, Registered (CSV + page); no lookalike society. 31550337 'Habinteg Housing Association Limited' 1/1 (exact). 31613175 'Habinteg Housing Association Ltd' 1/1. (c) nothing. The survivor is the mover, and its head is the exact FCA name."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR21256R",
+   "members": [
+    31611304,
+    31622550
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G14 GBMPR21256R. Register: FCA 21256R 'North Star Housing Group', Registered; exact match for both members (predecessor 30011R deregistered 2022). Rule (a): FCA 21256R is North Star Housing Group (Registered Society, 1974), renamed from Endeavour Housing Association Limited on 02/11/2020. Rule (b): twin 31611304 has 'North Star Housing Group' on 1 of 1 mentions (100%). Mover 31622550 has 'NORTH STAR HOUSING GROUP' on 1 of 1 (100%, raw GB-MPR-IP21256R). Rule (c): the only other entity that carried the name is 30011R 'North Star Housing Group Limited'. It transferred its engagements in full into 21256R on 02/11/2020, was renamed NSHG 2020 Limited, and was deregistered on 2022-02-18 (full FCA SocietyList.csv), so no live separate entity holds the name. Reviewer 1's bounded read (reviewer1/r1-dates.out) dates both notices after the rename and after 30011R was deregistered: 2023-04-04 (mover) and 2023-09-26 (twin). Merge, HIGH. The survivor is the twin, 31611304."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR27440R",
+   "members": [
+    30913929,
+    31543018
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G15 GBMPR27440R. Register: FCA Mutuals 27440R Creative Support Limited (Registered Society, Stockport; former name Manchester Housing Consortium Limited, 1994): 10/10 mentions name the holder. E0 key national:GBMPR27440R. The twin 30913929 (GBMPR27440R) names the holder on 9 of 9 mentions: 'Creative Support Ltd' 4, 'Creative Support' 3, 'CREATIVE SUPPORT LIMITED' 1, 'Creative Support Limited' 1. The mover 31543018 (GBMPRIP27440R) has 1 of 1 mentions as 'Creative Support Limited'. Notice 46742462 (West Northamptonshire Council, supported living) lists both ORG-GB-MPR-27440R and ORG-GB-MPR-IP27440R as 'Creative Support Limited': one publisher and one notice spell one entity two ways. (a) One holder. (b) Share 1.0 for both members. (c) No other entity. The survivor 30913929 is the 469 U6 altid register target (31553186 merged, alias ~PQBH3597XBJD). It is the lower id, so it survives, as G4 requires. The S7 window applies."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR27793R",
+   "members": [
+    31614098,
+    31624556
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G16 GBMPR27793R. Register: FCA 27793R Greenwich Leisure Limited, Registered Society (SocietyList.csv and page); no name changes. Both members carry the exact register name on 100% of mentions. 31614098 is 'Greenwich Leisure Limited' on 2 of 2. 31624556 is 'Greenwich Leisure Limited' on 1 of 1. Rule (c): no other entity named. The survivor is the mover 31614098 (lower id). The head names are identical, so this has no cosmetic effect."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR28038R",
+   "members": [
+    31534486,
+    31596599
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G17 GBMPR28038R. Register: FCA 28038R Clarion Housing Group Limited, Registered Society (1994-09-01); former names Affinity Sutton Group, The Affinity Homes Group, Downland Affinity Group, Downland Housing Group, Argus HA. (a) The register names one holder. (b) Twin 31534486 (138 mentions): 'Clarion Housing Group' 121 (PPON), 'CLARION HOUSING GROUP LIMITED' 15 (GB-MPR-28038R) and 'Clarion Housing Group Limited' 1 make 137/138 (99.3%). Mover 31596599: 'CLARION HOUSING GROUP LIMITED' 3 and 'Clarion Housing Group' 3 make 6/6. (c) 'Clarion Housing Association Ltd' is 1/138 (0.7%), the separate member society named in 469 U6's verdict, so it is a stray below 1/5. The mover carries no other entity's name. The survivor is 31534486, the lower id and the already-applied 469 U6 altid target (GBMPR28038R~PQND5289JNDN), so that alias is kept (G4). P0 #3 caveat as for G05."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR30167R",
+   "members": [
+    31604789,
+    31618490
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G18 GBMPR30167R. Register: FCA 30167R Town and Country Housing: Registered Society, registered 2007-01-17. Former names Town and Country Housing Group (changed 2019-05-09) and Town and Country Housing Group Limited (changed 2008-01-10).. (b) 31604789: 'Town & Country Housing' 1 of 1, on its own notice 46898329, 'Catering Services at Town & Country Housing'. 31618490: 'Town and Country Housing' 1 of 1 (KCHFT hospital care navigator, notice 46935105). Both are the register name. (c) No other entity name appears. The survivor is the mover 31604789 (the lower id), so the head name becomes 'Town & Country Housing'. That change is cosmetic."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR30301R",
+   "members": [
+    31551789,
+    31551790
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G19 GBMPR30301R. Register: FCA 30301R Herts Urgent Care (HUC) Limited, Registered; former name Herts Urgent Care Limited (2023-06-21). Both members are 'HERTS URGENT CARE (HUC) LIMITED' 2/2, the exact FCA name. Both sit on the same 2 notices (46761819, 47260436): one publisher wrote 30301R and IP30301R. E0's consortium veto reads names, not co-mentions, so it does not fire. (c) nothing."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBMPR30938R",
+   "members": [
+    30914487,
+    31591848
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G20 GBMPR30938R. Register: FCA 30938R 'The Riverside Group Limited', Registered; twin exact (116/116); mover names the holder 't/a One Housing Group' (20453R transferred engagements into 30938R in 2023). Rule (a): FCA 30938R is The Riverside Group Limited (Registered Society). Rule (b): twin 30914487 has 'The Riverside Group Limited' on 115 and 'The Riverside Group' on 1, so 116 of 116 (100%). Mover 31591848 has 'The Riverside Group trading as One Housing Group' on 1 of 1 (100%, raw 'GB-MPR-Reg No 30938R'). That name gives Riverside as the legal entity and One Housing Group as a trading name. FCA 30938R's transfers show One Housing Group Limited (20453R) transferring its engagements in full on 2023-03-31, and SocietyList gives 20453R the status 'Registered - Transferred Engagements'. So the trading name is a sourced brand of the holder, not a separate contracting entity. Rule (c): no separate entity's name is asserted as the party on 1/5 or more of either member's mentions. The mover's notice was published 2025-01-09, after the transfer (reviewer1/r1-dates.out). Merge, HIGH. The survivor is the twin, 30914487."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBNICNIC102575",
+   "members": [
+    31621236,
+    31631048
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G21 GBNICNIC102575. Register: CCNI 102575 Radius Housing Association Limited (registered 2016-04-04, on the register with status 'Received: on time', Holywood BT18): 2/2 mentions name the holder. E0 key national:GBNICNIC102575. The twin 31621236 (GBNICNIC102575) has 1 of 1 mentions as 'Radius Housing Association Ltd'. The mover 31631048 (GBNICCHARITYCOMMISSIONNONIC102575) has 1 of 1 mentions as 'RADIUS HOUSING ASSOCIATION LTD'. Both notices (46943131, 2023, heating works; 46977251, 2022, responsive repairs in NI dwellings) have Radius as the Northern Ireland housing buyer: one entity. (a) One holder: the CCNI record has one hit, subNo 0. (b) Share 1.0 for both members. (c) No other entity. The NIC rule keeps the published NIC prefix, and 102575 is not the 469 NIC alias target (GBNICNI100770)."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBUKPRN10004116",
+   "members": [
+    31549563,
+    31622719
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G22 GBUKPRN10004116. Register: UKRLP 10004116 EAST COAST COLLEGE, active; legal address St Peters Street, Lowestoft NR32 2NB (detail and active pages). Both members carry the UKRLP legal name on 100% of mentions. 31549563 is 'East Coast College' on 7 of 7. 31622719 is 'East Coast College' on 1 of 1 (raw GB-UKPRN-GB-UKPRN10004116). Rule (c): no other entity named. Survivor: 31549563 (twin, lower id)."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBUKPRN10005790",
+   "members": [
+    30915632,
+    31624379
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G23 GBUKPRN10005790. Register: UKRLP 10005790 SHEFFIELD HALLAM UNIVERSITY, active, City Campus Pond Street S1 1WB, no trading names. (a) The register names one holder. (b) Twin 30915632 (182 mentions): 'Sheffield Hallam University' 174, 'SHEFFIELD HALLAM UNIVERSITY' 1, '(CRESR)' 1 and 'Centre for Behavioural Science..., Sheffield Hallam University' 1 make 177/182 (97.3%) sourced. Adding 'Sheffield Polytechnic' 2, the predecessor name (not on UKRLP), gives 179/182. Mover 31624379 has 'Sheffield Hallam University' on 1/1 (notice 46953451, beside the FTS buyer org of the same name). (c) Access UK Ltd, Sheffield Hallam University Enterprises Ltd and University of Sheffield are each 1/182 (0.5%), so all are strays below 1/5. The survivor is 30915632, the lower id and the 469 U6 altid target. P0 #3 caveat as for G05."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBUKPRN10007157",
+   "members": [
+    31558903,
+    31630773
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G24 GBUKPRN10007157. Register: UKRLP 10007157 University of Sheffield: active. Trading names THE UNIVERSITY OF SHEFFIELD and University of Sheffield; legal address Western Bank, Sheffield S10 2TN.. (b) 31558903: 15 of 16 mentions (93.75%) name the holder: 'UNIVERSITY OF SHEFFIELD' 13, 'The University of Sheffield' 1 and 'University of Sheffield' 1. (c) 'Sheffield Hallam University' is a separate entity on 1 of 16 mentions (6.25%), below the 1/5 floor, so it is a stray. This is exactly the \u00a73.2(c) example. Notice 46778882 shows how it happened: Sheffield Hallam University (SHU) is the buyer there and published itself as ORG-GB-UKPRN-10007157, but its own UKPRN is 10005790. 31630773: 'UNIVERSITY OF SHEFFIELD' 1 of 1. Survivor is 31558903, the standing twin. Its head name 'Sheffield Hallam University' comes from that single stray, while its organization_names reads UNIVERSITY OF SHEFFIELD. That needs a head-name refresh, but it is cosmetic and does not block the merge. The stray mention is on 31558903 whether or not the merge goes ahead."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBUKPRN10007788",
+   "members": [
+    31549754,
+    31633713
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G25 GBUKPRN10007788. Register: UKRLP 10007788 UNIVERSITY OF CAMBRIDGE, active (trading: University of Cambridge, Cambridge University); OfS Register legal name 'The Chancellor, Masters, and Scholars of the University of Cambridge' (469 U6 registers/ukrlp.json). A5 is sourced: OfS lists the statutory name under UKPRN 10007788. 31549754 13/13 holder: 7 UKRLP/OfS exact, 6 statutory. Mover 31633713: statutory name 1/1 (notice 46988113, beside the twin's statutory notices 46990569/71). (c) nothing. The survivor is the lower id, which is G4's holder (its 469 U6 PPON merge is applied)."
+  },
+  {
+   "country": "GB",
+   "scheme": "E0",
+   "key": "national:GBUKPRN10007798",
+   "members": [
+    31600847,
+    31612560
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Issue 514 unit 2 review (wf_d1abdb0b-672, reviewer + challenger agree): G26 GBUKPRN10007798. Register: UKRLP 10007798 'University of Manchester' (active); exact match, 73/73 mentions across both members. Rule (a): UKRLP 10007798 is active with legal name University of Manchester and trading names THE UNIVERSITY OF MANCHESTER and University of Manchester. The deactivated search returns no result. Rule (b): twin 31600847 has 'UNIVERSITY OF MANCHESTER' on 37, 'University of Manchester' on 13 and 'THE UNIVERSITY OF MANCHESTER' on 1, so 51 of 51 (100%). Mover 31612560 has 'UNIVERSITY OF MANCHESTER' on 22 of 22 (100%; raws 'UKPRN 10007798' x21 and 'UKPRN10007798' x1). Rule (c): no other entity's name. Reviewer 1's independent prod read matches prod/02. Merge, HIGH. The survivor is the twin, 31600847."
+  }
+ ]
+}
