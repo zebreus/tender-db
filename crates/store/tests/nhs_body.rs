@@ -23,17 +23,82 @@ use store::{NhsBodyArgs, NhsBodyCaps, NhsBodyCode, NhsBodyReport, NhsNameCheck, 
 type Row =
     (&'static str, &'static str, &'static str, bool, &'static [&'static str], Option<&'static str>, &'static str);
 
-const TABLE: [Row; 9] = [
+const TABLE: &[Row] = &[
     ("00N", "NHS SUB-ICB LOCATION 00N", "RO98", false, &[], None, "sub-icb only"),
+    // Issue 519 unit 2: the child codes' rows (`nhs-ods.tsv` holds every RO98 row; the sites
+    // are no row of it) and an off-allowlist ICB. Their words appear in no 513 fixture name.
+    ("00P", "NHS NORTH EAST LONDON ICB - 00P", "RO98", false, &[], None, "sub-icb 00p"),
+    ("10Q", "NHS BUCKINGHAMSHIRE ICB - 10Q", "RO98", false, &[], None, "sub-icb 10q"),
+    ("13T", "NHS NORTH EAST LONDON ICB - 13T", "RO98", false, &[], None, "sub-icb 13t"),
+    ("14J", "GREATER MANCHESTER COMMISSIONING HUB", "RO98", false, &[], None, "sub-icb 14j"),
+    ("72Q", "NHS SOUTH EAST LONDON ICB - 72Q", "RO98", false, &[], None, "sub-icb 72q"),
+    ("B2M3M", "NHS NORTH EAST LONDON ICB - B2M3M", "RO98", false, &[], None, "sub-icb b2m3m"),
+    ("D4U1Y", "NHS FRIMLEY ICB - D4U1Y", "RO98", false, &[], None, "sub-icb d4u1y"),
     ("QKK", "NHS SOUTH EAST LONDON INTEGRATED CARE BOARD", "RO261", true, &[], None, "south east london"),
     ("QMF", "NHS NORTH EAST LONDON INTEGRATED CARE BOARD", "RO261", true, &[], None, "north east london"),
     ("QNQ", "NHS FRIMLEY INTEGRATED CARE BOARD", "RO261", true, &["QRL"], Some("2026-03-31"), "frimley"),
     ("QRL", "NHS HAMPSHIRE AND ISLE OF WIGHT INTEGRATED CARE BOARD", "RO261", true, &[], None, "hampshire"),
+    ("QU9", "NHS BUCKINGHAMSHIRE INTEGRATED CARE BOARD", "RO261", false, &[], None, "buckinghamshire"),
     ("R0B", "SOUTH TYNESIDE AND SUNDERLAND NHS FOUNDATION TRUST", "RO197", true, &[], None, "sunderland"),
     ("REN", "THE CLATTERBRIDGE CANCER CENTRE NHS FOUNDATION TRUST", "RO197", true, &[], None, "clatterbridge"),
     ("RET", "THE WALTON CENTRE NHS FOUNDATION TRUST", "RO197", true, &[], None, "walton"),
     ("RTH", "OXFORD UNIVERSITY HOSPITALS NHS FOUNDATION TRUST", "RO197", true, &[], None, "oxford"),
 ];
+
+/// Issue 519 unit 2: the dated child map in small — `nhs-ods-children.tsv`'s shape: (child,
+/// role, ODS name, its dated parents (parent, rel, start, end)). `00N` stays out of it, so
+/// 513's off-allowlist fixture reads as before.
+type ChildRow = (&'static str, &'static str, &'static str, &'static [(&'static str, &'static str, &'static str, Option<&'static str>)]);
+
+const CHILDREN: &[ChildRow] = &[
+    ("00P", "RO98", "NHS NORTH EAST LONDON ICB - 00P", &[("QMF", "RE5", "2020-04-01", None)]),
+    ("10Q", "RO98", "NHS BUCKINGHAMSHIRE ICB - 10Q", &[("QU9", "RE5", "2020-04-01", Some("2026-03-31"))]),
+    ("13T", "RO98", "NHS NORTH EAST LONDON ICB - 13T", &[("QMF", "RE5", "2020-04-01", None)]),
+    ("14J", "RO98", "GREATER MANCHESTER COMMISSIONING HUB", &[]),
+    ("72Q", "RO98", "NHS SOUTH EAST LONDON ICB - 72Q", &[("QKK", "RE5", "2020-04-01", None)]),
+    ("B2M3M", "RO98", "NHS NORTH EAST LONDON ICB - B2M3M", &[("QMF", "RE5", "2020-10-23", None)]),
+    (
+        "D4U1Y",
+        "RO98",
+        "NHS FRIMLEY ICB - D4U1Y",
+        &[("QNQ", "RE5", "2020-10-23", Some("2026-03-31")), ("QRL", "RE5", "2026-04-01", None)],
+    ),
+    ("RTH08", "RO198", "CHURCHILL HOSPITAL", &[("RTH", "RE6", "1991-04-01", None)]),
+];
+
+/// `nhs_ods::census_child` in small.
+fn child(code: &str) -> Option<store::NhsChildCode> {
+    CHILDREN.iter().find(|c| c.0 == code).map(|c| store::NhsChildCode {
+        code: c.0,
+        name: c.2,
+        role: c.1,
+        active: true,
+        parents: c.3.iter().map(|p| store::NhsOdsParent { code: p.0, rel: p.1, start: p.2, end: p.3 }).collect(),
+    })
+}
+
+/// `nhs_ods::census_children` in small: every child dated under `parent` in any period.
+fn children(parent: &str) -> Vec<store::NhsChildCode> {
+    CHILDREN.iter().filter(|c| c.3.iter().any(|p| p.0 == parent)).filter_map(|c| child(c.0)).collect()
+}
+
+/// `nhs_ods::census_child_check` in small: [`check`] whose rivals leave out the (Active)
+/// RO98 rows, plus the NHS England refusal — `england` in a name declaring no role.
+fn child_check(parent: &str, name: &str) -> NhsNameCheck {
+    let lower = name.to_lowercase();
+    if lower.contains("england") && !["icb", "integrated care board", "trust", "commissioning support"].iter().any(|r| lower.contains(r)) {
+        return NhsNameCheck { verdict: "nhse", rival: None };
+    }
+    let Some(own) = row(parent) else { return NhsNameCheck { verdict: "unknown", rival: None } };
+    let rival = TABLE.iter().find(|r| r.0 != parent && r.2 != "RO98" && lower.contains(r.6)).map(|r| r.0);
+    let verdict = match (lower.contains(own.6), rival) {
+        (true, None) => "admitted",
+        (true, Some(_)) => "tie",
+        (false, Some(_)) => "better",
+        (false, None) => "zero",
+    };
+    NhsNameCheck { verdict, rival }
+}
 
 fn row(code: &str) -> Option<&'static Row> {
     TABLE.iter().find(|r| r.0 == code)
@@ -158,6 +223,10 @@ fn args<'a>(caps: NhsBodyCaps, stoplist_cap: usize) -> NhsBodyArgs<'a> {
         stoplist_cap,
         caps,
         stop: &|| false,
+        children,
+        child,
+        child_check,
+        children_version: "ods-children-test",
     }
 }
 
@@ -1125,6 +1194,12 @@ async fn the_census_reads_seek_their_indexes() {
     );
     let owners = plan(store::NHS_BODY_KEY_OWNERS_SQL, vec![text("oxford"), text("GB"), Value::Integer(64)]).await;
     assert!(owners.contains("SEARCH organizations") && !owners.contains("SCAN"), "{owners}");
+    // Issue 519 unit 2: a child's identity seek (the only way a five-character child is
+    // seen), and the keep-over-applied probe on the verdicts' primary key.
+    let identity = plan(store::ORGS_WITH_TRIPLE_SQL, vec![text("GBNHSB2M3M"), text("national"), text("GB")]).await;
+    assert!(identity.contains("SEARCH organizations") && !identity.contains("SCAN"), "{identity}");
+    let applied = plan(store::NHS_BODY_APPLIED_MERGES_SQL, vec![text("GB:nhs-body"), text("QMF")]).await;
+    assert!(applied.contains("SEARCH org_merge_verdicts") && !applied.contains("SCAN"), "{applied}");
 }
 
 /// The column reaches an EXISTING database only through `MIGRATIONS` (the issue-372
@@ -2214,4 +2289,508 @@ async fn the_canary_re_resolves_a_folded_body_and_writes_nothing() {
     assert_eq!((r.mentions, r.agree, r.disagree), (1, 0, 1), "{r:#?}");
     assert_eq!((r.bindings[0].stored, r.bindings[0].resolved, r.bindings[0].agree), (8, 7, false));
     assert_eq!(b.count("SELECT organization_id FROM organization_mentions WHERE notice_id = 102").await, 8, "untouched");
+}
+
+// ---- Issue 519 unit 2: child codes in the census (decision
+// `.scratch/tender-db/519-nhs-digit-codes/unit2-decision.md` §1.1, §2.4, §6; the measured plan
+// changes of `measure/results.md` §6).
+
+const QMF_PPON: &str = "GB-PPON-QMFX-2026-NELA";
+const QMF_PPON_NAME: &str = "NHS NORTH EAST LONDON INTEGRATED CARE BOARD";
+const NEL_ICB: &str = "NHS North East London ICB";
+
+impl Bed {
+    /// North East London's body (QMF) after 513: its PPON org (40), named by a PPON-first
+    /// party beside `GB-NHS-QMF`, under an applied one-member 513 verdict.
+    async fn qmf_body(&self) {
+        self.org(40, &minted(QMF_PPON), QMF_PPON_NAME).await;
+        self.notice(400, None).await;
+        self.party(400, "P", Some(40), Some("GB"), &[QMF_PPON, "GB-NHS-QMF"], QMF_PPON_NAME).await;
+        self.applied_verdict("QMF", vec![40]).await;
+    }
+
+    /// A 513 verdict on `code`, folded: members `members`, reviewed over themselves, stamped
+    /// applied (cohort `513-u2-test`, reviewed at 0).
+    async fn applied_verdict(&self, code: &str, members: Vec<i64>) {
+        self.verdict(code, members.clone(), Some(members), "merge", "high").await;
+        self.conn
+            .execute(
+                "UPDATE org_merge_verdicts SET applied_at = 1, applied_action = 'merged' WHERE key = ? AND cohort = '513-u2-test'",
+                (Value::Text(code.into()),),
+            )
+            .await
+            .unwrap();
+    }
+
+    /// A child cohort's verdict on `code`, reviewed at `at` (after 513's, so it is the
+    /// standing one: the newest merge stands).
+    async fn child_verdict(&self, code: &str, members: Vec<i64>, holders: Vec<i64>, at: i64) {
+        self.db
+            .record_merge_verdicts("nhs-body-children-test", &[nhs_verdict(code, members, Some(holders), "merge", "high")], at)
+            .await
+            .unwrap();
+    }
+
+    /// 13T's identity org (41): `GB-NHS-13T` mints, and its coded party binds it.
+    async fn nel_13t(&self, head: &str) {
+        self.org(41, "GBNHS13T", head).await;
+        self.notice(410, None).await;
+        self.party(410, "N410", Some(41), Some("GB"), &["GB-NHS-13T"], NEL_ICB).await;
+    }
+
+    /// One more mention of `org` on a fresh notice: `raw`, `name`, under `country`.
+    async fn extra(&self, notice: i64, org: i64, raw: Option<&str>, name: &str, country: Option<&str>, at: Option<i64>) {
+        self.notice(notice, at).await;
+        self.mention(notice, &format!("ORG-X{notice}"), org, country, raw, name).await;
+    }
+}
+
+/// A five-character child (`B2M3M`) is no three-character tail, so the harvest counts its
+/// parties as "other GB-NHS values" and binds nothing by them: only the identity seek
+/// (`GBNHSB2M3M`, national, GB) finds its holder. It joins the parent's holder set, labelled
+/// `child`, with the child code listed per code and the counts report-wide.
+#[tokio::test]
+async fn a_five_character_child_is_found_by_its_identity_seek() {
+    let b = bed("child-seek").await;
+    b.qmf_body().await;
+    b.org(42, "GBNHSB2M3M", QMF_PPON_NAME).await;
+    b.coded(420, 42, "GB-NHS-B2M3M").await;
+    b.coded(421, 42, "GB-NHS-B2M3M").await;
+
+    let r = b.plan().await;
+    assert_eq!(r.ods_children_version, "ods-children-test");
+    assert_eq!(r.other_nhs_values, 2, "the harvest sees no three-character tail: {r:#?}");
+    let qmf = code(&r, "QMF");
+    assert_eq!(qmf.holder_ids, vec![40, 42], "{qmf:#?}");
+    let h = holder(qmf, 42);
+    assert_eq!((h.via, h.child, h.child_of.clone(), h.child_shape), ("child", true, vec!["B2M3M"], Some("identity")));
+    assert_eq!((h.coded_parties, h.child_parties), (0, 0), "found by the seek alone");
+    assert!(h.denied.is_empty(), "{h:#?}");
+    assert_eq!(qmf.eligible, vec![40, 42]);
+    assert_eq!(qmf.children.len(), 1, "only children with a holder are listed: {:#?}", qmf.children);
+    let c = &qmf.children[0];
+    assert_eq!((c.code, c.role, c.ods_name), ("B2M3M", "RO98", "NHS NORTH EAST LONDON ICB - B2M3M"));
+    assert_eq!(c.periods_here.iter().map(|p| (p.code, p.start, p.end)).collect::<Vec<_>>(), [("QMF", "2020-10-23", None)]);
+    assert!(c.other_parents.is_empty());
+    assert_eq!((c.holder_ids.clone(), c.coded_parties), (vec![42], 0));
+    assert_eq!((r.child_codes_seen, r.child_holders, r.child_mentions), (1, 1, 2));
+    assert_eq!(r.holders, 2, "the child holder is a holder of the census");
+    assert!(r.off_allowlist.is_empty());
+    // Nothing is written.
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 0);
+}
+
+impl Bed {
+    /// D4U1Y, dated under QNQ (Frimley) to 2026-03-31 and under QRL from 2026-04-01: each
+    /// parent's own cluster (50, 51), and the child's identity org (52) named as Frimley,
+    /// published once inside QNQ's period and once after it.
+    async fn frimley_moved(&self) {
+        self.provisional(50, "NHS Frimley ICB").await;
+        self.coded(500, 50, "GB-NHS-QNQ").await;
+        self.provisional(51, "NHS Hampshire and Isle of Wight ICB").await;
+        self.coded(510, 51, "GB-NHS-QRL").await;
+        self.org(52, "GBNHSD4U1Y", "NHS Frimley ICB").await;
+        self.coded_at(520, 52, "GB-NHS-D4U1Y", Some(Y2025_06_01)).await;
+        self.coded_at(521, 52, "GB-NHS-D4U1Y", Some(Y2026_05_01)).await;
+    }
+}
+
+/// A child dated under two allowlisted parents is a holder of both (any period: the name,
+/// never the date, chooses — §1.2), so both codes list it, each with its own periods and the
+/// other parent named.
+#[tokio::test]
+async fn a_child_holder_is_listed_under_every_dated_parent() {
+    let b = bed("child-two-parents").await;
+    b.frimley_moved().await;
+    let r = b.plan().await;
+    let (qnq, qrl) = (code(&r, "QNQ"), code(&r, "QRL"));
+    assert_eq!((qnq.holder_ids.clone(), qrl.holder_ids.clone()), (vec![50, 52], vec![51, 52]), "{r:#?}");
+    assert_eq!(holder(qnq, 52).holder_of, vec!["QNQ", "QRL"]);
+    assert_eq!(r.multi_code_orgs, 1);
+    let periods = |c: &NhsBodyCode| -> Vec<(&str, &str, Option<&str>, Vec<&str>)> {
+        c.children.iter().flat_map(|x| x.periods_here.iter().map(|p| (p.code, p.start, p.end, x.other_parents.clone()))).collect()
+    };
+    assert_eq!(periods(qnq), [("QNQ", "2020-10-23", Some("2026-03-31"), vec!["QRL"])]);
+    assert_eq!(periods(qrl), [("QRL", "2026-04-01", None, vec!["QNQ"])]);
+    assert_eq!((r.child_codes_seen, r.child_holders), (2, 1), "one child under two codes, one org");
+}
+
+/// A moved child is eligible only under the parent its names fit: the Frimley-named org
+/// passes the strict gate under QNQ and fails it under QRL (`better`, QNQ), whatever the
+/// dates — the census only reports them, per name, against each parent's periods.
+#[tokio::test]
+async fn a_moved_child_is_eligible_only_where_its_names_fit() {
+    let b = bed("child-moved").await;
+    b.frimley_moved().await;
+    let r = b.plan().await;
+    let (under_qnq, under_qrl) = (holder(code(&r, "QNQ"), 52), holder(code(&r, "QRL"), 52));
+    assert!(under_qnq.denied.is_empty(), "{under_qnq:#?}");
+    assert_eq!(under_qrl.denied, vec!["child-name-refused"], "{under_qrl:#?}");
+    let here = &under_qnq.child_names[..];
+    assert_eq!(here.len(), 1, "{here:#?}");
+    let n = &here[0];
+    assert_eq!((n.name.as_str(), n.n, n.check_here.verdict), ("NHS Frimley ICB", 2, "admitted"));
+    assert_eq!((n.before_start, n.in_period, n.after_end, n.undated), (0, 1, 1, 0), "one mention after QNQ's end");
+    assert_eq!(n.check_other_parents.iter().map(|c| (c.parent, c.check.verdict)).collect::<Vec<_>>(), [("QRL", "better")]);
+    let there = &under_qrl.child_names[0];
+    assert_eq!((there.check_here.verdict, there.check_here.rival), ("better", Some("QNQ")));
+    assert_eq!((there.before_start, there.in_period, there.after_end), (1, 1, 0));
+    assert_eq!(code(&r, "QNQ").eligible, vec![50, 52]);
+    assert_eq!(code(&r, "QRL").eligible, vec![51]);
+    assert_eq!(r.child_denied.get("child-name-refused"), Some(&1));
+}
+
+/// E2: 513's `minted-identity` denial is lifted for exactly the child's own triple
+/// (GB, national, `GBNHS<C>`). A foreign identity reached through the child — a company a
+/// party published `GB-NHS-13T` behind — is still denied, and the 513 holder test
+/// (`a_member_holding_a_minted_identity_is_denied`) stands unchanged.
+#[tokio::test]
+async fn a_child_identity_holder_is_not_denied_minted_identity_but_a_foreign_identity_still_is() {
+    let b = bed("child-minted").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    b.org(44, "GBCOH03914810", "North East London Health Services Ltd").await;
+    b.notice(440, None).await;
+    b.party(440, "C", Some(44), Some("GB"), &["GB-COH-03914810", "GB-NHS-13T"], "North East London Health Services Ltd").await;
+
+    let r = b.plan().await;
+    let qmf = code(&r, "QMF");
+    assert_eq!(qmf.holder_ids, vec![40, 41, 44], "{qmf:#?}");
+    let (own, foreign) = (holder(qmf, 41), holder(qmf, 44));
+    assert!(own.minted_identity && own.denied.is_empty(), "{own:#?}");
+    assert_eq!((own.child_shape, own.child_parties), (Some("identity"), 1));
+    assert_eq!(foreign.denied, vec!["minted-identity"], "{foreign:#?}");
+    assert_eq!((foreign.child, foreign.child_shape, foreign.child_parties), (true, None, 1));
+    let c = &qmf.children[0];
+    assert_eq!((c.code, c.holder_ids.clone(), c.coded_parties), ("13T", vec![41, 44], 2));
+    // A three-character child tail is still listed off the allowlist, as 513 listed it.
+    assert_eq!(r.off_allowlist.iter().map(|t| t.tail.as_str()).collect::<Vec<_>>(), ["13T"]);
+}
+
+/// E5: every distinct mention name must pass `child_check` under the parent. A name another
+/// body's code wins (`NHS South East London ICB`, QKK) makes the holder `child-name-mixed`:
+/// held, its stray to be rehomed first (§1.4). Each name is listed with its answer.
+#[tokio::test]
+async fn a_child_name_another_body_wins_is_child_name_mixed() {
+    let b = bed("child-mixed").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    b.extra(411, 41, Some("GB-NHS-13T"), "NHS South East London ICB", Some("GB"), None).await;
+
+    let r = b.plan().await;
+    let h = holder(code(&r, "QMF"), 41);
+    assert_eq!(h.denied, vec!["child-name-mixed"], "{h:#?}");
+    let names: Vec<(&str, &str, Option<&str>)> =
+        h.child_names.iter().map(|n| (n.name.as_str(), n.check_here.verdict, n.check_here.rival)).collect();
+    assert_eq!(names, [(NEL_ICB, "admitted", None), ("NHS South East London ICB", "better", Some("QKK"))]);
+    assert_eq!(r.child_denied.get("child-name-mixed"), Some(&1));
+    assert_eq!(code(&r, "QMF").eligible, vec![40]);
+}
+
+/// E3: every mention read must carry the holder's own triple, so the unwind can send each
+/// one back through E0. A lower-case spelling (`GB-NHS-13t`) is the same triple; a mention
+/// with no identifier, or one under no country, is not — `child-impure`.
+#[tokio::test]
+async fn an_uncoded_mention_makes_a_child_impure() {
+    let b = bed("child-impure").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    b.extra(411, 41, Some("GB-NHS-13t"), NEL_ICB, Some("GB"), None).await;
+    let r = b.plan().await;
+    let h = holder(code(&r, "QMF"), 41);
+    assert_eq!((h.own_triple_mentions, h.mentions_read, h.denied.clone()), (2, 2, vec![]), "{h:#?}");
+
+    b.extra(412, 41, None, NEL_ICB, Some("GB"), None).await;
+    let r = b.plan().await;
+    let h = holder(code(&r, "QMF"), 41);
+    assert_eq!((h.own_triple_mentions, h.mentions_read, h.denied.clone()), (2, 3, vec!["child-impure"]), "{h:#?}");
+
+    b.conn.execute("UPDATE organization_mentions SET raw_identifier = 'GB-NHS-13T', country = NULL WHERE notice_id = 412", ()).await.unwrap();
+    let r = b.plan().await;
+    let h = holder(code(&r, "QMF"), 41);
+    assert_eq!((h.own_triple_mentions, h.denied.clone()), (2, vec!["child-impure"]), "a country-less mention: {h:#?}");
+}
+
+/// E4: a child holder carrying a PPON — its own or a merged one — is denied
+/// (`child-carries-ppon`): a PPON org folds by 513's rules, never as a child.
+#[tokio::test]
+async fn a_merged_ppon_denies_a_child() {
+    let b = bed("child-ppon").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    b.conn
+        .execute(
+            "INSERT INTO organization_merged_identifiers (identifier, identifier_kind, country, org_id, loser, rule)
+             VALUES ('GBPPONZZZZ9999YYYY', 'national', 'GB', 41, 99, 'altid')",
+            (),
+        )
+        .await
+        .unwrap();
+    let r = b.plan().await;
+    let h = holder(code(&r, "QMF"), 41);
+    assert_eq!(h.denied, vec!["child-carries-ppon"], "{h:#?}");
+    assert_eq!(r.child_denied.get("child-carries-ppon"), Some(&1));
+}
+
+/// E3 and E4's other halves: a capped mention read leaves names unread (`child-names-unread`
+/// — the gate must see every name), and a `wrong` identifier verdict on the child's triple
+/// withholds it (`child-withheld`).
+#[tokio::test]
+async fn a_withheld_or_unread_child_is_denied() {
+    let b = bed("child-withheld").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    b.extra(411, 41, Some("GB-NHS-13T"), NEL_ICB, Some("GB"), None).await;
+    let capped = b.plan_with(NhsBodyCaps { mentions: 1, ..NhsBodyCaps::PRODUCTION }, 20).await;
+    assert_eq!(holder(code(&capped, "QMF"), 41).denied, vec!["child-names-unread"]);
+    let few_names = b.plan_with(NhsBodyCaps { child_names: 0, ..NhsBodyCaps::PRODUCTION }, 20).await;
+    let h = holder(code(&few_names, "QMF"), 41);
+    assert_eq!((h.denied.clone(), h.child_names_capped), (vec!["child-names-unread"], true), "{h:#?}");
+
+    b.conn
+        .execute(
+            "INSERT INTO org_identifier_verdicts
+                 (identifier, identifier_kind, country, org_id, cohort, verdict, rationale, confidence, reviewed_at)
+             VALUES ('GBNHS13T', 'national', 'GB', 41, 'c', 'wrong', 'r', 'high', 0)",
+            (),
+        )
+        .await
+        .unwrap();
+    let r = b.plan().await;
+    assert_eq!(holder(code(&r, "QMF"), 41).denied, vec!["child-withheld"], "{r:#?}");
+}
+
+/// The members-exact rule over the WIDENED holder set: 513's applied verdict stays
+/// `applied` (decided before members-exact) though a child holder now stands beside its
+/// members; a child cohort on the same key reviewed over the widened set is admitted; a
+/// newcomer child makes THAT cohort stale, never the applied one.
+#[tokio::test]
+async fn a_child_newcomer_stales_the_new_cohort_never_an_applied_verdict() {
+    let b = bed("child-newcomer").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    let r = b.plan().await;
+    let v = code(&r, "QMF").verdict.clone().expect("the 513 verdict");
+    assert_eq!((v.status, v.cohort.as_str()), ("applied", "513-u2-test"), "{v:#?}");
+    assert_eq!(code(&r, "QMF").holder_ids, vec![40, 41]);
+
+    b.child_verdict("QMF", vec![40, 41], vec![40, 41], 10).await;
+    let r = b.plan().await;
+    let v = code(&r, "QMF").verdict.clone().unwrap();
+    assert_eq!((v.status, v.cohort.as_str()), ("admitted", "nhs-body-children-test"), "{v:#?}");
+    assert_eq!(r.admitted_codes, vec!["QMF"]);
+
+    b.org(42, "GBNHSB2M3M", QMF_PPON_NAME).await;
+    b.coded(420, 42, "GB-NHS-B2M3M").await;
+    let r = b.plan().await;
+    let v = code(&r, "QMF").verdict.clone().unwrap();
+    assert_eq!((v.status, v.newcomers.clone(), v.cohort.as_str()), ("stale", vec![42], "nhs-body-children-test"));
+    assert!(r.admitted_codes.is_empty());
+}
+
+/// E1, phase A: a verdict naming an identity child is admitted only when the fold's survivor
+/// is a PPON org. QKK's body stands on a provisional anchor (60), so the child cohort is
+/// `child-into-anchor` (anchor parents are held, ruling 5).
+#[tokio::test]
+async fn a_child_without_a_ppon_survivor_is_child_into_anchor() {
+    let b = bed("child-anchor").await;
+    b.provisional(60, "NHS South East London ICB").await;
+    b.coded(600, 60, "GB-NHS-QKK").await;
+    b.coded(601, 60, "GB-NHS-QKK").await;
+    b.applied_verdict("QKK", vec![60]).await;
+    b.org(61, "GBNHS72Q", "NHS South East London ICB").await;
+    b.coded(610, 61, "GB-NHS-72Q").await;
+    b.child_verdict("QKK", vec![60, 61], vec![60, 61], 10).await;
+
+    let r = b.plan().await;
+    let qkk = code(&r, "QKK");
+    assert!(holder(qkk, 61).denied.is_empty(), "the holder itself is eligible: {qkk:#?}");
+    assert_eq!(qkk.verdict.as_ref().map(|v| v.status), Some("child-into-anchor"), "{qkk:#?}");
+    assert_eq!(r.verdict_status.get("child-into-anchor"), Some(&1));
+    assert!(r.admitted_codes.is_empty());
+}
+
+/// E2's second shape: a provisional cluster the parties of a ZERO-ONLY child tail bound by
+/// name (`GB-NHS-00P` mints nothing) is a name member, and a cohort naming it beside the
+/// PPON survivor is admitted. A cluster named as NHS England is refused by the gate.
+#[tokio::test]
+async fn a_zero_only_child_cluster_joins_as_a_name_member() {
+    let b = bed("child-zero").await;
+    b.qmf_body().await;
+    b.provisional(43, "North East London ICS").await;
+    b.coded(430, 43, "GB-NHS-00P").await;
+    b.provisional(45, "NHS England London").await;
+    b.coded(450, 45, "GB-NHS-00P").await;
+
+    let r = b.plan().await;
+    let qmf = code(&r, "QMF");
+    assert_eq!(qmf.holder_ids, vec![40, 43, 45], "{qmf:#?}");
+    let zero = holder(qmf, 43);
+    assert_eq!((zero.via, zero.child_shape, zero.child_parties, zero.denied.clone()), ("child", Some("zero-only"), 1, vec![]));
+    let nhse = holder(qmf, 45);
+    assert_eq!(nhse.denied, vec!["child-name-refused"], "{nhse:#?}");
+    assert_eq!(nhse.child_head_check.map(|c| c.verdict), Some("nhse"));
+    assert_eq!(qmf.children[0].code, "00P");
+    assert_eq!(qmf.children[0].holder_ids, vec![43, 45]);
+
+    b.child_verdict("QMF", vec![40, 43], vec![40, 43, 45], 10).await;
+    let r = b.plan().await;
+    assert_eq!(code(&r, "QMF").verdict.as_ref().map(|v| v.status), Some("admitted"), "{r:#?}");
+}
+
+/// The E5 amendment (measure-first): an identity holder's head name is checked and
+/// reported, but gates only as one of its mention names. 13T's head is the CSU's name, written
+/// at mint and never refreshed (issue 524); once no mention carries it, it holds nothing —
+/// an identity loser's keys are empty and its row is deleted at the fold.
+#[tokio::test]
+async fn a_head_name_no_mention_carries_does_not_hold_an_identity_child() {
+    let b = bed("child-head").await;
+    b.qmf_body().await;
+    b.nel_13t("North of England Commissioning Support").await;
+    let r = b.plan().await;
+    let h = holder(code(&r, "QMF"), 41);
+    assert_eq!(h.child_head_check.map(|c| c.verdict), Some("zero"), "{h:#?}");
+    assert!(h.denied.is_empty(), "{h:#?}");
+    assert_eq!(h.child_names.iter().map(|n| n.name.as_str()).collect::<Vec<_>>(), [NEL_ICB]);
+}
+
+/// …while a zero-only cluster's head still gates: its fold arms the head's name key, so a
+/// head the gate refuses holds it even when every mention name passes.
+#[tokio::test]
+async fn a_zero_only_cluster_head_name_still_gates() {
+    let b = bed("child-zero-head").await;
+    b.qmf_body().await;
+    b.provisional(43, "NHS South East London ICB").await;
+    b.notice(430, None).await;
+    b.party(430, "Z", Some(43), Some("GB"), &["GB-NHS-00P"], NEL_ICB).await;
+    let r = b.plan().await;
+    let h = holder(code(&r, "QMF"), 43);
+    assert_eq!(h.child_head_check.map(|c| c.verdict), Some("better"));
+    assert_eq!(h.denied, vec!["child-name-mixed"], "{h:#?}");
+}
+
+/// D4 skips identity child members: their name key is never armed (an identity loser's
+/// evidence carries empty keys, §3.4), so a standing identifier-NULL twin of an identity
+/// child's head key holds nothing. A zero-only member's key IS armed, and its twin holds.
+#[tokio::test]
+async fn the_d4_gate_skips_identity_child_members() {
+    let b = bed("child-d4").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    b.provisional(47, NEL_ICB).await;
+    b.child_verdict("QMF", vec![40, 41], vec![40, 41], 10).await;
+    let r = b.plan().await;
+    let qmf = code(&r, "QMF");
+    assert_eq!(holder(qmf, 41).key_owners_elsewhere, vec![47], "{qmf:#?}");
+    assert_eq!(qmf.verdict.as_ref().map(|v| v.status), Some("admitted"), "{qmf:#?}");
+
+    b.provisional(43, "North East London ICS").await;
+    b.coded(430, 43, "GB-NHS-00P").await;
+    b.provisional(48, "North East London ICS").await;
+    b.child_verdict("QMF", vec![40, 41, 43], vec![40, 41, 43], 11).await;
+    let r = b.plan().await;
+    let qmf = code(&r, "QMF");
+    assert_eq!(holder(qmf, 43).key_owners_elsewhere, vec![48]);
+    assert_eq!(qmf.verdict.as_ref().map(|v| v.status), Some("member-key-owned-elsewhere"));
+}
+
+/// Holds are made by leaving a holder out of `members`, never by `keep`: a keep on a code
+/// whose 513 merge is applied drops every alias row of that code (one lineage per body). The
+/// census lists such codes (`keep_over_applied`); S0 requires none. A keep on a code never
+/// folded is not one.
+#[tokio::test]
+async fn a_keep_on_an_applied_code_is_counted() {
+    let b = bed("child-keep").await;
+    b.qmf_body().await;
+    b.provisional(1, "Oxford University Hospitals NHS Foundation Trust").await;
+    b.coded(101, 1, "GB-NHS-RTH").await;
+    b.verdict("RTH", vec![1], None, "keep", "high").await;
+    let r = b.plan().await;
+    assert!(r.keep_over_applied.is_empty(), "{:?}", r.keep_over_applied);
+
+    b.db
+        .record_merge_verdicts("nhs-body-children-test", &[nhs_verdict("QMF", vec![40], None, "keep", "high")], 10)
+        .await
+        .unwrap();
+    let r = b.plan().await;
+    assert_eq!(code(&r, "QMF").verdict.as_ref().map(|v| v.status), Some("keep"));
+    assert_eq!(r.keep_over_applied, vec!["QMF"]);
+}
+
+/// The unit 2 review: a keep re-posted IN PLACE over the applied cohort (same country,
+/// scheme, key and cohort) rewrites the row's `action` to `keep` but never its applied
+/// stamp — so no row reads `action = 'merge'` any more, yet the keep still drops the code's
+/// alias rows. The probe reads the stamp alone, and lists it.
+#[tokio::test]
+async fn a_keep_reposted_over_the_applied_cohort_is_counted() {
+    let b = bed("child-keep-in-place").await;
+    b.qmf_body().await;
+    b.verdict("QMF", vec![40], Some(vec![40]), "keep", "high").await;
+    let rows = b
+        .count("SELECT COUNT(*) FROM org_merge_verdicts WHERE key = 'QMF' AND action = 'keep' AND applied_at IS NOT NULL")
+        .await;
+    assert_eq!(rows, 1, "the re-record kept the fold's stamp");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_verdicts WHERE key = 'QMF' AND action = 'merge'").await, 0);
+    let r = b.plan().await;
+    assert_eq!(code(&r, "QMF").verdict.as_ref().map(|v| v.status), Some("keep"));
+    assert_eq!(r.keep_over_applied, vec!["QMF"]);
+}
+
+/// `via` gains `child`, after 513's paths: an org holding the code through a child only is
+/// `child`; the PPON org whose mentions also publish the zero-only tail is `ppon+child` — an
+/// own holder, so 513's rules, not the child gates, apply to it.
+#[tokio::test]
+async fn via_labels_child() {
+    let b = bed("child-via").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    b.notice(401, None).await;
+    b.party(401, "Q", Some(40), Some("GB"), &["GB-NHS-00P"], QMF_PPON_NAME).await;
+    let r = b.plan().await;
+    let qmf = code(&r, "QMF");
+    assert_eq!(vias(qmf), vec![(40, "ppon+child"), (41, "child")]);
+    let ppon_org = holder(qmf, 40);
+    assert_eq!((ppon_org.child, ppon_org.child_of.clone(), ppon_org.child_shape), (false, vec!["00P"], None));
+    assert!(ppon_org.denied.is_empty() && ppon_org.child_names.is_empty(), "{ppon_org:#?}");
+    assert_eq!(r.child_holders, 1, "an own holder is no child holder");
+}
+
+/// A child tail no listed body anchors is listed apart: one whose every dated parent is off
+/// the allowlist (`10Q` under QU9, a digit ICB: U6), and one with no parent at all (`14J`).
+#[tokio::test]
+async fn a_child_tail_no_allowlisted_parent_anchors_is_listed_apart() {
+    let b = bed("child-unanchored").await;
+    b.provisional(70, "NHS Buckinghamshire ICB").await;
+    b.coded(700, 70, "GB-NHS-10Q").await;
+    b.org(71, "GBNHS14J", "Greater Manchester Commissioning Hub").await;
+    b.coded(710, 71, "GB-NHS-14J").await;
+    let r = b.plan().await;
+    assert!(r.codes.is_empty(), "{r:#?}");
+    let un: Vec<(&str, Vec<&str>, u64, u64, &str)> =
+        r.child_unanchored.iter().map(|c| (c.code.as_str(), c.parents.clone(), c.parties, c.holders, c.why)).collect();
+    assert_eq!(un, [("10Q", vec!["QU9"], 1, 1, "parents-off-allowlist")]);
+    assert_eq!(r.child_no_parent.iter().map(|c| c.code.as_str()).collect::<Vec<_>>(), ["14J"]);
+    assert_eq!(r.off_allowlist_seen, 2, "513's listing is unchanged");
+}
+
+/// Issue 519 unit 2 holds a child member out of the WET path until U4 builds the identity
+/// loser's fold (empty name keys, `loser_kind identity`) and the exact-triple alias arm:
+/// folded today, a child's head name would arm 513's name alias and its next coded mention
+/// would mint a new org. The body is held (`child-fold-unbuilt`), left in the residual, and
+/// nothing is written.
+#[tokio::test]
+async fn a_child_member_is_held_out_of_the_wet_run_until_the_identity_fold_exists() {
+    let b = bed("child-wet-hold").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    b.child_verdict("QMF", vec![40, 41], vec![40, 41], 10).await;
+    let expect = b.admitted().await;
+    assert_eq!(expect, vec!["QMF".to_owned()]);
+    let r = b.wet(&expect, None).await.expect("the wet run");
+    assert_eq!(r.held.iter().map(|h| (h.code, h.reason)).collect::<Vec<_>>(), [("QMF", "child-fold-unbuilt")], "{r:#?}");
+    assert_eq!(r.residual_codes, vec!["QMF"]);
+    assert!(r.folded.is_empty());
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id = 41").await, 1);
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 0);
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_verdicts WHERE cohort = 'nhs-body-children-test' AND applied_at IS NOT NULL").await, 0);
 }

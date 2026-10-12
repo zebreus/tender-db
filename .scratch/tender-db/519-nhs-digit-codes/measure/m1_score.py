@@ -161,12 +161,14 @@ overrides = load(os.path.join(HERE, 'm1_overrides.json')) if os.path.exists(os.p
 
 
 def best_body(name):
-    """The table row a refused name fits best (child rival set: Active RO98 rows dropped), and whether
-    `child_check` admits the name under it — the body a stray belongs to, when the table has it."""
+    """The table row a refused name fits best (child rival set: the "<ICB> - <code>" relabel rows dropped,
+    cc.RELABELS; narrowed after the U2 review on 2026-10-12, which moves only the two NHS England names'
+    best body from RCC to 85J, both `nhse` and called before this runs), and whether `child_check`
+    admits the name under it — the body a stray belongs to, when the table has it."""
     m = cc.split(name)
     best, bc = None, None
     for c in cc.codes:
-        if cc.table[c]['role'] == 'RO98' and cc.table[c]['status'] == 'A':
+        if c in cc.RELABELS:
             continue
         k = cc.key(m, [(cc.table[c]['name'], cc.table[c]['role'])])
         if best is None or k > best:

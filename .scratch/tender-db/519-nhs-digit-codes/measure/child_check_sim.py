@@ -10,7 +10,9 @@ What it ports, against crates/ingest/src/nhs_ods.rs at HEAD (2026-10-12):
   NonNhs markers include `charity`, `charities`, `charitable` (nhs_ods.rs `non_nhs`).
 - `child_check(parent, name)` (519 §1.3), two changes to `check`:
   1. rivals are every row except the parent's own names (parent + its predecessors) AND except the
-     **Active RO98** rows ("<current ICB> - code" since 2026-04); Inactive RO98 rows stay rivals;
+     Active RO98 rows named "<current ICB> - <code>" (since 2026-04, RELABELS: 107 rows); the other
+     Active RO98 rows (commissioning hubs, legacy CCGs, London reporting entities) and the Inactive
+     RO98 rows stay rivals (narrowed after the U2 review, 2026-10-12);
   2. `nhse`: a name with the token `england` that declares no ICB, trust or CSU role is refused.
      Placed after NonNhs and before Role (the decision does not fix its position; the decision's
      own table pins 03Q → nhse, which this order gives).
@@ -40,6 +42,12 @@ for line in open(TSV, encoding='utf-8'):
                        preds=[p for p in preds.split(',') if p], succs=[s for s in succs.split(',') if s],
                        legal_end=legal_end or None, name=name)
 codes = sorted(table)
+# 519 unit 2 §1.3 (narrowed after review, 2026-10-12): the rows `child_check` drops from the rivals are
+# the Active RO98 rows named as their current ICB's duplicate, "<ICB> - <code>". The other 58 Active RO98
+# rows (the NHS England commissioning hubs, the legacy CCGs 00W/12A/13P, London's "<borough> - SUB-ICB
+# REPORTING ENTITY" rows) are bodies of their own and stay rivals.
+RELABELS = {c for c, o in table.items()
+            if o['role'] == 'RO98' and o['status'] == 'A' and o['name'].endswith(' - ' + c)}
 
 STOP = set('nhs the and of for in t as trading c o limited ltd plc at with'.split())
 DESC = set('hospital university teaching healthcare health care community mental partnership service ambulance '
@@ -162,7 +170,7 @@ def _gate(code, name, child):
     best, bc = None, None
     for c in codes:
         if c in own_set: continue
-        if child and table[c]['role'] == 'RO98' and table[c]['status'] == 'A':
+        if child and c in RELABELS:
             continue
         k = key(m, [(table[c]['name'], table[c]['role'])])
         if best is None or k > best: best, bc = k, c

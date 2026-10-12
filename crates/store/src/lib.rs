@@ -65,6 +65,8 @@ pub use canonical::{
     RegistryNhsEntry, RegistryNhsHolder, REGISTRY_NHS_LISTING_CAP, REGISTRY_NHS_PPON_HOLDERS, REGISTRY_NHS_REGISTER_HOLDERS,
     NHS_BODY_SCHEME, NhsBodyArgs, NhsBodyCaps, NhsBodyCode, NhsBodyHolder, NhsBodyReport, NhsBodyTail, NhsBodyVerdict,
     NhsCount, NhsNameCheck, NhsOdsCode, NhsOffAllowlistTail, NhsPartySample, NhsRawCount, NhsYearShare,
+    NhsChildCode, NhsOdsParent, NhsBodyChild, NhsChildName, NhsChildOffBody, NhsParentCheck,
+    NHS_BODY_APPLIED_MERGES_SQL, ORGS_WITH_TRIPLE_SQL,
     NHS_BODY_HOLDER_MENTIONS_SQL, NHS_BODY_KEY_OWNERS_SQL, NHS_BODY_MENTION_COUNT_SQL, NHS_BODY_MERGED_HOLDERS_SQL,
     NHS_BODY_PARTY_MENTIONS_SQL,
     NHS_BODY_ALIAS_LEDGER_SQL, NHS_BODY_LEDGER_SQL, NHS_BODY_MERGED_LISTING_CAP, NHS_BODY_RETIRED_RULE, NHS_BODY_RULE,

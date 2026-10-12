@@ -111,6 +111,7 @@ This is `check` (`nhs_ods.rs:275-327`) with two changes:
 1. **Own names and rivals.**
    - Own names stay as they are: P plus P's predecessors (`nhs_ods.rs:289-291`).
    - Rivals become every row except own and except **Active RO98** rows. Since 2026-04 those rows read "<current ICB> - code" and duplicate an RO261 row already in the table.
+     - **Amended after the U2 review (2026-10-12): only the relabel rows are dropped**, the Active RO98 rows whose name is "<ICB> - <own code>" (107 rows). The premise above is false for the other 58 Active RO98 rows: NHS England's commissioning hubs (13Q-14T, 15L, 27T, 32T, 76A, 85J, 97T; 13X "CUMBRIA AND NORTH EAST COMMISSIONING HUB"), the legacy CCGs 00W, 12A and 13P, and London's "<borough> - SUB-ICB REPORTING ENTITY" rows. Dropped, they let `child_check(QHM, "Cumbria and North East Commissioning Hub")` admit an NHS England hub as NENC (`check` answers `better{13X}`). They stay rivals. Over M1's 227 asks no answer changes (`measure/child_check_sim.py`, `nhs_ods_child_check_m1_tally`).
    - Inactive RO98 rows (names of abolished CCGs) stay rivals.
 2. **NHS England refusal (`nhse`).** A name with the token `england` that declares no ICB, trust or CSU role is refused. NHS England's regions (RO209/RO210) are not in the table.
 

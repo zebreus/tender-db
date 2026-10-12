@@ -38,8 +38,30 @@ whose own table row is Inactive. Their names count as the code's own names in th
 Bridgewater under RWW) is a different body still answering, and a predecessor outside
 the table (mostly RO111 directly managed units of 1990s vintage) has no name in it;
 both are dropped and counted.
+
+Issue 519 unit 2 (U1, decision `.scratch/tender-db/519-nhs-digit-codes/unit2-decision.md`
+§2.1-§2.2): the same run also writes crates/ingest/sdk/nhs-ods-children.tsv, the frozen
+DATED CHILD MAP, with its own version (CHILDREN_VERSION). nhs-ods.tsv and VERSION do not
+change: the run exits non-zero, writing nothing, when nhs-ods.tsv would come out
+different from the checked-in bytes (`--rewrite-main` lets a deliberate re-snapshot
+through; bump VERSION with it).
+- Children: every RO98 row of the main table (CCG / sub-ICB location), keeping ORD
+  `Rels.Rel` with id RE5 whose target's primary role is RO261 (the ICB); and the measured
+  RO198 trust sites (MEASURED_RO198), keeping RE6 -> RO197 (the trust). Operational dates
+  (Legal when a relation has no Operational start). One row per (child, parent, merged
+  Operational interval): adjacent intervals with the same parent (end + 1 day == next
+  start) are merged. A child with no such parent gets one `rel -` row.
+- The child records are seeded into raw/ from 519's caches (measure/ods-ro98/, 344 RO98
+  records fetched 2026-10-12, 03K refetched; ods/ for the 25 sites), never from
+  ods-table-codes/ (03K's failed fetch lives there).
+- Exits non-zero on: a fetch status other than 200 or 404; an RO98 record that disagrees
+  with its main-table row (name, status, record class); a parent that is not a row of
+  the main table of the expected role; overlapping intervals for one child; a site whose
+  RE6 target is not RO197; an RE2 -> RO261 relation with no RE5 twin of the same target
+  and dates (RE2 is dropped as a duplicate).
 """
 import collections
+import datetime
 import json
 import os
 import subprocess
@@ -47,6 +69,8 @@ import sys
 import time
 
 VERSION = 'ods-2026-10-11'
+# Issue 519 unit 2: the child map's own version (the RO98 / RO198 records' fetch date).
+CHILDREN_VERSION = 'ods-children-2026-10-12'
 BASE = 'https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations'
 LIMIT = 1000
 LIST_ROLES = ['RO197', 'RO107', 'RO261', 'RO213', 'RO98']
@@ -59,6 +83,13 @@ ROLE_NAMES = {
     'RO172': 'INDEPENDENT SECTOR HEALTHCARE PROVIDER (measured codes only)',
 }
 MEASURED_RO172 = ['DQF']
+# Issue 519 unit 2: the trust-site codes unit 1 measured standing as GB-NHS identity orgs
+# (primary role RO198 in 519-nhs-digit-codes/gbnhs-orgs-classified.json).
+MEASURED_RO198 = [
+    'A2X8Q', 'B4Z5Z', 'P9T5R', 'Q3C0R', 'Q7N9Z', 'R1HKH', 'RBT20', 'RCU51', 'RCX70', 'RGQ67', 'RH8C3', 'RH8H6',
+    'RJ128', 'RJ759', 'RJN71', 'RNZ91', 'RP401', 'RTK01', 'RTR54', 'RW5NC', 'RX301', 'RXX1Y', 'RY4HQ', 'RYY13',
+    'X7V4Q',
+]
 ALLOW_ROLES = {'RO197', 'RO107', 'RO213'}
 LEGALLY_ENDED_ACTIVE = ['QJG', 'QMJ', 'QMM', 'QNQ', 'QXU', 'RNK', 'RYV']
 
@@ -67,10 +98,15 @@ RAW = os.path.join(HERE, 'raw')
 NHS = os.path.dirname(HERE)                                    # .scratch/tender-db/513-nhs
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(NHS)))  # the repo root
 OUT = os.path.join(REPO, 'crates', 'ingest', 'sdk', 'nhs-ods.tsv')
+OUT_CHILDREN = os.path.join(REPO, 'crates', 'ingest', 'sdk', 'nhs-ods-children.tsv')
 LEGACY_LISTS = os.path.join(NHS, 'u1', 'ods-lists')
 LEGACY_ORGS_WRAPPED = os.path.join(NHS, 'u1', 'ods')            # {"code","http","body"}
 LEGACY_ORGS_RAW = os.path.join(NHS, 'u2-panel', 'ods-extra')    # the body itself
+U519 = os.path.join(os.path.dirname(NHS), '519-nhs-digit-codes')
+SEED_RO98 = os.path.join(U519, 'measure', 'ods-ro98')           # {"code","http","body"}
+SEED_RO198 = os.path.join(U519, 'ods')                          # {"code","http","body"}
 OFFLINE = '--offline' in sys.argv[1:]
+REWRITE_MAIN = '--rewrite-main' in sys.argv[1:]
 PAUSE = 0.7
 fetched = 0
 
@@ -207,6 +243,174 @@ def clean(text):
     return text.strip()
 
 
+def child_record(code, role):
+    """Issue 519 unit 2: a child's ORD record body, seeded into raw/ from 519's caches
+    (wrapped {"code","http","body"}) before anything else, then org_record's own path."""
+    path = os.path.join(RAW, f'org_{code}.json')
+    if os.path.exists(path):
+        return load(path)
+    seed = os.path.join(SEED_RO98 if role == 'RO98' else SEED_RO198, f'{code}.json')
+    if os.path.exists(seed):
+        d = load(seed)
+        if d.get('http') == '200' and isinstance(d.get('body'), dict) and 'Organisation' in d['body']:
+            save(path, d['body'])
+            return d['body']
+        if d.get('http') == '404':
+            body = {'errorCode': 404, 'errorText': 'Not found'}
+            save(path, body)
+            return body
+    return org_record(code)
+
+
+def rel_dates(rel, typ):
+    for d in rel.get('Date', []):
+        if d.get('Type') == typ:
+            return d.get('Start') or '', d.get('End') or ''
+    return '', ''
+
+
+def children_table(rows):
+    """Issue 519 unit 2 (decision §2.1-§2.2): write OUT_CHILDREN, the dated child map."""
+    day = datetime.timedelta(days=1)
+    date = lambda s: datetime.date.fromisoformat(s) if s else None
+    errors, notes = [], []
+    dropped = collections.Counter()
+    merged_pairs = 0
+    out = []        # (child, status, rc, role, rel, parent, parent_role, start, end, legal_end, name)
+    children = [(c, 'RO98') for c in sorted(c for c, r in rows.items() if r['role'] == 'RO98')]
+    children += [(c, 'RO198') for c in MEASURED_RO198]
+    http = collections.Counter()
+    for code, role in children:
+        body = child_record(code, role)
+        o = body.get('Organisation')
+        if not o:
+            http['404'] += 1
+            if role != 'RO98':
+                errors.append(f'{code}: a measured site ORD does not know')
+                continue
+            t = rows[code]
+            out.append((code, t['status'][0], t['rc'], role, '-', '', '', '', '', '', t['name']))
+            continue
+        http['200'] += 1
+        prim = primary_role(o)
+        if prim != role:
+            errors.append(f'{code}: record primary role {prim}, expected {role}')
+            continue
+        name = clean(o['Name'])
+        status, rc = o['Status'], o.get('orgRecordClass')
+        if status not in ('Active', 'Inactive'):
+            errors.append(f'{code}: status {status}')
+            continue
+        if role == 'RO98':
+            t = rows[code]
+            if (name, status, rc) != (t['name'], t['status'], t['rc']):
+                errors.append(f'{code}: record {(name, status, rc)} differs from its table row '
+                              f'{(t["name"], t["status"], t["rc"])}')
+        want_rel, want_role = ('RE5', 'RO261') if role == 'RO98' else ('RE6', 'RO197')
+        ivs = collections.defaultdict(list)
+        re2 = []
+        for r in o.get('Rels', {}).get('Rel', []):
+            target_role = r['Target']['PrimaryRoleId']['id']
+            target = r['Target']['OrgId']['extension']
+            if r['id'] != want_rel or target_role != want_role:
+                if role == 'RO198' and r['id'] == 'RE6':
+                    errors.append(f'{code}: RE6 target {target} is {target_role}, not RO197')
+                if r['id'] == 'RE2' and target_role == 'RO261':
+                    re2.append((target, rel_dates(r, 'Operational')))
+                dropped[f'{r["id"]}->{target_role}'] += 1
+                continue
+            start, end = rel_dates(r, 'Operational')
+            legal_start, legal_end = rel_dates(r, 'Legal')
+            if not start:
+                notes.append(f'{code}: {want_rel}->{target} has no Operational start; Legal {legal_start}..{legal_end}')
+                start, end = legal_start, legal_end
+            if not start:
+                errors.append(f'{code}: {want_rel}->{target} has no start date at all')
+                continue
+            if target not in rows:
+                errors.append(f'{code}: parent {target} is not a row of nhs-ods.tsv')
+                continue
+            if rows[target]['role'] != want_role:
+                errors.append(f'{code}: parent {target} is {rows[target]["role"]} in nhs-ods.tsv, not {want_role}')
+                continue
+            ivs[target].append([date(start), date(end), legal_end])
+        # Measured on 2026-10-12: every RE2 -> RO261 relation duplicates an RE5 one exactly.
+        for target, (start, end) in re2:
+            if not any(iv[0] == date(start) and iv[1] == date(end) for iv in ivs.get(target, [])):
+                errors.append(f'{code}: RE2 -> {target} {start}..{end} has no RE5 twin')
+        if not ivs:
+            out.append((code, status[0], rc, role, '-', '', '', '', '', '', name))
+            continue
+        spans = []
+        for parent, lst in ivs.items():
+            lst.sort(key=lambda iv: iv[0])
+            joined = [list(lst[0])]
+            for iv in lst[1:]:
+                last = joined[-1]
+                if last[1] is not None and iv[0] == last[1] + day:
+                    notes.append(f'{code}: {parent} {last[0]}..{last[1]} + {iv[0]}..{iv[1] or ""} merged (adjacent)')
+                    merged_pairs += 1
+                    last[1], last[2] = iv[1], iv[2]
+                else:
+                    joined.append(list(iv))
+            for start, end, legal_end in joined:
+                spans.append((start, end, parent))
+                out.append((code, status[0], rc, role, want_rel, parent, want_role, start.isoformat(),
+                            end.isoformat() if end else '', legal_end, name))
+        far = datetime.date(9999, 12, 31)
+        for i in range(len(spans)):
+            for j in range(i + 1, len(spans)):
+                a, b = spans[i], spans[j]
+                if a[0] <= (b[1] or far) and b[0] <= (a[1] or far):
+                    errors.append(f'{code}: {a[2]} {a[0]}..{a[1]} overlaps {b[2]} {b[0]}..{b[1]}')
+    if errors:
+        for e in errors:
+            print('ERROR', e)
+        sys.exit(f'{len(errors)} child-map errors; {OUT_CHILDREN} not written')
+
+    out.sort(key=lambda r: (r[0], r[7], r[5]))
+    kinds = collections.Counter((r[3], r[4]) for r in out)
+    coded = {r[0] for r in out if r[4] != '-'}
+    no_parent = sorted(r[0] for r in out if r[4] == '-')
+    per_parent = collections.defaultdict(set)
+    for r in out:
+        if r[5]:
+            per_parent[r[5]].add(r[0])
+    head = [
+        '# nhs-ods-children.tsv: the frozen DATED CHILD MAP of issue 519 unit 2 (decision §2.1).',
+        f'# version: {CHILDREN_VERSION}',
+        '# Generated by .scratch/tender-db/513-nhs/u1-table/gen_nhs_ods_table.py; do not edit by hand.',
+        f'# endpoint: {BASE}/<code> (the ORD record of each child)',
+        '# children: every RO98 row of nhs-ods.tsv (CCG / sub-ICB location), and the measured RO198 trust sites',
+        '#   (' + ' '.join(MEASURED_RO198) + ').',
+        '# parents: RO98 keeps Rels.Rel id RE5 whose target is RO261 (the ICB); RO198 keeps RE6 -> RO197 (the trust).',
+        '#   Operational dates (Legal when a relation has none). One row per (child, parent, merged interval):',
+        '#   adjacent intervals with one parent are merged. A child with no such parent has one `rel -` row.',
+        '# dropped relations: ' + '; '.join(f'{k} {v}' for k, v in sorted(dropped.items()))
+        + ' (every RE2 -> RO261 duplicates an RE5 row exactly; the run exits otherwise)',
+        f'# counts: rows {len(out)}; '
+        + '; '.join(f'{role} {rel} {kinds[(role, rel)]}' for role, rel in sorted(kinds))
+        + f'; children with a parent {len(coded)}; without {len(no_parent)}; adjacent intervals merged {merged_pairs}',
+        '# columns: child, child_status (A|I), child record class, child_role (RO98|RO198), rel (RE5|RE6|-), parent,',
+        '#   parent_role, op_start, op_end (empty = open), legal_end (the relation\'s ORD Legal End, empty when none),',
+        '#   child_name',
+    ]
+    lines = ['\t'.join(r) for r in out]
+    tmp = OUT_CHILDREN + '.tmp'
+    with open(tmp, 'w', encoding='utf-8', newline='\n') as f:
+        f.write('\n'.join(head + lines) + '\n')
+    os.replace(tmp, OUT_CHILDREN)
+    print(f'wrote {OUT_CHILDREN}: {len(out)} rows {dict(kinds)}; records {dict(http)}')
+    print(f'dropped relations: {dict(sorted(dropped.items()))}')
+    for n in notes:
+        print('note', n)
+    allow = sorted(p for p in per_parent if rows[p]['allow'])
+    print(f'children per allowlisted parent ({len(allow)} parents):')
+    for p in allow:
+        print(f'  {p}: {" ".join(sorted(per_parent[p]))}')
+    print(f'codes with no parent ({len(no_parent)}): {" ".join(no_parent)}')
+
+
 def main():
     os.makedirs(RAW, exist_ok=True)
     rows = {}
@@ -313,12 +517,25 @@ def main():
                    ','.join(rows[c]['preds']), ','.join(rows[c]['succs']), rows[c]['legal_end'], rows[c]['name']])
         for c in sorted(rows)
     ]
-    tmp = OUT + '.tmp'
-    with open(tmp, 'w', encoding='utf-8', newline='\n') as f:
-        f.write('\n'.join(head + lines) + '\n')
-    os.replace(tmp, OUT)
+    text = '\n'.join(head + lines) + '\n'
+    # Issue 519 unit 2: the main table is frozen under VERSION; the child map is a sibling
+    # file, so this run must reproduce nhs-ods.tsv byte for byte (513's parse, its VERSION
+    # stamp and its rival set stay exactly as they are).
+    if os.path.exists(OUT) and not REWRITE_MAIN:
+        with open(OUT, encoding='utf-8', newline='') as f:
+            standing = f.read()
+        if standing != text:
+            sys.exit(f'{OUT} would change under version {VERSION}; nothing written '
+                     '(a deliberate re-snapshot passes --rewrite-main and bumps VERSION)')
+        print(f'{OUT}: byte-identical (version {VERSION})')
+    else:
+        tmp = OUT + '.tmp'
+        with open(tmp, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(text)
+        os.replace(tmp, OUT)
+        print(f'wrote {OUT}')
+    children_table(rows)
 
-    print(f'wrote {OUT}')
     print(f'network requests this run: {fetched}')
     print(f'rows {len(rows)}; allow {len(allow)}')
     for role in ROLE_NAMES:

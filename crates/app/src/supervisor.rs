@@ -3191,14 +3191,48 @@ fn nhs_body_unwind_summary(r: &store::NhsBodyUnwindReport) -> String {
     )
 }
 
+/// Issue 519 unit 2: the census's child-code clause — the child map's version, the child
+/// codes and holders it listed, their denials, the child tails no listed body anchors, and
+/// S0's `keep_over_applied` (named when nonzero: it must be empty before a cohort posts).
+fn nhs_body_children_clause(r: &store::NhsBodyReport) -> String {
+    let denied: Vec<String> = r.child_denied.iter().map(|(reason, n)| format!("{n} {reason}")).collect();
+    format!(
+        "children (issue 519, map {}): {} child codes, {} child holders ({} mentions), child denials: {}; {} child \
+         tails unanchored, {} with no parent; keep over an applied merge: {}",
+        r.ods_children_version,
+        r.child_codes_seen,
+        r.child_holders,
+        r.child_mentions,
+        if denied.is_empty() { "none".to_owned() } else { denied.join(", ") },
+        r.child_unanchored.len(),
+        r.child_no_parent.len(),
+        if r.keep_over_applied.is_empty() { "none".to_owned() } else { r.keep_over_applied.join(", ") },
+    )
+}
+
 /// Issue 513 U2: the nhs-body census's counts line — the harvest, the bodies, the
 /// structural denials (nonzero, in D6's order) and the verdicts; a cut list or a blind
-/// generic wall is said, never left to the stored body.
+/// generic wall is said, never left to the stored body. Issue 519 unit 2 appends the child
+/// codes' clause ([`nhs_body_children_clause`]) and its denials after 513's.
 fn nhs_body_summary(r: &store::NhsBodyReport, wall_readable: bool) -> String {
-    let denied: Vec<String> = ["gone", "minted-identity", "generic", "consortium", "successor-name", "contested"]
-        .iter()
-        .filter_map(|reason| r.denied.get(reason).filter(|n| **n > 0).map(|n| format!("{n} {reason}")))
-        .collect();
+    let denied: Vec<String> = [
+        "gone",
+        "minted-identity",
+        "generic",
+        "consortium",
+        "successor-name",
+        "contested",
+        "child-triple-shape",
+        "child-carries-ppon",
+        "child-withheld",
+        "child-impure",
+        "child-names-unread",
+        "child-name-refused",
+        "child-name-mixed",
+    ]
+    .iter()
+    .filter_map(|reason| r.denied.get(reason).filter(|n| **n > 0).map(|n| format!("{n} {reason}")))
+    .collect();
     let stale: Vec<String> = r
         .verdict_status
         .iter()
@@ -3227,7 +3261,7 @@ fn nhs_body_summary(r: &store::NhsBodyReport, wall_readable: bool) -> String {
          GB-NHS values counted apart), {} code/PPON pairs; {} codes, \
          {} holders ({} holding two or more codes); {} tails off the allowlist; denied: {}; {} eligible \
          holder entries, {} keys owned outside their body; verdicts: {} admitted, {} not admitted{}, {} keep; \
-         ledger: {} nhs-body rows, {} keys regrown (S4){}{}",
+         ledger: {} nhs-body rows, {} keys regrown (S4); {}{}{}",
         r.ods_version,
         r.fts_notices,
         r.coded_parties,
@@ -3251,6 +3285,7 @@ fn nhs_body_summary(r: &store::NhsBodyReport, wall_readable: bool) -> String {
         r.verdict_keep,
         r.ledger_rows,
         r.nhs_body_regrown.len(),
+        nhs_body_children_clause(r),
         if cut.is_empty() { String::new() } else { format!(" — CUT: {}", cut.join("; ")) },
         if wall_readable {
             ""
@@ -10636,6 +10671,11 @@ impl Supervisor {
                     stoplist_cap: SCAN_STOPLIST_CAP,
                     caps: store::NhsBodyCaps::PRODUCTION,
                     stop: &stop,
+                    // Issue 519 unit 2: the frozen dated child map and its strict name gate.
+                    children: ingest::nhs_ods::census_children,
+                    child: ingest::nhs_ods::census_child,
+                    child_check: ingest::nhs_ods::census_child_check,
+                    children_version: ingest::nhs_ods::CHILDREN_VERSION,
                 };
                 let r = if dry_run {
                     self.db.plan_nhs_bodies(args).await
@@ -18777,6 +18817,92 @@ mod tests {
         assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 7").await, 1);
         let (body, _) = sup.db().latest_report("nhs-body-unwind").await.unwrap().expect("recorded");
         assert!(body.contains("\"code\":\"RTH\"") && body.contains("\"moved\":2"), "{body}");
+        remove_db(&path);
+    }
+
+    /// Issue 519 unit 2: the census through the PRODUCTION child map and strict gate. QHM's
+    /// PPON org (5) holds the body; 13T's identity org (6, `GB-NHS-13T` mints) holds it only
+    /// through the child code, and B2M3M's (7) — a five-character child — is found by its
+    /// identity seek alone, under QWU, which a QWU-coded cluster (8) lists. The stored plan
+    /// lists both children with the real `child_check` answers (13T's NENC name admitted, its
+    /// CSU name refused: `child-name-mixed`), and the summary carries the child clause with
+    /// the map's version. A census moves nothing.
+    #[tokio::test]
+    async fn an_nhs_body_census_lists_child_codes_through_the_production_map() {
+        let path = format!("/tmp/tender-db-sup-nhs-child-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        let org = "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at) VALUES";
+        let notice = "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at) VALUES";
+        let id = "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) VALUES";
+        let mention = "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme) VALUES";
+        let nenc = "North East and North Cumbria Integrated Care Board";
+        let csu = "NORTH OF ENGLAND COMMISSIONING SUPPORT";
+        let cw = "NHS Coventry and Warwickshire Integrated Care Board";
+        for sql in [
+            format!("{org} (5, 'GB', 'national', 'GBPPONPHDQ2359NZMP', '{nenc}', 'north east and north cumbria integrated care board', 0, 0)"),
+            format!("{org} (6, 'GB', 'national', 'GBNHS13T', '{nenc}', 'north east and north cumbria integrated care board', 0, 0)"),
+            format!("{org} (7, 'GB', 'national', 'GBNHSB2M3M', '{cw}', 'nhs coventry and warwickshire integrated care board', 0, 0)"),
+            format!("{org} (8, 'GB', NULL, NULL, '{cw}', 'nhs coventry and warwickshire integrated care board', 1, 0)"),
+            format!("{notice} (14, 'fts', 'ocds-a', 'h', 'fts:ocds-1.1', 1, 'a', 0)"),
+            format!("{notice} (15, 'fts', 'ocds-b', 'h', 'fts:ocds-1.1', 1, 'b', 0)"),
+            format!("{notice} (16, 'fts', 'ocds-c', 'h', 'fts:ocds-1.1', 1, 'c', 0)"),
+            format!("{notice} (17, 'fts', 'ocds-d', 'h', 'fts:ocds-1.1', 1, 'd', 0)"),
+            format!("{notice} (18, 'fts', 'ocds-e', 'h', 'fts:ocds-1.1', 1, 'e', 0)"),
+            format!("{id} (14, 'ORG-A', 'BT-501-Organization-Company', 0, 'GB-PPON', 'GB-PPON-PHDQ-2359-NZMP', 0)"),
+            format!("{id} (14, 'ORG-A', 'BT-501-Organization-Company', 1, 'GB-NHS', 'GB-NHS-QHM', 0)"),
+            format!("{id} (15, 'ORG-B', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-13T', 0)"),
+            format!("{id} (16, 'ORG-C', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-13T', 0)"),
+            format!("{id} (17, 'ORG-D', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-B2M3M', 0)"),
+            format!("{id} (18, 'ORG-E', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-QWU', 0)"),
+            format!("{mention} (14, 'ORG-A', 5, '{nenc}', 'GB', 'GB-PPON-PHDQ-2359-NZMP', 'GB-PPON')"),
+            format!("{mention} (15, 'ORG-B', 6, '{nenc}', 'GB', 'GB-NHS-13T', 'GB-NHS')"),
+            format!("{mention} (16, 'ORG-C', 6, '{csu}', 'GB', 'GB-NHS-13T', 'GB-NHS')"),
+            format!("{mention} (17, 'ORG-D', 7, '{cw}', 'GB', 'GB-NHS-B2M3M', 'GB-NHS')"),
+            format!("{mention} (18, 'ORG-E', 8, '{cw}', 'GB', 'GB-NHS-QWU', 'GB-NHS')"),
+        ] {
+            conn.execute(sql.as_str(), ()).await.unwrap();
+        }
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let msg = sup.run_spec(&nhs_body_job(3, true)).await.expect("the census runs");
+        assert!(
+            msg.contains(&format!("children (issue 519, map {}): 2 child codes, 2 child holders (3 mentions)", ingest::nhs_ods::CHILDREN_VERSION)),
+            "{msg}"
+        );
+        assert!(msg.contains("child denials: 1 child-name-mixed") && msg.contains("1 child-name-mixed"), "{msg}");
+        let (body, _) = sup.db().latest_report("nhs-body-plan").await.unwrap().expect("recorded");
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(v["ods_children_version"], ingest::nhs_ods::CHILDREN_VERSION, "{body}");
+        let code_of = |code: &str| {
+            v["codes"].as_array().unwrap().iter().find(|c| c["code"] == code).cloned().unwrap_or_else(|| panic!("{code}: {body}"))
+        };
+        let qhm = code_of("QHM");
+        assert_eq!(qhm["holder_ids"], serde_json::json!([5, 6]), "{body}");
+        assert_eq!(qhm["children"][0]["code"], "13T", "{body}");
+        assert_eq!(qhm["children"][0]["coded_parties"], 2, "{body}");
+        let nel = &qhm["holders"][1];
+        assert_eq!((nel["via"].as_str(), nel["child_shape"].as_str()), (Some("child"), Some("identity")), "{body}");
+        let checks: Vec<(String, String)> = nel["child_names"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|n| (n["name"].as_str().unwrap().to_owned(), n["check_here"]["verdict"].as_str().unwrap().to_owned()))
+            .collect();
+        assert_eq!(
+            checks,
+            vec![(csu.to_owned(), "role".to_owned()), (nenc.to_owned(), "admitted".to_owned())],
+            "the real strict gate: {body}"
+        );
+        assert_eq!(nel["denied"], serde_json::json!(["child-name-mixed"]), "{body}");
+        let qwu = code_of("QWU");
+        assert_eq!(qwu["holder_ids"], serde_json::json!([7, 8]), "{body}");
+        assert_eq!(qwu["children"][0]["code"], "B2M3M", "{body}");
+        assert_eq!(qwu["holders"][0]["denied"], serde_json::json!([]), "{body}");
+        assert_eq!(qwu["holders"][0]["child_names"][0]["check_here"]["verdict"], "admitted", "{body}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 4);
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_log").await, 0);
         remove_db(&path);
     }
 

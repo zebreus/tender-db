@@ -2279,6 +2279,47 @@ The order is fixed by the decision's stop rules; each step reads before the next
    outranks every merge verdict for the code, so the body could not be folded again while
    it stands. Never roll the binary back past U4 without unwinding first (S6).
 
+### Child codes in the nhs-body census (issue 519 unit 2)
+
+A sub-ICB location (`13T`, `B2M3M`) or a measured trust site (`RBT20`) carries a digit, so its
+GB-NHS code mints an identity org of its own beside its body. Since issue 519 unit 2 the same
+dry request (`{"kind":"match-org-identifiers","rule":"nhs-body"}`) lists those orgs as holders
+of their parent code, through the frozen dated child map `crates/ingest/sdk/nhs-ods-children.tsv`
+(`ods_children_version`; `nhs-ods.tsv` and `ods_version` do not move with it). The job line ends
+with a `children (issue 519, map …)` clause. Read in `nhs-body-plan`:
+
+- per code, `children[]`: each child dated under it with a holder (its `periods_here`,
+  `other_parents`, `holder_ids`, `coded_parties`). A child is listed under EVERY dated parent;
+  the name chooses, never the date.
+- per holder, `child_of`, `child` (it holds the code only through a child, so 519's gates
+  apply), `child_shape` (`identity` / `zero-only`), `child_names[]` (every distinct mention name,
+  `check_here` = the strict gate under the code, the dated counts, the answer under each other
+  parent) and `child_head_check` (an identity holder's head gates only as one of its mention
+  names; a zero-only cluster's head gates). `via` gains `child`.
+- the child denials (`child-triple-shape`, `child-carries-ppon`, `child-withheld`,
+  `child-impure`, `child-names-unread`, `child-name-refused`, `child-name-mixed`) in `denied`
+  and `child_denied`; a verdict naming an identity child into a body with no PPON survivor reads
+  `child-into-anchor`.
+- report-wide: `child_codes_seen`, `child_holders`, `child_mentions`, `child_unanchored` (a
+  child tail whose dated parents are all off the allowlist — U6), `child_no_parent`, and
+  `keep_over_applied`.
+
+S0 before a child cohort is posted (U3): `keep_over_applied` `[]` (hold a holder by leaving it
+out of `members`, never by `keep`; a keep re-posted over the applied cohort itself counts, since a
+re-record never clears the applied stamp); E3/E4 denials 0 (the measured value) or explained; the
+zero-only holders are M5's list; `reviewed_holders` is the WIDENED live set, rehome targets
+included (a rehomed stray's target becomes a child holder of the code it was published under).
+513's applied verdicts read `applied` whatever the widening. The wet run HOLDS any body whose
+verdict names a child member (`held[]` `child-fold-unbuilt`, left in the residual, nothing
+written) until issue 519's U4 ships the identity-loser fold and the exact-triple alias.
+
+Unit 2 shipped U1+U2 only, a dry deploy: the census, the rehomes, the cohort post and the dry run
+(decision §5 steps 1-5) run on it. U4 — the fold, the exact-triple alias, the cohort-scoped unwind
+(`nhs-body-unwind` gains `cohort`) and S4's `identity` kinds — is a separate deploy that must land
+before the capped wet run (step 6). Until it does, a wet run folds no child body, the canary has no
+armed triple (`triple_bound` stays 0, so S5 cannot pass) and the scoped dry unwind of S6 cannot be
+asked.
+
 ### The admin surface beyond jobs (issues 230, 335, 348, 356)
 
 Every route takes the operator secret (`x-admin-secret`); `tender-admin raw <METHOD> <path>`

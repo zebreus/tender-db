@@ -5902,6 +5902,35 @@ impl NhsNameCheck {
     }
 }
 
+/// Issue 519 unit 2: one dated parent of a child code — `ingest::nhs_ods::Parent`, injected
+/// through [`NhsBodyArgs::children`] (store never depends on ingest).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsOdsParent {
+    /// The parent's ODS code (`QMM`, `T6Y0W`, `RBT`).
+    pub code: &'static str,
+    /// `RE5` (a sub-ICB location under its ICB) or `RE6` (a trust site under its trust).
+    pub rel: &'static str,
+    /// The Operational start, `YYYY-MM-DD`.
+    pub start: &'static str,
+    /// The Operational end, inclusive; `None` while open.
+    pub end: Option<&'static str>,
+}
+
+/// Issue 519 unit 2: one CHILD code of the frozen dated map — an RO98 sub-ICB location
+/// ODS dates under an RO261 ICB, or a measured RO198 trust site under its RO197 trust — with
+/// every dated parent it has, allowlisted or not.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsChildCode {
+    pub code: &'static str,
+    /// The child's own ODS name (`NHS NORFOLK AND SUFFOLK ICB - 26A`).
+    pub name: &'static str,
+    /// `RO98` or `RO198`.
+    pub role: &'static str,
+    pub active: bool,
+    /// Oldest first; empty for a code with no RE5 → RO261 (or RE6 → RO197) relation.
+    pub parents: Vec<NhsOdsParent>,
+}
+
 /// Issue 513 U2: the census's caps. Every list is cut at one and says so (`*_truncated`,
 /// `*_capped`), and the cut is logged. [`NhsBodyCaps::PRODUCTION`] in the job; a test
 /// injects small ones to show each cut is honest without building thousands of rows.
@@ -5924,6 +5953,10 @@ pub struct NhsBodyCaps {
     pub key_owners: usize,
     /// Consortium-shaped mention spellings listed per holder (a flag, never a denial).
     pub consortium_names: usize,
+    /// Issue 519 unit 2: distinct published names kept per CHILD holder, each checked by the
+    /// strict gate. Past it the holder is `child-names-unread` (E3: every name must be
+    /// seen); M1 measured at most 12 over the 85 child holders.
+    pub child_names: usize,
 }
 
 impl NhsBodyCaps {
@@ -5936,6 +5969,7 @@ impl NhsBodyCaps {
         samples: 50,
         key_owners: 8,
         consortium_names: 8,
+        child_names: 512,
     };
 }
 
@@ -5972,6 +6006,18 @@ pub struct NhsBodyArgs<'a> {
     pub caps: NhsBodyCaps,
     /// Cooperative stop, polled between notices and between holders.
     pub stop: &'a (dyn Fn() -> bool + Sync),
+    /// Issue 519 unit 2: `nhs_ods::census_children` — every CHILD code the frozen dated map
+    /// dates under a code in ANY period, each with all its dated parents. The census lists
+    /// their holders as holders of the code (decision §2.4).
+    pub children: fn(&str) -> Vec<NhsChildCode>,
+    /// Issue 519 unit 2: `nhs_ods::census_child` — a code's own child row, for a child tail
+    /// published off the allowlist (`child_unanchored`, `child_no_parent`).
+    pub child: fn(&str) -> Option<NhsChildCode>,
+    /// Issue 519 unit 2: `nhs_ods::census_child_check` (parent, name) — the strict gate a
+    /// child holder's every name must pass under the code (E5).
+    pub child_check: fn(&str, &str) -> NhsNameCheck,
+    /// `nhs_ods::CHILDREN_VERSION`, recorded on the report.
+    pub children_version: &'static str,
 }
 
 /// Issue 513 U2: a value and how often it was seen.
@@ -6054,10 +6100,101 @@ pub struct NhsBodyHolder {
     pub holder_of: Vec<&'static str>,
     /// The merge verdicts of two or more codes name it a member.
     pub contested: bool,
+    // ---- Issue 519 unit 2: child holders (decision §1.1, §2.4).
+    /// The child codes, dated under this code in the frozen map, through which it holds the
+    /// code: the child whose identity triple it carries, and each three-character child tail
+    /// a coded party bound it by. Empty for a holder of the code's own tails and PPONs only.
+    pub child_of: Vec<&'static str>,
+    /// It holds the code ONLY through a child (`child_of` non-empty, and no own tail or
+    /// PPON reaches it): 519's gates E2–E5 apply to it, on top of 513's.
+    pub child: bool,
+    /// The child coded GB parties (raw or later-coded) whose mention bound it.
+    pub child_parties: u64,
+    /// E2's shape, for a child holder: `identity` (its own identifier is exactly (GB,
+    /// national, `GBNHS<C>`) for a C of `child_of`), `zero-only` (a provisional,
+    /// identifier-less cluster a child tail that mints nothing — `00P` — bound by name), or
+    /// `None` (neither: denied).
+    pub child_shape: Option<&'static str>,
+    /// E3: its mentions read that carry its own triple — the identifier's literal, under its
+    /// register country. An identity child is pure when this equals `mentions_read`.
+    pub own_triple_mentions: u64,
+    /// E5, for a child holder: every distinct published name of its mentions read, the
+    /// most frequent first — checked under this code and dated against its periods.
+    pub child_names: Vec<NhsChildName>,
+    /// The distinct names outran `caps.child_names` (`child-names-unread`).
+    pub child_names_capped: bool,
+    /// `child_check(<code>, head name)`, for a child holder. A zero-only cluster's head
+    /// gates (its fold arms the head's key); an identity holder's is reported and gates only
+    /// as one of its mention names (measure-first's E5 amendment: 13T's head is the CSU's
+    /// name, written at mint and never refreshed — issue 524).
+    pub child_head_check: Option<NhsNameCheck>,
     /// The structural denials (D6) — no verdict overrides one; empty when it may be a
     /// member: `gone` (the org row no longer stands), `minted-identity`, `generic`,
-    /// `consortium`, `successor-name`, `contested`.
+    /// `consortium`, `successor-name`, `contested`; and for a child holder (issue 519 unit 2,
+    /// §1.1) `child-triple-shape` (E2), `child-carries-ppon` and `child-withheld` (E4),
+    /// `child-impure` and `child-names-unread` (E3), `child-name-refused` (no name passes the
+    /// strict gate) or `child-name-mixed` (some do, some do not: rehome the strays, §1.4).
     pub denied: Vec<&'static str>,
+}
+
+/// Issue 519 unit 2: one distinct published name of a child holder's mentions read, under
+/// one code (E5): its count, when its mentions were published against the code's dated
+/// periods, and the strict gate's answer under the code and under each other dated parent.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsChildName {
+    pub name: String,
+    pub name_norm: String,
+    pub n: u64,
+    /// Its mentions published before the code's first period, inside one of its periods,
+    /// after (outside every period, past the first start), and with no `published_at`.
+    /// Reported only: no date fence (ruling 4) — the NAME chooses the parent.
+    pub before_start: u64,
+    pub in_period: u64,
+    pub after_end: u64,
+    pub undated: u64,
+    /// `child_check(<this code>, name)`.
+    pub check_here: NhsNameCheck,
+    /// `child_check(<parent>, name)` under each of the child's other dated parents.
+    pub check_other_parents: Vec<NhsParentCheck>,
+}
+
+/// Issue 519 unit 2: the strict gate's answer for a name under one dated parent.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsParentCheck {
+    pub parent: &'static str,
+    pub check: NhsNameCheck,
+}
+
+/// Issue 519 unit 2: one child code dated under a listed code, with its holders there.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyChild {
+    pub code: &'static str,
+    /// `RO98` or `RO198`.
+    pub role: &'static str,
+    pub ods_name: &'static str,
+    /// Its periods under this code, oldest first.
+    pub periods_here: Vec<NhsOdsParent>,
+    /// Its other dated parents, in date order.
+    pub other_parents: Vec<&'static str>,
+    /// The orgs holding this code through it, ascending: its identity triple's carriers,
+    /// and for a three-character child the orgs its coded parties bound.
+    pub holder_ids: Vec<i64>,
+    /// GB parties publishing it as a three-character tail, raw or later (a five-character
+    /// child is no tail: its parties are `other_nhs_values`).
+    pub coded_parties: u64,
+}
+
+/// Issue 519 unit 2: a child tail published off the allowlist that no listed body anchors.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsChildOffBody {
+    pub code: String,
+    /// `parents-off-allowlist` (every dated parent is off it: a digit ICB, U6; a 2026
+    /// five-character ICB), `parents-unseen` (an allowlisted parent the census lists no
+    /// holder of), or `no-parent` (a `rel -` child: 14J, 14N).
+    pub why: &'static str,
+    pub parents: Vec<&'static str>,
+    pub parties: u64,
+    pub holders: u64,
 }
 
 /// Issue 513 U2: one published tail that reached a code.
@@ -6118,6 +6255,9 @@ pub struct NhsBodyCode {
     /// Listed holders no structural gate denies: the only possible members.
     pub eligible: Vec<i64>,
     pub verdict: Option<NhsBodyVerdict>,
+    /// Issue 519 unit 2: the child codes dated under this code with a holder or a coded
+    /// party, in code order.
+    pub children: Vec<NhsBodyChild>,
 }
 
 /// Issue 513 U2: one three-character tail off the allowlist (the `not-allowlisted`
@@ -6257,6 +6397,26 @@ pub struct NhsBodyReport {
     /// had committed — the folding stopped there, and the failed body and every later one
     /// are in `residual_codes`.
     pub fold_error: Option<String>,
+    // ---- Issue 519 unit 2: child codes (decision §2.4).
+    /// The child map's version.
+    pub ods_children_version: &'static str,
+    /// (code, child) pairs listed with a holder or a coded party; a child dated under two
+    /// listed codes counts under each.
+    pub child_codes_seen: u64,
+    /// Distinct orgs holding some code only through a child, and their mentions.
+    pub child_holders: u64,
+    pub child_mentions: u64,
+    /// The denials over the listed child-holder entries, per reason (513's included).
+    pub child_denied: std::collections::BTreeMap<&'static str, u64>,
+    /// Child tails published off the allowlist that no listed body anchors, the most
+    /// published first: 00X under QE1, 10Q under QU9 (U6 territory)…
+    pub child_unanchored: Vec<NhsChildOffBody>,
+    /// …and those the map gives no parent at all (14J, 14N).
+    pub child_no_parent: Vec<NhsChildOffBody>,
+    /// Codes whose standing verdict is a `keep` over an applied merge. A keep drops every
+    /// alias row of its code (one lineage per body), so holds are made by leaving a holder
+    /// out of `members`, never by `keep`: S0 requires this empty.
+    pub keep_over_applied: Vec<&'static str>,
 }
 
 /// Issue 513 U2: one notice's party mentions, with the name and the raw identifier the
@@ -6277,8 +6437,20 @@ pub const NHS_BODY_MENTION_COUNT_SQL: &str = "SELECT COUNT(*) FROM organization_
 /// `organization_mentions_org` that [`ALTID_ALIAS_OWNER_MENTION_NAMES_SQL`] makes, so no
 /// sorter reads every mention of a large holder before the LIMIT. Bound to the cap plus
 /// one, so a cut is told apart from a holder with exactly the cap.
-pub const NHS_BODY_HOLDER_MENTIONS_SQL: &str = "SELECT notice_id, name, raw_identifier FROM organization_mentions \
-     WHERE organization_id = ? ORDER BY rowid DESC LIMIT ?";
+/// Issue 519 unit 2: `country` too, so a child's purity (E3) reads each mention's triple.
+pub const NHS_BODY_HOLDER_MENTIONS_SQL: &str = "SELECT notice_id, name, raw_identifier, country \
+     FROM organization_mentions WHERE organization_id = ? ORDER BY rowid DESC LIMIT ?";
+
+/// Issue 519 unit 2: whether a code carries an APPLIED merge verdict in any cohort — the
+/// `keep_over_applied` probe, a seek on the verdicts' primary key `(country, scheme, key,
+/// cohort)`. The applied stamp alone marks one, whatever the row's `action` reads now: only
+/// the fold stamps an nhs-body row, and a re-record never clears the stamp, so a `keep`
+/// re-posted IN PLACE over the applied cohort reads `action = 'keep'` beside the fold's
+/// stamp — the very keep that drops the code's alias rows (the unit 2 review). An unwound
+/// body's verdict stays applied too, so a keep over it is listed as well: conservative,
+/// and S0 wants none either way.
+pub const NHS_BODY_APPLIED_MERGES_SQL: &str = "SELECT COUNT(*) FROM org_merge_verdicts \
+     WHERE country = 'GB' AND scheme = ? AND key = ? AND applied_at IS NOT NULL";
 
 /// Issue 513 U2: the standing identifier-NULL rows on one 234 key — the resolver's own
 /// probe (`organizations_name_country`), wider than its `LIMIT 1`.
@@ -6372,8 +6544,9 @@ pub struct NhsBodyRegrown {
 
 /// Issue 513 U4: a body the wet run would not fold, and why: `survivor-ambiguous` (two or
 /// more PPON members, and not exactly one of them paired with the code),
-/// `loser-ppon-unaliased` (a PPON org among the losers, which no alias re-binds yet) or
-/// `members-unlisted`.
+/// `loser-ppon-unaliased` (a PPON org among the losers, which no alias re-binds yet),
+/// `members-unlisted`, or `child-fold-unbuilt` (issue 519 unit 2: a member held through a
+/// child code, whose fold U4 builds).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct NhsBodyHeld {
     pub code: &'static str,
@@ -7649,6 +7822,17 @@ struct NhsOrgFacts {
     /// Notice year (`None`: no `published_at`) → (coded mentions, mentions), over the
     /// mentions read.
     years: std::collections::BTreeMap<Option<i64>, (u64, u64)>,
+    /// Issue 519 unit 2: its merged identifiers' triples (country, kind, literal) — a child
+    /// holder's PPON test (E4).
+    merged_triples: Vec<(Option<String>, Option<String>, String)>,
+    /// Issue 519 unit 2: the mentions read whose raw identifier is the org's own literal
+    /// (uppercase alphanumerics) under its register country — E3's purity.
+    own_triple: u64,
+    /// Issue 519 unit 2, read for a CHILD holder only: each distinct published name of the
+    /// mentions read with its mentions' `published_at`, the most frequent first, at most
+    /// the child-names cap (`names_seen_capped` when cut).
+    names_seen: Vec<(String, Vec<Option<i64>>)>,
+    names_seen_capped: bool,
 }
 
 /// Issue 513 U2: one holder's facts, every read bounded — a primary-key seek, a seek on
@@ -7656,6 +7840,10 @@ struct NhsOrgFacts {
 /// `organization_mentions_org`, its newest `caps.mentions` mentions through that index
 /// ([`NHS_BODY_HOLDER_MENTIONS_SQL`]), a primary-key seek per distinct notice among them
 /// (cached across holders), and the 234 key's probe.
+///
+/// Issue 519 unit 2: `child_names` (the cap, for a child holder only) also keeps every
+/// distinct published name with its mentions' instants, which a child's strict gate (E5)
+/// and the dated counts read; every holder counts its own-triple mentions (E3).
 async fn nhs_org_facts(
     conn: &Connection,
     org: i64,
@@ -7663,6 +7851,7 @@ async fn nhs_org_facts(
     tail: fn(&str) -> Option<&str>,
     consortium: fn(&str) -> bool,
     published: &mut std::collections::HashMap<i64, Option<i64>>,
+    child_names: Option<usize>,
 ) -> turso::Result<NhsOrgFacts> {
     use std::collections::HashMap;
     let mut f = NhsOrgFacts::default();
@@ -7687,6 +7876,7 @@ async fn nhs_org_facts(
     let mut rows = conn.query(ALTID_MERGED_IDS_OF_ORG_SQL, (Value::Integer(org),)).await?;
     while let Some(row) = rows.next().await? {
         f.merged.push(text(&row, 2));
+        f.merged_triples.push((opt_text_of(&row, 0), opt_text_of(&row, 1), text(&row, 2)));
     }
     drop(rows);
     f.merged.sort();
@@ -7702,14 +7892,14 @@ async fn nhs_org_facts(
     // Collected first and the cursor dropped, so the notice seeks below are not
     // interleaved with an open statement on the same connection.
     let limit = i64::try_from(caps.mentions.saturating_add(1)).unwrap_or(i64::MAX);
-    let mut read: Vec<(i64, Option<String>, Option<String>)> = Vec::new();
+    let mut read: Vec<(i64, Option<String>, Option<String>, Option<String>)> = Vec::new();
     let mut rows = conn.query(NHS_BODY_HOLDER_MENTIONS_SQL, (Value::Integer(org), Value::Integer(limit))).await?;
     while let Some(row) = rows.next().await? {
         if read.len() == caps.mentions {
             f.capped = true;
             break;
         }
-        read.push((int(&row, 0), opt_text_of(&row, 1), opt_text_of(&row, 2)));
+        read.push((int(&row, 0), opt_text_of(&row, 1), opt_text_of(&row, 2), opt_text_of(&row, 3)));
     }
     drop(rows);
     f.read = read.len() as u64;
@@ -7717,29 +7907,50 @@ async fn nhs_org_facts(
     let mut raws: HashMap<Option<String>, u64> = HashMap::new();
     let mut norms: HashMap<String, u64> = HashMap::new();
     let mut spelling: HashMap<String, String> = HashMap::new();
-    for (notice, name, raw) in read {
-        let coded = raw.as_deref().is_some_and(|r| {
-            let value: String = r.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
-            match tail(&value) {
-                Some(t) => {
-                    f.mention_tails.insert(t.to_owned());
-                    true
-                }
-                None => false,
+    // Issue 519 unit 2: a child holder's distinct names, with their mentions' instants.
+    let mut seen: HashMap<String, Vec<Option<i64>>> = HashMap::new();
+    for (notice, name, raw, country) in read {
+        let value: Option<String> = raw
+            .as_deref()
+            .map(|r| r.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect());
+        let coded = value.as_deref().is_some_and(|value| match tail(value) {
+            Some(t) => {
+                f.mention_tails.insert(t.to_owned());
+                true
             }
+            None => false,
         });
+        if f.identifier.is_some()
+            && value == f.identifier
+            && country.as_deref().map(register_jurisdiction) == f.country.as_deref()
+        {
+            f.own_triple += 1;
+        }
         *raws.entry(raw).or_default() += 1;
+        let at = notice_published(conn, notice, published).await?;
         if let Some(name) = name {
             let norm = org_name_norm(&name);
+            if child_names.is_some() && !name.trim().is_empty() {
+                seen.entry(name.clone()).or_default().push(at);
+            }
             if !norm.is_empty() {
                 *norms.entry(norm.clone()).or_default() += 1;
                 spelling.entry(norm).or_insert(name);
             }
         }
-        let year = notice_published(conn, notice, published).await?.map(unix_year);
+        let year = at.map(unix_year);
         let y = f.years.entry(year).or_default();
         y.0 += u64::from(coded);
         y.1 += 1;
+    }
+    if let Some(cap) = child_names {
+        let mut names: Vec<(String, Vec<Option<i64>>)> = seen.into_iter().collect();
+        names.sort_by(|a, b| b.1.len().cmp(&a.1.len()).then_with(|| a.0.cmp(&b.0)));
+        if names.len() > cap {
+            f.names_seen_capped = true;
+            names.truncate(cap);
+        }
+        f.names_seen = names;
     }
     // Only the head name denies (D6): one stray consortium-shaped spelling among 4,096
     // mentions would otherwise bar the body's PPON org, unseen past the 64 names kept.
@@ -7775,6 +7986,231 @@ async fn nhs_org_facts(
         }
     }
     Ok(f)
+}
+
+/// Issue 513 U2: how a holder holds its code, the paths joined by `+` in this order:
+/// `party`, `party-later`, `ppon`; and (issue 519 unit 2) `child` last — `child` alone for
+/// an org held through a child code only, `ppon+child` for an own holder whose mentions
+/// also publish a child tail. An org reached by none reads `ppon`, as before.
+fn nhs_body_via(party: bool, later: bool, ppon: bool, child: bool) -> &'static str {
+    match (party, later, ppon, child) {
+        (true, true, true, false) => "party+party-later+ppon",
+        (true, true, false, false) => "party+party-later",
+        (true, false, true, false) => "party+ppon",
+        (true, false, false, false) => "party",
+        (false, true, true, false) => "party-later+ppon",
+        (false, true, false, false) => "party-later",
+        (false, false, _, false) => "ppon",
+        (true, true, true, true) => "party+party-later+ppon+child",
+        (true, true, false, true) => "party+party-later+child",
+        (true, false, true, true) => "party+ppon+child",
+        (true, false, false, true) => "party+child",
+        (false, true, true, true) => "party-later+ppon+child",
+        (false, true, false, true) => "party-later+child",
+        (false, false, true, true) => "ppon+child",
+        (false, false, false, true) => "child",
+    }
+}
+
+/// Issue 519 unit 2: one code's child pass ([`nhs_child_pass`]) — its children with a
+/// holder or a coded party (the child, its holders ascending, its coded parties), and per
+/// holder org the child codes it holds the code through and the child coded parties that
+/// bound it.
+#[derive(Default)]
+struct NhsChildPass {
+    children: Vec<(NhsChildCode, Vec<i64>, u64)>,
+    orgs: std::collections::BTreeMap<i64, (BTreeSet<&'static str>, u64)>,
+}
+
+/// Issue 519 unit 2: the census's child pass over the listed codes (decision §2.4): per
+/// code, every child the map dates under it in any period — its identity triple's
+/// carriers (one seek on `organizations_identifier_id` per child, a child under two codes
+/// sought once), and for a three-character child the orgs its coded and later-coded GB
+/// parties bound (`coded_off`, the harvest's off-allowlist tails). A withheld carrier is
+/// listed and denied (`child-withheld`), never dropped. `None` when the stop fired.
+async fn nhs_child_pass(
+    conn: &Connection,
+    codes: &[&'static str],
+    children: fn(&str) -> Vec<NhsChildCode>,
+    coded_off: &std::collections::HashMap<&str, (u64, std::collections::BTreeMap<i64, u64>)>,
+    stop: &(dyn Fn() -> bool + Sync),
+) -> turso::Result<Option<std::collections::BTreeMap<&'static str, NhsChildPass>>> {
+    use std::collections::{BTreeMap, HashMap};
+    let mut out: BTreeMap<&'static str, NhsChildPass> = BTreeMap::new();
+    let mut sought: HashMap<&'static str, Vec<i64>> = HashMap::new();
+    for &code in codes {
+        if stop() {
+            return Ok(None);
+        }
+        let mut pass = NhsChildPass::default();
+        for child in children(code) {
+            let identity = match sought.get(child.code) {
+                Some(found) => found.clone(),
+                None => {
+                    let found = orgs_with_triple(conn, &format!("GBNHS{}", child.code), "national", "GB").await?;
+                    sought.insert(child.code, found.clone());
+                    found
+                }
+            };
+            let mut holders: BTreeSet<i64> = identity.iter().copied().collect();
+            for &org in &identity {
+                pass.orgs.entry(org).or_default().0.insert(child.code);
+            }
+            let mut parties = 0;
+            if let Some((n, bound)) = coded_off.get(child.code) {
+                parties = *n;
+                for (&org, &n) in bound {
+                    holders.insert(org);
+                    let e = pass.orgs.entry(org).or_default();
+                    e.0.insert(child.code);
+                    e.1 += n;
+                }
+            }
+            if !holders.is_empty() || parties > 0 {
+                pass.children.push((child, holders.into_iter().collect(), parties));
+            }
+        }
+        if !pass.children.is_empty() {
+            out.insert(code, pass);
+        }
+    }
+    Ok(Some(out))
+}
+
+/// Issue 519 unit 2: what one child holder's gates found under one code ([`nhs_child_gates`]).
+struct NhsChildGates {
+    /// E2: `identity`, `zero-only`, or neither.
+    shape: Option<&'static str>,
+    /// E4: it carries a PPON, its own or a merged one.
+    ppon: bool,
+    /// Its names, checked and dated (E5).
+    names: Vec<NhsChildName>,
+    /// `child_check` of its head name.
+    head: NhsNameCheck,
+    /// The E3 and E5 denials, in that order: `child-impure`, `child-names-unread`, then
+    /// `child-name-refused` or `child-name-mixed`.
+    denied: Vec<&'static str>,
+}
+
+/// Issue 519 unit 2: the first unix second of an ODS day (`YYYY-MM-DD`).
+fn ods_day_unix(day: &str) -> Option<i64> {
+    legal_end_unix(day).map(|next| next - 86_400)
+}
+
+/// Issue 519 unit 2: a child code that mints nothing — letters only, or its only digits are
+/// 0 (`00P`, `00N`): its parties bind by name, so its holders are provisional clusters.
+fn nhs_child_mints_nothing(code: &str) -> bool {
+    code.bytes().all(|b| !b.is_ascii_digit() || b == b'0')
+}
+
+/// Issue 519 unit 2 (decision §1.1; measure-first's E5 amendment): a child holder's gates
+/// under `code`, from its facts — the holder's denials beyond 513's.
+/// - **E2** shape: `identity` when its own identifier is exactly (GB, national,
+///   `GBNHS<C>`) for a child C it holds the code through; `zero-only` for a provisional,
+///   identifier-less cluster a child tail that mints nothing bound by name.
+/// - **E4**: a PPON, own or merged (the caller adds `child-withheld`).
+/// - **E3**: an identity holder's every mention read carries its own triple
+///   (`child-impure`), and nothing was left unread (`child-names-unread`: the mention read
+///   or the distinct names were capped; E5 is then not judged).
+/// - **E5**: `child_check(code, name)` admits every distinct mention name. An identity
+///   holder's head name is reported and gates only as one of those names (or alone, when no
+///   mention has a name): 13T's head is the CSU's, stale since its mint, and an identity
+///   loser's keys are empty, so a head no mention carries keys nothing. A zero-only
+///   cluster's head always gates: its fold arms the head's key. None admitted is
+///   `child-name-refused`; some is `child-name-mixed` (rehome the strays first, §1.4).
+fn nhs_child_gates(
+    code: &'static str,
+    f: &NhsOrgFacts,
+    child_of: &[&'static str],
+    rows: &[(NhsChildCode, Vec<i64>, u64)],
+    key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+    child_check: fn(&str, &str) -> NhsNameCheck,
+) -> NhsChildGates {
+    let identity = f.identifier.as_deref().is_some_and(|literal| {
+        f.country.as_deref() == Some("GB")
+            && f.identifier_kind.as_deref().unwrap_or("national") == "national"
+            && child_of.iter().any(|c| literal.strip_prefix("GBNHS") == Some(*c))
+    });
+    let zero_only = f.provisional && f.identifier.is_none() && child_of.iter().any(|c| nhs_child_mints_nothing(c));
+    let shape = if identity {
+        Some("identity")
+    } else if zero_only {
+        Some("zero-only")
+    } else {
+        None
+    };
+    let is_ppon = |country: Option<&str>, kind: Option<&str>, literal: &str| {
+        matches!(key(country, kind.unwrap_or("national"), literal), Some(("GB:ppon", _, _, _)))
+    };
+    let ppon = f.identifier.as_deref().is_some_and(|l| is_ppon(f.country.as_deref(), f.identifier_kind.as_deref(), l))
+        || f.merged_triples.iter().any(|(c, k, l)| is_ppon(c.as_deref(), k.as_deref(), l));
+    // The child rows it holds the code through: their periods under `code`, and every
+    // other parent they are dated under (in date order, once each).
+    let mine: Vec<&NhsChildCode> =
+        rows.iter().map(|(c, _, _)| c).filter(|c| child_of.contains(&c.code)).collect();
+    let mut periods: Vec<(i64, Option<i64>)> = Vec::new();
+    let mut others: Vec<&'static str> = Vec::new();
+    for c in &mine {
+        for p in &c.parents {
+            if p.code == code {
+                if let Some(start) = ods_day_unix(p.start) {
+                    periods.push((start, p.end.and_then(legal_end_unix)));
+                }
+            } else if !others.contains(&p.code) {
+                others.push(p.code);
+            }
+        }
+    }
+    let first_start = periods.iter().map(|(s, _)| *s).min();
+    let names: Vec<NhsChildName> = f
+        .names_seen
+        .iter()
+        .map(|(name, instants)| {
+            let (mut before_start, mut in_period, mut after_end, mut undated) = (0, 0, 0, 0);
+            for at in instants {
+                match at {
+                    None => undated += 1,
+                    Some(at) if periods.iter().any(|(s, e)| at >= s && e.is_none_or(|e| *at < e)) => in_period += 1,
+                    Some(at) if first_start.is_some_and(|s| *at < s) => before_start += 1,
+                    Some(_) => after_end += 1,
+                }
+            }
+            NhsChildName {
+                name: name.clone(),
+                name_norm: org_name_norm(name),
+                n: instants.len() as u64,
+                before_start,
+                in_period,
+                after_end,
+                undated,
+                check_here: child_check(code, name),
+                check_other_parents: others
+                    .iter()
+                    .map(|&parent| NhsParentCheck { parent, check: child_check(parent, name) })
+                    .collect(),
+            }
+        })
+        .collect();
+    let head = child_check(code, &f.name);
+    let mut denied = Vec::new();
+    if identity && f.own_triple < f.read {
+        denied.push("child-impure");
+    }
+    if f.capped || f.names_seen_capped {
+        denied.push("child-names-unread");
+    } else {
+        let mut gating: Vec<bool> = names.iter().map(|n| n.check_here.admitted()).collect();
+        if zero_only || gating.is_empty() {
+            gating.push(head.admitted());
+        }
+        let admitted = gating.iter().filter(|a| **a).count();
+        if admitted == 0 {
+            denied.push("child-name-refused");
+        } else if admitted < gating.len() {
+            denied.push("child-name-mixed");
+        }
+    }
+    NhsChildGates { shape, ppon, names, head, denied }
 }
 
 /// Issue 513 U2: a notice's `published_at` (unix seconds, UTC), one primary-key seek,
@@ -8538,6 +8974,11 @@ pub struct IdentifierVerdictReport {
     pub changed: u64,
 }
 
+/// [`orgs_with_triple`]'s seek (issue 519 unit 2 named it, for the census's plan guard: a
+/// five-character child code is seen only through it).
+pub const ORGS_WITH_TRIPLE_SQL: &str = "SELECT id FROM organizations WHERE identifier = ? \
+     AND COALESCE(identifier_kind, '') = ? AND COALESCE(country, '') = ?";
+
 /// The standing orgs that carry `identifier` under `(kind, country)` exactly,
 /// `''` matching NULL — a seek on `organizations_identifier_id`.
 async fn orgs_with_triple(
@@ -8546,13 +8987,7 @@ async fn orgs_with_triple(
     kind: &str,
     country: &str,
 ) -> turso::Result<Vec<i64>> {
-    let mut rows = conn
-        .query(
-            "SELECT id FROM organizations WHERE identifier = ? \
-                AND COALESCE(identifier_kind, '') = ? AND COALESCE(country, '') = ?",
-            (t(identifier), t(kind), t(country)),
-        )
-        .await?;
+    let mut rows = conn.query(ORGS_WITH_TRIPLE_SQL, (t(identifier), t(kind), t(country))).await?;
     let mut out = Vec::new();
     while let Some(row) = rows.next().await? {
         out.push(int(&row, 0));
@@ -26300,7 +26735,11 @@ impl Db {
     async fn plan_nhs_bodies_on(&self, conn: &Connection, args: &NhsBodyArgs<'_>) -> turso::Result<NhsBodyReport> {
         use std::collections::{BTreeMap, HashMap, HashSet};
         let caps = args.caps;
-        let mut report = NhsBodyReport { ods_version: args.ods_version, ..NhsBodyReport::default() };
+        let mut report = NhsBodyReport {
+            ods_version: args.ods_version,
+            ods_children_version: args.children_version,
+            ..NhsBodyReport::default()
+        };
 
         // ---- 1. HARVEST.
         let mut notices: Vec<i64> = Vec::new();
@@ -26531,13 +26970,17 @@ impl Db {
         }
 
         /// One code's holders before their details: the coded and later-coded parties each
-        /// org's mention bound, and the paired PPON keys each org holds.
+        /// org's mention bound, and the paired PPON keys each org holds; and (issue 519 unit
+        /// 2) the child codes each org holds it through, with the child coded parties that
+        /// bound it.
         #[derive(Default)]
         struct Holding {
             party: BTreeMap<i64, u64>,
             later: BTreeMap<i64, u64>,
             ppon: BTreeMap<i64, BTreeSet<String>>,
             ppons: BTreeSet<String>,
+            child: BTreeMap<i64, BTreeSet<&'static str>>,
+            child_parties: BTreeMap<i64, u64>,
         }
         let mut holding: BTreeMap<&'static str, Holding> = BTreeMap::new();
         let mut holder_of: BTreeMap<i64, Vec<&'static str>> = BTreeMap::new();
@@ -26563,9 +27006,51 @@ impl Db {
                     }
                 }
             }
-            let orgs: BTreeSet<i64> = h.party.keys().chain(h.later.keys()).chain(h.ppon.keys()).copied().collect();
+        }
+
+        // ---- 2b. Issue 519 unit 2: the CHILD pass (decision §2.4). Each child code the frozen
+        // map dates under a code, in ANY period (the name chooses among a child's parents,
+        // never the date): the orgs carrying its identity triple (`GBNHS<C>`, national, GB —
+        // the only way a five-character child is seen, `nhs_tail` taking three characters),
+        // and for a three-character child the orgs its coded and later-coded GB parties bound
+        // (still listed off the allowlist too, as 513 lists them). Both join the code's
+        // holders, so a verdict's `reviewed_holders` is held to the widened set. Safe for 513:
+        // `applied` is decided before members-exact, and every allowlisted ICB is applied.
+        let coded_off: HashMap<&str, (u64, BTreeMap<i64, u64>)> = off
+            .iter()
+            .map(|tail| {
+                let seen = tails.get(*tail);
+                let mut orgs: BTreeMap<i64, u64> = BTreeMap::new();
+                for (org, n) in seen.into_iter().flat_map(|s| s.bound.iter().chain(s.later.iter())) {
+                    *orgs.entry(*org).or_default() += n;
+                }
+                (tail.as_str(), (seen.map_or(0, |s| s.parties + s.later_parties), orgs))
+            })
+            .collect();
+        let listed: Vec<&'static str> = by_code.keys().copied().collect();
+        let pass = nhs_child_pass(conn, &listed, args.children, &coded_off, args.stop);
+        let Some(child_pass) = Box::pin(pass).await? else {
+            report.stopped = true;
+            return Ok(report);
+        };
+        for (code, pass) in &child_pass {
+            let h = holding.entry(code).or_default();
+            for (org, (children, parties)) in &pass.orgs {
+                h.child.entry(*org).or_default().extend(children.iter().copied());
+                *h.child_parties.entry(*org).or_default() += parties;
+            }
+        }
+        // The orgs that hold some code ONLY through a child: their facts keep every name.
+        let mut child_orgs: HashSet<i64> = HashSet::new();
+        for (&code, h) in &holding {
+            let orgs: BTreeSet<i64> =
+                h.party.keys().chain(h.later.keys()).chain(h.ppon.keys()).chain(h.child.keys()).copied().collect();
             for org in orgs {
                 holder_of.entry(org).or_default().push(code);
+                let own = h.party.contains_key(&org) || h.later.contains_key(&org) || h.ppon.contains_key(&org);
+                if !own && h.child.contains_key(&org) {
+                    child_orgs.insert(org);
+                }
             }
         }
         report.holders = holder_of.len() as u64;
@@ -26592,6 +27077,8 @@ impl Db {
 
         // ---- 3/4. HOLDERS, with their details, and the structural denials.
         let under_review = Self::review_keep_set_but(&conn, Some(NHS_BODY_SCHEME)).await?;
+        // Issue 519 unit 2: each child holder once, with its mentions (`child_holders`).
+        let mut child_counted: HashMap<i64, u64> = HashMap::new();
         let mut published: HashMap<i64, Option<i64>> = HashMap::new();
         let mut facts: HashMap<i64, NhsOrgFacts> = HashMap::new();
         let mut generic: HashMap<String, bool> = HashMap::new();
@@ -26614,10 +27101,14 @@ impl Db {
                 .keys()
                 .chain(h.later.keys())
                 .chain(h.ppon.keys())
+                .chain(h.child.keys())
                 .copied()
                 .collect::<BTreeSet<_>>()
                 .into_iter()
                 .collect();
+            // Issue 519 unit 2: this code's children with a holder or a coded party.
+            let code_children: &[(NhsChildCode, Vec<i64>, u64)] =
+                child_pass.get(code).map_or(&[], |p| p.children.as_slice());
             let mut entry = NhsBodyCode {
                 code,
                 ods: ods.clone(),
@@ -26639,7 +27130,28 @@ impl Db {
                 holders_truncated: false,
                 eligible: Vec::new(),
                 verdict: None,
+                children: code_children
+                    .iter()
+                    .map(|(c, holders, parties)| {
+                        let mut other_parents: Vec<&'static str> = Vec::new();
+                        for p in c.parents.iter().filter(|p| p.code != code) {
+                            if !other_parents.contains(&p.code) {
+                                other_parents.push(p.code);
+                            }
+                        }
+                        NhsBodyChild {
+                            code: c.code,
+                            role: c.role,
+                            ods_name: c.name,
+                            periods_here: c.parents.iter().filter(|p| p.code == code).cloned().collect(),
+                            other_parents,
+                            holder_ids: holders.clone(),
+                            coded_parties: *parties,
+                        }
+                    })
+                    .collect(),
             };
+            report.child_codes_seen += entry.children.len() as u64;
             // The census U1 promised: a code still published after its legal end.
             if let Some(end) = ods.legal_end.and_then(legal_end_unix) {
                 let mut after = BTreeSet::new();
@@ -26663,7 +27175,8 @@ impl Db {
                 }
                 report.holders_listed += 1;
                 if !facts.contains_key(&org) {
-                    let f = nhs_org_facts(&conn, org, &caps, args.tail, args.consortium, &mut published);
+                    let child_names = child_orgs.contains(&org).then_some(caps.child_names);
+                    let f = nhs_org_facts(&conn, org, &caps, args.tail, args.consortium, &mut published, child_names);
                     let f = Box::pin(f).await?;
                     facts.insert(org, f);
                 }
@@ -26708,6 +27221,16 @@ impl Db {
                     .take(caps.key_owners)
                     .collect();
                 let is_contested = contested.contains(&org);
+                let party = h.party.get(&org).copied();
+                let later = h.later.get(&org).copied();
+                let ppons: Vec<String> = h.ppon.get(&org).map(|k| k.iter().cloned().collect()).unwrap_or_default();
+                // Issue 519 unit 2: the child codes it holds this code through, and whether
+                // ONLY through them — then 519's gates apply (§1.1).
+                let child_of: Vec<&'static str> =
+                    h.child.get(&org).map(|c| c.iter().copied().collect()).unwrap_or_default();
+                let is_child = !child_of.is_empty() && party.is_none() && later.is_none() && ppons.is_empty();
+                let gates = (is_child && f.stands)
+                    .then(|| nhs_child_gates(code, f, &child_of, code_children, args.key, args.child_check));
                 let mut denied: Vec<&'static str> = Vec::new();
                 // Gone since the harvest (a concurrent merge or sweep: the reader is no
                 // snapshot across statements). Its facts are empty, so no other gate can
@@ -26715,7 +27238,9 @@ impl Db {
                 if !f.stands {
                     denied.push("gone");
                 }
-                if minted_identity {
+                // E2: 513's denial is lifted for exactly the child's own triple.
+                let minted_denied = minted_identity && gates.as_ref().is_none_or(|g| g.shape != Some("identity"));
+                if minted_denied {
                     denied.push("minted-identity");
                 }
                 if is_generic {
@@ -26730,8 +27255,26 @@ impl Db {
                 if is_contested {
                     denied.push("contested");
                 }
+                if let Some(g) = &gates {
+                    if g.shape.is_none() && !minted_denied {
+                        denied.push("child-triple-shape");
+                    }
+                    if g.ppon {
+                        denied.push("child-carries-ppon");
+                    }
+                    if withheld.contains(&org) {
+                        denied.push("child-withheld");
+                    }
+                    denied.extend(g.denied.iter().copied());
+                }
                 for reason in &denied {
                     *report.denied.entry(reason).or_default() += 1;
+                    if is_child {
+                        *report.child_denied.entry(reason).or_default() += 1;
+                    }
+                }
+                if is_child {
+                    child_counted.insert(org, f.mentions);
                 }
                 if denied.is_empty() {
                     report.eligible_holders += 1;
@@ -26740,20 +27283,13 @@ impl Db {
                 if !key_owners_elsewhere.is_empty() {
                     report.key_owned_elsewhere += 1;
                 }
-                let party = h.party.get(&org).copied();
-                let later = h.later.get(&org).copied();
-                let ppons: Vec<String> = h.ppon.get(&org).map(|k| k.iter().cloned().collect()).unwrap_or_default();
+                let (child_shape, child_names, child_head_check) = match gates {
+                    Some(g) => (g.shape, g.names, Some(g.head)),
+                    None => (None, Vec::new(), None),
+                };
                 entry.holders.push(NhsBodyHolder {
                     org_id: org,
-                    via: match (party.is_some(), later.is_some(), !ppons.is_empty()) {
-                        (true, true, true) => "party+party-later+ppon",
-                        (true, true, false) => "party+party-later",
-                        (true, false, true) => "party+ppon",
-                        (true, false, false) => "party",
-                        (false, true, true) => "party-later+ppon",
-                        (false, true, false) => "party-later",
-                        (false, false, _) => "ppon",
-                    },
+                    via: nhs_body_via(party.is_some(), later.is_some(), !ppons.is_empty(), !child_of.is_empty()),
                     coded_parties: party.unwrap_or(0),
                     later_parties: later.unwrap_or(0),
                     ppons,
@@ -26786,6 +27322,14 @@ impl Db {
                     minted_identity,
                     holder_of: holder_of.get(&org).cloned().unwrap_or_default(),
                     contested: is_contested,
+                    child: is_child,
+                    child_parties: h.child_parties.get(&org).copied().unwrap_or(0),
+                    child_shape,
+                    own_triple_mentions: f.own_triple,
+                    child_names_capped: is_child && f.names_seen_capped,
+                    child_names,
+                    child_head_check,
+                    child_of,
                     denied,
                 });
             }
@@ -26833,6 +27377,19 @@ impl Db {
                             } else if any_member(|x| !x.denied.is_empty()) {
                                 "member-denied"
                             } else if {
+                                // Issue 519 unit 2, E1 (phase A): an identity child folds only
+                                // into a PPON survivor; anchor parents are held (ruling 5).
+                                let members: Vec<&NhsBodyHolder> = v
+                                    .members
+                                    .iter()
+                                    .filter_map(|m| entry.holders.iter().find(|x| x.org_id == *m))
+                                    .collect();
+                                let survivor = nhs_body_survivor(&members, args.key);
+                                members.iter().any(|x| x.child && x.child_shape == Some("identity"))
+                                    && !matches!(survivor, Ok((_, NhsBodyTarget::Ppon { .. })))
+                            } {
+                                "child-into-anchor"
+                            } else if {
                                 // D4: U4 would hold a LOSER whose key a row outside the body
                                 // owns (`alias_key_owned_elsewhere`), so the verdict could not
                                 // fold what it names. Issue 513 U6: the member the fold keeps
@@ -26848,7 +27405,13 @@ impl Db {
                                     .filter_map(|m| entry.holders.iter().find(|x| x.org_id == *m))
                                     .collect();
                                 let keep = nhs_body_survivor(&members, args.key).ok().map(|(h, _)| h.org_id);
-                                members.iter().any(|x| Some(x.org_id) != keep && !x.key_owners_elsewhere.is_empty())
+                                // Issue 519 unit 2: an identity child's key is never armed
+                                // either (its evidence carries empty name keys, §3.4).
+                                members.iter().any(|x| {
+                                    Some(x.org_id) != keep
+                                        && !x.key_owners_elsewhere.is_empty()
+                                        && !(x.child && x.child_shape == Some("identity"))
+                                })
                             } {
                                 "member-key-owned-elsewhere"
                             } else {
@@ -26858,6 +27421,18 @@ impl Db {
                     }
                 };
                 *report.verdict_status.entry(status).or_default() += 1;
+                // Issue 519 unit 2: a keep over an applied merge drops the code's alias rows.
+                if status == "keep" {
+                    let mut rows = conn.query(NHS_BODY_APPLIED_MERGES_SQL, (t(NHS_BODY_SCHEME), t(code))).await?;
+                    let applied = match rows.next().await? {
+                        Some(row) => int(&row, 0),
+                        None => 0,
+                    };
+                    drop(rows);
+                    if applied > 0 {
+                        report.keep_over_applied.push(code);
+                    }
+                }
                 match status {
                     "admitted" => {
                         report.admitted_verdict += 1;
@@ -26881,6 +27456,9 @@ impl Db {
             report.codes.push(entry);
         }
 
+        report.child_holders = child_counted.len() as u64;
+        report.child_mentions = child_counted.values().sum();
+
         // ---- 6. The coded share by notice year, over the listed holders, each org once.
         let mut years: BTreeMap<Option<i64>, (u64, u64)> = BTreeMap::new();
         for f in facts.values() {
@@ -26900,6 +27478,44 @@ impl Db {
                 mentions,
             })
             .collect();
+
+        // ---- Issue 519 unit 2: child tails off the allowlist that no listed body anchors —
+        // every dated parent off the allowlist (U6's digit ICBs), an allowlisted parent the
+        // census lists no holder of, or no parent at all. Most published first.
+        for tail in &off {
+            let Some(child) = (args.child)(tail) else { continue };
+            let mut parents: Vec<&'static str> = Vec::new();
+            for p in &child.parents {
+                if !parents.contains(&p.code) {
+                    parents.push(p.code);
+                }
+            }
+            let why = if parents.is_empty() {
+                "no-parent"
+            } else if parents.iter().any(|p| by_code.contains_key(p)) {
+                continue;
+            } else if parents.iter().all(|p| !(args.ods)(p).is_some_and(|o| o.allow)) {
+                "parents-off-allowlist"
+            } else {
+                "parents-unseen"
+            };
+            let seen = tails.get(*tail);
+            let listing = NhsChildOffBody {
+                code: (*tail).clone(),
+                why,
+                parents,
+                parties: seen.map_or(0, |s| s.parties + s.later_parties),
+                holders: seen.map_or(0, |s| s.bound.keys().chain(s.later.keys()).collect::<BTreeSet<_>>().len() as u64),
+            };
+            if why == "no-parent" {
+                report.child_no_parent.push(listing);
+            } else {
+                report.child_unanchored.push(listing);
+            }
+        }
+        for list in [&mut report.child_unanchored, &mut report.child_no_parent] {
+            list.sort_by(|a, b| b.parties.cmp(&a.parties).then_with(|| a.code.cmp(&b.code)));
+        }
 
         // ---- Off the allowlist: the most-published first.
         report.off_allowlist_seen = off.len() as u64;
@@ -27165,6 +27781,20 @@ impl Db {
                 .collect();
             if members.len() != verdict.members.len() || members.is_empty() {
                 report.held.push(NhsBodyHeld { code: entry.code, reason: "members-unlisted", members: verdict.members.clone() });
+                residual.push(entry.code);
+                continue;
+            }
+            // Issue 519 unit 2 builds the census only (decision §7, U2: a dry deploy). The fold
+            // of a CHILD member needs U4 first — an identity loser's evidence with empty name
+            // keys (`loser_kind identity`), the exact-triple alias arm before `org_of`, the
+            // scoped unwind; folded today, its head name would arm 513's name alias and its next
+            // coded mention would mint a new org. So a body naming one is held, whole.
+            if members.iter().any(|h| h.child) {
+                report.held.push(NhsBodyHeld {
+                    code: entry.code,
+                    reason: "child-fold-unbuilt",
+                    members: verdict.members.clone(),
+                });
                 residual.push(entry.code);
                 continue;
             }

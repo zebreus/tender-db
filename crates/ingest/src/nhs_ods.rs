@@ -45,6 +45,18 @@
 //! adjudication-rows.json`, the `nhs_ods_adjudication_tally` test below), it admits 233 of
 //! 235 SAME registry holders and 116 of 116 SAME PPON holders, and no DIFFERENT or NOT_ORG
 //! holder on either side.
+//!
+//! **Issue 519 unit 2: the dated child map** (`sdk/nhs-ods-children.tsv`, version
+//! [`CHILDREN_VERSION`], decision `.scratch/tender-db/519-nhs-digit-codes/unit2-decision.md`
+//! §2). A CHILD code is an ODS code that ODS dates under a body's code: an RO98 sub-ICB
+//! location under its RO261 ICB (relationship RE5; `B2M3M` under QWU, `13T` under QHM), or
+//! a measured RO198 trust site under its RO197 trust (RE6; `RBT20` under RBT). Such a code
+//! with a digit mints an identity of its own, so one body stands as several canonical orgs;
+//! the census lists those holders under their parent, and a reviewed nhs-body verdict may
+//! name them. The map is a SIBLING file: `nhs-ods.tsv`, [`VERSION`] and every 513 answer stay
+//! byte for byte as they were. Parents are DATED ([`Parent`]), because the 2026-04 ICB
+//! mergers moved them (`26A`: QMM to 2026-03-31, then T6Y0W). [`child_check`] is the strict
+//! name gate a child's every name must pass under the parent (§1.3).
 
 use std::collections::HashMap;
 use std::sync::OnceLock;
@@ -53,6 +65,12 @@ use std::sync::OnceLock;
 pub const VERSION: &str = "ods-2026-10-11";
 
 const TSV: &str = include_str!("../sdk/nhs-ods.tsv");
+
+/// Issue 519 unit 2: the child map's version, the date its child records were fetched. A
+/// test pins it equal to the children TSV's header; [`VERSION`] does not move with it.
+pub const CHILDREN_VERSION: &str = "ods-children-2026-10-12";
+
+const CHILDREN_TSV: &str = include_str!("../sdk/nhs-ods-children.tsv");
 
 /// An ODS primary role, as far as the check tells them apart.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -245,6 +263,10 @@ pub enum Refusal {
     Coverage,
     /// The code is not in the table.
     Unknown,
+    /// Issue 519 unit 2, [`child_check`] only: the name carries the word `england` and
+    /// declares no ICB, trust or CSU role — NHS England (`NHS England North East and
+    /// Yorkshire`), whose regions (RO209/RO210) are not in the table to be a rival.
+    Nhse,
 }
 
 /// Whether `head_name` belongs to the ODS `code` (see the module doc).
@@ -273,6 +295,42 @@ pub enum Refusal {
 ///
 /// Deterministic: the rivals are walked in code order, and the first best one is named.
 pub fn check(code: &str, head_name: &str) -> NameCheck {
+    gate(code, head_name, false)
+}
+
+/// Issue 519 unit 2 (decision §1.3): the strict name gate of a CHILD code's names under
+/// its dated `parent` — [`check`] with two changes, and the same fn gates the bind (U4), so
+/// prevention is never looser than the reviewed merge.
+///
+/// 1. **Rivals**: every row except the parent's own names (the parent and its Inactive
+///    predecessors, as in [`check`]) and except the **relabel** rows: an Active RO98 row
+///    NAMED "<current ICB> - <code>" (`NHS COVENTRY AND WARWICKSHIRE ICB - B2M3M`; 107 rows
+///    since 2026-04). Such a row duplicates its ICB's row and declares the ICB role, so under
+///    [`check`] it beats the ICB for any name that carries the code. Only the name shape
+///    marks one: the other 58 Active RO98 rows are bodies of their own and stay rivals —
+///    NHS England's commissioning hubs (`13X CUMBRIA AND NORTH EAST COMMISSIONING HUB`, which
+///    must keep beating QHM for a hub-named mention), the legacy CCGs `00W`, `12A` and `13P`,
+///    and London's "<borough> - SUB-ICB REPORTING ENTITY" rows (narrowed after the unit 2
+///    review). Inactive RO98 rows (abolished CCGs) stay rivals.
+/// 2. **Nhse** ([`Refusal::Nhse`]): a name with the token `england` that declares no ICB,
+///    trust or CSU role is refused, after NonNhs and before Role.
+///
+/// Only [`NameCheck::Admitted`] passes: a `Tie` refuses.
+pub fn child_check(parent: &str, name: &str) -> NameCheck {
+    gate(parent, name, true)
+}
+
+/// Issue 519 unit 2 (decision §1.3): whether `o` is a RELABEL row, the rows [`child_check`]
+/// drops from its rivals — an Active RO98 row whose ODS name is "<current ICB> - <its own
+/// code>" (`NHS NORFOLK AND SUFFOLK ICB - 26A`). A hub, a legacy CCG or a London reporting
+/// entity is Active RO98 too, but named as itself, and is no relabel.
+fn relabel(o: &Org) -> bool {
+    o.role == Role::SubIcb && o.active && o.name.strip_suffix(o.code).is_some_and(|n| n.ends_with(" - "))
+}
+
+/// [`check`] (`child: false`) and [`child_check`] (`child: true`): one walk, so the two
+/// answer alike wherever 519's two changes do not apply.
+fn gate(code: &str, head_name: &str, child: bool) -> NameCheck {
     let t = table();
     let Some(&at) = t.index.get(code) else {
         return NameCheck::Refused(Refusal::Unknown);
@@ -286,6 +344,9 @@ pub fn check(code: &str, head_name: &str) -> NameCheck {
         return NameCheck::Refused(Refusal::NonNhs);
     }
     let name = Words::of_tokens(&toks);
+    if child && name.declared.is_none() && toks.iter().any(|t| t == "england") {
+        return NameCheck::Refused(Refusal::Nhse);
+    }
     let own: Vec<usize> =
         std::iter::once(at).chain(org.predecessors.iter().filter_map(|p| t.index.get(p).copied())).collect();
     let own_key = own.iter().map(|&i| Key::of(&name, &t.words[i], t.orgs[i].role)).fold(Key::NONE, Key::better);
@@ -298,6 +359,10 @@ pub fn check(code: &str, head_name: &str) -> NameCheck {
     let mut best: Option<(Key, &'static str)> = None;
     for (i, rival) in t.orgs.iter().enumerate() {
         if own.contains(&i) {
+            continue;
+        }
+        // 519 §1.3: a relabel row duplicates its current ICB's row under a code.
+        if child && relabel(rival) {
             continue;
         }
         let key = Key::of(&name, &t.words[i], rival.role);
@@ -345,7 +410,12 @@ pub fn census_code(code: &str) -> Option<store::NhsOdsCode> {
 /// Issue 513 U2: [`check`] flattened for the census's report (`NhsBodyArgs::check`): the
 /// answer as a label, and the rival a tie or a `better` refusal names.
 pub fn census_check(code: &str, head_name: &str) -> store::NhsNameCheck {
-    let (verdict, rival) = match check(code, head_name) {
+    census_label(check(code, head_name))
+}
+
+/// An answer of [`check`] or [`child_check`] as the census's label and rival.
+fn census_label(answer: NameCheck) -> store::NhsNameCheck {
+    let (verdict, rival) = match answer {
         NameCheck::Admitted => ("admitted", None),
         NameCheck::Tie { rival } => ("tie", Some(rival)),
         NameCheck::Refused(Refusal::Agent) => ("agent", None),
@@ -355,8 +425,137 @@ pub fn census_check(code: &str, head_name: &str) -> store::NhsNameCheck {
         NameCheck::Refused(Refusal::Better { rival }) => ("better", Some(rival)),
         NameCheck::Refused(Refusal::Coverage) => ("coverage", None),
         NameCheck::Refused(Refusal::Unknown) => ("unknown", None),
+        NameCheck::Refused(Refusal::Nhse) => ("nhse", None),
     };
     store::NhsNameCheck { verdict, rival }
+}
+
+// ---- Issue 519 unit 2: the dated child map.
+
+/// Issue 519 unit 2: one dated parent of a child code — one row of the children TSV.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Parent {
+    /// The parent's ODS code, a row of the main table (`QMM`, `T6Y0W`, `RBT`).
+    pub code: &'static str,
+    /// `RE5` (a sub-ICB location under its ICB) or `RE6` (a site under its trust).
+    pub rel: &'static str,
+    /// The Operational start, `YYYY-MM-DD`.
+    pub start: &'static str,
+    /// The Operational end, inclusive, `YYYY-MM-DD`; `None` while the relation is open.
+    pub end: Option<&'static str>,
+}
+
+/// Issue 519 unit 2: one child code of the map.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Child {
+    pub code: &'static str,
+    /// The child's own ODS name (`NHS NORFOLK AND SUFFOLK ICB - 26A`, `LEIGHTON HOSPITAL`).
+    pub name: &'static str,
+    /// The primary role id: `RO98` or `RO198`.
+    pub role: &'static str,
+    pub active: bool,
+    /// Record class RC1 (an organisation; a site is RC2).
+    pub rc1: bool,
+    /// Its dated parents, oldest first. Empty for a `rel -` row: no RE5 → RO261 relation at
+    /// all (14J and 14N, Inactive commissioning hubs with RO210 parents only).
+    pub parents: Vec<Parent>,
+}
+
+/// Issue 519 unit 2: the child row for `code`, or `None` when the map has no such code.
+pub fn child(code: &str) -> Option<&'static Child> {
+    let t = children_table();
+    t.index.get(code).map(|&i| &t.children[i])
+}
+
+/// Every child of the map, in code order.
+pub fn all_children() -> &'static [Child] {
+    &children_table().children
+}
+
+/// Issue 519 unit 2: a child code's dated parents, oldest first; empty for a code with no
+/// parent or one the map does not know.
+pub fn parents(code: &str) -> &'static [Parent] {
+    child(code).map_or(&[], |c| c.parents.as_slice())
+}
+
+/// Issue 519 unit 2: the reverse index — every child code dated under `parent` in ANY
+/// period (the name, never the date, chooses among a child's parents: §1.2), in code
+/// order.
+pub fn children(parent: &str) -> &'static [&'static str] {
+    children_table().by_parent.get(parent).map_or(&[], Vec::as_slice)
+}
+
+/// Issue 519 unit 2: a child as the store's nhs-body census reads it
+/// ([`store::NhsChildCode`]).
+pub fn census_child(code: &str) -> Option<store::NhsChildCode> {
+    child(code).map(|c| store::NhsChildCode {
+        code: c.code,
+        name: c.name,
+        role: c.role,
+        active: c.active,
+        parents: c
+            .parents
+            .iter()
+            .map(|p| store::NhsOdsParent { code: p.code, rel: p.rel, start: p.start, end: p.end })
+            .collect(),
+    })
+}
+
+/// Issue 519 unit 2: [`children`] as the census reads it (`NhsBodyArgs::children`): every
+/// child code dated under `parent`, each with ALL its dated parents.
+pub fn census_children(parent: &str) -> Vec<store::NhsChildCode> {
+    children(parent).iter().filter_map(|c| census_child(c)).collect()
+}
+
+/// Issue 519 unit 2: [`child_check`] flattened for the census (`NhsBodyArgs::child_check`),
+/// [`census_check`]'s labels plus `nhse`.
+pub fn census_child_check(parent: &str, name: &str) -> store::NhsNameCheck {
+    census_label(child_check(parent, name))
+}
+
+struct ChildrenTable {
+    children: Vec<Child>,
+    index: HashMap<&'static str, usize>,
+    by_parent: HashMap<&'static str, Vec<&'static str>>,
+}
+
+fn children_table() -> &'static ChildrenTable {
+    static CHILDREN: OnceLock<ChildrenTable> = OnceLock::new();
+    CHILDREN.get_or_init(|| parse_children(CHILDREN_TSV))
+}
+
+/// The checked-in children TSV is frozen and its integrity is pinned by the tests, so a
+/// malformed line is a build defect and panics. Rows come sorted by (child, start).
+fn parse_children(tsv: &'static str) -> ChildrenTable {
+    let mut children: Vec<Child> = Vec::new();
+    for line in tsv.lines().filter(|l| !l.is_empty() && !l.starts_with('#')) {
+        let fields: Vec<&'static str> = line.split('\t').collect();
+        let [code, status, rc, role, rel, parent, _parent_role, start, end, _legal_end, name] = fields[..] else {
+            panic!("nhs-ods-children.tsv: a row without eleven fields: {line:?}");
+        };
+        if children.last().is_none_or(|c| c.code != code) {
+            children.push(Child { code, name, role, active: status == "A", rc1: rc == "RC1", parents: Vec::new() });
+        }
+        if rel != "-" {
+            let end = (!end.is_empty()).then_some(end);
+            children.last_mut().expect("pushed above").parents.push(Parent { code: parent, rel, start, end });
+        }
+    }
+    children.sort_by_key(|c| c.code);
+    for c in &mut children {
+        c.parents.sort_by_key(|p| (p.start, p.code));
+    }
+    let index = children.iter().enumerate().map(|(i, c)| (c.code, i)).collect();
+    let mut by_parent: HashMap<&'static str, Vec<&'static str>> = HashMap::new();
+    for c in &children {
+        for p in &c.parents {
+            let codes = by_parent.entry(p.code).or_default();
+            if codes.last() != Some(&c.code) {
+                codes.push(c.code);
+            }
+        }
+    }
+    ChildrenTable { children, index, by_parent }
 }
 
 struct Table {
@@ -574,8 +773,9 @@ fn non_nhs(tokens: &[String], company: bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        NameCheck, Refusal, Role, TSV, VERSION, census_check, census_code, check, fold_unique, nhs_tail, o0_variants,
-        org, orgs, survivor_code,
+        CHILDREN_TSV, CHILDREN_VERSION, NameCheck, Parent, Refusal, Role, TSV, VERSION, all_children, census_check,
+        census_child, census_child_check, census_children, census_code, check, child, child_check, children,
+        fold_unique, nhs_tail, o0_variants, org, orgs, parents, survivor_code,
     };
 
     fn admitted(code: &str, name: &str) {
@@ -1030,5 +1230,316 @@ mod tests {
         if let Ok(out) = std::env::var("NHS_ODS_VERDICTS") {
             std::fs::write(out, lines.join("\n") + "\n").expect("write the verdicts");
         }
+    }
+
+    // ---- Issue 519 unit 2: the dated child map and `child_check` (decision §1.3, §2, §6).
+
+    fn parent(code: &'static str, rel: &'static str, start: &'static str, end: Option<&'static str>) -> Parent {
+        Parent { code, rel, start, end }
+    }
+
+    #[test]
+    fn the_children_version_is_the_children_tsv_header_version() {
+        let header = CHILDREN_TSV.lines().find_map(|l| l.strip_prefix("# version: ")).expect("a version header line");
+        assert_eq!(header, CHILDREN_VERSION);
+        // The sibling file moves alone: the main table's version is 513's, as it was.
+        assert_eq!(VERSION, "ods-2026-10-11");
+        assert_ne!(CHILDREN_VERSION, VERSION);
+    }
+
+    #[test]
+    fn the_children_tsv_rows_are_eleven_fields_sorted_by_child_then_start() {
+        let rows: Vec<Vec<&str>> = CHILDREN_TSV
+            .lines()
+            .filter(|l| !l.is_empty() && !l.starts_with('#'))
+            .map(|l| l.split('\t').collect())
+            .collect();
+        for f in &rows {
+            assert_eq!(f.len(), 11, "{f:?}");
+            assert!(matches!(f[0].len(), 3 | 5) && f[0].bytes().all(|b| b.is_ascii_uppercase() || b.is_ascii_digit()));
+            assert!(matches!(f[1], "A" | "I") && matches!(f[2], "RC1" | "RC2"), "{f:?}");
+            let date = |d: &str| d.len() == 10 && d.as_bytes()[4] == b'-' && d.as_bytes()[7] == b'-';
+            match (f[3], f[4]) {
+                ("RO98", "RE5") => assert_eq!(f[6], "RO261", "{f:?}"),
+                ("RO198", "RE6") => assert_eq!(f[6], "RO197", "{f:?}"),
+                ("RO98", "-") => assert!(f[5..10].iter().all(|x| x.is_empty()), "{f:?}"),
+                other => panic!("{other:?} in {f:?}"),
+            }
+            if f[4] != "-" {
+                assert!(date(f[7]) && (f[8].is_empty() || date(f[8])) && (f[9].is_empty() || date(f[9])), "{f:?}");
+                assert!(f[8].is_empty() || f[7] <= f[8], "{f:?}");
+            }
+            assert!(!f[10].is_empty() && f[10] == f[10].trim(), "{f:?}");
+        }
+        let keys: Vec<(&str, &str, &str)> = rows.iter().map(|f| (f[0], f[7], f[5])).collect();
+        assert!(keys.windows(2).all(|w| w[0] < w[1]), "sorted by (child, start, parent), no duplicate row");
+    }
+
+    /// M2's dated child map (`.scratch/tender-db/519-nhs-digit-codes/measure/child-map.json`)
+    /// as frozen on 2026-10-12, so a regenerated map is a visible diff: 410 rows — 223 RE5
+    /// interval rows over 182 sub-ICB children, 162 `rel -` rows, 25 RE6 site rows — every
+    /// parent a main-table row of the expected role, and no child with overlapping periods.
+    #[test]
+    fn the_child_map_snapshot_counts_are_pinned() {
+        let rows: Vec<Vec<&str>> = CHILDREN_TSV
+            .lines()
+            .filter(|l| !l.is_empty() && !l.starts_with('#'))
+            .map(|l| l.split('\t').collect())
+            .collect();
+        let count = |rel: &str| rows.iter().filter(|f| f[4] == rel).count();
+        assert_eq!((rows.len(), count("RE5"), count("-"), count("RE6")), (410, 223, 162, 25));
+        assert_eq!(all_children().len(), 344 + 25, "every RO98 row of the main table, and the 25 sites");
+        let with = |role: &str| all_children().iter().filter(|c| c.role == role && !c.parents.is_empty()).count();
+        assert_eq!((with("RO98"), with("RO198")), (182, 25));
+        for o in orgs().iter().filter(|o| o.role == Role::SubIcb) {
+            let c = child(o.code).unwrap_or_else(|| panic!("RO98 {} has no child row", o.code));
+            assert_eq!((c.name, c.active, c.rc1), (o.name, o.active, o.rc1), "{} matches its table row", o.code);
+        }
+        for c in all_children() {
+            assert!(c.role == "RO98" || org(c.code).is_none(), "{}: a site is no row of the main table", c.code);
+            for p in &c.parents {
+                let row = org(p.code).unwrap_or_else(|| panic!("{}'s parent {} is not a row", c.code, p.code));
+                let want = if c.role == "RO98" { ("RE5", Role::Icb) } else { ("RE6", Role::Trust) };
+                assert_eq!((p.rel, row.role), want, "{}: {p:?}", c.code);
+            }
+            for (i, a) in c.parents.iter().enumerate() {
+                for b in &c.parents[i + 1..] {
+                    let (a_end, b_end) = (a.end.unwrap_or("9999-12-31"), b.end.unwrap_or("9999-12-31"));
+                    assert!(a_end < b.start || b_end < a.start, "{}: {a:?} overlaps {b:?}", c.code);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn a_childs_parents_are_dated_oldest_first() {
+        assert_eq!(
+            parents("26A"),
+            [
+                parent("QMM", "RE5", "2019-10-23", Some("2026-03-31")),
+                parent("T6Y0W", "RE5", "2026-04-01", None),
+            ]
+        );
+        // 06K's two S1Y5D periods (04-01..04-07, 04-08..) are one row.
+        assert_eq!(
+            parents("06K"),
+            [
+                parent("QM7", "RE5", "2020-04-01", Some("2026-03-31")),
+                parent("S1Y5D", "RE5", "2026-04-01", None),
+            ]
+        );
+        // Unit 1's "no RO261 parent" for 03K was a failed fetch.
+        assert_eq!(parents("03K"), [parent("QOQ", "RE5", "2020-04-01", None)]);
+        assert_eq!(
+            parents("D4U1Y"),
+            [
+                parent("QNQ", "RE5", "2020-10-23", Some("2026-03-31")),
+                parent("QRL", "RE5", "2026-04-01", None),
+            ]
+        );
+        assert_eq!(parents("O4I9P").iter().map(|p| p.code).collect::<Vec<_>>(), ["QMF", "QRV", "Z9B2Z"]);
+        // 14J and 14N have RO210 parents only: a `rel -` row, known but parentless.
+        for code in ["14J", "14N"] {
+            let c = child(code).unwrap_or_else(|| panic!("{code} is a child row"));
+            assert!(c.parents.is_empty() && !c.active && c.role == "RO98", "{c:?}");
+        }
+        let site = child("RBT20").expect("a measured site");
+        assert_eq!((site.role, site.rc1, site.name), ("RO198", false, "LEIGHTON HOSPITAL"));
+        assert_eq!(site.parents, [parent("RBT", "RE6", "1991-04-01", None)]);
+        assert!(child("QHM").is_none() && child("ZZZ").is_none() && parents("ZZZ").is_empty());
+    }
+
+    #[test]
+    fn the_reverse_index_lists_every_child_dated_under_a_parent_in_any_period() {
+        assert_eq!(children("QHM"), ["00L", "00N", "00P", "01H", "13T", "16C", "84H", "99C"]);
+        assert_eq!(children("QWU"), ["05A", "05H", "05R", "B2M3M"]);
+        assert_eq!(children("RBT"), ["RBT20"]);
+        // A moved child is listed under every parent it was ever dated under.
+        assert!(children("QMM").contains(&"26A") && children("T6Y0W").contains(&"26A"));
+        assert!(children("QNQ").contains(&"D4U1Y") && children("QRL").contains(&"D4U1Y"));
+        assert!(children("RTH").is_empty() && children("ZZZ").is_empty());
+    }
+
+    /// M2: four children are dated under two allowlisted parents. D4U1Y (QNQ, then QRL) is
+    /// the one with a holder; L7N8K, O4I9P and Q0S2C reach theirs through a one-week first
+    /// parent (2024-03-26..04-02) and have none.
+    #[test]
+    fn four_children_are_dated_under_two_allowlisted_parents() {
+        let two: Vec<&str> = all_children()
+            .iter()
+            .filter(|c| {
+                let allowed: std::collections::BTreeSet<&str> =
+                    c.parents.iter().filter(|p| org(p.code).is_some_and(|o| o.allow)).map(|p| p.code).collect();
+                allowed.len() >= 2
+            })
+            .map(|c| c.code)
+            .collect();
+        assert_eq!(two, ["D4U1Y", "L7N8K", "O4I9P", "Q0S2C"]);
+    }
+
+    /// The decision's §1.3 table, as measure-first corrected it (`measure/results.md` M1):
+    /// 04Y answers `zero` (Zero refuses before a better rival is looked for) and College
+    /// Road answers `non-nhs` (`college` without `hospital`).
+    #[test]
+    fn child_check_answers_the_decisions_table() {
+        let ask = |p: &str, n: &str| child_check(p, n);
+        assert_eq!(ask("QMM", "NHS Norfolk and Suffolk ICB"), NameCheck::Refused(Refusal::Better { rival: "T6Y0W" }));
+        assert_eq!(ask("QHM", "NORTH OF ENGLAND COMMISSIONING SUPPORT"), NameCheck::Refused(Refusal::Role));
+        assert_eq!(
+            ask("QNC", "NHS Shropshire, Telford and Wrekin Integrated Care Board"),
+            NameCheck::Refused(Refusal::Zero),
+            "04Y: zero, not better{{QOC}}"
+        );
+        assert_eq!(ask("QOQ", "NHS England North East and Yorkshire"), NameCheck::Refused(Refusal::Nhse), "03Q");
+        // 13T's 16th mention (46991199).
+        assert_eq!(ask("QHM", "NHS England - North East & Yorkshire"), NameCheck::Refused(Refusal::Nhse));
+        // W2U3Z: QRV's own name ties its successor Z9B2Z, and a tie refuses.
+        assert_eq!(ask("QRV", "NHS North West London Integrated Care Board"), NameCheck::Tie { rival: "Z9B2Z" });
+        for name in ["NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD", "NHS Coventry and Warwickshire ICB - B2M3M"] {
+            assert_eq!(ask("QWU", name), NameCheck::Admitted, "B2M3M {name:?}");
+        }
+        assert!(!matches!(ask("QMM", "James Paget University Hospitals NHS Foundation Trust"), NameCheck::Admitted));
+        assert_eq!(ask("QHL", "College Road Surgery"), NameCheck::Refused(Refusal::NonNhs), "non-nhs, not zero");
+        assert_eq!(ask("QWO", "NHS West Yorkshire Integrated Care Board (Leeds Place)"), NameCheck::Admitted, "15F");
+        assert_eq!(ask("QHM", "North East and North Cumbria Integrated Care Board"), NameCheck::Admitted, "13T");
+        // The one phase-A own-name hold (31615636, 00P): a typo ties QMF.
+        assert_eq!(ask("QHM", "NHS North East and North Cumbira ICB"), NameCheck::Tie { rival: "QMF" });
+        // An Inactive RO98 row (an abolished CCG) stays a rival: 92G's false refusal.
+        assert_eq!(
+            ask("QOX", "Bath, Swindon & Wiltshire Integrated Care Board"),
+            NameCheck::Refused(Refusal::Better { rival: "13G" })
+        );
+        // An Active RO98 row named as itself is no relabel and stays a rival (the unit 2
+        // review): NHS England's hub 13X must keep beating QHM, or a hub-named mention under
+        // 13T/16C/01H/84H/99C would fold into, and bind, NENC's survivor; and 13P's
+        // CrossCity CCG stays its own row under QHL.
+        assert_eq!(
+            ask("QHM", "Cumbria and North East Commissioning Hub"),
+            NameCheck::Refused(Refusal::Better { rival: "13X" })
+        );
+        assert_eq!(ask("QHL", "NHS Birmingham CrossCity CCG"), NameCheck::Refused(Refusal::Better { rival: "13P" }));
+    }
+
+    /// The unit 2 review: `child_check` drops exactly the 107 relabel rows ("<ICB> - <code>")
+    /// from its rivals; the other 58 Active RO98 rows — the commissioning hubs, the legacy
+    /// CCGs 00W/12A/13P and London's reporting entities — and every Inactive one stay.
+    #[test]
+    fn child_check_drops_only_the_relabel_rows_from_its_rivals() {
+        let active_ro98: Vec<&super::Org> = orgs().iter().filter(|o| o.role == Role::SubIcb && o.active).collect();
+        let (relabels, own): (Vec<&super::Org>, Vec<&super::Org>) =
+            active_ro98.iter().partition(|o| super::relabel(o));
+        assert_eq!((active_ro98.len(), relabels.len(), own.len()), (165, 107, 58));
+        assert!(relabels.iter().all(|o| o.name.ends_with(&format!(" - {}", o.code))), "{relabels:?}");
+        for code in ["13X", "85J", "14A", "00W", "12A", "13P", "A4R1E", "Z1H8A"] {
+            assert!(own.iter().any(|o| o.code == code), "{code} stays a rival");
+        }
+        for code in ["26A", "B2M3M", "13T", "15F"] {
+            assert!(relabels.iter().any(|o| o.code == code), "{code} is a relabel");
+        }
+        assert!(orgs().iter().filter(|o| super::relabel(o)).all(|o| o.role == Role::SubIcb && o.active));
+        // A hub's own name, asked under its NHS England neighbour's parent, is the hub's.
+        assert_eq!(
+            child_check("QOQ", "North East and Yorkshire Commissioning Hub"),
+            NameCheck::Refused(Refusal::Better { rival: "85J" })
+        );
+    }
+
+    /// Flaw 10 of the decision: under `check` a relabel row ("<ICB> - <code>") beats the ICB
+    /// for a name carrying the code; `child_check` drops it. And `nhse` is
+    /// `child_check`'s alone: 513's `check` answers as it always did.
+    #[test]
+    fn an_active_sub_icb_row_rivals_check_but_not_child_check() {
+        let b2m3m = "NHS Coventry and Warwickshire ICB - B2M3M";
+        assert_eq!(check("QWU", b2m3m), NameCheck::Refused(Refusal::Better { rival: "B2M3M" }));
+        assert_eq!(child_check("QWU", b2m3m), NameCheck::Admitted);
+        let nhse = "NHS England North East and Yorkshire";
+        assert_eq!(check("QOQ", nhse), NameCheck::Refused(Refusal::Better { rival: "85J" }));
+        assert_eq!(child_check("QOQ", nhse), NameCheck::Refused(Refusal::Nhse));
+        // A name that declares a role is no NHS England refusal.
+        assert_ne!(child_check("QHM", "NHS England Commissioning Support Unit"), NameCheck::Refused(Refusal::Nhse));
+    }
+
+    /// Where 519's two changes do not bite, `child_check` answers exactly as `check`.
+    #[test]
+    fn child_check_agrees_with_check_where_its_changes_do_not_apply() {
+        for (code, name) in [
+            ("RTH", "Oxford University Hospitals NHS Foundation Trust"),
+            ("REN", "The Walton Centre NHS Foundation Trust"),
+            ("RCX", "Queen Elizabeth Hospital FT"),
+            ("RET", "Alder Hey"),
+            ("RTH", "University of Oxford"),
+            ("RWF", "Acme Ltd on behalf of Maidstone and Tunbridge Wells NHS Trust"),
+            ("RTF", "Northumbria Healthcare Facilities Management"),
+            ("QJK", "NHS Devon"),
+            ("QKK", "NHS North East London Integrated Care Board"),
+            ("ICB", "NHS Cheshire and Merseyside ICB"),
+        ] {
+            assert_eq!(child_check(code, name), check(code, name), "{code} {name:?}");
+        }
+    }
+
+    #[test]
+    fn the_child_census_adapters_carry_the_map_and_the_answer() {
+        let qmm = census_children("QMM");
+        let a26 = qmm.iter().find(|c| c.code == "26A").expect("26A is dated under QMM");
+        assert_eq!((a26.role, a26.active, a26.name), ("RO98", true, "NHS NORFOLK AND SUFFOLK ICB - 26A"));
+        let dated: Vec<(&str, &str, &str, Option<&str>)> =
+            a26.parents.iter().map(|p| (p.code, p.rel, p.start, p.end)).collect();
+        assert_eq!(dated, [("QMM", "RE5", "2019-10-23", Some("2026-03-31")), ("T6Y0W", "RE5", "2026-04-01", None)]);
+        assert_eq!(census_children("QHM").len(), 8);
+        assert!(census_child("14J").expect("a child row").parents.is_empty());
+        assert_eq!(census_child("ZZZ"), None);
+        let label = |p: &str, n: &str| {
+            let c = census_child_check(p, n);
+            (c.verdict, c.rival)
+        };
+        assert_eq!(label("QOQ", "NHS England North East and Yorkshire"), ("nhse", None));
+        assert_eq!(label("QRV", "NHS North West London Integrated Care Board"), ("tie", Some("Z9B2Z")));
+        assert_eq!(label("QWU", "NHS Coventry and Warwickshire ICB - B2M3M"), ("admitted", None));
+        assert_eq!(label("QMM", "NHS Norfolk and Suffolk ICB"), ("better", Some("T6Y0W")));
+        // 513's adapter is unchanged by the new arm.
+        assert_eq!(census_check("QOQ", "NHS England North East and Yorkshire").verdict, "better");
+    }
+
+    /// Issue 519 unit 2: `child_check` over every name M1 scored with the Python port
+    /// (`.scratch/tender-db/519-nhs-digit-codes/measure/child_check_sim.py`), under every
+    /// dated parent it was scored under; the port and the Rust must agree on every one. Run
+    /// with an ABSOLUTE path and the gate's flags and package set (CLAUDE.md):
+    /// `NHS_ODS_M1=/home/user/tender-db/.scratch/tender-db/519-nhs-digit-codes/measure/m1.json
+    /// CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p
+    /// model -p store -p ingest -p tender-db --features tender-db/server --lib
+    /// nhs_ods_child_check_m1_tally -- --ignored --nocapture`.
+    #[test]
+    #[ignore = "reads the scratch M1 scoring named by NHS_ODS_M1"]
+    fn nhs_ods_child_check_m1_tally() {
+        use std::collections::BTreeMap;
+        let path = std::env::var("NHS_ODS_M1").expect("NHS_ODS_M1");
+        let m1: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(&path).expect("read m1.json")).expect("JSON");
+        let mut tally: BTreeMap<String, usize> = BTreeMap::new();
+        let mut differ = Vec::new();
+        let mut asked = 0usize;
+        for h in m1["holders"].as_array().expect("holders") {
+            for n in h["name_detail"].as_array().into_iter().flatten() {
+                let name = n["name"].as_str().unwrap_or_default();
+                for (p, want) in n["check"].as_object().into_iter().flatten() {
+                    asked += 1;
+                    let got = census_child_check(p, name);
+                    *tally.entry(got.verdict.to_owned()).or_default() += 1;
+                    let (wv, wr) = (want["verdict"].as_str().unwrap_or_default(), want["rival"].as_str());
+                    if (got.verdict, got.rival) != (wv, wr) {
+                        differ.push(format!("{} {p} {name:?}: rust {:?} python {wv} {wr:?}", h["child"], (got.verdict, got.rival)));
+                    }
+                }
+            }
+        }
+        for (verdict, n) in &tally {
+            println!("tally\t{verdict}\t{n}");
+        }
+        println!("asked {asked}, differ {}", differ.len());
+        for d in &differ {
+            println!("DIFFER\t{d}");
+        }
+        assert!(asked > 0 && differ.is_empty(), "{differ:#?}");
     }
 }
