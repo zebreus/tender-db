@@ -1,0 +1,982 @@
+[
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "n a please see section vi 2 for additional information",
+  "mentions": 1,
+  "names": [
+   "N/A. Please see section VI.2) for additional information."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "na see section vi 4 2",
+  "mentions": 1,
+  "names": [
+   "NA See Section VI.4.2)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "name of economic operator withheld for security reasons",
+  "mentions": 1,
+  "names": [
+   "Name of economic operator withheld for security reasons"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "name of supplier withheld",
+  "mentions": 1,
+  "names": [
+   "Name of supplier withheld"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "name withheld due to security",
+  "mentions": 1,
+  "names": [
+   "Name withheld due to Security"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "name withheld due to security contract",
+  "mentions": 1,
+  "names": [
+   "Name withheld due to Security Contract"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "name withheld due to security issues",
+  "mentions": 1,
+  "names": [
+   "Name withheld due to security issues."
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "name withheld for security reasons can be provided to ec if requested",
+  "mentions": 1,
+  "names": [
+   "Name withheld for security reasons, can be provided to EC if requested"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "national assembly for wales acting for itself and on behalf of ceredigion county council see section ii 1 5",
+  "mentions": 1,
+  "names": [
+   "NATIONAL ASSEMBLY FOR WALES ACTING FOR ITSELF AND ON BEHALF OF CEREDIGION COUNTY COUNCIL (SEE SECTION II.1.5)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "national maritime museum via delta portal see section 1 1 3 above",
+  "mentions": 1,
+  "names": [
+   "National Maritime Museum Via Delta portal \u2014 See Section 1, 1.3 above"
+  ],
+  "orgs": 1,
+  "roles": {
+   "tender-receipt": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "nb paragraaf v 3 is niet van toepassing",
+  "mentions": 1,
+  "names": [
+   "Nb: Paragraaf V.3 is niet van toepassing."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "neant lot annule",
+  "mentions": 1,
+  "names": [
+   "n\u00e9ant (lot annul\u00e9)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "nie dotyczy art 138 o ustawy pzp",
+  "mentions": 1,
+  "names": [
+   "Nie dotyczy \u2013 art. 138 o ustawy Pzp"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "nie dotyczy art 8 ust 4 pkt 1 ustawy prawo zamowien publicznych",
+  "mentions": 1,
+  "names": [
+   "(nie dotyczy - art. 8 ust. 4 pkt 1 ustawy Prawo zam\u00f3wie\u0144 publicznych)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "nie dotyczy na podstawie art 8 ust 4 pkt 1 ustawy pzp spadkobierca zastrzegl ze dane osobowe nie moga byc udostepniane",
+  "mentions": 1,
+  "names": [
+   "Nie dotyczy. Na podstawie art. 8 ust. 4 pkt 1 ustawy Pzp Spadkobierca zastrzeg\u0142, \u017ce dane osobowe nie mog\u0105 by\u0107 udost\u0119pniane."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "nie dotyczy zamowienie udzielane w oparciu o zasade konkurencyjnosci niepodlegajacej ustawie pzp",
+  "mentions": 1,
+  "names": [
+   "nie dotyczy, zam\u00f3wienie udzielane w oparciu o zasad\u0119 konkurencyjno\u015bci niepodlegaj\u0105cej ustawie PZP"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing aanbesteding gestopt",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing - aanbesteding gestopt"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing aanbesteding is stopgezet",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing. Aanbesteding is stopgezet"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing aankondiging is ingetrokken",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing, aankondiging is ingetrokken"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing alle documenten zijn bij deze aankondiging gevoegd",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing. Alle documenten zijn bij deze aankondiging gevoegd."
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "niet van toepassing emva is behaald door perceel 1 en perceel 2 separaat te gunnen",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing (EMVA is behaald door perceel 1 en perceel 2 separaat te gunnen)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing geen geldige aanbiedingen ontvangen",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing. (Geen geldige aanbiedingen ontvangen)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing het tweesteden ziekenhuis zoekt",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing. Het TweeSteden ziekenhuis zoekt"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing in verband met intrekken ea",
+  "mentions": 1,
+  "names": [
+   "niet van toepassing in verband met intrekken EA."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing inkoopronde volgt",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing: inkoopronde volgt"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing ivm intrekken ea",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing ivm intrekken EA"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing procedure gestaakt",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing. Procedure gestaakt"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing zie bij ii 1 4",
+  "mentions": 1,
+  "names": [
+   "Niet van toepassing, zie bij II.1.4"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing zie marktconsultatiedocument",
+  "mentions": 1,
+  "names": [
+   "niet van toepassing, zie marktconsultatiedocument."
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "noe cpc is contracting on behalf of other authorities see section ii 1 2 b main place of delivery location",
+  "mentions": 1,
+  "names": [
+   "NOE CPC is contracting on behalf of other Authorities. See Section II.1.2.b) Main place of delivery/location"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "noe cpc member bodies as listed at http www noecpc nhs uk our current customers for full details see section ii 1 2 mail",
+  "mentions": 1,
+  "names": [
+   "NOE CPC Member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers. For full details see section II.1.2 Mail place of delivery"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "nog niet van toepassing",
+  "mentions": 1,
+  "names": [
+   "Nog niet van toepassing"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "non award see section vii",
+  "mentions": 1,
+  "names": [
+   "Non- Award - See section VII"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "northamptonshire county council for and on behalf of the east midlands broadband consortium embc see section vi 2",
+  "mentions": 1,
+  "names": [
+   "NORTHAMPTONSHIRE COUNTY COUNCIL FOR AND ON BEHALF OF THE EAST MIDLANDS BROADBAND CONSORTIUM [EMBC] - SEE SECTION VI.2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable but proceedings may be started in the high court of england and wales in accordance with part 5 remedies ",
+  "mentions": 1,
+  "names": [
+   "Not applicable, but proceedings may be started in the High Court of England and Wales in accordance with Part 5 (Remedies) of the Utilities Contracts Regulations 2016"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable contract not awarded",
+  "mentions": 1,
+  "names": [
+   "Not applicable (contract not awarded)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable due to cancellation of tender",
+  "mentions": 1,
+  "names": [
+   "Not applicable due to cancellation of tender"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 2
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable electronic submissions only",
+  "mentions": 1,
+  "names": [
+   "Not applicable \u2014 electronic submissions only"
+  ],
+  "orgs": 1,
+  "roles": {
+   "tender-receipt": 2
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable in ni",
+  "mentions": 1,
+  "names": [
+   "Not Applicable in NI"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable in northern ireland",
+  "mentions": 1,
+  "names": [
+   "Not Applicable in Northern Ireland"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable in uk",
+  "mentions": 1,
+  "names": [
+   "(Not applicable in UK)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "mediation-body": 2
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable no award made",
+  "mentions": 1,
+  "names": [
+   "Not Applicable \u2014 No Award Made"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable no contract awarded",
+  "mentions": 1,
+  "names": [
+   "Not Applicable - no contract awarded"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Lot-ReviewOrg": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable not a sufficient amount of acceptable tenders to conclude a contract procedure abandoned",
+  "mentions": 1,
+  "names": [
+   "Not applicable \u2014 not a sufficient amount of acceptable tenders to conclude a contract. Procedure abandoned"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable not a sufficient number of acceptable offers to conclude a contract procedure abandoned",
+  "mentions": 1,
+  "names": [
+   "Not applicable \u2014 not a sufficient number of acceptable offers to conclude a contract. Procedure abandoned"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable not a sufficient number of acceptable tenders to conclude a contract procedure abandoned",
+  "mentions": 1,
+  "names": [
+   "Not applicable \u2014 not a sufficient number of acceptable tenders to conclude a contract. Procedure abandoned"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable please see section vi 2 additional information",
+  "mentions": 1,
+  "names": [
+   "Not applicable \u2014 please see section VI.2 \u2014 Additional information"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable see contract 48 for lot 2",
+  "mentions": 1,
+  "names": [
+   "Not Applicable See Contract 48 for Lot 2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable see vi 4 3 review procedure below",
+  "mentions": 1,
+  "names": [
+   "Not applicable. See VI.4.3) Review procedure below"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable the framework contract was not awarded as the offer submitted was not compliant with the criteria laid do",
+  "mentions": 1,
+  "names": [
+   "Not applicable \u2014 The framework contract was not awarded as the offer submitted was not compliant with the criteria laid down in the tender specifications."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable to uk see section vi 4 2",
+  "mentions": 1,
+  "names": [
+   "Not applicable to Uk See section VI.4.2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "organisation refer to point vi 4 2 body responsible for mediation procedures if applicable organisation not applicable",
+  "mentions": 1,
+  "names": [
+   "Organisation: Refer to point VI.4.2 Body responsible for mediation procedures (if applicable) Organisation: Not applicable"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "other entitled participating institutions see section 2 2 of the call for applications",
+  "mentions": 1,
+  "names": [
+   "Other entitled participating institutions (see Section 2.2 of the call for applications)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "other social housing providers see section ii 2 1 in contract notice",
+  "mentions": 1,
+  "names": [
+   "Other Social Housing Providers (See Section II.2.1) in Contract Notice)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "other social housing providers see section ii 2 1 of the contract notice",
+  "mentions": 1,
+  "names": [
+   "Other Social Housing providers (See Section II.2.1 of the Contract Notice)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "package quote not applicable",
+  "mentions": 1,
+  "names": [
+   "Package quote not applicable"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "pag web de la comunidad de madrid perfil del contratante",
+  "mentions": 1,
+  "names": [
+   "P\u00c1G. web de la Comunidad de Madrid. Perfil del contratante"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "perceel 1 niet van toepassing perceel 2 munckhof groep bv",
+  "mentions": 1,
+  "names": [
+   "Perceel 1: niet van toepassing. Perceel 2: Munckhof Groep BV"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "perceel 4 niet van toepassing",
+  "mentions": 1,
+  "names": [
+   "perceel 4: niet van toepassing"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil de contratante de bec y sesion de dudas",
+  "mentions": 1,
+  "names": [
+   "Perfil de contratante de BEC y Sesi\u00f3n de dudas"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil de contratante del ayto de soria y plataforma de contratacion del estado",
+  "mentions": 1,
+  "names": [
+   "Perfil de Contratante del Ayto. de Soria y plataforma de Contrataci\u00f3n del Estado"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil de contratante del consorci administracio oberta de catalunya",
+  "mentions": 1,
+  "names": [
+   "Perfil de Contratante del Consorci Administraci\u00f3 Oberta de Catalunya"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil de contratante del sescam",
+  "mentions": 1,
+  "names": [
+   "Perfil de Contratante del Sescam"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil de contratante www gelves es",
+  "mentions": 1,
+  "names": [
+   "perfil de contratante www.gelves.es"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil de contratante y registro auxiliar de la universidad de valladolid",
+  "mentions": 1,
+  "names": [
+   "Perfil de contratante y Registro Auxiliar de la Universidad de Valladolid"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 5
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil del contratante de anfaco cecopesca",
+  "mentions": 1,
+  "names": [
+   "Perfil del contratante de Anfaco-Cecopesca"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil del contratante de la carm",
+  "mentions": 1,
+  "names": [
+   "Perfil del Contratante de la CARM"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil del contratante de la comunidad autonoma de la region de murcia www carm es",
+  "mentions": 1,
+  "names": [
+   "PERFIL DEL CONTRATANTE DE LA COMUNIDAD AUT\u00d3NOMA DE LA REGI\u00d3N DE MURCIA WWW.CARM.ES"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil del contratante de la delegacion territorial de educacion cultura y deporte en cadiz http contratacion chap junta",
+  "mentions": 1,
+  "names": [
+   "Perfil del contratante de la Delegaci\u00f3n Territorial de Educaci\u00f3n, Cultura y Deporte en C\u00e1diz: http://contratacion.chap.junta-andalucia.es/contratacion"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil del contratante de la junta de andalucia",
+  "mentions": 1,
+  "names": [
+   "Perfil del Contratante de la Junta de Andaluc\u00eda"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ }
+]

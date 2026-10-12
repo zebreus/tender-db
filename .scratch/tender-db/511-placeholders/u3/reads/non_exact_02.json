@@ -1,0 +1,1031 @@
+[
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 2 for details of suppliers",
+  "mentions": 5,
+  "names": [
+   "See Section VI.2) for details of suppliers"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 5
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 1",
+  "mentions": 5,
+  "names": [
+   "See Section VI.3.1"
+  ],
+  "orgs": 1,
+  "roles": {
+   "RESPONSIBLE_FOR_MEDIATION_PROCEDURES": 2,
+   "appeal-information": 3
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "the name s of the winning tenderers are being withheld for security reasons however these will be made available to the ",
+  "mentions": 5,
+  "names": [
+   "The name (s) of the winning tenderers are being withheld for security reasons; however, these will be made available to the commission on request"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 5
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "uk does not have any such body see section vi 4 2",
+  "mentions": 5,
+  "names": [
+   "UK does not have any such body SEE section VI.4.2",
+   "UK does not have any such body see section VI.4.2)"
+  ],
+  "orgs": 2,
+  "roles": {
+   "review-body": 6
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "vease el perfil del contratante http www juntadeandalucia es contratacion de fecha 30 3 2015 ref 2015 0000002775",
+  "mentions": 5,
+  "names": [
+   "V\u00e9ase el perfil del contratante http://www.juntadeandalucia.es/contratacion de fecha 30.3.2015 (ref. 2015-0000002775)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 5
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "ver pliego de clausulas administrativas particulares en el perfil del contratante https juntadeandalucia es temas contra",
+  "mentions": 5,
+  "names": [
+   "VER PLIEGO DE CLAUSULAS ADMINISTRATIVAS PARTICULARES EN EL PERFIL DEL CONTRATANTE https://juntadeandalucia.es/temas/contratacion-publica/perfiles-licitaciones.html",
+   "VER PLIEGO DE CLAUSULAS ADMINISTRATIVAS PARTICULARES EN EL PERFIL DEL CONTRATANTE:https://juntadeandalucia.es/temas/contratacion-publica/perfiles-licitaciones.html"
+  ],
+  "orgs": 2,
+  "roles": {
+   "review-body": 5
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "vergabekammer siehe oben",
+  "mentions": 5,
+  "names": [
+   "Vergabekammer (siehe oben)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 6
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "voluntary notice see section v1 4 2",
+  "mentions": 5,
+  "names": [
+   "Voluntary Notice: See section V1.4.2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 6
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "withheld for security reasons information will be made to the commission upon request",
+  "mentions": 5,
+  "names": [
+   "Withheld for security reasons. Information will be made to the commission upon request.",
+   "Withheld for Security Reasons \u2014 Information will be made to the Commission upon request",
+   "Withheld for Security Reasons - Information will be made to the Commission upon request"
+  ],
+  "orgs": 3,
+  "roles": {
+   "winner": 5
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "a full list of successful suppliers will be made available on contracts finder please see section vi 3 additional inform",
+  "mentions": 4,
+  "names": [
+   "A full list of successful suppliers will be made available on Contracts Finder. Please see Section VI.3) Additional information."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 7
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "en el perfil del contratante vortal de la sede electronica de la autoridad portuaria de barcelona",
+  "mentions": 4,
+  "names": [
+   "En el Perfil del Contratante (Vortal) de la sede electr\u00f3nica de la Autoridad Portuaria de Barcelona"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 5
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "fabrica nacional de moneda y timbre real casa de la moneda perfil del contratante de la pagina web de la fnmt rcm www fn",
+  "mentions": 4,
+  "names": [
+   "F\u00e1brica Nacional de Moneda y Timbre \u2013 Real Casa de la Moneda / Perfil del contratante de la p\u00e1gina web de la FNMT-RCM (www.fnmt.es)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 8
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "fotocopisteria arco y en el perfil del contratante del ayuntamiento de vitoria gasteiz",
+  "mentions": 4,
+  "names": [
+   "Fotocopister\u00eda ARCO y en el Perfil del contratante del Ayuntamiento de Vitoria-Gasteiz"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 9
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "gas natural comercializadora s a ver informacion adicional",
+  "mentions": 4,
+  "names": [
+   "GAS NATURAL COMERCIALIZADORA, S.A. (Ver informaci\u00f3n adicional)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 4
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe bei badv",
+  "mentions": 4,
+  "names": [
+   "keine Angabe bei BADV"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Lot-ReviewOrg": 16
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe gemas 61 abs 4 bvergg 2018",
+  "mentions": 4,
+  "names": [
+   "Keine Angabe gem\u00e4\u00df \u00a7 61 Abs. 4 BVergG 2018",
+   "Keine Angabe gem\u00e4\u00df \u00a7 61 Abs 4 BVergG 2018"
+  ],
+  "orgs": 2,
+  "roles": {
+   "winner": 4
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe nach 39 6 2 vgv bieter nummer 3",
+  "mentions": 4,
+  "names": [
+   "keine Angabe nach \u00a7 39 (6)2 VgV, Bieter Nummer 3",
+   "keine Angabe nach \u00a7 39 (6) 2 VgV, Bieter Nummer 3"
+  ],
+  "orgs": 2,
+  "roles": {
+   "winner": 4
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "lot multi attributaire voir autres informations",
+  "mentions": 4,
+  "names": [
+   "Lot multi-attributaire (voir autres informations)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 4
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable see aria act 2022",
+  "mentions": 4,
+  "names": [
+   "Not applicable - see ARIA Act 2022"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Lot-ReviewOrg": 4
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "please see section vi for names and addresses of economic operators",
+  "mentions": 4,
+  "names": [
+   "Please see section VI) for names and addresses of economic operators"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 4
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section 1 1",
+  "mentions": 4,
+  "names": [
+   "See section 1.1"
+  ],
+  "orgs": 2,
+  "roles": {
+   "further-information": 2,
+   "specifications-provider": 1,
+   "tender-receipt": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "see section 1 contracting authority for details of viridian group ltd contacts",
+  "mentions": 4,
+  "names": [
+   "See section 1 Contracting authority for details of Viridian Group Ltd contacts",
+   "see Section 1) Contracting authority for details of Viridian Group Ltd contacts"
+  ],
+  "orgs": 2,
+  "roles": {
+   "appeal-information": 4
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section ii 1 5",
+  "mentions": 4,
+  "names": [
+   "See section II.1.5"
+  ],
+  "orgs": 1,
+  "roles": {
+   "further-information": 3,
+   "purchasing-body": 1,
+   "specifications-provider": 3,
+   "tender-receipt": 3
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section ii 1 7",
+  "mentions": 4,
+  "names": [
+   "See Section II.1.7)",
+   "See Section II.1.7"
+  ],
+  "orgs": 2,
+  "roles": {
+   "purchasing-body": 5
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 4 3 below",
+  "mentions": 4,
+  "names": [
+   "See Section VI.4.3) below"
+  ],
+  "orgs": 2,
+  "roles": {
+   "mediation-body": 2,
+   "review-body": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben ii 1 4 aufgrund der unterschreitung des masgeblichen eu schwellenwertes besteht eine bindung an eu vergaberec",
+  "mentions": 4,
+  "names": [
+   "Siehe oben II.1.4, aufgrund der Unterschreitung des ma\u00dfgeblichen EU-Schwellenwertes besteht eine Bindung an EU-Vergaberecht nicht. Die EU-weite Bekanntmachung erfolgt freiwillig."
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 4
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "this information has been withheld",
+  "mentions": 4,
+  "names": [
+   "This information has been withheld"
+  ],
+  "orgs": 2,
+  "roles": {
+   "Tenderer": 3,
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "this is an award notice and this opportunity is now closed please see section v award of contract for further details",
+  "mentions": 4,
+  "names": [
+   "This is an award notice and this opportunity is now closed. Please see section V) (Award of Contract) for further details",
+   "This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details."
+  ],
+  "orgs": 2,
+  "roles": {
+   "mediation-body": 2,
+   "review-body": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "unter berufung auf 11 skr abs 2 vol a skr erfolgt hier keine angabe",
+  "mentions": 4,
+  "names": [
+   "Unter Berufung auf \u00a7 11 SKR Abs. 2 (VOL/A-SKR) erfolgt hier keine Angabe"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 4
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "withheld for security reasons information made available to commission upon request",
+  "mentions": 4,
+  "names": [
+   "Withheld for Security Reasons \u2014 Information made available to Commission upon request"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 4
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "1 vol a abschnitt 4 skr erfolgt hier keine angabe",
+  "mentions": 3,
+  "names": [
+   "1 VOL/A Abschnitt 4 SKR erfolgt hier keine Angabe"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 3
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "ayuntamiento de alcazar de san juan sitio web www alcazardesanjuan es perfil del contratante servicios",
+  "mentions": 3,
+  "names": [
+   "Ayuntamiento de Alc\u00e1zar de San Juan. Sitio web: www.alcazardesanjuan.es.Perfil del Contratante (Servicios)",
+   "Ayuntamiento de Alc\u00e1zar de San Juan, sitio web www.alcazardesanjuan.es , perfil del Contratante (Servicios)",
+   "Ayuntamiento de Alcazar de San Juan. Sitio web. www.alcazardesanjuan.es Perfil del contratante (servicios)"
+  ],
+  "orgs": 3,
+  "roles": {
+   "specifications-provider": 6
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "cf voir renseignements complementaires",
+  "mentions": 3,
+  "names": [
+   "cf voir renseignements compl\u00e9mentaires"
+  ],
+  "orgs": 2,
+  "roles": {
+   "winner": 3
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "en el perfil del contratante de la sede electronica de la autoridad portuaria de barcelona o departamento sau registro g",
+  "mentions": 3,
+  "names": [
+   "En el perfil del contratante de la sede electr\u00f3nica de la Autoridad Portuaria de Barcelona o Departamento SAU (Registro General)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "further-information": 8
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "for details of the awarded supplier please see section v1 2",
+  "mentions": 3,
+  "names": [
+   "For details of the awarded supplier please see section V1.2",
+   "For details of the awarded supplier, please see section V1.2",
+   "For details of the awarded supplier, please see section V1.2)"
+  ],
+  "orgs": 3,
+  "roles": {
+   "winner": 3
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "fotocopisteria arco y perfil del contratante",
+  "mentions": 3,
+  "names": [
+   "Fotocopister\u00eda Arco y Perfil del Contratante"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 7
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "hertfordshire county council this is an award notice and this opportunity is now closed please see section v award of co",
+  "mentions": 3,
+  "names": [
+   "Hertfordshire County Council \u2014 This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details."
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 2,
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "identity withheld for security reasons",
+  "mentions": 3,
+  "names": [
+   "Identity withheld for security reasons"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 4
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "ilmo ayuntamiento de don benito perfil de contratante",
+  "mentions": 3,
+  "names": [
+   "Ilmo. Ayuntamiento de Don Benito (Perfil de Contratante)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 7
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "in tend system please see section vi 3 additional information for details",
+  "mentions": 3,
+  "names": [
+   "In-Tend system (please see section VI.3 - Additional information for details)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "further-information": 1,
+   "specifications-provider": 1,
+   "tender-receipt": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "information is available via delta e sourcing see section vi 3",
+  "mentions": 3,
+  "names": [
+   "Information is available via Delta e sourcing - see section VI.3"
+  ],
+  "orgs": 1,
+  "roles": {
+   "further-information": 2,
+   "specifications-provider": 2,
+   "tender-receipt": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angaben erforderlich",
+  "mentions": 3,
+  "names": [
+   "Keine Angaben erforderlich"
+  ],
+  "orgs": 1,
+  "roles": {
+   "mediation-body": 2,
+   "review-body": 4
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "london borough of enfield on behalf of itself and the following contracting authorities see section vi 3",
+  "mentions": 3,
+  "names": [
+   "LONDON BOROUGH OF ENFIELD ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES; SEE SECTION VI.3"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 3
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "multi attributaire voir autres informations",
+  "mentions": 3,
+  "names": [
+   "Multi attributaire voir \u00abAutres informations\u00bb"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 3
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "n a to uk see section vi 4 2",
+  "mentions": 3,
+  "names": [
+   "N/A to UK See Section VI.4.2)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 4
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "niet van toepassing dit betreft een marktconsultatie",
+  "mentions": 3,
+  "names": [
+   "Niet van toepassing, dit betreft een marktconsultatie"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1,
+   "mediation-body": 1,
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "noe cpc member bodies as listed at http www noecpc nhs uk our current customers for full details see section ii 1 2 main",
+  "mentions": 3,
+  "names": [
+   "NOE CPC member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers. For full details see section II.1.2 Main place of delivery."
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 3
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "noecpc member bodies as listed at http www noecpc nhs uk our current customers for full details see section ii 1 2 main ",
+  "mentions": 3,
+  "names": [
+   "NOECPC member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers. For full details see section II.1.2 Main place of delivery.",
+   "NOECPC Member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers  For full details see section II.1.2 Main Place of Delivery"
+  ],
+  "orgs": 2,
+  "roles": {
+   "purchasing-body": 4
+  }
+ },
+ {
+  "classes": [
+   "blank"
+  ],
+  "fold": "not applicable under provider selection regime",
+  "mentions": 3,
+  "names": [
+   "Not applicable under Provider Selection Regime"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Lot-ReviewOrg": 4
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "perfil de contratante de la universidad complutense de madrid",
+  "mentions": 3,
+  "names": [
+   "Perfil de Contratante de la Universidad Complutense de Madrid"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 6
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "please see section ii 1 5",
+  "mentions": 3,
+  "names": [
+   "Please see section II.1.5"
+  ],
+  "orgs": 1,
+  "roles": {
+   "further-information": 2,
+   "specifications-provider": 2,
+   "tender-receipt": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "please see section ii 1 5 short description",
+  "mentions": 3,
+  "names": [
+   "Please see section II.1.5 Short Description",
+   "Please see Section II.1.5, Short Description",
+   "Please see Section II.1.5) Short Description"
+  ],
+  "orgs": 3,
+  "roles": {
+   "purchasing-body": 3
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "please see section ii 2 4",
+  "mentions": 3,
+  "names": [
+   "Please see Section II.2.4"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 3
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "please see section ii b object of the contract supplies or services ii 2",
+  "mentions": 3,
+  "names": [
+   "Please see Section II) B. Object of the contract \u2014 Supplies or services II.2)",
+   "Please see Section II.B: Object of the contract \u2014 Supplies or services. II.2",
+   "Please see Section II.B: Object of the contract \u2014 Supplies or services II.2)"
+  ],
+  "orgs": 3,
+  "roles": {
+   "purchasing-body": 4
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "please see section v 4 2",
+  "mentions": 3,
+  "names": [
+   "Please see Section V!.4.2."
+  ],
+  "orgs": 1,
+  "roles": {
+   "RESPONSIBLE_FOR_MEDIATION_PROCEDURES": 1,
+   "appeal-information": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "please see section vi 2",
+  "mentions": 3,
+  "names": [
+   "Please see Section VI.2",
+   "Please see section VI.2"
+  ],
+  "orgs": 2,
+  "roles": {
+   "winner": 3
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "please see section vi 2 of this notice and section vi 3 of the contract notice",
+  "mentions": 3,
+  "names": [
+   "Please see section VI.2 of this notice and section VI.3 of the contract notice"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 5
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "please see section vi 3 additional information for further details",
+  "mentions": 3,
+  "names": [
+   "Please see section VI.3) Additional Information for further details"
+  ],
+  "orgs": 1,
+  "roles": {
+   "further-information": 4
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "please see section vi 4 2 below",
+  "mentions": 3,
+  "names": [
+   "Please see Section VI.4.2) below",
+   "Please see Section VI.4.2 below."
+  ],
+  "orgs": 2,
+  "roles": {
+   "review-body": 6
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "regierung von oberbayern vergabekammer sudbayern siehe oben",
+  "mentions": 3,
+  "names": [
+   "Regierung von Oberbayern, Vergabekammer S\u00fcdbayern, siehe oben"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 5
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 additional information section of this notice",
+  "mentions": 3,
+  "names": [
+   "See Section VI.3) Additional information section of this notice"
+  ],
+  "orgs": 2,
+  "roles": {
+   "further-information": 2,
+   "specifications-provider": 2,
+   "tender-receipt": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi3 2",
+  "mentions": 3,
+  "names": [
+   "See Section VI3.2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 3
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben abschnitt i 1",
+  "mentions": 3,
+  "names": [
+   "siehe oben Abschnitt I.1)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "further-information": 2,
+   "specifications-provider": 2,
+   "tender-receipt": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben ziffer vi 4 1",
+  "mentions": 3,
+  "names": [
+   "siehe oben Ziffer VI.4.1)",
+   "siehe oben Ziffer VI. 4.1"
+  ],
+  "orgs": 2,
+  "roles": {
+   "appeal-information": 4
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "sptcv s a u perfil del contratante www sptcv org redirigido a la plataforma de contratacion gva www gva es",
+  "mentions": 3,
+  "names": [
+   "SPTCV, S.A.U. Perfil del Contratante, www.sptcv.org, redirigido a la Plataforma de Contrataci\u00f3n GVA, www.gva.es",
+   "SPTCV, S.A.U. Perfil del Contratante, www.sptcv.org redirigido a la Plataforma de Contrataci\u00f3n GVA, www.gva.es"
+  ],
+  "orgs": 2,
+  "roles": {
+   "specifications-provider": 6
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "this information is withheld for security reasons",
+  "mentions": 3,
+  "names": [
+   "This information is withheld for security reasons"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 2,
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "ver informacion sobre los 10 adjudicatarios de este lote en el apartado vi 3 de este anuncio",
+  "mentions": 3,
+  "names": [
+   "Ver informaci\u00f3n sobre los 10 adjudicatarios de este lote en el apartado VI.3 de este anuncio"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 3
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "withheld of security reasons",
+  "mentions": 3,
+  "names": [
+   "\u2018Withheld of Security Reasons\u2019",
+   "\"WITHHELD OF SECURITY REASONS\""
+  ],
+  "orgs": 2,
+  "roles": {
+   "Tenderer": 2,
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "worcestershire county council on behalf of itself and the following contracting authorities see section vi 3",
+  "mentions": 3,
+  "names": [
+   "WORCESTERSHIRE COUNTY COUNCIL ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.3)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 3
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "1 vol a erfolgt hier keine angabe",
+  "mentions": 2,
+  "names": [
+   "1 VOL/A erfolgt hier keine Angabe"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 2
+  }
+ }
+]

@@ -1,0 +1,982 @@
+[
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section ii 2 4",
+  "mentions": 1,
+  "names": [
+   "See Section II.2.4)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section ii 2 4 of this notice",
+  "mentions": 1,
+  "names": [
+   "See section II 2.4 of this Notice"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section ii 2 of the orginal ojeu notice",
+  "mentions": 1,
+  "names": [
+   "See section II.2) of the orginal OJEU notice"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section ii 7 additional information",
+  "mentions": 1,
+  "names": [
+   "See Section II.7 Additional Information"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section ii 7 of this notice",
+  "mentions": 1,
+  "names": [
+   "See Section II.7) of this Notice"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section ii 8",
+  "mentions": 1,
+  "names": [
+   "See Section II.8"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section ii i 5",
+  "mentions": 1,
+  "names": [
+   "See Section II.I.5)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section iv 4 2",
+  "mentions": 1,
+  "names": [
+   "see section IV.4.2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section iv 4 2 above",
+  "mentions": 1,
+  "names": [
+   "See section IV 4.2 above"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 2
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "see section royal courts of justice",
+  "mentions": 1,
+  "names": [
+   "see section Royal Courts of Justice"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section v1 3 2 above",
+  "mentions": 1,
+  "names": [
+   "see section V1.3.2 above"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section v1 4 1 above",
+  "mentions": 1,
+  "names": [
+   "see Section V1.4.1 above"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section v1 4 3",
+  "mentions": 1,
+  "names": [
+   "See Section V1.4.3"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Lot-ReviewOrg": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 2 complementary information",
+  "mentions": 1,
+  "names": [
+   "See Section VI.2) Complementary Information"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 2 for full list of economic operators in favour of whom the contract award decision has been taken",
+  "mentions": 1,
+  "names": [
+   "See Section VI.2 for full list of economic operators in favour of whom the contract award decision has been taken"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 2 for further information on contracting authorities",
+  "mentions": 1,
+  "names": [
+   "See Section VI.2 for further information on contracting authorities"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 2 for list of providers on lot 1",
+  "mentions": 1,
+  "names": [
+   "See section VI.2 for list of providers on Lot 1"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 2 for list of providers on lot 2",
+  "mentions": 1,
+  "names": [
+   "See section VI.2 for list of providers on Lot 2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 2 for list of providers on lot 3",
+  "mentions": 1,
+  "names": [
+   "See section VI.2 for list of providers on Lot 3"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 2 for list of service providers for each lot",
+  "mentions": 1,
+  "names": [
+   "See Section VI.2 for list of service providers for each lot"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 3 above",
+  "mentions": 1,
+  "names": [
+   "See Section VI.3.3 above"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 additional information for scope of framework",
+  "mentions": 1,
+  "names": [
+   "See Section VI.3) Additional Information for scope of framework"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 additonal information sub section 2",
+  "mentions": 1,
+  "names": [
+   "See Section VI.3 Additonal Information, sub-section 2."
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 below",
+  "mentions": 1,
+  "names": [
+   "See section VI.3 below"
+  ],
+  "orgs": 1,
+  "roles": {
+   "further-information": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 for details",
+  "mentions": 1,
+  "names": [
+   "See Section VI.3 for details"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 lot 1a",
+  "mentions": 1,
+  "names": [
+   "See section VI.3 - Lot 1A"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 lot 2",
+  "mentions": 1,
+  "names": [
+   "See section VI.3 - Lot 2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 lot 3",
+  "mentions": 1,
+  "names": [
+   "See section VI.3 - Lot 3"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "see section vi 3 lot1b",
+  "mentions": 1,
+  "names": [
+   "See section VI.3 - Lot1B"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 of contract notice",
+  "mentions": 1,
+  "names": [
+   "See Section VI.3 of Contract Notice"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 of the contract notice",
+  "mentions": 1,
+  "names": [
+   "See section VI.3 of the Contract Notice"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 3 of this notice",
+  "mentions": 1,
+  "names": [
+   "See section VI.3 of this notice"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi 4 2 of ojeu notice",
+  "mentions": 1,
+  "names": [
+   "See section VI.4.2 of OJEU notice"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi additional information",
+  "mentions": 1,
+  "names": [
+   "See Section VI) \u2014 additional information"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "see section vi complementary information for all framework members on lots 1 2 and 4",
+  "mentions": 1,
+  "names": [
+   "See Section VI Complementary Information for all framework members on Lots 1, 2 and 4."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "see sections ll 2 4 lot 2 and lot 3",
+  "mentions": 1,
+  "names": [
+   "see sections ll.2.4 Lot 2 and Lot 3"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "sequa ggmbh siehe oben zusatze texte",
+  "mentions": 1,
+  "names": [
+   "SEQUA gGmbH \"siehe oben/ Zus\u00e4tze/Texte\""
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "service from which information about the lodging of appeals may be obtained please see section vi 3 2",
+  "mentions": 1,
+  "names": [
+   "Service from which information about the lodging of appeals may be obtained: please see section VI.3.2."
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben abschnitt vi 3 1",
+  "mentions": 1,
+  "names": [
+   "Siehe oben, Abschnitt VI.3.1"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben bei vi 4 1",
+  "mentions": 1,
+  "names": [
+   "Siehe oben bei VI.4.1)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben genannten kontaktstellen",
+  "mentions": 1,
+  "names": [
+   "Siehe oben genannten Kontaktstellen"
+  ],
+  "orgs": 1,
+  "roles": {
+   "tender-receipt": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben iv 3 1",
+  "mentions": 1,
+  "names": [
+   "siehe oben IV.3.1)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben iv 4 1",
+  "mentions": 1,
+  "names": [
+   "siehe oben IV.4.1)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "siehe oben neb betriebsgesellschaft mbh die hiesige angabe erfolgt nur da das computerformular eine eingabe erfordert",
+  "mentions": 1,
+  "names": [
+   "siehe oben: NEB Betriebsgesellschaft mbH (die hiesige Angabe erfolgt nur, da das Computerformular eine Eingabe erfordert)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben unter punkt vi 4 1",
+  "mentions": 1,
+  "names": [
+   "Siehe oben unter Punkt VI.4.1)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben unter vi 3 1",
+  "mentions": 1,
+  "names": [
+   "Siehe oben unter VI.3.1"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "siehe oben vergabekammer sudbayern",
+  "mentions": 1,
+  "names": [
+   "siehe oben (Vergabekammer S\u00fcdbayern)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben vi 3",
+  "mentions": 1,
+  "names": [
+   "Siehe oben VI.3)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "siehe oben vks",
+  "mentions": 1,
+  "names": [
+   "Siehe oben \u2013 VKS"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben ziff vi 4 1ort",
+  "mentions": 1,
+  "names": [
+   "siehe oben Ziff. VI.4.1Ort"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "siehe oben ziffer vi 4 1 der vorliegenden bekanntmachung",
+  "mentions": 1,
+  "names": [
+   "Siehe oben Ziffer VI.4.1) der vorliegenden Bekanntmachung"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "sociedad de infraestructuras rurales aragonesas sa perfil del contratante www sirasa net area de licitaciones",
+  "mentions": 1,
+  "names": [
+   "Sociedad de Infraestructuras Rurales Aragonesas, SA - Perfil del Contratante www.sirasa.net (\u00e1rea de licitaciones)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "solihull metropolitan borough council see section vi 4",
+  "mentions": 1,
+  "names": [
+   "SOLIHULL METROPOLITAN BOROUGH COUNCIL (SEE SECTION VI.4)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "southend on sea nhs primary care trust as lead authority for the south east essex lift on behalf of itself and the follo",
+  "mentions": 1,
+  "names": [
+   "SOUTHEND-ON-SEA NHS PRIMARY CARE TRUST AS LEAD AUTHORITY FOR THE SOUTH EAST ESSEX LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "stadt aurich siehe oben unter vi 4 1",
+  "mentions": 1,
+  "names": [
+   "Stadt Aurich (siehe oben unter VI 4.1)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "stockton on tees borough council on behalf of itself and the following contracting authorities see section vi 3",
+  "mentions": 1,
+  "names": [
+   "STOCKTON-ON-TEES BOROUGH COUNCIL ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES, SEE SECTION VI.3"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "suffolk county council see section vi 3 additional information regarding the contracting authorities who may potentially",
+  "mentions": 1,
+  "names": [
+   "SUFFOLK COUNTY COUNCIL (SEE SECTION VI.3 \"ADDITIONAL INFORMATION\" REGARDING THE CONTRACTING AUTHORITIES WHO MAY POTENTIALLY USE THE CONTRACT)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "supplier name withheld for security reasons",
+  "mentions": 1,
+  "names": [
+   "\"Supplier name withheld for Security Reasons\""
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "swansea housing association on behalf of the integrate consortium see section vi for more information",
+  "mentions": 1,
+  "names": [
+   "SWANSEA HOUSING ASSOCIATION ON BEHALF OF THE INTEGRATE CONSORTIUM (SEE SECTION VI FOR MORE INFORMATION)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "tameside metropolitan borough council on behalf of itself and the following contracting authorities see section vi 3 ser",
+  "mentions": 1,
+  "names": [
+   "TAMESIDE METROPOLITAN BOROUGH COUNCIL ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES: SEE SECTION VI.3, SERVICES FOR CHILDREN AND YOUNG PEOPLE"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "tender document available electronically see section vi 3 additional information",
+  "mentions": 1,
+  "names": [
+   "Tender document available electronically. (See Section VI.3 Additional Information)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "tender document available electronically see section vi 3 for details",
+  "mentions": 1,
+  "names": [
+   "Tender document available electronically (see Section VI.3 for details)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "tender document is available electronically see section vi 3 additional information",
+  "mentions": 1,
+  "names": [
+   "Tender document is available electronically see section VI.3 Additional information"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "tender documents available electronically see section vi 3 additional information",
+  "mentions": 1,
+  "names": [
+   "Tender documents available electronically. See Section VI.3 Additional Information"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "tender must be sent electronically to rib software see section vi 3",
+  "mentions": 1,
+  "names": [
+   "Tender must be sent electronically to RIB software (see Section VI.3))"
+  ],
+  "orgs": 1,
+  "roles": {
+   "tender-receipt": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "the contractor s name has been withheld for security reasons",
+  "mentions": 1,
+  "names": [
+   "The contractor's name has been withheld for security reasons."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "the council of the london borough of ealing and also see section vi 3",
+  "mentions": 1,
+  "names": [
+   "THE COUNCIL OF THE LONDON BOROUGH OF EALING AND ALSO SEE SECTION VI.3"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "the name of the economic operator has been withheld for security reasons",
+  "mentions": 1,
+  "names": [
+   "The name of the economic operator has been withheld for security reasons"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "the name of the successful tenderer has been withheld for security reasons",
+  "mentions": 1,
+  "names": [
+   "The name of the successful tenderer has been withheld for security reasons"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "the seven tsos in the central western region as mentioned below cegedel net s a luxembourg elia system operator sa belgi",
+  "mentions": 1,
+  "names": [
+   "THE SEVEN TSOS IN THE CENTRAL WESTERN REGION AS MENTIONED BELOW: CEGEDEL NET S.A. (LUXEMBOURG), ELIA SYSTEM OPERATOR SA (BELGIUM), ENBW TRANSPORTNETZE AG (GERMANY), E.ON NETZ GMBH (GERMANY), RTE EDF TRANSPORT (FRANCE), RWE TRANSPORTNETZ STROM GMBH (GERMANY), TENNET TSO B.V. (THE NETHERLANDS) (SEE SECTION VI,VI.3 FOR FURTHER INFORMATION ABOUT TENDERING PARTY /CONTRACTING ENTITY)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ }
+]

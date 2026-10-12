@@ -1,0 +1,980 @@
+[
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "desde el dia siguiente a la publicacion en el perfil de contratante o la recepcion de la notificacion 15 dias habiles",
+  "mentions": 1,
+  "names": [
+   "Desde el d\u00eda siguiente a la publicaci\u00f3n en el perfil de contratante o la recepci\u00f3n de la notificaci\u00f3n ,15 d\u00edas h\u00e1biles"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Lot-ReviewInfo": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "details of supplier has been withheld for reasons of security",
+  "mentions": 1,
+  "names": [
+   "Details of supplier has been withheld for reasons of security."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "details withheld for commercial reasons",
+  "mentions": 1,
+  "names": [
+   "Details withheld for commercial reasons"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "documents available electronically see section vi 3 additional information below",
+  "mentions": 1,
+  "names": [
+   "Documents available electronically. See Section VI.3 Additional Information below"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "due to the sensitive nature of this contract the contractor s details are withheld",
+  "mentions": 1,
+  "names": [
+   "Due to the sensitive nature of this contract, the Contractor's details are withheld"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "due to the sensitive nature of this contract the suppier name will be withheld from publication",
+  "mentions": 1,
+  "names": [
+   "Due to the sensitive nature of this contract the suppier name will be withheld from publication."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "due to the sensitive nature of this contract the suppliers name is being withheld",
+  "mentions": 1,
+  "names": [
+   "Due to the sensitive nature of this Contract the suppliers name is being withheld"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "eastern shires purchasing organisation see www espo org on behalf of embc procurement limited embc see section vi 2",
+  "mentions": 1,
+  "names": [
+   "EASTERN SHIRES PURCHASING ORGANISATION (SEE WWW.ESPO.ORG) ON BEHALF OF EMBC PROCUREMENT LIMITED [EMBC] - SEE SECTION VI.2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "en el perfil del contratante o en el registro sau",
+  "mentions": 1,
+  "names": [
+   "En el Perfil del Contratante o en el Registro SAU"
+  ],
+  "orgs": 1,
+  "roles": {
+   "further-information": 2
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "en el perfil del contratante o recogerse personalmente en las oficinas del sau",
+  "mentions": 1,
+  "names": [
+   "En el Perfil del Contratante o recogerse personalmente en las oficinas del SAU"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "en el perfil del contratante www vitoria gasteiz org ademas la retirada de la documentacion podra realizarse en la copis",
+  "mentions": 1,
+  "names": [
+   "En el perfil del contratante, www.vitoria-gasteiz.org. Adem\u00e1s, la retirada de la documentaci\u00f3n podr\u00e1 realizarse en la copister\u00eda Arco, en la c/ San Antonio, n\u00ba 16, 01005 Vitoria-Gasteiz. Tel\u00e9fono copister\u00eda Arco: +34 945232813 y +34 945140678"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "endesa energia s a ver informacion adicional",
+  "mentions": 1,
+  "names": [
+   "ENDESA ENERG\u00cdA, S.A. (Ver informaci\u00f3n adicional)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "er anexo publicado en el perfil de contratante www hospitalclinic org proveidors plataforma electronica de contractacion",
+  "mentions": 1,
+  "names": [
+   "er anexo publicado en el Perfil de Contratante www.hospitalclinic.org/ prove\u00efdors / Plataforma Electr\u00f2nica de Contractaci\u00f3n P\u00fablica de la Generalitat de Catalunya"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "fabrica nacional de moneda y timbre real casa de la moneda perfil del contratante pagina web de la fnmt rcm",
+  "mentions": 1,
+  "names": [
+   "F\u00e1brica Nacional de Moneda y Timbre \u2013 Real Casa de la Moneda / Perfil del Contratante, p\u00e1gina WEB de la FNMT-RCM"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 3
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "for details of awarded supplier please see section vi 2",
+  "mentions": 1,
+  "names": [
+   "For details of awarded supplier, please see section VI.2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "for details of awarded suppliers please see section v 1",
+  "mentions": 1,
+  "names": [
+   "For details of awarded suppliers please see section V.1"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "for details of the awarded supplier plese see section vi 2",
+  "mentions": 1,
+  "names": [
+   "For details of the awarded supplier, plese see section VI.2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "for details of the awarded supplier see section v1 2",
+  "mentions": 1,
+  "names": [
+   "For details of the awarded supplier see Section V1.2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "for details of the awarded suppliers please see section vi 2 a list of purchasing points can be provided upon request",
+  "mentions": 1,
+  "names": [
+   "For details of the awarded suppliers, please see Section VI.2) A list of purchasing points can be provided upon request"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "for information please see section vi 3 additional information",
+  "mentions": 1,
+  "names": [
+   "For Information please see Section VI.3) Additional Information"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "for more information please see section ii 1 4 short description",
+  "mentions": 1,
+  "names": [
+   "For more information please see Section II.1.4) \"Short description\""
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "fotocopisteria arco y perfil de contratante www vitoria gasteiz org",
+  "mentions": 1,
+  "names": [
+   "Fotocopister\u00eda ARCO y perfil de contratante (www.vitoria-gasteiz.org)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "fotocopisteria arco y perfil del contratante http www vitoria gasteiz org",
+  "mentions": 1,
+  "names": [
+   "Fotocopister\u00eda Arco y Perfil del contratante (http://www.vitoria-gasteiz.org)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "fundacion ciudad de la energia ver pliegos descargar en perfil del contratante de la fundacion www ciuden es",
+  "mentions": 1,
+  "names": [
+   "Fundaci\u00f3n Ciudad de la Energ\u00eda (ver pliegos, descargar en perfil del contratante de la Fundaci\u00f3n, www.ciuden.es)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "fundacion ciudad de la energia ver pliegos descargar en perfil del contratante www ciuden es",
+  "mentions": 1,
+  "names": [
+   "Fundaci\u00f3n Ciudad de la Energ\u00eda. Ver Pliegos (descargar en perfil del contratante, www.ciuden.es)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "appeal-information": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "greffe du tribunal administratif de nantes voir renseignements ci dessus",
+  "mentions": 1,
+  "names": [
+   "Greffe du tribunal administratif de Nantes (voir renseignements ci-dessus)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "groupement elise jolliet architecte pascal macouin voir renseignements complementaires",
+  "mentions": 1,
+  "names": [
+   "Groupement \u00c9lise Jolliet architecte & Pascal Macouin (voir renseignements compl\u00e9mentaires)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "hertfordshire county council on behalf of hertfordshire catering limited this is an award notice and this opportunity is",
+  "mentions": 1,
+  "names": [
+   "Hertfordshire County Council on behalf of Hertfordshire Catering Limited \u2014 This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "hertfordshire county council this is an award notice and this opportunity is now closed please see section ii 1 4 for fu",
+  "mentions": 1,
+  "names": [
+   "Hertfordshire County Council \u2014 This is an award notice and this opportunity is now closed. Please see section II.1.4) for further details"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "information withheld for reasons of security",
+  "mentions": 1,
+  "names": [
+   "Information withheld for reasons of security"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "ingen lot 241",
+  "mentions": 1,
+  "names": [
+   "Ingen (lot 241)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "ingen lots 253 825 1077 1081 1210 1212 1215 1222 1223 1228 1230 1232 1340",
+  "mentions": 1,
+  "names": [
+   "INGEN (lots 253 - 825 - 1077 - 1081 - 1210 - 1212 - 1215 - 1222 - 1223 - 1228 - 1230 - 1232 - 1340)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "k does not have any such body see section vi 4 2",
+  "mentions": 1,
+  "names": [
+   "K does not have any such body. See section VI.4.2"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe da es sich um eine rahmenvereinbarung mit mehreren partnern handelt konnen die namen zum schutz des wettbew",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe. Da es sich um eine Rahmenvereinbarung mit mehreren Partnern handelt, k\u00f6nnen die Namen zum Schutz des Wettbewerbes nicht bekannt gegeben werden."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe da kein verfahren nach 97 gwb",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe, da kein Verfahren nach \u00a7\u00a7 97 GWB"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe da keine europaweite ausschreibung",
+  "mentions": 1,
+  "names": [
+   "keine Angabe, da keine europaweite Ausschreibung"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 2
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe da keine vergabe nach eu vergaberecht oder nach nationalem vergaberecht",
+  "mentions": 1,
+  "names": [
+   "keine Angabe, da keine Vergabe nach EU-Vergaberecht oder nach nationalem Vergaberecht"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe da nationale ausschreibung",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe, da nationale Ausschreibung"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe der zuschlag ging an meherere bieter die weiterhin im wettbewerb stehen",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe-der Zuschlag ging an meherere Bieter, die weiterhin im Wettbewerb stehen."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe erforderlich",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe erforderlich"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe gem 28 a ziffer 2 vol a",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe gem. \u00a7 28 a) Ziffer 2 VOL/A"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "keine angabe gemas 27a i v m 27 nr 3 b und c vol",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe gem\u00e4\u00df \u00a7 27a i. V. m. \u00a7 27 Nr. 3 b) und c) VOL"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe gemas 30 2 nr 3 uvgo",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe gem\u00e4\u00df \u00a7 30 (2) Nr. 3 UVgO"
+  ],
+  "orgs": 1,
+  "roles": {}
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe gemas 61 abs 4 bvergg 2018 aus rechtlichen geheimhaltungsgrunden konnen hierzu keine auskunfte erteilt werd",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe gem\u00e4\u00df \u00a7 61 Abs 4 BVergG 2018. (Aus rechtlichen Geheimhaltungsgr\u00fcnden k\u00f6nnen hierzu keine Ausk\u00fcnfte erteilt werden.)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "Tenderer": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe gemas 61abs 4 bvergg 2018",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe gem\u00e4\u00df \u00a7 61Abs 4 BVergG 2018"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe gemas 61abs4 und 62abs3 bvergg 2018",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe gem\u00e4\u00df \u00a761Abs4 und \u00a762Abs3 BVergG 2018"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe im interesse des auftragnehmers",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe im Interesse des Auftragnehmers"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe in abschnitt i ist falsch",
+  "mentions": 1,
+  "names": [
+   "keine, Angabe in Abschnitt I ist falsch"
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe nach 3 6 2 vgv bieter nummer 1",
+  "mentions": 1,
+  "names": [
+   "keine Angabe nach \u00a7 3 (6) 2, VgV, Bieter Nummer 1"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe siehe abschnitt vi 3",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe (siehe Abschnitt VI.3)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe siehe ziffer vi 3",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe (siehe Ziffer VI.3)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angabe zu den parteien der rahmenvereinbarung zur sicherstellung des freien und lauteren wettbewerbs bei den abruf",
+  "mentions": 1,
+  "names": [
+   "Keine Angabe zu den Parteien der Rahmenvereinbarung zur Sicherstellung des freien und lauteren Wettbewerbs bei den Abrufen aus der RV."
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angaben da berechtigte wirtschaftliche interessen einer nennung der bieter entgegenstehen und die bezuschlagten bi",
+  "mentions": 1,
+  "names": [
+   "keine Angaben, da berechtigte wirtschaftliche Interessen einer Nennung der Bieter entgegenstehen und die bezuschlagten Bieter noch im Wettbewerb zueinander stehen"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angaben gemas 12 skr vol a skr",
+  "mentions": 1,
+  "names": [
+   "Keine Angaben gem\u00e4\u00df \u00a7 12 SKR (VOL/A SKR)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angaben gemas 28 a nr 2 vol a",
+  "mentions": 1,
+  "names": [
+   "Keine Angaben gem\u00e4\u00df \u00a7 28 a Nr. 2 VOL/A"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angaben gemas 61 abs 4 bvergg 2018",
+  "mentions": 1,
+  "names": [
+   "Keine Angaben gem\u00e4\u00df \u00a7 61 Abs. 4 BVergG 2018"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "placeholder"
+  ],
+  "fold": "keine angaben los 3 wurde aufgehoben und wird neu ausgeschrieben",
+  "mentions": 1,
+  "names": [
+   "Keine Angaben, Los 3 wurde aufgehoben und wird neu ausgeschrieben"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "kontaktstelle siehe oben",
+  "mentions": 1,
+  "names": [
+   "Kontaktstelle siehe oben"
+  ],
+  "orgs": 1,
+  "roles": {
+   "review-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "london borough of camden on behalf of itself and the following contracting authorities see section vi 2 additional infor",
+  "mentions": 1,
+  "names": [
+   "LONDON BOROUGH OF CAMDEN ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES; SEE SECTION VI.2 (ADDITIONAL INFORMATION)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "london borough of camden on behalf of itself and the following contracting authorities see section vi 3",
+  "mentions": 1,
+  "names": [
+   "LONDON BOROUGH OF CAMDEN ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES; SEE SECTION VI.3"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "london borough of lambeth on behalf of itself and the following contracting authorities see section vi 3",
+  "mentions": 1,
+  "names": [
+   "LONDON BOROUGH OF LAMBETH - ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES: SEE SECTION VI.3"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "london borough of newham on behalf of itself and the following contracting authorities see section ii 7",
+  "mentions": 1,
+  "names": [
+   "LONDON BOROUGH OF NEWHAM ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES: SEE SECTION II.7"
+  ],
+  "orgs": 1,
+  "roles": {
+   "buyer": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "los pliegos se descargaran desde el perfil del contratante de la pagina web del museo",
+  "mentions": 1,
+  "names": [
+   "Los pliegos se descargar\u00e1n desde el perfil del contratante de la p\u00e1gina web del museo"
+  ],
+  "orgs": 1,
+  "roles": {
+   "specifications-provider": 2
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "marches du n 120001 a 120004 voir renseignements",
+  "mentions": 1,
+  "names": [
+   "March\u00e9s du n\u00b0 120001 \u00e0 120004 - voir renseignements"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "merthyr tydfil county borough council and such other local authorities in wales as may join the hub at a later date or m",
+  "mentions": 1,
+  "names": [
+   "Merthyr Tydfil County Borough Council and such other local authorities in Wales as may join the Hub at a later date or may be substituted for existing members of the Hub (see Section II.1.5 for further details)."
+  ],
+  "orgs": 1,
+  "roles": {
+   "purchasing-body": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "ministerium fur wirtschaft arbeit verkehr und technologie siehe oben",
+  "mentions": 1,
+  "names": [
+   "Ministerium f\u00fcr Wirtschaft, Arbeit, Verkehr und Technologie siehe oben"
+  ],
+  "orgs": 1,
+  "roles": {
+   "mediation-body": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "multiples adjudicatarios 178 relacion publicada en perfil de contratante adjudicacion",
+  "mentions": 1,
+  "names": [
+   "M\u00faltiples adjudicatarios (178) \u2014 relaci\u00f3n publicada en perfil de contratante (adjudicaci\u00f3n)"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "multiples adjudicatarios relacionados en la resolucion de adjudicacion de fecha 14 5 2018 publicada en el perfil del con",
+  "mentions": 1,
+  "names": [
+   "M\u00faltiples adjudicatarios relacionados en la Resoluci\u00f3n de Adjudicaci\u00f3n de fecha 14.5.2018, publicada en el perfil del contratante de la Delegaci\u00f3n Territorial de Igualdad, Salud y Pol\u00edticas Sociales en C\u00f3rdoba el 17.5.2018"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "award_summary"
+  ],
+  "fold": "multiples adjudicatarios relacionados en la resolucion de adjudicacion de fecha 18 5 2017 publicada en el perfil del con",
+  "mentions": 1,
+  "names": [
+   "M\u00faltiples adjudicatarios relacionados en la Resoluci\u00f3n de Adjudicaci\u00f3n de fecha 18.5.2017, publicada en el Perfil del Contratante de la Delegaci\u00f3n Territorial de Igualdad, Salud y Pol\u00edticas Sociales en C\u00f3rdoba el 19.5.2017"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ },
+ {
+  "classes": [
+   "name"
+  ],
+  "fold": "n a please see section vi 2 additional information",
+  "mentions": 1,
+  "names": [
+   "N/A - please see section VI.2) Additional information"
+  ],
+  "orgs": 1,
+  "roles": {
+   "winner": 1
+  }
+ }
+]
