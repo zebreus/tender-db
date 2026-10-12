@@ -1,6 +1,12 @@
 # 511 — placeholder names (pointers, withheld, `Various`, award summaries) mint parties in every role
 
-Status: ready-for-agent — UNIT 4 DEPLOYED 2026-10-12 (6593d9c, gate green; build wf_c7215857-cd9 with 3 reviews and fixes; deployed c786f0e). The unit 4 WET IS HELD. Dry 2283 (`../511-placeholders/u4/plan-dry.json`): the widened net (`echo_shaped`) catches 25,333 orgs. The fold would drop placeholder 1,253 / 1,920 and blank 52 / 215, but `name` is 24,027 orgs / 65,668 mentions and buyer_rows is 1,277, over the 1,000 stop line. Reading the `name` class exposed the real target. About 20.7k orgs / 56.7k mentions are bare SECTION-REFERENCE POINTERS in every language, which the lexicon does not classify:
+Status: ready-for-agent — UNITS 4+5 DRAINING 2026-10-12. Unit 5 was deployed in 4e79e46 (81f784d, gate green; build wf_b03f1aa2-7c5 with 3 reviews and 6 fixes).
+- Combined dry 2291 (`../511-placeholders/u45/plan-dry.json`): placeholder 21,334 orgs / 55,708 mentions, blank 52 / 215, name 1,165 / 2,534; 114 buyer rows; 46,499 notices.
+- Mandatory reads (wf_63890637-aa3, 46 agents, `u45/reads-wf_63890637.json`) covered all 2,136 non-exact folds and 1,115 list entries. Exactly one real party drops: 'Please see section VI.4.3 Translink' (1 mention, review body).
+- OWNER RULING: proceed rather than stop. The same no-separator shape already dropped under unit 2's anchor ('See section VI.4.3 Translink'), and this is 1 mention against ~55.9k. The fix is a follow-up keep rule (see Unit 6).
+- Buyer canary 2303/2304: 0 of 110 changed (`u45/canary/result.md`).
+- Wet 2306 (expect 46,499) → fold 2307 running. Floor: about 54,200 retired (drop-class 55,923, less guard 3, the canary's 13, and a ~3% multi-name allowance); above 55,923 is a read trigger.
+Was: ready-for-agent — UNIT 4 DEPLOYED 2026-10-12 (6593d9c, gate green; build wf_c7215857-cd9 with 3 reviews and fixes; deployed c786f0e). The unit 4 WET IS HELD. Dry 2283 (`../511-placeholders/u4/plan-dry.json`): the widened net (`echo_shaped`) catches 25,333 orgs. The fold would drop placeholder 1,253 / 1,920 and blank 52 / 215, but `name` is 24,027 orgs / 65,668 mentions and buyer_rows is 1,277, over the 1,000 stop line. Reading the `name` class exposed the real target. About 20.7k orgs / 56.7k mentions are bare SECTION-REFERENCE POINTERS in every language, which the lexicon does not classify:
 - 'siehe VI.4.1' (2,550 orgs / 10,629 mentions);
 - 'V.1 Award and contract value' (2,629 winner orgs);
 - 'siehe I.1', 'see VI.4.2 (below)', 'wie (oben Ziffer) VI.3.1', 'jak w pkt VI.4.1', 'cf rubrique VI.4.1', 'vedasi punto I.1', 'As in I.1 above', 'Same as VI.4.1'.
@@ -162,4 +168,28 @@ Open, before the wet run:
   mention that binds by the PPON, and the drop rule never sees a name. That is unconfirmed. Confirm it with
   a bounded indexed read of those 9 rows (`organization_mentions_org`: `SELECT notice_id, section_id, name,
   raw_identifier FROM organization_mentions WHERE organization_id = 30914328`).
+
+## Unit 6 — precision follow-ups from the units 4+5 reads (filed 2026-10-12)
+
+From `../511-placeholders/u45/reads-wf_63890637.json` (the readers' notes):
+1. **Pointer + body with no separator** drops the body. Examples: 'Please see section VI.4.3 Translink', and 'See
+   section VI.4.3 Translink' since unit 2. Proposed keep: when `names_after_stem` finds a name after the reference,
+   once titles and positions are stripped, read the name as an AwardSummary. Keep tests: Translink, plus 'S. VI.4.1)
+   Weimar Deutschland', which is kept today.
+2. **Junk still kept as name**:
+   - 'As shown in section I.1 above', 'As per the body in I.1', 'As defined in (section) VI.3 of this notice' and their
+     kin (the `As` pointer family whose grammar words are not yet listed);
+   - 'See links detailed in II.1.5';
+   - 'Se référer à l'article VI.3 du présent appel à candidatures';
+   - 'See VI.4.1) Review body field of this Contract Award Notice.';
+   - 'Siehe die unter Ziffer VI.4.1) genannte Stelle.';
+   - the long UK sentences ('This is an award notice and this opportunity is now closed…', 'The name(s) of the winning
+     tenderer(s) are being withheld…', 'A full list of successful suppliers will be made available on Contracts
+     Finder…').
+3. **Mixed folds**: 'siehe vi 4 1', 'wie vi 4 1', 'voir section vi 4 2' and 'siehe i 1 oder vi 4 1' each have a
+   spelling classed name. Find the variant (spacing or separator) and close it.
+4. **The dry plan's `legal_form` list** (role_census / supervisor) still lists the `As …` pointers. Stop counting a
+   pointer as a legal form there.
+5. **'V.1) AWARD AND CONTRACT VALUE:'** (2,629 orgs, one mention each) and 'siehe VI.4.1' (2,550 orgs) never collapse
+   to one org. Each slot keys on something else, perhaps an address or identifier. Check what mints them separately.
 
