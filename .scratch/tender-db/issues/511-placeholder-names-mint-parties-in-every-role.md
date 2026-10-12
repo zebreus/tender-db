@@ -1,6 +1,11 @@
 # 511 — placeholder names (pointers, withheld, `Various`, award summaries) mint parties in every role
 
-Status: ready-for-agent — UNIT 3 DRAINED 2026-10-12.
+Status: ready-for-agent — UNIT 4 DEPLOYED 2026-10-12 (6593d9c, gate green; build wf_c7215857-cd9 with 3 reviews and fixes; deployed c786f0e). The unit 4 WET IS HELD. Dry 2283 (`../511-placeholders/u4/plan-dry.json`): the widened net (`echo_shaped`) catches 25,333 orgs. The fold would drop placeholder 1,253 / 1,920 and blank 52 / 215, but `name` is 24,027 orgs / 65,668 mentions and buyer_rows is 1,277, over the 1,000 stop line. Reading the `name` class exposed the real target. About 20.7k orgs / 56.7k mentions are bare SECTION-REFERENCE POINTERS in every language, which the lexicon does not classify:
+- 'siehe VI.4.1' (2,550 orgs / 10,629 mentions);
+- 'V.1 Award and contract value' (2,629 winner orgs);
+- 'siehe I.1', 'see VI.4.2 (below)', 'wie (oben Ziffer) VI.3.1', 'jak w pkt VI.4.1', 'cf rubrique VI.4.1', 'vedasi punto I.1', 'As in I.1 above', 'Same as VI.4.1'.
+Also, the legal-form check reads 'As' as the AS form ('As VI.4.1' is listed with a legal form). NEXT: unit 5, the section-reference pointer class plus a net narrowed to pointer shapes. Then ONE combined dry → reads → canary → wet for units 4 and 5. Daily folds already apply unit 4's rules to notices they touch.
+Was: ready-for-agent — UNIT 3 DRAINED 2026-10-12.
 - Buyer canary passed: 10 of 389 buyer notices changed Tender, all German award notices joining their contract notice once the placeholder buyer left; one refused split healed. See `../511-placeholders/u3/canary/result.md`.
 - Wet job 2270 → fold 2271 retired 38,700 mentions (dropped parties: 211 void, 9,179 placeholder, 29,525 blank; 3,358 tenders corrected). Auto sweep 2272 removed 5,631 orphan orgs.
 - Retired fell 205 short of the restated floor of 38,905. Residual dry 2273 (`../511-placeholders/u3/plan-2273-residual.json`) explains the gap: 851 drop-class mentions are KEPT by the fold, and the planned-but-unseen parties add 590. 604 of the 851 are TED's multilingual pointer: one party carries 'See Section VI.2/VI.3 Additional information' in 24 languages, and the all-names rule keeps it because the EL/LT/HU/… translations read as names. 144 of those 604 are also read as AwardSummary ('Additional information' taken as a name after the pointer).
