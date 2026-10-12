@@ -1,0 +1,153 @@
+   Compiling ingest v0.1.0 (/home/user/tender-db/crates/ingest)
+warning: function `run` is never used
+   --> crates/store/tests/country_cluster_packet.rs:120:10
+    |
+120 | async fn run(db: &store::Db) -> store::CountryClusterReport {
+    |          ^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `store` (test "country_cluster_packet") generated 1 warning
+warning: unused import: `Value`
+  --> crates/store/tests/turso_temp_db_leak.rs:40:26
+   |
+40 | use store::turso::{self, Value};
+   |                          ^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `store` (test "turso_temp_db_leak") generated 1 warning (run `cargo fix --test "turso_temp_db_leak" -p store` to apply 1 suggestion)
+warning: unused variable: `db`
+  --> crates/store/tests/status_head_range.rs:68:9
+   |
+68 |     let db = store::Db::open(&path).await.expect("open");
+   |         ^^ help: if this is intentional, prefix it with an underscore: `_db`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `store` (test "status_head_range") generated 1 warning (run `cargo fix --test "status_head_range" -p store` to apply 1 suggestion)
+   Compiling tender-db v0.1.0 (/home/user/tender-db/crates/app)
+warning: unused variable: `path`
+   --> crates/ingest/tests/project.rs:552:24
+    |
+552 |     let (db, fetch_id, path) = scratch("withheld-stats").await;
+    |                        ^^^^ help: if this is intentional, prefix it with an underscore: `_path`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ingest` (test "project") generated 1 warning (run `cargo fix --test "project" -p ingest` to apply 1 suggestion)
+warning: unused variable: `daily`
+   --> crates/ingest/tests/process.rs:315:9
+    |
+315 |     let daily = run(&db, &archive).await;
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_daily`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+    --> crates/ingest/tests/project_incremental.rs:1217:9
+     |
+1217 |     let mut cn = island("Legacy CN");
+     |         ----^^
+     |         |
+     |         help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ingest` (test "process") generated 1 warning (run `cargo fix --test "process" -p ingest` to apply 1 suggestion)
+warning: `ingest` (test "project_incremental") generated 1 warning (run `cargo fix --test "project_incremental" -p ingest` to apply 1 suggestion)
+warning: unused import: `eforms`
+  --> crates/app/tests/api.rs:13:14
+   |
+13 | use ingest::{eforms, process, profile, project};
+   |              ^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tender-db` (test "api") generated 1 warning (run `cargo fix --test "api" -p tender-db` to apply 1 suggestion)
+    Finished `test` profile [unoptimized] target(s) in 1m 07s
+     Running unittests src/lib.rs (target/debug/deps/ingest-a0bb5cc3f6079573)
+
+running 56 tests
+test idgate::tests::the_lexicon_and_sequence_rules_hit_the_measured_placeholder_families ... ok
+test partyname::tests::a_blank_slot_but_a_named_body_is_kept ... ok
+test partyname::tests::a_name_before_a_boundary_stem_is_kept ... ok
+test partyname::tests::a_lot_qualifier_that_names_a_winner_is_an_award_summary ... ok
+test partyname::tests::a_form_section_title_after_a_pointer_is_no_name ... ok
+test partyname::tests::a_perfil_followed_by_its_owner_is_kept ... ok
+test partyname::tests::a_pointer_followed_by_a_name_is_kept ... ok
+test partyname::tests::a_bare_pointer_seeds_the_echo_and_the_net_reads_every_copy_it_sweeps ... ok
+test partyname::tests::a_spaced_section_reference_is_one_reference ... ok
+test partyname::tests::a_stem_inside_a_summary_is_an_award_summary ... ok
+test partyname::tests::a_summary_that_names_an_award_beside_a_void_lot_is_an_award_summary ... ok
+test partyname::tests::a_void_phrase_that_goes_on_to_name_an_award_is_an_award_summary ... ok
+test partyname::tests::every_entry_is_folded_and_every_stem_padded ... ok
+test partyname::tests::a_name_right_after_a_pointers_reference_is_kept ... ok
+test partyname::tests::every_measured_void_lot_spelling_is_refused ... ok
+test partyname::tests::every_measured_placeholder_spelling_has_its_class ... ok
+test partyname::tests::issue_511_temp_probe ... ignored, TEMP PROBE
+test partyname::tests::issue_511_unit_5_simulation ... ignored, reads the dry plan named by ISSUE_511_PLAN and writes ISSUE_511_SIM_OUT
+test partyname::tests::not_applicable_is_a_blank_slot ... ok
+test partyname::tests::placeholders_are_their_own_class ... ok
+test partyname::tests::politeness_before_a_pointer_stem_is_still_the_pointer ... ok
+test partyname::tests::punctuation_only_names_are_blank ... ok
+test partyname::tests::form_section_tokens_and_the_translation_shape ... ok
+test partyname::tests::scoped_words_need_their_language_and_a_plain_case ... ok
+test partyname::tests::real_names_beside_the_phrases_are_names ... ok
+test partyname::tests::stems_open_the_name ... ok
+test partyname::tests::teds_not_awarded_is_void_in_every_language ... ok
+test partyname::tests::teds_earlier_template_wordings_are_pointers_and_template_copies ... ok
+test partyname::tests::the_fold_is_the_role_census_fold ... ok
+test partyname::tests::the_former_non_name_folds_are_classified ... ok
+test partyname::tests::the_lot_qualifier_is_stripped_only_for_the_whole_compare ... ok
+test partyname::tests::the_plans_legal_form_list_leaves_out_section_reference_pointers ... ok
+test partyname::tests::the_as_family_and_the_readers_junk_are_section_reference_pointers ... ok
+test partyname::tests::the_pointer_word_as_is_no_legal_form ... ok
+test partyname::tests::withheld_and_not_applicable_sentences_have_their_class ... ok
+test profile::tests::only_an_all_zero_ojs_number_is_a_placeholder ... ok
+test project::tests::a_blank_party_with_a_gated_identifier_is_kept ... ok
+test project::tests::a_blank_winner_is_judged_on_the_results_other_evidence ... ok
+test partyname::tests::a_section_reference_pointer_is_a_placeholder_in_every_language ... ok
+test project::tests::a_non_english_pointer_seeds_no_echo ... ok
+test project::tests::a_placeholder_buyer_leaves_no_buyer_tokens ... ok
+test project::tests::a_name_beside_a_translated_pointer_that_reads_as_a_party_keeps_it ... ok
+test project::tests::a_placeholder_review_body_mints_nothing ... ok
+test project::tests::a_placeholder_party_with_an_identifier_is_dropped ... ok
+test project::tests::a_scoped_word_follows_the_notice_language ... ok
+test partyname::tests::a_name_beside_a_section_reference_stays_a_name ... FAILED
+test project::tests::an_eforms_placeholder_tenderer_keeps_the_publishers_decision ... ok
+test project::tests::a_teds_24_language_pointer_drops_with_its_croatian_copy ... ok
+test project::tests::the_decider_never_drops_an_award_summary ... ok
+test project::tests::the_dropped_report_counts_outer_sections ... ok
+test project::tests::the_echo_sweeps_a_pointer_led_copy_the_lexicon_misses ... ok
+test project::tests::the_ted_template_signal_keeps_a_named_party ... ok
+test project::tests::a_teds_translated_pointer_is_dropped_with_its_translations ... ok
+test project::tests::the_ted_template_signal_sweeps_copies_whatever_their_opener ... ok
+test project::tests::teds_19530163_pointer_drops_in_every_template_wording ... ok
+test partyname::tests::the_walks_net_holds_every_name_the_fold_drops ... ok
+
+failures:
+
+---- partyname::tests::a_name_beside_a_section_reference_stays_a_name stdout ----
+
+thread 'partyname::tests::a_name_beside_a_section_reference_stays_a_name' (13725) panicked at crates/ingest/src/partyname.rs:4110:13:
+assertion `left == right` failed: Transports Chalavan. V.1) AWARD AND CONTRACT VALUE:
+  left: true
+ right: false
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::panicking::assert_failed_inner
+   3: core::panicking::assert_failed::<bool, bool>
+   4: ingest::partyname::tests::a_name_beside_a_section_reference_stays_a_name
+   5: ingest::partyname::tests::a_name_beside_a_section_reference_stays_a_name::{closure#0}
+   6: <ingest::partyname::tests::a_name_beside_a_section_reference_stays_a_name::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    partyname::tests::a_name_beside_a_section_reference_stays_a_name
+
+test result: FAILED. 53 passed; 1 failed; 2 ignored; 0 measured; 435 filtered out; finished in 1.69s
+
+error: test failed, to rerun pass `-p ingest --lib`

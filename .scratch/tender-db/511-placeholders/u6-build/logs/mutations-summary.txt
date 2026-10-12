@@ -1,0 +1,20 @@
+applied M1-item1-arm
+M1-item1-arm EXIT=101 FAILED=3 partyname::tests::a_bare_pointer_seeds_the_echo_and_the_net_reads_every_copy_it_sweeps partyname::tests::a_name_right_after_a_pointers_reference_is_kept project::tests::a_name_beside_a_translated_pointer_that_reads_as_a_party_keeps_it 
+applied M2-item3-spaced
+M2-item3-spaced EXIT=101 FAILED=1 partyname::tests::a_spaced_section_reference_is_one_reference 
+applied M3-template-off
+M3-template-off EXIT=101 FAILED=2 project::tests::the_ted_template_signal_keeps_a_named_party project::tests::the_ted_template_signal_sweeps_copies_whatever_their_opener 
+applied M4-template-legal-form
+M4-template-legal-form EXIT=101 FAILED=3 partyname::tests::a_name_beside_a_section_reference_stays_a_name partyname::tests::teds_earlier_template_wordings_are_pointers_and_template_copies project::tests::the_ted_template_signal_keeps_a_named_party 
+applied M5-min-languages-2
+M5-min-languages-2 EXIT=101 FAILED=2 project::tests::the_ted_template_signal_keeps_a_named_party project::tests::the_ted_template_signal_sweeps_copies_whatever_their_opener 
+applied M6-legal-form-list
+M6-legal-form-list EXIT=101 FAILED=1 partyname::tests::the_plans_legal_form_list_leaves_out_section_reference_pointers 
+applied M7-net-narrow
+M7-net-narrow EXIT=101 FAILED=4 partyname::tests::teds_earlier_template_wordings_are_pointers_and_template_copies project::tests::the_ted_template_signal_keeps_a_named_party project::tests::the_ted_template_signal_sweeps_copies_whatever_their_opener partyname::tests::the_walks_net_holds_every_name_the_fold_drops 
+applied M8-no-consultar
+M8-no-consultar EXIT=101 FAILED=2 partyname::tests::teds_earlier_template_wordings_are_pointers_and_template_copies project::tests::teds_19530163_pointer_drops_in_every_template_wording 
+applied M9-opener-free
+M9-opener-free EXIT=101 FAILED=3 partyname::tests::a_name_beside_a_section_reference_stays_a_name partyname::tests::teds_earlier_template_wordings_are_pointers_and_template_copies project::tests::the_ted_template_signal_keeps_a_named_party 
+applied M10-template-seed-english
+M10-template-seed-english EXIT=101 FAILED=2 project::tests::the_ted_template_signal_keeps_a_named_party project::tests::the_ted_template_signal_sweeps_copies_whatever_their_opener 

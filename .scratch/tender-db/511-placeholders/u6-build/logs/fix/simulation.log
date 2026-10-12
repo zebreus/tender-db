@@ -1,0 +1,4550 @@
+   Compiling ingest v0.1.0 (/home/user/tender-db/crates/ingest)
+warning: unused variable: `db`
+  --> crates/store/tests/status_head_range.rs:68:9
+   |
+68 |     let db = store::Db::open(&path).await.expect("open");
+   |         ^^ help: if this is intentional, prefix it with an underscore: `_db`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `store` (test "status_head_range") generated 1 warning (run `cargo fix --test "status_head_range" -p store` to apply 1 suggestion)
+warning: function `run` is never used
+   --> crates/store/tests/country_cluster_packet.rs:120:10
+    |
+120 | async fn run(db: &store::Db) -> store::CountryClusterReport {
+    |          ^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `store` (test "country_cluster_packet") generated 1 warning
+warning: unused import: `Value`
+  --> crates/store/tests/turso_temp_db_leak.rs:40:26
+   |
+40 | use store::turso::{self, Value};
+   |                          ^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `store` (test "turso_temp_db_leak") generated 1 warning (run `cargo fix --test "turso_temp_db_leak" -p store` to apply 1 suggestion)
+   Compiling tender-db v0.1.0 (/home/user/tender-db/crates/app)
+warning: unused variable: `daily`
+   --> crates/ingest/tests/process.rs:315:9
+    |
+315 |     let daily = run(&db, &archive).await;
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_daily`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ingest` (test "process") generated 1 warning (run `cargo fix --test "process" -p ingest` to apply 1 suggestion)
+warning: variable does not need to be mutable
+    --> crates/ingest/tests/project_incremental.rs:1217:9
+     |
+1217 |     let mut cn = island("Legacy CN");
+     |         ----^^
+     |         |
+     |         help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ingest` (test "project_incremental") generated 1 warning (run `cargo fix --test "project_incremental" -p ingest` to apply 1 suggestion)
+warning: unused variable: `path`
+   --> crates/ingest/tests/project.rs:552:24
+    |
+552 |     let (db, fetch_id, path) = scratch("withheld-stats").await;
+    |                        ^^^^ help: if this is intentional, prefix it with an underscore: `_path`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ingest` (test "project") generated 1 warning (run `cargo fix --test "project" -p ingest` to apply 1 suggestion)
+warning: unused import: `eforms`
+  --> crates/app/tests/api.rs:13:14
+   |
+13 | use ingest::{eforms, process, profile, project};
+   |              ^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tender-db` (test "api") generated 1 warning (run `cargo fix --test "api" -p tender-db` to apply 1 suggestion)
+    Finished `test` profile [unoptimized] target(s) in 1m 03s
+     Running unittests src/lib.rs (target/debug/deps/ingest-a0bb5cc3f6079573)
+
+running 1 test
+{
+  "changed": 72,
+  "label": "residual dry 2310",
+  "legal_form_dropped": 227,
+  "net": {
+    "class_arms_only_buyer_rows": 87,
+    "class_arms_only_orgs": 1299,
+    "exact_entry_buyer_rows_estimate": 0,
+    "exact_entry_orgs": 510,
+    "net_buyer_rows_estimate": 102,
+    "net_buyer_rows_with_split_folds": 102,
+    "net_orgs": 1648,
+    "net_orgs_with_split_folds": 1648,
+    "net_without_framed_buyer_rows": 102,
+    "net_without_framed_orgs": 1648,
+    "non_exact_echo_arm_only": {
+      "buyer_rows": 15,
+      "folds": 295,
+      "mentions": 862,
+      "orgs": 349,
+      "roles": [
+        [
+          "appeal-information",
+          494
+        ],
+        [
+          "review-body",
+          244
+        ],
+        [
+          "purchasing-body",
+          103
+        ],
+        [
+          "specifications-provider",
+          94
+        ],
+        [
+          "tender-receipt",
+          86
+        ],
+        [
+          "winner",
+          77
+        ],
+        [
+          "further-information",
+          34
+        ],
+        [
+          "mediation-body",
+          24
+        ],
+        [
+          "buyer",
+          15
+        ],
+        [
+          "Tenderer",
+          1
+        ],
+        [
+          "employment-legislation-information",
+          1
+        ],
+        [
+          "environmental-legislation-information",
+          1
+        ],
+        [
+          "tax-legislation-information",
+          1
+        ]
+      ]
+    },
+    "non_exact_framed_shape_only": {
+      "buyer_rows": 0,
+      "folds": 0,
+      "mentions": 0,
+      "orgs": 0,
+      "roles": []
+    },
+    "non_exact_requeued_by_class_arms_only": {
+      "buyer_rows": 87,
+      "folds": 366,
+      "mentions": 1779,
+      "orgs": 789,
+      "roles": [
+        [
+          "appeal-information",
+          729
+        ],
+        [
+          "review-body",
+          446
+        ],
+        [
+          "winner",
+          355
+        ],
+        [
+          "purchasing-body",
+          140
+        ],
+        [
+          "mediation-body",
+          114
+        ],
+        [
+          "tender-receipt",
+          91
+        ],
+        [
+          "Tenderer",
+          90
+        ],
+        [
+          "buyer",
+          85
+        ],
+        [
+          "specifications-provider",
+          74
+        ],
+        [
+          "further-information",
+          42
+        ],
+        [
+          "Lot-Mediator",
+          14
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "BODY_RESPONSIBLE_APPEAL",
+          1
+        ]
+      ]
+    },
+    "non_exact_requeued_by_plan_classes": {
+      "buyer_rows": 102,
+      "folds": 661,
+      "mentions": 2641,
+      "orgs": 1138,
+      "roles": [
+        [
+          "appeal-information",
+          1223
+        ],
+        [
+          "review-body",
+          690
+        ],
+        [
+          "winner",
+          432
+        ],
+        [
+          "purchasing-body",
+          243
+        ],
+        [
+          "tender-receipt",
+          177
+        ],
+        [
+          "specifications-provider",
+          168
+        ],
+        [
+          "mediation-body",
+          138
+        ],
+        [
+          "buyer",
+          100
+        ],
+        [
+          "Tenderer",
+          91
+        ],
+        [
+          "further-information",
+          76
+        ],
+        [
+          "Lot-Mediator",
+          14
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "BODY_RESPONSIBLE_APPEAL",
+          1
+        ],
+        [
+          "employment-legislation-information",
+          1
+        ],
+        [
+          "environmental-legislation-information",
+          1
+        ],
+        [
+          "tax-legislation-information",
+          1
+        ]
+      ]
+    },
+    "non_exact_requeued_by_this_net": {
+      "buyer_rows": 102,
+      "folds": 661,
+      "mentions": 2641,
+      "orgs": 1138,
+      "roles": [
+        [
+          "appeal-information",
+          1223
+        ],
+        [
+          "review-body",
+          690
+        ],
+        [
+          "winner",
+          432
+        ],
+        [
+          "purchasing-body",
+          243
+        ],
+        [
+          "tender-receipt",
+          177
+        ],
+        [
+          "specifications-provider",
+          168
+        ],
+        [
+          "mediation-body",
+          138
+        ],
+        [
+          "buyer",
+          100
+        ],
+        [
+          "Tenderer",
+          91
+        ],
+        [
+          "further-information",
+          76
+        ],
+        [
+          "Lot-Mediator",
+          14
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "BODY_RESPONSIBLE_APPEAL",
+          1
+        ],
+        [
+          "employment-legislation-information",
+          1
+        ],
+        [
+          "environmental-legislation-information",
+          1
+        ],
+        [
+          "tax-legislation-information",
+          1
+        ]
+      ]
+    },
+    "non_exact_requeued_without_the_framed_shape": {
+      "buyer_rows": 102,
+      "folds": 661,
+      "mentions": 2641,
+      "orgs": 1138,
+      "roles": [
+        [
+          "appeal-information",
+          1223
+        ],
+        [
+          "review-body",
+          690
+        ],
+        [
+          "winner",
+          432
+        ],
+        [
+          "purchasing-body",
+          243
+        ],
+        [
+          "tender-receipt",
+          177
+        ],
+        [
+          "specifications-provider",
+          168
+        ],
+        [
+          "mediation-body",
+          138
+        ],
+        [
+          "buyer",
+          100
+        ],
+        [
+          "Tenderer",
+          91
+        ],
+        [
+          "further-information",
+          76
+        ],
+        [
+          "Lot-Mediator",
+          14
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "BODY_RESPONSIBLE_APPEAL",
+          1
+        ],
+        [
+          "employment-legislation-information",
+          1
+        ],
+        [
+          "environmental-legislation-information",
+          1
+        ],
+        [
+          "tax-legislation-information",
+          1
+        ]
+      ]
+    },
+    "non_exact_split_folds": {
+      "buyer_rows": 0,
+      "folds": 0,
+      "mentions": 0,
+      "orgs": 0,
+      "roles": []
+    },
+    "plan_buyer_rows": 102,
+    "plan_requeued_orgs": 1648,
+    "prior_simulation_net": null
+  },
+  "superset_misses": 0,
+  "transitions": [
+    {
+      "from": "award_summary",
+      "tally": {
+        "buyer_rows": 1,
+        "folds": 135,
+        "mentions": 510,
+        "orgs": 242,
+        "roles": [
+          [
+            "specifications-provider",
+            537
+          ],
+          [
+            "winner",
+            179
+          ],
+          [
+            "review-body",
+            57
+          ],
+          [
+            "further-information",
+            30
+          ],
+          [
+            "appeal-information",
+            25
+          ],
+          [
+            "tender-receipt",
+            10
+          ],
+          [
+            "mediation-body",
+            4
+          ],
+          [
+            "purchasing-body",
+            4
+          ],
+          [
+            "Lot-ReviewInfo",
+            2
+          ],
+          [
+            "Tenderer",
+            1
+          ],
+          [
+            "buyer",
+            1
+          ]
+        ]
+      },
+      "to": "award_summary"
+    },
+    {
+      "from": "blank",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 5,
+        "mentions": 6,
+        "orgs": 5,
+        "roles": [
+          [
+            "winner",
+            6
+          ]
+        ]
+      },
+      "to": "blank"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 94,
+        "folds": 518,
+        "mentions": 1495,
+        "orgs": 611,
+        "roles": [
+          [
+            "appeal-information",
+            571
+          ],
+          [
+            "review-body",
+            452
+          ],
+          [
+            "winner",
+            241
+          ],
+          [
+            "purchasing-body",
+            153
+          ],
+          [
+            "specifications-provider",
+            124
+          ],
+          [
+            "tender-receipt",
+            118
+          ],
+          [
+            "mediation-body",
+            102
+          ],
+          [
+            "buyer",
+            92
+          ],
+          [
+            "Tenderer",
+            48
+          ],
+          [
+            "further-information",
+            45
+          ],
+          [
+            "AWARD_AND_CONTRACT_VALUE",
+            6
+          ],
+          [
+            "Procedure-Buyer",
+            2
+          ],
+          [
+            "employment-legislation-information",
+            1
+          ],
+          [
+            "environmental-legislation-information",
+            1
+          ],
+          [
+            "tax-legislation-information",
+            1
+          ]
+        ]
+      },
+      "to": "name"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 72,
+        "mentions": 438,
+        "orgs": 93,
+        "roles": [
+          [
+            "review-body",
+            202
+          ],
+          [
+            "purchasing-body",
+            89
+          ],
+          [
+            "appeal-information",
+            63
+          ],
+          [
+            "tender-receipt",
+            57
+          ],
+          [
+            "specifications-provider",
+            41
+          ],
+          [
+            "further-information",
+            31
+          ],
+          [
+            "winner",
+            24
+          ],
+          [
+            "Tenderer",
+            17
+          ],
+          [
+            "Lot-Mediator",
+            14
+          ],
+          [
+            "mediation-body",
+            7
+          ],
+          [
+            "BODY_RESPONSIBLE_APPEAL",
+            1
+          ]
+        ]
+      },
+      "to": "placeholder"
+    },
+    {
+      "from": "placeholder",
+      "tally": {
+        "buyer_rows": 8,
+        "folds": 66,
+        "mentions": 702,
+        "orgs": 429,
+        "roles": [
+          [
+            "appeal-information",
+            589
+          ],
+          [
+            "winner",
+            161
+          ],
+          [
+            "review-body",
+            36
+          ],
+          [
+            "mediation-body",
+            29
+          ],
+          [
+            "Tenderer",
+            26
+          ],
+          [
+            "buyer",
+            8
+          ],
+          [
+            "specifications-provider",
+            3
+          ],
+          [
+            "tender-receipt",
+            2
+          ],
+          [
+            "purchasing-body",
+            1
+          ]
+        ]
+      },
+      "to": "placeholder"
+    }
+  ]
+}
+{
+  "changed": 72,
+  "label": "dry 2283",
+  "legal_form_dropped": 538,
+  "net": {
+    "class_arms_only_buyer_rows": 99,
+    "class_arms_only_orgs": 22106,
+    "exact_entry_buyer_rows_estimate": 0,
+    "exact_entry_orgs": 518,
+    "net_buyer_rows_estimate": 115,
+    "net_buyer_rows_with_split_folds": 115,
+    "net_orgs": 22582,
+    "net_orgs_with_split_folds": 22591,
+    "net_without_framed_buyer_rows": 114,
+    "net_without_framed_orgs": 22456,
+    "non_exact_echo_arm_only": {
+      "buyer_rows": 16,
+      "folds": 399,
+      "mentions": 1598,
+      "orgs": 476,
+      "roles": [
+        [
+          "review-body",
+          640
+        ],
+        [
+          "appeal-information",
+          561
+        ],
+        [
+          "purchasing-body",
+          371
+        ],
+        [
+          "winner",
+          151
+        ],
+        [
+          "specifications-provider",
+          101
+        ],
+        [
+          "tender-receipt",
+          94
+        ],
+        [
+          "mediation-body",
+          43
+        ],
+        [
+          "further-information",
+          42
+        ],
+        [
+          "Lot-ReviewOrg",
+          19
+        ],
+        [
+          "buyer",
+          16
+        ],
+        [
+          "Lot-ReviewInfo",
+          2
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          1
+        ],
+        [
+          "Tenderer",
+          1
+        ],
+        [
+          "employment-legislation-information",
+          1
+        ],
+        [
+          "environmental-legislation-information",
+          1
+        ],
+        [
+          "tax-legislation-information",
+          1
+        ]
+      ]
+    },
+    "non_exact_framed_shape_only": {
+      "buyer_rows": 1,
+      "folds": 103,
+      "mentions": 735,
+      "orgs": 126,
+      "roles": [
+        [
+          "review-body",
+          396
+        ],
+        [
+          "purchasing-body",
+          269
+        ],
+        [
+          "appeal-information",
+          82
+        ],
+        [
+          "winner",
+          75
+        ],
+        [
+          "Lot-ReviewOrg",
+          19
+        ],
+        [
+          "mediation-body",
+          19
+        ],
+        [
+          "tender-receipt",
+          10
+        ],
+        [
+          "specifications-provider",
+          9
+        ],
+        [
+          "further-information",
+          8
+        ],
+        [
+          "Lot-ReviewInfo",
+          2
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          1
+        ],
+        [
+          "buyer",
+          1
+        ]
+      ]
+    },
+    "non_exact_requeued_by_class_arms_only": {
+      "buyer_rows": 99,
+      "folds": 1693,
+      "mentions": 56085,
+      "orgs": 21588,
+      "roles": [
+        [
+          "appeal-information",
+          24116
+        ],
+        [
+          "review-body",
+          24008
+        ],
+        [
+          "mediation-body",
+          8201
+        ],
+        [
+          "winner",
+          4625
+        ],
+        [
+          "specifications-provider",
+          1035
+        ],
+        [
+          "tender-receipt",
+          974
+        ],
+        [
+          "further-information",
+          972
+        ],
+        [
+          "purchasing-body",
+          726
+        ],
+        [
+          "Lot-Mediator",
+          625
+        ],
+        [
+          "Lot-ReviewInfo",
+          481
+        ],
+        [
+          "Lot-ReviewOrg",
+          332
+        ],
+        [
+          "Tenderer",
+          124
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          108
+        ],
+        [
+          "buyer",
+          94
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          26
+        ],
+        [
+          "tax-legislation-information",
+          18
+        ],
+        [
+          "employment-legislation-information",
+          16
+        ],
+        [
+          "environmental-legislation-information",
+          16
+        ],
+        [
+          "SERVICE_INFORMATION_LODGING_APPEALS",
+          6
+        ],
+        [
+          "BODY_RESPONSIBLE_MEDIATION",
+          5
+        ],
+        [
+          "Procedure-Buyer",
+          5
+        ],
+        [
+          "BODY_RESPONSIBLE_APPEAL",
+          4
+        ]
+      ]
+    },
+    "non_exact_requeued_by_plan_classes": {
+      "buyer_rows": 1277,
+      "folds": 3988,
+      "mentions": 66793,
+      "orgs": 24815,
+      "roles": [
+        [
+          "review-body",
+          28348
+        ],
+        [
+          "appeal-information",
+          26394
+        ],
+        [
+          "mediation-body",
+          9119
+        ],
+        [
+          "winner",
+          6304
+        ],
+        [
+          "tender-receipt",
+          1547
+        ],
+        [
+          "purchasing-body",
+          1474
+        ],
+        [
+          "specifications-provider",
+          1450
+        ],
+        [
+          "further-information",
+          1163
+        ],
+        [
+          "Lot-ReviewInfo",
+          1148
+        ],
+        [
+          "buyer",
+          984
+        ],
+        [
+          "Lot-Mediator",
+          846
+        ],
+        [
+          "Lot-AddInfo",
+          476
+        ],
+        [
+          "Lot-TenderReceipt",
+          440
+        ],
+        [
+          "Lot-ReviewOrg",
+          411
+        ],
+        [
+          "Procedure-Buyer",
+          293
+        ],
+        [
+          "Tenderer",
+          127
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          111
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          58
+        ],
+        [
+          "tax-legislation-information",
+          19
+        ],
+        [
+          "employment-legislation-information",
+          17
+        ],
+        [
+          "environmental-legislation-information",
+          17
+        ],
+        [
+          "Contract-Signatory",
+          12
+        ],
+        [
+          "LotResult-Financing",
+          8
+        ],
+        [
+          "SERVICE_INFORMATION_LODGING_APPEALS",
+          8
+        ],
+        [
+          "BODY_RESPONSIBLE_MEDIATION",
+          5
+        ],
+        [
+          "BODY_RESPONSIBLE_APPEAL",
+          4
+        ]
+      ]
+    },
+    "non_exact_requeued_by_this_net": {
+      "buyer_rows": 115,
+      "folds": 2092,
+      "mentions": 57683,
+      "orgs": 22064,
+      "roles": [
+        [
+          "appeal-information",
+          24677
+        ],
+        [
+          "review-body",
+          24648
+        ],
+        [
+          "mediation-body",
+          8244
+        ],
+        [
+          "winner",
+          4776
+        ],
+        [
+          "specifications-provider",
+          1136
+        ],
+        [
+          "purchasing-body",
+          1097
+        ],
+        [
+          "tender-receipt",
+          1068
+        ],
+        [
+          "further-information",
+          1014
+        ],
+        [
+          "Lot-Mediator",
+          625
+        ],
+        [
+          "Lot-ReviewInfo",
+          483
+        ],
+        [
+          "Lot-ReviewOrg",
+          351
+        ],
+        [
+          "Tenderer",
+          125
+        ],
+        [
+          "buyer",
+          110
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          109
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          26
+        ],
+        [
+          "tax-legislation-information",
+          19
+        ],
+        [
+          "employment-legislation-information",
+          17
+        ],
+        [
+          "environmental-legislation-information",
+          17
+        ],
+        [
+          "SERVICE_INFORMATION_LODGING_APPEALS",
+          6
+        ],
+        [
+          "BODY_RESPONSIBLE_MEDIATION",
+          5
+        ],
+        [
+          "Procedure-Buyer",
+          5
+        ],
+        [
+          "BODY_RESPONSIBLE_APPEAL",
+          4
+        ]
+      ]
+    },
+    "non_exact_requeued_without_the_framed_shape": {
+      "buyer_rows": 114,
+      "folds": 1989,
+      "mentions": 56948,
+      "orgs": 21938,
+      "roles": [
+        [
+          "appeal-information",
+          24595
+        ],
+        [
+          "review-body",
+          24252
+        ],
+        [
+          "mediation-body",
+          8225
+        ],
+        [
+          "winner",
+          4701
+        ],
+        [
+          "specifications-provider",
+          1127
+        ],
+        [
+          "tender-receipt",
+          1058
+        ],
+        [
+          "further-information",
+          1006
+        ],
+        [
+          "purchasing-body",
+          828
+        ],
+        [
+          "Lot-Mediator",
+          625
+        ],
+        [
+          "Lot-ReviewInfo",
+          481
+        ],
+        [
+          "Lot-ReviewOrg",
+          332
+        ],
+        [
+          "Tenderer",
+          125
+        ],
+        [
+          "buyer",
+          109
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          108
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          26
+        ],
+        [
+          "tax-legislation-information",
+          19
+        ],
+        [
+          "employment-legislation-information",
+          17
+        ],
+        [
+          "environmental-legislation-information",
+          17
+        ],
+        [
+          "SERVICE_INFORMATION_LODGING_APPEALS",
+          6
+        ],
+        [
+          "BODY_RESPONSIBLE_MEDIATION",
+          5
+        ],
+        [
+          "Procedure-Buyer",
+          5
+        ],
+        [
+          "BODY_RESPONSIBLE_APPEAL",
+          4
+        ]
+      ]
+    },
+    "non_exact_split_folds": {
+      "buyer_rows": 0,
+      "folds": 3,
+      "mentions": 98,
+      "orgs": 9,
+      "roles": [
+        [
+          "purchasing-body",
+          105
+        ]
+      ]
+    },
+    "plan_buyer_rows": 1277,
+    "plan_requeued_orgs": 25333,
+    "prior_simulation_net": {
+      "exact_entry_buyer_rows_estimate": 0,
+      "exact_entry_orgs": 518,
+      "non_exact_echo_arm_only": {
+        "buyer_rows": 15,
+        "folds": 359,
+        "mentions": 1268,
+        "orgs": 428,
+        "roles": [
+          [
+            "appeal-information",
+            523
+          ],
+          [
+            "review-body",
+            436
+          ],
+          [
+            "purchasing-body",
+            189
+          ],
+          [
+            "tender-receipt",
+            141
+          ],
+          [
+            "specifications-provider",
+            133
+          ],
+          [
+            "winner",
+            86
+          ],
+          [
+            "further-information",
+            65
+          ],
+          [
+            "mediation-body",
+            29
+          ],
+          [
+            "Tenderer",
+            18
+          ],
+          [
+            "buyer",
+            15
+          ],
+          [
+            "Lot-Mediator",
+            14
+          ],
+          [
+            "BODY_RESPONSIBLE_APPEAL",
+            1
+          ],
+          [
+            "employment-legislation-information",
+            1
+          ],
+          [
+            "environmental-legislation-information",
+            1
+          ],
+          [
+            "tax-legislation-information",
+            1
+          ]
+        ]
+      },
+      "non_exact_requeued_by_unit_4": {
+        "buyer_rows": 1277,
+        "folds": 3988,
+        "mentions": 66793,
+        "orgs": 24815,
+        "roles": [
+          [
+            "review-body",
+            28348
+          ],
+          [
+            "appeal-information",
+            26394
+          ],
+          [
+            "mediation-body",
+            9119
+          ],
+          [
+            "winner",
+            6304
+          ],
+          [
+            "tender-receipt",
+            1547
+          ],
+          [
+            "purchasing-body",
+            1474
+          ],
+          [
+            "specifications-provider",
+            1450
+          ],
+          [
+            "further-information",
+            1163
+          ],
+          [
+            "Lot-ReviewInfo",
+            1148
+          ],
+          [
+            "buyer",
+            984
+          ],
+          [
+            "Lot-Mediator",
+            846
+          ],
+          [
+            "Lot-AddInfo",
+            476
+          ],
+          [
+            "Lot-TenderReceipt",
+            440
+          ],
+          [
+            "Lot-ReviewOrg",
+            411
+          ],
+          [
+            "Procedure-Buyer",
+            293
+          ],
+          [
+            "Tenderer",
+            127
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            111
+          ],
+          [
+            "AWARD_AND_CONTRACT_VALUE",
+            58
+          ],
+          [
+            "tax-legislation-information",
+            19
+          ],
+          [
+            "employment-legislation-information",
+            17
+          ],
+          [
+            "environmental-legislation-information",
+            17
+          ],
+          [
+            "Contract-Signatory",
+            12
+          ],
+          [
+            "LotResult-Financing",
+            8
+          ],
+          [
+            "SERVICE_INFORMATION_LODGING_APPEALS",
+            8
+          ],
+          [
+            "BODY_RESPONSIBLE_MEDIATION",
+            5
+          ],
+          [
+            "BODY_RESPONSIBLE_APPEAL",
+            4
+          ]
+        ]
+      },
+      "non_exact_requeued_by_unit_5": {
+        "buyer_rows": 114,
+        "folds": 1986,
+        "mentions": 56942,
+        "orgs": 21935,
+        "roles": [
+          [
+            "appeal-information",
+            24593
+          ],
+          [
+            "review-body",
+            24251
+          ],
+          [
+            "mediation-body",
+            8224
+          ],
+          [
+            "winner",
+            4701
+          ],
+          [
+            "specifications-provider",
+            1127
+          ],
+          [
+            "tender-receipt",
+            1058
+          ],
+          [
+            "further-information",
+            1006
+          ],
+          [
+            "purchasing-body",
+            828
+          ],
+          [
+            "Lot-Mediator",
+            625
+          ],
+          [
+            "Lot-ReviewInfo",
+            481
+          ],
+          [
+            "Lot-ReviewOrg",
+            332
+          ],
+          [
+            "Tenderer",
+            125
+          ],
+          [
+            "buyer",
+            109
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            108
+          ],
+          [
+            "AWARD_AND_CONTRACT_VALUE",
+            26
+          ],
+          [
+            "tax-legislation-information",
+            19
+          ],
+          [
+            "employment-legislation-information",
+            17
+          ],
+          [
+            "environmental-legislation-information",
+            17
+          ],
+          [
+            "SERVICE_INFORMATION_LODGING_APPEALS",
+            6
+          ],
+          [
+            "BODY_RESPONSIBLE_MEDIATION",
+            5
+          ],
+          [
+            "Procedure-Buyer",
+            5
+          ],
+          [
+            "BODY_RESPONSIBLE_APPEAL",
+            4
+          ]
+        ]
+      },
+      "non_exact_requeued_by_unit_5_class_arms_only": {
+        "buyer_rows": 99,
+        "folds": 1627,
+        "mentions": 55674,
+        "orgs": 21507,
+        "roles": [
+          [
+            "appeal-information",
+            24070
+          ],
+          [
+            "review-body",
+            23815
+          ],
+          [
+            "mediation-body",
+            8195
+          ],
+          [
+            "winner",
+            4615
+          ],
+          [
+            "specifications-provider",
+            994
+          ],
+          [
+            "further-information",
+            941
+          ],
+          [
+            "tender-receipt",
+            917
+          ],
+          [
+            "purchasing-body",
+            639
+          ],
+          [
+            "Lot-Mediator",
+            611
+          ],
+          [
+            "Lot-ReviewInfo",
+            481
+          ],
+          [
+            "Lot-ReviewOrg",
+            332
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            108
+          ],
+          [
+            "Tenderer",
+            107
+          ],
+          [
+            "buyer",
+            94
+          ],
+          [
+            "AWARD_AND_CONTRACT_VALUE",
+            26
+          ],
+          [
+            "tax-legislation-information",
+            18
+          ],
+          [
+            "employment-legislation-information",
+            16
+          ],
+          [
+            "environmental-legislation-information",
+            16
+          ],
+          [
+            "SERVICE_INFORMATION_LODGING_APPEALS",
+            6
+          ],
+          [
+            "BODY_RESPONSIBLE_MEDIATION",
+            5
+          ],
+          [
+            "Procedure-Buyer",
+            5
+          ],
+          [
+            "BODY_RESPONSIBLE_APPEAL",
+            3
+          ]
+        ]
+      },
+      "non_exact_split_folds": {
+        "buyer_rows": 0,
+        "folds": 1,
+        "mentions": 3,
+        "orgs": 3,
+        "roles": [
+          [
+            "purchasing-body",
+            4
+          ]
+        ]
+      },
+      "plan_buyer_rows": 1277,
+      "plan_requeued_orgs": 25333,
+      "unit_5_class_arms_only_buyer_rows": 99,
+      "unit_5_class_arms_only_orgs": 22025,
+      "unit_5_net_buyer_rows_estimate": 114,
+      "unit_5_net_buyer_rows_with_split_folds": 114,
+      "unit_5_net_orgs": 22453,
+      "unit_5_net_orgs_with_split_folds": 22456
+    }
+  },
+  "superset_misses": 0,
+  "transitions": [
+    {
+      "from": "award_summary",
+      "tally": {
+        "buyer_rows": 1,
+        "folds": 134,
+        "mentions": 508,
+        "orgs": 240,
+        "roles": [
+          [
+            "specifications-provider",
+            537
+          ],
+          [
+            "winner",
+            179
+          ],
+          [
+            "review-body",
+            57
+          ],
+          [
+            "further-information",
+            30
+          ],
+          [
+            "appeal-information",
+            25
+          ],
+          [
+            "tender-receipt",
+            10
+          ],
+          [
+            "mediation-body",
+            4
+          ],
+          [
+            "Lot-ReviewInfo",
+            2
+          ],
+          [
+            "Tenderer",
+            1
+          ],
+          [
+            "buyer",
+            1
+          ],
+          [
+            "purchasing-body",
+            1
+          ]
+        ]
+      },
+      "to": "award_summary"
+    },
+    {
+      "from": "award_summary+placeholder",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 1,
+        "mentions": 3,
+        "orgs": 3,
+        "roles": [
+          [
+            "purchasing-body",
+            4
+          ]
+        ]
+      },
+      "to": "award_summary+placeholder"
+    },
+    {
+      "from": "blank",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 5,
+        "mentions": 6,
+        "orgs": 5,
+        "roles": [
+          [
+            "winner",
+            6
+          ]
+        ]
+      },
+      "to": "blank"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 1257,
+        "folds": 2516,
+        "mentions": 11338,
+        "orgs": 3485,
+        "roles": [
+          [
+            "review-body",
+            4545
+          ],
+          [
+            "appeal-information",
+            2354
+          ],
+          [
+            "winner",
+            1842
+          ],
+          [
+            "mediation-body",
+            995
+          ],
+          [
+            "buyer",
+            967
+          ],
+          [
+            "purchasing-body",
+            793
+          ],
+          [
+            "Lot-ReviewInfo",
+            667
+          ],
+          [
+            "tender-receipt",
+            605
+          ],
+          [
+            "Lot-AddInfo",
+            476
+          ],
+          [
+            "specifications-provider",
+            445
+          ],
+          [
+            "Lot-TenderReceipt",
+            440
+          ],
+          [
+            "Procedure-Buyer",
+            290
+          ],
+          [
+            "Lot-Mediator",
+            221
+          ],
+          [
+            "further-information",
+            202
+          ],
+          [
+            "Lot-ReviewOrg",
+            79
+          ],
+          [
+            "Tenderer",
+            50
+          ],
+          [
+            "AWARD_AND_CONTRACT_VALUE",
+            38
+          ],
+          [
+            "Contract-Signatory",
+            12
+          ],
+          [
+            "LotResult-Financing",
+            8
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            3
+          ],
+          [
+            "SERVICE_INFORMATION_LODGING_APPEALS",
+            2
+          ],
+          [
+            "employment-legislation-information",
+            1
+          ],
+          [
+            "environmental-legislation-information",
+            1
+          ],
+          [
+            "tax-legislation-information",
+            1
+          ]
+        ]
+      },
+      "to": "name"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 71,
+        "mentions": 427,
+        "orgs": 88,
+        "roles": [
+          [
+            "review-body",
+            198
+          ],
+          [
+            "purchasing-body",
+            87
+          ],
+          [
+            "tender-receipt",
+            57
+          ],
+          [
+            "appeal-information",
+            46
+          ],
+          [
+            "specifications-provider",
+            41
+          ],
+          [
+            "further-information",
+            31
+          ],
+          [
+            "winner",
+            24
+          ],
+          [
+            "Tenderer",
+            17
+          ],
+          [
+            "Lot-Mediator",
+            14
+          ],
+          [
+            "mediation-body",
+            8
+          ],
+          [
+            "BODY_RESPONSIBLE_APPEAL",
+            1
+          ]
+        ]
+      },
+      "to": "placeholder"
+    },
+    {
+      "from": "placeholder",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 1,
+        "mentions": 1,
+        "orgs": 1,
+        "roles": [
+          [
+            "review-body",
+            3
+          ]
+        ]
+      },
+      "to": "award_summary"
+    },
+    {
+      "from": "placeholder",
+      "tally": {
+        "buyer_rows": 20,
+        "folds": 1394,
+        "mentions": 55019,
+        "orgs": 21233,
+        "roles": [
+          [
+            "appeal-information",
+            23994
+          ],
+          [
+            "review-body",
+            23604
+          ],
+          [
+            "mediation-body",
+            8116
+          ],
+          [
+            "winner",
+            4431
+          ],
+          [
+            "specifications-provider",
+            964
+          ],
+          [
+            "further-information",
+            930
+          ],
+          [
+            "tender-receipt",
+            885
+          ],
+          [
+            "Lot-Mediator",
+            611
+          ],
+          [
+            "purchasing-body",
+            590
+          ],
+          [
+            "Lot-ReviewInfo",
+            481
+          ],
+          [
+            "Lot-ReviewOrg",
+            332
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            108
+          ],
+          [
+            "Tenderer",
+            60
+          ],
+          [
+            "AWARD_AND_CONTRACT_VALUE",
+            20
+          ],
+          [
+            "tax-legislation-information",
+            18
+          ],
+          [
+            "buyer",
+            17
+          ],
+          [
+            "employment-legislation-information",
+            16
+          ],
+          [
+            "environmental-legislation-information",
+            16
+          ],
+          [
+            "SERVICE_INFORMATION_LODGING_APPEALS",
+            6
+          ],
+          [
+            "BODY_RESPONSIBLE_MEDIATION",
+            5
+          ],
+          [
+            "BODY_RESPONSIBLE_APPEAL",
+            3
+          ],
+          [
+            "Procedure-Buyer",
+            3
+          ]
+        ]
+      },
+      "to": "placeholder"
+    },
+    {
+      "from": "void",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 1,
+        "mentions": 1,
+        "orgs": 1,
+        "roles": [
+          [
+            "winner",
+            1
+          ]
+        ]
+      },
+      "to": "void"
+    }
+  ]
+}
+{
+  "changed": 120,
+  "label": "dry 2265 (unit 3)",
+  "legal_form_dropped": 0,
+  "net": {
+    "class_arms_only_buyer_rows": 389,
+    "class_arms_only_orgs": 7764,
+    "exact_entry_buyer_rows_estimate": 292,
+    "exact_entry_orgs": 4920,
+    "net_buyer_rows_estimate": 389,
+    "net_buyer_rows_with_split_folds": 389,
+    "net_orgs": 7764,
+    "net_orgs_with_split_folds": 7767,
+    "net_without_framed_buyer_rows": 389,
+    "net_without_framed_orgs": 7764,
+    "non_exact_echo_arm_only": {
+      "buyer_rows": 0,
+      "folds": 0,
+      "mentions": 0,
+      "orgs": 0,
+      "roles": []
+    },
+    "non_exact_framed_shape_only": {
+      "buyer_rows": 0,
+      "folds": 0,
+      "mentions": 0,
+      "orgs": 0,
+      "roles": []
+    },
+    "non_exact_requeued_by_class_arms_only": {
+      "buyer_rows": 97,
+      "folds": 564,
+      "mentions": 5548,
+      "orgs": 2844,
+      "roles": [
+        [
+          "review-body",
+          1975
+        ],
+        [
+          "winner",
+          1800
+        ],
+        [
+          "Tenderer",
+          792
+        ],
+        [
+          "appeal-information",
+          738
+        ],
+        [
+          "mediation-body",
+          625
+        ],
+        [
+          "purchasing-body",
+          289
+        ],
+        [
+          "Lot-ReviewOrg",
+          147
+        ],
+        [
+          "tender-receipt",
+          120
+        ],
+        [
+          "specifications-provider",
+          105
+        ],
+        [
+          "buyer",
+          95
+        ],
+        [
+          "further-information",
+          69
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          36
+        ],
+        [
+          "Lot-ReviewInfo",
+          12
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "employment-legislation-information",
+          2
+        ],
+        [
+          "environmental-legislation-information",
+          2
+        ],
+        [
+          "tax-legislation-information",
+          2
+        ]
+      ]
+    },
+    "non_exact_requeued_by_plan_classes": {
+      "buyer_rows": 98,
+      "folds": 600,
+      "mentions": 5658,
+      "orgs": 2888,
+      "roles": [
+        [
+          "review-body",
+          1986
+        ],
+        [
+          "winner",
+          1801
+        ],
+        [
+          "Tenderer",
+          792
+        ],
+        [
+          "appeal-information",
+          740
+        ],
+        [
+          "mediation-body",
+          625
+        ],
+        [
+          "specifications-provider",
+          296
+        ],
+        [
+          "purchasing-body",
+          294
+        ],
+        [
+          "Lot-ReviewOrg",
+          147
+        ],
+        [
+          "tender-receipt",
+          121
+        ],
+        [
+          "buyer",
+          96
+        ],
+        [
+          "further-information",
+          85
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          36
+        ],
+        [
+          "Lot-ReviewInfo",
+          12
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "employment-legislation-information",
+          2
+        ],
+        [
+          "environmental-legislation-information",
+          2
+        ],
+        [
+          "tax-legislation-information",
+          2
+        ]
+      ]
+    },
+    "non_exact_requeued_by_this_net": {
+      "buyer_rows": 97,
+      "folds": 564,
+      "mentions": 5548,
+      "orgs": 2844,
+      "roles": [
+        [
+          "review-body",
+          1975
+        ],
+        [
+          "winner",
+          1800
+        ],
+        [
+          "Tenderer",
+          792
+        ],
+        [
+          "appeal-information",
+          738
+        ],
+        [
+          "mediation-body",
+          625
+        ],
+        [
+          "purchasing-body",
+          289
+        ],
+        [
+          "Lot-ReviewOrg",
+          147
+        ],
+        [
+          "tender-receipt",
+          120
+        ],
+        [
+          "specifications-provider",
+          105
+        ],
+        [
+          "buyer",
+          95
+        ],
+        [
+          "further-information",
+          69
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          36
+        ],
+        [
+          "Lot-ReviewInfo",
+          12
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "employment-legislation-information",
+          2
+        ],
+        [
+          "environmental-legislation-information",
+          2
+        ],
+        [
+          "tax-legislation-information",
+          2
+        ]
+      ]
+    },
+    "non_exact_requeued_without_the_framed_shape": {
+      "buyer_rows": 97,
+      "folds": 564,
+      "mentions": 5548,
+      "orgs": 2844,
+      "roles": [
+        [
+          "review-body",
+          1975
+        ],
+        [
+          "winner",
+          1800
+        ],
+        [
+          "Tenderer",
+          792
+        ],
+        [
+          "appeal-information",
+          738
+        ],
+        [
+          "mediation-body",
+          625
+        ],
+        [
+          "purchasing-body",
+          289
+        ],
+        [
+          "Lot-ReviewOrg",
+          147
+        ],
+        [
+          "tender-receipt",
+          120
+        ],
+        [
+          "specifications-provider",
+          105
+        ],
+        [
+          "buyer",
+          95
+        ],
+        [
+          "further-information",
+          69
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          36
+        ],
+        [
+          "Lot-ReviewInfo",
+          12
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "employment-legislation-information",
+          2
+        ],
+        [
+          "environmental-legislation-information",
+          2
+        ],
+        [
+          "tax-legislation-information",
+          2
+        ]
+      ]
+    },
+    "non_exact_split_folds": {
+      "buyer_rows": 0,
+      "folds": 1,
+      "mentions": 3,
+      "orgs": 3,
+      "roles": [
+        [
+          "purchasing-body",
+          4
+        ]
+      ]
+    },
+    "plan_buyer_rows": 390,
+    "plan_requeued_orgs": 7808,
+    "prior_simulation_net": null
+  },
+  "superset_misses": 0,
+  "transitions": [
+    {
+      "from": "award_summary",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 99,
+        "mentions": 400,
+        "orgs": 199,
+        "roles": [
+          [
+            "specifications-provider",
+            344
+          ],
+          [
+            "winner",
+            178
+          ],
+          [
+            "review-body",
+            49
+          ],
+          [
+            "appeal-information",
+            23
+          ],
+          [
+            "further-information",
+            14
+          ],
+          [
+            "tender-receipt",
+            7
+          ],
+          [
+            "mediation-body",
+            4
+          ],
+          [
+            "Lot-ReviewInfo",
+            2
+          ],
+          [
+            "Tenderer",
+            1
+          ]
+        ]
+      },
+      "to": "award_summary"
+    },
+    {
+      "from": "award_summary",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 1,
+        "mentions": 2,
+        "orgs": 1,
+        "roles": [
+          [
+            "specifications-provider",
+            2
+          ],
+          [
+            "tender-receipt",
+            2
+          ]
+        ]
+      },
+      "to": "placeholder"
+    },
+    {
+      "from": "award_summary+placeholder",
+      "tally": {
+        "buyer_rows": 1,
+        "folds": 2,
+        "mentions": 224,
+        "orgs": 14,
+        "roles": [
+          [
+            "winner",
+            166
+          ],
+          [
+            "review-body",
+            32
+          ],
+          [
+            "mediation-body",
+            18
+          ],
+          [
+            "purchasing-body",
+            4
+          ],
+          [
+            "appeal-information",
+            2
+          ],
+          [
+            "buyer",
+            1
+          ],
+          [
+            "further-information",
+            1
+          ]
+        ]
+      },
+      "to": "placeholder"
+    },
+    {
+      "from": "blank",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 3,
+        "mentions": 8,
+        "orgs": 6,
+        "roles": [
+          [
+            "review-body",
+            8
+          ]
+        ]
+      },
+      "to": "award_summary"
+    },
+    {
+      "from": "blank",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 53,
+        "mentions": 265,
+        "orgs": 55,
+        "roles": [
+          [
+            "review-body",
+            92
+          ],
+          [
+            "Lot-ReviewOrg",
+            89
+          ],
+          [
+            "mediation-body",
+            58
+          ],
+          [
+            "winner",
+            27
+          ],
+          [
+            "appeal-information",
+            18
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            2
+          ],
+          [
+            "purchasing-body",
+            2
+          ],
+          [
+            "tender-receipt",
+            2
+          ],
+          [
+            "specifications-provider",
+            1
+          ]
+        ]
+      },
+      "to": "blank"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 1,
+        "folds": 4,
+        "mentions": 4,
+        "orgs": 4,
+        "roles": [
+          [
+            "review-body",
+            3
+          ],
+          [
+            "buyer",
+            1
+          ],
+          [
+            "purchasing-body",
+            1
+          ],
+          [
+            "winner",
+            1
+          ]
+        ]
+      },
+      "to": "award_summary"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 1,
+        "mentions": 3,
+        "orgs": 3,
+        "roles": [
+          [
+            "purchasing-body",
+            4
+          ]
+        ]
+      },
+      "to": "award_summary+placeholder"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 3,
+        "mentions": 30,
+        "orgs": 3,
+        "roles": [
+          [
+            "review-body",
+            18
+          ],
+          [
+            "Lot-ReviewOrg",
+            12
+          ]
+        ]
+      },
+      "to": "blank"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 79,
+        "folds": 223,
+        "mentions": 633,
+        "orgs": 262,
+        "roles": [
+          [
+            "review-body",
+            206
+          ],
+          [
+            "winner",
+            164
+          ],
+          [
+            "buyer",
+            77
+          ],
+          [
+            "mediation-body",
+            77
+          ],
+          [
+            "appeal-information",
+            76
+          ],
+          [
+            "purchasing-body",
+            49
+          ],
+          [
+            "Tenderer",
+            47
+          ],
+          [
+            "tender-receipt",
+            32
+          ],
+          [
+            "specifications-provider",
+            30
+          ],
+          [
+            "further-information",
+            11
+          ],
+          [
+            "AWARD_AND_CONTRACT_VALUE",
+            6
+          ],
+          [
+            "Procedure-Buyer",
+            2
+          ]
+        ]
+      },
+      "to": "name"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 1,
+        "folds": 77,
+        "mentions": 1364,
+        "orgs": 875,
+        "roles": [
+          [
+            "review-body",
+            631
+          ],
+          [
+            "appeal-information",
+            365
+          ],
+          [
+            "winner",
+            357
+          ],
+          [
+            "Tenderer",
+            98
+          ],
+          [
+            "mediation-body",
+            59
+          ],
+          [
+            "purchasing-body",
+            50
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            22
+          ],
+          [
+            "tender-receipt",
+            11
+          ],
+          [
+            "further-information",
+            9
+          ],
+          [
+            "specifications-provider",
+            8
+          ],
+          [
+            "Lot-ReviewOrg",
+            1
+          ],
+          [
+            "buyer",
+            1
+          ]
+        ]
+      },
+      "to": "placeholder"
+    },
+    {
+      "from": "placeholder",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 29,
+        "mentions": 97,
+        "orgs": 32,
+        "roles": [
+          [
+            "specifications-provider",
+            193
+          ],
+          [
+            "further-information",
+            16
+          ],
+          [
+            "tender-receipt",
+            3
+          ],
+          [
+            "appeal-information",
+            2
+          ]
+        ]
+      },
+      "to": "award_summary"
+    },
+    {
+      "from": "placeholder",
+      "tally": {
+        "buyer_rows": 16,
+        "folds": 205,
+        "mentions": 3030,
+        "orgs": 1634,
+        "roles": [
+          [
+            "winner",
+            1086
+          ],
+          [
+            "review-body",
+            996
+          ],
+          [
+            "Tenderer",
+            647
+          ],
+          [
+            "mediation-body",
+            413
+          ],
+          [
+            "appeal-information",
+            277
+          ],
+          [
+            "purchasing-body",
+            184
+          ],
+          [
+            "tender-receipt",
+            73
+          ],
+          [
+            "specifications-provider",
+            64
+          ],
+          [
+            "further-information",
+            48
+          ],
+          [
+            "Lot-ReviewOrg",
+            45
+          ],
+          [
+            "buyer",
+            16
+          ],
+          [
+            "Lot-ReviewInfo",
+            12
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            12
+          ],
+          [
+            "employment-legislation-information",
+            2
+          ],
+          [
+            "environmental-legislation-information",
+            2
+          ],
+          [
+            "tax-legislation-information",
+            2
+          ]
+        ]
+      },
+      "to": "placeholder"
+    }
+  ]
+}
+{
+  "changed": 88,
+  "label": "dry 2266 (unit 3)",
+  "legal_form_dropped": 0,
+  "net": {
+    "class_arms_only_buyer_rows": 389,
+    "class_arms_only_orgs": 7764,
+    "exact_entry_buyer_rows_estimate": 292,
+    "exact_entry_orgs": 4920,
+    "net_buyer_rows_estimate": 389,
+    "net_buyer_rows_with_split_folds": 389,
+    "net_orgs": 7764,
+    "net_orgs_with_split_folds": 7767,
+    "net_without_framed_buyer_rows": 389,
+    "net_without_framed_orgs": 7764,
+    "non_exact_echo_arm_only": {
+      "buyer_rows": 0,
+      "folds": 0,
+      "mentions": 0,
+      "orgs": 0,
+      "roles": []
+    },
+    "non_exact_framed_shape_only": {
+      "buyer_rows": 0,
+      "folds": 0,
+      "mentions": 0,
+      "orgs": 0,
+      "roles": []
+    },
+    "non_exact_requeued_by_class_arms_only": {
+      "buyer_rows": 97,
+      "folds": 564,
+      "mentions": 5548,
+      "orgs": 2844,
+      "roles": [
+        [
+          "review-body",
+          1975
+        ],
+        [
+          "winner",
+          1800
+        ],
+        [
+          "Tenderer",
+          792
+        ],
+        [
+          "appeal-information",
+          738
+        ],
+        [
+          "mediation-body",
+          625
+        ],
+        [
+          "purchasing-body",
+          289
+        ],
+        [
+          "Lot-ReviewOrg",
+          147
+        ],
+        [
+          "tender-receipt",
+          120
+        ],
+        [
+          "specifications-provider",
+          105
+        ],
+        [
+          "buyer",
+          95
+        ],
+        [
+          "further-information",
+          69
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          36
+        ],
+        [
+          "Lot-ReviewInfo",
+          12
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "employment-legislation-information",
+          2
+        ],
+        [
+          "environmental-legislation-information",
+          2
+        ],
+        [
+          "tax-legislation-information",
+          2
+        ]
+      ]
+    },
+    "non_exact_requeued_by_plan_classes": {
+      "buyer_rows": 98,
+      "folds": 568,
+      "mentions": 5553,
+      "orgs": 2850,
+      "roles": [
+        [
+          "review-body",
+          1978
+        ],
+        [
+          "winner",
+          1801
+        ],
+        [
+          "Tenderer",
+          792
+        ],
+        [
+          "appeal-information",
+          738
+        ],
+        [
+          "mediation-body",
+          625
+        ],
+        [
+          "purchasing-body",
+          294
+        ],
+        [
+          "Lot-ReviewOrg",
+          147
+        ],
+        [
+          "tender-receipt",
+          118
+        ],
+        [
+          "specifications-provider",
+          103
+        ],
+        [
+          "buyer",
+          96
+        ],
+        [
+          "further-information",
+          69
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          36
+        ],
+        [
+          "Lot-ReviewInfo",
+          12
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "employment-legislation-information",
+          2
+        ],
+        [
+          "environmental-legislation-information",
+          2
+        ],
+        [
+          "tax-legislation-information",
+          2
+        ]
+      ]
+    },
+    "non_exact_requeued_by_this_net": {
+      "buyer_rows": 97,
+      "folds": 564,
+      "mentions": 5548,
+      "orgs": 2844,
+      "roles": [
+        [
+          "review-body",
+          1975
+        ],
+        [
+          "winner",
+          1800
+        ],
+        [
+          "Tenderer",
+          792
+        ],
+        [
+          "appeal-information",
+          738
+        ],
+        [
+          "mediation-body",
+          625
+        ],
+        [
+          "purchasing-body",
+          289
+        ],
+        [
+          "Lot-ReviewOrg",
+          147
+        ],
+        [
+          "tender-receipt",
+          120
+        ],
+        [
+          "specifications-provider",
+          105
+        ],
+        [
+          "buyer",
+          95
+        ],
+        [
+          "further-information",
+          69
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          36
+        ],
+        [
+          "Lot-ReviewInfo",
+          12
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "employment-legislation-information",
+          2
+        ],
+        [
+          "environmental-legislation-information",
+          2
+        ],
+        [
+          "tax-legislation-information",
+          2
+        ]
+      ]
+    },
+    "non_exact_requeued_without_the_framed_shape": {
+      "buyer_rows": 97,
+      "folds": 564,
+      "mentions": 5548,
+      "orgs": 2844,
+      "roles": [
+        [
+          "review-body",
+          1975
+        ],
+        [
+          "winner",
+          1800
+        ],
+        [
+          "Tenderer",
+          792
+        ],
+        [
+          "appeal-information",
+          738
+        ],
+        [
+          "mediation-body",
+          625
+        ],
+        [
+          "purchasing-body",
+          289
+        ],
+        [
+          "Lot-ReviewOrg",
+          147
+        ],
+        [
+          "tender-receipt",
+          120
+        ],
+        [
+          "specifications-provider",
+          105
+        ],
+        [
+          "buyer",
+          95
+        ],
+        [
+          "further-information",
+          69
+        ],
+        [
+          "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+          36
+        ],
+        [
+          "Lot-ReviewInfo",
+          12
+        ],
+        [
+          "AWARD_AND_CONTRACT_VALUE",
+          6
+        ],
+        [
+          "Procedure-Buyer",
+          2
+        ],
+        [
+          "employment-legislation-information",
+          2
+        ],
+        [
+          "environmental-legislation-information",
+          2
+        ],
+        [
+          "tax-legislation-information",
+          2
+        ]
+      ]
+    },
+    "non_exact_split_folds": {
+      "buyer_rows": 0,
+      "folds": 1,
+      "mentions": 3,
+      "orgs": 3,
+      "roles": [
+        [
+          "purchasing-body",
+          4
+        ]
+      ]
+    },
+    "plan_buyer_rows": 390,
+    "plan_requeued_orgs": 7770,
+    "prior_simulation_net": null
+  },
+  "superset_misses": 0,
+  "transitions": [
+    {
+      "from": "award_summary",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 131,
+        "mentions": 505,
+        "orgs": 237,
+        "roles": [
+          [
+            "specifications-provider",
+            537
+          ],
+          [
+            "winner",
+            178
+          ],
+          [
+            "review-body",
+            57
+          ],
+          [
+            "further-information",
+            30
+          ],
+          [
+            "appeal-information",
+            25
+          ],
+          [
+            "tender-receipt",
+            10
+          ],
+          [
+            "mediation-body",
+            4
+          ],
+          [
+            "Lot-ReviewInfo",
+            2
+          ],
+          [
+            "Tenderer",
+            1
+          ]
+        ]
+      },
+      "to": "award_summary"
+    },
+    {
+      "from": "award_summary",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 1,
+        "mentions": 2,
+        "orgs": 1,
+        "roles": [
+          [
+            "specifications-provider",
+            2
+          ],
+          [
+            "tender-receipt",
+            2
+          ]
+        ]
+      },
+      "to": "placeholder"
+    },
+    {
+      "from": "award_summary+placeholder",
+      "tally": {
+        "buyer_rows": 1,
+        "folds": 2,
+        "mentions": 224,
+        "orgs": 14,
+        "roles": [
+          [
+            "winner",
+            166
+          ],
+          [
+            "review-body",
+            32
+          ],
+          [
+            "mediation-body",
+            18
+          ],
+          [
+            "purchasing-body",
+            4
+          ],
+          [
+            "appeal-information",
+            2
+          ],
+          [
+            "buyer",
+            1
+          ],
+          [
+            "further-information",
+            1
+          ]
+        ]
+      },
+      "to": "placeholder"
+    },
+    {
+      "from": "blank",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 53,
+        "mentions": 265,
+        "orgs": 55,
+        "roles": [
+          [
+            "review-body",
+            92
+          ],
+          [
+            "Lot-ReviewOrg",
+            89
+          ],
+          [
+            "mediation-body",
+            58
+          ],
+          [
+            "winner",
+            27
+          ],
+          [
+            "appeal-information",
+            18
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            2
+          ],
+          [
+            "purchasing-body",
+            2
+          ],
+          [
+            "tender-receipt",
+            2
+          ],
+          [
+            "specifications-provider",
+            1
+          ]
+        ]
+      },
+      "to": "blank"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 1,
+        "folds": 4,
+        "mentions": 4,
+        "orgs": 4,
+        "roles": [
+          [
+            "review-body",
+            3
+          ],
+          [
+            "buyer",
+            1
+          ],
+          [
+            "purchasing-body",
+            1
+          ],
+          [
+            "winner",
+            1
+          ]
+        ]
+      },
+      "to": "award_summary"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 1,
+        "mentions": 3,
+        "orgs": 3,
+        "roles": [
+          [
+            "purchasing-body",
+            4
+          ]
+        ]
+      },
+      "to": "award_summary+placeholder"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 0,
+        "folds": 3,
+        "mentions": 30,
+        "orgs": 3,
+        "roles": [
+          [
+            "review-body",
+            18
+          ],
+          [
+            "Lot-ReviewOrg",
+            12
+          ]
+        ]
+      },
+      "to": "blank"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 79,
+        "folds": 223,
+        "mentions": 633,
+        "orgs": 262,
+        "roles": [
+          [
+            "review-body",
+            206
+          ],
+          [
+            "winner",
+            164
+          ],
+          [
+            "buyer",
+            77
+          ],
+          [
+            "mediation-body",
+            77
+          ],
+          [
+            "appeal-information",
+            76
+          ],
+          [
+            "purchasing-body",
+            49
+          ],
+          [
+            "Tenderer",
+            47
+          ],
+          [
+            "tender-receipt",
+            32
+          ],
+          [
+            "specifications-provider",
+            30
+          ],
+          [
+            "further-information",
+            11
+          ],
+          [
+            "AWARD_AND_CONTRACT_VALUE",
+            6
+          ],
+          [
+            "Procedure-Buyer",
+            2
+          ]
+        ]
+      },
+      "to": "name"
+    },
+    {
+      "from": "name",
+      "tally": {
+        "buyer_rows": 1,
+        "folds": 77,
+        "mentions": 1364,
+        "orgs": 875,
+        "roles": [
+          [
+            "review-body",
+            631
+          ],
+          [
+            "appeal-information",
+            365
+          ],
+          [
+            "winner",
+            357
+          ],
+          [
+            "Tenderer",
+            98
+          ],
+          [
+            "mediation-body",
+            59
+          ],
+          [
+            "purchasing-body",
+            50
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            22
+          ],
+          [
+            "tender-receipt",
+            11
+          ],
+          [
+            "further-information",
+            9
+          ],
+          [
+            "specifications-provider",
+            8
+          ],
+          [
+            "Lot-ReviewOrg",
+            1
+          ],
+          [
+            "buyer",
+            1
+          ]
+        ]
+      },
+      "to": "placeholder"
+    },
+    {
+      "from": "placeholder",
+      "tally": {
+        "buyer_rows": 16,
+        "folds": 205,
+        "mentions": 3030,
+        "orgs": 1634,
+        "roles": [
+          [
+            "winner",
+            1086
+          ],
+          [
+            "review-body",
+            996
+          ],
+          [
+            "Tenderer",
+            647
+          ],
+          [
+            "mediation-body",
+            413
+          ],
+          [
+            "appeal-information",
+            277
+          ],
+          [
+            "purchasing-body",
+            184
+          ],
+          [
+            "tender-receipt",
+            73
+          ],
+          [
+            "specifications-provider",
+            64
+          ],
+          [
+            "further-information",
+            48
+          ],
+          [
+            "Lot-ReviewOrg",
+            45
+          ],
+          [
+            "buyer",
+            16
+          ],
+          [
+            "Lot-ReviewInfo",
+            12
+          ],
+          [
+            "RESPONSIBLE_FOR_MEDIATION_PROCEDURES",
+            12
+          ],
+          [
+            "employment-legislation-information",
+            2
+          ],
+          [
+            "environmental-legislation-information",
+            2
+          ],
+          [
+            "tax-legislation-information",
+            2
+          ]
+        ]
+      },
+      "to": "placeholder"
+    }
+  ]
+}
+test partyname::tests::issue_511_unit_6_simulation ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 493 filtered out; finished in 5.19s
+
+     Running unittests src/bin/data-quality.rs (target/debug/deps/data_quality-96c63c6e25332ec4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/fetch.rs (target/debug/deps/fetch-1e3eb4cf2e5e4ffd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/plan-probe.rs (target/debug/deps/plan_probe-9b3deae8c086c38f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/process.rs (target/debug/deps/process-6390b03d17010239)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/project.rs (target/debug/deps/project-321d98720ab9b8ec)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/verify.rs (target/debug/deps/verify-3e45ce0035f38a5a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+     Running tests/data_quality.rs (target/debug/deps/data_quality-6b18e854dacd3cf3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/doe.rs (target/debug/deps/doe-e2b7c541cc3bf00b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/eforms.rs (target/debug/deps/eforms-5cd89442d6e6ce2a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 56 filtered out; finished in 0.00s
+
+     Running tests/fetch.rs (target/debug/deps/fetch-b0fa1555f1c0e7c5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 44 filtered out; finished in 0.00s
+
+     Running tests/fts.rs (target/debug/deps/fts-218ca3d011e05b92)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/internal_ojs.rs (target/debug/deps/internal_ojs-0c41c72be38bf682)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/original_lang_eras.rs (target/debug/deps/original_lang_eras-d725ca9b08d1fc13)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/process.rs (target/debug/deps/process-b9cba53e29a2078b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/project.rs (target/debug/deps/project-06e0f184427b1f11)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 100 filtered out; finished in 0.00s
+
+     Running tests/project_equivalence.rs (target/debug/deps/project_equivalence-17c6c075bc44893a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/project_fold_source.rs (target/debug/deps/project_fold_source-cec0dee1a3c1c6fc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/project_golden.rs (target/debug/deps/project_golden-b3317ac717b09634)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/project_incremental.rs (target/debug/deps/project_incremental-9c9e326c32c018c4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 51 filtered out; finished in 0.00s
+
+     Running tests/project_incremental_timing.rs (target/debug/deps/project_incremental_timing-4fbdfc4168c939bf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/project_memory.rs (target/debug/deps/project_memory-448fb3c8d18efc37)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/project_resume.rs (target/debug/deps/project_resume-17b554fda6b10505)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/r208.rs (target/debug/deps/r208-0426cbbfea75b95f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+     Running tests/r209.rs (target/debug/deps/r209-fb05b6c4db070e29)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 19 filtered out; finished in 0.00s
+
+     Running tests/register_archive.rs (target/debug/deps/register_archive-aa6ca55fdb16b5b1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/text.rs (target/debug/deps/text-2a0c295e213bfd47)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/model-334dbc134392f2ef)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/store-30dc60d6702c686d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 182 filtered out; finished in 0.00s
+
+     Running tests/alter_add_column_cost.rs (target/debug/deps/alter_add_column_cost-ddb34fb4d8fdc882)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/altid_merge.rs (target/debug/deps/altid_merge-77a8129251b4740b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 81 filtered out; finished in 0.00s
+
+     Running tests/analyze_job.rs (target/debug/deps/analyze_job-2512ef70193d2a6d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/analyze_stats_pickup.rs (target/debug/deps/analyze_stats_pickup-760b729372169203)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/anchor_wall.rs (target/debug/deps/anchor_wall-c5a8a75a0176bd70)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/cache_size.rs (target/debug/deps/cache_size-c48c88fdfdb3f7b0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/case_reviews.rs (target/debug/deps/case_reviews-d23dab8af88abed4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/changes_kinds.rs (target/debug/deps/changes_kinds-d66cbc6313dc7a31)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/country_cluster_census.rs (target/debug/deps/country_cluster_census-492f1dd6db61f526)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/country_cluster_packet.rs (target/debug/deps/country_cluster_packet-f1c02cc924f54466)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/country_filter_probe.rs (target/debug/deps/country_filter_probe-03716e2e9ef4d2d9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/country_fold.rs (target/debug/deps/country_fold-8bb4c64d5ccfd284)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/country_typo_census.rs (target/debug/deps/country_typo_census-c93d355044f218ee)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/country_typo_repair.rs (target/debug/deps/country_typo_repair-fecf95c8c30802cf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/country_verdicts.rs (target/debug/deps/country_verdicts-c7411d9b09c7b09a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/currency_presence.rs (target/debug/deps/currency_presence-ad831544748b22d9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/currency_rates.rs (target/debug/deps/currency_rates-e200a9a0040f7ec3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/deadline_backfill.rs (target/debug/deps/deadline_backfill-8bb8771251f0abe9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/deferred_index_detection.rs (target/debug/deps/deferred_index_detection-a8b70baed0b480d6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/duplicate_identity_census.rs (target/debug/deps/duplicate_identity_census-18679a9d9f4b8ff3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
+
+     Running tests/e0_merge.rs (target/debug/deps/e0_merge-5f5ae803946c8cf0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/exists_shortcircuit_probe.rs (target/debug/deps/exists_shortcircuit_probe-cd63fb208817f655)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/fallback_band.rs (target/debug/deps/fallback_band-60300ed290cb6bac)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/fold_writer_golden.rs (target/debug/deps/fold_writer_golden-a189c63dfb05f95d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/fusion_census.rs (target/debug/deps/fusion_census-993e065a9f400c17)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/generic_statistic_census.rs (target/debug/deps/generic_statistic_census-5f3e5db9adbb7cf1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/generic_wall_census.rs (target/debug/deps/generic_wall_census-7ade3e03833ae412)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/ghost_census.rs (target/debug/deps/ghost_census-d8627422df38cd41)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/head_election_agreement.rs (target/debug/deps/head_election_agreement-c290a72e165c22c3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/head_pointer_equivalence.rs (target/debug/deps/head_pointer_equivalence-7b33c6a3afc8b1df)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/identifier_verdicts.rs (target/debug/deps/identifier_verdicts-5e2d0a7c38c1a4c7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/interrupt_probe.rs (target/debug/deps/interrupt_probe-b4ed4726d80a3cd8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/isolation_routing.rs (target/debug/deps/isolation_routing-2d4d3c8acafd1a58)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/label_prefix_repair.rs (target/debug/deps/label_prefix_repair-cbee4fff5b916a44)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/lot_deadline_scope.rs (target/debug/deps/lot_deadline_scope-0ec0f4c6d97e23ea)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/lot_prod_profile_probe.rs (target/debug/deps/lot_prod_profile_probe-cec9c4e5bb66c48d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/lot_summary_cost.rs (target/debug/deps/lot_summary_cost-ab49858231dc21a7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/lot_summary_equivalence.rs (target/debug/deps/lot_summary_equivalence-04ac4e6fad6afadb)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/lot_value_election.rs (target/debug/deps/lot_value_election-89199e3c0cdb1fbe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/lots_country_seed.rs (target/debug/deps/lots_country_seed-65453de58412458b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/lots_drive_probe.rs (target/debug/deps/lots_drive_probe-b05bd9fc80f6d97d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/lots_filter_fixture.rs (target/debug/deps/lots_filter_fixture-ca87b631b6411608)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/lots_open_head_seed.rs (target/debug/deps/lots_open_head_seed-c3d42e07af52578c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/mention_fk_probe.rs (target/debug/deps/mention_fk_probe-c739204492e93d39)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/mention_refresh.rs (target/debug/deps/mention_refresh-bdd63bf2a3c79bed)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/merged_org.rs (target/debug/deps/merged_org-6256448b13872f9f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/minted_country_repair.rs (target/debug/deps/minted_country_repair-dd1a2a3cfbe86e53)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/name_attribution_probe.rs (target/debug/deps/name_attribution_probe-aaa62a98d8cb93a4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/name_pollution_census.rs (target/debug/deps/name_pollution_census-56583b682a09ca9e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/name_prefix_probe.rs (target/debug/deps/name_prefix_probe-cb849c05e26348ae)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/nested_org_repair.rs (target/debug/deps/nested_org_repair-3e71bcf7624290c5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/nhs_body.rs (target/debug/deps/nhs_body-6eee0e4f0c415208)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 42 filtered out; finished in 0.00s
+
+     Running tests/notice_instant_repair.rs (target/debug/deps/notice_instant_repair-54fd94769a528505)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/notice_quarantine.rs (target/debug/deps/notice_quarantine-0f0c74d9fc200f22)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/ordered_source_plan.rs (target/debug/deps/ordered_source_plan-9a96e2988a9a2a9f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_candidate_edges.rs (target/debug/deps/org_candidate_edges-18ef82a8e475d67e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/org_cursor_probe.rs (target/debug/deps/org_cursor_probe-edeb7101fd5fa324)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_index_bulk_load.rs (target/debug/deps/org_index_bulk_load-54a8413580acdbef)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/org_index_read_amplification.rs (target/debug/deps/org_index_read_amplification-270a12bbcd0be07b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_match_keys_build.rs (target/debug/deps/org_match_keys_build-719ba6e0e62cb499)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_merge_change_events.rs (target/debug/deps/org_merge_change_events-94886e43e84450e1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/org_merge_health.rs (target/debug/deps/org_merge_health-c4b5348ed2f672fe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_name_backfill.rs (target/debug/deps/org_name_backfill-e2b98c35c62e080e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_name_search.rs (target/debug/deps/org_name_search-c5f459c55ee0b094)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/org_schema_migration.rs (target/debug/deps/org_schema_migration-d8ff1e5a1ea3b14e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/original_lang_backfill.rs (target/debug/deps/original_lang_backfill-4efede26d6101dfc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/original_lang_pick.rs (target/debug/deps/original_lang_pick-63305d6cac401e75)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/orphan_org_sweep.rs (target/debug/deps/orphan_org_sweep-df072ceb8915682a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/package_rates.rs (target/debug/deps/package_rates-dab4c783f55337b0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/paginated_index_probe.rs (target/debug/deps/paginated_index_probe-5fbeff85fb2ca30c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/placeholder_dissolve.rs (target/debug/deps/placeholder_dissolve-0346d79b263192e4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/plan_bulk_load.rs (target/debug/deps/plan_bulk_load-a64ebb08d4b58a00)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/provisional_echo_census.rs (target/debug/deps/provisional_echo_census-9408730f198cbb31)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/provisional_echo_fold.rs (target/debug/deps/provisional_echo_fold-2548cc7529c50f16)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/provisional_name_norm.rs (target/debug/deps/provisional_name_norm-92dd044a28e1e52a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/published_order.rs (target/debug/deps/published_order-eab156e8ec095988)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/quarantine_outcome_disjoint.rs (target/debug/deps/quarantine_outcome_disjoint-7fc4e0a3bd43c46f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/r2_merge.rs (target/debug/deps/r2_merge-313c6255e2591733)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/r2_name_gate.rs (target/debug/deps/r2_name_gate-6a09f3330ee367a3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/r3_merge.rs (target/debug/deps/r3_merge-09ba864f85a6343a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/refold_fields.rs (target/debug/deps/refold_fields-dc78cab37b07e016)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/registry_page.rs (target/debug/deps/registry_page-d325830d74756dc7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/rehoming.rs (target/debug/deps/rehoming-b08507f0f323b678)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/rehoming_packet.rs (target/debug/deps/rehoming_packet-b820b6948d703933)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/rekey.rs (target/debug/deps/rekey-b11888c3f613f4e1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/renormalise_repair.rs (target/debug/deps/renormalise_repair-96983faf2d61e485)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/reparse_fk.rs (target/debug/deps/reparse_fk-accd19cbdaac725b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/report_history.rs (target/debug/deps/report_history-d106fd278ccf16da)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/requeue_plan_probe.rs (target/debug/deps/requeue_plan_probe-bcc47e9f60bbf0d1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/resolver_prevention.rs (target/debug/deps/resolver_prevention-d389fc51a4eb7a03)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/reveal_cursor_probe.rs (target/debug/deps/reveal_cursor_probe-84fa829d77d834bf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/reveal_recheck.rs (target/debug/deps/reveal_recheck-abd8bf173f5bb1d7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/satellite_column_migration.rs (target/debug/deps/satellite_column_migration-cff63ce865557cde)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/satellite_drops.rs (target/debug/deps/satellite_drops-b4d10e007d101c38)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/satellite_orphans.rs (target/debug/deps/satellite_orphans-f46b819358b225e4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/scan_budget_probe.rs (target/debug/deps/scan_budget_probe-f648f2e01caf30ec)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/seeded_lots_page.rs (target/debug/deps/seeded_lots_page-6298cb77424103f9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/stage4_schema.rs (target/debug/deps/stage4_schema-3220b01d3e61a57b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/status_head_range.rs (target/debug/deps/status_head_range-af810121a1029bbf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/stripes_probe.rs (target/debug/deps/stripes_probe-b76c2816a75e7eec)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/tender_publication_lookup.rs (target/debug/deps/tender_publication_lookup-0726da44282024fa)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/tenders_shortcircuit.rs (target/debug/deps/tenders_shortcircuit-899e745be5c683cb)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/title_backfill.rs (target/debug/deps/title_backfill-242757abf8d72d90)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/turso_temp_db_leak.rs (target/debug/deps/turso_temp_db_leak-b398912094a86136)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/version_instant_repair.rs (target/debug/deps/version_instant_repair-6237fc433611299c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/view_pushdown_probe.rs (target/debug/deps/view_pushdown_probe-1d81ece1f3a35ca4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/withheld_fields_view.rs (target/debug/deps/withheld_fields_view-536e8faa28c2a7fd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/tender_db-eccffe3a82a97ef3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 202 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/tender_db-59c883676ccb9603)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/accounts.rs (target/debug/deps/accounts-dedd1a7459e3a412)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/admin.rs (target/debug/deps/admin-5a133700ee52d394)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/api.rs (target/debug/deps/api-fdf8165e78b1a200)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 79 filtered out; finished in 0.00s
+
+     Running tests/plan_capture.rs (target/debug/deps/plan_capture-8c952f1c6d87e381)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/sql.rs (target/debug/deps/sql-c5a349c514f35a79)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
+
+     Running tests/webhooks.rs (target/debug/deps/webhooks-fa68aae6d785523d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+   Doc-tests ingest
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests model
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests store
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests tender_db
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+

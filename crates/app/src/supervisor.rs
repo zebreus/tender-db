@@ -5520,10 +5520,12 @@ impl Supervisor {
             .collect();
         // The design's stand-in for a legal-form guard (510 unit1-decision §5.3): a match
         // that also holds a commercial legal form is listed, every one, for the operator to
-        // read before the wet run. Its stop rule: such an org that reads as a company.
+        // read before the wet run. Its stop rule: such an org that reads as a company. Issue
+        // 511 unit 6 item 4: a section-reference pointer is no company, whatever the census's
+        // case-blind `AS` reads in its `As`/`Same as` (`ingest::partyname::plan_legal_form`).
         let legal_form: Vec<serde_json::Value> = orgs
             .iter()
-            .filter(|(_, name, ..)| ingest::project::role_census::has_commercial_form(name))
+            .filter(|(_, name, ..)| ingest::partyname::plan_legal_form(name))
             .map(|(id, name, identifier, _)| {
                 serde_json::json!({
                     "org": id,
@@ -17281,6 +17283,43 @@ mod tests {
         let msg = sup.run_spec(&job(3, false, Some(1))).await.expect("wet");
         assert!(msg.contains("re-queued 1") && msg.contains("stamped 1"), "{msg}");
         assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap().len(), 1, "re-queued for the fold");
+    }
+
+    /// Issue 511 unit 6 item 4: the placeholder plan's `legal_form` read list (510 unit1-decision
+    /// §5.3's stand-in for a legal-form guard) leaves out a section-reference pointer, whose `As` /
+    /// `Same as` the census reads as the `AS` form — residual dry 2310's list held 268 orgs, most of
+    /// them such pointers — and still lists a hit that names a company.
+    #[tokio::test]
+    async fn the_placeholder_plans_legal_form_list_leaves_out_section_reference_pointers() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        db.execute_for_test(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (99530, 'GB', NULL, NULL, 'As in I.1 above', 'x', 1, 0),
+                    (99531, 'GB', NULL, NULL, 'Same as VI.4.1', 'x', 1, 0),
+                    (99532, 'NO', NULL, NULL, 'Norconsult AS, see section VI.3', 'x', 1, 0)",
+        )
+        .await
+        .unwrap();
+        for name in ["As in I.1 above", "Same as VI.4.1", "Norconsult AS, see section VI.3"] {
+            assert!(ingest::project::role_census::has_commercial_form(name), "premise: the census reads a form in {name}");
+        }
+        let job = Job {
+            id: 1,
+            kind: "refold-placeholder-names".into(),
+            params: String::new(),
+            spec: Spec::RefoldPlaceholderNames { dry_run: true, expect: None },
+            resume_after: None,
+        };
+        let msg = sup.run_spec(&job).await.expect("dry");
+        assert!(msg.contains("3 org(s) the net caught"), "{msg}");
+        let (body, _) = db.latest_report(PLACEHOLDER_NAMES_REFOLD_REPORT).await.unwrap().expect("report");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(
+            report["legal_form"],
+            serde_json::json!([{ "org": 99532, "name": "Norconsult AS, see section VI.3", "identifier": null, "mentions": 0 }]),
+            "{body}"
+        );
     }
 
     /// Issue 511 §8.1: the fold's job row is the only place the operator reads

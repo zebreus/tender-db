@@ -1,0 +1,15 @@
+F6a-pointer-arm EXIT=101 COMPILE_ERROR=True FAILED=1 partyname::tests::teds_earlier_template_wordings_are_pointers_and_template_copies
+F6b-separated EXIT=101 COMPILE_ERROR=True FAILED=1 partyname::tests::teds_earlier_template_wordings_are_pointers_and_template_copies
+F6c-locator-letters EXIT=101 COMPILE_ERROR=True FAILED=1 partyname::tests::teds_earlier_template_wordings_are_pointers_and_template_copies
+F6d-opener-words EXIT=101 COMPILE_ERROR=True FAILED=1 partyname::tests::teds_earlier_template_wordings_are_pointers_and_template_copies
+F5-class-guard EXIT=101 COMPILE_ERROR=True FAILED=1 project::tests::the_ted_template_signal_keeps_a_named_party
+F1a-template-guard EXIT=101 COMPILE_ERROR=True FAILED=1 project::tests::a_copy_naming_a_body_after_its_reference_keeps_its_party_beside_a_bare_seed
+F1b-echo-guard EXIT=101 COMPILE_ERROR=True FAILED=2 project::tests::a_copy_naming_a_body_after_its_reference_keeps_its_party_beside_a_bare_seed project::tests::a_non_english_pointer_seeds_no_echo
+F1c-echo-titled-always EXIT=101 COMPILE_ERROR=True FAILED=2 project::tests::a_copy_naming_a_body_after_its_reference_keeps_its_party_beside_a_bare_seed project::tests::a_non_english_pointer_seeds_no_echo
+F3a-lexicon-tail EXIT=101 COMPILE_ERROR=True FAILED=1 partyname::tests::a_label_or_a_non_name_right_after_a_pointers_reference_is_no_body
+F3b-roman EXIT=101 COMPILE_ERROR=True FAILED=1 partyname::tests::a_label_or_a_non_name_right_after_a_pointers_reference_is_no_body
+F3c-tail-list EXIT=101 COMPILE_ERROR=True FAILED=1 partyname::tests::a_label_or_a_non_name_right_after_a_pointers_reference_is_no_body
+F3d-phrase EXIT=101 COMPILE_ERROR=True FAILED=1 partyname::tests::a_label_or_a_non_name_right_after_a_pointers_reference_is_no_body
+F3e-form-escape EXIT=101 COMPILE_ERROR=True FAILED=1 partyname::tests::a_label_or_a_non_name_right_after_a_pointers_reference_is_no_body
+F3f-titles EXIT=101 COMPILE_ERROR=True FAILED=1 partyname::tests::a_label_or_a_non_name_right_after_a_pointers_reference_is_no_body
+note: COMPILE_ERROR=True is the cargo 'error: test failed, to rerun' line (a bare 'error' prefix); every mutation compiled and the named tests ran and failed. Sources restored (md5 checked).

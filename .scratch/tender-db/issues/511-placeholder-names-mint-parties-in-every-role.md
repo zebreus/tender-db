@@ -177,6 +177,18 @@ From `../511-placeholders/u45/reads-wf_63890637.json` (the readers' notes):
    section VI.4.3 Translink' since unit 2. Proposed keep: when `names_after_stem` finds a name after the reference,
    once titles and positions are stripped, read the name as an AwardSummary. Keep tests: Translink, plus 'S. VI.4.1)
    Weimar Deutschland', which is kept today.
+   - **The keep rule does not restore Translink by itself (u6 build review, 2026-10-12).** Fold 2307 retired the
+     review-body mention and sweep 2309 removed its 1-mention org. It is absent from `u45/plan-residual.json`, and
+     `refold-placeholder-names` walks only existing org head names (`NonNames::net`; `requeues` also exempts an
+     AwardSummary head), so neither the unit 6 dry nor its wet re-queues the notice. The same holds for unit 2's
+     'See section VI.4.3 Translink'. The dry-2283 'placeholder → award_summary' row in `u6-build/simulation.md` is a
+     classifier transition, not a restore. **Runbook, beside the mandatory 12516947/19530163 canary:** find the
+     notice(s) with bounded indexed reads: Translink's own buyer org (the reads say it is a separate org and was
+     unaffected) by name, then `SELECT notice_id, section_id, name FROM organization_mentions WHERE organization_id
+     = ?` (`organization_mentions_org`). `refold-notices` those notices after the deploy, then assert by notice
+     (`SELECT organization_id, name FROM organization_mentions WHERE notice_id = ?`) that a review-body mention named
+     'Please see section VI.4.3 Translink' (or 'See section VI.4.3 Translink') exists again. If the owner rules the
+     drop permanent instead, record that here.
 2. **Junk still kept as name**:
    - 'As shown in section I.1 above', 'As per the body in I.1', 'As defined in (section) VI.3 of this notice' and their
      kin (the `As` pointer family whose grammar words are not yet listed);

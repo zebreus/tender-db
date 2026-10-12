@@ -4459,7 +4459,9 @@ fn party_names<'a>(
 ///   translated names never include a void phrase.
 /// - Issue 511 unit 4: a translation of the party's own pointer counts as that placeholder
 ///   before the rules above read the names ([`translation_echoes`]: TED's `See Section VI.2
-///   'Additional information'` in two dozen languages, notice 12516947).
+///   'Additional information'` in two dozen languages, notice 12516947); since unit 6 so does a
+///   copy of TED's multilingual template whatever its opener ([`template_echoes`]: 19530163's
+///   ORG-10, `Consultar o ponto VI.3 «Informação adicional»`).
 /// - Among the dropping names the party takes `Placeholder` over `VoidLot` over `Blank`: a
 ///   withheld winner beside a void phrase means a winner exists.
 /// - Guard 3: a `Blank` party that carries an identifier the gate admits
@@ -4630,28 +4632,46 @@ fn drop_decision(
 /// bare one — a placeholder whose text after its stem names nothing once the references are
 /// stripped and the form section titles blanked ([`crate::partyname::names_after_stem`]). `See
 /// Section VI.3 Kier Construction` and the residual's `Please see section VI.4.3 Translink` read
-/// as `Placeholder` (the keep rule wants a separator), but a body is named after the number, and
-/// its copy `Siehe Abschnitt VI.3 Kier Construction` is the body copied untranslated — the
-/// legal-form test alone misses `Kier Construction`, `Translink` and `Acme plc` (the review). A
-/// capitalised common noun in the tail withholds the seed too (`Please see section VI.3 for list
-/// of awarded Suppliers`), erring toward a name. An [`NotAName::AwardSummary`] translation is left
-/// as it is, so it still keeps the party. Since issue 511 unit 5 a section-reference pointer in
-/// any language is `Placeholder` by itself, and only unit 4's seeds seed
-/// ([`crate::partyname::echo_seed`]: the lexicon's class without those pointers): a bilingual
+/// as `Placeholder` before issue 511 unit 6 (the keep rule wanted a separator; since unit 6 item 1
+/// they are award summaries, which keep the party), but a body is named after the number, and its
+/// copy `Siehe Abschnitt VI.3 Kier Construction` is the body copied untranslated — the legal-form
+/// test alone misses `Kier Construction`, `Translink` and `Acme plc` (the review). A capitalised
+/// common noun in the tail withholds the seed too (`Please see section VI.3 for list of awarded
+/// Suppliers`, still `Placeholder`), erring toward a name. An [`NotAName::AwardSummary`]
+/// translation is left as it is, so it still keeps the party. Since issue 511 unit 5 a
+/// section-reference pointer in any language is `Placeholder` by itself, and only unit 4's seeds
+/// seed ([`crate::partyname::echo_seed`]: the lexicon's class without those pointers): a bilingual
 /// award's FI `Katso kohta VI.4.1` must not sweep its SV `Se punkt VI.4.1 Marknadsdomstolen`.
 ///
 /// The party's head name (`organizations.name`) is its first-seen copy, the original language's,
 /// so a FR- or DE-original party heads with a translation this sweeps (`Voir point VI.2) Autres
 /// informations.`); the walk's net reads that shape too
 /// ([`crate::partyname::mentions_placeholder`]), so the drain re-queues it.
+///
+/// Issue 511 unit 6 item 6: the TED template signal runs first ([`template_echoes`]).
+///
+/// Issue 511 unit 6, the build review: a copy that names a body right after its reference
+/// ([`crate::partyname::names_after_reference`]) is swept only beside a seed that carries a form
+/// section's title after its own ([`crate::partyname::titled_after_reference`]), whose copies carry
+/// that title translated (`Se punkt VI.2) Nye oplysninger` beside `See Section VI.2 'Additional
+/// information'.`). Beside a bare seed the tail can only name a body: unit 6's openers (`Glejte`,
+/// `Consultar`, `se référer`, `As set out`) made a bilingual review body's copy `Glejte oddelek
+/// VI.4.1 Državna revizijska komisija` pointer-led beside its English `See section VI.4.1`, and
+/// the echo swept it and dropped the body. A body named after a titled seed's reference stays the
+/// trade-off: no list tells a title the lists miss from a body.
 fn translation_echoes(names: &mut [(&str, Option<NotAName>)], labels: &[Option<&str>]) {
+    template_echoes(names, labels);
     let label = |l: &Option<&str>| normalize_lang(l.filter(|l| !l.trim().is_empty()));
-    let pointers: Vec<(String, String)> = names
+    // (number, language, whether the seed names the section's title after it).
+    let pointers: Vec<(String, String, bool)> = names
         .iter()
         .zip(labels)
         .filter(|((name, class), _)| *class == Some(NotAName::Placeholder) && crate::partyname::echo_seed(name))
         .filter_map(|((name, _), l)| Some((*name, label(l)?)))
-        .flat_map(|(name, lang)| crate::partyname::form_section_tokens(name).into_iter().map(move |t| (t, lang.clone())))
+        .flat_map(|(name, lang)| {
+            let titled = crate::partyname::titled_after_reference(name);
+            crate::partyname::form_section_tokens(name).into_iter().map(move |t| (t, lang.clone(), titled))
+        })
         .collect();
     if pointers.is_empty() {
         return;
@@ -4659,10 +4679,88 @@ fn translation_echoes(names: &mut [(&str, Option<NotAName>)], labels: &[Option<&
     for ((name, class), l) in names.iter_mut().zip(labels) {
         let Some(lang) = class.is_none().then(|| label(l)).flatten() else { continue };
         let tokens = crate::partyname::form_section_tokens(name);
-        if pointers.iter().any(|(token, from)| *from != lang && tokens.contains(token))
+        let seeds: Vec<bool> =
+            pointers.iter().filter(|(token, from, _)| *from != lang && tokens.contains(token)).map(|(.., titled)| *titled).collect();
+        if !seeds.is_empty()
             && crate::partyname::translation_shaped(name)
+            && (seeds.contains(&true) || !crate::partyname::names_after_reference(name))
         {
             *class = Some(NotAName::Placeholder);
+        }
+    }
+}
+
+/// Issue 511 unit 6 item 6 (residual dry 2310: notice 19530163's ORG-10, org 10601576, 140 mentions,
+/// survived the units 4+5 wet): the TED template signal. TED's earlier template words its 24 copies
+/// of `See Section VI.3 Additional information` differently from 12516947's (PT `Consultar o ponto
+/// VI.3 «Informação adicional»`, SL `Glejte oddelek VI.3) Dodatne informacije`), and a copy whose
+/// opener no list holds is no translation for [`translation_echoes`], so it kept the party. A name of
+/// the party that no class reads (`None`) now counts as `Placeholder` when:
+/// - an ENGLISH-labelled name of the party is a bare placeholder with a form section number
+///   ([`crate::partyname::template_seed`]: unit 5's section-reference pointers included, `Same as
+///   in point VI.4.1`);
+/// - at least [`crate::partyname::TEMPLATE_MIN_LANGUAGES`] distinct language labels among the
+///   party's names carry that number in a short copy with no legal form
+///   ([`crate::partyname::template_copy`]) — the seed and the copies classed by themselves count;
+/// - the name carries a label other than English and the number, and is such a copy, pointer-led
+///   or with its reference framed by a locator or a title whatever its opener
+///   ([`crate::partyname::template_shaped`]).
+///
+/// A bilingual award (FI/SV, FR/NL) never reaches ten languages, so a pointer in one language and
+/// the body in the other stays two names ([`translation_echoes`]' seed rule guards it the same
+/// way). A copy with a legal form never counts and is never swept, so a real company keeps its
+/// party; an [`NotAName::AwardSummary`] copy is left as it is. The walk's net holds every name this
+/// sweeps ([`crate::partyname::mentions_placeholder`]'s template arm), so a non-English original
+/// heading the party is re-queued.
+///
+/// Issue 511 unit 6, the build review: as in [`translation_echoes`], a copy that names a body right
+/// after its reference ([`crate::partyname::names_after_reference`]) is swept only when a seed of
+/// that number names its section's title ([`crate::partyname::titled_after_reference`]: 19530163's
+/// `See Section VI.3 Additional information`); beside bare seeds (`See section VI.4.1`, `Same as in
+/// point VI.4.1`) it keeps the party, in 24 languages as in two.
+fn template_echoes(names: &mut [(&str, Option<NotAName>)], labels: &[Option<&str>]) {
+    use crate::partyname::{
+        TEMPLATE_MIN_LANGUAGES, form_section_tokens, names_after_reference, template_copy, template_seed, template_shaped,
+        titled_after_reference,
+    };
+    // The hot loop's exit: almost every party has one or two names.
+    if names.len() < TEMPLATE_MIN_LANGUAGES {
+        return;
+    }
+    let labelled: Vec<Option<String>> = labels.iter().map(|l| normalize_lang(l.filter(|l| !l.trim().is_empty()))).collect();
+    let tokens: Vec<Vec<String>> = names.iter().map(|(name, _)| form_section_tokens(name)).collect();
+    let english = |l: &Option<String>| l.as_deref() == Some("ENG");
+    // Each seeded number, and whether a seed of it names its section's title.
+    let mut seeds: BTreeMap<String, bool> = BTreeMap::new();
+    for (((name, class), l), t) in names.iter().zip(&labelled).zip(&tokens) {
+        if *class == Some(NotAName::Placeholder) && english(l) && template_seed(name) {
+            let titled = titled_after_reference(name);
+            for token in t {
+                *seeds.entry(token.clone()).or_default() |= titled;
+            }
+        }
+    }
+    for (token, &titled) in &seeds {
+        let languages: BTreeSet<&str> = names
+            .iter()
+            .zip(&labelled)
+            .zip(&tokens)
+            .filter(|(((name, _), _), t)| t.contains(token) && template_copy(name))
+            .filter_map(|((_, l), _)| l.as_deref())
+            .collect();
+        if languages.len() < TEMPLATE_MIN_LANGUAGES {
+            continue;
+        }
+        for (((name, class), l), t) in names.iter_mut().zip(&labelled).zip(&tokens) {
+            if class.is_none()
+                && l.is_some()
+                && !english(l)
+                && t.contains(token)
+                && template_shaped(name)
+                && (titled || !names_after_reference(name))
+            {
+                *class = Some(NotAName::Placeholder);
+            }
         }
     }
 }
@@ -14755,12 +14853,22 @@ mod tests {
         let parsed = multilingual(&[("ORG-1", &pairs[0]), ("ORG-2", &pairs[1])], &["ORG-1", "ORG-2"]);
         assert!(decided(false, &parsed).is_empty(), "{:?}", decided(false, &parsed));
         assert_eq!(results(&bound("ted-export-r208", &parsed)), vec![(Some("selec-w".into()), vec![1_001, 1_002])]);
-        // The English stem seed still sweeps such a copy: TED's template carries one.
-        let seeded = multilingual(
-            &[("ORG-1", &[(Some("EN"), "See section VI.4.1"), pairs[0][1]]), ("ORG-2", &[(Some("FR"), "Société Dupont SARL")])],
-            &["ORG-1", "ORG-2"],
-        );
-        assert_eq!(decided(false, &seeded), BTreeMap::from([("ORG-1".to_owned(), NotAName::Placeholder)]));
+        // The English stem seed still sweeps a pointer-led copy the lexicon misses: TED's template
+        // carries one. Since issue 511 unit 6 (the build review) a copy that names a body after its
+        // reference stays a name beside it: the seed names no section title after its reference
+        // (`crate::partyname::titled_after_reference`), so the copy's tail can only be the body,
+        // and the review body `Marknadsdomstolen` keeps its party.
+        let seeded = |copy: &'static str| {
+            multilingual(
+                &[("ORG-1", &[(Some("EN"), "See section VI.4.1"), (Some("SV"), copy)]), ("ORG-2", &[(Some("FR"), "Société Dupont SARL")])],
+                &["ORG-1", "ORG-2"],
+            )
+        };
+        assert!(decided(false, &seeded(pairs[0][1].1)).is_empty(), "{:?}", decided(false, &seeded(pairs[0][1].1)));
+        const LOWERCASE_TAIL: &str = "Se punkt VI.4.1 nedan";
+        assert_eq!(crate::partyname::not_a_name(LOWERCASE_TAIL), None, "premise: {LOWERCASE_TAIL}");
+        assert!(crate::partyname::translation_shaped(LOWERCASE_TAIL) && !crate::partyname::names_after_reference(LOWERCASE_TAIL));
+        assert_eq!(decided(false, &seeded(LOWERCASE_TAIL)), BTreeMap::from([("ORG-1".to_owned(), NotAName::Placeholder)]));
     }
 
     /// Issue 511 unit 4 item 1's near misses: a name beside the English pointer is a translation
@@ -14795,9 +14903,10 @@ mod tests {
                 // …with no legal form and in the translated shape, so only its class keeps it
                 // (the review: ORG-8's `mbH` alone kept ORG-8).
                 ("ORG-10", &[EN_VI3, (Some("DE"), SUMMARY_COPY)]),
-                // A body after the number with no separator: the English is `Placeholder` (the
-                // keep rule wants a separator) but not bare, so it seeds nothing, and the body
-                // copied untranslated stays a name — the residual's `Translink` (the review).
+                // A body after the number with no separator: the residual's `Translink` (the review).
+                // Since issue 511 unit 6 item 1 the English is an award summary by itself, which keeps
+                // the party; before it, `Placeholder` but not bare, so it seeded nothing (ORG-16 pins
+                // that rule now).
                 ("ORG-11", &[(Some("EN"), "Please see section VI.4.3 Translink"), (Some("DE"), "Siehe Abschnitt VI.4.3 Translink")]),
                 ("ORG-12", &[(Some("EN"), "See Section VI.3 Kier Construction"), (Some("DE"), "Siehe Abschnitt VI.3 Kier Construction")]),
                 // A legal form the crate's company readings missed (`plc`), on both sides.
@@ -14806,10 +14915,19 @@ mod tests {
                 // it — short, no legal form, so unit 4's echo swept it and dropped the party.
                 ("ORG-14", &[EN_VI3, (Some("DA"), "Region Hovedstaden VI.3")]),
                 ("ORG-15", &[EN_VI3, (Some("DE"), "Referat VI.3")]),
+                // A placeholder that is not bare (a capitalised noun after the reference, no name right
+                // after it): `Placeholder`, but it seeds nothing, so its pointer-led copy stays a name.
+                (
+                    "ORG-16",
+                    &[
+                        (Some("EN"), "Please see section VI.3 for list of awarded Suppliers"),
+                        (Some("DE"), "Siehe Abschnitt VI.3 for list of awarded Suppliers"),
+                    ],
+                ),
             ],
             &[
                 "ORG-1", "ORG-2", "ORG-3", "ORG-4", "ORG-5", "ORG-6", "ORG-7", "ORG-8", "ORG-10", "ORG-11", "ORG-12", "ORG-13", "ORG-14",
-                "ORG-15",
+                "ORG-15", "ORG-16",
             ],
         );
         assert!(decided(false, &parsed).is_empty(), "{:?}", decided(false, &parsed));
@@ -14817,7 +14935,7 @@ mod tests {
             results(&bound("ted-export-r208", &parsed)),
             vec![(
                 Some("selec-w".into()),
-                vec![1_001, 1_002, 1_003, 1_004, 1_005, 1_006, 1_007, 1_008, 1_010, 1_011, 1_012, 1_013, 1_014, 1_015]
+                vec![1_001, 1_002, 1_003, 1_004, 1_005, 1_006, 1_007, 1_008, 1_010, 1_011, 1_012, 1_013, 1_014, 1_015, 1_016]
             )]
         );
         for copy in ["Region Hovedstaden VI.3", "Referat VI.3"] {
@@ -14839,21 +14957,244 @@ mod tests {
         let twelve = PARTY_COPIES[1].split_whitespace().take(12).collect::<Vec<_>>().join(" ");
         assert!(crate::partyname::translation_shaped(&twelve), "only the word cap: {twelve}");
         assert!(crate::partyname::translation_shaped(PARTY_COPIES[2]), "only the language label");
-        // The premises that make ORG-10 to 12 real near misses: each copy has the translated
-        // shape and carries the pointer's number, so only the class (ORG-10) or the bare-seed
-        // rule (ORG-11, ORG-12) keeps the party.
+        // The premises that make ORG-10 to 12 and ORG-16 real near misses: each copy has the
+        // translated shape and carries the pointer's number, so only the class (ORG-10; ORG-11 and
+        // ORG-12 since issue 511 unit 6 item 1) or the bare-seed rule (ORG-16) keeps the party.
         assert_eq!(crate::partyname::not_a_name(SUMMARY_COPY), Some(NotAName::AwardSummary));
         assert!(crate::partyname::translation_shaped(SUMMARY_COPY));
         assert!(!crate::partyname::names_after_stem(EN_VI3.1), "EN_VI3 seeds");
-        for (pointer, copy) in [
-            ("Please see section VI.4.3 Translink", "Siehe Abschnitt VI.4.3 Translink"),
-            ("See Section VI.3 Kier Construction", "Siehe Abschnitt VI.3 Kier Construction"),
+        for (pointer, copy, class) in [
+            ("Please see section VI.4.3 Translink", "Siehe Abschnitt VI.4.3 Translink", NotAName::AwardSummary),
+            ("See Section VI.3 Kier Construction", "Siehe Abschnitt VI.3 Kier Construction", NotAName::AwardSummary),
+            ("Please see section VI.3 for list of awarded Suppliers", "Siehe Abschnitt VI.3 for list of awarded Suppliers", NotAName::Placeholder),
         ] {
-            assert_eq!(crate::partyname::not_a_name(pointer), Some(NotAName::Placeholder), "{pointer}");
+            assert_eq!(crate::partyname::not_a_name(pointer), Some(class), "{pointer}");
             assert!(crate::partyname::names_after_stem(pointer), "{pointer}");
             assert_eq!(crate::partyname::not_a_name(copy), None, "{copy}");
             assert!(crate::partyname::translation_shaped(copy), "{copy}");
         }
+    }
+
+    /// Notice 19530163's ORG-10 (ted-export-r209, org 10601576, 140 mentions): TED's earlier template
+    /// for `See Section VI.3 Additional information`, its 24 `TED-OFFICIALNAME` copies verbatim
+    /// (bounded read, 2026-10-12). The party survived the units 4+5 wet: the PT and SL openers were
+    /// in no list, so those two copies were neither pointers nor translations (issue 511 unit 6 item
+    /// 6, residual dry 2310).
+    const TED_VI3_POINTER_19530163: [(&str, &str); 24] = [
+        ("EN", "See Section VI.3 Additional information"),
+        ("DA", "Se del VI.3 Yderligere oplysninger"),
+        ("DE", "Siehe Abschnitt VI.3 Zusätzliche Angaben"),
+        ("ES", "Véase el apartado VI.3, «Información adicional»"),
+        ("FI", "Katso kohta VI.3 (lisätiedot)"),
+        ("FR", "voir point VI.3) Informations complémentaires"),
+        ("EL", "Βλέπε τμήμα VI.3 Συμπληρωματικές πληροφορίες"),
+        ("IT", "cfr. sezione VI.3) Informazioni complementari"),
+        ("NL", "zie VI.3) Nadere inlichtingen"),
+        ("PT", "Consultar o ponto VI.3 «Informação adicional»"),
+        ("SV", "Se punkt VI.3 Kompletterande upplysningar"),
+        ("CS", "Viz oddíl VI.3 Další informace"),
+        ("ET", "Vt punkti VI.3 (lisateave)"),
+        ("HU", "Lásd a VI.3. szakaszt (További információk)"),
+        ("LT", "Žr. VI.3 dalį „Papildoma informacija“"),
+        ("LV", "Skatīt VI.3. iedaļu \"Papildu informācija\""),
+        ("MT", "Ara t-Taqsima VI.3 Tagħrif addizzjonali"),
+        ("PL", "Zob. sekcja VI.3 Informacje dodatkowe"),
+        ("SK", "Pozri oddiel VI.3 Doplňujúce informácie"),
+        ("SL", "Glejte oddelek VI.3) Dodatne informacije"),
+        ("GA", "Féach Alt VI.3 Faisnéis Bhreise"),
+        ("BG", "Вж. раздел VI.3 Допълнителна информация"),
+        ("RO", "A se vedea secțiunea VI.3 Informații suplimentare"),
+        ("HR", "Vidjeti odjeljak VI.3. Dodatni podaci"),
+    ];
+
+    /// [`TED_VI3_POINTER_19530163`] with every non-English copy's first word replaced by one no list
+    /// holds: a template wording whose openers the lists miss, which only the TED template signal
+    /// reads (each copy's reference is still framed by a locator or a title).
+    fn unknown_openers() -> Vec<(Option<&'static str>, String)> {
+        TED_VI3_POINTER_19530163
+            .iter()
+            .map(|(lang, name)| match *lang {
+                "EN" => (Some(*lang), (*name).to_owned()),
+                // The RO opener is three words (`A se vedea`).
+                "RO" => (Some(*lang), format!("Qqq {}", name.strip_prefix("A se vedea ").unwrap_or(name))),
+                _ => (Some(*lang), format!("Qqq {}", name.split_once(' ').map_or(*name, |(_, rest)| rest))),
+            })
+            .collect()
+    }
+
+    /// Issue 511 unit 6 item 6: 19530163's ORG-10 drops — every copy is a section-reference pointer by
+    /// itself now (the openers and titles of the earlier template), so the party drops whichever copy
+    /// heads it, beside a real co-winner that keeps its place.
+    #[test]
+    fn teds_19530163_pointer_drops_in_every_template_wording() {
+        use placeholder_511::*;
+        let copies: Vec<(Option<&str>, &str)> = TED_VI3_POINTER_19530163.iter().map(|(lang, name)| (Some(*lang), *name)).collect();
+        for (_, name) in &copies {
+            assert_eq!(crate::partyname::not_a_name(name), Some(NotAName::Placeholder), "{name} is a pointer by itself");
+            assert!(crate::partyname::mentions_placeholder(name), "the walk's net catches {name}");
+        }
+        let parsed = multilingual(&[("ORG-10", &copies), ("ORG-2", &[(Some("EN"), "Kier Construction Ltd")])], &["ORG-10", "ORG-2"]);
+        assert_eq!(decided(false, &parsed), BTreeMap::from([("ORG-10".to_owned(), NotAName::Placeholder)]));
+        assert_eq!(results(&bound("ted-export-r209", &parsed)), vec![(Some("selec-w".into()), vec![1_002])]);
+        // Whichever copy heads the party (the original language's), it drops.
+        for first in 0..copies.len() {
+            let mut rotated = copies.clone();
+            rotated.rotate_left(first);
+            let parsed = multilingual(&[("ORG-10", &rotated)], &["ORG-10"]);
+            assert_eq!(decided(false, &parsed), BTreeMap::from([("ORG-10".to_owned(), NotAName::Placeholder)]), "{:?} first", rotated[0]);
+        }
+    }
+
+    /// Issue 511 unit 6 item 6, the TED template signal: a party with ten or more language-labelled
+    /// copies of an English bare placeholder's section number, short and with no legal form, drops
+    /// whatever its copies open with — here 19530163's wording with every non-English opener unknown,
+    /// which neither the lexicon nor the echo reads. Nine languages are no template.
+    #[test]
+    fn the_ted_template_signal_sweeps_copies_whatever_their_opener() {
+        use placeholder_511::*;
+        let owned = unknown_openers();
+        let copies: Vec<(Option<&str>, &str)> = owned.iter().map(|(lang, name)| (*lang, name.as_str())).collect();
+        for (_, name) in &copies[1..] {
+            assert_eq!(crate::partyname::not_a_name(name), None, "premise: {name} reads as a name alone");
+            assert!(!crate::partyname::translation_shaped(name), "premise: the echo cannot sweep {name}");
+            assert!(crate::partyname::template_shaped(name), "{name}");
+        }
+        let parsed = multilingual(&[("ORG-1", &copies), ("ORG-2", &[(Some("FR"), "Société Dupont SARL")])], &["ORG-1", "ORG-2"]);
+        assert_eq!(decided(false, &parsed), BTreeMap::from([("ORG-1".to_owned(), NotAName::Placeholder)]));
+        assert_eq!(results(&bound("ted-export-r209", &parsed)), vec![(Some("selec-w".into()), vec![1_002])]);
+        // A non-English original heads the party with an unknown-opener copy: still dropped, and the
+        // walk's net reads that head (`decided` checks every name of a dropped party).
+        let mut pt_first = copies.clone();
+        pt_first.rotate_left(9);
+        assert_eq!(pt_first[0].0, Some("PT"));
+        assert_eq!(decided(false, &multilingual(&[("ORG-1", &pt_first)], &["ORG-1"])), BTreeMap::from([("ORG-1".to_owned(), NotAName::Placeholder)]));
+        // The threshold: the English seed and eight copies are nine languages; one more makes ten.
+        assert_eq!(crate::partyname::TEMPLATE_MIN_LANGUAGES, 10);
+        let nine = multilingual(&[("ORG-1", &copies[..9])], &["ORG-1"]);
+        assert!(decided(false, &nine).is_empty(), "nine languages are no template: {:?}", decided(false, &nine));
+        let ten = multilingual(&[("ORG-1", &copies[..10])], &["ORG-1"]);
+        assert_eq!(decided(false, &ten), BTreeMap::from([("ORG-1".to_owned(), NotAName::Placeholder)]));
+        // A section-reference pointer seeds the signal too (residual dry 2310's `Same as in point
+        // VI.4.1` parties, kept by a sibling copy): ten languages of the review slot's template.
+        let same_as: Vec<(Option<&str>, String)> = std::iter::once((Some("EN"), "Same as in point VI.4.1".to_owned()))
+            .chain(["DA", "DE", "ES", "FI", "FR", "EL", "IT", "NL", "PT"].iter().map(|lang| (Some(*lang), "Qqq punkt VI.4.1".to_owned())))
+            .collect();
+        let same_as: Vec<(Option<&str>, &str)> = same_as.iter().map(|(lang, name)| (*lang, name.as_str())).collect();
+        assert!(!crate::partyname::echo_seed(same_as[0].1) && crate::partyname::template_seed(same_as[0].1));
+        assert_eq!(decided(false, &multilingual(&[("ORG-1", &same_as)], &["ORG-1"])), BTreeMap::from([("ORG-1".to_owned(), NotAName::Placeholder)]));
+    }
+
+    /// Issue 511 unit 6 item 6's near misses: the template signal keeps a party
+    /// - whose one copy names a legal form (a real company's: `Acme GmbH, punkt VI.3`), which
+    ///   never counts and is never swept — without it, the same party drops, so the form alone keeps
+    ///   it;
+    /// - that is bilingual (an English pointer and the body in French): two languages are no template;
+    /// - with no English seed, or an English copy that names a body (no bare placeholder);
+    /// - whose copies carry no language label, or another section number than the seed's;
+    /// - with an award summary among its copies (issue 511 unit 6, the build review).
+    #[test]
+    fn the_ted_template_signal_keeps_a_named_party() {
+        use placeholder_511::*;
+        const LANGS: [&str; 11] = ["DA", "DE", "ES", "FI", "FR", "EL", "IT", "NL", "PT", "CS", "PL"];
+        let party = |en: &str, copy: &str, extra: Option<(&'static str, &str)>| -> Vec<(Option<&'static str>, String)> {
+            std::iter::once((Some("EN"), en.to_owned()))
+                .chain(LANGS.iter().map(|lang| (Some(*lang), copy.to_owned())))
+                .chain(extra.map(|(lang, name)| (Some(lang), name.to_owned())))
+                .collect()
+        };
+        let read = |names: &[(Option<&'static str>, String)]| {
+            let names: Vec<(Option<&str>, &str)> = names.iter().map(|(lang, name)| (*lang, name.as_str())).collect();
+            decided(false, &multilingual(&[("ORG-1", &names)], &["ORG-1"]))
+        };
+        // A real company's copies cite the section with a locator, one names its form.
+        let company = party("See section VI.3", "Acme, punkt VI.3", Some(("SV", "Acme GmbH, punkt VI.3")));
+        assert!(read(&company).is_empty(), "the legal-form copy keeps the party: {:?}", read(&company));
+        assert!(!crate::partyname::template_copy("Acme GmbH, punkt VI.3"));
+        // The guard's control: without the form the copies are template copies, and the party drops.
+        assert!(crate::partyname::template_shaped("Acme, punkt VI.3"));
+        assert_eq!(read(&party("See section VI.3", "Acme, punkt VI.3", None)), BTreeMap::from([("ORG-1".to_owned(), NotAName::Placeholder)]));
+        // A name of two capitalised words before the locator is no copy at all.
+        assert!(!crate::partyname::template_shaped("Acme Bau, punkt VI.3"));
+        assert!(read(&party("See section VI.3", "Acme Bau, punkt VI.3", None)).is_empty());
+        // A bilingual body: the English pointer seeds, the French copy is template-shaped, two
+        // languages.
+        let bilingual = [(Some("EN"), "See VI.4.1".to_owned()), (Some("FR"), "Voir point VI.4.1 Conseil d'Etat".to_owned())];
+        assert!(crate::partyname::template_seed(&bilingual[0].1) && crate::partyname::template_shaped(&bilingual[1].1));
+        assert!(read(&bilingual).is_empty(), "{:?}", read(&bilingual));
+        // No English seed: the same copies under a French label, or an English copy naming a body.
+        let mut no_english = party("See section VI.3", "Qqq punkt VI.3", None);
+        no_english[0].0 = Some("FR");
+        assert!(read(&no_english).is_empty(), "{:?}", read(&no_english));
+        let named = party("Please see section VI.3 for list of awarded Suppliers", "Qqq punkt VI.3", None);
+        assert!(!crate::partyname::template_seed(&named[0].1), "premise: a placeholder, but not bare");
+        assert!(read(&named).is_empty(), "{:?}", read(&named));
+        // Unlabelled copies, or copies of another number.
+        let mut unlabelled = party("See section VI.3", "Qqq punkt VI.3", None);
+        for copy in &mut unlabelled[1..] {
+            copy.0 = None;
+        }
+        assert!(read(&unlabelled).is_empty(), "{:?}", read(&unlabelled));
+        assert!(read(&party("See section VI.3", "Qqq punkt VI.4", None)).is_empty());
+        // Issue 511 unit 6, the build review: an award summary among the copies is left as it is,
+        // so it keeps the party — 19530163's 24 copies with the DE one naming the review body
+        // (template-shaped, the seed's number). Rewriting any class but `None` would drop it.
+        assert_eq!(crate::partyname::not_a_name(SUMMARY_COPY), Some(NotAName::AwardSummary), "premise");
+        assert!(crate::partyname::template_shaped(SUMMARY_COPY), "premise: {SUMMARY_COPY} has the template's shape");
+        assert_eq!(crate::partyname::form_section_tokens(SUMMARY_COPY), vec!["vi.3"], "premise");
+        let summarised: Vec<(Option<&'static str>, String)> = TED_VI3_POINTER_19530163
+            .iter()
+            .map(|(lang, name)| (Some(*lang), if *lang == "DE" { SUMMARY_COPY } else { *name }.to_owned()))
+            .collect();
+        assert!(read(&summarised).is_empty(), "{:?}", read(&summarised));
+    }
+
+    /// Issue 511 unit 6, the build review: unit 6's openers (`Glejte`, `Consultar`, `se référer`,
+    /// `As set out`) make a copy that names a body after its reference pointer-led and
+    /// template-shaped. Beside a BARE seed of its number (no section title after the seed's
+    /// reference) neither sweep takes it, in two languages or in 24 — a bilingual review body
+    /// (`See section VI.4.1` / `Glejte oddelek VI.4.1 Državna revizijska komisija`), or a DE-original
+    /// one whose English copy names the body. Beside a titled seed the echo still sweeps a title the
+    /// lists miss ([`the_echo_sweeps_a_pointer_led_copy_the_lexicon_misses`]); the bare copies drop.
+    #[test]
+    fn a_copy_naming_a_body_after_its_reference_keeps_its_party_beside_a_bare_seed() {
+        use placeholder_511::*;
+        const EN_BARE: (Option<&str>, &str) = (Some("EN"), "See section VI.4.1");
+        let pairs: [[(Option<&str>, &str); 2]; 4] = [
+            [EN_BARE, (Some("SL"), "Glejte oddelek VI.4.1 Državna revizijska komisija")],
+            [EN_BARE, (Some("FR"), "Se référer au point VI.4.1 Conseil d'État")],
+            [EN_BARE, (Some("PT"), "Consultar o ponto VI.4.1 Tribunal Administrativo de Círculo de Lisboa")],
+            [(Some("DE"), "Siehe oben VI.4.1"), (Some("EN"), "As set out at VI.4.1 Office of Government Procurement")],
+        ];
+        for [seed, copy] in &pairs {
+            assert!(crate::partyname::echo_seed(seed.1) && !crate::partyname::titled_after_reference(seed.1), "premise: {} seeds bare", seed.1);
+            assert_eq!(crate::partyname::not_a_name(copy.1), None, "premise: {}", copy.1);
+            assert!(crate::partyname::translation_shaped(copy.1), "premise: the echo's shape, {}", copy.1);
+            assert_eq!(crate::partyname::form_section_tokens(copy.1), vec!["vi.4.1"], "premise: {}", copy.1);
+            let parsed = multilingual(&[("ORG-1", &[*seed, *copy])], &["ORG-1"]);
+            assert!(decided(false, &parsed).is_empty(), "{}: {:?}", copy.1, decided(false, &parsed));
+        }
+        // The control: the bare copy is a pointer by itself, and the party drops.
+        let bare = multilingual(&[("ORG-1", &[EN_BARE, (Some("SL"), "Glejte oddelek VI.4.1")])], &["ORG-1"]);
+        assert_eq!(decided(false, &bare), BTreeMap::from([("ORG-1".to_owned(), NotAName::Placeholder)]));
+        // 24 languages, a bare English seed, 22 bare copies the template signal sweeps, and the SL
+        // copy naming the body: kept. With the SL copy bare, the party drops.
+        const LANGS: [&str; 22] = [
+            "DA", "DE", "ES", "FI", "FR", "EL", "IT", "NL", "PT", "SV", "CS", "ET", "HU", "LT", "LV", "MT", "PL", "SK", "GA", "BG", "RO", "HR",
+        ];
+        let template = |sl: &'static str| -> Vec<(Option<&'static str>, &'static str)> {
+            std::iter::once(EN_BARE)
+                .chain(LANGS.iter().map(|lang| (Some(*lang), "Qqq punkt VI.4.1")))
+                .chain(std::iter::once((Some("SL"), sl)))
+                .collect()
+        };
+        assert!(crate::partyname::template_shaped("Qqq punkt VI.4.1"), "premise");
+        let named = template("Glejte oddelek VI.4.1 Državna revizijska komisija");
+        assert!(decided(false, &multilingual(&[("ORG-1", &named)], &["ORG-1"])).is_empty());
+        let all_bare = template("Glejte oddelek VI.4.1");
+        assert_eq!(
+            decided(false, &multilingual(&[("ORG-1", &all_bare)], &["ORG-1"])),
+            BTreeMap::from([("ORG-1".to_owned(), NotAName::Placeholder)])
+        );
     }
 
     /// [`a_name_beside_a_translated_pointer_that_reads_as_a_party_keeps_it`]'s review body named

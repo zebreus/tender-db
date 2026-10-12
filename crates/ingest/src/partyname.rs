@@ -65,6 +65,18 @@
 //! above` ([`section_reference_pointer`]). A body's name beside the pointer keeps it a name
 //! (`Krajowa Izba Odwoławcza – jak wyżej w pkt VI.4.1)`, `Referat II.3`).
 //!
+//! Issue 511's unit 6 (the units 4+5 reads and residual dry 2310,
+//! `.scratch/tender-db/511-placeholders/u45/plan-residual.json`) closes what the combined wet left:
+//! a body named right after a pointer's reference with no separator keeps its party
+//! ([`opens_with_a_name`]: `Please see section VI.4.3 Translink`); the `As` family's verbs and the
+//! generic nouns, notice names and typos the closed lists lacked (`As shown in section I.1 above`,
+//! `See links detailed in II.1.5`, `Siehe die unter Ziffer VI.4.1) genannte Stelle.`), and the UK's
+//! long withheld sentences, whole; a spaced reference (`Wie VI.4 1)`, `siehe VI 4.1`:
+//! [`raw_pieces`]); the dry plan's legal-form list without the pointers ([`plan_legal_form`]); and
+//! TED's earlier template wording (notice 19530163's ORG-10: `Consultar o ponto VI.3`, `Glejte
+//! oddelek VI.3)`), each copy a pointer by itself, with the fold's TED template signal for the
+//! wordings no list holds ([`template_shaped`], the projection's `template_echoes`).
+//!
 //! The real names beside the phrases stay names — `Desierto OÜ`, `DESERTOT`, `VÁRIOS
 //! MUNDOS`, `NIL d.o.o.`, `N/A s.r.o.`, `Void arhitektura`, `Gestiver Información SL`,
 //! `Bank of America, N.A.`, `X Corp` — pinned by the tests below.
@@ -232,7 +244,7 @@ const BLANK_STEMS: [&str; 3] = [" nie dotyczy", " not applicable", " niet van to
 /// elsewhere or plural. Classed by what each says in a winner slot (issue 511 §1): `tbc`,
 /// `unknown` and the other "name missing" words moved here from [`BLANK_WHOLE`] (66
 /// winner/bidder rows between them, none with an identifier).
-const PLACEHOLDER_WHOLE: [&str; 70] = [
+const PLACEHOLDER_WHOLE: [&str; 74] = [
     // The name is missing or pending.
     "k a",
     "ka",
@@ -279,6 +291,15 @@ const PLACEHOLDER_WHOLE: [&str; 70] = [
     // 2026-10-12): the one PPON stands for unrelated suppliers, so it names none of them.
     "information withheld due to security",
     "this information has been omitted from this notice in accordance with s 94 procurement act 2023",
+    // Issue 511 unit 6 item 2 (the units 4+5 reads, the plan's `long` list): the UK sentences
+    // that say the award or its winners are elsewhere or withheld, whole — each name exactly as
+    // published, folded. Hertfordshire's award notice sentence WITH the council's name (`… for
+    // further details. Hertfordshire County Council`, 17 mentions) is a different fold and stays a
+    // name; these are its bare spellings (10804641, 7610087).
+    "this is an award notice and this opportunity is now closed please see section v award of contract for further details",
+    "the name s of the winning tenderer s are being withheld for security reasons however these will be made available to the commission on request",
+    "the name s of the winning tenderers are being withheld for security reasons however these will be made available to the commission on request",
+    "a full list of successful suppliers will be made available on contracts finder please see section vi 3 additional information",
     // Plural: the award went to several, named nowhere.
     "various",
     "various suppliers",
@@ -564,7 +585,9 @@ pub fn not_a_name(name: &str) -> Option<NotAName> {
 /// 4. a placeholder stem — an anchored pointer stem may follow one polite first word
 ///    ([`POINTER_LEAD_INS`]: `Please see section VI.4.2`): [`NotAName::AwardSummary`] when a
 ///    pointer is followed by a name ([`pointer_names`], a form section's own title not counted:
-///    [`FORM_SECTION_TITLES`]; a perfil stem's genitive owner included: [`perfil_owner`]), a
+///    [`FORM_SECTION_TITLES`]; a perfil stem's genitive owner included: [`perfil_owner`]; since
+///    issue 511 unit 6 a name right after the references with no separator: `See section VI.4.3
+///    Translink`), a
 ///    boundary stem follows one ([`named_before_stem`]) or the name has a summary's shape
 ///    ([`summary_shape`]), else [`NotAName::Placeholder`];
 /// 5. a blank stem: [`NotAName::AwardSummary`] for a summary's shape or a `but` clause that
@@ -705,9 +728,11 @@ fn placeholder_hit<'p>(full: &str, padded: &'p str) -> (&'p str, Option<(&'stati
 /// stripped, an opening separator and the references after it stripped, the form section titles
 /// blanked) WITHOUT its separator requirement. The fold's translation echo seeds only from a
 /// placeholder this is false for ([`crate::project`]'s `translation_echoes`): `See Section VI.3
-/// Kier Construction` and the residual's `Please see section VI.4.3 Translink` are
-/// `Placeholder` (no separator, so the keep rule never reads the tail), but the tail names a
-/// body, and its untranslated copy `Siehe Abschnitt VI.3 Kier Construction` keeps the party.
+/// Kier Construction` and the residual's `Please see section VI.4.3 Translink` were
+/// `Placeholder` (no separator, so the keep rule never read the tail) until issue 511 unit 6 item
+/// 1 read a name right after the references as an award summary ([`opens_with_a_name`]); a tail
+/// that names something later (`Please see section VI.3 for list of awarded Suppliers`) still
+/// leaves a `Placeholder` that seeds nothing.
 /// `See Section VI.2 'Additional information'.` (the 460) and `See section VI.3 (Additional
 /// Information)` (the 144) leave only a blanked title, and seed. False for a name with no
 /// placeholder stem (a whole value names nothing after it); true when the fold's words and the
@@ -786,7 +811,9 @@ pub fn scoped_languages(word: &str) -> &'static [&'static str] {
 /// narrowed unit 4's echo arm, which took any short name with a section number (`Referat
 /// II.3`, `Stadtverwaltung Kaiserslautern - Stabstelle IV.1 Zentrale Vergabestelle`: dry
 /// 2283's 25,333 orgs and 1,277 buyer rows), to what the echo can sweep since unit 5 — a
-/// pointer-led copy ([`translation_shaped`]).
+/// pointer-led copy ([`translation_shaped`]). Issue 511 unit 6 item 6 widens it to what the TED
+/// template signal sweeps ([`template_shaped`]: a copy whose reference a locator or a title frames,
+/// whatever its opener): 126 orgs and 1 buyer row more on dry 2283 (`u6-build/simulation.md`).
 pub fn mentions_placeholder(name: &str) -> bool {
     // Issue 511 unit 4 (the review of item 1), narrowed by unit 5: every name the fold's
     // translation echo can sweep. A party's head name is its first-seen copy, the ORIGINAL
@@ -833,8 +860,104 @@ fn mentions_by_class(name: &str) -> bool {
 /// ([`mentions_placeholder`]); since unit 5 it costs a refold only for a pointer-led name that
 /// cites a section and still reads as a name (`Siehe Punkt VI.4.1) - VKS Wien`), and the fold
 /// decides.
+///
+/// Issue 511 unit 6 item 6: widened to what the TED template signal sweeps ([`template_shaped`]:
+/// short, no legal form, and pointer-led OR its reference framed by a locator before it or a title
+/// after it), which holds every translated-pointer shape, so the arm holds both sweeps by
+/// construction. A body's name beside a bare number (`Referat II.3`, `Region Hovedstaden VI.3`)
+/// stays out, as since unit 5.
 fn echo_shaped(raw: &str) -> bool {
-    !form_section_tokens(raw).is_empty() && translation_shaped(raw)
+    !form_section_tokens(raw).is_empty() && template_shaped(raw)
+}
+
+/// Issue 511 unit 6 item 6: the fewest language-labelled copies, each carrying the English seed's
+/// section number, short and with no legal form ([`template_copy`]), that make a party's names
+/// TED's multilingual pointer template (the fold's `template_echoes`): TED prints the pointer in
+/// 23 or 24 languages, a bilingual award (FI/SV, FR/NL) in two.
+pub const TEMPLATE_MIN_LANGUAGES: usize = 10;
+
+/// Issue 511 unit 6 item 6: whether `name` may seed the TED template signal — a bare placeholder
+/// with a form section number: the lexicon's `Placeholder`, unit 5's section-reference pointers
+/// included (`Same as in point VI.4.1`, `Please refer to VI.4.1.`, `See Section VI.3 Additional
+/// information`), naming nothing after a stem ([`names_after_stem`]). Wider than [`echo_seed`],
+/// whose narrowing guards a bilingual award; the template signal asks for
+/// [`TEMPLATE_MIN_LANGUAGES`] copies and an English seed instead.
+pub fn template_seed(name: &str) -> bool {
+    !form_section_tokens(name).is_empty() && classify(name, None, true) == Some(NotAName::Placeholder) && !names_after_stem(name)
+}
+
+/// Issue 511 unit 6 item 6: whether `raw` counts toward the TED template signal — at most
+/// [`TRANSLATION_MAX_WORDS`] words and no legal form ([`names_a_legal_form`]). A real party's copy
+/// that names its form (`Consultar o ponto VI.3 Acme Lda`) never counts and is never swept.
+pub fn template_copy(raw: &str) -> bool {
+    raw.split_whitespace().count() <= TRANSLATION_MAX_WORDS && !names_a_legal_form(raw)
+}
+
+/// Issue 511 unit 6 item 6: what the TED template signal sweeps once a party holds it — a
+/// [`template_copy`] that opens with a pointer word ([`pointer_led`]) OR whatever its opener has a
+/// section reference framed as the template frames it ([`reference_framed`]: a locator before it,
+/// `Consultar o ponto VI.3`, `Glejte oddelek VI.3)`; a form title or a postposed locator after
+/// it, `Lásd a VI.3. szakaszt`, `… VI.3 «Informação adicional»`). A body named beside a bare
+/// number is no copy (`Referat II.3`, `Stadtverwaltung Kaiserslautern - Stabstelle IV.1 Zentrale
+/// Vergabestelle`), so the walk's net arm ([`echo_shaped`]) stays narrow.
+pub fn template_shaped(raw: &str) -> bool {
+    template_copy(raw) && (pointer_led(raw) || reference_framed(raw))
+}
+
+/// Issue 511 unit 6 item 6: whether `raw`'s first form section reference ([`reference_pieces`]) sits
+/// where a template copy's does, after an opener of a few words, framed as the template frames it:
+/// - at most [`TEMPLATE_OPENER_WORDS`] words before it — the first any word, each later one
+///   lowercase or a closed-list word but never a [`SECTION_POINTERS`] phrase — with no separator
+///   ([`Pieces::separated`]) and no full stop between them, except after a one-word opener that
+///   more words follow (`Zob. sekcja`). A body named before a pointer (`KIO – jak w pkt VI.3.1)`,
+///   `Vergabekammer des Landes Berlin; siehe Punkt VI.4.1)`), a capitalised name (`LMU München,
+///   Referat IV.1`) or a supplier before the award heading it spilled (`Transports Chalavan. V.1)
+///   AWARD AND CONTRACT VALUE:`, `Bouygues. V.1) …`) is no copy;
+/// - and a [`SECTION_LOCATORS`] phrase of two or more letters right before it (`ponto VI.3`,
+///   `t-Taqsima VI.3`, not `P VI.3`), or a [`FORM_SECTION_TITLES`] phrase or a
+///   [`POSTPOSED_LOCATORS`] word right after it (`VI.3) Nadere inlichtingen`, `VI.3. szakaszt`).
+fn reference_framed(raw: &str) -> bool {
+    let Some(pieces) = reference_pieces(raw) else { return false };
+    let words = &pieces.words;
+    let Some(k) = words.iter().position(Option::is_none) else { return false };
+    if k > TEMPLATE_OPENER_WORDS {
+        return false;
+    }
+    // Before the first reference the pieces are the raw name's alphanumeric runs, one for one.
+    let runs = alphanumeric_runs(raw);
+    let gap = |i: usize| &raw[runs[i - 1].1..runs[i].0];
+    let opener = (1..=k).all(|i| !pieces.separated[i] && (!gap(i).contains('.') || (i == 1 && k >= 2)))
+        && (1..k).all(|i| match reference_phrase(words, i) {
+            Some((_, ReferencePart::Pointer)) => false,
+            Some(_) => true,
+            None => !raw[runs[i].0..runs[i].1].starts_with(char::is_uppercase),
+        });
+    let before = (1..=k.min(3)).any(|n| {
+        reference_phrase(words, k - n) == Some((n, ReferencePart::Locator))
+            && words[k - n..k].iter().flatten().map(|w| w.chars().count()).sum::<usize>() >= 2
+    });
+    let after = match reference_phrase(words, k + 1) {
+        Some((_, ReferencePart::Title)) => true,
+        Some((1, ReferencePart::Locator)) => words[k + 1].as_deref().is_some_and(|w| POSTPOSED_LOCATORS.contains(&w)),
+        _ => false,
+    };
+    opener && (before || after)
+}
+
+/// Issue 511 unit 6 item 6: the most words before a template copy's reference ([`reference_framed`]):
+/// TED's openers with their locator run to four (`A se vedea secțiunea VI.3`, `Véase el apartado
+/// VI.3`, `Consultar o ponto VI.3`).
+const TEMPLATE_OPENER_WORDS: usize = 4;
+
+/// Issue 511 unit 6 item 4: whether the drain's dry plan lists `name` among the hits it reads for a
+/// legal form (`legal_form`, the stand-in for a legal-form guard, 510 unit1-decision §5.3) — the
+/// role census's case-blind reading ([`crate::project::role_census::has_commercial_form`]), less a
+/// section-reference pointer ([`section_reference_pointer`]), whose `As`/`Same as` the census
+/// reads as the Norwegian/Estonian `AS`: residual dry 2310's list held 268 orgs, its readers found
+/// every placeholder among them such a pointer (`Same as VI.4.1`, `As in I.1 above`, `Address as
+/// per I.1) above.`). A real company keeps its place (`Norconsult AS`, `Acme AS, see VI.3`).
+pub fn plan_legal_form(name: &str) -> bool {
+    crate::project::role_census::has_commercial_form(name) && !section_reference_pointer(name)
 }
 
 /// Issue 511 unit 4: whether a whole value (`whole`, the fold after a bare lot qualifier) is a
@@ -986,8 +1109,10 @@ fn after_lot_designator(full: &str) -> &str {
 /// Without a separator nothing follows the pointer but its own words (`See Section VI.3)
 /// Additional information`, `See Contracts Finder Notice for full supplier list`) — except
 /// a `see section` with no reference at all, which names its body directly (`see section
-/// Royal Courts of Justice`), and a perfil stem that opens the name, whose genitive names
-/// the profile's owner ([`perfil_owner`]: `Perfil de contratante del Gobierno de Aragón`).
+/// Royal Courts of Justice`), a perfil stem that opens the name, whose genitive names
+/// the profile's owner ([`perfil_owner`]: `Perfil de contratante del Gobierno de Aragón`), and
+/// since issue 511 unit 6 item 1 a name right after the stripped references ([`opens_with_a_name`]:
+/// `Please see section VI.4.3 Translink`, `See Section VI.3 Kier Construction`).
 fn pointer_names(raw: &str, padded: &str, stem: &str, pos: usize) -> bool {
     let Some(after) = after_stem(raw, padded, stem, pos) else {
         return false;
@@ -996,6 +1121,10 @@ fn pointer_names(raw: &str, padded: &str, stem: &str, pos: usize) -> bool {
     let rest = match open_separator(rest) {
         Some(after) => strip_references(after).0,
         None if stem == " see section" && !referenced => rest,
+        // Issue 511 unit 6 item 1 (the units 4+5 reads: `Please see section VI.4.3 Translink`, a
+        // review body, the one real party the combined wet dropped): no separator, but the text
+        // after the references opens with a name.
+        None if referenced => return opens_with_a_name(&without_section_titles(rest)),
         // Issue 511 unit 3 read: only when nothing precedes the stem — `Ver perfil del
         // contratante de la Junta de Andalucía` points a winner slot at the buyer's
         // profile (the 2010 print's junk, `text::parse`), and a name before the stem is
@@ -1005,6 +1134,102 @@ fn pointer_names(raw: &str, padded: &str, stem: &str, pos: usize) -> bool {
     };
     // Issue 511 unit 4: a form section's own title names the section, not a body.
     names_something(&without_section_titles(rest))
+}
+
+/// Issue 511 unit 6 item 1: whether `s`, the text after a pointer's section references with the form
+/// section titles blanked ([`pointer_names`]), opens with a name — its first word, past the words
+/// of a position ([`REFERENCE_WORDS`], [`SECTION_POSITIONS`]: `below`), starts with a capital, has
+/// two or more letters, is no malformed reference ([`roman_with_digits`]: `V1`) and no closed-list
+/// word of a section-reference pointer ([`REFERENCE_LISTS`]: `For`, `Section`, `Notice`, `Avis`,
+/// `Point`). `Translink`, `Kier Construction` and `Acme plc` open with one; `for list of awarded
+/// Suppliers`, `of the Project Information Memorandum` and a blanked `Additional information` do
+/// not. Without a separator, a body named after a joiner (`The High Court`) or with a list word
+/// (`Point P`) stays unread, as before unit 6: erring toward the pointer, which the separator rule
+/// reads ([`names_something`]) when the publisher writes one.
+///
+/// Issue 511 unit 6, the build review: a capitalised word is no name by itself. The first word also
+/// opens no closed-list phrase of any length ([`reference_phrase`]: `Contract Award Notice`), no
+/// [`TAIL_NON_NAMES`] phrase (`Suppliers`, `Lots 1-5`, `Annex`, `Name`, `Contracts Finder`, `Es
+/// handelt sich …`) unless the tail names a legal form (`NIL d.o.o.`), and is no bare Roman
+/// numeral (`siehe oben Ziff. VI.4.1Ort`, whose glued `VI.4.1Ort` no reference strip splits); and
+/// the tail from it is no non-name the lexicon classes by itself (`See section VI.3 Not
+/// applicable`, `… TBC`, `… Withheld`). The form labels a pointer names its target with are
+/// [`FORM_SECTION_TITLES`] (`Name and addresses`, `Mediation body`, `Zuständige Stelle`), blanked
+/// before this reads. Before the review all of these read as a body, an award summary the fold
+/// never drops — three names unit 3's wet dropped among them (`u3/plan-2265.json`).
+fn opens_with_a_name(s: &str) -> bool {
+    let runs = alphanumeric_runs(s);
+    let words: Vec<Option<String>> = runs.iter().map(|&(start, end)| Some(fold(&s[start..end]))).collect();
+    let mut i = 0;
+    while i < words.len() {
+        let folded = words[i].as_deref().unwrap_or_default();
+        if REFERENCE_WORDS.contains(&folded) {
+            i += 1;
+            continue;
+        }
+        if let Some((n, ReferencePart::Position)) = reference_phrase(&words, i) {
+            i += n;
+            continue;
+        }
+        let (start, end) = runs[i];
+        let (word, tail) = (&s[start..end], &s[start..]);
+        return word.chars().next().is_some_and(char::is_uppercase)
+            && word.chars().filter(|c| c.is_alphabetic()).count() >= 2
+            && !roman_with_digits(word)
+            && !(ROMAN.contains(&folded) && word.bytes().all(|b| matches!(b, b'I' | b'V' | b'X')))
+            && reference_phrase(&words, i).is_none()
+            && (!tail_non_name(&words, i) || names_a_legal_form(tail))
+            && !matches!(not_a_name(tail), Some(NotAName::Placeholder | NotAName::Blank | NotAName::VoidLot));
+    }
+    false
+}
+
+/// Issue 511 unit 6, the build review: the words that may follow a pointer's reference with no
+/// separator and name no body ([`opens_with_a_name`]), on the fold — the generic nouns a pointer
+/// names its target with that are no form's title (`See section VI.3 Suppliers`, `See Section VI.3
+/// Lots 1-5`, `… Annex`, `siehe oben I.1 Name`, `See section VI.3 Contracts Finder`), the deferred
+/// `nil` (`… Nil`; `NIL d.o.o.` names its form), and a sentence's opening pronoun (`Siehe oben
+/// Abschnitt II.1.4). Es handelt sich um eine freiwillige EU-Bekanntmachung …`, 6 mentions dropped
+/// by unit 3's wet). Read for the tail only: none is a closed-list word of the section-reference
+/// grammar ([`REFERENCE_LISTS`]), so a name opening with one stays out of the pointer class.
+const TAIL_NON_NAMES: [&str; 13] =
+    ["supplier", "suppliers", "annex", "annexe", "anhang", "name", "names", "contracts finder", "nil", "es", "this", "these", "there"];
+
+/// Whether a [`TAIL_NON_NAMES`] phrase or a [`LOT_WORDS`] word opens `words` (folded) at `i`.
+fn tail_non_name(words: &[Option<String>], i: usize) -> bool {
+    let at = |t: usize| words.get(i + t).and_then(Option::as_deref);
+    LOT_WORDS.iter().any(|w| at(0) == Some(*w))
+        || TAIL_NON_NAMES.iter().any(|phrase| phrase.split(' ').enumerate().all(|(t, w)| at(t) == Some(w)))
+}
+
+/// Issue 511 unit 6, the build review: `raw` after its LAST form section reference
+/// ([`reference_pieces`]), `None` without one.
+fn after_last_reference(raw: &str) -> Option<&str> {
+    let pieces = reference_pieces(raw)?;
+    let last = pieces.words.iter().rposition(Option::is_none)?;
+    Some(&raw[pieces.ends[last]..])
+}
+
+/// Issue 511 unit 6, the build review: whether the text after `raw`'s last form section reference,
+/// its form section titles blanked, opens with a name ([`opens_with_a_name`]) — a body named right
+/// after a pointer's reference, in a copy no class reads (`Glejte oddelek VI.4.1 Državna revizijska
+/// komisija`, `Se référer au point VI.4.1 Conseil d'État`, `As set out at VI.4.1 Office of
+/// Government Procurement`). The fold's two sweeps (`translation_echoes`, `template_echoes`) leave
+/// such a copy a name beside a bare seed ([`titled_after_reference`]). Every copy of 12516947's and
+/// 19530163's pointer is false: a section-reference pointer by itself, its tail closed-list words.
+pub fn names_after_reference(raw: &str) -> bool {
+    after_last_reference(raw).is_some_and(|tail| opens_with_a_name(&without_section_titles(tail)))
+}
+
+/// Issue 511 unit 6, the build review: whether a [`FORM_SECTION_TITLES`] phrase follows `raw`'s
+/// last form section reference — a seed that names the section pointed at (`See Section VI.2
+/// 'Additional information'.`, `See Section VI.3 Additional information`), whose copies carry that
+/// title translated, in a wording the lists may miss (`Se punkt VI.2) Nye oplysninger`, unit 4's
+/// echo case). Beside such a seed a capitalised tail is read as the title and swept; beside a bare
+/// one (`See section VI.4.1`, `Siehe oben VI.4.1`, `Same as in point VI.4.1`) a copy's tail can only
+/// be a body ([`names_after_reference`]), and the copy is left a name.
+pub fn titled_after_reference(raw: &str) -> bool {
+    after_last_reference(raw).is_some_and(|tail| matches!(without_section_titles(tail), std::borrow::Cow::Owned(_)))
 }
 
 /// Issue 511 unit 4 item 2 (residual dry 2273): the titles TED's standard forms give their
@@ -1022,7 +1247,7 @@ fn pointer_names(raw: &str, padded: &str, stem: &str, pos: usize) -> bool {
 /// 29), and the "Additional information" title of TED's 23-language pointer (notice 12516947's
 /// ORG-2, `TED_VI2_POINTER` in the projection's tests). A section-reference pointer may close on
 /// them ([`reference_shape`]), and the keep rule reads past them as before.
-const FORM_SECTION_TITLES: [&str; 87] = [
+const FORM_SECTION_TITLES: [&str; 107] = [
     // Section VI: complementary information; VI.2 / VI.3 additional information; VI.3 / VI.4 the
     // review procedures (2008 and 2014 numbering).
     "additional information",
@@ -1127,6 +1352,38 @@ const FORM_SECTION_TITLES: [&str; 87] = [
     // podaci` (section VI's), reconstructed from the form labels, not read off a notice.
     "dodatni podaci",
     "dopunski podaci",
+    // Issue 511 unit 6 item 6: the wordings of TED's earlier template (notice 19530163's ORG-10,
+    // `See Section VI.3 Additional information` in 24 languages, read 2026-10-12) that 12516947's
+    // read did not show — EL `Συμπληρωματικές πληροφορίες`, PT `Informação adicional`, SV
+    // `Kompletterande upplysningar`, CS `Další informace` — and item 2's typo of `Kontaktstelle`
+    // (`siehe Kontakstelle unter Punkt I.1)`, 9 mentions in residual dry 2310).
+    "συμπληρωματικεσ πληροφοριεσ",
+    "informacao adicional",
+    "kompletterande upplysningar",
+    "dalsi informace",
+    "kontakstelle",
+    // Issue 511 unit 6, the build review: the form labels a pointer names its target with, which
+    // the no-separator keep rule ([`opens_with_a_name`]) read as a body — section I's `Name and
+    // addresses` and contact point, VI.4's mediation body and the VI.4.3/VI.4.4 service title, the
+    // plan's typo `See Section VI.3 Additonal Information, sub-section 2.` (dropped by unit 3's
+    // wet), and the German labels (`siehe oben VI.4.1 Nachprüfungsstelle`, `siehe oben Ziffer
+    // VI.4.1 Zuständige Stelle`, `siehe oben II.1.4 Kurze Beschreibung`, `siehe oben VI.3 Weitere
+    // Angaben`, `siehe oben I.1 Adresse`, `… Ansprechpartner`).
+    "name and address",
+    "name and addresses",
+    "names and addresses",
+    "contact point",
+    "contact points",
+    "contact details",
+    "mediation body",
+    "service from which information about the lodging of appeals may be obtained",
+    "additonal information",
+    "nachprufungsstelle",
+    "zustandige stelle",
+    "kurze beschreibung",
+    "weitere angaben",
+    "adresse",
+    "ansprechpartner",
 ];
 
 /// Issue 511 unit 5: the polite lead-ins a section-reference pointer may open with, on the fold —
@@ -1142,7 +1399,7 @@ const REFERENCE_LEAD_INS: [&str; 4] =
 /// `cf` 668, `voir` 661, `vedasi` 197, `as in` 206, `zie` 182, `οπωσ` 182, `vease` 161, `vd` 133,
 /// `come al` 123, `same as in` 111, `s o` 97, `confer` 95, `vedi` 89. A typo of `siehe` is kept
 /// where the plan holds it (`sieh`, `siehs`, `sihe`, `seihe`, `sehe`).
-const SECTION_POINTERS: [&str; 118] = [
+const SECTION_POINTERS: [&str; 126] = [
     // English.
     "see",
     "see also",
@@ -1161,6 +1418,13 @@ const SECTION_POINTERS: [&str; 118] = [
     "as set out in",
     "as listed in",
     "as specified in",
+    // Issue 511 unit 6 item 2 (the units 4+5 reads, `legal_form` list): the `As` family's verbs
+    // the list missed — `As shown in section I.1 above`, `As defined in (section) VI.3 of this
+    // notice`, `As set out at I.1`, `As noted in VI.4.1`.
+    "as shown in",
+    "as defined in",
+    "as set out",
+    "as noted in",
     "cf",
     "confer",
     "idem",
@@ -1199,6 +1463,9 @@ const SECTION_POINTERS: [&str; 118] = [
     "cfer",
     "se reporter a",
     "se referer a",
+    // Issue 511 unit 6 item 2: `Se référer au point VI.2 autres informations` (`au`, not `à`).
+    "se reporter",
+    "se referer",
     "meme entite que celle mentionnee",
     "lire",
     "supra",
@@ -1276,6 +1543,11 @@ const SECTION_POINTERS: [&str; 118] = [
     "vezi",
     "виж",
     "vgs",
+    // Issue 511 unit 6 item 6: the openers of 19530163's PT and SL copies, the two no list held
+    // (`Consultar o ponto VI.3 «Informação adicional»`, `Glejte oddelek VI.3) Dodatne
+    // informacije`), which kept ORG-10 (140 mentions) through the units 4+5 wet.
+    "consultar",
+    "glejte",
 ];
 
 /// Issue 511 unit 5 (dry 2283): the words that name the kind of place pointed at, on the fold —
@@ -1283,7 +1555,7 @@ const SECTION_POINTERS: [&str; 118] = [
 /// `unter` 593, `rubrique` 557, `abschnitt` 289 — and TED's template's (`oddíl`, `pontot`, `dalį`,
 /// `iedaļu`, `jaotist`, `Taqsima`, `Alt`, `раздел`, `secţiunea`). A bare number or Roman numeral
 /// may follow one (`Nr. 1`, `Section VI`, `bloc 7`).
-const SECTION_LOCATORS: [&str; 76] = [
+const SECTION_LOCATORS: [&str; 82] = [
     "section",
     "point",
     "points",
@@ -1363,11 +1635,21 @@ const SECTION_LOCATORS: [&str; 76] = [
     "tocko",
     "abschn",
     "sec",
+    // Issue 511 unit 6 item 6: 19530163's ET `Vt punkti VI.3 (lisateave)`, HU `Lásd a VI.3.
+    // szakaszt` (postposed, [`POSTPOSED_LOCATORS`]) and MT `Ara t-Taqsima VI.3` (the article
+    // hyphened onto the noun); item 2's typos with their mentions in residual dry 2310 (`Siehe
+    // Abschnittt VI.4.1)` 6, `siehe Abschnit I.1` 6, `cf rubirque Vi.4.1` 6).
+    "punkti",
+    "szakaszt",
+    "t taqsima",
+    "abschnittt",
+    "abschnit",
+    "rubirque",
 ];
 
 /// Issue 511 unit 5 (dry 2283): where the place pointed at sits — `below` 545 orgs, `above` 286,
 /// `ci dessus` 34, `powyzej` 12.
-const SECTION_POSITIONS: [&str; 15] = [
+const SECTION_POSITIONS: [&str; 17] = [
     "above",
     "below",
     "oben",
@@ -1383,12 +1665,16 @@ const SECTION_POSITIONS: [&str; 15] = [
     "ponizej",
     "ανωτερω",
     "ovan",
+    // Issue 511 unit 6 item 2: `As specified in section I.1 and the address/URL details remain the
+    // same.` — the place pointed at holds them unchanged.
+    "remain the same",
+    "remains the same",
 ];
 
 /// Issue 511 unit 5 (dry 2283): the notice itself, which a reference may name (`der
 /// Bekanntmachung` 186 orgs, `ogłoszenia` 96, `of this notice` 59, `del presente avviso` 47, `der
 /// vorliegenden Bekanntmachung` 36, `dieser Vergabebekanntmachung` 33).
-const SECTION_NOTICE_WORDS: [&str; 25] = [
+const SECTION_NOTICE_WORDS: [&str; 33] = [
     "notice",
     "contract notice",
     "bekanntmachung",
@@ -1414,22 +1700,37 @@ const SECTION_NOTICE_WORDS: [&str; 25] = [
     "niniejszego",
     "deze",
     "tohto",
+    // Issue 511 unit 6 item 2 (the units 4+5 reads): `See VI.4.1) Review body field of this
+    // Contract Award Notice.` (33 mentions), `Se référer à l'article VI.3 du présent appel à
+    // candidatures` (34), `Come indicato al punto I.1) del presente avviso di gara`, `As detailed
+    // in section II.2.1) of the corresponding Contract Notice`, `Please see section II.24 of
+    // original notice`, and the plan's typo `Ver el apartado VI.3.2 del presenta anuncio` (16).
+    "contract award notice",
+    "award notice",
+    "appel a candidatures",
+    "appel d offres",
+    "avviso di gara",
+    "corresponding",
+    "original",
+    "presenta",
 ];
 
 /// Issue 511 unit 5 (dry 2283): the articles, prepositions and conjunctions between a pointer's
 /// words (`jak w pkt`, `Ver el apartado … del presente anuncio`, `jw. dla pkt`, `Voir au point`,
 /// `VI.3.1) und VI.3.2)`, HU `című`) — never the name's first word.
-const SECTION_JOINERS: [&str; 44] = [
+const SECTION_JOINERS: [&str; 45] = [
     "in", "at", "of", "the", "under", "and", "for", "within", "der", "die", "bei", "und", "oder", "sowie", "bzw", "zu", "nach",
     "le", "la", "les", "l", "du", "de", "au", "aux", "a", "en", "el", "del", "al", "o", "u", "il", "i", "alla", "van", "onder",
     "w", "dla", "στο", "στην", "με", "cimu", "relative",
+    // Issue 511 unit 6 item 2: the Dutch article (`Zie het gestelde in VI.3`).
+    "het",
 ];
 
 /// Issue 511 unit 5 (dry 2283): the generic words a pointer names its target with (`See
 /// information in VI.4.3`, `Siehe Angaben unter Ziff. VI.4.1` 17 orgs, `refer to information
 /// contained in Section VI.4.2`, `punti di contatto indicati al punto I.1`) — never the name's
 /// first word.
-const SECTION_POINTER_NOUNS: [&str; 16] = [
+const SECTION_POINTER_NOUNS: [&str; 30] = [
     "details",
     "information",
     "informations",
@@ -1446,6 +1747,28 @@ const SECTION_POINTER_NOUNS: [&str; 16] = [
     "indicati",
     "indicato",
     "citee",
+    // Issue 511 unit 6 item 2 (the units 4+5 reads and residual dry 2310): `As per the body in
+    // I.1`, `As per those listed in the additional information field VI.3)`, `Refer to named
+    // Contracting Authority in section I.1`, `See links detailed in II.1.5` (58 mentions), `See link
+    // in II.2.4` (17), `Refer to instructions contained in Section VI.4.2` (13), `Please refer to
+    // the answer in section VI.4.2`, `Siehe die unter Ziffer VI.4.1) genannte Stelle.` (31), `Siehe
+    // die unter VI.4.1) bezeichnete Stelle`, `Siehe Kontaktdaten unter Nr. I.1).`, `Zie het
+    // gestelde in VI.3`, `Voir informations citées à l'article VI.3)`, and the `address/URL
+    // details` of an `As specified in` pointer.
+    "body",
+    "those",
+    "named",
+    "link",
+    "links",
+    "detailed",
+    "instructions",
+    "answer",
+    "stelle",
+    "bezeichnete",
+    "kontaktdaten",
+    "gestelde",
+    "citees",
+    "url",
 ];
 
 /// Issue 511 unit 5: what a piece of a section-reference name is ([`reference_shape`]).
@@ -1547,10 +1870,20 @@ pub fn pointer_led(raw: &str) -> bool {
 
 /// Whether `raw` holds a form section reference at all (a [`ROMAN`] letter, a dot, a digit): the
 /// cheap test before [`reference_pieces`] builds anything, since the fold reads every party name.
+/// Issue 511 unit 6 item 3: or a [`ROMAN`] letter, spaces and a dotted digit pair, the numeral
+/// spaced off its number (`siehe VI 4.1`), which [`raw_pieces`] reads as one reference.
 fn has_form_reference(raw: &str) -> bool {
-    raw.as_bytes()
-        .windows(3)
-        .any(|w| w[1] == b'.' && matches!(w[0], b'I' | b'V' | b'X' | b'i' | b'v' | b'x') && w[2].is_ascii_digit())
+    let roman = |b: u8| matches!(b, b'I' | b'V' | b'X' | b'i' | b'v' | b'x');
+    let bytes = raw.as_bytes();
+    bytes.windows(3).any(|w| w[1] == b'.' && roman(w[0]) && w[2].is_ascii_digit())
+        || bytes.windows(2).enumerate().any(|(i, w)| {
+            roman(w[0]) && w[1] == b' ' && {
+                let rest = &bytes[i + 1..];
+                let rest = &rest[rest.iter().take_while(|b| **b == b' ').count()..];
+                let n = rest.iter().take_while(|b| b.is_ascii_digit()).count();
+                n > 0 && rest.get(n) == Some(&b'.') && rest.get(n + 1).is_some_and(u8::is_ascii_digit)
+            }
+        })
 }
 
 /// Issue 511 unit 5: a name as [`reference_shape`] reads it ([`raw_pieces`]).
@@ -1562,11 +1895,15 @@ struct Pieces {
     /// keep rule reads one ([`open_separator`]: `:`, `(`, an en or em dash, a hyphen followed by
     /// a space) — `See section VI.2: Avis`, `Voir VI.2 - Point P`.
     separated: Vec<bool>,
+    /// Index for index: the byte offset in the raw name where the piece ends (issue 511 unit 6, the
+    /// build review: [`after_last_reference`]).
+    ends: Vec<usize>,
 }
 
 /// `raw` as [`reference_shape`] reads it, `None` without a form section reference
 /// ([`has_form_reference`]): [`raw_pieces`]' words — `VI.4.1)`, `I.1°`, `Nr .I.1`, `Vi.4.2`,
-/// `pkt.VI.4.1` each one reference. A digit run glued to a letter ends the reference (`VI.4.1a`
+/// `pkt.VI.4.1` each one reference, and since issue 511 unit 6 item 3 the spaced spellings of one
+/// (`VI.4 1`, `VI.4. 1`, `VI 4.1`). A digit run glued to a letter ends the reference (`VI.4.1a`
 /// leaves the word `1a`), and a bare `VI` is a word.
 fn reference_pieces(raw: &str) -> Option<Pieces> {
     if !has_form_reference(raw) {
@@ -1579,28 +1916,55 @@ fn reference_pieces(raw: &str) -> Option<Pieces> {
 /// [`reference_pieces`] without the test that a reference is there.
 fn raw_pieces(raw: &str) -> Pieces {
     let runs = alphanumeric_runs(raw);
-    let digits_after = |j: usize| {
-        runs.get(j + 1).is_some_and(|&(start, end)| {
-            &raw[runs[j].1..start] == "." && raw[start..end].bytes().all(|b| b.is_ascii_digit())
-        })
+    // The raw text between run `j` and the next, and whether the next is an ASCII digit run (of at
+    // most `max` digits).
+    let gap = |j: usize| runs.get(j + 1).map(|&(start, _)| &raw[runs[j].1..start]);
+    let digits = |j: usize, max: usize| {
+        runs.get(j).is_some_and(|&(start, end)| end - start <= max && raw[start..end].bytes().all(|b| b.is_ascii_digit()))
     };
-    let mut pieces = Pieces { words: Vec::with_capacity(runs.len()), separated: Vec::with_capacity(runs.len()) };
+    let spaces = |g: &str| !g.is_empty() && g.bytes().all(|b| b == b' ');
+    // Whether run `j` is followed by a `.` and a digit run: the next group of a reference.
+    let dotted = |j: usize| gap(j) == Some(".") && digits(j + 1, usize::MAX);
+    // Issue 511 unit 6 item 3 (residual dry 2310's mixed folds): a reference's LAST group may follow
+    // a space after the dot (`Siehe VI.4. 1)`) or stand off with a space for the second dot when
+    // `first` (`Wie VI.4 1)`, `Voir section VI.4 2`) — one or two digits that no dotted group
+    // follows, so a year, a count or a date (`V.1 12.05.2010`) is no part of it.
+    let spaced_last = |j: usize, first: bool| {
+        gap(j).is_some_and(|g| g.strip_prefix('.').is_some_and(spaces) || (first && spaces(g)))
+            && digits(j + 1, 2)
+            && !dotted(j + 1)
+    };
+    let mut pieces = Pieces {
+        words: Vec::with_capacity(runs.len()),
+        separated: Vec::with_capacity(runs.len()),
+        ends: Vec::with_capacity(runs.len()),
+    };
     let mut k = 0;
     let mut previous_end = 0;
     while k < runs.len() {
         let (start, end) = runs[k];
         pieces.separated.push(separator_gap(&raw[previous_end..start]));
-        if ROMAN.contains(&raw[start..end].to_ascii_lowercase().as_str()) && digits_after(k) {
+        let roman = ROMAN.contains(&raw[start..end].to_ascii_lowercase().as_str());
+        // Issue 511 unit 6 item 3: the numeral spaced off a dotted number (`siehe I.1 oder VI 4.1`).
+        let spaced = roman && gap(k).is_some_and(spaces) && digits(k + 1, usize::MAX) && dotted(k + 1);
+        if roman && (dotted(k) || spaced) {
             let mut j = k + 1;
-            while digits_after(j) {
+            while dotted(j) {
+                j += 1;
+            }
+            // A space stands for the second dot only right after the first group of an unspaced
+            // reference (`VI.4 1`, not `VI 4.1 2` or `VI.4.1 2`).
+            if spaced_last(j, j == k + 1 && !spaced) {
                 j += 1;
             }
             pieces.words.push(None);
             previous_end = runs[j].1;
+            pieces.ends.push(previous_end);
             k = j + 1;
         } else {
             pieces.words.push(Some(fold(&raw[start..end])));
             previous_end = end;
+            pieces.ends.push(end);
             k += 1;
         }
     }
@@ -1641,7 +2005,7 @@ fn reference_phrase(pieces: &[Option<String>], i: usize) -> Option<(usize, Refer
 /// Issue 511 unit 5, the review: the [`SECTION_LOCATORS`] a language writes AFTER its reference —
 /// TED's HU `Lásd a VI.2., További információk című pontot.`, LT `Žr. VI.2 dalį …`, LV `Skatīt
 /// VI.2) iedaļu …` — anchored by the reference before them ([`reference_shape`]).
-const POSTPOSED_LOCATORS: [&str; 3] = ["pontot", "dali", "iedalu"];
+const POSTPOSED_LOCATORS: [&str; 4] = ["pontot", "dali", "iedalu", "szakaszt"];
 
 /// Issue 511 unit 5: the grammar of a section-reference name ([`section_reference_pointer`]) over
 /// its pieces ([`reference_pieces`]): every word in a [`REFERENCE_LISTS`] phrase, or a bare number
@@ -3577,18 +3941,20 @@ mod tests {
         ] {
             assert!(!names_after_stem(bare), "{bare} is a bare pointer");
         }
-        // A body after the number with no separator: `Placeholder` (the keep rule wants one), but
-        // not bare, so it seeds nothing — the residual's `Translink` (1 mention, review body).
-        for named in [
-            "See Section VI.3 Kier Construction",
-            "Please see section VI.4.3 Translink",
-            "See section VI.4.3 Translink",
-            "See Section VI.3 Acme plc",
-            // A capitalised noun withholds the seed too, erring toward a name.
-            "Please see section VI.3 for list of awarded Suppliers",
+        // A body after the number with no separator: not bare, so it seeds nothing — the
+        // residual's `Translink` (1 mention, review body). Since issue 511 unit 6 item 1 the name
+        // right after the reference makes it an award summary by itself; a capitalised noun later in
+        // the tail leaves the pointer `Placeholder`, and withholds the seed, erring toward a name.
+        for (named, class) in [
+            ("See Section VI.3 Kier Construction", NotAName::AwardSummary),
+            ("Please see section VI.4.3 Translink", NotAName::AwardSummary),
+            ("See section VI.4.3 Translink", NotAName::AwardSummary),
+            ("See Section VI.3 Acme plc", NotAName::AwardSummary),
+            ("Please see section VI.3 for list of awarded Suppliers", NotAName::Placeholder),
         ] {
-            assert_eq!(not_a_name(named), Some(NotAName::Placeholder), "premise: {named}");
+            assert_eq!(not_a_name(named), Some(class), "premise: {named}");
             assert!(names_after_stem(named), "{named} names something after its stem");
+            assert!(!super::echo_seed(named) && !super::template_seed(named), "{named} seeds nothing");
         }
         assert!(names_after_stem("See section VI.4.1: High Court of Justice"), "the keep rule's own case");
         // Issue 511 unit 5, the review: the echo's seeds stay unit 4's — a bare placeholder the
@@ -3909,6 +4275,427 @@ mod tests {
         }
     }
 
+    /// Issue 511 unit 6 item 1 (the units 4+5 reads: `Please see section VI.4.3 Translink`, a review
+    /// body and the one real party the combined wet dropped; `See section VI.4.3 Translink` since unit
+    /// 2): a pointer stem whose references are followed, with no separator, by a name keeps the party
+    /// as an award summary — the text after the references and the form section titles, past a
+    /// position, opens with a capitalised word no closed list holds. A title, a position, a function
+    /// word or a list word after the reference leaves the pointer a pointer.
+    #[test]
+    fn a_name_right_after_a_pointers_reference_is_kept() {
+        for kept in [
+            "Please see section VI.4.3 Translink",
+            "See section VI.4.3 Translink",
+            "Please see section VI.4.3) Translink",
+            "See section VI.4.3 below Translink",
+            "See Section VI.3 Kier Construction",
+            "See Section VI.3 Additional information Kier Construction",
+            "See Section VI.3 Acme plc",
+            "Siehe oben VI.4.1 Vergabekammer Südbayern",
+            "siehe oben unter Ziffer VI.4.1 Vergabekammer des Bundes",
+        ] {
+            assert_eq!(not_a_name(kept), Some(NotAName::AwardSummary), "{kept}");
+            assert!(super::names_after_stem(kept), "{kept}");
+            assert!(mentions_placeholder(kept) && !is_exact_entry(kept), "{kept}: listed, and read before the wet run");
+        }
+        // No stem: the section-reference grammar refuses the city, so it stays a name, as before.
+        for name in ["S. VI.4.1) Weimar Deutschland", "Siehe VI.4.1 Weimar Deutschland"] {
+            assert_eq!(not_a_name(name), None, "{name}");
+        }
+        for pointer in [
+            "See Section VI.3 Additional information",
+            "please see Section VI.3.2",
+            "Please see section VI.3 for list of awarded Suppliers",
+            "Please see Section VI.3) for list of awarded suppliers",
+            "Please see Section VI.3 Additional Information below",
+            "Please see section VI.3) Additional Information for further details",
+            "Please see Section 5.2 of the Project Information Memorandum",
+            "Please see section VI.2 for full list of 27 Economic Operators",
+            "Please see Section VI.3 For details",
+            "See section VI.2 Avis",
+            "See Section VI.3 Below",
+            "Please see section V1.4.2",
+            "See section VI.3 - Lot 2",
+            "See Contracts Finder Notice for full supplier list",
+            "siehe oben unter Ziffer VI.4.1",
+            "Siehe oben Nr. 3",
+        ] {
+            assert_eq!(not_a_name(pointer), Some(NotAName::Placeholder), "{pointer}");
+        }
+        assert!(super::opens_with_a_name("Translink") && super::opens_with_a_name(" below  Translink"));
+        for tail in ["for list of awarded Suppliers", "Section 4", "Notice", "V1 Acme", "X", "  ", "below"] {
+            assert!(!super::opens_with_a_name(tail), "{tail:?}");
+        }
+    }
+
+    /// Issue 511 unit 6, the build review of item 1: a capitalised word right after a pointer's
+    /// reference is no body when the lexicon classes the tail by itself, when it is a form label, a
+    /// generic noun, a sentence's pronoun or a bare Roman numeral — each read as an award summary by
+    /// the first build of item 1, which the fold never drops and the walk never revisits. Three of
+    /// them unit 3's wet dropped (`u3/plan-2265.json`: the `Es handelt sich` sentence, 6 mentions;
+    /// `Additonal Information, sub-section 2.`; `Ziff. VI.4.1Ort`). Each stays `Placeholder`, as
+    /// before unit 6; a body beside each near miss stays an award summary.
+    #[test]
+    fn a_label_or_a_non_name_right_after_a_pointers_reference_is_no_body() {
+        for pointer in [
+            // The lexicon's own non-names.
+            "See section VI.3 Not applicable",
+            "See section VI.3 TBC",
+            "See section VI.3 Various",
+            "See section VI.3 Withheld",
+            "See section VI.3 Confidential",
+            "See section VI.3 Unknown",
+            "See section VI.3 Nil",
+            // Form labels and generic nouns.
+            "See section I.1 Name and addresses",
+            "See Section V.2.3 Name and address of the contractor",
+            "Please see section VI.4.1 Mediation body",
+            "See section VI.4.3 Contact details",
+            "See section VI.3 Contracts Finder",
+            "See section VI.3 Suppliers",
+            "See Section VI.3 Lots 1-5",
+            "See section VI.3 Annex",
+            "See section VI.4.3 Service from which information about the lodging of appeals may be obtained",
+            "See Section VI.3 Contract Award Notice",
+            // German nouns, always capitalised.
+            "siehe oben VI.4.1 Nachprüfungsstelle",
+            "siehe oben Ziffer VI.4.1 Zuständige Stelle",
+            "siehe oben I.1 Adresse",
+            "siehe oben I.1 Ansprechpartner",
+            "siehe oben I.1 Name",
+            "siehe oben II.1.4 Kurze Beschreibung",
+            "siehe oben VI.3 Weitere Angaben",
+            // A Roman numeral a glued reference leaves, and unit 3's dropped names.
+            "siehe oben Ziff. VI.4.1Ort",
+            "Siehe oben Abschnitt II.1.4). Es handelt sich um eine freiwillige EU-Bekanntmachung einer unterschwelligen Dienstleistungskonzession.",
+            "See Section VI.3 Additonal Information, sub-section 2.",
+        ] {
+            assert_eq!(not_a_name(pointer), Some(NotAName::Placeholder), "{pointer}");
+            assert!(mentions_placeholder(pointer), "{pointer}");
+        }
+        for kept in [
+            "See section VI.3 NIL d.o.o.",
+            "See section VI.4.3 Service Public de Wallonie",
+            "Please see section VI.4.1 Mediation Service Northern Ireland",
+            "See section VI.4.3 Contact Energy Ltd",
+            "siehe oben VI.4.1 Vergabekammer Nordbayern",
+            "See section VI.4.3 Vi Bank",
+        ] {
+            assert_eq!(not_a_name(kept), Some(NotAName::AwardSummary), "{kept}");
+        }
+        for tail in ["Not applicable", "TBC", "Contract Award Notice", "Lots 1-5", "Suppliers", "VI 4 1Ort", "Es handelt sich um", "Nil"] {
+            assert!(!super::opens_with_a_name(tail), "{tail:?}");
+        }
+        for tail in ["NIL d.o.o.", "Vi Bank", "Translink"] {
+            assert!(super::opens_with_a_name(tail), "{tail:?}");
+        }
+    }
+
+    /// Issue 511 unit 6, the build review of items 2 and 6: the fold's two sweeps read what follows a
+    /// copy's last reference ([`super::names_after_reference`]) and whether the seed names its
+    /// section's title there ([`super::titled_after_reference`]). Unit 6's openers made these
+    /// copies pointer-led, so beside a bare seed of their number the echo swept them; each names a
+    /// body after its reference and stays a name by itself.
+    #[test]
+    fn a_body_named_after_a_copys_reference_is_read_and_a_seeds_title_is_told_apart() {
+        use super::{form_section_tokens, names_after_reference, titled_after_reference, translation_shaped};
+        for copy in [
+            "Glejte oddelek VI.4.1 Državna revizijska komisija",
+            "Se référer au point VI.4.1 Conseil d'État",
+            "Consultar o ponto VI.4.1 Tribunal Administrativo de Círculo de Lisboa",
+            "As set out at VI.4.1 Office of Government Procurement",
+            "Glejte oddelek VI.4.1: Državna revizijska komisija",
+            // A title the lists miss reads the same: only the seed tells them apart.
+            "Se punkt VI.2) Nye oplysninger",
+        ] {
+            assert_eq!(not_a_name(copy), None, "premise: {copy}");
+            assert!(translation_shaped(copy) && !form_section_tokens(copy).is_empty(), "premise: the echo's shape, {copy}");
+            assert!(names_after_reference(copy), "{copy}");
+        }
+        for bare in [
+            "Glejte oddelek VI.4.1",
+            "Consultar o ponto VI.3 «Informação adicional»",
+            "Lásd a VI.3. szakaszt (További információk)",
+            "Qqq punkt VI.4.1",
+            "siehe oben: Vergabekammer Südbayern (VI.3)",
+            "Translink, section VI.4.3",
+            "Translink",
+        ] {
+            assert!(!names_after_reference(bare), "{bare}");
+        }
+        for titled in ["See Section VI.3 Additional information", "See Section VI.2 'Additional information'.", "See section VI.3 (Additional Information)"] {
+            assert!(titled_after_reference(titled), "{titled}");
+        }
+        for bare in ["See section VI.4.1", "Siehe oben VI.4.1", "Same as in point VI.4.1", "See Additional information VI.3", "Additional information"] {
+            assert!(!titled_after_reference(bare), "{bare}");
+        }
+    }
+
+    /// Issue 511 unit 6 item 2 (the units 4+5 reads' junk kept as a name, and residual dry 2310's
+    /// `name` folds): the `As` family's missing verbs, the generic nouns, the notice's names and the
+    /// typos the readers listed are closed-list words now, so each spelling is a section-reference
+    /// pointer; the residual's forms a sibling copy keeps were pointers already. A body named with
+    /// one of the new words stays a name: a noun, a notice word or a position never opens one.
+    #[test]
+    fn the_as_family_and_the_readers_junk_are_section_reference_pointers() {
+        for pointer in [
+            "As shown in section I.1 above",
+            "As per the body in I.1",
+            "As defined in (section) VI.3 of this notice",
+            "As defined in VI.3 of this notice",
+            "As defined in section VI.3 of this Contract Notice",
+            "As set out at I.1",
+            "As set out at I.1)",
+            "As noted in VI.4.1",
+            "As specified in section I.1 and the address/URL details remain the same.",
+            "As per those listed in the additional information field VI.3)",
+            "As set out above in VI.3) Additional information",
+            "As detailed in section II.2.1) of the corresponding Contract Notice",
+            "See links detailed in II.1.5",
+            "See link in II.2.4",
+            "Se référer à l'article VI.3 du présent appel à candidatures",
+            "See VI.4.1) Review body field of this Contract Award Notice.",
+            "Siehe die unter Ziffer VI.4.1) genannte Stelle.",
+            "Wie unter Ziffer I.1) genannte Stelle.",
+            "Siehe die unter VI.4.1) bezeichnete Stelle",
+            "Refer to instructions contained in Section VI.4.2",
+            "Refer to named Contracting Authority in section I.1",
+            "Please refer to the answer in section VI.4.2",
+            "Zie het gestelde in VI.3",
+            "Zie het gestelde in afdeling IV.3.3 van deze aankondiging",
+            "Voir informations citées à l'article VI.3) Informations complémentaires",
+            "Se référer au point VI.2 autres informations",
+            "Come indicato al punto I.1) del presente avviso di gara",
+            "Ver el apartado VI.3.2 del presenta anuncio",
+            "siehe Kontakstelle unter Punkt I.1)",
+            "Siehe Kontaktdaten unter Nr. I.1).",
+            "Siehe Abschnittt VI.4.1)",
+            "siehe Abschnit I.1",
+            "cf rubirque Vi.4.1",
+            // Residual dry 2310's `placeholder` folds, kept by a sibling copy: pointers already.
+            "Same as in point VI.4.1",
+            "Please refer to VI.4.1.",
+            "Please refer to VI.3.1",
+            "As in point VI.3.1",
+            "Same as VI.3.1.",
+            "As in VI.4.1)",
+            "Voir point VI.4.1)",
+        ] {
+            assert_eq!(section_reference(pointer), Some(ReferenceShape::Pointer), "{pointer}");
+            assert_eq!(not_a_name(pointer), Some(NotAName::Placeholder), "{pointer}");
+            assert!(mentions_placeholder(pointer) && !is_exact_entry(pointer), "{pointer}: listed, and read before the wet run");
+        }
+        for name in [
+            "Body Shop International (see VI.3)",
+            "Links Communications, see I.1",
+            "Stelle für Bauwesen, siehe I.1",
+            "Original Factory Shop (see I.1)",
+            "Award Notice Services, see VI.3",
+            "Het Gestelde Bouwbedrijf, zie VI.3",
+            // Not in this item's lists, and no pointer by the grammar: read before the next wet run.
+            "As above (Please see IV.4.1)",
+            "As per Regulation 50(6)(a) - information withheld for security reasons",
+        ] {
+            assert!(!section_reference_pointer(name), "{name}");
+            assert_eq!(not_a_name(name), None, "{name}");
+        }
+        // The long UK sentences, whole: exactly as published (the plan's `long` list), each its own
+        // exact entry. With the council's name, a different fold, and a name.
+        for sentence in [
+            "This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details.",
+            "This is an award notice and this opportunity is now closed. Please see section V) (Award of Contract) for further details",
+            "The name(s) of the winning tenderer(s) are being withheld for security reasons, however these will be made available to the commission on request",
+            "The name (s) of the winning tenderers are being withheld for security reasons; however, these will be made available to the commission on request",
+            "A full list of successful suppliers will be made available on Contracts Finder. Please see Section VI.3) Additional information.",
+        ] {
+            assert_eq!(not_a_name(sentence), Some(NotAName::Placeholder), "{sentence}");
+            assert!(mentions_placeholder(sentence) && is_exact_entry(sentence), "{sentence}");
+        }
+        for name in [
+            "This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details. Hertfordshire County Council",
+            "This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details - Hertfordshire County Council",
+            "Hertfordshire County Council — This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details.",
+            "This is an award notice and this opportunity is closed. Please see section V (award of contract) for further details. Hertfordshire County Council ",
+        ] {
+            assert_eq!(not_a_name(name), None, "{name}");
+        }
+    }
+
+    /// Issue 511 unit 6 item 3 (residual dry 2310's mixed folds `siehe vi 4 1`, `wie vi 4 1`, `voir
+    /// section vi 4 2` and `siehe i 1 oder vi 4 1`, whose kept spelling the dry plan's three samples
+    /// hid): a space for the second dot (`Wie VI.4 1)`), a space after a dot (`Siehe VI.4. 1)`) or
+    /// the numeral spaced off its number (`VI 4.1`) is one reference. Only the last group, of one or
+    /// two digits with no dotted group after it, may stand off.
+    #[test]
+    fn a_spaced_section_reference_is_one_reference() {
+        for pointer in [
+            "Wie VI.4 1)",
+            "Voir section VI.4 2",
+            "siehe I.1 oder VI 4.1",
+            "Siehe VI.4. 1)",
+            "siehe VI 4.1",
+            "Siehe VI.4.1. 2)",
+        ] {
+            assert_eq!(section_reference(pointer), Some(ReferenceShape::Pointer), "{pointer}");
+            assert_eq!(not_a_name(pointer), Some(NotAName::Placeholder), "{pointer}");
+            assert!(mentions_placeholder(pointer), "the walk's net catches {pointer}");
+        }
+        for name in [
+            // Another group after a spaced one: a date, not a reference.
+            "V.1 12.05.2010",
+            "Siehe VI.4 2010",
+            // A space for a dot only once, right after the first group.
+            "Siehe VI.4.1 2",
+            "Siehe VI 4.1 2",
+            // No dot at all, and a body.
+            "Siehe VI 4",
+            "Abteilung VI 4.1",
+        ] {
+            assert!(!section_reference_pointer(name), "{name}");
+            assert_eq!(not_a_name(name), None, "{name}");
+        }
+    }
+
+    /// Issue 511 unit 6 item 4: the dry plan's legal-form read list (the census's case-blind forms,
+    /// whose `as` holds the pointer word) leaves out a section-reference pointer — residual dry
+    /// 2310's 268 entries held the `As …`/`Same as …` pointers among the real companies — and keeps
+    /// every name the census reads a form in otherwise.
+    #[test]
+    fn the_plans_legal_form_list_leaves_out_section_reference_pointers() {
+        use super::plan_legal_form;
+        for pointer in [
+            "As in I.1 above",
+            "AS IN I.1 ABOVE",
+            "As VI.4.1",
+            "Same as VI.4.1",
+            "Same as in point VI.4.1",
+            "As shown in section I.1 above",
+            "Address as per I.1) above.",
+        ] {
+            assert!(crate::project::role_census::has_commercial_form(pointer), "premise: the census reads `as` in {pointer}");
+            assert!(!plan_legal_form(pointer), "{pointer}");
+        }
+        for company in [
+            "Norconsult AS",
+            "Hansen A/S",
+            "Acme AS, see VI.3",
+            "Gatwick Airport Limited",
+            "ENDESA ENERGIA S.A.",
+            // Not a pointer by the grammar, so read for its `as`.
+            "As per Regulation 50(6)(a) - information withheld for security reasons",
+        ] {
+            assert!(plan_legal_form(company), "{company}");
+        }
+    }
+
+    /// Issue 511 unit 6 item 6: notice 19530163's ORG-10 (org 10601576, 140 mentions) publishes `See
+    /// Section VI.3 Additional information` in TED's earlier template wording, 24 copies verbatim
+    /// (bounded read, 2026-10-12). Each is a section-reference pointer by itself since unit 6 (the
+    /// PT `Consultar` and SL `Glejte` openers, the EL, PT, SV and CS titles, the ET, HU and MT
+    /// locators), and each has the shape the TED template signal sweeps. The signal's shape takes a
+    /// copy whatever its opener when a locator or a title frames its reference; a body named beside a
+    /// bare number, a legal form or a long name is no copy.
+    #[test]
+    fn teds_earlier_template_wordings_are_pointers_and_template_copies() {
+        use super::{echo_seed, form_section_tokens, template_copy, template_seed, template_shaped, translation_shaped};
+        for copy in [
+            "See Section VI.3 Additional information",
+            "Se del VI.3 Yderligere oplysninger",
+            "Siehe Abschnitt VI.3 Zusätzliche Angaben",
+            "Véase el apartado VI.3, «Información adicional»",
+            "Katso kohta VI.3 (lisätiedot)",
+            "voir point VI.3) Informations complémentaires",
+            "Βλέπε τμήμα VI.3 Συμπληρωματικές πληροφορίες",
+            "cfr. sezione VI.3) Informazioni complementari",
+            "zie VI.3) Nadere inlichtingen",
+            "Consultar o ponto VI.3 «Informação adicional»",
+            "Se punkt VI.3 Kompletterande upplysningar",
+            "Viz oddíl VI.3 Další informace",
+            "Vt punkti VI.3 (lisateave)",
+            "Lásd a VI.3. szakaszt (További információk)",
+            "Žr. VI.3 dalį „Papildoma informacija“",
+            "Skatīt VI.3. iedaļu \"Papildu informācija\"",
+            "Ara t-Taqsima VI.3 Tagħrif addizzjonali",
+            "Zob. sekcja VI.3 Informacje dodatkowe",
+            "Pozri oddiel VI.3 Doplňujúce informácie",
+            "Glejte oddelek VI.3) Dodatne informacije",
+            "Féach Alt VI.3 Faisnéis Bhreise",
+            "Вж. раздел VI.3 Допълнителна информация",
+            "A se vedea secțiunea VI.3 Informații suplimentare",
+            "Vidjeti odjeljak VI.3. Dodatni podaci",
+        ] {
+            assert_eq!(section_reference(copy), Some(ReferenceShape::Pointer), "{copy}");
+            assert_eq!(not_a_name(copy), Some(NotAName::Placeholder), "{copy}");
+            assert!(translation_shaped(copy) && template_shaped(copy), "{copy}");
+            assert_eq!(form_section_tokens(copy), vec!["vi.3"], "{copy}");
+            assert!(mentions_placeholder(copy) && !is_exact_entry(copy), "{copy}");
+            // Issue 511 unit 6, the build review: closed-list words after the reference, so no copy
+            // names a body there, and the sweeps' guard never spares one.
+            assert!(!super::names_after_reference(copy), "{copy}");
+        }
+        // Seeds: the English stem pointer seeds both; a section-reference pointer seeds only the
+        // template signal (ten languages and an English label stand in for the echo's narrowing).
+        assert!(echo_seed("See Section VI.3 Additional information") && template_seed("See Section VI.3 Additional information"));
+        for seed in ["Same as in point VI.4.1", "Please refer to VI.4.1.", "See VI.4.1"] {
+            assert!(!echo_seed(seed) && template_seed(seed), "{seed}");
+        }
+        for name in ["Various suppliers", "See Section VI: complementary information", "See Section VI.3 Kier Construction"] {
+            assert!(!template_seed(name), "{name}: no number, or not a bare placeholder");
+        }
+        // Whatever the opener: a locator before the reference, or a title or a postposed locator
+        // after it. None of these is a pointer alone or a translation to the echo.
+        for copy in [
+            "Qqq o ponto VI.3 «Informação adicional»",
+            "Qqq a VI.3. szakaszt (További információk)",
+            "Qqq del VI.3 Yderligere oplysninger",
+            "Qqq t-Taqsima VI.3 Tagħrif addizzjonali",
+            "Qqq VI.3) Nadere inlichtingen",
+        ] {
+            assert_eq!(not_a_name(copy), None, "premise: {copy}");
+            assert!(!translation_shaped(copy), "premise: {copy} is no translation to the echo");
+            assert!(template_shaped(copy), "{copy}");
+            assert!(mentions_placeholder(copy), "the walk's net holds {copy}");
+        }
+        for name in [
+            "Referat II.3",
+            "Region Hovedstaden VI.3",
+            "Abteilung VI.4",
+            "LMU München, Referat IV.1",
+            "Stadtverwaltung Kaiserslautern - Stabstelle IV.1 Zentrale Vergabestelle",
+            "Rheingau-Taunus-Kreis FD I.7",
+            "I.4) Avis",
+            // A body named before a pointer, or a reference past the opener's words.
+            "KIO – jak w pkt VI.3.1)",
+            "Vergabekammer des Landes Berlin; siehe Punkt VI.4.1)",
+            "Krajowa Izba Odwoławcza – jak wyżej w pkt VI.4.1)",
+            "Regierung von Oberbayern Vergabekammer Südbayern Punkt VI.4.1",
+            "Vergabekammer Südbayern, Punkt VI.4.1",
+            // A supplier before the award heading it spilled.
+            "Transports Chalavan. V.1) AWARD AND CONTRACT VALUE:",
+            "Bouygues. V.1) Award and contract value",
+            // Issue 511 unit 6, the build review: one string per guard of `reference_framed`, which
+            // that guard alone refuses — a pointer phrase in the opener (a body named before it), a
+            // separator in the opener, a one-letter locator, and a reference past four opener words.
+            "Vergabekammer siehe Punkt VI.4.1",
+            "KIO jak w pkt VI.3.1)",
+            "VKS – Punkt VI.4.1",
+            "Marknadsdomstolen – punkt VI.4.1",
+            "Acme P VI.3",
+            "the awarded suppliers are listed in section VI.2",
+        ] {
+            assert!(!template_shaped(name), "{name}");
+            assert!(!mentions_placeholder(name), "{name}: the net stays narrow");
+        }
+        // A legal form, or more than twelve words: no copy, so never counted and never swept.
+        for name in [
+            "Consultar o ponto VI.3 Acme Lda",
+            "Qqq o ponto VI.3 Acme GmbH",
+            "Qqq o ponto VI.3 «Informação adicional» para todos os lotes deste concurso público internacional",
+        ] {
+            assert!(!template_copy(name) && !template_shaped(name), "{name}");
+        }
+    }
+
     /// Issue 511 unit 5 item C: the walk's net is a superset of the fold's drops, name by name.
     /// Every string literal in this module's tests and in the projection's — the drop tests' every
     /// specimen, prod spellings and TED translations included — that the fold classes
@@ -3917,10 +4704,20 @@ mod tests {
     /// echo's sweeps are pinned per party by the projection's harness (`placeholder_511::decided`).
     #[test]
     fn the_walks_net_holds_every_name_the_fold_drops() {
-        let (mut placeholder, mut void) = (0, 0);
+        let (mut placeholder, mut void, mut swept) = (0, 0, 0);
         for (file, src) in [("partyname.rs", include_str!("partyname.rs")), ("project.rs", include_str!("project.rs"))] {
             let tests = &src[src.find("#[cfg(test)]\nmod tests").unwrap_or_else(|| panic!("{file} has a tests module"))..];
             for literal in string_literals(tests) {
+                // Issue 511 unit 6 item 6: a name the fold's echo or its TED template signal can sweep
+                // (a form section number in a translation's or a template copy's shape) is a hit too,
+                // whatever its own class: the party's other copies decide the sweep, and the walk reads
+                // the head name alone.
+                if !super::form_section_tokens(&literal).is_empty()
+                    && (super::translation_shaped(&literal) || super::template_shaped(&literal))
+                {
+                    assert!(mentions_placeholder(&literal), "{file}: the fold can sweep {literal:?}, the net misses it");
+                    swept += 1;
+                }
                 for lang in [None, Some("DAN"), Some("SWE"), Some("NOR"), Some("POL"), Some("ITA")] {
                     match not_a_name_in(&literal, lang) {
                         Some(NotAName::Placeholder | NotAName::Blank) => {
@@ -3938,6 +4735,7 @@ mod tests {
         }
         // The scan read the drop tests at all (every literal is read in six languages).
         assert!(placeholder > 6 * 400 && void > 6 * 100, "{placeholder} placeholder, {void} void readings");
+        assert!(swept > 300, "{swept} sweepable readings");
     }
 
     /// The string literals of Rust source `src`, unescaped: `"…"` with `\"`, `\\`, `\n`, `\t`, `\'`,
@@ -4014,35 +4812,113 @@ mod tests {
     /// `refold-placeholder-names` dry plan (dry 2283's,
     /// `.scratch/tender-db/511-placeholders/u4/plan-dry.json`, a job row whose `body` is the plan)
     /// re-classified spelling by spelling with this build's [`not_a_name`], and the narrowed net
-    /// ([`mentions_placeholder`]) re-run on every spelling. Writes `simulation.json` and
-    /// `simulation.md` to `ISSUE_511_SIM_OUT`: per class transition the folds, orgs, mentions,
-    /// buyer rows and role mix; every fold that changes class; what the narrowed net would catch
-    /// and its buyer rows; and the net's superset check on the plan's own spellings. Run with
-    /// ABSOLUTE paths (cargo runs the test from `crates/ingest`) and the gate's flags and package
-    /// set (CLAUDE.md): `ISSUE_511_PLAN=/home/user/tender-db/.scratch/tender-db/511-placeholders/
-    /// u4/plan-dry.json ISSUE_511_SIM_OUT=/home/user/tender-db/.scratch/tender-db/511-placeholders/
-    /// u5-build CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test
-    /// -p model -p store -p ingest -p tender-db --features tender-db/server --
-    /// issue_511_unit_5_simulation --ignored`.
-    ///
-    /// The plan counts orgs per fold, not per spelling, so a fold whose spellings split is
-    /// counted apart (`split`); the net's figures add the plan's exact entries (no `non_exact`
-    /// fold: whole values and bare stems, all still hits, their class unchanged) to the
-    /// re-run folds. A name no unit-4 net caught is in no plan, so a unit-5 hit beyond unit 4's
-    /// net (a reference glued to its locator, `pkt.VI.4.1`) is not counted here.
+    /// ([`mentions_placeholder`]) re-run on every spelling ([`simulate_plan`]). Writes
+    /// `simulation.json` and `simulation.md` to `ISSUE_511_SIM_OUT`. Run with ABSOLUTE paths (cargo
+    /// runs the test from `crates/ingest`) and the gate's flags and package set (CLAUDE.md):
+    /// `ISSUE_511_PLAN=/home/user/tender-db/.scratch/tender-db/511-placeholders/u4/plan-dry.json
+    /// ISSUE_511_SIM_OUT=/home/user/tender-db/.scratch/tender-db/511-placeholders/u5-build
+    /// CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p model -p
+    /// store -p ingest -p tender-db --features tender-db/server -- issue_511_unit_5_simulation
+    /// --ignored`. Since issue 511 unit 6 it reads with the current build, unit 6 included
+    /// ([`issue_511_unit_6_simulation`] runs several plans).
     #[test]
     #[ignore = "reads the dry plan named by ISSUE_511_PLAN and writes ISSUE_511_SIM_OUT"]
     fn issue_511_unit_5_simulation() {
+        let path = std::env::var("ISSUE_511_PLAN").expect("ISSUE_511_PLAN");
+        let out_dir = std::env::var("ISSUE_511_SIM_OUT").expect("ISSUE_511_SIM_OUT");
+        let (report, md) = simulate_plan(&path, None);
+        std::fs::create_dir_all(&out_dir).expect("the output directory");
+        std::fs::write(format!("{out_dir}/simulation.json"), serde_json::to_string_pretty(&report).expect("JSON") + "\n").expect("write simulation.json");
+        std::fs::write(format!("{out_dir}/simulation.md"), format!("# Issue 511 — simulation over one dry plan\n\n{md}")).expect("write simulation.md");
+    }
+
+    /// Issue 511 unit 6, the SIMULATION over several dry plans: `ISSUE_511_PLANS` holds `;`-separated
+    /// entries `label|plan[|prior]` — a `refold-placeholder-names` job row, and optionally a prior
+    /// simulation's `simulation.json`, whose `changed` folds give the classes the prior build read
+    /// where the plan's own are older (dry 2283 was planned by unit 4; unit 5's simulation of it holds
+    /// unit 5's). Each plan is read by [`simulate_plan`]; `simulation.json` and `simulation.md` go to
+    /// `ISSUE_511_SIM_OUT`. Unit 6's run:
+    /// `ISSUE_511_PLANS='residual dry 2310|/home/user/tender-db/.scratch/tender-db/511-placeholders/
+    /// u45/plan-residual.json;dry 2283|/home/user/tender-db/.scratch/tender-db/511-placeholders/u4/
+    /// plan-dry.json|/home/user/tender-db/.scratch/tender-db/511-placeholders/u5-build/
+    /// simulation.json' ISSUE_511_SIM_OUT=/home/user/tender-db/.scratch/tender-db/511-placeholders/
+    /// u6-build`, with the gate's flags and package set (CLAUDE.md) and `-- issue_511_unit_6_simulation
+    /// --ignored`.
+    #[test]
+    #[ignore = "reads the dry plans named by ISSUE_511_PLANS and writes ISSUE_511_SIM_OUT"]
+    fn issue_511_unit_6_simulation() {
+        use serde_json::{Value, json};
+        let plans = std::env::var("ISSUE_511_PLANS").expect("ISSUE_511_PLANS");
+        let out_dir = std::env::var("ISSUE_511_SIM_OUT").expect("ISSUE_511_SIM_OUT");
+        let mut reports: Vec<Value> = Vec::new();
+        let mut md = String::from(
+            "# Issue 511 unit 6 — simulation over residual dry 2310 and dry 2283\n\n\
+             Generated by `partyname::tests::issue_511_unit_6_simulation`. Every `non_exact` fold of each plan is re-classified \
+             spelling by spelling with unit 6's `not_a_name` (items 1–3: the no-separator keep, the closed-list words, the spaced \
+             references; item 6's openers and titles) and re-run through unit 6's walk net (`mentions_placeholder`, whose echo arm \
+             now holds the TED template signal's shape). The TED template signal itself decides per party, across a notice's \
+             copies, which a plan (head names only) does not hold: its effect is not simulated here, only its net arm.\n\n",
+        );
+        for entry in plans.split(';').filter(|e| !e.trim().is_empty()) {
+            let mut parts = entry.split('|');
+            let label = parts.next().expect("a label").trim();
+            let path = parts.next().expect("a plan path").trim();
+            let prior = parts.next().map(str::trim).filter(|p| !p.is_empty());
+            let (report, section) = simulate_plan(path, prior);
+            md.push_str(&format!("## {label}\n\n{section}\n"));
+            reports.push(json!({ "label": label, "report": report }));
+        }
+        std::fs::create_dir_all(&out_dir).expect("the output directory");
+        std::fs::write(format!("{out_dir}/simulation.json"), serde_json::to_string_pretty(&json!({ "plans": reports })).expect("JSON") + "\n")
+            .expect("write simulation.json");
+        std::fs::write(format!("{out_dir}/simulation.md"), md).expect("write simulation.md");
+        for r in &reports {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "label": r["label"], "transitions": r["report"]["transitions"], "net": r["report"]["net"],
+                    "superset_misses": r["report"]["superset_misses"].as_array().map(Vec::len),
+                    "changed": r["report"]["changed"].as_array().map(Vec::len),
+                    "legal_form_dropped": r["report"]["legal_form_dropped"].as_array().map(Vec::len),
+                }))
+                .expect("JSON")
+            );
+        }
+    }
+
+    /// The simulation of one `refold-placeholder-names` dry plan (`path`, a job row whose `body` is the
+    /// plan) for [`issue_511_unit_5_simulation`] and [`issue_511_unit_6_simulation`]: every `non_exact`
+    /// fold re-classified spelling by spelling with this build's [`not_a_name`], against the prior
+    /// class — the plan's own, or a prior simulation's (`prior`, its `changed` folds' `to`) — and the
+    /// walk's net ([`mentions_placeholder`]) re-run on every spelling. Returns the JSON report and its
+    /// markdown: per class transition the folds, orgs, mentions, buyer rows and role mix; every fold
+    /// that changes class; what the net would re-queue and its buyer rows, beside the net without the
+    /// TED template signal's framed shape (issue 511 unit 6 item 6: [`super::template_shaped`] over
+    /// [`super::translation_shaped`]) and the class arms alone; the net's superset check on the plan's
+    /// own spellings; and the plan's `legal_form` entries this build's list leaves out
+    /// ([`super::plan_legal_form`]).
+    ///
+    /// The plan counts orgs per fold, not per spelling, so a fold whose spellings split is counted
+    /// apart (`split`); the net's figures add the plan's exact entries (no `non_exact` fold: whole
+    /// values and bare stems, all still hits, their class unchanged) to the re-run folds. A name no
+    /// earlier net caught is in no plan, so a hit beyond the plan's net (a reference glued to its
+    /// locator, `pkt.VI.4.1`) is not counted here.
+    fn simulate_plan(path: &str, prior: Option<&str>) -> (serde_json::Value, String) {
         use serde_json::{Value, json};
         use std::collections::{BTreeMap, BTreeSet};
         use std::fmt::Write as _;
-        let path = std::env::var("ISSUE_511_PLAN").expect("ISSUE_511_PLAN");
-        let out_dir = std::env::var("ISSUE_511_SIM_OUT").expect("ISSUE_511_SIM_OUT");
-        let job: Value = serde_json::from_str(&std::fs::read_to_string(&path).expect("read the plan")).expect("a JSON job row");
+        let job: Value = serde_json::from_str(&std::fs::read_to_string(path).expect("read the plan")).expect("a JSON job row");
         let plan: Value = match &job["body"] {
             Value::String(body) => serde_json::from_str(body).expect("the plan body"),
             other => other.clone(),
         };
+        let prior_sim: Option<Value> =
+            prior.map(|p| serde_json::from_str(&std::fs::read_to_string(p).expect("read the prior simulation")).expect("a JSON simulation"));
+        let prior_classes: BTreeMap<String, String> = prior_sim
+            .iter()
+            .flat_map(|sim| sim["changed"].as_array().into_iter().flatten())
+            .filter_map(|c| Some((c["fold"].as_str()?.to_owned(), c["to"].as_str()?.to_owned())))
+            .collect();
         let class_name = |class: Option<NotAName>| match class {
             None => "name",
             Some(NotAName::VoidLot) => "void",
@@ -4089,10 +4965,12 @@ mod tests {
         let mut changed: Vec<Value> = Vec::new();
         let mut shapes: BTreeMap<&str, Tally> = BTreeMap::new();
         // The net over the re-run folds: every spelling a hit and re-queued (not an award summary),
-        // none, or split; the narrowed net, and the class arms alone (no echo arm).
-        let (mut old_requeued, mut new_requeued, mut class_requeued, mut split_net) =
-            (Tally::default(), Tally::default(), Tally::default(), Tally::default());
-        let mut echo_only = Tally::default();
+        // none, or split; this build's net, the net without the template signal's framed shape (the
+        // class arms and the echo's pointer-led shape), and the class arms alone.
+        let (mut plan_requeued, mut net_requeued, mut unframed_requeued, mut class_requeued, mut split_net) =
+            (Tally::default(), Tally::default(), Tally::default(), Tally::default(), Tally::default());
+        let (mut echo_only, mut framed_only) = (Tally::default(), Tally::default());
+        let mut framed_folds: Vec<Value> = Vec::new();
         // The re-queued folds that hold buyer rows, for the buyer canary's reading.
         let mut buyer_folds: Vec<Value> = Vec::new();
         let mut new_by_class: BTreeMap<String, Tally> = BTreeMap::new();
@@ -4100,8 +4978,9 @@ mod tests {
         for fold in folds {
             let names: Vec<&str> = fold["names"].as_array().expect("names").iter().filter_map(Value::as_str).collect();
             let (orgs, mentions, roles) = (count(&fold["orgs"]), count(&fold["mentions"]), &fold["roles"]);
-            let old: Vec<&str> = fold["classes"].as_array().expect("classes").iter().filter_map(Value::as_str).collect();
-            let old_key = old.join("+");
+            let plan_key = fold["classes"].as_array().expect("classes").iter().filter_map(Value::as_str).collect::<Vec<_>>().join("+");
+            let fold_key = fold["fold"].as_str().unwrap_or("");
+            let old_key = prior_classes.get(fold_key).cloned().unwrap_or_else(|| plan_key.clone());
             let classes: Vec<Option<NotAName>> = names.iter().map(|n| not_a_name(n)).collect();
             let new: BTreeSet<&str> = classes.iter().map(|c| class_name(*c)).collect();
             let new_key = new.iter().copied().collect::<Vec<_>>().join("+");
@@ -4124,11 +5003,14 @@ mod tests {
                     "names": names, "orgs": orgs, "mentions": mentions, "roles": roles,
                 }));
             }
-            if old_key != "award_summary" {
-                old_requeued.add(orgs, mentions, roles);
+            if plan_key != "award_summary" {
+                plan_requeued.add(orgs, mentions, roles);
             }
+            let tokens = |n: &str| !super::form_section_tokens(n).is_empty();
             let hits: Vec<bool> = names.iter().map(|n| mentions_placeholder(n)).collect();
             let class_hits: Vec<bool> = names.iter().map(|n| super::mentions_by_class(n)).collect();
+            let unframed_hits: Vec<bool> =
+                names.iter().zip(&class_hits).map(|(n, c)| *c || (tokens(n) && super::translation_shaped(n))).collect();
             let requeued = |hit: &[bool]| -> Option<bool> {
                 let kept = hit.iter().zip(&classes).map(|(h, c)| *h && *c != Some(NotAName::AwardSummary)).collect::<Vec<_>>();
                 if kept.iter().all(|k| *k) {
@@ -4142,19 +5024,26 @@ mod tests {
             if requeued(&hits) != Some(false) && buyer_rows(roles) > 0 {
                 buyer_folds.push(json!({
                     "fold": fold["fold"], "class": new_key, "names": names, "orgs": orgs, "buyer_rows": buyer_rows(roles),
-                    "echo_arm_only": hits.iter().zip(&names).all(|(h, n)| *h && !super::mentions_by_class(n)),
+                    "echo_arm_only": hits.iter().zip(&class_hits).all(|(h, c)| *h && !*c),
                 }));
             }
             match requeued(&hits) {
-                Some(true) => new_requeued.add(orgs, mentions, roles),
+                Some(true) => net_requeued.add(orgs, mentions, roles),
                 Some(false) => {}
                 None => split_net.add(orgs, mentions, roles),
+            }
+            if requeued(&unframed_hits) == Some(true) {
+                unframed_requeued.add(orgs, mentions, roles);
             }
             if requeued(&class_hits) == Some(true) {
                 class_requeued.add(orgs, mentions, roles);
             }
             if hits.iter().zip(&class_hits).all(|(h, c)| *h && !*c) {
                 echo_only.add(orgs, mentions, roles);
+            }
+            if requeued(&hits) == Some(true) && requeued(&unframed_hits) != Some(true) {
+                framed_only.add(orgs, mentions, roles);
+                framed_folds.push(json!({ "fold": fold["fold"], "class": new_key, "names": names, "orgs": orgs, "mentions": mentions, "buyer_rows": buyer_rows(roles) }));
             }
             for ((name, class), hit) in names.iter().zip(&classes).zip(&hits) {
                 spellings += 1;
@@ -4163,32 +5052,40 @@ mod tests {
                 }
             }
         }
-        // The plan's exact entries: its re-queued orgs and buyer rows less the re-run folds'.
+        // The plan's exact entries: its re-queued orgs and buyer rows less the re-run folds' (by the
+        // plan's own classes, which its net split by).
         let (plan_orgs, plan_buyer_rows) = (count(&plan["orgs"]), count(&plan["buyer_rows"]));
-        let exact_orgs = plan_orgs.saturating_sub(old_requeued.orgs);
-        let exact_buyer_rows = plan_buyer_rows.saturating_sub(old_requeued.buyer_rows);
+        let exact_orgs = plan_orgs.saturating_sub(plan_requeued.orgs);
+        let exact_buyer_rows = plan_buyer_rows.saturating_sub(plan_requeued.buyer_rows);
         let legal_form: Vec<&str> = plan["legal_form"].as_array().into_iter().flatten().filter_map(|o| o["name"].as_str()).collect();
-        let legal_form_pointers: Vec<&str> = legal_form.iter().copied().filter(|n| section_reference_pointer(n)).collect();
+        let legal_form_dropped: Vec<&str> = legal_form.iter().copied().filter(|n| !super::plan_legal_form(n)).collect();
         changed.sort_by(|a, b| count(&b["orgs"]).cmp(&count(&a["orgs"])).then(count(&b["mentions"]).cmp(&count(&a["mentions"]))));
+        framed_folds.sort_by(|a, b| count(&b["orgs"]).cmp(&count(&a["orgs"])));
         let net = json!({
             "plan_requeued_orgs": plan_orgs,
             "plan_buyer_rows": plan_buyer_rows,
+            "prior_simulation_net": prior_sim.as_ref().map(|sim| sim["net"].clone()),
             "exact_entry_orgs": exact_orgs,
             "exact_entry_buyer_rows_estimate": exact_buyer_rows,
-            "non_exact_requeued_by_unit_4": old_requeued.json(),
-            "non_exact_requeued_by_unit_5": new_requeued.json(),
+            "non_exact_requeued_by_plan_classes": plan_requeued.json(),
+            "non_exact_requeued_by_this_net": net_requeued.json(),
+            "non_exact_requeued_without_the_framed_shape": unframed_requeued.json(),
             "non_exact_split_folds": split_net.json(),
-            "non_exact_requeued_by_unit_5_class_arms_only": class_requeued.json(),
+            "non_exact_requeued_by_class_arms_only": class_requeued.json(),
             "non_exact_echo_arm_only": echo_only.json(),
-            "unit_5_net_orgs": exact_orgs + new_requeued.orgs,
-            "unit_5_net_orgs_with_split_folds": exact_orgs + new_requeued.orgs + split_net.orgs,
-            "unit_5_net_buyer_rows_estimate": exact_buyer_rows + new_requeued.buyer_rows,
-            "unit_5_net_buyer_rows_with_split_folds": exact_buyer_rows + new_requeued.buyer_rows + split_net.buyer_rows,
-            "unit_5_class_arms_only_orgs": exact_orgs + class_requeued.orgs,
-            "unit_5_class_arms_only_buyer_rows": exact_buyer_rows + class_requeued.buyer_rows,
+            "non_exact_framed_shape_only": framed_only.json(),
+            "net_orgs": exact_orgs + net_requeued.orgs,
+            "net_orgs_with_split_folds": exact_orgs + net_requeued.orgs + split_net.orgs,
+            "net_buyer_rows_estimate": exact_buyer_rows + net_requeued.buyer_rows,
+            "net_buyer_rows_with_split_folds": exact_buyer_rows + net_requeued.buyer_rows + split_net.buyer_rows,
+            "net_without_framed_orgs": exact_orgs + unframed_requeued.orgs,
+            "net_without_framed_buyer_rows": exact_buyer_rows + unframed_requeued.buyer_rows,
+            "class_arms_only_orgs": exact_orgs + class_requeued.orgs,
+            "class_arms_only_buyer_rows": exact_buyer_rows + class_requeued.buyer_rows,
         });
         let report = json!({
             "plan": path,
+            "prior": prior,
             "non_exact_folds": folds.len(),
             "spellings": spellings,
             "transitions": transitions.iter().map(|((from, to), t)| json!({"from": from, "to": to, "tally": t.json()})).collect::<Vec<_>>(),
@@ -4197,51 +5094,83 @@ mod tests {
             "net": net,
             "superset_misses": superset_misses,
             "net_buyer_folds": buyer_folds,
+            "framed_shape_folds": framed_folds,
             "legal_form_orgs": legal_form.len(),
-            "legal_form_section_reference_pointers": legal_form_pointers,
+            "legal_form_dropped": legal_form_dropped,
             "changed": changed,
         });
-        std::fs::create_dir_all(&out_dir).expect("the output directory");
-        std::fs::write(format!("{out_dir}/simulation.json"), serde_json::to_string_pretty(&report).expect("JSON") + "\n").expect("write simulation.json");
         let mut md = String::new();
-        let _ = writeln!(md, "# Issue 511 unit 5 — simulation over dry 2283\n");
         let _ = writeln!(
             md,
-            "Generated by `partyname::tests::issue_511_unit_5_simulation` from `{path}`: {} `non_exact` folds, {spellings} spellings, each re-classified with unit 5's `not_a_name` and re-run through the narrowed `mentions_placeholder`.\n",
-            folds.len()
+            "Plan `{path}`{}: {} `non_exact` folds, {spellings} spellings. The `from` class is {}.\n",
+            prior.map(|p| format!(", prior classes from `{p}`")).unwrap_or_default(),
+            folds.len(),
+            if prior.is_some() { "the prior simulation's (its `changed` folds), else the plan's" } else { "the plan's own" },
         );
-        let _ = writeln!(md, "## Class transitions (fold classes, unit 4 → unit 5)\n");
+        let _ = writeln!(md, "### Class transitions (fold classes, prior → this build)\n");
         let _ = writeln!(md, "| from | to | folds | orgs | mentions | buyer rows | role mix (top 6) |\n|---|---|---:|---:|---:|---:|---|");
         for ((from, to), t) in &transitions {
             let _ = writeln!(md, "| {from} | {to} | {} | {} | {} | {} | {} |", t.folds, t.orgs, t.mentions, t.buyer_rows, t.roles_line(6));
         }
-        let _ = writeln!(md, "\n## Non-exact folds by unit 5 class\n");
+        let _ = writeln!(md, "\n### Non-exact folds by this build's class\n");
         let _ = writeln!(md, "| class | folds | orgs | mentions | buyer rows |\n|---|---:|---:|---:|---:|");
         for (class, t) in &new_by_class {
             let _ = writeln!(md, "| {class} | {} | {} | {} | {} |", t.folds, t.orgs, t.mentions, t.buyer_rows);
         }
-        let _ = writeln!(md, "\n## Section-reference shapes (folds whose every spelling has the shape)\n");
+        let _ = writeln!(md, "\n### Section-reference shapes (folds whose every spelling has the shape)\n");
         let _ = writeln!(md, "| shape | folds | orgs | mentions | buyer rows | role mix (top 6) |\n|---|---:|---:|---:|---:|---|");
         for (shape, t) in &shapes {
             let _ = writeln!(md, "| {shape} | {} | {} | {} | {} | {} |", t.folds, t.orgs, t.mentions, t.buyer_rows, t.roles_line(6));
         }
-        let _ = writeln!(md, "\n## The narrowed net\n");
+        let _ = writeln!(md, "\n### The walk's net\n");
         let _ = writeln!(md, "| | orgs | buyer rows |\n|---|---:|---:|");
-        let _ = writeln!(md, "| unit 4's net (the plan's re-queued orgs, `buyer_rows`) | {plan_orgs} | {plan_buyer_rows} |");
+        let _ = writeln!(md, "| the plan's net (its re-queued orgs, `buyer_rows`) | {plan_orgs} | {plan_buyer_rows} |");
+        if let Some(prior_net) = prior_sim.as_ref().map(|sim| &sim["net"]) {
+            let _ = writeln!(
+                md,
+                "| the prior simulation's net (`unit_5_net_orgs`, buyer rows estimate) | {} | {} |",
+                count(&prior_net["unit_5_net_orgs"]),
+                count(&prior_net["unit_5_net_buyer_rows_estimate"])
+            );
+        }
         let _ = writeln!(md, "| exact entries (outside `non_exact`, unchanged) | {exact_orgs} | {exact_buyer_rows} (estimate) |");
-        let _ = writeln!(md, "| `non_exact` re-queued by unit 4 | {} | {} |", old_requeued.orgs, old_requeued.buyer_rows);
-        let _ = writeln!(md, "| `non_exact` re-queued by unit 5 | {} | {} |", new_requeued.orgs, new_requeued.buyer_rows);
+        let _ = writeln!(md, "| `non_exact` re-queued by the plan's classes | {} | {} |", plan_requeued.orgs, plan_requeued.buyer_rows);
+        let _ = writeln!(md, "| `non_exact` re-queued by this build's net | {} | {} |", net_requeued.orgs, net_requeued.buyer_rows);
         let _ = writeln!(md, "| `non_exact` folds whose spellings split | {} | {} |", split_net.orgs, split_net.buyer_rows);
-        let _ = writeln!(md, "| **unit 5's net** (exact + re-queued; + split) | **{}** (+{}) | **{}** (+{}) |", exact_orgs + new_requeued.orgs, split_net.orgs, exact_buyer_rows + new_requeued.buyer_rows, split_net.buyer_rows);
-        let _ = writeln!(md, "| unit 5's class arms alone (no echo arm) | {} | {} |", exact_orgs + class_requeued.orgs, exact_buyer_rows + class_requeued.buyer_rows);
-        let _ = writeln!(md, "| of the net: echo arm only (pointer-led, still a name) | {} | {} |", echo_only.orgs, echo_only.buyer_rows);
-        let _ = writeln!(md, "\nSuperset check on the plan's own spellings: {} of {spellings} spellings are `Placeholder`/`Blank` and missed by the net.\n", superset_misses.len());
+        let _ = writeln!(
+            md,
+            "| **this build's net** (exact + re-queued; + split) | **{}** (+{}) | **{}** (+{}) |",
+            exact_orgs + net_requeued.orgs,
+            split_net.orgs,
+            exact_buyer_rows + net_requeued.buyer_rows,
+            split_net.buyer_rows
+        );
+        let _ = writeln!(
+            md,
+            "| the net without the template signal's framed shape (class arms + pointer-led echo arm) | {} | {} |",
+            exact_orgs + unframed_requeued.orgs,
+            exact_buyer_rows + unframed_requeued.buyer_rows
+        );
+        let _ = writeln!(md, "| the class arms alone (no echo arm) | {} | {} |", exact_orgs + class_requeued.orgs, exact_buyer_rows + class_requeued.buyer_rows);
+        let _ = writeln!(md, "| of the net: echo arm only (a sweepable shape, still a name) | {} | {} |", echo_only.orgs, echo_only.buyer_rows);
+        let _ = writeln!(md, "| of the net: the framed shape only (unit 6 item 6's cost) | {} | {} |", framed_only.orgs, framed_only.buyer_rows);
+        let _ = writeln!(
+            md,
+            "\nSuperset check on the plan's own spellings: {} of {spellings} spellings are `Placeholder`/`Blank` and missed by the net.\n",
+            superset_misses.len()
+        );
         for miss in &superset_misses {
             let _ = writeln!(md, "- MISS `{miss}`");
         }
-        let _ = writeln!(md, "Re-queued folds with buyer rows ({}):\n", buyer_folds.len());
+        let names_cell = |f: &Value| -> String {
+            f["names"].as_array().into_iter().flatten().filter_map(Value::as_str).map(|n| format!("`{}`", n.replace('|', "\\|"))).collect::<Vec<_>>().join(" · ")
+        };
+        let _ = writeln!(md, "Folds the framed shape alone re-queues ({}):\n", framed_folds.len());
+        for f in &framed_folds {
+            let _ = writeln!(md, "- {} org(s), {} mention(s), {} buyer row(s), {}: {}", count(&f["orgs"]), count(&f["mentions"]), count(&f["buyer_rows"]), f["class"].as_str().unwrap_or(""), names_cell(f));
+        }
+        let _ = writeln!(md, "\nRe-queued folds with buyer rows ({}):\n", buyer_folds.len());
         for f in &buyer_folds {
-            let names: Vec<String> = f["names"].as_array().into_iter().flatten().filter_map(Value::as_str).map(|n| format!("`{n}`")).collect();
             let _ = writeln!(
                 md,
                 "- {} buyer row(s), {} org(s), {}{}: {}",
@@ -4249,16 +5178,20 @@ mod tests {
                 count(&f["orgs"]),
                 f["class"].as_str().unwrap_or(""),
                 if f["echo_arm_only"].as_bool() == Some(true) { " (echo arm only)" } else { "" },
-                names.join(" · ")
+                names_cell(f)
             );
         }
-        let _ = writeln!(md);
-        let _ = writeln!(md, "Legal-form list: {} of the plan's {} `legal_form` orgs are section-reference pointers now (`As in I.1 above` and its kin): {}\n", legal_form_pointers.len(), legal_form.len(), legal_form_pointers.iter().map(|n| format!("`{n}`")).collect::<Vec<_>>().join(", "));
-        let _ = writeln!(md, "## Every fold that changes class ({})\n", changed.len());
+        let _ = writeln!(
+            md,
+            "\nLegal-form list (issue 511 unit 6 item 4): {} of the plan's {} `legal_form` orgs leave this build's list (`plan_legal_form`: section-reference pointers): {}\n",
+            legal_form_dropped.len(),
+            legal_form.len(),
+            legal_form_dropped.iter().map(|n| format!("`{n}`")).collect::<Vec<_>>().join(", ")
+        );
+        let _ = writeln!(md, "### Every fold that changes class ({})\n", changed.len());
         let _ = writeln!(md, "| orgs | mentions | from → to | shape | fold | spellings | roles |\n|---:|---:|---|---|---|---|---|");
         let cell = |s: &str| s.replace('|', "\\|").replace('\n', " ");
         for c in &changed {
-            let names: Vec<String> = c["names"].as_array().into_iter().flatten().filter_map(Value::as_str).map(|n| format!("`{}`", cell(n))).collect();
             let roles: Vec<String> = c["roles"].as_object().into_iter().flatten().map(|(r, n)| format!("{r} {n}")).collect();
             let shape: Vec<&str> = c["shape"].as_array().into_iter().flatten().filter_map(Value::as_str).collect();
             let _ = writeln!(
@@ -4270,11 +5203,10 @@ mod tests {
                 c["to"].as_str().unwrap_or(""),
                 shape.join("+"),
                 cell(c["fold"].as_str().unwrap_or("")),
-                names.join(" · "),
+                names_cell(c),
                 roles.join(", ")
             );
         }
-        std::fs::write(format!("{out_dir}/simulation.md"), md).expect("write simulation.md");
-        println!("{}", serde_json::to_string_pretty(&json!({"transitions": report["transitions"], "net": report["net"], "superset_misses": report["superset_misses"].as_array().map(Vec::len), "changed": changed.len()})).expect("JSON"));
+        (report, md)
     }
 }
