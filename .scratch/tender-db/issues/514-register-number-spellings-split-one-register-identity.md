@@ -1,6 +1,7 @@
 # 514 — spellings of one register number (label text, linked-charity suffixes) split one registry identity
 
-Status: ready-for-agent — UNIT 2 DECIDED 2026-10-12 (`../514-register-spellings/unit2-decision.md`; design panel wf_9e0f1ab7-2e7, 3 designs, 2 judges, synthesis; all 12 owner rulings adopted). MINIMAL is adopted: a live-normaliser rewrite of only the spellings that 469's REGISTRIES shape refuses, into shaped values.
+Status: ready-for-agent — UNIT 2 DECIDED + P0 DONE 2026-10-12 (`../514-register-spellings/unit2-decision.md`, `p0/p0.md`). 345 dry 2288: rows 0 (S1). E0 dry 2289: B0 = 3 exact-duplicate groups, drained by E0 wet 2290 (5 org rows), so B0 is now 0. NEXT: measure first #3 (register records for the 54 canonical numbers) and #4 (the review packet, 52 members + 27 movers). Then post the 26 verdicts and build U2.2/U2.3 per §7.
+Was: ready-for-agent — UNIT 2 DECIDED 2026-10-12 (`../514-register-spellings/unit2-decision.md`; design panel wf_9e0f1ab7-2e7, 3 designs, 2 judges, synthesis; all 12 owner rulings adopted). MINIMAL is adopted: a live-normaliser rewrite of only the spellings that 469's REGISTRIES shape refuses, into shaped values.
 - Rewrite rules: UKPRN repeated token; CHC with 9 closed charity labels; NIC with 3 labels (spelling kept); MPR `IP`+5 digits+`R` and `REGNO`+R-number. The token, digits and R are never changed.
 - Repair: the 345 re-key, bound to its plan.
 - Merge: R2's E0, with a reviewed verdict on every group as the name gate.
