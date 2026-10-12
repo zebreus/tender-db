@@ -592,3 +592,20 @@ NEXT: measure first, M1–M7 (offline work or bounded reads; M1 and M7 decide ru
   - M6 moves into U3.
 - **Phase-A fold, measured:** 34 holders / 1,475 mentions after 26 rehomes, or 33 / 987 without 13T. The child map is
   M2's `measure/child-map.json`: 0 overlaps, 03K under QOQ, 162 codes with no RO261 parent.
+
+## Ruling 3 settled, §1.4 amended (2026-10-12, U3 challenge wf_6487ead6-224)
+
+- **The 25 other-body rehomes** (13T ×15 to 30929531, 26A ×2, 15E ×4, 15C, 15N ×2, 93C): an independent challenger
+  re-derived each from the notice evidence and recorded HIGH, agreeing with M7's target; every target is live and
+  every mention still stood on its case org. S1 is met for all 25.
+- **46991199 is NENC's own mention, not NHS England's.** Two independent readers (reviewer and challenger, not
+  coordinated) both found FTS 036139-2022's amendment 2, which corrects section I.1 Name from "NHS England North East
+  and Yorkshire" to NENC's name. Both read the target as QHM's survivor 31556600 at HIGH on the identification; both
+  noted that §1.4 as written admits only another body's mention.
+- **Amendment to §1.4 (owner ruling):** a reviewed 317 verdict may also move a body's OWN refused mention to P's
+  survivor when the notice's own published correction (an FTS amendment / corrigendum) names P. The published
+  correction is stronger evidence than the name gate, and the move puts the mention exactly where the fold would.
+  It does not widen the bind-time gate, which stays strict. Today it covers 46991199 only.
+- **So ruling 3 takes its first branch:** 13T's 16 refused mentions are rehomed (15 to 0AR's 30929531, 46991199 to
+  31556600); the E5 head-name clause (U2) makes 13T's stale CSU head informational, so 13T joins the cohort with its
+  488 NENC-named mentions. U3 still checks 13T's census entry after `apply-rehoming`.

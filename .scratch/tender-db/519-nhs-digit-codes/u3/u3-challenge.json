@@ -1,0 +1,374 @@
+[
+ [
+  "a7506f6b0cde07084",
+  {
+   "rows": [
+    {
+     "notice_id": 46763776,
+     "section_id": "ORG-GB-NHS-26a#2",
+     "case_org": 30915273,
+     "agree": true,
+     "target_org": 30915905,
+     "reviewer_target": 30915905,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "Evidence comes from the FTS package 074890-2025 (awardUpdate+contractUpdate, 2025-11-18). It is a PSR contract-modification notice titled 'Norfolk and Norwich University Hospitals NHS Foundation Trust (NNUH) 2022 - 2027'. The buyer is GB-NHS-26a, 'NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD' (8th Floor, County Hall, Norwich; nwicb.contractsandprocurement@nhs.net). The same party id GB-NHS-26a is reused on a second party named 'Norfolk & Norwich University Hospitals NHS Foundation Trust', with roles [supplier], locality Norwich, scale large, no contact and identifier.id '26a'. The release lists the same trust again as GB-NHS-RM1 (same name, Norwich, supplier, large). The award's suppliers are both entries, and GB-FTS-143090 (the ICB) is the review body. The stored parse (/content) matches: section ORG-GB-NHS-26a#2 has BT-500 = the NNUH name and BT-501 = GB-NHS-26a. So the section names NNUH (ODS RM1) as supplier. It is the issue-484 shared-party-id shape, not the ICB. Target: live /v1/organizations/30915905 answers 200. It is non-provisional, identifier GBNHSRM1 (national), named with the exact ODS name 'Norfolk and Norwich University Hospitals NHS Foundation Trust', 69 mentions. A live bounded read of organization_mentions for notice 46763776 shows the sibling section ORG-GB-NHS-RM1 already on 30915905, so the rehome puts both NNUH sections of the notice on one row under the GB-NHS scheme. NNUH also has other rows: a non-provisional PPON row 30913682 (GBPPONPQLV1688MQYV, 119 mentions; 513's listing classes RM1/PPON as both_distinct, and RM1 is off the 513 allowlist) and four provisional name twins (2789117, 5207321, 2829903, 2876979). The RM1 row is still the right code-keyed row for a GB-NHS-schemed mention whose sibling sits there. The RM1/PPON split is a separate consolidation question. Mention today: the same live read returns (46763776, ORG-GB-NHS-26a#2) -> organization_id 30915273, name 'Norfolk & Norwich University Hospitals NHS Foundation Trust', raw_identifier GB-NHS-26a, scheme GB-NHS, so it still stands on the case org."
+    },
+    {
+     "notice_id": 46880633,
+     "section_id": "ORG-GB-NHS-26A#2",
+     "case_org": 30915273,
+     "agree": true,
+     "target_org": 1280779,
+     "reviewer_target": 1280779,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "Evidence comes from the FTS package 020794-2025 (awardUpdate+contractUpdate, 2025-05-13). It is a PSR contract-modification notice titled 'James Paget University Hospitals NHS Foundation Trust 2022 - 2027 (CV106)', updating associate-commissioner values. The buyer is GB-NHS-26A, NHS Norfolk and Waveney ICB (County Hall, Norwich; nwicb.contractsandprocurement@nhs.net). Party id GB-NHS-26A is reused on a party named 'James Paget University Hospitals NHS Foundation Trust', with roles [supplier], locality Great Yarmouth, scale large, no contact. The same trust is also listed as GB-NHS-RGP (same name, Great Yarmouth, supplier). The award's suppliers are both entries, and GB-FTS-143090 (the ICB) is the review body. /content section ORG-GB-NHS-26A#2 has BT-500 = the JPUH name and BT-501 = GB-NHS-26A. So the section names JPUH (ODS RGP), not the ICB. Target: live /v1/organizations/1280779 answers 200 (no 308). It is 'James Paget University Hospitals NHS Foundation Trust', 91 mentions, identifier null, provisional=true, merged_identifiers [GB national GBNHSRGP]. An identity seek for GBNHSRGP finds no standing row, so RGP resolves only to 1280779. It is the survivor of 513's reviewed RGP body verdict (members 1280779, 31597478, 31598092, 31599086; reviewer and challenger HIGH). A live mention read shows all 91 of its mentions are JPUH names, 24 of them coded GB-NHS-RGP. The same notice's ORG-GB-NHS-RGP section stands on 1280779 today. Caveat: a non-provisional PPON-keyed JPUH row 30913928 exists (GBPPONPHCJ6961YPQN, 9 mentions, all PPON-coded, live 200) outside the 513 RGP body. There is also a provisional 'Hospital' twin, 2829898 (5 mentions). I still agree with 1280779. It is the code-keyed RGP body row, its provisional flag is an artefact of a cluster surviving, and it holds the sibling RGP section of this notice. Rehoming to the PPON row would split the notice's two JPUH supplier sections across two orgs. PPON 30913928 vs RGP body 1280779 is a separate consolidation follow-up, not a reason to doubt this rehome. Mention today: the live read returns (46880633, ORG-GB-NHS-26A#2) -> organization_id 30915273, name JPUH, raw_identifier GB-NHS-26A, scheme GB-NHS, so it still stands on the case org."
+    }
+   ],
+   "notes": "I re-derived both rows independently and agree with the reviewer's targets at HIGH. S1 is met for both 26A rehomes (30915905 for 46763776 #2, 1280779 for 46880633 #2).\n\nSources:\n- the cached m7-raw files (FTS OCDS packages 074890-2025 and 020794-2025, plus the /content stored parse);\n- live public GETs of /v1/organizations for 30915905, 1280779, 30915273, 30913928, 30913682 and 2829898 (all 200);\n- bounded SELECTs through /root/sq.sh:\n  - organization_mentions by PK on both notices, LIMIT 20;\n  - name_norm seeks for both trusts;\n  - identity seeks for GBNHSRGP, GBNHSRM1 and the two PPONs;\n  - organization_mentions_org for 30913928 and 1280779;\n  - organization_names for 30915273, 30915905 and 1280779.\n\norg_mention_rehoming is not on the public /v1/sql surface, so I could not see whether verdicts already exist for these tuples. Nothing was written.\n\nSide findings for the orchestrator:\n1. **Twin rows for both trusts.** JPUH stands as 1280779 (the RGP body, provisional flag) and as the non-provisional PPON row 30913928, which is not in 513's RGP verdict. NNUH stands as RM1 30915905 and PPON 30913682 (both_distinct; RM1 is off the allowlist). Neither twin affects these rehomes. Both are consolidation follow-ups (513 / 469 register pairs).\n2. **The 26A org carries JPUH's name as a satellite.** The case org 30915273's ENG organization_names satellite is currently 'James Paget University Hospitals NHS Foundation Trust'; the JPUH mention, ingested last, won the latest-variant slot. apply-rehoming does not move satellites (the issue-321 residue). After both rehomes the 26A ICB org will still carry JPUH's name as its ENG satellite name, which matters if the re-census, the fold's name check or the stage-4 name keys read satellites.\n3. **Each trust ends up twice on its award.** After the rehome each trust appears twice as supplier on its award (the coded section and the #2 section, now on the same org). That is a derived-layer duplicate for the refold to handle, not a wrong target.\n\nScratch reads are in /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/c26a/."
+  }
+ ],
+ [
+  "a21afdff9286c19fc",
+  {
+   "rows": [
+    {
+     "notice_id": 46888904,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "014164-2024 (2024-05-02, award+contract, PSR intention to award), 'Collingwood-GPcover', supplier Collingwood Health Group. The buyer party GB-NHS-13T has name and identifier.legalName 'NORTH OF ENGLAND COMMISSIONING SUPPORT' and roles [buyer], and release.buyer points to it. Contact is NECS's mailbox necsu.psrprocurement@nhs.net, address Stella House NE15 8NY. The rest of its profile is NENC's: code 13T and details.url northeastnorthcumbria.nhs.uk. The lot text says 'The relevant authority intends to award'; the decision makers are NENC officers (North Tyneside Place Based Delivery Group, Executive Area Director (North), DoF North Tyneside). NENC is reviewBody GB-FTS-107692, but that slot is the PSR template: NENC-named buyers from the same account carry it too (013052-2024, 013745-2024). So the mention is NECS (the agent) entering its own exact legal name as contracting party. That is another body's name, not an NENC misspelling. The procurement's follow-up 021683-2024 (46895693) carries the same NECS name with GB-NHS-QHM and sits on NECS row 3257070, which 513 reviewed as DIFFERENT (NECS). 30929531 is live (200, non-provisional, PPON PJGL8154MTZX + GBNHS0AR; ODS 0AR = NHS NORTH OF ENGLAND CSU) and is the canonical NECS row. A live primary-key read shows the mention still on 31600907."
+    },
+    {
+     "notice_id": 46889505,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "014821-2024 (2024-05-09, PSR award+contract), 'NT Carers Centre /NTCC.99C.EJ.2324.01'. 99C is NENC's North Tyneside place code; the supplier is North Tyneside Carers. The buyer party GB-NHS-13T is named (name and legalName) 'NORTH OF ENGLAND COMMISSIONING SUPPORT', role buyer, and release.buyer points to it. Contact is necsu.psrprocurement@nhs.net at Stella House NE15 8NY. Code 13T and URL northeastnorthcumbria.nhs.uk are NENC's. The decision makers are NENC officers (North Tyneside PBDG, Exec Area Director North). NENC is reviewBody GB-FTS-112852, which is the PSR template, so it does not discriminate. The name is NECS's exact legal name, so this is another body's mention, not an NENC misspelling. Both follow-ups (021686-2024 / 46895696 and 022634-2024 / 46896414) repeat the NECS name with GB-NHS-QHM on NECS row 3257070, which 513 classed DIFFERENT (NECS). 30929531 is live and is the canonical NECS row (PPON + merged GBNHS0AR), not the provisional twin 3257070. The live primary-key read shows the mention on 31600907."
+    },
+    {
+     "notice_id": 46937373,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013148-2024 (2024-04-23, PSR award+contract), 'BLUEBIRDNCLE.AR.2324.01 / D J Haswell - EoL Domiciliary Care', supplier Bluebird Care. The buyer GB-NHS-13T is named and legalName'd 'NORTH OF ENGLAND COMMISSIONING SUPPORT', roles [buyer], with release.buyer pointing to it. Contact is necsu.psrprocurement@nhs.net, Stella House. The profile code 13T and URL are NENC's. 'Relevant authority intends to award'; the decision makers are NENC's Executive Area Director (North) and DoF North Tyneside. NENC as reviewBody GB-FTS-107692 is template; NENC-named buyers carry it too. The mention names NECS by its exact legal name, so it is another body's name. Follow-up 021075-2024 (46895225) keeps the NECS name under GB-NHS-QHM and sits on 3257070, which 513 reviewed as NECS. Target 30929531 is live, non-provisional and canonical for NECS (0AR/PPON). The mention is live on 31600907."
+    },
+    {
+     "notice_id": 46937405,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013180-2024 (2024-04-23, PSR award+contract), 'INVOLVENORTHEAST.AR.2324.01 / Involve North East - Engagement'. The supplier is mis-entered as 'NENC ICB Engagment service', which names the commissioning ICB. The buyer GB-NHS-13T is 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (name and legalName), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net. Code 13T and URL are NENC's profile values. The decision makers are NENC's Executive Area Director (North) and DoF North Tyneside. NENC is reviewBody GB-FTS-107692 (template). The party is NECS, the agent, under its own exact name; this is another body's mention, not an NENC misspelling. Follow-up 021098-2024 (46895248) carries the same NECS name with GB-NHS-QHM on 3257070, which 513 classed DIFFERENT (NECS). 30929531 is live and canonical (PPON PJGL8154MTZX, merged GBNHS0AR). The live primary-key read shows the mention on 31600907."
+    },
+    {
+     "notice_id": 46937475,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013298-2024 (2024-04-24, PSR award+contract), 'CYGNUS.00L.EJ.2324.01 Cygnus counselling and wellbeing support service'. 00L is NENC's Northumberland place code. The buyer GB-NHS-13T is named 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (legalName the same), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net. Code 13T and URL are NENC's. The decision makers are NENC's Northumberland Place Based Delivery Group Area Director and DoF. NENC is reviewBody GB-FTS-107692 (PSR template). The name is NECS's exact legal name, so this is another body's mention. Follow-up 021370-2024 (47164026) repeats the NECS name with GB-NHS-QHM and sits on NECS row 3257070, which 513 reviewed as DIFFERENT. 30929531 is live, non-provisional, and the canonical NECS row rather than a provisional twin. The mention still stands on 31600907 (live primary-key read)."
+    },
+    {
+     "notice_id": 46937487,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013310-2024 (2024-04-24, PSR award+contract), 'Qwell for Adults Qwell.00L.AB.2324.01'. The buyer GB-NHS-13T is 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (name and legalName), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net. Code and URL are NENC's. The decision makers are NENC's Northumberland PBDG. This is the one notice with no NENC party: reviewBody is Qwell (GB-FTS-111893), a data-entry slip. The reviewer's 'NENC listed separately' fact therefore does not apply. The reading rests on the published name (NECS's exact legal name, not an NENC misspelling), the NECS mailbox, and the follow-up 021364-2024 (47164020). That follow-up names the same NECS party under GB-NHS-QHM and sits on 3257070, which 513 classed DIFFERENT (NECS). Those are enough for HIGH under \u00a71.4's another-body test. 30929531 is live and canonical (0AR/PPON). The mention is live on 31600907."
+    },
+    {
+     "notice_id": 46937551,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013374-2024 (2024-04-25, PSR award+contract), 'The Grove Medical - GPwSI ENT', supplier The Grove Medical Group. The buyer GB-NHS-13T is named 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (legalName the same), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net, Stella House. Code 13T and URL are NENC's profile values. The decision makers are NENC's Executive Area Director (North) and DoF North Tyneside. NENC is reviewBody GB-FTS-107692 (template, also present beside NENC-named buyers). The mention is NECS under its exact name: another body's, not an NENC misspelling. Follow-up 021193-2024 (47163849) repeats the NECS name with GB-NHS-QHM on 3257070, which 513 reviewed as NECS. 30929531 is live, non-provisional, PPON + merged GBNHS0AR: the right NECS row. The live primary-key read shows the mention on 31600907."
+    },
+    {
+     "notice_id": 46937614,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013437-2024 (2024-04-25, PSR award+contract), 'STFT Holdings Palliative and End of Life Care Beds in South Tyneside'. The buyer GB-NHS-13T is 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (name and legalName), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net. Code and URL are NENC's. The decision text names NENC officers and says 'Approval in-line with ICB Scheme of Delegation'. NENC is reviewBody GB-FTS-107692 (template). So NECS, the agent, entered its own exact legal name as contracting party: another body's mention. Follow-up 022313-2024 (46896093) carries the same NECS name under GB-NHS-QHM on 3257070, which 513 classed DIFFERENT (NECS). 30929531 is live and the canonical NECS row. The mention still stands on 31600907."
+    },
+    {
+     "notice_id": 46937774,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013597-2024 (2024-04-26, PSR award+contract), 'MATRIXCT.00N.LM.2324.01 MATRIX HEALTH SERVICES'. 00N is NENC's South Tyneside place code. The buyer GB-NHS-13T is named 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (legalName the same), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net. Code 13T and URL are NENC's. The decision makers are NENC's Executive Area Director (South) and DoF South and Central. NENC is reviewBody GB-FTS-107692 (template). The mention names NECS exactly, so it is another body's name. Follow-up 021256-2024 (46895377) keeps the NECS name under GB-NHS-QHM on 3257070, which 513 reviewed as NECS. 30929531 is live, non-provisional and canonical (PPON + GBNHS0AR). The live primary-key read shows the mention on 31600907."
+    },
+    {
+     "notice_id": 46938010,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013850-2024 (2024-04-30, PSR award+contract), 'AQP Podiatry NORTHEASTPODIATRY.00N.LM.2324.01', supplier North East Podiatry, NENC 00N place code. The buyer GB-NHS-13T is 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (name and legalName), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net. Code and URL are NENC's. The decision makers are NENC's Executive Area Director (South) and DoF. NENC is reviewBody GB-FTS-107692 (template). No NECS-named follow-up of this procurement is among 3257070's 14 QHM-coded mentions. The reading rests on the published name (NECS's exact legal name, not an NENC variant), the NECS mailbox, and the same account and form as the other 14 in the 2024-04-23..05-09 run. Under \u00a71.4 that is another body's mention. 30929531 is live and canonical for NECS. The live primary-key read shows the mention on 31600907."
+    },
+    {
+     "notice_id": 47148728,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013116-2024 (2024-04-23, PSR award+contract), the first of the run: 'ASPR.LM.2324.01 - Asylum Seekers Prescription Recharges', supplier Lobley Hill Pharmacy. The buyer GB-NHS-13T is named 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (legalName the same), role buyer, release.buyer. Contact is necsu.psrprocurement@nhs.net with a named contact, Hannah Jennings. Code 13T and URL northeastnorthcumbria.nhs.uk are NENC's. 'Relevant authority intends to award' (PSR, so NENC is principal). NENC is reviewBody GB-FTS-107692 (template). The mention is NECS, the agent, under its exact name: another body's. Follow-up 020854-2024 (46895004) carries the same NECS name with GB-NHS-QHM on 3257070, which 513 classed DIFFERENT (NECS). 30929531 is live, non-provisional and canonical (PPON PJGL8154MTZX + GBNHS0AR). The mention is live on 31600907."
+    },
+    {
+     "notice_id": 47148845,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013233-2024 (2024-04-24, PSR award+contract), 'RIVERSIDECOMMUNITY.AR.2324.01 / Riverside Community Health Project'. The buyer GB-NHS-13T is 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (name and legalName), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net. Code and URL are NENC's. The decision makers are NENC's Executive Area Director (North) and DoF North Tyneside. NENC is reviewBody GB-FTS-107692 (template). The name is NECS's exact legal name, so this is another body's mention. Follow-up 021111-2024 (46895261) repeats the NECS name under GB-NHS-QHM on NECS row 3257070 (513: DIFFERENT, NECS). 30929531 is live and the canonical NECS row. The live primary-key read shows the mention on 31600907."
+    },
+    {
+     "notice_id": 47148858,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013246-2024 (2024-04-24, PSR award+contract), 'CHILDRENNE(NEWCASTLE).AR.2324.01 / Children North East - Counselling Services'. The buyer GB-NHS-13T is named 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (legalName the same), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net. Code 13T and URL are NENC's. The decision makers are NENC's Executive Area Director (North) and DoF North Tyneside. NENC is reviewBody GB-FTS-107692 (template). The mention names NECS exactly: another body's, not an NENC misspelling. Follow-up 021078-2024 (46895228) keeps the NECS name with GB-NHS-QHM on 3257070, which 513 reviewed as NECS. 30929531 is live, non-provisional and canonical. The mention is live on 31600907."
+    },
+    {
+     "notice_id": 47149301,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "013689-2024 (2024-04-29, PSR award+contract), 'Lifecycle Lifecycle.00N.JW.2324.01', NENC 00N place code. The supplier is mis-entered as 'Sunderland Royal Hospital'. The buyer GB-NHS-13T is 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (name and legalName), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net. Code and URL are NENC's. The decision makers are NENC's Executive Area Director (South) and DoF. NENC is reviewBody GB-FTS-107692 (template). The same account published an NENC-named PSR award (013745-2024) later the same day, so the naming varied per notice. This mention still carries NECS's exact legal name and is another body's under \u00a71.4. No NECS-named follow-up of this procurement is among 3257070's 14. 30929531 is live and canonical for NECS. The live primary-key read shows the mention on 31600907."
+    },
+    {
+     "notice_id": 47149905,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "reviewer_target": 30929531,
+     "agree": true,
+     "target_org": 30929531,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "014293-2024 (2024-05-03, PSR award+contract), 'EdithMoffat-GPcover', supplier Northumbria Primary Care. The buyer GB-NHS-13T is named 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (legalName the same), role buyer, release.buyer, contact necsu.psrprocurement@nhs.net. Code 13T and URL are NENC's. The decision makers are NENC's North Tyneside PBDG, Executive Area Director (North) and DoF. NENC is reviewBody GB-FTS-112852 (template). The mention is NECS under its exact legal name: another body's. Follow-up 022630-2024 (46896410) repeats the NECS name with GB-NHS-QHM on 3257070, which 513 classed DIFFERENT (NECS). 30929531 is live (200, non-provisional, PPON + GBNHS0AR) and is the canonical NECS row. The mention still stands on 31600907."
+    }
+   ],
+   "notes": "Verdict: I agree with all 15 rehomes to 30929531 and record HIGH on each. Ruling 3's conclusion holds, but one of its supporting facts does not discriminate, and the profile evidence points to NENC.\n\n1. Where the reviewer overstates. \"NENC listed separately (reviewBody) in 14 of 15\" comes from the PSR form's review-body slot, and the same account fills that slot beside NENC-named buyers too:\n   - 013052-2024 (46937325, 2024-04-22, the day before the run starts): buyer named NENC, reviewOrg GB-FTS-107692;\n   - 013745-2024 (46937905, 2024-04-29, NENC-named, published between two of the 15): reviewOrg GB-FTS-109824;\n   - 038756-2024: reviewBody GB-FTS-107692.\n\n   Apart from its name, the buyer party in the 15 matches the NENC-named 13T buyers exactly: code 13T, details.url northeastnorthcumbria.nhs.uk, Stella House NE15 8NY, necsu.psrprocurement mailbox. All 15 say \"The relevant authority intends to award\", and their decision makers are NENC ICB officers. So the precise reading is that NECS, the agent, entered its own exact legal name as the contracting party for NENC's PSR awards. It is not NECS acting as a separate party alongside NENC.\n\n2. Why HIGH still holds:\n   - \"NORTH OF ENGLAND COMMISSIONING SUPPORT\" (name and identifier.legalName) is another body's exact legal name, not an NENC misspelling. Under \u00a71.4's test that makes it a rehome, not a hold.\n   - The naming was persistent, not a one-off typo. The July 2024 follow-up (tenderUpdate) notices of 13 of these 15 procurements name the same party in the same uppercase form, now under NENC's ICB code GB-NHS-QHM. The 14 follow-up mentions are 46895004, 46895225, 46895228, 46895248, 46895261, 46895377, 46895693, 46895696, 46896093, 46896410, 46896414, 47163849, 47164020 and 47164026.\n   - Those 14 already sit on NECS's provisional row 3257070, which 513's reviewed QHM verdict classed DIFFERENT (NECS 0AR). Rehoming keeps both notices of each procurement on NECS.\n   - Lifecycle (013689) and AQP Podiatry (013850) have no follow-up in that set. Qwell (013310) has no NENC party at all.\n\n3. Target and live state:\n   - Target: 30929531 answered HTTP 200 with no redirect: provisional=false, PPON PJGL8154MTZX, merged GBNHS0AR, 55 mentions. ODS 0AR is \"NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT\" (RO213, Active). The other NECS-named rows are 3257070 (provisional, 253 mentions), 10286686 (country US, provisional) and 31600907 (13T itself), so 30929531 is the right row.\n   - Mentions: a live primary-key seek on organization_mentions shows all 15 tuples (notice_id, 'ORG-GB-NHS-13T') still on organization_id 31600907, named \"NORTH OF ENGLAND COMMISSIONING SUPPORT\", raw GB-NHS-13T.\n   - Follow-up (not in scope here): 3257070 should be consolidated into 30929531. Until then, each procurement's award and follow-up notices sit on two NECS rows.\n\nReads, all read-only with nothing written: 8 public GETs on tenders.zebreus.click (orgs 30929531, 31600907, 3257070; content of 46937905, 47150693, 46937325, 46895004, 47164026) plus 2 /v1/notices fetches (46895004, 47164026), every one 200 and paced 0.5 s. 6 bounded SELECTs through /root/sq.sh. One window query returned 0 rows because published_at is stored as epoch seconds; I rewrote the query with epoch bounds, which was not a retry of an error. No 408s. Scratch files are in /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/ch/."
+  }
+ ],
+ [
+  "adb9671221e47dac7",
+  {
+   "rows": [
+    {
+     "notice_id": 46899287,
+     "section_id": "ORG-GB-NHS-15E",
+     "case_org": 31546689,
+     "agree": true,
+     "target_org": 31542353,
+     "reviewer_target": 31542353,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "Evidence: in the FTS package 025992-2024 (cached in m7-raw/fts, and matching the live /content), the only party carrying GB-NHS-15E is the buyer, named \"NHS Black Country Integrated Care Board\". Its details.url is https://www.blackcountry.icb.nhs.uk/ and its contact is Kimberley Walker (nhs.net) at St John's House, East Street, Leicester, the address of the CSU that procures for the ICB. The award is a VEAT for a Residential Short Breaks Service for the Borough of Dudley, which is in the Black Country. The supplier is Progress Children's Services Ltd (GB-COH-04014026, Wolverhampton) and the review body is The High Courts. Nothing on the notice is Birmingham and Solihull except the code 15E, which is BSol's sub-ICB code. This is Black Country ICB (ODS QUA) typed with another ICB's code. Target: /v1/organizations/31542353 answers 200, provisional=false, identifier GBPPONPCXW1342CXYV, merged_identifiers [GBNHSQUA], 83 mentions, so it is the PPON survivor that carries QUA. A bounded SELECT for identifier='GBNHSQUA' returns 0 rows, so no separate QUA row competes. A name-prefix seek on 'nhs black country' finds two other Black Country ICB rows: the D2P2L child holder 31545773, which \u00a71.5 folds into this survivor anyway, and a provisional twin 31564770 'NHS Black Country ICB'. The other hits are the predecessor BCWB CCG rows. 31542353 is the correct row. Mention: organization_mentions(46899287,'ORG-GB-NHS-15E') still has organization_id=31546689 (the GBNHS15E holder, 46 mentions) today."
+    },
+    {
+     "notice_id": 46751084,
+     "section_id": "ORG-GB-NHS-15E#2",
+     "case_org": 31546689,
+     "agree": true,
+     "target_org": 31601027,
+     "reviewer_target": 31601027,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "Evidence: 062119-2025 is BSol ICB's 'Enhanced Service Offer 2025/26 Moseley, Billesley & Yardley Wood PCN', a PSR direct award with one lot and one award per GP practice. The buyer is NHS Birmingham and Solihull ICB (GB-NHS-15E, Alpha Tower). Lot 3 / award 062119-2025-3 goes to a supplier named \"Wake Green Surgery\" (roles [supplier], scale sme, locality Birmingham), whose OCDS identifier is wrongly given as GB-NHS 15E. Its sibling suppliers on the same notice each carry their own practice code (M85006, M85018, M85105, M85118, Y02571). So the section names the practice, not the ICB. Target: /v1/organizations/31601027 answers 200, provisional=false, 'Wake Green Surgery', identifier GBNHSM85074. ?identifier=GBNHSM85074 returns only this row. ODS (gbnhs-orgs-classified.json) gives M85074 = WAKE GREEN SURGERY, Active, RO177 GP practice. The row's single mention is notice 46889189 (014499-2024, BSol's own 'Enhanced Service Offer 2024/25'), section ORG-GB-NHS-M85074 'Wake Green Surgery', which corroborates the code-to-name binding from the same publisher. Better row: the name-prefix seek on 'wake green' finds only this row and a provisional, identifier-less twin 15514884 (one mention, notice 21140612 ORG-27). The code-keyed 31601027 is the better row, and no PPON or other code-keyed row exists. Mention: organization_mentions(46751084,'ORG-GB-NHS-15E#2') still has organization_id=31546689 today."
+    },
+    {
+     "notice_id": 46751166,
+     "section_id": "ORG-GB-NHS-15E#2",
+     "case_org": 31546689,
+     "agree": true,
+     "target_org": 31601028,
+     "reviewer_target": 31601028,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "Evidence: 062201-2025 is BSol ICB's 'Enhanced Service Offer 2025/26 Kingstanding, Erdington & Nechells PCN', with the same per-practice lot/award shape. The buyer is BSol ICB (GB-NHS-15E). Section ORG-GB-NHS-15E#2 is named \"College Road Surgery\", has role supplier, and is the tenderer of lot 3 (TPA-062201-2025-3-0 references ORG-GB-NHS-15E#2), but its identifier is wrongly given as GB-NHS-15E. The other six winning practices carry their own M85 codes (M85060, M85081, M85732, M85759, M85792). The section names the GP practice. Target: /v1/organizations/31601028 answers 200, provisional=false, 'College Road Surgery', identifier GBNHSM85087. ?identifier=GBNHSM85087 returns only this row, and a bounded SELECT on identifier also returns only 31601028. ODS gives M85087 = COLLEGE ROAD SURGERY, Active, RO177. The row's one mention is 46889189 (BSol ESO 2024/25) section ORG-GB-NHS-M85087 'College Road Surgery', the same publisher using the correct code. Better row: the name-prefix seek on 'college road' returns only 31601028, so no provisional twin or PPON row exists, and this code-keyed row is the best available. Mention: organization_mentions(46751166,'ORG-GB-NHS-15E#2') still has organization_id=31546689 today."
+    },
+    {
+     "notice_id": 46751166,
+     "section_id": "ORG-GB-NHS-15E#3",
+     "case_org": 31546689,
+     "agree": true,
+     "target_org": 31601029,
+     "reviewer_target": 31601029,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "Evidence: this is the same notice, 062201-2025 (BSol ICB ESO 2025/26 PCN award). Section ORG-GB-NHS-15E#3 is named \"Small Heath Medical Practice\", has role supplier, and is the tenderer of lot 4 (TPA-062201-2025-4-0 references ORG-GB-NHS-15E#3). Its identifier is GB-NHS-15E, the ICB's code, while the buyer section ORG-GB-NHS-15E is separately named NHS Birmingham and Solihull ICB. The section names the GP practice, not the ICB. Target: /v1/organizations/31601029 answers 200, provisional=false, 'Small Heath Medical Practice', identifier GBNHSM85108. ODS gives M85108 = SMALL HEATH MEDICAL PRACTICE, Active, RO177. The row's one mention is 46889189 (BSol ESO 2024/25) section ORG-GB-NHS-M85108 'Small Heath Medical Practice', so the same publisher uses the correct code. Better row: the name-prefix seek on 'small heath' returns 31601029 plus two unrelated provisional rows ('Small Heath Leadership Academy', 'Small Heath Pharmacy'). There is no twin of the practice, and this code-keyed row is the best available. Caveat: my direct identifier lookups for GBNHSM85108 failed on transport (SSH connection closed; API connection reset) and were not retried. The row's own identifier and the name seek cover the question. Mention: organization_mentions(46751166,'ORG-GB-NHS-15E#3') still has organization_id=31546689 today."
+    }
+   ],
+   "notes": "I re-derived all 4 rows on 15E (org 31546689, GBNHS15E, 46 mentions, live 200) from the cached FTS packages plus live /v1/notices/<id>/content and /v1/organizations/<id>. I agree with the reviewer on every row at HIGH.\n\nAll four tuples still sit on 31546689 today. I checked each with a primary-key SELECT on organization_mentions.\n\nAll four targets answer 200, are live and non-provisional, and are the right rows:\n- 31542353 is the Black Country ICB PPON survivor, carrying merged GBNHSQUA. No standalone GBNHSQUA row exists. The D2P2L child holder 31545773 and the provisional 31564770 are not better targets.\n- 31601027, 31601028 and 31601029 are keyed on the practices' own ODS codes M85074, M85087 and M85108. ODS lists all three as Active RO177 GP practices with matching names. Each row's only mention is BSol's own ESO 2024/25 notice 46889189, which lists the same practice names under those exact codes.\n- No better row exists for any practice. The only twin found is the provisional, identifier-less 15514884 'Wake Green Surgery', which is worse than the code-keyed row.\n\nFailures, none retried:\n- SSH connection closed on the SQL identifier lookups for GBNHSM85074 and GBNHSM85108. GBNHSM85074 was covered by the API lookup.\n- Connection reset on the API lookups ?identifier=GBNHSM85108 and ?identifier=GBNHSQUA. GBNHSQUA was covered by the SQL lookup.\n- organization_merged_identifiers is not on the /v1/sql public surface (400).\n\nI wrote nothing to the repo or the box. Scratch reads are in /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/ch15e."
+  }
+ ],
+ [
+  "a7c096b51b9368c59",
+  {
+   "rows": [
+    {
+     "notice_id": 46907344,
+     "section_id": "ORG-GB-NHS-15C",
+     "case_org": 31566597,
+     "agree": true,
+     "target_org": 30917049,
+     "reviewer_target": 30917049,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "I checked the cached FTS package 035235-2024 against a fresh /v1/notices/46907344/content (HTTP 200). There is one party, the buyer, with id GB-NHS-15C. Its name and legalName are \"NHS Devon Integrated Care Board\". The address is Aperture House, Rydon Lane, Exeter EX2 5AZ, the contact is d-icb.contracting@nhs.net and the url is onedevon.org.uk. The title reads \"NHS Devon - Care Co-ordination Hub for Devon\", and the text names \"NHS Devon Integrated Care Board's (the Commissioner's)\", with SCW CSU running the exercise on its behalf. No other party is listed. ODS gives 15C as \"NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE ICB - 15C\" (South Plaza, Bristol). Devon's own sub-ICB code is 15N, and its ODS address is the same Aperture House, EX2 5AZ. So this is Devon ICB's buyer typed with BNSSG's sub-ICB code; it is not a misspelling of BNSSG's name. Target: /v1/organizations/30917049 returns 200, provisional false, identifier GBPPONPRDC6266CBRR (PPON), merged_identifiers GBNHSQJK, name \"NHS DEVON INTEGRATED CARE BOARD\", 422 mentions. That is the canonical PPON survivor of the QJK body, so it is the right row. The 15N identity holder 31555903 would be wrong: a mention carrying GB-NHS-15C would make it child-impure. Mention: a bounded SELECT on organization_mentions shows (31566597, 46907344, ORG-GB-NHS-15C, \"NHS Devon Integrated Care Board\", raw GB-NHS-15C), so the mention still stands on the case org."
+    },
+    {
+     "notice_id": 46807952,
+     "section_id": "ORG-GB-NHS-15N",
+     "case_org": 31555903,
+     "agree": true,
+     "target_org": 31536069,
+     "reviewer_target": 31536069,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "I checked the cached FTS package 033070-2026 (tenderUpdate, PSR Direct Award C) against a fresh /v1/notices/46807952/content (200). There is one party, the buyer, with id GB-NHS-15N. Its name and legalName are \"NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board\", the locality is Bristol, the contact is scwcsu.cbprocurement@nhs.net and the url is bnssg.icb.nhs.uk. The text reads: \"NHS Bristol, North Somerset and South Gloucestershire ICB (\\\"the Commissioner\\\")\" for P3 Discharge to Assess beds at Crossley House, South Gloucestershire, procured by SCW CSU on the Commissioner's behalf. No other party is listed. ODS gives 15N as \"NHS DEVON ICB - 15N\" (Aperture House, Exeter), whose parent is QJK. So this is BNSSG ICB's buyer typed with Devon's code; it is not Devon's own name. Target: /v1/organizations/31536069 returns 200, provisional false, identifier GBPPONPPCD6597HCDW (PPON), merged GBNHSQUY, name \"NHS Bristol North Somerset & South Gloucestershire Integrated Care Board\", 169 mentions. That is the canonical QUY PPON survivor, so it is the right row. The 15C holder 31566597 would be wrong, because it would be child-impure with a GB-NHS-15N raw. Mention: a bounded SELECT shows (31555903, 46807952, ORG-GB-NHS-15N, raw GB-NHS-15N), so the mention still stands on the case org."
+    },
+    {
+     "notice_id": 46807955,
+     "section_id": "ORG-GB-NHS-15N",
+     "case_org": 31555903,
+     "agree": true,
+     "target_org": 31536069,
+     "reviewer_target": 31536069,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "This is the sibling of 46807952, published five minutes later: FTS 033073-2026, re-fetched content 200. The party is identical to 46807952's: the same buyer, GB-NHS-15N, named \"NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board\", locality Bristol, contact scwcsu.cbprocurement@nhs.net, url bnssg.icb.nhs.uk. The text names BNSSG ICB \"the Commissioner\" for D2A beds at Rose Garden and Olive Tree House, South Gloucestershire (Allegra Care Group). No other party is listed. The 15N code is Devon's (ODS \"NHS DEVON ICB - 15N\", parent QJK), so this is BNSSG's mention under the wrong code. Target: 31536069 returns 200 and is the live, non-provisional QUY PPON survivor (GBPPONPPCD6597HCDW, merged GBNHSQUY), the canonical row of the named body. Mention: a bounded SELECT shows (31555903, 46807955, ORG-GB-NHS-15N, raw GB-NHS-15N), so the mention still stands on the case org."
+    },
+    {
+     "notice_id": 46955480,
+     "section_id": "ORG-GB-NHS-93C",
+     "case_org": 31570826,
+     "agree": true,
+     "target_org": 31617815,
+     "reviewer_target": 31617815,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "Evidence comes from the cached FTS package 018790-2023 (award and contract, 2023-07-03) and a fresh content read (200). The buyer party GB-NHS-93C has name and legalName \"N E L Commissioning Support Unit\", address 4th Floor, Unex Tower, London E15 1DA, and contact Taofeeq Ladega (nhs.net). Its details.url and buyerProfile point to NCL ICB's page. The other parties are the supplier Federated4Health, review body \"NHS North East London\" and mediation body \"NHS NEL ICB\"; the last two give the same Unex Tower address. The title is \"NCL CCG Digital Inclusion Support Services\" (with a Haringey lot), so NCL is the commissioner. The party is NEL CSU acting as agent in the buyer slot under NCL's sub-ICB code (ODS 93C, parent QMJ). Name, legalName, address and contact are all the CSU's; only the code and url are NCL's. This is not a variant of NCL's name: the gate refuses it as 0AQ \"NHS NORTH AND EAST LONDON COMMISSIONING SUPPORT UNIT\" (Inactive RO213). It has exactly the shape of 13T's 15 CSU-named mentions that ruling 3 accepted at HIGH. Those NECS-named parties also carried the ICB's url (northeastnorthcumbria.nhs.uk), and the Qwell one also had no separate ICB party. So I agree with the rehome at HIGH under \u00a71.4 as written. Rehoming to NCL's survivor 30916245 instead would need \u00a71.4 amended, as for 46991199's option (a). On a canonical row, I found none for NEL CSU. An identity seek for GBNHS0AQ and GBNHS0DJ in organizations returns 0 rows. A name_norm sweep finds 10 NEL CSU orgs, not the 5 m7 lists: 31617815 (8), 6325843 (323), 4457535 (79), 7632263 (59), 6469518 (11), 5323747 (11), 7195645 (6), 4693072 (3), 6358223 (2) and 15453143 (1). All are provisional, all have empty merged_identifiers, and all answer 200. An aggregate over their mentions finds no GB-NHS-0AQ/0DJ or PPON raw identifier (only nulls and two junk raws). The merged-identifier table is not on the public surface, so a GBNHS0AQ merged into some unrelated survivor cannot be ruled out from here. With no keyed row, the exact-name cluster 31617815 is the minimal-assumption target. All 8 of its mentions are \"N E L Commissioning Support Unit\" spellings. It answers 200, provisional, as a live org. 4693072 carries 0AQ's ODS register name exactly; it is a defensible alternative but no more canonical. Mention: a bounded SELECT shows (31570826, 46955480, ORG-GB-NHS-93C, \"N E L Commissioning Support Unit\", raw GB-NHS-93C), so the mention still stands on the case org."
+    }
+   ],
+   "notes": "I read only: cached m7-raw files, 4 fresh /v1/notices/<id>/content reads (all 200), 17 /v1/organizations reads (all 200, none redirected) and 6 bounded sq.sh SELECTs. One SELECT on organization_mentions covered the four notices. One was an identity seek for GBNHS0AQ/0DJ. One was a NEL CSU name_norm IN-seek. One aggregated raw identifiers over the 10 NEL CSU clusters. One listed 31617815's mentions. Two were refused as off the public surface: organization_merged_identifiers and org_mention_rehoming. So whether these tuples already carry a verdict is unknown from here. Its primary key is (notice_id, section_id). I made no retries, saw no 408s and wrote nothing. Two corrections for m7.md \u00a74: NEL CSU stands as 10 provisional clusters, not 5 (also 4457535 with 79 mentions, 6469518 with 11, 4693072 with 3, 6358223 with 2 and 15453143 with 1). 4693072 is named exactly as 0AQ's ODS record. This does not change the target, since none of the clusters is code- or PPON-keyed. The 93C reading sits on the same evidence shape ruling 3 accepted for 13T's CSU-named mentions, including the ICB url on the CSU-named party."
+  }
+ ],
+ [
+  "a2ead5800315f5d15",
+  {
+   "rows": [
+    {
+     "notice_id": 46991199,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "agree": false,
+     "reviewer_target": 31541949,
+     "target_org": 31556600,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "Under \u00a71.4 as written, no target is HIGH for this row, so 13T stays held whole under ruling 3. The reason is in the evidence. FTS package 036139-2022 is a tenderUpdate (corrigendum). Its tender.amendments[id 2] changes section I.1 Name from oldValue \"NHS England North East and Yorkshire\" to newValue \"NHS North East and Cumbria ICB\": the publisher itself corrected this buyer away from NHS England NEY. Neither M7 nor results \u00a75 cites this amendment. The party block still carries the pre-correction name with id GB-NHS-13T, and OPT-300 points the procedure's buyer at that section. That name comes from a profile: the details url is england.nhs.uk/north-east-yorkshire, but the contact (necsu.neprocurement@nhs.net) and address (Waterfront 4, Goldcrest Way NE15 8NY) are NECS. The rest of the notice also says NENC. The description names \"North East and North Cumbria ICB (The Contracting Authority)\" and says \"The ICB is inviting any provider\". It is an APMS (primary medical services) contract for Elswick, Newcastle. 13T is NENC's Newcastle Gateshead sub-ICB code, and primary medical care was delegated to ICBs from July 2022. Compare the NECS notices that really are NHS England NEY's, on twin 31619786 (46983499, 46985092, 46938485): those say \"for and on behalf of NHS England - North East and Yorkshire ... (the Contracting Authorities)\". This one does not. So the party is NENC ICB, under a stale or wrong name. That makes it NENC's own refused mention, not another body's. Rehoming it to Y63 31541949 would make NHS England NEY the buyer of a NENC ICB procurement, against the publisher's own correction. I put Y63 at LOW, not HIGH. The correct home is QHM's survivor 31556600, where the fold would put it anyway. I am HIGH on that identification. But a rehome to 31556600 is results \u00a75 option (a), which needs the owner to amend \u00a71.4 so a body's own refused mention can move to P's survivor. It is not a \u00a71.4 rehome as written. Target checks today: 31556600 answers 200, live, not provisional, PPON-keyed (GBPPONPMYZ6944BYLH), merged GBNHSQHM, 2,395 mentions, named NENC ICB. 31541949 also answers 200, live, the canonical GBNHSY63 row. 31619786 is the provisional exact-name twin. Mention check: live organization_mentions (46991199, ORG-GB-NHS-13T) is on 31600907, named \"NHS England - North East & Yorkshire\", raw GB-NHS-13T, and 13T still reports 504 mentions. The /content section matches the cache byte for byte. Tender 8769908 has this notice as its only version, so the original PIN is not in the DB."
+    }
+   ],
+   "notes": "Verdict for ruling 3: under \u00a71.4 as written, neither target is HIGH, so hold 13T whole (fold 33 / 987). The reviewer's Y63 target is contradicted by the corrigendum: FTS 036139-2022 amendment 2 changes I.1 Name from NHS England NEY to \"NHS North East and Cumbria ICB\", so the mention is NENC's own. target_org 31556600 is that body's row. I am HIGH on the identification, but the move is valid only if the owner adopts results \u00a75 option (a), the \u00a71.4 amendment. Do not post it as a \u00a71.4 rehome without that. Reads: public GETs for orgs 31541949, 31556600, 31619786 and 31600907 (all 200), for notice 46991199 and its /content, and for /content of 46938485, 46983499 and 46985092. Bounded SELECTs: organization_mentions by notice_id and by organization_id, tender_versions by notice and tender. Nothing was written to the repo or the box. Scratch copies are under /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/c13t/. The evidence file is /home/user/tender-db/.scratch/tender-db/519-nhs-digit-codes/measure/m7-raw/fts/036139-2022.json."
+  }
+ ],
+ [
+  "aab8f807ed68b3b65",
+  {
+   "rows": [
+    {
+     "notice_id": 46991199,
+     "section_id": "ORG-GB-NHS-13T",
+     "case_org": 31600907,
+     "agree": false,
+     "reviewer_target": 31541949,
+     "target_org": 31556600,
+     "confidence": "high",
+     "target_live": true,
+     "mention_on_case_org": "true",
+     "rationale": "I disagree with the reviewer: this mention is NENC's, not NHS England's, and under \u00a71.4 as written no rehome of it can reach HIGH, so 13T is held whole per ruling 3. M7 missed the deciding evidence. The cached Find a Tender package (m7-raw/fts/036139-2022.json) is a correction notice: its one release is tagged tenderUpdate, and tender.amendments[id 2].unstructuredChanges has where {section 'I.1.', label 'Name'}, oldValue 'NHS England North East and Yorkshire', newValue 'NHS North East and Cumbria ICB'. The publisher itself changed the buyer's name to NENC ICB. The parties block still shows the old name 'NHS England - North East & Yorkshire', and so does our stored parse (/v1/notices/46991199/content: BT-500 has that name, and nothing of the correction was ingested). That is why the gate sees an NHS England name. Everything else points to NENC acting through NECS: the description says 'NECS is working for and on behalf of North East and North Cumbria ICB (The Contracting Authority)' and 'The ICB is inviting any provider'; the code is GB-NHS-13T, NENC's own sub-ICB child code; the contact is necsu.neprocurement@nhs.net; the address is NECS's (Waterfront 4 Goldcrest Way, NE15 8NY); the buyer profile is in-tendhost.co.uk/nhsnecsu. It is the notice's only party (role buyer), with no other parties. Only details.url (england.nhs.uk/north-east-yorkshire) and the uncorrected name point to NHS England NEY. Targets: 31541949 returns 200 and is live (GBNHSY63, not provisional, 12 mentions). It would be the right row for NHS England NEY, but the notice withdraws that name, so (b) is wrong on the evidence, not just MEDIUM: it would move an NENC tender onto NHS England. 31556600 returns 200 and is live (PPON PMYZ6944BYLH, GBNHSQHM merged, 2,395 mentions, not provisional). It is NENC's canonical survivor and the right row for the body named. 31619786 is NHS England NEY's provisional exact-name twin. The mention still stands on the case org: a bounded SELECT on organization_mentions WHERE notice_id=46991199 returns exactly one row (31600907, 'ORG-GB-NHS-13T', 'NHS England - North East & Yorkshire', GB-NHS-13T). Under \u00a71.4 as written: ruling 3 treats 13T as NENC publishing under its own sub-ICB code, so this is the body's own mention under a stale name, not another body's. A 317 rehome to 31556600 is option (a), which results.md \u00a75 says needs the owner to amend \u00a71.4, and (b) contradicts the notice. My HIGH is on the evidence (the party is NENC, 31556600) and is not a HIGH vote for any rehome under \u00a71.4 as written. If the owner adopts (a), I would record HIGH for 31556600."
+    }
+   ],
+   "notes": "Bottom line for ruling 3: under \u00a71.4 as written, neither (a) nor (b) can be a HIGH rehome, so hold 13T whole. The cost is the 488 NENC-named mentions; the 15 CSU rehomes are not affected. The deciding evidence is the Find a Tender correction in measure/m7-raw/fts/036139-2022.json: tender.amendments[0].unstructuredChanges[0] changes section I.1 'Name' from 'NHS England North East and Yorkshire' to 'NHS North East and Cumbria ICB'. M7's reader (m7.json) took parties, buyer and description but not tender.amendments, so the reviewer never saw it. That also undercuts results.md \u00a75's statement that 'by name this one is' another body's mention: the published name was corrected to NENC by the publisher. Two ways to unblock 13T, both outside this verdict: (1) the owner amends \u00a71.4 so a reviewed 317 verdict may move a body's own refused mention to P's survivor; then 31556600 is HIGH from this challenger, and it has the same effect as folding the mention with 13T. (2) A follow-up for ingest: legacy FTS corrigenda (unstructuredChanges on I.1 Name) are not applied to the stored party name, so the gate scores a name the publisher withdrew. Reads made: GET /v1/organizations/{31541949,31556600,31600907,31619786}, all 200 and live (31619786 provisional). Two bounded SELECTs on organization_mentions: by notice_id 46991199 (1 row, on 31600907), and by organization_id IN (31541949, 31619786) (15 rows, LIMIT 40, not truncated). Nothing was written; only scratch copies were kept under the session scratchpad (c13t/)."
+  }
+ ]
+]

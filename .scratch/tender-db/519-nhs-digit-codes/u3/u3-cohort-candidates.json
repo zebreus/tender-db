@@ -1,0 +1,3993 @@
+[
+ {
+  "code": "QGH",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QGH",
+   "legal_end": null,
+   "name": "NHS HEREFORDSHIRE AND WORCESTERSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31542355,
+   "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+   "identifier": "GBPPONPNMN7243RQRR"
+  },
+  "holder_ids": [
+   31542355,
+   31575075
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30916931,
+    31542355
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30916931,
+    31542355
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "18C",
+    "coded_parties": 1,
+    "holder_ids": [
+     31575075
+    ],
+    "ods_name": "NHS HEREFORDSHIRE AND WORCESTERSHIRE ICB - 18C",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QGH",
+      "end": null,
+      "rel": "RE5",
+      "start": "2019-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31575075,
+    "child_of": [
+     "18C"
+    ],
+    "shape": "identity",
+    "head": "NHS Herefordshire and Worcestershire Integrated Care Board",
+    "mentions": 1,
+    "identifier": "GBNHS18C",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+      "name_norm": "nhs herefordshire and worcestershire integrated care board",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-18C"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "QHL",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QHL",
+   "legal_end": null,
+   "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 30916123,
+   "name": "NHS Birmingham and Solihull Integrated Care Board",
+   "identifier": "GBPPONPWQY9673JBYN"
+  },
+  "holder_ids": [
+   30916123,
+   31542353,
+   31546689,
+   31601027,
+   31601028,
+   31601029
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30915737,
+    30915738,
+    30916123
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30915737,
+    30915738,
+    30916123
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "15E",
+    "coded_parties": 46,
+    "holder_ids": [
+     31542353,
+     31546689,
+     31601027,
+     31601028,
+     31601029
+    ],
+    "ods_name": "NHS BIRMINGHAM AND SOLIHULL ICB - 15E",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QHL",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31546689,
+    "child_of": [
+     "15E"
+    ],
+    "shape": "identity",
+    "head": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+    "mentions": 42,
+    "identifier": "GBNHS15E",
+    "provisional": false,
+    "under_review": true,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 36,
+      "n": 36,
+      "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+      "name_norm": "nhs birmingham and solihull integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 3,
+      "n": 3,
+      "name": "NHS Birmingham and Solihull ICB",
+      "name_norm": "nhs birmingham and solihull icb",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 3,
+      "n": 3,
+      "name": "NHS Birmingham and Solihull Integrated Care Board",
+      "name_norm": "nhs birmingham and solihull integrated care board",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 40,
+      "raw": "GB-NHS-15E"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-15e"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": [
+   {
+    "org_id": 31542353,
+    "name": "NHS Black Country Integrated Care Board",
+    "child": true,
+    "denied": [
+     "child-triple-shape",
+     "child-carries-ppon",
+     "child-name-refused"
+    ]
+   },
+   {
+    "org_id": 31601027,
+    "name": "Wake Green Surgery",
+    "child": true,
+    "denied": [
+     "minted-identity",
+     "child-name-refused"
+    ]
+   },
+   {
+    "org_id": 31601028,
+    "name": "College Road Surgery",
+    "child": true,
+    "denied": [
+     "minted-identity",
+     "child-name-refused"
+    ]
+   },
+   {
+    "org_id": 31601029,
+    "name": "Small Heath Medical Practice",
+    "child": true,
+    "denied": [
+     "minted-identity",
+     "child-name-refused"
+    ]
+   }
+  ]
+ },
+ {
+  "code": "QHM",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QHM",
+   "legal_end": null,
+   "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD",
+   "predecessors": [
+    "QMK",
+    "QT8",
+    "QVP"
+   ],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31556600,
+   "name": "NHS North East and North Cumbria Integrated Care Board",
+   "identifier": "GBPPONPMYZ6944BYLH"
+  },
+  "holder_ids": [
+   3257070,
+   30929531,
+   31547927,
+   31548114,
+   31556600,
+   31577547,
+   31600907,
+   31603816,
+   31604393,
+   31605903,
+   31610859,
+   31614001,
+   31614680,
+   31615636,
+   31615979,
+   31632651,
+   31634553,
+   31645251
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30915134,
+    30930129,
+    30976504,
+    31538425,
+    31556600,
+    31565552,
+    31593327,
+    31595235,
+    31604957,
+    31608998
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    3257070,
+    30915134,
+    30930129,
+    30976504,
+    31538425,
+    31547927,
+    31548114,
+    31556600,
+    31565552,
+    31577547,
+    31593327,
+    31595235,
+    31603816,
+    31604957,
+    31605903,
+    31608998,
+    31645251
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "00L",
+    "coded_parties": 1,
+    "holder_ids": [
+     31632651
+    ],
+    "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 00L",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QHM",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "00N",
+    "coded_parties": 5,
+    "holder_ids": [
+     31556600
+    ],
+    "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 00N",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QHM",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "00P",
+    "coded_parties": 25,
+    "holder_ids": [
+     31556600,
+     31603816,
+     31605903,
+     31610859,
+     31615636,
+     31615979
+    ],
+    "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 00P",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QHM",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "01H",
+    "coded_parties": 1,
+    "holder_ids": [
+     31604393
+    ],
+    "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 01H",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QHM",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "13T",
+    "coded_parties": 504,
+    "holder_ids": [
+     30929531,
+     31556600,
+     31600907
+    ],
+    "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 13T",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QHM",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "16C",
+    "coded_parties": 8,
+    "holder_ids": [
+     31614680
+    ],
+    "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 16C",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QHM",
+      "end": null,
+      "rel": "RE5",
+      "start": "2019-10-23"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "84H",
+    "coded_parties": 1,
+    "holder_ids": [
+     31634553
+    ],
+    "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 84H",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QHM",
+      "end": null,
+      "rel": "RE5",
+      "start": "2019-10-23"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "99C",
+    "coded_parties": 6,
+    "holder_ids": [
+     31614001
+    ],
+    "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 99C",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QHM",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31600907,
+    "child_of": [
+     "13T"
+    ],
+    "shape": "identity",
+    "head": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "mentions": 488,
+    "identifier": "GBNHS13T",
+    "provisional": false,
+    "under_review": true,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "role"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 464,
+      "n": 464,
+      "name": "North East and North Cumbria Integrated Care Board",
+      "name_norm": "north east and north cumbria integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 11,
+      "n": 11,
+      "name": "NHS North East and North Cumbria Integrated Care Board",
+      "name_norm": "nhs north east and north cumbria integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 4,
+      "n": 4,
+      "name": "North East & North Cumbria Integrated Care Board",
+      "name_norm": "north east & north cumbria integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 2,
+      "n": 2,
+      "name": "NHS North East North Cumbria Integrated Care Board",
+      "name_norm": "nhs north east north cumbria integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 2,
+      "n": 2,
+      "name": "NHS North East and North Cumbria Integrated Care Board (ICB)",
+      "name_norm": "nhs north east and north cumbria integrated care board (icb)",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS North East & North Cumbria Integrated Care Board",
+      "name_norm": "nhs north east & north cumbria integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS North East and Cumbria Integrated Care Board",
+      "name_norm": "nhs north east and cumbria integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS North East and North Cumbria ICB",
+      "name_norm": "nhs north east and north cumbria icb",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "North East North Cumbria Integrated Care Board",
+      "name_norm": "north east north cumbria integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "North East and North Cumbria Integrated Care",
+      "name_norm": "north east and north cumbria integrated care",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 488,
+      "raw": "GB-NHS-13T"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   },
+   {
+    "org_id": 31604393,
+    "child_of": [
+     "01H"
+    ],
+    "shape": "identity",
+    "head": "NHS North East and North Cumbria Integrated Care Board",
+    "mentions": 1,
+    "identifier": "GBNHS01H",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS North East and North Cumbria Integrated Care Board",
+      "name_norm": "nhs north east and north cumbria integrated care board",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-01H"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   },
+   {
+    "org_id": 31610859,
+    "child_of": [
+     "00P"
+    ],
+    "shape": "zero-only",
+    "head": "The North East and North Cumbria Integrated Care System (ICS)",
+    "mentions": 1,
+    "identifier": null,
+    "provisional": true,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "The North East and North Cumbria Integrated Care System (ICS)",
+      "name_norm": "the north east and north cumbria integrated care system (ics)",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-00P"
+     }
+    ],
+    "m1_kind": "zero-only"
+   },
+   {
+    "org_id": 31614001,
+    "child_of": [
+     "99C"
+    ],
+    "shape": "identity",
+    "head": "North East and North Cumbria Integrated Care Board",
+    "mentions": 6,
+    "identifier": "GBNHS99C",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 3,
+      "n": 3,
+      "name": "NHS North East and North Cumbria Integrated Care Board",
+      "name_norm": "nhs north east and north cumbria integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 2,
+      "n": 2,
+      "name": "North East and North Cumbria Integrated Care Board",
+      "name_norm": "north east and north cumbria integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS North East and North Cumbria Integrated Care Board (NHS NENC ICB)",
+      "name_norm": "nhs north east and north cumbria integrated care board (nhs nenc icb)",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 5,
+      "raw": "GB-NHS-99C"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-99c"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   },
+   {
+    "org_id": 31614680,
+    "child_of": [
+     "16C"
+    ],
+    "shape": "identity",
+    "head": "NHS North East and North Cumbria Integrated Care Board",
+    "mentions": 8,
+    "identifier": "GBNHS16C",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 6,
+      "n": 6,
+      "name": "NHS North East and North Cumbria Integrated Care Board",
+      "name_norm": "nhs north east and north cumbria integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS North East North Cumbria Integrated Care Board - Tees Valley Place",
+      "name_norm": "nhs north east north cumbria integrated care board - tees valley place",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "North East & North Cumbria Integrated Care Board - Tees Valley",
+      "name_norm": "north east & north cumbria integrated care board - tees valley",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 6,
+      "raw": "GB-NHS-16C"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-16 (c)"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-16c"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   },
+   {
+    "org_id": 31615979,
+    "child_of": [
+     "00P"
+    ],
+    "shape": "zero-only",
+    "head": "The North East and North Cumbria Integrated Care Board (ICB)",
+    "mentions": 1,
+    "identifier": null,
+    "provisional": true,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "The North East and North Cumbria Integrated Care Board (ICB)",
+      "name_norm": "the north east and north cumbria integrated care board (icb)",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-00P"
+     }
+    ],
+    "m1_kind": "zero-only"
+   },
+   {
+    "org_id": 31632651,
+    "child_of": [
+     "00L"
+    ],
+    "shape": "zero-only",
+    "head": "NHS North East and North Cumbria Integrated Care Boards",
+    "mentions": 1,
+    "identifier": null,
+    "provisional": true,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS North East and North Cumbria Integrated Care Boards",
+      "name_norm": "nhs north east and north cumbria integrated care boards",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-00L"
+     }
+    ],
+    "m1_kind": "zero-only"
+   },
+   {
+    "org_id": 31634553,
+    "child_of": [
+     "84H"
+    ],
+    "shape": "identity",
+    "head": "NHS North East and North Cumbria Integrated Care Boards",
+    "mentions": 1,
+    "identifier": "GBNHS84H",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS North East and North Cumbria Integrated Care Boards",
+      "name_norm": "nhs north east and north cumbria integrated care boards",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-84H"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": [
+   {
+    "org_id": 3257070,
+    "name": "North of England Commissioning Support",
+    "child": false,
+    "denied": []
+   },
+   {
+    "org_id": 30929531,
+    "name": "NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT",
+    "child": true,
+    "denied": [
+     "child-triple-shape",
+     "child-carries-ppon",
+     "child-name-refused"
+    ]
+   },
+   {
+    "org_id": 31547927,
+    "name": "Aspatria Medical Group",
+    "child": false,
+    "denied": []
+   },
+   {
+    "org_id": 31548114,
+    "name": "Parkway Medical Group",
+    "child": false,
+    "denied": []
+   },
+   {
+    "org_id": 31577547,
+    "name": "NHS England North West / Greater Manchester",
+    "child": false,
+    "denied": []
+   },
+   {
+    "org_id": 31603816,
+    "name": "NHS North East North Cumbria Integrated Care Board - County Durham Place",
+    "child": false,
+    "denied": []
+   },
+   {
+    "org_id": 31605903,
+    "name": "NHS North East North Cumbria Integrated Care Board - Tees Valley Place",
+    "child": false,
+    "denied": []
+   },
+   {
+    "org_id": 31615636,
+    "name": "NHS North East and North Cumbira ICB",
+    "child": true,
+    "denied": [
+     "child-name-refused"
+    ]
+   },
+   {
+    "org_id": 31645251,
+    "name": "The Store House Pharmacy",
+    "child": false,
+    "denied": []
+   }
+  ]
+ },
+ {
+  "code": "QJK",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QJK",
+   "legal_end": null,
+   "name": "NHS DEVON INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 30917049,
+   "name": "NHS DEVON INTEGRATED CARE BOARD",
+   "identifier": "GBPPONPRDC6266CBRR"
+  },
+  "holder_ids": [
+   30917049,
+   31536069,
+   31555903
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30914151,
+    30914271,
+    30914831,
+    30917049
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30914151,
+    30914271,
+    30914831,
+    30917049
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "15N",
+    "coded_parties": 31,
+    "holder_ids": [
+     31536069,
+     31555903
+    ],
+    "ods_name": "NHS DEVON ICB - 15N",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QJK",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31555903,
+    "child_of": [
+     "15N"
+    ],
+    "shape": "identity",
+    "head": "NHS Devon Integrated Care Board",
+    "mentions": 29,
+    "identifier": "GBNHS15N",
+    "provisional": false,
+    "under_review": true,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 12,
+      "n": 12,
+      "name": "NHS Devon Integrated Care Board",
+      "name_norm": "nhs devon integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 11,
+      "n": 11,
+      "name": "NHS DEVON ICB",
+      "name_norm": "nhs devon icb",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 5,
+      "n": 5,
+      "name": "NHS DEVON INTEGRATED CARE BOARD",
+      "name_norm": "nhs devon integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS Devon Integrated Care Board (ICB)",
+      "name_norm": "nhs devon integrated care board (icb)",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 29,
+      "raw": "GB-NHS-15N"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": [
+   {
+    "org_id": 31536069,
+    "name": "NHS Bristol North Somerset & South Gloucestershire Integrated Care Board",
+    "child": true,
+    "denied": [
+     "child-triple-shape",
+     "child-carries-ppon",
+     "child-name-refused"
+    ]
+   }
+  ]
+ },
+ {
+  "code": "QMJ",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QMJ",
+   "legal_end": "2026-03-31",
+   "name": "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": [
+    "Z9B2Z"
+   ]
+  },
+  "survivor": {
+   "org_id": 30916245,
+   "name": "NHS North Central London Integrated Care Board",
+   "identifier": "GBPPONPWBN7811DGVX"
+  },
+  "holder_ids": [
+   30915099,
+   30916245,
+   31570826,
+   31617815,
+   31625150
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-residue-2026-10-12",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30915101,
+    30915993,
+    30916245,
+    31536734,
+    31593612
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30915099,
+    30915101,
+    30915993,
+    30916245,
+    31536734,
+    31593612,
+    31625150
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "93C",
+    "coded_parties": 23,
+    "holder_ids": [
+     31570826,
+     31617815
+    ],
+    "ods_name": "NHS WEST AND NORTH LONDON ICB - 93C",
+    "other_parents": [
+     "Z9B2Z"
+    ],
+    "periods_here": [
+     {
+      "code": "QMJ",
+      "end": "2026-03-31",
+      "rel": "RE5",
+      "start": "2019-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31570826,
+    "child_of": [
+     "93C"
+    ],
+    "shape": "identity",
+    "head": "NHS North Central London Integrated Care Board",
+    "mentions": 22,
+    "identifier": "GBNHS93C",
+    "provisional": false,
+    "under_review": true,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": "QMJ",
+         "verdict": "better"
+        },
+        "parent": "Z9B2Z"
+       }
+      ],
+      "in_period": 9,
+      "n": 9,
+      "name": "North Central London Integrated Care Board",
+      "name_norm": "north central london integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": "QMJ",
+         "verdict": "better"
+        },
+        "parent": "Z9B2Z"
+       }
+      ],
+      "in_period": 6,
+      "n": 6,
+      "name": "NHS North Central London ICB",
+      "name_norm": "nhs north central london icb",
+      "undated": 0
+     },
+     {
+      "after_end": 1,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": "QMJ",
+         "verdict": "better"
+        },
+        "parent": "Z9B2Z"
+       }
+      ],
+      "in_period": 5,
+      "n": 6,
+      "name": "NHS North Central London Integrated Care Board",
+      "name_norm": "nhs north central london integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": "QMJ",
+         "verdict": "better"
+        },
+        "parent": "Z9B2Z"
+       }
+      ],
+      "in_period": 1,
+      "n": 1,
+      "name": "North Central London Integrated Care System",
+      "name_norm": "north central london integrated care system",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 21,
+      "raw": "GB-NHS-93C"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-93c"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": [
+   {
+    "org_id": 30915099,
+    "name": "NHS London Commercial Hub",
+    "child": false,
+    "denied": []
+   },
+   {
+    "org_id": 31617815,
+    "name": "N E L Commissioning Support Unit",
+    "child": true,
+    "denied": [
+     "child-triple-shape",
+     "child-name-refused"
+    ]
+   },
+   {
+    "org_id": 31625150,
+    "name": "NHS NCL Integrated Care Board",
+    "child": false,
+    "denied": []
+   }
+  ]
+ },
+ {
+  "code": "QMM",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QMM",
+   "legal_end": "2026-03-31",
+   "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": [
+    "T6Y0W"
+   ]
+  },
+  "survivor": {
+   "org_id": 31542073,
+   "name": "NHS Norfolk and Waveney Integrated Care Board",
+   "identifier": "GBPPONPZYC6286DWHT"
+  },
+  "holder_ids": [
+   1280779,
+   30915273,
+   30915905,
+   31542073
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30915248,
+    31542073
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30915248,
+    31542073
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "26A",
+    "coded_parties": 115,
+    "holder_ids": [
+     1280779,
+     30915273,
+     30915905
+    ],
+    "ods_name": "NHS NORFOLK AND SUFFOLK ICB - 26A",
+    "other_parents": [
+     "T6Y0W"
+    ],
+    "periods_here": [
+     {
+      "code": "QMM",
+      "end": "2026-03-31",
+      "rel": "RE5",
+      "start": "2019-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 30915273,
+    "child_of": [
+     "26A"
+    ],
+    "shape": "identity",
+    "head": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+    "mentions": 113,
+    "identifier": "GBNHS26A",
+    "provisional": false,
+    "under_review": true,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 1,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": "QMM",
+         "verdict": "better"
+        },
+        "parent": "T6Y0W"
+       }
+      ],
+      "in_period": 108,
+      "n": 109,
+      "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+      "name_norm": "nhs norfolk and waveney integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": "QMM",
+         "verdict": "better"
+        },
+        "parent": "T6Y0W"
+       }
+      ],
+      "in_period": 3,
+      "n": 3,
+      "name": "Norfolk & Waveney Integrated Care Board",
+      "name_norm": "norfolk & waveney integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 1,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": "QMM",
+         "verdict": "better"
+        },
+        "parent": "T6Y0W"
+       }
+      ],
+      "in_period": 0,
+      "n": 1,
+      "name": "NHS Norfolk and Waveney Integrated Care Board",
+      "name_norm": "nhs norfolk and waveney integrated care board",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 80,
+      "raw": "GB-NHS-26a"
+     },
+     {
+      "n": 33,
+      "raw": "GB-NHS-26A"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": [
+   {
+    "org_id": 1280779,
+    "name": "James Paget University Hospitals NHS Foundation Trust",
+    "child": true,
+    "denied": [
+     "child-triple-shape",
+     "child-name-refused"
+    ]
+   },
+   {
+    "org_id": 30915905,
+    "name": "Norfolk and Norwich University Hospitals NHS Foundation Trust",
+    "child": true,
+    "denied": [
+     "minted-identity",
+     "child-name-refused"
+    ]
+   }
+  ]
+ },
+ {
+  "code": "QNQ",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QNQ",
+   "legal_end": "2026-03-31",
+   "name": "NHS FRIMLEY INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": [
+    "QRL",
+    "S0E4D",
+    "S9B9J"
+   ]
+  },
+  "survivor": {
+   "org_id": 31552078,
+   "name": "NHS Frimley Integrated Care Board",
+   "identifier": "GBPPONPLMH6718XNVJ"
+  },
+  "holder_ids": [
+   31535814,
+   31552078
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30913842,
+    30916858,
+    31540924,
+    31552078
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30913842,
+    30916858,
+    31540924,
+    31552078
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "D4U1Y",
+    "coded_parties": 0,
+    "holder_ids": [
+     31535814
+    ],
+    "ods_name": "NHS FRIMLEY ICB - D4U1Y",
+    "other_parents": [
+     "QRL"
+    ],
+    "periods_here": [
+     {
+      "code": "QNQ",
+      "end": "2026-03-31",
+      "rel": "RE5",
+      "start": "2020-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31535814,
+    "child_of": [
+     "D4U1Y"
+    ],
+    "shape": "identity",
+    "head": "NHS Frimley ICB",
+    "mentions": 65,
+    "identifier": "GBNHSD4U1Y",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 8,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": null,
+         "verdict": "zero"
+        },
+        "parent": "QRL"
+       }
+      ],
+      "in_period": 47,
+      "n": 55,
+      "name": "NHS Frimley Integrated Care Board",
+      "name_norm": "nhs frimley integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": null,
+         "verdict": "zero"
+        },
+        "parent": "QRL"
+       }
+      ],
+      "in_period": 9,
+      "n": 9,
+      "name": "NHS Frimley ICB",
+      "name_norm": "nhs frimley icb",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": null,
+         "verdict": "zero"
+        },
+        "parent": "QRL"
+       }
+      ],
+      "in_period": 1,
+      "n": 1,
+      "name": "Frimley ICB",
+      "name_norm": "frimley icb",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 65,
+      "raw": "GB-NHS-D4U1Y"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "QOC",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QOC",
+   "legal_end": null,
+   "name": "NHS SHROPSHIRE, TELFORD AND WREKIN INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31542354,
+   "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+   "identifier": "GBPPONPGZQ6523JGTT"
+  },
+  "holder_ids": [
+   30915758,
+   31542354
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30915757,
+    31542354
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30915757,
+    31542354
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "M2L0M",
+    "coded_parties": 0,
+    "holder_ids": [
+     30915758
+    ],
+    "ods_name": "NHS SHROPSHIRE, TELFORD AND WREKIN ICB - M2L0M",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QOC",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 30915758,
+    "child_of": [
+     "M2L0M"
+    ],
+    "shape": "identity",
+    "head": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+    "mentions": 4,
+    "identifier": "GBNHSM2L0M",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 4,
+      "n": 4,
+      "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+      "name_norm": "nhs shropshire, telford and wrekin integrated care board",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 4,
+      "raw": "GB-NHS-M2L0M"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "QOQ",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QOQ",
+   "legal_end": null,
+   "name": "NHS HUMBER AND NORTH YORKSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31573365,
+   "name": "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+   "identifier": "GBPPONPBCG3899RLCL"
+  },
+  "holder_ids": [
+   30915681,
+   31570761,
+   31573365,
+   31591587,
+   31619860
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30913653,
+    31535385,
+    31552257,
+    31570883,
+    31573365,
+    31587871,
+    31591474,
+    31592886
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30913653,
+    31535385,
+    31552257,
+    31570883,
+    31573365,
+    31587871,
+    31591474,
+    31592886
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "02Y",
+    "coded_parties": 1,
+    "holder_ids": [
+     31570761
+    ],
+    "ods_name": "NHS HUMBER AND NORTH YORKSHIRE ICB - 02Y",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QOQ",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "03K",
+    "coded_parties": 12,
+    "holder_ids": [
+     31591587
+    ],
+    "ods_name": "NHS HUMBER AND NORTH YORKSHIRE ICB - 03K",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QOQ",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "03Q",
+    "coded_parties": 1,
+    "holder_ids": [
+     30915681
+    ],
+    "ods_name": "NHS HUMBER AND NORTH YORKSHIRE ICB - 03Q",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QOQ",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "42D",
+    "coded_parties": 2,
+    "holder_ids": [
+     31619860
+    ],
+    "ods_name": "NHS HUMBER AND NORTH YORKSHIRE ICB - 42D",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QOQ",
+      "end": null,
+      "rel": "RE5",
+      "start": "2019-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31570761,
+    "child_of": [
+     "02Y"
+    ],
+    "shape": "identity",
+    "head": "NHS Humber and North Yorkshire Integrated Care Board",
+    "mentions": 1,
+    "identifier": "GBNHS02Y",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS Humber and North Yorkshire Integrated Care Board",
+      "name_norm": "nhs humber and north yorkshire integrated care board",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-02Y"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   },
+   {
+    "org_id": 31591587,
+    "child_of": [
+     "03K"
+    ],
+    "shape": "identity",
+    "head": "NHS Humber and North Yorkshire ICB",
+    "mentions": 12,
+    "identifier": "GBNHS03K",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 12,
+      "n": 12,
+      "name": "NHS Humber and North Yorkshire ICB",
+      "name_norm": "nhs humber and north yorkshire icb",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 12,
+      "raw": "GB-NHS-03K"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   },
+   {
+    "org_id": 31619860,
+    "child_of": [
+     "42D"
+    ],
+    "shape": "identity",
+    "head": "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+    "mentions": 2,
+    "identifier": "GBNHS42D",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 2,
+      "n": 2,
+      "name": "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+      "name_norm": "nhs humber and north yorkshire integrated care board (icb)",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-42D"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": [
+   {
+    "org_id": 30915681,
+    "name": "NHS England North East and Yorkshire",
+    "child": true,
+    "denied": [
+     "child-name-refused"
+    ]
+   }
+  ]
+ },
+ {
+  "code": "QPM",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QPM",
+   "legal_end": null,
+   "name": "NHS NORTHAMPTONSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31542357,
+   "name": "NHS Northamptonshire Integrated Care Board",
+   "identifier": "GBPPONPWCM9262VJDY"
+  },
+  "holder_ids": [
+   31542357,
+   31606157
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30916368,
+    31542357
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30916368,
+    31542357
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "78H",
+    "coded_parties": 2,
+    "holder_ids": [
+     31606157
+    ],
+    "ods_name": "NHS NORTHAMPTONSHIRE ICB - 78H",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QPM",
+      "end": null,
+      "rel": "RE5",
+      "start": "2019-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31606157,
+    "child_of": [
+     "78H"
+    ],
+    "shape": "identity",
+    "head": "NHS Northamptonshire ICB",
+    "mentions": 2,
+    "identifier": "GBNHS78H",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 2,
+      "n": 2,
+      "name": "NHS Northamptonshire ICB",
+      "name_norm": "nhs northamptonshire icb",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-78H"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "QRL",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QRL",
+   "legal_end": null,
+   "name": "NHS HAMPSHIRE AND ISLE OF WIGHT INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31552077,
+   "name": "NHS Hampshire and Isle of Wight Integrated Care Board",
+   "identifier": "GBPPONPBQZ2117NPPD"
+  },
+  "holder_ids": [
+   31535814,
+   31552077,
+   31597942
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    20902603,
+    30913796,
+    31543410,
+    31552077,
+    31567317,
+    31580931,
+    31591850,
+    31605716,
+    31630906
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    20902603,
+    30913796,
+    31543410,
+    31552077,
+    31567317,
+    31580931,
+    31591850,
+    31605716,
+    31630906
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "D4U1Y",
+    "coded_parties": 0,
+    "holder_ids": [
+     31535814
+    ],
+    "ods_name": "NHS FRIMLEY ICB - D4U1Y",
+    "other_parents": [
+     "QNQ"
+    ],
+    "periods_here": [
+     {
+      "code": "QRL",
+      "end": null,
+      "rel": "RE5",
+      "start": "2026-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "D9Y0V",
+    "coded_parties": 0,
+    "holder_ids": [
+     31597942
+    ],
+    "ods_name": "NHS HAMPSHIRE AND ISLE OF WIGHT ICB - D9Y0V",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QRL",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31597942,
+    "child_of": [
+     "D9Y0V"
+    ],
+    "shape": "identity",
+    "head": "NHS HAMPSHIRE AND THE ISLE OF WIGHT INTEGRATED CARE BOARD",
+    "mentions": 10,
+    "identifier": "GBNHSD9Y0V",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 7,
+      "n": 7,
+      "name": "NHS Hampshire and Isle of Wight ICB",
+      "name_norm": "nhs hampshire and isle of wight icb",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 3,
+      "n": 3,
+      "name": "NHS HAMPSHIRE AND THE ISLE OF WIGHT INTEGRATED CARE BOARD",
+      "name_norm": "nhs hampshire and the isle of wight integrated care board",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 10,
+      "raw": "GB-NHS-D9Y0V"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": [
+   {
+    "org_id": 31535814,
+    "name": "NHS Frimley ICB",
+    "child": true,
+    "denied": [
+     "child-name-refused"
+    ]
+   }
+  ]
+ },
+ {
+  "code": "QUA",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QUA",
+   "legal_end": null,
+   "name": "NHS BLACK COUNTRY INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31542353,
+   "name": "NHS Black Country Integrated Care Board",
+   "identifier": "GBPPONPCXW1342CXYV"
+  },
+  "holder_ids": [
+   31542353,
+   31545773
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30917129,
+    31542353
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30917129,
+    31542353
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "D2P2L",
+    "coded_parties": 0,
+    "holder_ids": [
+     31545773
+    ],
+    "ods_name": "NHS BLACK COUNTRY ICB - D2P2L",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QUA",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31545773,
+    "child_of": [
+     "D2P2L"
+    ],
+    "shape": "identity",
+    "head": "NHS BLACK COUNTRY INTEGRATED CARE BOARD",
+    "mentions": 16,
+    "identifier": "GBNHSD2P2L",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 14,
+      "n": 14,
+      "name": "NHS Black Country Integrated Care Board",
+      "name_norm": "nhs black country integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS BLACK COUNTRY INTEGRATED CARE BOARD",
+      "name_norm": "nhs black country integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS Balck Country Integrated Care Board",
+      "name_norm": "nhs balck country integrated care board",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 16,
+      "raw": "GB-NHS-D2P2L"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "QUY",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QUY",
+   "legal_end": null,
+   "name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31536069,
+   "name": "NHS Bristol North Somerset & South Gloucestershire Integrated Care Board",
+   "identifier": "GBPPONPPCD6597HCDW"
+  },
+  "holder_ids": [
+   30917049,
+   31536069,
+   31566597
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-u6-2026-10-12",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30914356,
+    31536069,
+    31609946
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30914356,
+    31536069,
+    31609946
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "15C",
+    "coded_parties": 31,
+    "holder_ids": [
+     30917049,
+     31566597
+    ],
+    "ods_name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE ICB - 15C",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QUY",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31566597,
+    "child_of": [
+     "15C"
+    ],
+    "shape": "identity",
+    "head": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board",
+    "mentions": 30,
+    "identifier": "GBNHS15C",
+    "provisional": false,
+    "under_review": true,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 24,
+      "n": 24,
+      "name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board",
+      "name_norm": "nhs bristol, north somerset and south gloucestershire integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "Bristol, North Somerset & South Gloucestershire Integrated Care Board",
+      "name_norm": "bristol, north somerset & south gloucestershire integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS Bristol North Somerset and South Gloucestershire Integrated Care Board",
+      "name_norm": "nhs bristol north somerset and south gloucestershire integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS Bristol, North Somerset and South Gloucestershire ICB",
+      "name_norm": "nhs bristol, north somerset and south gloucestershire icb",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board (BNSSG ICB)",
+      "name_norm": "nhs bristol, north somerset and south gloucestershire integrated care board (bnssg icb)",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS, Bristol, North Somerset and South Gloucestershire Integrated Care Board",
+      "name_norm": "nhs, bristol, north somerset and south gloucestershire integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "\u2022\tNHS Bristol, North Somerset and South Gloucestershire ICB",
+      "name_norm": "\u2022 nhs bristol, north somerset and south gloucestershire icb",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 30,
+      "raw": "GB-NHS-15C"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": [
+   {
+    "org_id": 30917049,
+    "name": "NHS DEVON INTEGRATED CARE BOARD",
+    "child": true,
+    "denied": [
+     "child-triple-shape",
+     "child-carries-ppon",
+     "child-name-refused"
+    ]
+   }
+  ]
+ },
+ {
+  "code": "QVV",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QVV",
+   "legal_end": null,
+   "name": "NHS DORSET INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31571396,
+   "name": "NHS Dorset Integrated Care Board",
+   "identifier": "GBPPONPGWM4538ZGJR"
+  },
+  "holder_ids": [
+   31571396,
+   31575718
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30914398,
+    31571396
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30914398,
+    31571396
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "11J",
+    "coded_parties": 3,
+    "holder_ids": [
+     31575718
+    ],
+    "ods_name": "NHS DORSET ICB - 11J",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QVV",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31575718,
+    "child_of": [
+     "11J"
+    ],
+    "shape": "identity",
+    "head": "NHS Dorset Integrated Care Board",
+    "mentions": 3,
+    "identifier": "GBNHS11J",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 3,
+      "n": 3,
+      "name": "NHS Dorset Integrated Care Board",
+      "name_norm": "nhs dorset integrated care board",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-NHS-11J"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "QWO",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QWO",
+   "legal_end": null,
+   "name": "NHS WEST YORKSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 30917022,
+   "name": "NHS West Yorkshire Integrated Care Board",
+   "identifier": "GBPPONPMTJ1118QVJH"
+  },
+  "holder_ids": [
+   30917022,
+   31541083,
+   31587867,
+   31612327
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    30914544,
+    30917022,
+    30933188
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    30914544,
+    30917022,
+    30933188
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "03R",
+    "coded_parties": 5,
+    "holder_ids": [
+     31541083
+    ],
+    "ods_name": "NHS WEST YORKSHIRE ICB - 03R",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QWO",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "15F",
+    "coded_parties": 3,
+    "holder_ids": [
+     31612327
+    ],
+    "ods_name": "NHS WEST YORKSHIRE ICB - 15F",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QWO",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-04-01"
+     }
+    ],
+    "role": "RO98"
+   },
+   {
+    "code": "36J",
+    "coded_parties": 1,
+    "holder_ids": [
+     31587867
+    ],
+    "ods_name": "NHS WEST YORKSHIRE ICB - 36J",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QWO",
+      "end": null,
+      "rel": "RE5",
+      "start": "2019-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31541083,
+    "child_of": [
+     "03R"
+    ],
+    "shape": "identity",
+    "head": "West Yorkshire Integrated Care Board",
+    "mentions": 5,
+    "identifier": "GBNHS03R",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 4,
+      "n": 4,
+      "name": "NHS West Yorkshire ICB",
+      "name_norm": "nhs west yorkshire icb",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "West Yorkshire Integrated Care Board",
+      "name_norm": "west yorkshire integrated care board",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 5,
+      "raw": "GB-NHS-03R"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   },
+   {
+    "org_id": 31587867,
+    "child_of": [
+     "36J"
+    ],
+    "shape": "identity",
+    "head": "NHS West Yorkshire Integrated Care Board (ICB)",
+    "mentions": 1,
+    "identifier": "GBNHS36J",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS West Yorkshire Integrated Care Board (ICB)",
+      "name_norm": "nhs west yorkshire integrated care board (icb)",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-36J"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   },
+   {
+    "org_id": 31612327,
+    "child_of": [
+     "15F"
+    ],
+    "shape": "identity",
+    "head": "NHS West Yorkshire Integrated Care Board (Leeds Place)",
+    "mentions": 3,
+    "identifier": "GBNHS15F",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS West Yorkshire Integrated Care Board (ICB)",
+      "name_norm": "nhs west yorkshire integrated care board (icb)",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS West Yorkshire Integrated Care Board (ICB) (Leeds Place)",
+      "name_norm": "nhs west yorkshire integrated care board (icb) (leeds place)",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS West Yorkshire Integrated Care Board (Leeds Place)",
+      "name_norm": "nhs west yorkshire integrated care board (leeds place)",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-NHS-15F"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "QWU",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QWU",
+   "legal_end": null,
+   "name": "NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31542351,
+   "name": "NHS Coventry and Warwickshire Integrated Care Board",
+   "identifier": "GBPPONPBZT7637QJTP"
+  },
+  "holder_ids": [
+   30917969,
+   31542351
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    31534829,
+    31542351
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    31534829,
+    31542351
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "B2M3M",
+    "coded_parties": 0,
+    "holder_ids": [
+     30917969
+    ],
+    "ods_name": "NHS COVENTRY AND WARWICKSHIRE ICB - B2M3M",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "QWU",
+      "end": null,
+      "rel": "RE5",
+      "start": "2020-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 30917969,
+    "child_of": [
+     "B2M3M"
+    ],
+    "shape": "identity",
+    "head": "NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD",
+    "mentions": 600,
+    "identifier": "GBNHSB2M3M",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 349,
+      "n": 349,
+      "name": "NHS Coventry and Warwickshire ICB",
+      "name_norm": "nhs coventry and warwickshire icb",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 247,
+      "n": 247,
+      "name": "NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD",
+      "name_norm": "nhs coventry and warwickshire integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 3,
+      "n": 3,
+      "name": "NHS Coventry and Warwickshire Integrated Care Board",
+      "name_norm": "nhs coventry and warwickshire integrated care board",
+      "undated": 0
+     },
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS Coventry and Warwickshire Integrated CareBoard",
+      "name_norm": "nhs coventry and warwickshire integrated careboard",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 600,
+      "raw": "GB-NHS-B2M3M"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "QXU",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QXU",
+   "legal_end": "2026-03-31",
+   "name": "NHS SURREY HEARTLANDS INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": [
+    "S9B9J"
+   ]
+  },
+  "survivor": {
+   "org_id": 31552079,
+   "name": "NHS Surrey Heartlands Integrated Care Board",
+   "identifier": "GBPPONPTCP5774GNNH"
+  },
+  "holder_ids": [
+   31552079,
+   31608314
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    21990238,
+    30916138,
+    31543412,
+    31552079
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    21990238,
+    30916138,
+    31543412,
+    31552079
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "92A",
+    "coded_parties": 1,
+    "holder_ids": [
+     31608314
+    ],
+    "ods_name": "NHS SURREY AND SUSSEX ICB - 92A",
+    "other_parents": [
+     "S9B9J"
+    ],
+    "periods_here": [
+     {
+      "code": "QXU",
+      "end": "2026-03-31",
+      "rel": "RE5",
+      "start": "2019-10-23"
+     }
+    ],
+    "role": "RO98"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31608314,
+    "child_of": [
+     "92A"
+    ],
+    "shape": "identity",
+    "head": "NHS Surrey Heartlands ICB",
+    "mentions": 1,
+    "identifier": "GBNHS92A",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [
+       {
+        "check": {
+         "rival": "QXU",
+         "verdict": "better"
+        },
+        "parent": "S9B9J"
+       }
+      ],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS Surrey Heartlands ICB",
+      "name_norm": "nhs surrey heartlands icb",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-92A"
+     }
+    ],
+    "m1_kind": "sub-icb"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "RBT",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RBT",
+   "legal_end": null,
+   "name": "MID CHESHIRE HOSPITALS NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 30918302,
+   "name": "Mid Cheshire Hospitals NHS Foundation Trust",
+   "identifier": "GBPPONPZZX1928RJQT"
+  },
+  "holder_ids": [
+   30918302,
+   31624083
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    1271280,
+    30918302
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    1271280,
+    30918302
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "RBT20",
+    "coded_parties": 0,
+    "holder_ids": [
+     31624083
+    ],
+    "ods_name": "LEIGHTON HOSPITAL",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "RBT",
+      "end": null,
+      "rel": "RE6",
+      "start": "1991-04-01"
+     }
+    ],
+    "role": "RO198"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31624083,
+    "child_of": [
+     "RBT20"
+    ],
+    "shape": "identity",
+    "head": "Mid Cheshire Hospitals NHS Foundation Trust",
+    "mentions": 1,
+    "identifier": "GBNHSRBT20",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "Mid Cheshire Hospitals NHS Foundation Trust",
+      "name_norm": "mid cheshire hospitals nhs foundation trust",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RBT20"
+     }
+    ],
+    "m1_kind": "site"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "RCU",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RCU",
+   "legal_end": null,
+   "name": "SHEFFIELD CHILDREN'S NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 30930095,
+   "name": "Sheffield Children's NHS Foundation Trust",
+   "identifier": "GBPPONPTWR5281TMPQ"
+  },
+  "holder_ids": [
+   30930095,
+   30967595
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    1250550,
+    30930095
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    1250550,
+    30930095
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "RCU51",
+    "coded_parties": 0,
+    "holder_ids": [
+     30967595
+    ],
+    "ods_name": "THE BECTON CENTRE FOR CHILDREN & YOUNG PEOPLE",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "RCU",
+      "end": null,
+      "rel": "RE6",
+      "start": "2002-04-01"
+     }
+    ],
+    "role": "RO198"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 30967595,
+    "child_of": [
+     "RCU51"
+    ],
+    "shape": "identity",
+    "head": "Sheffield Children's NHS Foundation Trust",
+    "mentions": 1,
+    "identifier": "GBNHSRCU51",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "Sheffield Children's NHS Foundation Trust",
+      "name_norm": "sheffield children's nhs foundation trust",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RCU51"
+     }
+    ],
+    "m1_kind": "site"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "RCX",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RCX",
+   "legal_end": null,
+   "name": "THE QUEEN ELIZABETH HOSPITAL, KING'S LYNN, NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 30914684,
+   "name": "The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust",
+   "identifier": "GBPPONPQCT9574RQTZ"
+  },
+  "holder_ids": [
+   30914684,
+   31551062,
+   31594811
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    1929574,
+    2728937,
+    30914684,
+    31598591,
+    31648953
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    1929574,
+    2728937,
+    30914684,
+    31594811,
+    31598591,
+    31648953
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "RCX70",
+    "coded_parties": 0,
+    "holder_ids": [
+     31551062
+    ],
+    "ods_name": "THE QUEEN ELIZABETH HOSPITAL",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "RCX",
+      "end": null,
+      "rel": "RE6",
+      "start": "1992-04-01"
+     }
+    ],
+    "role": "RO198"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31551062,
+    "child_of": [
+     "RCX70"
+    ],
+    "shape": "identity",
+    "head": "The Queen Elizabeth Hospital King's Lynn NHS  Foundation Trust",
+    "mentions": 1,
+    "identifier": "GBNHSRCX70",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "The Queen Elizabeth Hospital King's Lynn NHS  Foundation Trust",
+      "name_norm": "the queen elizabeth hospital king's lynn nhs foundation trust",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RCX70"
+     }
+    ],
+    "m1_kind": "site"
+   }
+  ],
+  "non_members": [
+   {
+    "org_id": 31594811,
+    "name": "Queen Elizabeth Hospital FT",
+    "child": false,
+    "denied": []
+   }
+  ]
+ },
+ {
+  "code": "RPY",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RPY",
+   "legal_end": null,
+   "name": "THE ROYAL MARSDEN NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 30926647,
+   "name": "The Royal Marsden NHS Foundation Trust",
+   "identifier": "GBPPONPXLT9823WVCY"
+  },
+  "holder_ids": [
+   30926647,
+   31560996
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    1206891,
+    6454935,
+    30926647
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    1206891,
+    6454935,
+    30926647
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "B4Z5Z",
+    "coded_parties": 0,
+    "holder_ids": [
+     31560996
+    ],
+    "ods_name": "THE ROYAL MARSDEN HOSPITAL (SUTTON)",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "RPY",
+      "end": null,
+      "rel": "RE6",
+      "start": "2021-10-01"
+     }
+    ],
+    "role": "RO198"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31560996,
+    "child_of": [
+     "B4Z5Z"
+    ],
+    "shape": "identity",
+    "head": "The Royal Marsden Hospital",
+    "mentions": 1,
+    "identifier": "GBNHSB4Z5Z",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "The Royal Marsden Hospital",
+      "name_norm": "the royal marsden hospital",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-B4Z5Z"
+     }
+    ],
+    "m1_kind": "site"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "RXA",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RXA",
+   "legal_end": null,
+   "name": "CHESHIRE AND WIRRAL PARTNERSHIP NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RJT",
+    "RR5"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 31552751,
+   "name": "Cheshire and Wirral Partnership NHS Foundation Trust",
+   "identifier": "GBPPONPGZV5874HRZD"
+  },
+  "holder_ids": [
+   31537284,
+   31552751
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    1604072,
+    2267512,
+    31552751
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    1604072,
+    2267512,
+    31552751
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "Q7N9Z",
+    "coded_parties": 0,
+    "holder_ids": [
+     31537284
+    ],
+    "ods_name": "CHESHIRE WEST HH+ - COVID VACCINATION CENTRE",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "RXA",
+      "end": null,
+      "rel": "RE6",
+      "start": "2021-10-01"
+     }
+    ],
+    "role": "RO198"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31537284,
+    "child_of": [
+     "Q7N9Z"
+    ],
+    "shape": "identity",
+    "head": "NHS Cheshire and Wirral Partnership NHS FT",
+    "mentions": 1,
+    "identifier": "GBNHSQ7N9Z",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "NHS Cheshire and Wirral Partnership NHS FT",
+      "name_norm": "nhs cheshire and wirral partnership nhs ft",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-Q7N9Z"
+     }
+    ],
+    "m1_kind": "site"
+   }
+  ],
+  "non_members": []
+ },
+ {
+  "code": "RYY",
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYY",
+   "legal_end": null,
+   "name": "KENT COMMUNITY HEALTH NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "survivor": {
+   "org_id": 30916727,
+   "name": "Kent Community Health NHS Foundation Trust",
+   "identifier": "GBPPONPHVC1716LBDJ"
+  },
+  "holder_ids": [
+   30916727,
+   31603978
+  ],
+  "verdict": {
+   "action": "merge",
+   "cohort": "nhs-body-ods-confirmed-2026-10-11",
+   "confidence": "high",
+   "departed": [],
+   "members": [
+    6676127,
+    30916727,
+    31560119,
+    31604013,
+    31649007
+   ],
+   "newcomers": [],
+   "reviewed_holders": [
+    6676127,
+    30916727,
+    31560119,
+    31604013,
+    31649007
+   ],
+   "status": "applied"
+  },
+  "children": [
+   {
+    "code": "RYY13",
+    "coded_parties": 0,
+    "holder_ids": [
+     31603978
+    ],
+    "ods_name": "TRINITY HOUSE",
+    "other_parents": [],
+    "periods_here": [
+     {
+      "code": "RYY",
+      "end": null,
+      "rel": "RE6",
+      "start": "2010-11-01"
+     }
+    ],
+    "role": "RO198"
+   }
+  ],
+  "members": [
+   {
+    "org_id": 31603978,
+    "child_of": [
+     "RYY13"
+    ],
+    "shape": "identity",
+    "head": "Kent Community Health NHS Foundation Trust",
+    "mentions": 1,
+    "identifier": "GBNHSRYY13",
+    "provisional": false,
+    "under_review": false,
+    "child_head_check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "child_names": [
+     {
+      "after_end": 0,
+      "before_start": 0,
+      "check_here": {
+       "rival": null,
+       "verdict": "admitted"
+      },
+      "check_other_parents": [],
+      "in_period": 1,
+      "n": 1,
+      "name": "Kent Community Health NHS Foundation Trust",
+      "name_norm": "kent community health nhs foundation trust",
+      "undated": 0
+     }
+    ],
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RYY13"
+     }
+    ],
+    "m1_kind": "site"
+   }
+  ],
+  "non_members": []
+ }
+]
