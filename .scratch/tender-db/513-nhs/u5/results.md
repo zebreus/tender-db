@@ -68,3 +68,21 @@ The owner read of U3's 18-code residue was a reviewer plus an adversarial challe
   - U4's alias arms loser keys only: `NHS_BODY_ALIAS_LEDGER_SQL` reads `$.loser_name_norm`.
   - `arm_nhs_body_alias_on` already refuses, at arm time, a loser key that a standing identifier-NULL row owns.
   - So the census gate guards nothing when it catches the survivor. That is filed as U6.
+
+## U6 cohort (2026-10-12)
+
+U6 (the survivor-exempt D4) was gated at 6593d9c and deployed at c786f0e. Census 2284 confirmed that the nine bodies
+held only on their PPON survivor's twin-owned key still had their reviewed holder sets.
+
+Posted as cohort `nhs-body-u6-2026-10-12` (`verdicts-nhs-body-u6-2026-10-12.json`): QUY, RCB, RHM, RNK, RRV, RXF, RXT,
+RYC, RYG.
+- Dry 2285: 9 admitted.
+- Wet 2286: 9 merged, every survivor the body's PPON org; 13 org rows removed; 1,358 mentions repointed; 798 tenders
+  touched; held 0.
+- S3 read (`s3check_u6.py` → `s3-read-u6.json`): 0 fails.
+- Closing dry 2287: `admitted_codes` []; 171 applied; `nhs_body_regrown` []; ledger 273.
+
+**Totals: 171 of 174 codes applied, 273 org rows removed, 26,705 mentions repointed.** Still held:
+- DQF: the minted COH identity already is the body;
+- RFF: no SAME holder;
+- RVY: after its legal end, so it belongs to 519.

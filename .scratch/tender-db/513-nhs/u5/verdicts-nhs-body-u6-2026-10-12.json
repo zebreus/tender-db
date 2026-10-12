@@ -1,0 +1,159 @@
+{
+ "cohort": "nhs-body-u6-2026-10-12",
+ "verdicts": [
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QUY",
+   "members": [
+    30914356,
+    31536069,
+    31609946
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89). Held only on D4 for the PPON survivor 31536069, whose head key its uncoded twin owns; 513 U6 (6593d9c) exempts the survivor, as the alias arms loser keys only. Census 2284. All 3 live holders are SAME as QUY (NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE ICB, A, RO261, no legal end), and each is admitted by the check with denied=[]. 30914356 has the exact ODS name (163 mentions, 33 coded). 31536069 is the body's PPON org (PPCD6597HCDW): the ODS name with '&' and no comma, 5 mentions. 31609946 reads 'North East Somerset' for 'North Somerset' (1 mention, coded QUY). Bristol and South Gloucestershire belong only to BNSSG, and the check finds no rival, QOX included. The 'North East Somerset' holder is NOT the blocker. The blocker: 31536069, the SAME PPON org and so D1's survivor, has key_owners_elsewhere=[31592799]. Per NHS_BODY_KEY_OWNERS_SQL, 31592799 is ",
+   "reviewed_holders": [
+    30914356,
+    31536069,
+    31609946
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RCB",
+   "members": [
+    30916881,
+    31535291
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89). Held only on D4 for the PPON survivor 31535291, whose head key its uncoded twin owns; 513 U6 (6593d9c) exempts the survivor, as the alias arms loser keys only. Census 2284. Both live holders are SAME as RCB (YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST, A, RO197, allow=1, no legal end). Each is admitted by the check with denied=[]. 30916881 has the exact ODS name (63 mentions, 44 coded). 31535291 is the PPON org (PNMY9834ZYJT), 'Teaching Hospital' in the singular, 19 mentions. ORD names BF1 and RCC (2012-07-01) as predecessors, but no holder carries the RCC 'Scarborough and North East Yorkshire' name, so D6's successor and predecessor concern does not arise. The blocker: 31535291, the SAME PPON org and so D1's survivor, has key_owners_elsewhere=[30915212]. 30915212 is a standing GB identifier-NULL row whose name_norm is exactly 'york and scarbor",
+   "reviewed_holders": [
+    30916881,
+    31535291
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RHM",
+   "members": [
+    2181541,
+    30926769,
+    31624750
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89). Held only on D4 for the PPON survivor 30926769, whose head key its uncoded twin owns; 513 U6 (6593d9c) exempts the survivor, as the alias arms loser keys only. Census 2284. All three members are UHS (ODS RHM, UNIVERSITY HOSPITAL SOUTHAMPTON NHS FOUNDATION TRUST, Active, no legal end). The check admits all three, none is denied or contested, and none is under review. 2181541 carries the exact ODS name (391 mentions, 26 of the 28 coded parties). 31624750 'University Hospitals Southampton NHS' is a truncated variant with a plural slip (1 mention). 30926769 is the body's PPON org, PTRZ1736CQVH, which the census lists beside the code. Its head name is 'University Hospital Southampton', and 17 of its 18 mentions carry the full trust name. D1 makes 30926769 the survivor: nhs_body_survivor picks the only PPON member. The blocker is that 30926769 has key_owners_elsewher Excluded: 30926652: NOT_ORG. 'Coroners Adult Post-Mortem and Forensic services' is a service or tender title, not an organisation. The check says zero, it has 1",
+   "reviewed_holders": [
+    2181541,
+    30926652,
+    30926769,
+    31624750
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RNK",
+   "members": [
+    1538916,
+    31554431
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89). Held only on D4 for the PPON survivor 31554431, whose head key its uncoded twin owns; 513 U6 (6593d9c) exempts the survivor, as the alias arms loser keys only. Census 2284. Both holders are RNK (ODS TAVISTOCK AND PORTMAN NHS FOUNDATION TRUST). The check admits both, and neither is denied, contested or under review. 1538916 carries the exact ODS name: 29 mentions, 4 of them coded GB-NHS-RNK. 31554431 is the body's PPON org, PGGT9642DYWY, which the census lists beside the code. It is named 'Tavistock and Portman NHS Trust', RNK's own pre-2006 name: the FT role starts 2006-11-01, and the only predecessor is FBL. The legal end does not bar the verdict. ODS gives a legal end of 2026-03-31 with successor G6V2S (NORTH LONDON NHS FOUNDATION TRUST). But neither holder carries a successor name (successor_name null), coded_notices_after_legal_end is 0 and later_parties is",
+   "reviewed_holders": [
+    1538916,
+    31554431
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RRV",
+   "members": [
+    1791116,
+    30916969
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89). Held only on D4 for the PPON survivor 30916969, whose head key its uncoded twin owns; 513 U6 (6593d9c) exempts the survivor, as the alias arms loser keys only. Census 2284. Both live holders are UCLH (ODS RRV, Active RO197, no legal end). 1791116 is 'University College London Hospitals NHS Foundation Trust': the exact ODS name, 228 mentions, 10 of them GB-NHS-RRV, provisional, check admitted, nothing denied. 30916969 is the PPON org PYRL5371BNMH, 'University College London Hospitals NHS FT': the FT abbreviation, 40 mentions, check admitted, nothing denied. Its head 234 key 'university college london hospitals nhs ft'/GB is also owned by 17230498, a standing identifier-NULL GB row outside the body (NHS_BODY_KEY_OWNERS_SQL matches exact name_norm, country GB and identifier IS NULL). The members-exact verdict [1791116,30916969] therefore reads 'member-key-owned-el",
+   "reviewed_holders": [
+    1791116,
+    30916969
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXF",
+   "members": [
+    30917291,
+    31539005
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89). Held only on D4 for the PPON survivor 30917291, whose head key its uncoded twin owns; 513 U6 (6593d9c) exempts the survivor, as the alias arms loser keys only. Census 2284. Both live holders are the RXF body: MID YORKSHIRE TEACHING NHS TRUST, Active RO197, no legal end, no successors. 31539005 is 'MID YORKSHIRE TEACHING NHS TRUST': the exact current ODS name, 45 mentions, 6 of them GB-NHS-RXF, provisional, check admitted, nothing denied. 30917291 is the PPON org PTPB4248VJQT: head 'Mid Yorkshire Hospitals NHS Trust' (27 mentions) plus 'Mid Yorkshire Teaching NHS Trust' (3), check admitted, nothing denied. 'Mid Yorkshire Hospitals NHS Trust' is RXF's own pre-2023 name, the same code renamed. It is neither a predecessor body (those are RMW Dewsbury and RR4 Pinderfields and Pontefract) nor a successor, so D6 does not apply. But 30917291's head 234 key 'mid yorkshi",
+   "reviewed_holders": [
+    30917291,
+    31539005
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RXT",
+   "members": [
+    10958945,
+    30926645,
+    30932865
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89). Held only on D4 for the PPON survivor 30926645, whose head key its uncoded twin owns; 513 U6 (6593d9c) exempts the survivor, as the alias arms loser keys only. Census 2284. The identity read is complete. Three holders are SAME as BIRMINGHAM AND SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST: 10958945 (the '&' spelling, 155 mentions, 5 coded), 30932865 (the 'Foundation NHS Trust' word order, 1 coded) and 30926645 (the trust's own PPON org PTMC2127TPCV, 51 mentions). The ODS row has no successors and no legal end, and its predecessors RND and RNF are Inactive, so there is no D6 successor question. The blocker is D4 on the PPON member. 30926645 has key_owners_elsewhere=[30917358]. NHS_BODY_KEY_OWNERS_SQL defines that as a standing identifier-NULL GB row whose name_norm is exactly 'birmingham & solihull mental health foundation trust': the body's own uncoded E3 twin,  Excluded: 13043614: This is a DIFFERENT body. 'Birmingham Women's and Children's Hospital NHS Foundation Trust' is RQ3 (Active RO197 in nhs-ods.tsv), and the ch",
+   "reviewed_holders": [
+    10958945,
+    13043614,
+    30926645,
+    30932865
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYC",
+   "members": [
+    1263180,
+    30916110
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89). Held only on D4 for the PPON survivor 30916110, whose head key its uncoded twin owns; 513 U6 (6593d9c) exempts the survivor, as the alias arms loser keys only. Census 2284. Both live holders are SAME as EAST OF ENGLAND AMBULANCE SERVICE NHS TRUST. 1263180 carries the exact ODS name (209 mentions, 3 RYC-coded). Its stray raw values 'c/o West Midlands Ambulance Service NHS FT' come from joint ambulance procurements and are not a second body. 30916110 is the trust's PPON org PBNZ4155WXBZ: 71 of its 89 mentions carry the plain trust name, and a PPON registers the legal body, not the RYC01 HQ site. The ODS row has no successors and no legal end, and its predecessors RB4, RFU and RMZ are Inactive. The blocker is D4 on the PPON member, which the code would pick as survivor. 30916110 has key_owners_elsewhere=[31623946]: a standing identifier-NULL GB row whose name_norm",
+   "reviewed_holders": [
+    1263180,
+    30916110
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "RYG",
+   "members": [
+    1691021,
+    4648675,
+    30918096
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89). Held only on D4 for the PPON survivor 30918096, whose head key its uncoded twin owns; 513 U6 (6593d9c) exempts the survivor, as the alias arms loser keys only. Census 2284. All three live holders are SAME as COVENTRY AND WARWICKSHIRE PARTNERSHIP NHS TRUST. 1691021 carries the exact ODS name (40 mentions, 5 RYG-coded). Its other code RGY (1 mention) is a transposition typo: RGY is absent from nhs-ods.tsv and ORD answers 404. It is letter-only, so it mints no identity; 1691021 has identifier null, no minted-identity flag and no denial, so this is not 519 territory. 4648675 is the name without 'NHS' (32 mentions, 1 coded); 'Partnership' rules out RKB (UHCW) and the ICB. 30918096 is the PPON org PPBB6627GXNQ, spelled with '&'. The ODS row has no predecessors, successors or legal end. The blocker is D4 on the PPON member, the code's survivor. 30918096 has key_owners",
+   "reviewed_holders": [
+    1691021,
+    4648675,
+    30918096
+   ]
+  }
+ ]
+}

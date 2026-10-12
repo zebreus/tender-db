@@ -1,0 +1,170 @@
+{
+ "checks": [
+  {
+   "code": "QUY",
+   "keep": 31536069,
+   "target": "ppon",
+   "losers": [
+    30914356,
+    31609946
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 169,
+   "mentions_now": 169,
+   "id_lookup": [
+    31536069
+   ],
+   "losers_http": {
+    "30914356": "308",
+    "31609946": "308"
+   }
+  },
+  {
+   "code": "RCB",
+   "keep": 31535291,
+   "target": "ppon",
+   "losers": [
+    30916881
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 82,
+   "mentions_now": 82,
+   "id_lookup": [
+    31535291
+   ],
+   "losers_http": {
+    "30916881": "308"
+   }
+  },
+  {
+   "code": "RHM",
+   "keep": 30926769,
+   "target": "ppon",
+   "losers": [
+    2181541,
+    31624750
+   ],
+   "nonmembers": [
+    30926652
+   ],
+   "mentions_before_sum": 410,
+   "mentions_now": 410,
+   "id_lookup": [
+    30926769
+   ],
+   "losers_http": {
+    "2181541": "308",
+    "31624750": "308"
+   }
+  },
+  {
+   "code": "RNK",
+   "keep": 31554431,
+   "target": "ppon",
+   "losers": [
+    1538916
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 30,
+   "mentions_now": 30,
+   "id_lookup": [
+    31554431
+   ],
+   "losers_http": {
+    "1538916": "308"
+   }
+  },
+  {
+   "code": "RRV",
+   "keep": 30916969,
+   "target": "ppon",
+   "losers": [
+    1791116
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 268,
+   "mentions_now": 268,
+   "id_lookup": [
+    30916969
+   ],
+   "losers_http": {
+    "1791116": "308"
+   }
+  },
+  {
+   "code": "RXF",
+   "keep": 30917291,
+   "target": "ppon",
+   "losers": [
+    31539005
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 75,
+   "mentions_now": 75,
+   "id_lookup": [
+    30917291
+   ],
+   "losers_http": {
+    "31539005": "308"
+   }
+  },
+  {
+   "code": "RXT",
+   "keep": 30926645,
+   "target": "ppon",
+   "losers": [
+    10958945,
+    30932865
+   ],
+   "nonmembers": [
+    13043614
+   ],
+   "mentions_before_sum": 207,
+   "mentions_now": 207,
+   "id_lookup": [
+    30926645
+   ],
+   "losers_http": {
+    "10958945": "308",
+    "30932865": "308"
+   }
+  },
+  {
+   "code": "RYC",
+   "keep": 30916110,
+   "target": "ppon",
+   "losers": [
+    1263180
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 298,
+   "mentions_now": 298,
+   "id_lookup": [
+    30916110
+   ],
+   "losers_http": {
+    "1263180": "308"
+   }
+  },
+  {
+   "code": "RYG",
+   "keep": 30918096,
+   "target": "ppon",
+   "losers": [
+    1691021,
+    4648675
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 76,
+   "mentions_now": 76,
+   "id_lookup": [
+    30918096
+   ],
+   "losers_http": {
+    "1691021": "308",
+    "4648675": "308"
+   }
+  }
+ ],
+ "fails": []
+}
