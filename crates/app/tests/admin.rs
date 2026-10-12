@@ -275,11 +275,9 @@ async fn admin_api_drives_ingestion_end_to_end() {
         "action": "merge", "rationale": "r", "confidence": "high",
     }]});
     assert_eq!(verdicts(altid_one).send().await.unwrap().status().as_u16(), 400, "every other scheme needs two");
-    // The census is dry only: a wet run is refused at enqueue, and the dry run's report is
-    // readable on the stored-report surface (empty here: the fixture has no FTS notice).
-    let wet = h.enqueue(Some(SECRET), json!({"kind":"match-org-identifiers","rule":"nhs-body","dry_run":false})).await;
-    assert_eq!(wet.status().as_u16(), 400, "the nhs-body wet path is U4's");
-    assert!(wet.text().await.unwrap().contains("nhs-body wet path is U4; not built"));
+    // The census's report is readable on the stored-report surface (empty here: the fixture
+    // has no FTS notice). Since U4 a wet run is accepted at enqueue, and it refuses at run,
+    // writing nothing, while the generic-name wall cannot be read (no org_match_keys here).
     let dry = h.enqueue(Some(SECRET), json!({"kind":"match-org-identifiers","rule":"nhs-body"})).await;
     assert_eq!(dry.status().as_u16(), 202);
     let state = h.drain(3).await;
@@ -287,6 +285,16 @@ async fn admin_api_drives_ingestion_end_to_end() {
     let report: Value = h.report(Some(SECRET), "nhs-body-plan").await.json().await.unwrap();
     let census: Value = serde_json::from_str(report["body"].as_str().unwrap()).unwrap();
     assert_eq!((census["dry_run"].clone(), census["codes"].clone()), (json!(true), json!([])), "{census}");
+    let wet = h.enqueue(Some(SECRET), json!({"kind":"match-org-identifiers","rule":"nhs-body","dry_run":false})).await;
+    assert_eq!(wet.status().as_u16(), 202, "the nhs-body wet path is U4's, and it is built");
+    let state = h.drain(3).await;
+    let wet_row = &state["recent"][0];
+    assert_eq!(wet_row["outcome"], "error", "{wet_row}");
+    let counts = wet_row["counts"].as_str().unwrap();
+    assert!(
+        counts.contains("nhs-body REFUSED") && counts.contains("org_match_keys is empty") && counts.contains("nothing was written"),
+        "{counts}"
+    );
 
     // --- DELETE an unknown queued job ⇒ 404 (and the route is gated) --------
     let unknown =
