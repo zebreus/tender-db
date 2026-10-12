@@ -14,7 +14,7 @@ codes = [c for c in codes if re.fullmatch(r'[A-Z0-9]{3}|[A-Z0-9]{5}|[A-Z0-9]{6}'
 print(len(codes), 'codes to look up', file=sys.stderr)
 n = 0
 for c in codes:
-    path = os.path.join(HERE, 'ods', c + '.json')
+    path = os.path.join(os.environ.get('ODS_DIR', os.path.join(HERE, 'ods')), c + '.json')
     if os.path.exists(path):
         continue
     for attempt in range(5):
