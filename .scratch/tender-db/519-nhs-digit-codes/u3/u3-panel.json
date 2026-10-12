@@ -1,0 +1,610 @@
+[
+ [
+  "QHM:reviewer",
+  {
+   "members": [
+    {
+     "code": "QHM",
+     "org_id": 31600907,
+     "child": "13T",
+     "include": true,
+     "confidence": "high",
+     "rationale": "13T is dated under QHM in the child map (RE5, 2020-04-01, open; ODS 'NHS NORTH EAST AND NORTH CUMBRIA ICB - 13T'; no other parent). I read the live rows (bounded SELECT, LIMIT 700): 488 mentions on 488 distinct notices, all in section ORG-GB-NHS-13T with the exact raw GB-NHS-13T. All 10 distinct names are NENC spellings: 464 'North East and North Cumbria Integrated Care Board', 11 'NHS ...', 4 '&', 2 '(ICB)', 2 'North East North Cumbria', and five single variants (including 'NHS North East and Cumbria Integrated Care Board' and the truncated 'North East and North Cumbria Integrated Care'). No mention is named after the CSU or NHS England. The 16 refused mentions have left: 46991199 now sits on 31556600, as the \u00a71.4 amendment ruled. I read 9 notices outside M7's sample, including the three oddest names. In every one the 13T party is the buyer (OPT-300-Procedure-Buyer) named as NENC, and usually a separate GB-FTS NENC row is the review body. The notice text reads 'NECS working for and on behalf of NHS NENC ICB (the Contracting/Relevant Authority)'. So these are NENC's own procurements (QHM-2024-xxxx refs, the Tees Valley SLT RFI, dental under delegated commissioning). The head 'NORTH OF ENGLAND COMMISSIONING SUPPORT' is stale: issue 524, no mention carries it now. Under the E5 amendment it is informational, and as an identity loser it keys nothing. under_review=true comes from the org_mention_rehoming case flag, not a denial. Ruling 3's first branch is met."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31604393,
+     "child": "01H",
+     "include": true,
+     "confidence": "high",
+     "rationale": "01H (North Cumbria sub-ICB location) is dated under QHM (RE5, 2020-04-01, open; no other parent). It has one live mention, 46897190 / 023427-2024, raw GB-NHS-01H, named 'NHS North East and North Cumbria Integrated Care Board'. It is the NHS 111 North West joint award, with buyers QE1, QYG, 14J and 01H. NENC is one of the four joint buyers, for the North Cumbria population. That is the ICB itself buying under its own sub-ICB code, not a supplier or a separate body. The head equals the mention name, and child_check admits it."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31614001,
+     "child": "99C",
+     "include": true,
+     "confidence": "high",
+     "rationale": "99C (North Tyneside sub-ICB location) is dated under QHM (RE5, 2020-04-01, open; no other parent). It has 6 live mentions, all with the holder's own triple (5 'GB-NHS-99C', 1 'GB-NHS-99c'). The three names are all NENC: 'NHS North East and North Cumbria Integrated Care Board' x3, 'North East and North Cumbria Integrated Care Board' x2, and '... (NHS NENC ICB)' x1. I read 2 notices, 47108709 / 007973-2023 and 46922697 / 035732-2023. In both the 99C party is the buyer, and the text reads 'NECS ... working for and on behalf of NHS NENC ICB'. All names are admitted."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31614680,
+     "child": "16C",
+     "include": true,
+     "confidence": "high",
+     "rationale": "16C (Tees Valley sub-ICB location) is dated under QHM (RE5, 2019-10-23, open; no other parent). It has 8 live mentions, all with its own triple ('16C', '16c', '16 (c)'). Six are named 'NHS North East and North Cumbria Integrated Care Board'. Two are place-named: 46945687 / 008130-2023 'North East & North Cumbria Integrated Care Board - Tees Valley' (buyer, with NECS as mediator), and 47163862 / 021206-2024 '... - Tees Valley Place' (buyer + CPB; text: 'NECS working for and on behalf of NHS NENC ICB - Tees Valley place'). An ICB place is not a separate legal body: the ICB is the buyer, and the place is exactly what the 16C sub-ICB location code denotes. So this is the parent publishing under its child code, and child_check admits every name. Note for the record: this is the asymmetry results.md \u00a76 keeps on purpose. 513 left the uncoded 'Tees Valley Place' cluster 31605903 out as HOSTED_OR_SITE, and it stays a non-member here. Folding 16C does not touch it: an identity loser arms no name keys."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31634553,
+     "child": "84H",
+     "include": true,
+     "confidence": "high",
+     "rationale": "84H (County Durham sub-ICB location) is dated under QHM (RE5, 2019-10-23, open; no other parent). It has one live mention, 46991767 / 036707-2022 'NECS449 - Vasectomy Service', raw GB-NHS-84H, named 'NHS North East and North Cumbria Integrated Care Boards' (a plural slip). It is the buyer, and the text reads 'NECS is working for and on behalf of NHS North East and North Cumbria Integrated Care Board (ICB) (the Contracting Authority)'. The head equals the name, and child_check admits it."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31610859,
+     "child": "00P",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Zero-only cluster under the 00P tail, which is dated under QHM (RE5, 2020-04-01, open). It is provisional and has one mention, 46914583 / 027214-2023, raw GB-NHS-00P, named 'The North East and North Cumbria Integrated Care System (ICS)'. That mention is the buyer, and the text says NECS acts 'for and on behalf of NHS North East and North Cumbria (NHS NENC) Integrated Care Board (ICB) (the Contracting Authority)'. The deciding evidence: the award notice of the same procurement (same ocid ocds-h6vhtk-03de02, 46929420 / 004815-2024) names the buyer 'The North East and North Cumbria Integrated Care Board (ICB)', and that mention is the sibling member 31615979. So the 'ICS' name is NENC ICB under its system name. An ICS has no legal personality, and the ICB is the statutory buyer. The head is the mention name, and both gate (E5 still gates zero-only heads) and are admitted. The fold arms this name as a QHM key, which is right for this name."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31615979,
+     "child": "00P",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Zero-only cluster under the 00P tail, which is dated under QHM. It is provisional and has one mention, 46929420 / 004815-2024, raw GB-NHS-00P, named 'The North East and North Cumbria Integrated Care Board (ICB)'. That mention is the buyer, and the text says NECS acts 'for and on behalf of NHS North East and North Cumbria Integrated Care Board'. It is the award of the same procurement as 31610859's tender notice. The head equals the name, and child_check admits it. It is plainly the parent body under its 00x tail."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31632651,
+     "child": "00L",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Zero-only cluster under the 00L tail (Northumberland), which is dated under QHM (RE5, 2020-04-01, open; no other parent). It is provisional and has one mention, 46983541 / 027995-2022 'NECS375 - Home Oxygen Assessment and Review Service', raw GB-NHS-00L, named 'NHS North East and North Cumbria Integrated Care Boards' (a plural slip). That mention is the buyer, and the text says 'NECS are working for, and on behalf of, NHS North East and North Cumbria Integrated Care Board (NHS NENC ICB)'. The head equals the name and is admitted. The parent is under its 00x tail."
+    }
+   ],
+   "notes": "REVIEWER, group QHM: 8 of 8 members included, all HIGH. Live checks, read-only: 9 bounded SELECTs (one PK read of the org rows, one equality seek on organization_mentions_org per member, one PK-prefix read of notice 46991199), and 22 public notice GETs paced at 0.5 s. No 408s, no errors, nothing written.\n- The child map dates every member code (13T, 01H, 99C, 16C, 84H, 00P, 00L) under QHM only.\n- 13T live is 488 mentions on 488 notices. All carry the exact triple GB-NHS-13T and all are NENC-named. The 16 strays are gone: 46991199 now sits on 31556600.\n- The 13T notices I sampled (9, outside M7's 14) show NENC as buyer, with NECS publishing 'for and on behalf of' NENC.\n- 31610859's 'ICS' name is settled by a shared ocid: its tender (ocds-h6vhtk-03de02) has the award 46929420, whose buyer is the ICB-named member 31615979.\n- 16C carries 2 'Tees Valley Place'-named mentions. Both are the ICB buying for its place, so this is no wrong fold. It is the deliberate asymmetry results.md \u00a76 records against 513's HOSTED_OR_SITE call on cluster 31605903, which stays out.\n- 13T's stale CSU head is informational under the E5 amendment.\n- The non-members (31603816, 31605903, 31615636, 30929531 and the others) are not candidates and are untouched.\nEvidence cache: /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/qhm-rev/"
+  }
+ ],
+ [
+  "QHM:challenger",
+  {
+   "members": [
+    {
+     "code": "QHM",
+     "org_id": 31600907,
+     "child": "13T",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: 13T is RO98, RE5 to QHM from 2020-04-01, open, with no other parent. Live read (organization_mentions, org 31600907): 488 mentions, all in section ORG-GB-NHS-13T with raw GB-NHS-13T and country GB. All 10 distinct names are NENC spellings (464 'North East and North Cumbria Integrated Care Board', 11 'NHS ...', 4 '&', and so on) and the gate admits each one. None of the 15 CSU-named mentions or the NHSE-named one is still on this org. 46991199 now sits on survivor 31556600, so ruling 3's two conditions are met. I read 16 notices: 12 spread evenly across the notice-id range plus all 4 with odd spellings ('...Integrated Care', '...North East and Cumbria...', 'NHS NENC ICB', 'North East North Cumbria'). In every one the GB-NHS-13T party is NENC in the Buyer role. NECS-published texts call NENC 'the Relevant Authority' or 'Contracting Authority', including NHSE839 dental, where NENC holds delegated dental commissioning. In none of them does another body, practice, supplier or the CSU act as itself. My one objection is the head name, 'NORTH OF ENGLAND COMMISSIONING SUPPORT' (child_head_check 'role'). Under the owner's E5 amendment it is informational only. The fold writes empty name keys, and the ledger's loser_name will read as the CSU's, which keys nothing. It does not make the fold wrong. under_review=true is the 317 case-org flag, not a denial. Org has no PPON and an empty merged_identifiers list."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31604393,
+     "child": "01H",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: 01H (former North Cumbria CCG) is RE5 to QHM from 2020-04-01, open, with no other parent. 1 mention: notice 46897190 (023427-2024), NHS 111 North West award. The party ORG-GB-NHS-01H is named 'NHS North East and North Cumbria Integrated Care Board' and is one of four joint OPT-300 Buyers (with QE1, QYG and 14J). The lot text says the area includes 'North Cumbria Place (part of North East and North Cumbria ICB)' and that the contract 'was awarded by all ICBs'. So this is NENC as a real joint buyer for its North Cumbria place, published under that place's own code. The name and head are the exact ICB name, admitted. Nothing odd."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31614001,
+     "child": "99C",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: 99C (former North Tyneside CCG) is RE5 to QHM from 2020-04-01, open, with no other parent. 6 live mentions (5 'GB-NHS-99C', 1 lower-case '99c'), notices 46922697, 46938475, 46960627, 46983953, 46987620 and 47108709, dated 2022-10 to 2023-12, all after NENC was formed. I read all six. In each, the 99C party is NENC and the sole OPT-300 Buyer, on North Tyneside services (NTIMS MSK, falls, spirometry, Admiral nurses, respiratory). NECS appears only as a separate mediator party. Names: the exact ICB name, the same without 'NHS', and '(NHS NENC ICB)'. All admitted. No other body is in the 99C slot."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31614680,
+     "child": "16C",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: 16C (former Tees Valley CCG) is RE5 to QHM from 2019-10-23, open, with no other parent. 8 live mentions (raws 16C, 16c, and 'GB-NHS-16 (c)'). I read all eight notices. In each, the 16C party is named NENC and is the OPT-300 Buyer. Bidders such as North Tees, CDDFT, Specsavers and Scrivens appear as separate Tenderer parties, and NECS as the mediator. The case I tried hardest to reject: 2 of the 8 names carry a place suffix, '...- Tees Valley' (46945687) and '...- Tees Valley Place' (47163862). 513 classed the provisional org 31605903 '...- Tees Valley Place' (raw 00P) as HOSTED_OR_SITE and left it out of QHM, on the stated ground that 'RO98 orgs never join a body (519)'. Ruling 1 has now decided that sub-ICB locations do join. 16C IS the Tees Valley sub-ICB location, so a Tees Valley Place-named buyer under code 16C is the ICB publishing under that place's own code. A place is not a different organisation, so this is not a wrong fold. I only flag the asymmetry: 16C's place-named mentions reach the survivor, while 31605903's stay apart. results.md \u00a76 records the same asymmetry as deliberate. Identity-loser keys are empty, so no place-name key gets armed."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31634553,
+     "child": "84H",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: 84H (former County Durham CCG) is RE5 to QHM from 2019-10-23, open, with no other parent. 1 mention: notice 46991767 (036707-2022, 2022-12-30), the NECS449 Vasectomy Service PIN. The party ORG-GB-NHS-84H is named 'NHS North East and North Cumbria Integrated Care Boards' and is the sole Buyer. The text reads: 'NECS is working for and on behalf of NHS North East and North Cumbria Integrated Care Board (ICB) (the Contracting Authority)', for patients in the Durham Dales, Easington and Sedgefield locality, which is 84H's own area. The plural 'Boards' is a typo; there is only one NENC ICB. The gate admits it, and as an identity loser it arms no name key. Nothing odd."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31610859,
+     "child": "00P",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Zero-only cluster under 00P (RE5 to QHM from 2020-04-01, open). The live org is provisional, with no identifier, and holds 1 mention: notice 46914583 (027214-2023), party ORG-GB-NHS-00P, sole Buyer, raw GB-NHS-00P. The objection I pressed: the name is 'The North East and North Cumbria Integrated Care System (ICS)'. An ICS is a partnership with no legal personality, not the statutory ICB, and folding a zero-only cluster arms its head name as a 513 alias key. The notice settles it. Its own text says 'NECS ... working for and on behalf of NHS North East and North Cumbria Integrated Care Board (ICB) (the Contracting Authority)'. The same procurement's 2024 award (46929420, same 00P code, same Type 2 diabetes education service) names the buyer as 'The North East and North Cumbria Integrated Care Board (ICB)'. So this is the parent publishing under a 00x tail, in an ICS spelling. Only the ICB contracts for an ICS, so a future exact-name bind to the ICB carries low risk. The gate admits both the head and the mention name. The 00P (Sunderland) code on a Gateshead/Northumberland/North Tyneside service makes no difference under the zero-only rule."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31615979,
+     "child": "00P",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Zero-only cluster under 00P (RE5 to QHM, open). The live org is provisional and holds 1 mention: notice 46929420 (004815-2024), party ORG-GB-NHS-00P named 'The North East and North Cumbria Integrated Care Board (ICB)', sole Buyer, raw GB-NHS-00P. The text names NECS as acting for NENC ICB, 'the Contracting Authority'. This is the award notice of the same procurement as 31610859. The head and mention name are the ICB's own name with 'The' and '(ICB)' added, and the gate admits it. Arming that name key binds only NENC spellings. Nothing odd."
+    },
+    {
+     "code": "QHM",
+     "org_id": 31632651,
+     "child": "00L",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Zero-only cluster under 00L (former Northumberland CCG; RE5 to QHM from 2020-04-01, open). The live org is provisional, with no identifier, and holds 1 mention: notice 46983541 (027995-2022, 2022-10-05), the NECS375 Home Oxygen Assessment and Review ITT. The party ORG-GB-NHS-00L is named 'NHS North East and North Cumbria Integrated Care Boards' and is the sole Buyer. Every lot's text reads: 'NECS are working for, and on behalf of, NHS North East and North Cumbria Integrated Care Board (NHS NENC ICB)'. The plural 'Boards' is a typo for the one ICB (84H's PIN uses the same spelling, from the same NECS desk). The gate admits it. The lots cover Durham, Tees Valley, Sunderland/South Tyneside and Gateshead rather than Northumberland, which does not matter under the zero-only rule. Arming the plural name key binds only this NENC misspelling."
+    }
+   ],
+   "notes": "Challenger, QHM group. I worked independently and did not coordinate with the reviewer. Reads: 9 bounded /v1/sql seeks (organization_mentions by organization_id for all 8 members, plus one notice_id seek for 46991199), 4 org details, and 35 notices' meta and content: all 19 notices behind the 7 small members, plus 16 of 13T's notices. Every read answered 200; there were no 408s and no retries. Nothing was written. Scratch files are under /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/qhm-ch/.\n\nLive state matches the cohort file:\n- survivor 31556600 is PPON GBPPONPMYZ6944BYLH with GBNHSQHM merged, 2,396 mentions;\n- 13T 31600907 has 488 mentions, all NENC-named;\n- 46991199 is rehomed onto 31556600.\n\nEvery child code is dated only under QHM in crates/ingest/sdk/nhs-ods-children.tsv, all open-ended. Every examined mention is NENC in the Buyer role (or a joint buyer, for 01H). NECS appears only as a separate mediator or publisher stating it acts for NENC.\n\nI found no reason to exclude any member. Points worth recording:\n1. 13T's head is the CSU's name. Under the E5 amendment it is informational, and its ledger loser_name will read as the CSU, keying nothing.\n2. 16C carries 2 Tees Valley place-named mentions. These fold, while 513's HOSTED_OR_SITE org 31605903 ('- Tees Valley Place', 00P) stays apart. This is the same asymmetry results.md \u00a76 records for 15F. Consider re-adjudicating 31605903 and 31603816 as a 513 amendment for consistency.\n3. 31610859 is named as the ICS. Its notice text and its own award notice (31615979's) both name NENC ICB as the contracting authority. Folding it arms the exact ICS name as an alias key to the ICB.\n4. The 00L cluster and 84H share the plural misspelling 'Integrated Care Boards'. Both are NECS-for-NENC notices."
+  }
+ ],
+ [
+  "big-subicb:reviewer",
+  {
+   "members": [
+    {
+     "code": "QWU",
+     "org_id": 30917969,
+     "child": "B2M3M",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates B2M3M RE5 under QWU from 2020-10-23 with no end and no other parent. The live org is GBNHSB2M3M, canonical, and its head is the ICB's name. All 600 live mentions (GB-NHS-B2M3M, every one the primary ORG-GB-NHS-B2M3M party with no #N supplier copies) are C&W ICB spellings: 'NHS Coventry and Warwickshire ICB' x349, the upper-case full name x247, the mixed-case full name x3 and 'Integrated CareBoard' x1. child_check admits all of them and there are no denials. I read the newest notice, 46823809 (2026-05-27, PSR award C): the buyer is ORG-GB-NHS-B2M3M, 'NHS Coventry and Warwickshire ICB has utilised direct award process C'. This is the ICB publishing under its own sub-ICB code. The survivor 31542351 is a PPON row."
+    },
+    {
+     "code": "QMM",
+     "org_id": 30915273,
+     "child": "26A",
+     "include": true,
+     "confidence": "high",
+     "rationale": "26A is a moved child, dated under QMM 2019-10-23..2026-03-31 and then T6Y0W, which is off the allowlist. Ruling 4 means no date fence. The 2 trust strays (NNUH and James Paget, issue-484 supplier shape) were rehomed. I re-read the live rows: 113 mentions are left, all Norfolk and Waveney ICB names ('NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD' x109 as 26A/26a, 'Norfolk & Waveney Integrated Care Board' x3, the mixed-case full name x1). All are admitted under QMM, and T6Y0W only scores 'better' for QMM. No 'Norfolk and Suffolk' name appears. The 2 mentions after the end date (46807447 and 46810637, April 2026) still carry the old body's name, which ruling 4 explicitly lets fold. The head is the ICB name, there are no denials, and the survivor 31542073 is a PPON row."
+    },
+    {
+     "code": "QNQ",
+     "org_id": 31535814,
+     "child": "D4U1Y",
+     "include": true,
+     "confidence": "high",
+     "rationale": "D4U1Y is dated under QNQ 2020-10-23..2026-03-31 and then QRL. Its names score 'zero' under QRL (Hampshire and IoW), so QNQ is the only parent the gate admits and there is no contested risk. All 65 live mentions are Frimley ICB names: 'NHS Frimley Integrated Care Board' x55, 'NHS Frimley ICB' x9, 'Frimley ICB' x1. All are admitted and the head is 'NHS Frimley ICB'. I read the newest of the 8 mentions published after the end date, 47366322 (2026-10-05, tenderUpdate). The buyer is ORG-GB-NHS-D4U1Y, 'NHS Frimley ICB (the Commissioner)', for Bracknell/RBWM/Slough. That is the old body's own name, which folds under ruling 4's no-date-fence trade-off. Survivor 31552078 is a PPON row named 'NHS Frimley Integrated Care Board'."
+    },
+    {
+     "code": "QHL",
+     "org_id": 31546689,
+     "child": "15E",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates 15E RE5 under QHL from 2020-04-01, open, with no other parent. The 4 strays were rehomed and none is left on the live row: Black Country ICB to QUA, plus the Wake Green, College Road and Small Heath GP-practice supplier copies. The 42 live mentions are all BSol ICB names: the upper-case full name x36 (15E/15e), 'NHS Birmingham and Solihull ICB' x3, the mixed-case full name x3. All are admitted, every one is the primary ORG-GB-NHS-15E party, and the head is the ICB name. under_review=true is the 317 rehome flag, not a D6 denial. The QHL15E typo is a separate 452 matter and is not this holder. Survivor 30916123 is a PPON row."
+    },
+    {
+     "code": "QJK",
+     "org_id": 31555903,
+     "child": "15N",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates 15N RE5 under QJK (Devon) from 2020-04-01, open. The 2 BNSSG-named mistyped-code mentions were rehomed to QUY 31536069. The 29 live mentions are all Devon ICB names: 'NHS Devon Integrated Care Board' x12, 'NHS DEVON ICB' x11, the upper-case full name x5, '(ICB)' x1. All are admitted and the head is the Devon ICB name, not BNSSG's, so the 15C/15N swap left nothing behind. There are no denials. Survivor 30917049 is a PPON row."
+    },
+    {
+     "code": "QMJ",
+     "org_id": 31570826,
+     "child": "93C",
+     "include": true,
+     "confidence": "high",
+     "rationale": "93C is dated under QMJ 2019-10-23..2026-03-31 and then Z9B2Z, which is off the allowlist. Under Z9B2Z every name scores 'better' for QMM's sibling rule, i.e. for QMJ. The NEL CSU stray was rehomed to 31617815. The 22 live mentions are 'North Central London Integrated Care Board' x9, 'NHS North Central London ICB' x6, 'NHS North Central London Integrated Care Board' x6 and 'North Central London Integrated Care System' x1. I read the ICS-named notice, 46910498 (038708-2024): the ICS party is the procedure buyer, and the text says 'NHS North Central London Integrated Care Board (ICB) ... is seeking to procure', so that mention is the ICB itself. The 1 mention after the end date (46808778) uses the old NCL ICB name, which folds under ruling 4. The head is the ICB name, there are no denials, and survivor 30916245 is a PPON row."
+    },
+    {
+     "code": "QUY",
+     "org_id": 31566597,
+     "child": "15C",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates 15C RE5 under QUY (BNSSG) from 2020-04-01, open. The single Devon-named mistyped-code mention was rehomed to QJK 30917049. The 30 live mentions are all BNSSG spellings: the full name x24, plus single variants with '&', without commas, 'ICB', '(BNSSG ICB)', 'NHS, Bristol\u2026' and one with a leading bullet/tab scrape artefact. All are admitted and the head is the BNSSG ICB name. A messy spelling is harmless here because identity losers fold with empty name keys. QUY was applied in 513 U6, and survivor 31536069 is a PPON row."
+    }
+   ],
+   "notes": "Reviewer verdict for QWU, QMM, QNQ, QHL, QJK, QMJ and QUY: all 7 members are included at HIGH. I found no member whose names belong to another body.\n\nChecks behind it:\n(1) Each child code is dated under its parent in crates/ingest/sdk/nhs-ods-children.tsv.\n- B2M3M, 15E, 15N and 15C are open-ended and have only that parent.\n- 26A, 93C and D4U1Y moved on 2026-04-01. Their other parents (T6Y0W, Z9B2Z, QRL) either sit off the allowlist or refuse the names. D4U1Y under QRL answers 'zero'.\n(2) A bounded live SELECT of organizations shows all 7 members standing as canonical GBNHS<C> identity rows. All 7 survivors are standing PPON rows.\n(3) A bounded live aggregate of organization_mentions grouped by org and name matches the cohort file exactly: 600 / 113 / 65 / 42 / 29 / 22 / 30. None of the 10 rehomed strays is still on a member.\n- Every remaining mention name is a spelling of the parent ICB.\n- Every head name is one of the member's own mention names.\n- No 13T-style stale head exists in this group.\n(4) Every remaining mention is the primary ORG-GB-NHS-<C> party. There are no #N duplicate party ids, so none of the issue-484 supplier-carrying-the-ICB-id shape is left.\n(5) I read 3 notices (public content GETs, paced):\n- 46910498: 93C's single 'North Central London Integrated Care System' mention is the buyer, and the text names the NCL ICB as the procuring body.\n- 47366322: D4U1Y's newest mention after the end date (2026-10-05) is 'NHS Frimley ICB (the Commissioner)' as buyer.\n- 46823809: B2M3M's newest mention is C&W ICB as buyer of a PSR direct award.\n\nThe mentions published after the parent's end (D4U1Y 8, 26A 2, 93C 1) all use the old body's own name. Ruling 4 (no date fence) lets them fold. I saw no successor-body name under any moved child.\n\nNothing was written: no repo files, no POSTs, no jobs. Downloaded notice JSON is in the scratchpad at rev-dl/."
+  }
+ ],
+ [
+  "small-subicb:reviewer",
+  {
+   "members": [
+    {
+     "code": "QGH",
+     "org_id": 31575075,
+     "child": "18C",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates 18C under QGH by RE5, open since 2019-10-23. The ODS name is 'NHS HEREFORDSHIRE AND WORCESTERSHIRE ICB - 18C', and QGH has no other dated parent. There is 1 mention, in notice 46822938 (FTS 048828-2026, a NEPTS PSR PIN led by BSol). The party ORG-GB-NHS-18C is named 'NHS Herefordshire and Worcestershire Integrated Care Board' and is one of five OPT-300 buyers, each West Midlands ICB under its own code. So this is the ICB itself buying under its sub-ICB code. The head name equals the mention name, both admitted. The org is live and canonical, with no denial. Survivor: PPON 31542355."
+    },
+    {
+     "code": "QOC",
+     "org_id": 30915758,
+     "child": "M2L0M",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates M2L0M under QOC by RE5, open since 2020-10-23; it is the only parent. All 4 mentions (30808330, 46737553, 46737574, 46822938) are named 'NHS Shropshire, Telford and Wrekin Integrated Care Board' and hold the OPT-300 buyer role. Three are STW ICB's own PSR Direct Award B notices (community ophthalmology, cataract/YAG), whose text names STW ICB. The fourth is the joint West Midlands NEPTS PIN, where STW is one of five ICB buyers. The head name is admitted, with no denial. Survivor: PPON 31542354."
+    },
+    {
+     "code": "QOQ",
+     "org_id": 31570761,
+     "child": "02Y",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates 02Y under QOQ by RE5, open since 2020-04-01; it is the only parent. There is 1 mention, 46808541 (NHSE1086 Area Based UDT, Humber and North Yorkshire), named 'NHS Humber and North Yorkshire Integrated Care Board', as the buyer. The text says NECS acts 'for and on behalf of NHS Humber and North Yorkshire Integrated Care Board (the Relevant Authority)', and the coded party is the ICB, not NECS. The name is admitted, with no denial. Survivor: PPON 31573365."
+    },
+    {
+     "code": "QOQ",
+     "org_id": 31591587,
+     "child": "03K",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates 03K under QOQ by RE5, open since 2020-04-01. M2's refetch fixed Unit 1's failed '000' fetch; the ODS name is 'NHS HUMBER AND NORTH YORKSHIRE ICB - 03K'. All 12 mentions are named 'NHS Humber and North Yorkshire ICB' and hold the OPT-300 buyer role. They are the NHSE1006 Yorkshire and the Humber community dental notices for lots 2, 3 and 4 (North Yorkshire and York, North and North-East Lincolnshire, Hull and East Riding), MSP and intention-to-award. The text: 'NECS is working for and on behalf of NHS Humber and North Yorkshire ICB (HNY ICB) (the Relevant Authority)'. The publisher used one sub-ICB code across all lots, which is still HNY's own code. The other parties are a same-name FTS party for HNY ICB and the award winners RJL and City Health Care Partnership, none on 03K. Admitted, with no denial."
+    },
+    {
+     "code": "QOQ",
+     "org_id": 31619860,
+     "child": "42D",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates 42D under QOQ by RE5, open since 2019-10-23. Both mentions (46938623, 46950169; NECS432 CYP Autism Assessment, Scarborough, Ryedale and Whitby) are named 'NHS Humber and North Yorkshire Integrated Care Board (ICB)'. The coded party is the buyer, and the CPB in one of them. The text: 'NECS are working for, and on behalf of, NHS Humber and North Yorkshire ICB (the Contracting Authority)'. NECS appears as a separate party (ORG-GB-FTS-72354), not under 42D. Admitted, with no denial. Survivor: PPON 31573365."
+    },
+    {
+     "code": "QPM",
+     "org_id": 31606157,
+     "child": "78H",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates 78H under QPM by RE5, open since 2019-10-23; it is the only parent. Both mentions (46901928, Covid Medicines Delivery Unit in Northamptonshire; 46901932, Looked After Children health assessments in Northamptonshire) are named 'NHS Northamptonshire ICB' and are the OPT-300 buyer. The winners (LLR Patient Care Locally, GP practices) are separate parties with their own ids. Admitted, with no denial. Survivor: PPON 31542357."
+    },
+    {
+     "code": "QRL",
+     "org_id": 31597942,
+     "child": "D9Y0V",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates D9Y0V under QRL by RE5, open since 2020-10-23; it is the only parent. All 10 mentions are the buyer: 3 named 'NHS HAMPSHIRE AND THE ISLE OF WIGHT INTEGRATED CARE BOARD' and 7 'NHS Hampshire and Isle of Wight ICB'. They are the CYP complex domiciliary care framework, the IoW Place community beds and the family support service. Where the text says HIOW ICB acts 'on behalf of NHS Frimley ICB (NEH&F Local Team)' and four councils, the coded party is still HIOW itself, the lead buyer. Both names are admitted, with no denial. D4U1Y under QRL is a census non-member and is not adjudicated here. Survivor: PPON 31552077."
+    },
+    {
+     "code": "QUA",
+     "org_id": 31545773,
+     "child": "D2P2L",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates D2P2L under QUA by RE5, open since 2020-10-23. D2P2L is the former Black Country and West Birmingham CCG's code, and no mention carries a BSol or other name. All 16 mentions are the OPT-300 buyer: 14 'NHS Black Country Integrated Care Board', 1 in upper case, and 1 'NHS Balck Country Integrated Care Board', a typo the gate admits. They are Black Country ICB PSR awards and procurements: stroke, end of life, ECG, outbreak response, covid outreach, LMNS hub, the OD consultancy PIN and the joint NEPTS PIN. On 46978077 the AGEM CSU/DIHC act 'on behalf of the NHS Black Country ICB and Dudley MBC', but the coded party is the ICB. Winners are separate parties. No denial. Survivor: PPON 31542353."
+    },
+    {
+     "code": "QVV",
+     "org_id": 31575718,
+     "child": "11J",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates 11J under QVV by RE5, open since 2020-04-01; it is the only parent. All 3 mentions (46825937, 46921048, 46952273) are named 'NHS Dorset Integrated Care Board' and are the OPT-300 buyer: Dorset NEPTS (tender and award) and children's sight testing. In the sight-testing notice, BSW (QOX) and Somerset (11X) are separate co-buyer parties under their own codes, in a 'clustering' arrangement, and none of them is on 11J. Admitted, with no denial. Survivor: PPON 31571396."
+    },
+    {
+     "code": "QWO",
+     "org_id": 31541083,
+     "child": "03R",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates 03R under QWO by RE5, open since 2020-04-01. All 5 mentions are the buyer: 4 'NHS West Yorkshire ICB' and 1 'West Yorkshire Integrated Care Board', the head name. They are NHSE1007 Area Based UDT West Yorkshire and NHSE1006 community dental lot 1 West Yorkshire, MSP and award. The text: 'NECS is working for and on behalf of NHS West Yorkshire Integrated Care Board (the Relevant Authority)'. The winner (TAD) and a same-name FTS party for WY ICB are separate. Both names are admitted, with no denial. Survivor: PPON 30917022."
+    },
+    {
+     "code": "QWO",
+     "org_id": 31587867,
+     "child": "36J",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates 36J under QWO by RE5, open since 2019-10-23. There is 1 mention, 46846909 (NHSE1110 Primary Care Occupational Health Services, WY RFI), named 'NHS West Yorkshire Integrated Care Board (ICB)', as the buyer. The text: NECS acts 'for and on behalf of NHS West Yorkshire Integrated Care Board (ICB) (the Contracting Authority)'. Admitted, with no denial. Survivor: PPON 30917022."
+    },
+    {
+     "code": "QWO",
+     "org_id": 31612327,
+     "child": "15F",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates 15F under QWO by RE5, open since 2020-04-01 (ODS: 'NHS WEST YORKSHIRE ICB - 15F', the Leeds sub-ICB location). All 3 mentions are the Shakespeare/Shadwell APMS procurement in Leeds, and on each the coded party is the buyer (and the CPB on two). The names are 'NHS West Yorkshire ICB (Leeds Place)', 'NHS West Yorkshire ICB (ICB) (Leeds Place)' and 'NHS West Yorkshire ICB (ICB)'. The text: 'NECS working for, and on behalf of, NHS West Yorkshire Integrated Care Board (ICB) (Leeds Place)', or 'the Contracting Authority'. NECS is a separate party (FTS-91442 or FTS-35885), not on 15F. 'Leeds Place' is the ICB acting at its Leeds sub-ICB location, not a separate legal body, so folding is not a merge of a different organisation. I keep the results.md \u00a76 asymmetry deliberately. This fold is identity-keyed: the loser's name keys are empty (\u00a73.4), so the '(Leeds Place)' names arm no 513 name alias. Only GBNHS15F plus a gate-admitted name will bind. In this same cohort, QHM's own place codes 16C and 84H fold the same way. QHM's provisional 'County Durham/Tees Valley Place' clusters stay out because a name-member fold would arm their names and reverse 513 U3's reviewed HOSTED_OR_SITE call. All three names are admitted (pinned in \u00a76), with no denial."
+    },
+    {
+     "code": "QXU",
+     "org_id": 31608314,
+     "child": "92A",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The map dates 92A under QXU by RE5 from 2019-10-23 to 2026-03-31, then under S9B9J (off-allowlist). There is 1 mention, 46907492 (Surrey Heartlands hospital discharge service for complex needs), named 'NHS Surrey Heartlands ICB', as the buyer. It was published 2024-10-31, inside QXU's period, so it is pre-merger and uses the ended body's own name. Admitted under QXU; S9B9J answers better{QXU}, so no rival parent claims it. The winner and a same-body FTS party are separate. Future 'Surrey and Sussex'-named 92A mentions would be refused under QXU and stand as listed strays, never a wrong bind. No denial. Survivor: PPON 31552079."
+    }
+   ],
+   "notes": "I am the reviewer for the group QGH, QOC, QOQ, QPM, QRL, QUA, QVV, QWO, QXU: 13 candidate members, all included at HIGH. Each one is the parent ICB buying under its own sub-ICB code.\n\nEvidence:\n- **Live mentions.** One bounded SELECT read 61 mentions on the 13 holders, matching the census counts. A second read the org rows: all 13 holders are live and canonical (provisional 0), each with its own GBNHS identifier, and all 9 survivors hold the expected PPON.\n- **Notices.** I read all 59 notices through /v1/notices/<id>/content (pace 0.5 s, no failures). On every one of the 61 mentions the coded party is the OPT-300-Procedure-Buyer (on 3 it is also the CPB). Every party name is the parent ICB's own name.\n- **Agents and winners.** Where an agent appears (NECS for HNY and WY; AGEM CSU and DIHC for Black Country), it is a separate party or is named only in the text as acting 'on behalf of' the ICB. Winners are separate parties. No supplier, GP practice or CSU is published under any of these child codes.\n- **Child map.** I checked every child code against crates/ingest/sdk/nhs-ods-children.tsv: each is dated RE5 under the stated parent. Only 92A has a second parent: S9B9J (off-allowlist) after 2026-03-31, and its one mention is from 2024-10-31.\n\nNot adjudicated: the census non-members 03Q (QOQ, NHS England, never) and D4U1Y under QRL (Frimley-named, refused here; it belongs under QNQ).\n\n15F asymmetry: kept deliberately. The fold is identity-keyed with empty name keys, so the '(Leeds Place)' names arm nothing. QHM's own place codes 16C and 84H fold the same way in this cohort. Only QHM's provisional place-name clusters stay out, per 513 U3's HOSTED_OR_SITE call.\n\nNothing was written. The reads are cached under /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rev-grp-qgh/ (ments.json, orgs.json, c<notice>.json, analysis.txt)."
+  }
+ ],
+ [
+  "big-subicb:challenger",
+  {
+   "members": [
+    {
+     "code": "QWU",
+     "org_id": 30917969,
+     "child": "B2M3M",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: B2M3M is RE5 under QWU only, from 2020-10-23 with no end date and no other parent. Live read: 600 mentions, every one in the primary section ORG-GB-NHS-B2M3M with raw GB-NHS-B2M3M and one mention per notice. The four names are all C&W ICB: 'NHS Coventry and Warwickshire ICB' 349, upper-case ICB 247, 'NHS Coventry and Warwickshire Integrated Care Board' 3, the 'CareBoard' typo 1. The head name is one of these, and the census admits all of them. I read 8 notices (2022-10 AGEM-run survey 'on behalf of the C&W ICB'; 2024-09 and 2025-02 domiciliary and care-home PSR awards; 2025-07 and 2026-05 bulk PSR enhanced-service awards; the 2024-06 'CareBoard' lead-provider award; and 048828-2026, a joint Midlands NEPTS PIN where each ICB is its own buyer under its own sub-ICB code). In every one the party is C&W ICB as buyer. I found no supplier, CSU or other body. The survivor 31542351 is a PPON org with merged GBNHSQWU."
+    },
+    {
+     "code": "QMM",
+     "org_id": 30915273,
+     "child": "26A",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: 26A is under QMM from 2019-10-23 to 2026-03-31, then under T6Y0W, which is not allowlisted. Under T6Y0W every name answers better{QMM}, so the holder cannot be contested. Live read: 113 mentions, all in primary sections (ORG-GB-NHS-26A \u00d733, 26a \u00d780, which is the same triple, E3 clean). Names: 'NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD' 109, 'Norfolk & Waveney Integrated Care Board' 3, 'NHS Norfolk and Waveney Integrated Care Board' 1. The two supplier strays (#2 sections, NNUH and JPUH) are already rehomed. I read 4 notices, all with N&W ICB as buyer. Two mentions were published after the end date (46807447, 46810637; April 2026 PSR modifications of N&W-era contracts). In both the successor 'NHS Norfolk and Suffolk ICB' appears as review body, and the buyer party is named N&W. Ruling 4 (no date fence) explicitly accepts these. No other body's name is present."
+    },
+    {
+     "code": "QNQ",
+     "org_id": 31535814,
+     "child": "D4U1Y",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: D4U1Y is under QNQ from 2020-10-23 to 2026-03-31, then under QRL. Under QRL every name answers zero, so only QNQ's verdict can admit it and it is not contested. QRL's next cohort must still omit this holder from its members. Live read: 65 mentions, all primary ORG-GB-NHS-D4U1Y. Names: 'NHS Frimley Integrated Care Board' 55, 'NHS Frimley ICB' 9 (the head name), 'Frimley ICB' 1. I read 4 notices, including 3 of the 8 published after the end date (032437-, 055318- and 093870-2026). Each reads 'NHS Frimley ICB (\"the Commissioner\") sought to commission' a service for the East Berkshire places, a retrospective Frimley award. The 2023 'Frimley ICB' notice is Frimley ICB as buyer. These are the ended body's own name and contracts, which ruling 4 folds. I found no Hampshire and Isle of Wight name or other body."
+    },
+    {
+     "code": "QHL",
+     "org_id": 31546689,
+     "child": "15E",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: 15E is under QHL only, from 2020-04-01, open. After the 4 rehomes (Black Country to QUA, and 3 GP-practice suppliers in #2/#3 sections to 31601027-29), the live read is 42 mentions, all primary (GB-NHS-15E \u00d740, 15e \u00d72). Names: 'NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD' 36, 'NHS Birmingham and Solihull ICB' 3, 'NHS Birmingham and Solihull Integrated Care Board' 3. The census admits all of them, and the head is BSol's. I read 4 notices (2024-02 care-home placement, 2024-12 RNIB PSR award, 2025-10 enhanced-service award, the 2026-05 joint NEPTS PIN). Each has BSol as buyer, with a BSol review body where one is listed. This publisher has put the ICB's party id on suppliers before. That is a bind-time risk only: such names fail child_check and become strays, so it is not a fold risk. QHL15E (M6) is a separate typo org and does not affect this fold. The non-members 31542353 and 31601027-29 must stay out of members."
+    },
+    {
+     "code": "QJK",
+     "org_id": 31555903,
+     "child": "15N",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: 15N is under QJK only, from 2020-04-01, open. After the 2 BNSSG strays were rehomed to QUY, the live read is 29 mentions, all primary ORG-GB-NHS-15N. Names: 'NHS Devon Integrated Care Board' 12, 'NHS DEVON ICB' 11, upper-case ICB 5, '(ICB)' 1. All are Devon and the census admits them. Because 15C and 15N were swapped between Devon and BNSSG elsewhere, I read 5 notices for Devon content: Torbay high-intensity user service, Plymouth eating-disorder award, Devon community-hospital out-of-hours, Cranbrook APMS (Devon and Cornwall clustering), and the 2026-04-13 South-West crisis text service ('NHS Devon ICB is acting as Lead Commissioner'). All are Devon's own. The BNSSG survivor 31536069 is a denied non-member holder and must stay out of members."
+    },
+    {
+     "code": "QMJ",
+     "org_id": 31570826,
+     "child": "93C",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: 93C is under QMJ from 2019-10-23 to 2026-03-31, then under Z9B2Z. Under Z9B2Z every name answers better{QMJ}, so it is not contested. After the NEL CSU stray was rehomed to 31617815, the live read is 22 mentions, all primary (93C \u00d721, 93c \u00d71). Names: 'North Central London Integrated Care Board' 9, 'NHS North Central London Integrated Care Board' 6, 'NHS North Central London ICB' 6, 'North Central London Integrated Care System' 1. I checked the ICS-named mention (038708-2024, NCL APMS GP services). Its text says 'NHS North Central London Integrated Care Board (ICB) ... under delegated commissioning on behalf of NHS England' is the procurer, so the party is the ICB under its system name, not NHS England or a provider. The one mention published after the end date (033904-2026) is a PSR modification decided by the 'NCL ICB Primary Care Committee'; ruling 4 folds it. Two other samples (2022 Enfield community services, 2023 LTC locally commissioned service) are NCL ICB as buyer. Non-members 31617815, 30915099 and 31625150 stay out."
+    },
+    {
+     "code": "QUY",
+     "org_id": 31566597,
+     "child": "15C",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: 15C is under QUY only, from 2020-04-01, open. After the one Devon stray was rehomed to QJK, the live read is 30 mentions, all primary ORG-GB-NHS-15C. All 7 spellings are BNSSG ICB: 24 of the main form, plus single variants including a leading bullet character, a stray comma, '&' and '(BNSSG ICB)'. The census admits all of them, and the head is BNSSG's. I read 4 notices, including the bullet-named one (007518-2023, BNSSG UEC dashboard, review body 'NHS BNSSG ICB'), the comma variant (haemodialysis transport, SCW CSU as review body only), the 2022 Charlotte Keel APMS and the 2026-06 discharge-to-assess award. All have BNSSG ICB as buyer. The Devon survivor 30917049 is a denied non-member holder and must stay out of members."
+    }
+   ],
+   "notes": "I tried to find a reason not to fold each of the 7 members in this group and found none. All 7 are include=true at HIGH.\n\nWhat I checked:\n- **Child map:** every child code is dated under its parent in crates/ingest/sdk/nhs-ods-children.tsv.\n- **Live holders:** a bounded `organization_mentions` seek per holder matches the census exactly: B2M3M 600, 26A 113, D4U1Y 65, 15E 42, 15N 29, 93C 22, 15C 30. Every mention is in the holder's primary ORG-GB-NHS-<C> section (no #2/#3 supplier-copy sections are left after the rehomes), with one mention per notice. Every name is the parent ICB, and each head name is one of those mention names.\n- **Org details:** fetched for all 7 members and all 7 survivors. Each survivor is a non-provisional PPON org carrying merged GBNHS<P>.\n- **Notices:** I read about 35 notice contents across the 7 members. Each shows the parent ICB as buyer.\n\nPoints the poster should know (none blocks a fold):\n- **Post-end mentions under the old name:** 26A has 2, D4U1Y 8, 93C 1. They are retrospective awards or PSR modifications of the old body's contracts. On 26A's two, the successor Norfolk and Suffolk ICB appears as review body. Ruling 4 accepts these.\n- **D4U1Y is also dated under QRL**, where its names answer zero. QRL's cohort must not name it, or it becomes contested.\n- **Each verdict's `reviewed_holders` must include the denied non-member holders and leave them out of `members`.** These are the rehome targets and other holders:\n  - QJK: 31536069 (BNSSG survivor, holds a 15N mention)\n  - QUY: 30917049 (Devon survivor, holds a 15C mention)\n  - QHL: 31542353, 31601027, 31601028, 31601029\n  - QMM: 1280779, 30915905\n  - QMJ: 31617815, 30915099, 31625150\n- **93C's 'North Central London Integrated Care System' mention** is the NCL ICB by the notice text (delegated commissioning on NHS England's behalf). It is not NHS England.\n\nReads: about 50 public GETs paced at 0.5 s, all returning 200, and 8 bounded SELECTs (SELECT 1 plus 7 single-org seeks with LIMIT 700). No retries. Nothing written. Cached under /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/chal-qwu/raw/."
+  }
+ ],
+ [
+  "sites:reviewer",
+  {
+   "members": [
+    {
+     "code": "RBT",
+     "org_id": 31624083,
+     "child": "RBT20",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates RBT20 (LEIGHTON HOSPITAL, RO198) under RBT by RE6 from 1991-04-01, open-ended, with no other parent. The live org has 1 mention, which matches the census: notice 46952168 (FTS 015413-2023, published 2023-05-31, inside the period), named 'Mid Cheshire Hospitals NHS Foundation Trust', exactly the survivor's name, raw GB-NHS-RBT20, and child_check admits it. Reading the notice: Cheshire East Council is the buyer, and ORG-GB-NHS-RBT20 is the tenderer that won one of the two paediatric SLCN contracts, 'delivered from the 2 hospitals located within the borough'. East Cheshire NHS Trust is coded under its own site RJN71 for the other contract. So the party is the trust contracting as provider under its main hospital's site code. No other body is involved. The survivor 30918302 (PPON GBPPONPZZX1928RJQT) is live."
+    },
+    {
+     "code": "RCU",
+     "org_id": 30967595,
+     "child": "RCU51",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates RCU51 (THE BECTON CENTRE FOR CHILDREN & YOUNG PEOPLE) under RCU by RE6 from 2002-04-01, open-ended. The live org has 1 mention: notice 46132954 (FTS 087965-2026, 2026-09-16, inside the period), named 'Sheffield Children's NHS Foundation Trust', the trust's exact name, and child_check admits it. Reading the notice: the buyer is CWP (GB-NHS-RXA), and the procedure title is 'Tier 4 sub-contract between Cheshire and Wirral Partnership NHS Foundation Trust and Sheffield Children's NHS Foundation Trust'. ORG-GB-NHS-RCU51 is the tenderer. The service, Tier 4 CAMHS in-patient learning disability, is what the Becton Centre site provides. So this is the trust contracting under its own site code. The survivor 30930095 (PPON) is live."
+    },
+    {
+     "code": "RCX",
+     "org_id": 31551062,
+     "child": "RCX70",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates RCX70 (THE QUEEN ELIZABETH HOSPITAL) under RCX by RE6 from 1992-04-01, open-ended. The live org has 1 mention: notice 46760195 (FTS 071297-2025, 2025-11-05), named 'The Queen Elizabeth Hospital King's Lynn NHS  Foundation Trust' (with a double space; the notice's org section also carries the 'Kings Lynn' spelling, which is the same trust), and child_check admits it. Reading the notice: it is a PSR contract modification for 'The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust (QEH) Community Diagnostic Centre'. The buyer is NHS Norfolk and Waveney ICB (26A), and ORG-GB-NHS-RCX70 is the provider (tenderer). That is the trust contracting under its hospital site code. The separate non-member 31594811 'Queen Elizabeth Hospital FT' is not a child holder and is untouched. The survivor 30914684 (PPON) is live."
+    },
+    {
+     "code": "RPY",
+     "org_id": 31560996,
+     "child": "B4Z5Z",
+     "include": true,
+     "confidence": "high",
+     "rationale": "This is the reviewer's call, and I include it. The child map dates B4Z5Z (THE ROYAL MARSDEN HOSPITAL (SUTTON), RO198) under RPY by RE6 from 2021-10-01, open-ended, with no other parent. The live org has 1 mention: notice 46783786 (FTS 008419-2026, 2026-01-30, inside the period), named 'The Royal Marsden Hospital', and child_check admits it. Reading the notice: ORG-GB-NHS-B4Z5Z is the BUYER, and the supplier is Hanley Technology Ltd (COH SC132095). It buys specialist cleanroom equipment for paperless aseptic preparation, which is pharmacy kit. ODS gives B4Z5Z's address as 'PHARMACY STORES (GOODS ENTRANCE), COTSWOLD ROAD, SUTTON', so the code is the trust's pharmacy delivery point. A hospital site is not a legal entity. 'The Royal Marsden Hospital' is the brand of the trust's own hospitals and no other body carries that name, so the contracting party can only be The Royal Marsden NHS FT. Folding therefore merges no different organisation. 513 already set the precedent for this ambiguity. RFS 5888684 'Chesterfield Royal Hospital' was ruled SAME ('ODS also has a site RFSDA with this name, but a site does not procure, so as a buyer the name means the trust'), and so was RBL 'Wirral University Teaching Hospital'; RPY's own 6454935 'Royal Marsden Hospital NHS Foundation Trust' was a member. 513's HOSTED_OR_SITE hospital case (RJL30 'Diana, Princess of Wales Hospital') was a distinctly named hospital that the check refused as zero, which is not this shape. One thing remains open, and it is about convention, not identity: the bare name is also the site's ODS name. Uncoded provisional twins (31607240 'The Royal Marsden Hospital', 21469072, 3793373) stand apart and are not touched by this fold. The survivor 30926647 (PPON GBPPONPXLT9823WVCY) is live."
+    },
+    {
+     "code": "RXA",
+     "org_id": 31537284,
+     "child": "Q7N9Z",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates Q7N9Z (CHESHIRE WEST HH+ - COVID VACCINATION CENTRE, RO198) under RXA by RE6 from 2021-10-01, open-ended. The live org has 1 mention: notice 46730523 (FTS 041481-2025, 2025-07-21, inside the period), named 'NHS Cheshire and Wirral Partnership NHS FT'. That is the trust's name with a redundant NHS prefix, and child_check admits it. Reading the notice: it is NECS575, NECS acting for NHS England North West (buyer coded 'Q75, Q83, Q84'), awarding the COVID-19 vaccination outreach service. ORG-GB-NHS-Q7N9Z is the winning tenderer of Lot 1, Cheshire and Merseyside (GBP 200k). The other lots' winners (pharmacies, a PCN, GTD) are each coded under their own ODS codes. So this is CWP contracting under its own COVID vaccination-centre site code, which fits the service. Neither NECS nor NHSE is behind this mention. The survivor 31552751 (PPON GBPPONPGZV5874HRZD) is live."
+    },
+    {
+     "code": "RYY",
+     "org_id": 31603978,
+     "child": "RYY13",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates RYY13 (TRINITY HOUSE) under RYY by RE6 from 2010-11-01, open-ended. The live org has 1 mention: notice 46896068 (FTS 022288-2024, 2024-07-18, inside the period), named 'Kent Community Health NHS Foundation Trust', the survivor's exact name, and child_check admits it. Reading the notice: East Sussex County Council is the buyer and ORG-GB-NHS-RYY13 is the tenderer. The text says the council is 'awarding to Kent Community Health NHS Foundation Trust for sexual health services' under PCR2015 regulation 32. So this is the trust contracting as provider under its own site code (Trinity House, the trust's site in ODS). No other body is involved. The survivor 30916727 (PPON) is live."
+    }
+   ],
+   "notes": "REVIEWER read of the six trust sites. I re-read each one live on 2026-10-12. Public GETs: the 6 member orgs (each still 1 mention, identity GBNHS<C>, not provisional, no merged identifiers), the 6 PPON survivors (all live, HTTP 200, no redirect), and the 6 notices with their /content. Three bounded SELECTs with a LIMIT: the members' mentions (6 rows, each matching the candidate file's name and raw), a name_norm seek on the Royal Marsden names, and the mentions of those provisional orgs. 0 x 408. Nothing was written.\n\nThe child map (crates/ingest/sdk/nhs-ods-children.tsv) dates every child code under its parent by RE6, open-ended. Each mention falls inside that period.\n\nAll six mentions are the parent trust as a contracting party (buyer or provider) under its own site code:\n- RBT20: provider to Cheshire East Council.\n- RCU51: subcontractor to CWP.\n- RCX70: provider of its own CDC to N&W ICB.\n- Q7N9Z: Lot 1 winner of NECS/NHSE NW COVID outreach.\n- RYY13: awardee of East Sussex sexual health.\n- B4Z5Z: buyer of aseptic cleanroom kit, delivered to the Sutton pharmacy stores.\n\nB4Z5Z, the reviewer's call: include, HIGH. A site does not procure, and 'The Royal Marsden Hospital' denotes no body other than the RPY trust. 513's RFS 'Chesterfield Royal Hospital' and RBL 'Wirral University Teaching Hospital' SAME rulings settle this shape. The RJL30 hospital-site precedent was a distinctly named, check-zero hospital. What remains open is convention only: the bare name is also the site's ODS name. Uncoded provisional twins of the name (31607240, 21469072, 3793373) stand apart and this fold does not touch them.\n\nNo member carries a refused name, another body's name, a PPON, or a flag. The RCX non-member 31594811 stays out, as the census lists it."
+  }
+ ],
+ [
+  "small-subicb:challenger",
+  {
+   "members": [
+    {
+     "code": "QGH",
+     "org_id": 31575075,
+     "child": "18C",
+     "include": true,
+     "confidence": "high",
+     "rationale": "I found no reason to omit it. The child map dates 18C under QGH (RE5, from 2019-10-23, open). The holder has 1 mention, on notice 46822938 (FTS 048828-2026, 2026-05-26). That notice is a joint NEPTS planning notice with five co-buyers, each a separate OPT-300 Buyer under its own sub-ICB code. This section is named 'NHS Herefordshire and Worcestershire Integrated Care Board' with GB-NHS-18C, so it is the ICB itself acting as co-buyer. BSol leads the notice, but its 15E section is a different party. The name is admitted under QGH alone (the port refuses it under every other RO261 row). The head equals the mention name. The org is live with no merged identifiers. Survivor 31542355 is a live PPON org and carries GBNHSQGH."
+    },
+    {
+     "code": "QOC",
+     "org_id": 30915758,
+     "child": "M2L0M",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates M2L0M under QOC (from 2020-10-23, open). All 4 mentions are named exactly 'NHS Shropshire, Telford and Wrekin Integrated Care Board', and every one is the procedure Buyer:\n- 30808330 and 46737553: Community Ophthalmology, with the STW ICB also as review body;\n- 46737574: Cataract/YAG, where SaTH, CHEC and SpaMedica are separate tenderer sections;\n- 46822938: the joint NEPTS notice, as its own co-buyer.\nNo other body uses the code. The name is admitted only under QOC, and the head equals the mention name. Survivor 31542354 is a live PPON org."
+    },
+    {
+     "code": "QOQ",
+     "org_id": 31570761,
+     "child": "02Y",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates 02Y under QOQ (from 2020-04-01, open). It has 1 mention, 46808541 (FTS 033664-2026, 2026-04-14), an RFI for urgent dental treatment. The section 'NHS Humber and North Yorkshire Integrated Care Board' is the Buyer, and the text reads 'NECS is working for and on behalf of NHS Humber and North Yorkshire Integrated Care Board (the Relevant Authority)'. So NECS is the agent, not a party, and the ICB is the buyer. The mention is post-April 2026, but QOQ did not change. The name is admitted under QOQ only. Survivor 31573365 is a live PPON org."
+    },
+    {
+     "code": "QOQ",
+     "org_id": 31591587,
+     "child": "03K",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Unit 1's 'no parent' was a failed fetch. The frozen child map has 03K under QOQ (RE5, from 2020-04-01, open), the row 'NHS HUMBER AND NORTH YORKSHIRE ICB - 03K'.\n\nAll 12 mentions:\n- are named 'NHS Humber and North Yorkshire ICB';\n- are the Buyer;\n- come from the NECS NHSE1006 community dental MSP series (2024-10 to 2025-02), whose text says NECS works 'for and on behalf of NHS Humber and North Yorkshire ICB (HNY ICB) (the Relevant Authority)'.\n\nNECS used 03K (North Lincolnshire's code) for all HNY lots (2, 3 and 4). That is HNY publishing under one of its own sub-ICB codes, not another body. The tenderers RJL and CHCP are separate sections. West Yorkshire's lot 1 sits separately under 03R. The name is admitted only under QOQ."
+    },
+    {
+     "code": "QOQ",
+     "org_id": 31619860,
+     "child": "42D",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates 42D under QOQ (from 2019-10-23, open). Both mentions are the Buyer (one also the CPB), named 'NHS Humber and North Yorkshire Integrated Care Board (ICB)':\n- 46938623 (2023-01-09), the tender;\n- 46950169 (2023-05-10), the award for the NECS432 CYP Autism Assessment service (Scarborough/Ryedale/Whitby).\nThe text names HNY ICB 'the Contracting Authority', with NECS as agent in its own unroled section. The supplier ABL Health is a separate section. The name is admitted only under QOQ, and the head equals the mention name."
+    },
+    {
+     "code": "QPM",
+     "org_id": 31606157,
+     "child": "78H",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates 78H under QPM (from 2019-10-23, open). Both mentions are the Buyer, named 'NHS Northamptonshire ICB':\n- 46901928, the Covid Medicines Delivery Unit award (2024-09-10);\n- 46901932, the Looked After Children health assessments award.\nThe GP practice tenderers (K83041, K83055, GFC01, G7128088) and LLR PCL are separate sections, so no supplier carries the ICB's code. The name is admitted only under QPM. Survivor 31542357 is a live PPON org."
+    },
+    {
+     "code": "QRL",
+     "org_id": 31597942,
+     "child": "D9Y0V",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates D9Y0V under QRL (from 2020-10-23, open), with no other parent.\n\nAll 10 mentions are the Buyer, under two names: 'NHS Hampshire and Isle of Wight ICB' \u00d77 and 'NHS HAMPSHIRE AND THE ISLE OF WIGHT INTEGRATED CARE BOARD' \u00d73. They cover:\n- the CYP complex domiciliary care framework (2023 to 2025);\n- the Isle of Wight Place community beds series (2023 to 2024);\n- the Barnardo's family support award (2022-12).\n\n'Isle of Wight Place' appears only in titles, never as a party name. The suppliers are separate sections. Both names are admitted only under QRL. The Frimley D4U1Y holder is correctly a non-member here."
+    },
+    {
+     "code": "QUA",
+     "org_id": 31545773,
+     "child": "D2P2L",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates D2P2L under QUA (from 2020-10-23, open).\n\nAll 16 mentions are the Buyer (2022-08 to 2026-05), and every name is Black Country ICB:\n- 14 in mixed case;\n- 1 in upper case;\n- 1 typo, 'NHS Balck Country Integrated Care Board' (46978077, 2022-08-12, co-buyer with Dudley MBC, which is its own section).\n\nThe suppliers (GP practices M91013/M91019/M91616/M91647, charities, companies) are separate tenderer sections. The typo is the body's own misspelling, and the strict gate admits it only under QUA. The org is an identity loser, so it arms no name key. Survivor 31542353 is a live PPON org."
+    },
+    {
+     "code": "QVV",
+     "org_id": 31575718,
+     "child": "11J",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates 11J under QVV (from 2020-04-01, open). All 3 mentions are the Buyer, named 'NHS Dorset Integrated Care Board':\n- 46952273 and 46921048, NEPTS (2023);\n- 46825937 (2026-06-02), a cluster tender in which BSW (QOX) and Somerset (11X) are separate co-buyer sections.\nDorset's clustering with BSW and Somerset has not changed the ODS parentage: QVV is Active with no legal end. The name is admitted only under QVV."
+    },
+    {
+     "code": "QWO",
+     "org_id": 31541083,
+     "child": "03R",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates 03R under QWO (from 2020-04-01, open). All 5 mentions are the Buyer: 'NHS West Yorkshire ICB' \u00d74 (the NHSE1006 dental lot 1 series, 2024) and 'West Yorkshire Integrated Care Board' \u00d71 (46738086, a 2025 urgent dental treatment RFI). The text has NECS working 'for and on behalf of NHS West Yorkshire Integrated Care Board (the relevant Authority)'. The tenderer TAD (Bradford District Care FT) is a separate section. Both names are admitted only under QWO, and the head ('West Yorkshire Integrated Care Board') is one of them. Survivor 30917022 is a live PPON org."
+    },
+    {
+     "code": "QWO",
+     "org_id": 31587867,
+     "child": "36J",
+     "include": true,
+     "confidence": "high",
+     "rationale": "The child map dates 36J under QWO (from 2019-10-23, open). It has 1 mention, 46846909 (2026-08-03), an RFI for primary care occupational health ('NHSE1110'). The section 'NHS West Yorkshire Integrated Care Board (ICB)' is the Buyer, and the text has NECS acting 'for and on behalf of NHS West Yorkshire ICB (the Contracting Authority)'. The mention is post-April 2026, but QWO did not change. The name is admitted only under QWO."
+    },
+    {
+     "code": "QWO",
+     "org_id": 31612327,
+     "child": "15F",
+     "include": true,
+     "confidence": "high",
+     "rationale": "I tested the '(Leeds Place)' asymmetry and it does not support omitting the holder.\n\n**The mentions.** All 3 are the Buyer (2 also the CPB) on the Shakespeare/Shadwell APMS series (2023):\n- 'NHS West Yorkshire Integrated Care Board (ICB)' (46941547, plain WY ICB);\n- '\u2026(Leeds Place)' (46918466);\n- '\u2026(ICB) (Leeds Place)' (46952676).\n\nThe text has NECS working 'for, and on behalf of, NHS West Yorkshire Integrated Care Board (ICB) (Leeds Place)', and an APMS contract can only be awarded by the ICB. A place has no legal personality. NECS appears as its own unroled or mediator section.\n\n**Why 513's call does not carry over.**\n- 513 U3 classed the County Durham and Tees Valley Place orgs HOSTED_OR_SITE explicitly because they name a sub-ICB location ('RO98 orgs never join a body (519)'). 519 reverses that premise.\n- In this same cohort, 16C, a QHM member, folds '\u2026- Tees Valley Place' names.\n- 15F is itself the Leeds sub-ICB location, so '(Leeds Place)' is exactly what the code denotes.\n- An identity loser's name keys are empty, so no place name is armed. A future 15F mention still passes child_check one name at a time.\n\nThe gate admits all 3 names under QWO only. The head is one of them."
+    },
+    {
+     "code": "QXU",
+     "org_id": 31608314,
+     "child": "92A",
+     "include": true,
+     "confidence": "high",
+     "rationale": "92A is a moved child. The child map dates it under QXU from 2019-10-23 to 2026-03-31, then under S9B9J (Surrey and Sussex, not allowlisted). QXU's legal end is 2026-03-31 with successor S9B9J.\n\nThe 1 mention, 46907492 (2024-10-31), falls inside QXU's period. It is the Buyer, named 'NHS Surrey Heartlands ICB', on an award for a hospital discharge service, and the supplier Positive Support Group is a separate section. The name is admitted under QXU, and under S9B9J it answers better{QXU}, so exactly one parent admits it. The name is the predecessor's, not the successor's, so 513's successor-name denial does not apply.\n\nAfter the fold, GBNHS92A answers the ended body's survivor 31552079 (a live PPON org). Future 'Surrey and Sussex' mentions fail the gate under QXU and become listed strays: risk 10 and ruling 4, not a wrong merge."
+    }
+   ],
+   "notes": "I am the challenger for group QGH/QOC/QOQ/QPM/QRL/QUA/QVV/QWO/QXU: 13 candidate members, all include=true at HIGH. I wrote nothing.\n\n**Reads**\n- 1 bounded SELECT: organization_mentions for the 13 member org_ids, LIMIT 300. It returned 61 rows, untruncated, matching the cohort's per-member counts exactly.\n- Public notice and content GETs for all 59 distinct notices, paced at 0.5 s, with no failures or retries.\n- Public org GETs for the 13 members and 9 survivors.\n- child_check_sim.py re-run on every distinct name, under its parent and against every other RO261 row.\n\n**Findings**\n- Every one of the 61 mentions is the OPT-300 Procedure Buyer (some also CPB), named as the parent ICB.\n- Suppliers, GP practices, NECS (as agent) and review bodies always sit in separate sections, so no issue-484 supplier-carries-ICB-code shape occurs.\n- Every name is admitted only under its own parent; no other RO261 row admits any of them.\n- Every head equals one of its mention names.\n- Members are live national identities (GBNHS<C>), with no merged identifiers and not provisional.\n- Survivors are live PPON orgs, each carrying GBNHS<P>.\n- All 13 child codes are dated under the stated parent in nhs-ods-children.tsv.\n\n**Points I tested and rejected as reasons to omit**\n1. **15F (Leeds Place).** 513 U3's HOSTED_OR_SITE call on the QHM place orgs rested on 'RO98 orgs never join a body (519)', which 519 itself reverses. 16C in this cohort already folds '\u2026- Tees Valley Place'. 15F is the Leeds sub-ICB location, and identity losers arm no name keys. Keeping the two 513 place orgs out is a separate 513-amendment question, not a hold on 15F.\n2. **92A.** QXU ended on 2026-03-31, but the only mention is from 2024 and named Surrey Heartlands, and S9B9J answers better{QXU}.\n3. **Shared notice.** 18C, M2L0M and D2P2L share joint NEPTS notice 46822938. Each is its own ICB co-buyer under its own code; BSol (15E) leads in a separate section.\n4. **03K.** NECS uses North Lincolnshire's code for all HNY dental lots, always under HNY's name.\n5. **Typo.** D2P2L's 'Balck' is the body's own typo and is admitted.\n\n**Outside this group (non-members, not rated)**\n- QOQ's 03Q holder 30915681 (NHS England NEY) is correctly a non-member.\n- QRL's D4U1Y holder 31535814 (Frimley) is correctly a non-member."
+  }
+ ],
+ [
+  "sites:challenger",
+  {
+   "members": [
+    {
+     "code": "RBT",
+     "org_id": 31624083,
+     "child": "RBT20",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: RBT20 (LEIGHTON HOSPITAL, RO198) is RE6 under RBT from 1991-04-01 with no end date, and has no other parent. The survivor 30918302 is live, PPON-keyed (GBPPONPZZX1928RJQT) and carries GBNHSRBT. The member is live with 1 mention. I read that mention's notice, 46952168 (FTS 015413-2023, 2023-05-31, in period): Cheshire East Council awards paediatric speech and language therapy. The tenderer ORG-GB-NHS-RBT20 is named 'Mid Cheshire Hospitals NHS Foundation Trust'. The other tenderer is East Cheshire NHS Trust under its own site code RJN71. The lot covers services from 'the 2 hospitals located within the borough', so the council entered each trust's hospital site code. The party is the trust acting as supplier under its own main-hospital code, not another body. Its name is already one of RBT's 513 keys. Argument against: the site code was entered by the council, not the trust. That says nothing about who the party is. Ruling 7 applies: the name passes the gate, it is the trust's name, and the survivor is PPON."
+    },
+    {
+     "code": "RCU",
+     "org_id": 30967595,
+     "child": "RCU51",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: RCU51 (THE BECTON CENTRE FOR CHILDREN & YOUNG PEOPLE, a Tier 4 CAMHS unit) is RE6 under RCU from 2002-04-01, open-ended, with no other parent. The survivor 30930095 is live, PPON-keyed (GBPPONPTWR5281TMPQ) and carries GBNHSRCU. I read the 1 mention's notice, 46132954 (FTS 087965-2026, 2026-09-16, in period). The buyer is Cheshire and Wirral Partnership NHS FT (GB-NHS-RXA). The procedure title is 'CAMHS Tier 4 sub-contract between Cheshire and Wirral Partnership NHS Foundation Trust and Sheffield Children's NHS Foundation Trust'. The tenderer is ORG-GB-NHS-RCU51, named 'Sheffield Children's NHS Foundation Trust'. The title names the trust as the contracting party, and the site code fits the Tier 4 CAMHS service. Its name is already one of RCU's 513 keys. I found no reason against folding."
+    },
+    {
+     "code": "RCX",
+     "org_id": 31551062,
+     "child": "RCX70",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: RCX70 (THE QUEEN ELIZABETH HOSPITAL) is RE6 under RCX from 1992-04-01, open-ended, with no other parent. The survivor 30914684 is live, PPON-keyed (GBPPONPQCT9574RQTZ) and carries GBNHSRCX. I read the 1 mention's notice, 46760195 (FTS 071297-2025, 2025-11-05, in period): a PSR contract modification by NHS Norfolk and Waveney ICB (26A) for 'The Queen Elizabeth Hospital King's Lynn NHS Foundation Trust (QEH) Community Diagnostic Centre'. The tenderer ORG-GB-NHS-RCX70 carries two names. Both are the trust's full name: the stored mention name with a double space, and 'Kings Lynn' without the apostrophe. The party is the trust acting as provider. I checked the rival risk: the inactive RG2 'QUEEN ELIZABETH HOSPITAL NHS TRUST' (Woolwich) shares the prefix, but the gate admitted the name, and 'King's Lynn' settles which hospital it is. The non-member 31594811 'Queen Elizabeth Hospital FT' is not a child holder and is not touched. Its name is already one of RCX's 513 keys."
+    },
+    {
+     "code": "RPY",
+     "org_id": 31560996,
+     "child": "B4Z5Z",
+     "include": true,
+     "confidence": "medium",
+     "rationale": "Child map: B4Z5Z (THE ROYAL MARSDEN HOSPITAL (SUTTON)) is RE6 under RPY from 2021-10-01, open-ended, with no other parent. The survivor 30926647 is live, PPON-keyed (GBPPONPXLT9823WVCY) and carries GBNHSRPY. The 1 mention is notice 46783786 (FTS 008419-2026, UK5 transparency notice, 2026-01-30, in period). The buyer ORG-GB-NHS-B4Z5Z is 'The Royal Marsden Hospital', buying specialist cleanroom equipment for paperless aseptic preparation compatible with EPIC, from Hanley Technology Ltd. It matches the provisional org 31607240, which also has the name 'The Royal Marsden Hospital' and no identifier. That org's notice 46904782 (2024) is the 'Aseptic Suite, Sutton' works tender. So this is the Royal Marsden's own Sutton aseptic programme. The trust is the only legal entity, and no other row in nhs-ods.tsv contains 'Marsden'. Folding it would not merge another organisation. Reasons against HIGH: (1) The name is the site's ODS name without '(SUTTON)', not the trust's legal name. The survivor's 190 mentions never use the bare 'The Royal Marsden Hospital'; they use 'Royal Marsden Hospital NHS Foundation Trust' 16 times. (2) 513 keeps site-named holders separate ('Whipps Cross Hospital' stays on its own row under R1H). Folding B4Z5Z alone also leaves the same-named provisional rows 31607240 and 21469072 apart from the trust, a naming asymmetry. Neither point is a wrong merge, so including it is safe, but it rests on calling a site name a trust name. Medium leaves the call to the reviewer, as the ruling intends."
+    },
+    {
+     "code": "RXA",
+     "org_id": 31537284,
+     "child": "Q7N9Z",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: Q7N9Z (CHESHIRE WEST HH+ - COVID VACCINATION CENTRE) is RE6 under RXA from 2021-10-01, open-ended, with no other parent. The survivor 31552751 is live, PPON-keyed (GBPPONPGZV5874HRZD) and carries GBNHSRXA. I read the 1 mention's notice, 46730523 (FTS 041481-2025, 2025-07-21, in period): NECS575, a PSR intention-to-award for a Covid vaccination outreach service in the North West. The buyer is NHS England North West, with NECS running the procurement for it. The Lot 1 (Cheshire and Merseyside) tenderer is ORG-GB-NHS-Q7N9Z, named 'NHS Cheshire and Wirral Partnership NHS FT'. The party is CWP acting as provider, under the code of its own Covid vaccination centre, which fits a Covid vaccination contract. The redundant 'NHS ... NHS FT' wording is still CWP's name, and the gate admits it. Argument against: NHS England and NECS appear on this notice. Neither is in the RXA-coded org section: NHS England sits under its own Q75/Q83/Q84 codes and as the review body. The other lots' winners (pharmacies, PCNs) carry their own GB-NHS codes and are not Q7N9Z."
+    },
+    {
+     "code": "RYY",
+     "org_id": 31603978,
+     "child": "RYY13",
+     "include": true,
+     "confidence": "high",
+     "rationale": "Child map: RYY13 (TRINITY HOUSE, the trust's Ashford premises) is RE6 under RYY from 2010-11-01, open-ended, with no other parent. The survivor 30916727 is live, PPON-keyed (GBPPONPHVC1716LBDJ) and carries GBNHSRYY. I read the 1 mention's notice, 46896068 (FTS 022288-2024, 2024-07-18, in period). East Sussex County Council awards East Sussex sexual health services under PCR 2015 Reg 32 'to Kent Community Health NHS Foundation Trust'. The tenderer is ORG-GB-NHS-RYY13, named 'Kent Community Health NHS Foundation Trust'. The party is the trust acting as supplier under one of its own site codes. Its name is already one of RYY's 513 keys. I found no reason against folding."
+    }
+   ],
+   "notes": "I read all six members' notices through the public API. I also ran three bounded SELECTs on the box: the RPY survivor's mention names (190 rows), a name_norm range seek on 'the royal marsden' / 'royal marsden', and the mention of 31607240. I wrote nothing and posted nothing.\n\nThe members and survivors are live as of now. Each member still holds exactly 1 mention carrying its own GB-NHS-<site> triple. Each survivor is PPON-keyed and carries GBNHS<P> as a merged identifier. Each site is RE6 under its parent in crates/ingest/sdk/nhs-ods-children.tsv, with an open interval and no other parent, and every mention falls inside its period.\n\nFive of the six are the trust acting as supplier or provider under one of its own site codes: RBT20, RCU51, RCX70, Q7N9Z and RYY13. Each name is the trust's own and is already one of the trust's 513 name keys (all but Q7N9Z), so I put them at HIGH.\n\nB4Z5Z is included at MEDIUM only. The notice is the Royal Marsden buying for its Sutton aseptic suite, and the trust is the only legal entity, so folding it would not merge another body. But the mention name is the site's ODS name without '(SUTTON)'. Two provisional orgs with the same name, 31607240 'The Royal Marsden Hospital' (the 2024 Sutton aseptic-suite tender) and 21469072 'Royal Marsden Hospital', stay separate from the trust whatever happens to B4Z5Z. Folding it would therefore be a naming-policy choice in tension with 513's 'hosted sites stay separate', not a correction of a split body.\n\nSomething the cohort does not cover: the RBT20 notice also carries East Cheshire NHS Trust under site code RJN71. RJN71 is one of the 25 measured sites. Its parent RJN contains no digit, so the census should have it with a 'site' m1_kind; it is not part of this group."
+  }
+ ]
+]

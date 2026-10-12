@@ -46,6 +46,8 @@ def lookup(identifier):
 
 fails, out = [], []
 folded_losers = 0
+# A child dated under two parents is a holder of both; when it folds under one, it leaves the other's holders.
+losers_anywhere = {l: f['code'] for f in wet['folded'] for l in f['losers']}
 for f in wet['folded']:
     code, keep, losers = f['code'], f['keep'], f['losers']
     folded_losers += len(losers)
@@ -73,6 +75,8 @@ for f in wet['folded']:
         fails.append(f'{code}: losers still holders {sorted(set(losers) & set(ph))}')
     for n in nonmembers:
         if n not in ph:
+            if losers_anywhere.get(n, code) != code:
+                continue  # folded into its other parent in this run
             fails.append(f'{code}: non-member {n} left the holders')
         elif ph[n]['mentions'] != pre_h[n]['mentions']:
             fails.append(f'{code}: non-member {n} mentions {pre_h[n]["mentions"]} -> {ph[n]["mentions"]}')
