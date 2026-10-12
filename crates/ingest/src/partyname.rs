@@ -502,10 +502,11 @@ pub fn not_a_name(name: &str) -> Option<NotAName> {
 /// 2. a void stem: [`NotAName::AwardSummary`] when the name also names an award, else
 ///    [`NotAName::VoidLot`] (510);
 /// 3. a placeholder stem: [`NotAName::AwardSummary`] when a pointer is followed by a name
-///    ([`pointer_names`]), a boundary stem follows one ([`named_before_stem`]) or the name
-///    has a summary's shape ([`summary_shape`]), else [`NotAName::Placeholder`];
-/// 4. a blank stem: [`NotAName::AwardSummary`] for a summary's shape, else
-///    [`NotAName::Blank`];
+///    ([`pointer_names`], a perfil stem's genitive owner included: [`perfil_owner`]), a
+///    boundary stem follows one ([`named_before_stem`]) or the name has a summary's shape
+///    ([`summary_shape`]), else [`NotAName::Placeholder`];
+/// 4. a blank stem: [`NotAName::AwardSummary`] for a summary's shape or a `but` clause that
+///    names a body ([`but_names`]), else [`NotAName::Blank`];
 /// 5. the whole values: 510's void ones first (with its reason and prefix rules), then
 ///    [`PLACEHOLDER_WHOLE`], [`BLANK_WHOLE`], and [`SCOPED_WHOLE`] in its languages and a
 ///    plain case — after a bare lot qualifier only; one that names a company or a list is
@@ -549,8 +550,9 @@ pub fn not_a_name_in(name: &str, lang: Option<&str>) -> Option<NotAName> {
             NotAName::Placeholder
         });
     }
-    if BLANK_STEMS.iter().any(|stem| head.starts_with(stem)) {
-        return Some(if summary_shape(name, &full) { NotAName::AwardSummary } else { NotAName::Blank });
+    if let Some(stem) = BLANK_STEMS.iter().find(|stem| head.starts_with(*stem)) {
+        let but = after_stem(name, &padded, stem, padded.len() - head.len()).is_some_and(but_names);
+        return Some(if but || summary_shape(name, &full) { NotAName::AwardSummary } else { NotAName::Blank });
     }
     // Folded again only when a lot qualifier came off: the fold already drops leading and
     // trailing punctuation and space, so an unstripped name folds to `full`.
@@ -716,23 +718,152 @@ fn after_lot_designator(full: &str) -> &str {
 /// Without a separator nothing follows the pointer but its own words (`See Section VI.3)
 /// Additional information`, `See Contracts Finder Notice for full supplier list`) — except
 /// a `see section` with no reference at all, which names its body directly (`see section
-/// Royal Courts of Justice`).
+/// Royal Courts of Justice`), and a perfil stem that opens the name, whose genitive names
+/// the profile's owner ([`perfil_owner`]: `Perfil de contratante del Gobierno de Aragón`).
 fn pointer_names(raw: &str, padded: &str, stem: &str, pos: usize) -> bool {
+    let Some(after) = after_stem(raw, padded, stem, pos) else {
+        return false;
+    };
+    let (rest, referenced) = strip_references(after);
+    let rest = match open_separator(rest) {
+        Some(after) => strip_references(after).0,
+        None if stem == " see section" && !referenced => rest,
+        // Issue 511 unit 3 read: only when nothing precedes the stem — `Ver perfil del
+        // contratante de la Junta de Andalucía` points a winner slot at the buyer's
+        // profile (the 2010 print's junk, `text::parse`), and a name before the stem is
+        // `named_before_stem`'s to read.
+        None if PERFIL_STEMS.contains(&stem) && pos == 0 => return perfil_owner(after),
+        None => return false,
+    };
+    names_something(rest)
+}
+
+/// The raw text after a stem (`stem`, found at byte `pos` of `padded`, the space-padded
+/// fold of `raw`) and the word it ends in; `None` when the fold's words and `raw`'s
+/// alphanumeric runs do not line up.
+fn after_stem<'a>(raw: &'a str, padded: &str, stem: &str, pos: usize) -> Option<&'a str> {
     // The fold's words are the raw name's alphanumeric runs, one for one (`match_norm`
     // spaces every non-alphanumeric run; the Latin fold maps char to char).
     let runs = alphanumeric_runs(raw);
     let first = padded[..pos].matches(' ').count();
     let last = first + stem.trim_start().split(' ').count() - 1;
-    let Some(&(_, end)) = runs.get(last).filter(|_| runs.len() == padded.trim_start().split(' ').count()) else {
+    let &(_, end) = runs.get(last).filter(|_| runs.len() == padded.trim_start().split(' ').count())?;
+    Some(&raw[end..])
+}
+
+/// The two perfil stems among [`POINTER_STEMS`]: a genitive after one names the profile's
+/// owner ([`perfil_owner`]).
+const PERFIL_STEMS: [&str; 2] = [" perfil del contratante", " perfil de contratante"];
+
+/// Issue 511 unit 3 read: the folded words that never name a perfil's owner — the Spanish
+/// function words title case capitalises (`Perfil Del Contratante De La Página Web`), and
+/// the web lead-in's and a URL's words (`de la página WEB de la Fábrica Nacional …`,
+/// `sitio internet`). Excluded wherever they sit, the lead-in needs no strip of its own.
+const PERFIL_NON_NAMES: [&str; 15] =
+    ["de", "del", "la", "las", "los", "el", "y", "en", "pagina", "sitio", "web", "internet", "www", "http", "https"];
+
+/// Issue 511 unit 3 read: the generic phrases a perfil's genitive may open on, on the fold —
+/// the buyer's office or the national platform, never a named owner (`Perfil del Contratante
+/// del Órgano de Contratación`, `perfil del contratante de la Plataforma de Contratación del
+/// Sector Público`). Their words count for nothing, the rest still reads (`Perfil de
+/// Contratante del Ayto. de Soria y plataforma de Contratación del Estado` names Soria).
+const PERFIL_GENERIC: [&str; 3] = [
+    "organo de contratacion",
+    "plataforma de contratacion del sector publico",
+    "plataforma de contratacion del estado",
+];
+
+/// Issue 511 unit 3 read (the dry plan's real-party hits, 26 orgs / 91 mentions in plan
+/// 2265, nearly all specifications-provider): whether the text after a perfil stem that
+/// opens the name (`after`, [`pointer_names`]) names the profile's owner — `Perfil de
+/// contratante del Gobierno de Aragón`, `PERFIL DEL CONTRATANTE DE LA CARM`, `Perfil de
+/// contratante y Registro Auxiliar de la Universidad de Valladolid`. The same body written
+/// before the stem was already kept ([`named_before_stem`]: `Junta de Andalucía - ver perfil
+/// de contratante`), so its fate hung on word order alone.
+/// 1. `after` opens, with nothing but space before it, on a genitive ([`genitive_at`]) — or
+///    on `y`, some words and a genitive (the profile and another office of the owner);
+/// 2. a word after that genitive is capitalised with two or more letters (an acronym too:
+///    `SESCAM`, `FNMT-RCM`), and is no [`PERFIL_NON_NAMES`] word, no part of a URL
+///    ([`url_token`]: `(www.x.es)`) and no part of a [`PERFIL_GENERIC`] phrase.
+///
+/// `Perfil del contratante de la página web` and `… del órgano de contratación` name nothing.
+fn perfil_owner(after: &str) -> bool {
+    let runs = alphanumeric_runs(after);
+    if runs.first().is_none_or(|&(start, _)| !after[..start].trim().is_empty()) {
+        return false;
+    }
+    let words: Vec<String> = runs.iter().map(|&(start, end)| fold(&after[start..end])).collect();
+    let owner = genitive_at(&words, 0)
+        .or_else(|| (words[0] == "y").then(|| (1..words.len()).find_map(|i| genitive_at(&words, i))).flatten());
+    let Some(owner) = owner else {
         return false;
     };
-    let (rest, referenced) = strip_references(&raw[end..]);
-    let rest = match open_separator(rest) {
-        Some(after) => strip_references(after).0,
-        None if stem == " see section" && !referenced => rest,
-        None => return false,
-    };
-    names_something(rest)
+    let mut generic = vec![false; words.len()];
+    for phrase in PERFIL_GENERIC {
+        let phrase: Vec<&str> = phrase.split(' ').collect();
+        for (at, window) in words.windows(phrase.len()).enumerate() {
+            if window.iter().zip(&phrase).all(|(word, p)| word == p) {
+                generic[at..at + phrase.len()].fill(true);
+            }
+        }
+    }
+    // The whitespace tokens that are URLs, as byte ranges of `after`.
+    let mut urls: Vec<std::ops::Range<usize>> = Vec::new();
+    let mut start: Option<usize> = None;
+    for (at, c) in after.char_indices().chain(std::iter::once((after.len(), ' '))) {
+        match (c.is_whitespace(), start) {
+            (false, None) => start = Some(at),
+            (true, Some(from)) => {
+                if url_token(&after[from..at]) {
+                    urls.push(from..at);
+                }
+                start = None;
+            }
+            _ => {}
+        }
+    }
+    (owner..words.len()).any(|i| {
+        let word = &after[runs[i].0..runs[i].1];
+        word.chars().next().is_some_and(char::is_uppercase)
+            && word.chars().filter(|c| c.is_alphabetic()).count() >= 2
+            && !PERFIL_NON_NAMES.contains(&words[i].as_str())
+            && !generic[i]
+            && !urls.iter().any(|url| url.contains(&runs[i].0))
+    })
+}
+
+/// The index of the first word after a Spanish or Catalan genitive at word `i` of the folded
+/// `words`: `del`, `de la`, `de las`, `de los` or `de`; `None` for any other word. The elided
+/// `de l'Ajuntament` reads as `de`: its one-letter `l` is no name ([`perfil_owner`]).
+fn genitive_at(words: &[String], i: usize) -> Option<usize> {
+    match words.get(i)?.as_str() {
+        "del" => Some(i + 1),
+        "de" if words.get(i + 1).is_some_and(|w| matches!(w.as_str(), "la" | "las" | "los")) => Some(i + 2),
+        "de" => Some(i + 1),
+        _ => None,
+    }
+}
+
+/// A whitespace token that is a URL (`www.carm.es`, `(www.fnmt.es)`, `http://contratacion…`,
+/// any case): none of its words names a perfil's owner ([`perfil_owner`]).
+fn url_token(token: &str) -> bool {
+    let t = token.trim_start_matches(|c: char| !c.is_alphanumeric()).to_lowercase();
+    t.starts_with("www.") || t.starts_with("http") || t.contains("://")
+}
+
+/// Issue 511 unit 3 read: whether the text after a blank stem (`rest`, [`after_stem`]) is a
+/// `but` clause that names a body ([`names_something`]) — the review-body slot's `Not
+/// applicable, but proceedings may be started in the High Court of England and Wales …`
+/// (plan 2265: 6 orgs / 8 mentions, the decision's `see section Royal Courts of Justice` in
+/// other words). The `but` is required, an optional `,` before it: a comma alone continues
+/// the blank (`Not applicable, see section VI.4`, `Not Applicable, since Minesto is a private
+/// company`, `nie dotyczy, zamówienie … ustawie PZP`), whose capitals name nobody.
+fn but_names(rest: &str) -> bool {
+    let t = rest.trim_start();
+    let t = t.strip_prefix(',').unwrap_or(t).trim_start();
+    t.get(..3).is_some_and(|word| word.eq_ignore_ascii_case("but"))
+        && t[3..].starts_with(|c: char| !c.is_alphanumeric())
+        && names_something(&t[3..])
 }
 
 /// The words that lead into a [`StemAt::Boundary`] stem as part of its phrase (`Véase /
@@ -1359,8 +1490,8 @@ fn bare_lot_qualifier(group: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        BLANK_STEMS, BLANK_WHOLE, NotAName, PLACEHOLDER_STEMS, PLACEHOLDER_WHOLE, POINTER_STEMS, SCOPED_WHOLE, VOID_STEMS,
-        VOID_WHOLE, fold, is_exact_entry, mentions_placeholder, not_a_name, not_a_name_in,
+        BLANK_STEMS, BLANK_WHOLE, NotAName, PERFIL_STEMS, PLACEHOLDER_STEMS, PLACEHOLDER_WHOLE, POINTER_STEMS, SCOPED_WHOLE,
+        VOID_STEMS, VOID_WHOLE, fold, is_exact_entry, mentions_placeholder, not_a_name, not_a_name_in,
     };
 
     /// One prod specimen per entry, and the spellings the 508 lists missed.
@@ -1716,6 +1847,9 @@ mod tests {
         for pointer in POINTER_STEMS {
             assert!(placeholder_stems.contains(&pointer), "{pointer:?} is a placeholder stem");
         }
+        for perfil in PERFIL_STEMS {
+            assert!(POINTER_STEMS.contains(&perfil), "{perfil:?} is a pointer stem");
+        }
         let scoped: Vec<&str> = SCOPED_WHOLE.iter().map(|(word, _)| *word).collect();
         let wholes: Vec<&str> =
             VOID_WHOLE.iter().chain(&PLACEHOLDER_WHOLE).chain(&BLANK_WHOLE).chain(&scoped).copied().collect();
@@ -2051,6 +2185,85 @@ mod tests {
             "Disclosure would prejudice commercial interests",
         ] {
             assert_eq!(not_a_name(bare), Some(NotAName::Placeholder), "{bare}");
+        }
+    }
+
+    /// Issue 511 unit 3 read: a perfil stem that opens the name, then a genitive (or `y`, an
+    /// office and a genitive), names the profile's owner — the dry plan's real-party hits, 26
+    /// orgs / 91 mentions in plan 2265, kept when written before the stem but dropped after
+    /// it. A genitive onto the web page, the buyer's office or the national platform names
+    /// nobody, and a lead-in leaves the pointer a pointer.
+    #[test]
+    fn a_perfil_followed_by_its_owner_is_kept() {
+        for kept in [
+            "Perfil de contratante del Gobierno de Aragón",
+            "Perfil de contratante de la página WEB de la Fábrica Nacional de Moneda y Timbre - Real Casa de la Moneda",
+            "Perfil del Contratante de la Comunidad Autónoma de la Región de Murcia",
+            "Perfil de Contratante de la Universidad Complutense de Madrid",
+            "Perfil del contratante del Ayuntamiento de San Fernando",
+            "Perfil de contratante del SESCAM",
+            "PERFIL DEL CONTRATANTE DE LA CARM",
+            "Perfil del contratante y Servicio Central de Contratación de la Diputación de Alicante",
+            "Perfil de contratante y Registro Auxiliar de la Universidad de Valladolid",
+            "Perfil del contratante de la Empresa Malagueña de Transportes S.A.M.",
+            // More of the plan's spellings: an acronym after a bare `de`, a URL after the
+            // owner, the platform beside a named owner; and the Catalan elision.
+            "Perfil del contratante de Anfaco-Cecopesca",
+            "Perfil del contratante de la página web de la FNMT-RCM (www.fnmt.es)",
+            "PERFIL DEL CONTRATANTE DE LA COMUNIDAD AUTÓNOMA DE LA REGIÓN DE MURCIA WWW.CARM.ES",
+            "Perfil de Contratante del Ayto. de Soria y plataforma de Contratación del Estado",
+            "Perfil del contratante de l'Ajuntament de Girona",
+        ] {
+            assert_eq!(not_a_name(kept), Some(NotAName::AwardSummary), "{kept}");
+            assert!(mentions_placeholder(kept) && !is_exact_entry(kept), "{kept}: listed, and read before the wet run");
+        }
+        for pointer in [
+            "Ver perfil del contratante",
+            "Véase perfil del contratante",
+            "Perfil del contratante de la página web",
+            "Perfil Del Contratante De La Página Web",
+            "Perfil del contratante del órgano de contratación",
+            "Perfil del Contratante del Órgano de Contratación",
+            "Perfil del contratante (www.x.es)",
+            "perfil del contratante de la Plataforma de Contratación del Sector Público",
+            "Perfil del contratante y Plataforma de Contratación del Estado",
+            "Perfil del contratante de la web municipal (puntos de contacto)",
+            "Perfil del contratante de WWW.MADRID.ES",
+            "perfil de contratante www.gelves.es",
+            // A lead-in: a winner slot pointed at the buyer's profile (`text::parse`'s junk).
+            "Ver perfil del contratante de la Junta de Andalucía",
+            "Ver Perfil de Contratante del Hospital Clínic de Barcelona",
+            // `o`, not `y`: another place to look, not the owner's other office.
+            "Perfil del Contratante o Jta. de Contratación",
+        ] {
+            assert_eq!(not_a_name(pointer), Some(NotAName::Placeholder), "{pointer}");
+        }
+    }
+
+    /// Issue 511 unit 3 read: a blank stem followed by a `but` clause that names a body names
+    /// that body — the review-body slot's High Court (plan 2265: 6 orgs / 8 mentions). A comma
+    /// alone continues the blank, and a `but` that names nothing leaves it blank.
+    #[test]
+    fn a_blank_slot_but_a_named_body_is_kept() {
+        for kept in [
+            "Not applicable, but proceedings may be started in the High Court of England and Wales",
+            "Not applicable but proceedings may be started in the High Court of England and Wales",
+            "Not Applicable, but proceedings may be started in the High Court of England and Wales in accordance with Part 3 (Remedies) of the Public Contracts Regulations 2015",
+        ] {
+            assert_eq!(not_a_name(kept), Some(NotAName::AwardSummary), "{kept}");
+        }
+        for blank in [
+            "Not applicable",
+            "N/A",
+            "Not applicable.",
+            // A comma alone: the capitals after it name nobody.
+            "Not applicable, see section VI.4",
+            "Not Applicable, since Minesto is a private company.",
+            "nie dotyczy, zamówienie udzielane w oparciu o zasadę konkurencyjności niepodlegające ustawie PZP",
+            "Not applicable, but see below",
+            "Not applicable in Northern Ireland",
+        ] {
+            assert_eq!(not_a_name(blank), Some(NotAName::Blank), "{blank}");
         }
     }
 
