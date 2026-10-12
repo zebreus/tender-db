@@ -43,3 +43,28 @@ Still open (U5 tail):
   `nhs_body_regrown` (must stay []).
 - The owner read of the 18-code residue (174 codes − 156 verdicts).
 - Then 469 U7, with 519 before or alongside it.
+
+## Residue owner read and second cohort (2026-10-12)
+
+The owner read of U3's 18-code residue was a reviewer plus an adversarial challenger per batch of three
+(wf_2411cb6d-b89, 12 agents; `residue-read-wf_2411cb6d.json`). The challenger agreed on all 18.
+
+**Posted**, cohort `nhs-body-residue-2026-10-12` (`verdicts-nhs-body-residue-2026-10-12.json`):
+- QJM; QKK (SEL only, the NEL strays excluded); QMF (NEL); QMJ (PPON survivor); QOP (one member); QYG.
+- Dry 2280: 6 admitted.
+- Wet 2281: 5 merged, 1 one-member; 23 org rows removed; 1,952 mentions repointed; 967 tenders touched; held 0.
+- S3 read (`s3check_residue.py` → `s3-read-residue.json`): 2 reported fails, both by design. 30914670 and 31570524 are
+  NEL clusters, non-members of QKK and members of QMF. 30914670 is QMF's anchor and absorbed 31570524 (217 → 281).
+
+**Totals after U5: 162 bodies applied, 260 org rows removed, 25,347 mentions repointed.**
+
+**Held: 12.**
+- DQF: a minted COH identity is already the body; nothing to fold.
+- RFF: no SAME holder.
+- RVY: every coded notice falls after its legal end (519 territory).
+- QUY, RCB, RHM, RNK, RRV, RXF, RXT, RYC, RYG: `member-key-owned-elsewhere`. In 7 of these the blocked member is the
+  body's own **PPON org, i.e. the survivor**, whose head key is owned by its uncoded twin (an identifier-NULL row
+  outside the body).
+  - U4's alias arms loser keys only: `NHS_BODY_ALIAS_LEDGER_SQL` reads `$.loser_name_norm`.
+  - `arm_nhs_body_alias_on` already refuses, at arm time, a loser key that a standing identifier-NULL row owns.
+  - So the census gate guards nothing when it catches the survivor. That is filed as U6.

@@ -1,0 +1,640 @@
+{
+ "proposals": {
+  "QMF": {
+   "code": "QMF",
+   "decision": "post",
+   "members": [
+    30914670,
+    30976288,
+    31542989,
+    31570524,
+    31608373,
+    31608375,
+    31613968
+   ],
+   "reviewed_holders": [
+    5132172,
+    30914670,
+    30915099,
+    30976288,
+    31542989,
+    31561974,
+    31570524,
+    31570934,
+    31608373,
+    31608375,
+    31613968
+   ],
+   "excluded": [
+    {
+     "org": 5132172,
+     "why": "This is Barking, Havering and Redbridge University Hospitals NHS Trust, a DIFFERENT body: ODS RF4, Active, RO197. It has 1 stray GB-NHS-QMF mention against 64 uncoded, and the check refuses it on 'role'. D6 says never."
+    },
+    {
+     "org": 30915099,
+     "why": "This is the NHS London Commercial Hub, a procurement unit hosted by NEL ICB (FTS 033194-2025: 'hosted by NHS North East London ICB'). It has its own PPON PBWD-3998-QHRQ and also holds QMJ. The check refuses it ('better', rival 13R). HOSTED_OR_SITE, so D6 says never."
+    },
+    {
+     "org": 31561974,
+     "why": "This is the PPON org GBPPONPMLZ8385VMTM. FTS witnesses show it is NEL ICB's own PPON, but its head name is SEL ICB (3 of 5 mentions). The check refuses it ('better', rival QKK). Its 234 key is owned by 30914447, QKK's SEL cluster, outside this body, so as a member it would make the verdict 'member-key-owned-elsewhere' (D4). The adopted D6 drops the QKK/QMF cross-assignment so both bodies stay anchors. It can join later only through a keep_name relabel to the NEL name with the SEL key left un-armed, decided together with QKK's 31576333 in a later cohort."
+    },
+    {
+     "org": 31570934,
+     "why": "SAME in substance: the exact ODS name plus '(covering Barking & Dagenham, Havering and Redbridge)', 1 mention, coded QMF. But the check refuses it on 'coverage'. D3 requires cited ODS rename or predecessor evidence for a check-refused member, and an area parenthetical is neither. S1 allows 0 flagged members without evidence, and the U3 challenger disputed it. It is left out at no cost (1 mention). If the owner adopts the RBL/RGP/RWR 'coverage' precedent from cohort 1, a later cohort can add it."
+    }
+   ],
+   "reason": "ODS QMF is NHS North East London ICB (RO261, Active, allowlisted, no legal end or successor). Seven live holders are NEL spellings:\n- 30914670 is the exact ODS name, with 217 mentions, 119 of them coded QMF.\n- 30976288 is 'NHS North East London ICB'.\n- 31542989 is 'North East London ICB'.\n- 31570524 is 'North East London Integrated Care Board'.\n- 31608373 and 31608375 are the 'Integrate' and 'Intergrated' typos.\n- 31613968 adds '(NEL)' and '(ICB)'.\n\nEvery one of them passes the check as 'admitted'. They are standing, have no denial and no key_owners_elsewhere, are not contested, and none carries a GB:ppon identifier.\n\nWith no PPON member, the code picks the largest cluster: 30914670 (217 mentions) becomes the provisional anchor. There is no PPON loser, so 'loser-ppon-unaliased' cannot fire. This is exactly D6's 'both stay anchors' outcome, and it is the U3 reviewer's safe option (a).\n\nThe U3 hold rested on the PPON org 31561974. That org is excluded here, and leaving it out does not block admission, because the census does not require every SAME holder to be a member.\n\nCoordination: 30914670 and 31570524 are also QKK holders, from 4 and 1 QKK stray mentions. QKK's verdict must list them in its reviewed_holders but must NOT name them as members. Otherwise both codes go 'contested'. QKK's U3 member list already leaves them out.",
+   "unblock": "Nothing blocks the post. Two holders can come in through a later cohort's verdict on QMF (new cohort row, newest merge honoured):\n- 31561974 joins after a keep_name relabel to 'NHS North East London Integrated Care Board' with its SEL key un-armed, coordinated with QKK. As the PPON member it would then become the survivor and absorb the anchor through the ledger.\n- 31570934 joins if the owner rules that a verbatim ODS name plus an area parenthetical is adequate D3 evidence.",
+   "expected_census_status": "admitted (it would read 'contested' only if a QKK verdict named 30914670 or 31570524 as members)"
+  },
+  "QMJ": {
+   "code": "QMJ",
+   "decision": "post",
+   "members": [
+    30915101,
+    30915993,
+    30916245,
+    31536734,
+    31593612
+   ],
+   "reviewed_holders": [
+    30915099,
+    30915101,
+    30915993,
+    30916245,
+    31536734,
+    31593612,
+    31625150
+   ],
+   "excluded": [
+    {
+     "org": 30915099,
+     "why": "This is the NHS London Commercial Hub, hosted by NHS North East London ICB (QMF), not NCL. It has its own PPON PBWD-3998-QHRQ and only 1 QMJ-coded mention, from running procurements for several London ICBs. The check refuses it ('better', rival 13R). DIFFERENT or HOSTED, so D6 says never."
+    },
+    {
+     "org": 31625150,
+     "why": "'NHS NCL Integrated Care Board': SAME in substance (NCL is North Central London's acronym), 1 mention, coded QMJ. But the check refuses it as 'zero'. An acronym is not the ODS rename or predecessor evidence D3 requires, and S1 allows 0 flagged members without evidence; the U3 challenger disputed it for that reason. It is left out at no cost (1 mention). A later cohort can add it if the owner accepts own-acronym evidence."
+    }
+   ],
+   "reason": "ODS QMJ is NHS North Central London ICB (RO261, allowlisted, still Active). It was legally ended on 2026-03-31, and its successor is Z9B2Z, NHS West and North London ICB.\n\nThe legal end does not block a verdict:\n- No holder carries the successor name: successor_name is null for every holder, and no name_norm in any holder is the W&NL name. All holders are uncapped, so the name lists are complete.\n- The decision accepts that legally-ended codes have no date fence.\n- Cohort 1 already posted and folded the sibling predecessor QRV, plus QMM, QJG, QXU (24 notices after its legal end) and RYV.\n\nFive members are NCL spellings:\n- 30915101 is the exact ODS name, with 419 mentions, 48 coded.\n- 30915993 is 'NHS North Central London ICB', with 225 mentions.\n- 30916245 is the PPON org GBPPONPWBN7811DGVX, with the exact ODS name, 17 mentions, and its PPON published beside QMJ.\n- 31536734 is the ODS name with 'London' appended.\n- 31593612 is the name without 'NHS'.\n\nEvery member passes the check as 'admitted', with no denial, no key_owners_elsewhere and no contest. The survivor is the single SAME PPON member, 30916245, and no loser carries a PPON.\n\nThe reviewer and challenger agreed on every class. The only dispute was 31625150, and this verdict takes the challenger's stricter set.",
+   "unblock": "Nothing blocks the post. 31625150 can join through a later cohort if the owner accepts the acronym as D3 evidence.",
+   "expected_census_status": "admitted"
+  },
+  "QOP": {
+   "code": "QOP",
+   "decision": "post",
+   "members": [
+    30916695
+   ],
+   "reviewed_holders": [
+    1850341,
+    8572709,
+    30916695,
+    31620840
+   ],
+   "excluded": [
+    {
+     "org": 1850341,
+     "why": "'NHS Greater Manchester' was classed UNSURE because it is a mixed cluster:\n- Its org id (1.85M) puts its first mention in the 2011-13 era: the 'NHS Greater Manchester' PCT cluster, or the GM CSU 0AJ, which is Inactive in the table.\n- Its 4 coded FTS mentions are the ICB's operating brand.\n- The check ties it with 0AJ, and ODS has no rename or predecessor record linking the name to QOP.\nIt therefore cannot be a member in any outcome, and folding it whole would pull pre-ICB mentions into the ICB."
+    },
+    {
+     "org": 8572709,
+     "why": "'NHS England Greater Manchester' is DIFFERENT: it is NHS England's Greater Manchester area team, not the ICB. Its id (8.57M) dates it to the ~2015 area-team era. 7 of its 9 mentions are uncoded, and the 2 QOP-coded ones are strays. The check ties it with 0AJ."
+    },
+    {
+     "org": 31620840,
+     "why": "'NHS England and NHS Greater Manchester Integrated Care Partnership' is a joint label naming two bodies: NHS England, and the GM ICP, a joint committee of the ICB and the 10 councils. It is not the ICB's legal body, so it falls under D6 as a consortium-style or hosted name, even though the check admits the string."
+    }
+   ],
+   "reason": "ODS QOP is NHS Greater Manchester ICB (RO261, Active, allowlisted, no legal end). The only holder that IS the body is 30916695: the exact ODS name, 206 mentions, check 'admitted', no denial, no key_owners_elsewhere, and not contested. Its single GB-NHS-TBC raw is a placeholder, not an ODS code.\n\nA one-member verdict is allowed. It folds nothing; it records GBNHSQOP on 30916695 so that ?identifier=GBNHSQOP answers it.\n\nU3 held QOP only for medium confidence over the UNSURE holder 1850341. Both the reviewer and the challenger concluded that whatever the read of 1850341 finds, it stays out and the expected outcome is this 1-member verdict on 30916695. That uncertainty does not touch the member set, so the verdict is HIGH: no holder of doubtful identity is merged.",
+   "unblock": "Nothing blocks the post. A bounded read of the notice dates of 1850341's 7 uncoded mentions would only tell whether its FTS-era part could be split off later (an E3 or split question). It does not change this verdict.",
+   "expected_census_status": "admitted"
+  },
+  "DQF": {
+   "code": "DQF",
+   "decision": "hold",
+   "members": [],
+   "reviewed_holders": [
+    31550606
+   ],
+   "excluded": [
+    {
+     "org": 31550606,
+     "why": "SAME: it is the code's own company. The ODS name of DQF (RO172, a QWO subsidiary) is CALDERDALE AND HUDDERSFIELD SOLUTIONS LIMITED, and this holder is the same name with Ltd for Limited, under COH 11258001 with the code's PPON PHPR3762LPLP as a merged identifier. It still cannot be a member. The census gives it the structural denial 'minted-identity', because its own identifier GBCOH11258001 does not key to GB:ppon (plan_nhs_bodies, the minted_identity test). D6 says minted-identity holders are never members, and no verdict overrides a structural denial. It also fails D4: its 234 key 'calderdale and huddersfield solutions ltd' is owned outside the body by 14305379, so key_owners_elsewhere is [14305379]. It is also under_review, through a keep set in another scheme. One stray 'calderdale & huddersfield nhs foundation trust' mention out of 22 is noise."
+    }
+   ],
+   "reason": "There is nothing to fold. DQF's body is already one canonical org, 31550606, with COH 11258001 as its identity and PPON PHPR3762LPLP merged in. A verdict could only be one-member, and all it would do is record GBNHSDQF as a merged identifier. Posting that verdict [31550606] with reviewed_holders [31550606] passes stale, members-not-live, member-gone and contested. It then stops at 'member-denied' because denied = ['minted-identity']. If that denial were lifted, it would still stop at 'member-key-owned-elsewhere' because of 14305379. So posting it gains nothing. The only thing lost is a GBNHSDQF lookup, and D1's accepted trade-offs say a one-member record is lost on a rebuild anyway.",
+   "unblock": "The simplest option is to close DQF as 'no fold needed' and not record it. To record the code anyway, three things are needed. (1) An owner amendment to D6 and a planner change in plan_nhs_bodies. Together they would exempt a ONE-MEMBER record verdict from the 'minted-identity' denial when the holder's own registry identity is the ODS body itself, here an RO172 company whose COH name equals the ODS name. That is unlike 519's typo or sub-ICB identities, which must stay denied. (2) Clearing D4: identify 14305379, the identifier-NULL owner of the 'calderdale and huddersfield solutions ltd' key. If it is the company's own uncoded twin, fold it first through an E3/234 path, or by an altid/COH fold onto 31550606. If it is a different org, the hold stands. (3) Read which keep verdict puts 31550606 under review.",
+   "expected_census_status": "member-denied"
+  },
+  "QJM": {
+   "code": "QJM",
+   "decision": "post",
+   "members": [
+    20444933,
+    30913741,
+    31605215
+   ],
+   "reviewed_holders": [
+    20444933,
+    30913741,
+    31605215,
+    31605311
+   ],
+   "excluded": [
+    {
+     "org": 31605311,
+     "why": "'NHS incolnshire Integrated Care Board' (1 mention, coded GB-NHS-QJM) is SAME: the leading L of Lincolnshire is missing. But the check refuses it as 'zero'. D3 says a member the check refuses needs HIGH with cited ODS rename or predecessor evidence. ODS QJM has no predecessors and no rename, and a typo of the current name is neither. S1 requires 0 flagged members without evidence. The U3 challenger disputed it on exactly this ground. Leaving it out costs one mention, which stays a split provisional org (an accepted trade-off)."
+    }
+   ],
+   "reason": "ODS QJM is NHS LINCOLNSHIRE INTEGRATED CARE BOARD: RO261, Active, no legal end, no predecessors or successors, allowlisted. All three members are this body and pass the check (verdict 'admitted'). 30913741 is the exact ODS name: 855 mentions, 404 coded. 20444933 is 'NHS Lincolnshire ICB', the ICB abbreviation (16 mentions, 3 coded). 31605215 is 'NHS LINCOLNSHIRE INTEGRATED ACRE BOARD', a typo of CARE whose single mention publishes GB-NHS-QJM. Each of the three has holder_of only QJM, denied [], key_owners_elsewhere [] and contested false, and all are live and standing. reviewed_holders equals census 2279's holder_ids exactly, so the census status chain ends at 'admitted'. No member carries a GB:ppon identifier and the code has no PPON, so nhs_body_survivor picks the largest cluster, 30913741 (855 mentions), as the provisional anchor. There is no loser PPON, so 'loser-ppon-unaliased' cannot fire.",
+   "unblock": "Nothing blocks this post. 31605311 can join later through a new-cohort verdict, members [30913741, 31605311], with reviewed_holders taken from the census at that time. That needs an owner ruling that a cited one-letter typo of the code's own ODS name counts as D3 evidence. The posted cohort already admitted 5 check-refused 'coverage' and 'tie' members (RBL, RGP x2, RWR, QRV) on cited evidence, so there is precedent. A later verdict is possible because merge_verdict_for takes the newest reviewed_at.",
+   "expected_census_status": "admitted"
+  },
+  "QKK": {
+   "code": "QKK",
+   "decision": "post",
+   "members": [
+    30914447,
+    30928152,
+    31534497,
+    31544853,
+    31556342,
+    31620803
+   ],
+   "reviewed_holders": [
+    30914447,
+    30914670,
+    30928152,
+    31534497,
+    31544853,
+    31556342,
+    31570524,
+    31576333,
+    31620803
+   ],
+   "excluded": [
+    {
+     "org": 30914670,
+     "why": "DIFFERENT body. This is 'NHS North East London Integrated Care Board', the neighbouring ICB QMF. 119 of its coded mentions publish GB-NHS-QMF and only 4 publish QKK (dropdown strays). The check refuses it for QKK (better: QMF), and it holds both QKK and QMF. It belongs in QMF's verdict, never QKK's."
+    },
+    {
+     "org": 31570524,
+     "why": "DIFFERENT body. 'North East London Integrated Care Board' is NEL ICB (QMF): 4 QMF-coded mentions against 1 QKK stray, and the check refuses it for QKK (better: QMF). It holds both QKK and QMF and belongs only to QMF's verdict."
+    },
+    {
+     "org": 31576333,
+     "why": "The PPON org GBPPONPCXT8262NYRV. The FTS witnesses U3 fetched (033033-2025, 041616-2025, 042734-2025) show SEL ICB publishing QKK beside GB-PPON-PCXT-8262-NYRV, so by identity it is SEL's PPON org. But its only mention, and so its head name, is 'NHS North East London Integrated Care Board'. Three things keep it out. (1) The check refuses it (better: QMF), and there is no ODS rename or predecessor evidence (D3). (2) Its head 234 key 'nhs north east london integrated care board' is owned by 30914670, a standing identifier-NULL row outside SEL's body. D4 would hold it, but the census shows key_owners_elsewhere [] because the filter excludes every holder of the code, not every non-member. (3) As a member it would become the survivor, since nhs_body_survivor prefers a GB:ppon member. It would carry NEL's name and arm NEL's key for SEL's body. D6 dropped the QKK/QMF cross-assignment so that 'both stay anchors'."
+    }
+   ],
+   "reason": "ODS QKK is NHS SOUTH EAST LONDON INTEGRATED CARE BOARD: RO261, Active, no legal end or successors, allowlisted. The six members are all SEL spellings and all pass the check ('admitted'). 30914447 is the exact ODS name (241 mentions, 109 coded). 30928152 adds 'London' (11). 31534497 is the ICB abbreviation (41). 31544853 drops 'NHS' (21). 31556342 adds '(SEL ICB)' (6). 31620803 drops 'NHS' and adds '(ICB)' (2). Each has holder_of only QKK, denied [], key_owners_elsewhere [] and contested false. Their head keys are all SEL strings, so no non-member holder shares one: 31576333 has an identifier, and the two NEL clusters have NEL keys. QMF's holders include none of the six, so a later QMF verdict cannot make them 'contested'. reviewed_holders equals census 2279's nine holder_ids exactly, so the status is 'admitted'. No member has a GB:ppon identifier, so the survivor is the largest member cluster, 30914447 (241 mentions), as the provisional anchor, and there is no loser PPON. This is U3's safe option (a), and it matches the adopted D6. It holds back none of the clean SEL folds over the PPON-label question.",
+   "unblock": "Nothing blocks the post. To fold 31576333 in later (U3's option b), it becomes the survivor with keep_name 'NHS South East London Integrated Care Board', and its NEL head key is left unarmed. That needs three things. (1) An owner ruling that the FTS PPON witnesses count as identity evidence overriding the check's 'better: QMF'. (2) A D4/alias change so that a survivor's misnamed head key is not armed, and so that key_owners_elsewhere counts non-member holders such as 30914670. (3) Withdrawing or not posting the planned 469 keep verdict on QKK<->PCXT, because the PPONs are not swapped across bodies, only their labels. Decide this together with QMF's mirror case 31561974 (PMLZ-8385-VMTM, SEL-labelled). If QMF folds 31570524 before this verdict is applied, re-post QKK with the reviewed_holders of the census at that time, because a departed holder makes the verdict 'stale'.",
+   "expected_census_status": "admitted"
+  },
+  "QYG": {
+   "code": "QYG",
+   "decision": "post",
+   "members": [
+    30913962,
+    30916196,
+    30916198,
+    31541032,
+    31546209,
+    31551077,
+    31556030
+   ],
+   "reviewed_holders": [
+    30913962,
+    30916196,
+    30916198,
+    31541032,
+    31546209,
+    31551077,
+    31556030,
+    31579965,
+    31747045,
+    31747049,
+    31747053
+   ],
+   "excluded": [
+    {
+     "org": 31579965,
+     "why": "SAME in substance ('NHS Cheshire and Merseyside', the ICB's operating brand, 3 of its 5 mentions coded QYG), but the check returns verdict=tie against rival 0CE. Under D3, a member the check refuses needs HIGH evidence of an ODS rename or predecessor. ORD QYG (u1/ods/QYG.json) has no Succs and no former name, and the TSV predecessors column for QYG is empty. 0CE (NHS Cheshire and Merseyside CSU, I, RO213) is an ended rival, not a predecessor. The owner held RCX 31594811 on this same argument (rival RG2 inactive since 2009), and QNX 31632073 'NHS Sussex' (a tie) was left out the same way. So it stays a non-member holder: it is held, not a different body."
+    },
+    {
+     "org": 31747045,
+     "why": "DIFFERENT: 'Miriam Primary Care Group' is the Wirral GP practice N85625, a provider the ICB commissions that picked up the ICB's code on 1 mention. The check returns zero. D6 says never a member."
+    },
+    {
+     "org": 31747049,
+     "why": "DIFFERENT: 'Miriam Primary Care Limited' is the company behind practice N85625. The check returns non-nhs. D6 says never a member."
+    },
+    {
+     "org": 31747053,
+     "why": "DIFFERENT: 'Paxton Medical Group' is the Wirral GP practice N85044, with 1 stray coded mention. The check returns zero. D6 says never a member."
+    }
+   ],
+   "reason": "QYG = NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD (A, RC1, RO261, allow=1, no legal end, no predecessors or successors). The live census 2279 lists the same 11 holders U3 read, so nothing is new and nothing has gone. There is no PPON holder: PMYD9553QJQN is published beside the code but no org holds it. The 7 members are spellings of the ICB, each admitted by the check, with denied=[], key_owners_elsewhere=[], contested=false and holder_of=['QYG']: 30913962 (exact ODS name, 584 coded), 30916196 ('NHS Cheshire and Merseyside ICB', 906 mentions), 30916198 (no 'NHS' prefix), 31541032 ('(ICB)' suffix), 31546209 ('&' and '(ICB)'), 31551077 ('&'), 31556030 ('&' and a doubled 'ICB'). Their other_codes (OYG, QYC, 0YD/OYD) are typo tails that are off the allowlist. They put no holder into any other code, so they are 519 material and do not block this verdict. This follows U3's challenger, who disputed only 31579965, and the QNX/RCX/RNZ precedent: drop the member the check refuses and post the rest. With no PPON member, the code anchors on the largest cluster, 30916196 (906 mentions), as a provisional anchor, and no loser carries a PPON, so loser-ppon-unaliased cannot fire. Verdict: GB / GB:nhs-body / QYG, action merge, confidence high.",
+   "unblock": "Nothing blocks the post. Rebuild reviewed_holders from a live census just before posting, because a newcomer since 2279 would make the verdict stale. Residual: 31579965 can join only through a second cohort, and only if the owner rules that a rival ended before the code's operational start (0CE's legal end 2014-09-30, QYG operational from 2017-04-01) counts as D3 evidence. That ruling would also reopen RCX 31594811 and QNX 31632073.",
+   "expected_census_status": "admitted"
+  },
+  "QUY": {
+   "code": "QUY",
+   "decision": "hold",
+   "members": [
+    30914356,
+    31536069,
+    31609946
+   ],
+   "reviewed_holders": [
+    30914356,
+    31536069,
+    31609946
+   ],
+   "excluded": [],
+   "reason": "All 3 live holders are SAME as QUY (NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE ICB, A, RO261, no legal end), and each is admitted by the check with denied=[]. 30914356 has the exact ODS name (163 mentions, 33 coded). 31536069 is the body's PPON org (PPCD6597HCDW): the ODS name with '&' and no comma, 5 mentions. 31609946 reads 'North East Somerset' for 'North Somerset' (1 mention, coded QUY). Bristol and South Gloucestershire belong only to BNSSG, and the check finds no rival, QOX included. The 'North East Somerset' holder is NOT the blocker. The blocker: 31536069, the SAME PPON org and so D1's survivor, has key_owners_elsewhere=[31592799]. Per NHS_BODY_KEY_OWNERS_SQL, 31592799 is a standing GB identifier-NULL row whose name_norm is exactly 'nhs bristol north somerset & south gloucestershire integrated care board'. It is almost certainly the uncoded twin of the PPON spelling, but it carries no QUY code, so it is not a holder and cannot be a member. A verdict that names 31536069 is refused as member-key-owned-elsewhere (D4: U4 holds that member, because arming its key would pull 31592799's future mentions). Posting without the PPON org, as [30914356, 31609946], would be admitted. But the code would then anchor the body and GBNHSQUY on the provisional 30914356 while a SAME canonical PPON row exists. That reverses D1's survivor rule by choosing members to exclude, and it gains one 1-mention cluster. U3's reviewer and challenger both held for this reason, and I agree.",
+   "unblock": "(1) Confirm with a bounded primary-key read of org 31592799 (name, identifier, provisional, mention count, raw identifiers) that it is BNSSG's uncoded twin. (2) Then pick one: (a) a D4 extension. A SAME member's key owner whose name_norm equals that member's head name_norm exactly, which is identifier-NULL and holds no code, may fold as a loser into the PPON survivor. This needs plan_nhs_bodies and MergeVerdict::validate to accept members drawn from holders plus the members' key owners. After the fold no identifier-NULL row outside the body owns the key, so the alias binds no wider than today. (b) Fold 31592799 into 31536069 through a separate reviewed path and run the census again right away. key_owners_elsewhere then empties and [30914356, 31536069, 31609946] is admitted, with the PPON org as survivor. (c) An explicit owner exception to D1 that posts the anchor fallback [30914356, 31609946] now, with a later cohort folding the anchor into 31536069.",
+   "expected_census_status": "member-key-owned-elsewhere"
+  },
+  "RCB": {
+   "code": "RCB",
+   "decision": "hold",
+   "members": [
+    30916881,
+    31535291
+   ],
+   "reviewed_holders": [
+    30916881,
+    31535291
+   ],
+   "excluded": [],
+   "reason": "Both live holders are SAME as RCB (YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST, A, RO197, allow=1, no legal end). Each is admitted by the check with denied=[]. 30916881 has the exact ODS name (63 mentions, 44 coded). 31535291 is the PPON org (PNMY9834ZYJT), 'Teaching Hospital' in the singular, 19 mentions. ORD names BF1 and RCC (2012-07-01) as predecessors, but no holder carries the RCC 'Scarborough and North East Yorkshire' name, so D6's successor and predecessor concern does not arise. The blocker: 31535291, the SAME PPON org and so D1's survivor, has key_owners_elsewhere=[30915212]. 30915212 is a standing GB identifier-NULL row whose name_norm is exactly 'york and scarborough teaching hospital nhs foundation trust', almost certainly the uncoded twin of the PPON spelling. It is not a holder, so it cannot join the verdict. Any verdict naming 31535291 is refused as member-key-owned-elsewhere (D4). The only admissible alternative is a one-member [30916881]. It folds nothing, records GBNHSRCB on a provisional anchor while a SAME canonical PPON row exists (against D1), and is lost on a from-archive rebuild anyway. Holding costs nothing. U3's reviewer and challenger agree.",
+   "unblock": "(1) Confirm with a bounded primary-key read of org 30915212 (name, identifier, provisional, mention count, raw identifiers) that it is the trust's uncoded twin. (2) Then pick one: (a) the same D4 extension as for QUY: an exact-name_norm identifier-NULL twin of a SAME member, holding no code, may fold as a loser into the PPON survivor (a census and validate change). (b) Fold 30915212 into 31535291 through a separate reviewed path and run the census again right away, so that [30916881, 31535291] is admitted with 31535291 as survivor. (c) An explicit owner exception to D1 that posts the one-member [30916881] fallback.",
+   "expected_census_status": "member-key-owned-elsewhere"
+  },
+  "RFF": {
+   "code": "RFF",
+   "decision": "hold",
+   "members": [],
+   "reviewed_holders": [
+    31223758
+   ],
+   "excluded": [
+    {
+     "org": 31223758,
+     "why": "DIFFERENT body. The name is 'EPSOM & ST HELIER UNIVERSITY HOSPITAL NHS TRUST', which is ODS RVR (EPSOM AND ST HELIER UNIVERSITY HOSPITALS NHS TRUST, Active, predecessors RA1/RAZ). RFF is BARNSLEY HOSPITAL NHS FOUNDATION TRUST: no predecessors, no successors, and nothing links it to Epsom. The ODS check says zero. Only 1 of its 2 mentions carries GB-NHS-RFF, and that code is a neighbour's code picked by mistake. Reviewer and challenger agreed in U3."
+    }
+   ],
+   "reason": "There is no SAME holder, so there is no body to record or fold. The census lists one holder, 31223758, and it is Epsom & St Helier (RVR). RVR's own body was already applied in U5 as a one-member verdict on 2231053. Note that plan_nhs_bodies has no check-verdict gate in its status ladder (canonical.rs ~26671-26697). A verdict of [31223758] with reviewed_holders [31223758] would therefore read 'admitted': the holder stands, has no denial, no contest and no key owned elsewhere. Only review stops it, so nothing may be posted. A keep must not be posted either. merge_verdict_for prefers a keep from any cohort (canonical.rs ~29104), so a keep would block a real Barnsley body from ever folding under RFF.",
+   "unblock": "Nothing to unblock for RFF as it stands. A verdict becomes possible only if a later census lists a SAME Barnsley Hospital NHS FT holder that publishes GB-NHS-RFF; that needs a fresh review then. The stray 31223758 belongs with RVR's survivor 2231053. An nhs-body verdict cannot move it there, because it never published GB-NHS-RVR and so is no RVR holder. That is wrong-code stray material (452 identifier verdict, or 519 if the owner widens 519 to mis-coded strays), not 513.",
+   "expected_census_status": "none: no verdict posted (census verdict null). A hypothetical [31223758] verdict would wrongly read 'admitted', because the census does not gate on check.verdict."
+  },
+  "RHM": {
+   "code": "RHM",
+   "decision": "hold",
+   "members": [
+    2181541,
+    30926769,
+    31624750
+   ],
+   "reviewed_holders": [
+    2181541,
+    30926652,
+    30926769,
+    31624750
+   ],
+   "excluded": [
+    {
+     "org": 30926652,
+     "why": "NOT_ORG. 'Coroners Adult Post-Mortem and Forensic services' is a service or tender title, not an organisation. The check says zero, it has 1 mention, and D6 bars it."
+    }
+   ],
+   "reason": "All three members are UHS (ODS RHM, UNIVERSITY HOSPITAL SOUTHAMPTON NHS FOUNDATION TRUST, Active, no legal end). The check admits all three, none is denied or contested, and none is under review. 2181541 carries the exact ODS name (391 mentions, 26 of the 28 coded parties). 31624750 'University Hospitals Southampton NHS' is a truncated variant with a plural slip (1 mention). 30926769 is the body's PPON org, PTRZ1736CQVH, which the census lists beside the code. Its head name is 'University Hospital Southampton', and 17 of its 18 mentions carry the full trust name. D1 makes 30926769 the survivor: nhs_body_survivor picks the only PPON member. The blocker is that 30926769 has key_owners_elsewhere=[22035718], so today this verdict reads member-key-owned-elsewhere (canonical.rs:26691). That gate is stricter than the U4 alias it guards. The fold writes one org_merge_log row per LOSER (nhs_body_fold, nhs_body_ledger_evidence). The alias arms only $.loser_name_norm (NHS_BODY_ALIAS_LEDGER_SQL, canonical.rs:6269; arm_nhs_body_alias_on ~17489). So a survivor's own head key is never an alias key, and D4's alias_key_owned_elsewhere can never fire on it. 'university hospital southampton' simply stays with 22035718, the trust's uncoded short-name twin, an accepted E3 split. The losers' keys (2181541, 31624750) have no owner elsewhere. Neither loser has a PPON, so loser-ppon-unaliased does not fire. Posting without the PPON org would be admitted today, but it folds into the provisional anchor 2181541 against D1. The PPON org would then need a second fold, and the gain now is one 1-mention cluster. I agree with both U3 agents on hold, and with the challenger that the PPON org belongs in the members.",
+   "unblock": "An owner ruling that D4 covers loser keys only, matching what U4 arms. Then a census change: plan_nhs_bodies applies member-key-owned-elsewhere only to members other than the one nhs_body_survivor would pick. The test a_member_whose_key_a_row_outside_the_body_owns_holds_the_verdict (crates/store/tests/nhs_body.rs:916) must be updated so it still holds a LOSER whose key is owned elsewhere and admits a PPON survivor whose key is. After the gate, deploy and a dry re-census, post this verdict: merge, high, members [2181541, 30926769, 31624750], reviewed_holders [2181541, 30926652, 30926769, 31624750]. It should read admitted, with survivor 30926769. The same fix applies to the D4-held PPON orgs of QUY 31536069, RCB 31535291, RRV 30916969, RXT 30926645, RYC 30916110 and RYG 30918096, subject to their own questions. If the owner declines the change, the admitted fallback is merge [2181541, 31624750] into the anchor 2181541. I do not recommend it.",
+   "expected_census_status": "member-key-owned-elsewhere today (30926769, owner 22035718); admitted after the survivor-exempt census change"
+  },
+  "RNK": {
+   "code": "RNK",
+   "decision": "hold",
+   "members": [
+    1538916,
+    31554431
+   ],
+   "reviewed_holders": [
+    1538916,
+    31554431
+   ],
+   "excluded": [],
+   "reason": "Both holders are RNK (ODS TAVISTOCK AND PORTMAN NHS FOUNDATION TRUST). The check admits both, and neither is denied, contested or under review. 1538916 carries the exact ODS name: 29 mentions, 4 of them coded GB-NHS-RNK. 31554431 is the body's PPON org, PGGT9642DYWY, which the census lists beside the code. It is named 'Tavistock and Portman NHS Trust', RNK's own pre-2006 name: the FT role starts 2006-11-01, and the only predecessor is FBL. The legal end does not bar the verdict. ODS gives a legal end of 2026-03-31 with successor G6V2S (NORTH LONDON NHS FOUNDATION TRUST). But neither holder carries a successor name (successor_name null), coded_notices_after_legal_end is 0 and later_parties is 0. D6 bars successor names only, and legally-ended codes have no date fence (an accepted trade-off; U3 posted QJG on the same terms). So the body is SAME and two-member, and D1 makes 31554431 the survivor as the only PPON member. The single blocker is that 31554431 has key_owners_elsewhere=[31598112], so this verdict reads member-key-owned-elsewhere today. As for RHM, that key is the survivor's own head key, which U4 never arms: the ledger and alias carry loser_name_norm only (canonical.rs:6269, ~17489). The loser 1538916 has no key owned elsewhere and no PPON. The fallback, a one-member [1538916], is admitted today but goes against D1. It records GBNHSRNK on a provisional org instead of the PPON org, folds nothing, and the record is lost on a from-archive rebuild because a one-member fold writes no ledger row. It gains nothing that justifies a second verdict later. Both U3 agents held.",
+   "unblock": "The same owner ruling and census change as RHM: member-key-owned-elsewhere applies only to members that would be losers, not to the member nhs_body_survivor picks, and the nhs_body.rs:916 test is updated to match. After the gate, deploy and a dry re-census, post: merge, high, members [1538916, 31554431], reviewed_holders [1538916, 31554431]. It should read admitted, with survivor 31554431. 31598112 is probably an uncoded 'Tavistock and Portman NHS Trust' twin. It is not a holder, so it stays outside the body (E3); it needs no read for this verdict. Re-check coded_notices_after_legal_end and later_parties at posting time. If a post-2026-03-31 notice appears, re-read it as a possible G6V2S successor mention before posting.",
+   "expected_census_status": "member-key-owned-elsewhere today (31554431, owner 31598112); admitted after the survivor-exempt census change"
+  },
+  "RRV": {
+   "code": "RRV",
+   "decision": "hold",
+   "members": [
+    1791116,
+    30916969
+   ],
+   "reviewed_holders": [
+    1791116,
+    30916969
+   ],
+   "excluded": [],
+   "reason": "Both live holders are UCLH (ODS RRV, Active RO197, no legal end). 1791116 is 'University College London Hospitals NHS Foundation Trust': the exact ODS name, 228 mentions, 10 of them GB-NHS-RRV, provisional, check admitted, nothing denied. 30916969 is the PPON org PYRL5371BNMH, 'University College London Hospitals NHS FT': the FT abbreviation, 40 mentions, check admitted, nothing denied. Its head 234 key 'university college london hospitals nhs ft'/GB is also owned by 17230498, a standing identifier-NULL GB row outside the body (NHS_BODY_KEY_OWNERS_SQL matches exact name_norm, country GB and identifier IS NULL). The members-exact verdict [1791116,30916969] therefore reads 'member-key-owned-elsewhere' in plan_nhs_bodies (canonical.rs ~26691), not admitted. A one-member verdict [1791116] would be admitted, but I reject it for four reasons. It drops a SAME holder from members. It makes the provisional cluster the anchor, while D1 makes the SAME PPON org the survivor (nhs_body_survivor picks only among members). It leaves the canonical PPON row split. And once that verdict is stamped applied, a later fold needs a second cohort, or an unwind (D7), to move GBNHSRRV off the anchor. U3's reviewer and challenger both held for the same reason, and I agree.",
+   "unblock": "Option (a), a code change I prefer, filed as a 513 follow-up: limit the 'member-key-owned-elsewhere' gate to non-survivor members. The alias arms only LOSERS' keys from the ledger rows (arm_nhs_body_alias_on). The survivor's own head key is never armed, so 17230498 owning it cannot conflict with any alias. 17230498 just stays the uncoded twin, the E3 split the decision already accepts. Once that ships, POST members [1791116,30916969] with reviewed_holders [1791116,30916969]: 30916969 is the PPON survivor and 1791116 the loser, whose key has no other owner. Option (b): a bounded read of org 17230498 confirms it is UCLH (its name_norm already matches exactly). It would then have to leave the key, by a fold through some reviewed path, before the same verdict reads admitted. Re-census before posting: the holder set must still be exactly {1791116, 30916969}.",
+   "expected_census_status": "member-key-owned-elsewhere"
+  },
+  "RVY": {
+   "code": "RVY",
+   "decision": "hold",
+   "members": [],
+   "reviewed_holders": [
+    30916239,
+    31560273
+   ],
+   "excluded": [
+    {
+     "org": 30916239,
+     "why": "'Mersey West Lancashire Teaching Hospitals NHS Trust' (4 mentions, all GB-NHS-RVY) carries the successor's name. RVY (Southport and Ormskirk Hospital NHS Trust) reached its legal end on 2023-06-30, and its ODS successor is RBN, MERSEY AND WEST LANCASHIRE TEACHING HOSPITALS NHS TRUST. The census denies it as successor-name (successor_name RBN; check 'better', rival RBN), and D6 forbids successor names as members. Its real body is RBN, whose verdict was applied with survivor 31536800 (PPON PRYN5195GTQJ). It is not an RBN holder (holder_of [RVY]), so no verdict can fold it today."
+    },
+    {
+     "org": 31560273,
+     "why": "'Cambridge Community Services' (1 mention, GB-NHS-RVY) is Cambridgeshire Community Services NHS Trust, ODS RYV. RVY was picked by an RVY/RYV letter transposition, so this is a DIFFERENT body (check 'zero' under RVY), which D6 forbids. Its real body is RYV, whose verdict was applied with survivor 31557115 (PPON PHQR1485BDJQ)."
+    }
+   ],
+   "reason": "No live holder is Southport and Ormskirk Hospital NHS Trust itself, and all 5 coded notices fall after RVY's 2023-06-30 legal end. With no SAME holder, there is no member to name. A verdict [30916239] would read 'member-denied' (successor-name). A verdict [31560273] would pass the structural gates but fold a different body (RYV) under RVY, so it must never be posted. U3's reviewer and challenger agreed on 'none'.",
+   "unblock": "Nothing unblocks an RVY verdict. The code's body no longer exists, and its two holders belong to other, already-folded bodies. They can be repaired only under their real codes, through 519. A successor rule, under which a legally-ended code published after its legal end reads as its ODS successor (RVY to RBN), would make 30916239 an RBN holder. A second-cohort RBN verdict could then fold it into 31536800, where it carries no successor-name denial because the name is RBN's own. A typo-code rule, such as 519's (triple, name_norm) pin for RVY/RYV, would make 31560273 an RYV holder, foldable into 31557115 by a second-cohort RYV verdict. Both are tiny: 4 mentions and 1.",
+   "expected_census_status": "none (no verdict; the only candidate, [30916239], would read member-denied)"
+  },
+  "RXF": {
+   "code": "RXF",
+   "decision": "hold",
+   "members": [
+    30917291,
+    31539005
+   ],
+   "reviewed_holders": [
+    30917291,
+    31539005
+   ],
+   "excluded": [],
+   "reason": "Both live holders are the RXF body: MID YORKSHIRE TEACHING NHS TRUST, Active RO197, no legal end, no successors. 31539005 is 'MID YORKSHIRE TEACHING NHS TRUST': the exact current ODS name, 45 mentions, 6 of them GB-NHS-RXF, provisional, check admitted, nothing denied. 30917291 is the PPON org PTPB4248VJQT: head 'Mid Yorkshire Hospitals NHS Trust' (27 mentions) plus 'Mid Yorkshire Teaching NHS Trust' (3), check admitted, nothing denied. 'Mid Yorkshire Hospitals NHS Trust' is RXF's own pre-2023 name, the same code renamed. It is neither a predecessor body (those are RMW Dewsbury and RR4 Pinderfields and Pontefract) nor a successor, so D6 does not apply. But 30917291's head 234 key 'mid yorkshire hospitals nhs trust'/GB is owned by 6724930, a standing identifier-NULL GB row outside the body, which is by construction the trust's uncoded old-name twin. The members-exact verdict [30917291,31539005] therefore reads 'member-key-owned-elsewhere'. A one-member verdict [31539005] would be admitted. I reject it for the same reasons as RRV: it drops a SAME holder, anchors the code on the provisional cluster instead of the D1 PPON survivor, leaves the PPON row split, and needs a second cohort or an unwind later. U3's reviewer and challenger both held, and I agree.",
+   "unblock": "Option (a), the same code change as RRV and preferred: limit the 'member-key-owned-elsewhere' status to non-survivor members. The survivor 30917291's own key is never armed as an alias (only losers' keys are), and 6724930 stays the accepted E3 uncoded twin. Then POST members [30917291,31539005] with reviewed_holders [30917291,31539005]: 30917291 is the PPON survivor and 31539005 the loser, whose key 'mid yorkshire teaching nhs trust' has no other owner. Option (b): a bounded read of 6724930 confirms it is the old-name Mid Yorkshire twin, and it leaves the key before the verdict is re-posted. Re-census first: the holder set must still be exactly {30917291, 31539005}.",
+   "expected_census_status": "member-key-owned-elsewhere"
+  },
+  "RXT": {
+   "code": "RXT",
+   "decision": "hold",
+   "members": [
+    10958945,
+    30926645,
+    30932865
+   ],
+   "reviewed_holders": [
+    10958945,
+    13043614,
+    30926645,
+    30932865
+   ],
+   "excluded": [
+    {
+     "org": 13043614,
+     "why": "This is a DIFFERENT body. 'Birmingham Women's and Children's Hospital NHS Foundation Trust' is RQ3 (Active RO197 in nhs-ods.tsv), and the check gives verdict 'better' with rival RQ3. Its one RXT-coded party is a neighbour's code picked by mistake, so D6 says never a member."
+    }
+   ],
+   "reason": "The identity read is complete. Three holders are SAME as BIRMINGHAM AND SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST: 10958945 (the '&' spelling, 155 mentions, 5 coded), 30932865 (the 'Foundation NHS Trust' word order, 1 coded) and 30926645 (the trust's own PPON org PTMC2127TPCV, 51 mentions). The ODS row has no successors and no legal end, and its predecessors RND and RNF are Inactive, so there is no D6 successor question. The blocker is D4 on the PPON member. 30926645 has key_owners_elsewhere=[30917358]. NHS_BODY_KEY_OWNERS_SQL defines that as a standing identifier-NULL GB row whose name_norm is exactly 'birmingham & solihull mental health foundation trust': the body's own uncoded E3 twin, never a holder of RXT. plan_nhs_bodies therefore gives any verdict that includes 30926645 'member-key-owned-elsewhere' (canonical.rs ~26691), and the wet run folds only admitted codes. The verdict could be admitted today by dropping 30926645, giving members [10958945, 30932865] with 10958945 as the anchor. I reject that. It breaks D1's survivor rule (a SAME PPON org exists, so it must be the survivor). It would put GBNHSRXT on a provisional row. Bringing the PPON org in later would need a second, chained fold. And none of the 156 posted verdicts left out a SAME PPON org. U3's reviewer and challenger both held for the same reason.",
+   "unblock": "Option 1, an owner ruling that narrows D4 to loser keys, plus a census change. The gate guards nothing when the member it catches is the survivor. Only LOSER keys are ever armed: NHS_BODY_ALIAS_LEDGER_SQL reads only $.loser_name_norm, and arm_nhs_body_alias_on already refuses at arm time any loser key that a standing identifier-NULL row owns (canonical.rs ~17477). So plan_nhs_bodies should skip the key_owners_elsewhere test for the member nhs_body_survivor would keep (the PPON org). 30917358 then stays split exactly as today, which is the accepted E3 trade-off. Re-census, then post members [10958945, 30926645, 30932865] with reviewed_holders [10958945, 13043614, 30926645, 30932865]. Option 2: 30917358 stops being an outside owner. Either it is folded by a reviewed path, or it publishes GB-NHS-RXT and becomes a holder; that makes the verdict stale, so re-review with 30917358 as a member.",
+   "expected_census_status": "member-key-owned-elsewhere"
+  },
+  "RYC": {
+   "code": "RYC",
+   "decision": "hold",
+   "members": [
+    1263180,
+    30916110
+   ],
+   "reviewed_holders": [
+    1263180,
+    30916110
+   ],
+   "excluded": [],
+   "reason": "Both live holders are SAME as EAST OF ENGLAND AMBULANCE SERVICE NHS TRUST. 1263180 carries the exact ODS name (209 mentions, 3 RYC-coded). Its stray raw values 'c/o West Midlands Ambulance Service NHS FT' come from joint ambulance procurements and are not a second body. 30916110 is the trust's PPON org PBNZ4155WXBZ: 71 of its 89 mentions carry the plain trust name, and a PPON registers the legal body, not the RYC01 HQ site. The ODS row has no successors and no legal end, and its predecessors RB4, RFU and RMZ are Inactive. The blocker is D4 on the PPON member, which the code would pick as survivor. 30916110 has key_owners_elsewhere=[31623946]: a standing identifier-NULL GB row whose name_norm is exactly 'east of england ambulance service nhs trust headquarters', the same body's uncoded HQ-spelled twin and not an RYC holder. So any verdict with 30916110 gets 'member-key-owned-elsewhere'. Dropping 30916110 would leave a one-member verdict on provisional 1263180. That records GBNHSRYC on the non-canonical row, folds nothing, and goes against D1's survivor rule. Rejected; both U3 agents also held.",
+   "unblock": "Same as RXT. Option 1: an owner ruling that D4 applies to loser keys only. The survivor's key is never armed: the alias reads only loser_name_norm, and arm-time D4 already refuses owned loser keys. The census change then exempts the nhs_body_survivor member from the key_owners_elsewhere test. The only loser key here, 1263180's 'east of england ambulance service nhs trust', has no outside owner. Re-census, then post members [1263180, 30916110] with reviewed_holders [1263180, 30916110]. Option 2: 31623946 stops being an outside owner, either folded by a reviewed path or by becoming an RYC holder (which makes the verdict stale, so re-review with it as a member).",
+   "expected_census_status": "member-key-owned-elsewhere"
+  },
+  "RYG": {
+   "code": "RYG",
+   "decision": "hold",
+   "members": [
+    1691021,
+    4648675,
+    30918096
+   ],
+   "reviewed_holders": [
+    1691021,
+    4648675,
+    30918096
+   ],
+   "excluded": [],
+   "reason": "All three live holders are SAME as COVENTRY AND WARWICKSHIRE PARTNERSHIP NHS TRUST. 1691021 carries the exact ODS name (40 mentions, 5 RYG-coded). Its other code RGY (1 mention) is a transposition typo: RGY is absent from nhs-ods.tsv and ORD answers 404. It is letter-only, so it mints no identity; 1691021 has identifier null, no minted-identity flag and no denial, so this is not 519 territory. 4648675 is the name without 'NHS' (32 mentions, 1 coded); 'Partnership' rules out RKB (UHCW) and the ICB. 30918096 is the PPON org PPBB6627GXNQ, spelled with '&'. The ODS row has no predecessors, successors or legal end. The blocker is D4 on the PPON member, the code's survivor. 30918096 has key_owners_elsewhere=[5317015]: a standing identifier-NULL GB row whose name_norm is exactly 'coventry & warwickshire partnership trust', the body's own uncoded twin and not an RYG holder. Any verdict with 30918096 therefore gets 'member-key-owned-elsewhere'. Dropping it would admit [1691021, 4648675] with anchor 1691021 today. I reject that: it goes against D1 (a SAME PPON org exists), puts GBNHSRYG on a provisional row, and needs a second, chained fold later. U3's reviewer and challenger agreed.",
+   "unblock": "Same as RXT. Option 1: an owner ruling that D4 applies to loser keys only, since the survivor's key is never armed (the alias ledger reads loser_name_norm; arm_nhs_body_alias_on refuses owned loser keys). The census then exempts the nhs_body_survivor member from the key_owners_elsewhere test. The loser keys, 1691021's and 4648675's, have no outside owners. Re-census, then post members [1691021, 4648675, 30918096] with reviewed_holders [1691021, 4648675, 30918096]. Option 2: 5317015 stops being an outside owner, either folded by a reviewed path or by becoming an RYG holder (which makes the verdict stale, so re-review with it as a member).",
+   "expected_census_status": "member-key-owned-elsewhere"
+  }
+ },
+ "rulings": {
+  "DQF": {
+   "code": "DQF",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [],
+   "reason": "I could not refute the hold. It has two real census blockers, and both come from the code, not from judgement. (1) In plan_nhs_bodies, minted_identity is true for any own identifier that does not key to GB:ppon. 31550606's identifier is GBCOH11258001, so it gets denied=['minted-identity']. That is the only minted-identity denial in the whole of census 2279 (denied tally: minted-identity 1). A one-member verdict [31550606] with reviewed_holders [31550606] passes stale, members-not-live, member-gone and contested, then returns 'member-denied'. (2) If that denial went away, key_owners_elsewhere=[14305379] would return 'member-key-owned-elsewhere'. Holder 31550606 is SAME: the ODS name of DQF (RO172, allow=1, no predecessors, successors or legal end) with Ltd for Limited, under COH 11258001, with PPON PHPR3762LPLP merged in. There is nothing to fold. Two corrections to the unblock text, neither of which changes the decision. (a) under_review does not come from a keep verdict. It comes from the applied GB:altid MERGE verdict '11258001~PHPR3762LPLP' (members [30929661, 31550606], 448 residue 2026-10-01, file 448-campaign/verdicts-altid-residue-2026-10-01.json). review_keep_set_but reads members from every merge verdict outside the nhs-body scheme. under_review is not a census gate either, so unblock step (3) is not a real requirement. (b) On D4: key_owners holds identifier-NULL GB rows with the same head key, so 14305379's head name_norm is exactly 'calderdale and huddersfield solutions ltd'. That makes it almost certainly the company's own uncoded twin. It is not a DQF holder, though, so no DQF verdict can include it (E3). A one-member fold writes no ledger row, so it arms no alias, and D4 is moot in substance for a one-member record. A planner exemption from 'member-key-owned-elsewhere' for one-member verdicts is an alternative to folding 14305379 first. It still needs a planner change, alongside the D6/minted-identity amendment. Closing DQF as 'no fold needed' is the sensible outcome."
+  },
+  "QJM": {
+   "code": "QJM",
+   "agree": true,
+   "corrected_decision": "post",
+   "corrected_members": [
+    20444933,
+    30913741,
+    31605215
+   ],
+   "reason": "I could not refute it. reviewed_holders [20444933, 30913741, 31605215, 31605311] equals census 2279's holder_ids exactly, and the list is ascending. The members are ascending, distinct and a subset of reviewed_holders, so MergeVerdict::validate passes. All three members are live, have stands=true, denied=[], key_owners_elsewhere=[], contested=false and holder_of ['QJM'], and the check admits each one. No QJM verdict stands today, so contested cannot fire. The status chain therefore ends at 'admitted'. ODS row: QJM A RC1 RO261 allow=1, no predecessors, successors or legal end (not one of the 2026-04 ICB mergers). Members: 30913741 is the exact ODS name (855 mentions, 404 coded GB-NHS-QJM). 20444933 is the 'ICB' abbreviation. 31605215 'ACRE' is a typo of CARE with one coded mention, and the check admits it. Survivor: no member has a GB:ppon identifier, so nhs_body_survivor takes the most mentions, 30913741. With no PPON loser, 'loser-ppon-unaliased' cannot fire. I tried to refute the exclusion of 31605311 ('NHS incolnshire Integrated Care Board'). It is the body (SAME), but the check refuses it as 'zero', and D3 requires cited ODS rename or predecessor evidence. The posted cohort's check-refused members do not cover it: RBL, RGP x2 and RWR each cited an ORD registered-address match, and QRV cited Z9B2Z's ODS predecessor link. A typo has no ODS field to cite. Leaving it out is the letter-of-D3 reading. It costs one mention, leaves the verdict admissible either way, and a later new-cohort verdict can add it once an owner rules on typos. Before posting, re-run the dry census and confirm holder_ids are unchanged, because daily folds can add a newcomer and make the verdict stale."
+  },
+  "QKK": {
+   "code": "QKK",
+   "agree": true,
+   "corrected_decision": "post",
+   "corrected_members": [
+    30914447,
+    30928152,
+    31534497,
+    31544853,
+    31556342,
+    31620803
+   ],
+   "reason": "I could not refute it. reviewed_holders [30914447, 30914670, 30928152, 31534497, 31544853, 31556342, 31570524, 31576333, 31620803] equals census 2279's nine holder_ids exactly, ascending, and contains every member, so validate passes. All six members are SEL spellings that the check admits, each with denied=[], key_owners_elsewhere=[], contested=false, holder_of ['QKK'] and identifier null. The status is 'admitted'. On the D4 blind spot: the census filter drops every code holder from key owners, so a non-member holder could hide a key collision. Here it cannot. The only identifier-NULL non-member holders are 30914670 and 31570524, and their keys 'nhs north east london integrated care board' and 'north east london integrated care board' match no member's key. 31576333 has an identifier, so it owns no 234 key. At alias-arming time no key is poisoned, because QMF's holders and planned members are NEL-named. Exclusions: 30914670 and 31570524 are NEL (QMF). They carry 119 and 4 QMF-coded mentions against 4 and 1 QKK strays, the check says better: QMF, and they belong only in QMF's verdict. Leaving them out cannot make QKK contested. 31576333 is SEL by identity, per the FTS PPON witnesses, but its only name is NEL's, and the check refuses it (better: QMF) with no ODS rename or predecessor evidence. D3 alone therefore keeps it out. D6 adopted 'both stay anchors' for QKK/QMF. Including it would make it the survivor (it is the only GB:ppon member) under NEL's name, so leaving it out is required, not merely safe. Survivor: no PPON member, so the anchor is 30914447 (241 mentions), and there is no PPON loser. Ordering: if both bodies are admitted in one plan, the wet path folds them in code order, QKK before QMF. None of QKK's losers is a QMF holder, so QMF is unaffected. If QMF folds 31570524 first in a separate run, QKK's verdict becomes stale and must be re-posted, as the proposal says. Option (b) remains open later, because the anchor would just become a non-PPON loser. One forward caution for QMF's packet: QMF's PPON org 31561974 has the same head key as QKK's anchor ('nhs south east london integrated care board'), so QMF must not make it a loser. Before posting, re-run the dry census and confirm the nine holder_ids are unchanged."
+  },
+  "QMF": {
+   "code": "QMF",
+   "agree": true,
+   "corrected_decision": "post",
+   "corrected_members": [
+    30914670,
+    30976288,
+    31542989,
+    31570524,
+    31608373,
+    31608375,
+    31613968
+   ],
+   "reason": "I could not refute it. reviewed_holders is the same as census_2279 holder_ids, all 11, ascending. Every member is listed, standing, check 'admitted', with denied=[], key_owners_elsewhere=[] and contested=false. Under plan_nhs_bodies the status order (stale \u2192 members-not-live \u2192 member-gone \u2192 contested \u2192 member-denied \u2192 member-key-owned-elsewhere) therefore ends at 'admitted'. validate() passes: GB, a 3-character key, members ascending and contained in reviewed_holders.\n\nNo member carries an identifier, so nhs_body_survivor picks the anchor by mentions: 30914670 (217). No loser has a PPON, so 'loser-ppon-unaliased' cannot fire.\n\nThe census key_owners_elsewhere skips every holder, not just non-members (the gap the QKK challenger found). So I checked by hand that no non-member holder shares a member's head key:\n- 5132172 (BHRUT), 30915099 (Hub) and 31570934 each have a different name_norm.\n- 31561974 carries a PPON identifier, so NHS_BODY_KEY_OWNERS_SQL (identifier IS NULL) never counts it.\nThe fold's S4 regrown check and the D4 arming check (canonical.rs ~17595) are therefore clean.\n\nThe exclusions hold:\n- 5132172 is RF4 (DIFFERENT, check 'role').\n- 30915099 is the NEL-hosted Hub (check 'better' 13R, HOSTED).\n- 31561974 would make the verdict 'member-key-owned-elsewhere' (owner 30914447) and is check-refused. It would also become survivor under SEL's head name. Leaving it out is exactly the adopted D6 outcome: 'cross-assignment dropped, both stay anchors'.\n- 31570934 is SAME. Cohort 1 did admit 'coverage'-refused members with address suffixes (RBL 31647910, RGP 31598092/31599086, RWR 31549588), so the precedent claim is verified. But U3 disputed this one, and D3/S1 ask for ODS rename or predecessor evidence. Leaving it out is the stricter, rule-compliant choice and costs 1 mention. That is not a defect.\n\nLeaving SAME holders out does not block admission: the census needs members to be a subset of the live holders, not every SAME holder.\n\nCaveats, none blocking:\n- Census 2279 dates from 03:34 today. Re-run a dry census after posting under a new cohort: any newcomer reads 'stale'.\n- Any QKK verdict must keep 30914670 and 31570524 out of its members, or both codes go 'contested'.\n- QMF must be in the stored dry plan's expect_codes, or the wet run defers it."
+  },
+  "QMJ": {
+   "code": "QMJ",
+   "agree": true,
+   "corrected_decision": "post",
+   "corrected_members": [
+    30915101,
+    30915993,
+    30916245,
+    31536734,
+    31593612
+   ],
+   "reason": "I could not refute it. reviewed_holders is the same as holder_ids, all 7. Every member is check 'admitted', with denied=[] (so no 'successor-name' denial), key_owners_elsewhere=[] and contested=false, and is uncapped (names_capped and mentions_capped false for all 7). The status is 'admitted'.\n\nThe survivor is the single PPON member, 30916245 (GBPPONPWBN7811DGVX, the exact ODS name, its PPON published beside QMJ). No loser carries an identifier.\n\nOn S4 and D4: the loser 30915101 shares its key with the survivor. Once it is deleted, no identifier-NULL row owns 'nhs north central london integrated care board', so the alias arms to the PPON target. That is the same shape cohort 1 folded for QMM.\n\nThe legal end checks out. The raw ORD record shows QMJ legally ended 2026-03-31 with successor Z9B2Z, and Z9B2Z is in the table, so the census successor_name test ran and found no holder. No name_norm is the W&NL name.\n\nThe proposal leaves out one fact: coded_notices_after_legal_end = 2. That does not block. The decision accepts no date fence, and cohort 1 folded QXU (24 such notices), QMM (1) and RYV (1).\n\nThe exclusions hold:\n- 30915099 is the NEL-hosted Hub, check 'better' 13R.\n- 31625150 'NHS NCL ICB' is SAME, but check 'zero' with only acronym evidence. U3's challenger dropped it under D3/S1. The stricter set is correct and costs 1 mention.\n\nCaveats: re-run a dry census after posting (stale guard), and QMJ must be in the wet run's expect_codes."
+  },
+  "QOP": {
+   "code": "QOP",
+   "agree": true,
+   "corrected_decision": "post",
+   "corrected_members": [
+    30916695
+   ],
+   "reason": "I could not refute it. reviewed_holders is the same as holder_ids [1850341, 8572709, 30916695, 31620840]. The member 30916695 is the exact ODS name (206 mentions), check 'admitted', with denied=[], key_owners_elsewhere=[] and contested=false. Its other_codes ['TBC'] is not a denial. validate() allows 1 member for nhs-body. The status is 'admitted', and the fold only writes GBNHSQOP: no loser, no ledger row, no alias key.\n\nThe U3 blocker was medium confidence over the UNSURE holder 1850341. It does not touch the outcome:\n- 1850341 and 8572709 are both check 'tie' (rival 0AJ, Inactive CSU), and ODS has no rename or predecessor record linking either name to QOP. Under D3 neither can be a member, whatever the era read finds. Both U3 agents said the 1-member verdict follows either way.\n- 31620840 is check-admitted, but it is a joint NHS England + GM ICP label naming two bodies. Leaving it out is the conservative D6 call and costs 2 mentions.\n\nS0 concerns unread or uncapped holders. All 4 are listed and read; U3 records S0 as satisfied.\n\nSo HIGH is justified on what the verdict does: the one member is certain, and no doubtful holder is touched. Two conditions:\n- The posted rationale must state the medium \u2192 high change explicitly, and why: the non-members are barred by the check and D3, not by judgment.\n- Re-run a dry census after posting (stale guard), and QOP must be in the wet run's expect_codes."
+  },
+  "QYG": {
+   "code": "QYG",
+   "agree": true,
+   "corrected_decision": "post",
+   "corrected_members": [
+    30913962,
+    30916196,
+    30916198,
+    31541032,
+    31546209,
+    31551077,
+    31556030
+   ],
+   "reason": "Could not refute. (1) reviewed_holders matches census 2279 holder_ids exactly (11 ids, ascending, holders_truncated=false). Members are ascending and contained in it, so MergeVerdict::validate passes for GB / GB:nhs-body / QYG, merge, high. (2) Walking plan_nhs_bodies' status chain: no newcomers or departed (not stale); every member is live with stands=true; contested=false; denied=[]; key_owners_elsewhere=[] on all 7. Status is 'admitted'. (3) Survivor: no member carries a GB:ppon identifier, and no org holds PMYD9553QJQN (it is in neither the holder walk nor ppon_pairs). nhs_body_survivor therefore takes the largest cluster by mentions, 30916196 (906 > 784). No loser has a PPON, so loser-ppon-unaliased cannot fire. (4) 31579965 is excluded correctly, but the proposal's framing needs one correction: the census never reads check.verdict. The status chain gates only on stale, live, gone, contested, denied and key-owned. An 8-member verdict would therefore also be 'admitted'. The exclusion is a D3 review rule, not a mechanical one. Under D3 it holds: the check ties it with 0CE (TSV: 0CE I RO213 'NHS CHESHIRE AND MERSEYSIDE COMMISSIONING SUPPORT UNIT'). Raw ORD for QYG (u1/ods/QYG.json) has no Succs and no former name, only RO261/RO262/RO318 roles from 2017-04-01. That leaves no rename or predecessor evidence. The precedents agree: RCX 31594811 and QNX 31632073 were both dropped and the rest posted. (5) The 3 GP holders are DIFFERENT: the check gives zero for 31747045 and 31747053 and non-nhs for 31747049. U3's challenger confirmed N85625/N85044 in ODS. (6) The members' other_codes (OYG, QYC, 0YD, OYD) are not TSV rows and every holder_of is ['QYG'], so they block nothing. Caveat for the post: rebuild reviewed_holders from a fresh census right before posting. A second cohort for 31579965 is mechanically possible, because the verdict PK includes the cohort and merge_verdict_for takes the newest unapplied row."
+  },
+  "QUY": {
+   "code": "QUY",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [
+    30914356,
+    31536069,
+    31609946
+   ],
+   "reason": "The blocker is real and mechanical. 31536069 is the only member with a GB:ppon identifier (GBPPONPPCD6597HCDW, which is also the code's published PPON), so it is nhs_body_survivor's choice. Its key_owners_elsewhere=[31592799] comes from NHS_BODY_KEY_OWNERS_SQL (name_norm = its name_norm column, country GB, identifier IS NULL, filtered to non-holders). So 31592799 is a standing GB identifier-NULL row whose name_norm is exactly 'nhs bristol north somerset & south gloucestershire integrated care board'. A verdict naming 31536069 clears stale, live, gone, contested and denied, then stops at 'member-key-owned-elsewhere'. All 3 holders are SAME and pass the check (rival null, QOX not raised). 31609946 'North East Somerset' is a typo: it is coded QUY, and Bristol plus South Gloucestershire belong only to BNSSG. Hold over the admissible partial [30914356, 31609946] is consistent with practice. In census 2279, every SAME-PPON holder with an elsewhere-owned key is held: QMF, QUY, RCB, RNK, RRV, RXF, RXT, RYC, RYG. The two applied verdicts that left a key-owned holder out (0CX 31572637 'TEST', RTF 30914055 NHFM) excluded non-SAME holders. So no precedent drops a SAME PPON survivor, and the partial would gain only a 1-mention cluster. Not verified: 31592799's identity, which appears in no local scratch data. The proposed bounded PK read needs the team lead's word under docs/agents/prod-box-reads.md. Whatever it shows, the census refuses any verdict naming 31536069 until 31592799 is gone or the D4 rule changes. Unblock options (a)/(b)/(c) are sound. (a) contradicts members \u2286 live holders (validate's reviewed_holders \u2287 members and the census's members-not-live), so it needs a code change, as the proposal says."
+  },
+  "RCB": {
+   "code": "RCB",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [
+    30916881,
+    31535291
+   ],
+   "reason": "The blocker is real and mechanical. 31535291 is the only GB:ppon member (GBPPONPNMY9834ZYJT, the code's published PPON) and therefore the D1 survivor. key_owners_elsewhere=[30915212] means a standing GB identifier-NULL row has name_norm exactly 'york and scarborough teaching hospital nhs foundation trust', which is 31535291's head name_norm. Any verdict naming it ends at 'member-key-owned-elsewhere'. Both holders are SAME and pass the check. The predecessor facts check out against raw ORD (u1/ods/RCB.json): BF1 (1992) and RCC (Legal 2012-07-01) are Type Predecessor. RCB's TSV predecessor column is empty because RCC's own row is Active (TSV 'RCC A RC1 RO197 1 \u00b7 RCB 2012-06-30'), and the column lists Inactive predecessors only. RCC has no holders in census 2279, so no successor-name or contested interaction arises. The only admissible alternative is the one-member [30916881], which folds nothing. Per the adopted trade-offs, its GBNHSRCB is lost on a from-archive rebuild, and the U3 practice above was to hold every SAME-PPON body with an elsewhere-owned key. Holding costs nothing. Not verified: 30915212's identity (no local data; a PK read needs the team lead's word). The blocker stands whatever that read shows."
+  },
+  "RFF": {
+   "code": "RFF",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [],
+   "reason": "I agree with the hold and could not refute it. The live census 2279 (the same as 2261) lists one holder, 31223758 'EPSOM & ST HELIER UNIVERSITY HOSPITAL NHS TRUST'. Its check is zero, other_codes is [], and its raw identifiers are 1 null plus 1 GB-NHS-RFF. The ODS TSV gives RFF as BARNSLEY HOSPITAL NHS FOUNDATION TRUST with no predecessors and no successors. RVR is EPSOM AND ST HELIER UNIVERSITY HOSPITALS NHS TRUST, with predecessors RA1 (Epsom Health Care) and RAZ (St Helier). So 31223758 is a DIFFERENT body and D6 bars it. There is no SAME holder, so neither a body verdict nor a one-member verdict is possible: a one-member verdict would record GBNHSRFF on Epsom.\n\nI checked the danger the proposal names in code. The plan_nhs_bodies status ladder (canonical.rs 26671-26697) runs stale, members-not-live, member-gone, contested, member-denied, member-key-owned-elsewhere, then admitted. It has no check.verdict gate and no under_review gate. A [31223758] verdict would therefore read 'admitted', so only review stops it.\n\nThe proposal is also right not to post a keep. merge_verdict_for (canonical.rs 29098) orders by (action='keep') DESC, then reviewed_at DESC. A keep from any cohort would therefore shadow a future real Barnsley merge.\n\nPlan 2279 confirms that RVR's verdict is applied as one-member [2231053], with reviewed_holders [2231053, 31544125]. 31223758 never published GB-NHS-RVR, so no RVR verdict can include it (members-not-live).\n\nOne small correction to the unblock text: a 452 identifier verdict cannot carry this stray. 452 verdicts upsert on the identity triple the org carries now, and a verdict for an org without that triple is counted stale and skipped. 31223758 has identifier=null, because GB-NHS-RFF never minted. Moving it to 2231053 would need 519 to be widened to wrong-code strays, or some other merge or rehoming route. This does not change the RFF decision. Post nothing, and record no keep.",
+   "code_rulings_note": ""
+  },
+  "RHM": {
+   "code": "RHM",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [
+    2181541,
+    30926769,
+    31624750
+   ],
+   "reason": "I agree with the hold, the members [2181541, 30926769, 31624750] and reviewed_holders [2181541, 30926652, 30926769, 31624750]. That holder set is exactly holder_ids in both 2279 and 2261.\n\nThe members:\n- 2181541 carries the exact ODS name, has 391 mentions and 26 of the 28 coded parties, and the check admits it.\n- 31624750 'University Hospitals Southampton NHS' is a truncated variant and the check admits it.\n- 30926769 is the PPON org PTRZ1736CQVH. The census lists that PPON beside RHM, 17 of its 18 name_norms are the full trust name, and the check admits it.\n\nNone of the three is denied, contested or under review.\n\nThe one exclusion, 30926652 'Coroners Adult Post-Mortem and Forensic services', is a service title (NOT_ORG, check zero), so D6 bars it. Arming its key would also be harmful, because councils commission coroner services.\n\nI re-ran the ladder by hand. stale no, members-not-live no, member-gone no, contested no, member-denied no. Then 30926769 has key_owners_elsewhere=[22035718], so the verdict reads 'member-key-owned-elsewhere'. The blocker is real today, and crates/store/tests/nhs_body.rs:918 deliberately pins exactly this PPON-survivor case.\n\nThe proposal's mechanism argument checks out in code:\n- NHS_BODY_ALIAS_LEDGER_SQL (6269) and arm_nhs_body_alias_on (17486) arm only $.loser_name_norm.\n- The wet path writes one ledger row per loser.\n- nhs_body_survivor picks the single GB:ppon member, 30926769.\n- Neither loser has a PPON, so loser-ppon-unaliased does not fire.\n- Neither loser's key has an owner elsewhere.\n\nPlan 2279 adds supporting evidence. All 13 holders with key_owners_elsewhere carry an identifier (PPON, or COH for DQF). In practice the gate therefore fires only on identifier-bearing orgs, which are survivors, or are already held by loser-ppon-unaliased or minted-identity.\n\nOne correction to the unblock. The census exemption must be scoped to a survivor whose target is Ppon, not to 'the member nhs_body_survivor would pick'. For an Anchor survivor, its own key is the alias's bind target. nhs_body_alias_bind resolves an Anchor through 'name_norm=? AND identifier IS NULL ORDER BY id LIMIT 1', and the arm skips its D4 check for the anchor target's own key. So an anchor whose key a second identifier-NULL row outside the body also owns would send the losers' aliased mentions to that outside row. The test update should admit a PPON survivor whose key is owned elsewhere, and still hold an anchor survivor in that position as well as such a loser. For RHM this changes nothing, because the survivor is the PPON org.\n\nA note on the fallback. The 918 test shows that a verdict leaving the D4-held member out is the designed, admitted path (D4: 'its member held'). So merge [2181541, 31624750] would conform to the decision; it is not 'against D1' in a strict sense. A later cohort could still fold the anchor into the PPON org, because anchor targets chain and merge_verdict_for reads the newest merge. I still accept the hold: the fallback gains one 1-mention cluster, and both U3 agents and this proposal agree on it.\n\nPost-unblock verdict: merge, high, members [2181541, 30926769, 31624750], reviewed_holders [2181541, 30926652, 30926769, 31624750]. It should read admitted, with survivor 30926769."
+  },
+  "RNK": {
+   "code": "RNK",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [
+    1538916,
+    31554431
+   ],
+   "reason": "I agree with the hold, the members [1538916, 31554431] and reviewed_holders [1538916, 31554431]. That holder set is exactly holder_ids in both 2279 and 2261.\n\nThe members:\n- 1538916 carries the exact ODS name 'Tavistock and Portman NHS Foundation Trust': 29 mentions, 4 of them GB-NHS-RNK. The check admits it.\n- 31554431 is the PPON org PGGT9642DYWY. The census lists that PPON beside RNK, and it holds the code only via that pairing (coded 0, later 0). It is named 'Tavistock and Portman NHS Trust', the body's pre-FT name. ODS lists FBL as the only predecessor and no other code uses that name. The check admits it.\n\nThe pairing notice must predate the legal end. The census counts coded_notices_after_legal_end over every notice carrying an RNK tail at any ordinal, and that count is 0. So PGGT9642DYWY was Tavistock's PPON, not one used by the successor G6V2S (NORTH LONDON NHS FOUNDATION TRUST in the TSV, allow 0).\n\nThe legal end does not bar the verdict:\n- successor_name is null on both holders, and D6 bars successor names only.\n- 'No date fence' is an accepted trade-off.\n- later_parties is 0.\n\nThe ladder: stale no, members-not-live no, member-gone no, contested no, member-denied no. Then 31554431 has key_owners_elsewhere=[31598112], so the verdict reads 'member-key-owned-elsewhere' today, and the blocker is real.\n\nUnder the same code reading as RHM, that key is the survivor's own head key, which U4 never arms. The loser 1538916 has no PPON and no key owned elsewhere. So the PPON-survivor exemption would admit it, with survivor 31554431 (the only GB:ppon member).\n\nThe same correction as RHM applies to the unblock: scope the census change to a survivor with a Ppon target, not to any nhs_body_survivor pick. An Anchor survivor's own key is the alias's LIMIT-1 bind target, and the arm exempts it from D4.\n\nI accept the rejection of the one-member fallback [1538916]. It folds nothing. It records GBNHSRNK on a provisional org, and that record is lost on a from-archive rebuild because a one-member fold writes no ledger row. The PPON org would need a second verdict anyway.\n\nA cosmetic note for posting time, not a blocker: the fold never renames the survivor. The consolidated body would serve 31554431's pre-2006 name 'Tavistock and Portman NHS Trust' as keep_name, which is also the mint name on a rebuild. That is the same property every applied PPON-survivor body has.\n\nAs the proposal says, re-check coded_notices_after_legal_end and later_parties at posting time.\n\nPost-unblock verdict: merge, high, members [1538916, 31554431], reviewed_holders [1538916, 31554431]. It should read admitted, with survivor 31554431."
+  },
+  "RRV": {
+   "code": "RRV",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [
+    1791116,
+    30916969
+   ],
+   "reason": "I agree with HOLD. The census status checks out against the code. Census 2279 lists exactly two holders, 1791116 and 30916969, with holders_truncated false, so reviewed_holders [1791116,30916969] is exact. For the members-exact verdict, plan_nhs_bodies (canonical.rs 26671-26697) passes stale (no newcomers or departed), members-not-live, member-gone (both stand), contested (both false) and member-denied (both denied []). It stops at `any_member(|x| !x.key_owners_elsewhere.is_empty())`, because 30916969 has key_owners_elsewhere [17230498]. Status: member-key-owned-elsewhere, so no wet run would fold it. Both holders are SAME. 1791116 has the exact ODS name and 10 GB-NHS-RRV mentions. 30916969 is PPON PYRL5371BNMH, 'NHS FT'. Neither carries the predecessor name of RQP, 'UCLH NHS TRUST'.\n\nI tried to refute the hold with D4's literal wording, 'its member held'. Read that way, you hold out 30916969 and post a one-member verdict [1791116] with reviewed_holders [1791116,30916969], which would be admitted. There is precedent for holding out a SAME holder and posting the rest: RCX 31594811, QNX 31632073 and RNZ 31632712 in the 156. But none of the 156 held out a SAME PPON org. Doing it here would make provisional 1791116 the anchor while a SAME PPON exists, which contradicts D1. So I reject the refutation.\n\nTwo corrections to the unblock.\n(1) Option (b) has no path today. 17230498 is a holder of no code in census 2279, so no nhs-body verdict can name it (members must be live holders). The 300 \u00a710 amendment allows no other name capture. 'Leave the key through some reviewed path' is therefore not a real unblock.\n(2) Option (a) is sound for RRV but too broad as written. The anchor bind (canonical.rs ~17733) resolves `name_norm=? AND identifier IS NULL ORDER BY id LIMIT 1`. If the survivor is an anchor, a lower-id elsewhere-owner of its key would capture every alias bind. So the exemption must cover only a survivor whose target is a PPON (nhs_body_ppon_of is Some), not 'non-survivor members' in general.\n\nWith that exemption, S4 stays clean here. The loser key 'university college london hospitals nhs foundation trust' has no outside owner, so it would not show up in nhs_body_regrown. The loser has no PPON, so 'loser-ppon-unaliased' does not hold it.\n\nOption (a) also relaxes S0 ('0 elsewhere-owned keys admitted') and D4. That needs a written owner amendment, not only a code change. It also needs a re-census of the other key_owned_elsewhere holders (13 corpus-wide) before it ships.\n\nRe-census before posting: the holder set must still be exactly {1791116, 30916969}."
+  },
+  "RVY": {
+   "code": "RVY",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [],
+   "reason": "I agree: no verdict. Census 2279 holder_ids is [30916239, 31560273], not truncated, so the reviewed_holders in the proposal are exact.\n\n30916239, 'Mersey West Lancashire Teaching Hospitals NHS Trust', is denied with ['successor-name'], successor_name RBN, check 'better', rival RBN. ODS RVY has legal_end 2023-06-30 and successor RBN, MERSEY AND WEST LANCASHIRE TEACHING HOSPITALS NHS TRUST. D6 bars it. A verdict [30916239] reads member-denied: it passes stale, live, stands and contested, and fails denied.\n\n31560273, 'Cambridge Community Services', is eligible structurally: denied [], check 'zero'. A verdict naming it would be admitted, which is exactly why it must never be posted. RYV, CAMBRIDGESHIRE COMMUNITY SERVICES NHS TRUST, is the RVY/RYV transposition, a DIFFERENT body under D6. Even if it were not RYV, it is not Southport and Ormskirk.\n\nNo holder carries the RVY body's name or a predecessor name: REQ SOUTHPORT AND FORMBY, RJV WEST LANCASHIRE. coded_notices_after_legal_end 5 = coded_parties 5, so every coded party falls after the legal end.\n\nI checked the cited survivors in plan-2279. RBN's verdict was applied with sole holder 31536800 (PPON PRYN5195GTQJ, merged GBNHSRBN). RYV's was applied with sole holder 31557115 (PPON PHQR1485BDJQ, merged GBNHSRYV).\n\nA nuance for the 519/second-cohort unblock: RYV itself legally ended 2026-03-31, successor RY3. A typo-code repin of 31560273 into RYV should look at its notice date. 'Cambridge Community Services' is not RY3's name, so no successor-name denial would fire. The hold is unaffected."
+  },
+  "RXF": {
+   "code": "RXF",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [
+    30917291,
+    31539005
+   ],
+   "reason": "I agree with HOLD. Census 2279 lists exactly two holders, 30917291 and 31539005, not truncated, so reviewed_holders is exact.\n\nBoth holders are SAME.\n- 31539005 has the exact current ODS name, 45 mentions (6 coded), check admitted, nothing denied.\n- 30917291 is PPON PTPB4248VJQT: 'Mid Yorkshire Hospitals NHS Trust' (27 mentions) plus 'Mid Yorkshire Teaching NHS Trust' (3), check admitted, nothing denied. That is RXF's own pre-2023 name, so D6 does not apply. The ODS predecessors are RMW DEWSBURY HEALTH CARE and RR4 PINDERFIELDS AND PONTEFRACT, and RXF has no successors and no legal end.\n\nThe members-exact verdict [30917291,31539005] passes stale, live, gone, contested and denied. It reads member-key-owned-elsewhere on 30917291's key_owners_elsewhere [6724930] (canonical.rs 26691).\n\nThe one-member alternative [31539005] would be admitted, but it anchors on provisional 31539005 while a SAME PPON exists. No verdict in the 156 held out a SAME PPON org, so that would break D1. I reject it.\n\nCorrections to the unblock, as for RRV.\n(1) 'Six-seven-two-four-nine-three-zero is the old-name twin by construction' overstates it. By construction it is only a standing identifier-NULL GB row whose head name_norm is exactly 'mid yorkshire hospitals nhs trust'. The hold does not depend on its identity.\n(2) Option (b) has no path today. 6724930 is a holder of no code in 2279, so no nhs-body verdict can name it, and 300 \u00a710 allows no other capture.\n(3) Option (a) must exempt only a PPON-target survivor. With an anchor survivor, the `ORDER BY id LIMIT 1` anchor bind (canonical.rs ~17733) could land on a lower-id outside owner. It also needs a written amendment of S0 and D4. For RXF, a PPON-scoped exemption gives survivor 30917291 and loser 31539005. The loser has no PPON, so 'loser-ppon-unaliased' does not hold it. Its key 'mid yorkshire teaching nhs trust' has no outside owner, so nhs_body_regrown stays [].\n\nRe-census before posting: the holder set must still be exactly {30917291, 31539005}."
+  },
+  "RXT": {
+   "code": "RXT",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [
+    10958945,
+    30926645,
+    30932865
+   ],
+   "reason": "I could not refute the hold. (1) Members and exclusion are right. 10958945 (155 mentions, 5 coded), 30932865 (1 coded) and PPON org 30926645 (PTMC2127TPCV, paired beside the code in census.ppons) are all SAME, and their check verdicts are all 'admitted'. 13043614 is DIFFERENT: check gives 'better' with rival RQ3, which nhs-ods.tsv lists as A RC1 RO197, BIRMINGHAM WOMEN'S AND CHILDREN'S NHS FOUNDATION TRUST, allow 0 because it carries a digit. RND and RNF are Inactive with no legal end or successors, so D6 has nothing to bar. (2) reviewed_holders [10958945,13043614,30926645,30932865] equals holder_ids in plan-2279-dry-final.json exactly. That file matches the packet: nothing truncated, no verdict, no denials, nothing contested. (3) The status is right. In the canonical.rs ~26677-26696 chain (stale, members-not-live, member-gone, contested, member-denied, then key-owned-elsewhere), only 30926645's key_owners_elsewhere=[30917358] fires, giving 'member-key-owned-elsewhere'. 30917358 holds no code in census 2279. (4) Dropping the PPON org would be admissible to the code. The U2 test a_member_whose_key_a_row_outside_the_body_owns_holds_the_verdict (crates/store/tests/nhs_body.rs ~916) admits exactly that verdict. So the hold rests on policy, not on a census refusal. I accept that policy. The rule is that the code picks the survivor, so the verdict must not pick it by leaving out the SAME PPON org. It is also uniform precedent: none of the 156 posted verdicts left out a SAME PPON org. The only PPON holders left out were 0CX NOT_ORG, RAL HOSTED, and RGT, RTF and RXX DIFFERENT. Every SAME PPON org with an elsewhere-owned key was held (QMF, QUY, RCB, RNK, RRV, RXF, RXT, RYC, RYG). Two corrections to the unblock. (a) Option 1's exemption must be limited to a survivor with a PPON target (identifier non-NULL), not to whatever nhs_body_survivor picks. A PPON survivor's key is never armed: the alias keys come from loser_name_norm only, and arm-time D4 (~17587) refuses owned loser keys; nhs_body_regrown also probes loser keys only. But an Anchor target binds through 'WHERE name_norm=? AND country=? AND identifier IS NULL ORDER BY id LIMIT 1' (~17738), so an outside owner of an anchor survivor's key would really compete. (b) Option 2's 'folded by a reviewed path' does not exist today. D2 says nothing else captures by name, and 30917358 is no holder, so a verdict naming it gets 'members-not-live'. Only it publishing GB-NHS-RXT would make it eligible. Option 1 (an owner ruling plus the narrowed census test, then a re-census and a post of these members) is the real unblock."
+  },
+  "RYC": {
+   "code": "RYC",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [
+    1263180,
+    30916110
+   ],
+   "reason": "I could not refute the hold. 1263180 carries the exact ODS name (209 mentions, all one name_norm, 3 coded). Its 'c/o West Midlands Ambulance Service NHS FT', 'N/A' and name-as-code raw values are noise on the same name, not a second body. 30916110 is the PPON org PBNZ4155WXBZ, paired beside the code. 71 of its 89 mentions carry the plain trust name. A PPON registers the legal entity, so the 'Headquarters' head name is not the RYC01 site, and the org is SAME, not HOSTED_OR_SITE. ODS row: A RC1 RO197, predecessors RB4, RFU and RMZ all Inactive, no successors, no legal end. reviewed_holders [1263180,30916110] equals holder_ids in plan 2279. Status: only 30916110's key_owners_elsewhere=[31623946] fires, so 'member-key-owned-elsewhere'. 31623946 holds no code. Dropping 30916110 is worse here than for the other two codes. The result would be a one-member verdict on provisional 1263180 that folds nothing, writes no ledger row, and loses GBNHSRYC on a from-archive rebuild (owner ruling, 2026-10-12). It also goes against 'SAME PPON org if one exists'. Under Option 1 the only loser key, 'east of england ambulance service nhs trust' on 1263180, has key_owners_elsewhere=[]. The same corrections as RXT apply. Limit the Option 1 exemption to a survivor with a PPON target, because an Anchor target binds by ORDER BY id LIMIT 1 on its own key (~17738). Option 2 has no 'reviewed path' today, since 31623946 is no holder and would get 'members-not-live'. It becomes eligible only if it publishes GB-NHS-RYC, which makes the verdict stale and calls for a re-review."
+  },
+  "RYG": {
+   "code": "RYG",
+   "agree": true,
+   "corrected_decision": "hold",
+   "corrected_members": [
+    1691021,
+    4648675,
+    30918096
+   ],
+   "reason": "I could not refute the hold. 1691021 carries the exact ODS name (40 mentions, 5 coded). Its other code RGY is absent from nhs-ods.tsv, and u2-panel/ods-extra/RGY.json is a 404, so it is a transposition typo. That does not bar it. The 519 line 'their orgs never join a body' means the typo codes' own identity orgs (D6 'minted-identity holders'). 1691021 has identifier null, minted_identity false and denied []. Posted precedent agrees: members carrying absent typo codes went through (QJG 30917668 QLG, QJK 30914151 QKJ, QRV 30914264 QMV, 0CX 6191087 ODX). 4648675 is the name without 'NHS'; 'Partnership' rules out RKB (UHCW) and QWU (the ICB). 30918096 is the PPON org PPBB6627GXNQ, paired beside the code, with the '&' spelling. ODS row: A RC1 RO197, no predecessors, successors or legal end. reviewed_holders [1691021,4648675,30918096] equals holder_ids in plan 2279. Status: only 30918096's key_owners_elsewhere=[5317015] fires, so 'member-key-owned-elsewhere'. 5317015's name_norm is 'coventry & warwickshire partnership trust', which differs from 4648675's 'and' key, so 4648675 is not the owner, and 5317015 holds no code. Dropping 30918096 would admit [1691021,4648675] with anchor 1691021 (40 against 32 mentions). The test in nhs_body.rs ~916 shows the code would admit it, but that is the verdict picking the survivor against the PPON-first rule, and against the uniform precedent of holding a SAME PPON org with an elsewhere-owned key. The same corrections as RXT apply. Limit Option 1 to a survivor with a PPON target; the loser keys on 1691021 and 4648675 have no outside owners. Option 2's 'folded by a reviewed path' does not exist, since 5317015 is no holder; only publishing GB-NHS-RYG would make it eligible."
+  }
+ }
+}

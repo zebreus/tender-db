@@ -1,6 +1,7 @@
 # 513 — letter-only NHS ODS codes (`GB-NHS-RTH`) mint no identity, so their parties bind by name and never pair
 
-Status: ready-for-agent — U5 APPLIED 2026-10-12 (`../513-nhs/u5/results.md`). Capped wet 2275 folded 20 bodies; the S3 read was clean; canary 2277 AGREES (29 of 29); full wet 2278 folded 136. All 156 bodies are applied: 119 merged, 37 one-member; 237 org rows removed; 23,395 mentions repointed; ledger 237 rows; 0 regrown. The 7 non-members that 'left' a code were strays folded into their own body (verified, 308). NEXT: S4 read after the daily folds ([issue 513] diag lines; a dry run with `nhs_body_regrown` []), the owner read of the 18-code residue, then 469 U7 with 519.
+Status: ready-for-agent — U5 APPLIED + RESIDUE READ 2026-10-12 (`../513-nhs/u5/results.md`). 162 bodies are applied: 156 from U3, plus 6 from the residue cohort `nhs-body-residue-2026-10-12` (QJM QKK QMF QMJ QOP QYG; wet 2281). 260 org rows removed, 25,347 mentions repointed, 0 regrown. 12 are held. 9 of them on `member-key-owned-elsewhere`, and 7 of those block on the PPON SURVIVOR, whose head key the alias never arms. NEXT: U6, the survivor-exempt D4 (see below), gated with 511 unit 4. Then re-census and post RHM / RNK / RXT / RYC / RYG / RRV / RCB per the read. Also the S4 read after the daily folds; then 469 U7 with 519.
+Was: ready-for-agent — U5 APPLIED 2026-10-12 (`../513-nhs/u5/results.md`). Capped wet 2275 folded 20 bodies; the S3 read was clean; canary 2277 AGREES (29 of 29); full wet 2278 folded 136. All 156 bodies are applied: 119 merged, 37 one-member; 237 org rows removed; 23,395 mentions repointed; ledger 237 rows; 0 regrown. The 7 non-members that 'left' a code were strays folded into their own body (verified, 308). NEXT: S4 read after the daily folds ([issue 513] diag lines; a dry run with `nhs_body_regrown` []), the owner read of the 18-code residue, then 469 U7 with 519.
 Was: ready-for-agent — U3 DONE 2026-10-11/12. Every holder of the 174 codes was adjudicated by a reviewer and a challenger per batch against ODS (wf_126dc78d-0f3, 38 agents; `../513-nhs/u3/adjudication-rows-u3.json`). 156 bodies have a HIGH merge verdict both agree on: 393 members, 37 of them one-member. They are POSTED as cohort `nhs-body-ods-confirmed-2026-10-11`, with `reviewed_holders` taken from census 2261. Re-census 2264: 156 admitted, 0 not admitted. Not posted: 18 codes held or disputed (DQF QJM QKK QMF QMJ QOP QUY QYG RCB RFF RHM RNK RRV RVY RXF RXT RYC RYG; see `u3-residue` below). NEXT: U4, the wet path, the alias armed from the ledger, the scoped unwind, and the merged/regrown reports, in one deploy. Then U5: dry run, a wet run capped at 20 bodies, a read, then the full wet run.
 Was: ready-for-agent — U2 DEPLOYED 2026-10-11 21:54 UTC (a163c1e) and RUN. Dry census job 2261 (`../513-nhs/u3/nhs-body-plan-2261.json`): 335,827 FTS notices, 13,187 coded GB parties (9,234 on the allowlist, 7 by an O/0 fold); 174 codes, 534 holders, uncapped (12 orgs hold two or more codes); 254 tails off the allowlist; denials: 1 minted identity, 1 generic, 1 consortium, 2 successor names; 13 keys owned outside their body. The coded share by notice year is 0 before 2022, then 34 (2022), 112 (2023), 20% (2024), 34% (2025) and 36% (2026). NEXT: U3, adjudicating every holder of the 174 codes (a reviewer plus a challenger per body, against ODS), then posting HIGH verdicts with `reviewed_holders` from this live listing.
 Was: ready-for-agent — U2 ON MAIN 2026-10-11 (084e4d0, gate green): the dry `nhs-body` census planner and the `reviewed_holders` verdict schema. Built by agent (wf_246fba7e-fdd), reviewed for correctness and test strength, 11 review fixes applied. NEXT: deploy once the 491 drain ends, then a dry `match-org-identifiers {"rule":"nhs-body"}` and a read of `nhs-body-plan` (uncapped holders, denials, off-allowlist tails, coded share by year). Then U3: adjudicate every holder (a reviewer plus a challenger per body, against ODS) and post the verdicts with `reviewed_holders` built from the live listing.
@@ -277,4 +278,22 @@ Replaces the withdrawn D1–D4. All three judges ranked design C first. Counts a
 - RVY: every coded notice falls after its legal end; this one belongs to 519's territory.
 
 Each needs an owner read (the challenger's reasons are in `adjudication-rows-u3.json`) before a second cohort.
+
+## U6 — survivor-exempt D4 (filed 2026-10-12 from the residue read)
+
+`plan_nhs_bodies` gives `member-key-owned-elsewhere` to any member whose 234 key a standing identifier-NULL row
+outside the body owns (canonical.rs ~26691). U4 arms the alias on LOSER keys only:
+- the ledger alias reads `$.loser_name_norm` (`NHS_BODY_ALIAS_LEDGER_SQL`);
+- `arm_nhs_body_alias_on` already refuses a loser key that such a row owns.
+
+So when the caught member is the one `nhs_body_survivor` keeps, the gate protects nothing. It blocks the body's own PPON
+org, whose uncoded twin owns its head key: RHM 30926769, RNK 31554431, RXT 30926645, RYC 30916110, RYG 30918096,
+RRV 30916969 and RCB 31535291 (QUY's 31536069 has its own question). The uncoded twin stays split, which is the
+accepted E3 trade-off.
+
+Change: apply the key-owner test only to members other than the survivor the code would pick. Update
+`a_member_whose_key_a_row_outside_the_body_owns_holds_the_verdict` (crates/store/tests/nhs_body.rs:916) so it still
+holds a LOSER whose key is owned elsewhere, and add a test that admits a PPON survivor whose key is. Then deploy,
+re-census, and post the seven verdicts as the read gives them (`../513-nhs/u5/residue-read-wf_2411cb6d.json`,
+`unblock`), re-checking `coded_notices_after_legal_end` for RNK (legal end 2026-03-31, successor G6V2S).
 

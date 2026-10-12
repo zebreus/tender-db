@@ -1,0 +1,152 @@
+{
+ "cohort": "nhs-body-residue-2026-10-12",
+ "verdicts": [
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QJM",
+   "members": [
+    20444933,
+    30913741,
+    31605215
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89, census 2279, ODS ods-2026-10-11). ODS QJM is NHS LINCOLNSHIRE INTEGRATED CARE BOARD: RO261, Active, no legal end, no predecessors or successors, allowlisted. All three members are this body and pass the check (verdict 'admitted'). 30913741 is the exact ODS name: 855 mentions, 404 coded. 20444933 is 'NHS Lincolnshire ICB', the ICB abbreviation (16 mentions, 3 coded). 31605215 is 'NHS LINCOLNSHIRE INTEGRATED ACRE BOARD', a typo of CARE whose single mention publishes GB-NHS-QJM. Each of the three has holder_of only QJM, denied [], key_owners_elsewhere [] and contested false, and all are live and standing. reviewed_holders equals census 2279's holder_ids exactly, so the census status chain ends at 'admitted'. No member carries a GB:ppon identifier and the code has no PPON, so nhs_body_survivor picks the largest cluster, 30913741 (855 mentions), as the provisional anchor. There is no loser PPON, so 'loser-ppon-unaliased' cann Excluded: 31605311: 'NHS incolnshire Integrated Care Board' (1 mention, coded GB-NHS-QJM) is SAME: the leading L of Lincolnshire is missing. But the check refuses it as 'zero'. D3 ",
+   "reviewed_holders": [
+    20444933,
+    30913741,
+    31605215,
+    31605311
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QKK",
+   "members": [
+    30914447,
+    30928152,
+    31534497,
+    31544853,
+    31556342,
+    31620803
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89, census 2279, ODS ods-2026-10-11). ODS QKK is NHS SOUTH EAST LONDON INTEGRATED CARE BOARD: RO261, Active, no legal end or successors, allowlisted. The six members are all SEL spellings and all pass the check ('admitted'). 30914447 is the exact ODS name (241 mentions, 109 coded). 30928152 adds 'London' (11). 31534497 is the ICB abbreviation (41). 31544853 drops 'NHS' (21). 31556342 adds '(SEL ICB)' (6). 31620803 drops 'NHS' and adds '(ICB)' (2). Each has holder_of only QKK, denied [], key_owners_elsewhere [] and contested false. Their head keys are all SEL strings, so no non-member holder shares one: 31576333 has an identifier, and the two NEL clusters have NEL keys. QMF's holders include none of the six, so a later QMF verdict cannot make them 'contested'. reviewed_holders equals census 2279's nine holder_ids exactly, so the status is 'admitted'. No member has a GB:ppon identifier, so the survivor is the largest member cl Excluded: 30914670: DIFFERENT body. This is 'NHS North East London Integrated Care Board', the neighbouring ICB QMF. 119 of its coded mentions publish GB-NHS-QMF and only 4 publish; 31570524: DIFFERENT body. 'North East London Integrated Care Board' is NEL ICB (QMF): 4 QMF-coded mentions against 1 QKK stray, and the check refuses it for QKK (better: ; 31576333: The PPON org GBPPONPCXT8262NYRV. The FTS witnesses U3 fetched (033033-2025, 041616-2025, 042734-2025) show SEL ICB publishing QKK beside GB-PPON-PCXT-8262-NYRV,",
+   "reviewed_holders": [
+    30914447,
+    30914670,
+    30928152,
+    31534497,
+    31544853,
+    31556342,
+    31570524,
+    31576333,
+    31620803
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QMF",
+   "members": [
+    30914670,
+    30976288,
+    31542989,
+    31570524,
+    31608373,
+    31608375,
+    31613968
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89, census 2279, ODS ods-2026-10-11). ODS QMF is NHS North East London ICB (RO261, Active, allowlisted, no legal end or successor). Seven live holders are NEL spellings:\n- 30914670 is the exact ODS name, with 217 mentions, 119 of them coded QMF.\n- 30976288 is 'NHS North East London ICB'.\n- 31542989 is 'North East London ICB'.\n- 31570524 is 'North East London Integrated Care Board'.\n- 31608373 and 31608375 are the 'Integrate' and 'Intergrated' typos.\n- 31613968 adds '(NEL)' and '(ICB)'.\n\nEvery one of them passes the check as 'admitted'. They are standing, have no denial and no key_owners_elsewhere, are not contested, and none carries a GB:ppon identifier.\n\nWith no PPON member, the code picks the largest cluster: 30914670 (217 mentions) becomes the provisional anchor. There is no PPON loser, so 'loser-ppon-unaliased' cannot fire. This is exactly D6's 'both stay anchors' outcome, and it is the U3 reviewer's safe option (a).\n\nTh Excluded: 5132172: This is Barking, Havering and Redbridge University Hospitals NHS Trust, a DIFFERENT body: ODS RF4, Active, RO197. It has 1 stray GB-NHS-QMF mention against 64 u; 30915099: This is the NHS London Commercial Hub, a procurement unit hosted by NEL ICB (FTS 033194-2025: 'hosted by NHS North East London ICB'). It has its own PPON PBWD-3; 31561974: This is the PPON org GBPPONPMLZ8385VMTM. FTS witnesses show it is NEL ICB's own PPON, but its head name is SEL ICB (3 of 5 mentions). The check refuses it ('bet; 31570934: SAME in substance: the exact ODS name plus '(covering Barking & Dagenham, Havering and Redbridge)', 1 mention, coded QMF. But the check refuses it on 'coverage'",
+   "reviewed_holders": [
+    5132172,
+    30914670,
+    30915099,
+    30976288,
+    31542989,
+    31561974,
+    31570524,
+    31570934,
+    31608373,
+    31608375,
+    31613968
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QMJ",
+   "members": [
+    30915101,
+    30915993,
+    30916245,
+    31536734,
+    31593612
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89, census 2279, ODS ods-2026-10-11). ODS QMJ is NHS North Central London ICB (RO261, allowlisted, still Active). It was legally ended on 2026-03-31, and its successor is Z9B2Z, NHS West and North London ICB.\n\nThe legal end does not block a verdict:\n- No holder carries the successor name: successor_name is null for every holder, and no name_norm in any holder is the W&NL name. All holders are uncapped, so the name lists are complete.\n- The decision accepts that legally-ended codes have no date fence.\n- Cohort 1 already posted and folded the sibling predecessor QRV, plus QMM, QJG, QXU (24 notices after its legal end) and RYV.\n\nFive members are NCL spellings:\n- 30915101 is the exact ODS name, with 419 mentions, 48 coded.\n- 30915993 is 'NHS North Central London ICB', with 225 mentions.\n- 30916245 is the PPON org GBPPONPWBN7811DGVX, with the exact ODS name, 17 mentions, and its PPON published beside QMJ.\n- 31536734 is the ODS na Excluded: 30915099: This is the NHS London Commercial Hub, hosted by NHS North East London ICB (QMF), not NCL. It has its own PPON PBWD-3998-QHRQ and only 1 QMJ-coded mention, from; 31625150: 'NHS NCL Integrated Care Board': SAME in substance (NCL is North Central London's acronym), 1 mention, coded QMJ. But the check refuses it as 'zero'. An acronym",
+   "reviewed_holders": [
+    30915099,
+    30915101,
+    30915993,
+    30916245,
+    31536734,
+    31593612,
+    31625150
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QOP",
+   "members": [
+    30916695
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89, census 2279, ODS ods-2026-10-11). ODS QOP is NHS Greater Manchester ICB (RO261, Active, allowlisted, no legal end). The only holder that IS the body is 30916695: the exact ODS name, 206 mentions, check 'admitted', no denial, no key_owners_elsewhere, and not contested. Its single GB-NHS-TBC raw is a placeholder, not an ODS code.\n\nA one-member verdict is allowed. It folds nothing; it records GBNHSQOP on 30916695 so that ?identifier=GBNHSQOP answers it.\n\nU3 held QOP only for medium confidence over the UNSURE holder 1850341. Both the reviewer and the challenger concluded that whatever the read of 1850341 finds, it stays out and the expected outcome is this 1-member verdict on 30916695. That uncertainty does not touch the member set, so the verdict is HIGH: no holder of doubtful identity is merged. Excluded: 1850341: 'NHS Greater Manchester' was classed UNSURE because it is a mixed cluster:\n- Its org id (1.85M) puts its first mention in the 2011-13 era: the 'NHS Greater Manc; 8572709: 'NHS England Greater Manchester' is DIFFERENT: it is NHS England's Greater Manchester area team, not the ICB. Its id (8.57M) dates it to the ~2015 area-team era; 31620840: 'NHS England and NHS Greater Manchester Integrated Care Partnership' is a joint label naming two bodies: NHS England, and the GM ICP, a joint committee of the I",
+   "reviewed_holders": [
+    1850341,
+    8572709,
+    30916695,
+    31620840
+   ]
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:nhs-body",
+   "key": "QYG",
+   "members": [
+    30913962,
+    30916196,
+    30916198,
+    31541032,
+    31546209,
+    31551077,
+    31556030
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "Owner read of the U3 residue, reviewer + challenger agree (wf_2411cb6d-b89, census 2279, ODS ods-2026-10-11). QYG = NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD (A, RC1, RO261, allow=1, no legal end, no predecessors or successors). The live census 2279 lists the same 11 holders U3 read, so nothing is new and nothing has gone. There is no PPON holder: PMYD9553QJQN is published beside the code but no org holds it. The 7 members are spellings of the ICB, each admitted by the check, with denied=[], key_owners_elsewhere=[], contested=false and holder_of=['QYG']: 30913962 (exact ODS name, 584 coded), 30916196 ('NHS Cheshire and Merseyside ICB', 906 mentions), 30916198 (no 'NHS' prefix), 31541032 ('(ICB)' suffix), 31546209 ('&' and '(ICB)'), 31551077 ('&'), 31556030 ('&' and a doubled 'ICB'). Their other_codes (OYG, QYC, 0YD/OYD) are typo tails that are off the allowlist. They put no holder into any other code, so they are 519 material and do not block this verdict. This follows U3's challenger, w Excluded: 31579965: SAME in substance ('NHS Cheshire and Merseyside', the ICB's operating brand, 3 of its 5 mentions coded QYG), but the check returns verdict=tie against rival 0CE; 31747045: DIFFERENT: 'Miriam Primary Care Group' is the Wirral GP practice N85625, a provider the ICB commissions that picked up the ICB's code on 1 mention. The check re; 31747049: DIFFERENT: 'Miriam Primary Care Limited' is the company behind practice N85625. The check returns non-nhs. D6 says never a member.; 31747053: DIFFERENT: 'Paxton Medical Group' is the Wirral GP practice N85044, with 1 stray coded mention. The check returns zero. D6 says never a member.",
+   "reviewed_holders": [
+    30913962,
+    30916196,
+    30916198,
+    31541032,
+    31546209,
+    31551077,
+    31556030,
+    31579965,
+    31747045,
+    31747049,
+    31747053
+   ]
+  }
+ ]
+}
