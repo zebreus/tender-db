@@ -1287,6 +1287,9 @@ fn altid_rules() -> store::AltIdAliasRules {
         trim: |s| s.to_owned(),
         norm,
         owner_mention_cap: store::ALTID_ALIAS_OWNER_MENTIONS,
+        // Issue 519 U4: the strict gate the exact-triple arm binds a child mention by, as
+        // `project::altid_alias_rules` passes `nhs_ods::census_child_check`.
+        nhs_child_check: Some(child_check),
     }
 }
 
@@ -1854,12 +1857,27 @@ async fn a_target_folded_by_a_later_altid_merge_is_followed_not_reminted() {
 async fn an_unarmed_resolver_is_byte_identical() {
     let b = bed("byte-identical").await;
     b.provisional(70, "Oxford University Hospitals NHS FT").await;
-    b.fresh(&[300, 301, 302]).await;
-    let (armed, c) = b.resolve(true, &[mention(300, "Oxford University Hospitals NHS FT", None), mention(301, "New Body", None)]).await;
+    // Issue 519 U4: a child identity standing on its own row — E0 binds it, armed (with the
+    // child gate) or not: with no identity-loser ledger row, no triple is armed.
+    b.org(71, "GBNHS13T", NEL_ICB).await;
+    b.fresh(&[300, 301, 302, 303, 304]).await;
+    let (armed, c) = b
+        .resolve(
+            true,
+            &[
+                mention(300, "Oxford University Hospitals NHS FT", None),
+                mention(301, "New Body", None),
+                mention(303, NEL_ICB, Some("GB-NHS-13T")),
+            ],
+        )
+        .await;
     assert_eq!(c, store::NhsBodyAliasCounts::default());
-    let (unarmed, _) = b.resolve(false, &[mention(302, "Oxford University Hospitals NHS FT", None)]).await;
+    let (unarmed, _) = b
+        .resolve(false, &[mention(302, "Oxford University Hospitals NHS FT", None), mention(304, NEL_ICB, Some("GB-NHS-13T"))])
+        .await;
     assert_eq!(armed[0], 70);
     assert_eq!(unarmed[0], 70);
+    assert_eq!((armed[2], unarmed[1]), (71, 71), "the child's own row, through E0");
     let mut resolver =
         b.db.mention_resolver(Some(key), Some(consortium), None, Some(norm), None, None, 20).await.unwrap();
     b.db.arm_nhs_body_alias(&mut resolver).await.unwrap();
@@ -1926,7 +1944,7 @@ async fn the_unwind_round_trip_dissolves_the_body_back_through_234() {
     b.fold_all().await;
     assert_eq!(b.count("SELECT organization_id FROM tender_version_bid_parties WHERE tender_id = 9").await, 7);
     let unwind =
-        |dry_run: bool| store::NhsBodyUnwindArgs { code: "RTH", dry_run, register_identity, key, job_id: Some(78) };
+        |dry_run: bool| store::NhsBodyUnwindArgs { code: "RTH", cohort: None, dry_run, register_identity, key, job_id: Some(78) };
     let dry = b.db.unwind_nhs_body(unwind(true)).await.unwrap();
     assert_eq!((dry.ledger_rows, dry.survivor, dry.survivor_mentions), (3, Some(7), 6));
     assert_eq!((dry.moved, dry.by_name, dry.by_identity, dry.minted), (5, 5, 0, 4), "{dry:#?}");
@@ -2002,7 +2020,7 @@ async fn an_unwind_whose_keep_now_names_an_unrelated_org_is_refused() {
     for dry_run in [true, false] {
         let err = b
             .db
-            .unwind_nhs_body(store::NhsBodyUnwindArgs { code: "RTH", dry_run, register_identity, key, job_id: None })
+            .unwind_nhs_body(store::NhsBodyUnwindArgs { code: "RTH", cohort: None, dry_run, register_identity, key, job_id: None })
             .await
             .expect_err("the keep names an unrelated org");
         let msg = err.to_string();
@@ -2107,7 +2125,7 @@ async fn the_unwind_returns_a_loser_ppon_org_through_e0_and_redirects_it_by_iden
     }
     let r = b
         .db
-        .unwind_nhs_body(store::NhsBodyUnwindArgs { code: "RET", dry_run: false, register_identity, key, job_id: None })
+        .unwind_nhs_body(store::NhsBodyUnwindArgs { code: "RET", cohort: None, dry_run: false, register_identity, key, job_id: None })
         .await
         .unwrap();
     assert_eq!((r.survivor, r.moved, r.by_name, r.by_identity, r.minted), (Some(31), 3, 2, 1, 3), "{r:#?}");
@@ -2135,7 +2153,7 @@ async fn a_one_member_body_unwinds_to_dropping_its_code() {
     b.verdict("RET", vec![21], Some(vec![21]), "merge", "high").await;
     b.fold_all().await;
     assert_eq!(b.holders_of("GBNHSRET").await, vec![21]);
-    let unwind = |dry_run: bool| store::NhsBodyUnwindArgs { code: "RET", dry_run, register_identity, key, job_id: None };
+    let unwind = |dry_run: bool| store::NhsBodyUnwindArgs { code: "RET", cohort: None, dry_run, register_identity, key, job_id: None };
     let dry = b.db.unwind_nhs_body(unwind(true)).await.unwrap();
     assert_eq!((dry.ledger_rows, dry.survivor, dry.merged_identifiers_dropped), (0, Some(21), 1), "{dry:#?}");
     assert_eq!(b.holders_of("GBNHSRET").await, vec![21], "dry writes nothing");
@@ -2773,24 +2791,777 @@ async fn a_child_tail_no_allowlisted_parent_anchors_is_listed_apart() {
     assert_eq!(r.off_allowlist_seen, 2, "513's listing is unchanged");
 }
 
-/// Issue 519 unit 2 holds a child member out of the WET path until U4 builds the identity
-/// loser's fold (empty name keys, `loser_kind identity`) and the exact-triple alias arm:
-/// folded today, a child's head name would arm 513's name alias and its next coded mention
-/// would mint a new org. The body is held (`child-fold-unbuilt`), left in the residual, and
-/// nothing is written.
+// ---- Issue 519 U4: the identity-loser fold, the exact-triple alias arm, the cohort-scoped
+// unwind with last-in-first-out refusal, S4's identity labels and the canary (decision
+// `.scratch/tender-db/519-nhs-digit-codes/unit2-decision.md` §3.2-§3.7, §5, §6). U2's wet hold
+// (`child-fold-unbuilt`) and its test are gone with it.
+
+const CHILD_COHORT: &str = "nhs-body-children-test";
+const NEL_ICB_LONG: &str = "NHS North East London Integrated Care Board";
+const SEL_ICB: &str = "NHS South East London ICB";
+
+/// A child check that admits every name under every code: the shape in which two arms both
+/// admit a mention (the miniature [`child_check`] reads one word per code, so no name fits two).
+fn admit_all(_parent: &str, _name: &str) -> NhsNameCheck {
+    NhsNameCheck { verdict: "admitted", rival: None }
+}
+
+impl Bed {
+    /// QMF's 513 fold as a multi-member body leaves it: the PPON org (40) and a spelling
+    /// cluster (46) its coded party bound, folded by the 513 cohort — one `nhs-body` ledger
+    /// row (loser 46, a name loser) and `GBNHSQMF` recorded on 40.
+    async fn qmf_folded(&self) {
+        self.org(40, &minted(QMF_PPON), QMF_PPON_NAME).await;
+        self.notice(400, None).await;
+        self.party(400, "P", Some(40), Some("GB"), &[QMF_PPON, "GB-NHS-QMF"], QMF_PPON_NAME).await;
+        self.provisional(46, NEL_ICB_LONG).await;
+        self.coded(460, 46, "GB-NHS-QMF").await;
+        self.verdict("QMF", vec![40, 46], Some(vec![40, 46]), "merge", "high").await;
+        let r = self.fold_all().await;
+        assert_eq!(r.folded.iter().map(|f| (f.code, f.keep, f.losers.clone())).collect::<Vec<_>>(), [("QMF", 40, vec![46])]);
+    }
+
+    /// QMF as prod's 513 ONE-MEMBER bodies stand (QWU may be one): its PPON org (40) alone,
+    /// folded for real by the 513 cohort — no loser, so no ledger row, only `GBNHSQMF`
+    /// recorded on 40 and the verdict stamped `recorded GBNHSQMF on 40`. ([`Self::qmf_body`]
+    /// stamps the verdict by hand and records no code.)
+    async fn qmf_one_member_folded(&self) {
+        self.org(40, &minted(QMF_PPON), QMF_PPON_NAME).await;
+        self.notice(400, None).await;
+        self.party(400, "P", Some(40), Some("GB"), &[QMF_PPON, "GB-NHS-QMF"], QMF_PPON_NAME).await;
+        self.verdict("QMF", vec![40], Some(vec![40]), "merge", "high").await;
+        let r = self.fold_all().await;
+        assert_eq!((r.merged_bodies, r.recorded_bodies, r.removed), (0, 1, 0), "{r:#?}");
+        assert_eq!(self.holders_of("GBNHSQMF").await, vec![40]);
+        assert_eq!(self.count("SELECT COUNT(*) FROM org_merge_log").await, 0, "no loser, no ledger row");
+    }
+
+    /// The child cohort on QMF (reviewed at 10, so it stands over 513's), dried and folded.
+    async fn fold_children(&self, members: Vec<i64>, holders: Vec<i64>) -> NhsBodyReport {
+        self.child_verdict("QMF", members, holders, 10).await;
+        self.fold_all().await
+    }
+
+    /// 13T folded into QMF's PPON survivor (40) by the child cohort, over 513's one-member
+    /// body: the shape every alias test starts from.
+    async fn child_folded(&self) {
+        self.qmf_body().await;
+        self.nel_13t(NEL_ICB).await;
+        self.fold_children(vec![40, 41], vec![40, 41]).await;
+    }
+
+    /// [`Self::resolve`] armed with explicit altid rules (the child gate is one of them).
+    async fn resolve_with(
+        &self,
+        rules: store::AltIdAliasRules,
+        mentions: &[store::Mention],
+    ) -> (Vec<i64>, store::NhsBodyAliasCounts) {
+        let mut resolver =
+            self.db.mention_resolver(Some(key), Some(consortium), None, Some(norm), None, None, 20).await.unwrap();
+        self.db.arm_altid_alias(&mut resolver, rules).await.unwrap();
+        let ids = self.db.resolve_mentions(&mut resolver, mentions, 1).await.unwrap();
+        let counts = store::Db::nhs_body_alias_counts(&resolver);
+        self.db.finish_mention_resolver(resolver).await.unwrap();
+        (ids, counts)
+    }
+
+    /// A hand-written IDENTITY loser's ledger row, the shape the child fold writes: the
+    /// child's triple, empty name keys.
+    #[allow(clippy::too_many_arguments)]
+    async fn ledger_identity(&self, keep: i64, loser: i64, code: &str, child: &str, target: &str, keep_name: &str, at: i64) {
+        self.ledger_evidence(
+            keep,
+            loser,
+            &format!(
+                "\"code\":\"{code}\",{target},\"keep_name\":\"{keep_name}\",\"loser_id\":\"GBNHS{child}\",\
+                 \"loser_kind\":\"identity\",\"loser_identifier_kind\":\"national\",\"loser_name_norm\":\"\",\
+                 \"loser_name_norms\":[],\"loser_country\":\"GB\",\"child_code\":\"{child}\",\
+                 \"child_codes\":[\"{child}\"],\"cohort\":\"{CHILD_COHORT}\""
+            ),
+            at,
+        )
+        .await;
+    }
+
+    async fn unwind(&self, cohort: Option<&str>, dry_run: bool) -> store::turso::Result<store::NhsBodyUnwindReport> {
+        self.db
+            .unwind_nhs_body(store::NhsBodyUnwindArgs { code: "QMF", cohort, dry_run, register_identity, key, job_id: Some(79) })
+            .await
+    }
+
+    /// Every row a scoped unwind could touch, in one string: what "nothing was written" means
+    /// (an empty table reads as an empty field, so a one-member body with no ledger row reads).
+    async fn unwind_state(&self) -> String {
+        self.text_of(
+            "SELECT (SELECT COUNT(*) FROM organizations) || '|' || (SELECT COUNT(*) FROM changes) || '|' || \
+             (SELECT COALESCE(group_concat(rule || ':' || loser, ','), '') FROM org_merge_log) || '|' || \
+             (SELECT COALESCE(group_concat(identifier || ':' || loser || ':' || org_id, ','), '') \
+                FROM organization_merged_identifiers) \
+             || '|' || (SELECT COALESCE(group_concat(notice_id || ':' || organization_id, ','), '') FROM organization_mentions)",
+        )
+        .await
+    }
+
+    /// The org a notice's (only) mention stands on.
+    async fn org_of_notice(&self, notice: i64) -> i64 {
+        self.count(&format!("SELECT organization_id FROM organization_mentions WHERE notice_id = {notice}")).await
+    }
+}
+
+/// U4's fold (§3.2-§3.4): a reviewed child — 13T's identity org (41), every name admitted
+/// under QMF — folds into QMF's PPON survivor (40) in the child cohort, where U2 held it
+/// (`child-fold-unbuilt`). Its references move, its row goes, its id answers 308, and its own
+/// literal `GBNHS13T` is now a merged identifier of the survivor (`repoint_merged_identifiers`,
+/// rule `nhs-body`), so `?identifier=GBNHS13T` answers 40 beside `GBNHSQMF`. The ledger row is
+/// an IDENTITY loser's: its triple, its names, the child code with its rel and periods, and
+/// EMPTY name keys — so no name path reads it (513's alias, the unwind's key set, S4's name
+/// probe). 513's applied cohort is untouched, and the re-dry reads the child cohort applied.
 #[tokio::test]
-async fn a_child_member_is_held_out_of_the_wet_run_until_the_identity_fold_exists() {
-    let b = bed("child-wet-hold").await;
+async fn a_reviewed_child_folds_into_the_ppon_survivor_and_its_code_answers_it() {
+    let b = bed("child-fold").await;
     b.qmf_body().await;
     b.nel_13t(NEL_ICB).await;
+    b.extra(411, 41, Some("GB-NHS-13T"), NEL_ICB_LONG, Some("GB"), None).await;
+    assert_eq!(b.holders_of("GBNHS13T").await, vec![41]);
     b.child_verdict("QMF", vec![40, 41], vec![40, 41], 10).await;
-    let expect = b.admitted().await;
-    assert_eq!(expect, vec!["QMF".to_owned()]);
-    let r = b.wet(&expect, None).await.expect("the wet run");
-    assert_eq!(r.held.iter().map(|h| (h.code, h.reason)).collect::<Vec<_>>(), [("QMF", "child-fold-unbuilt")], "{r:#?}");
-    assert_eq!(r.residual_codes, vec!["QMF"]);
-    assert!(r.folded.is_empty());
-    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id = 41").await, 1);
-    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 0);
-    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_verdicts WHERE cohort = 'nhs-body-children-test' AND applied_at IS NOT NULL").await, 0);
+    let r = b.fold_all().await;
+    assert_eq!(r.folded, vec![store::NhsBodyFolded { code: "QMF", keep: 40, target: "ppon", losers: vec![41] }]);
+    assert_eq!((r.merged_bodies, r.removed, r.mentions, r.parties), (1, 1, 2, 0), "{r:#?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id = 41").await, 0, "the child row is gone");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 40").await, 3);
+    assert_eq!(store::read::resolve_org(&b.conn, 41).await.unwrap(), store::read::OrgResolution::MergedInto(40));
+    assert_eq!(b.holders_of("GBNHS13T").await, vec![40], "the child's code answers the survivor");
+    assert_eq!(b.holders_of("GBNHSQMF").await, vec![40]);
+    assert_eq!(
+        b.text_of("SELECT rule || '|' || loser || '|' || country || '|' || identifier_kind FROM organization_merged_identifiers WHERE identifier = 'GBNHS13T'")
+            .await,
+        "nhs-body|41|GB|national"
+    );
+    let evidence = b.text_of("SELECT evidence FROM org_merge_log WHERE loser = 41").await;
+    for (field, value) in [
+        ("code", "QMF"),
+        ("target", "ppon"),
+        ("target_identity", "GBPPONQMFX2026NELA"),
+        ("keep_name", QMF_PPON_NAME),
+        ("loser_id", "GBNHS13T"),
+        ("loser_kind", "identity"),
+        ("loser_identifier_kind", "national"),
+        ("loser_country", "GB"),
+        ("loser_name", NEL_ICB),
+        ("loser_name_norm", ""),
+        ("child_code", "13T"),
+        ("child_rel", "RE5"),
+        ("cohort", CHILD_COHORT),
+    ] {
+        assert!(evidence.contains(&format!("\"{field}\":\"{value}\"")), "{field} in {evidence}");
+    }
+    for literal in [
+        format!("\"loser_names\":[\"{NEL_ICB}\",\"{NEL_ICB_LONG}\"]"),
+        "\"loser_name_norms\":[]".to_owned(),
+        "\"child_codes\":[\"13T\"]".to_owned(),
+        "\"child_periods\":[\"2020-04-01..\"]".to_owned(),
+        "\"code_recorded\":true".to_owned(),
+    ] {
+        assert!(evidence.contains(&literal), "{literal} in {evidence}");
+    }
+    assert_eq!(
+        b.count("SELECT COUNT(*) FROM org_merge_log WHERE json_extract(evidence, '$.loser_kind') = 'identity' AND json_array_length(json_extract(evidence, '$.loser_name_norms')) = 0")
+            .await,
+        1,
+        "the evidence parses as JSON"
+    );
+    let applied = "SELECT COUNT(*) FROM org_merge_verdicts WHERE key = 'QMF' AND applied_at IS NOT NULL AND cohort = ";
+    assert_eq!(b.count(&format!("{applied}'{CHILD_COHORT}'")).await, 1, "the child cohort is stamped");
+    assert_eq!(b.count(&format!("{applied}'513-u2-test' AND applied_at = 1")).await, 1, "513's stamp unmoved");
+    let again = b.plan().await;
+    let qmf = code(&again, "QMF");
+    assert_eq!((qmf.verdict.as_ref().map(|v| (v.status, v.cohort.as_str())), qmf.holder_ids.clone()), (Some(("applied", CHILD_COHORT)), vec![40]));
+    assert!(again.admitted_codes.is_empty() && again.nhs_body_regrown.is_empty(), "{again:#?}");
+}
+
+/// One lineage per body, two cohorts (§3.1): a child cohort on a code whose 513 cohort is
+/// applied folds ONLY its children — the 513 ledger row stands byte for byte, `GBNHSQMF`
+/// stands once, and the child row says the code was already recorded (`code_recorded`
+/// false), which the scoped unwind reads.
+#[tokio::test]
+async fn a_second_cohort_on_an_applied_code_folds_only_the_children() {
+    let b = bed("child-second-cohort").await;
+    b.qmf_folded().await;
+    let first = "SELECT group_concat(keep || ':' || loser || ':' || at || ':' || evidence, '|') FROM org_merge_log \
+                 WHERE json_extract(evidence, '$.cohort') = '513-u2-test'";
+    let before = b.text_of(first).await;
+    assert!(before.contains("\"code_recorded\":true"), "513's fold recorded the code: {before}");
+    b.nel_13t(NEL_ICB).await;
+    let r = b.fold_children(vec![40, 41], vec![40, 41]).await;
+    assert_eq!(r.folded, vec![store::NhsBodyFolded { code: "QMF", keep: 40, target: "ppon", losers: vec![41] }]);
+    assert_eq!(b.text_of(first).await, before, "513's row is untouched");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body'").await, 2);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organization_merged_identifiers WHERE identifier = 'GBNHSQMF'").await, 1);
+    assert!(b.text_of("SELECT evidence FROM org_merge_log WHERE loser = 41").await.contains("\"code_recorded\":false"));
+    assert_eq!(b.org_of_notice(460).await, 40, "513's member stays folded");
+}
+
+/// §1.4's rehome-then-fold: a holder whose stray mention another body wins (`child-name-mixed`)
+/// is held; once issue 317's rehoming moves the stray to its body's org, the holder's every
+/// name passes, it is eligible, and the child cohort folds it — the rehomed mention stays
+/// where the rehoming put it.
+#[tokio::test]
+async fn a_rehomed_stray_leaves_its_holder_foldable() {
+    let b = bed("child-rehomed").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    b.provisional(60, SEL_ICB).await;
+    b.coded(600, 60, "GB-NHS-QKK").await;
+    b.extra(411, 41, Some("GB-NHS-13T"), SEL_ICB, Some("GB"), None).await;
+    assert_eq!(holder(code(&b.plan().await, "QMF"), 41).denied, vec!["child-name-mixed"]);
+    b.db
+        .record_rehoming(
+            "317-test",
+            &[store::RehomingVerdict {
+                case_org_id: 41,
+                notice_id: 411,
+                section_id: "ORG-X411".into(),
+                action: "rehome".into(),
+                target_org_id: Some(60),
+                target_name: None,
+                rationale: "fixture: South East London's notice".into(),
+                confidence: "high".into(),
+            }],
+            1,
+        )
+        .await
+        .unwrap();
+    assert_eq!(b.db.apply_rehoming(false, None, Some(5), 2).await.unwrap().moved, 1);
+    let r = b.plan().await;
+    let qmf = code(&r, "QMF");
+    assert!(holder(qmf, 41).denied.is_empty(), "{qmf:#?}");
+    let holders = qmf.holder_ids.clone();
+    let r = b.fold_children(vec![40, 41], holders).await;
+    assert_eq!(r.folded.iter().map(|f| (f.keep, f.losers.clone())).collect::<Vec<_>>(), [(40, vec![41])]);
+    assert_eq!(b.org_of_notice(411).await, 60, "the rehomed stray stays rehomed");
+    assert_eq!(b.org_of_notice(410).await, 40);
+}
+
+/// Ruling 9: a zero-only child cluster folds as a NAME member — its evidence is a name
+/// loser's with its keys, so 513's name alias arms them — and `GBNHS<00x>` is recorded on
+/// the survivor (lookup only), so `?identifier=GBNHS00P` answers it.
+#[tokio::test]
+async fn a_zero_only_child_folds_by_name_and_records_its_code() {
+    let b = bed("child-zero-fold").await;
+    b.qmf_body().await;
+    b.provisional(43, "North East London ICS").await;
+    b.coded(430, 43, "GB-NHS-00P").await;
+    b.fold_children(vec![40, 43], vec![40, 43]).await;
+    assert_eq!(b.holders_of("GBNHS00P").await, vec![40]);
+    let evidence = b.text_of("SELECT evidence FROM org_merge_log WHERE loser = 43").await;
+    for literal in [
+        "\"loser_kind\":\"name\"",
+        "\"loser_name_norm\":\"north east london ics\"",
+        "\"child_code\":\"00P\"",
+        "\"child_codes\":[\"00P\"]",
+    ] {
+        assert!(evidence.contains(literal), "{literal} in {evidence}");
+    }
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[mention(300, "North East London ICS", None)]).await;
+    assert_eq!(ids, vec![40], "513's name alias binds the cluster's spelling");
+    assert_eq!((c.keys, c.bound, c.triples), (1, 1, 0), "{c:?}");
+}
+
+/// The exact-triple arm's reason to exist (§3.5). After the fold the child row is gone and a
+/// merged identifier routes nothing (`org_of` is preloaded from own identifiers only), so the
+/// next child-coded mention misses E0 and the unarmed fold mints a new `GBNHS13T` org. Armed,
+/// a mention whose identifier IS the child triple and whose name `child_check(QMF, name)`
+/// admits binds the survivor; nothing is minted and nothing re-recorded (both codes stand).
+#[tokio::test]
+async fn the_next_child_coded_mention_named_as_the_body_binds_the_survivor() {
+    let b = bed("child-next").await;
+    b.child_folded().await;
+    b.fresh(&[300, 301]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b.resolve(true, &[mention(300, NEL_ICB, Some("GB-NHS-13T"))]).await;
+    assert_eq!(ids, vec![40]);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs);
+    assert_eq!(
+        (c.ledger_rows, c.triple_rows, c.triples, c.triple_arms, c.triple_asked, c.triple_bound, c.triple_minted, c.triple_recorded),
+        (1, 1, 1, 1, 1, 1, 0, 0),
+        "{c:?}"
+    );
+    assert_eq!((c.keys, c.asked), (0, 0), "an identity loser arms no name key");
+    let (ids, c) = b.resolve(false, &[mention(301, NEL_ICB, Some("GB-NHS-13T"))]).await;
+    assert_ne!(ids[0], 40, "unarmed, the regrowth the arm prevents");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs + 1);
+    assert_eq!(c, store::NhsBodyAliasCounts::default());
+}
+
+/// Precedence (§3.5, "why the arm must precede `org_of`"): a child-coded mention the gate
+/// refuses (`NHS South East London ICB`, QKK's) falls through to `org_of` and mints its own
+/// row, which claims the triple — yet a LATER admitted mention in the same fold still binds
+/// the survivor, because the arm is asked before `org_of`. A second refused mention rides E0
+/// onto the stray row, as a mis-publisher should.
+#[tokio::test]
+async fn a_refused_name_stands_on_its_own_row_and_a_later_admitted_one_still_binds_the_survivor() {
+    let b = bed("child-precedence").await;
+    b.child_folded().await;
+    b.fresh(&[300, 301, 302]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b
+        .resolve(
+            true,
+            &[
+                mention(300, SEL_ICB, Some("GB-NHS-13T")),
+                mention(301, NEL_ICB, Some("GB-NHS-13T")),
+                mention(302, SEL_ICB, Some("GB-NHS-13T")),
+            ],
+        )
+        .await;
+    let stray = ids[0];
+    assert_ne!(stray, 40);
+    assert_eq!(&ids[1..], &[40, stray], "{ids:?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs + 1);
+    assert_eq!(
+        b.text_of(&format!("SELECT identifier || '|' || name FROM organizations WHERE id = {stray}")).await,
+        format!("GBNHS13T|{SEL_ICB}")
+    );
+    assert_eq!((c.triple_asked, c.triple_bound, c.triple_refused_name, c.triple_minted), (3, 1, 2, 0), "{c:?}");
+}
+
+/// S5's store half for children (§3.5): a rebuild in notice order. The rebuild keeps the
+/// ledger and the verdicts and drops the org layer, so the first child-coded mention finds
+/// no survivor: the arm MINTS the PPON survivor from the ledger (`keep_name`), recording
+/// `GBNHSQMF` and `GBNHS13T` on it once; the PPON-first mention then rides E0 onto it, a
+/// second admitted spelling binds it standing, and a refused name stands on its own row.
+#[tokio::test]
+async fn the_child_arm_survives_a_rebuild_in_notice_order() {
+    let b = bed("child-rebuild").await;
+    b.child_folded().await;
+    for table in ["organization_mentions", "organization_names", "organization_merged_identifiers", "organizations"] {
+        b.conn.execute(&format!("DELETE FROM {table}"), ()).await.unwrap();
+    }
+    b.fresh(&[500, 501, 502, 503]).await;
+    let (ids, c) = b
+        .resolve(
+            true,
+            &[
+                mention(500, NEL_ICB, Some("GB-NHS-13T")),
+                mention(501, QMF_PPON_NAME, Some(QMF_PPON)),
+                mention(502, NEL_ICB_LONG, Some("GB-NHS-13T")),
+                mention(503, SEL_ICB, Some("GB-NHS-13T")),
+            ],
+        )
+        .await;
+    let body = ids[0];
+    assert_eq!(&ids[..3], &[body; 3], "one org for the body: {ids:?}");
+    assert_ne!(ids[3], body, "the refused name stands apart");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, 2);
+    assert_eq!(
+        b.text_of(&format!("SELECT name || '|' || identifier || '|' || provisional FROM organizations WHERE id = {body}")).await,
+        format!("{QMF_PPON_NAME}|{}|0", minted(QMF_PPON)),
+        "the PPON survivor, named by the ledger"
+    );
+    assert_eq!(
+        (c.triple_asked, c.triple_minted, c.triple_bound, c.triple_refused_name, c.triple_recorded),
+        (3, 1, 1, 1, 2),
+        "{c:?}"
+    );
+    assert_eq!(b.holders_of("GBNHSQMF").await, vec![body]);
+    let mut thirteen = b.holders_of("GBNHS13T").await;
+    thirteen.sort_unstable();
+    let mut want = vec![body, ids[3]];
+    want.sort_unstable();
+    assert_eq!(thirteen, want, "the merged leg answers the body, the stray answers by its own row");
+}
+
+/// One triple, two arms, routed by name (§3.5, from separate-arm): D4U1Y dated under QNQ and
+/// then QRL, an identity row under each code. A Frimley name binds QNQ's survivor, a Hampshire
+/// name QRL's; a name no arm admits is `refused_name`; a name two arms admit is
+/// `refused_ambiguous` — and each refusal falls through to `org_of` and the mint unchanged.
+#[tokio::test]
+async fn two_arms_route_by_name() {
+    let b = bed("child-two-arms").await;
+    let (frimley, hampshire) = ("NHS FRIMLEY INTEGRATED CARE BOARD", "NHS HAMPSHIRE AND ISLE OF WIGHT INTEGRATED CARE BOARD");
+    let ppon_b = "GB-PPON-WXYZ-1234-ABCD";
+    b.org(50, &minted(PPON), frimley).await;
+    b.org(51, &minted(ppon_b), hampshire).await;
+    b.ledger_identity(50, 52, "QNQ", "D4U1Y", &ppon_target(PPON), frimley, 1).await;
+    b.ledger_identity(51, 53, "QRL", "D4U1Y", &ppon_target(ppon_b), hampshire, 2).await;
+    b.fresh(&[300, 301, 302, 303]).await;
+    let (ids, c) = b
+        .resolve(
+            true,
+            &[
+                mention(300, "NHS Frimley ICB", Some("GB-NHS-D4U1Y")),
+                mention(301, "NHS Hampshire and Isle of Wight ICB", Some("GB-NHS-D4U1Y")),
+                mention(302, "Frimley and Hampshire", Some("GB-NHS-D4U1Y")),
+            ],
+        )
+        .await;
+    assert_eq!(&ids[..2], &[50, 51], "{ids:?}");
+    let stray = ids[2];
+    assert!(stray != 50 && stray != 51, "{ids:?}");
+    assert_eq!((c.triples, c.triple_arms), (1, 2), "{c:?}");
+    assert_eq!((c.triple_asked, c.triple_bound, c.triple_refused_name, c.triple_refused_ambiguous), (3, 2, 1, 0), "{c:?}");
+    let rules = store::AltIdAliasRules { nhs_child_check: Some(admit_all), ..altid_rules() };
+    let (ids, c) = b.resolve_with(rules, &[mention(303, "NHS Frimley ICB", Some("GB-NHS-D4U1Y"))]).await;
+    assert_eq!(ids, vec![stray], "two admitting arms bind neither: E0 takes the stray row");
+    assert_eq!((c.triple_asked, c.triple_refused_ambiguous, c.triple_bound), (1, 1, 0), "{c:?}");
+}
+
+/// A child triple whose arm's anchor chain is broken (here a two-row anchor cycle, beside
+/// `a_two_row_anchor_cycle_is_poisoned`) is poisoned WHOLE — not just that arm, which would
+/// let a sibling arm bind a name both admit: the triple is not armed, and its mention
+/// resolves exactly as unarmed (the sibling's survivor is not bound).
+#[tokio::test]
+async fn a_broken_anchor_chain_poisons_the_child_triple() {
+    let b = bed("child-chain-poisoned").await;
+    let frimley = "NHS FRIMLEY INTEGRATED CARE BOARD";
+    b.org(50, &minted(PPON), frimley).await;
+    b.ledger(40, 90, "RET", "walton a", &anchor_target("walton b"), 1).await;
+    b.ledger(41, 91, "RET", "walton b", &anchor_target("walton a"), 1).await;
+    b.ledger_identity(41, 52, "QRL", "D4U1Y", &anchor_target("walton a"), "Walton A", 2).await;
+    b.ledger_identity(50, 53, "QNQ", "D4U1Y", &ppon_target(PPON), frimley, 3).await;
+    b.fresh(&[300]).await;
+    let rules = store::AltIdAliasRules { nhs_child_check: Some(admit_all), ..altid_rules() };
+    let (ids, c) = b.resolve_with(rules, &[mention(300, "NHS Frimley ICB", Some("GB-NHS-D4U1Y"))]).await;
+    assert_ne!(ids[0], 50, "no arm of a poisoned triple binds");
+    assert_eq!((c.triple_rows, c.triple_poisoned, c.triples, c.triple_asked), (2, 1, 0, 0), "{c:?}");
+}
+
+/// A `wrong` identifier verdict on the child's triple (issue 452) withholds it: the arm binds
+/// nobody (`triple_refused_withheld`) and the mention falls through unchanged.
+#[tokio::test]
+async fn a_withheld_child_triple_binds_nobody() {
+    let b = bed("child-withheld-arm").await;
+    b.child_folded().await;
+    b.conn
+        .execute(
+            "INSERT INTO org_identifier_verdicts
+                 (identifier, identifier_kind, country, org_id, cohort, verdict, rationale, confidence, reviewed_at)
+             VALUES ('GBNHS13T', 'national', 'GB', 40, 'c', 'wrong', 'r', 'high', 0)",
+            (),
+        )
+        .await
+        .unwrap();
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[mention(300, NEL_ICB, Some("GB-NHS-13T"))]).await;
+    assert_ne!(ids[0], 40);
+    assert_eq!((c.triples, c.triple_asked, c.triple_refused_withheld, c.triple_bound), (1, 1, 1, 0), "{c:?}");
+}
+
+/// Country-less triples are never armed (§3.5): a child literal published with no country is
+/// another triple, untouched by the arm.
+#[tokio::test]
+async fn a_country_less_child_mention_is_untouched() {
+    let b = bed("child-countryless").await;
+    b.child_folded().await;
+    b.fresh(&[300]).await;
+    let m = store::Mention {
+        country: None,
+        identifier: register_identity("GB-NHS-13T", None),
+        ..mention(300, NEL_ICB, Some("GB-NHS-13T"))
+    };
+    assert_eq!(m.identifier.as_ref().map(|i| i.country.clone()), Some(None));
+    let (ids, c) = b.resolve(true, &[m]).await;
+    assert_ne!(ids[0], 40);
+    assert_eq!((c.triples, c.triple_asked), (1, 0), "{c:?}");
+}
+
+/// No child gate injected (`AltIdAliasRules::nhs_child_check: None`, or the body alias armed
+/// alone) arms no triple — the identity rows are read and counted, and the mention binds as
+/// unarmed. Prevention is never looser than the verified merge: no gate, no bind.
+#[tokio::test]
+async fn no_child_check_arms_no_triple() {
+    let b = bed("child-no-check").await;
+    b.child_folded().await;
+    b.fresh(&[300]).await;
+    let rules = store::AltIdAliasRules { nhs_child_check: None, ..altid_rules() };
+    let (ids, c) = b.resolve_with(rules, &[mention(300, NEL_ICB, Some("GB-NHS-13T"))]).await;
+    assert_ne!(ids[0], 40);
+    assert_eq!((c.ledger_rows, c.triple_rows, c.triples, c.triple_arms, c.triple_asked), (1, 1, 0, 0, 0), "{c:?}");
+    let mut resolver =
+        b.db.mention_resolver(Some(key), Some(consortium), None, Some(norm), None, None, 20).await.unwrap();
+    b.db.arm_nhs_body_alias(&mut resolver).await.unwrap();
+    let c = store::Db::nhs_body_alias_counts(&resolver);
+    assert_eq!((c.triple_rows, c.triples), (1, 0), "{c:?}");
+    b.db.finish_mention_resolver(resolver).await.unwrap();
+}
+
+/// A `keep` on the code drops its identity rows at arming, as it drops its name rows (one
+/// lineage per body; beside `a_keep_verdict_on_a_folded_code_drops_its_alias_rows`).
+#[tokio::test]
+async fn a_keep_on_the_code_drops_its_triples() {
+    let b = bed("child-keep-arm").await;
+    b.child_folded().await;
+    b.db.record_merge_verdicts("513-keep-test", &[nhs_verdict("QMF", vec![40], None, "keep", "high")], 20).await.unwrap();
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[mention(300, NEL_ICB, Some("GB-NHS-13T"))]).await;
+    assert_ne!(ids[0], 40);
+    assert_eq!((c.ledger_rows, c.kept, c.triples, c.triple_asked), (1, 1, 0, 0), "{c:?}");
+}
+
+/// §3.6, the scoped unwind (ruling 10): `cohort` = the child cohort dissolves ONLY its rows —
+/// the identity child back through E0 to a row carrying its triple, the zero-only cluster
+/// back through 234 — and keeps the 513 fold: its ledger row, its member's mention on the
+/// survivor, and `GBNHSQMF` (the child cohort did not record it). The child literal leaves the
+/// survivor, both its fold-written row and an alias-recorded one (loser = org = survivor, as a
+/// rebuild's bind writes it), and so does `GBNHS00P`. Dry lists exactly those moves and writes
+/// nothing. After it the triple arm arms nothing and a child-coded mention takes the restored
+/// row through E0, while 513's name key still binds the survivor.
+#[tokio::test]
+async fn a_cohort_scoped_unwind_returns_the_children_through_e0_and_keeps_the_513_fold() {
+    let b = bed("child-unwind-scoped").await;
+    b.qmf_folded().await;
+    b.nel_13t(NEL_ICB).await;
+    b.provisional(43, "North East London ICS").await;
+    b.coded(430, 43, "GB-NHS-00P").await;
+    assert_eq!(code(&b.plan().await, "QMF").holder_ids, vec![40, 41, 43]);
+    b.fold_children(vec![40, 41, 43], vec![40, 41, 43]).await;
+    assert_eq!(b.holders_of("GBNHS00P").await, vec![40]);
+    b.conn
+        .execute(
+            "INSERT INTO organization_merged_identifiers (identifier, identifier_kind, country, org_id, loser, rule)
+             VALUES ('GBNHS13T', 'national', 'GB', 40, 40, 'nhs-body')",
+            (),
+        )
+        .await
+        .unwrap();
+    let before = b.unwind_state().await;
+    let dry = b.unwind(Some(CHILD_COHORT), true).await.unwrap();
+    assert_eq!((dry.ledger_rows, dry.survivor, dry.cohort.as_deref()), (2, Some(40), Some(CHILD_COHORT)), "{dry:#?}");
+    assert_eq!((dry.moved, dry.by_name, dry.by_identity, dry.minted), (2, 1, 1, 2), "{dry:#?}");
+    let targets: Vec<(&str, &str, u64)> = dry.targets.iter().map(|t| (t.kind, t.key.as_str(), t.mentions)).collect();
+    assert_eq!(targets, [("name", "north east london ics|GB", 1), ("identity", "GBNHS13T", 1)], "{dry:#?}");
+    assert!(dry.code_kept, "{dry:#?}");
+    assert_eq!(b.unwind_state().await, before, "dry writes nothing");
+
+    let r = b.unwind(Some(CHILD_COHORT), false).await.unwrap();
+    assert_eq!((r.moved, r.minted, r.ledger_retired, r.redirects, r.merged_identifiers_dropped), (2, 2, 2, 2, 3), "{r:#?}");
+    assert!(r.code_kept);
+    assert_eq!(b.holders_of("GBNHSQMF").await, vec![40], "513's code stays");
+    assert!(b.holders_of("GBNHS00P").await.is_empty());
+    let restored = b.org_of_notice(410).await;
+    assert_ne!(restored, 40);
+    assert_eq!(
+        b.text_of(&format!("SELECT identifier || '|' || country || '|' || name FROM organizations WHERE id = {restored}")).await,
+        format!("GBNHS13T|GB|{NEL_ICB}")
+    );
+    assert_eq!(b.holders_of("GBNHS13T").await, vec![restored], "the child literal left the survivor");
+    assert_eq!(store::read::resolve_org(&b.conn, 41).await.unwrap(), store::read::OrgResolution::MergedInto(restored));
+    let zero = b.org_of_notice(430).await;
+    assert!(zero != 40 && zero != restored);
+    assert_eq!(store::read::resolve_org(&b.conn, 43).await.unwrap(), store::read::OrgResolution::MergedInto(zero));
+    assert_eq!(b.org_of_notice(460).await, 40, "513's member stays on the survivor");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body'").await, 1, "513's row stands");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body-retired'").await, 2);
+    b.fresh(&[300, 301]).await;
+    let (ids, c) = b.resolve(true, &[mention(300, NEL_ICB, Some("GB-NHS-13T")), mention(301, NEL_ICB_LONG, None)]).await;
+    assert_eq!(ids, vec![restored, 40]);
+    assert_eq!((c.triples, c.keys, c.bound), (0, 1, 1), "{c:?}");
+}
+
+/// Last in, first out (§3.6 item 4): a scoped unwind of the 513 cohort is refused while the
+/// later child cohort's rows stand on the code — dry and wet alike, nothing written. Unwound
+/// in order, child cohort then 513's, both succeed, and the last one takes `GBNHSQMF` with it
+/// (513's fold recorded it, and no row of the code remains).
+#[tokio::test]
+async fn a_scoped_unwind_under_a_later_cohort_is_refused() {
+    let b = bed("child-unwind-lifo").await;
+    b.qmf_folded().await;
+    b.nel_13t(NEL_ICB).await;
+    b.fold_children(vec![40, 41], vec![40, 41]).await;
+    let before = b.unwind_state().await;
+    for dry_run in [true, false] {
+        let err = b.unwind(Some("513-u2-test"), dry_run).await.expect_err("a later cohort stands");
+        let msg = err.to_string();
+        assert!(msg.contains("later cohort") && msg.contains(CHILD_COHORT) && msg.contains("nothing was written"), "{msg}");
+        assert_eq!(b.unwind_state().await, before, "dry_run {dry_run}: nothing written");
+    }
+    let r = b.unwind(Some(CHILD_COHORT), false).await.unwrap();
+    assert_eq!((r.ledger_retired, r.by_identity, r.code_kept), (1, 1, true), "{r:#?}");
+    let r = b.unwind(Some("513-u2-test"), false).await.unwrap();
+    assert_eq!((r.ledger_retired, r.by_name, r.code_kept), (1, 1, false), "{r:#?}");
+    assert!(b.holders_of("GBNHSQMF").await.is_empty());
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body'").await, 0);
+}
+
+/// `cohort: None` keeps 513's code-wide behaviour: one unwind dissolves every cohort of the
+/// code — the 513 member through 234, the child through E0 — and drops `GBNHSQMF` and the
+/// child literal off the survivor (beside `the_unwind_round_trip_dissolves_the_body_back_through_234`).
+#[tokio::test]
+async fn a_code_wide_unwind_still_unwinds_every_cohort() {
+    let b = bed("child-unwind-wide").await;
+    b.qmf_folded().await;
+    b.nel_13t(NEL_ICB).await;
+    b.fold_children(vec![40, 41], vec![40, 41]).await;
+    let r = b.unwind(None, false).await.unwrap();
+    assert_eq!((r.ledger_rows, r.ledger_retired, r.redirects, r.cohort.clone()), (2, 2, 2, None), "{r:#?}");
+    assert_eq!((r.moved, r.by_name, r.by_identity, r.merged_identifiers_dropped, r.code_kept), (2, 1, 1, 2, false), "{r:#?}");
+    assert!(b.holders_of("GBNHSQMF").await.is_empty());
+    let restored = b.org_of_notice(410).await;
+    assert_eq!(b.holders_of("GBNHS13T").await, vec![restored]);
+    assert_ne!(b.org_of_notice(460).await, 40, "513's member is dissolved too");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body'").await, 0);
+}
+
+/// Review finding (issue 519 U4): a scoped unwind whose cohort has no standing row on the code
+/// never falls into the code-wide one-member path, which drops `GBNHS<code>` wherever it
+/// stands — on a 513 ONE-MEMBER body (no ledger row; its fold only recorded the code: prod's
+/// shape) that is 513's applied fold. A cohort that never folded QMF (a typo) is refused, dry
+/// and wet, nothing written; so is the child cohort's own scoped unwind run a second time (an
+/// interrupted job recovered, an operator re-run): "unwound already". `GBNHSQMF` stays on 40
+/// throughout. The 513 cohort's own one-member fold may still be unwound scoped — refused
+/// while the later child cohort stands (last in, first out), then, once nothing else claims
+/// the code, it drops `GBNHSQMF` as 513's unwind does.
+#[tokio::test]
+async fn a_retried_or_mistyped_scoped_unwind_keeps_a_one_member_bodys_code() {
+    let b = bed("child-unwind-one-member").await;
+    b.qmf_one_member_folded().await;
+    let before = b.unwind_state().await;
+    for dry_run in [true, false] {
+        for cohort in [CHILD_COHORT, "nhs-body-chidlren-typo"] {
+            let err = b.unwind(Some(cohort), dry_run).await.expect_err("the cohort never folded QMF");
+            let msg = err.to_string();
+            assert!(msg.contains("never folded QMF") && msg.contains("nothing was written"), "{msg}");
+            assert!(!msg.contains("later cohort"), "{msg}");
+            assert_eq!(b.unwind_state().await, before, "{cohort} dry_run {dry_run}: nothing written");
+        }
+    }
+    assert_eq!(b.holders_of("GBNHSQMF").await, vec![40], "513's code stays");
+
+    b.nel_13t(NEL_ICB).await;
+    b.fold_children(vec![40, 41], vec![40, 41]).await;
+    let err = b.unwind(Some("513-u2-test"), false).await.expect_err("the child cohort stands later");
+    let msg = err.to_string();
+    assert!(msg.contains("later cohort") && msg.contains(CHILD_COHORT) && msg.contains("nothing was written"), "{msg}");
+    let r = b.unwind(Some(CHILD_COHORT), false).await.unwrap();
+    assert_eq!((r.ledger_retired, r.by_identity, r.code_kept), (1, 1, true), "{r:#?}");
+    assert_eq!(b.holders_of("GBNHSQMF").await, vec![40]);
+
+    let before = b.unwind_state().await;
+    for dry_run in [true, false] {
+        let err = b.unwind(Some(CHILD_COHORT), dry_run).await.expect_err("a retry finds nothing standing");
+        let msg = err.to_string();
+        assert!(msg.contains("unwound already") && msg.contains("nothing was written"), "{msg}");
+        assert_eq!(b.unwind_state().await, before, "dry_run {dry_run}: nothing written");
+    }
+    assert_eq!(b.holders_of("GBNHSQMF").await, vec![40], "513's code survives the retry");
+
+    let r = b.unwind(Some("513-u2-test"), false).await.unwrap();
+    assert_eq!((r.ledger_rows, r.survivor, r.merged_identifiers_dropped, r.code_kept), (0, Some(40), 1, false), "{r:#?}");
+    assert!(b.holders_of("GBNHSQMF").await.is_empty(), "513's own one-member unwind drops it");
+}
+
+/// Review finding (issue 519 U4): on a MULTI-member 513 body, a scoped unwind naming a cohort
+/// with no row on the code is refused as "never folded" — not as last in, first out, whose
+/// message named 513's EARLIER cohort as the later one and told the operator to unwind it.
+#[tokio::test]
+async fn a_scoped_unwind_naming_a_cohort_with_no_rows_says_so() {
+    let b = bed("child-unwind-typo").await;
+    b.qmf_folded().await;
+    let before = b.unwind_state().await;
+    for dry_run in [true, false] {
+        let err = b.unwind(Some("a-cohort-that-never-folded-qmf"), dry_run).await.expect_err("no rows");
+        let msg = err.to_string();
+        assert!(msg.contains("never folded QMF") && msg.contains("nothing was written"), "{msg}");
+        assert!(!msg.contains("later cohort") && !msg.contains("513-u2-test (QMF)"), "{msg}");
+        assert_eq!(b.unwind_state().await, before, "dry_run {dry_run}: nothing written");
+    }
+    assert_eq!(b.holders_of("GBNHSQMF").await, vec![40]);
+}
+
+/// Review finding (issue 519 U4): the scoped unwind's moves pick mentions by literal and key,
+/// never by cohort. When two cohorts folded the same child literal into one survivor — 41
+/// (`GBNHS13T`) by the child cohort, then 72 (a second `GBNHS13T` holder named as the body)
+/// by a later `children-2` cohort — a scoped unwind of the later one would also carry the
+/// earlier cohort's mention (410) off the survivor, splitting the body under an applied
+/// verdict. It is refused, dry and wet, nothing written; the code-wide unwind dissolves both.
+#[tokio::test]
+async fn a_scoped_unwind_is_refused_when_an_earlier_cohort_folded_the_same_child_literal() {
+    let b = bed("child-unwind-shared-literal").await;
+    b.child_folded().await;
+    assert_eq!(b.org_of_notice(410).await, 40);
+    b.org(72, "GBNHS13T", NEL_ICB).await;
+    b.notice(720, None).await;
+    b.party(720, "N720", Some(72), Some("GB"), &["GB-NHS-13T"], NEL_ICB).await;
+    assert_eq!(code(&b.plan().await, "QMF").holder_ids, vec![40, 72]);
+    b.db
+        .record_merge_verdicts("nhs-body-children-2", &[nhs_verdict("QMF", vec![40, 72], Some(vec![40, 72]), "merge", "high")], 20)
+        .await
+        .unwrap();
+    b.fold_all().await;
+    assert_eq!(b.org_of_notice(720).await, 40);
+    let before = b.unwind_state().await;
+    for dry_run in [true, false] {
+        let err = b.unwind(Some("nhs-body-children-2"), dry_run).await.expect_err("the literal is shared");
+        let msg = err.to_string();
+        assert!(
+            msg.contains(&format!("GBNHS13T ({CHILD_COHORT})")) && msg.contains("omit `cohort`") && msg.contains("nothing was written"),
+            "{msg}"
+        );
+        assert_eq!(b.unwind_state().await, before, "dry_run {dry_run}: nothing written");
+    }
+    assert_eq!(b.org_of_notice(410).await, 40, "the earlier cohort's mention stays on the survivor");
+    let r = b.unwind(None, false).await.unwrap();
+    assert_eq!((r.ledger_retired, r.by_identity), (2, 2), "{r:#?}");
+    let restored = b.org_of_notice(410).await;
+    assert_ne!(restored, 40);
+    assert_eq!(b.org_of_notice(720).await, restored);
+}
+
+/// S4 (§3.7): a child literal standing on a row other than its live survivor is listed. Named
+/// so the gate refuses it — a mis-publisher the arm rightly refused — it is `identity-stray`
+/// (listed, no halt). Once a name `child_check(QMF)` admits stands on it — a mention, or a
+/// row's head — it is `identity` (halt): the arm should have bound that one.
+#[tokio::test]
+async fn a_regrown_child_literal_named_as_the_body_halts_and_a_stray_is_listed() {
+    let b = bed("child-s4").await;
+    b.child_folded().await;
+    b.fresh(&[300]).await;
+    let (ids, _) = b.resolve(true, &[mention(300, SEL_ICB, Some("GB-NHS-13T"))]).await;
+    let stray = ids[0];
+    let kinds = |r: &NhsBodyReport| -> Vec<(String, &'static str, String, i64, Option<i64>)> {
+        r.nhs_body_regrown.iter().map(|g| (g.code.clone(), g.kind, g.key.clone(), g.org_id, g.survivor)).collect()
+    };
+    let r = b.plan().await;
+    assert_eq!(kinds(&r), [("QMF".to_owned(), "identity-stray", "GBNHS13T".to_owned(), stray, Some(40))]);
+    b.extra(301, stray, Some("GB-NHS-13T"), NEL_ICB, Some("GB"), None).await;
+    b.org(72, "GBNHS13T", NEL_ICB_LONG).await;
+    let r = b.plan().await;
+    let mut want = vec![
+        ("QMF".to_owned(), "identity", "GBNHS13T".to_owned(), stray, Some(40)),
+        ("QMF".to_owned(), "identity", "GBNHS13T".to_owned(), 72, Some(40)),
+    ];
+    want.sort_by_key(|w| w.3);
+    assert_eq!(kinds(&r), want, "{:#?}", r.nhs_body_regrown);
+}
+
+/// S5's canary covers child-coded notices (§5): a fresh resolver armed as the fold arms it
+/// (the child gate among the altid rules) re-resolves the folded child's coded notice
+/// through the exact-triple arm onto the survivor — agreement, `triple_bound` > 0 — and the
+/// PPON-first notice through E0; rolled back, nothing written.
+#[tokio::test]
+async fn the_canary_re_resolves_a_folded_child_through_the_triple_arm() {
+    let b = bed("child-canary").await;
+    b.child_folded().await;
+    let state = b.unwind_state().await;
+    let r = b
+        .db
+        .nhs_body_canary(store::NhsBodyCanaryArgs {
+            notices: &[400, 410],
+            identity: |raw, _scheme, country| raw.and_then(|r| register_identity(r, country)),
+            canon_key: Some(key),
+            consortium: Some(consortium),
+            anchors: None,
+            norm: Some(norm),
+            legal_form: None,
+            hard_scheme: None,
+            stoplist_cap: 20,
+            altid: altid_rules(),
+        })
+        .await
+        .unwrap();
+    assert_eq!((r.mentions, r.agree, r.disagree, r.minted), (2, 2, 0, 0), "{r:#?}");
+    assert!(r.bindings.iter().all(|x| x.stored == 40 && x.resolved == 40), "{r:#?}");
+    assert_eq!((r.alias.triple_asked, r.alias.triple_bound), (1, 1), "{:?}", r.alias);
+    assert_eq!(b.unwind_state().await, state, "rolled back: nothing written");
 }

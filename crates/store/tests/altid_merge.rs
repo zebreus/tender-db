@@ -1706,6 +1706,8 @@ fn alias_rules() -> store::AltIdAliasRules {
         trim,
         norm,
         owner_mention_cap: store::ALTID_ALIAS_OWNER_MENTIONS,
+        // Issue 519 U4: no child gate, so the nhs-body alias arms no exact triple.
+        nhs_child_check: None,
     }
 }
 

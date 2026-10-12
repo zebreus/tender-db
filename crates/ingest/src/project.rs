@@ -2061,6 +2061,10 @@ pub fn altid_alias_rules() -> store::AltIdAliasRules {
         norm: crate::project::match_norm,
         // Issue 518: the owner's newest mention names, as the planner reads names.
         owner_mention_cap: store::ALTID_ALIAS_OWNER_MENTIONS,
+        // Issue 519 U4: the strict child gate the nhs-body alias's exact-triple arm binds a
+        // child-coded mention by — the very fn the census gated the reviewed fold with, so
+        // prevention is never looser than the verified merge.
+        nhs_child_check: Some(crate::nhs_ods::census_child_check),
     }
 }
 
@@ -15547,5 +15551,21 @@ mod tests {
         assert_eq!(gb_value_of(l14), Some("GBCHCREGISTEREDCHARITYNUMBER279057".into()));
         // …while the number published bare is still the national charity's own identity.
         assert_eq!(gb_value_of("GB-CHC-279057"), Some("GBCHC279057".into()));
+    }
+
+    /// Issue 519 U4: the production altid rules carry the STRICT child gate. `None` would
+    /// silently disarm the nhs-body exact-triple arm (it arms nothing and logs `NOT armed`),
+    /// and 513's `census_check` in its place would admit what the census refused: it calls
+    /// an NHS England name `better`, where the child gate labels it `nhse`.
+    #[test]
+    fn the_production_altid_rules_carry_the_strict_child_gate() {
+        let check = altid_alias_rules().nhs_child_check.expect("the child gate is wired");
+        let label = |p: &str, n: &str| {
+            let c = check(p, n);
+            (c.verdict, c.rival)
+        };
+        assert_eq!(label("QWU", "NHS Coventry and Warwickshire ICB - B2M3M"), ("admitted", None));
+        assert_eq!(label("QOQ", "NHS England North East and Yorkshire"), ("nhse", None));
+        assert_eq!(label("QMM", "NHS Norfolk and Suffolk ICB"), ("better", Some("T6Y0W")));
     }
 }

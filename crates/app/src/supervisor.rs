@@ -422,8 +422,16 @@ enum Spec {
     MatchOrgIdentifiersNhsBody { dry_run: bool, max_groups: Option<u64> },
     /// Issue 513 U4 (D7): the scoped unwind of one body's `nhs-body` folds — retire its
     /// ledger rows and dissolve the survivor's former members back through 234/E0. Dry
-    /// by default; records `nhs-body-unwind`.
-    MatchOrgIdentifiersNhsBodyUnwind { code: String, dry_run: bool },
+    /// by default; records `nhs-body-unwind`. Issue 519 U4 (decision §3.6, ruling 10):
+    /// `cohort` scopes it to one cohort's rows (the child cohort, keeping 513's fold),
+    /// refused while a later cohort of the code stands (last in, first out); `None`, every
+    /// cohort of the code, as before. `#[serde(default)]` keeps pre-U4 job rows readable.
+    MatchOrgIdentifiersNhsBodyUnwind {
+        code: String,
+        dry_run: bool,
+        #[serde(default)]
+        cohort: Option<String>,
+    },
     /// Issue 513 U4 (S5's prod half): re-resolve these notices' recorded mentions through a
     /// fresh, armed resolver inside a transaction that is always rolled back, and report
     /// each binding against the stored org. Read-only; records `nhs-body-canary`.
@@ -1156,6 +1164,10 @@ pub struct JobRequest {
     /// `match-org-identifiers` rule `nhs-body-unwind` only: the ODS code of the body
     /// to unwind (`RTH`). Required there, refused elsewhere.
     pub code: Option<String>,
+    /// `match-org-identifiers` rule `nhs-body-unwind` only (issue 519 U4): the one cohort
+    /// of the body to unwind (`nhs-body-children-2026-10-13`), last in first out. Omitted,
+    /// every cohort of the code; refused on every other rule.
+    pub cohort: Option<String>,
     /// `scan-org-match-keys` wet runs only: write at most this many edges —
     /// the design's capped first prod run (issue 300 Stage 4). The census
     /// still runs whole, so parity stays a whole-plan check. Omitted means
@@ -1573,7 +1585,9 @@ impl Supervisor {
                     // Issue 513 U4 (D7): one body's unwind, named by its ODS code.
                     "nhs-body-unwind" => {
                         let code = nhs_body_unwind_code(req.code.as_deref())?;
-                        Spec::MatchOrgIdentifiersNhsBodyUnwind { code, dry_run }
+                        // Issue 519 U4: one cohort of the body, last in first out.
+                        let cohort = nhs_body_unwind_cohort(req.cohort.as_deref())?;
+                        Spec::MatchOrgIdentifiersNhsBodyUnwind { code, dry_run, cohort }
                     }
                     // Issue 513 U4 (S5): the read-only re-resolve canary over named notices.
                     "nhs-body-canary" => {
@@ -1592,13 +1606,21 @@ impl Supervisor {
                         "match-org-identifiers: `code` is for rule nhs-body-unwind only, not '{rule}'"
                     ));
                 }
+                if rule != "nhs-body-unwind" && req.cohort.is_some() {
+                    return Err(format!(
+                        "match-org-identifiers: `cohort` is for rule nhs-body-unwind only, not '{rule}'"
+                    ));
+                }
                 if rule != "nhs-body-canary" && req.notices.is_some() {
                     return Err(format!(
                         "match-org-identifiers: `notices` is for rule nhs-body-canary only, not '{rule}'"
                     ));
                 }
                 let scope = match &spec {
-                    Spec::MatchOrgIdentifiersNhsBodyUnwind { code, .. } => format!(" code={code}"),
+                    Spec::MatchOrgIdentifiersNhsBodyUnwind { code, cohort, .. } => match cohort {
+                        Some(cohort) => format!(" code={code} cohort={cohort}"),
+                        None => format!(" code={code}"),
+                    },
                     Spec::MatchOrgIdentifiersNhsBodyCanary { notices } => {
                         let shown: Vec<String> = notices.iter().map(i64::to_string).collect();
                         format!(" notices={}", shown.join(","))
@@ -3033,6 +3055,21 @@ fn nhs_body_unwind_code(code: Option<&str>) -> Result<String, String> {
     }
 }
 
+/// Issue 519 U4: an unwind's `cohort` — optional; when given, trimmed and non-empty (an
+/// empty one is refused rather than read as "every cohort", which is the omitted field's
+/// meaning).
+fn nhs_body_unwind_cohort(cohort: Option<&str>) -> Result<Option<String>, String> {
+    match cohort.map(str::trim) {
+        None => Ok(None),
+        Some("") => Err(
+            "match-org-identifiers nhs-body-unwind: `cohort` names the verdict cohort to unwind \
+             (e.g. \"nhs-body-children-2026-10-13\"); omit it to unwind every cohort of the code"
+                .to_owned(),
+        ),
+        Some(cohort) => Ok(Some(cohort.to_owned())),
+    }
+}
+
 /// Issue 513 U4: a canary's `notices` — required, at most
 /// [`store::NHS_BODY_CANARY_NOTICES_CAP`], deduplicated in the order given; a wet request
 /// is refused (the canary writes nothing, so `dry_run: false` names a different job).
@@ -3076,7 +3113,8 @@ fn nhs_body_canary_summary(r: &store::NhsBodyCanaryReport) -> String {
         .collect();
     format!(
         "{} mention(s) of {} notice(s) re-resolved: {} agree, {} disagree{}{}; nhs-body alias asked {}, bound {}, \
-         minted {}, refused {}",
+         minted {}, refused {}; child triple arm (issue 519) asked {}, bound {}, minted {}, refused {} by name, {} \
+         ambiguous, {} withheld, {} shared",
         r.mentions,
         r.notices.len(),
         r.agree,
@@ -3091,6 +3129,13 @@ fn nhs_body_canary_summary(r: &store::NhsBodyCanaryReport) -> String {
         r.alias.bound,
         r.alias.minted,
         r.alias.refused,
+        r.alias.triple_asked,
+        r.alias.triple_bound,
+        r.alias.triple_minted,
+        r.alias.triple_refused_name,
+        r.alias.triple_refused_ambiguous,
+        r.alias.triple_refused_withheld,
+        r.alias.triple_refused_shared,
     )
 }
 
@@ -3165,14 +3210,16 @@ fn nhs_body_wet_clause(r: &store::NhsBodyReport) -> String {
     )
 }
 
-/// Issue 513 U4: an unwind's counts line.
+/// Issue 513 U4: an unwind's counts line. Issue 519 U4: a scoped unwind names its cohort
+/// and whether `GBNHS<code>` stayed on the survivor.
 fn nhs_body_unwind_summary(r: &store::NhsBodyUnwindReport) -> String {
     format!(
-        "{}: {} nhs-body ledger row(s), survivor {}; {} of its {} mentions moved off ({} by name through 234, {} by \
+        "{}{}: {} nhs-body ledger row(s), survivor {}; {} of its {} mentions moved off ({} by name through 234, {} by \
          identity through E0) onto {} org(s), {} of them minted; {} party and {} bid-party rows rebound; {} tenders \
          stamped stale, {} notices re-queued; {} ledger rows retired, {} loser ids redirected, {} merged \
-         identifiers dropped",
+         identifiers dropped{}",
         r.code,
+        r.cohort.as_deref().map_or_else(String::new, |c| format!(" cohort {c}")),
         r.ledger_rows,
         r.survivor.map_or_else(|| "none".to_owned(), |s| s.to_string()),
         r.moved,
@@ -3188,6 +3235,7 @@ fn nhs_body_unwind_summary(r: &store::NhsBodyUnwindReport) -> String {
         r.ledger_retired,
         r.redirects,
         r.merged_identifiers_dropped,
+        if r.code_kept { format!(" (GBNHS{} kept on the survivor: another cohort of the code holds it)", r.code) } else { String::new() },
     )
 }
 
@@ -3213,7 +3261,9 @@ fn nhs_body_children_clause(r: &store::NhsBodyReport) -> String {
 /// Issue 513 U2: the nhs-body census's counts line — the harvest, the bodies, the
 /// structural denials (nonzero, in D6's order) and the verdicts; a cut list or a blind
 /// generic wall is said, never left to the stored body. Issue 519 unit 2 appends the child
-/// codes' clause ([`nhs_body_children_clause`]) and its denials after 513's.
+/// codes' clause ([`nhs_body_children_clause`]) and its denials after 513's. Issue 519 U4
+/// (review): S4's `keys regrown` counts the halting kinds (`name`, `ppon`, `identity`) and
+/// the `identity-stray` entries are counted apart, listed, never a halt.
 fn nhs_body_summary(r: &store::NhsBodyReport, wall_readable: bool) -> String {
     let denied: Vec<String> = [
         "gone",
@@ -3255,13 +3305,17 @@ fn nhs_body_summary(r: &store::NhsBodyReport, wall_readable: bool) -> String {
     if r.nhs_body_regrown_truncated {
         cut.push(format!("regrown keys listed {}", r.nhs_body_regrown.len()));
     }
+    // Issue 519 U4 (review): S4's halt counts the `name`, `ppon` and `identity` entries only;
+    // an `identity-stray` (a mis-published child mention the triple arm rightly refused,
+    // standing on its own `GBNHS<C>` row) is listed beside them, never a halt.
+    let regrown_halting = r.nhs_body_regrown.iter().filter(|g| g.kind != "identity-stray").count();
     format!(
         "ODS {}; {} FTS notices, {} coded GB parties ({} on the allowlist, {} of them by an O/0 fold; {} \
          more publish a code behind another first identifier; {} country-less, {} non-GB and {} other \
          GB-NHS values counted apart), {} code/PPON pairs; {} codes, \
          {} holders ({} holding two or more codes); {} tails off the allowlist; denied: {}; {} eligible \
          holder entries, {} keys owned outside their body; verdicts: {} admitted, {} not admitted{}, {} keep; \
-         ledger: {} nhs-body rows, {} keys regrown (S4); {}{}{}",
+         ledger: {} nhs-body rows, {} keys regrown (S4), {} identity-stray listed (no halt); {}{}{}",
         r.ods_version,
         r.fts_notices,
         r.coded_parties,
@@ -3284,7 +3338,8 @@ fn nhs_body_summary(r: &store::NhsBodyReport, wall_readable: bool) -> String {
         if stale.is_empty() { String::new() } else { format!(" ({})", stale.join(", ")) },
         r.verdict_keep,
         r.ledger_rows,
-        r.nhs_body_regrown.len(),
+        regrown_halting,
+        r.nhs_body_regrown.len() - regrown_halting,
         nhs_body_children_clause(r),
         if cut.is_empty() { String::new() } else { format!(" — CUT: {}", cut.join("; ")) },
         if wall_readable {
@@ -10741,10 +10796,11 @@ impl Supervisor {
                     )
                 })
             }).await,
-            Spec::MatchOrgIdentifiersNhsBodyUnwind { code, dry_run } => Box::pin(async move {
+            Spec::MatchOrgIdentifiersNhsBodyUnwind { code, dry_run, cohort } => Box::pin(async move {
                 // Issue 513 U4 (D7): one body's unwind — its nhs-body ledger rows retired and
                 // the survivor's former members dissolved back through 234/E0. Dry plans and
-                // writes only its report. Boxed like every match-identifiers arm.
+                // writes only its report. Boxed like every match-identifiers arm. Issue 519
+                // U4: `cohort` scopes it to one cohort's rows, last in first out.
                 let dry_run = *dry_run;
                 if !dry_run {
                     Box::pin(self.refuse_without_org_fk_indexes("match-org-identifiers nhs-body-unwind")).await?;
@@ -10753,12 +10809,16 @@ impl Supervisor {
                     if dry_run { "planning" } else { "merging" },
                     None,
                     None,
-                    format!("unwinding the {code} body"),
+                    match cohort {
+                        Some(cohort) => format!("unwinding the {code} body's cohort {cohort}"),
+                        None => format!("unwinding the {code} body"),
+                    },
                 );
                 let r = self
                     .db
                     .unwind_nhs_body(store::NhsBodyUnwindArgs {
                         code,
+                        cohort: cohort.as_deref(),
                         dry_run,
                         register_identity: ingest::project::normalise_identifier,
                         key: ingest::crosswalk::canonical_key_flat,
@@ -18515,7 +18575,7 @@ mod tests {
             id,
             kind: "match-org-identifiers".into(),
             params: String::new(),
-            spec: Spec::MatchOrgIdentifiersNhsBodyUnwind { code: code.into(), dry_run: dry },
+            spec: Spec::MatchOrgIdentifiersNhsBodyUnwind { code: code.into(), dry_run: dry, cohort: None },
             resume_after: None,
         }
     }
@@ -18606,6 +18666,71 @@ mod tests {
         assert!(err.contains("no `admitted_codes`") && err.contains("re-run the dry plan"), "{err}");
         assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 2, "nothing was written");
         remove_db(&path);
+    }
+
+    /// Issue 519 U4 (decision §3.6, ruling 10): the unwind takes an optional `cohort` — one
+    /// cohort of the body, last in first out — named in the job's params; an empty one is
+    /// refused (omitting it is how every cohort is asked for), and `cohort` on any other rule
+    /// refuses. A durable job row written before U4 (no `cohort`) still reads, as every cohort.
+    #[tokio::test]
+    async fn an_nhs_body_unwind_takes_a_cohort_and_cohort_is_the_unwinds_only() {
+        let (db, _conn, path) = altid_fixture("nhs-body-unwind-cohort").await;
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
+        let mut unwind = req("match-org-identifiers");
+        unwind.rule = Some("nhs-body-unwind".into());
+        unwind.code = Some("qmf".into());
+        unwind.cohort = Some("  ".into());
+        let err = sup.enqueue_request(&unwind).await.expect_err("an empty cohort is refused");
+        assert!(err.contains("`cohort`") && err.contains("omit it"), "{err}");
+        unwind.cohort = Some("nhs-body-children-2026-10-13".into());
+        sup.enqueue_request(&unwind).await.expect("a scoped unwind enqueues, dry by default");
+        unwind.cohort = None;
+        sup.enqueue_request(&unwind).await.expect("the code-wide unwind still enqueues");
+        for rule in ["nhs-body", "nhs-body-canary", "altid"] {
+            let mut stray = req("match-org-identifiers");
+            stray.rule = Some(rule.into());
+            stray.notices = (rule == "nhs-body-canary").then(|| vec![14]);
+            stray.cohort = Some("nhs-body-children-2026-10-13".into());
+            let err = sup.enqueue_request(&stray).await.expect_err("cohort is the unwind's only");
+            assert!(err.contains("`cohort` is for rule nhs-body-unwind only"), "{rule}: {err}");
+        }
+        let params: Vec<String> = sup.queued().iter().map(|q| q.params.clone()).collect();
+        assert_eq!(
+            params,
+            vec![
+                "match-org-identifiers nhs-body-unwind code=QMF cohort=nhs-body-children-2026-10-13 dry-run",
+                "match-org-identifiers nhs-body-unwind code=QMF dry-run",
+            ],
+        );
+        let old: Spec = serde_json::from_str(r#"{"MatchOrgIdentifiersNhsBodyUnwind":{"code":"RTH","dry_run":true}}"#)
+            .expect("a pre-U4 unwind row deserializes");
+        assert!(matches!(old, Spec::MatchOrgIdentifiersNhsBodyUnwind { cohort: None, .. }));
+        remove_db(&path);
+    }
+
+    /// Issue 519 U4 (review): the census line's S4 count is the HALTING entries only
+    /// (`name`, `ppon`, `identity`); an `identity-stray` — a mis-published child mention the
+    /// triple arm rightly refused — is counted apart, listed, never a halt, so a stray does
+    /// not read as "1 keys regrown" on 513's daily S4 read.
+    #[test]
+    fn the_nhs_body_line_counts_identity_strays_apart_from_the_s4_halt() {
+        let entry = |kind: &'static str, org_id: i64| store::NhsBodyRegrown {
+            code: "QMF".into(),
+            kind,
+            key: "GBNHS13T".into(),
+            org_id,
+            survivor: Some(40),
+        };
+        let mut r = store::NhsBodyReport {
+            ledger_rows: 2,
+            nhs_body_regrown: vec![entry("identity-stray", 72), entry("identity-stray", 73)],
+            ..store::NhsBodyReport::default()
+        };
+        let msg = nhs_body_summary(&r, true);
+        assert!(msg.contains("ledger: 2 nhs-body rows, 0 keys regrown (S4), 2 identity-stray listed (no halt)"), "{msg}");
+        r.nhs_body_regrown.extend([entry("identity", 74), entry("name", 75), entry("ppon", 76)]);
+        let msg = nhs_body_summary(&r, true);
+        assert!(msg.contains("ledger: 2 nhs-body rows, 3 keys regrown (S4), 2 identity-stray listed (no halt)"), "{msg}");
     }
 
     /// Issue 513 U2, through the PRODUCTION table and rules (`ingest::nhs_ods`, the
