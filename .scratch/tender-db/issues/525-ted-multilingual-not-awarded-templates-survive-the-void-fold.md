@@ -1,6 +1,7 @@
 # 525 — TED's multilingual "not awarded" templates survive the void fold, and the void walk re-lists them forever
 
-Status: ready-for-agent — filed and DIAGNOSED 2026-10-12 (two independent diagnoses and a verifier, wf_8a719bd1-4b6,
+Status: done — BUILT, GATED, DEPLOYED AND DRAINED 2026-10-12. Build wf_b2a69580-a7e: 3 reviewers (2 must-fix, the walk skipped DE-1.x normalisation; 4 should-fix/nit) and fixes, then a second panel wf_151870b7-e19 on the fix delta (1 should-fix, a pointer is one group; 1 nit, a void entry reads a template as classify does), fixed with mutation-checked tests. Gate green at ec1b121, deployed ec1b121. Drain: dry 2355 listed 92 void-lot orgs / 128 mentions / 89 notices (26 distinct folds, every one a plain 'not awarded / no tenders received / unsuccessful' phrase, read before the wet run); wet 2356 → fold 2357 retired exactly 128 non-name mentions and announced 255 correction rows → sweep 2358 swept 92 of 92. Verify reads done: dry 2359 lists 0 void-lot orgs and re-queues nothing; 6709213, 1354108, 1265984 and 27220329 answer 404. Residue by design: 7969717 ('… — Lot 5 non attribué', a lot-numbered compound no exact template holds) is exempted as 'party kept: 2/24 names void'. The 376 exemptions are 520's (344 award summaries, 31 single-copy names the fold reads as no void, and 7969717).
+Was: ready-for-agent — filed and DIAGNOSED 2026-10-12 (two independent diagnoses and a verifier, wf_8a719bd1-4b6,
 `../520-award-summaries/void-residue-diagnosis-wf_8a719bd1-4b6.json`; both reproduced it with probe tests built from
 the notices' public `/content`). NEXT: the build unit below (all four parts in one deploy), then a drain.
 Kind: data quality (void-lot winners served as organizations) and a walk/fold contract bug
