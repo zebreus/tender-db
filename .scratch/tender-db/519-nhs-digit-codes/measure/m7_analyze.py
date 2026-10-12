@@ -46,7 +46,7 @@ READ = {
             "Buyer is NHS BNSSG ICB (SCW CSU contact) typed with Devon's sub-ICB code 15N. Target: QUY survivor 31536069."),
     (46807955, 'ORG-GB-NHS-15N'): ('other-icb-buyer-wrong-code', 'rehome', 31536069, 'high',
             "As 46807952 (same day, sibling contract)."),
-    (46955480, 'ORG-GB-NHS-93C'): ('csu-own-party', 'rehome', 31617815, 'medium',
+    (46955480, 'ORG-GB-NHS-93C'): ('csu-own-party', 'rehome', 31617815, 'high (party); target is the exact-name cluster',
             "NEL CSU names itself as buyer (Unex Tower contact) on an NCL CCG procurement (Haringey), with NEL ICB as "
             "review/mediation body. No CSU body exists (0DJ inactive, no GBNHS0DJ org); NEL CSU stands as 5 "
             "provisional clusters. Target: the exact-name cluster 31617815 (8 mentions); the largest is 6325843 (323)."),

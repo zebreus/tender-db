@@ -1,6 +1,7 @@
 # 519 — NHS sub-ICB location codes and typo ODS codes mint identities of their own, so one NHS body stands as several canonical orgs
 
-Status: ready-for-agent — UNIT 2 DECIDED 2026-10-12 (`../519-nhs-digit-codes/unit2-decision.md`; design panel wf_98dc79c8-57c, both judges chose extend-513; owner rulings recorded). 513's reviewed nhs-body verdicts may name holders of CHILD codes (RO98 sub-ICB by RE5, measured RO198 trust sites by RE6), with these structural gates:
+Status: ready-for-agent — MEASURE-FIRST DONE + RULINGS 2/3 DECIDED 2026-10-12 (`../519-nhs-digit-codes/measure/results.md`; wf_45bc31fa-ae6; 89 bounded reads and 369 ODS fetches, 0 × 408). Strict all-names gate (it holds 1 phase-A mention). 13T: rehome the 15 CSU mentions to 0AR and fold 488 into QHM, conditional, else held. Phase-A fold measured at 34 holders / 1,475 mentions; the child map has 0 overlaps. NEXT: build U2 per §7 plus the measured plan changes (dated child map in the frozen table, census widening, `child_check`, the exact-triple alias arm, the scoped unwind, E5's head-name clause). Start it after 511 unit 6 leaves the compile tree.
+Was: ready-for-agent — UNIT 2 DECIDED 2026-10-12 (`../519-nhs-digit-codes/unit2-decision.md`; design panel wf_98dc79c8-57c, both judges chose extend-513; owner rulings recorded). 513's reviewed nhs-body verdicts may name holders of CHILD codes (RO98 sub-ICB by RE5, measured RO198 trust sites by RE6), with these structural gates:
 - a frozen dated `parents` map;
 - the child's own GBNHS identity, or a zero-only cluster;
 - a strict all-names `child_check`;

@@ -2796,7 +2796,7 @@
     "kind": "csu-own-party",
     "action": "rehome",
     "target_org": 31617815,
-    "confidence": "medium",
+    "confidence": "high (party); target is the exact-name cluster",
     "note": "NEL CSU names itself as buyer (Unex Tower contact) on an NCL CCG procurement (Haringey), with NEL ICB as review/mediation body. No CSU body exists (0DJ inactive, no GBNHS0DJ org); NEL CSU stands as 5 provisional clusters. Target: the exact-name cluster 31617815 (8 mentions); the largest is 6325843 (323)."
    }
   },

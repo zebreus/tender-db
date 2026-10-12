@@ -570,3 +570,24 @@ provisional anchors with no 300 §10 amendment.
 11. NHS England (class C) is filed as its own issue: 523.
 
 NEXT: measure first, M1–M7 (offline work or bounded reads; M1 and M7 decide rulings 2 and 3), then the units in §7.
+
+## Rulings 2 and 3, decided after measure-first (2026-10-12; `measure/results.md`, wf_45bc31fa-ae6)
+
+- **Ruling 2: strict all-names gate.** The attestation alternative is dropped. In phase A the strict gate holds
+  1 holder / 1 mention (31615636, "…North Cumbira ICB", a `tie{QMF}` the attestation could not reach either), and
+  both options fold the same holders. S1 does not trip.
+- **Ruling 3: first branch.** M7: NECS appears as its own party in the buyer slot, with NENC beside it, in 14 of 15
+  notices. So:
+  - rehome the 15 CSU-named 13T mentions to 0AR's survivor 30929531;
+  - fold the 488 NENC-named mentions into QHM.
+  This is conditional on two things settling before 13T joins: the 16th mention (46991199), and the head-name clause
+  (13T's head name is the CSU's, which E5's head-name gate checks). If either stays open, 13T is held whole. The
+  cost is 488 mentions and nothing else.
+- **Plan changes the measurements force** (folded into the build):
+  - E5's head-name clause for identity holders;
+  - the two wrong pins (04Y answers `zero`; College Road answers `non-nhs`);
+  - zero-only members drop to 3 holders / 3 mentions (00P/00N already arrived through 513's folds);
+  - U6 needs a PPON tier (QE1 has a standing PPON org 31569664 beside 30915463);
+  - M6 moves into U3.
+- **Phase-A fold, measured:** 34 holders / 1,475 mentions after 26 rehomes, or 33 / 987 without 13T. The child map is
+  M2's `measure/child-map.json`: 0 overlaps, 03K under QOQ, 162 codes with no RO261 parent.
