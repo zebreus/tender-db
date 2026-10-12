@@ -6294,3 +6294,122 @@ async fn an_incremental_refold_retires_a_standing_placeholder_mention() {
 async fn a_full_fold_retires_a_standing_placeholder_mention() {
     a_standing_placeholder_mention_is_retired_by_a_refold(Refold::Full).await;
 }
+
+/// Issue 525 (class B): notice 23151933 (ted-export-r209, public `/content` 2026-10-12) as
+/// (Notice, Parsed). RES-1's `TED-WINNER` names ORG-2, a nameless wrapper whose nested ORG-3
+/// (`ADDRESS_WINNER`) carries `winner`; `nested: false` is the layout issue 259's landing repair
+/// left recorded — ORG-3 on its own under RES-1, the winner ref naming it, no ORG-2.
+fn nested_void_winner(fetch_id: i64, nested: bool, winner: &str) -> (Notice, Parsed) {
+    let section = |id: &str, kind: &str, parent: &str| Section { id: id.into(), kind: kind.into(), parent: Some(parent.into()) };
+    let text = |section: &str, value: &str| ValueRow {
+        section_id: section.into(),
+        field_id: "TED-OFFICIALNAME".into(),
+        ordinal: 0,
+        value: NoticeValue::Text { lang: Some("FR".into()), value: value.into() },
+    };
+    let id_ref = |section: &str, field: &str, target: &str| ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Id { scheme: None, value: target.into(), is_ref: true },
+    };
+    let country = |section: &str| ValueRow {
+        section_id: section.into(),
+        field_id: "TED-COUNTRY".into(),
+        ordinal: 0,
+        value: NoticeValue::Code { list: None, code: "FR".into() },
+    };
+    let mut parsed = Parsed {
+        sections: vec![
+            Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+            section("ORG-1", "Organization", "PROCEDURE"),
+            section("RES-1", "LotResult", "PROCEDURE"),
+            section("ORG-4", "Organization", "PROCEDURE"),
+        ],
+        values: vec![
+            id_ref("PROCEDURE", "TED-ADDRESS_CONTRACTING_BODY", "ORG-1"),
+            id_ref("PROCEDURE", "TED-ADDRESS_REVIEW_BODY", "ORG-4"),
+            ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: "TED-NO_DOC_OJS".into(),
+                ordinal: 0,
+                value: NoticeValue::Id { scheme: None, value: "2023/S 089-275908".into(), is_ref: false },
+            },
+            text("ORG-1", "commune des Essarts"),
+            country("ORG-1"),
+            text("ORG-3", winner),
+            country("ORG-3"),
+            text("ORG-4", "tribunal administratif de Nantes"),
+            country("ORG-4"),
+        ],
+    };
+    if nested {
+        parsed.sections.push(section("ORG-2", "Organization", "RES-1"));
+        parsed.sections.push(section("ORG-3", "Organization", "ORG-2"));
+        parsed.values.push(id_ref("RES-1", "TED-WINNER", "ORG-2"));
+        parsed.values.push(id_ref("ORG-2", "TED-ADDRESS_WINNER", "ORG-3"));
+    } else {
+        parsed.sections.push(section("ORG-3", "Organization", "RES-1"));
+        parsed.values.push(id_ref("RES-1", "TED-WINNER", "ORG-3"));
+    }
+    let notice = Notice {
+        source: SOURCE.into(),
+        publication_id: "275908-2023".into(),
+        content_hash: "hash-525".into(),
+        profile: "ted-export-r209".into(),
+        declared_version: None,
+        fetch_id,
+        member_path: "275908-2023.xml".into(),
+        ingested_at: 0,
+        published_at: None,
+        dispatched_at: None,
+    };
+    (notice, parsed)
+}
+
+/// Issue 525 (class B): a void winner named through its nested inner half, whose mention row
+/// stands at the INNER key — prod holds (23151933, ORG-3) → org 1265984 and no ORG-2 row. The
+/// refold drops the party through both halves, and used to hand the retire the outer ORG-2 alone:
+/// no row there, `0 non-name retired`, and the ORG-3 mention kept its org alive through every
+/// drain (the walk re-listed it each time). Both halves' keys reach the retire now, on either fold;
+/// a second refold retires nothing.
+async fn a_standing_inner_half_mention_is_retired_by_a_refold(refold: Refold) {
+    let (db, fetch_id, path) = scratch(&format!("525-inner-{refold:?}")).await;
+    let (notice, recorded) = nested_void_winner(fetch_id, false, "Atelier Martin Architectes");
+    db.record_notice(&notice, &Parse::Parsed(recorded)).await.expect("record");
+    project::project(&db, false).await.expect("first fold");
+    let winner = scalar(&db, "SELECT organization_id FROM organization_mentions WHERE section_id = 'ORG-3'").await;
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organization_mentions WHERE section_id = 'ORG-2'").await, 0, "premise");
+
+    let (_, nested) = nested_void_winner(fetch_id, true, "marché déclaré sans suite");
+    db.reparse_notice(&notice, &nested).await.expect("reparse");
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {winner}")).await,
+        1,
+        "premise: issue 248's keep-set left the inner mention standing"
+    );
+    let report = match refold {
+        Refold::Incremental => project::project_incremental(&db).await.expect("refold"),
+        Refold::Full => project::project(&db, false).await.expect("full refold"),
+    };
+    assert_eq!(report.mentions_retired, 1, "{refold:?}: the inner-key mention was retired");
+    assert_eq!(report.dropped.void, 1, "{refold:?}: one party, counted once");
+    assert_eq!(scalar(&db, &format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {winner}")).await, 0);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organization_mentions WHERE section_id IN ('ORG-2', 'ORG-3')").await, 0, "{refold:?}");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organization_mentions").await, 2, "{refold:?}: the buyer and the review body");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await, 0, "{refold:?}");
+
+    let again = project::project_incremental(&db).await.expect("second refold");
+    assert_eq!(again.mentions_retired, 0, "nothing left to retire");
+    let _ = std::fs::remove_file(&path);
+}
+
+#[tokio::test]
+async fn an_incremental_refold_retires_a_standing_inner_half_mention() {
+    a_standing_inner_half_mention_is_retired_by_a_refold(Refold::Incremental).await;
+}
+
+#[tokio::test]
+async fn a_full_fold_retires_a_standing_inner_half_mention() {
+    a_standing_inner_half_mention_is_retired_by_a_refold(Refold::Full).await;
+}

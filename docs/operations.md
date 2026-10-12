@@ -1730,7 +1730,10 @@ that publisher. Read 30 samples per class on the portals first.
 ### Void-lot party names and `refold-void-names` (issue 510)
 
 A party slot that says the lot was not awarded — `Infructueux`, `Lot déclaré infructueux`, `Sans suite`,
-`Desierto`, `Lotto deserto`, `Niet gegund`, `Unieważniony`, `Not awarded` — is not a party.
+`Desierto`, `Lotto deserto`, `Niet gegund`, `Unieważniony`, `Not awarded`, and TED's multilingual
+templates in every language their notices print (`Kontrakten ikke tildelt.`, `Los wurde nicht vergeben`,
+`This lot was unsuccessful.`, `entfällt — Los nicht vergeben`, `Zuschlag nicht vergeben`: issue 525) — is
+not a party.
 `ingest::partyname::not_a_name` decides it (one list for every era and for the text parser; decision and
 measurements in `.scratch/tender-db/510-void-names/unit1-decision.md`), and the fold applies its
 `VoidLot` class in every era and role: such a party mints no organization, carries no role, result winner
@@ -1753,14 +1756,41 @@ change silently); the fold's line reads `N non-name mention(s) retired, M correc
 /root/aj.sh /admin/jobs '{"kind":"refold-void-names","dry_run":false,"expect":N}'  # wet + the fold
 ```
 
-The walk reads every organization by id window with the fold's own predicate (never SQL `LIKE`), then
-the mentions' notices through `organization_mentions_org`. The walk's net is every void phrase
-(`partyname::mentions_void`); the fold's own rule splits it, and what `partyname::names_an_award` keeps
-(a per-lot summary such as `Lot 1) Sarl Bremond. Lot 2) Infructueux`, a company form, an awardee word)
-is listed in `exempted` and never re-queued — dropping such a "name" would turn the awards it lists
-into `clos-nw` (the first dry run, job 2164, stopped on exactly these). `long` lists every void name over
-120 characters (summaries the exemption missed) and `distinct` the void names by fold. Before the wet run
-read three lists:
+The walk reads every organization by id window and nets each head name that carries a void phrase
+(`partyname::mentions_void`, never SQL `LIKE`). The net is a name test; the split is the fold's own
+PARTY decision (issue 525). The fold drops a party only when every published copy of its name is a
+non-name (void, placeholder or blank), or when it has four or more copies and at least half read void.
+TED's multilingual winner slots print two dozen copies, a bilingual award two. So a void head says
+nothing about the party: `Lot not awarded` heading 22 copies the lexicon reads as names is KEPT, and
+served as a winner. The walk therefore reads every recorded mention of the net's orgs with its section
+(`Db::mention_sections_of_orgs`, through `organization_mentions_org`) and each mentioned notice's
+stored parse (`parsed_by_ids`, 200 per read), and asks `ingest::project::fold_parties`: the fold's
+`drop_decision` with the fold's own inputs (the parse as the fold reads it, a DE-1.x one through
+`normalise_de1`'s aliases; the sdk-0.1 flag from the profile; the section map; the nested-Organization
+aliases). A mention is re-queued only when the fold drops its section, outer or
+nested inner half (since issue 525 the fold retires both keys), or when the walk cannot read it (no
+parse, no such party section). Every other mention is listed in `exempted` with the fold's reason
+(`party kept: 6/23 names void`, `…, an award summary among them`, `…, a gated identifier`, `party kept:
+no name`) and up to three of its notices. Read a kept void template's copies there
+(`/v1/notices/<id>/content`): the ones no list holds belong in `partyname`'s `VOID_TEMPLATES`, exact
+values only (a template that goes on is national free text, never measured as a prefix). A net org mentioned nowhere keeps the head rule (`partyname::is_void_lot`: counted, for the
+orphan sweep; else exempted as `names an award`). What `partyname::names_an_award` keeps (a per-lot
+summary such as `Lot 1) Sarl Bremond. Lot 2) Infructueux`, a company form, an awardee word) is an
+award summary the fold never drops, so it lands in `exempted` too. Dropping such a "name" would turn
+the awards it lists into `clos-nw` (the first dry run, job 2164, stopped on exactly these). So every
+mention of the net's orgs the paired fold will retire is re-queued, and a dry re-walk after the fold
+lists no notice. The re-queued mentions are a subset of what that fold retires, not all of it: it
+retires every dropped party key of each re-queued notice, of every class and org, nested inner halves
+included, and whatever else its delta drops. A fold `retired` count above the dry run's mention count
+is expected. One below it means mentions re-queued only because the walk could not read their parse,
+or a corpus that moved between the runs: read those before the next drain. Before issue 525, the split was `is_void_lot` on the head name, the fold's rule for ONE name.
+It re-listed 37 orgs / 40 mentions the fold keeps after every drain (dry 2351, wet 2352, fold 2353 `0
+non-name retired`, dry 2354). The net still reads the head name only, not every `organization_names`
+copy (about 39M rows, several times the org walk): a party the majority rule drops while its head
+copy reads as a name stays outside the net, so add the template's copies to the lexicon when one
+shows up. `long` lists every void name over 120 characters (summaries the exemption missed) and
+`distinct` the void names by fold. An org with mentions on both sides is in `top` and in `exempted`.
+Before the wet run read three lists:
 `notices_by_profile` against the census shape (r208 ≈ 8.5k, text ≈ 0.7k, internal-ojs ≈ 150, r209 ≈ 140,
 eForms ≈ 50 notices), `identified` (matches carrying an identifier) and `legal_form` (matches whose name
 also holds a commercial legal form — the design lists them instead of guarding on them). **Stop and add
@@ -1798,7 +1828,9 @@ organization each identifier keys (`organizations_identity`) and stop if one is 
 shape needs an identifier guard on `Placeholder` first. A small dip in `data_quality`'s winner-chain
 rate is expected (withheld results become `selec-w` with no winner, dated blank ones NULL).
 
-`refold-placeholder-names` is `refold-void-names` generalised by class (one fn, `run_refold_non_names`):
+`refold-placeholder-names` is `refold-void-names` generalised by class (one fn, `run_refold_non_names`).
+It still splits its net by the head name: it re-queues every hit but an award summary, and the fold
+decides the rest. Issue 525's party split is the void walk's alone so far:
 
 ```sh
 /root/aj.sh /admin/jobs '{"kind":"refold-placeholder-names"}'                             # dry, straight after deploy

@@ -124,8 +124,9 @@ pub const DROPPED_SAMPLE: usize = 20;
 /// Issue 511: the parties the fold's decider dropped ([`dropped_party_sections`]) across the
 /// notices whose mentions this run read, per class, on OUTERMOST sections only (the
 /// decider's map also holds their nested inner halves). The daily fold's measure: a run
-/// retires at most [`DroppedParties::total`] recorded mentions, since only these keys are
-/// handed to [`store::Db::retire_mentions`].
+/// retires at most one recorded mention per key it hands to [`store::Db::retire_mentions`] —
+/// each of these parties' outer section and, since issue 525, its nested inner halves (a
+/// mention row may stand at either), so [`DroppedParties::total`] plus the inner halves.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct DroppedParties {
     pub void: u64,
@@ -4487,7 +4488,7 @@ fn dropped_party_sections(
     alias: &HashMap<String, String>,
     parsed: &Parsed,
 ) -> BTreeMap<String, NotAName> {
-    drop_decision(sdk01, sections, alias, parsed).sections
+    drop_decision(sdk01, sections, alias, parsed, false).sections
 }
 
 /// Issue 511: what [`dropped_party_sections`] decided, with the outermost dropped parties
@@ -4498,14 +4499,120 @@ struct DropDecision {
     /// The outermost dropped parties: (section, class, first name, the raw identifier when
     /// one passed the gate).
     outer: Vec<(String, NotAName, String, Option<String>)>,
+    /// Issue 525: every outermost NAMED party kept, with the tally that kept it — filled only
+    /// when [`drop_decision`] is asked to explain ([`fold_parties`], the walk's read), so the
+    /// fold's own hot loop allocates nothing for it.
+    kept: Vec<(String, KeptParty)>,
 }
 
-/// [`dropped_party_sections`]' decision; see there.
+/// Issue 525: why the fold keeps a named party ([`drop_decision`]'s tally of it), for the
+/// `refold-void-names` walk's `exempted` list ([`KeptParty::reason`]: `party kept: 6/23 names
+/// void`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct KeptParty {
+    /// Its published names that read [`NotAName::VoidLot`].
+    pub void: usize,
+    /// Its published names, every copy (0: a party with no name, which the fold keeps).
+    pub names: usize,
+    /// One of them is an [`NotAName::AwardSummary`], which keeps the party whatever the rest are.
+    pub summary: bool,
+    /// A `Blank` party guard 3 kept for its gated identifier.
+    pub identified: bool,
+}
+
+impl KeptParty {
+    /// The walk's `exempted` reason: `party kept: 6/23 names void`, then what else kept it.
+    pub fn reason(&self) -> String {
+        if self.names == 0 {
+            return "party kept: no name".to_owned();
+        }
+        let mut reason = format!("party kept: {}/{} names void", self.void, self.names);
+        if self.summary {
+            reason.push_str(", an award summary among them");
+        }
+        if self.identified {
+            reason.push_str(", a gated identifier");
+        }
+        reason
+    }
+}
+
+/// Issue 525: the fold's verdict on one party section of a notice ([`FoldParties::verdict`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PartyVerdict {
+    /// The fold drops the party, with its class: no mention is minted for it and a recorded one
+    /// at this key is retired.
+    Dropped(NotAName),
+    /// The fold keeps the party, and why.
+    Kept(KeptParty),
+    /// No party section by this id in the parse (it moved, or the parse is not there): the walk
+    /// cannot decide, so it re-queues.
+    Unknown,
+}
+
+/// Issue 525: the fold's own party decision on one stored notice ([`fold_parties`]).
+pub struct FoldParties {
+    dropped: BTreeMap<String, NotAName>,
+    kept: HashMap<String, KeptParty>,
+    alias: HashMap<String, String>,
+    parties: std::collections::HashSet<String>,
+}
+
+impl FoldParties {
+    /// The verdict on the party section `section` — outer or a nested inner half, the key a
+    /// recorded mention may stand at.
+    pub fn verdict(&self, section: &str) -> PartyVerdict {
+        if let Some(class) = self.dropped.get(section) {
+            return PartyVerdict::Dropped(*class);
+        }
+        if !self.parties.contains(section) {
+            return PartyVerdict::Unknown;
+        }
+        let outer = self.alias.get(section).map_or(section, String::as_str);
+        PartyVerdict::Kept(self.kept.get(outer).copied().unwrap_or_default())
+    }
+}
+
+/// Issue 525: the fold's party decision on one stored notice, for the `refold-void-names` walk —
+/// [`drop_decision`] with the inputs [`NoticeState::mentions_and_dropped`] gives it: the parse as
+/// the fold reads it (a DE-1.x one through [`normalise_de1`]'s aliases, so its organization names
+/// are `BT-500`, not the stored `DE1-…-PartyName-Name` no party-name rule reads), the sdk-0.1 flag
+/// from the notice's profile (as `Ident::read` sets it), the section map, and
+/// [`nested_org_aliases`]. Its dropped sections are exactly the keys the fold hands to
+/// [`store::Db::retire_mentions`], so a walk that re-queues a mention only on
+/// [`PartyVerdict::Dropped`] (or [`PartyVerdict::Unknown`]) re-queues every mention the fold
+/// would retire and none it would keep: 510's walk tested the org's head name alone and re-listed
+/// the parties the fold keeps on its all-names rule after every drain (dry 2351–2354). `parsed`
+/// is the stored parse (`Db::parsed_by_ids`), as the fold reads it before normalising.
+pub fn fold_parties(profile: &str, parsed: &Parsed) -> FoldParties {
+    // The review: unnormalised, every DE-1.x party read as one with no name and was kept, while
+    // the fold dropped it — the walk exempted what the fold would retire.
+    let normalised;
+    let parsed = if is_de1_profile(profile) {
+        let mut copy = parsed.clone();
+        normalise_de1_parse(&mut copy);
+        normalised = copy;
+        &normalised
+    } else {
+        parsed
+    };
+    let sdk01 = is_sdk01_profile(profile);
+    let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+    let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
+    let alias = nested_org_aliases(&sections, kinds);
+    let decision = drop_decision(sdk01, &sections, &alias, parsed, true);
+    let parties = parsed.sections.iter().filter(|s| kinds.contains(&s.kind.as_str())).map(|s| s.id.clone()).collect();
+    FoldParties { dropped: decision.sections, kept: decision.kept.into_iter().collect(), alias, parties }
+}
+
+/// [`dropped_party_sections`]' decision; see there. `explain` also records each named party
+/// it keeps and why ([`DropDecision::kept`]).
 fn drop_decision(
     sdk01: bool,
     sections: &HashMap<&str, &store::Section>,
     alias: &HashMap<String, String>,
     parsed: &Parsed,
+    explain: bool,
 ) -> DropDecision {
     let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
     // The notice's language, read once and only when a name needs it: guard 2's scoped
@@ -4540,11 +4647,15 @@ fn drop_decision(
         translation_echoes(names, &labels[owner]);
     }
     let mut decided: Vec<(&str, NotAName)> = Vec::new();
+    let mut kept: Vec<(String, KeptParty)> = Vec::new();
     for (owner, names) in &tally {
+        let void = names.iter().filter(|(_, class)| *class == Some(NotAName::VoidLot)).count();
         if names.iter().any(|(_, class)| *class == Some(NotAName::AwardSummary)) {
+            if explain {
+                kept.push(((*owner).to_owned(), KeptParty { void, names: names.len(), summary: true, identified: false }));
+            }
             continue;
         }
-        let void = names.iter().filter(|(_, class)| *class == Some(NotAName::VoidLot)).count();
         let class = if names.iter().all(|(_, class)| class.is_some()) {
             if names.iter().any(|(_, class)| *class == Some(NotAName::Placeholder)) {
                 NotAName::Placeholder
@@ -4556,6 +4667,9 @@ fn drop_decision(
         } else if names.len() >= 4 && 2 * void >= names.len() {
             NotAName::VoidLot
         } else {
+            if explain {
+                kept.push(((*owner).to_owned(), KeptParty { void, names: names.len(), ..KeptParty::default() }));
+            }
             continue;
         };
         decided.push((*owner, class));
@@ -4590,7 +4704,7 @@ fn drop_decision(
             }
         }
     }
-    let mut out = DropDecision { sections: BTreeMap::new(), outer: Vec::new() };
+    let mut out = DropDecision { sections: BTreeMap::new(), outer: Vec::new(), kept };
     for (owner, class) in decided {
         let names = &tally[owner];
         let gated = identity.get(owner).and_then(|(raw, scheme, country)| {
@@ -4601,6 +4715,10 @@ fn drop_decision(
             && let Some(raw) = gated
             && !identifier_echoes(raw, names, lang.get_or_insert_with(|| original_lang(parsed)).as_deref())
         {
+            if explain {
+                let party = KeptParty { void: 0, names: names.len(), summary: false, identified: true };
+                out.kept.push((owner.to_owned(), party));
+            }
             continue;
         }
         out.outer.push((owner.to_owned(), class, names[0].0.to_owned(), gated.map(str::to_owned)));
@@ -5260,11 +5378,12 @@ impl NoticeState {
         Self::mentions_and_void(sdk01, notice_id, parsed).0
     }
 
-    /// [`Self::mentions`], and the outermost party sections it skipped because every name
-    /// they publish is a dropping non-name (issues 510 and 511, [`dropped_party_sections`])
-    /// — the keys a fold hands to [`store::Db::retire_mentions`], so a mention recorded
-    /// before the rule is retired rather than left standing. Every class rides one list:
-    /// the retirement is class-blind.
+    /// [`Self::mentions`], and the party sections it skipped because every name they publish
+    /// is a dropping non-name (issues 510 and 511, [`dropped_party_sections`]) — each dropped
+    /// outermost section and, since issue 525, its nested inner halves: the keys a fold hands
+    /// to [`store::Db::retire_mentions`], so a mention recorded before the rule is retired
+    /// rather than left standing, at whichever half it was recorded. Every class rides one
+    /// list: the retirement is class-blind.
     fn mentions_and_void(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<Mention>, Vec<String>) {
         let (mentions, skipped, _) = Self::mentions_and_dropped(sdk01, notice_id, parsed);
         (mentions, skipped)
@@ -5286,12 +5405,17 @@ impl NoticeState {
         // parties of their own.
         let alias = nested_org_aliases(&sections, mention_kinds);
         // Issues 510 and 511: a party whose every name is a dropping non-name mints nothing.
-        let decision = drop_decision(sdk01, &sections, &alias, parsed);
+        let decision = drop_decision(sdk01, &sections, &alias, parsed, false);
         let void = &decision.sections;
+        // Issue 525: the retire keys are every dropped party section, the nested inner halves
+        // included. A mention row may stand at an inner key (issue 259's landing repair left
+        // 23151933's at ORG-3 inside the void ORG-2), and a retire keyed on the outer section
+        // alone found no row and left it keeping its org alive. Minting below and the
+        // `dropped` count stay outer: one party, nothing minted for either half.
         let skipped: Vec<String> = parsed
             .sections
             .iter()
-            .filter(|s| mention_kinds.contains(&s.kind.as_str()) && !alias.contains_key(&s.id) && void.contains_key(&s.id))
+            .filter(|s| mention_kinds.contains(&s.kind.as_str()) && void.contains_key(&s.id))
             .map(|s| s.id.clone())
             .collect();
         let mut dropped = DroppedParties::default();
@@ -8688,16 +8812,22 @@ fn is_de1_profile(profile: &str) -> bool {
 /// skipped on the profile test and cost one string compare each.
 fn normalise_de1(chunk: &mut [(store::NoticeRef, Parsed)]) {
     for (_, parsed) in chunk.iter_mut().filter(|(n, _)| is_de1_profile(&n.profile)) {
-        for section in &mut parsed.sections {
-            if section.kind == DE1_LOT_KIND {
-                section.kind = de1_lot_kind(&section.id).to_owned();
-            }
+        normalise_de1_parse(parsed);
+    }
+}
+
+/// [`normalise_de1`] on one DE-1.x parse (issue 525: [`fold_parties`] reads one stored parse
+/// at a time, as the fold reads it).
+fn normalise_de1_parse(parsed: &mut Parsed) {
+    for section in &mut parsed.sections {
+        if section.kind == DE1_LOT_KIND {
+            section.kind = de1_lot_kind(&section.id).to_owned();
         }
-        for value in &mut parsed.values {
-            if let Some((_, eforms)) = DE1_FIELD_ALIASES.iter().find(|(de1, _)| *de1 == value.field_id) {
-                value.field_id = (*eforms).to_owned();
-                de1_mark_reference(value);
-            }
+    }
+    for value in &mut parsed.values {
+        if let Some((_, eforms)) = DE1_FIELD_ALIASES.iter().find(|(de1, _)| *de1 == value.field_id) {
+            value.field_id = (*eforms).to_owned();
+            de1_mark_reference(value);
         }
     }
 }
@@ -14103,7 +14233,9 @@ mod tests {
         let state = bound(r209, &nested);
         assert_eq!(results(&state), vec![(Some("clos-nw".into()), vec![])], "a void winner named through its nested half");
         assert_eq!(party_orgs(&state), BTreeSet::from([1_009]), "no role through the inner half either");
-        assert_eq!(skipped(r209, &nested), (vec!["ORG-9".into()], vec!["ORG-1".into()]), "only the outermost is skipped");
+        // Issue 525: both halves' keys reach the retire (a mention row may stand at either);
+        // only the outer one would mint.
+        assert_eq!(skipped(r209, &nested), (vec!["ORG-9".into()], vec!["ORG-1".into(), "ORG-2".into()]), "both halves retire");
 
         // One real name among the names: not void.
         let mixed = legacy(&[("ORG-1", None, &["Infructueux", "ACME SA"])], &["ORG-1"], vec![]);
@@ -14675,7 +14807,8 @@ mod tests {
     }
 
     /// Issue 511: `Report::dropped` counts outermost sections only — a dropped party named
-    /// through its nested inner half counts once, though the decider's map holds both.
+    /// through its nested inner half counts once, though the decider's map holds both. Since
+    /// issue 525 the retire keys hold both halves (a mention row may stand at the inner one).
     #[test]
     fn the_dropped_report_counts_outer_sections() {
         use placeholder_511::*;
@@ -14685,7 +14818,7 @@ mod tests {
         parsed.values.push(text_value("ORG-2", "TED-OFFICIALNAME", 0, None, "N/A"));
         assert_eq!(decided(false, &parsed).len(), 2, "the outer section and its inner half");
         let (_, skipped, dropped) = NoticeState::mentions_and_dropped(false, 9, &parsed);
-        assert_eq!(skipped, vec!["ORG-1".to_owned()]);
+        assert_eq!(skipped, vec!["ORG-1".to_owned(), "ORG-2".to_owned()]);
         assert_eq!((dropped.blank, dropped.total()), (1, 1));
         assert_eq!(results(&bound("ted-export-r209", &parsed)), vec![(Some("clos-nw".into()), vec![])]);
     }
@@ -15213,6 +15346,652 @@ mod tests {
         "Zie VI.3 voor de deelnemende instellingen van het consortium rond het Nederlands Lucht- en Ruimtevaartlaboratorium",
         "See VI.3 Siemens Healthcare",
     ];
+
+    // ---- Issue 525: TED's other "not awarded" templates, the nested retire key, the walk's verdict ----
+
+    /// Issue 525 (class A): TED's other "not awarded" winner templates, verbatim from the kept
+    /// parties' `TED-OFFICIALNAME` rows (public `/content`, read 2026-10-12) in the order each notice
+    /// publishes them, its original language first (the party's head name). The lexicon held one
+    /// template's translations (17674598's, `partyname`'s `teds_not_awarded_is_void_in_every_language`),
+    /// so 1–7 copies of each read void, the all-names rule kept the party, and it was served as a
+    /// winner named `Marché non attribué.` or `Lot not awarded` (dry 2351: 37 orgs, re-listed after
+    /// every drain). This one: 16893864's ORG-2..5 (orgs 1920418–21), 6 of 23 void.
+    const TED_MARCHE_NON_ATTRIBUE: [(&str, &str); 23] = [
+        ("FR", "Marché non attribué."),
+        ("DA", "Kontrakten ikke tildelt."),
+        ("DE", "Der Auftrag wurde nicht vergeben."),
+        ("EN", "Contract not awarded."),
+        ("ES", "El contrato no ha sido adjudicado."),
+        ("FI", "Sopimusta ei tehty."),
+        ("EL", "Η σύμβαση δεν κατακυρώθηκε."),
+        ("IT", "Appalto non aggiudicato."),
+        ("NL", "Opdracht niet gegund."),
+        ("PT", "Contrato não adjudicado."),
+        ("SV", "Kontraktet har inte tilldelats."),
+        ("CS", "Zakázka nebyla zadána."),
+        ("ET", "Lepingut ei sõlmitud."),
+        ("HU", "A szerződést nem ítélték oda."),
+        ("LT", "Sutartis nepaskirta."),
+        ("LV", "Līgums nav piešķirts."),
+        ("MT", "Il-kuntratt ma ngħatax."),
+        ("PL", "Zamówienia nie udzielono."),
+        ("SK", "Obstarávanie nebolo pridelené."),
+        ("SL", "Pogodba ni dodeljena."),
+        ("GA", "Níor dámhadh an Conradh."),
+        ("BG", "Поръчката не беше възложена."),
+        ("RO", "Contract neatribuit."),
+    ];
+    /// [`TED_MARCHE_NON_ATTRIBUE`]'s kin: 16891918's ORG-2 (org 1914495), 5 of 23 void.
+    const TED_CONTRACT_NOT_AWARDED: [(&str, &str); 23] = [
+        ("EN", "Contract not awarded"),
+        ("DA", "Kontrakten blev ikke tildelt."),
+        ("DE", "Es wurde kein Auftrag vergeben"),
+        ("ES", "No se ha adjudicado ningún contrato"),
+        ("FI", "Sopimusta ei tehty"),
+        ("FR", "Le marché n'a pas été attribué"),
+        ("EL", "Η σύμβαση δεν ανατέθηκε"),
+        ("IT", "Appalto non aggiudicato"),
+        ("NL", "De opdracht is niet gegund"),
+        ("PT", "Contrato não adjudicado"),
+        ("SV", "Inget kontrakt har tilldelats"),
+        ("CS", "Zakázka nebyla zadána"),
+        ("ET", "Lepingut ei sõlmitud"),
+        ("HU", "A szerződést nem ítélték oda."),
+        ("LT", "Sutartis nepaskirta"),
+        ("LV", "Līguma slēgšanas tiesības nav piešķirtas"),
+        ("MT", "Il-kuntratt ma ngħatax."),
+        ("PL", "Zamówienie nie zostało udzielone"),
+        ("SK", "Zmluva nebola udelená"),
+        ("SL", "Naročilo ni bilo oddano."),
+        ("GA", "Níor dámhadh an conradh"),
+        ("BG", "Поръчката не бе възложена"),
+        ("RO", "Contract neatribuit"),
+    ];
+    /// [`TED_MARCHE_NON_ATTRIBUE`]'s kin: 16967678's ORG-4 (org 2184993), 7 of 23 void.
+    const TED_NO_CONTRACT_AWARDED: [(&str, &str); 23] = [
+        ("EN", "No contract awarded."),
+        ("DA", "Ingen kontrakt tildelt."),
+        ("DE", "Es wurde kein Auftrag vergeben."),
+        ("ES", "No se ha adjudicado ningún contrato."),
+        ("FI", "Sopimusta ei tehty."),
+        ("FR", "Aucun marché n'a été attribué."),
+        ("EL", "Δεν ανατέθηκε σύμβαση."),
+        ("IT", "Non è stato aggiudicato alcun contratto."),
+        ("NL", "Er is geen opdracht gegund."),
+        ("PT", "Não foi adjudicado nenhum contrato."),
+        ("SV", "Inget kontrakt har tilldelats."),
+        ("CS", "Zakázka nebyla zadána."),
+        ("ET", "Lepingut ei sõlmitud."),
+        ("HU", "Szerződés odaítélésére nem került sor."),
+        ("LT", "Sutartis nepaskirta."),
+        ("LV", "Līgums nav piešķirts."),
+        ("MT", "Il-kuntratt ma ngħatax."),
+        ("PL", "Zamówienia nie udzielono."),
+        ("SK", "Obstarávanie nebolo pridelené."),
+        ("SL", "Naročilo ni bilo oddano."),
+        ("GA", "Níor dámhadh aon chonradh."),
+        ("BG", "Поръчката не е възложена."),
+        ("RO", "Nu a fost atribuit niciun contract."),
+    ];
+    /// 17674598's template as 16967678's ORG-2 prints it, beside ORG-4's [`TED_NO_CONTRACT_AWARDED`]:
+    /// its LV copy `Nav piešķirta.` (not the list's `…piešķirts`) the one the lexicon missed, so 510's
+    /// majority rule dropped it at 22 of 23.
+    const TED_NOT_AWARDED: [(&str, &str); 23] = [
+        ("EN", "Not awarded."),
+        ("DA", "Ikke tildelt"),
+        ("DE", "nicht vergeben."),
+        ("ES", "No ha sido adjudicado."),
+        ("FI", "Sopimusta ei tehty."),
+        ("FR", "non attribué."),
+        ("EL", "Δεν ανατέθηκε."),
+        ("IT", "Non aggiudicato."),
+        ("NL", "Niet gegund."),
+        ("PT", "Não adjudicado."),
+        ("SV", "Ej tilldelat."),
+        ("CS", "Nebyla zadána."),
+        ("ET", "lepingut ei sõlmitud."),
+        ("HU", "Nem ítélték oda."),
+        ("LT", "Nesudaryta."),
+        ("LV", "Nav piešķirta."),
+        ("MT", "Ma ngħatax."),
+        ("PL", "Zamówienia nie udzielono."),
+        ("SK", "Nebola pridelená."),
+        ("SL", "Naročilo ni bilo oddano."),
+        ("GA", "Gan dámhachtain."),
+        ("BG", "Не е възложена."),
+        ("RO", "Nu a fost atribuit."),
+    ];
+    /// [`TED_MARCHE_NON_ATTRIBUE`]'s kin: 12563312's ORG-23 (org 1579624), 4 of 23 void.
+    const TED_LOT_NOT_AWARDED: [(&str, &str); 23] = [
+        ("EN", "Lot not awarded"),
+        ("DA", "Partiet blev ikke tildelt"),
+        ("DE", "Los wurde nicht vergeben"),
+        ("ES", "Lote no adjudicado"),
+        ("FI", "Erästä ei tehty sopimusta"),
+        ("FR", "Lot non attribué"),
+        ("EL", "Η παρτίδα δεν ανατέθηκε"),
+        ("IT", "lotto non aggiudicato"),
+        ("NL", "Het perceel is niet gegund"),
+        ("PT", "Lote não adjudicado"),
+        ("SV", "Delen har inte tilldelats"),
+        ("CS", "Položka nebyla zadána"),
+        ("ET", "Osa kohta lepingut ei sõlmitud"),
+        ("HU", "A tétel nem került odaítélésre"),
+        ("LT", "Dalis nepaskirta"),
+        ("LV", "Daļa netika piešķirta"),
+        ("MT", "Il-lott ma ngħatax"),
+        ("PL", "Na tę część nie udzielono zamówienia"),
+        ("SK", "Časť nebola pridelená"),
+        ("SL", "Sklop ni bil oddan"),
+        ("GA", "Níor dámhadh an beart"),
+        ("BG", "Партидата не е възложена"),
+        ("RO", "Lot neatribuit"),
+    ];
+    /// [`TED_MARCHE_NON_ATTRIBUE`]'s kin: 12466332's ORG-2 (org 1229591), `Ce lot est infructueux.`,
+    /// 2 of 23 void (the FR and ES `infructu` stems).
+    const TED_LOT_UNSUCCESSFUL: [(&str, &str); 23] = [
+        ("FR", "Ce lot est infructueux."),
+        ("DA", "Dette parti er ikke blevet tildelt."),
+        ("DE", "Dieses Los blieb erfolglos."),
+        ("EN", "This lot was unsuccessful."),
+        ("ES", "Este lote ha resultado infructuoso."),
+        ("FI", "Tämä erä oli tulokseton."),
+        ("EL", "Η διαδικασία ανάθεσης της παρτίδας είναι ανεπιτυχής."),
+        ("IT", "Questo lotto è risultato infruttuoso."),
+        ("NL", "Het perceel bleef zonder resultaat."),
+        ("PT", "Este lote foi considerado infrutífero."),
+        ("SV", "Denna del har inte givit något resultat."),
+        ("CS", "Tato položka byla neúspěšná."),
+        ("ET", "Selle osa menetlus luhtus."),
+        ("HU", "A tétel sikertelen volt."),
+        ("LT", "Ši dalis buvo nesėkminga."),
+        ("LV", "Šī daļa bija neveiksmīga."),
+        ("MT", "Dan il-lott kien mingħajr suċċess."),
+        ("PL", "Zamówienie dla tej części uznano za nieskuteczne."),
+        ("SK", "Táto časť bola neúspešná."),
+        ("SL", "Ta sklop je bil neuspešen."),
+        ("GA", "Bhí an beart seo neamhrathúil."),
+        ("BG", "Тази партида беше неуспешна."),
+        ("RO", "Acest lot a fost nereuşit."),
+    ];
+    /// [`TED_MARCHE_NON_ATTRIBUE`]'s kin: 18344075's ORG-4..7 (org 6709213, 4 mentions), 24 languages
+    /// (HR from 2013). Each copy opens with the slot's "not applicable" and closes on the lot's "not
+    /// awarded": the FR and NL copies read void (a stem), the EN and PL ones `Blank`, the rest names.
+    const TED_NOT_APPLICABLE_LOT_NOT_AWARDED: [(&str, &str); 24] = [
+        ("FR", "Non applicable — Lot non attribué"),
+        ("DA", "finder ikke anvendelse — partiet blev ikke tildelt"),
+        ("DE", "entfällt — Los nicht vergeben"),
+        ("EN", "not applicable — lot not awarded"),
+        ("ES", "No procede: lote no adjudicado"),
+        ("FI", "ei sovelleta – erästä ei tehty sopimusta"),
+        ("EL", "Άνευ αντικειμένου — Το τμήμα δεν ανατέθηκε"),
+        ("IT", "Non applicabile — lotto non aggiudicato"),
+        ("NL", "Niet van toepassing — perceel niet gegund"),
+        ("PT", "Não aplicável — Lote não adjudicado"),
+        ("SV", "Ej tillämpligt – delen har inte tilldelats"),
+        ("CS", "nepoužije se – položka nebyla zadána"),
+        ("ET", "Ei kohaldata – osa lepingut ei sõlmitud"),
+        ("HU", "nem alkalmazható – a tétel nem került odaítélésre"),
+        ("LT", "netaikoma, nes dalis nebuvo paskirta."),
+        ("LV", "Nav piemērojams – līguma slēgšanas tiesības par šo daļu nav piešķirtas"),
+        ("MT", "mhux applikabbli — il-lott ma ngħatax"),
+        ("PL", "nie dotyczy — zamówienia na tę część nie udzielono"),
+        ("SK", "neuplatniteľné – časť nebola pridelená"),
+        ("SL", "Ni navedeno – sklop ni bil oddan"),
+        ("GA", "neamhbhainteach — níor dámhadh beart"),
+        ("BG", "не е приложимо – партидата не е възложена"),
+        ("RO", "neaplicabil – lot neatribuit"),
+        ("HR", "nije primjenjivo — grupa nije dodijeljena"),
+    ];
+    // The review: the kept parties of dry 2351 the build had not read, verbatim from diagnosis 2's
+    // copies (public `/content`, 2026-10-12), in published order.
+    /// `Non-attribution du marché`: 17359294's ORG-2 (org 3530158), 6 of 23 void before the review.
+    const TED_NON_ATTRIBUTION: [(&str, &str); 23] = [
+        ("FR", "Non-attribution du marché"),
+        ("DA", "Ikke-tildeling af kontrakten"),
+        ("DE", "Nichtvergabe des Auftrags"),
+        ("EN", "non-award of the contract"),
+        ("ES", "El contrato no ha sido adjudicado"),
+        ("FI", "sopimuksen tekemättä jättäminen"),
+        ("EL", "Μη ανάθεση της σύμβασης"),
+        ("IT", "Non aggiudicazione dell'appalto"),
+        ("NL", "de opdracht is niet gegund"),
+        ("PT", "Não adjudicação do contrato"),
+        ("SV", "Utebliven kontraktstilldelning"),
+        ("CS", "nezadání zakázky"),
+        ("ET", "Lepingut ei sõlmitud"),
+        ("HU", "a szerződést nem ítélték oda"),
+        ("LT", "Sutarties nepaskyrimas"),
+        ("LV", "Līguma slēgšanas tiesību nepiešķiršana"),
+        ("MT", "il-kuntratt ma ngħatax"),
+        ("PL", "Nieudzielenie zamówienia"),
+        ("SK", "nepridelenie obstarávania"),
+        ("SL", "neoddano naročilo"),
+        ("GA", "neamhdhámhachtain an chonartha"),
+        ("BG", "невъзлагане на поръчката"),
+        ("RO", "neatribuirea contractului"),
+    ];
+    /// `non applicable: marché non attribué.`: 18137696's ORG-2 (org 6023876), 2 of 24 void before the
+    /// review — the colon spelling of [`TED_NOT_APPLICABLE_LOT_NOT_AWARDED`]'s compound, the contract's
+    /// wording.
+    const TED_NOT_APPLICABLE_CONTRACT_COLON: [(&str, &str); 24] = [
+        ("FR", "non applicable: marché non attribué."),
+        ("DA", "ikke relevant: Kontrakten blev ikke tildelt."),
+        ("DE", "entfällt: Der Auftrag wurde nicht vergeben."),
+        ("EN", "not applicable: contract not awarded."),
+        ("ES", "No procede: el contrato no se ha adjudicado."),
+        ("FI", "ei sovelleta: sopimusta ei tehty."),
+        ("EL", "άνευ αντικειμένου: η σύμβαση δεν ανατέθηκε."),
+        ("IT", "Non applicabile: appalto non aggiudicato."),
+        ("NL", "niet van toepassing: opdracht niet gegund."),
+        ("PT", "Não aplicável: contrato não adjudicado."),
+        ("SV", "Ej tillämpligt: kontraktet har inte tilldelats."),
+        ("CS", "nepoužije se: zakázka nebyla zadána."),
+        ("ET", "Ei kohaldata: lepingut ei sõlmitud."),
+        ("HU", "nem alkalmazható: a szerződést nem ítélték oda."),
+        ("LT", "netaikoma: sutartis nepaskirta."),
+        ("LV", "Nav piemērojams –  līguma slēgšanas tiesības nav piešķirtas."),
+        ("MT", "ma japplikax: il-kuntratt ma ngħatax."),
+        ("PL", "nie dotyczy: zamówienia nie udzielono."),
+        ("SK", "neuplatniteľné: zmluva nebola pridelená."),
+        ("SL", "ni ustrezno: naročilo ni bilo oddano."),
+        ("GA", "neamhbhainteach: níor dámhadh an conradh."),
+        ("BG", "не е приложимо: поръчката не е възложена."),
+        ("RO", "nu se aplică: contract neatribuit."),
+        ("HR", "nije primjenjivo: ugovor nije sklopljen."),
+    ];
+    /// `Non applicable — Marché non attribué`: 18549508's ORG-2 (org 7400280), 3 of 24 void before the
+    /// review — the dash spelling, the contract's wording.
+    const TED_NOT_APPLICABLE_CONTRACT_DASH: [(&str, &str); 24] = [
+        ("FR", "Non applicable — Marché non attribué"),
+        ("DA", "finder ikke anvendelse — kontrakten blev ikke tildelt"),
+        ("DE", "entfällt — Auftrag nicht vergeben"),
+        ("EN", "not applicable — contract not awarded"),
+        ("ES", "No procede: contrato no adjudicado"),
+        ("FI", "ei sovelleta – sopimusta ei tehty"),
+        ("EL", "Άνευ αντικειμένου — Μη ανατεθείσα σύμβαση"),
+        ("IT", "Non applicabile — appalto non aggiudicato"),
+        ("NL", "Niet van toepassing — opdracht niet gegund"),
+        ("PT", "Não aplicável — Contrato não adjudicado"),
+        ("SV", "Ej tillämpligt – kontraktet har inte tilldelats"),
+        ("CS", "nepoužije se – zakázka nebyla zadána"),
+        ("ET", "ei kohaldata – lepingut ei sõlmitud"),
+        ("HU", "nem alkalmazható – a tétel nem került odaítélésre"),
+        ("LT", "netaikoma, nes sutartis nebuvo paskirta."),
+        ("LV", "Nav – līguma slēgšanas tiesības nav piešķirtas"),
+        ("MT", "mhux applikabbli — il-kuntratt ma ngħatax"),
+        ("PL", "nie dotyczy — zamówienia nie udzielono"),
+        ("SK", "neuplatniteľné – zmluva nebola uzatvorená"),
+        ("SL", "Ni navedeno – naročilo ni bilo oddano"),
+        ("GA", "neamhbhainteach — níor dámhadh conradh"),
+        ("BG", "не е приложимо – поръчката не е възложена"),
+        ("RO", "neaplicabil – contract neatribuit"),
+        ("HR", "nije primjenjivo — ugovor nije sklopljen"),
+    ];
+    /// `Aucune offre reçue`: 18236286's ORG-3 (org 5286300), 1 of 24 void before the review.
+    const TED_NO_TENDERS_RECEIVED: [(&str, &str); 24] = [
+        ("FR", "Aucune offre reçue"),
+        ("DA", "der blev ikke modtaget nogen bud"),
+        ("DE", "Es ging kein Angebot ein"),
+        ("EN", "no tenders were received"),
+        ("ES", "No se ha recibido ninguna oferta."),
+        ("FI", "yhtään tarjousta ei saatu."),
+        ("EL", "Δεν παρελήφθη καμία προσφορά"),
+        ("IT", "Non sono pervenute offerte"),
+        ("NL", "er zijn geen inschrijvingen ontvangen"),
+        ("PT", "Não foi recebida nenhuma proposta"),
+        ("SV", "Inga anbud mottogs"),
+        ("CS", "nebyly obdrženy žádné nabídky"),
+        ("ET", "ühtegi pakkumist ei laekunud"),
+        ("HU", "nem érkezett be ajánlat"),
+        ("LT", "Negauta jokių pasiūlymų"),
+        ("LV", "Netika saņemts neviens piedāvājums"),
+        ("MT", "ma waslu ebda offerti"),
+        ("PL", "Nie otrzymano ofert."),
+        ("SK", "nebola doručená žiadna ponuka"),
+        ("SL", "prejeta ni bila nobena ponudba."),
+        ("GA", "ní bhfuarthas aon tairiscintí"),
+        ("BG", "не бяха получени оферти"),
+        ("RO", "nu s-a primit nicio ofertă."),
+        ("HR", "nije zaprimljena nijedna ponuda"),
+    ];
+    /// `Procédure infructueuse`: 18720683's ORG-2 (org 7985877), 2 of 24 void before the review.
+    const TED_PROCEDURE_UNSUCCESSFUL: [(&str, &str); 24] = [
+        ("FR", "Procédure infructueuse"),
+        ("DA", "resultatløs procedure"),
+        ("DE", "Verfahren erfolglos"),
+        ("EN", "unsuccessful procedure"),
+        ("ES", "Procedimiento infructuoso"),
+        ("FI", "tulokseton menettely"),
+        ("EL", "Ατελέσφορη διαδικασία"),
+        ("IT", "Procedura infruttuosa"),
+        ("NL", "De procedure is zonder resultaat gebleven"),
+        ("PT", "Concurso declarado infrutífero"),
+        ("SV", "Resultatlöst förfarande."),
+        ("CS", "neúspěšné řízení"),
+        ("ET", "Menetlus luhtus"),
+        ("HU", "sikertelen eljárás"),
+        ("LT", "nesėkminga procedūra"),
+        ("LV", "Neveiksmīga procedūra"),
+        ("MT", "proċedura mingħajr suċċess"),
+        ("PL", "Postępowanie nieskuteczne"),
+        ("SK", "neúspešné konanie"),
+        ("SL", "Neuspešen postopek"),
+        ("GA", "nós imeachta neamhrathúil"),
+        ("BG", "неуспешна процедура"),
+        ("RO", "procedură nereușită"),
+        ("HR", "neuspješan postupak"),
+    ];
+    /// 12381194's ORG-4 (org 31475976, `TED-ORGANISATION`): [`TED_LOT_NOT_AWARDED`] with TED's own pointer
+    /// to section VI.2 bracketed after it.
+    const TED_LOT_NOT_AWARDED_POINTED: [(&str, &str); 23] = [
+        ("FR", "Lot non attribué [voir section VI, point VI.2) «Autres informations»]."),
+        ("DA", "Partiet er ikke tildelt (Jf. del VI, punkt VI.2) »Supplerende oplysninger«)."),
+        ("DE", "Los wurde nicht vergeben (siehe Abschnitt VI Ziffer VI.2 „Sonstige Informationen“)."),
+        ("EN", "Lot not awarded (see section VI, point VI.2 'Additional information')."),
+        ("ES", "Lote no adjudicado (véase el apartado VI, punto VI.2 «Información adicional»)."),
+        ("FI", "Erästä ei tehty sopimusta (katso osa VI, kohta VI.2 ”Lisätietoja”)."),
+        ("EL", "Η παρτίδα δεν ανατέθηκε [βλ. τμήμα VI, σημείο VI.2) «Άλλες πληροφορίες»]."),
+        ("IT", "Lotto non aggiudicato [cfr. sezione VI, punto VI.2) «Informazioni complementari»]."),
+        ("NL", "Het perceel is niet gegund (zie VI, VI.2 „Nadere inlichtingen”)"),
+        ("PT", "Lote não adjudicado (consultar ponto VI.2 da secção VI «Informações complementares»)."),
+        ("SV", "Delen har inte tilldelats (se avsnitt VI, punkt VI.2 Kompletterande information)."),
+        ("CS", "Položka nebyla zadána (viz oddíl VI, bod VI.2 „Dodatečné informace“)."),
+        ("ET", "Osa kohta lepingut ei sõlmitud (vt jaotise VI punkti VI.2 \"Lisateave\")."),
+        ("HU", "A tétel nem került odaítélésre (lásd a VI. szaksz, VI.2. „További információk” pontot)."),
+        ("LT", "Dalis nepaskirta (žr. VI dalies VI.2 punktą „Papildoma informacija“)."),
+        ("LV", "Daļa nav piešķirta (skatīt VI iedaļu, VI.2) punktu \"Papildu informācija\")."),
+        ("MT", "Il-lott ma ngħatax (ara taqsima VI, punt VI.2 'Tagħrif ieħor')."),
+        ("PL", "Zamówienia na tę część nie udzielono [zob. sekcja VI pkt VI.2 „Informacje dodatkowe”]."),
+        ("SK", "Táto časť nebola pridelená (pozri oddiel VI, bod VI.2 „Dodatočné informácie“)."),
+        ("SL", "Sklop ni bil oddan (glej točko VI.2 „Dodatne informacije“)."),
+        ("GA", "Níor dámhadh an beart (féach alt VI, pointe VI.2 'Faisnéis bhreise')."),
+        ("BG", "Партидата не е възложена (вж. раздел VI, точка VI.2 „Допълнителна информация“)."),
+        ("RO", "Lot neatribuit (a se vedea secţiunea VI, punctul VI.2 „Informaţii suplimentare”)."),
+    ];
+    /// 18715886's ORG-6 (org 7969717), 2 of 24 void: the review's named residue — every copy carries its
+    /// lot's number, so no exact value holds the template.
+    const TED_NOT_APPLICABLE_NO_TENDERS_LOT_5: [(&str, &str); 24] = [
+        ("FR", "Non applicable — Aucune offre n'a été reçue — Lot 5 non attribué"),
+        ("DA", "Ingen angivelse — der blev ikke modtaget bud — parti 5 blev ikke tildelt"),
+        ("DE", "entfällt — kein Angebot eingegangen — Los 5 nicht vergeben"),
+        ("EN", "not applicable — no tenders were received — lot 5 not awarded"),
+        ("ES", "No procede: no se ha recibido ninguna oferta, el lote 5 no ha sido adjudicado"),
+        ("FI", "ei sovelleta – yhtään tarjousta ei saatu – erästä 5 ei tehty sopimusta"),
+        ("EL", "Άνευ αντικειμένου — Δεν υπεβλήθη προσφορά — Η παρτίδα 5 δεν ανατέθηκε"),
+        ("IT", "Non applicabile — non sono pervenute offerte — lotto 5 non aggiudicato"),
+        ("NL", "Niet van toepassing — er zijn geen inschrijvingen ontvangen — perceel 5 is niet gegund"),
+        ("PT", "Não aplicável — Nenhuma proposta recebida — Lote 5 não adjudicado"),
+        ("SV", "inte tillämpligt – inga anbud har mottagits – del 5 har inte tilldelats"),
+        ("CS", "nepoužije se – nebyly obdrženy žádné nabídky – položka č. 5 nebyla zadána"),
+        ("ET", "Ei kohaldata – ühtegi pakkumist ei laekunud – 5. osa kohta lepingut ei sõlmitud"),
+        ("HU", "nem alkalmazható – nem érkezett be ajánlat – az 5. tétel nem került odaítélésre"),
+        ("LT", "Netaikoma – negauta jokių pasiūlymų – 5 dalis nepaskirta"),
+        ("LV", "Nav – netika saņemts neviens piedāvājums – līguma slēgšanas tiesības par 5. daļu nav piešķirtas"),
+        ("MT", "mhux applikabbli — ebda offerta ma waslet — il-5 lott ma ngħatax"),
+        ("PL", "Nie dotyczy – nie otrzymano ofert – zamówienia na część 5 nie udzielono"),
+        ("SK", "neuplatniteľné – nebola doručená žiadna ponuka – časť 5 nebola pridelená"),
+        ("SL", "ni navedeno – ni bilo prejetih ponudb – sklop 5 ni oddan"),
+        ("GA", "níl sé infheidhme — ní bhfuarthas tairiscint ar bith — níor dámhadh beart 5"),
+        ("BG", "не е приложимо – няма получени оферти – партида 5 не е възложена"),
+        ("RO", "nu se aplică – nu a fost primită nicio ofertă – lotul 5 nu a fost atribuit"),
+        ("HR", "nije primjenjivo — nije zaprimljena nijedna ponuda — grupa 5 nije dodijeljenja"),
+    ];
+
+    /// Issue 525 (class A): every copy of each of TED's other templates reads void — `Blank` for
+    /// the two copies that say "not applicable" and nothing more the lexicon reads — so the party
+    /// drops as `VoidLot` whichever copy heads it, a result whose only winner it is reads `clos-nw`,
+    /// and a real party beside it stays.
+    #[test]
+    fn teds_other_not_awarded_templates_drop_their_party() {
+        use placeholder_511::*;
+        const BLANK: [&str; 6] = [
+            "not applicable — lot not awarded",
+            "nie dotyczy — zamówienia na tę część nie udzielono",
+            "not applicable: contract not awarded.",
+            "nie dotyczy: zamówienia nie udzielono.",
+            "not applicable — contract not awarded",
+            "nie dotyczy — zamówienia nie udzielono",
+        ];
+        let templates: [&[(&str, &str)]; 11] = [
+            &TED_MARCHE_NON_ATTRIBUE,
+            &TED_CONTRACT_NOT_AWARDED,
+            &TED_NO_CONTRACT_AWARDED,
+            &TED_LOT_NOT_AWARDED,
+            &TED_LOT_UNSUCCESSFUL,
+            &TED_NOT_APPLICABLE_LOT_NOT_AWARDED,
+            // The review's five.
+            &TED_NON_ATTRIBUTION,
+            &TED_NOT_APPLICABLE_CONTRACT_COLON,
+            &TED_NOT_APPLICABLE_CONTRACT_DASH,
+            &TED_NO_TENDERS_RECEIVED,
+            &TED_PROCEDURE_UNSUCCESSFUL,
+        ];
+        for template in templates {
+            let head = template[0].1;
+            for (lang, name) in template {
+                let want = if BLANK.contains(name) { NotAName::Blank } else { NotAName::VoidLot };
+                assert_eq!(crate::partyname::not_a_name(name), Some(want), "{head}: {lang} {name}");
+            }
+            let copies: Vec<(Option<&str>, &str)> = template.iter().map(|(lang, name)| (Some(*lang), *name)).collect();
+            let parsed = multilingual(&[("ORG-1", &copies), ("ORG-2", &[(Some("FR"), "Société Dupont SARL")])], &["ORG-1"]);
+            assert_eq!(decided(false, &parsed), BTreeMap::from([("ORG-1".to_owned(), NotAName::VoidLot)]), "{head}");
+            assert_eq!(results(&bound("ted-export-r208", &parsed)), vec![(Some("clos-nw".into()), vec![])], "{head}");
+            // Any copy may head the party (a notice's original language comes first): the party
+            // drops whichever one does.
+            let mut rotated = copies.clone();
+            rotated.rotate_left(copies.len() / 2);
+            let parsed = multilingual(&[("ORG-1", &rotated)], &["ORG-1"]);
+            assert_eq!(decided(false, &parsed), BTreeMap::from([("ORG-1".to_owned(), NotAName::VoidLot)]), "{head} rotated");
+        }
+    }
+
+    /// Issue 525, the review: TED's own pointer after a template (12381194's ORG-4, `Los wurde nicht
+    /// vergeben (siehe Abschnitt VI Ziffer VI.2 „Sonstige Informationen“).`) reads void by the
+    /// template — otherwise an exact value, so a template followed by anything else is a name — and
+    /// the party drops on 510's majority rule, 15 of 23 (a copy whose pointer the lists do not read
+    /// stays a name). 18715886's ORG-6 is the named residue: every copy carries lot 5's number, no
+    /// exact value holds it, and the fold keeps the party, which the walk exempts with its tally.
+    #[test]
+    fn a_template_with_teds_pointer_drops_and_the_lot_numbered_compound_is_kept() {
+        use placeholder_511::*;
+        let labelled = |template: &[(&'static str, &'static str)]| -> Vec<(Option<&'static str>, &'static str)> {
+            template.iter().map(|(lang, name)| (Some(*lang), *name)).collect()
+        };
+        let void = |template: &[(&str, &str)]| {
+            template.iter().filter(|(_, name)| crate::partyname::not_a_name(name) == Some(NotAName::VoidLot)).count()
+        };
+        assert_eq!(void(&TED_LOT_NOT_AWARDED_POINTED), 15);
+        assert_eq!(void(&TED_NOT_APPLICABLE_NO_TENDERS_LOT_5), 2);
+        let parsed = multilingual(
+            &[
+                ("ORG-4", &labelled(&TED_LOT_NOT_AWARDED_POINTED)),
+                ("ORG-6", &labelled(&TED_NOT_APPLICABLE_NO_TENDERS_LOT_5)),
+            ],
+            &["ORG-4", "ORG-6"],
+        );
+        assert_eq!(decided(false, &parsed), BTreeMap::from([("ORG-4".to_owned(), NotAName::VoidLot)]));
+        match fold_parties("ted-export-r208", &parsed).verdict("ORG-6") {
+            PartyVerdict::Kept(kept) => assert_eq!(kept.reason(), "party kept: 2/24 names void"),
+            other => panic!("{other:?}"),
+        }
+    }
+
+    /// Issue 525: notice 16967678 prints both templates side by side. ORG-2 (17674598's, its LV
+    /// copy now void too) still drops; ORG-4 (`No contract awarded.`, kept at 7 of 23 before)
+    /// now drops; Deloitte, the real winner beside them, stays the only winner.
+    #[test]
+    fn notice_16967678_drops_both_its_void_winners() {
+        use placeholder_511::*;
+        let labelled = |template: &[(&'static str, &'static str)]| -> Vec<(Option<&'static str>, &'static str)> {
+            template.iter().map(|(lang, name)| (Some(*lang), *name)).collect()
+        };
+        assert!(TED_NOT_AWARDED.iter().all(|(_, name)| crate::partyname::not_a_name(name) == Some(NotAName::VoidLot)));
+        let deloitte: Vec<(Option<&str>, &str)> =
+            TED_NOT_AWARDED.iter().map(|(lang, _)| (Some(*lang), "Deloitte Bedrijfsrevisoren CVBA")).collect();
+        let parsed = multilingual(
+            &[("ORG-2", &labelled(&TED_NOT_AWARDED)), ("ORG-3", &deloitte), ("ORG-4", &labelled(&TED_NO_CONTRACT_AWARDED))],
+            &["ORG-2", "ORG-3", "ORG-4"],
+        );
+        assert_eq!(
+            decided(false, &parsed),
+            BTreeMap::from([("ORG-2".to_owned(), NotAName::VoidLot), ("ORG-4".to_owned(), NotAName::VoidLot)])
+        );
+        assert_eq!(results(&bound("ted-export-r208", &parsed)), vec![(Some("selec-w".into()), vec![1_003])]);
+    }
+
+    /// Issue 525: South Tyrol's bilingual awards (12501289's five, 4416766's two): IT `non
+    /// aggiudicato` beside DE `Zuschlag nicht vergeben`. Two copies never reach 510's majority
+    /// rule, so the DE wording had to read void by itself; it does, and the pair drops. The rule
+    /// the 2-copy party keeps: a void copy beside a company's name is still a party.
+    #[test]
+    fn a_bilingual_not_awarded_pair_drops_and_a_company_beside_one_keeps_its_party() {
+        use placeholder_511::*;
+        let parsed = multilingual(
+            &[
+                ("ORG-2", &[(Some("IT"), "non aggiudicato"), (Some("DE"), "Zuschlag nicht vergeben")]),
+                ("ORG-3", &[(Some("IT"), "Non aggiudicato"), (Some("DE"), "Siemens")]),
+                ("ORG-4", &[(Some("IT"), "Fater SpA"), (Some("DE"), "fater spa")]),
+            ],
+            &["ORG-2", "ORG-3", "ORG-4"],
+        );
+        assert_eq!(decided(false, &parsed), BTreeMap::from([("ORG-2".to_owned(), NotAName::VoidLot)]));
+    }
+
+    /// Notice 23151933's shape (r209, public `/content` 2026-10-12): RES-1's `TED-WINNER` names
+    /// ORG-2, a nameless wrapper whose nested ORG-3 (`ADDRESS_WINNER`) carries the void name.
+    fn nested_void_winner() -> Parsed {
+        use placeholder_511::*;
+        Parsed {
+            sections: vec![
+                section("PROCEDURE", "Notice", None),
+                section("ORG-1", ORGANIZATION_KIND, Some("PROCEDURE")),
+                section("RES-1", "LotResult", Some("PROCEDURE")),
+                section("ORG-2", ORGANIZATION_KIND, Some("RES-1")),
+                section("ORG-3", ORGANIZATION_KIND, Some("ORG-2")),
+                section("ORG-4", ORGANIZATION_KIND, Some("PROCEDURE")),
+            ],
+            values: vec![
+                text_value("ORG-1", "TED-OFFICIALNAME", 0, Some("FR"), "commune des Essarts"),
+                id_ref("ORG-2", "TED-ADDRESS_WINNER", "ORG-3"),
+                text_value("ORG-3", "TED-OFFICIALNAME", 0, Some("FR"), "marché déclaré sans suite"),
+                text_value("ORG-4", "TED-OFFICIALNAME", 0, Some("FR"), "tribunal administratif de Nantes"),
+                id_ref("PROCEDURE", "TED-ADDRESS_CONTRACTING_BODY", "ORG-1"),
+                id_ref("PROCEDURE", "TED-ADDRESS_REVIEW_BODY", "ORG-4"),
+                id_ref("RES-1", "TED-WINNER", "ORG-2"),
+            ],
+        }
+    }
+
+    /// Issue 525 (class B): the retire keys are every dropped party section, the nested inner
+    /// half included — 23151933's mention row stands at (23151933, ORG-3), the key issue 259's
+    /// landing repair left, and a retire keyed on the outer ORG-2 alone found no row. Minting and
+    /// the `dropped` count stay outer: one party, counted once, nothing minted for either half.
+    #[test]
+    fn a_nested_void_winner_retires_both_its_halves() {
+        use placeholder_511::*;
+        let parsed = nested_void_winner();
+        assert_eq!(
+            decided(false, &parsed),
+            BTreeMap::from([("ORG-2".to_owned(), NotAName::VoidLot), ("ORG-3".to_owned(), NotAName::VoidLot)])
+        );
+        let (mentions, retired, dropped) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        assert_eq!(retired, vec!["ORG-2".to_owned(), "ORG-3".to_owned()], "both halves' keys reach the retire");
+        assert_eq!(mentions.iter().map(|m| m.section_id.as_str()).collect::<Vec<_>>(), vec!["ORG-1", "ORG-4"]);
+        assert_eq!((dropped.void, dropped.total()), (1, 1), "one party");
+    }
+
+    /// Issue 525 (the walk/fold contract): the walk's verdict on a (notice, section) is the fold's
+    /// own drop decision. [`fold_parties`] drops exactly the sections the fold hands to the retire
+    /// ([`NoticeState::mentions_and_dropped`]: every dropped party section, inner halves
+    /// included), keeps every other party section with the fold's tally, and knows no other
+    /// section — over 525's fixtures, 23151933's nested shape, an sdk-0.1 award and (the review) a
+    /// DE-1.x one as stored, which the fold reads through `normalise_de1`.
+    #[test]
+    fn the_walks_verdict_is_the_folds_own_drop_decision() {
+        use placeholder_511::*;
+        let labelled = |template: &[(&'static str, &'static str)]| -> Vec<(Option<&'static str>, &'static str)> {
+            template.iter().map(|(lang, name)| (Some(*lang), *name)).collect()
+        };
+        let kept_copies = [(Some("IT"), "non aggiudicato"), (Some("DE"), "Rossi GmbH")];
+        let ted = multilingual(
+            &[
+                ("ORG-1", &labelled(&TED_LOT_NOT_AWARDED)),
+                ("ORG-2", &kept_copies),
+                ("ORG-3", &[(Some("EN"), "Lot 1) Sarl Bremond. Lot 2) Infructueux")]),
+                ("ORG-4", &[]),
+            ],
+            &["ORG-1", "ORG-2", "ORG-3"],
+        );
+        let sdk01 = Parsed {
+            sections: vec![
+                section("PROC", "Notice", None),
+                section("CP-9", SDK01_BUYER_KIND, None),
+                section("TR-1", SDK01_RESULT_KIND, None),
+                section("WP-1", SDK01_WINNER_KIND, Some("TR-1")),
+            ],
+            values: vec![
+                text_value("CP-9", "SDK01-ContractingParty-Party-PartyName-Name", 0, None, "Stadt Graz"),
+                text_value("WP-1", "SDK01-TenderResult-WinningParty-Party-PartyName-Name", 0, None, "Nicht vergeben"),
+            ],
+        };
+        // The review: a DE-1.x award as stored — its names under the dialect's own field, which the
+        // fold reads only after `normalise_de1` — whose winner says the lot was not awarded.
+        const DE1_NAME: &str = "DE1-Organizations-Organization-Company-PartyName-Name";
+        let de1 = Parsed {
+            sections: vec![
+                section("PROC", "Notice", None),
+                section("ORG-0001", ORGANIZATION_KIND, None),
+                section("ORG-0003", ORGANIZATION_KIND, None),
+            ],
+            values: vec![
+                text_value("ORG-0001", DE1_NAME, 0, Some("DEU"), "Stadt Köln"),
+                text_value("ORG-0003", DE1_NAME, 0, Some("DEU"), "Los wurde nicht vergeben"),
+            ],
+        };
+        for (profile, parsed) in [
+            ("ted-export-r208", &ted),
+            ("ted-export-r209", &nested_void_winner()),
+            ("eforms:eforms-sdk-0.1", &sdk01),
+            ("eforms:eforms-de-1.2", &de1),
+        ] {
+            let parties = fold_parties(profile, parsed);
+            // The fold's own read of the stored parse: its chunk through `normalise_de1`.
+            let notice = store::NoticeRef { id: 9, source: "ted".into(), publication_id: "9-2024".into(), profile: profile.into() };
+            let mut chunk = vec![(notice, parsed.clone())];
+            normalise_de1(&mut chunk);
+            let (_, retired, _) = NoticeState::mentions_and_dropped(is_sdk01_profile(profile), 9, &chunk[0].1);
+            let walked: Vec<String> = parsed
+                .sections
+                .iter()
+                .filter(|s| matches!(parties.verdict(&s.id), PartyVerdict::Dropped(_)))
+                .map(|s| s.id.clone())
+                .collect();
+            assert!(!retired.is_empty(), "{profile}: premise, the fold drops something");
+            assert_eq!(walked, retired, "{profile}");
+        }
+        let parties = fold_parties("ted-export-r208", &ted);
+        assert_eq!(parties.verdict("ORG-1"), PartyVerdict::Dropped(NotAName::VoidLot));
+        let kept = |verdict: PartyVerdict| match verdict {
+            PartyVerdict::Kept(kept) => kept.reason(),
+            other => panic!("{other:?}"),
+        };
+        assert_eq!(kept(parties.verdict("ORG-2")), "party kept: 1/2 names void");
+        assert_eq!(kept(parties.verdict("ORG-3")), "party kept: 0/1 names void, an award summary among them");
+        assert_eq!(kept(parties.verdict("ORG-4")), "party kept: no name");
+        assert_eq!(kept(parties.verdict("ORG-9")), "party kept: 0/1 names void");
+        assert_eq!(parties.verdict("RES-1"), PartyVerdict::Unknown, "not a party section");
+        assert_eq!(parties.verdict("ORG-77"), PartyVerdict::Unknown, "no such section: the parse moved");
+        // The nested shape: either half's key is the party's.
+        let nested = fold_parties("ted-export-r209", &nested_void_winner());
+        assert_eq!(nested.verdict("ORG-3"), PartyVerdict::Dropped(NotAName::VoidLot));
+        assert_eq!(kept(nested.verdict("ORG-1")), "party kept: 0/1 names void");
+        // The DE-1.x party the fold keeps has its name, as the fold reads it.
+        assert_eq!(kept(fold_parties("eforms:eforms-de-1.2", &de1).verdict("ORG-0001")), "party kept: 0/1 names void");
+        // Guard 3 keeps a blank party with a gated identifier: the walk says so.
+        let identified = eforms(&[("Procedure-Buyer", "Morsø Kommune", "DNK", ""), ("Tenderer", "0", "DNK", "38160540")], Some("DAN"));
+        assert_eq!(kept(fold_parties("eforms:eforms-sdk-1.10", &identified).verdict("ORG-2")), "party kept: 0/1 names void, a gated identifier");
+    }
 
     /// Issue 512: the text parser stores the "every tender was rejected" marker as a Code
     /// on its award skeleton, beside the award date. Read as the Integer only, a dated text

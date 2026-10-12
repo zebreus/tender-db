@@ -19217,6 +19217,27 @@ impl Db {
         Ok(out)
     }
 
+    /// Issue 525: [`Db::mention_notices_of_orgs`] with each mention's section — the
+    /// `(organization, notice, section)` of every recorded mention of `orgs`, the key the fold
+    /// retires — so `refold-void-names` can ask the fold's own party decision about that very
+    /// section. Through `organization_mentions_org`, in IN chunks; ordered by the key.
+    pub async fn mention_sections_of_orgs(&self, orgs: &[i64]) -> turso::Result<Vec<(i64, i64, String)>> {
+        let conn = self.reader().await?;
+        let mut out = Vec::new();
+        for chunk in orgs.chunks(IN_CHUNK) {
+            let sql = format!(
+                "SELECT organization_id, notice_id, section_id FROM organization_mentions WHERE organization_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, chunk.iter().map(|id| Value::Integer(*id)).collect::<Vec<_>>()).await?;
+            while let Some(row) = rows.next().await? {
+                out.push((int(&row, 0), int(&row, 1), text(&row, 2)));
+            }
+        }
+        out.sort();
+        Ok(out)
+    }
+
     /// How many of `notices` each `notices.profile` holds, by primary key in IN chunks
     /// (issue 510's dry plan: the cohort's era split, read against the census shape).
     pub async fn notice_profile_counts(&self, notices: &[i64]) -> turso::Result<std::collections::BTreeMap<String, u64>> {

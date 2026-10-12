@@ -591,11 +591,15 @@ enum Spec {
     /// so the next incremental fold re-derives exactly those. Dry (the default) counts and
     /// stores the cohort as the `buyer-role-refold` report.
     RefoldBuyerRoles { dry_run: bool },
-    /// Issue 510: find every organization whose head name says the lot was not awarded
-    /// (`ingest::partyname::is_void_lot`, the fold's own rule) and the notices that
-    /// mention one; a wet run (which needs `expect`, the dry run's notice count) re-queues
-    /// those notices with their Tenders stamped epoch-stale, so the next incremental fold
-    /// retires the mentions. Dry (the default) counts and stores `void-names-refold`.
+    /// Issue 510: find every organization whose head name carries a void-lot phrase
+    /// (`ingest::partyname::mentions_void`) and, since issue 525, the mentions of them the
+    /// fold's own party decision drops (`ingest::project::fold_parties` on each mention's
+    /// notice: a party drops only when all its copies read as non-names, or half of four or
+    /// more read void — the head name alone is not the party); a wet run (which needs
+    /// `expect`, the dry run's notice count) re-queues those notices with their Tenders
+    /// stamped epoch-stale, so the next incremental fold retires the mentions. The mentions
+    /// the fold keeps are listed under `exempted` with its reason (`party kept: 6/23 names
+    /// void`). Dry (the default) counts and stores `void-names-refold`.
     RefoldVoidNames { dry_run: bool, expect: Option<u64> },
     /// Issue 511: 510's walk generalised by class — every organization whose head name
     /// the placeholder net catches (`ingest::partyname::mentions_placeholder`: a pointer,
@@ -3739,6 +3743,11 @@ const VOID_NAMES_REFOLD_REPORT: &str = "void-names-refold";
 /// placeholder plan's (`Supervisor::placeholder_plan`).
 const PLACEHOLDER_NAMES_REFOLD_REPORT: &str = "placeholder-names-refold";
 
+/// Issue 525: how many mentioned notices `refold-void-names` reads per `parsed_by_ids` call
+/// (`Supervisor::void_split`) — a TED r208 award carries two dozen language copies of every
+/// text, so a chunk's parses are held in memory only while the fold's party decision reads them.
+const VOID_PARSE_CHUNK: usize = 200;
+
 /// Issue 511: the non-name class one `run_refold_non_names` walk drains — 510's void lots
 /// or 511's placeholders (pointers, withheld or missing names, blank slots).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -3778,6 +3787,10 @@ impl NonNames {
 
     /// The walk's net: every head name carrying one of the class's phrases, before the
     /// fold's exemptions, so the plan lists what they keep beside what the fold drops.
+    /// Issue 525: the head name only, not every `organization_names` copy (about 39M rows,
+    /// several times the org walk's read) — a party the void majority rule drops while its head
+    /// copy reads as a name is outside the net, so a template copy that shows up so belongs in
+    /// the lexicon (`partyname`'s `VOID_TEMPLATES`), which closes the shapes measured.
     fn net(self) -> fn(&str) -> bool {
         match self {
             NonNames::Void => ingest::partyname::mentions_void,
@@ -3785,10 +3798,13 @@ impl NonNames {
         }
     }
 
-    /// Whether a hit is re-queued rather than exempted. 510: the void lots the fold drops
-    /// (`is_void_lot`). 511: every hit but an award summary — the fold, not the walk,
-    /// decides the anchor, the scope and the identifier guard, so a hit the fold keeps
-    /// costs a refold and nothing else.
+    /// Whether a hit is re-queued rather than exempted, by its head name. 511: every hit but an
+    /// award summary — the fold, not the walk, decides the anchor, the scope and the identifier
+    /// guard, so a hit the fold keeps costs a refold and nothing else. 510: a void head
+    /// (`is_void_lot`, the fold's rule for ONE name) — since issue 525 only for a hit mentioned
+    /// nowhere; a mentioned hit is split by the fold's party decision on each mention
+    /// ([`split_void_hits`]), since the fold drops a party only when all its copies read void
+    /// (or half of four or more) and a head-name test re-listed the parties it keeps forever.
     fn requeues(self, name: &str) -> bool {
         match self {
             NonNames::Void => ingest::partyname::is_void_lot(name),
@@ -3797,6 +3813,88 @@ impl NonNames {
             }
         }
     }
+}
+
+/// Issue 525: `refold-void-names`' split of its net by the fold's own party decision
+/// ([`split_void_hits`]).
+#[derive(Debug, Default)]
+struct VoidSplit {
+    /// The hits re-queued: a mention the fold drops (or the walk cannot read), or — mentioned
+    /// nowhere — a void head (510's count of what the orphan sweep will take).
+    orgs: Vec<store::NamedOrg>,
+    /// The re-queued `(org, notice)` mentions.
+    pairs: Vec<(i64, i64)>,
+    /// The hits with a mention the fold keeps, or mentioned nowhere and naming an award.
+    exempted: Vec<store::NamedOrg>,
+    /// Each exempted hit's kept mentions.
+    kept: std::collections::HashMap<i64, u64>,
+    /// Each exempted hit's reason: the fold's (`party kept: 6/23 names void`), distinct ones
+    /// joined, or `names an award` for one mentioned nowhere.
+    reasons: std::collections::HashMap<i64, String>,
+    /// The first [`KEPT_NOTICES`] notices of each hit's kept mentions, so the operator can read
+    /// the copies that kept the party (a template wording the lexicon lacks).
+    kept_notices: std::collections::HashMap<i64, Vec<i64>>,
+}
+
+/// How many kept notices one `exempted` entry of `refold-void-names` names ([`VoidSplit`]).
+const KEPT_NOTICES: usize = 3;
+
+/// Issue 525: the void walk's contract — a mention of a net hit is re-queued only when the
+/// fold's own party decision (`verdict`, [`ingest::project::FoldParties::verdict`] on the
+/// mention's notice) drops its section, or answers [`ingest::project::PartyVerdict::Unknown`]
+/// (no parse to read, no such party section), so the re-queued set covers every drop the fold
+/// will make among these mentions; a mention the fold keeps is exempted with its reason. A hit
+/// with no mention keeps 510's head rule ([`NonNames::requeues`]): there is nothing to refold,
+/// and the count says what the orphan sweep takes. `mentions` are `(org, notice, section)`.
+fn split_void_hits(
+    hits: Vec<store::NamedOrg>,
+    mentions: &[(i64, i64, String)],
+    verdict: impl Fn(i64, &str) -> ingest::project::PartyVerdict,
+) -> VoidSplit {
+    use ingest::project::PartyVerdict;
+    let mut by_org: std::collections::HashMap<i64, Vec<(i64, &str)>> = std::collections::HashMap::new();
+    for (org, notice, section) in mentions {
+        by_org.entry(*org).or_default().push((*notice, section.as_str()));
+    }
+    let mut split = VoidSplit::default();
+    for org in hits {
+        let Some(mentioned) = by_org.get(&org.0) else {
+            if NonNames::Void.requeues(&org.1) {
+                split.orgs.push(org);
+            } else {
+                split.kept.insert(org.0, 0);
+                split.reasons.insert(org.0, "names an award".to_owned());
+                split.exempted.push(org);
+            }
+            continue;
+        };
+        let (mut requeued, mut kept, mut kept_notices): (Vec<i64>, Vec<String>, Vec<i64>) =
+            (Vec::new(), Vec::new(), Vec::new());
+        for (notice, section) in mentioned {
+            match verdict(*notice, section) {
+                PartyVerdict::Dropped(_) | PartyVerdict::Unknown => requeued.push(*notice),
+                PartyVerdict::Kept(party) => {
+                    kept.push(party.reason());
+                    kept_notices.push(*notice);
+                }
+            }
+        }
+        if !kept.is_empty() {
+            split.kept.insert(org.0, kept.len() as u64);
+            kept.sort();
+            kept.dedup();
+            split.reasons.insert(org.0, kept.join("; "));
+            kept_notices.dedup();
+            kept_notices.truncate(KEPT_NOTICES);
+            split.kept_notices.insert(org.0, kept_notices);
+            split.exempted.push(org.clone());
+        }
+        if !requeued.is_empty() {
+            split.pairs.extend(requeued.into_iter().map(|notice| (org.0, notice)));
+            split.orgs.push(org);
+        }
+    }
+    split
 }
 
 /// Issue 511: [`Supervisor::placeholder_plan`]'s answer — the summary clause for the job
@@ -5536,16 +5634,27 @@ impl Supervisor {
     /// Issue 510's `refold-void-names` and issue 511's `refold-placeholder-names`, one fn
     /// through `off_frame` (issue 467), generalised by class ([`NonNames`]). Walks
     /// `organizations` by id window with the class's net (`ingest::partyname::mentions_void`
-    /// or `mentions_placeholder`, never SQL `LIKE`), splits the hits by the fold's own rule
-    /// (re-queued or exempted, [`NonNames::requeues`]), then reads each re-queued org's
-    /// mention notices through `organization_mentions_org`. Dry counts; wet holds the
-    /// notice count to `expect` (aborting, with nothing written, when it is above it by
-    /// more than a quarter: a predicate change caught before it re-queues the corpus), then
-    /// re-queues the notices and stamps their Tenders epoch-stale in chunks (the issue-179
-    /// pair), for the paired fold to retire the mentions. Stoppable between windows; a
-    /// stopped run writes nothing and stores no report. A finished run stores
-    /// `void-names-refold` or `placeholder-names-refold`; the placeholder plan adds what
-    /// 511 §8.2 must read before the wet run ([`Self::placeholder_plan`]).
+    /// or `mentions_placeholder`, never SQL `LIKE`) on each org's head name, then splits the
+    /// hits into re-queued and exempted:
+    /// - void (issue 525): by the fold's own PARTY decision on each recorded mention — the
+    ///   hits' `(org, notice, section)` mentions through `organization_mentions_org`, each
+    ///   notice's stored parse through `parsed_by_ids`, and `ingest::project::fold_parties`,
+    ///   the fold's `drop_decision` with its own inputs. A mention is re-queued only when the
+    ///   fold drops its section, or when the walk cannot read it (no parse, no such party
+    ///   section); every other one is exempted with the fold's reason (`party kept: 6/23 names
+    ///   void`) — [`Self::void_split`]. The head name alone re-listed the parties the fold keeps
+    ///   on its all-names rule after every drain (dry 2351 → wet 2352 → fold 2353 `0 non-name
+    ///   retired` → dry 2354);
+    /// - placeholder: by the head name ([`NonNames::requeues`]), re-queuing every hit but an
+    ///   award summary and reading the re-queued orgs' mention notices.
+    ///
+    /// Dry counts; wet holds the notice count to `expect` (aborting, with nothing written, when
+    /// it is above it by more than a quarter: a predicate change caught before it re-queues the
+    /// corpus), then re-queues the notices and stamps their Tenders epoch-stale in chunks (the
+    /// issue-179 pair), for the paired fold to retire the mentions. Stoppable between windows
+    /// (and, void, between parse chunks); a stopped run writes nothing and stores no report. A
+    /// finished run stores `void-names-refold` or `placeholder-names-refold`; the placeholder
+    /// plan adds what 511 §8.2 must read before the wet run ([`Self::placeholder_plan`]).
     async fn run_refold_non_names(
         &self,
         job: &Job,
@@ -5560,11 +5669,8 @@ impl Supervisor {
         const LONG_VOID_NAME: usize = 120;
         let (kind, issue) = (class.kind(), class.issue());
         let mode = if dry_run { " DRY RUN — nothing written" } else { "" };
-        let mut orgs: Vec<store::NamedOrg> = Vec::new();
-        // Matched the net, kept by the fold (510: a summary that names an award beside the
-        // void lot; 511: any award summary — a pointer followed by a name, a list): never
-        // re-queued, listed for the operator.
-        let mut exempted: Vec<store::NamedOrg> = Vec::new();
+        // Every head name the class's net caught, split below.
+        let mut hits: Vec<store::NamedOrg> = Vec::new();
         let (mut after, mut walked) = (0i64, 0u64);
         loop {
             if self.cancelled(job.id) {
@@ -5573,17 +5679,12 @@ impl Supervisor {
                      nothing written, no report stored"
                 ));
             }
-            // The walk's net is every phrase of the class; the fold's own rule splits it
-            // below, so the plan lists what the exemption keeps beside what the fold drops.
+            // The walk's net is every phrase of the class; the split below (void: the fold's own
+            // party decision on each mention; placeholder: the head name) lists what the fold
+            // keeps beside what it drops.
             let (found, last) =
                 Box::pin(self.db.orgs_named_window(after, WINDOW, class.net())).await.map_err(|e| e.to_string())?;
-            for org in found {
-                if class.requeues(&org.1) {
-                    orgs.push(org);
-                } else {
-                    exempted.push(org);
-                }
-            }
+            hits.extend(found);
             let Some(last) = last else { break };
             walked += WINDOW as u64;
             after = last;
@@ -5591,11 +5692,37 @@ impl Supervisor {
                 "counting",
                 Some(walked),
                 None,
-                format!("organization id {after}: {} {} org(s) so far", orgs.len(), class.noun()),
+                format!("organization id {after}: {} {} hit(s) so far", hits.len(), class.noun()),
             );
         }
-        let ids: Vec<i64> = orgs.iter().map(|(id, ..)| *id).collect();
-        let pairs = Box::pin(self.db.mention_notices_of_orgs(&ids)).await.map_err(|e| e.to_string())?;
+        // `orgs`: the hits re-queued; `pairs`: their re-queued (org, notice) mentions;
+        // `exempted`: the hits the fold keeps (510: a summary that names an award beside the
+        // void lot, and since issue 525 every party the fold's all-names rule keeps; 511: any
+        // award summary — a pointer followed by a name, a list), never re-queued, listed for the
+        // operator with their kept mentions and, void, the fold's reason.
+        let (orgs, pairs, exempted, exempted_mentions, reasons, kept_notices) = match class {
+            NonNames::Void => {
+                let Some(split) = Box::pin(self.void_split(job, hits)).await? else {
+                    return Ok(format!(
+                        "{kind} (issue {issue}){mode}: STOPPED by cancel while reading the fold's party \
+                         decision — nothing written, no report stored"
+                    ));
+                };
+                (split.orgs, split.pairs, split.exempted, split.kept, split.reasons, split.kept_notices)
+            }
+            NonNames::Placeholder => {
+                let (orgs, exempted): (Vec<store::NamedOrg>, Vec<store::NamedOrg>) =
+                    hits.into_iter().partition(|(_, name, ..)| class.requeues(name));
+                let ids: Vec<i64> = orgs.iter().map(|(id, ..)| *id).collect();
+                let pairs = Box::pin(self.db.mention_notices_of_orgs(&ids)).await.map_err(|e| e.to_string())?;
+                let exempted_ids: Vec<i64> = exempted.iter().map(|(id, ..)| *id).collect();
+                let mut exempted_mentions: std::collections::HashMap<i64, u64> = std::collections::HashMap::new();
+                for (org, _) in Box::pin(self.db.mention_notices_of_orgs(&exempted_ids)).await.map_err(|e| e.to_string())? {
+                    *exempted_mentions.entry(org).or_default() += 1;
+                }
+                (orgs, pairs, exempted, exempted_mentions, Default::default(), Default::default())
+            }
+        };
         let mut per_org: std::collections::HashMap<i64, u64> = std::collections::HashMap::new();
         for (org, _) in &pairs {
             *per_org.entry(*org).or_default() += 1;
@@ -5630,19 +5757,22 @@ impl Supervisor {
         // exempted org; every void name long enough to be a summary the exemption missed;
         // and the names by fold, so the whole cohort is readable in one report.
         let clip = |name: &str, max: usize| -> String { name.chars().take(max).collect() };
-        let exempted_ids: Vec<i64> = exempted.iter().map(|(id, ..)| *id).collect();
-        let mut exempted_mentions: std::collections::HashMap<i64, u64> = std::collections::HashMap::new();
-        for (org, _) in Box::pin(self.db.mention_notices_of_orgs(&exempted_ids)).await.map_err(|e| e.to_string())? {
-            *exempted_mentions.entry(org).or_default() += 1;
-        }
         let exempted_list: Vec<serde_json::Value> = exempted
             .iter()
             .map(|(id, name, ..)| {
-                serde_json::json!({
+                let mut entry = serde_json::json!({
                     "org": id,
                     "name": clip(name, 300),
                     "mentions": exempted_mentions.get(id).copied().unwrap_or(0),
-                })
+                });
+                // Issue 525: why the fold keeps it (`party kept: 6/23 names void`), and where.
+                if let (Some(reason), Some(fields)) = (reasons.get(id), entry.as_object_mut()) {
+                    fields.insert("reason".into(), serde_json::json!(reason));
+                    if let Some(notices) = kept_notices.get(id) {
+                        fields.insert("notices".into(), serde_json::json!(notices));
+                    }
+                }
+                entry
             })
             .collect();
         let long: Vec<serde_json::Value> = orgs
@@ -5720,12 +5850,16 @@ impl Supervisor {
         let profiles = by_profile.iter().map(|(profile, n)| format!("{profile} {n}")).collect::<Vec<_>>().join(", ");
         let action = if dry_run { "would re-queue" } else { "re-queued" };
         let count = if dry_run { found } else { requeued };
+        // Issue 525 (the review): a void org with mentions on both sides is in both lists, so the
+        // line says how many of the exempted are re-queued too rather than adding them up.
+        let requeued_ids: std::collections::HashSet<i64> = orgs.iter().map(|(id, ..)| *id).collect();
+        let both = exempted.iter().filter(|(id, ..)| requeued_ids.contains(id)).count();
         Ok(match summary {
             None => format!(
                 "{kind} (issue {issue}){mode}: {} void-lot org(s) ({} with an identifier, {} with a legal form, \
-                 {} long; {} more exempted as naming an award), {} mention(s) on {found} notice(s) ({profiles}); \
-                 {action} {count}, stamped {stamped} tender(s) epoch-stale — the fold retires the mentions, then run \
-                 sweep-orphan-orgs",
+                 {} long); {} exempted, {both} of them also re-queued (the fold keeps their party or the name names \
+                 an award); {} mention(s) to retire on {found} notice(s) ({profiles}); {action} {count}, stamped \
+                 {stamped} tender(s) epoch-stale — the fold retires the mentions, then run sweep-orphan-orgs",
                 orgs.len(),
                 identified.len(),
                 legal_form.len(),
@@ -5745,6 +5879,47 @@ impl Supervisor {
                 pairs.len(),
             ),
         })
+    }
+
+    /// Issue 525: `refold-void-names`' split of its net `hits` ([`split_void_hits`]), reading
+    /// what it needs: every recorded mention of the hits with its section
+    /// (`Db::mention_sections_of_orgs`), and each mentioned notice's stored parse through
+    /// `parsed_by_ids` in chunks of [`VOID_PARSE_CHUNK`], each read with the fold's own party
+    /// decision (`ingest::project::fold_parties`) and dropped before the next chunk. A notice
+    /// the read does not return stays unread, so its mentions re-queue. `None` when cancelled
+    /// between chunks (nothing is written before the split).
+    async fn void_split(&self, job: &Job, hits: Vec<store::NamedOrg>) -> Result<Option<VoidSplit>, String> {
+        let ids: Vec<i64> = hits.iter().map(|(id, ..)| *id).collect();
+        let mentions = Box::pin(self.db.mention_sections_of_orgs(&ids)).await.map_err(|e| e.to_string())?;
+        let mut wanted: std::collections::BTreeMap<i64, Vec<&str>> = std::collections::BTreeMap::new();
+        for (_, notice, section) in &mentions {
+            wanted.entry(*notice).or_default().push(section.as_str());
+        }
+        let notices: Vec<i64> = wanted.keys().copied().collect();
+        let mut verdicts: std::collections::HashMap<(i64, &str), ingest::project::PartyVerdict> =
+            std::collections::HashMap::new();
+        for (i, chunk) in notices.chunks(VOID_PARSE_CHUNK).enumerate() {
+            if self.cancelled(job.id) {
+                return Ok(None);
+            }
+            for (notice, parsed) in Box::pin(self.db.parsed_by_ids(chunk)).await.map_err(|e| e.to_string())? {
+                let parties = ingest::project::fold_parties(&notice.profile, &parsed);
+                for section in wanted.get(&notice.id).into_iter().flatten() {
+                    verdicts.insert((notice.id, *section), parties.verdict(section));
+                }
+            }
+            let read = (i * VOID_PARSE_CHUNK + chunk.len()) as u64;
+            self.set_phase(
+                "reading",
+                Some(read),
+                Some(notices.len() as u64),
+                format!("the fold's party decision on {read} of {} mentioned notice(s)", notices.len()),
+            );
+        }
+        let verdict = |notice: i64, section: &str| {
+            verdicts.get(&(notice, section)).copied().unwrap_or(ingest::project::PartyVerdict::Unknown)
+        };
+        Ok(Some(split_void_hits(hits, &mentions, verdict)))
     }
 
     /// Issue 511 §7 U2d: the placeholder dry plan's own sections — what 511 §8.2 must read
@@ -17078,9 +17253,10 @@ mod tests {
     }
 
     /// Issue 510: `refold-void-names` enqueues dry unless asked (a wet request without
-    /// `expect` is refused), counts the void-lot orgs with the fold's own predicate and the
-    /// notices that mention them, aborts a wet run above its `expect` with nothing written,
-    /// and otherwise re-queues those notices with their Tenders stamped.
+    /// `expect` is refused), counts the void-lot orgs whose mentions the fold's own party
+    /// decision drops (issue 525) and the notices that mention them, aborts a wet run above its
+    /// `expect` with nothing written, and otherwise re-queues those notices with their Tenders
+    /// stamped.
     #[tokio::test]
     async fn refold_void_names_counts_dry_refuses_over_expect_and_requeues() {
         let db = scratch().await;
@@ -17128,6 +17304,12 @@ mod tests {
         .unwrap();
         ingest::project::project(&db, false).await.expect("fold");
         db.execute_for_test("UPDATE organizations SET name = 'Lot déclaré infructueux'").await.unwrap();
+        // …and the parse with it: the mention stands, recorded before the rule, while the stored
+        // parse says the lot was not awarded — what the walk's split reads (issue 525: the fold's
+        // own party decision, not the head name).
+        db.execute_for_test("UPDATE notice_texts SET value = 'Lot déclaré infructueux' WHERE section_id = 'ORG-1'")
+            .await
+            .unwrap();
         // Two more matches, mentioned nowhere. A void sentence whose fold holds the census's
         // legal-form `sa` (the French possessive): void, and listed for the operator
         // (unit1-decision §5.3's stand-in for a guard). A per-lot summary that names a
@@ -17151,7 +17333,7 @@ mod tests {
         let msg = sup.run_spec(&job(1, true, None)).await.expect("dry");
         assert!(
             msg.contains("DRY RUN")
-                && msg.contains("2 void-lot org(s) (0 with an identifier, 1 with a legal form, 0 long; 1 more exempted")
+                && msg.contains("2 void-lot org(s) (0 with an identifier, 1 with a legal form, 0 long); 1 exempted, 0 of them")
                 && msg.contains("on 1 notice(s) (eforms:eforms-sdk-1.13 1)")
                 && msg.contains("would re-queue 1"),
             "{msg}"
@@ -17167,7 +17349,7 @@ mod tests {
         );
         assert_eq!(
             report["exempted"],
-            serde_json::json!([{ "org": 99511, "name": "Lot 1) Dupont. Lot 2) infructueux", "mentions": 0 }]),
+            serde_json::json!([{ "org": 99511, "name": "Lot 1) Dupont. Lot 2) infructueux", "mentions": 0, "reason": "names an award" }]),
             "{body}"
         );
         assert_eq!(report["long"], serde_json::json!([]), "{body}");
@@ -17189,6 +17371,286 @@ mod tests {
         let msg = sup.run_spec(&job(3, false, Some(1))).await.expect("wet");
         assert!(msg.contains("re-queued 1") && msg.contains("stamped 1"), "{msg}");
         assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap().len(), 1, "re-queued for the fold");
+    }
+
+    /// Issue 525 (the walk/fold contract): `refold-void-names` re-queues a mention only when the
+    /// fold's own party decision drops its (notice, section) — or cannot read it — so its
+    /// re-queued set covers every drop the fold makes among the net's mentions, and lists each
+    /// mention the fold keeps under `exempted` with the fold's reason. A hit mentioned nowhere
+    /// keeps 510's head-name rule (counted when void, exempted when it names an award).
+    #[test]
+    fn the_void_walk_requeues_what_the_fold_drops_and_exempts_what_it_keeps() {
+        use ingest::project::{PartyVerdict, fold_parties};
+        let section = |id: &str, kind: &str, parent: Option<&str>| store::Section {
+            id: id.into(),
+            kind: kind.into(),
+            parent: parent.map(Into::into),
+        };
+        let name = |section: &str, ordinal: i64, lang: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: "TED-OFFICIALNAME".into(),
+            ordinal,
+            value: store::NoticeValue::Text { value: value.into(), lang: Some(lang.into()) },
+        };
+        // Notice 1 (r208): ORG-1 TED's `Lot not awarded` in four copies (dropped); ORG-2 a void IT
+        // copy beside a DE company's name (kept, 1 of 2 void); ORG-3 a real winner.
+        let r208 = store::Parsed {
+            sections: vec![
+                section("PROCEDURE", "Notice", None),
+                section("RES-1", "LotResult", Some("PROCEDURE")),
+                section("ORG-1", "Organization", Some("RES-1")),
+                section("ORG-2", "Organization", Some("RES-1")),
+                section("ORG-3", "Organization", Some("RES-1")),
+            ],
+            values: vec![
+                name("ORG-1", 0, "EN", "Lot not awarded"),
+                name("ORG-1", 1, "DA", "Partiet blev ikke tildelt"),
+                name("ORG-1", 2, "DE", "Los wurde nicht vergeben"),
+                name("ORG-1", 3, "ES", "Lote no adjudicado"),
+                name("ORG-2", 0, "IT", "non aggiudicato"),
+                name("ORG-2", 1, "DE", "Rossi GmbH"),
+                name("ORG-3", 0, "IT", "Rossi S.r.l."),
+            ],
+        };
+        // Notice 2 (r209): 23151933's nested shape, the mention recorded at the inner ORG-3.
+        let nested = store::Parsed {
+            sections: vec![
+                section("PROCEDURE", "Notice", None),
+                section("RES-1", "LotResult", Some("PROCEDURE")),
+                section("ORG-2", "Organization", Some("RES-1")),
+                section("ORG-3", "Organization", Some("ORG-2")),
+            ],
+            values: vec![name("ORG-3", 0, "FR", "marché déclaré sans suite")],
+        };
+        // Notice 3 has no parse the walk can read.
+        let folds = std::collections::HashMap::from([
+            (1, fold_parties("ted-export-r208", &r208)),
+            (2, fold_parties("ted-export-r209", &nested)),
+        ]);
+        let verdict = |notice: i64, section: &str| folds.get(&notice).map_or(PartyVerdict::Unknown, |f| f.verdict(section));
+        let org = |id: i64, name: &str| -> store::NamedOrg { (id, name.into(), None, None) };
+        let hits = vec![
+            org(10, "Lot not awarded"),
+            org(11, "non aggiudicato"),
+            org(12, "marché déclaré sans suite"),
+            org(13, "Infructueux"),
+            org(14, "Desierto"),
+            org(15, "Lot 1) Dupont. Lot 2) infructueux"),
+        ];
+        let mentions: Vec<(i64, i64, String)> =
+            [(10, 1, "ORG-1"), (11, 1, "ORG-2"), (12, 2, "ORG-3"), (13, 1, "ORG-3"), (13, 3, "ORG-5")]
+                .into_iter()
+                .map(|(org, notice, section)| (org, notice, section.to_owned()))
+                .collect();
+        let split = split_void_hits(hits, &mentions, verdict);
+        let ids = |orgs: &[store::NamedOrg]| orgs.iter().map(|(id, ..)| *id).collect::<Vec<_>>();
+        assert_eq!(split.pairs, vec![(10, 1), (12, 2), (13, 3)], "the drop, the nested drop, the unread parse");
+        assert_eq!(ids(&split.orgs), vec![10, 12, 13, 14], "…and a void head mentioned nowhere");
+        assert_eq!(ids(&split.exempted), vec![11, 13, 15]);
+        assert_eq!(split.kept, std::collections::HashMap::from([(11, 1), (13, 1), (15, 0)]));
+        assert_eq!(split.reasons[&11], "party kept: 1/2 names void");
+        assert_eq!(split.reasons[&13], "party kept: 0/1 names void", "13's other mention names a real winner");
+        assert_eq!(split.reasons[&15], "names an award");
+        assert_eq!(split.kept_notices, std::collections::HashMap::from([(11, vec![1]), (13, vec![1])]));
+        // The contract itself: every mention the fold drops is re-queued.
+        for (org, notice, section) in &mentions {
+            if matches!(verdict(*notice, section), PartyVerdict::Dropped(_)) {
+                assert!(split.pairs.contains(&(*org, *notice)), "{org} at {notice}/{section}: a fold drop not re-queued");
+            }
+        }
+    }
+
+    /// Issue 525, end to end: the void walk re-queues the notices of the mentions the fold drops
+    /// — a 2-copy party whose copies both read void, a void name in a nested inner half recorded
+    /// at the inner key (23151933's shape), and (the review) a DE-1.x party, read through the
+    /// fold's `normalise_de1` — and exempts the party the fold keeps (a
+    /// void copy beside a company's name). The paired fold retires exactly those mentions, and
+    /// a dry re-walk lists no notice: the drain converges instead of re-listing them (dry 2351 →
+    /// wet 2352 → fold 2353 `0 non-name retired` → dry 2354, the same 37 orgs).
+    #[tokio::test]
+    async fn refold_void_names_requeues_only_the_folds_drops_and_converges() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let fetch_id = seed_fetch(&db).await;
+        let section = |id: &str, kind: &str, parent: Option<&str>| store::Section {
+            id: id.into(),
+            kind: kind.into(),
+            parent: parent.map(Into::into),
+        };
+        let text = |section: &str, field: &str, ordinal: i64, lang: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal,
+            value: store::NoticeValue::Text { value: value.into(), lang: Some(lang.into()) },
+        };
+        let id_ref = |section: &str, field: &str, target: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: store::NoticeValue::Id { scheme: None, value: target.into(), is_ref: true },
+        };
+        let notice = |n: u32, profile: &str| store::Notice {
+            source: "ted".into(),
+            publication_id: format!("0052500{n}-2024"),
+            content_hash: format!("h525-{n}"),
+            profile: profile.into(),
+            declared_version: None,
+            fetch_id,
+            member_path: format!("m525-{n}"),
+            ingested_at: 0,
+            published_at: Some(store::Stamp::utc(0)),
+            dispatched_at: None,
+        };
+        // A bilingual award folded with real names; ORG-2 and ORG-3 then read void in the parse.
+        const BT500: &str = "BT-500-Organization-Company";
+        let bilingual = store::Parsed {
+            sections: vec![
+                section("PROCEDURE", "Notice", None),
+                section("ORG-1", "Organization", None),
+                section("ORG-2", "Organization", None),
+                section("ORG-3", "Organization", None),
+            ],
+            values: vec![
+                text("ORG-1", BT500, 0, "ITA", "Comune di Bolzano"),
+                text("ORG-2", BT500, 0, "ITA", "Rossi S.r.l."),
+                text("ORG-2", BT500, 1, "DEU", "Rossi GmbH"),
+                text("ORG-3", BT500, 0, "ITA", "Bianchi S.r.l."),
+                text("ORG-3", BT500, 1, "DEU", "Bianchi GmbH"),
+            ],
+        };
+        db.record_notice(&notice(1, "eforms:eforms-sdk-1.13"), &store::Parse::Parsed(bilingual)).await.unwrap();
+        // 23151933's layout as recorded: ORG-3 alone under RES-1, the winner ref naming it.
+        let r209 = store::Parsed {
+            sections: vec![
+                section("PROCEDURE", "Notice", None),
+                section("ORG-1", "Organization", Some("PROCEDURE")),
+                section("RES-1", "LotResult", Some("PROCEDURE")),
+                section("ORG-3", "Organization", Some("RES-1")),
+            ],
+            values: vec![
+                text("ORG-1", "TED-OFFICIALNAME", 0, "FR", "commune des Essarts"),
+                text("ORG-3", "TED-OFFICIALNAME", 0, "FR", "Atelier Martin Architectes"),
+                id_ref("PROCEDURE", "TED-ADDRESS_CONTRACTING_BODY", "ORG-1"),
+                id_ref("RES-1", "TED-WINNER", "ORG-3"),
+            ],
+        };
+        db.record_notice(&notice(2, "ted-export-r209"), &store::Parse::Parsed(r209)).await.unwrap();
+        // The review: a DE-1.x award, stored under the dialect's own name field, which the fold reads
+        // only through `normalise_de1` — and so must the walk, or the party reads as nameless and kept.
+        const DE1_NAME: &str = "DE1-Organizations-Organization-Company-PartyName-Name";
+        let de1 = store::Parsed {
+            sections: vec![
+                section("PROCEDURE", "Notice", None),
+                section("ORG-0001", "Organization", None),
+                section("ORG-0003", "Organization", None),
+            ],
+            values: vec![text("ORG-0001", DE1_NAME, 0, "DEU", "Stadt Köln"), text("ORG-0003", DE1_NAME, 0, "DEU", "Müller Bau GmbH")],
+        };
+        db.record_notice(&notice(3, "eforms:eforms-de-1.2"), &store::Parse::Parsed(de1)).await.unwrap();
+        ingest::project::project(&db, false).await.expect("fold");
+        let org_of = async |publication: &str, section: &str| {
+            let sql = format!(
+                "SELECT m.organization_id FROM organization_mentions m JOIN notices n ON n.id = m.notice_id
+                  WHERE n.publication_id = '{publication}' AND m.section_id = '{section}'"
+            );
+            match db.scalar(&sql).await {
+                Ok(Some(store::turso::Value::Integer(id))) => id,
+                other => panic!("{publication} {section}: {other:?}"),
+            }
+        };
+        let kept = org_of("00525001-2024", "ORG-2").await;
+        let dropped = org_of("00525001-2024", "ORG-3").await;
+        let inner = org_of("00525002-2024", "ORG-3").await;
+        let de1_winner = org_of("00525003-2024", "ORG-0003").await;
+        // The parses change under the standing mentions (a re-parse's shape), and the orgs and
+        // mentions take the void heads their first copies give them.
+        let notice_of = |publication: &str| format!("(SELECT id FROM notices WHERE publication_id = '{publication}')");
+        let (bilingual, r209, de1) = (notice_of("00525001-2024"), notice_of("00525002-2024"), notice_of("00525003-2024"));
+        for sql in [
+            format!(
+                "UPDATE notice_texts SET value = 'non aggiudicato' \
+                 WHERE notice_id = {bilingual} AND section_id IN ('ORG-2', 'ORG-3') AND ordinal = 0"
+            ),
+            format!(
+                "UPDATE notice_texts SET value = 'Zuschlag nicht vergeben' \
+                 WHERE notice_id = {bilingual} AND section_id = 'ORG-3' AND ordinal = 1"
+            ),
+            format!(
+                "INSERT INTO notice_sections (notice_id, section_id, kind, parent_section_id) \
+                 VALUES ({r209}, 'ORG-2', 'Organization', 'RES-1')"
+            ),
+            format!("UPDATE notice_sections SET parent_section_id = 'ORG-2' WHERE notice_id = {r209} AND section_id = 'ORG-3'"),
+            format!("UPDATE notice_texts SET value = 'marché déclaré sans suite' WHERE notice_id = {r209} AND section_id = 'ORG-3'"),
+            format!("UPDATE organizations SET name = 'non aggiudicato' WHERE id IN ({kept}, {dropped})"),
+            format!("UPDATE organizations SET name = 'marché déclaré sans suite' WHERE id = {inner}"),
+            // The recorded mention names its party's first copy, as on prod: the kept party's
+            // mention is unchanged for the fold, so it stays bound where it is.
+            format!("UPDATE organization_mentions SET name = 'non aggiudicato' WHERE organization_id IN ({kept}, {dropped})"),
+            format!("UPDATE organization_mentions SET name = 'marché déclaré sans suite' WHERE organization_id = {inner}"),
+            format!("UPDATE notice_texts SET value = 'Los wurde nicht vergeben' WHERE notice_id = {de1} AND section_id = 'ORG-0003'"),
+            format!("UPDATE organizations SET name = 'Los wurde nicht vergeben' WHERE id = {de1_winner}"),
+            format!("UPDATE organization_mentions SET name = 'Los wurde nicht vergeben' WHERE organization_id = {de1_winner}"),
+        ] {
+            db.execute_for_test(&sql).await.unwrap_or_else(|e| panic!("{sql}: {e}"));
+        }
+        assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty());
+
+        let job = |id: u64, dry_run: bool, expect: Option<u64>| Job {
+            id,
+            kind: "refold-void-names".into(),
+            params: String::new(),
+            spec: Spec::RefoldVoidNames { dry_run, expect },
+            resume_after: None,
+        };
+        let msg = sup.run_spec(&job(1, true, None)).await.expect("dry");
+        assert!(
+            msg.contains("3 void-lot org(s)")
+                && msg.contains("1 exempted, 0 of them also re-queued")
+                && msg.contains("would re-queue 3"),
+            "{msg}"
+        );
+        let (body, _) = db.latest_report(VOID_NAMES_REFOLD_REPORT).await.unwrap().expect("report");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(
+            (report["orgs"].as_u64(), report["mentions"].as_u64(), report["notices"].as_u64()),
+            (Some(3), Some(3), Some(3)),
+            "{body}"
+        );
+        assert_eq!(report["notices_by_profile"]["eforms:eforms-de-1.2"], 1, "the DE-1.x drop is re-queued {body}");
+        let bilingual_id = match db.scalar("SELECT id FROM notices WHERE publication_id = '00525001-2024'").await {
+            Ok(Some(store::turso::Value::Integer(id))) => id,
+            other => panic!("{other:?}"),
+        };
+        assert_eq!(
+            report["exempted"],
+            serde_json::json!([{
+                "org": kept, "name": "non aggiudicato", "mentions": 1, "reason": "party kept: 1/2 names void",
+                "notices": [bilingual_id],
+            }]),
+            "{body}"
+        );
+
+        let msg = sup.run_spec(&job(2, false, Some(3))).await.expect("wet");
+        assert!(msg.contains("re-queued 3"), "{msg}");
+        let fold = ingest::project::project_incremental(&db).await.expect("the paired fold");
+        assert_eq!(fold.mentions_retired, 3, "the fold retires every mention the walk re-queued");
+        for (org, left) in [(kept, 1), (dropped, 0), (inner, 0), (de1_winner, 0)] {
+            let n = db.scalar(&format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {org}")).await.unwrap();
+            assert_eq!(n, Some(store::turso::Value::Integer(left)), "org {org}");
+        }
+
+        let msg = sup.run_spec(&job(3, true, None)).await.expect("dry again");
+        assert!(
+            msg.contains("on 0 notice(s)") && msg.contains("would re-queue 0") && msg.contains("1 exempted, 0 of them"),
+            "{msg}"
+        );
+        let (body, _) = db.latest_report(VOID_NAMES_REFOLD_REPORT).await.unwrap().expect("report");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(
+            (report["mentions"].as_u64(), report["notices"].as_u64()),
+            (Some(0), Some(0)),
+            "the emptied orgs wait for the orphan sweep {body}"
+        );
     }
 
     /// Issue 511: `refold-placeholder-names` routes beside `refold-void-names` (dry unless

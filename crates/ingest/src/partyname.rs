@@ -37,7 +37,14 @@
 //! ([`bare_lot_qualifier`]). Every void entry is a 2026-10-10 prod
 //! measurement (`.scratch/tender-db/510-void-names/unit1-decision.md` §2): each whole
 //! value says the lot was not awarded, has 20 or more winner-role mentions, and no real
-//! company with that exact fold. Issue 511's entries are its 2026-10-11 census (§4), with
+//! company with that exact fold — save TED's own multilingual templates, whose every copy
+//! is a void value because the fold reads a party by all its copies: 17674598's (510's drain
+//! Verify), and since issue 525 the other templates the kept parties printed (`Kontrakten
+//! ikke tildelt.`, `Los wurde nicht vergeben`, `This lot was unsuccessful.`, `entfällt — Los
+//! nicht vergeben`), each a form wording, never a company's name. Those are EXACT values
+//! ([`VOID_TEMPLATES`]: never measured as a reason head or a prefix, so a name that opens
+//! with one and goes on is a name), save TED's own bracketed pointer after one
+//! ([`template_pointed`]). Issue 511's entries are its 2026-10-11 census (§4), with
 //! four guards for the real names beside them:
 //! - every new single word or abbreviation is a whole value (`N/A s. r. o.`, `NIL d.o.o.`,
 //!   `Diverse Care Services Ltd`, `Brake` stay names);
@@ -192,6 +199,239 @@ const VOID_WHOLE: [&str; 50] = [
     "не е възложена",
     "nu a fost atribuit",
     "ugovor nije sklopljen",
+];
+
+/// Issue 525: TED's OTHER winner-slot templates for a contract or lot not awarded, from the
+/// copies of the parties the fold kept (dry 2351's 37 orgs, re-listed after every drain; public
+/// `/content`, 2026-10-12). A 2-copy party drops only when both copies read void and a 24-copy one
+/// on half, so each template is carried in every language its notices print.
+///
+/// EXACT values: the entire fold, or the fold before a bare lot qualifier
+/// ([`bare_lot_qualifier`]: `(lot 3)`) — never a reason head nor a prefix, as [`VOID_WHOLE`]'s
+/// are ([`reason_head`], [`void_prefix`]). TED prints its templates exactly; a name that opens
+/// with one and goes on is national free text, which these were never measured against (510's
+/// admission rule: a prefix census), and the award vocabulary that would keep it a name
+/// ([`names_an_award`]) is French, Spanish, Italian, English and Dutch only — `Kontrakten ikke
+/// tildelt, men givet til Hansen Byg` and `Los wurde nicht vergeben e.K.` are names (the review).
+const VOID_TEMPLATES: [&str; 191] = [
+    // `Contract not awarded.` / `Marché non attribué.` (16893864 ORG-2..5: DA, DE, ES, EL, IT, PT,
+    // SV, CS, HU, LT, LV, MT, SK, SL, GA, BG, RO):
+    "kontrakten ikke tildelt",
+    "der auftrag wurde nicht vergeben",
+    "el contrato no ha sido adjudicado",
+    "η συμβαση δεν κατακυρωθηκε",
+    "appalto non aggiudicato",
+    "contrato nao adjudicado",
+    "kontraktet har inte tilldelats",
+    "zakazka nebyla zadana",
+    "a szerzodest nem iteltek oda",
+    "sutartis nepaskirta",
+    "ligums nav pieskirts",
+    "il kuntratt ma ngħatax",
+    "obstaravanie nebolo pridelene",
+    "pogodba ni dodeljena",
+    "nior damhadh an conradh",
+    "поръчката не беше възложена",
+    "contract neatribuit",
+    // …its later wording (16891918 ORG-2: DA, DE, ES, FR, EL, SV, LV, PL, SK, BG):
+    "kontrakten blev ikke tildelt",
+    "es wurde kein auftrag vergeben",
+    "no se ha adjudicado ningun contrato",
+    "le marche n a pas ete attribue",
+    "η συμβαση δεν ανατεθηκε",
+    "inget kontrakt har tilldelats",
+    "liguma slegsanas tiesibas nav pieskirtas",
+    "zamowienie nie zostalo udzielone",
+    "zmluva nebola udelena",
+    "поръчката не бе възложена",
+    // `No contract awarded.` (16967678 ORG-4: DA, FR, IT, NL, PT, HU, GA, BG), and 17674598's
+    // own LV copy as 16967678's ORG-2 spells it:
+    "ingen kontrakt tildelt",
+    "aucun marche n a ete attribue",
+    "non e stato aggiudicato alcun contratto",
+    "er is geen opdracht gegund",
+    "nao foi adjudicado nenhum contrato",
+    "szerzodes odaitelesere nem kerult sor",
+    "nior damhadh aon chonradh",
+    "поръчката не е възложена",
+    "nav pieskirta",
+    // `Lot not awarded` (12563312 ORG-23: DA, DE, ES, FI, EL, PT, SV, CS, ET, HU, LT, LV, MT, PL,
+    // SK, SL, GA, BG, RO):
+    "partiet blev ikke tildelt",
+    "los wurde nicht vergeben",
+    "lote no adjudicado",
+    "erasta ei tehty sopimusta",
+    "η παρτιδα δεν ανατεθηκε",
+    "lote nao adjudicado",
+    "delen har inte tilldelats",
+    "polozka nebyla zadana",
+    "osa kohta lepingut ei solmitud",
+    "a tetel nem kerult odaitelesre",
+    "dalis nepaskirta",
+    "dala netika pieskirta",
+    "il lott ma ngħatax",
+    "na te czesc nie udzielono zamowienia",
+    "cast nebola pridelena",
+    "sklop ni bil oddan",
+    "nior damhadh an beart",
+    "партидата не е възложена",
+    "lot neatribuit",
+    // `Ce lot est infructueux.` / `This lot was unsuccessful.` (12466332 ORG-2: every language
+    // but FR and ES, which the `infructu` stem reads):
+    "dette parti er ikke blevet tildelt",
+    "dieses los blieb erfolglos",
+    "this lot was unsuccessful",
+    "tama era oli tulokseton",
+    "η διαδικασια αναθεσησ τησ παρτιδασ ειναι ανεπιτυχησ",
+    "questo lotto e risultato infruttuoso",
+    "het perceel bleef zonder resultaat",
+    "este lote foi considerado infrutifero",
+    "denna del har inte givit nagot resultat",
+    "tato polozka byla neuspesna",
+    "selle osa menetlus luhtus",
+    "a tetel sikertelen volt",
+    "si dalis buvo nesekminga",
+    "si dala bija neveiksmiga",
+    "dan il lott kien mingħajr suċċess",
+    "zamowienie dla tej czesci uznano za nieskuteczne",
+    "tato cast bola neuspesna",
+    "ta sklop je bil neuspesen",
+    "bhi an beart seo neamhrathuil",
+    "тази партида беше неуспешна",
+    "acest lot a fost nereusit",
+    // `Non applicable — Lot non attribué` (18344075 ORG-4..7, 24 languages with HR): the slot's
+    // "not applicable" and the lot's "not awarded" whole together, since the opener alone is no
+    // void phrase (the FR and NL copies read void by their stems, the EN and PL ones `Blank`):
+    "finder ikke anvendelse partiet blev ikke tildelt",
+    "entfallt los nicht vergeben",
+    "no procede lote no adjudicado",
+    "ei sovelleta erasta ei tehty sopimusta",
+    "ανευ αντικειμενου το τμημα δεν ανατεθηκε",
+    "non applicabile lotto non aggiudicato",
+    "nao aplicavel lote nao adjudicado",
+    "ej tillampligt delen har inte tilldelats",
+    "nepouzije se polozka nebyla zadana",
+    "ei kohaldata osa lepingut ei solmitud",
+    "nem alkalmazhato a tetel nem kerult odaitelesre",
+    "netaikoma nes dalis nebuvo paskirta",
+    "nav piemerojams liguma slegsanas tiesibas par so dalu nav pieskirtas",
+    "mhux applikabbli il lott ma ngħatax",
+    "neuplatnitelne cast nebola pridelena",
+    "ni navedeno sklop ni bil oddan",
+    "neamhbhainteach nior damhadh beart",
+    "не е приложимо партидата не е възложена",
+    "neaplicabil lot neatribuit",
+    "nije primjenjivo grupa nije dodijeljena",
+    // The review: the other kept parties of dry 2351, from diagnosis 2's copies (public `/content`,
+    // 2026-10-12). `Non-attribution du marché` (17359294 ORG-2, org 3530158: DA, DE, EN, FI, EL, IT,
+    // PT, SV, CS, LT, LV, PL, SK, SL, GA, BG, RO):
+    "ikke tildeling af kontrakten",
+    "nichtvergabe des auftrags",
+    "non award of the contract",
+    "sopimuksen tekematta jattaminen",
+    "μη αναθεση τησ συμβασησ",
+    "non aggiudicazione dell appalto",
+    "nao adjudicacao do contrato",
+    "utebliven kontraktstilldelning",
+    "nezadani zakazky",
+    "sutarties nepaskyrimas",
+    "liguma slegsanas tiesibu nepieskirsana",
+    "nieudzielenie zamowienia",
+    "nepridelenie obstaravania",
+    "neoddano narocilo",
+    "neamhdhamhachtain an chonartha",
+    "невъзлагане на поръчката",
+    "neatribuirea contractului",
+    // `non applicable: marché non attribué.` (18137696 ORG-2, org 6023876), the colon spelling of
+    // the "not applicable — not awarded" compound with the contract's wording (DA … HR; the FR and NL
+    // copies read void by their stems, the EN and PL ones `Blank`):
+    "ikke relevant kontrakten blev ikke tildelt",
+    "entfallt der auftrag wurde nicht vergeben",
+    "no procede el contrato no se ha adjudicado",
+    "ei sovelleta sopimusta ei tehty",
+    "ανευ αντικειμενου η συμβαση δεν ανατεθηκε",
+    "non applicabile appalto non aggiudicato",
+    "nao aplicavel contrato nao adjudicado",
+    "ej tillampligt kontraktet har inte tilldelats",
+    "nepouzije se zakazka nebyla zadana",
+    "ei kohaldata lepingut ei solmitud",
+    "nem alkalmazhato a szerzodest nem iteltek oda",
+    "netaikoma sutartis nepaskirta",
+    "nav piemerojams liguma slegsanas tiesibas nav pieskirtas",
+    "ma japplikax il kuntratt ma ngħatax",
+    "neuplatnitelne zmluva nebola pridelena",
+    "ni ustrezno narocilo ni bilo oddano",
+    "neamhbhainteach nior damhadh an conradh",
+    "не е приложимо поръчката не е възложена",
+    "nu se aplica contract neatribuit",
+    "nije primjenjivo ugovor nije sklopljen",
+    // `Non applicable — Marché non attribué` (18549508 ORG-2, org 7400280), its dash spelling (the
+    // copies it shares with the colon one listed there):
+    "finder ikke anvendelse kontrakten blev ikke tildelt",
+    "entfallt auftrag nicht vergeben",
+    "no procede contrato no adjudicado",
+    "ανευ αντικειμενου μη ανατεθεισα συμβαση",
+    "netaikoma nes sutartis nebuvo paskirta",
+    "nav liguma slegsanas tiesibas nav pieskirtas",
+    "mhux applikabbli il kuntratt ma ngħatax",
+    "neuplatnitelne zmluva nebola uzatvorena",
+    "ni navedeno narocilo ni bilo oddano",
+    "neamhbhainteach nior damhadh conradh",
+    "neaplicabil contract neatribuit",
+    // `Aucune offre reçue` (18236286 ORG-3, org 5286300; the FR copy is a `VOID_WHOLE` value):
+    "der blev ikke modtaget nogen bud",
+    "es ging kein angebot ein",
+    "no tenders were received",
+    "no se ha recibido ninguna oferta",
+    "yhtaan tarjousta ei saatu",
+    "δεν παρεληφθη καμια προσφορα",
+    "non sono pervenute offerte",
+    "er zijn geen inschrijvingen ontvangen",
+    "nao foi recebida nenhuma proposta",
+    "inga anbud mottogs",
+    "nebyly obdrzeny zadne nabidky",
+    "uhtegi pakkumist ei laekunud",
+    "nem erkezett be ajanlat",
+    "negauta jokiu pasiulymu",
+    "netika sanemts neviens piedavajums",
+    "ma waslu ebda offerti",
+    "nie otrzymano ofert",
+    "nebola dorucena ziadna ponuka",
+    "prejeta ni bila nobena ponudba",
+    "ni bhfuarthas aon tairiscinti",
+    "не бяха получени оферти",
+    "nu s a primit nicio oferta",
+    "nije zaprimljena nijedna ponuda",
+    // `Procédure infructueuse` (18720683 ORG-2, org 7985877; the FR and ES copies read by the
+    // `infructu` stem):
+    "resultatlos procedure",
+    "verfahren erfolglos",
+    "unsuccessful procedure",
+    "tulokseton menettely",
+    "ατελεσφορη διαδικασια",
+    "procedura infruttuosa",
+    "de procedure is zonder resultaat gebleven",
+    "concurso declarado infrutifero",
+    "resultatlost forfarande",
+    "neuspesne rizeni",
+    "menetlus luhtus",
+    "sikertelen eljaras",
+    "nesekminga procedura",
+    "neveiksmiga procedura",
+    "proċedura mingħajr suċċess",
+    "postepowanie nieskuteczne",
+    "neuspesne konanie",
+    "neuspesen postopek",
+    "nos imeachta neamhrathuil",
+    "неуспешна процедура",
+    "procedura nereusita",
+    "neuspjesan postupak",
+    // South Tyrol's bilingual `non aggiudicato` / `Zuschlag nicht vergeben` (12501289, 4416766):
+    // two copies, so the DE one must read void by itself.
+    "zuschlag nicht vergeben",
+    // The text era's `NO AWARD WAS MADE` (3322691 ORG-2): `no award` and a lowercase `was` read
+    // void, an uppercase `WAS` a company's next word, so case decided it. Whole, it does not.
+    "no award was made",
 ];
 
 /// Pointer and withheld-value stems (the rest of the 508 text list, and issue 511's
@@ -592,7 +832,8 @@ pub fn not_a_name(name: &str) -> Option<NotAName> {
 ///    ([`summary_shape`]), else [`NotAName::Placeholder`];
 /// 5. a blank stem: [`NotAName::AwardSummary`] for a summary's shape or a `but` clause that
 ///    names a body ([`but_names`]), else [`NotAName::Blank`];
-/// 6. the whole values: 510's void ones first (with its reason and prefix rules), then
+/// 6. the whole values: 510's void ones first (with its reason and prefix rules) and issue 525's
+///    TED templates (exact, or with TED's own bracketed pointer: [`VOID_TEMPLATES`]), then
 ///    [`PLACEHOLDER_WHOLE`] (and a legal reference closing on `erfolgt hier keine Angabe`:
 ///    [`withheld_by_reference`]), [`BLANK_WHOLE`], and [`SCOPED_WHOLE`] in its languages and a
 ///    plain case — after a bare lot qualifier only; one that names a company or a list is
@@ -662,6 +903,14 @@ fn classify(name: &str, lang: Option<&str>, references: bool) -> Option<NotAName
     let whole = stripped.as_deref().unwrap_or(&full);
     if VOID_WHOLE.contains(&whole) {
         return Some(NotAName::VoidLot);
+    }
+    // Issue 525: TED's other templates, exact — the whole fold, or before a bare lot qualifier
+    // only; neither the reason nor the prefix rule below reads them ([`VOID_TEMPLATES`]).
+    if VOID_TEMPLATES.contains(&whole) && qualifier.is_none_or(|(_, group)| bare_lot_qualifier(group)) {
+        return Some(NotAName::VoidLot);
+    }
+    if template_pointed(name) {
+        return (!names_an_award(name, &full)).then_some(NotAName::VoidLot);
     }
     // A void whole value followed by its reason (`Desierto (no ofertas)`, `Lotto deserto -
     // non aggiudicato per importo offerto superiore alla base d'asta`, `Niet gegund - perceel
@@ -2445,8 +2694,10 @@ fn polish_company_form(padded: &str) -> bool {
     [" sp z o o", " sp z oo", " spolka ", " spolki "].iter().any(|form| format!("{padded} ").contains(form))
 }
 
-/// Whether `name` says the lot was not awarded ([`NotAName::VoidLot`]) — the fold's rule,
-/// as a plain predicate for injection (issue 510's `refold-void-names` org walk).
+/// Whether `name` says the lot was not awarded ([`NotAName::VoidLot`]) — the fold's rule for
+/// ONE name, as a plain predicate for injection. The fold drops a PARTY by all its copies
+/// ([`crate::project::fold_parties`]), which issue 525's `refold-void-names` walk asks about
+/// every mention; this decides only the walk's orgs mentioned nowhere.
 pub fn is_void_lot(name: &str) -> bool {
     not_a_name(name) == Some(NotAName::VoidLot)
 }
@@ -2464,7 +2715,10 @@ pub fn mentions_void(name: &str) -> bool {
         return true;
     }
     let stripped = strip_lot_qualifier(name).map(fold);
-    VOID_WHOLE.contains(&stripped.as_deref().unwrap_or(&full))
+    let whole = stripped.as_deref().unwrap_or(&full);
+    VOID_WHOLE.contains(&whole)
+        || VOID_TEMPLATES.contains(&whole)
+        || template_pointed(name)
         || reason_head(name).is_some_and(|head| VOID_WHOLE.contains(&fold(head).as_str()))
         || void_prefix(name)
 }
@@ -2502,6 +2756,24 @@ fn void_prefix(name: &str) -> bool {
         }
     }
     false
+}
+
+/// Issue 525: one of TED's templates ([`VOID_TEMPLATES`]) followed by TED's own pointer to the
+/// form's additional information, in one bracketed group that closes the name — 12381194's ORG-4
+/// prints `Lot not awarded (see section VI, point VI.2 'Additional information').` in 23 languages
+/// (`Los wurde nicht vergeben (siehe Abschnitt VI Ziffer VI.2 „Sonstige Informationen“).`). The
+/// group is the pointer's translation shape ([`translation_shaped`]: a pointer word first, a dozen
+/// words at most, no legal form), holds a form section reference ([`has_form_reference`]) and names
+/// nothing after it ([`names_after_reference`]); a template followed by anything else is no
+/// template.
+fn template_pointed(name: &str) -> bool {
+    let trimmed = name.trim().trim_end_matches(|c: char| c.is_whitespace() || ".,;:".contains(c));
+    let Some(open) = trimmed.find(['(', '[']) else { return false };
+    let Some(inner) = trimmed[open + 1..].strip_suffix([')', ']']) else { return false };
+    VOID_TEMPLATES.contains(&fold(&trimmed[..open]).as_str())
+        && has_form_reference(inner)
+        && translation_shaped(inner)
+        && !names_after_reference(inner)
 }
 
 /// Words that continue a void phrase into its reason, in any case (all-caps names hide the
@@ -2822,6 +3094,7 @@ fn mixed_segments(raw: &str) -> bool {
             let padded = format!(" {folded}");
             !VOID_STEMS.iter().any(|stem| padded.contains(stem))
                 && !VOID_WHOLE.contains(&folded.as_str())
+                && !VOID_TEMPLATES.contains(&folded.as_str())
                 && ![" relanc", " nouvelle consultation", " nueva licitaci", " nuova gara", " nuevo procedimiento"]
                     .iter()
                     .any(|note| padded.contains(note))
@@ -2888,7 +3161,8 @@ mod tests {
     use super::{
         BLANK_STEMS, BLANK_WHOLE, FORM_SECTION_TITLES, NO_INFORMATION_TAILS, NotAName, PERFIL_STEMS, PLACEHOLDER_STEMS,
         PLACEHOLDER_WHOLE, POINTER_LEAD_INS, POINTER_STEMS, REFERENCE_HEAD_WORDS, REFERENCE_LISTS, REFERENCE_LEAD_INS,
-        ReferenceShape, SCOPED_WHOLE, VOID_STEMS, VOID_WHOLE, fold, is_exact_entry, mentions_placeholder, mentions_void,
+        ReferenceShape, SCOPED_WHOLE, VOID_STEMS, VOID_TEMPLATES, VOID_WHOLE, fold, is_exact_entry, mentions_placeholder,
+        mentions_void,
         not_a_name, not_a_name_in, section_reference, section_reference_pointer,
     };
 
@@ -3115,6 +3389,110 @@ mod tests {
         }
     }
 
+    /// Issue 525 (classes A and C): TED's OTHER winner-slot templates for a contract or lot not
+    /// awarded — one specimen per template and language family here; the projection's drop tests
+    /// pin every copy of each template with its notice (`TED_*` beside
+    /// `teds_other_not_awarded_templates_drop_their_party`). And the text era's all-caps `NO AWARD
+    /// WAS MADE` (3322691 ORG-2), whose uppercase `WAS` the prefix rule reads as a company's next
+    /// word: a whole value, so case never decides it.
+    #[test]
+    fn teds_other_not_awarded_templates_are_void() {
+        for void in [
+            "NO AWARD WAS MADE",
+            "No award was made",
+            "No award was made.",
+            "Zuschlag nicht vergeben",
+            "Der Auftrag wurde nicht vergeben.",
+            "Kontrakten ikke tildelt.",
+            "El contrato no ha sido adjudicado.",
+            "Appalto non aggiudicato.",
+            "Contract neatribuit.",
+            "Es wurde kein Auftrag vergeben",
+            "Le marché n'a pas été attribué",
+            "Aucun marché n'a été attribué.",
+            "Ingen kontrakt tildelt.",
+            "Partiet blev ikke tildelt",
+            "Los wurde nicht vergeben",
+            "Lote no adjudicado",
+            "LOTE NO ADJUDICADO",
+            "Lot neatribuit",
+            "This lot was unsuccessful.",
+            "Dieses Los blieb erfolglos.",
+            "entfällt — Los nicht vergeben",
+            "No procede: lote no adjudicado",
+            "Поръчката не беше възложена.",
+            "Η παρτίδα δεν ανατέθηκε",
+            "Il-lott ma ngħatax",
+            "Nav piešķirta.",
+            // The review: the other kept parties of dry 2351 (diagnosis 2's copies).
+            "Nichtvergabe des Auftrags",
+            "non-award of the contract",
+            "entfällt: Der Auftrag wurde nicht vergeben.",
+            "ikke relevant: Kontrakten blev ikke tildelt.",
+            "Non applicabile: appalto non aggiudicato.",
+            "entfällt — Auftrag nicht vergeben",
+            "finder ikke anvendelse — kontrakten blev ikke tildelt",
+            "neaplicabil – contract neatribuit",
+            "Es ging kein Angebot ein",
+            "no tenders were received",
+            "Verfahren erfolglos",
+            "unsuccessful procedure",
+            "Procedura infruttuosa",
+            // A bare lot qualifier comes off, as from every whole value.
+            "Lote no adjudicado (lote 3)",
+            // TED's own pointer after a template (12381194's ORG-4, every language).
+            "Los wurde nicht vergeben (siehe Abschnitt VI Ziffer VI.2 „Sonstige Informationen“).",
+            "Delen har inte tilldelats (se avsnitt VI, punkt VI.2 Kompletterande information).",
+            "Lot neatribuit (a se vedea secţiunea VI, punctul VI.2 „Informaţii suplimentare”).",
+        ] {
+            assert_eq!(not_a_name(void), Some(NotAName::VoidLot), "{void}");
+            assert!(mentions_void(void), "510's net holds {void}");
+        }
+    }
+
+    /// Issue 525: the real names beside the new templates stay names. A template is the entire
+    /// name ([`VOID_TEMPLATES`]), so a company that opens with one and goes on — a capitalised
+    /// word, a legal form, an award in a language the award words do not hold — is no void lot,
+    /// and a name that merely shares a word with a template (`Award`, `LOT`, `Partiet`, `Sklop`)
+    /// is nowhere near one.
+    #[test]
+    fn real_names_beside_teds_templates_are_names() {
+        for name in [
+            "Nicht Vergeben GmbH",
+            "Zuschlag Nicht Vergeben GmbH",
+            "NO AWARD WAS MADE LTD",
+            "Award Ltd",
+            "Awarded Contracts Ltd",
+            "LOT Polish Airlines",
+            "Polskie Linie Lotnicze LOT S.A.",
+            "Lote Uno SL",
+            "Lote No Adjudicado SL",
+            "Contract Neatribuit SRL",
+            "Sklop d.o.o.",
+            "Partiet Ingeniører ApS",
+            "Dalis UAB",
+            "Unsuccessful Ventures Ltd",
+            // The review: a template is EXACT ([`VOID_TEMPLATES`]) — neither a reason head nor a
+            // prefix, since the award vocabulary that keeps a summary a name is French, Spanish,
+            // Italian, English and Dutch only, and a legal form outside `COMPANY_TOKENS` is none.
+            "Kontrakten ikke tildelt, men givet til Hansen Byg",
+            "Zakázka nebyla zadána, vybrán dodavatel Novák stavby",
+            "Zamówienie nie zostało udzielone w części 2, część 1 udzielono Firmie Handlowej Jan Kowalski",
+            "Los wurde nicht vergeben, Zuschlag an Müller Bau AG",
+            "Appalto non aggiudicato in via definitiva, aggiudicazione provvisoria a Rossi Costruzioni",
+            "Lot neatribuit, lotul 2 atribuit catre Alfa Construct",
+            "Verfahren erfolglos, neu vergeben an Schmidt Bau",
+            "Sklop ni bil oddan d.o.o.",
+            "Los wurde nicht vergeben e.K.",
+            "Lote no adjudicado por falta de ofertas",
+            // A qualifier that says more than which lot, and a pointer group that names a company.
+            "Lote no adjudicado (lote 3 adjudicado a Pérez SL)",
+            "Los wurde nicht vergeben (siehe Müller Bau AG, VI.2)",
+        ] {
+            assert_eq!(not_a_name(name), None, "{name}");
+        }
+    }
+
     #[test]
     fn placeholders_are_their_own_class() {
         for placeholder in [
@@ -3249,8 +3627,14 @@ mod tests {
             assert!(POINTER_STEMS.contains(&perfil), "{perfil:?} is a pointer stem");
         }
         let scoped: Vec<&str> = SCOPED_WHOLE.iter().map(|(word, _)| *word).collect();
-        let wholes: Vec<&str> =
-            VOID_WHOLE.iter().chain(&PLACEHOLDER_WHOLE).chain(&BLANK_WHOLE).chain(&scoped).copied().collect();
+        let wholes: Vec<&str> = VOID_WHOLE
+            .iter()
+            .chain(&VOID_TEMPLATES)
+            .chain(&PLACEHOLDER_WHOLE)
+            .chain(&BLANK_WHOLE)
+            .chain(&scoped)
+            .copied()
+            .collect();
         for whole in &wholes {
             assert_eq!(fold(whole), *whole, "{whole:?}");
             assert_eq!(wholes.iter().filter(|w| *w == whole).count(), 1, "{whole:?} is in one list only");
