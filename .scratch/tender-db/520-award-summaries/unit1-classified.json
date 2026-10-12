@@ -1,0 +1,2039 @@
+[
+ {
+  "i": 0,
+  "rows": [
+   {
+    "org": 1171947,
+    "cls": "D",
+    "why": "Pure void prose ('Le marché n'a pas été attribué. Appel d'offres sans suite'); names no winner, should be VoidLot."
+   },
+   {
+    "org": 1300853,
+    "cls": "D",
+    "why": "Void prose (sans suite, to be relaunched as MAPA); 'multi attributaires' is the framework's design, no winner named."
+   },
+   {
+    "org": 1341883,
+    "cls": "D",
+    "why": "Administrative note ('Demander le détail… 257 lots attribués… 74 lots infructueux… 2 lots sans suite'); names no winner."
+   },
+   {
+    "org": 1392146,
+    "cls": "D",
+    "why": "'Le lot 1: <title> a été déclaré Infructueux' template: the lot title plus a void verdict, no winner."
+   },
+   {
+    "org": 1397079,
+    "cls": "A",
+    "winner": "B BRAUN",
+    "why": "Relaunch prose: '…relancé en procédure négocié… avec la société B BRAUN'; one winner."
+   },
+   {
+    "org": 1397080,
+    "cls": "A",
+    "winner": "Vascutek",
+    "why": "Relaunch prose: '…avec la Société Vascutek'; one winner."
+   },
+   {
+    "org": 1435451,
+    "cls": "A",
+    "winner": "Arrow Génériques",
+    "why": "'…puis attribué à la Société Arrow Génériques suite à procédure négociée…'; one winner."
+   },
+   {
+    "org": 1435452,
+    "cls": "A",
+    "winner": "Abbott Products",
+    "why": "'…puis attribué à la Société Abbott Products suite à…'; one winner."
+   },
+   {
+    "org": 1435453,
+    "cls": "A",
+    "winner": "Fresenius Kabi",
+    "why": "'…puis attribué à la Société Fresenius Kabi suite à…'; one winner."
+   },
+   {
+    "org": 1435455,
+    "cls": "A",
+    "winner": "Sanofi Aventis",
+    "why": "'…puis attribué à la Société Sanofi Aventis suite à…'; one winner."
+   },
+   {
+    "org": 1435456,
+    "cls": "A",
+    "winner": "Grunenthal/CSP",
+    "why": "'…puis attribué à la Société Grunenthal/CSP suite à…'; one party as written (lab/distributor pair CSP); keep the slash string, do not split."
+   },
+   {
+    "org": 1435457,
+    "cls": "A",
+    "winner": "Sandoz",
+    "why": "'…puis attribué à la Société Sandoz suite à procédure négociée avec publicité… (IAP 11-32 C)'; one winner."
+   },
+   {
+    "org": 1484019,
+    "cls": "A",
+    "winner": "Bionobis",
+    "why": "'…puis attribué à la Société Bionobis suite à un marché négocié…'; one winner."
+   },
+   {
+    "org": 1484119,
+    "cls": "A",
+    "winner": "CSL Berhing",
+    "why": "'…puis attribué à la Société CSL Berhing, suite marché négocié…'; one winner (source typo for CSL Behring; served as written). Ends at a comma, not 'suite à'."
+   },
+   {
+    "org": 1484121,
+    "cls": "A",
+    "winner": "LFB BIOMEDICAMENTS",
+    "why": "'…puis attribué à la Société LFB BIOMEDICAMENTS, suite marché négocié…'; one winner, ends at a comma."
+   },
+   {
+    "org": 1503868,
+    "cls": "A",
+    "winner": "Henry Schein",
+    "why": "'…puis attribué à la société Henry Schein suite à la passation…'; one winner."
+   },
+   {
+    "org": 1506401,
+    "cls": "A",
+    "winner": "France Télécom",
+    "why": "'Aucune offre n'ayant été déposée, un marché négocié… sera passé avec la STÉ France Télécom'; one winner after the abbreviation 'STÉ'. Reason says only '0/1 names void' (no award-summary flag): the classifier does not read it as void at all."
+   },
+   {
+    "org": 1513105,
+    "cls": "D",
+    "why": "'Aucune offre n'a été déposée; le lot n° 2 a été déclaré infructueux'; no winner."
+   },
+   {
+    "org": 1513898,
+    "cls": "D",
+    "why": "'Le lot 3: <long lot description> a été déclaré sans suite'; no winner ('titulaire' appears in the description)."
+   },
+   {
+    "org": 1537305,
+    "cls": "D",
+    "why": "'Marché classé sans suite… nouvelle procédure… lot no 3 - agence Paul Signac lot no 4 - agence Beaumonts': the agences are the buyer's sites, not winners."
+   },
+   {
+    "org": 1537987,
+    "cls": "D",
+    "why": "'le lot 1: <description> a été déclaré Infructueux'; no winner."
+   },
+   {
+    "org": 1610364,
+    "cls": "D",
+    "why": "'Lot 4 est déclaré sans suite pour motif d'intérêt général…': the Université de Nice Sophia Antipolis is the buyer; no winner."
+   },
+   {
+    "org": 1621278,
+    "cls": "A",
+    "winner": "Brake France Service",
+    "why": "'…procédure négociée… Nom de l'attributaire: Brake France Service'; one winner after an 'attributaire:' label."
+   },
+   {
+    "org": 1633917,
+    "cls": "D",
+    "why": "Contest declared sans suite after the liquidation of the agence Toth-Fasquelle before signature: it names the failed would-be awardee, but no contract was awarded."
+   },
+   {
+    "org": 1642155,
+    "cls": "B",
+    "why": "XML multi-lot list in one slot: 'BRI: lot 1: marché n° 12.001 / Arthrex: lots 7 et 10… / Stryker… / Heraeus… / Zimmer France…'; several winners."
+   },
+   {
+    "org": 1668604,
+    "cls": "A",
+    "winner": "SARL TACAVL",
+    "why": "'…puis attribué dans le cadre de cette nouvelle procédure à la Sarltacavl, pour un montant…' (notice 12584969 RES-4). The source fuses 'Sarl'+'tacavl', so literal extraction gives 'Sarltacavl', which matches no org. Prod has SARL TACAVL (9757611, 15 mentions)."
+   },
+   {
+    "org": 1710867,
+    "cls": "D",
+    "why": "'néant; la consultation a été déclarée infructueuse en raison de l'absence d'offre recevable'; no winner."
+   },
+   {
+    "org": 1722464,
+    "cls": "B",
+    "why": "Per-contract list in one slot: '2012021901 = JBE Electrcité; 2012021902 = Someci; … = Infructueux…'; several winners."
+   },
+   {
+    "org": 1722465,
+    "cls": "B",
+    "why": "Per-contract list: '2012023401 = Cle de Sol; 2012023402 = Infructueux; … Logis Services; ATH; MCB…'; several winners."
+   },
+   {
+    "org": 1722466,
+    "cls": "B",
+    "why": "Per-contract list: '2012030801 = Infructueux; 2012040801 = Decobois; … ATH; Logis Services…'; several winners."
+   },
+   {
+    "org": 1722468,
+    "cls": "B",
+    "why": "Per-contract list: '2012041701 = DFG Travaux; … SETIM; ATH; Proxiserve…'; several winners."
+   },
+   {
+    "org": 1722469,
+    "cls": "B",
+    "why": "Per-contract list: '2012043201 = Logis Services; … ART SMA; … Infructueux…'; several winners."
+   },
+   {
+    "org": 1753646,
+    "cls": "D",
+    "why": "'lot declare sans suite pour motif d'interet general une seule offre…': rmn-gp is the buyer; no winner."
+   },
+   {
+    "org": 1813067,
+    "cls": "B",
+    "why": "Two awardees with addresses in one slot ('1/ Gidef, … Bondy - 2/ Auxet, …') plus a partial-void tail. Multi-awardee framework, not per-lot."
+   },
+   {
+    "org": 1813070,
+    "cls": "B",
+    "why": "Two awardees ('1/ CE Cedille … - 2/ Gidef …') plus a partial-void tail; multi-awardee."
+   },
+   {
+    "org": 1813087,
+    "cls": "B",
+    "why": "Two awardees ('1/ Gidef … - 2/ AECD …') plus a partial-void tail; multi-awardee."
+   },
+   {
+    "org": 1814340,
+    "cls": "D",
+    "why": "Polish 'Zadanie unieważnione - Wykonawcy wykluczeni; oferty odrzucone' (task cancelled, contractors excluded, offers rejected); no winner."
+   },
+   {
+    "org": 1844213,
+    "cls": "B",
+    "why": "Two awardees with addresses ('Equinoxe Formation … / BGE Guyane …') plus a partial-void tail; multi-awardee."
+   },
+   {
+    "org": 1844215,
+    "cls": "B",
+    "why": "Two awardees ('BGE Guyane … / Equinoxe Formation …') plus a partial-void tail; multi-awardee. 2 mentions."
+   },
+   {
+    "org": 1844218,
+    "cls": "B",
+    "why": "Two awardees ('BGE Guyane …/ Equinoxe Formation …') plus a partial-void tail; multi-awardee."
+   },
+   {
+    "org": 1844224,
+    "cls": "B",
+    "why": "Two awardees ('BG Guyane … / Point Com …') plus a partial-void tail; multi-awardee."
+   },
+   {
+    "org": 1844226,
+    "cls": "A",
+    "winner": "BGE Guyane",
+    "why": "One awardee plus address ('16 rue Lt Becker 97300 Cayenne') plus the partial-void tail 'La consultation a été déclarée sans suite pour les parts non couvertes'. Prod has BGE Guyane (1844216, 5293612)."
+   },
+   {
+    "org": 1844229,
+    "cls": "A",
+    "winner": "BGE Guyane",
+    "why": "One awardee plus address plus '- la consultation a été déclarée sans suite pour les parts non couvertes…'."
+   },
+   {
+    "org": 1844232,
+    "cls": "A",
+    "winner": "BGE Guyane",
+    "why": "One awardee plus address plus '/ la consultation a été déclarée sans suite…'."
+   },
+   {
+    "org": 1861834,
+    "cls": "D",
+    "why": "'Lot classé \"sans suite\"… seul 1 candidat… 1 attributaire ne convient pas…'; no winner."
+   },
+   {
+    "org": 1861839,
+    "cls": "D",
+    "why": "Same sentence as 1861834 (sans suite, intérêt général, art. 59); no winner."
+   },
+   {
+    "org": 1943868,
+    "cls": "D",
+    "why": "'Le lot 1: génie civil… TF: parc Paul Vernet; TC1… A été déclaré sans suite': the parcs are sites; no winner."
+   },
+   {
+    "org": 1943869,
+    "cls": "D",
+    "why": "'Le lot 2: fourniture et pose… A été déclaré sans suite'; no winner."
+   },
+   {
+    "org": 1974244,
+    "cls": "D",
+    "why": "The CAO declares the consultation infructueuse because 'l'offre du groupement auxi+/ sas Viviani est inacceptable': it names the rejected bidder, not a winner."
+   },
+   {
+    "org": 1986366,
+    "cls": "A",
+    "winner": "Peters",
+    "why": "'lot déclaré infructueux… puis attribué à la société Peters suite à un marché négocié…'; one winner."
+   },
+   {
+    "org": 2021395,
+    "cls": "D",
+    "why": "'le lot 12: sans objet se reporter au lot no9 plomberie sanitaire a été déclaré infructueux'; no winner."
+   },
+   {
+    "org": 2035260,
+    "cls": "A",
+    "winner": "LV Consultants",
+    "why": "One awardee plus address ('Cv1 Simarouba - 97310 Kourou, FRANCE') plus a partial-void tail. Prod has LV Consultants (2035273, 5293609)."
+   },
+   {
+    "org": 2131011,
+    "cls": "D",
+    "why": "'Le marché n'a pas été attribué: la procédure est déclarée infructueuse le 17.4.2012'; no winner."
+   },
+   {
+    "org": 2369100,
+    "cls": "D",
+    "why": "Polish 'nie wpłynęła żadna oferta; postepowanie unieważniono art. 93…' (no offer, procedure cancelled); no winner."
+   },
+   {
+    "org": 2378132,
+    "cls": "D",
+    "why": "Read notice 17022086, ORG-6/RES-5: 'Le lot 3: <long description incl. \"trois (3) titulaires seront désignés\"> … a été déclaré infructueux'; no winner. The batch name is truncated before the void tail."
+   },
+   {
+    "org": 2381358,
+    "cls": "B",
+    "why": "Multi-lot prose list: 'lot 10 attribué à Bayer Santé Familiale… Lot 13 déclaré sans suite… Lot 14 attribué à Pfizer…'; several winners."
+   },
+   {
+    "org": 2381360,
+    "cls": "B",
+    "why": "Multi-lot list: Mylan, Pierre Fabre Dermatologie, EG Labo; Lot 21 sans suite."
+   },
+   {
+    "org": 2381361,
+    "cls": "B",
+    "why": "Multi-lot list: Pierre Fabre Dermatologie, Sinclair Pharma, Glaxosmithline, MSD France; Lot 24 sans suite."
+   },
+   {
+    "org": 2381362,
+    "cls": "B",
+    "why": "Multi-lot list (lot 30 relaunched, lot 31 sans suite, lot 32 attribué à Pierre Fabre Dermatologie). Only one winner, but it is for one lot of three, so assigning it to the whole slot would be wrong."
+   },
+   {
+    "org": 2450314,
+    "cls": "B",
+    "why": "Relaunch prose naming two winners for sub-lots: '5a…: attributaire: L'Art du bois… 5b…: attributaire: Ellipse Bois…', with amounts; several winners in one slot."
+   },
+   {
+    "org": 2528483,
+    "cls": "D",
+    "why": "Read notice 17071684 RES-1: 'Syndicat intercommunal de la Vallée d'Abondance' is the lot title (a territory); 'Le lot 1: … a été déclaré Sans suite'; no winner."
+   },
+   {
+    "org": 2678824,
+    "cls": "D",
+    "why": "'Déclaré sans suite pour motif d'intérêt général et relancé (cf avis JOUE…; BOAMP…)'; no winner. 2 mentions."
+   },
+   {
+    "org": 2734624,
+    "cls": "A",
+    "winner": "GRPT GCC (mandataire) et Andre BTP",
+    "why": "Consortium winner of its own RES-2 (notice 17129175), followed by the earlier-void tail ', suite à procédure négociée après AO infructueux'; strip the tail and keep the groupement string."
+   },
+   {
+    "org": 2734625,
+    "cls": "A",
+    "winner": "GRPT vallée sas (mandataire), La Comec et Arbat System",
+    "why": "Consortium winner of RES-3 (notice 17129175) plus the tail ', suite à procédure négociée après AO infructueux' (the void belongs to the earlier procedure)."
+   },
+   {
+    "org": 2847767,
+    "cls": "D",
+    "why": "'le lot 3: Lot 03 A: Ite parement pierre… Lot 03 B: Ite enduits a été déclaré infructueux'; no winner."
+   },
+   {
+    "org": 2900386,
+    "cls": "D",
+    "why": "'Le Lot 2: acheminement du trafic sortant… A été déclaré infructueux'; no winner."
+   },
+   {
+    "org": 2900516,
+    "cls": "D",
+    "why": "'Le lot 2: lot no2 a été déclaré infructueux'; no winner."
+   },
+   {
+    "org": 2948392,
+    "cls": "D",
+    "why": "'lot 9: Sans suite Lot 10: Infructueux': a labelled list in which every entry is void; no winner."
+   },
+   {
+    "org": 2957539,
+    "cls": "B",
+    "why": "Labelled multi-lot list: 'lot 35: ETIAM Lot 36: KEOSYS Lot 37: Infructueux'."
+   },
+   {
+    "org": 2957542,
+    "cls": "B",
+    "why": "Labelled multi-lot list: Philips, SIGIL; Infructueux / Sans suite entries."
+   },
+   {
+    "org": 2957543,
+    "cls": "B",
+    "why": "Labelled multi-lot list: ge medical systems, SIGIL; void entries."
+   },
+   {
+    "org": 2957545,
+    "cls": "B",
+    "why": "Labelled multi-lot list: 'lots 19 à 22: EUROMEDICA Lot 23: SIGIL Lots 24 et 25: Infructueux'."
+   },
+   {
+    "org": 2957546,
+    "cls": "B",
+    "why": "Labelled multi-lot list: 'lot 26: Carestream Lot 27: Sans suite lot 28: CARESTREAM'. One distinct winner across three lots."
+   },
+   {
+    "org": 2957549,
+    "cls": "B",
+    "why": "Labelled multi-lot list: 'lot 32: Medrad Lot 33: Covidien Lot 34: Infructueux'."
+   },
+   {
+    "org": 2973447,
+    "cls": "A",
+    "winner": "Les Ateliers de Polangis",
+    "why": "'Lot infructueux relancé en marché négocié. Le lot est attribué à l'esat \"Les Ateliers de Polangis\"'; one winner (the quoted name; 'esat' is the body type, like 'société'). No existing prod org."
+   },
+   {
+    "org": 3066482,
+    "cls": "D",
+    "why": "'le lot 3 : Lot no3 : Films Radiographiques… a été déclaré Sans Suite'; no winner."
+   },
+   {
+    "org": 3107850,
+    "cls": "D",
+    "why": "'le lot 8 : Electricite, Courant Fort - courant Faible ; a été déclaré Infructueux'; no winner."
+   },
+   {
+    "org": 3219666,
+    "cls": "B",
+    "why": "Per-contract/zone list: '2013021901/zone Belley Bas Bugey : Gandit - 69120…; … JS Electricité; ABT Electricité…'; several winners."
+   },
+   {
+    "org": 3219667,
+    "cls": "B",
+    "why": "Per-contract/zone list: Jonyk Franck, Sarl Da Cunha, SOS 01 Dépannage; '…: Infructueux'."
+   },
+   {
+    "org": 3219668,
+    "cls": "B",
+    "why": "Per-contract/zone list: Logis services, Sarl MCB, SOS 01 Dépannage, RB dépannage…"
+   },
+   {
+    "org": 3219671,
+    "cls": "B",
+    "why": "Per-contract/zone list: Sarl Mcb, AMS, SOS 01 Dépannage, Logis Services; 'zone Bresse : infructueux'."
+   },
+   {
+    "org": 3219672,
+    "cls": "B",
+    "why": "Per-contract/zone list: Abs décors, Parducci, Netsol expansion; '…: Infructueux'."
+   },
+   {
+    "org": 3238976,
+    "cls": "D",
+    "why": "'le lot 2 : Lot no2 - sorties scolaires… a été déclaré Infructueux'; no winner."
+   },
+   {
+    "org": 3290486,
+    "cls": "B",
+    "why": "Per-contract list: '096-13 LOT 1 A.C.H. - Depann'Express 40100 DAX 097-13 Lot3 TSMP… Lot4 CG.POSES…'; several winners (void entry past the shown truncation)."
+   },
+   {
+    "org": 3314070,
+    "cls": "D",
+    "why": "'le lot n'a pas été attribué, la procédure a été déclarée infructueuse'; no winner."
+   },
+   {
+    "org": 3371493,
+    "cls": "B",
+    "why": "17304500 pharmacy list: 'lot268 sanofi av - 269sanofi AV - 270renaudin… 282 sans suite… 286infructueux…'; abbreviated names."
+   },
+   {
+    "org": 3371495,
+    "cls": "B",
+    "why": "17304500 pharmacy list with unit prices: 'lot 418 - gLAXOSMITHKLINE - 1691.1ht… lot 422 sans suite…'."
+   },
+   {
+    "org": 3371500,
+    "cls": "B",
+    "why": "17304500 pharmacy list with unit prices: 'lot 643 - sans suite - lOT 644 MYLAN - 2459.7ht…'."
+   },
+   {
+    "org": 3371513,
+    "cls": "B",
+    "why": "17304500 pharmacy list: 'lot1045sans SUITE- lot1046infructueux- lot1047serb 83268ht…'."
+   },
+   {
+    "org": 3371518,
+    "cls": "B",
+    "why": "17304500 pharmacy list: 'lot1096 INFRUCTUEUX- lot1097 fresenius k 22500…'."
+   },
+   {
+    "org": 3371519,
+    "cls": "B",
+    "why": "17304500 pharmacy list: 'lot1125 INFRUCTUEUX- lot1126 GILBERT 11400 Ht…'."
+   },
+   {
+    "org": 3371520,
+    "cls": "B",
+    "why": "17304500 pharmacy list: 'lot1112 AGUETTANT 42600.36… lot1116 INFRUCTUEUX…'."
+   },
+   {
+    "org": 3371521,
+    "cls": "B",
+    "why": "17304500 pharmacy list: 'lot470 INFRUCTUEUX… lOT 473carl ZEISS 6300ht- lOT 474alcon…'."
+   },
+   {
+    "org": 3371523,
+    "cls": "B",
+    "why": "17304500 pharmacy list (the issue's own example): 'lot 43 INFRUCTUEUX - 44 reckitt benckiser 28692.07…'."
+   }
+  ],
+  "notes": "Batch 0, 94 orgs: A=23, B=37, C=0, D=34, E=0, F=0. Every notice is XML (TED-* fields, notice ids 12.4M-17.3M), so no text-era 'Lot n)' list appears here.\n\nD (34) is the largest actionable group, and a large share of it is one BOAMP template: 'Le lot N: <lot title or description> a été déclaré infructueux/sans suite' (14 orgs: 1392146, 1513898, 1537987, 1943868, 1943869, 2021395, 2378132, 2528483, 2847767, 2900386, 2900516, 3066482, 3107850, 3238976). The 'Le lot N:' label, or a word in the lot description ('titulaires', 'marché', 'Syndicat', 'agence', 'parc'), sets off names_an_award, but the slot names no winner.\nOther D shapes:\n- a labelled list in which every entry is void ('lot 9: Sans suite Lot 10: Infructueux');\n- Polish cancellation sentences (1814340, 2369100);\n- prose that names a rejected or liquidated bidder, not a winner (1974244 'l'offre du groupement auxi+/ sas Viviani est inacceptable'; 1633917 agence Toth-Fasquelle liquidated before signature). A fold-level extractor must not treat these as winners.\n\nA (23) shapes:\n(1) '…puis attribué à la Société X suite à / , suite …' (13 orgs). The winner ends at ' suite', at a comma, or at '(';\n(2) '…relancé en procédure négocié… avec la société X' (2);\n(3) 'sera passé avec la STÉ X' (1506401; this one is not even flagged as an award summary, reason '0/1 names void');\n(4) 'Nom de l'attributaire: X' (1621278);\n(5) 'attribué à l'esat \"X\"' (2973447);\n(6) 'attribué… à la Sarltacavl, pour un montant…'. The source fuses SARL into the name; prod already has SARL TACAVL (9757611, 15 mentions);\n(7) one awardee plus postal address plus the partial-void tail 'La consultation a été déclarée sans suite pour la/les part(s) non couverte(s) des besoins' (BGE Guyane x3, LV Consultants). Extraction must also strip the address;\n(8) a consortium plus the earlier-void tail ', suite à procédure négociée après AO infructueux' (2734624, 2734625, notice 17129175, each in its own RES). EARLIER_VOID lists ' apres ao infructu', yet these were still classed as award summaries.\n\nB (37) sub-shapes:\n- labelled 'lot n: X Lot m: Y' imaging lists (17192324);\n- 'NNNNNNNNNN = X;' and 'NNNNNNNNNN/zone Z : X - CP ville ;' per-contract housing lists (12599407, 17262462);\n- 'lot n attribué à X le … (no marché …)' prose lists (17022900);\n- the 17304500 pharmacy lists with abbreviations and unit prices (9);\n- BRI/Arthrex (12578078);\n- a Landes list (17281688);\n- two sub-lot awardees (2450314).\nOne sub-shape differs: 1813067/070/087 and 1844213/215/218/224 are two awardees with addresses in ONE lot of a multi-attributaire framework, plus a partial-void tail, not per-lot lists. Splitting them into two winners of the same RES would be correct, unlike the pharmacy lists. The same notices also carry 3-awardee variants with no void word (1844230, 1844256, 1844219, 1844214), which are ordinary names outside this list.\nTwo B rows name a single distinct winner but cover several lots, so they should not be extracted as A: 2381362 (Pierre Fabre Dermatologie for lot 32 only) and 2957546 (Carestream for lots 26 and 28, with lot 27 sans suite).\n\nReads: 4 notice contents (12584969, 17022086, 17071684, 17129175) and 9 org name_prefix GETs, all 200, paced 0.5 s. Downloads are in the scratchpad dir 520b0-notices. Nothing written in the repo.",
+  "challenge": {
+   "checked": 94,
+   "disagree": [
+    {
+     "org": 1341883,
+     "given": "D",
+     "correct": "F (an administrative pointer on a result that WAS awarded: drop the name, leave RES-1 without a winner, outcome (b). Do NOT make it VoidLot)",
+     "why": "I read notice 12497785. The name is the only ORG under RES-1, and RES-1 is a real award: CONTRACT_TITLE '333 lots', CONTRACT_AWARD_DATE 2011-07-01, CONTRACT_NUMBER 112121. The text itself says '257 lots attribués' against 74 infructueux and 2 sans suite. The per-lot winners are in the notice's ADDITIONAL_INFORMATION ('B.Braun Medical SAS ... - lot 44; lot 45; ...', 'Baxter SAS ... - lot 214; ...'). The name names no winner, so the org should go. But treating it as VoidLot would turn a mostly awarded 333-lot result into a void one, which is the costly direction."
+    },
+    {
+     "org": 1506401,
+     "given": "A (winner France Télécom)",
+     "correct": "F (a future award: the lot is unawarded in this notice. Do not extract France Télécom as the RES-3 winner unless policy accepts announced negotiated counterparties)",
+     "why": "I read notice 12543416. RES-3 (lot 3) has OFFERS_RECEIVED_NUMBER=0, no CONTRACT_AWARD_DATE and no CONTRACT_NUMBER, while RES-1 and RES-2 have both. The prose is in the future tense ('un marché négocié ... SERA passé avec la STÉ France Télécom'). The B BRAUN and Vascutek A rows look alike but differ: notice 12513246 RES-13 and RES-14 carry an award date (2011-08-01) and contract numbers (110630, 110628), and their prose is in the past tense. France Télécom is a real company, so this is the less costly kind of error. Still, serving it as the winner states an award this notice does not record. If it is kept as A, the extractor must strip the 'STÉ' prefix."
+    }
+   ],
+   "notes": "I re-classified all 94 rows: every D (31), every A (27), every B (36), plus extra checks. There are no C, E or F rows in this batch. The notice ids (12.45M to 17.3M) are all 2011–2013 XML era. I read 7 notices for context: 12497785, 12543416, 12552163, 12513246, 16859068, 17022086, 12576023, 17281688.\n\nNo D names a winner. These Ds were confirmed against their notice:\n- 1537305 (12552163): RES-3 CONTRACT_TITLE is 'Agence Paul Signac et agence Beaumonts.', so the agences are the buyer's (OPHM de Montreuil) sites.\n- 2378132 (17022086): the full ORG-6 name ends 'a été déclaré infructueux' and RES-5 has no award date. The '3 titulaires seront désignés' wording is from the lot description.\n- 1633917 (12576023): a design contest declared sans suite. Toth-Fasquelle is the failed would-be awardee, and RES-1 has nothing but this org.\n\nOf the other Ds, 1974244 names a rejected bidder and 1610364 names the buyer. Only 1341883 is wrong (awarded, not void; see disagreements). Before any D goes VoidLot, it is worth checking whether its RES has CONTRACT_AWARD_DATE or CONTRACT_NUMBER set; that test is what caught 1341883.\n\nAll A winners are real companies or bodies. Points to watch when extracting:\n- 1668604: the text fuses 'Sarltacavl', so the classifier's mapping to SARL TACAVL is a lookup, not literal extraction.\n- 1435456: 'Grunenthal/CSP' is a lab/distributor pair kept as one string.\n- 2734624 and 2734625: groupement strings with a 'GRPT' prefix.\n- 1484119: 'CSL Berhing' is a typo in the source.\n- 1844226, 1844229, 1844232 and 2035260: name + address + a partial-void tail. The address must be stripped, not just the tail.\n\nB labels are acceptable, with one point for the class decision. 1813067, 1813070, 1813087, 1844213, 1844215, 1844218 and 1844224 are not multi-lot lists. They are CO-WINNERS OF ONE LOT. Notice 16859068 RES-16 reads 'Nombre de titulaires: 3', with two awarded and the rest of the lot declared sans suite. They split cleanly on '1/ … - 2/ …' or ' / ', so 'keep as is' (511 §5) under-serves them. A sub-class 'co-winners of one RES: split into N winner parties' may be worth recording.\n\nThe same notice also has co-winner rows with no void word ('1/ Gidef … - 2/ AECD … - 3/ MIC …', ORG-14 and ORG-6). Those are never in `exempted`, so this shape reaches beyond the void-word list.\n\nTwo more B checks:\n- 3290486 (17281688): the full name ends 'Les lots 2 et 11 sont déclarés sans suite. Le lot 10 est déclaré infructueux', so B is confirmed.\n- 2381362 and 2957546: each has a single distinct winner but covers several lots including void ones, so B is right; do not promote them to A."
+  }
+ },
+ {
+  "i": 1,
+  "rows": [
+   {
+    "org": 3371525,
+    "cls": "B",
+    "why": "r208 multi-lot list in one award slot (17304500 AP-HP pharmacy shape): abbreviated names + unit prices, several winners and void lots"
+   },
+   {
+    "org": 3371526,
+    "cls": "B",
+    "why": "r208 multi-lot list in one award slot (17304500 AP-HP pharmacy shape): abbreviated names + unit prices, several winners and void lots"
+   },
+   {
+    "org": 3425880,
+    "cls": "D",
+    "why": "pure void: one lot's description, no winner; kept by mixed_segments (the ';' inside the lot title leaves a segment without a void stem)"
+   },
+   {
+    "org": 3526206,
+    "cls": "D",
+    "why": "void lot to be renegotiated 'avec les sociétés ayant soumissionné : lot n : société X'; X is the sole bidder (and the equipment maker in the RES title), NOT an awardee — the award notice reports the lot infructueux; kept by award_clause ' avec les societes ' + Société token"
+   },
+   {
+    "org": 3526207,
+    "cls": "D",
+    "why": "void lot to be renegotiated 'avec les sociétés ayant soumissionné : lot n : société X'; X is the sole bidder (and the equipment maker in the RES title), NOT an awardee — the award notice reports the lot infructueux; kept by award_clause ' avec les societes ' + Société token"
+   },
+   {
+    "org": 3526208,
+    "cls": "D",
+    "why": "void lot to be renegotiated 'avec les sociétés ayant soumissionné : lot n : société X'; X is the sole bidder (and the equipment maker in the RES title), NOT an awardee — the award notice reports the lot infructueux; kept by award_clause ' avec les societes ' + Société token"
+   },
+   {
+    "org": 3526209,
+    "cls": "D",
+    "why": "void lot to be renegotiated 'avec les sociétés ayant soumissionné : lot n : société X'; X is the sole bidder (and the equipment maker in the RES title), NOT an awardee — the award notice reports the lot infructueux; kept by award_clause ' avec les societes ' + Société token"
+   },
+   {
+    "org": 3526210,
+    "cls": "D",
+    "why": "void lot to be renegotiated 'avec les sociétés ayant soumissionné : lot n : société X'; X is the sole bidder (and the equipment maker in the RES title), NOT an awardee — the award notice reports the lot infructueux; kept by award_clause ' avec les societes ' + Société token"
+   },
+   {
+    "org": 3526991,
+    "cls": "D",
+    "why": "same SDIS 33 shape (17358323 RES-2): lot 2 infructueux, to be renegotiated 'avec la société LHENRY' (the equipment maker named in the RES title), not an awardee; kept by award_clause ' avec la societe '"
+   },
+   {
+    "org": 3534542,
+    "cls": "D",
+    "why": "pure void: buyer (SEMAPA) declared the call sans suite, no winner; kept by mixed_segments (reason after ';')"
+   },
+   {
+    "org": 3556403,
+    "cls": "D",
+    "why": "pure void, no winner; kept by several_lots ('lot no 3' vs 'lot no3' counted as two lots)"
+   },
+   {
+    "org": 3586203,
+    "cls": "B",
+    "why": "multi-lot list in one slot: Sous-lot 1 Firplast SAS, Sous-lot 2 Paredes, ... (with addresses and real per-sub-lot amounts), void sub-lot in the truncated tail"
+   },
+   {
+    "org": 3666893,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3666894,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3666895,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3666903,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3666904,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3666905,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3666906,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3717094,
+    "cls": "D",
+    "why": "pure void list 'lot 1 sans suite Lot 3 infructueux', no winner; several_lots"
+   },
+   {
+    "org": 3720532,
+    "cls": "D",
+    "why": "pure void prose (offers irregular, negotiated procedure to be relaunched), no winner"
+   },
+   {
+    "org": 3863573,
+    "cls": "A",
+    "why": "relaunch prose: infructueux, then 'après négociation, le marché a été attribué à Thermo Onix LTD'",
+    "winner": "Thermo Onix LTD"
+   },
+   {
+    "org": 3915725,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3915726,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3915727,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3915728,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3915729,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3915730,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3915731,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3915732,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3915733,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3915742,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3982542,
+    "cls": "A",
+    "why": "relaunch prose: infructueux, relaunched as negotiated contract 013086, 'fournisseur retenu = zoll medical France'",
+    "winner": "zoll medical France"
+   },
+   {
+    "org": 3984070,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3984072,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3984073,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 3993625,
+    "cls": "A",
+    "why": "one winner for lots 10 and 11 (minimum amounts, not award values) plus 'Les lots 1 à 9 sont déclarés sans suite'; list-ish but exactly one winner, the leading name",
+    "winner": "Pentax France life care"
+   },
+   {
+    "org": 4032000,
+    "cls": "D",
+    "why": "pure void (full text read, 17538199 RES-3): offers irregular, negotiate 'avec les sociétés candidates' — no company named; kept by award_clause ' avec les societes '"
+   },
+   {
+    "org": 4048470,
+    "cls": "B",
+    "why": "multi-lot list in one slot: pro a pro (lots 47-69), SODIAL (lot 52), lot 67 sans suite — two winners"
+   },
+   {
+    "org": 4133918,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots; JCB is an equipment brand, not a winner"
+   },
+   {
+    "org": 4133919,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots; JCB is an equipment brand, not a winner"
+   },
+   {
+    "org": 4133921,
+    "cls": "D",
+    "why": "pure void lot description, no winner (O&K is an equipment brand); kept by mixed_segments because the HTML entity 'O&Amp;K' contains ';'"
+   },
+   {
+    "org": 4133935,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots; Dynapac is an equipment brand, not a winner"
+   },
+   {
+    "org": 4133936,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots; Dynapac is an equipment brand, not a winner"
+   },
+   {
+    "org": 4229970,
+    "cls": "D",
+    "why": "pure void 'n'a pas été attribué et a été déclaré infructueux'; kept because award_clause checks only the word right before 'attribué' ('ete'), missing 'pas été attribué'"
+   },
+   {
+    "org": 4272807,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and a back-reference 'lot no1' as two lots"
+   },
+   {
+    "org": 4359873,
+    "cls": "B",
+    "why": "multi-lot list in one slot: contract refs -321-13 … with winners france inox, compagnie hobart, aft equipement, ESSOR, le froid pyreneen, SEFTI + 'Les lots 12, 13 sont déclarés infructueux'"
+   },
+   {
+    "org": 4409817,
+    "cls": "D",
+    "why": "pure void: project sans suite, relaunched under an ESID number, 'attribué le 28.10.2013' — a date, no winner named; kept by award_clause"
+   },
+   {
+    "org": 4409820,
+    "cls": "D",
+    "why": "pure void: project sans suite, relaunched under an ESID number, 'attribué le 28.10.2013' — a date, no winner named; kept by award_clause"
+   },
+   {
+    "org": 4409821,
+    "cls": "D",
+    "why": "pure void: project sans suite, relaunched under an ESID number, 'attribué le 28.10.2013' — a date, no winner named; kept by award_clause"
+   },
+   {
+    "org": 4425125,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 4425126,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 4425128,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 4425129,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 4425130,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 4425131,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 4425132,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 4552687,
+    "cls": "A",
+    "why": "relaunch prose: infructueux, relaunched negotiated, 'marché attribué le 9/12/13 à Assurances securité 59000 Lille' (strip postcode and town)",
+    "winner": "Assurances securité"
+   },
+   {
+    "org": 4726611,
+    "cls": "D",
+    "why": "pure void Spanish list: Sublote 9.1/9.2/9.3 Declarado desierto, no winner; several_lots"
+   },
+   {
+    "org": 4726614,
+    "cls": "B",
+    "why": "sub-lot list in one slot: Sublote 12.1 has three co-awardees (Bernadí, S.A.; Expert Line, S.L.; S&T 96, S.L.), 12.2 and 12.3 desierto — several winners (a ';'-split would be reliable here)"
+   },
+   {
+    "org": 4764054,
+    "cls": "D",
+    "why": "pure void: one lot's description ('le lot 1 : Lot no1 : ... a été déclaré infructueux'), no winner; kept only because several_lots counts 'lot 1' and 'Lot no1' as two lots"
+   },
+   {
+    "org": 4774593,
+    "cls": "D",
+    "why": "pure void (full text read, 17756593): 'décision de déclarer infructueux le lot nº N … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permettent pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+   },
+   {
+    "org": 4774594,
+    "cls": "D",
+    "why": "pure void (full text read, 17756593): 'décision de déclarer infructueux le lot nº N … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permettent pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+   },
+   {
+    "org": 4774596,
+    "cls": "D",
+    "why": "pure void (full text read, 17756593): 'décision de déclarer infructueux le lot nº N … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permet pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+   },
+   {
+    "org": 4774599,
+    "cls": "D",
+    "why": "pure void (full text read, 17756593): 'décision de déclarer infructueux le lot nº N … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permet pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+   },
+   {
+    "org": 4774607,
+    "cls": "D",
+    "why": "pure void (full text read, 17756593): 'décision de déclarer infructueux le lot nº N … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permettent pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+   },
+   {
+    "org": 4774610,
+    "cls": "D",
+    "why": "pure void (full text read, 17756593): 'décision de déclarer sans suite le lot nº 08 … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permettent pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+   },
+   {
+    "org": 4782526,
+    "cls": "A",
+    "why": "relaunch prose (full text read, 17758913 RES-1): infructueux, relaunched negotiated, CAO 'a décidé d'attribuer ce lot à la société Eiffage Construction SISE rue François Durieux – 59174 La Sentinelle' for 5 141 184,66 EUR HT ('SISE' = located at; strip address and amount)",
+    "winner": "Eiffage Construction"
+   },
+   {
+    "org": 4802635,
+    "cls": "D",
+    "why": "pure void Dutch: 'Perceel 1 wordt niet gegund – opdracht wordt gegund op totaal der percelen = perceel 3', no winner named; kept by the un-negated second 'gegund' (awardee_noun) + several_lots"
+   },
+   {
+    "org": 4802636,
+    "cls": "D",
+    "why": "pure void Dutch: 'Perceel 2 wordt niet gegund – opdracht wordt gegund op totaal der percelen = perceel 3', no winner named; kept by the un-negated second 'gegund' (awardee_noun) + several_lots"
+   },
+   {
+    "org": 4804532,
+    "cls": "B",
+    "why": "multi-lot list in one slot: contract ref/zone : winner - postcode town ; … (ninet gavin, CUTELLE, logis services, …) with a void zone — several winners"
+   },
+   {
+    "org": 4804533,
+    "cls": "B",
+    "why": "multi-lot list in one slot: contract ref/zone : winner - postcode town ; … (ninet gavin, DUCIMETIERE, VITTET, …) with a void zone — several winners"
+   },
+   {
+    "org": 4804535,
+    "cls": "B",
+    "why": "multi-lot list in one slot: contract ref/zone : winner - postcode town ; … (logis services, EGV, MCB, …) with a void zone — several winners"
+   },
+   {
+    "org": 4804536,
+    "cls": "B",
+    "why": "multi-lot list in one slot: contract ref/zone : winner - postcode town ; … (PARDUCCI, ezm peinture, cazajous decor, …) with one zone INFRUCTUEUX — several winners"
+   },
+   {
+    "org": 4804537,
+    "cls": "B",
+    "why": "multi-lot list in one slot: contract ref/zone : winner - postcode town ; … (BATILYON, PARDUCCI, BERNARD, abs decors, …) with a void zone — several winners"
+   },
+   {
+    "org": 4836476,
+    "cls": "A",
+    "why": "two contracts in lot 1 (RES title 'Secteur Belley-bas Bugey : 2 marchés', 17775161): one to Bp innovis, the other infructueux; strip '; infructueux'",
+    "winner": "Bp innovis"
+   },
+   {
+    "org": 4846679,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré INFRUCTUEUX'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+   },
+   {
+    "org": 4877271,
+    "cls": "D",
+    "why": "pure void (full text read, 17787731 RES-5): 'décision de déclarer sans suite le Lot no15 … ne permet pas d'en établir l'attribution', no winner; awardee_noun on 'attribution'"
+   },
+   {
+    "org": 4885215,
+    "cls": "D",
+    "why": "pure void (full text read, 17789763 RES-11): lot sans suite, relaunched split into lots 11 and 15, no winner; several_lots"
+   },
+   {
+    "org": 4885217,
+    "cls": "D",
+    "why": "pure void (full text read, 17789763 RES-13): lot sans suite because covered by an existing multi-award framework of université Joseph Fourier (the buyer); kept by awardee_noun 'titulaires' — names no winner"
+   },
+   {
+    "org": 5101244,
+    "cls": "D",
+    "why": "pure void lot description, no winner; kept by company_token on 'SAU' (a typo for 'sauf' in 'SAU ouvrages distribués exclusivement')"
+   },
+   {
+    "org": 5148433,
+    "cls": "D",
+    "why": "pure void 'Offres inacceptables ; lot déclaré infructueux', no winner; kept by mixed_segments (the reason segment has no void stem)"
+   },
+   {
+    "org": 5351950,
+    "cls": "B",
+    "why": "multi-lot list in one slot (17933348 pharmacy shape): Lot 6.01.01-… PARAMAT, novo nordisk, APOTECNIA, one sub-lot sans suite — several winners"
+   },
+   {
+    "org": 5351956,
+    "cls": "A",
+    "why": "list shape (17933348) but exactly one winner: 'lot 7.0401 : pansements raffin Lot 7.04.02 : sans suite'",
+    "winner": "pansements raffin"
+   },
+   {
+    "org": 5351959,
+    "cls": "B",
+    "why": "multi-lot list in one slot: pansements raffin, Hartmann, molnlycke healthcare, … + a sans suite sub-lot — several winners"
+   },
+   {
+    "org": 5351961,
+    "cls": "B",
+    "why": "multi-lot list in one slot: pansements raffin, Lohmann et Rausscher, Hartmann + sans suite — several winners"
+   },
+   {
+    "org": 5351964,
+    "cls": "A",
+    "why": "list shape (17933348) but exactly one winner: 'lot 9.02.01 : sans suite Lot 9.02.02 : Vygon'",
+    "winner": "Vygon"
+   },
+   {
+    "org": 5351965,
+    "cls": "B",
+    "why": "multi-lot list in one slot: Paramat, pansements raffins + sans suite — two winners"
+   },
+   {
+    "org": 5351966,
+    "cls": "B",
+    "why": "multi-lot list in one slot: Teleflex, Novo Nordisk, ABS, BSN médical, Cooper + sans suite — several winners"
+   },
+   {
+    "org": 5425803,
+    "cls": "B",
+    "why": "sub-lot list in one slot: 10a sans suite, 10b infructueuse, 10c 'titulaire 1: SAGA titulaire 2: Chapelec' — two co-winners"
+   },
+   {
+    "org": 5425806,
+    "cls": "D",
+    "why": "pure void sub-lot list (procédure infructueuse / déclaration sans suite), no winner; several_lots (sub-lot codes 2a/2b)"
+   },
+   {
+    "org": 5425808,
+    "cls": "D",
+    "why": "pure void sub-lot list (procédure infructueuse / déclaration sans suite), no winner; several_lots (sub-lot codes 4a/4b)"
+   },
+   {
+    "org": 5543579,
+    "cls": "D",
+    "why": "pure void: 'Aucun nom d'attributaire n'est mentionné … le lot 4 a été déclaré sans suite'; kept by awardee_noun 'attributaire' (the negation 'aucun' sits two words back, past 'nom')"
+   },
+   {
+    "org": 5605092,
+    "cls": "D",
+    "why": "pure void: one lot's description ('Le lot 6 : lot M6 ...'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots; Palneca/Ajaccio are places"
+   }
+  ],
+  "notes": "Batch 1 tally: A 8, B 17, D 69, C 0, E 0, F 0 (94 rows, one per org). Every notice is r208 XML (ids 17.30M-18.01M, 2013-2014), so there is no text-era class C. I read 8 notices (17358086, 17358323, 17538199, 17756593, 17787731, 17789763, 17775161, 17758913), all HTTP 200, no retries. Downloads are in scratchpad/520b1-dl, the scripts in scratchpad/520b1-tools. Nothing was written to the repo.\n\nMost of the D rows come from a few predicate misfires in names_an_award (crates/ingest/src/partyname.rs). Fixing these would turn the D rows into VoidLot:\n1. several_lots counts a lot's own two designators as two lots. One sentence carries the RES lot number and the buyer's lot code ('Le lot 102 : lot B10: … a été déclaré infructueux', 'le lot 1 : Lot no1', 'lot no 3' vs 'lot no3'). This accounts for 41 of the 69 D rows. A 'Le lot N : lot X[:] <title> a été déclaré <void>' template, or treating an adjacent second designator as an alias, would catch them.\n2. award_clause looks only at the word right before 'attribué', so 'n'a pas été attribué' passes (4229970). It also counts 'attribué le <date>' with no 'à <name>' (4409817/20/21).\n3. The ' avec la/les société(s) ' cue misfires in a relaunch-to-negotiation sentence ('à relancer en marché négocié … avec les sociétés ayant soumissionné : lot 1 : société TIB'; 'avec les sociétés candidates'). In SDIS 33's 17358086 and 17358323 the named company is the sole bidder, and also the equipment maker in the RES title. It is not an awardee, so extracting it as a winner would be wrong. I put these 7 rows plus 4032000 in D, but they are the closest call in the batch.\n4. awardee_noun on 'attribution' / 'attributaire' / 'titulaires' when the negation sits beyond the fillers: 'ne permettent pas d'en établir l'attribution', 'Aucun nom d'attributaire', 'Les titulaires de cet accord-cadre'. The Dutch 'niet gegund … opdracht wordt gegund' misfires the same way.\n5. mixed_segments splits on a ';' inside an HTML entity ('O&Amp;K') or inside a lot title, and fires on a reason clause after ';' ('Offres inacceptables ; lot déclaré infructueux').\n6. company_token reads 'SAU' (a typo for 'sauf') as a company form (5101244).\n\nThe A rows have two shapes:\n- Prose 'attribué à X' / 'fournisseur retenu = X', where an address, amount or date follows. Eiffage has 'SISE rue …' after the name, Assurances securité has '59000 Lille'.\n- A list or segment shape with exactly one distinct non-void winner: Pentax (lots 10-11 plus 'lots 1 à 9 sans suite'), 'pansements raffin' (7.0401 plus a void sub-lot), Vygon, and 'Bp innovis ; infructueux'. For this shape the rule would be: 'all non-void entries name the same party, so that party wins'.\n\nIf unit 1 wants A to mean prose only, move 3993625, 5351956, 5351964 and 4836476 to B.\n\nTwo B rows have co-awardees that would split reliably:\n- 4726614: three ';'-separated S.A./S.L. names for one sub-lot.\n- 5425803: 'titulaire 1: SAGA titulaire 2: Chapelec'.\n\nNeither fits the one-winner A extraction, so both stay B.",
+  "challenge": {
+   "checked": 94,
+   "disagree": [],
+   "notes": "I re-read all 94 rows, not just a sample, and found no class disagreements. Every row is an r208 French, Spanish or Dutch notice (17.30M–18.01M), so there is no C, and no E is missing.\n\nHow I checked: besides reading every name, I read 22 notices' content. 8 came from the classifier's 520b1-dl folder (17358086, 17358323, 17775161, 17758913, 17789763 and others). I fetched 14 more into scratchpad/520b1-rv-dl: 17652212, 17695208, 17526831, 17488388, 17523806, 17933348, 17764880, 17991654, 17367136, 17636553, 17444126, 17869715, 17955715 and 17402943. I also made one bounded organizations GET (name_prefix=Assurances s). All calls returned 200, at a 0.5 s pace, with no retries. Nothing was written outside the scratchpad.\n\nAdversarial checks:\n\n(1) D rows that name a company. None names a winner.\n- 3526206–10 and 3526991 (17358086, 17358323): the RES has no award value. The text says \"à relancer … avec les sociétés ayant soumissionné\". TIB, Picot Petit, Sides, WAS and Lhenry are equipment makers named in the RES titles. D is correct.\n- Nit on their \"why\": \"sole bidder\" holds only for RES-1 and RES-3 (OFFERS_RECEIVED_NUMBER=1). RES-2, RES-4 and RES-5 publish no offer count, and RES-5's title does not name Massias.\n- 4409817/20/21 (17652212): \"attribué le 28.10.2013\" refers to the relaunched ESID project. No winner appears anywhere in the ORG or the RES, so D.\n- 4885217: Université Joseph Fourier is the buyer (ORG-1). D.\n- 3534542: SEMAPA is the body that declared the call sans suite, not a winner. D.\n- 4802635/6: Aerodata Surveys Nederland is a separate org on RES-3, so these two are pure void. D.\n- 5543579: ADDITIONAL_INFORMATION confirms lot 4 has no awardee. D.\n\n(2) A winners. All 8 are real companies and extractable.\n- Thermo Onix LTD: its ORG address is Solaar House, Cambridge.\n- zoll medical France: the notice's other RES slots are bare \"infructueux\".\n- Pentax France life care: RES-1 VALUE_COST of 14 453 EUR equals the sum of the lot 10 and lot 11 minimums, so the value is already on the RES and no figure needs extracting.\n- Assurances securité: a real Lille broker. Org 2992764 \"Assurances Securite\" has 70 mentions, and 4552672 has 13, so the extracted name would merge with an existing org.\n- Eiffage Construction: RES-1 has no VALUE_COST; only the name carries 5 141 184,66.\n- Bp innovis: a cleaning company; the same notice's other winners are \"hilan nettoyage\" and \"jl services\".\n- pansements raffin: appears as a supplier in about 8 other list slots of 17933348.\n- Vygon: real company, no doubt.\n\n(3) B rows. Each one names at least 2 winners, so none is a one-winner A.\n- 3586203: the full name has Firplast, Paredes and Euromedis, with sub-lots 6 and 8 infructueux.\n- 5425803: TED-ADDRESS lists both SAGA and Chapelec.\n- 4726614: three co-awardees.\n\nNote for the decision: class A covers two shapes.\n- Award-clause prose: 3863573, 3982542, 4552687, 4782526.\n- One-winner lists, which an \"attribué à X\" extractor will not catch: 3993625 (\"<name> montants mini : …\"), 4836476 (\"X ; infructueux\"), 5351956 and 5351964 (\"lot a : X Lot b : sans suite\").\n\nMechanism claims I checked against partyname.rs; all hold:\n- 4229970: award_clause looks only one word back, so \"pas ete attribue\" passes.\n- 5101244: SAU is in COMPANY_TOKENS.\n- 4133921: the ';' in \"O&Amp;K\" sets off mixed_segments.\n- 5148433: \"inacceptables\" is not in VOID_STEMS, so mixed_segments fires.\n- 5543579 and the 4774xxx rows: awardee_noun is blocked only when the word directly before is a negation. \"nom\" and \"etablir\" sit between the negation and the noun, so it fires.\n- The several_lots \"lot N : lot X\" double count holds.\n- One addition: 3556403 is also kept by awardee_noun on \"Date d'attribution\", not only by several_lots. 3720532 is kept by awardee_noun on \"retenue\", since \"candidature\" is a NEGATION_FILLERS word."
+  }
+ },
+ {
+  "i": 2,
+  "rows": [
+   {
+    "org": 5611738,
+    "cls": "D",
+    "why": "'Sans suite, en cours d'attribution' is a void lot with no winner. It is kept only because the awardee noun 'attribution' is not negated ('en cours d')."
+   },
+   {
+    "org": 5772779,
+    "cls": "D",
+    "why": "One lot's description (sub-lots nob02..nob06) followed by 'a été déclaré sans suite'. several_lots fires on the 'sous-lot nobNN' codes. No winner."
+   },
+   {
+    "org": 5772782,
+    "cls": "D",
+    "why": "Same shape as 5772779 (lot 005 with sub-lots noe09..noe11, declared sans suite). several_lots fires on the sub-lot codes. No winner."
+   },
+   {
+    "org": 5772784,
+    "cls": "D",
+    "why": "Same shape as 5772779 (lot 007 with sub-lots nog12..nog14, declared sans suite). several_lots fires on the sub-lot codes. No winner."
+   },
+   {
+    "org": 5961568,
+    "cls": "D",
+    "why": "Declared sans suite and relaunched as 2 lots. The rest is publication references (JOUE/BOAMP/annonce nº 63). Probably mixed_segments, on the ';' reference segment. No winner."
+   },
+   {
+    "org": 6011832,
+    "cls": "D",
+    "why": "'Lot déjà attribué a été déclaré sans suite' is void. award_clause fires on 'attribué' even though it says the lot was already awarded. No winner named."
+   },
+   {
+    "org": 6069583,
+    "cls": "D",
+    "why": "'Le lot n° 2 du marché n'a pas été attribué. Le lot n° 2 est infructueux' is pure void. This is an award_clause negation gap: 'été' sits between 'pas' and 'attribué', so the negation check (words[i-1] only) misses it."
+   },
+   {
+    "org": 6191476,
+    "cls": "A",
+    "winner": "Keolis",
+    "why": "Void, then relaunched with an adapted procedure. 'Nom du titulaire: Keolis' names one winner."
+   },
+   {
+    "org": 6209983,
+    "cls": "B",
+    "why": "r208 2015 multi-zone list in one award slot: contract no./zone: winner — postcode town (Ecco bat service, ID services, Serfal, SEMI …). Several winners, truncated at 300 chars."
+   },
+   {
+    "org": 6209984,
+    "cls": "B",
+    "why": "Sibling of 6209983 (Parducci, ABS deocrs, SCOP NEA …). A multi-zone list with several winners."
+   },
+   {
+    "org": 6286857,
+    "cls": "D",
+    "why": "The market was declared sans suite after the presumed awardee was sold. The awardee noun 'attributaire' (in 'pressentie attributaire') fires, but no winner is named."
+   },
+   {
+    "org": 6333652,
+    "cls": "D",
+    "why": "No offer, declared sans suite, split into new lots 06/07 and relaunched. several_lots fires on 'lot nº 06 … lot nº 07'. No winner."
+   },
+   {
+    "org": 6357683,
+    "cls": "D",
+    "why": "Lot declared sans suite and relaunched; the rest is JOUE/BOAMP references. Probably mixed_segments on the 'annonce(s) n° 116' segment. No winner."
+   },
+   {
+    "org": 6499376,
+    "cls": "D",
+    "why": "'infructueux suite à désistement du titulaire' is void (the holder withdrew). It is kept by the awardee noun 'titulaire'. No winner."
+   },
+   {
+    "org": 6603158,
+    "cls": "B",
+    "why": "Orthopaedic list in one award slot: lot 24 infructueux; Orthomed lots 25 and 26; Biotech Ortho lot 27. Two winners."
+   },
+   {
+    "org": 6603162,
+    "cls": "B",
+    "why": "Same notice's list: Biotech Ortho lot 32, Zimmer France lot 33, Depuy France SA lot 34, lot 35 infructueux. Several winners."
+   },
+   {
+    "org": 6603163,
+    "cls": "B",
+    "why": "Same notice's 'Name: lot nº' list: Stryker France SAS lot 36, lot 37 sans suite. List shape, but only ONE winner (Stryker France SAS), which could be extracted if B lists are ever split."
+   },
+   {
+    "org": 6603175,
+    "cls": "B",
+    "why": "Same notice's list: Depuy France sa lots 2-4, Stryker France SAS lot 5, Arthrex lot 6, lot 7 sans suite. Several winners."
+   },
+   {
+    "org": 6654938,
+    "cls": "D",
+    "why": "The presumed awardee changed its offer, so the lot was declared sans suite. Kept by the awardee noun 'attributaire'. No winner."
+   },
+   {
+    "org": 6672986,
+    "cls": "B",
+    "why": "A count-of-lots list ('2 lots attribués à la société Alere …; 11 lots … Becton Dickinson; 22 … Biomérieux; … Bio-Rad; … Elitech'). Several winners in one slot."
+   },
+   {
+    "org": 6672989,
+    "cls": "B",
+    "why": "Sibling of 6672986 (Alldiag, Bio-Rad, CML, Greiner Bio One, Less France …). Several winners."
+   },
+   {
+    "org": 6688295,
+    "cls": "D",
+    "why": "The lot was declared sans suite and relaunched, and its award notice is being published. Kept by the awardee noun 'attribution' ('avis d'attribution'). No winner."
+   },
+   {
+    "org": 6825282,
+    "cls": "D",
+    "why": "Declared infructueux, so 'n'a pas fait l'objet d'une attribution'. The negation is not adjacent ('objet' intervenes), so the awardee noun fires. No winner."
+   },
+   {
+    "org": 7024169,
+    "cls": "D",
+    "why": "'Pas d'attributaire retenu pour l'instant. Décision … repoussée' says no awardee yet. No void stem matches, so the classifier reads it as a plain name. No winner."
+   },
+   {
+    "org": 7030205,
+    "cls": "A",
+    "winner": "ARDP",
+    "why": "Void lot relaunched by negotiated procedure; 'Attributaire: ARDP' names one winner."
+   },
+   {
+    "org": 7030206,
+    "cls": "A",
+    "winner": "JV Distribution",
+    "why": "Void lot relaunched by negotiated procedure; 'Attributaire: JV Distribution' names one winner."
+   },
+   {
+    "org": 7075593,
+    "cls": "D",
+    "why": "Polish: 'postępowanie unieważniono – ofertę odrzucono; Wykonawca wykluczony …' (proceedings annulled, offer rejected, contractor excluded). Probably kept by mixed_segments on the second segment. No winner."
+   },
+   {
+    "org": 7093933,
+    "cls": "D",
+    "why": "'Le lot n° 2 n'a pas été attribué et fut déclaré sans suite' is pure void. Same award_clause negation gap ('pas été attribué')."
+   },
+   {
+    "org": 7151483,
+    "cls": "A",
+    "winner": "Léo Lagrange",
+    "why": "'Pas d'offre. Relancé en procédure 35.ii.3 … Attribué à Léo Lagrange' names one winner. No void stem matches, so the fold reads the whole sentence as a plain name."
+   },
+   {
+    "org": 7151494,
+    "cls": "A",
+    "winner": "FAIL 13",
+    "why": "Same relaunch template: 'Attribué à FAIL 13'. One winner. Read as a plain name."
+   },
+   {
+    "org": 7151502,
+    "cls": "A",
+    "winner": "C.A.J.L",
+    "why": "Same relaunch template: 'Attribué à C.A.J.L'. One winner. Read as a plain name."
+   },
+   {
+    "org": 7151511,
+    "cls": "A",
+    "winner": "Apis",
+    "why": "Same relaunch template: 'Attribué à Apis'. One winner. Read as a plain name."
+   },
+   {
+    "org": 7151529,
+    "cls": "A",
+    "winner": "Léo Lagrange",
+    "why": "'… Attribué à Léo Lagrange (AAPC n° 2015_20403_0016)'. Drop the trailing reference parenthetical. One winner, the same as 7151483."
+   },
+   {
+    "org": 7151543,
+    "cls": "A",
+    "winner": "A.E.C. Castellane",
+    "why": "Same relaunch template: 'Attribué à A.E.C. Castellane'. One winner."
+   },
+   {
+    "org": 7151562,
+    "cls": "A",
+    "winner": "san see",
+    "why": "Same relaunch template: 'Attribué à san see'. Lower case as published (ORG-21/ORG-22 of 18476378). One winner."
+   },
+   {
+    "org": 7279113,
+    "cls": "A",
+    "winner": "Somatico",
+    "why": "'infructueux — suite à négociation attribué à société Somatico'. One winner; drop the 'société' descriptor."
+   },
+   {
+    "org": 7395857,
+    "cls": "D",
+    "why": "Declared sans suite because the awardee company went into liquidation. Kept by 'attributaire'. No winner."
+   },
+   {
+    "org": 7512199,
+    "cls": "B",
+    "why": "Multi-lot list: lots 2,4-8,10-20 to TOPOS SARL (with address), lots 21-22 to G2C Territoire, lots 1,3,9,23 sans suite. Two winners."
+   },
+   {
+    "org": 7517636,
+    "cls": "D",
+    "why": "Declared sans suite in the general interest (changed needs before the 'commission interne d'attribution'). Kept by the awardee noun 'attribution'. No winner."
+   },
+   {
+    "org": 7524029,
+    "cls": "D",
+    "why": "'Le lot n° 1 n'a pas été attribué … déclaré sans suite' (redefinition after a merger). award_clause negation gap ('pas été attribué'). No winner."
+   },
+   {
+    "org": 7596880,
+    "cls": "D",
+    "why": "'Not awarded (was retended and awarded as part of a new project)' is void. names_an_award fires on the second 'awarded', so the classifier returns a plain name. No winner."
+   },
+   {
+    "org": 7596896,
+    "cls": "D",
+    "why": "'Not awarded (was retendered and awarded as part of a new project)'. Same as 7596880. No winner."
+   },
+   {
+    "org": 7674818,
+    "cls": "B",
+    "why": "Orthopaedic list: Orthomed lots 1,2,4; Groupe Lepine 5,6,9; Biotech Ortho 8,34-38; Depuy …; Ethicon 30; FH Orthopedics … Several winners, with contract refs."
+   },
+   {
+    "org": 7685392,
+    "cls": "B",
+    "why": "Sector list: 'Gallego secteurs 3A à 3D / infructueux secteurs 3E à 3H'. List shape with ONE winner (Gallego), extractable if sector lists are split."
+   },
+   {
+    "org": 7685393,
+    "cls": "B",
+    "why": "Sector list: Acorus 4A/4D, Maisonning 4B/4C, infructueux 4E/4F, Chenelec 4G/4H. Several winners."
+   },
+   {
+    "org": 7685394,
+    "cls": "B",
+    "why": "Sector list: SPIE 5A-5D, infructueux 5E/5F, Marc Elec 5G, Chenelec 5H. Several winners."
+   },
+   {
+    "org": 7685395,
+    "cls": "B",
+    "why": "Sector list: Acorus 6A-6D, infructueux 6E/6F, Chenelec 6G/6H. Two winners."
+   },
+   {
+    "org": 7685396,
+    "cls": "B",
+    "why": "Sector list: 'Dubreuilh secteurs 7A 7B / Infructueux secteurs 7C 7D'. ONE winner (Dubreuilh), list shape."
+   },
+   {
+    "org": 7732764,
+    "cls": "D",
+    "why": "Declared sans suite (the reagents are only needed for a new method; the presumed holder of lot 1 is unchanged). Kept by 'titulaire'/'attribution'. No winner."
+   },
+   {
+    "org": 7732765,
+    "cls": "D",
+    "why": "Same as 7732764 (plural 'ces lots'). No winner."
+   },
+   {
+    "org": 7791659,
+    "cls": "A",
+    "winner": "Transgourmet",
+    "why": "Infructueux, relaunched negotiated, 'attribué à l'entreprise Transgourmet (44470 Carquefou)'. One winner; drop 'l'entreprise' and the postcode parenthetical."
+   },
+   {
+    "org": 7791721,
+    "cls": "A",
+    "winner": "Lodfirais",
+    "why": "Infructueux, relaunched negotiated, 'attribué à L'entreprise Lodfirais (24100 Bergerac)'. One winner."
+   },
+   {
+    "org": 7791767,
+    "cls": "A",
+    "winner": "Promocash",
+    "why": "The issue's own example: 'attribué à l'entreprise Promocash (02100 Saint-Quentin)'. One winner."
+   },
+   {
+    "org": 7805728,
+    "cls": "A",
+    "winner": "SMACL",
+    "why": "'Marché infructueux, recours à procédure négociée: titulaire: SMACL'. One winner."
+   },
+   {
+    "org": 7815395,
+    "cls": "D",
+    "why": "'Les lots n° 1 et 3 ont été déclarés infructueux. Le lot n° 2 a été déclaré sans suite' is all void. several_lots fires. No winner."
+   },
+   {
+    "org": 7969717,
+    "cls": "D",
+    "why": "European Parliament 18715886 ORG-6, the whole contractor slot in 24 languages: 'not applicable — no tenders were received — lot 5 not awarded'. Only 2 of 24 copies classify void, so the party tally keeps it. No winner."
+   },
+   {
+    "org": 8747281,
+    "cls": "B",
+    "why": "Sector list with rebates: '74 Sud: AMS (+30 %) et non attribué (infructueux) / 74 Nord: AMS (+30 %) et non attribué'. One distinct winner (AMS) over two sectors, plus unfilled slots."
+   },
+   {
+    "org": 8747284,
+    "cls": "B",
+    "why": "Same shape: ACS DECO (+5 %/+3 %) and non attribué for 74 Sud/Nord. One distinct winner (ACS DECO), list shape."
+   },
+   {
+    "org": 8788741,
+    "cls": "B",
+    "why": "Sector list: 'Allier: lot non attribué (infructueux); Puy-de-Dôme: Dômes Etanch (0 %)'. ONE winner (Dômes Etanch), list shape."
+   },
+   {
+    "org": 8788743,
+    "cls": "B",
+    "why": "Sector list: 'Allier: non attribué; Puy-de-Dôme: SARF (0 %)'. ONE winner (SARF), list shape."
+   },
+   {
+    "org": 8788747,
+    "cls": "B",
+    "why": "Sector list: 'Allier: grange (0 %) et Fayolle (-4 %); Puy-de-Dôme: non attribué'. Two winners."
+   },
+   {
+    "org": 8788751,
+    "cls": "B",
+    "why": "Sector list: Allier AFP, DIAZ and infructueux; Puy-de-Dôme AFP, SARF, Volcapaint, Vallée Dome Finitions. Several winners."
+   },
+   {
+    "org": 9104280,
+    "cls": "A",
+    "winner": "OTIS",
+    "why": "After infructuosité, relaunched (art. 30): 'Il a été attribué à l'entreprise OTIS'. One winner."
+   },
+   {
+    "org": 9104287,
+    "cls": "A",
+    "winner": "Menuiserie du Chalonnais",
+    "why": "Same template: 'attribué à l'entreprise Menuiserie du Chalonnais'. One winner."
+   },
+   {
+    "org": 9811971,
+    "cls": "B",
+    "why": "r208 2017 list: Lot 1 Meal-o-Matic; Lots 2,4,5 Carolo Drink Service; Lot 3 non attribué; Lot 6 Topsec Équipement. Several winners."
+   },
+   {
+    "org": 9907415,
+    "cls": "D",
+    "why": "Declared sans suite because the awardee modified its offer after the award. Kept by 'attributaire'. No winner."
+   },
+   {
+    "org": 10497189,
+    "cls": "B",
+    "why": "Sector list: Secteur 1-2-3 MENUISERIE NORD GIRONDE; Secteur 4 HAROCARENE; Secteur 5-6 infructueuse. Two winners."
+   },
+   {
+    "org": 10528138,
+    "cls": "D",
+    "why": "'Desierto, al retirar su oferta el único licitador propuesto adjudicatario' (void; the sole bidder withdrew). Kept by the un-negated noun 'adjudicatario', so read as a plain name. No winner."
+   },
+   {
+    "org": 10893714,
+    "cls": "D",
+    "why": "NS Groep 19618835 RES-1: a dummy contractor 'Perceel 1 NIET gegungd B.V.' at 'nietgunningsstraat 1', value EUR 1, lot title 'NIET GEGUND maar teruggetrokken'. Kept only by the 'B.V.' company token. No winner."
+   },
+   {
+    "org": 11251840,
+    "cls": "D",
+    "why": "Italian: 'Lotto non aggiudicato' because the only offer (UnipolSai S.p.A. — Ag. Marcantoni) was EXCLUDED. The S.p.A. names an excluded bidder, not a winner. Read as a plain name. A near miss for any A extractor."
+   },
+   {
+    "org": 11663718,
+    "cls": "D",
+    "why": "'Desierto; oferta excluida del proceso de valoración' is pure void. Kept, probably by mixed_segments on the second segment, and read as a plain name."
+   },
+   {
+    "org": 11663720,
+    "cls": "D",
+    "why": "'Desierto; el licitador ha renunciado a la adjudicación del contrato' is pure void. Probably kept by mixed_segments, and read as a plain name."
+   },
+   {
+    "org": 12169942,
+    "cls": "D",
+    "why": "Dutch: 'Perceel 2 en Perceel 4 worden niet gegund. Er zijn geen geldige inschrijvingen ontvangen.' All void. several_lots fires on the two percelen. No winner."
+   },
+   {
+    "org": 14580326,
+    "cls": "D",
+    "why": "'No Contract awarded, see section VI.2' is void plus a pointer. Read as a plain name. No winner."
+   },
+   {
+    "org": 15591728,
+    "cls": "B",
+    "why": "Ranked multi-attribution list: 'Rang 1: Helmlinger, Rang 2: Jonnette, Rang 3: Infructueux'. Two winners in one slot."
+   },
+   {
+    "org": 23532535,
+    "cls": "D",
+    "why": "'Déclaration sans suite du lot n°15 et du lot n°17 - Recomposition d'un lot - Relance …'. All void and relaunch. several_lots fires. No winner."
+   },
+   {
+    "org": 23645704,
+    "cls": "B",
+    "why": "Multi-lot list: CAT8-MS1 Ganix, MS2 RacinesUrbaines, MS3 Rebiffé, MS4 non attribué, MS5 Ets Lefeuvre, MS6 LePain2Mains. Several winners."
+   },
+   {
+    "org": 25043000,
+    "cls": "D",
+    "why": "Text-era 2005 spill: 'Gara deserta per mancanza di offerte valide. SECTION VI: … Date of contract award …'. Read as a plain name. No winner."
+   },
+   {
+    "org": 25755356,
+    "cls": "D",
+    "why": "Text-era spill: 'Desierto. SECTION VI: OTHER INFORMATION …'. Read as a plain name. No winner."
+   },
+   {
+    "org": 25893172,
+    "cls": "D",
+    "why": "Text-era spill: 'Nicht vergeben. SECTION VI: …'. Read as a plain name. No winner."
+   },
+   {
+    "org": 26966868,
+    "cls": "C",
+    "why": "Text 1998 (40640-1998). 'Lote I: declarado desierto. Lote II: Winterthur Seguros Generales'. TXT-CO has 4 lots (II Winterthur Seguros Generales, S.A. …; III Euromutua; IV Aurora Polar), so a C split must accept 'Lote' + Roman numerals + ':'."
+   },
+   {
+    "org": 27028633,
+    "cls": "C",
+    "why": "Text 1998 (1730-1998). 'Lot 1) non attribution pour cause administratif. Lot 2) Hospithera'. The C split yields Hospithera for lot 2."
+   },
+   {
+    "org": 27567379,
+    "cls": "C",
+    "why": "Text 1995 (49091-1995). 'Lot 3) Figuères Services. Lots 1 et 2 déclarés infructueux'. The C split yields Figuères Services."
+   },
+   {
+    "org": 28310858,
+    "cls": "D",
+    "why": "Text 2009 (279510-2009): 'Desierto lote 4 y 5 por falta de licitadores. Desierto lotes 1[,2 y 3 …]'. All void. Read as a plain name, so it survived 491's reparse. No winner."
+   },
+   {
+    "org": 28821451,
+    "cls": "D",
+    "why": "'Not Awarded - Other FE College awarded area. V.5) …' is void plus a spill. The other college is not named. No winner."
+   },
+   {
+    "org": 29760975,
+    "cls": "D",
+    "why": "'No contract awarded. SECTION VI … appeal …: Limerick City Council'. Void plus a spill; the trailing body is the appeal body, not a winner."
+   },
+   {
+    "org": 30336777,
+    "cls": "D",
+    "why": "'Not awarded. Section VI: Complementary information …' is a void spill. Read as a plain name."
+   },
+   {
+    "org": 30533823,
+    "cls": "E",
+    "why": "eForms (Gemeente Maastricht 24400562, ORG-0004 with KvK 69341172): a real tenderer 'Humble Inpect B.V.' with the publisher's '(niet gegunde partij)' = non-awarded-party note. Keep the org; ideally strip the annotation to 'Humble Inpect B.V.'. Not a winner."
+   },
+   {
+    "org": 30533824,
+    "cls": "E",
+    "why": "Same notice pair: a real tenderer 'Provadi B.V.' plus '(niet gegunde partij)'. Keep; ideally strip the annotation. Not a winner."
+   },
+   {
+    "org": 30535445,
+    "cls": "D",
+    "why": "Text-era spill: 'Desiertos. SECTION VI: …'. Read as a plain name. No winner."
+   },
+   {
+    "org": 30535976,
+    "cls": "D",
+    "why": "Text-era spill: 'Desierto. SECTION VI: …'. Read as a plain name. No winner."
+   },
+   {
+    "org": 30537999,
+    "cls": "D",
+    "why": "Text-era spill: 'No award made. SECTION VI: …'. Read as a plain name. No winner."
+   },
+   {
+    "org": 30538906,
+    "cls": "D",
+    "why": "Text-era spill: 'Desierto. SECTION VI: …'. Read as a plain name. No winner."
+   },
+   {
+    "org": 30539882,
+    "cls": "D",
+    "why": "Text-era spill: 'Desierto. SECTION VI: …'. Read as a plain name. No winner."
+   }
+  ],
+  "notes": "Batch 2 split: A=17, B=25, C=3, D=47, E=2, F=0. Notice reads: 8 public GETs (18715886, 19618835, 24400562, 18476378, 1192128, 1156409, 364141, 3879139), 0 failures. Nothing was written to the repo.\n\nWhat 'reason' means: a reason without ', an award summary among them' means the classifier returns None, so the fold reads the sentence as a plain name; it is not an AwardSummary. This applies to 21 rows: all 7 A rows from 18476377/8 ('Pas d'offre … Attribué à X'), and 14 D rows, almost all reason_head/void whole value + names_an_award, or the text-era 'X. SECTION VI …' spills.\n\nNear misses the class D rows show in names_an_award:\n(1) award_clause checks only words[i-1] for non/pas/sans, so 'n'a pas été attribué' counts as an award (6069583, 7093933, 7524029). awardee_noun already lists 'ete' as a filler; award_clause should skip NEGATION_FILLERS the same way.\n(2) Awardee nouns in a hypothetical or failed context fire: 'attributaire pressenti', 'désistement du titulaire', 'société attributaire' in liquidation, 'avis/commission d'attribution', 'n'a pas fait l'objet d'une attribution'. This is most of D.\n(3) several_lots fires on all-void multi-lot sentences and on sub-lot codes ('sous-lot nob02').\n(4) mixed_segments fires on ';'-separated publication references (JOUE/BOAMP/annonce nº).\n(5) One D comes from the party tally, not the classifier: 7969717 is a 24-language void placeholder, and only 2 of its 24 copies classify void.\n(6) 10893714 is a dummy contractor kept only by 'B.V.'.\n(7) 11251840 names an EXCLUDED bidder (UnipolSai S.p.A.). An A extractor must not take a company that follows 'offerta ricevuta dalla' or 'escluso'.\n\nA: every winner follows 'Attribué à', 'attribué à (l')entreprise/société', 'Attributaire:', 'titulaire:' or 'Nom du titulaire:'. Strip the 'l'entreprise'/'société' descriptor, a '(NNNNN Town)' postcode parenthetical and a trailing '(AAPC n° …)' reference.\n\nB: 9 B rows are list-shaped but name only ONE distinct winner: 6603163 Stryker France SAS, 7685392 Gallego, 7685396 Dubreuilh, 8747281 AMS, 8747284 ACS DECO, 8788741 Dômes Etanch, 8788743 SARF. If a single-winner rule is wanted, these are the candidates. They use the 'Name: lot n' / 'Name secteurs xA' / 'Secteur S: Name (n %)' grammars, not the A prose clause.\n\nC: all three are pre-2004 text (1995, 1998). 26966868 uses 'Lote I:/Lote II:' (Roman numerals with ':'), so the C fix in lot_prefix_len must also accept 'Lote' plus Roman numerals in the ':' branch. Its TXT-CO names two more winners (Euromutua, Aurora Polar) that the stored name truncated away.\n\nD: 28310858 is text from 2009 (279510-2009) and survived 491's reparse, because the classifier returns None for it.\n\nE: both rows are eForms tenderers with KvK ids and a '(niet gegunde partij)' annotation. Keep them, and consider stripping the annotation.",
+  "challenge": {
+   "checked": 94,
+   "disagree": [
+    {
+     "org": 7151562,
+     "given": "A (winner 'san see')",
+     "correct": "F (A-shaped, but the winner cannot be verified, so do not extract it)",
+     "why": "No body called 'san see' could be found. Sibling notice 18476377 (fetched) names Fail13, Léo Lagrange Méditerranée, CCO, CAJL, EPISEC, Francas 13, CS Saint-Gabriel Bon Secours, CS La Martine and AGACSC des Rio, but nothing like it. The notice's own 72 orgs (18476378, which lowercases every first letter) have nothing like it either, and a web search finds no Marseille association by that name. RES-20 and RES-21 also have no award date and no contract number. Unlike FAIL 13 and C.A.J.L, which match real awardees, extracting this would create an org 'san see' from what may be a garbled string. Keep it out of the A extraction until it is confirmed."
+    },
+    {
+     "org": 30533823,
+     "given": "E (keep as is)",
+     "correct": "F (the name is a real tenderer, but the fold serves it as a false winner)",
+     "why": "'(niet gegunde partij)' means 'party not awarded'. In 24400562, RES-0001 (BT-142=selec-w) has OPT-320 listing TEN-0001..0006, and CON-0001 has BT-3202 listing TEN-0001..0005. TEN-0002 maps to TPA-0002, which maps to ORG-0004 Humble Inpect B.V. So the fold serves it as a winning bidder next to the real winner, ORG-0003 'Planon Building Management B.V. (gegunde partij)'. 'Keep as is' therefore keeps a false winner. Correct handling: keep the org (KvK 69341172), strip the annotation, and drop its winner role. The publisher's annotation is the only signal that it lost."
+    },
+    {
+     "org": 30533824,
+     "given": "E (keep as is)",
+     "correct": "F (the name is a real tenderer, but the fold serves it as a false winner)",
+     "why": "Same shape as 30533823. TEN-0004 maps to TPA-0003, which maps to ORG-0005 'Provadi B.V. (niet gegunde partij)' (KvK 61820210). TEN-0004 is inside CON-0001's BT-3202 and RES-0001's OPT-320, so Provadi is served as a winner although the publisher marks it as not awarded. Keep the org, strip the annotation, and drop the winner role. ORG-0006 PVM Eindhoven B.V. and ORG-0007 Facilicom Solutions in the same notice have the same shape; they are not in this batch."
+    }
+   ],
+   "notes": "I re-read all 94 rows, not only a sample. Every D, every A and every E was checked against the name, and 8 notices were checked against content: 4 cached in scratchpad/520b2 and 4 fetched once each, with no retries, into scratchpad/v520b2r (18476377, 18440709, 18662475, 18513007). One web search. Nothing was written to the repo or the box.\n\nNo D names a winner. All 50 D rows are winnerless void, relaunch or pending prose. The near misses are correctly D:\n- 11251840: UnipolSai S.p.A. is the EXCLUDED bidder, not a winner.\n- 7524029: BBA is a commune in a merger.\n- 29760975: Limerick City Council is the appeal body.\n- 28821451: 'Other FE College' is not named.\n- 10893714: a dummy 'NIET gegungd B.V.' at 'nietgunningsstraat 1'.\nChecks against content:\n- 28310858: its TXT-CO says lots 1–5 are all desierto.\n- 7969717: all 24 language copies are void.\n- 7024169 is 'decision postponed' rather than void, but it has no winner, so dropping it is still right.\n\nA winners: apart from 'san see', each is a real body.\n- ARDP (18440709, ORG-8) has an address in Sainte-Clotilde and won lot 7, periodicals.\n- Somatico won RES-7 and RES-9 of 18513007 under its plain name.\n- Lodfirais is as published (lot 8, dairy).\n- FAIL 13, C.A.J.L and Léo Lagrange match awardees in 18476377. Note that 'Léo Lagrange' is a short form of 'Léo Lagrange Méditerranée', so extraction will create a separate org.\n\nB rows with one winner (6603163, 7685392, 7685396, 8747281, 8747284, 8788741, 8788743): B is defensible because each lists several lots or sectors. For 8747281 and 8747284, though, the one winner (AMS, ACS DECO) holds every awarded slot of the RES, so an A extraction would be fully correct there. In the others the single winner covers only part of the RES's lots.\n\nC rows are fine. 26966868's TXT-CO holds the full 4-lot list: II Winterthur, III Euromutua, IV Aurora Polar.\n\nCorrections to the labeller's mechanism notes (the class labels are unaffected):\n- 7024169 is not just 'no void stem'. void_prefix fires on 'Pas d'attributaire', and awardee_noun fires on 'retenu' because the word before it is 'attributaire', not a negation. So it reads as a plain name.\n- The text-era 'Desierto./Gara deserta…/No contract awarded. SECTION VI' spills, and 14580326, are kept by named_before_spill: the head before 'section vi' has no VOID_STEMS word ('desierto' is a VOID_WHOLE value, not a stem).\n- The award_clause negation-gap claim is confirmed: partyname.rs:3116-3125 checks only words[i-1] for non/pas/sans. NEGATION_FILLERS ('ete') apply only to awardee_noun."
+  }
+ },
+ {
+  "i": 3,
+  "rows": [
+   {
+    "org": 30593829,
+    "cls": "C",
+    "why": "Text-era 'lot n) X. lot m) Y' list: lot 2 void (sans suite), lot 3 won by Aloka Sàrl."
+   },
+   {
+    "org": 30665788,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: Lot 3 void (sans suite), Lot 4 won by 'Ets. S.A.D. (73)'."
+   },
+   {
+    "org": 30666364,
+    "cls": "C",
+    "why": "Text 'Lot n) <title>: <winner>' list (Foucque, Nassibou, Nicisa…); lot 2 infructueux."
+   },
+   {
+    "org": 30680275,
+    "cls": "D",
+    "why": "Text era. 'Marché numéro: 01072 - Lot 1) et lot 2) Marché classé sans suite' is void as a whole and names no winner. several_lots fires on lot 1/lot 2."
+   },
+   {
+    "org": 30680323,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: lots 1-2 declared infructueux, Lot 2) Vallée de la Marne won by IWACO France."
+   },
+   {
+    "org": 30686841,
+    "cls": "C",
+    "why": "Text 'Lot n)' list (SPLO, Distralls/Distralis, Prodirest, Rault); lots 10-11 infructueux."
+   },
+   {
+    "org": 30687978,
+    "cls": "C",
+    "why": "Spanish text list 'Lote 1) Declarado desierto. Lote 2) Limpiezas Luz'. The C fix must accept 'Lote' as well as 'Lot'."
+   },
+   {
+    "org": 30688273,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: Lot 1 sans suite, Lot 2 won by Astem Sécurité."
+   },
+   {
+    "org": 30689270,
+    "cls": "C",
+    "why": "Text 'Lot n)' list (Dactyl Buro, Buro +, Willecocq, Rover, Navarre); includes a 'Lot 8bis)' label and three infructueux lots."
+   },
+   {
+    "org": 30690240,
+    "cls": "C",
+    "why": "Text list 'Lots 1) et 2) Entreprise Mazza. Lot 3) GCTélécom Lor 4) déclaré sans suite'. It has a typo label 'Lor 4)' and a multi-label 'Lots 1) et 2)'."
+   },
+   {
+    "org": 30695615,
+    "cls": "C",
+    "why": "Text lettered list 'A) non attribué. B1) et B2) Climelec' with one winner, Climelec. Lettered labels are not covered by a digits-only Lot-n fix."
+   },
+   {
+    "org": 30698459,
+    "cls": "C",
+    "why": "Notice 49631-2002. The name 'Lot 1) déclaré infructueux. Lots 2)' holds no winner: the parser cut it off. TXT-CO continues 'Lots 2), 3) et 4) SA EVM - Les Pépinières des Vallées', so that winner is lost today. Lot-n fix plus reparse recovers it (the 'Lots 2) 8) 20) X' test shape)."
+   },
+   {
+    "org": 30786740,
+    "cls": "D",
+    "why": "Spanish 2003 text: 'Desiertos..' plus a SECTION VI spill. No winner. Reason lacks 'award summary', so this is a VoidLot classifier miss (plural Desiertos plus spill), not a names_an_award keep."
+   },
+   {
+    "org": 30820452,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: Lot 1 won by USP Normandie SA, lots 2-3 infructueux."
+   },
+   {
+    "org": 30899597,
+    "cls": "D",
+    "why": "Notice 21645990, 2021 DK defence XML. 'No contract awarded — see section VI.2)'; VI.2 explains the termination. No winner. Not AwardSummary: a void miss, likely through the section-pointer handling."
+   },
+   {
+    "org": 31375951,
+    "cls": "D",
+    "why": "Read 4357356, the only RES (CH Vichy). The full value is a summary paragraph ('11 lots sans suite, 5 infructueux, 61 lots attribués à 29 fournisseurs') that names no supplier. Drop the org; nothing to extract. The RES is not wholly void."
+   },
+   {
+    "org": 31377625,
+    "cls": "D",
+    "why": "Read 4359993: RES-1 holds only the header of a 310-circuit list ('220 lots attribués… 90 infructueux… liste ci-dessous'), no winner. The winners sit in sibling RES org names. Drop."
+   },
+   {
+    "org": 31381712,
+    "cls": "A",
+    "winner": "LD Bio Diagnostics",
+    "why": "Relaunch prose: 'Déclaré infructueux… Relancé en procédure négociée… et attribuée à LD Bio Diagnostics.'"
+   },
+   {
+    "org": 31383538,
+    "cls": "D",
+    "why": "Pointer prose 'Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot' names no winner (awardee_noun fires on attribution/attributaire). 5 mentions."
+   },
+   {
+    "org": 31383542,
+    "cls": "D",
+    "why": "Same pointer prose as 31383538 ('no10-279996'); no winner."
+   },
+   {
+    "org": 31391828,
+    "cls": "D",
+    "why": "'non retenus: lots 6-44-… sans suite: lots 9-65-92-96' names no winner; several_lots fires on the two lot runs."
+   },
+   {
+    "org": 31393407,
+    "cls": "A",
+    "winner": "Nectarys",
+    "why": "'lot 16-1… déclaré sans suite le lot 16-2 est attribué à Nectarys' names exactly one winner."
+   },
+   {
+    "org": 31393408,
+    "cls": "B",
+    "why": "XML multi-winner list in one slot: Gaudais Distribution, Pomona Passion Frois, Transgourmet, Earl Lefleche (lots 1-x); lot 1-7 sans suite."
+   },
+   {
+    "org": 31400142,
+    "cls": "D",
+    "why": "'Le Lot n'a pas été attribué (lot infructueux)'. award_clause misses the negation because 'été' sits between 'pas' and 'attribué'."
+   },
+   {
+    "org": 31414415,
+    "cls": "B",
+    "why": "Read 4430393 ORG-5: the full value goes past the batch's 300 chars to 'attribués à la société RMI… / SCC… / Est Multicopie…', several winners with per-lot prices. Not A despite the RMI-only prefix."
+   },
+   {
+    "org": 31415171,
+    "cls": "D",
+    "why": "Infructueux, relaunched, 'en cours d'attribution'; no winner."
+   },
+   {
+    "org": 31424633,
+    "cls": "D",
+    "why": "'Attributaire non designe - lot infructueux'. awardee_noun fires because the negation follows the noun."
+   },
+   {
+    "org": 31425155,
+    "cls": "D",
+    "why": "'Non attribuée - en cours d'analyse - attribution reportée' names no winner ('attribution' noun fires)."
+   },
+   {
+    "org": 31427032,
+    "cls": "D",
+    "why": "Template 'Le lot 3: <lot title> a été déclaré sans suite'; no winner."
+   },
+   {
+    "org": 31428158,
+    "cls": "B",
+    "why": "XML ' / '-separated list: Brake, Davigel, le Roy, le Saint, Pomona PF, Pomona TA; lot 8 infructueux."
+   },
+   {
+    "org": 31428159,
+    "cls": "D",
+    "why": "'Lot 1 sans suite / lot 2 infructueux' is pure void; the triage already noted it as a VoidLot miss."
+   },
+   {
+    "org": 31428160,
+    "cls": "B",
+    "why": "XML list: Bernard, Brake, Pomona PF, SDA, terre et plume; lots 11-12 sans suite."
+   },
+   {
+    "org": 31450417,
+    "cls": "D",
+    "why": "Read 12316056: the full value is 'Le Lot 2: <long title>… ascenseurs a été déclaré infructueux', the lot-title template. No winner."
+   },
+   {
+    "org": 31471384,
+    "cls": "D",
+    "why": "Template 'Le lot 6: <title incl. Zac… lots 3-2, 3-3> a été déclaré infructueux'. several_lots fires on the numbers inside the title."
+   },
+   {
+    "org": 31473527,
+    "cls": "D",
+    "why": "Template 'Le lot 1: <title> a été déclaré Sans Suite'; no winner."
+   },
+   {
+    "org": 31481076,
+    "cls": "D",
+    "why": "Template 'Le lot 5: Lot 2011-210 02 Communauté de Communes… a été déclaré infructueux'. The CC is the lot title, not a winner. several_lots fires on 'Lot 2011-210 02'."
+   },
+   {
+    "org": 31481089,
+    "cls": "D",
+    "why": "Same template (lot 9, CC du Pays de Cruseilles is the lot title); no winner."
+   },
+   {
+    "org": 31481092,
+    "cls": "D",
+    "why": "Same template (lot 6, CC du Genevois is the lot title); no winner."
+   },
+   {
+    "org": 31481093,
+    "cls": "D",
+    "why": "Same template (lot 7, CC du Genevois); no winner."
+   },
+   {
+    "org": 31481094,
+    "cls": "D",
+    "why": "Same template (lot 8, CC du Genevois); no winner."
+   },
+   {
+    "org": 31481098,
+    "cls": "D",
+    "why": "Same template (lot 3, CC de la Vallée Verte); no winner."
+   },
+   {
+    "org": 31481123,
+    "cls": "D",
+    "why": "Same template, sans suite (lot 7, CC du Genevois); no winner."
+   },
+   {
+    "org": 31482009,
+    "cls": "A",
+    "winner": "Faure/Annequin",
+    "why": "Read 12396006: 'lot déclaré infructueux… relancée… marché attribué à: Faure/Annequin'. The same notice serves 'Faure/Annequin' as a plain org on RES-15."
+   },
+   {
+    "org": 31482010,
+    "cls": "A",
+    "winner": "Berthelet",
+    "why": "Same notice: '… marché attribué à: Berthelet'. A sibling RES already has the org 'Berthelet'."
+   },
+   {
+    "org": 31482011,
+    "cls": "A",
+    "winner": "Segui",
+    "why": "Same notice: '… marché attribué à: Segui'."
+   },
+   {
+    "org": 31482013,
+    "cls": "A",
+    "winner": "Cars du Trièves",
+    "why": "Same notice: '… marché attribué à: Cars du Trièves'."
+   },
+   {
+    "org": 31482014,
+    "cls": "A",
+    "winner": "Faure/Eyraud",
+    "why": "Same notice: '… marché attribué à: Faure/Eyraud' (a slash pair, kept as published like its siblings)."
+   },
+   {
+    "org": 31482016,
+    "cls": "A",
+    "winner": "Eyraud/Perraud",
+    "why": "Same notice: '… marché attribué à: Eyraud/Perraud'. 'Eyraud/Perraud' is already a plain org on RES-3/4."
+   },
+   {
+    "org": 31486027,
+    "cls": "D",
+    "why": "Read 12406378 RES-4: 'attribué par marché négocié… suite à appel d'offres infructueux (publicité…)'. No winner named, so drop. Caveat: the lot WAS awarded (to an unnamed party); it is not truly void."
+   },
+   {
+    "org": 31489554,
+    "cls": "D",
+    "why": "'Lot infructueux. En cours d'attribution, suite marché négocié sans publicité.' No winner. 3 mentions."
+   },
+   {
+    "org": 31489559,
+    "cls": "D",
+    "why": "Same 'Lot infructueux. En cours d'attribution…'; no winner."
+   },
+   {
+    "org": 31491050,
+    "cls": "D",
+    "why": "Template 'Le lot 13: <title> a été déclaré Sans Suite'; no winner."
+   },
+   {
+    "org": 31491056,
+    "cls": "D",
+    "why": "Same notice and template as 31491050 ('Le lot 6: <long title>… a été déclaré…'); no winner."
+   },
+   {
+    "org": 31497710,
+    "cls": "B",
+    "why": "XML list: GE Healthcare Clinical Systems (lot 1) and Philips France (lots 2-5), with per-lot EUR HT figures; lot 6 sans suite."
+   },
+   {
+    "org": 31497872,
+    "cls": "D",
+    "why": "The AIA Clermont-Ferrand director declared lots 10/15/17/19/14/18 sans suite. The body named is the buyer, not a winner. several_lots fires."
+   },
+   {
+    "org": 31518405,
+    "cls": "B",
+    "why": "XML list (27163521): Adhesia, Coldis; lot 1002 infructueux."
+   },
+   {
+    "org": 31518406,
+    "cls": "B",
+    "why": "XML list: Coldis, Abena frantex; lots 1107-1110 infructueux."
+   },
+   {
+    "org": 31518407,
+    "cls": "B",
+    "why": "XML list: Mongin jauffret (lots 1220-1237), Chomette favor (1238); lot 1226 infructueux."
+   },
+   {
+    "org": 31518408,
+    "cls": "B",
+    "why": "XML list: Paredes, Coldis, Argos hygiène, Cedisud, Chomette favor; several lots infructueux."
+   },
+   {
+    "org": 31518409,
+    "cls": "B",
+    "why": "XML list: Paredes, Coldis, Abena frantex, Groupe 5 s, Eif; lot 1334 infructueux."
+   },
+   {
+    "org": 31518416,
+    "cls": "B",
+    "why": "XML list: Usagunic, Apmp; lots 2004-2006 infructueux."
+   },
+   {
+    "org": 31518419,
+    "cls": "A",
+    "winner": "Paredes",
+    "why": "Single winner in the 27163521 list shape: 'Paredes lot 506 i Les Paluds - 140 avenue du Millet Bp 1340 lots 501 à 505 infructueux'. The tail is an address. List-shaped, not award prose, so the extractor needs a '<Name> lot(s) N' head rule."
+   },
+   {
+    "org": 31518420,
+    "cls": "B",
+    "why": "XML list: Argos hygiène, Eumarcom, Coldis, Paredes, Thermofina; several lots infructueux."
+   },
+   {
+    "org": 31518422,
+    "cls": "B",
+    "why": "XML list: Coldis, Argos, Phs, Adhesia; lots 905, 911 infructueux."
+   },
+   {
+    "org": 31527955,
+    "cls": "F",
+    "why": "Named company, NOT a winner. Read 27180984 (Nice pool, 2008): 'Société Sindarro Lot déclaré infructueux relancé en marché négocié… (date limite le 10 juin 2008)'. The relaunch deadline falls after the 2008-05-24 publication, and the RES has no value fields (awarded RES do). So Sindarro is a failed bidder. Treat as void (drop) and never extract. A near-miss test for A."
+   },
+   {
+    "org": 31527956,
+    "cls": "F",
+    "why": "Same as 31527955: 'Société Sanchez lot déclaré infructueux relancé… (date limite le 10 juin 2008)'. Failed bidder, not a winner. Drop; do not extract."
+   },
+   {
+    "org": 31527960,
+    "cls": "F",
+    "why": "Same shape: 'Société Energys. Lot déclaré infructueux relancé…'. Energys legitimately won RES-12/14 of this notice but not this lot. Drop; do not extract."
+   },
+   {
+    "org": 31527961,
+    "cls": "F",
+    "why": "Same shape: 'Société SOTEP Lot Déclaré infructueux et sera relancé…'. Not a winner. Drop; do not extract."
+   },
+   {
+    "org": 31527964,
+    "cls": "F",
+    "why": "Same shape: 'Société Spada. Lot déclarée infructueux relancé…'. Not a winner. Drop; do not extract."
+   },
+   {
+    "org": 31527968,
+    "cls": "F",
+    "why": "Same shape: 'Société Herman Aluminium Lot déclaré infructueux, relancé…'. Not a winner. Drop; do not extract."
+   },
+   {
+    "org": 31528120,
+    "cls": "B",
+    "why": "XML 'MARCHE <n> <WINNER> Lots : …' list: ALDIS-BORGEL, BRAKE, CAFES RICHARD, FRIGERAL, POMONA, PRO A PRO DISTRIBUTION SUD…"
+   },
+   {
+    "org": 31674188,
+    "cls": "D",
+    "why": "Text 1997: 'A 97.23.18) sans suite (déjà attribué au lots A 06 et A 12)'. award_clause fires on 'déjà attribué' (awarded under OTHER lots). No winner."
+   },
+   {
+    "org": 31674189,
+    "cls": "D",
+    "why": "Same: 'A 97.23.19) sans suite (déjà attribué au lot A 12)'; no winner."
+   },
+   {
+    "org": 31689490,
+    "cls": "A",
+    "winner": "Mepy Système",
+    "why": "Text 1999 (Strasbourg HU): 'Procédure de marché négocié après appel d'offres infructueux: 5) Mepy Système'. 'infructueux' belongs to the procedure heading (EARLIER_VOID cites this exact name). Strip heading and label. Text era, so a pre-2004 reparse today refuses it whole."
+   },
+   {
+    "org": 31689502,
+    "cls": "C",
+    "why": "Read 1338124 (1999 text numbered list): 'Bernas Médical' (lot 64, AO list) glued across the 'Procédure de marché négocié après appel d'offres infructueux:' heading to '28) Kodack'. Two winners and nothing void. Needs a heading split in winner_segments."
+   },
+   {
+    "org": 31731990,
+    "cls": "C",
+    "why": "Read 1801614 (2001 text, lettered lots under 'Marché <category>:' headings): 'G) non attribué. Marché conserves: A)' holds no winner. The parser cut the list and lost Eurocash for A)/D). Lettered labels and headings go beyond the Lot-n fix; a D-style drop is the fallback."
+   },
+   {
+    "org": 31731993,
+    "cls": "C",
+    "why": "Same notice: 'E) non attribué. Marché produits d'entretien: A)' holds no winner; the winner was lost to the same lettered/heading segmentation."
+   },
+   {
+    "org": 31733023,
+    "cls": "D",
+    "why": "'aucune entreprise ne s'est portée candidate pour le marché négocié passé suite à l'appel d'offres infructueux': the relaunch itself drew no candidate. only_an_earlier_void/EARLIER_VOID wrongly reads it as an award. A near-miss test."
+   },
+   {
+    "org": 31733948,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: Sté Doumenge, SA Rault, Sté Discol-Prodirest, Elidis, Andrieux, GDA, Krill…; lot 5 infructueux."
+   },
+   {
+    "org": 31734131,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: Progetech, Vidalauto, Descours et Cabaud…; lots 1-2 void."
+   },
+   {
+    "org": 31734397,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: Tissus Gisele, Mulliez, Centraco, CTD, TTE…; lot 9 'Aucune réponse'."
+   },
+   {
+    "org": 31734422,
+    "cls": "C",
+    "why": "Read 1827406 (2002 text, 'Marché n:' plus 'lot n)' list): 'lot 4) Marché infructueux. Marché 4: SA Cofida d'Hauwers'. SA Cofida d'Hauwers won Marché 4. The fix needs a 'Marché n:' split too."
+   },
+   {
+    "org": 31735007,
+    "cls": "C",
+    "why": "The triage's example (20187-2002): Blin, Prodirest, Ouest Distribution, Corol Jeager… with several lots déclaré infructueux."
+   },
+   {
+    "org": 31736174,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: Didactic, Vygon, LPI, Allegiance, Terumo…; lot 19 'Non attr…'."
+   },
+   {
+    "org": 31737127,
+    "cls": "C",
+    "why": "Text 'Lot n) \"title\": société X' list: Antalis, Buhrmann, Top Papers, Agenpa…"
+   },
+   {
+    "org": 31738162,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: Société SEF Environnement, Société France Elagage; lots 4-5 infructueux."
+   },
+   {
+    "org": 31738464,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: Norisolec, Millery, Thommeret, Sauval…; lot 2 non attribué."
+   },
+   {
+    "org": 31738609,
+    "cls": "A",
+    "winner": "Storz",
+    "why": "Read 1869611 (2002 text): 'lot 25) la société Storz a été retenue. Le lot 32 a été déclaré infructueux'. One winner; the void sentence belongs to another lot. Text era: siblings 'lot 38) la société Braun a été retenue' are C-class names needing the same 'la société X a été retenue' cut."
+   },
+   {
+    "org": 31739133,
+    "cls": "A",
+    "winner": "Importaciones Canarias de Automóviles SA",
+    "why": "Read 1877924 (66330-2002 text): the last list entry '10) … (Lote A2.5).' is glued to 'Se ha declarado desierto el Lote A3.2. Nacionalidad: española'. One winner. Siblings keep their '(Lote X)' suffix as published. Text era."
+   },
+   {
+    "org": 31740148,
+    "cls": "C",
+    "why": "Text 'Lot n)' list: Roche Diagnostics, Dade Behring, Biomerieux, Abbott, Sebia…; lot 4 infructueux."
+   },
+   {
+    "org": 31740189,
+    "cls": "C",
+    "why": "Text 'Lot n° n)' list: Renault France VI S.A., SES, W41 TP, Coullare…; lot 9 sans suite. The fix must accept 'Lot n°'."
+   },
+   {
+    "org": 31854611,
+    "cls": "D",
+    "why": "'Not awarded. Procedure cancelled according to FOA § 22-1.. SECTION VI…' spill. No winner. Reason lacks 'award summary', so this is a VoidLot classifier miss (spill handling)."
+   },
+   {
+    "org": 31919182,
+    "cls": "A",
+    "winner": "savelys GDF suez",
+    "why": "Labelled entries: 'Agence d'Amboise : appel d'offres déclaré sans suite - Agence de Chinon : savelys GDF suez' (the labelled_entries doc example). One winner, cut verbatim; its proper form is 'Savelys GDF Suez'. List-shaped, so it needs a 'label : value' rule rather than an award clause."
+   },
+   {
+    "org": 31919183,
+    "cls": "A",
+    "winner": "Mongin Jauffret",
+    "why": "Single winner in the 27163521 list shape: 'Mongin Jauffret : lots 1504 et 1505 Zi Delta industrie la Valentine lots infructueux : 1501…'. The tail is an address. Needs a '<Name> : lots N' head rule."
+   }
+  ],
+  "notes": "94 rows: A=14, B=14, C=26, D=34, E=0, F=6. Batch 3 is mostly r208 French awards 2008-2017 (XML era) plus pre-2004 text, with one 2021 DK notice. 14 public reads, no failures and no retries: 27180984, 12396006, 4357356, 1861225, 1801614, 1338124, 1827406, 1869611, 4430393, 1877924, 4359993, 12316056, 21645990, 12406378.\n\nFindings for the decision:\n(1) The batch truncates names at 300 chars, and that can hide winners. 31414415 starts 'attribués à la société RMI' and looks like A, but the full value goes on to SCC and Est Multicopie, so it is B. A one-winner A verdict needs the full value.\n(2) F near-miss for the A extractor: notice 27180984 has six 'Société X Lot déclaré infructueux relancé… (date limite le 10 juin 2008)' names (31527955/56/60/61/64/68). X is a failed bidder, not a winner: the relaunch deadline falls after publication and those RES carry no value fields. They should be dropped like D, and X must never be extracted.\n(3) A-class shapes beyond 'attribué à X': 'marché attribué à: X' (6 rows, 12396006); 'la société X a été retenue'; a procedure heading 'marché négocié après appel d'offres infructueux: 5) X'; and one-winner list heads '<X> lot(s) N …' or 'label : X' (31518419, 31919183, 31919182). The four text-era A rows (31689490, 31738609, 31739133, plus the Storz C siblings) also need the text parser to keep them, because plausible_name refuses them whole on any pre-2004 reparse.\n(4) D triggers worth tests:\n - awardee_noun on 'en cours d'attribution', 'attributaire non désigné' (negation after the noun) and 'Voir l'avis d'attribution';\n - award_clause on 'n'a pas été attribué' ('été' sits between the negation and the participle) and on 'déjà attribué au lot A 12';\n - several_lots on numbers inside a 'Le lot N: <title> a été déclaré…' template ('Lot 2011-210 02', 'lots 3-2, 3-3');\n - EARLIER_VOID on 'aucune entreprise ne s'est portée candidate pour le marché négocié passé suite à l'AO infructueux'.\n Three D rows are not AwardSummary keeps at all; the reason reads '0/1 names void' without 'award summary'. They are VoidLot classifier misses: 30786740 'Desiertos.. SECTION VI', 30899597 'No contract awarded — see section VI.2)', 31854611 'Not awarded… SECTION VI'.\n 31486027 says the lot was awarded but names no winner. Dropping the org is right, but the lot is not truly void.\n 31375951 and 31377625 are summary or header paragraphs with no names. In 4359993 the winners sit in sibling RES org names.\n(5) C-class variants the Lot-n fix must cover or knowingly leave out:\n - 'Lote n)', 'Lot n° n)', 'Lot 8bis)', a typo 'Lor 4)', and 'Lots 1) et 2)';\n - lettered 'A)'/'B1)' labels and 'Marché <category>: A)' headings (1801614, where the parser lost Eurocash);\n - 'Marché n:' (1827406) and 'Procédure …:' headings (1338124).\n In 30698459 the cut 'Lots 2)' lost SA EVM - Les Pépinières des Vallées, which a reparse would recover.\nNo E rows. Nothing was written to the repo.",
+  "challenge": {
+   "checked": 94,
+   "disagree": [
+    {
+     "org": 31375951,
+     "given": "D",
+     "correct": "F",
+     "why": "Read 4357356. The name names no supplier, so dropping the org is right. But VoidLot would mark the result 'clos-nw' (closed, no winner), and this RES is an award. RES-1 is the only result and covers all 78 lots. It has CONTRACT_AWARD_DATE 2010-12-27, OFFERS_RECEIVED 61 and VALUE_COST 312,675.04 EUR, which ADDITIONAL_INFORMATION states as the annual cost of '61 lots attribués à 29 fournisseurs'. It is the plural 'Various suppliers' placeholder: drop the org but read 'selec-w', not void. The labeler's own note ('the RES is not wholly void') contradicts D."
+    },
+    {
+     "org": 31377625,
+     "given": "D",
+     "correct": "F",
+     "why": "Read 4359993. RES-1 has CONTRACT_AWARD_DATE 2010-07-22 and covers the whole consultation ('220 lots ont été attribués le 22.7.2010'). Its name is a pointer: 'La liste des attributaires des 220 marchés … est présentée ci-dessous'. The winners sit in sibling RES-2..RES-30 org names. That is Placeholder ('see below'), not a void lot. Drop the org but don't mark the umbrella award 'clos-nw'."
+    },
+    {
+     "org": 31486027,
+     "given": "D",
+     "correct": "F",
+     "why": "Read 12406378, lower confidence. The name asserts an award: 'attribué par marché négocié passé selon art. 35-I.1 … suite à appel d'offres infructueux'. The code's own EARLIER_VOID (' suite a appel d offres infructu') reads the void as the earlier procedure's. The labeler's caveat ('the lot WAS awarded … not truly void') contradicts D's VoidLot meaning. Correct: drop the org as a non-name with a Placeholder-style 'winner unnamed' marker, not VoidLot. The ambiguity: RES-4 has no award date or value, unlike lots 1 and 3, whose negotiated awards this notice does report. So 'void in this open procedure, awarded in a separate negotiated one' (like 4369863's pointer rows, which I confirmed as D) is a defensible reading. But the published text says 'attribué'."
+    }
+   ],
+   "notes": "Coverage: I re-classified all 94 rows: 34 D, 6 F, 14 A, plus all 14 B and all 26 C as the random sample. 14 notice reads (12406378, 4357356, 4359993, 27180984, 12419775, 4430393, 27163521, 4369863, 12438447, 4385211, 12393517, 12396006, 4388372, 1338123), paced at 0.6 s, 0 failures, no retries. They checked about 39 rows against their notice. I wrote nothing outside scratchpad/v520b3.\n\nThe only disagreements are D labels on results that were actually awarded. In every case dropping the org is right, but VoidLot reads 'clos-nw' where it should read 'selec-w' (partyname.rs:18-21). No D names a winner, and no A names something that isn't a company.\n\nConfirmed by reads:\n- 31383538 and 31383542 are D. 4369863's void RESes (3, 7, 8, 10, 22, 23) have no award date or offer count, while every awarded RES has both. The award is in a separate notice.\n- 31491050 and 31491056 are D. The full 650-character value ends 'a été déclaré Sans Suite', and RES-6/13 carry no award date or value.\n- 31481089, 31481092, 31481093 and 31481094 are D. In 12393517 the RES titles are 'Lot 2011-231 0x Communauté de Communes du Genevois', so the CC names are lot titles of void lots. The other three CC template rows (31481076, 31481098, 31481123) share the shape but I did not read their notices.\n- 31497872 is D. Its RES-2 covers only the void lots and has no award date; RES-1 went to Eurotech.\n- 31391828 is D. Its RES-37 lists only lots not awarded and has no award date; the winners sit on RES-1..36.\n- 31414415 is B: RMI, SCC and Est Multicopie (763 characters).\n- 31518419 is A for Paredes. RES-5 is worth 12,091.56 EUR, and its postal code 13784 Aubagne matches Paredes' own RES-15 address 'Zi les Paluds - 140 avenue du Millet', so the tail is Paredes' address.\n- 31919183 is A for Mongin Jauffret (postal code 13396 Marseille).\n- The six 31482xxx rows are A. Each relaunch RES has award date 2011-06-09, and Faure/Annequin, Eyraud/Perraud and Berthelet appear as plain orgs on RES-15, RES-3/4 and RES-12.\n- 31689490 is A for Mepy Système. TXT-CO reads '2) Procédure de marché négocié après appel d'offres infructueux: 5) Mepy Système; 9) Kontron; …'.\n- 31393407 (Nectarys, RES-16 'Lait frais') and 31393408 (B) hold.\n\nThe F rows (31527955-68) are right. In 27180984 every awarded RES has a VALUE_COST and an addressed org, while these RESes have neither, and the relaunch deadline of 10 June 2008 falls after the 2008-05-24 publication. So each named Société is a failed bidder: drop the org and treat the lot as void. However, the existing test at partyname.rs:3298 asserts 'Société Sindarro Lot déclaré infructueux relancé…' is an AwardSummary, which is the wrong expectation. The fix must invert that test.\n\nCaution on the C rows that hold no winner (30698459, 31731990, 31731993): if the Lot-n or lettered reparse does not recover their winners, the 'D-style drop' fallback must not use VoidLot. Those results carry awarded lots (SA EVM for lots 2-4; Eurocash for A)/D)), so the fallback marker belongs in the Placeholder or no-marker family."
+  }
+ }
+]
