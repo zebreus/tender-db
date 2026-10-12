@@ -99,7 +99,8 @@ Figures:
 
 Still open, as the decision lists:
 - 1188404 `Ingen` FR (language unread);
-- whether to promote the "nobody" words to VoidLot (needs 510's per-word value/date table);
+- whether to promote the "nobody" words to VoidLot (needs 510's per-word value/date table) — owned by issue 521
+  since 2026-10-12;
 - the deferred words `nil`, `ei`, `sin`, `vari`;
 - a follow-up issue for per-lot parsing of the ~500 award summaries, to be filed with unit 2.
 

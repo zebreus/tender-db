@@ -119,5 +119,7 @@ For U7 that means:
 - a 513 survivor counts as a holder through its merged `GBNHS<code>` identifier;
 - the cross-body PPON pairs QKK, QMF, RXX, RTF, RGT, 0CX and RAL get keep verdicts (513 U3), and U7's registry-shape
   gate denies them too;
-- 519 (sub-ICB and typo codes) lands before U7 or with it.
+- 519 (sub-ICB and typo codes) lands before U7 or with it (phase A applied 2026-10-12);
+- the X24 ↔ PPON pair (NHS England, `GB-NHS-X24` beside GB-PPON-PDPT-3135-BWWY) is owned by issue 523, so U7's
+  registry-shape denial of it is intentional, not a miss.
 
