@@ -1,6 +1,14 @@
 # 511 — placeholder names (pointers, withheld, `Various`, award summaries) mint parties in every role
 
-Status: ready-for-agent — UNITS 4+5 DRAINED 2026-10-12. Wet 2306 (expect 46,499; 46,487 re-queued) → fold 2307 retired **55,007** mentions. That clears the ~54,200 floor and stays under the 55,923 read trigger. Dropped parties: 216 void and 55,337 placeholder. 2,607 tenders corrected, 6,453 correction rows. The fold's sample of 25 identified placeholders was read. Echo identifiers aside, it is 'siehe Ziffer VI.4.1' in DE eForms review slot ORG-7005 carrying BWI GmbH's own ids (Leitweg 992-80159-61 = org 2216; VAT DE814789837). The publisher copied the buyer's id into a review slot that names nothing, so dropping it is correct: BWI no longer appears as its own review body. The auto sweep 2308 was over the cap (20,898), so it recorded a plan (10 protected by review tables). Wet sweep 2309 removed **20,898 orphan orgs** (28,158 name variants). NEXT: unit 6 precision follow-ups (below). Watch the daily fold's identified sample.
+Status: ready-for-agent — UNIT 6 DRAINED 2026-10-12 (eefbd64; build wf_915efc84-688 with 3 reviews and fixes).
+- Dry 2320: placeholder 994 / 1,956, blank 49 / 185.
+- Reads wf_285dee15-947 (32 agents, 1,552 entries): 0 real-party drops.
+- Canaries: 12516947 / 19530163 refold (all 21 pointer parties of 19530163 dropped), and buyer canary 0 of 99 changed.
+- Translink restored by refolding its 1,364 notices: 19272352 ORG-2 is back as an AwardSummary party.
+- Wet 2332 → fold 2333 retired 1,435 mentions (dropped 1,597 placeholder, 55 blank, 167 void; 121 tenders corrected). Auto sweep 2334 removed 627 orphans.
+- The gap to the dry (670 mentions) is exactly residual dry 2335's kept drop-class (`../511-placeholders/u6/plan-residual.json`): 2009–13 r208 TED pointers ('Please refer to VI.4.1.', 'Same as in point VI.4.1') whose template copies fail the template guard. Examples: SK 'Prosíme, pozrite VI.4.1.' (comma before the reference), BG '… справка с точка', RO '… punctul', MT '… l-punt'.
+NEXT (low priority): unit 7 (below). The class drain is otherwise complete across units 1–6.
+Was: ready-for-agent — UNITS 4+5 DRAINED 2026-10-12. Wet 2306 (expect 46,499; 46,487 re-queued) → fold 2307 retired **55,007** mentions. That clears the ~54,200 floor and stays under the 55,923 read trigger. Dropped parties: 216 void and 55,337 placeholder. 2,607 tenders corrected, 6,453 correction rows. The fold's sample of 25 identified placeholders was read. Echo identifiers aside, it is 'siehe Ziffer VI.4.1' in DE eForms review slot ORG-7005 carrying BWI GmbH's own ids (Leitweg 992-80159-61 = org 2216; VAT DE814789837). The publisher copied the buyer's id into a review slot that names nothing, so dropping it is correct: BWI no longer appears as its own review body. The auto sweep 2308 was over the cap (20,898), so it recorded a plan (10 protected by review tables). Wet sweep 2309 removed **20,898 orphan orgs** (28,158 name variants). NEXT: unit 6 precision follow-ups (below). Watch the daily fold's identified sample.
 Was: ready-for-agent — UNITS 4+5 DRAINING 2026-10-12. Unit 5 was deployed in 4e79e46 (81f784d, gate green; build wf_b03f1aa2-7c5 with 3 reviews and 6 fixes).
 - Combined dry 2291 (`../511-placeholders/u45/plan-dry.json`): placeholder 21,334 orgs / 55,708 mentions, blank 52 / 215, name 1,165 / 2,534; 114 buyer rows; 46,499 notices.
 - Mandatory reads (wf_63890637-aa3, 46 agents, `u45/reads-wf_63890637.json`) covered all 2,136 non-exact folds and 1,115 list entries. Exactly one real party drops: 'Please see section VI.4.3 Translink' (1 mention, review body).
@@ -229,3 +237,21 @@ From `../511-placeholders/u45/reads-wf_63890637.json` (the readers' notes):
 7. **Junk head names on real orgs.** 22713056 is headed 's.o.' but its 28 remaining mentions are 'Vergabekammer bei
    der Bezirksregierung', bound by the chamber's phone number 0251411691. 30914328 is headed 'Withheld Section94
    Supplier' (see 522). A head-name refresh after drops would fix the served name.
+
+## Unit 7 — the residual tail (filed 2026-10-12, low priority)
+
+Residual dry 2335: placeholder 364 orgs / 485 mentions and blank 49 / 185 are still kept. Almost all are 2009–13 TED
+r208 appeal-information pointers.
+1. **Template signal by ratio.** When the English seed is bare and at least 20 of a party's labelled copies carry its
+   number with no legal form, sweep the rest whatever their shape. A real name is never translated into 20 languages
+   beside a section number. Also add the old template's locators: точка, punctul, l-punt, punktą, pontot, punktu.
+2. **I.1 pointers kept as names**: 'die in Ziffer I.1) genannte Stelle' (197), 'Die unter Ziffer I.1) genannte
+   Stelle', 'bei der unter I.1) … genannten Stelle'. These need an article or preposition opener as a lead-in.
+3. **Purchasing-body and winner pointers kept as names**: 'Organisations stated in Section II.1.5' (101) and its kin,
+   'titulaires mentionnés au point VI.2 du présent avis' (44), 'For details of awarded suppliers please see Section
+   V1.2' (the V1 typo).
+4. **Withheld variants**: 'Name Withheld for security reasons', 'Details of supplier withheld…', 'As per Regulation
+   50(6)(a) — information withheld…' (it also carries a made-up GBCOH identifier).
+
+The readers' full notes are in `../511-placeholders/u6/reads-wf_285dee15.json`.
+
