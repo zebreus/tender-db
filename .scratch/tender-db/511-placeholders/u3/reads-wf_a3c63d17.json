@@ -1,0 +1,1697 @@
+{
+  "summary": "Issue 511 unit 3: the mandatory dry-plan reads (non-exact folds, identified, legal form, digit-only) and the org-floor gap analysis",
+  "agentCount": 12,
+  "logs": [],
+  "result": {
+    "reads": [
+      {
+        "real_party_hits": [
+          {
+            "fold": "perfil de contratante del gobierno de aragon",
+            "classes": [
+              "placeholder"
+            ],
+            "names": [
+              "Perfil de contratante del Gobierno de Aragón"
+            ],
+            "mentions": 15,
+            "why_real": "The name is the 'perfil de contratante' phrase followed by a real authority, the Gobierno de Aragón, in the specifications-provider slot (32 role rows, 1 org). I traced it through not_a_name_in: the stem ' perfil de contratante' is found at pos 0, so named_before_stem has zero words before it and returns false. pointer_names then reads ' del Gobierno de Aragón'. That text has no section reference and open_separator returns None on 'del'. Because the stem is not ' see section', it returns false. summary_shape does not fire either, so the name is classed Placeholder and the party is dropped. The same shape with the authority written first is kept: the exempted list holds 'Hospital Clínico San Carlos de Madrid y en el Perfil de Contratante de la Consejería de Hacienda de la CAM'. So whether the authority survives depends only on word order.",
+            "suggested_keep_rule": "Apply this to the two perfil stems only ('perfil del contratante', 'perfil de contratante'), inside pointer_names. (1) When the text after the stem opens with a Spanish genitive connector (del | de la | de las | de los | de l' | de), treat the connector as the separator, the way open_separator treats ':' or ' - '. (2) Strip one optional web lead-in after it: página/pagina/sitio + web/WEB/internet, followed by a second connector (de la | del). (3) Return AwardSummary only when what remains has a capitalised content word of two or more letters. That word must not be a Spanish function word (De/Del/La/Las/Los/El/Y/En; these matter in title case), must not be web/WEB/www/http(s)/Internet/Página, and must not be part of a URL token. This keeps Gobierno de Aragón, FNMT-RCM and Comunidad Autónoma de la Región de Murcia. It still drops 'Ver perfil del contratante', 'Perfil del contratante de la página web', 'perfil del contratante del órgano de contratación' and 'Perfil del contratante (www.x.es)'. One weak spot: 'Perfil del Contratante del Órgano de Contratación' in title case and 'Plataforma de Contratación del Sector Público' would be kept. Add those generic phrases to the skip list, or accept that the rule errs toward keeping."
+          },
+          {
+            "fold": "perfil de contratante de la pagina web de la fabrica nacional de moneda y timbre real casa de la moneda",
+            "classes": [
+              "placeholder"
+            ],
+            "names": [
+              "Perfil de contratante de la página WEB de la Fábrica Nacional de Moneda y Timbre - Real Casa de la Moneda",
+              "Perfil de contratante de la página web de la Fábrica Nacional de Moneda y Timbre – Real Casa de la Moneda"
+            ],
+            "mentions": 14,
+            "why_real": "It names a real state body, the Fábrica Nacional de Moneda y Timbre – Real Casa de la Moneda (FNMT-RCM), in the specifications-provider slot (32 role rows, 2 orgs). Same path as the Aragón entry: the stem opens the name, the genitive 'de la página WEB de la …' is not a separator, and the later ' - ' does not open the rest, so pointer_names returns false and the name is classed Placeholder. Entry #42 in this same file, 'Fábrica Nacional de Moneda y Timbre — Real Casa de la Moneda / Perfil del contratante de la página WEB de la FNMT-RCM', is classed award_summary and kept. So the same body in the same role is kept or dropped depending only on word order.",
+            "suggested_keep_rule": "The same genitive-connector rule as for the Aragón entry. Its step (2), stripping 'página web/WEB de la', is what this name needs: after the strip, 'Fábrica Nacional de Moneda y Timbre - Real Casa de la Moneda' still names something. A bare 'Perfil de contratante de la página WEB' has nothing left after the strip, so it is still dropped."
+          },
+          {
+            "fold": "perfil del contratante de la comunidad autonoma de la region de murcia",
+            "classes": [
+              "placeholder"
+            ],
+            "names": [
+              "Perfil del Contratante de la Comunidad Autonoma de la Región de Murcia",
+              "Perfil del Contratante de la Comunidad Autónoma de la Región de Murcia"
+            ],
+            "mentions": 13,
+            "why_real": "It names a real regional government, the Comunidad Autónoma de la Región de Murcia (CARM), in the further-information slot (16 rows) and the specifications-provider slot (10 rows), across 2 orgs. The stem ' perfil del contratante' is at pos 0 and is followed by the genitive 'de la Comunidad …' with no separator, so it is classed Placeholder and dropped. This is a real authority behind the placeholder phrase. It is not an empty pointer.",
+            "suggested_keep_rule": "The same genitive-connector rule as for the Aragón entry: 'de la' counts as the separator, and 'Comunidad Autónoma de la Región de Murcia' then names something. Title-case connectors ('De La') must be excluded from the capital-word test, or every title-cased bare phrase would be kept."
+          }
+        ],
+        "doubtful": [
+          {
+            "fold": "please see section vi 4 2",
+            "note": "Classed 'name', so it is kept, and it is the largest kept junk in this file: 411 mentions across 378 orgs in review-body, appeal and mediation slots. The ' see section' stem is anchored at the start (StemAt::Start), so the 'please' lead-in defeats it. The same applies to 'please see section vi 3 2' (315 mentions / 267 orgs), 'please see section vi 4 3' (106 mentions / 5 orgs), 'please see section 6 3 2 below' (38 / 38), 'please see section vi 3 2 below' (13 / 2) and 'please see section v1 4 2' (11 / 4). Possible fix: allow an optional 'please' (and 'n a', see the separate entry) before the anchor, the same way the optional lot designator is allowed."
+          },
+          {
+            "fold": "for details of the awarded suppliers please see section vi 2",
+            "note": "Classed 'name', so kept: a pointer in the winner slot (52 rows, 50 orgs). The same goes for 'for details of the awarded supplier please see section vi 2' (winner 43 rows, 40 orgs), 'for details of the awarded suppliers please see section v1 2' (13), 'please see section vi 3 for list of awarded suppliers' (winner 21) and 'for details of the contracting authorities and for information on how to express an interest please see section vi 3 add…' (purchasing-body 22). None of them names a party, and all are kept because the stem does not open the name."
+          },
+          {
+            "fold": "information withheld for security reasons",
+            "note": "Classed 'name', so kept: 89 mentions, Tenderer 82 rows, winner 35 rows. The ' withheld' stem is anchored at the start and the name opens with 'Information'. Related kept junk: 'as per regulation 50 6 a information withheld for security reasons' (17), 'due to the sensitive nature of this contract the supplier name will be withheld' (60, winner 60) and '… withheld from publication' (20). Each is a withheld winner, which is Placeholder in meaning."
+          },
+          {
+            "fold": "unter bezugnahme auf 39 abs 6 nr 4 vgv erfolgt hier keine angabe",
+            "note": "Classed 'name', so kept: a withheld winner (19 rows). The ' keine angabe' stem is anchored at the start but sits at the end of this name. The same applies to 'unter berufung auf art 24 abs 2 erfolgt keine angabe' (winner 13)."
+          },
+          {
+            "fold": "none not applicable if you have a complaint or seek to challenge the outcome please seek independent legal advice on how",
+            "note": "Classed 'name', so kept: a blank review-body slot (20 rows). The same goes for 'this is not applicable in the uk' (15) and 'this is not applicable to the uk' (14). A lead-in word comes before the ' not applicable' blank stem in each, so the stem never matches."
+          },
+          {
+            "fold": "n a see section vi 4 2",
+            "note": "Classed 'name', so kept (15 mentions). 'N/A' followed by a pointer: neither the blank whole value nor the anchored ' see section' stem matches."
+          },
+          {
+            "fold": "ver anexo publicado en el perfil del contratante www hospitalclinic org proveidors plataforma electronica de contractaci",
+            "note": "Classed award_summary, so kept: 84 winner rows across 64 orgs. In meaning it is a winner placeholder ('see the annex in the buyer profile'). named_before_stem only strips lead-ins that sit right before the stem, so 'Ver anexo publicado en el' stays. names_something then counts the capitalised 'Ver' as a name and the entry is kept as a summary. Possible fix: also drop BOUNDARY_LEAD_INS words at the start of the before-text, and require a capitalised word other than Ver/En/Consultar."
+          },
+          {
+            "fold": "varios adjudicatarios ver perfil del contratante",
+            "note": "Classed award_summary, so kept (winner 27). It is a plural placeholder ('several awardees, see the buyer profile'), not a name. Once the lead-in is stripped, the before-text is 'VARIOS ADJUDICATARIOS', which names_something accepts because it is all capitals. 'VARIOS ADJUDICADORES SEGÚN LOTE (VER PERFIL DE CONTRATANTE)' (org 9923096) is kept the same way. Possible fix: put 'varios adjudicatarios' / 'varios adjudicadores' in PLACEHOLDER_WHOLE or as a stem."
+          },
+          {
+            "fold": "ver pliego de clausulas administrativas particulares en el perfil del contratante http www juntadeandalucia es contratac",
+            "note": "Classed award_summary, so kept: a review-body pointer (24 rows, 7 orgs). Same mechanism as the 'Ver anexo' entry: the capitalised 'Ver' at the start of the before-text counts as a name."
+          },
+          {
+            "fold": "see section vi 3 2 below",
+            "note": "Mixed classes. One org is kept: 31409767, 'see section VI.3.2.below' (2 mentions). This mechanism is not covered in the decision: the token 'VI.3.2.below' is not a section_number, so strip_references stops with referenced=false. The bare-body branch for 'see section' then lets names_something read the Roman numeral 'VI' as a capitalised word, because roman_with_digits filters only numerals with digits glued on. Possible fix: skip bare ROMAN words in names_something, or split a dotted section token from a trailing reference word. In the sibling fold 'see section vi 3 additional information', the kept org is 4644701, 'See section VI.3 (Additional Information)'. The decision already lists that one as junk the rule keeps."
+          },
+          {
+            "fold": "this is an award notice and this opportunity is now closed please see section v award of contract for further details he",
+            "note": "Classed 'name', so kept: buyer 7, mediation 5 and review 7 rows. The kept party is real (Hertfordshire County Council, at the end of the name), but the stored name is a whole sentence. It is not a loss, and the clean name would be the trailing body."
+          },
+          {
+            "fold": "en el perfil del contratante www vitoria gasteiz org ademas la retirada de la documentacion podra realizarse en la fotoc",
+            "note": "Classed award_summary, so kept (specifications-provider 30 rows). It is kept because 'En' is capitalised, not because of the real body it contains (Fotocopistería Arco / Vitoria-Gasteiz). Keeping it is acceptable, but the stored name is a sentence."
+          }
+        ],
+        "read_count": 70,
+        "summary": "I read all 70 entries of non_exact_00.json. 42 are classed placeholder or blank only, and the fold drops them. Another 2 are mixed award_summary+placeholder ('see section vi 3 additional information', 'see section vi 3 2 below'), where most orgs are dropped and one org each is kept as junk. 20 are classed name only and 6 award_summary only; the fold keeps all 26.\n\nThere are three real-party losses, and they share one shape: 'Perfil de/del contratante' opens the name and is followed by a Spanish genitive and a real authority.\n- 'Perfil de contratante del Gobierno de Aragón' (15 mentions, 1 org)\n- 'Perfil de contratante de la página WEB de la Fábrica Nacional de Moneda y Timbre – Real Casa de la Moneda' (14 mentions, 2 orgs)\n- 'Perfil del Contratante de la Comunidad Autónoma de la Región de Murcia' (13 mentions, 2 orgs)\n\nAll three sit in specifications-provider or further-information slots. I traced the cause in crates/ingest/src/partyname.rs. pointer_names accepts only ':', '(', a dash or a hyphen as the separator after a pointer stem. named_before_stem finds nothing before a stem at position 0. So a genitive 'del/de la <Authority>' falls through to Placeholder. The same FNMT-RCM body written first (#42, '… / Perfil del contratante …') is kept as award_summary, so the outcome depends only on word order. The fix I suggest is a perfil-only rule: treat a genitive connector as the separator, strip one 'página web de la' lead-in, then require a capitalised content word that is not a Spanish function word, web/www/Internet/Página, or a URL.\n\nEvery other dropped entry I read is junk with no party in it. That covers the see section / siehe oben / voir / ver información pointers, keine Angabe(n), Withheld …, Not applicable (UK / ARIA Act / BVerG), nie dotyczy … Pzp, 'Ver perfil del contratante' and 'See Section I / 1 / I.1'. The last group points at the buyer, so a review-body role is lost, but there is no name to keep. Two dropped entries carry an identifier: 'Withheld Section94 Supplier' and '… Supplier 2' have PPONs. The decision drops these by design, and its pre-wet read of the identified placeholders checks them.\n\nThe bigger issue in this file is kept junk, not lost names. The anchored stems miss lead-ins:\n- 'Please see section …' (about 900 mentions across 6 folds)\n- 'For details of the awarded supplier(s), please see section VI.2' (winner slot)\n- 'Information withheld …', 'Due to the sensitive nature … withheld'\n- '… erfolgt keine Angabe'\n- 'This is not applicable in the UK'\n\nA second kept-junk mechanism: names_something counts a capitalised lead-in ('Ver', 'En'), an all-caps 'VARIOS ADJUDICATARIOS', or a bare Roman numeral 'VI' as a name. That keeps 'Ver anexo publicado en el Perfil del Contratante …' (84 winner rows, 64 orgs), 'VARIOS ADJUDICATARIOS (VER PERFIL DEL CONTRATANTE)' and 'see section VI.3.2.below'.\n\nReal bodies with junk suffixes are correctly kept as 'name': Vergabekammer Südbayern (siehe oben), Krajowa Izba Odwoławcza (nie dotyczy …), Landgericht Köln (siehe oben …).\n\nI edited nothing and wrote no output file, because none was named. Files read: /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/reads/non_exact_00.json, /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json, /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md and /home/user/tender-db/crates/ingest/src/partyname.rs."
+      },
+      {
+        "read_count": 70,
+        "real_party_hits": [
+          {
+            "fold": "perfil del contratante de la pagina web de la fabrica nacional de moneda y timbre real casa de la moneda",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 9,
+            "names": [
+              "Perfil del contratante de la página WEB de la Fábrica Nacional de Moneda y Timbre - Real Casa de la Moneda"
+            ],
+            "why_real": "A real authority, the FNMT-RCM (Spanish Royal Mint), follows the 'perfil del contratante' phrase. The role is specifications-provider (20 rows, 1 org): the publisher is naming the body that supplies the documents. pointer_names returns false because the rest after the stem starts with 'de la página', not a separator, and the stem is not 'see section'. named_before_stem has nothing before the stem. So it is Placeholder and gets dropped. The FNMT is probably also the buyer, so what is lost is the doc-provider party, not a winner or buyer. The plan has a twin, 'Perfil de contratante de la página WEB de la FNMT…' (2 orgs, 14 mentions), and 'Perfil del contratante de la página web de la FNMT-RCM (www.fnmt.es)'.",
+            "suggested_keep_rule": "Perfil genitive rule. On the perfil del/de contratante branch, apply it only when the name OPENS with the stem, i.e. nothing comes before it. Skip one genitive (de | del | de la | de los | de las), plus an optional 'pagina web de la' / 'web de la'. If what follows passes names_something (a capitalised word of 2+ letters, or an acronym such as CAM, CARM, FNMT-RCM), class the name AwardSummary. It still drops 'Véase/Ver perfil del contratante' (lead-in, nothing after it) and 'Perfil del contratante de la web municipal (puntos de contacto)' (lowercase). Across plan-2265 this shape is about 27 orgs / 80 mentions. All of them sit in specifications-provider, further-information or tender-receipt slots, none in winner, Tenderer or buyer. The only junk it would save is 'Perfil del Contratante del Órgano de contratación' (1 mention), so exclude 'organo de contratacion' explicitly."
+          },
+          {
+            "fold": "perfil de contratante de la consejeria de hacienda de la cam",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 7,
+            "names": [
+              "Perfil de Contratante de la Consejería de Hacienda de la CAM"
+            ],
+            "why_real": "It names a real authority, the Consejería de Hacienda of the Comunidad de Madrid, which runs the central Madrid contracting profile. Role: specifications-provider (18 rows, 1 org). The buyer is often a different body: the kept award_summary entry 'Hospital Clínico San Carlos de Madrid y en el Perfil de Contratante de la Consejería de Hacienda de la CAM' shows the same provider serving a hospital buyer. Dropping it loses a distinct doc-provider authority. The kept twin with a leading hospital name survives only through named_before_stem, so the two spellings of one body get opposite fates.",
+            "suggested_keep_rule": "The same perfil genitive rule (name opens with the stem, then a genitive, then names_something gives AwardSummary). 'de la CAM' is saved by the capitalised 'Consejería' or the acronym CAM."
+          },
+          {
+            "fold": "perfil del contratante del ayuntamiento de san fernando",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 7,
+            "names": [
+              "Perfil del contratante del Ayuntamiento de San Fernando"
+            ],
+            "why_real": "A real municipality, the Ayuntamiento de San Fernando, follows the phrase. Role: specifications-provider (15 rows, 1 org). It is not a hub: every mention belongs to this one authority. It is dropped only because the rest after the stem starts with 'del' and no separator. Compare 'En el perfil del contratante de la Sede Electrónica de la Autoridad Portuaria de Barcelona …' in the same file: it is the same shape, but the fold keeps it as award_summary only because the leading 'En' is a capitalised 2-letter word that named_before_stem reads as a name.",
+            "suggested_keep_rule": "The same perfil genitive rule. 'del Ayuntamiento …' gives names_something on 'Ayuntamiento', so the name is AwardSummary."
+          },
+          {
+            "fold": "perfil del contratante de la comunidad autonoma de la region de murcia carm",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 5,
+            "names": [
+              "Perfil del Contratante de la Comunidad Autonoma de la Región de Murcia (CARM)",
+              "Perfil del Contratante de la Comunidad Autónoma de la Región de Murcia (CARM)"
+            ],
+            "why_real": "It names a real regional government, the Comunidad Autónoma de la Región de Murcia (CARM), as specifications-provider (9 rows, 2 orgs). The plan has siblings without '(CARM)': 2 orgs / 13 mentions in further-information and specifications-provider, plus 'PERFIL DEL CONTRATANTE DE LA COMUNIDAD AUTÓNOMA DE LA REGIÓN DE MURCIA WWW.CARM.ES' and 'Perfil del Contratante de la CARM'. All of them are dropped.",
+            "suggested_keep_rule": "The same perfil genitive rule. It also covers the all-caps spelling, because names_something accepts an uppercase-initial word, and the bare 'de la CARM' through the acronym."
+          },
+          {
+            "fold": "not applicable but proceedings may be started in the high court of england and wales in accordance with part 5 of the ut",
+            "classes": [
+              "blank"
+            ],
+            "mentions": 5,
+            "names": [
+              "Not applicable, but proceedings may be started in the High Court of England and Wales in accordance with Part 5 of the Utilities Contracts Regulations 2016",
+              "Not applicable, but proceedings may be started in the High Court of England and Wales in accordance with Part 5 of the Utilities Contract Regulations 2016",
+              "Not applicable, but proceedings may be started in the High Court of England and Wales in accordance with Part 5 of the Utilities Regulations 2016"
+            ],
+            "why_real": "The review-body slot (5 rows, 3 orgs) names the real UK review forum, the High Court of England and Wales, after 'Not applicable, but'. Under PCR 2015 Part 3 and UCR 2016 Part 5, the High Court IS the body for review proceedings. The decision already keeps 'see section Royal Courts of Justice' for exactly this reason. The anchored BLANK_STEMS hit reaches summary_shape only: no company token and no list, so the name is Blank and gets dropped. The plan has two siblings: 'Not Applicable, but proceedings … High Court … Part 3 (Remedies) of the Public Contracts Regulations 2015' (2 orgs / 2 mentions) and '… Part 5 (Remedies) …' (1 / 1). That makes 6 orgs / 8 mentions in all.",
+            "suggested_keep_rule": "Blank 'but' clause rule. On the BLANK_STEMS branch, when the stem is followed by ', but' or 'but' and the remainder contains a capitalised review-body head noun (Court, Tribunal, Vergabekammer, Chamber/Kammer), class the name AwardSummary, which keeps it. It saves no junk from this file. 'Not applicable in Denmark', 'Not applicable under PSR', 'Not Applicable under the PSR' and 'Nie dotyczy - brak procedury mediacyjnej' all lack both 'but' and a body noun, so they stay Blank."
+          }
+        ],
+        "doubtful": [
+          {
+            "fold": "the uk does not have any such body for appeal procedures please see section vi 4 2",
+            "note": "Kept as name: 3 orgs, 11 mentions, mediation-body and review-body. Pure junk saying there is no body. The anchored 'see section' stem misses a mid-string 'Please see section'."
+          },
+          {
+            "fold": "the uk does not have any such body with responsibility for appeal procedures please see section vi 4 2",
+            "note": "Same junk: kept as name, 2 orgs, 11 mentions, review-body and mediation-body."
+          },
+          {
+            "fold": "the uk does not have any such body with responsibility for appeal procedures please see section vi 3 2",
+            "note": "Same junk: kept as name, 3 orgs, 8 mentions, review-body."
+          },
+          {
+            "fold": "the uk does not have any such body with responsibility for appeal procedures please see section v1 4 2",
+            "note": "Same junk: kept as name, 1 org, 6 mentions, review-body."
+          },
+          {
+            "fold": "the uk does not have any such body with responsibility for appeal procedures please see section vi 3 2 body responsible ",
+            "note": "Same junk, running on into the mediation sentence: kept as name, 2 orgs, 6 mentions."
+          },
+          {
+            "fold": "1 erfolgt hier keine angabe",
+            "note": "Withheld winner kept as name: winner 10 rows, 1 org, so a cross-tender hub. 'keine angabe' sits mid-string behind a bare '1' with no lot designator, so the anchor misses it."
+          },
+          {
+            "fold": "unter berufung auf artikel 24 abs 2 der richtlinie 93 38 ewg erfolgt hier keine angabe",
+            "note": "Withheld winner kept as name: winner 6 rows, 2 orgs."
+          },
+          {
+            "fold": "rv partner 1 keine angabe aus grunden des wettbewerbs",
+            "note": "Withheld framework partner kept as name: winner 6 rows, 1 org, a hub across tenders. 'keine angabe' is mid-string."
+          },
+          {
+            "fold": "rv partner 2 keine angabe aus grunden des wettbewerbs",
+            "note": "As RV-Partner 1: winner 6 rows, 1 org."
+          },
+          {
+            "fold": "rv partner 3 keine angabe aus grunden des wettbewerbs",
+            "note": "As RV-Partner 1: winner 6 rows, 1 org."
+          },
+          {
+            "fold": "name withheld for security reasons",
+            "note": "Withheld supplier kept as name: Tenderer 11 and winner 3 rows, 1 org, a hub. The 'withheld' stem is anchored at the start, so a leading 'Name' defeats it."
+          },
+          {
+            "fold": "details of supplier withheld for reasons of security",
+            "note": "Withheld supplier kept as name: winner 7 rows, 2 orgs. Same anchor gap as above."
+          },
+          {
+            "fold": "supplier name withheld for the protection of vulnerable individuals",
+            "note": "Withheld supplier kept as name: Tenderer 6 rows, 1 org."
+          },
+          {
+            "fold": "please see section v1 2 additional information",
+            "note": "Pointer kept as name: winner 8 and purchasing-body 2 rows, 3 orgs. The leading 'Please' defeats the anchored 'see section'."
+          },
+          {
+            "fold": "for details of awarded suppliers please see section v1 2",
+            "note": "Pointer kept as name: winner 8 rows, 3 orgs."
+          },
+          {
+            "fold": "for details of the awarded suppliers please see section vi 3",
+            "note": "Pointer kept as name: winner 6 rows, 3 orgs."
+          },
+          {
+            "fold": "for names of suppliers please see section 6",
+            "note": "Pointer kept as name: winner 6 rows, 1 org."
+          },
+          {
+            "fold": "please see section vi 2 additional information",
+            "note": "Pointer kept as name: purchasing-body 4 and winner 3 rows, 3 orgs."
+          },
+          {
+            "fold": "please see section vi 3",
+            "note": "Pointer kept as name: purchasing-body 5 and winner 4 rows, 3 orgs."
+          },
+          {
+            "fold": "please see section vi",
+            "note": "Pointer kept as name: purchasing-body 5 and Tenderer 1 rows, 3 orgs."
+          },
+          {
+            "fold": "please see section vi 3 below",
+            "note": "Pointer kept as name: further-information, specifications-provider and tender-receipt, 1 org, 5 mentions."
+          },
+          {
+            "fold": "for information on contracting authorities and how to express an interest please see section vi 3 additional information",
+            "note": "Pointer kept as name: purchasing-body 9 rows, 1 org."
+          },
+          {
+            "fold": "n a see section vi 3 2",
+            "note": "Blank plus pointer kept as name: appeal-information 7 rows. 'n a' matches only as a whole value, and the 'see section' that follows is mid-string."
+          },
+          {
+            "fold": "various see section vi complementary information",
+            "note": "'Various' with a non-bare qualifier '(See Section VI)', so the whole-value class is lost and the result is None. Role AWARD_AND_CONTRACT_VALUE, 6 rows, 1 org."
+          },
+          {
+            "fold": "in tend system please see section vi 3 additional information",
+            "note": "Borderline. 'In-Tend' is an e-tendering platform (In-Tend Ltd), not a party to the procurement. Kept as name in further-information, specifications-provider and tender-receipt (7 rows each, 1 org), so it may act as a hub across buyers."
+          },
+          {
+            "fold": "varios ver perfil del contratante del principado de asturias www asturias es",
+            "note": "Kept as award_summary in a WINNER slot: 11 rows, 2 orgs. No winner is named; 'Varios' says there are several. named_before_stem accepts 'Varios' as a name even though 'varios' is a PLACEHOLDER_WHOLE value. Fix: named_before_stem should fail when not_a_name(before) is Placeholder or Blank."
+          },
+          {
+            "fold": "ver anexo publicado en el perfil del contratante www hospitalclinic org proveidors plataforma electronica de contratacio",
+            "note": "Kept as award_summary in a WINNER slot: 8 rows, 4 orgs. Pure pointer to an annex. BOUNDARY_LEAD_INS strips lead-ins only when they sit right before the stem, so the leading 'Ver' of 'Ver anexo publicado en el' passes names_something (capitalised, 3 letters)."
+          },
+          {
+            "fold": "ver anexo publicado en el perfil de contratante www hospitalclinic org proveidors plataforma electronica de contractacio",
+            "note": "Same as above: winner 6 rows, 3 orgs, kept because of the capitalised 'Ver'."
+          },
+          {
+            "fold": "3 sublotes varios proveedores homologados con diferentes porcentajes de descuento el listado de proveedores homologados ",
+            "note": "Kept as award_summary in a WINNER slot: 8 rows, 1 org. It names no supplier, only points to the list on the Gobierno de Aragón profile. Presumably kept by named_before_stem, which sees capitalised words such as 'El' before the stem, or by summary_shape; I did not trace which one."
+          }
+        ],
+        "summary": "I read all 70 entries in non_exact_01.json. The fold would drop 33 of them (28 placeholder, 5 blank), and 5 of those carry a real party, 33 mentions in total. None sits in a winner, Tenderer or buyer slot.\n\n**Real parties the fold would drop:**\n- **Four Spanish 'perfil del/de contratante de <authority>' names**, all in the specifications-provider slot:\n  - the FNMT-RCM (Royal Mint), 9 mentions;\n  - the Consejería de Hacienda of Madrid, 7;\n  - the Ayuntamiento de San Fernando, 7;\n  - the Región de Murcia (CARM), 5.\n\n  They are dropped for two reasons. pointer_names needs a separator after the stem unless the stem is 'see section', and the rest here starts with a genitive ('de la', 'del'). named_before_stem has nothing before the stem to read. The fold does keep the same shape when any capitalised word comes before the stem: 'En el perfil … Autoridad Portuaria de Barcelona' survives on the capitalised 'En'. Across plan-2265 this shape is about 27 orgs / 80 mentions, all in doc-provider slots.\n- **The High Court of England and Wales**, as a review body (3 orgs, 5 mentions): 'Not applicable, but proceedings may be started in the High Court of England and Wales …'. The anchored 'not applicable' blank stem catches it and summary_shape does not save it. The plan has two siblings, 6 orgs / 8 mentions in all.\n\nBoth keep rules work on the name's shape, not its role, and neither saves the junk in this file:\n- **Perfil genitive rule:** when the name opens with the stem, skip one genitive. If a capitalised word or acronym follows, class it AwardSummary. Exclude 'organo de contratacion'.\n- **Blank 'but' clause rule:** a blank stem followed by 'but' and a capitalised court or review-body noun becomes AwardSummary.\n\nThe other 28 drop-class entries are pure pointers ('See section …', 'siehe oben …'), withheld statements ('Keine Angabe …', 'Bieter Nummer 1/2') or no-body statements. Dropping them is correct. That includes 'See Section II.2.3) Place of performance' and 'Siehe oben Abschnitt II.1.4). Es handelt sich …', which correctly fail the pointer keep rule.\n\n**Junk the fold keeps** (29 doubtful folds, listed separately). There are two causes:\n- **The start anchor misses phrases in the middle of a name.** Examples: 'Please see section …', 'For details of awarded suppliers please see …', 'The UK does not have any such body … please see section …', 'Name/Details of supplier/Supplier name withheld …', '… erfolgt hier keine Angabe', 'RV-Partner N (Keine Angabe …)'. Several of these are winner or Tenderer hubs.\n- **named_before_stem reads placeholder words as names.** It accepts 'Varios', which is itself a PLACEHOLDER_WHOLE value. BOUNDARY_LEAD_INS strips lead-in words only right before the stem, so in 'Ver anexo publicado en el perfil …' the leading 'Ver' still counts as a capitalised name. Both cases keep junk in winner slots.\n\nCorrectly kept real names in this file: Regierung von Oberbayern VOB-Stelle, ThüringenForst AöR, the Royal Borough of Kingston (a buyer), Vergabekammer des Landes Berlin, UVS, Hospital Clínico San Carlos, the Autoridad Portuaria de Barcelona and Fotocopistería Arco.\n\nFiles read: /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/reads/non_exact_01.json, /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json, /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md and /home/user/tender-db/crates/ingest/src/partyname.rs (not_a_name_in, pointer_names, named_before_stem, names_something)."
+      },
+      {
+        "read_count": 70,
+        "real_party_hits": [
+          {
+            "fold": "perfil de contratante de la universidad complutense de madrid",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 3,
+            "names": [
+              "Perfil de Contratante de la Universidad Complutense de Madrid"
+            ],
+            "why_real": "Universidad Complutense de Madrid is a real public university and contracting authority. It is named here in the specifications-provider role (6 role rows, 1 org). 'Perfil de Contratante de la X' means 'X's buyer profile', so the party is UCM, reached through its profile. It is not a pointer to text elsewhere in the notice. It is classed Placeholder because (a) pointer_names only treats a ':', '(', en dash, em dash or ' - ' as a separator after a perfil stem, and the Spanish genitive 'de la' is none of these, so it returns false; and (b) named_before_stem finds nothing, because the stem sits at position 0. The decision (section 2) drops specifications-provider parties outright, so UCM's org and role rows go. The same shape is classed Placeholder in sibling read files: 'Perfil de contratante del Gobierno de Aragón', '... de la Junta de Andalucía', '... del Ministerio de Justicia', '... de la Comunidad Autónoma de la Región de Murcia (CARM)', '... del Ayuntamiento de San Fernando', '... de la página web de la Fábrica Nacional de Moneda y Timbre', 'Ver Perfil de Contratante del Hospital Clínic de Barcelona', '... de la Agencia de Gestión Agraria y Pesquera de Andalucía', '... de Anfaco-Cecopesca'. So this is a systemic gap in the perfil keep rule, not a one-off.",
+            "suggested_keep_rule": "Apply this to the two perfil stems only (' perfil del contratante', ' perfil de contratante'), and only when the stem opens the name after optional BOUNDARY_LEAD_INS (Ver/Véase). Treat a Spanish genitive right after the stem ('de', 'del', 'de la', 'de los', 'de las') as a separator, the way open_separator treats ':' or '('. Then strip channel words ('página web/WEB de(l/la)', 'web de(l/la)', 'sede electrónica de(l/la)'). Class the name AwardSummary only when names_something holds on what remains AND its first capitalised word is not a generic office noun (Órgano/Organo [de contratación], Entidad, Organismo, Poder adjudicador). Expected results: it keeps 'Perfil de Contratante de la Universidad Complutense de Madrid', '... del Gobierno de Aragón' and '... de la página web de la FNMT-RCM'. It still drops 'Perfil del Contratante del Órgano de contratación' (stoplist), '... de la web municipal (puntos de contacto)' and '... de la página web del museo' (no capitalised name left), and bare 'Ver perfil del contratante' or 'perfil de contratante www.gelves.es' (no genitive). Leave alone 'Perfil del contratante y registro auxiliar de la Universidad de Valladolid' (conjunction, no genitive) unless an 'y <office> de <Name>' arm is also wanted."
+          }
+        ],
+        "doubtful": [
+          {
+            "fold": "keine angabe bei badv",
+            "note": "DROPPED (Placeholder, Lot-ReviewOrg x16). BADV (Bundesamt für zentrale Dienste und offene Vermögensfragen) is a real federal authority and is named after the 'keine Angabe' phrase. The text means 'no statement at BADV' in the review-org slot, though, so BADV here is the buyer, not a review body. Keeping it would record BADV as the review body. Dropping it is correct and not a loss; keine Angabe is not a pointer stem, so no keep rule is wanted."
+          },
+          {
+            "fold": "keine angabe nach 39 6 2 vgv bieter nummer 3",
+            "note": "DROPPED (Placeholder, winner x4). 'Bieter Nummer 3' is an anonymous bidder number, not an organisation. Dropping it collapses distinct withheld winners (Bieter 1/2/3) into a selec-w marker with no winner. The decision already accepts this (specimen in every_measured_placeholder_spelling_has_its_class). Not a loss."
+          },
+          {
+            "fold": "not applicable see aria act 2022",
+            "note": "DROPPED (Blank, Lot-ReviewOrg). ARIA is the Advanced Research and Invention Agency, but here it is only an Act citation (procurement-exempt), not a review body. Drop is correct."
+          },
+          {
+            "fold": "please see section ii 1 5 (and 12 more 'Please see section ...' entries)",
+            "note": "KEPT junk (class 'name'). 'See section II.1.5' (22) drops, but 'Please see section II.1.5' (50) is kept, because the ' see section' anchor requires the stem at the start and 'please' comes first. The same applies to 51-58 ('Please see Section II.1.5 Short Description', 'II.2.4', 'II.B Object of the contract', 'V!.4.2', 'VI.2' winner x3, 'VI.2 of this notice...', 'VI.3) Additional Information', 'VI.4.2) below') and 19 ('Please see section VI) for names and addresses of economic operators', winner). Fix: a ' please see section' Start stem that shares the pointer keep rule."
+          },
+          {
+            "fold": "this information has been withheld / this information is withheld for security reasons / identity withheld for security reasons / the name s of the winning tenderers are being withheld ...",
+            "note": "KEPT junk (class 'name') in winner and Tenderer slots (26, 65, 37, 2). The ' withheld' stem is anchored at the start, so a leading 'This information has/is', 'Identity' or 'The name(s) of the winning tenderers are being' escapes it, and a withheld-text org survives as a winner or bidder."
+          },
+          {
+            "fold": "unter berufung auf 11 skr abs 2 vol a skr erfolgt hier keine angabe / 1 vol a abschnitt 4 skr erfolgt hier keine angabe / 1 vol a erfolgt hier keine angabe",
+            "note": "KEPT junk winners (28, 30, 69). The 'keine Angabe' withheld wording sits at the end ('erfolgt hier keine Angabe'), so the start anchor misses it. A whole-pattern '... erfolgt hier keine Angabe' would catch all three without touching real names."
+          },
+          {
+            "fold": "lot multi attributaire voir autres informations / multi attributaire voir autres informations / cf voir renseignements complementaires",
+            "note": "KEPT junk winners (17, 43, 32). The French pointer stems come after 'Lot multi-attributaire' or 'cf', which is not a lot designator, so the anchor misses them."
+          },
+          {
+            "fold": "uk does not have any such body see section vi 4 2 / n a to uk see section vi 4 2 / voluntary notice see section v1 4 2 / this is an award notice and this opportunity is now closed ...",
+            "note": "KEPT junk review- and mediation-body orgs (3, 44, 7, 27). Each is a pointer or not-applicable text with the stem mid-string."
+          },
+          {
+            "fold": "a full list of successful suppliers will be made available on contracts finder ... / for details of the awarded supplier please see section v1 2",
+            "note": "KEPT junk winners (9 winner x7, 34). These are pointers with the stem mid-string."
+          },
+          {
+            "fold": "in tend system please see section vi 3 ... / information is available via delta e sourcing see section vi 3",
+            "note": "KEPT (39, 40). These name e-tender platforms (In-Tend, Delta eSourcing), not a party, in further-information, spec-provider and tender-receipt slots. Junk, but harmless."
+          },
+          {
+            "fold": "vease el perfil del contratante http www juntadeandalucia es contratacion de fecha 30 3 2015 ref 2015 0000002775",
+            "note": "KEPT junk winner (4, award_summary). In named_before_stem the article 'el' is not in BOUNDARY_LEAD_INS, so lead-in stripping stops at 'el'. The text before the stem, 'Véase el', then passes names_something ('Véase' is capitalised) and the bare pointer becomes AwardSummary. Adding articles (el/la/los/las) to the lead-ins, or ignoring lead-in words inside names_something, fixes it."
+          },
+          {
+            "fold": "ver pliego de clausulas administrativas particulares en el perfil del contratante https juntadeandalucia es ...",
+            "note": "KEPT junk review-body (5, award_summary). The same mechanism as entry 4: the upper-case 'VER PLIEGO DE CLAUSULAS ... EN EL' before the boundary stem reads as a name. Document nouns (pliego, cláusulas, anexo, documentación) need a non-name list in named_before_stem."
+          },
+          {
+            "fold": "vergabekammer siehe oben",
+            "note": "KEPT (6, appeal-information). A generic, unidentified 'Vergabekammer (see above)'. It is a real kind of body but names no specific chamber. Borderline; keeping it is harmless."
+          },
+          {
+            "fold": "noe cpc member bodies as listed at http www noecpc nhs uk ... / noecpc member bodies ...",
+            "note": "KEPT (46, 47, purchasing-body). A pointer to a member list, not one organisation, though it names the NOE CPC consortium. Borderline."
+          }
+        ],
+        "summary": "I read all 70 entries of non_exact_02.json. 23 of them are classed placeholder or blank, so the fold drops them. One of those is a real organisation: 'Perfil de Contratante de la Universidad Complutense de Madrid' (specifications-provider, 3 mentions, 6 role rows). It is dropped because the perfil pointer keep rule (pointer_names) only accepts a punctuation separator after the stem, and the Spanish genitive 'de la' is not one. named_before_stem also finds nothing, because the stem opens the name.\n\nThis is systemic. The sibling read files carry the same shape as Placeholder: Gobierno de Aragón, Junta de Andalucía, Ministerio de Justicia, CARM, FNMT, Ayuntamiento de San Fernando, Hospital Clínic de Barcelona, AGAPA and Anfaco-Cecopesca. The proposed keep rule treats a genitive after a perfil stem as a separator, strips web/sede channel words, and needs a capitalised name that is not 'Órgano de contratación'. That saves these without saving the bare pointers.\n\nThe other 22 drops are junk, so dropping them loses nothing. They are section pointers, withheld, keine Angabe, not applicable and siehe oben texts. 'keine Angabe bei BADV' names the buyer, not a review body. 'Bieter Nummer 3' is an anonymous bidder number. The 'ARIA Act 2022' entry is a statute, not a body.\n\nThe fold also keeps junk because of the start anchor:\n- 14 'Please see section ...' pointers. 'See section II.1.5' drops but 'Please see section II.1.5' is kept.\n- 4 withheld winners or bidders where the phrase starts with 'This information...', 'Identity...' or 'The name(s)...'.\n- 3 'erfolgt hier keine Angabe' winners.\n- 3 French 'multi-attributaire voir...' pointers.\n- UK 'no such body' review bodies.\n- 2 award_summary pointers kept because a lead-in followed by an article ('Véase el', 'EN EL') reads as a name in named_before_stem.\n\nNo repo files were edited and the production box was not touched. File read: /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/reads/non_exact_02.json. Code consulted: /home/user/tender-db/crates/ingest/src/partyname.rs (not_a_name_in, pointer_names, named_before_stem, open_separator, names_something)."
+      },
+      {
+        "real_party_hits": [
+          {
+            "fold": "perfil del contratante de la agencia de gestion agraria y pesquera de andalucia",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 2,
+            "names": [
+              "Perfil del contratante de la Agencia de Gestión Agraria y Pesquera de Andalucía"
+            ],
+            "why_real": "The name is AGAPA (Agencia de Gestión Agraria y Pesquera de Andalucía), a real public agency of the Junta de Andalucía. It sits in the specifications-provider slot (5 role rows) as the place the documents come from. The boundary stem `perfil del contratante` is followed by the genitive `de la` and then the body. pointer_names accepts only `:`, ` - `, en/em dash or `(` as a separator, and only a bare `see section` gets past without one. named_before_stem finds nothing before the stem (words == 0), so the name is classed Placeholder and dropped.",
+            "suggested_keep_rule": "In pointer_names (partyname.rs ~720), for the `perfil del contratante` / `perfil de contratante` stems only, and only when the name OPENS with the stem (no `ver`/`véase`/`consultar` lead-in), accept a Spanish genitive (`de`, `del`, `de la`, `de las`, `de los`) as the separator. Then skip generic location words (`página`, `web`, `sede electrónica`) and return AwardSummary when the rest names_something, ignoring a short list of generic heads (`Órgano`, `Entidad`, `Fundación`, `Plataforma`, `Web`/`WEB`). Across plan 2265's non_exact this saves about 24 of the 27 genitive rows (95 mentions): Gobierno de Aragón 15, FNMT 14+9, CARM 13+5, Consejería de Hacienda de la CAM 7, Ayuntamiento de San Fernando 7, Universidad Complutense 3, Sescam, Anfaco-Cecopesca, Ministerio de Justicia, Junta de Andalucía and others. It still drops `…del Órgano de contratación`, `…de la web municipal (puntos de contacto)` and the winner-slot `Ver Perfil de Contratante del Hospital Clínic de Barcelona`, which has a lead-in."
+          },
+          {
+            "fold": "perfil del contratante de la empresa malaguena de transportes s a m",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 2,
+            "names": [
+              "Perfil del Contratante de la Empresa Malagueña de Transportes, S. A. M."
+            ],
+            "why_real": "The name is EMT Málaga (Empresa Malagueña de Transportes, Sociedad Anónima Municipal), a real municipal transport company. It fills the specifications-provider (3) and tender-receipt (3) slots. Two gaps drop it. First, the same genitive gap in pointer_names as above. Second, summary_shape misses the legal form: company_token splits on whitespace, so the spaced `S. A. M.` becomes the single letters S, A, M, and none of them is a company token. Plan 2265 lists it in `legal_form` as well, with identifier null.",
+            "suggested_keep_rule": "(1) The genitive rule for perfil stems described in the first hit. (2) Independently, in company_token (partyname.rs ~1193), join runs of dotted single-letter tokens (`S. A.`, `S. A. M.`, `S. L.`, `S. A. U.`) into one form before the lookup, and add `sam` to COMPANY_FORMS_DOTTED. summary_shape then keeps the name as AwardSummary whatever the stem. A plain word cannot fake this because it needs the dotted single-letter shape."
+          },
+          {
+            "fold": "perfil del contratante del gobierno de canarias",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 2,
+            "names": [
+              "Perfil del contratante del Gobierno de Canarias"
+            ],
+            "why_real": "The name is the Gobierno de Canarias (the Canary Islands regional government), a real authority, in the specifications-provider slot (4 role rows). The stem is followed by the genitive `del`, which is the same pointer_names gap. Plan 2265's `exempted` list already keeps a different spelling that names the Gobierno de Canarias, so the fold treats the same body inconsistently depending on word order.",
+            "suggested_keep_rule": "The genitive rule for perfil stems described in the first hit (`del` + `Gobierno de Canarias` passes names_something with two capitalised words)."
+          },
+          {
+            "fold": "not applicable but proceedings may be started in the high court of england and wales in accordance with part 3 remedies ",
+            "classes": [
+              "blank"
+            ],
+            "mentions": 2,
+            "names": [
+              "Not Applicable, but proceedings may be started in the High Court of England and Wales in accordance with Part 3 (Remedies) of the Public Contracts Regulations 2015",
+              "Not applicable but proceedings may be started in the High Court of England and Wales in accordance with Part 3 (Remedies) of the Public Contracts Regulations 2015"
+            ],
+            "why_real": "After `Not applicable, but` the publisher names the real review body for English procurement, the High Court of England and Wales, in the review-body slot (2 rows, 2 orgs). The blank stem `not applicable` is anchored at the start and summary_shape is false, so the name is classed Blank and dropped. The decision's own pointer keep rule saves the same body when it is written `see section Royal Courts of Justice`. Plan-wide there are two more variants (Part 5 Utilities Contracts Regulations 2016: 5 mentions and 1 mention), all review-body.",
+            "suggested_keep_rule": "In not_a_name_in's BLANK_STEMS branch (partyname.rs ~552), return AwardSummary when the raw text after the stem holds a contrast connector (`but`, `however`, case-insensitive) followed later by a capitalised court noun (`Court`, `Tribunal`, case-sensitive). In plan 2265's non_exact this saves exactly the 3 High Court variants (8 mentions). No other blank-class name there contains a court or body noun. The 4 `Withheld for Security Reasons — … Commission upon request` winner placeholders are not affected because the rule applies to blank stems only. `Not applicable in DK`, `to UK`, `as voluntary notice`, `at present` and `since Minesto is a private company` all still drop."
+          }
+        ],
+        "doubtful": [
+          {
+            "fold": "not applicable since minesto is a private company",
+            "note": "Dropped (blank, review-body 4) correctly in my reading. Minesto (Minesto AB, a tidal-energy company) is real, but here it is the contracting entity explaining why there is NO review body, not the review body itself. Dropping it loses no party. Do not save it."
+          },
+          {
+            "fold": "not applicable the contract has not been awarded",
+            "note": "Dropped as Blank in a winner slot. Dropping is right, but the text is a void lot ('the contract has not been awarded'), so VoidLot (clos-nw) would be the truer class. Blank leaves the result to the evidence rule. Not a party loss."
+          },
+          {
+            "fold": "see section v1 3 additional information",
+            "note": "KEPT as award_summary, but it is junk (specifications-provider/tender-receipt). section_number rejects `V1.3` because `V1` is neither digits nor a ROMAN part, so no reference is stripped. `referenced` stays false, so the bare-`see section` path runs names_something on `V1.3 Additional information`, and `Additional` passes. This is the V-one typo of the 140-mention `See Section VI.3 Additional information` that the decision drops. Fix: let section_number accept a roman_with_digits part, the filter names_something already applies."
+          },
+          {
+            "fold": "en el perfil del contratante de la sede electronica de la autoridad portuaria de barcelona o departamento s a u registro",
+            "note": "Kept as award_summary, and keeping it is fine because it names the Autoridad Portuaria de Barcelona. But the keep comes from an accident: named_before_stem treats the lead-in `En` as a capitalised name word, since BOUNDARY_LEAD_INS lacks `en`/`el`. If those lead-ins are ever added, this row drops unless the genitive perfil rule exists."
+          },
+          {
+            "fold": "4 abs 2 erfolgt keine angabe",
+            "note": "Kept junk (winner 2): a withheld-winner fragment ('§ 4 Abs. 2 … keine Angabe'). `keine angabe` is anchored at the start, so it escapes."
+          },
+          {
+            "fold": "analog siehe oben",
+            "note": "Kept junk (mediation-body 3, 2 orgs): `siehe oben` is not at the start."
+          },
+          {
+            "fold": "aucun lot supprime",
+            "note": "Kept junk (winner 2): `aucun (lot supprimé)`. The qualifier is not a bare lot qualifier and has no summary shape, so it reads as None. It really says the lot was removed (void)."
+          },
+          {
+            "fold": "details of suppliers has been withheld for reasons of security",
+            "note": "Kept junk (winner 3, 2 orgs): `withheld` is anchored at the start."
+          },
+          {
+            "fold": "details withheld",
+            "note": "Kept junk (winner 2)."
+          },
+          {
+            "fold": "details withheld for security reasons",
+            "note": "Kept junk (Tenderer 3)."
+          },
+          {
+            "fold": "security contract details withheld",
+            "note": "Kept junk (Tenderer 3, 2 orgs)."
+          },
+          {
+            "fold": "name withheld",
+            "note": "Kept junk (Tenderer 1, winner 1)."
+          },
+          {
+            "fold": "name withheld for security purposes",
+            "note": "Kept junk (Tenderer 2)."
+          },
+          {
+            "fold": "due of the sensitive nature of this contract the supplier name will be withheld",
+            "note": "Kept junk (winner 2)."
+          },
+          {
+            "fold": "due to the sensitive nature of this contract the supplier name is withheld from publication",
+            "note": "Kept junk (winner 2, 2 orgs)."
+          },
+          {
+            "fold": "for details of the awarded supplier please see section vi 3",
+            "note": "Kept junk (winner 2): the pointer is not at the start."
+          },
+          {
+            "fold": "for information on how to express an interest please see section vi 3 additional information",
+            "note": "Kept junk (purchasing-body 2)."
+          },
+          {
+            "fold": "n a see section vi 2",
+            "note": "Kept junk (winner 4): `n a` is whole-value only and `see section` is not at the start."
+          },
+          {
+            "fold": "no contract awarded see section vi 2",
+            "note": "Kept junk (winner 2, 2 orgs): a void-lot phrase in a winner slot that no VOID stem catches."
+          },
+          {
+            "fold": "package basis not applicable",
+            "note": "Kept junk (winner 2, 2 orgs)."
+          },
+          {
+            "fold": "other entitled participating institutions see section 1 2 of the itt",
+            "note": "Kept junk in a BUYER slot (2): a plural pointer, not a body."
+          },
+          {
+            "fold": "participating institutions agencies and bodies see section vi 3 additional information",
+            "note": "Kept junk in a BUYER slot (2)."
+          },
+          {
+            "fold": "please see section 5 2 of the project information memorandum",
+            "note": "Kept junk (purchasing-body 2): `please` before `see section` defeats the anchor. PLACEHOLDER_WHOLE has `please see below` but no `please see section` stem."
+          },
+          {
+            "fold": "please see section ii 2 1",
+            "note": "Kept junk (purchasing-body 8, 2 orgs). Same `please see section` gap."
+          },
+          {
+            "fold": "please see section iv 3",
+            "note": "Kept junk (winner 2)."
+          },
+          {
+            "fold": "please see section v",
+            "note": "Kept junk (Tenderer 2)."
+          },
+          {
+            "fold": "please see section vi 3 additional information below",
+            "note": "Kept junk (purchasing-body 3)."
+          },
+          {
+            "fold": "scotland does not have a body which is responsible for appeals procedures see section below",
+            "note": "Kept junk (review-body 2)."
+          },
+          {
+            "fold": "scotland does not have a body which is responsible for appeals procedures see section vi 4 2 below",
+            "note": "Kept junk (review-body 2)."
+          }
+        ],
+        "read_count": 70,
+        "summary": "I read all 70 entries of /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/reads/non_exact_03.json: 36 name, 18 placeholder, 10 blank, 6 award_summary. Of the 28 the fold drops, 4 are real-party losses. Each was checked against the deployed predicate in /home/user/tender-db/crates/ingest/src/partyname.rs.\n\n(1) Three Spanish buyer-profile names with the shape `Perfil del contratante de/de la/del <body>`: AGAPA, EMT Málaga (S.A.M.) and the Gobierno de Canarias, all in specifications-provider/tender-receipt slots. pointer_names (~line 720) accepts only `:`, ` - `, dash or `(` as the separator after a pointer stem, so the genitive `de la`/`del` that joins the stem to the body fails. named_before_stem finds nothing before a stem that opens the name. The reverse word order (`X, perfil del contratante`) is kept as AwardSummary, so the same bodies are treated inconsistently. Across plan 2265's non_exact, 27 rows / 95 mentions have this genitive shape, and about 24 name real bodies (Gobierno de Aragón 15, FNMT 14+9, CARM 13+5, CAM Hacienda 7, San Fernando 7, …). EMT is also missed by company_token, which does not recognise the spaced `S. A. M.`.\n\n(2) `Not applicable, but proceedings may be started in the High Court of England and Wales …` (review-body) is classed Blank and dropped. Plan-wide there are 3 variants and 8 mentions.\n\nKeep rules for both are in the hits. They do not save the junk nearby: `del Órgano de contratación`, `web municipal`, `Ver perfil … Hospital Clínic` in a winner slot, `Not applicable in DK/to UK`, and the `Withheld … Commission` placeholders.\n\nThe other 24 dropped entries are correctly junk (keine Angabe withheld winners, see-section pointers, nie dotyczy, not applicable, and so on). Minesto is noted in doubtful as a correct drop.\n\nKept junk worth noting:\n- `See Section V1.3 Additional information` is kept as award_summary because section_number rejects the `V1` typo, which the decision means to drop.\n- A cluster of `Please see section …`, `Name/Details withheld`, `Due to the sensitive nature …` and `N/A see section VI.2` winner/Tenderer/purchasing-body names, plus two plural buyer-slot pointers, are kept because the anchor does not fire when another word comes before the stem.\n\nRead-only: I wrote no files and did not touch the box."
+      },
+      {
+        "real_party_hits": [],
+        "doubtful": [
+          {
+            "fold": "the name s of the winning tenderer s are being withheld for security reasons however these will be made available to the",
+            "note": "Kept as a winner (class name, 2 orgs, 2 mentions) but it is a withheld-winner sentence with no organisation in it. The ' withheld' stem is StemAt::Start, so it misses 'withheld' in the middle of a sentence. This should be Placeholder (selec-w, no winner)."
+          },
+          {
+            "fold": "as per regulation 50 6 a information is withheld for security reasons details will be provided to the commission on requ",
+            "note": "Junk kept in a winner slot (class name). 'withheld' sits after a 'As per Regulation 50(6)(a)' prefix, so the start-anchored stem misses it. This should be Placeholder. The same applies to the next two folds."
+          },
+          {
+            "fold": "as per regulation 50 6 a withheld for security reasons information will be released to the commission on request",
+            "note": "Same as above: a withheld winner behind a regulation prefix, kept as a winner organisation."
+          },
+          {
+            "fold": "as per regulation 506a information withheld for security reasons",
+            "note": "Same as above: a withheld winner behind a regulation prefix, kept as a winner organisation."
+          },
+          {
+            "fold": "unter berufung auf 12 skr abs 2 vol a skr erfolgt hier keine angabe",
+            "note": "Junk kept in a winner slot (class name). 'keine Angabe' comes after a legal-citation prefix, so the start-anchored ' keine angabe' stem misses it. This is the usual DE withheld-winner wording and should be Placeholder."
+          },
+          {
+            "fold": "unter berufung auf artikel 24 absatz 2 erfolgt keine angabe",
+            "note": "Same pattern: a legal citation followed by 'erfolgt keine Angabe', kept as a winner organisation."
+          },
+          {
+            "fold": "1 abschnitt 4 skr vol a erfolgt hier keine angabe",
+            "note": "Same pattern: a truncated citation followed by 'erfolgt hier keine Angabe', kept as a winner."
+          },
+          {
+            "fold": "2 erfolgt hier keine angabe",
+            "note": "Same pattern: '2 erfolgt hier keine Angabe', kept as a winner."
+          },
+          {
+            "fold": "auftrag nr los 1 und 2 keine angaben gem 28a nr 2 vol a",
+            "note": "A 'Keine Angaben gem. § 28a' withheld winner behind an 'Auftrag Nr. Los 1 und 2:' prefix, kept as a winner (class name). It names no award and no company, so it should be Placeholder."
+          },
+          {
+            "fold": "combined lot not applicable",
+            "note": "Junk kept in a winner slot (class name). 'Not applicable' follows a 'Combined Lot' qualifier. This should be Blank or VoidLot. It names no winner."
+          },
+          {
+            "fold": "227 adjudicatarios ver informacion adicional",
+            "note": "A plural-winner pointer kept as a winner organisation (class name). This should be Placeholder (a winner exists, plural, named elsewhere)."
+          },
+          {
+            "fold": "3 titulaires voir autres informations vi 2",
+            "note": "A plural-winner pointer ('3 Titulaires - voir autres informations VI 2') kept as a winner organisation. This should be Placeholder."
+          },
+          {
+            "fold": "52 adjudicatarios ver resolucion de adjudicacion en perfil de contratante http www plataformadecontractacio caib es lici",
+            "note": "Class award_summary, so it is kept as a winner, but it is a plural-winner pointer plus a URL with no winner name. names_an_award probably fired on 'resolución de adjudicación'."
+          },
+          {
+            "fold": "3 sublotes varios proveedores homolgados con diferentes porcentajes de descuento el listado de proveedores homologados p",
+            "note": "Class award_summary, kept as a winner, but it names no supplier: 'various approved suppliers, list on the Gobierno de Aragón buyer profile'. Gobierno de Aragón is the buyer, not a winner. The homoolgados twin fold behaves the same way."
+          },
+          {
+            "fold": "ver anexo publicado en el perfil del contratante http www hospitalclinic org proveidors plataforma electronica de contra",
+            "note": "Class award_summary, kept as a winner (2 orgs), but it is a 'see annex on the buyer profile' pointer. hospitalclinic.org is the buyer's site and the Generalitat platform is the publishing portal. It names no winner and should be Placeholder."
+          },
+          {
+            "fold": "contratistas y ventajas de la oferta adjudicataria ver anexo publicado en el perfil del contratante www hospitalclinic o",
+            "note": "The same Hospital Clínic pointer, kept as a winner (award_summary). It names no winner."
+          },
+          {
+            "fold": "ver resolucion en perfil del contratante",
+            "note": "Class award_summary, kept in review-body and appeal-information slots, but it is a pure pointer. The decision lists 'ver perfil del contratante' as a Placeholder specimen. 'resolución' probably tripped names_an_award."
+          },
+          {
+            "fold": "ver pliego de condiciones o el perfil del contratante de la fundacion",
+            "note": "A pointer kept as a review-body (award_summary). 'la Fundación' is not a named organisation."
+          },
+          {
+            "fold": "ver pliego de condiciones particulares perfil del contratante de la fundacion www ciuden es",
+            "note": "A pointer plus a URL kept as a review-body (award_summary). The CIUDEN foundation appears only as a domain."
+          },
+          {
+            "fold": "siehe oben ii ausschreibungs und erganzende unterlagen einschlieslich unterlagen fur den wettbewerblichen dialog und ein",
+            "note": "Class award_summary, kept as tender-receipt. The pointer rule took the quoted section-II heading ('Ausschreibungs- und ergänzende Unterlagen ... verschicken') for a body name. It is a section title, not an organisation."
+          },
+          {
+            "fold": "to obtain tender documents and specification see section vi 3 for etendering website address",
+            "note": "A pure pointer sentence kept as a specifications-provider and tender-receipt (class name). The 'see section' stem is not at the start, so it misses."
+          },
+          {
+            "fold": "descarga desde el perfil del contratante de la web del museo",
+            "note": "Kept as a specifications-provider (award_summary), but it says 'download from the buyer profile on the Museum's website' and names no organisation. The 'en la web del museo' twin fold behaves the same way."
+          }
+        ],
+        "read_count": 70,
+        "summary": "I read all 70 entries of /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/reads/non_exact_04.json. 16 entries are classed placeholder (32 mentions), so the fold drops them; none is classed blank. None of the 16 is a real organisation, and none carries a party after its placeholder phrase. They are section pointers ('See section VI.3 of this advert', 'siehe oben A. I', 'siehe oben unter (Ziffer) VI.4.1 / VI.3.1 / VI.2.1', 'Siehe oben Abschnitt II.1.4) und VI. 3) …'), generic stand-ins for review or contact bodies ('Siehe oben genannte Kontaktstellen', 'Siehe oben Kontaktstelle (unter I.1)', 'Siehe oben Stelle für Nachprüfungsverfahren'), ES/FR pointers ('Ver información complementaria: apartado VI', 'Ver información sobre los 12 adjudicatarios …', 'voir renseignements complémentaires ci-dessous') and 'Withheld for security reasons …' winners. Real-party hits: 0, so no keep rule is needed for this shard. Every pointer that does carry a body is classed award_summary or name and is kept. Examples are 'Siehe oben - WSA Toenning', 'Thüringen Forst … (siehe oben unter I.1)', 'Vergabekammer Rheinland (Siehe oben …)', 'Bundesverwaltungsgericht, siehe oben', 'BAAINBw U 2.4 (Angaben siehe oben)', the 'This is an award notice … Hertfordshire County Council' buyers, 'Accor-Pannonia Hotels Zrt. … see Section VI.3' and the PCT/council 'on behalf of itself … see section VI.3/VI.4' buyers. The weakness in this shard runs the other way: junk the fold keeps, which is in the doubtful list. Most of it is withheld or pointer wording in winner slots behind a prefix, which the start-anchored stems (' withheld', ' keine angabe', ' siehe oben') miss. Examples are 'The name(s) of the winning tenderer(s) are being withheld …', 'As per Regulation 50(6)(a) — withheld …' (3 folds), '… erfolgt (hier) keine Angabe' (4 folds), 'Auftrag Nr. Los 1 und 2: Keine Angaben gem. § 28a', '227 Adjudicatarios-Ver Información Adicional' and '3 Titulaires - voir autres informations'. These stay as fake winner organisations instead of becoming selec-w with no winner. Several award_summary pointers with no name in them are also kept: 'Ver resolución en perfil del contratante.', the Hospital Clínic 'ver anexo' winners, '52 adjudicatarios, ver resolución …' and the '3 sublotes … proveedores homologados' winners. None of these is a data loss; they are under-drops."
+      },
+      {
+        "real_party_hits": [],
+        "doubtful": [
+          {
+            "fold": "er anexo publicado en el perfil de contratante www hospitalclinic org proveidors plataforma electronica de contractacion",
+            "note": "Dropped (placeholder, winner, org 10451421), and that is correct. The winner sits in an annex. hospitalclinic.org is the buyer's site and 'Plataforma Electrònica de Contractació Pública de la Generalitat de Catalunya' is the e-procurement platform, not a supplier. The inconsistency is that about 90 sibling orgs with the full 'Ver anexo publicado en el Perfil del Contratante www.hospitalclinic.org...' text are on plan-2265's exempted list (AwardSummary, kept). They are junk kept for one reason: named_before_stem reads the sentence-initial 'Ver' as a name. BOUNDARY_LEAD_INS only strips lead-ins directly before the stem, and here 'anexo publicado en el' sits in between. This one escaped only because the 'V' was truncated."
+          },
+          {
+            "fold": "keine angabe los 3 wurde aufgehoben und wird neu ausgeschrieben",
+            "note": "Dropped as placeholder, winner. There is no real party. The text says Los 3 was cancelled, which makes it a void lot, so the Placeholder class gives selec-w where clos-nw is true. unit1-decision §1 already records and accepts this one. Not a loss."
+          },
+          {
+            "fold": "keine angabe gemas 61abs4 und 62abs3 bvergg 2018",
+            "note": "Dropped, and that is correct. It matches plan identified org 17855508 (AT), whose identifier is KEINEANGABEGEM61ABS4UND62ABS3BVERGG2018. The identifier echoes the placeholder, so no withheld winner's identity is lost."
+          },
+          {
+            "fold": "keine angabe gemas 30 2 nr 3 uvgo",
+            "note": "Dropped, and that is correct (a statute citation). Its roles map is empty ({}) although it has 1 mention. That oddity may be worth a check in the plan reader. It is not a loss."
+          },
+          {
+            "fold": "keine angabe gemas 27a i v m 27 nr 3 b und c vol",
+            "note": "Junk KEPT in a winner slot (award_summary). summary_shape's lettered_entries reads the statute sub-clauses '§ 27 Nr. 3 b) und c)' as two lettered award entries. Fix: don't count a marker that follows 'Nr.', '§', 'Abs.' or a digit, or require each marker to be followed by a capitalised word."
+          },
+          {
+            "fold": "multiples adjudicatarios 178 relacion publicada en perfil de contratante adjudicacion",
+            "note": "Junk KEPT in a winner slot (award_summary, org 9910338). This is the plural placeholder ('178 winners, list on the buyer profile'). named_before_stem keeps it because 'Múltiples' is capitalised. Fix: add 'multiples adjudicatarios' and 'varios adjudicatarios' as Start-anchored Placeholder stems."
+          },
+          {
+            "fold": "multiples adjudicatarios relacionados en la resolucion de adjudicacion de fecha 14 5 2018 publicada en el perfil del con",
+            "note": "Junk KEPT in a winner slot (award_summary, org 11767119). 'Delegación Territorial de Igualdad, Salud y Políticas Sociales en Córdoba' is the BUYER, not a winner. The capitalised words before 'perfil del contratante' trip named_before_stem. Same fix as the stem above."
+          },
+          {
+            "fold": "multiples adjudicatarios relacionados en la resolucion de adjudicacion de fecha 18 5 2017 publicada en el perfil del con",
+            "note": "Junk KEPT in a winner slot (award_summary, org 9934943). Same case as the 2018 variant: the Delegación named is the buyer."
+          },
+          {
+            "fold": "desde el dia siguiente a la publicacion en el perfil de contratante o la recepcion de la notificacion 15 dias habiles",
+            "note": "Junk KEPT in Lot-ReviewInfo (award_summary). This is a review-period deadline, not a body. named_before_stem keeps it because the first word 'Desde' is capitalised."
+          },
+          {
+            "fold": "en el perfil del contratante o en el registro sau",
+            "note": "Junk KEPT in further-information (award_summary, org 7234685). named_before_stem keeps it because of 'En'. 'Registro SAU' is an office of the Autoridad Portuaria de Barcelona, not a party name."
+          },
+          {
+            "fold": "en el perfil del contratante o recogerse personalmente en las oficinas del sau",
+            "note": "Junk KEPT in specifications-provider (award_summary, org 7234686). It is kept because of the sentence-initial 'En'."
+          },
+          {
+            "fold": "los pliegos se descargaran desde el perfil del contratante de la pagina web del museo",
+            "note": "Junk KEPT in specifications-provider (award_summary, org 31443835). It is kept because of the sentence-initial 'Los'. A general fix for named_before_stem: ignore a capitalised first word of `before` when it is a Spanish function word or verb (en, el, la, los, las, desde, ver, descarga, multiples, varios), or extend the lead-in strip to whole lead-in runs such as 'ver anexo publicado en el'. 'Serco — disclosure…' and 'Ayuntamiento de Madrid (véase…' would still be kept."
+          },
+          {
+            "fold": "details of supplier has been withheld for reasons of security",
+            "note": "Junk KEPT in a winner slot (name, 2 winner rows). The anchored ' withheld' stem misses it because the name opens with 'Details'."
+          },
+          {
+            "fold": "details withheld for commercial reasons",
+            "note": "Junk KEPT in a winner slot (name). 'withheld' is not at the start."
+          },
+          {
+            "fold": "due to the sensitive nature of this contract the contractor s details are withheld",
+            "note": "Junk KEPT in a winner slot (name). Candidate Start-anchored Placeholder stem: 'due to the sensitive nature'."
+          },
+          {
+            "fold": "due to the sensitive nature of this contract the suppier name will be withheld from publication",
+            "note": "Junk KEPT in a winner slot (name). Same family as the previous entry."
+          },
+          {
+            "fold": "due to the sensitive nature of this contract the suppliers name is being withheld",
+            "note": "Junk KEPT in a winner slot (name). Same family."
+          },
+          {
+            "fold": "information withheld for reasons of security",
+            "note": "Junk KEPT in a winner slot (name). Candidate stems: 'information withheld' and 'details withheld'."
+          },
+          {
+            "fold": "for details of awarded supplier please see section vi 2",
+            "note": "Junk KEPT in a winner slot (name). The anchor refuses 'see section' in mid-string. The lead-in 'for details of (the) awarded supplier(s) (please)' is fixed English with no proper noun, so it is safe as a Start-anchored Placeholder stem."
+          },
+          {
+            "fold": "for details of awarded suppliers please see section v 1",
+            "note": "Junk KEPT in a winner slot (name). Same family."
+          },
+          {
+            "fold": "for details of the awarded supplier plese see section vi 2",
+            "note": "Junk KEPT in a winner slot (name). Same family (with a typo)."
+          },
+          {
+            "fold": "for details of the awarded supplier see section v1 2",
+            "note": "Junk KEPT in a winner slot (name, 2 rows). Same family."
+          },
+          {
+            "fold": "for details of the awarded suppliers please see section vi 2 a list of purchasing points can be provided upon request",
+            "note": "Junk KEPT in a winner slot (name). Same family."
+          },
+          {
+            "fold": "n a please see section vi 2 additional information",
+            "note": "Junk KEPT in a winner slot (name). 'N/A' plus a pointer: N/A is matched only as a whole value and 'see section' only at the start, so this name falls between the two rules."
+          },
+          {
+            "fold": "marches du n 120001 a 120004 voir renseignements",
+            "note": "Junk KEPT in a winner slot (name). It reads 'contracts 120001 to 120004, see information'. 'voir renseignements' is not at the start."
+          },
+          {
+            "fold": "for more information please see section ii 1 4 short description",
+            "note": "Junk KEPT in the BUYER slot (name). It gives a placeholder buyer token and key, which is exactly what §3 wants gone. Candidate stem: 'for (more) information please see section'."
+          },
+          {
+            "fold": "for information please see section vi 3 additional information",
+            "note": "Junk KEPT in purchasing-body (name). Same candidate stem."
+          },
+          {
+            "fold": "documents available electronically see section vi 3 additional information below",
+            "note": "Junk KEPT in specifications-provider (name)."
+          },
+          {
+            "fold": "k does not have any such body see section vi 4 2",
+            "note": "Junk KEPT in review-body (name). A truncated 'The UK does not have any such body'."
+          },
+          {
+            "fold": "kontaktstelle siehe oben",
+            "note": "Junk KEPT in review-body (name). It reads 'contact point, see above'. 'siehe oben' is not at the start."
+          },
+          {
+            "fold": "ingen lot 241",
+            "note": "Kept (name, winner), apparently because the notice is not in DAN/SWE/NOR. The lot numbering (241; and 253 to 1340 in the next entry) matches the large French award to the probable firm INGEN (org 1188404, notice 4354963). Keeping it is the safe side, so no action."
+          },
+          {
+            "fold": "ingen lots 253 825 1077 1081 1210 1212 1215 1222 1223 1228 1230 1232 1340",
+            "note": "Kept (name, winner). Probably the French firm INGEN. Same reasoning as 'Ingen (lot 241)'."
+          }
+        ],
+        "read_count": 70,
+        "summary": "I read all 70 entries of /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/reads/non_exact_05.json: 24 placeholder, 0 blank, 32 name, 14 award_summary. Every entry has 1 org and 1 mention. NO REAL-PARTY LOSS: none of the 24 entries the fold drops names a real organisation, and none carries a real party after the placeholder phrase.\n\nThe 24 dropped entries:\n- 23 are 'Keine Angabe/Angaben ...' variants. They are withheld winners, citations of statutes (GWB §97, VOL/A §28a, SKR §12, UVgO §30, BVergG §61/62, VgV §3), 'no EU tender' review-body fillers, 'Bieter Nummer 1', and 'keine, Angabe in Abschnitt I ist falsch'.\n- 1 is the truncated 'er anexo publicado en el Perfil de Contratante www.hospitalclinic.org ... Plataforma Electrònica ...'. It names the buyer's site and the platform, not a winner.\n- The one identified org among them (17855508) has an identifier that echoes the placeholder, so no withheld winner's identity is lost.\n- 'Los 3 wurde aufgehoben' is a void lot classed Placeholder. The decision doc already records it.\n\nCorrectly KEPT real bodies: ESPO/EMBC, ENDESA ENERGÍA S.A., FNMT-RCM, Fundación Ciudad de la Energía (x2), Greffe du TA de Nantes, Groupement Jolliet & Macouin, Hertfordshire CC (x2), the LB Camden/Lambeth/Newham buyers (4 entries), Merthyr Tydfil CBC, Ministerium für Wirtschaft ... siehe oben, and Copistería Arco.\n\nJunk the fold KEEPS (the doubtful list), in four families:\n1. English withheld and pointer phrases with a lead-in, which the Start anchor refuses: 'Details ... withheld', 'Due to the sensitive nature ... withheld', 'Information withheld ...', 'For details of (the) awarded supplier(s) please see section ...', 'N/A - please see section ...', 'For (more) information please see section ...'. Nine of these sit in winner slots and one in the BUYER slot.\n2. named_before_stem treats a capitalised first word as a name. 'En el Perfil...', 'Los pliegos...', 'Desde el día...' and 'Múltiples adjudicatarios...' are kept for this reason, and so are about 90 'Ver anexo publicado en el Perfil del Contratante www.hospitalclinic.org' sibling orgs on plan-2265's exempted list, because the lead-in strip only removes a lead-in that sits directly before the stem.\n3. lettered_entries reads statute sub-clauses ('§ 27 Nr. 3 b) und c)') as award entries.\n4. German and French pointers in mid-string ('Kontaktstelle siehe oben', 'Marchés du n° ... - voir renseignements').\n\nThe two 'Ingen/INGEN (lots ...)' winners are kept, probably the French firm INGEN, which is the safe side. Suggested narrow keep and drop fixes are in each doubtful note. I edited no files."
+      },
+      {
+        "read_count": 70,
+        "real_party_hits": [
+          {
+            "fold": "perfil de contratante del sescam",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil de Contratante del Sescam"
+            ],
+            "why_real": "After the phrase comes SESCAM (Servicio de Salud de Castilla-La Mancha), a real regional health authority. It is the documents source (specifications-provider x2). The name means 'SESCAM's buyer profile'. pointer_names returns false because nothing separates the stem from the genitive 'del', and named_before_stem finds no words before the stem, so the name is classed Placeholder and dropped.",
+            "suggested_keep_rule": "PERFIL GENITIVE RULE. For the two boundary stems ' perfil de(l) contratante' only, treat a Spanish or Catalan genitive right after the stem (de / del / de la / de los / de las / d') as the separator in pointer_names. Also accept a coordinated 'y <pointer words>' followed by such a genitive. Skip a leading 'página web de la' or 'web de', then call names_something on what remains, and keep the name (AwardSummary) when it is true. A generic-head stoplist stays Placeholder: 'órgano de contratación', 'web municipal', 'entidad contratante', 'poder adjudicador'. Bare forms ('Ver perfil del contratante', 177 mentions), URL-only forms ('perfil del contratante www.madrid.es') and 'o ...' alternatives get no genitive and stay Placeholder. Checked against the plan's 41 distinct perfil folds: it keeps 30 real ones (about 98 mentions, 33 orgs, e.g. Gobierno de Aragón x15, FNMT-RCM x14, CARM x13, Ayto. de San Fernando x7, Universidad Complutense, Ministerio de Justicia, Diputación de Alicante, Hospital Clínic de Barcelona). The 11 left as Placeholder are all pointer text or URLs."
+          },
+          {
+            "fold": "perfil de contratante del consorci administracio oberta de catalunya",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil de Contratante del Consorci Administració Oberta de Catalunya"
+            ],
+            "why_real": "Consorci Administració Oberta de Catalunya (AOC) is a real Catalan public consortium, named in full after the stem (specifications-provider x2).",
+            "suggested_keep_rule": "Perfil genitive rule (see the SESCAM entry): 'del' + names_something('Consorci Administració Oberta de Catalunya') is true, so the name is kept."
+          },
+          {
+            "fold": "perfil del contratante de la junta de andalucia",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del Contratante de la Junta de Andalucía"
+            ],
+            "why_real": "Junta de Andalucía is a real regional government, named after the stem (specifications-provider x2). It is the same organisation that the existing named_before rule already keeps in the reversed order 'Junta de Andalucía - ver perfil de contratante', so dropping this word order is inconsistent.",
+            "suggested_keep_rule": "Perfil genitive rule: 'de la' + 'Junta de Andalucía' gives a capitalised word, so the name is kept. It mirrors named_before_stem for text that follows the stem."
+          },
+          {
+            "fold": "perfil del contratante de la delegacion territorial de educacion cultura y deporte en cadiz http contratacion chap junta",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del contratante de la Delegación Territorial de Educación, Cultura y Deporte en Cádiz: http://contratacion.chap.junta-andalucia.es/contratacion"
+            ],
+            "why_real": "The Delegación Territorial de Educación, Cultura y Deporte en Cádiz (Junta de Andalucía) is a real public body, named before the URL (specifications-provider x2).",
+            "suggested_keep_rule": "Perfil genitive rule: 'de la' + 'Delegación Territorial …' passes names_something, so the name is kept. A trailing URL does not matter."
+          },
+          {
+            "fold": "perfil del contratante de la carm",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del Contratante de la CARM"
+            ],
+            "why_real": "CARM is Comunidad Autónoma de la Región de Murcia, a real regional authority. The acronym passes names_something (capitalised, 2+ letters).",
+            "suggested_keep_rule": "Perfil genitive rule: 'de la' + 'CARM', so the name is kept."
+          },
+          {
+            "fold": "perfil del contratante de la comunidad autonoma de la region de murcia www carm es",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "PERFIL DEL CONTRATANTE DE LA COMUNIDAD AUTÓNOMA DE LA REGIÓN DE MURCIA WWW.CARM.ES"
+            ],
+            "why_real": "Comunidad Autónoma de la Región de Murcia (a real regional authority) is spelled out before the URL. The same body without the URL appears in the plan's distinct list 13+5 times.",
+            "suggested_keep_rule": "Perfil genitive rule. The text is all upper case, but names_something only needs a capitalised word of 2+ letters, so the name is kept."
+          },
+          {
+            "fold": "perfil de contratante y registro auxiliar de la universidad de valladolid",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil de contratante y Registro Auxiliar de la Universidad de Valladolid"
+            ],
+            "why_real": "Universidad de Valladolid is a real public university, and its Registro Auxiliar is a real office of it. The name carries 5 specifications-provider role rows in one mention, the most of any entry in this file.",
+            "suggested_keep_rule": "Perfil genitive rule, coordinated arm: the rest opens 'y <words>' and then a genitive 'de la' + 'Universidad de Valladolid', so the name is kept. The same arm keeps the plan's 'perfil del contratante y servicio central de contratación de la Diputación (Provincial) de Alicante' (3 folds)."
+          },
+          {
+            "fold": "perfil del contratante de anfaco cecopesca",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del contratante de Anfaco-Cecopesca"
+            ],
+            "why_real": "ANFACO-CECOPESCA is a real Spanish canning industry association and technology centre that procures under public rules (specifications-provider x2).",
+            "suggested_keep_rule": "Perfil genitive rule: 'de' + 'Anfaco-Cecopesca', so the name is kept."
+          },
+          {
+            "fold": "perfil de contratante del ayto de soria y plataforma de contratacion del estado",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil de Contratante del Ayto. de Soria y plataforma de Contratación del Estado"
+            ],
+            "why_real": "Ayto. de Soria (Ayuntamiento de Soria) is a real municipality, named right after the stem (specifications-provider x2). The plan has a twin, 'perfil del contratante del ayto de soria …'.",
+            "suggested_keep_rule": "Perfil genitive rule: 'del' + 'Ayto. de Soria …', so the name is kept. The trailing 'plataforma de Contratación del Estado' does not need to be read."
+          },
+          {
+            "fold": "perfil de contratante de bec y sesion de dudas",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil de contratante de BEC y Sesión de dudas"
+            ],
+            "why_real": "BEC is Bilbao Exhibition Centre S.A., a real publicly owned company that is a contracting entity. The role is appeal-information x2, which is odd but is where the publisher put the contact. Lower confidence: the name is an acronym plus 'Q&A session'.",
+            "suggested_keep_rule": "Perfil genitive rule: 'de' + 'BEC', so the name is kept. Nothing in it is generic, so no stoplist entry applies."
+          },
+          {
+            "fold": "not applicable but proceedings may be started in the high court of england and wales in accordance with part 5 remedies",
+            "classes": [
+              "blank"
+            ],
+            "mentions": 1,
+            "names": [
+              "Not applicable, but proceedings may be started in the High Court of England and Wales in accordance with Part 5 (Remedies) of the Utilities Contracts Regulations 2016"
+            ],
+            "why_real": "Role review-body x1. The text after 'Not applicable,' names the real review body for this notice, the High Court of England and Wales. The anchored blank stem ' not applicable' classes the whole name Blank, so the review body is dropped. In the plan the same family has 3 folds (Part 5 of the UT… 5 mentions / 3 orgs, Part 3 Remedies 2/2, this one 1/1): 8 mentions and 6 review-body orgs in total.",
+            "suggested_keep_rule": "In the BLANK_STEMS branch of not_a_name_in, before returning Blank: if the text after the stem (which may open with ',', 'but' or 'however') contains a capitalised court or review-body noun (Court, Tribunal, Rechtbank, Vergabekammer, Sąd, Izba), return AwardSummary so the name is kept. Do not use plain names_something here, because it would also keep junk such as 'Not applicable in NI/UK', 'Not Applicable — No Award Made' and 'Not applicable. See VI.4.3) Review procedure below'. None of those, nor any other blank name in this file, contains a court noun. The kept org name stays the long sentence, as other AwardSummary names do."
+          }
+        ],
+        "doubtful": [
+          {
+            "fold": "perfil de contratante www gelves es",
+            "note": "Placeholder, dropped (specifications-provider x1). The URL points to the Ayuntamiento de Gelves, but no organisation name is written, only a domain. The proposed genitive rule leaves it as Placeholder. That is a small loss, and keeping URL-only perfil names would also keep 'perfil del contratante www.madrid.es'-type pointers."
+          },
+          {
+            "fold": "niet van toepassing het tweesteden ziekenhuis zoekt",
+            "note": "Blank, dropped (winner). It names a real hospital, TweeSteden ziekenhuis, but inside a cut-off sentence ('the hospital is looking for'). The hospital is the buyer, not a winner, so dropping the winner party is correct and this is not a loss."
+          },
+          {
+            "fold": "nie dotyczy art 8 ust 4 pkt 1 ustawy prawo zamowien publicznych",
+            "note": "Blank, dropped (winner). Art. 8 ust. 4 pkt 1 Pzp withholds a natural person's data, so a winner (a person as supplier) exists but its name is withheld. That makes it a Placeholder (selec-w with no winner), not a Blank (no marker). No name is lost, but the class is wrong."
+          },
+          {
+            "fold": "nie dotyczy na podstawie art 8 ust 4 pkt 1 ustawy pzp spadkobierca zastrzegl ze dane osobowe nie moga byc udostepniane",
+            "note": "Blank, dropped (winner). The winner is an heir who reserved their personal data: a winner exists and is withheld. As above, this is a Placeholder misclassed as Blank; no name is lost."
+          },
+          {
+            "fold": "not applicable contract not awarded / due to cancellation of tender / no award made / no contract awarded / procedure abandoned (x3) / the framework contract was not awarded ...",
+            "note": "Blank, dropped. Semantically these are void lots, but they get no clos-nw marker because ' not applicable' is caught by the anchored blank stem before any void wording. The same holds for the Dutch 'aanbesteding gestopt/stopgezet', 'aankondiging is ingetrokken', 'geen geldige aanbiedingen ontvangen', 'procedure gestaakt' and 'intrekken EA'. The evidence rule decides the lot status instead. This is not a party loss."
+          },
+          {
+            "fold": "n a please see section vi 2 for additional information",
+            "note": "Classed 'name', so the fold keeps it (winner). It is junk: 'n a' is only a whole value and ' see section' is anchored at the start, so 'N/A. Please see section…' gets past both."
+          },
+          {
+            "fold": "na see section vi 4 2",
+            "note": "Classed 'name', kept (review-body). It is a pointer: 'NA' followed by 'See Section VI.4.2)'."
+          },
+          {
+            "fold": "organisation refer to point vi 4 2 body responsible for mediation procedures if applicable organisation not applicable",
+            "note": "Classed 'name', kept (review-body). It is a form-label pointer that ends in 'Not applicable'."
+          },
+          {
+            "fold": "name of economic operator withheld for security reasons / name of supplier withheld / name withheld due to security (contract/issues) / name withheld for security reasons can be provided to ec if requested",
+            "note": "Six entries classed 'name', kept (winner/Tenderer). All are withheld-winner placeholders. They escape because ' withheld' is anchored at the start and these names open with 'Name (of …)'. A 'name (of <noun>) withheld' start stem would class them Placeholder."
+          },
+          {
+            "fold": "nb paragraaf v 3 is niet van toepassing",
+            "note": "Classed 'name', kept (winner). It is a remark ('NB: paragraph V.3 does not apply'), not a party."
+          },
+          {
+            "fold": "neant lot annule",
+            "note": "Classed 'name', kept (winner). 'néant (lot annulé)' is a void or blank lot; it escapes because '(lot annulé)' is not a bare lot qualifier."
+          },
+          {
+            "fold": "nog niet van toepassing",
+            "note": "Classed 'name', kept (winner). It means 'not yet applicable', a pending placeholder; it escapes because 'nog' comes before the anchored blank stem."
+          },
+          {
+            "fold": "non award see section vii",
+            "note": "Classed 'name', kept (Tenderer). It is a void lot plus a pointer."
+          },
+          {
+            "fold": "package quote not applicable",
+            "note": "Classed 'name', kept (winner). It is junk, not a party."
+          },
+          {
+            "fold": "other entitled participating institutions see section 2 2 of the call for applications / other social housing providers see section ii 2 1 ...",
+            "note": "Three entries classed 'name', kept (buyer/purchasing-body). They are generic plural placeholders, not one organisation. Borderline junk."
+          },
+          {
+            "fold": "niet van toepassing emva is behaald door perceel 1 en perceel 2 separaat te gunnen",
+            "note": "Classed award_summary, kept (winner). summary_shape trips on several_lots ('perceel 1 en perceel 2'), but no party is named ('not applicable: MEAT achieved by awarding lots 1 and 2 separately'), so it is junk the fold keeps."
+          }
+        ],
+        "summary": "I read all 70 entries in /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/reads/non_exact_06.json: 22 'name', 3 'award_summary', 34 'blank' and 11 'placeholder', so 45 would be dropped. 11 of the dropped entries are real-party losses.\n\n(1) 10 of the 11 Placeholder entries are 'Perfil de(l) contratante de/del/de la <X>' (mostly specifications-provider). Each names a real authority after the phrase: SESCAM, Consorci AOC, Junta de Andalucía, Delegación Territorial de Educación Cádiz, CARM (twice), Universidad de Valladolid, Anfaco-Cecopesca, Ayto. de Soria and BEC. The deployed keep rules miss them. pointer_names requires a separator such as ':', '-' or '(' after the stem, and named_before_stem only reads text before the stem. Fix: in pointer_names, treat a Spanish genitive (de/del/de la/de los/de las/d', or 'y <words>' then a genitive) as the separator for the two perfil stems, then call names_something, with a stoplist for generic heads ('órgano de contratación', 'web municipal'). Against the plan's 41 distinct perfil folds this keeps 30 real ones (about 98 mentions, 33 orgs, including Gobierno de Aragón x15, FNMT x14 and CARM x13). The other 11, including 'ver perfil del contratante' (177 mentions), the URL-only forms and 'del órgano de contratación', stay Placeholder.\n\n(2) One Blank entry is a review-body loss: 'Not applicable, but proceedings may be started in the High Court of England and Wales …'. Its family in the plan is 3 folds, 8 mentions and 6 orgs. Fix: in the blank-stem branch, keep the name (AwardSummary) when the text after the stem has a capitalised court noun (Court/Tribunal/Rechtbank/Vergabekammer/Sąd/Izba). Plain names_something is not safe here, because it would also keep 'Not applicable in NI/UK' and 'No Award Made'.\n\nThe other blank drops carry no party. Two are wrong-class cases rather than losses: the Polish withheld natural-person winners (art. 8 ust. 4 pkt 1) should be Placeholder, and the 'not applicable / niet van toepassing' cancelled-tender names are void lots that get no clos-nw marker. The 'name' and award_summary entries keep some junk winners: six 'Name (of supplier) withheld…' entries escape the start-anchored ' withheld' stem, plus 'N/A. Please see section…', 'NA See Section', 'néant (lot annulé)', 'Nog niet van toepassing', 'Non- Award', 'Package quote not applicable' and the 'EMVA … perceel 1 en perceel 2' summary.\n\nThis was read-only: no files were written or edited."
+      },
+      {
+        "real_party_hits": [
+          {
+            "fold": "perfil del contratante de la pagina web de la fnmt rcm www fnmt es",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del contratante de la página web de la FNMT-RCM (www.fnmt.es)"
+            ],
+            "why_real": "FNMT-RCM (Fábrica Nacional de Moneda y Timbre - Real Casa de la Moneda) is a real Spanish state body and is named after the perfil phrase. pointer_names refuses it because the rest opens with the genitive 'de la', which is not a separator. Role: specifications-provider.",
+            "suggested_keep_rule": "For the perfil del/de contratante stems only, pointer_names should treat a leading Spanish genitive or conjunction (de, del, de la, de los, de las, y, o, e) as the step-3 separator, also skip an optional 'página web (de la)' / 'web', and then require names_something on what is left. Generic procurement words must not count as names there: Órgano, Contratación, Contratante, Jta/Junta de Contratación, Mesa, Entidad, Plataforma, Estado, Sector, Público, Perfil, Web. With this rule 'FNMT', 'RCM' survive and the party is kept."
+          },
+          {
+            "fold": "perfil del contratante del ayto de soria y plataforma de contratacion del estado",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del Contratante del Ayto de Soria y Plataforma de Contratación del Estado"
+            ],
+            "why_real": "Ayuntamiento de Soria is a real municipality, named right after the phrase through 'del'. The mirror form is already kept: entry 16, 'Plataforma de Contratación del Sector Público y Perfil de Contratante del Ayuntamiento de Águilas', stays an award_summary via named_before_stem. This one is dropped only because the authority comes AFTER the stem. Role: specifications-provider (2).",
+            "suggested_keep_rule": "The same genitive-opener extension of pointer_names for the perfil stems. 'Ayto' and 'Soria' are not in the generic stoplist, so it is kept. 'Plataforma de Contratación del Estado' on its own would still drop."
+          },
+          {
+            "fold": "perfil del contratante del gobierno de aragon",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del Contratante del Gobierno de Aragón"
+            ],
+            "why_real": "Gobierno de Aragón is a real regional government, named after the phrase through 'del'. Role: specifications-provider (2).",
+            "suggested_keep_rule": "Genitive-opener extension for the perfil stems plus names_something with the generic stoplist. 'Gobierno' and 'Aragón' survive the stoplist."
+          },
+          {
+            "fold": "perfil del contratante del ministerio de justicia",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del contratante del Ministerio de Justicia"
+            ],
+            "why_real": "Ministerio de Justicia is a real Spanish ministry, named after the phrase through 'del'. Role: specifications-provider (3).",
+            "suggested_keep_rule": "Genitive-opener extension for the perfil stems plus names_something with the generic stoplist. 'Ministerio' and 'Justicia' survive the stoplist."
+          },
+          {
+            "fold": "perfil del contratante y registro auxiliar de la universidad de valladolid",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del contratante y registro auxiliar de la Universidad de Valladolid"
+            ],
+            "why_real": "Universidad de Valladolid is a real public university. Its auxiliary registry is a real office where documents are collected. It follows the phrase through the conjunction 'y'. Role: specifications-provider (2).",
+            "suggested_keep_rule": "Genitive/conjunction-opener extension ('y' counts as the separator) plus names_something with the generic stoplist. 'Universidad' and 'Valladolid' survive the stoplist."
+          },
+          {
+            "fold": "perfil del contratante y servicio central de contratacion de la diputacion de alicante",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del contratante y servicio Central de Contratación de la Diputación de Alicante"
+            ],
+            "why_real": "The Servicio Central de Contratación of the Diputación de Alicante is a real procurement unit of a real provincial authority. It follows the phrase through 'y'. Role: specifications-provider (4).",
+            "suggested_keep_rule": "Conjunction-opener extension plus names_something with the generic stoplist. 'Contratación' is stoplisted, but 'Central', 'Diputación' and 'Alicante' survive, so it is kept."
+          },
+          {
+            "fold": "perfil del contratante y servicio central de contratacion de la diputacion provinical de alicante",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del contratante y servicio Central de Contratación de la Diputación Provinical de Alicante"
+            ],
+            "why_real": "The same real unit as the previous entry, with the publisher's typo 'Provinical'. Role: specifications-provider (2).",
+            "suggested_keep_rule": "The same conjunction-opener extension. 'Diputación' and 'Alicante' survive the stoplist."
+          },
+          {
+            "fold": "perfil del contratante y servicio de asistencia a municipios de la diputacion provincial de alicante",
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "names": [
+              "Perfil del contratante y Servicio de Asistencia a Municipios de la Diputación Provincial de Alicante"
+            ],
+            "why_real": "The Servicio de Asistencia a Municipios of the Diputación Provincial de Alicante is a real unit of a real authority. It follows the phrase through 'y'. Role: specifications-provider (2).",
+            "suggested_keep_rule": "The same conjunction-opener extension. 'Servicio', 'Asistencia', 'Municipios', 'Diputación' and 'Alicante' survive the stoplist."
+          }
+        ],
+        "doubtful": [
+          {
+            "fold": "perfil del contratante o delegaciones territoriales de educacion direcciones detalladas en punto 28 3 de la caratula",
+            "note": "BORDERLINE DROP (placeholder, specifications-provider 2). 'Delegaciones Territoriales de Educación' is a real kind of authority (most likely the Junta de Andalucía's provincial education offices), but it is plural and does not say which one; the addresses are in point 28.3 of the cover sheet. The proposed perfil genitive/conjunction keep rule would keep it unless 'Delegaciones'/'Direcciones' join the stoplist. Little is at stake either way."
+          },
+          {
+            "fold": "perfil del contratante www madrid es",
+            "note": "BORDERLINE DROP (placeholder, specifications-provider 3). Only the URL points to the Ayuntamiento de Madrid; no organisation is named. It has no genitive opener and no capitalised word, so the proposed rule still drops it. The drop is acceptable, since the buyer is presumably present elsewhere on the notice."
+          },
+          {
+            "fold": "perfil del contratante de la web municipal puntos de contacto",
+            "note": "Correct drop: 'web municipal' names no body. The proposed rule still drops it because nothing in it is capitalised."
+          },
+          {
+            "fold": "perfil del contratante del organo de contratacion",
+            "note": "Correct drop: generic 'contracting body'. WARNING: names_something would read 'Órgano' as a name, so any genitive-opener keep rule MUST stoplist Órgano/Contratación or it will save this."
+          },
+          {
+            "fold": "perfil del contratante o jta de contratacion",
+            "note": "Correct drop: 'Junta de Contratación' with no owner. Any keep rule must stoplist Jta/Junta de Contratación ('Jta' is capitalised)."
+          },
+          {
+            "fold": "perfil del contratante www vitoria gasteiz org y en la fotocopisteria arco se obtendran los pliegos de condiciones los a",
+            "note": "Kept as award_summary: the whole sentence (pliegos at Fotocopistería Arco, annexes at the Departamento de Mantenimiento) is stored as an org name in specifications-provider. It is junk-shaped, but it does name a real copy shop. Not a loss."
+          },
+          {
+            "fold": "please see section vi 2 for full list of 27 economic operators",
+            "note": "Class 'name', so the fold KEEPS it as a WINNER org. Same for 'please see section vi 2 for full list of 20 economic operators', '... of economic operators', 'please see section vi 2 for details of the awarded companies' / '... suppliers', 'please see section vi 2 additional information for full list of successful contractors', 'please see section vi 3 for a full list of economic operators', 'please see section v1 2 additional informationqual' and 'please see section vi vi 3 additional information' (9 winner folds, 12 winner mentions). These are exactly the placeholder winners 511 targets: ' see section' is anchored at the start, and the leading 'please' defeats it. PLACEHOLDER_WHOLE only has 'please see below'."
+          },
+          {
+            "fold": "please see section vi 4 3 translink",
+            "note": "Correctly KEPT, and real: Translink, the Northern Ireland transport body, as review-body (3). CAUTION: if 'please' is ever allowed as a lead-in to ' see section', pointer_names would DROP this. After the 'VI.4.3' reference, 'Translink' follows with no separator, and the no-separator exception applies only when there is no reference. Such a widening needs a 'reference followed by a capitalised name' keep rule."
+          },
+          {
+            "fold": "please see section ii 1 5 for list of contracting authorities",
+            "note": "Junk the fold keeps, all pointers with a leading 'please', in purchasing-body/buyer/Tenderer/tender-receipt/further-information/review-body/appeal/spec slots: 'please see section 1 of the invitation to send requests to participate', 'please see section 6 additional information', 'please see section ii 1 2c of this advert', 'please see section ii 1 4', '... ii 1 4 short description', '... ii 1 4 short description for details on other bodies involved', '... ii 1 5 for details of the contracting authorities ...', '... ii 1 5 for full details', '... ii 1 5 short description of the contract or purchase s', '... ii 2 4 description of the procurement for details of other public bodies ...', '... ii 24 of original notice', '... ii 4', '... v1 3', '... vi 3 for a full list ofother contracting authorities', '... vi 3 of this advert', '... vi 4 2 above', '... vi 4 3 above'. Also 'public bodies see section vi 3' (a mid-string stem)."
+          },
+          {
+            "fold": "regulation 50 6 applies the contractors details are withheld",
+            "note": "Junk the fold keeps as a WINNER: the ' withheld' stem is anchored at the start and appears mid-string here. The same goes for 'regulation 50 6 applies to this tender and information identifying the contractor is withheld' and 'regulation 50 6 applies to this tender information concerning the contractors is withheld' (3 winner folds). A candidate whole/start entry would be 'regulation 50 6 applies'."
+          },
+          {
+            "fold": "security contract withheld",
+            "note": "Junk the fold keeps as a WINNER (2); 'security contract information withheld' is kept as Tenderer (1). ' withheld' is not at the start. Candidate start stem: 'security contract'."
+          },
+          {
+            "fold": "rv partner 4 keine angabe aus grunden des wettbewerbs",
+            "note": "Junk the fold keeps as a WINNER: withheld framework partner 4. Same for 'rv partner 5 ...'. 'keine angabe' is anchored at the start and the 'RV-Partner N' prefix defeats it. A candidate fix is a skippable 'RV-Partner N' designator, like the lot designator."
+          },
+          {
+            "fold": "s vergabestelle siehe oben",
+            "note": "Junk the fold keeps (appeal-information): 'S.' = siehe, i.e. 'see contracting office, see above'. 's o vi 3 1 und siehe oben i 1' (appeal-information) is junk too: 's o' is a whole value only, and ' siehe oben' is not at the start."
+          },
+          {
+            "fold": "s e q u a siehe oben zusatze texte",
+            "note": "Correctly KEPT and real: SEQUA (sequa gGmbH, a German development organisation) as winner, followed by a pointer. It is a name, not a loss."
+          }
+        ],
+        "read_count": 70,
+        "summary": "I read all 70 entries of non_exact_07.json: 23 placeholder, 5 award_summary and 42 name. None is classed blank.\n\nThe fold DROPS 23. Of these, 8 are real-party losses, all from the 'Perfil del contratante <genitive/conjunction> <authority>' family in the specifications-provider role, one mention each. They name FNMT-RCM, the Ayto de Soria, the Gobierno de Aragón, the Ministerio de Justicia, the Universidad de Valladolid, two units of the Diputación (Provincial) de Alicante (one of them published twice, the second time with a typo) and its Servicio de Asistencia a Municipios. Each falls to Placeholder because pointer_names keeps a perfil hit only when the rest opens with a separator (':', '(', dash). Here the owner follows 'del' / 'de la' / 'y', so the rest never opens with one. The mirror form is already KEPT through named_before_stem: entry 16 ('Plataforma de Contratación del Sector Público y Perfil de Contratante del Ayuntamiento de Águilas') and entry 15 (LIPASAM) are award_summary. So the asymmetry depends only on whether the authority comes before or after the stem.\n\nKeep rule: for the perfil del/de contratante stems only, let a leading genitive or conjunction (de, del, de la, de los, de las, y, o, e), optionally followed by 'página web (de la)', act as the step-3 separator. Then require names_something, with generic procurement words stoplisted (Órgano, Contratación, Contratante, Jta/Junta de Contratación, Mesa, Entidad, Plataforma, Estado, Sector, Público, Perfil, Web). This saves all 8. It still drops the junk 'de la web municipal (puntos de contacto)', 'del Órgano de contratación' (the stoplist is required: 'Órgano' is capitalised) and 'o Jta. de Contratación'. It also drops 'www.madrid.es', which has no opener and no capital. The borderline 'o Delegaciones Territoriales de Educación' would be kept unless stoplisted.\n\nThe other 13 drops ('See section …' pointers, including the winner 'see the thirty providers awarded') are correct.\n\nLoss severity is low: specifications-provider is a role nothing reads (decision §2), and the authority is usually the buyer anyway. Still, they are real organisations.\n\nThe fold KEEPS a lot of junk, much of it as WINNER orgs:\n- 9 'Please see section VI.2/VI.3 … economic operators / awarded suppliers' folds (12 winner mentions): the leading 'please' defeats the anchored ' see section'.\n- 3 'Regulation 50.6 applies … withheld'.\n- 'Security Contract. Withheld'.\n- 'RV-Partner 4/5 (Keine Angabe …)'.\n- About 18 non-winner 'please see section' pointers, plus 'Public Bodies see Section VI.3', 'S. Vergabestelle siehe oben' and 'S. o. VI.3.1) und siehe oben I.1)'.\n\nIf 'please' is ever added as a lead-in, 'Please see section VI.4.3 Translink' (a real review body, 3 mentions) would be dropped. pointer_names refuses a capitalised name that follows a reference without a separator, so that change needs its own keep rule.\n\nThese real names are correctly kept: Translink, Regierung von Oberbayern / Vergabekammer Südbayern, Rochdale MBC, Rotherham BC, Royal Mail Group Limited, SEQUA, the Aragón Secretaría General Técnica, E.P. SEAGA S.A. and LIPASAM.\n\nNo output file was written. Input: /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/reads/non_exact_07.json. Code checked: /home/user/tender-db/crates/ingest/src/partyname.rs (pointer_names, named_before_stem)."
+      },
+      {
+        "real_party_hits": [],
+        "doubtful": [
+          {
+            "fold": "see section vi 3 lot1b",
+            "note": "Junk that the fold keeps. 'See section VI.3 - Lot1B' (Tenderer) is classed award_summary, but its siblings 'See section VI.3 - Lot 1A / Lot 2 / Lot 3' (entries 25-27) are classed placeholder and dropped. The cause is the glued designator 'Lot1B': strip_references only strips a separate 'lot' word, so names_something sees the capitalised word 'Lot1B' and treats it as a name. Fix: treat a token shaped like ^lot\\d+[a-z]?$ (and lose/lote/lots) as a lot reference in strip_references and names_something."
+          },
+          {
+            "fold": "see sections ll 2 4 lot 2 and lot 3",
+            "note": "Junk that the fold keeps (winner, award_summary). It is a pointer with no name: 'sections' is plural and the numeral is written 'll' instead of 'II', so 'll.2.4' is not stripped as a section reference. The leftover 'Lot 2 and Lot 3' then reads as a name through the capitalised 'Lot' in names_something, or as several_lots in summary_shape. Fix: names_something should ignore LOT_DESIGNATORS words, and several_lots should need at least one word that is not a lot designator, number, conjunction or reference word."
+          },
+          {
+            "fold": "supplier name withheld for security reasons",
+            "note": "Junk that the fold keeps (Tenderer, classed name). The text is '\"Supplier name withheld for Security Reasons\"', which is exactly what Placeholder means. It escapes because the ' withheld' stem is anchored at the start of the name. Keep rule that catches it without catching 'Jan Kowalski – withheld': add a whole-phrase or lead-in rule for 'withheld for security reasons' when every word before 'withheld' comes from {the, supplier, supplier's, contractor, contractor's, name, of, economic, operator, successful, tenderer, has, been, is}."
+          },
+          {
+            "fold": "the contractor s name has been withheld for security reasons",
+            "note": "Junk winner the fold keeps (classed name). Same withheld-for-security-reasons family as above; the same lead-in rule would class it Placeholder."
+          },
+          {
+            "fold": "the name of the economic operator has been withheld for security reasons",
+            "note": "Junk winner the fold keeps (classed name). Same withheld family; the lead-in rule would catch it."
+          },
+          {
+            "fold": "the name of the successful tenderer has been withheld for security reasons",
+            "note": "Junk winner the fold keeps (classed name). Same withheld family; the lead-in rule would catch it."
+          },
+          {
+            "fold": "service from which information about the lodging of appeals may be obtained please see section vi 3 2",
+            "note": "Junk the fold keeps (appeal-information, classed name). It is a form field label followed by a pointer, with no body named. 'see section' is not at the start, so the Start-anchored stem misses it. Only harmless because no result reads that role."
+          },
+          {
+            "fold": "tender document available electronically see section vi 3 additional information",
+            "note": "Junk the fold keeps (specifications-provider). Instruction text plus a pointer, with no party. The same applies to entries 61-63: 'tender document available electronically see section vi 3 for details', 'tender document is available electronically ...' and 'tender documents available electronically ...'. A whole-phrase or lead-in rule for 'tender document(s) (is) available electronically' would drop all four safely."
+          },
+          {
+            "fold": "tender must be sent electronically to rib software see section vi 3",
+            "note": "Borderline, and kept (tender-receipt). It is mostly instruction text, but it does name a real vendor, RIB Software (an e-tendering platform), as the place tenders go. Keeping it is acceptable; dropping it would lose almost nothing."
+          }
+        ],
+        "read_count": 70,
+        "summary": "I read all 70 entries of non_exact_08.json. 43 are classed placeholder (none blank), 7 award_summary and 20 name. No real party is lost: every placeholder-classed entry is a bare section pointer or a 'siehe oben' cross-reference. Some point to a list of winners kept elsewhere, but that list is not in the name ('See Section VI.2 for list of providers on Lot 1', 'See Section VI Complementary Information for all framework members on Lots 1, 2 and 4'). Some carry only a lot label ('See section VI.3 - Lot 1A/2/3') or a contact reference ('Siehe oben genannten Kontaktstellen'). In 'siehe oben Ziff. VI.4.1Ort', 'Ort' is a leaked German field label (it means 'place'), not a name. None carries an organisation, review body, court or person after the pointer. The pointer keep rule catches the real parties correctly and keeps them as award_summary: 'see section Royal Courts of Justice', 'siehe oben: NEB Betriebsgesellschaft mbH', 'siehe oben (Vergabekammer Südbayern)', 'Siehe oben – VKS' and SIRASA. The councils and housing associations with a trailing '(see section VI.x)' are classed name and kept: Solihull, Southend PCT, Stockton, Suffolk, Swansea HA, Tameside, Ealing, Stadt Aurich. SEQUA gGmbH and the list of seven TSOs are also kept. Junk the fold keeps, listed as doubtful: (1) 'See section VI.3 - Lot1B' is award_summary only because 'Lot1B' is glued; its Lot 1A/2/3 siblings drop. (2) 'see sections ll.2.4 Lot 2 and Lot 3' is award_summary because 'Lot' reads as a name. (3) Four 'name ... withheld for security reasons' winner/Tenderer values miss the Start-anchored ' withheld' stem. (4) Form or instruction text such as 'Tender document(s) available electronically ... see section VI.3' (x4) and 'Service from which information about the lodging of appeals may be obtained ...'. Sources: /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/reads/non_exact_08.json and /home/user/tender-db/crates/ingest/src/partyname.rs (pointer_names, names_something, strip_references)."
+      },
+      {
+        "real_party_hits": [],
+        "doubtful": [
+          {
+            "fold": "ver perfil de contratante del hospital clinic de barcelona",
+            "note": "DROPPED (placeholder, role winner). It names a real body, but Hospital Clinic de Barcelona owns the buyer profile being pointed at. It is not the winner, and binding it as winner would be wrong, so the drop is correct and loses nothing. The keep rule refuses it correctly: no separator after the stem, and only the lead-in 'Ver' comes before it."
+          },
+          {
+            "fold": "the uk does not have any such body with responsibility for appeal procedures pleas see section vi 4 2",
+            "note": "KEPT junk (name, review-body). 'see section' sits mid-string, so the anchor refuses it. It says no review body exists, which is effectively Blank."
+          },
+          {
+            "fold": "the uk does not have any such body with responsibility for appeal procedures please see section v1 3 2",
+            "note": "KEPT junk (name, review-body). Same 'UK has no such body' text."
+          },
+          {
+            "fold": "uk does not have any such body with responsibility for appeals procedures see section vi 4 2",
+            "note": "KEPT junk (name, review-body). Same 'UK has no such body' text."
+          },
+          {
+            "fold": "this is not applicable in uk",
+            "note": "KEPT junk (name, review-body). 'not applicable' is mid-string, so the anchored Blank stem misses it."
+          },
+          {
+            "fold": "this is withheld for security reasons",
+            "note": "KEPT junk (name, Tenderer). It is a withheld supplier, but the 'This is' lead-in defeats the anchored ' withheld' stem."
+          },
+          {
+            "fold": "to the sensitive nature of this contract the supplier name will be withheld",
+            "note": "KEPT junk (name, winner). A withheld winner, with 'withheld' at the end, so the anchor misses it. A junk winner stays bound."
+          },
+          {
+            "fold": "unter berufung auf art 2 erfolgt keine angabe",
+            "note": "KEPT junk (name, winner). The decision's 'keine Angabe' withheld-winner wording behind a legal-citation lead-in. The anchor misses it and a junk winner stays bound."
+          },
+          {
+            "fold": "unter berufung auf art 24 abs 2 erfolgt hier keine angabe",
+            "note": "KEPT junk (name, winner). Same 'Unter Berufung auf ... keine Angabe' withheld winner."
+          },
+          {
+            "fold": "unter berufung auf vol a abschnitt 4 skr 12 abs 3 1 erfolgt hier keine angabe",
+            "note": "KEPT junk (name, winner). Same 'Unter Berufung auf ... keine Angabe' withheld winner."
+          },
+          {
+            "fold": "various contractors see section vi complementary information",
+            "note": "KEPT junk (name, Tenderer). 'various contractors' is a PLACEHOLDER_WHOLE entry, but the qualifier is not a lot qualifier and 'see section' is mid-string, so neither matches."
+          },
+          {
+            "fold": "various see section vi 2 of this award notice for more details",
+            "note": "KEPT junk (name, purchasing-body). 'Various' followed by a pointer, which neither the whole-value nor the anchored-stem test catches."
+          },
+          {
+            "fold": "voluntary notice see section vi 4 2",
+            "note": "KEPT junk (name, review-body). A notice-type label followed by a pointer."
+          },
+          {
+            "fold": "vergabestelle siehe oben",
+            "note": "KEPT, low-grade junk (name, appeal-information). A generic back-reference ('the contracting authority, see above'), not a named body. Unlike the other Vergabekammer ... siehe oben entries in this file, which are real review chambers and correctly kept."
+          },
+          {
+            "fold": "www ch colmar fr marches publics reference voir renseignements complementaires ci dessous",
+            "note": "KEPT, low-grade junk (name, specifications-provider x2). A URL plus a pointer, not an organisation name."
+          },
+          {
+            "fold": "varios adjudicadores segun lote ver perfil de contratante",
+            "note": "KEPT junk (award_summary, winner x2). named_before_stem reads the all-caps 'VARIOS ADJUDICADORES SEGUN LOTE' as naming something, because names_something counts any capitalised word of 2+ letters. It is a pure 'several winners, see profile' pointer."
+          },
+          {
+            "fold": "vease el perfil del contratante http www juntadeandalucia es contratacion de fecha 30 03 2015 ref 2015 0000002775",
+            "note": "KEPT junk (award_summary, winner). BOUNDARY_LEAD_INS are stripped only from the END of the text before the stem. The article 'el' blocks that strip, so 'Vease' counts as a capitalised name word."
+          },
+          {
+            "fold": "ver anexo contratos en el perfil del contratante",
+            "note": "KEPT junk (award_summary, winner). The text before the stem is 'Ver Anexo Contratos en el'. The sentence-initial 'Ver' is never stripped (only trailing lead-ins are), so 'Ver' and 'Anexo' satisfy names_something."
+          },
+          {
+            "fold": "ver anexo publicado en el perfil de contratante",
+            "note": "KEPT junk (award_summary, winner). Same 'Ver ... perfil' flaw: the leading 'Ver' alone satisfies names_something."
+          },
+          {
+            "fold": "ver anexo publicado en el perfil de contratante a excepcion de la empresa lopez y ocana s a que por resolucion de 25 de ",
+            "note": "KEPT (award_summary, winner x2), probably via company_token on 'S.A.'. It is a pointer, and the one company it names, Lopez y Ocana S.A., is the bidder whose award was declared lapsed. Kept as a winner party it binds the wrong company. Not a loss, but a wrong keep."
+          },
+          {
+            "fold": "ver anexo publicado en el perfil de contratante http www hospitalclinic org proveidors plataforma electronica de contrac",
+            "note": "KEPT junk (award_summary, winner). 'Ver ... perfil' flaw, URL pointer."
+          },
+          {
+            "fold": "ver anexo publicado en el perfil de contratante http www hospitalclinic org proveidors plataforma electronica de contrat",
+            "note": "KEPT junk (award_summary, winner). 'Ver ... perfil' flaw, URL pointer."
+          },
+          {
+            "fold": "ver apartado documentos del perfil de contratante forta",
+            "note": "KEPT junk (award_summary, review-body). FORTA is the buyer whose profile is meant, not a review body."
+          },
+          {
+            "fold": "ver apartado vi 2 y perfil del contratante",
+            "note": "KEPT junk (award_summary, winner). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver clausula 34 del pcap ver perfil del contratante del ayuntamiento de santa cruz de tenerife",
+            "note": "KEPT junk (award_summary, review-body). The Ayuntamiento owns the buyer profile and is not named as the review body. Stripping 'Ver' at the start would still leave the capitalised 'Clausula' counting as a name."
+          },
+          {
+            "fold": "ver detalle de los operadores economicos en el perfil del contratante",
+            "note": "KEPT junk (award_summary, winner). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver documentacion presentada en el perfil del contratante",
+            "note": "KEPT junk (award_summary, appeal-information). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver documentacion publicada en el perfil de contratante",
+            "note": "KEPT junk (award_summary, appeal-information x2). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver documentacion publicada en el perfil del contratante",
+            "note": "KEPT junk (award_summary, appeal-information). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver pliegos de clausulas administrativas particulares en el perfil del contratante http www juntadeandalucia es contrata",
+            "note": "KEPT junk (award_summary, review-body). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver pliegos descargar en perfil del contratante de la fundacion www ciuden es",
+            "note": "KEPT junk (award_summary, review-body). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver pliegos descargar en perfil del contratante www ciuden es",
+            "note": "KEPT junk (award_summary, review-body). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver pliegos descargar pliegos en el perfil del contratante de la fundacion www ciuden es",
+            "note": "KEPT junk (award_summary, review-body). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver pliegos descargar pliegos en perfil del contratante de la fundacion www ciuden es",
+            "note": "KEPT junk (award_summary, review-body x2). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver relacion de empresas homologadas en perfil del contratante de www madrid org y en apartado vi 2 informacion adiciona",
+            "note": "KEPT junk (award_summary, winner). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver resoluciones de adjudicacion de fecha 11 9 2013 publicadas en el perfil de contratante",
+            "note": "KEPT junk (award_summary, winner). 'Ver ... perfil' flaw."
+          },
+          {
+            "fold": "ver resoluciones de adjudicacion de fecha 6 9 2013 publicadas en el perfil de contratante",
+            "note": "KEPT junk (award_summary, winner). 'Ver ... perfil' flaw."
+          }
+        ],
+        "read_count": 70,
+        "summary": "I read all 70 entries of /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/reads/non_exact_09.json: 19 placeholder (dropped by the fold), 29 name (kept) and 22 award_summary (kept). No blank-class entries appear in this file.\n\n**Real-party losses: none.** Every one of the 19 dropped entries is a correct drop:\n- 4 'Ver informacion ... apartado VI(.3)' pointers.\n- 'Voir renseignements complementaires section VI'.\n- 9 'Withheld for/due to/on security ...' and 'Withheld from publication' winners.\n- 4 'Withheld (Section 94 / Section 108) supplier' and 'Withheld under PCR 2015 Reg. 50(6)' Tenderer rows.\n- 'Ver Perfil de Contratante del Hospital Clinic de Barcelona' (winner). This one names a real body, but the hospital owns the buyer profile and is not the winner. Keeping it would bind the buyer as winner, so dropping it loses no real party.\n\nThe real organisations in this file are all kept, as name class:\n- University of Plymouth\n- Hertfordshire County Council, after the 'award notcie' junk prefix\n- 7 Vergabekammer ... (siehe oben) review chambers\n- Vermeer Infrastructuur bv\n- Wesco\n- West Morisson Production\n- Westgate Oxford Alliance\n- Westlea / Sovereign Housing Association\n- Xantive Supplier Platform\n\n**The losses run the other way: the fold keeps junk.**\n\n1. **Name-class junk, mostly where the anchor refuses a stem that is not at the start.**\n   - 'This is withheld for security reasons' and 'to the sensitive nature ... supplier name will be withheld' are withheld suppliers behind a lead-in.\n   - 3 'Unter Berufung auf Art. ... erfolgt (hier) keine Angabe' winners are the decision's withheld-winner wording behind a legal citation. Junk winners stay bound.\n   - 'Various Contractors (See Section VI...)' and 'Various — see Section VI.2' are plural placeholders with a pointer that is not a lot qualifier.\n   - 4 'UK does not have any such body' / 'not applicable in UK' review bodies.\n   - 'Voluntary Notice: See section VI.4.2'.\n   - Lower grade: 'Vergabestelle (siehe oben)' and a www.ch-colmar.fr URL.\n\n2. **Award_summary junk: all 22 are Spanish 'perfil del/de contratante' pointers, not award summaries.**\n   - **Cause:** in partyname.rs, `named_before_stem` strips `BOUNDARY_LEAD_INS` only from the end of the text before the stem. A sentence-initial 'Ver' or 'Vease' followed by other words ('Ver anexo publicado en el ...', 'Vease el ...') stays in that text. `names_something` then counts any capitalised word of two or more letters ('Ver', 'Vease', 'Anexo', the all-caps 'VARIOS'), so the name is classed AwardSummary.\n   - **Worst case:** 'Ver anexo ... a excepcion de la empresa Lopez y Ocana, S.A. que ... se declara decaida su adjudicacion' is kept as a winner (x2). The only company it names is the one whose award lapsed.\n   - **Wrong-role keeps:** FORTA and the Ayuntamiento de Santa Cruz de Tenerife are kept as review bodies, but each is only the owner of the buyer profile.\n   - **A possible tightening, not applied:** treat a 'before' text that opens with a lead-in as a pointer sentence, and ignore pointer vocabulary (anexo, apartado, pliegos, clausula, documentacion) in `names_something` for boundary stems. This would move these to Placeholder without dropping real names. Entry 17 would still be kept through `company_token`.\n\nNone of this is data loss; it is junk the fold keeps."
+      },
+      {
+        "real_party_hits": [
+          {
+            "fold": "perfil del contratante de la empresa malaguena de transportes s a m",
+            "names": [
+              "Perfil del Contratante de la Empresa Malagueña de Transportes, S. A. M."
+            ],
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 2,
+            "why_real": "Org 12337654 is on the legal_form list. The text names EMT Málaga (Empresa Malagueña de Transportes, S.A.M.), Málaga's real municipal transport company, as the owner of the buyer profile. It sits in specifications-provider (3 rows) and tender-receipt (3 rows) slots. The fold classes it Placeholder and drops it, for three reasons: (1) pointer_names returns false because the text after the `perfil del contratante` stem opens with `de`, which is not a separator, and only `see section` may skip the separator; (2) named_before_stem finds nothing before the stem; (3) summary_shape does not read the spaced `S. A. M.` as a company form. Impact is low: §2 says no result, token or key reads these roles. By the letter of §8.2, though ('every legal_form org… Stop and add a keep test if any of them reads as a real party'), this triggers stop-and-add-a-keep-test. The other choice is for the owner to record that the drop is accepted, because the profile's owner is usually also the notice's buyer.",
+            "suggested_keep_rule": "In pointer_names, for the `perfil del/de contratante` stems only: when the rest opens with a genitive (`de`, `del`, `de la`, `de los`, `de las`) followed by a capitalised word of 2+ letters or a legal form, return AwardSummary. Alternatively, have company_token accept the spaced `S. A.` / `S. A. M.` / `S. L.` forms. Keep tests: this specimen and `Perfil del contratante del Ayuntamiento de San Fernando` -> AwardSummary. Negative tests: `Perfil del contratante de la web municipal (puntos de contacto)`, `Perfil del Contratante del Órgano de contratación`, `Ver perfil del contratante` and `Ver Perfil de Contratante del Hospital Clínic de Barcelona` in a winner slot stay Placeholder. Read the lowercase-owner case by hand: `del Órgano` is capitalised, so a capital-only test still keeps it."
+          },
+          {
+            "fold": "perfil del contratante de la delegacion territorial de educacion cultura y deporte en cadiz http contratacion chap junta andalucia es contratacion",
+            "names": [
+              "Perfil del contratante de la Delegación Territorial de Educación, Cultura y Deporte en Cádiz: http://contratacion.chap.junta-andalucia.es/contratacion"
+            ],
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 1,
+            "why_real": "Org 3677030 is on the long list. It names a real public body: the Junta de Andalucía's Delegación Territorial de Educación, Cultura y Deporte in Cádiz. It sits in a specifications-provider slot (2 rows) and is dropped as Placeholder through the same genitive gap in pointer_names. Low impact: no result, token or key reads this role.",
+            "suggested_keep_rule": "Same as above: a genitive owner after a `perfil` pointer names a body, so the class is AwardSummary."
+          },
+          {
+            "fold": "perfil de(l) contratante de/del <body> (pattern; these groups sit in the non_exact batches, listed for whoever reads them)",
+            "names": [
+              "Perfil de contratante del Gobierno de Aragón",
+              "Perfil de contratante de la página WEB de la Fábrica Nacional de Moneda y Timbre - Real Casa de la Moneda",
+              "Perfil del Contratante de la Comunidad Autonoma de la Región de Murcia",
+              "Perfil de Contratante de la Consejería de Hacienda de la CAM",
+              "Perfil del contratante del Ayuntamiento de San Fernando",
+              "Perfil de Contratante de la Universidad Complutense de Madrid",
+              "Perfil del contratante de la Agencia de Gestión Agraria y Pesquera de Andalucía",
+              "Perfil del contratante del Gobierno de Canarias",
+              "Perfil del contratante del Ministerio de Justicia",
+              "Perfil del Contratante de la Junta de Andalucía",
+              "Perfil de Contratante del Sescam",
+              "Perfil del contratante de Anfaco-Cecopesca"
+            ],
+            "classes": [
+              "placeholder"
+            ],
+            "mentions": 91,
+            "why_real": "From plan-2265 non_exact: 26 orgs and 91 mentions across about 23 fold groups. Each is a Placeholder that names a real public body or company as the owner of the buyer profile. Their rows are 178 specifications-provider, 16 further-information and 3 tender-receipt, with no winner, Tenderer or buyer rows. The two hits above are members of this pattern. All are dropped because the keep rule needs a separator after the pointer.",
+            "suggested_keep_rule": "One rule covers the whole pattern: the genitive-owner keep rule in pointer_names for the perfil stems. If the owner prefers to accept the drop, record that the role is not read by any result, token or key, and that the owner is usually the buyer itself."
+          }
+        ],
+        "doubtful": [
+          {
+            "fold": "keine angabe (org 23186509, DE, vat DE198511192, Tenderer 2 rows)",
+            "note": "UNRESOLVED. This is the item the decision put on the read list itself. The identifier passes the DE USt-IdNr checksum: ISO 7064 MOD 11,10 gives check digit 2, which matches. Two public web searches found no company for it. The census shows it is the only identifier-bearing org under the `keine angabe` key, with provisional 0. It may well be the withheld winner's own VAT. If so, the drop removes a real supplier: the eForms Tenderer party goes, the Bid stays, and no winner is bound. That is the runbook's STOP shape. The prod identity seek was denied by the session's permission system ([Production Reads]) and I did not retry it. Read this before the wet run: SELECT id, name, identifier FROM organizations WHERE country='DE' AND identifier_kind='vat' AND identifier='DE198511192' LIMIT 5, plus the two mentions' notices. Until then the STOP is not cleared."
+          },
+          {
+            "fold": "s o (org 22713056 's.o.', DE, identifier 0251411691, 46 mentions)",
+            "note": "NEW. This org is not in the decision's expected `identified` list (§8.2) and not in the census, whose `s.o` key found 5 orgs, none with an identifier. It is the largest identified placeholder after Section94. The identifier is a 0-led 10-digit number with Münster's area code 0251. The Vergabekammer Westfalen at Bezirksregierung Münster publishes +49 251 411-1691, so this is likely that review chamber's phone, mistyped with one '1' missing. idgate's phone_shaped needs a t/T prefix, so the bare number passed the gate. The census found `s.o.` (siehe oben) in review or mediation slots on 1,689 of its 1,716 rows. My lean: a mediation or review body saying 'see above' and carrying the chamber's phone as its id. That is not a supplier and has no result impact. Unverified: I could not read the role split or the identity. Read before the wet run: SELECT role, COUNT(*) FROM tender_version_parties WHERE organization_id = 22713056 GROUP BY role, and the identity seek on DE/national/0251411691. If any winner or Tenderer row shows up, that is a STOP."
+          },
+          {
+            "fold": "various (org 23424157, IE, national 10003, Tenderer 2 rows)",
+            "note": "Unresolved because the prod read was denied. Irish CRO numbers run up to 6 digits, so 10003 could be a real, very old company. But 'Various' stands for several suppliers by definition, and §4 of the decision reads 10003 as the placeholder's own number. Low stakes (2 rows). The identity seek IE/national/10003 would settle it."
+          },
+          {
+            "fold": "nie dotyczy na podstawie art 8 ust 4 pkt 1 ustawy pzp spadkobierca zastrzegl ze dane osobowe nie moga byc udostepniane (org 14514067, winner 1)",
+            "note": "No name is lost, but the class is wrong. The `nie dotyczy` stem makes it Blank, yet the text says the winner (an heir) withheld their personal data under art. 8(4)(1) Pzp. A winner exists, so this is Placeholder in meaning. As Blank, the result goes to the evidence rule (clos-nw, or NULL) instead of selec-w with no winner."
+          },
+          {
+            "fold": "not applicable the framework contract was not awarded as the offer submitted was not compliant ... (org 5646489, winner 1)",
+            "note": "Blank by the `not applicable` stem, but it means VoidLot. The evidence rule decides, so a block with a value would read selec-w. Minor, and no real name is involved."
+          },
+          {
+            "fold": "not applicable but proceedings may be started in the high court of england and wales ... (orgs 8356090, 8882188, 9008243, 9468987, 9629138, 10097321)",
+            "note": "Blank, about 8 mentions, review-body only. The text names the High Court of England and Wales as the venue, so a real body is mentioned, but the publisher's own answer is 'Not applicable' and nothing reads the role. I would accept the drop."
+          },
+          {
+            "fold": "nc (org 15906016 'NC+', BE, BE0464910706, 3 mentions)",
+            "note": "The fold strips '+', so `NC+`, possibly a real brand, collides with the `nc` (non communiqué) whole value. The BE enterprise number is checksum-valid (mod 97 gives 06). Guard 3 keeps it (echo false) wherever the mention carries the identifier. Only mentions without that identifier would drop. Low risk."
+          },
+          {
+            "fold": "ingen (scoped.unknown: 117 country-less 'INGEN' all-caps orgs, plus 'INGEN (lots 253 - 825 - 1077 - … - 1340)')",
+            "note": "The all-caps, lot-qualified form matches the French firm INGEN's multi-lot awards (census trap notice 4354963). Guard 2 keeps these only through the notice language (FRA, or unknown, means kept). Not a loss if original_lang is right. Worth a Verify-step check beside 1188404."
+          }
+        ],
+        "read_count": 786,
+        "summary": "I read every entry in all seven lists of lists.json: 786 entries (identified 9, identified_blank 12, legal_form 102, digit_only 42, long 76, scoped 525, top 20). I joined each legal_form and long entry to the class plan-2265's non_exact assigns it.\n\nMy one prod read was denied by the permission system ([Production Reads]) and I did not retry it. So I made 0 of the 15 allowed reads, and resolved identifiers from local evidence instead: census.json, the 452 GB national-org census (gb-orgs-2026-09-30.jsonl), the 357 cluster verdicts, idgate.rs, checksums, and two web searches.\n\n**Identified (9):**\n- Not real suppliers:\n  - 17660142, 17855508 and 17888810: the identifier is the space-free text of the placeholder itself.\n  - 22763666: 111222333 is a dummy. Issue 357's slice-4 verdict found it shared by 'TEST ORG 2', German boilerplate and 'eSendCorp'.\n  - 30914328 and 31548264: in the 2026-09-30 census of GB national orgs (58,938 rows), each Section94 PPON is held only by its 'Withheld' placeholder, so neither keys a real-named org.\n- Unresolved, so **the STOP is not cleared**:\n  - 23186509 'Keine Angabe': VAT DE198511192 is checksum-valid and could be the withheld winner's.\n  - 22713056 's.o.': 0251411691, 46 mentions. It is in neither the census nor the expected `identified` list. My lean is a review or mediation filler carrying the Vergabekammer Westfalen's phone as its id, but its roles were never read.\n  - 23424157 'Various': 10003, low stakes.\n  - Each of these three needs the identity seek, and 22713056 also a role split, before the wet run.\n\n**Identified_blank (12):** all are echo:false, so guard 3 keeps them. No loss.\n\n**Digit_only (42):** all zeros, none a real party. The one identifier-bearing org (23095417, CVR 38160540) is kept by guard 3.\n\n**Legal_form (102):**\n- 66 are `n.v.t.` orgs (689 mentions), listed only because has_commercial_form reads Dutch `N.V.` inside `n v t`. They are Blank, not companies.\n- The real company names (Gatwick Airport Ltd, GAS NATURAL / ENDESA S.A., Accor-Pannonia Zrt., Royal Mail Group, Vermeer Infrastructuur bv, Westgate Oxford, Byggeweb A/S, and the UK 'on behalf of' buyers) all come out as class `name`, which the fold keeps.\n- **Real party dropped:** 12337654 'Perfil del Contratante de la Empresa Malagueña de Transportes, S. A. M.', Placeholder, in specifications-provider and tender-receipt slots.\n\n**Long (76):** the one real body dropped is 3677030, the Junta de Andalucía's Delegación Territorial in Cádiz, behind a `perfil del contratante de` pointer. The rest are true placeholders (withheld 'Keine Angabe', 'siehe oben Abschnitt', 'Not applicable, but … High Court') or are kept as `name`.\n\n**The pattern behind both real hits:** the pointer keep rule needs a separator after `perfil del/de contratante`, so a genitive owner ('… de la Junta de Andalucía') is dropped. In non_exact this covers 26 orgs and 91 mentions naming real public bodies, all in specifications-provider, further-information or tender-receipt slots. No winner, Tenderer or buyer rows are affected, so the impact is low. By §8.2's letter it is still stop-and-add-a-keep-test, unless the owner records that the drop is accepted.\n\n**Not losses, but worth knowing:** two class errors (14514067, a withheld heir classed Blank; 5646489, a void lot classed Blank), and some junk the fold keeps, for example 'As per Regulation 50(6)(a) — information withheld…' and 'The name(s) of the winning tenderer(s) are being withheld…'.\n\nI wrote no files.\n\nSources: [TED notice 584604-2023, Vergabekammer Westfalen contact](https://ted.europa.eu/en/notice/584604-2023/pdf), [lookuptax DE USt-IdNr format](https://lookuptax.com/validate/germany/ustidnr)."
+      }
+    ],
+    "gap": "**Verdict: PROCEED. The ~310-org shortfall comes from comparing two different metrics. It does not show a regression.**\n\nThe floor of 6,475 (stop at 6,450) counted the 522 census orgs on the scoped words `ingen`, `inget` and `nd` as Blank. The plan's `by_class` reads names with no language, so it puts every scoped word in `name` (the docstring at supervisor.rs `placeholder_plan` says so). The fold still drops these per notice language. Compared on the same basis, the plan catches 185 more drop-class orgs than the decision expected.\n\n**What the 312-org gap is made of (6,450 − 6,138)**\n\n| item | orgs |\n|---|---:|\n| Scoped words shown as `name` instead of Blank | +522 |\n| Drop-class orgs the plan finds beyond the decision's figures | −185 |\n| Tolerance between 6,475 and the 6,450 stop line | −25 |\n| **Gap** | **312** |\n\n**The floor, rebuilt on the plan's own basis**\n\nThe floor without the scoped words is 6,475 − 522 = 5,953 (stop line 5,928). The plan has 6,138. That 185 surplus splits by component:\n\n| component | decision expected | plan 2265 | difference |\n|---|---:|---:|---:|\n| Census folds, not scoped and not punctuation/zeros | 4,515 | 4,577 | +62 |\n| Punctuation/zeros names (fold `''` 65 in the census, plus 23 not probed) | 88 | 133 | +45 |\n| Names starting with one of the 8 stems the decision measured | 1,350 | 1,345 | −5 |\n| 510's stems on names outside the census (not counted in the floor) | 0 | 80 | +80 |\n| Other Blank names | 0 | 3 | +3 |\n| **Total** | **5,953** | **6,138** | **+185** |\n\n- **Census folds (+62):** spellings the census did not probe, on folds it already had. Examples: `s o` +7 orgs / +789 mentions, `n a` +7, `siehe oben` +5, `nie dotyczy` +5, `entfallt` +5, `x` +4, `keine` +3.\n- **Punctuation/zeros (+45):** fold `''` has 124 orgs, plus `00`/`000`/`0000` with 9.\n- **Stem prefixes (−5):** 1,345 dropped plus 17 kept as award summaries makes 1,362, exactly the review's count of prefix names. The −5 is five deliberate keeps beyond the decision's 12, all junk:\n  - `See Section V1.3 Additional information`\n  - `see section VI.3.2.below`\n  - `See section VI.3 - Lot1B`\n  - the lettered `Keine Angabe gemäß § 27a … VOL`\n  - `Niet van toepassing (… perceel 1 en perceel 2 …)`\n- **510's stems (+80):** `Perfil del/de contratante <body>` 43, `Ver información adicional` 31, `Voir renseignements complémentaires` 6.\n- **Other Blank (+3):** two `Not applicable … see section VI.x` and one `perceel 4: niet van toepassing`.\n\n**Census keys, one by one**\n\nAll 165 admitted census folds are caught (every census fold except the four deferred words), each with the decision's class:\n- Blank: 3,408 orgs in the census, 3,502 in the plan.\n- Placeholder: exactly the decision's 1,172 in the census, 1,199 in the plan.\n\n| what happened | census folds / orgs | deliberate? |\n|---|---|---|\n| Moved to `name` | Only the scoped words: `ingen` 518, `inget` 1, `nd` 4 | Yes (guard 2) |\n| Moved to `award_summary` | 1 org, 4644701 `See section VI.3 (Additional Information)` | Yes: the decision lists it as accepted junk |\n| Not caught | 8 orgs / 60 mentions: `nil` 3, `vari` 2, `ei` 2, `sin` 1 | Yes: deferred, never admitted, not in the floor |\n\nThe scoped words then go three ways at the fold:\n- **Dropped (in scope), 8 orgs / 535 mentions:** the decision expected 7 / 534.\n- **Kept (out of scope), 4 orgs / 144 mentions:** 1188404 `Ingen` FR, 14319858 `ND` HR, and `InGen` ×2. This is exactly the decision's set.\n- **Decided by notice language (no country), 513 orgs / 514 mentions:** the decision expected about 511.\n\n**What sits in `name` and `award_summary`**\n\nNone of the orgs below were in the floor, so they do not affect the gap.\n- **`name`, 1,670 orgs:**\n  - 525 scoped (the 523 above plus `Ingen (lot 241)` and `INGEN (lots …)`).\n  - 1,127 hits in the middle of a name, which the anchor refuses as designed. Most are junk:\n    - `Please see section VI.4.2` and similar: 759 orgs / 1,017 mentions\n    - `For details of the awarded supplier(s), please see section VI.2`: 110 / 147\n    - `withheld` mid-name: 56 / 268, including `Information withheld for security reasons` with 89 mentions (82 Tenderer rows, 35 winner rows)\n    - `… erfolgt hier keine Angabe`: 22 / 89\n\n    Real bodies are correctly kept, e.g. `Vergabekammer des Landes Berlin (siehe oben)`, `Landgericht Köln (siehe oben …)`, `Krajowa Izba Odwoławcza (nie dotyczy …)`.\n  - 16 long names with `(SEE SECTION VI.4)` inside, such as PCT LIFT consortia and councils (real bodies, kept).\n  - 2 kept because only a bare lot qualifier counts: `néant (lot annulé)` and `aucun (lot supprimé)`.\n- **`award_summary`, 202 orgs:**\n  - 179 from the boundary-stem rule that keeps a name written before `perfil del/de contratante`. These names were never measured, so they were never in the floor.\n  - 17 from the pointer keep rule and `summary_shape`: 7 real bodies (Royal Courts of Justice, Vergabekammer Südbayern, WSA Toenning, VKS, NEB mbH, UVS ×2) and 10 junk.\n  - The remaining 6 are other `perfil`/summary keeps.\n\n**Effect of the 13 review fixes on the floor's own population**\n\nAbout 5 orgs, the prefix −5 above. Their large keeps (179 `perfil` and the mid-name refusals) fall on hits the floor never counted. The language fix acts only at the fold, so it does not change `by_class`.\n\n**Mentions**\n\nThe drop classes hold 39,368 mentions against the ~37,000 stop. With all scoped words dropped it would be up to 40,417.\n\n**Floor restated**\n- Compare `by_class` Blank + Placeholder against 5,928. It passes with 6,138.\n- Or add the in-scope and no-country scoped orgs back: 6,138 + 8 + 513 = 6,659, against 6,450.\n- Either way, take off the 11 non-scoped `identified_blank` orgs that guard 3 keeps (all `echo: false`).\n\n**Possible losses I noticed in the extra drops (none of these is a gap regression)**\n\n1. **43 `Perfil del/de contratante de <body>` orgs dropped as Placeholder.** Examples: `… de la Universidad Complutense de Madrid`, `… del Gobierno de Canarias`, `… de la Región de Murcia`. Most of their rows are specifications-provider (206), plus further-information 16, tender-receipt 3, winner 2, appeal-information 2. With no separator the keep rule does not fire, and the decision never measured this shape. They are on the `non_exact` read list.\n2. **6 Blank review-slot orgs that name a real court:** `Not applicable, but proceedings may be started in the High Court of England…`, 8 mentions. Blank stems have no pointer keep rule.\n3. **22713056 `s.o.` DE, identifier `0251411691`, 46 mentions.** It is in the plan's `identified` list but not in the decision's expected list, and the identifier looks like a Münster phone number. The §8.1 stop-rule read applies. Separately, the `s o` fold grew by +7 orgs / +789 mentions (1168870 `s. o.` alone has 441). As an exact lexicon entry it is not on the `non_exact` read list.\n4. **15906016 `NC+` BE with VAT BE0464910706:** guard 3 keeps it (`echo: false`). Only its mentions without the identifier will be retired.\n\n**Possible follow-up (not a blocker):** treating `please` and `for details of …` as words allowed before `see section` would also drop about 870 junk pointer orgs (about 1,160 mentions).\n\nFiles used:\n- /home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json\n- /home/user/tender-db/.scratch/tender-db/511-placeholders/census.json\n- /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md\n- /home/user/tender-db/.scratch/tender-db/511-placeholders/u2-build/workflow-wf_b728b394.json\n- partyname.rs and supervisor.rs as of 10cb829\n\nMy working scripts and per-fold rows are in /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/a/ (`recon.py`, `rows.json`, `newdrops.txt`)."
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Read"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Gap"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "read:non_exact_00",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "a4cca1082298632d3",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791764269749,
+      "queuedAt": 1791764269716,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read all 70 entries of non_exact_00.json. 42 are classed …",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791764507095,
+      "tokens": 99816,
+      "toolCalls": 16,
+      "durationMs": 237345,
+      "resultPreview": "{\"real_party_hits\":[{\"fold\":\"perfil de contratante del gobierno de aragon\",\"classes\":[\"placeholder\"],\"names\":[\"Perfil de contratante del Gobierno de Aragón\"],\"mentions\":15,\"why_real\":\"The name is the 'perfil de contratante' phrase followed by a real authority, the Gobierno de Aragón, in the specifications-provider slot (32 role rows, 1 org). I traced it through not_a_name_in: the stem ' perfil de …"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "read:non_exact_01",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "a19f18563e4171f92",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791764269749,
+      "queuedAt": 1791764269717,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read all 70 entries in non_exact_01.json. The fold would …",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791764508327,
+      "tokens": 112880,
+      "toolCalls": 14,
+      "durationMs": 233577,
+      "resultPreview": "{\"read_count\":70,\"real_party_hits\":[{\"fold\":\"perfil del contratante de la pagina web de la fabrica nacional de moneda y timbre real casa de la moneda\",\"classes\":[\"placeholder\"],\"mentions\":9,\"names\":[\"Perfil del contratante de la página WEB de la Fábrica Nacional de Moneda y Timbre - Real Casa de la Moneda\"],\"why_real\":\"A real authority, the FNMT-RCM (Spanish Royal Mint), follows the 'perfil del co…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "read:non_exact_02",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "a29da45fefa72759c",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791764508950,
+      "queuedAt": 1791764269717,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read all 70 entries of non_exact_02.json. 23 of them are …",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791764673226,
+      "tokens": 106002,
+      "toolCalls": 11,
+      "durationMs": 164275,
+      "resultPreview": "{\"read_count\":70,\"real_party_hits\":[{\"fold\":\"perfil de contratante de la universidad complutense de madrid\",\"classes\":[\"placeholder\"],\"mentions\":3,\"names\":[\"Perfil de Contratante de la Universidad Complutense de Madrid\"],\"why_real\":\"Universidad Complutense de Madrid is a real public university and contracting authority. It is named here in the specifications-provider role (6 role rows, 1 org). 'Pe…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 4,
+      "label": "read:non_exact_03",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "aa59484735e9ecc8a",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791764510097,
+      "queuedAt": 1791764269717,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read all 70 entries of /home/user/tender-db/.scratch/tend…",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791764741125,
+      "tokens": 128434,
+      "toolCalls": 14,
+      "durationMs": 229321,
+      "resultPreview": "{\"real_party_hits\":[{\"fold\":\"perfil del contratante de la agencia de gestion agraria y pesquera de andalucia\",\"classes\":[\"placeholder\"],\"mentions\":2,\"names\":[\"Perfil del contratante de la Agencia de Gestión Agraria y Pesquera de Andalucía\"],\"why_real\":\"The name is AGAPA (Agencia de Gestión Agraria y Pesquera de Andalucía), a real public agency of the Junta de Andalucía. It sits in the specificatio…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 5,
+      "label": "read:non_exact_04",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "a942d8159cff6908b",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791764674971,
+      "queuedAt": 1791764269717,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read all 70 entries of /home/user/tender-db/.scratch/tend…",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791764757192,
+      "tokens": 73839,
+      "toolCalls": 5,
+      "durationMs": 82220,
+      "resultPreview": "{\"real_party_hits\":[],\"doubtful\":[{\"fold\":\"the name s of the winning tenderer s are being withheld for security reasons however these will be made available to the\",\"note\":\"Kept as a winner (class name, 2 orgs, 2 mentions) but it is a withheld-winner sentence with no organisation in it. The ' withheld' stem is StemAt::Start, so it misses 'withheld' in the middle of a sentence. This should be Place…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 6,
+      "label": "read:non_exact_05",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "a9ecdabe365a0c43a",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791764742897,
+      "queuedAt": 1791764269717,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read all 70 entries of /home/user/tender-db/.scratch/tend…",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791764911105,
+      "tokens": 110142,
+      "toolCalls": 13,
+      "durationMs": 168207,
+      "resultPreview": "{\"real_party_hits\":[],\"doubtful\":[{\"fold\":\"er anexo publicado en el perfil de contratante www hospitalclinic org proveidors plataforma electronica de contractacion\",\"note\":\"Dropped (placeholder, winner, org 10451421), and that is correct. The winner sits in an annex. hospitalclinic.org is the buyer's site and 'Plataforma Electrònica de Contractació Pública de la Generalitat de Catalunya' is the e-…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 7,
+      "label": "read:non_exact_06",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "a1b928aca1e3ae6ae",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791764759019,
+      "queuedAt": 1791764269718,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read all 70 entries in /home/user/tender-db/.scratch/tend…",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791764969595,
+      "tokens": 98288,
+      "toolCalls": 14,
+      "durationMs": 210575,
+      "resultPreview": "{\"read_count\":70,\"real_party_hits\":[{\"fold\":\"perfil de contratante del sescam\",\"classes\":[\"placeholder\"],\"mentions\":1,\"names\":[\"Perfil de Contratante del Sescam\"],\"why_real\":\"After the phrase comes SESCAM (Servicio de Salud de Castilla-La Mancha), a real regional health authority. It is the documents source (specifications-provider x2). The name means 'SESCAM's buyer profile'. pointer_names return…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 8,
+      "label": "read:non_exact_07",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "a128b491e02aa9c08",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791764912864,
+      "queuedAt": 1791764269718,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read all 70 entries of non_exact_07.json: 23 placeholder,…",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791765070145,
+      "tokens": 91831,
+      "toolCalls": 9,
+      "durationMs": 157280,
+      "resultPreview": "{\"real_party_hits\":[{\"fold\":\"perfil del contratante de la pagina web de la fnmt rcm www fnmt es\",\"classes\":[\"placeholder\"],\"mentions\":1,\"names\":[\"Perfil del contratante de la página web de la FNMT-RCM (www.fnmt.es)\"],\"why_real\":\"FNMT-RCM (Fábrica Nacional de Moneda y Timbre - Real Casa de la Moneda) is a real Spanish state body and is named after the perfil phrase. pointer_names refuses it because…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 9,
+      "label": "read:non_exact_08",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "abf4444c8303dfe0c",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791764971425,
+      "queuedAt": 1791764269718,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read all 70 entries of non_exact_08.json. 43 are classed …",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791765059610,
+      "tokens": 75817,
+      "toolCalls": 7,
+      "durationMs": 88184,
+      "resultPreview": "{\"real_party_hits\":[],\"doubtful\":[{\"fold\":\"see section vi 3 lot1b\",\"note\":\"Junk that the fold keeps. 'See section VI.3 - Lot1B' (Tenderer) is classed award_summary, but its siblings 'See section VI.3 - Lot 1A / Lot 2 / Lot 3' (entries 25-27) are classed placeholder and dropped. The cause is the glued designator 'Lot1B': strip_references only strips a separate 'lot' word, so names_something sees th…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 10,
+      "label": "read:non_exact_09",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "aba987f0ab234a8fb",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791765061257,
+      "queuedAt": 1791764269718,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read all 70 entries of /home/user/tender-db/.scratch/tend…",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791765199885,
+      "tokens": 91989,
+      "toolCalls": 8,
+      "durationMs": 138628,
+      "resultPreview": "{\"real_party_hits\":[],\"doubtful\":[{\"fold\":\"ver perfil de contratante del hospital clinic de barcelona\",\"note\":\"DROPPED (placeholder, role winner). It names a real body, but Hospital Clinic de Barcelona owns the buyer profile being pointed at. It is not the winner, and binding it as winner would be wrong, so the drop is correct and loses nothing. The keep rule refuses it correctly: no separator aft…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 11,
+      "label": "read:lists",
+      "phaseIndex": 1,
+      "phaseTitle": "Read",
+      "agentId": "ab8e8b9328b31be02",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791765071833,
+      "queuedAt": 1791764269718,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "I read every entry in all seven lists of lists.json: 786 en…",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791765602269,
+      "tokens": 193513,
+      "toolCalls": 45,
+      "durationMs": 530436,
+      "resultPreview": "{\"real_party_hits\":[{\"fold\":\"perfil del contratante de la empresa malaguena de transportes s a m\",\"names\":[\"Perfil del Contratante de la Empresa Malagueña de Transportes, S. A. M.\"],\"classes\":[\"placeholder\"],\"mentions\":2,\"why_real\":\"Org 12337654 is on the legal_form list. The text names EMT Málaga (Empresa Malagueña de Transportes, S.A.M.), Málaga's real municipal transport company, as the owner o…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 12,
+      "label": "gap",
+      "phaseIndex": 2,
+      "phaseTitle": "Gap",
+      "agentId": "acbce525d0edb5d0e",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791765604166,
+      "queuedAt": 1791765604161,
+      "attempt": 1,
+      "lastToolName": "Bash",
+      "lastToolSummary": "cd /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b…",
+      "promptPreview": "Issue 511 (decision /home/user/tender-db/.scratch/tender-db/511-placeholders/unit1-decision.md; code crates/ingest/src/partyname.rs not_a_name_in / mentions_placeholder and\ncrates/ingest/src/project.rs dropped_party_sections, deployed 10cb829). The dry run refold-placeholder-names job 2265 stored its plan\n(/home/user/tender-db/.scratch/tender-db/511-placeholders/u3/plan-2265.json). The fold DROPS …",
+      "promptFramed": true,
+      "lastProgressAt": 1791766196263,
+      "tokens": 221031,
+      "toolCalls": 35,
+      "durationMs": 592097,
+      "resultPreview": "**Verdict: PROCEED. The ~310-org shortfall comes from comparing two different metrics. It does not show a regression.**\n\nThe floor of 6,475 (stop at 6,450) counted the 522 census orgs on the scoped words `ingen`, `inget` and `nd` as Blank. The plan's `by_class` reads names with no language, so it puts every scoped word in `name` (the docstring at supervisor.rs `placeholder_plan` says so). The fold…"
+    }
+  ],
+  "totalTokens": 1403582,
+  "totalToolCalls": 191
+}
