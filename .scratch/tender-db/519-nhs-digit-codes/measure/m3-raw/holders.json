@@ -1,0 +1,618 @@
+[
+{
+"org_id": 31613615,
+"code": "01A",
+"identifier": "GBNHS01A",
+"name": "Lancashire & South Cumbria Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 3
+},
+{
+"org_id": 31604393,
+"code": "01H",
+"identifier": "GBNHS01H",
+"name": "NHS North East and North Cumbria Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 31612258,
+"code": "02E",
+"identifier": "GBNHS02E",
+"name": "NHS Cheshire and Merseyside ICB",
+"kind": "sub-icb",
+"mentions_u1": 2
+},
+{
+"org_id": 31570761,
+"code": "02Y",
+"identifier": "GBNHS02Y",
+"name": "NHS Humber and North Yorkshire Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 31591587,
+"code": "03K",
+"identifier": "GBNHS03K",
+"name": "NHS Humber and North Yorkshire ICB",
+"kind": "sub-icb",
+"mentions_u1": 12
+},
+{
+"org_id": 31593407,
+"code": "03N",
+"identifier": "GBNHS03N",
+"name": "NHS South Yorkshire Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 8
+},
+{
+"org_id": 30915681,
+"code": "03Q",
+"identifier": "GBNHS03Q",
+"name": "NHS England North East and Yorkshire",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 31541083,
+"code": "03R",
+"identifier": "GBNHS03R",
+"name": "West Yorkshire Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 5
+},
+{
+"org_id": 31602970,
+"code": "03W",
+"identifier": "GBNHS03W",
+"name": "NHS Leicester, Leicestershire and Rutland Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 5
+},
+{
+"org_id": 31649328,
+"code": "04Y",
+"identifier": "GBNHS04Y",
+"name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 31539308,
+"code": "05D",
+"identifier": "GBNHS05D",
+"name": "NHS Staffordshire and Stoke-on-Trent Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 6
+},
+{
+"org_id": 31625518,
+"code": "05V",
+"identifier": "GBNHS05V",
+"name": "NHS Staffordshire and Stoke-on-Trent Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 31537455,
+"code": "06H",
+"identifier": "GBNHS06H",
+"name": "Cambridgeshire & Peterborough Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 10
+},
+{
+"org_id": 31616626,
+"code": "06K",
+"identifier": "GBNHS06K",
+"name": "NHS Hertfordshire and West Essex Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 31631584,
+"code": "06N",
+"identifier": "GBNHS06N",
+"name": "Hertfordshire and West Essex Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 31625011,
+"code": "06Q",
+"identifier": "GBNHS06Q",
+"name": "NHS Mid & South Essex Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 2
+},
+{
+"org_id": 31566140,
+"code": "10Q",
+"identifier": "GBNHS10Q",
+"name": "NHS Buckinghamshire, Oxfordshire and Berkshire West ICB",
+"kind": "sub-icb",
+"mentions_u1": 8
+},
+{
+"org_id": 31575718,
+"code": "11J",
+"identifier": "GBNHS11J",
+"name": "NHS Dorset Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 3
+},
+{
+"org_id": 30916970,
+"code": "11X",
+"identifier": "GBNHS11X",
+"name": "NHS Somerset Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 30
+},
+{
+"org_id": 31600907,
+"code": "13T",
+"identifier": "GBNHS13T",
+"name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+"kind": "sub-icb",
+"mentions_u1": 504
+},
+{
+"org_id": 31604394,
+"code": "14J",
+"identifier": "GBNHS14J",
+"name": "NHS Greater Manchester Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 2
+},
+{
+"org_id": 31620331,
+"code": "14N",
+"identifier": "GBNHS14N",
+"name": "NHS England Yorkshire & Humber",
+"kind": "sub-icb",
+"mentions_u1": 2
+},
+{
+"org_id": 31534640,
+"code": "15A",
+"identifier": "GBNHS15A",
+"name": "NHS Thames Valley Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 23
+},
+{
+"org_id": 31566597,
+"code": "15C",
+"identifier": "GBNHS15C",
+"name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 31
+},
+{
+"org_id": 31546689,
+"code": "15E",
+"identifier": "GBNHS15E",
+"name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+"kind": "sub-icb",
+"mentions_u1": 46
+},
+{
+"org_id": 31612327,
+"code": "15F",
+"identifier": "GBNHS15F",
+"name": "NHS West Yorkshire Integrated Care Board (Leeds Place)",
+"kind": "sub-icb",
+"mentions_u1": 3
+},
+{
+"org_id": 31606796,
+"code": "15M",
+"identifier": "GBNHS15M",
+"name": "NHS Derby and Derbyshire Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 2
+},
+{
+"org_id": 31555903,
+"code": "15N",
+"identifier": "GBNHS15N",
+"name": "NHS Devon Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 31
+},
+{
+"org_id": 31614680,
+"code": "16C",
+"identifier": "GBNHS16C",
+"name": "NHS North East and North Cumbria Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 8
+},
+{
+"org_id": 31575075,
+"code": "18C",
+"identifier": "GBNHS18C",
+"name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 30915273,
+"code": "26A",
+"identifier": "GBNHS26A",
+"name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+"kind": "sub-icb",
+"mentions_u1": 115
+},
+{
+"org_id": 31605500,
+"code": "27D",
+"identifier": "GBNHS27D",
+"name": "NHS Cheshire and Merseyside ICB",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 31587867,
+"code": "36J",
+"identifier": "GBNHS36J",
+"name": "NHS West Yorkshire Integrated Care Board (ICB)",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 31543312,
+"code": "36L",
+"identifier": "GBNHS36L",
+"name": "NHS SOUTH WEST LONDON INTEGRATED CARE BOARD",
+"kind": "sub-icb",
+"mentions_u1": 33
+},
+{
+"org_id": 31619860,
+"code": "42D",
+"identifier": "GBNHS42D",
+"name": "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+"kind": "sub-icb",
+"mentions_u1": 2
+},
+{
+"org_id": 31614401,
+"code": "70F",
+"identifier": "GBNHS70F",
+"name": "NHS Sussex ICB",
+"kind": "sub-icb",
+"mentions_u1": 3
+},
+{
+"org_id": 30926709,
+"code": "72Q",
+"identifier": "GBNHS72Q",
+"name": "NHS South East London Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 47
+},
+{
+"org_id": 31606157,
+"code": "78H",
+"identifier": "GBNHS78H",
+"name": "NHS Northamptonshire ICB",
+"kind": "sub-icb",
+"mentions_u1": 2
+},
+{
+"org_id": 31634553,
+"code": "84H",
+"identifier": "GBNHS84H",
+"name": "NHS North East and North Cumbria Integrated Care Boards",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 31537488,
+"code": "91Q",
+"identifier": "GBNHS91Q",
+"name": "NHS KENT AND MEDWAY INTEGRATED CARE BOARD",
+"kind": "sub-icb",
+"mentions_u1": 41
+},
+{
+"org_id": 31608314,
+"code": "92A",
+"identifier": "GBNHS92A",
+"name": "NHS Surrey Heartlands ICB",
+"kind": "sub-icb",
+"mentions_u1": 1
+},
+{
+"org_id": 30913840,
+"code": "92G",
+"identifier": "GBNHS92G",
+"name": "NHS Bath and North East Somerset, Swindon and Wiltshire Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 80
+},
+{
+"org_id": 31570826,
+"code": "93C",
+"identifier": "GBNHS93C",
+"name": "NHS North Central London Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 23
+},
+{
+"org_id": 31614001,
+"code": "99C",
+"identifier": "GBNHS99C",
+"name": "North East and North Cumbria Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 6
+},
+{
+"org_id": 31595370,
+"code": "A2X8Q",
+"identifier": "GBNHSA2X8Q",
+"name": "Kingston Hospital NHS Foundation Trust",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 30915550,
+"code": "A3A8R",
+"identifier": "GBNHSA3A8R",
+"name": "NHS North East London Integrated Care Board (NEL ICB)",
+"kind": "sub-icb",
+"mentions_u1": 25
+},
+{
+"org_id": 30917969,
+"code": "B2M3M",
+"identifier": "GBNHSB2M3M",
+"name": "NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD",
+"kind": "sub-icb",
+"mentions_u1": 600
+},
+{
+"org_id": 31560996,
+"code": "B4Z5Z",
+"identifier": "GBNHSB4Z5Z",
+"name": "The Royal Marsden Hospital",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31545773,
+"code": "D2P2L",
+"identifier": "GBNHSD2P2L",
+"name": "NHS BLACK COUNTRY INTEGRATED CARE BOARD",
+"kind": "sub-icb",
+"mentions_u1": 16
+},
+{
+"org_id": 31535814,
+"code": "D4U1Y",
+"identifier": "GBNHSD4U1Y",
+"name": "NHS Frimley ICB",
+"kind": "sub-icb",
+"mentions_u1": 65
+},
+{
+"org_id": 31597942,
+"code": "D9Y0V",
+"identifier": "GBNHSD9Y0V",
+"name": "NHS HAMPSHIRE AND THE ISLE OF WIGHT INTEGRATED CARE BOARD",
+"kind": "sub-icb",
+"mentions_u1": 10
+},
+{
+"org_id": 31592285,
+"code": "M1J4Y",
+"identifier": "GBNHSM1J4Y",
+"name": "NHS Bedfordshire, Luton and Milton Keynes Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 11
+},
+{
+"org_id": 30915758,
+"code": "M2L0M",
+"identifier": "GBNHSM2L0M",
+"name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 4
+},
+{
+"org_id": 31566644,
+"code": "P9T5R",
+"identifier": "GBNHSP9T5R",
+"name": "Koala North West Ltd",
+"kind": "site",
+"mentions_u1": 2
+},
+{
+"org_id": 31593405,
+"code": "Q3C0R",
+"identifier": "GBNHSQ3C0R",
+"name": "Whipps Cross Hospital",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31537284,
+"code": "Q7N9Z",
+"identifier": "GBNHSQ7N9Z",
+"name": "NHS Cheshire and Wirral Partnership NHS FT",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31593406,
+"code": "R1HKH",
+"identifier": "GBNHSR1HKH",
+"name": "Whipps Cross Hospital",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31624083,
+"code": "RBT20",
+"identifier": "GBNHSRBT20",
+"name": "Mid Cheshire Hospitals NHS Foundation Trust",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 30967595,
+"code": "RCU51",
+"identifier": "GBNHSRCU51",
+"name": "Sheffield Children's NHS Foundation Trust",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31551062,
+"code": "RCX70",
+"identifier": "GBNHSRCX70",
+"name": "The Queen Elizabeth Hospital King's Lynn NHS  Foundation Trust",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 30929423,
+"code": "RGQ67",
+"identifier": "GBNHSRGQ67",
+"name": "Suffolk Orthodontic Practice",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31601206,
+"code": "RH8C3",
+"identifier": "GBNHSRH8C3",
+"name": "NHS DEVON ICB",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31565729,
+"code": "RH8H6",
+"identifier": "GBNHSRH8H6",
+"name": "St Thomas Health Centre",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31593486,
+"code": "RJ128",
+"identifier": "GBNHSRJ128",
+"name": "Kings College Hospital NHS Foundation Trust",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31618666,
+"code": "RJ759",
+"identifier": "GBNHSRJ759",
+"name": "Tudor Lodge Health Centre",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31624084,
+"code": "RJN71",
+"identifier": "GBNHSRJN71",
+"name": "East Cheshire NHS Trust",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31618308,
+"code": "RNZ91",
+"identifier": "GBNHSRNZ91",
+"name": "Salisbury Medical Practice",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31569057,
+"code": "RP401",
+"identifier": "GBNHSRP401",
+"name": "(A&T) Great Ormond Street Hospital for Children NHS Foundation Trust",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31603332,
+"code": "RTK01",
+"identifier": "GBNHSRTK01",
+"name": "Ashford And St Peter's Hospitals Nhs Trust",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31620988,
+"code": "RTR54",
+"identifier": "GBNHSRTR54",
+"name": "North East and North Cumbria Integrated Care Board",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31592221,
+"code": "RW5NC",
+"identifier": "GBNHSRW5NC",
+"name": "NHS England North West Health & Justice Team",
+"kind": "site",
+"mentions_u1": 11
+},
+{
+"org_id": 31577282,
+"code": "RX301",
+"identifier": "GBNHSRX301",
+"name": "Tees, Esk & Wear Valleys NHS Foundation Trust",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31544428,
+"code": "RXX1Y",
+"identifier": "GBNHSRXX1Y",
+"name": "Mind Matters",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31567042,
+"code": "RY4HQ",
+"identifier": "GBNHSRY4HQ",
+"name": "Hertfordshire Community Trust (HCT)",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31603978,
+"code": "RYY13",
+"identifier": "GBNHSRYY13",
+"name": "Kent Community Health NHS Foundation Trust",
+"kind": "site",
+"mentions_u1": 1
+},
+{
+"org_id": 31567224,
+"code": "W2U3Z",
+"identifier": "GBNHSW2U3Z",
+"name": "NHS North West London Integrated Care Board",
+"kind": "sub-icb",
+"mentions_u1": 3
+},
+{
+"org_id": 31612702,
+"code": "X7V4Q",
+"identifier": "GBNHSX7V4Q",
+"name": "NHS North East & North Cumbria Integrated Care Board",
+"kind": "site",
+"mentions_u1": 1
+}
+]

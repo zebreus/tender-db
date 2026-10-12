@@ -1,0 +1,263 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/084031-2025?limit=100&updatedTo=2026-10-12T11:48:39",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2025-12-17T16:22:33Z",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "id": "084031-2025",
+            "tag": [
+                "award",
+                "contract"
+            ],
+            "date": "2025-12-17T16:22:33Z",
+            "initiationType": "tender",
+            "ocid": "ocds-h6vhtk-059920",
+            "parties": [
+                {
+                    "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD",
+                    "id": "GB-NHS-QHM",
+                    "identifier": {
+                        "scheme": "GB-NHS",
+                        "id": "QHM"
+                    },
+                    "additionalIdentifiers": [
+                        {
+                            "scheme": "GB-PPON",
+                            "id": "PMYZ-6944-BYLH"
+                        }
+                    ],
+                    "address": {
+                        "streetAddress": "PEMBERTON HOUSE COLIMA AVENUE SUNDERLAND ENTERPRISE PARK",
+                        "locality": "Sunderland",
+                        "postalCode": "SR5 3XB",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKC23"
+                    },
+                    "contactPoint": {
+                        "email": "necsu.neprocurement@nhs.net"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthorityCentralGovernment",
+                                "description": "Public authority - central government"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT",
+                    "id": "GB-NHS-0AR",
+                    "identifier": {
+                        "scheme": "GB-NHS",
+                        "id": "0AR"
+                    },
+                    "additionalIdentifiers": [
+                        {
+                            "scheme": "GB-PPON",
+                            "id": "PJGL-8154-MTZX"
+                        }
+                    ],
+                    "address": {
+                        "streetAddress": "John Snow House",
+                        "locality": "Durham",
+                        "postalCode": "DH1 3YG",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKC14"
+                    },
+                    "contactPoint": {
+                        "email": "necsu.neprocurement@nhs.net"
+                    },
+                    "roles": [
+                        "procuringEntity",
+                        "processContactPoint"
+                    ],
+                    "roleDetails": "Commissioning Support Unit (NHS)"
+                },
+                {
+                    "name": "REFERRAL MANAGEMENT SERVICES LIMITED",
+                    "id": "GB-COH-11362661",
+                    "identifier": {
+                        "scheme": "GB-COH",
+                        "id": "11362661"
+                    },
+                    "additionalIdentifiers": [
+                        {
+                            "scheme": "GB-PPON",
+                            "id": "PRWY-2562-JYRT"
+                        }
+                    ],
+                    "address": {
+                        "streetAddress": "61a King Street",
+                        "locality": "Knutsford",
+                        "postalCode": "WA16 6DX",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKD62"
+                    },
+                    "contactPoint": {
+                        "email": "cto@dental-referrals.org"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "url": "https://referral.solutions/",
+                        "scale": "sme",
+                        "vcse": false
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-NHS-QHM",
+                "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD"
+            },
+            "tender": {
+                "id": "NHSE1065",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Dental Electronic Referral Management System Services (DeRMS)",
+                "description": "Dental Electronic Referral Management System Service for the North East of England",
+                "status": "complete",
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Open procedure",
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "complete"
+                    }
+                ]
+            },
+            "bids": {
+                "statistics": [
+                    {
+                        "id": "1",
+                        "measure": "bids",
+                        "value": 5,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "2",
+                        "measure": "finalStageBids",
+                        "value": 5,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "3",
+                        "measure": "smeFinalStageBids",
+                        "value": 5,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "4",
+                        "measure": "vcseFinalStageBids",
+                        "value": 0,
+                        "relatedLot": "1"
+                    }
+                ]
+            },
+            "awards": [
+                {
+                    "id": "1",
+                    "title": "Dental Electronic Referral Management System Service for the North East of England",
+                    "status": "active",
+                    "date": "2025-11-28T00:00:00Z",
+                    "value": {
+                        "amountGross": 2964500,
+                        "amount": 2954500,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "services",
+                    "aboveThreshold": false,
+                    "suppliers": [
+                        {
+                            "id": "GB-COH-11362661",
+                            "name": "REFERRAL MANAGEMENT SERVICES LIMITED"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "1",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "85130000",
+                                    "description": "Dental practice and related services"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UKC",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "1"
+                        }
+                    ],
+                    "contractPeriod": {
+                        "startDate": "2026-07-01T00:00:00+01:00",
+                        "endDate": "2031-06-30T23:59:59+01:00",
+                        "maxExtentDate": "2033-06-30T23:59:59+01:00"
+                    },
+                    "hasRenewal": true,
+                    "renewal": {
+                        "description": "Contract is for a period of 5 years with the optional extension of 2 years"
+                    },
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "documents": [
+                        {
+                            "id": "084031-2025",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK6",
+                            "description": "Contract award notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/084031-2025",
+                            "datePublished": "2025-12-17T16:22:33Z",
+                            "format": "text/html"
+                        }
+                    ],
+                    "assessmentSummariesDateSent": "2025-12-17T00:00:00Z",
+                    "milestones": [
+                        {
+                            "id": "1",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2025-12-31T23:59:59Z",
+                            "status": "scheduled"
+                        }
+                    ]
+                }
+            ],
+            "language": "en"
+        }
+    ]
+}

@@ -1,0 +1,211 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/036651-2024?limit=100&updatedTo=2026-10-12T11:48:37",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2024-11-12T18:05:32Z",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "ocid": "ocds-h6vhtk-047af5",
+            "id": "036651-2024",
+            "date": "2024-11-12T18:05:32Z",
+            "tag": [
+                "award",
+                "contract"
+            ],
+            "initiationType": "tender",
+            "tender": {
+                "id": "C234500",
+                "legalBasis": {
+                    "id": "32014L0024",
+                    "scheme": "CELEX"
+                },
+                "title": "Corporate IT Support Services - Humber and North Yorkshire ICB",
+                "status": "complete",
+                "classification": {
+                    "scheme": "CPV",
+                    "id": "72610000",
+                    "description": "Computer support services"
+                },
+                "mainProcurementCategory": "services",
+                "description": "NHS Humber and North Yorkshire Integrated Care Board (hereafter the Contracting Authority) is seeking to commission Corporate IT Support Services through an open procurement process. The preferred Bidder will be required to demonstrate that they can provide and deliver a quality focussed and resilient service model which operates in a sustainable, innovative and flexible way, ensuring service user satisfaction throughout.\nThe service will be required to:\n• Ensure that any transfer and transition of services is effectively managed to ensure a continuation of the existing level of service provision and to prevent de-stabilising the delivery of corporate services;\n• Ensure that Services are supported on a 24/7 basis as appropriate to requirement;\n• Ensure that all systems, and associated infrastructure, are securely operated and maintained;\n• Ensure a proactive support service is available, supporting a clinically essential service, with robust incident management processes;\n• Propose innovative and cost-effective strategies to address service improvement and sustainability and /or create financial efficiencies; and\n• Fully understand all local and national requirements and work closely with the ICB to help them plan better; to discharge their statutory duties; and exploit technology and systems in support of the challenging NHS transformation agenda.",
+                "lots": [
+                    {
+                        "id": "1",
+                        "description": "NHS Humber and North Yorkshire Integrated Care Board (hereafter the Contracting Authority) is seeking to commission Corporate IT Support Services through an open procurement process. The preferred Bidder will be required to demonstrate that they can provide and deliver a quality focussed and resilient service model which operates in a sustainable, innovative and flexible way, ensuring service user satisfaction throughout.\nThe service will be required to:\n• Ensure that any transfer and transition of services is effectively managed to ensure a continuation of the existing level of service provision and to prevent de-stabilising the delivery of corporate services;\n• Ensure that Services are supported on a 24/7 basis as appropriate to requirement;\n• Ensure that all systems, and associated infrastructure, are securely operated and maintained;\n• Ensure a proactive support service is available, supporting a clinically essential service, with robust incident management processes;\n• Propose innovative and cost-effective strategies to address service improvement and sustainability and /or create financial efficiencies; and\n• Fully understand all local and national requirements and work closely with the ICB to help them plan better; to discharge their statutory duties; and exploit technology and systems in support of the challenging NHS transformation agenda.",
+                        "awardCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "price"
+                                }
+                            ]
+                        },
+                        "hasOptions": true,
+                        "options": {
+                            "description": "Contract period is 60 months with the option to extend by 24 months. The estimated value (II.2.6) value excluding VAT - is based on a total period of 84 months, should the option to extend be exercised."
+                        },
+                        "status": "cancelled"
+                    }
+                ],
+                "items": [
+                    {
+                        "id": "1",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "72600000",
+                                "description": "Computer support and consultancy services"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKE1"
+                            },
+                            {
+                                "region": "UKE2"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Open procedure",
+                "coveredBy": [
+                    "GPA"
+                ]
+            },
+            "awards": [
+                {
+                    "id": "036651-2024-1",
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "status": "active",
+                    "suppliers": [
+                        {
+                            "id": "GB-NHS-0AR",
+                            "name": "NHS North of England Commissioning Support Unit (hosted by NHS England)"
+                        }
+                    ]
+                }
+            ],
+            "parties": [
+                {
+                    "name": "NHS HUMBER & NORTH YORKSHIRE ICB",
+                    "id": "GB-NHS-QOQ",
+                    "identifier": {
+                        "legalName": "NHS HUMBER & NORTH YORKSHIRE ICB",
+                        "id": "QOQ",
+                        "scheme": "GB-NHS"
+                    },
+                    "address": {
+                        "streetAddress": "Health House,Grange Park Lane",
+                        "locality": "WILLERBY",
+                        "region": "UKE",
+                        "postalCode": "HU106DT",
+                        "countryName": "United Kingdom"
+                    },
+                    "contactPoint": {
+                        "email": "hnyicb.procurement@nhs.net"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "https://humberandnorthyorkshire.icb.nhs.uk/",
+                        "classifications": [
+                            {
+                                "scheme": "TED_CA_TYPE",
+                                "id": "BODY_PUBLIC",
+                                "description": "Body governed by public law"
+                            },
+                            {
+                                "scheme": "COFOG",
+                                "id": "07",
+                                "description": "Health"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "NHS North of England Commissioning Support Unit (hosted by NHS England)",
+                    "id": "GB-NHS-0AR",
+                    "identifier": {
+                        "legalName": "NHS North of England Commissioning Support Unit (hosted by NHS England)",
+                        "id": "0AR",
+                        "scheme": "GB-NHS"
+                    },
+                    "address": {
+                        "locality": "Durham",
+                        "region": "UKC1",
+                        "countryName": "United Kingdom"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "scale": "large"
+                    }
+                },
+                {
+                    "name": "NHS England",
+                    "id": "GB-FTS-7114",
+                    "identifier": {
+                        "legalName": "NHS England"
+                    },
+                    "address": {
+                        "locality": "London",
+                        "countryName": "United Kingdom"
+                    },
+                    "roles": [
+                        "reviewBody"
+                    ]
+                }
+            ],
+            "buyer": {
+                "id": "GB-NHS-QOQ",
+                "name": "NHS HUMBER & NORTH YORKSHIRE ICB"
+            },
+            "contracts": [
+                {
+                    "id": "036651-2024-1",
+                    "awardID": "036651-2024-1",
+                    "status": "active",
+                    "value": {
+                        "amount": 2881683,
+                        "currency": "GBP"
+                    },
+                    "dateSigned": "2024-10-08T00:00:00+01:00"
+                }
+            ],
+            "bids": {
+                "statistics": [
+                    {
+                        "id": "2",
+                        "measure": "bids",
+                        "relatedLot": "1",
+                        "value": 3
+                    }
+                ]
+            },
+            "language": "en"
+        }
+    ]
+}

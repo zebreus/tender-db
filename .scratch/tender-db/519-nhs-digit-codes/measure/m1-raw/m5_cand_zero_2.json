@@ -1,0 +1,1 @@
+{"columns": ["organization_id", "notice_id", "section_id", "name", "country", "raw_identifier"], "row_count": 0, "rows": [], "truncated": false, "_sql": "SELECT organization_id, notice_id, section_id, name, country, raw_identifier FROM organization_mentions WHERE organization_id IN (31537048, 31606105, 31549058, 31606610) AND raw_identifier LIKE 'GB-NHS-00%' LIMIT 500"}

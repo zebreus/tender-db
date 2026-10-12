@@ -1,0 +1,14 @@
+344 RO98 codes
+50 fetched
+  curl 35 for 04E (attempt 1): curl: (35) Recv failure: Connection reset by peer
+100 fetched
+150 fetched
+  curl 35 for 09Y (attempt 1): curl: (35) Recv failure: Connection reset by peer
+  curl 35 for 13H (attempt 1): curl: (35) Recv failure: Connection reset by peer
+200 fetched
+  curl 35 for 99K (attempt 1): curl: (35) Recv failure: Connection reset by peer
+250 fetched
+  curl 35 for B1G9X (attempt 1): curl: (35) Recv failure: Connection reset by peer
+  curl 35 for D7Z1O (attempt 1): curl: (35) Recv failure: Connection reset by peer
+done: fetched 293, seeded 51
+EXIT=0

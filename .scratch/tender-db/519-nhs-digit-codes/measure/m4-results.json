@@ -1,0 +1,2333 @@
+{
+ "total_mentions": 1880,
+ "uncoded": 1,
+ "last12": 419,
+ "after_end": 14,
+ "after_end_last12": 13,
+ "months": {
+  "2025-10": {
+   "A1m": 41,
+   "all": 52,
+   "A2": 10,
+   "A1": 1,
+   "notices": 50
+  },
+  "2025-11": {
+   "A1m": 18,
+   "all": 33,
+   "A2": 5,
+   "A1": 9,
+   "B": 1,
+   "notices": 32
+  },
+  "2025-12": {
+   "A1m": 5,
+   "all": 12,
+   "A2": 6,
+   "A1": 1,
+   "notices": 12
+  },
+  "2026-01": {
+   "A1m": 5,
+   "all": 7,
+   "A2": 1,
+   "B": 1,
+   "notices": 7
+  },
+  "2026-02": {
+   "A2": 29,
+   "all": 37,
+   "A1m": 3,
+   "A1": 5,
+   "notices": 37
+  },
+  "2026-03": {
+   "A1m": 38,
+   "all": 71,
+   "A2": 10,
+   "A1": 17,
+   "B": 4,
+   "A3": 1,
+   "rest": 1,
+   "notices": 69
+  },
+  "2026-04": {
+   "A2": 6,
+   "all": 24,
+   "A1m": 6,
+   "A1": 11,
+   "A3": 1,
+   "notices": 24
+  },
+  "2026-05": {
+   "A2": 10,
+   "all": 134,
+   "A1": 123,
+   "A1m": 1,
+   "notices": 130
+  },
+  "2026-06": {
+   "A2": 5,
+   "all": 16,
+   "rest": 3,
+   "A1": 6,
+   "A3": 1,
+   "B": 1,
+   "notices": 15
+  },
+  "2026-07": {
+   "A2": 5,
+   "all": 7,
+   "rest": 1,
+   "A1m": 1,
+   "notices": 7
+  },
+  "2026-08": {
+   "A2": 7,
+   "all": 13,
+   "rest": 5,
+   "A1": 1,
+   "notices": 13
+  },
+  "2026-09": {
+   "A2": 3,
+   "all": 13,
+   "B": 2,
+   "rest": 8,
+   "notices": 13
+  },
+  "2026-10": {
+   "A2": 1,
+   "all": 8,
+   "rest": 6,
+   "A1": 1,
+   "notices": 8
+  }
+ },
+ "years": {
+  "2022-A": 24,
+  "2022-B": 2,
+  "2023-A": 69,
+  "2023-B": 7,
+  "2024-A": 1004,
+  "2024-B": 7,
+  "2025-A": 425,
+  "2025-B": 12,
+  "2026-A": 322,
+  "2026-B": 8
+ },
+ "children": {
+  "01A": {
+   "cls": "A3",
+   "parent": {
+    "parent": "QE1",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QE1",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 3,
+   "notices": 3,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-10-21",
+   "last": "2023-12-28",
+   "months": {}
+  },
+  "01H": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QHM",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QHM",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-07-26",
+   "last": "2024-07-26",
+   "months": {}
+  },
+  "02E": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QYG",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QYG",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 2,
+   "notices": 2,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-10-20",
+   "last": "2023-10-20",
+   "months": {}
+  },
+  "02Y": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QOQ",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QOQ",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2026-04-14",
+   "last": "2026-04-14",
+   "months": {
+    "2026-04": 1
+   }
+  },
+  "03K": {
+   "cls": "rest",
+   "parent": {
+    "parent": "QOQ",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QOQ",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 12,
+   "notices": 12,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-10-24",
+   "last": "2025-02-11",
+   "months": {}
+  },
+  "03N": {
+   "cls": "A3",
+   "parent": {
+    "parent": "QF7",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QF7",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 8,
+   "notices": 8,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-10-24",
+   "last": "2025-02-11",
+   "months": {}
+  },
+  "03Q": {
+   "cls": "rest",
+   "parent": {
+    "parent": "QOQ",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QOQ",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2025-06-11",
+   "last": "2025-06-11",
+   "months": {}
+  },
+  "03R": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QWO",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QWO",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 5,
+   "notices": 5,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-10-24",
+   "last": "2025-08-15",
+   "months": {}
+  },
+  "03W": {
+   "cls": "A3",
+   "parent": {
+    "parent": "QK1",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QK1",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 5,
+   "notices": 5,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-04-03",
+   "last": "2024-06-20",
+   "months": {}
+  },
+  "04Y": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QNC",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QNC",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2026-06-03",
+   "last": "2026-06-03",
+   "months": {
+    "2026-06": 1
+   }
+  },
+  "05D": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QNC",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QNC",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 6,
+   "notices": 6,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-07-05",
+   "last": "2025-09-17",
+   "months": {}
+  },
+  "05V": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QNC",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QNC",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-07-31",
+   "last": "2023-07-31",
+   "months": {}
+  },
+  "06H": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QUE",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": "2026-03-31",
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QUE",
+      "2020-04-01",
+      "2026-03-31"
+     ],
+     [
+      "S1Y5D",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 10,
+   "notices": 10,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-10-28",
+   "last": "2025-10-10",
+   "months": {
+    "2025-10": 1
+   }
+  },
+  "06K": {
+   "cls": "A3",
+   "parent": {
+    "parent": "QM7",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": null,
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QM7",
+      "2020-04-01",
+      "2026-03-31"
+     ],
+     [
+      "S1Y5D",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-03-01",
+   "last": "2024-03-01",
+   "months": {}
+  },
+  "06N": {
+   "cls": "A3",
+   "parent": {
+    "parent": "QM7",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": null,
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QM7",
+      "2020-04-01",
+      "2026-03-31"
+     ],
+     [
+      "S1Y5D",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-08-26",
+   "last": "2022-08-26",
+   "months": {}
+  },
+  "06Q": {
+   "cls": "A3",
+   "parent": {
+    "parent": "QH8",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": null,
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QH8",
+      "2020-04-01",
+      "2026-03-31"
+     ],
+     [
+      "D7T5G",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 2,
+   "notices": 2,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-07-12",
+   "last": "2023-10-27",
+   "months": {}
+  },
+  "10Q": {
+   "cls": "A3",
+   "parent": {
+    "parent": "QU9",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": null,
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QU9",
+      "2020-04-01",
+      "2026-03-31"
+     ],
+     [
+      "S0E4D",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 8,
+   "notices": 8,
+   "last12": 3,
+   "after_end": 2,
+   "after_end_last12": 2,
+   "after_end_names": [
+    [
+     "NHS Buckinghamshire, Oxfordshire and Berkshire West ICB",
+     1
+    ],
+    [
+     "NHS Thames Valley ICB",
+     1
+    ]
+   ],
+   "first": "2023-05-12",
+   "last": "2026-06-18",
+   "months": {
+    "2026-03": 1,
+    "2026-04": 1,
+    "2026-06": 1
+   }
+  },
+  "11J": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QVV",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QVV",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 3,
+   "notices": 3,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-06-01",
+   "last": "2026-06-02",
+   "months": {
+    "2026-06": 1
+   }
+  },
+  "11X": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QSL",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QSL",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 30,
+   "notices": 30,
+   "last12": 8,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-01-06",
+   "last": "2026-09-17",
+   "months": {
+    "2025-10": 1,
+    "2025-11": 1,
+    "2026-02": 1,
+    "2026-04": 1,
+    "2026-06": 2,
+    "2026-08": 1,
+    "2026-09": 1
+   }
+  },
+  "13T": {
+   "cls": "A1m",
+   "parent": {
+    "parent": "QHM",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QHM",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 504,
+   "notices": 504,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-12-21",
+   "last": "2024-12-02",
+   "months": {}
+  },
+  "14J": {
+   "cls": "rest",
+   "parent": {
+    "parent": null,
+    "how": "none",
+    "end": null,
+    "rel_end": null,
+    "legal_end": null,
+    "dated": []
+   },
+   "n": 2,
+   "notices": 2,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-10-11",
+   "last": "2024-07-26",
+   "months": {}
+  },
+  "14N": {
+   "cls": "rest",
+   "parent": {
+    "parent": null,
+    "how": "none",
+    "end": null,
+    "rel_end": null,
+    "legal_end": null,
+    "dated": []
+   },
+   "n": 2,
+   "notices": 2,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-09-21",
+   "last": "2023-01-25",
+   "months": {}
+  },
+  "15A": {
+   "cls": "rest",
+   "parent": {
+    "parent": "S0E4D",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QU9",
+      "2020-04-01",
+      "2026-03-31"
+     ],
+     [
+      "S0E4D",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 23,
+   "notices": 23,
+   "last12": 17,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-12-13",
+   "last": "2026-10-06",
+   "months": {
+    "2026-06": 3,
+    "2026-07": 1,
+    "2026-08": 5,
+    "2026-09": 8,
+    "2026-10": 5
+   }
+  },
+  "15C": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QUY",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QUY",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 31,
+   "notices": 31,
+   "last12": 19,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-09-30",
+   "last": "2026-06-15",
+   "months": {
+    "2026-03": 11,
+    "2026-04": 7,
+    "2026-06": 1
+   }
+  },
+  "15E": {
+   "cls": "A1m",
+   "parent": {
+    "parent": "QHL",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QHL",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 46,
+   "notices": 44,
+   "last12": 39,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-02-02",
+   "last": "2026-05-26",
+   "months": {
+    "2025-10": 38,
+    "2026-05": 1
+   }
+  },
+  "15F": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QWO",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QWO",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 3,
+   "notices": 3,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-02-06",
+   "last": "2023-10-24",
+   "months": {}
+  },
+  "15M": {
+   "cls": "A3",
+   "parent": {
+    "parent": "QJ2",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QJ2",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 2,
+   "notices": 2,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-09-26",
+   "last": "2024-10-23",
+   "months": {}
+  },
+  "15N": {
+   "cls": "A1m",
+   "parent": {
+    "parent": "QJK",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QJK",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 31,
+   "notices": 31,
+   "last12": 6,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-08-09",
+   "last": "2026-07-21",
+   "months": {
+    "2025-12": 1,
+    "2026-03": 1,
+    "2026-04": 3,
+    "2026-07": 1
+   }
+  },
+  "16C": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QHM",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QHM",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 8,
+   "notices": 8,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-09-23",
+   "last": "2024-07-11",
+   "months": {}
+  },
+  "18C": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QGH",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QGH",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2026-05-26",
+   "last": "2026-05-26",
+   "months": {
+    "2026-05": 1
+   }
+  },
+  "26A": {
+   "cls": "A1m",
+   "parent": {
+    "parent": "QMM",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": "2026-03-31",
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QMM",
+      "2019-10-23",
+      "2026-03-31"
+     ],
+     [
+      "T6Y0W",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 115,
+   "notices": 115,
+   "last12": 72,
+   "after_end": 2,
+   "after_end_last12": 2,
+   "after_end_names": [
+    [
+     "NHS Norfolk and Waveney Integrated Care Board",
+     1
+    ],
+    [
+     "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     1
+    ]
+   ],
+   "first": "2024-10-07",
+   "last": "2026-04-20",
+   "months": {
+    "2025-10": 3,
+    "2025-11": 18,
+    "2025-12": 4,
+    "2026-01": 5,
+    "2026-02": 3,
+    "2026-03": 37,
+    "2026-04": 2
+   }
+  },
+  "27D": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QYG",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QYG",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-08-22",
+   "last": "2024-08-22",
+   "months": {}
+  },
+  "36J": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QWO",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QWO",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2026-08-03",
+   "last": "2026-08-03",
+   "months": {
+    "2026-08": 1
+   }
+  },
+  "36L": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QWE",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QWE",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 33,
+   "notices": 33,
+   "last12": 28,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-10-17",
+   "last": "2026-06-04",
+   "months": {
+    "2025-10": 4,
+    "2025-12": 4,
+    "2026-02": 9,
+    "2026-03": 9,
+    "2026-04": 1,
+    "2026-06": 1
+   }
+  },
+  "42D": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QOQ",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QOQ",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 2,
+   "notices": 2,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-01-09",
+   "last": "2023-05-10",
+   "months": {}
+  },
+  "70F": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QNX",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": "2026-03-31",
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QNX",
+      "2019-10-23",
+      "2026-03-31"
+     ],
+     [
+      "S9B9J",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 3,
+   "notices": 3,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-03-17",
+   "last": "2023-12-19",
+   "months": {}
+  },
+  "72Q": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QKK",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QKK",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 47,
+   "notices": 47,
+   "last12": 13,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-10-17",
+   "last": "2026-10-01",
+   "months": {
+    "2025-10": 1,
+    "2025-11": 1,
+    "2025-12": 2,
+    "2026-01": 1,
+    "2026-02": 2,
+    "2026-05": 1,
+    "2026-08": 3,
+    "2026-09": 2,
+    "2026-10": 1
+   }
+  },
+  "78H": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QPM",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QPM",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 2,
+   "notices": 2,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-09-10",
+   "last": "2024-09-10",
+   "months": {}
+  },
+  "84H": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QHM",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QHM",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-12-30",
+   "last": "2022-12-30",
+   "months": {}
+  },
+  "91Q": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QKS",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QKS",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 41,
+   "notices": 41,
+   "last12": 19,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-03-29",
+   "last": "2026-05-07",
+   "months": {
+    "2025-10": 1,
+    "2026-02": 12,
+    "2026-04": 2,
+    "2026-05": 4
+   }
+  },
+  "92A": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QXU",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": "2026-03-31",
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QXU",
+      "2019-10-23",
+      "2026-03-31"
+     ],
+     [
+      "S9B9J",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-10-31",
+   "last": "2024-10-31",
+   "months": {}
+  },
+  "92G": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QOX",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QOX",
+      "2019-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 80,
+   "notices": 80,
+   "last12": 18,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-02-14",
+   "last": "2026-08-24",
+   "months": {
+    "2026-02": 4,
+    "2026-04": 2,
+    "2026-05": 4,
+    "2026-06": 1,
+    "2026-07": 4,
+    "2026-08": 3
+   }
+  },
+  "93C": {
+   "cls": "A1m",
+   "parent": {
+    "parent": "QMJ",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": "2026-03-31",
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QMJ",
+      "2019-10-23",
+      "2026-03-31"
+     ],
+     [
+      "Z9B2Z",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 23,
+   "notices": 23,
+   "last12": 1,
+   "after_end": 1,
+   "after_end_last12": 1,
+   "after_end_names": [
+    [
+     "NHS North Central London Integrated Care Board",
+     1
+    ]
+   ],
+   "first": "2022-10-03",
+   "last": "2026-04-14",
+   "months": {
+    "2026-04": 1
+   }
+  },
+  "99C": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QHM",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QHM",
+      "2020-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 6,
+   "notices": 6,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-10-10",
+   "last": "2023-12-05",
+   "months": {}
+  },
+  "A2X8Q": {
+   "cls": "B",
+   "parent": {
+    "parent": "RAX",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RAX",
+      "2024-03-22",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2025-03-21",
+   "last": "2025-03-21",
+   "months": {}
+  },
+  "A3A8R": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QMF",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QMF",
+      "2020-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 25,
+   "notices": 25,
+   "last12": 9,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-10-17",
+   "last": "2026-07-29",
+   "months": {
+    "2025-10": 2,
+    "2025-11": 3,
+    "2026-02": 1,
+    "2026-03": 1,
+    "2026-05": 1,
+    "2026-07": 1
+   }
+  },
+  "B2M3M": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QWU",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QWU",
+      "2020-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 600,
+   "notices": 600,
+   "last12": 120,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-10-18",
+   "last": "2026-05-27",
+   "months": {
+    "2026-05": 120
+   }
+  },
+  "B4Z5Z": {
+   "cls": "B",
+   "parent": {
+    "parent": "RPY",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RPY",
+      "2021-10-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2026-01-30",
+   "last": "2026-01-30",
+   "months": {
+    "2026-01": 1
+   }
+  },
+  "D2P2L": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QUA",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QUA",
+      "2020-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 16,
+   "notices": 16,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-08-12",
+   "last": "2026-05-26",
+   "months": {
+    "2026-05": 1
+   }
+  },
+  "D4U1Y": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QNQ",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": "2026-03-31",
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QNQ",
+      "2020-10-23",
+      "2026-03-31"
+     ],
+     [
+      "QRL",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 65,
+   "notices": 65,
+   "last12": 29,
+   "after_end": 8,
+   "after_end_last12": 7,
+   "after_end_names": [
+    [
+     "NHS Frimley Integrated Care Board",
+     8
+    ]
+   ],
+   "first": "2023-04-17",
+   "last": "2026-10-05",
+   "months": {
+    "2025-10": 1,
+    "2025-11": 9,
+    "2025-12": 1,
+    "2026-02": 5,
+    "2026-03": 6,
+    "2026-04": 3,
+    "2026-06": 4,
+    "2026-10": 1
+   }
+  },
+  "D9Y0V": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QRL",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QRL",
+      "2020-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 10,
+   "notices": 10,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-12-16",
+   "last": "2025-04-30",
+   "months": {}
+  },
+  "M1J4Y": {
+   "cls": "A2",
+   "parent": {
+    "parent": "QHG",
+    "how": "name",
+    "rel_end": "2026-03-31",
+    "legal_end": "2026-03-31",
+    "end": "2026-03-31",
+    "dated": [
+     [
+      "QHG",
+      "2020-10-23",
+      "2026-03-31"
+     ],
+     [
+      "S1Y5D",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 11,
+   "notices": 11,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-04-12",
+   "last": "2025-01-20",
+   "months": {}
+  },
+  "M2L0M": {
+   "cls": "A1",
+   "parent": {
+    "parent": "QOC",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QOC",
+      "2020-10-23",
+      null
+     ]
+    ]
+   },
+   "n": 4,
+   "notices": 4,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2025-06-11",
+   "last": "2026-05-26",
+   "months": {
+    "2026-05": 1
+   }
+  },
+  "P9T5R": {
+   "cls": "B",
+   "parent": {
+    "parent": "RW4",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RW4",
+      "2021-10-01",
+      null
+     ]
+    ]
+   },
+   "n": 2,
+   "notices": 2,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2025-03-13",
+   "last": "2026-03-13",
+   "months": {
+    "2026-03": 1
+   }
+  },
+  "Q3C0R": {
+   "cls": "B",
+   "parent": {
+    "parent": "R1H",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "R1H",
+      "2020-10-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2025-02-11",
+   "last": "2025-02-11",
+   "months": {}
+  },
+  "Q7N9Z": {
+   "cls": "B",
+   "parent": {
+    "parent": "RXA",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RXA",
+      "2021-10-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2025-07-21",
+   "last": "2025-07-21",
+   "months": {}
+  },
+  "R1HKH": {
+   "cls": "B",
+   "parent": {
+    "parent": "R1H",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "R1H",
+      "2012-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2025-02-11",
+   "last": "2025-02-11",
+   "months": {}
+  },
+  "RBT20": {
+   "cls": "B",
+   "parent": {
+    "parent": "RBT",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RBT",
+      "1991-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-05-31",
+   "last": "2023-05-31",
+   "months": {}
+  },
+  "RCU51": {
+   "cls": "B",
+   "parent": {
+    "parent": "RCU",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RCU",
+      "2002-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2026-09-16",
+   "last": "2026-09-16",
+   "months": {
+    "2026-09": 1
+   }
+  },
+  "RCX70": {
+   "cls": "B",
+   "parent": {
+    "parent": "RCX",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RCX",
+      "1992-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2025-11-05",
+   "last": "2025-11-05",
+   "months": {
+    "2025-11": 1
+   }
+  },
+  "RGQ67": {
+   "cls": "B",
+   "parent": {
+    "parent": "RGQ",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": "2018-06-30",
+    "end": "2018-06-30",
+    "dated": [
+     [
+      "RGQ",
+      "2015-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 1,
+   "after_end_last12": 1,
+   "after_end_names": [
+    [
+     "Suffolk Orthodontic Practice",
+     1
+    ]
+   ],
+   "first": "2026-09-10",
+   "last": "2026-09-10",
+   "months": {
+    "2026-09": 1
+   }
+  },
+  "RH8C3": {
+   "cls": "B",
+   "parent": {
+    "parent": "RH8",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RH8",
+      "2011-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-05-10",
+   "last": "2024-05-10",
+   "months": {}
+  },
+  "RH8H6": {
+   "cls": "B",
+   "parent": {
+    "parent": "RH8",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RH8",
+      "2017-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2026-03-06",
+   "last": "2026-03-06",
+   "months": {
+    "2026-03": 1
+   }
+  },
+  "RJ128": {
+   "cls": "B",
+   "parent": {
+    "parent": "RJ1",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RJ1",
+      "2005-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2025-02-12",
+   "last": "2025-02-12",
+   "months": {}
+  },
+  "RJ759": {
+   "cls": "B",
+   "parent": {
+    "parent": "RJ7",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RJ7",
+      "2008-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-04-04",
+   "last": "2024-04-04",
+   "months": {}
+  },
+  "RJN71": {
+   "cls": "B",
+   "parent": {
+    "parent": "RJN",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RJN",
+      "1993-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-05-31",
+   "last": "2023-05-31",
+   "months": {}
+  },
+  "RNZ91": {
+   "cls": "B",
+   "parent": {
+    "parent": "RNZ",
+    "how": "only",
+    "rel_end": "2025-02-28",
+    "legal_end": null,
+    "end": "2025-02-28",
+    "dated": [
+     [
+      "RNZ",
+      "2014-10-01",
+      "2025-02-28"
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-03-27",
+   "last": "2024-03-27",
+   "months": {}
+  },
+  "RP401": {
+   "cls": "B",
+   "parent": {
+    "parent": "RP4",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RP4",
+      "2003-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2026-03-30",
+   "last": "2026-03-30",
+   "months": {
+    "2026-03": 1
+   }
+  },
+  "RTK01": {
+   "cls": "B",
+   "parent": {
+    "parent": "RTK",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RTK",
+      "1998-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-07-03",
+   "last": "2024-07-03",
+   "months": {}
+  },
+  "RTR54": {
+   "cls": "B",
+   "parent": {
+    "parent": "RTR",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RTR",
+      "2013-10-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-02-14",
+   "last": "2023-02-14",
+   "months": {}
+  },
+  "RW5NC": {
+   "cls": "B",
+   "parent": {
+    "parent": "RW5",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RW5",
+      "2006-10-01",
+      null
+     ]
+    ]
+   },
+   "n": 11,
+   "notices": 11,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-09-26",
+   "last": "2025-03-19",
+   "months": {}
+  },
+  "RX301": {
+   "cls": "B",
+   "parent": {
+    "parent": "RX3",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RX3",
+      "2006-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2026-06-12",
+   "last": "2026-06-12",
+   "months": {
+    "2026-06": 1
+   }
+  },
+  "RXX1Y": {
+   "cls": "B",
+   "parent": {
+    "parent": "RXX",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RXX",
+      "2006-10-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2025-09-15",
+   "last": "2025-09-15",
+   "months": {}
+  },
+  "RY4HQ": {
+   "cls": "B",
+   "parent": {
+    "parent": "RY4",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RY4",
+      "2016-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2026-03-16",
+   "last": "2026-03-16",
+   "months": {
+    "2026-03": 1
+   }
+  },
+  "RYY13": {
+   "cls": "B",
+   "parent": {
+    "parent": "RYY",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RYY",
+      "2010-11-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2024-07-18",
+   "last": "2024-07-18",
+   "months": {}
+  },
+  "W2U3Z": {
+   "cls": "rest",
+   "parent": {
+    "parent": "Z9B2Z",
+    "how": "name",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "QRV",
+      "2020-10-23",
+      "2026-03-31"
+     ],
+     [
+      "Z9B2Z",
+      "2026-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 3,
+   "notices": 3,
+   "last12": 1,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2022-10-17",
+   "last": "2026-10-02",
+   "months": {
+    "2026-03": 1,
+    "2026-10": 1
+   }
+  },
+  "X7V4Q": {
+   "cls": "B",
+   "parent": {
+    "parent": "RNN",
+    "how": "only",
+    "rel_end": null,
+    "legal_end": null,
+    "end": null,
+    "dated": [
+     [
+      "RNN",
+      "2022-04-01",
+      null
+     ]
+    ]
+   },
+   "n": 1,
+   "notices": 1,
+   "last12": 0,
+   "after_end": 0,
+   "after_end_last12": 0,
+   "after_end_names": [],
+   "first": "2023-11-02",
+   "last": "2023-11-02",
+   "months": {}
+  }
+ }
+}

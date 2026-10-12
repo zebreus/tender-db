@@ -1,0 +1,1 @@
+{"columns": ["id", "identifier", "name", "name_norm", "provisional", "country"], "row_count": 0, "rows": [], "truncated": false, "_sql": "SELECT id, identifier, name, name_norm, provisional, country FROM organizations WHERE name_norm >= 'nhs north east and cumbria' AND name_norm < 'nhs north east and cumbria~' LIMIT 100"}

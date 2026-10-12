@@ -1,0 +1,1 @@
+{"columns": ["id", "country", "identifier", "name", "provisional"], "row_count": 1, "rows": [[6325843, "GB", null, "NEL Commissioning Support Unit", 1]], "truncated": false, "_sql": "SELECT id, country, identifier, name, provisional FROM organizations WHERE name_norm = 'nel commissioning support unit' LIMIT 20"}

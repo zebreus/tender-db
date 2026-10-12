@@ -1,0 +1,389 @@
+{
+ "tails": {
+  "00P": {
+   "holders": 6,
+   "parties": 25,
+   "later_parties": 0,
+   "top_names": [
+    {
+     "n": 8,
+     "value": "NHS North East and North Cumbria Integrated Care Board"
+    },
+    {
+     "n": 4,
+     "value": "NHS North East & North Cumbria Integrated Care Board"
+    },
+    {
+     "n": 4,
+     "value": "NHS North East North Cumbria Integrated Care Board"
+    },
+    {
+     "n": 2,
+     "value": "NHS North East and North Cumbria ICB"
+    },
+    {
+     "n": 2,
+     "value": "North East & North Cumbria Integrated Care Board"
+    }
+   ],
+   "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 00P"
+  },
+  "00N": {
+   "holders": 1,
+   "parties": 5,
+   "later_parties": 0,
+   "top_names": [
+    {
+     "n": 5,
+     "value": "NHS North East and North Cumbria Integrated Care Board"
+    }
+   ],
+   "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 00N"
+  },
+  "00X": {
+   "holders": 2,
+   "parties": 2,
+   "later_parties": 0,
+   "top_names": [
+    {
+     "n": 1,
+     "value": "Lancashire and Cumbria integrated Care Board"
+    },
+    {
+     "n": 1,
+     "value": "NHS Lancashire and South Cumbria Integrated Care Board"
+    }
+   ],
+   "ods_name": "NHS LANCASHIRE AND SOUTH CUMBRIA ICB - 00X"
+  },
+  "00L": {
+   "holders": 1,
+   "parties": 1,
+   "later_parties": 0,
+   "top_names": [
+    {
+     "n": 1,
+     "value": "NHS North East and North Cumbria Integrated Care Boards"
+    }
+   ],
+   "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 00L"
+  }
+ },
+ "holders": [
+  {
+   "org_id": 31603816,
+   "tail": "00P",
+   "standing": true,
+   "provisional": 1,
+   "identifier": null,
+   "head_name": "NHS North East North Cumbria Integrated Care Board - County Durham Place",
+   "mentions": 5,
+   "raws": {
+    "GB-NHS-QHM": 4,
+    "GB-NHS-00P": 1
+   },
+   "names": [
+    {
+     "name": "NHS North East North Cumbria Integrated Care Board - County Durham Place",
+     "n": 5,
+     "first": "2024-07-12",
+     "last": "2024-12-20",
+     "check": {
+      "QHM": {
+       "verdict": "admitted",
+       "rival": null
+      }
+     },
+     "armed_513_key": []
+    }
+   ],
+   "armed_513_key_any": false,
+   "in_qhm_513_reviewed_holders": true,
+   "parent": "QHM",
+   "phase": "A-ppon-survivor",
+   "m1_class": "all-admitted"
+  },
+  {
+   "org_id": 31605903,
+   "tail": "00P",
+   "standing": true,
+   "provisional": 1,
+   "identifier": null,
+   "head_name": "NHS North East North Cumbria Integrated Care Board - Tees Valley Place",
+   "mentions": 3,
+   "raws": {
+    "GB-NHS-00P": 1,
+    "GB-NHS-QHM": 2
+   },
+   "names": [
+    {
+     "name": "NHS North East North Cumbria Integrated Care Board - Tees Valley Place",
+     "n": 3,
+     "first": "2024-09-03",
+     "last": "2024-11-18",
+     "check": {
+      "QHM": {
+       "verdict": "admitted",
+       "rival": null
+      }
+     },
+     "armed_513_key": []
+    }
+   ],
+   "armed_513_key_any": false,
+   "in_qhm_513_reviewed_holders": true,
+   "parent": "QHM",
+   "phase": "A-ppon-survivor",
+   "m1_class": "all-admitted"
+  },
+  {
+   "org_id": 31615636,
+   "tail": "00P",
+   "standing": true,
+   "provisional": 1,
+   "identifier": null,
+   "head_name": "NHS North East and North Cumbira ICB",
+   "mentions": 1,
+   "raws": {
+    "GB-NHS-00P": 1
+   },
+   "names": [
+    {
+     "name": "NHS North East and North Cumbira ICB",
+     "n": 1,
+     "first": "2024-02-05",
+     "last": "2024-02-05",
+     "check": {
+      "QHM": {
+       "verdict": "tie",
+       "rival": "QMF"
+      }
+     },
+     "armed_513_key": []
+    }
+   ],
+   "armed_513_key_any": false,
+   "in_qhm_513_reviewed_holders": false,
+   "parent": "QHM",
+   "phase": "A-ppon-survivor",
+   "m1_class": "none-admitted:own-name-noise"
+  },
+  {
+   "org_id": 31610859,
+   "tail": "00P",
+   "standing": true,
+   "provisional": 1,
+   "identifier": null,
+   "head_name": "The North East and North Cumbria Integrated Care System (ICS)",
+   "mentions": 1,
+   "raws": {
+    "GB-NHS-00P": 1
+   },
+   "names": [
+    {
+     "name": "The North East and North Cumbria Integrated Care System (ICS)",
+     "n": 1,
+     "first": "2023-09-14",
+     "last": "2023-09-14",
+     "check": {
+      "QHM": {
+       "verdict": "admitted",
+       "rival": null
+      }
+     },
+     "armed_513_key": []
+    }
+   ],
+   "armed_513_key_any": false,
+   "in_qhm_513_reviewed_holders": false,
+   "parent": "QHM",
+   "phase": "A-ppon-survivor",
+   "m1_class": "all-admitted"
+  },
+  {
+   "org_id": 31615979,
+   "tail": "00P",
+   "standing": true,
+   "provisional": 1,
+   "identifier": null,
+   "head_name": "The North East and North Cumbria Integrated Care Board (ICB)",
+   "mentions": 1,
+   "raws": {
+    "GB-NHS-00P": 1
+   },
+   "names": [
+    {
+     "name": "The North East and North Cumbria Integrated Care Board (ICB)",
+     "n": 1,
+     "first": "2024-02-13",
+     "last": "2024-02-13",
+     "check": {
+      "QHM": {
+       "verdict": "admitted",
+       "rival": null
+      }
+     },
+     "armed_513_key": []
+    }
+   ],
+   "armed_513_key_any": false,
+   "in_qhm_513_reviewed_holders": false,
+   "parent": "QHM",
+   "phase": "A-ppon-survivor",
+   "m1_class": "all-admitted"
+  },
+  {
+   "org_id": 31632651,
+   "tail": "00L",
+   "standing": true,
+   "provisional": 1,
+   "identifier": null,
+   "head_name": "NHS North East and North Cumbria Integrated Care Boards",
+   "mentions": 1,
+   "raws": {
+    "GB-NHS-00L": 1
+   },
+   "names": [
+    {
+     "name": "NHS North East and North Cumbria Integrated Care Boards",
+     "n": 1,
+     "first": "2022-10-05",
+     "last": "2022-10-05",
+     "check": {
+      "QHM": {
+       "verdict": "admitted",
+       "rival": null
+      }
+     },
+     "armed_513_key": []
+    }
+   ],
+   "armed_513_key_any": false,
+   "in_qhm_513_reviewed_holders": false,
+   "parent": "QHM",
+   "phase": "A-ppon-survivor",
+   "m1_class": "all-admitted"
+  },
+  {
+   "org_id": 30915461,
+   "tail": "00X",
+   "standing": true,
+   "provisional": 1,
+   "identifier": null,
+   "head_name": "NHS Lancashire and South Cumbria Integrated Care Board",
+   "mentions": 252,
+   "raws": {
+    "null": 251,
+    "GB-NHS-00X": 1
+   },
+   "names": [
+    {
+     "name": "NHS Lancashire and South Cumbria Integrated Care Board",
+     "n": 252,
+     "first": "2022-07-29",
+     "last": "2026-10-07",
+     "check": {
+      "QE1": {
+       "verdict": "admitted",
+       "rival": null
+      }
+     },
+     "armed_513_key": []
+    }
+   ],
+   "armed_513_key_any": false,
+   "in_qhm_513_reviewed_holders": false,
+   "parent": "QE1",
+   "phase": "A3-off-allowlist",
+   "m1_class": "all-admitted"
+  },
+  {
+   "org_id": 31624168,
+   "tail": "00X",
+   "standing": true,
+   "provisional": 1,
+   "identifier": null,
+   "head_name": "Lancashire and Cumbria integrated Care Board",
+   "mentions": 1,
+   "raws": {
+    "GB-NHS-00X": 1
+   },
+   "names": [
+    {
+     "name": "Lancashire and Cumbria integrated Care Board",
+     "n": 1,
+     "first": "2023-06-02",
+     "last": "2023-06-02",
+     "check": {
+      "QE1": {
+       "verdict": "admitted",
+       "rival": null
+      }
+     },
+     "armed_513_key": []
+    }
+   ],
+   "armed_513_key_any": false,
+   "in_qhm_513_reviewed_holders": false,
+   "parent": "QE1",
+   "phase": "A3-off-allowlist",
+   "m1_class": "all-admitted"
+  }
+ ],
+ "survivor": {
+  "org_id": 31556600,
+  "code": "QHM",
+  "identifier": "GBPPONPMYZ6944BYLH",
+  "provisional": 0,
+  "zero_coded_mentions": [
+   {
+    "raw": "GB-NHS-00N",
+    "name": "NHS North East and North Cumbria Integrated Care Board",
+    "n": 5
+   },
+   {
+    "raw": "GB-NHS-00P",
+    "name": "NHS North East & North Cumbria Integrated Care Board",
+    "n": 4
+   },
+   {
+    "raw": "GB-NHS-00P",
+    "name": "NHS North East North Cumbria Integrated Care Board",
+    "n": 4
+   },
+   {
+    "raw": "GB-NHS-00P",
+    "name": "NHS North East and North Cumbria ICB",
+    "n": 2
+   },
+   {
+    "raw": "GB-NHS-00P",
+    "name": "NHS North East and North Cumbria Integrated Care Board",
+    "n": 8
+   },
+   {
+    "raw": "GB-NHS-00P",
+    "name": "North East & North Cumbria Integrated Care Board",
+    "n": 2
+   }
+  ]
+ },
+ "tails_before_513_wet": {
+  "00P": {
+   "holders": 10,
+   "parties": 25
+  },
+  "00N": {
+   "holders": 1,
+   "parties": 5
+  },
+  "00X": {
+   "holders": 2,
+   "parties": 2
+  },
+  "00L": {
+   "holders": 1,
+   "parties": 1
+  }
+ }
+}

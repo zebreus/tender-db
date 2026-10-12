@@ -1,0 +1,4202 @@
+{
+ "computed": "2026-10-12",
+ "summary": {
+  "holders": 77,
+  "sub_icb": 52,
+  "sites": 25,
+  "mentions_read": 1880,
+  "api_mentions": 1880,
+  "mention_identifier_kinds": {
+   "own": 1783,
+   "own-respelt": 97
+  },
+  "child_impure": 0,
+  "child_carries_ppon": 0,
+  "child_withheld": 0,
+  "merged_identifiers_any": 0,
+  "identifier_status_any": 0,
+  "flag_hits": {
+   "identifier_verdicts": 0,
+   "merge_verdicts": 0,
+   "rehoming": 0,
+   "case_reviews": 0,
+   "country_verdicts": 0,
+   "name_verdicts": 0
+  },
+  "in_469_reports": {
+   "06H": [
+    "altid-merge-plan-2163 registry_sample",
+    "u2-read (469 U2 reviewer+challenger)"
+   ]
+  },
+  "party_ppon_copublished_513": {
+   "06H": 1,
+   "11X": 1
+  },
+  "off_allowlist_multi_holder": {},
+  "off_allowlist_listed": 44,
+  "census513": {
+   "countryless_parties": 0,
+   "non_gb_parties": 0,
+   "computed_at": 1791790823
+  },
+  "admin_rows_read": {
+   "identifier": 1199,
+   "merge": 1294,
+   "rehoming": 585,
+   "case": 997,
+   "country": 4043,
+   "name": 5000
+  },
+  "admin_truncated": [
+   "name"
+  ],
+  "gb_nhs_identifier_verdicts": 0,
+  "by_class": {
+   "A3": {
+    "holders": 8,
+    "mentions": 30,
+    "impure": 0,
+    "ppon": 0,
+    "withheld": 0
+   },
+   "A1": {
+    "holders": 19,
+    "mentions": 761,
+    "impure": 0,
+    "ppon": 0,
+    "withheld": 0
+   },
+   "A2": {
+    "holders": 14,
+    "mentions": 291,
+    "impure": 0,
+    "ppon": 0,
+    "withheld": 0
+   },
+   "rest": {
+    "holders": 6,
+    "mentions": 43,
+    "impure": 0,
+    "ppon": 0,
+    "withheld": 0
+   },
+   "A1m": {
+    "holders": 5,
+    "mentions": 719,
+    "impure": 0,
+    "ppon": 0,
+    "withheld": 0
+   },
+   "B": {
+    "holders": 25,
+    "mentions": 36,
+    "impure": 0,
+    "ppon": 0,
+    "withheld": 0
+   }
+  },
+  "caps": {
+   "mentions_cap": 4096,
+   "names_cap": 64,
+   "max_mentions": 600,
+   "max_distinct_names": 12
+  },
+  "child_names_unread": 0
+ },
+ "holders": [
+  {
+   "org_id": 31613615,
+   "code": "01A",
+   "kind": "sub-icb",
+   "class": "A3",
+   "name": "Lancashire & South Cumbria Integrated Care Board",
+   "identifier": "GBNHS01A",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS01A",
+    "provisional": false,
+    "mentions": 3,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 3,
+   "mention_identifier_kinds": {
+    "own": 3
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 3,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31604393,
+   "code": "01H",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS North East and North Cumbria Integrated Care Board",
+   "identifier": "GBNHS01H",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS01H",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31612258,
+   "code": "02E",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS Cheshire and Merseyside ICB",
+   "identifier": "GBNHS02E",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS02E",
+    "provisional": false,
+    "mentions": 2,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 2,
+   "mention_identifier_kinds": {
+    "own": 2
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 2,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31570761,
+   "code": "02Y",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS Humber and North Yorkshire Integrated Care Board",
+   "identifier": "GBNHS02Y",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS02Y",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31591587,
+   "code": "03K",
+   "kind": "sub-icb",
+   "class": "rest",
+   "name": "NHS Humber and North Yorkshire ICB",
+   "identifier": "GBNHS03K",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS03K",
+    "provisional": false,
+    "mentions": 12,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 12,
+   "mention_identifier_kinds": {
+    "own": 12
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 12,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31593407,
+   "code": "03N",
+   "kind": "sub-icb",
+   "class": "A3",
+   "name": "NHS South Yorkshire Integrated Care Board",
+   "identifier": "GBNHS03N",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS03N",
+    "provisional": false,
+    "mentions": 8,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 8,
+   "mention_identifier_kinds": {
+    "own": 8
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 8,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 30915681,
+   "code": "03Q",
+   "kind": "sub-icb",
+   "class": "rest",
+   "name": "NHS England North East and Yorkshire",
+   "identifier": "GBNHS03Q",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS03Q",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31541083,
+   "code": "03R",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "West Yorkshire Integrated Care Board",
+   "identifier": "GBNHS03R",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS03R",
+    "provisional": false,
+    "mentions": 5,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 5,
+   "mention_identifier_kinds": {
+    "own": 5
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 5,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31602970,
+   "code": "03W",
+   "kind": "sub-icb",
+   "class": "A3",
+   "name": "NHS Leicester, Leicestershire and Rutland Integrated Care Board",
+   "identifier": "GBNHS03W",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS03W",
+    "provisional": false,
+    "mentions": 5,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 5,
+   "mention_identifier_kinds": {
+    "own": 5
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 5,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31649328,
+   "code": "04Y",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+   "identifier": "GBNHS04Y",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS04Y",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31539308,
+   "code": "05D",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS Staffordshire and Stoke-on-Trent Integrated Care Board",
+   "identifier": "GBNHS05D",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS05D",
+    "provisional": false,
+    "mentions": 6,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 6,
+   "mention_identifier_kinds": {
+    "own": 6
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 6,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31625518,
+   "code": "05V",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS Staffordshire and Stoke-on-Trent Integrated Care Board",
+   "identifier": "GBNHS05V",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS05V",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31537455,
+   "code": "06H",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "Cambridgeshire & Peterborough Integrated Care Board",
+   "identifier": "GBNHS06H",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS06H",
+    "provisional": false,
+    "mentions": 10,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 10,
+   "mention_identifier_kinds": {
+    "own": 10
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [
+    "altid-merge-plan-2163 registry_sample",
+    "u2-read (469 U2 reviewer+challenger)"
+   ],
+   "census513_off_allowlist": {
+    "parties": 10,
+    "holders": 1,
+    "ppons": 1
+   }
+  },
+  {
+   "org_id": 31616626,
+   "code": "06K",
+   "kind": "sub-icb",
+   "class": "A3",
+   "name": "NHS Hertfordshire and West Essex Integrated Care Board",
+   "identifier": "GBNHS06K",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS06K",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31631584,
+   "code": "06N",
+   "kind": "sub-icb",
+   "class": "A3",
+   "name": "Hertfordshire and West Essex Integrated Care Board",
+   "identifier": "GBNHS06N",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS06N",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31625011,
+   "code": "06Q",
+   "kind": "sub-icb",
+   "class": "A3",
+   "name": "NHS Mid & South Essex Integrated Care Board",
+   "identifier": "GBNHS06Q",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS06Q",
+    "provisional": false,
+    "mentions": 2,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 2,
+   "mention_identifier_kinds": {
+    "own": 2
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 2,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31566140,
+   "code": "10Q",
+   "kind": "sub-icb",
+   "class": "A3",
+   "name": "NHS Buckinghamshire, Oxfordshire and Berkshire West ICB",
+   "identifier": "GBNHS10Q",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS10Q",
+    "provisional": false,
+    "mentions": 8,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 8,
+   "mention_identifier_kinds": {
+    "own": 8
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 8,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31575718,
+   "code": "11J",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS Dorset Integrated Care Board",
+   "identifier": "GBNHS11J",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS11J",
+    "provisional": false,
+    "mentions": 3,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 3,
+   "mention_identifier_kinds": {
+    "own": 3
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 3,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 30916970,
+   "code": "11X",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS Somerset Integrated Care Board",
+   "identifier": "GBNHS11X",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS11X",
+    "provisional": false,
+    "mentions": 30,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 30,
+   "mention_identifier_kinds": {
+    "own-respelt": 4,
+    "own": 26
+   },
+   "odd_mentions": [
+    {
+     "notice_id": 30810335,
+     "section_id": "ORG-GB-NHS-11x",
+     "name": "NHS Somerset Integrated Care Board",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-11x",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS11X",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46381296,
+     "section_id": "ORG-GB-NHS-11x",
+     "name": "NHS Somerset ICB",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-11x",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS11X",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46855870,
+     "section_id": "ORG-GB-NHS-11x",
+     "name": "NHS Somerset Integrated Care Board",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-11x",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS11X",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46870515,
+     "section_id": "ORG-GB-NHS-11x",
+     "name": "NHS Somerset Integrated Care Board",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-11x",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS11X",
+     "kind": "own-respelt"
+    }
+   ],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 30,
+    "holders": 1,
+    "ppons": 1
+   }
+  },
+  {
+   "org_id": 31600907,
+   "code": "13T",
+   "kind": "sub-icb",
+   "class": "A1m",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "identifier": "GBNHS13T",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS13T",
+    "provisional": false,
+    "mentions": 504,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 504,
+   "mention_identifier_kinds": {
+    "own": 504
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 504,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31604394,
+   "code": "14J",
+   "kind": "sub-icb",
+   "class": "rest",
+   "name": "NHS Greater Manchester Integrated Care Board",
+   "identifier": "GBNHS14J",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS14J",
+    "provisional": false,
+    "mentions": 2,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 2,
+   "mention_identifier_kinds": {
+    "own": 2
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 2,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31620331,
+   "code": "14N",
+   "kind": "sub-icb",
+   "class": "rest",
+   "name": "NHS England Yorkshire & Humber",
+   "identifier": "GBNHS14N",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS14N",
+    "provisional": false,
+    "mentions": 2,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 2,
+   "mention_identifier_kinds": {
+    "own": 2
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 2,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31534640,
+   "code": "15A",
+   "kind": "sub-icb",
+   "class": "rest",
+   "name": "NHS Thames Valley Integrated Care Board",
+   "identifier": "GBNHS15A",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS15A",
+    "provisional": false,
+    "mentions": 23,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 23,
+   "mention_identifier_kinds": {
+    "own": 23
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 23,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31566597,
+   "code": "15C",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board",
+   "identifier": "GBNHS15C",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS15C",
+    "provisional": false,
+    "mentions": 31,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 31,
+   "mention_identifier_kinds": {
+    "own": 31
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 31,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31546689,
+   "code": "15E",
+   "kind": "sub-icb",
+   "class": "A1m",
+   "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+   "identifier": "GBNHS15E",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS15E",
+    "provisional": false,
+    "mentions": 46,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 46,
+   "mention_identifier_kinds": {
+    "own": 44,
+    "own-respelt": 2
+   },
+   "odd_mentions": [
+    {
+     "notice_id": 46750232,
+     "section_id": "ORG-GB-NHS-15e",
+     "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-15e",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS15E",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46751014,
+     "section_id": "ORG-GB-NHS-15e",
+     "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-15e",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS15E",
+     "kind": "own-respelt"
+    }
+   ],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 46,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31612327,
+   "code": "15F",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS West Yorkshire Integrated Care Board (Leeds Place)",
+   "identifier": "GBNHS15F",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS15F",
+    "provisional": false,
+    "mentions": 3,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 3,
+   "mention_identifier_kinds": {
+    "own": 3
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 3,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31606796,
+   "code": "15M",
+   "kind": "sub-icb",
+   "class": "A3",
+   "name": "NHS Derby and Derbyshire Integrated Care Board",
+   "identifier": "GBNHS15M",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS15M",
+    "provisional": false,
+    "mentions": 2,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 2,
+   "mention_identifier_kinds": {
+    "own": 2
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 2,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31555903,
+   "code": "15N",
+   "kind": "sub-icb",
+   "class": "A1m",
+   "name": "NHS Devon Integrated Care Board",
+   "identifier": "GBNHS15N",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS15N",
+    "provisional": false,
+    "mentions": 31,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 31,
+   "mention_identifier_kinds": {
+    "own": 31
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 31,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31614680,
+   "code": "16C",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS North East and North Cumbria Integrated Care Board",
+   "identifier": "GBNHS16C",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS16C",
+    "provisional": false,
+    "mentions": 8,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 8,
+   "mention_identifier_kinds": {
+    "own": 6,
+    "own-respelt": 2
+   },
+   "odd_mentions": [
+    {
+     "notice_id": 46950016,
+     "section_id": "ORG-GB-NHS-16c",
+     "name": "NHS North East and North Cumbria Integrated Care Board",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-16c",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS16C",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46982226,
+     "section_id": "ORG-GB-NHS-16 (c)",
+     "name": "NHS North East and North Cumbria Integrated Care Board",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-16 (c)",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS16C",
+     "kind": "own-respelt"
+    }
+   ],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 8,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31575075,
+   "code": "18C",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+   "identifier": "GBNHS18C",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS18C",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 30915273,
+   "code": "26A",
+   "kind": "sub-icb",
+   "class": "A1m",
+   "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+   "identifier": "GBNHS26A",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS26A",
+    "provisional": false,
+    "mentions": 115,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 115,
+   "mention_identifier_kinds": {
+    "own": 34,
+    "own-respelt": 81
+   },
+   "odd_mentions": [
+    {
+     "notice_id": 46756505,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46759382,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46761413,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46761414,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46763785,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46764267,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46764283,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46764306,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46764323,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46765453,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46765494,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46765502,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46765528,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46765584,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46766274,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46766494,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46769881,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46775101,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46777046,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46783612,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46783613,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46783625,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46786092,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46794098,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46794101,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46794184,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46794357,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46794359,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46798759,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46798760,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46798761,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46798762,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46799731,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46799793,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46800100,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46800236,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46800240,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46800244,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46800280,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46800283,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46800354,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46801900,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46802466,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46802467,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46802468,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46802469,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46803008,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46803029,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46807447,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS Norfolk and Waveney Integrated Care Board",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46810637,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46873193,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46876094,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46876337,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46877174,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46877177,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46877179,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46878298,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46879144,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46879275,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46879613,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46879616,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46879617,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46879618,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46880170,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46880171,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46880574,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47284865,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47290603,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47294667,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47299312,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47299313,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47299314,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47299315,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47300296,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47300924,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47303058,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47303059,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47303060,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47303061,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 47303603,
+     "section_id": "ORG-GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46763776,
+     "section_id": "ORG-GB-NHS-26a#2",
+     "name": "Norfolk & Norwich University Hospitals NHS Foundation Trust",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-26a",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS26A",
+     "kind": "own-respelt"
+    }
+   ],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 115,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31605500,
+   "code": "27D",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS Cheshire and Merseyside ICB",
+   "identifier": "GBNHS27D",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS27D",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31587867,
+   "code": "36J",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS West Yorkshire Integrated Care Board (ICB)",
+   "identifier": "GBNHS36J",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS36J",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31543312,
+   "code": "36L",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS SOUTH WEST LONDON INTEGRATED CARE BOARD",
+   "identifier": "GBNHS36L",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS36L",
+    "provisional": false,
+    "mentions": 33,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 33,
+   "mention_identifier_kinds": {
+    "own": 29,
+    "own-respelt": 4
+   },
+   "odd_mentions": [
+    {
+     "notice_id": 46755011,
+     "section_id": "ORG-GB-NHS-36l",
+     "name": "NHS SOUTH WEST LONDON INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-36l",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS36L",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46755014,
+     "section_id": "ORG-GB-NHS-36l",
+     "name": "NHS SOUTH WEST LONDON INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-36l",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS36L",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46771068,
+     "section_id": "ORG-GB-NHS-36l",
+     "name": "NHS SOUTH WEST LONDON INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-36l",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS36L",
+     "kind": "own-respelt"
+    },
+    {
+     "notice_id": 46798096,
+     "section_id": "ORG-GB-NHS-36l",
+     "name": "NHS SOUTH WEST LONDON INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-36l",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS36L",
+     "kind": "own-respelt"
+    }
+   ],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 33,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31619860,
+   "code": "42D",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+   "identifier": "GBNHS42D",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS42D",
+    "provisional": false,
+    "mentions": 2,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 2,
+   "mention_identifier_kinds": {
+    "own": 2
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 2,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31614401,
+   "code": "70F",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS Sussex ICB",
+   "identifier": "GBNHS70F",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS70F",
+    "provisional": false,
+    "mentions": 3,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 3,
+   "mention_identifier_kinds": {
+    "own": 3
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 3,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 30926709,
+   "code": "72Q",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS South East London Integrated Care Board",
+   "identifier": "GBNHS72Q",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS72Q",
+    "provisional": false,
+    "mentions": 47,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 47,
+   "mention_identifier_kinds": {
+    "own": 47
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 47,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31606157,
+   "code": "78H",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS Northamptonshire ICB",
+   "identifier": "GBNHS78H",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS78H",
+    "provisional": false,
+    "mentions": 2,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 2,
+   "mention_identifier_kinds": {
+    "own": 2
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 2,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31634553,
+   "code": "84H",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS North East and North Cumbria Integrated Care Boards",
+   "identifier": "GBNHS84H",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS84H",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31537488,
+   "code": "91Q",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS KENT AND MEDWAY INTEGRATED CARE BOARD",
+   "identifier": "GBNHS91Q",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS91Q",
+    "provisional": false,
+    "mentions": 41,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 41,
+   "mention_identifier_kinds": {
+    "own": 40,
+    "own-respelt": 1
+   },
+   "odd_mentions": [
+    {
+     "notice_id": 46756540,
+     "section_id": "ORG-GB-NHS-91q",
+     "name": "NHS KENT AND MEDWAY INTEGRATED CARE BOARD",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-91q",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS91Q",
+     "kind": "own-respelt"
+    }
+   ],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 41,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31608314,
+   "code": "92A",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS Surrey Heartlands ICB",
+   "identifier": "GBNHS92A",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS92A",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 1,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 30913840,
+   "code": "92G",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS Bath and North East Somerset, Swindon and Wiltshire Integrated Care Board",
+   "identifier": "GBNHS92G",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS92G",
+    "provisional": false,
+    "mentions": 80,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 80,
+   "mention_identifier_kinds": {
+    "own": 79,
+    "own-respelt": 1
+   },
+   "odd_mentions": [
+    {
+     "notice_id": 46747905,
+     "section_id": "ORG-GB-NHS-92g",
+     "name": "NHS Bath and North East Somerset, Swindon and Wiltshire Integrated Care Board",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-92g",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS92G",
+     "kind": "own-respelt"
+    }
+   ],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 80,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31570826,
+   "code": "93C",
+   "kind": "sub-icb",
+   "class": "A1m",
+   "name": "NHS North Central London Integrated Care Board",
+   "identifier": "GBNHS93C",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS93C",
+    "provisional": false,
+    "mentions": 23,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 23,
+   "mention_identifier_kinds": {
+    "own": 22,
+    "own-respelt": 1
+   },
+   "odd_mentions": [
+    {
+     "notice_id": 46915790,
+     "section_id": "ORG-GB-NHS-93c",
+     "name": "North Central London Integrated Care Board",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-93c",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS93C",
+     "kind": "own-respelt"
+    }
+   ],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 23,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31614001,
+   "code": "99C",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "identifier": "GBNHS99C",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHS99C",
+    "provisional": false,
+    "mentions": 6,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 6,
+   "mention_identifier_kinds": {
+    "own": 5,
+    "own-respelt": 1
+   },
+   "odd_mentions": [
+    {
+     "notice_id": 47108709,
+     "section_id": "ORG-GB-NHS-99c",
+     "name": "NHS North East and North Cumbria Integrated Care Board (NHS NENC ICB)",
+     "country": "GB",
+     "raw_identifier": "GB-NHS-99c",
+     "scheme": "GB-NHS",
+     "normalised": "GBNHS99C",
+     "kind": "own-respelt"
+    }
+   ],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": {
+    "parties": 6,
+    "holders": 1,
+    "ppons": 0
+   }
+  },
+  {
+   "org_id": 31595370,
+   "code": "A2X8Q",
+   "kind": "site",
+   "class": "B",
+   "name": "Kingston Hospital NHS Foundation Trust",
+   "identifier": "GBNHSA2X8Q",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSA2X8Q",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 30915550,
+   "code": "A3A8R",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS North East London Integrated Care Board (NEL ICB)",
+   "identifier": "GBNHSA3A8R",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSA3A8R",
+    "provisional": false,
+    "mentions": 25,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 25,
+   "mention_identifier_kinds": {
+    "own": 25
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 30917969,
+   "code": "B2M3M",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD",
+   "identifier": "GBNHSB2M3M",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSB2M3M",
+    "provisional": false,
+    "mentions": 600,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 600,
+   "mention_identifier_kinds": {
+    "own": 600
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31560996,
+   "code": "B4Z5Z",
+   "kind": "site",
+   "class": "B",
+   "name": "The Royal Marsden Hospital",
+   "identifier": "GBNHSB4Z5Z",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSB4Z5Z",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31545773,
+   "code": "D2P2L",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS BLACK COUNTRY INTEGRATED CARE BOARD",
+   "identifier": "GBNHSD2P2L",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSD2P2L",
+    "provisional": false,
+    "mentions": 16,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 16,
+   "mention_identifier_kinds": {
+    "own": 16
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31535814,
+   "code": "D4U1Y",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS Frimley ICB",
+   "identifier": "GBNHSD4U1Y",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSD4U1Y",
+    "provisional": false,
+    "mentions": 65,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 65,
+   "mention_identifier_kinds": {
+    "own": 65
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31597942,
+   "code": "D9Y0V",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS HAMPSHIRE AND THE ISLE OF WIGHT INTEGRATED CARE BOARD",
+   "identifier": "GBNHSD9Y0V",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSD9Y0V",
+    "provisional": false,
+    "mentions": 10,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 10,
+   "mention_identifier_kinds": {
+    "own": 10
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31592285,
+   "code": "M1J4Y",
+   "kind": "sub-icb",
+   "class": "A2",
+   "name": "NHS Bedfordshire, Luton and Milton Keynes Integrated Care Board",
+   "identifier": "GBNHSM1J4Y",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSM1J4Y",
+    "provisional": false,
+    "mentions": 11,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 11,
+   "mention_identifier_kinds": {
+    "own": 11
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 30915758,
+   "code": "M2L0M",
+   "kind": "sub-icb",
+   "class": "A1",
+   "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+   "identifier": "GBNHSM2L0M",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSM2L0M",
+    "provisional": false,
+    "mentions": 4,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 4,
+   "mention_identifier_kinds": {
+    "own": 4
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31566644,
+   "code": "P9T5R",
+   "kind": "site",
+   "class": "B",
+   "name": "Koala North West Ltd",
+   "identifier": "GBNHSP9T5R",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSP9T5R",
+    "provisional": false,
+    "mentions": 2,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 2,
+   "mention_identifier_kinds": {
+    "own": 2
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31593405,
+   "code": "Q3C0R",
+   "kind": "site",
+   "class": "B",
+   "name": "Whipps Cross Hospital",
+   "identifier": "GBNHSQ3C0R",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSQ3C0R",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31537284,
+   "code": "Q7N9Z",
+   "kind": "site",
+   "class": "B",
+   "name": "NHS Cheshire and Wirral Partnership NHS FT",
+   "identifier": "GBNHSQ7N9Z",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSQ7N9Z",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31593406,
+   "code": "R1HKH",
+   "kind": "site",
+   "class": "B",
+   "name": "Whipps Cross Hospital",
+   "identifier": "GBNHSR1HKH",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSR1HKH",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31624083,
+   "code": "RBT20",
+   "kind": "site",
+   "class": "B",
+   "name": "Mid Cheshire Hospitals NHS Foundation Trust",
+   "identifier": "GBNHSRBT20",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRBT20",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 30967595,
+   "code": "RCU51",
+   "kind": "site",
+   "class": "B",
+   "name": "Sheffield Children's NHS Foundation Trust",
+   "identifier": "GBNHSRCU51",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRCU51",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31551062,
+   "code": "RCX70",
+   "kind": "site",
+   "class": "B",
+   "name": "The Queen Elizabeth Hospital King's Lynn NHS  Foundation Trust",
+   "identifier": "GBNHSRCX70",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRCX70",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 30929423,
+   "code": "RGQ67",
+   "kind": "site",
+   "class": "B",
+   "name": "Suffolk Orthodontic Practice",
+   "identifier": "GBNHSRGQ67",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRGQ67",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31601206,
+   "code": "RH8C3",
+   "kind": "site",
+   "class": "B",
+   "name": "NHS DEVON ICB",
+   "identifier": "GBNHSRH8C3",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRH8C3",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31565729,
+   "code": "RH8H6",
+   "kind": "site",
+   "class": "B",
+   "name": "St Thomas Health Centre",
+   "identifier": "GBNHSRH8H6",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRH8H6",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31593486,
+   "code": "RJ128",
+   "kind": "site",
+   "class": "B",
+   "name": "Kings College Hospital NHS Foundation Trust",
+   "identifier": "GBNHSRJ128",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRJ128",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31618666,
+   "code": "RJ759",
+   "kind": "site",
+   "class": "B",
+   "name": "Tudor Lodge Health Centre",
+   "identifier": "GBNHSRJ759",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRJ759",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31624084,
+   "code": "RJN71",
+   "kind": "site",
+   "class": "B",
+   "name": "East Cheshire NHS Trust",
+   "identifier": "GBNHSRJN71",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRJN71",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31618308,
+   "code": "RNZ91",
+   "kind": "site",
+   "class": "B",
+   "name": "Salisbury Medical Practice",
+   "identifier": "GBNHSRNZ91",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRNZ91",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31569057,
+   "code": "RP401",
+   "kind": "site",
+   "class": "B",
+   "name": "(A&T) Great Ormond Street Hospital for Children NHS Foundation Trust",
+   "identifier": "GBNHSRP401",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRP401",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31603332,
+   "code": "RTK01",
+   "kind": "site",
+   "class": "B",
+   "name": "Ashford And St Peter's Hospitals Nhs Trust",
+   "identifier": "GBNHSRTK01",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRTK01",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31620988,
+   "code": "RTR54",
+   "kind": "site",
+   "class": "B",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "identifier": "GBNHSRTR54",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRTR54",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31592221,
+   "code": "RW5NC",
+   "kind": "site",
+   "class": "B",
+   "name": "NHS England North West Health & Justice Team",
+   "identifier": "GBNHSRW5NC",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRW5NC",
+    "provisional": false,
+    "mentions": 11,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 11,
+   "mention_identifier_kinds": {
+    "own": 11
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31577282,
+   "code": "RX301",
+   "kind": "site",
+   "class": "B",
+   "name": "Tees, Esk & Wear Valleys NHS Foundation Trust",
+   "identifier": "GBNHSRX301",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRX301",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31544428,
+   "code": "RXX1Y",
+   "kind": "site",
+   "class": "B",
+   "name": "Mind Matters",
+   "identifier": "GBNHSRXX1Y",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRXX1Y",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31567042,
+   "code": "RY4HQ",
+   "kind": "site",
+   "class": "B",
+   "name": "Hertfordshire Community Trust (HCT)",
+   "identifier": "GBNHSRY4HQ",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRY4HQ",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31603978,
+   "code": "RYY13",
+   "kind": "site",
+   "class": "B",
+   "name": "Kent Community Health NHS Foundation Trust",
+   "identifier": "GBNHSRYY13",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSRYY13",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31567224,
+   "code": "W2U3Z",
+   "kind": "sub-icb",
+   "class": "rest",
+   "name": "NHS North West London Integrated Care Board",
+   "identifier": "GBNHSW2U3Z",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSW2U3Z",
+    "provisional": false,
+    "mentions": 3,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 3,
+   "mention_identifier_kinds": {
+    "own": 3
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  },
+  {
+   "org_id": 31612702,
+   "code": "X7V4Q",
+   "kind": "site",
+   "class": "B",
+   "name": "NHS North East & North Cumbria Integrated Care Board",
+   "identifier": "GBNHSX7V4Q",
+   "api": {
+    "country": "GB",
+    "identifier_kind": "national",
+    "identifier": "GBNHSX7V4Q",
+    "provisional": false,
+    "mentions": 1,
+    "identifier_status": null,
+    "merged_identifiers": []
+   },
+   "mentions_read": 1,
+   "mention_identifier_kinds": {
+    "own": 1
+   },
+   "odd_mentions": [],
+   "child_impure": false,
+   "impure_mentions": 0,
+   "own_ppon": false,
+   "merged_ppon": [],
+   "child_carries_ppon": false,
+   "child_withheld": false,
+   "flags": {
+    "identifier_verdicts": [],
+    "merge_verdicts": [],
+    "rehoming": [],
+    "case_reviews": [],
+    "country_verdicts": [],
+    "name_verdicts": []
+   },
+   "in_469_reports": [],
+   "census513_off_allowlist": null
+  }
+ ]
+}

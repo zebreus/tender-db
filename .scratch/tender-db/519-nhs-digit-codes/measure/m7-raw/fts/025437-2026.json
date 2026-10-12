@@ -1,0 +1,252 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/025437-2026?limit=100&updatedTo=2026-10-12T11:48:41",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2026-03-19T16:41:55Z",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "id": "025437-2026",
+            "tag": [
+                "tenderUpdate"
+            ],
+            "date": "2026-03-19T16:41:55Z",
+            "initiationType": "tender",
+            "ocid": "ocds-h6vhtk-05eb43",
+            "parties": [
+                {
+                    "name": "NHS ENGLAND",
+                    "id": "GB-NHS-X24",
+                    "identifier": {
+                        "scheme": "GB-NHS",
+                        "id": "X24"
+                    },
+                    "additionalIdentifiers": [
+                        {
+                            "scheme": "GB-PPON",
+                            "id": "PDPT-3135-BWWY"
+                        }
+                    ],
+                    "address": {
+                        "streetAddress": "NHS England, 7&8 Wellington Place",
+                        "locality": "Leeds",
+                        "postalCode": "LS1 4AP",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKE42"
+                    },
+                    "contactPoint": {
+                        "email": "england.commercialqueries@nhs.net"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthorityCentralGovernment",
+                                "description": "Public authority - central government"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "NHS NORTH OF ENGLAND COMMISSIONING SUPPORT UNIT",
+                    "id": "GB-NHS-0AR",
+                    "identifier": {
+                        "scheme": "GB-NHS",
+                        "id": "0AR"
+                    },
+                    "additionalIdentifiers": [
+                        {
+                            "scheme": "GB-PPON",
+                            "id": "PJGL-8154-MTZX"
+                        }
+                    ],
+                    "address": {
+                        "streetAddress": "John Snow House",
+                        "locality": "Durham",
+                        "postalCode": "DH1 3YG",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKC14"
+                    },
+                    "contactPoint": {
+                        "email": "necsu.neprocurement@nhs.net"
+                    },
+                    "roles": [
+                        "procuringEntity",
+                        "processContactPoint"
+                    ],
+                    "roleDetails": "Procurement Delivery Partner - Managing the Tender Process"
+                }
+            ],
+            "buyer": {
+                "id": "GB-NHS-X24",
+                "name": "NHS ENGLAND"
+            },
+            "planning": {
+                "noEngagementNoticeRationale": "UK2 - Preliminary market engagement was published\nNotice identifier: 2025/S 000-004027"
+            },
+            "tender": {
+                "id": "NHSE1048",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Child Health Information Services - North East and Yorkshire and Cumbria",
+                "description": "North of England Commissioning Support (NECS) is a commissioning support service working for and on behalf of NHS England as a Procurement delivery partner to manage the procurement of the Child Health Information Services (CHIS) across the North East and Yorkshire and Cumbria.\nThe Contracting Authority are undertaking an Open Procedure and the awarding of this contract is subject to the Procurement Act 2023. For the avoidance of doubt, the provisions of the Provider Selection Regime 2023 and/ or Public Contracts Regulations 2015 do not apply to this award.\nThis tender notice is being published to alert the market of this opportunity and the Contracting Authority's intention to appoint a provider.  It is the intention of the Contracting Authority to award a public contract to the provider who submits the most advantageous tender as a result of the competitive tendering procedure.\nThe primary aim of CHIS is to establish and manage comprehensive child health record records.  These are used to support organisations that provide specified public health interventions in ensuring that all children are offered the full range public health interventions.\nThe opportunity will be offered to the market as a single lot as it is  not suitable or not applicable for lotting.\nThe contract term is for an initial period of 5 years commencing on 01 April 2027, with an option to extend for a further 2 years at the discretion of the Contracting Authority and Governance, subject to satisfactory contractual and financial performance.\nThe closing date for submission of competition response is by 12 noon on 20 April 2026.\nAdditional information\nNECS is utilising an electronic tendering tool to manage this competition and communicate with potential providers. Accordingly, there will be no hard copy documents\nissued to potential providers and all communications with NECS, including response submissions, will be conducted via the Atamis portal at:\nhttps://healthfamily.force.com/s/Welcome.\nIt is free to register on the portal and it can be accessed at\nany time of day providing you have a working internet connection. Should providers have any queries, or are having problems registering on the portal; they should contact the Atamis helpdesk via:\nSupport-health@Atamis.co.uk or phone number 0800 9956035\nThe helpdesk is open Monday - Friday between 08.00 am - 06.00 pm\nTender documentation will be available on the e-tendering site from 19 March 2026.",
+                "status": "active",
+                "items": [
+                    {
+                        "id": "1",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "48814400",
+                                "description": "Clinical information system"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "85100000",
+                                "description": "Health services"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKC",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            },
+                            {
+                                "region": "UKE",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "value": {
+                    "amountGross": 62062945,
+                    "amount": 51719121,
+                    "currency": "GBP"
+                },
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Open procedure",
+                "mainProcurementCategory": "services",
+                "aboveThreshold": true,
+                "submissionMethodDetails": "Tenderers must complete their Tenders within the E-Tendering Portal, Atamis\nThe procurement documents are available for unrestricted and full direct access, free of charge, via Atamis:\nhttps://health-family.force.com/s/Welcome\nFull details are included in the Invitation to Tender document pack.",
+                "submissionTerms": {
+                    "electronicSubmissionPolicy": "allowed",
+                    "languages": [
+                        "en"
+                    ]
+                },
+                "tenderPeriod": {
+                    "endDate": "2026-04-22T12:00:00+01:00"
+                },
+                "enquiryPeriod": {
+                    "endDate": "2026-04-07T23:59:00+01:00"
+                },
+                "awardPeriod": {
+                    "endDate": "2026-09-01T23:59:59+01:00"
+                },
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "active",
+                        "value": {
+                            "amountGross": 62062945,
+                            "amount": 51719121,
+                            "currency": "GBP"
+                        },
+                        "awardCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "quality",
+                                    "name": "Technical",
+                                    "numbers": [
+                                        {
+                                            "number": 90,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "quality",
+                                    "name": "Social Value",
+                                    "numbers": [
+                                        {
+                                            "number": 10,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "suitability": {
+                            "sme": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2027-04-01T00:00:00+01:00",
+                            "endDate": "2032-03-31T23:59:59+01:00",
+                            "maxExtentDate": "2034-03-31T23:59:59+01:00"
+                        },
+                        "hasRenewal": true,
+                        "renewal": {
+                            "description": "The duration of the contract is 5 years, with the option to extend for a further 2 years. Any extension will be subject to satisfactory contractual and financial performance, and at the sole discretion of the Contracting Authority and Governance."
+                        }
+                    }
+                ],
+                "documents": [
+                    {
+                        "id": "conflictOfInterest",
+                        "documentType": "conflictOfInterest",
+                        "description": "Not published"
+                    },
+                    {
+                        "id": "L-1",
+                        "documentType": "biddingDocuments",
+                        "url": "https://atamis-1928.my.site.com/s/Welcome"
+                    },
+                    {
+                        "id": "025437-2026",
+                        "documentType": "tenderNotice",
+                        "noticeType": "UK4",
+                        "description": "Tender notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/025437-2026",
+                        "datePublished": "2026-03-19T16:41:55Z",
+                        "format": "text/html"
+                    }
+                ],
+                "amendments": [
+                    {
+                        "description": "Tender documentation will be available on the e-tendering site from 19 March 2026\nEnquiry deadline\n7 April 2026, 11:59pm\nTender submission deadline\n22 April 2026, 12:00pm",
+                        "id": "025437-2026"
+                    }
+                ]
+            },
+            "language": "en"
+        }
+    ]
+}

@@ -1,0 +1,1 @@
+{"columns": ["id", "country", "identifier", "name", "provisional"], "row_count": 1, "rows": [[31619786, "GB", null, "NHS England - North East & Yorkshire", 1]], "truncated": false, "_sql": "SELECT id, country, identifier, name, provisional FROM organizations WHERE name_norm = 'nhs england - north east & yorkshire' LIMIT 20"}

@@ -1,0 +1,2984 @@
+{
+ "computed": "2026-10-12",
+ "summary": {
+  "org_13T": 31600907,
+  "note_31593407": "is GBNHS03N (NHS South Yorkshire ICB), not 13T",
+  "targets_read": 44,
+  "notices_read": 43,
+  "packages_read": 43,
+  "csu_named": 15,
+  "csu_named_role_buyer": 15,
+  "csu_named_release_buyer_is_13T": 15,
+  "csu_named_nenc_listed_separately": 14,
+  "csu_named_nenc_role": {
+   "reviewBody": 14
+  },
+  "csu_named_contact": {
+   "necsu.psrprocurement@nhs.net": 15
+  },
+  "csu_named_tags": {
+   "award+contract": 15
+  },
+  "csu_named_dates": [
+   "2024-04-23",
+   "2024-05-09"
+  ],
+  "nenc_sample": 14,
+  "nenc_sample_contact": {
+   "necsu.neprocurement@nhs.net": 5,
+   "necsu.psrprocurement@nhs.net": 9
+  },
+  "by_action": [
+   {
+    "code": "13T",
+    "action": "rehome",
+    "target_org": 30929531,
+    "mentions": 15
+   },
+   {
+    "code": "13T",
+    "action": "rehome",
+    "target_org": 31541949,
+    "mentions": 1
+   },
+   {
+    "code": "26A",
+    "action": "rehome",
+    "target_org": 30915905,
+    "mentions": 1
+   },
+   {
+    "code": "26A",
+    "action": "rehome",
+    "target_org": 1280779,
+    "mentions": 1
+   },
+   {
+    "code": "15E",
+    "action": "rehome",
+    "target_org": 31542353,
+    "mentions": 1
+   },
+   {
+    "code": "15E",
+    "action": "rehome",
+    "target_org": 31601027,
+    "mentions": 1
+   },
+   {
+    "code": "15E",
+    "action": "rehome",
+    "target_org": 31601028,
+    "mentions": 1
+   },
+   {
+    "code": "15E",
+    "action": "rehome",
+    "target_org": 31601029,
+    "mentions": 1
+   },
+   {
+    "code": "15C",
+    "action": "rehome",
+    "target_org": 30917049,
+    "mentions": 1
+   },
+   {
+    "code": "15N",
+    "action": "rehome",
+    "target_org": 31536069,
+    "mentions": 2
+   },
+   {
+    "code": "11X",
+    "action": "out of scope (A2 held)",
+    "target_org": null,
+    "mentions": 1
+   },
+   {
+    "code": "93C",
+    "action": "rehome",
+    "target_org": 31617815,
+    "mentions": 1
+   },
+   {
+    "code": "RNZ91",
+    "action": "none",
+    "target_org": null,
+    "mentions": 1
+   },
+   {
+    "code": "RTR54",
+    "action": "rehome (optional)",
+    "target_org": 31556600,
+    "mentions": 1
+   },
+   {
+    "code": "X7V4Q",
+    "action": "rehome (optional)",
+    "target_org": 31556600,
+    "mentions": 1
+   }
+  ]
+ },
+ "rows": [
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46888904,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-05-02",
+   "why": "refused",
+   "publication_id": "014164-2024",
+   "published_at": "2024-05-02T10:26:49+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "Collingwood-GPcover Collingwood-GPcover.KM24/25",
+   "description_head": "GMS Services to residents temporarily residing in a care home",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "Collingwood Health Group",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "North Shields"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46889505,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-05-09",
+   "why": "refused",
+   "publication_id": "014821-2024",
+   "published_at": "2024-05-09T13:10:52+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "NT Carers Centre /NTCC.99C.EJ.2324.01",
+   "description_head": "Support work - the provision of 1-1 and peer mental health support for carers, the development and delivery of training sessions to carers, professionals and targeted work with GP practices to improve identification and support for carers                                                                                   Young Carers - the provision of 1-1 and group support for young carers, advocac",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "North Tyneside Carers",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "North Shields"
+    },
+    {
+     "id": "GB-FTS-112852",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46937373,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-23",
+   "why": "refused",
+   "publication_id": "013148-2024",
+   "published_at": "2024-04-23T13:56:54+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "BLUEBIRDNCLE.AR.2324.01 / D J Haswell - EoL Domiciliary Care",
+   "description_head": "Bluebird Care - End of Life Domiciliary Care",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "Bluebird Care",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "tyne and wear"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46937405,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-23",
+   "why": "refused",
+   "publication_id": "013180-2024",
+   "published_at": "2024-04-23T15:42:02+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "INVOLVENORTHEAST.AR.2324.01 / Involve North East - Engagement",
+   "description_head": "NENC ICB Engagement Service",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "NENC ICB Engagment service",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46937475,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-24",
+   "why": "refused",
+   "publication_id": "013298-2024",
+   "published_at": "2024-04-24T13:14:18+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "CYGNUS.00L.EJ.2324.01 Cygnus counselling and wellbeing support service",
+   "description_head": "Cygnus - Counselling and Bereavement Counselling Support and a Parent Factor Service",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "Cygnus",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Northumberland"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46937487,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-24",
+   "why": "refused",
+   "publication_id": "013310-2024",
+   "published_at": "2024-04-24T14:11:29+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "Qwell for Adults Qwell.00L.AB.2324.01",
+   "description_head": "On line Counselling and digital mental health and wellbeing support service for adults and older people",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "Qwell",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "london"
+    },
+    {
+     "id": "GB-FTS-111893",
+     "name": "Qwell",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "London"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46937551,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-25",
+   "why": "refused",
+   "publication_id": "013374-2024",
+   "published_at": "2024-04-25T09:05:10+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "The Grove Medical - GPwSI ENT",
+   "description_head": "GP with Special Interest - ENT service",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "The Grove Medical Group",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle upon Tyne"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46937614,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-25",
+   "why": "refused",
+   "publication_id": "013437-2024",
+   "published_at": "2024-04-25T13:41:58+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "STFT Holdings Palliative and End of Life Care Beds in South Tyneside",
+   "description_head": "Palliative and End of Life Care - Community Provision Beds\nThe service will: \n3.1.1.\t Deliver Palliative and end of life care 24 hours a day, 7 days a week in an community bedded area, which will include symptom management, end of life care, crisis respite care and assessment of a patient's changing illness, under the care of a palliative care team, including a physician, as and when required. OOH",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "STFT Holdings LTD",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "South Shields"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46937774,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-26",
+   "why": "refused",
+   "publication_id": "013597-2024",
+   "published_at": "2024-04-26T13:08:06+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "MATRIXCT.00N.LM.2324.01 MATRIX HEALTH SERVICES",
+   "description_head": "AQP Community Based Carpal Tunnel Decompression Service",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "Matrix Health Services UK Ltd",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Houghton le Spring"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46938010,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-30",
+   "why": "refused",
+   "publication_id": "013850-2024",
+   "published_at": "2024-04-30T10:26:02+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "AQP Podiatry NORTHEASTPODIATRY.00N.LM.2324.01",
+   "description_head": "AQP Podiatry - non-complex podiatry services",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "North East Podiatry",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Sunderland"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46991199,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NHS England - North East & Yorkshire",
+   "date": "2022-12-21",
+   "why": "refused",
+   "publication_id": "036139-2022",
+   "published_at": "2022-12-21T09:49:40+00:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NHS England - North East & Yorkshire"
+   },
+   "title": "NHSE884 Elswick APMS PIN for Call for Competition",
+   "description_head": "North of England Commissioning Support (NECS) is working for and on behalf of North East and North Cumbria ICB (The Contracting Authority) to commission an Alternative Provider Medical Service (APMS) to be delivered from Elswick Health Centre, Meldon Street, Elswick, Newcastle Upon Tyne NE4 6SH to cover the patients of Elswick Family Practice with a weighted patient list size of 7,890.51  (April 2",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NHS England - North East & Yorkshire",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.neprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Waterfront 4 Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nhse-named",
+    "action": "rehome",
+    "target_org": 31541949,
+    "confidence": "medium",
+    "note": "Buyer named 'NHS England - North East & Yorkshire' under 13T; the text says NECS acts for NENC ICB (the contracting authority). NECS is hosted by NHS England, so the name is the host's region. Named party = NHS England NE&Y: Y63 org 31541949; its exact-name provisional twin is 31619786 (3 mentions). Not NENC's own name, so it cannot stay on 13T under the strict gate."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 47148728,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-23",
+   "why": "refused",
+   "publication_id": "013116-2024",
+   "published_at": "2024-04-23T11:46:01+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "ASPR.LM.2324.01 - Asylum Seekers Prescription Recharges",
+   "description_head": "Asylum Seekers Prescription Recharges",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": "Hannah Jennings",
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-TBC",
+     "name": "Lobley Hill Pharmacy",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-TBC",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Gateshead"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 47148845,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-24",
+   "why": "refused",
+   "publication_id": "013233-2024",
+   "published_at": "2024-04-24T08:50:35+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "RIVERSIDECOMMUNITY.AR.2324.01 / Riverside Community Health Project",
+   "description_head": "Riverside Community Health Project",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "Riverside Community Health Project",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 47148858,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-24",
+   "why": "refused",
+   "publication_id": "013246-2024",
+   "published_at": "2024-04-24T09:42:32+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "CHILDRENNE(NEWCASTLE).AR.2324.01 / Children North East - Counselling Services",
+   "description_head": "Counselling Services",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "Children North East",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 47149301,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-04-29",
+   "why": "refused",
+   "publication_id": "013689-2024",
+   "published_at": "2024-04-29T09:56:30+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "Lifecycle Lifecycle.00N.JW.2324.01",
+   "description_head": "Lifecycle Service\nAdult Talking Therapies, tier 2 CAMHS, Mental Health Support Teams in Schools and an enhanced primary care mental health support team - Getting help support for Children and Young People and Parents",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "Sunderland Royal Hospital",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "sunderland"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 47149905,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+   "date": "2024-05-03",
+   "why": "refused",
+   "publication_id": "014293-2024",
+   "published_at": "2024-05-03T09:40:39+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT"
+   },
+   "title": "EdithMoffat-GPcover",
+   "description_head": "GMS Services to residents temporarily residing in a care home",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-tbc",
+     "name": "Northumbria Primary Care (NPC)",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-tbc",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    },
+    {
+     "id": "GB-FTS-112852",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 30929531,
+    "confidence": "high",
+    "note": "NECS names itself as the buyer party (role buyer, its own address and necsu.* contact) and lists NENC as a separate party; the contract is NENC's (PSR direct award, NENC place codes in the title). The party is the CSU acting as agent, as 0AR's own mentions already record it (procuringEntity on NENC/NHSE notices)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46941023,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NHS North East and North Cumbria Integrated Care Board (ICB)",
+   "date": "2023-02-01",
+   "why": "nenc-oldest",
+   "publication_id": "003061-2023",
+   "published_at": "2023-02-01T10:55:11+00:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NHS North East and North Cumbria Integrated Care Board (ICB)"
+   },
+   "title": "NECS417 Alternative to Crisis Service in Newcastle",
+   "description_head": "North of England Commissioning Support (NECS) are working for, and on behalf of, NHS North East & North Cumbria Integrated Care Board (ICB) - Newcastle Place (the Contracting Authority) who wish to commission an Alternative to Crisis Service in Newcastle.\nThe basic principles that mirror those of the open procedure will be followed for this procurement to test the capacity, capability, and technic",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NHS North East and North Cumbria Integrated Care Board (ICB)",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.neprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Goldcrest Way, Riverside House, Newburn, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-02073465",
+     "name": "Mental Health Concern",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-02073465",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "2 Esh Plaza, 1st Floor, Sir Bobby Robson Way, Gosforth, NE13 9BA"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46953319,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East & North Cumbria Integrated Care Board",
+   "date": "2023-06-12",
+   "why": "nenc-oldest",
+   "publication_id": "016564-2023",
+   "published_at": "2023-06-12T12:55:23+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tender"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East & North Cumbria Integrated Care Board"
+   },
+   "title": "Ophthalmology (Cataracts & Glaucoma)",
+   "description_head": "North of England Commissioning Support (NECS) are working for, and on behalf of, NHS North East & North Cumbria Integrated Care Board who wish to commission an Ophthalmology (Glaucoma and Cataracts) Service as one contract covering the following areas:\nNorth Tyneside\nNewcastle & Gateshead\nNorthumberland\nThe basic principles that mirror that of the open procedure will be followed for this procureme",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East & North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.neprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Newcastle Upon Tyne"
+   },
+   "other_parties": [
+    {
+     "id": "GB-FTS-124",
+     "name": "Public Procurement Review Service",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "London"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46924486,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NHS North East & North Cumbria Integrated Care Board",
+   "date": "2023-12-21",
+   "why": "nenc-oldest",
+   "publication_id": "037677-2023",
+   "published_at": "2023-12-21T13:05:14+00:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "planning"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NHS North East & North Cumbria Integrated Care Board"
+   },
+   "title": "Out of Hours and Home Visiting Service",
+   "description_head": "North of England Commissioning Support (NECS) are working for, and on behalf of, NHS North East & North Cumbria Integrated Care Board who wish to alert the market to the future opportunity of Out of Hours and Home Visiting Services for the following areas:\n\u2022\tLot 1 - Newcastle\n\u2022\tLot 2 - North Tyneside\n\u2022\tLot 3 - Northumberland\nIt is anticipated that the tender live date for this procurement will be ",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NHS North East & North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.neprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Newcastle"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46936664,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2024-04-16",
+   "why": "nenc-csu-window",
+   "publication_id": "012262-2024",
+   "published_at": "2024-04-16T08:55:43+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "Northumberland Together in a Crisis",
+   "description_head": "Together in a Crisis",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle upon Tyne, NE15 8NY"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46936742,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2024-04-16",
+   "why": "nenc-csu-window",
+   "publication_id": "012380-2024",
+   "published_at": "2024-04-16T15:20:16+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "North Tyneside Living Well Service",
+   "description_head": "The service aims to support patients to maintain their health, well-being and independence for as long as possible, managing and / or receiving care in their home and local community wherever possible'.",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46936764,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2024-04-16",
+   "why": "nenc-csu-window",
+   "publication_id": "012402-2024",
+   "published_at": "2024-04-16T15:53:51+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "QHM-2024-8298 Barnardo's Orchard Mosaic North Tyneside",
+   "description_head": "Children and Young People's Bereavement Counselling and Sexual Abuse Counselling",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46936947,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2024-04-18",
+   "why": "nenc-csu-window",
+   "publication_id": "012585-2024",
+   "published_at": "2024-04-18T08:28:06+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "GMS Services to residents temporarily residing in care homes",
+   "description_head": "GMS Services to residents temporarily residing in a care home service across North Tyneside",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46936956,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2024-04-18",
+   "why": "nenc-csu-window",
+   "publication_id": "012596-2024",
+   "published_at": "2024-04-18T09:00:57+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "QHM-2024-2417 TYNEHEALTH_SUNDAY",
+   "description_head": "Extended access to GP appointments on Sundays and Bank Holidays",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 47148226,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2024-04-18",
+   "why": "nenc-csu-window",
+   "publication_id": "012614-2024",
+   "published_at": "2024-04-18T10:06:31+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "\"Teesside Hospice Care Foundation - Hospice Services Ref: TeessideH2024/25\"",
+   "description_head": "Teesside Hospice - End of life services and in-patient care.",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-TBC",
+     "name": "\"Teesside Hospice Care Foundation - Hospice Services Ref: TeessideH2024/25\"",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-TBC",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "1 Northgate Road Linthorpe, Middlesbrough, TS5 5NW \""
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46937033,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2024-04-18",
+   "why": "nenc-csu-window",
+   "publication_id": "012691-2024",
+   "published_at": "2024-04-18T14:50:34+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "Counselling Services for Eating Distress",
+   "description_head": "Counselling Services for Eating Distress across Newcastle, Gateshead and North Tyneside",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46937213,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2024-04-22",
+   "why": "nenc-csu-window",
+   "publication_id": "012906-2024",
+   "published_at": "2024-04-22T08:41:10+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "A Better U Coaching Service - South Tyneside",
+   "description_head": "\"A Better U Coaching (ABU) Service: community based social prescribing service, delivered across South Tyneside. The Service has two goals:\n1.\tTo improve the quality of life for people by increasing their skills, knowledge and confidence to manage their illness. \n2.\tTo reduce costs and or improve value for the NHS in treating them. \"",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 47167416,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "NHS North East and North Cumbria Integrated Care Board",
+   "date": "2024-08-07",
+   "why": "nenc-newest",
+   "publication_id": "024759-2024",
+   "published_at": "2024-08-07T08:44:23+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "planning"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "NHS North East and North Cumbria Integrated Care Board"
+   },
+   "title": "NECS537 Non-Surgical Vasectomy Services - South Tyneside",
+   "description_head": "North of England Commissioning Support is working for and on behalf of NHS North East and North Cumbria Integrated Care Board (the Relevant Authority) and is managing this market engagement exercise for the provision of Vasectomy Services in South Tyneside.\nThe Relevant Authority is issuing this Prior Information Notice (PIN) as a Request for Information (RFI) to engage with the market and to gath",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "NHS North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.neprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-FTS-120624",
+     "name": "North of England Commissioning Support",
+     "roles": [
+      "processContactPoint"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": "necsu.neprocurement@nhs.net",
+     "contact_name": null,
+     "address": "North of England Commissioning Support (NECS)  John Snow House, Durham University Science Park, County Durham, DH1 3YG"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 47170183,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2024-08-29",
+   "why": "nenc-newest",
+   "publication_id": "027518-2024",
+   "published_at": "2024-08-29T10:47:48+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "awardUpdate",
+    "contractUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "ICBTV-HOUSING-HOMEGROUP-23-24",
+   "description_head": "",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.psrprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Way, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-FTS-122927",
+     "name": "HOMEGROUP",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle upon Tyne"
+    },
+    {
+     "id": "GB-FTS-60956",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "13T",
+   "org_id": 31600907,
+   "notice_id": 46910546,
+   "section_id": "ORG-GB-NHS-13T",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2024-12-02",
+   "why": "nenc-newest",
+   "publication_id": "038756-2024",
+   "published_at": "2024-12-02T13:25:59+00:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "The Deep End Immunisations Catch Ups Team",
+   "description_head": "A nurse-led dedicated immunisations team to provide a community outreach immunisations programme to those patients registered with a Deep End GP practice in a primary care setting and agreed allied settings including the patient's home and community settings.",
+   "party": {
+    "id": "GB-NHS-13T",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-13T",
+    "additional_identifiers": [],
+    "contact_email": "necsu.neprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Stella House, Goldcrest Wasy, Newcastle Upon Tyne, NE15 8NY"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-TBC",
+     "name": "Intrahealth",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-TBC",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "1st Floor, William Brown Centre, Manor Way, Peterlee, SR8 5TW"
+    },
+    {
+     "id": "GB-FTS-107692",
+     "name": "North East and North Cumbria Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Newcastle Upon Tyne"
+    }
+   ],
+   "nenc_listed_separately": true,
+   "reading": {
+    "kind": "nenc-as-buyer",
+    "action": "fold (no rehome)",
+    "target_org": null,
+    "confidence": "high",
+    "note": "NENC named as the buyer party; published by NECS (necsu.* contact, NECS address)."
+   }
+  },
+  {
+   "code": "26A",
+   "org_id": 30915273,
+   "notice_id": 46763776,
+   "section_id": "ORG-GB-NHS-26a#2",
+   "name": "Norfolk & Norwich University Hospitals NHS Foundation Trust",
+   "date": "2025-11-18",
+   "why": "refused",
+   "publication_id": "074890-2025",
+   "published_at": "2025-11-18T15:47:33+00:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "awardUpdate",
+    "contractUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-26a",
+    "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD"
+   },
+   "title": "Norfolk and Norwich University Hospitals NHS Foundation Trust (NNUH) 2022 - 2027",
+   "description_head": "",
+   "party": {
+    "id": "GB-NHS-26a",
+    "name": "Norfolk & Norwich University Hospitals NHS Foundation Trust",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": "GB-NHS-26a",
+    "additional_identifiers": [],
+    "contact_email": null,
+    "contact_name": null,
+    "address": "Norwich"
+   },
+   "other_parties": [
+    {
+     "id": "GB-NHS-26a",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "roles": [
+      "buyer"
+     ],
+     "identifier": "GB-NHS-26a",
+     "additional_identifiers": [],
+     "contact_email": "nwicb.contractsandprocurement@nhs.net",
+     "contact_name": null,
+     "address": "8th Floor, County Hall, Martineau Lane, Norwich, NR12DH"
+    },
+    {
+     "id": "GB-NHS-RM1",
+     "name": "Norfolk & Norwich University Hospitals NHS Foundation Trust",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-RM1",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Norwich"
+    },
+    {
+     "id": "GB-FTS-143090",
+     "name": "NHS Norfolk and Waveney Integrated Care Board (ICB)",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Norwich"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "shared-party-id-supplier",
+    "action": "rehome",
+    "target_org": 30915905,
+    "confidence": "high",
+    "note": "Supplier NNUH published under the ICB's party id GB-NHS-26a (issue 484 shape); the same release also lists NNUH correctly as GB-NHS-RM1. Target: the RM1 identity org 30915905 (RM1 is not allowlisted)."
+   }
+  },
+  {
+   "code": "26A",
+   "org_id": 30915273,
+   "notice_id": 46880633,
+   "section_id": "ORG-GB-NHS-26A#2",
+   "name": "James Paget University Hospitals NHS Foundation Trust",
+   "date": "2025-05-13",
+   "why": "refused",
+   "publication_id": "020794-2025",
+   "published_at": "2025-05-13T11:55:01+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "awardUpdate",
+    "contractUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-26A",
+    "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD"
+   },
+   "title": "James Paget University Hospitals NHS Foundation Trust 2022 - 2027 (CV106)",
+   "description_head": "",
+   "party": {
+    "id": "GB-NHS-26A",
+    "name": "James Paget University Hospitals NHS Foundation Trust",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": "GB-NHS-26A",
+    "additional_identifiers": [],
+    "contact_email": null,
+    "contact_name": null,
+    "address": "Great Yarmouth"
+   },
+   "other_parties": [
+    {
+     "id": "GB-NHS-26A",
+     "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+     "roles": [
+      "buyer"
+     ],
+     "identifier": "GB-NHS-26A",
+     "additional_identifiers": [],
+     "contact_email": "nwicb.contractsandprocurement@nhs.net",
+     "contact_name": null,
+     "address": "8th Floor, County Hall, Martineau Lane, Norwich, NR12DH"
+    },
+    {
+     "id": "GB-NHS-RGP",
+     "name": "James Paget University Hospitals NHS Foundation Trust",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-RGP",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Great Yarmouth"
+    },
+    {
+     "id": "GB-FTS-143090",
+     "name": "NHS Norfolk and Waveney Integrated Care Board (ICB)",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Norwich"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "shared-party-id-supplier",
+    "action": "rehome",
+    "target_org": 1280779,
+    "confidence": "high",
+    "note": "Supplier James Paget published under the ICB's party id GB-NHS-26A; the same release lists it as GB-NHS-RGP. Target: RGP body survivor 1280779 (merged GBNHSRGP)."
+   }
+  },
+  {
+   "code": "15E",
+   "org_id": 31546689,
+   "notice_id": 46899287,
+   "section_id": "ORG-GB-NHS-15E",
+   "name": "NHS Black Country Integrated Care Board",
+   "date": "2024-08-15",
+   "why": "refused",
+   "publication_id": "025992-2024",
+   "published_at": "2024-08-15T15:55:39+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-15E",
+    "name": "NHS Black Country Integrated Care Board"
+   },
+   "title": "Residential Short Breaks Service for Children and Young People",
+   "description_head": "NHS Black Country Integrated Care Board wishes to inform the market that upon successful completion of the VEAT Notice the contract has been awarded to Progress Care.\nThe award has been conducted under Regulation 32(2)(b)(ii) (i.e., competition is absent for technical reasons) for the provision of a Residential Short Breaks Service for the Borough of Dudley.\nThe contract duration is 3 years commen",
+   "party": {
+    "id": "GB-NHS-15E",
+    "name": "NHS Black Country Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-15E",
+    "additional_identifiers": [],
+    "contact_email": "kimberley.walker13@nhs.net",
+    "contact_name": "Kimberley Walker",
+    "address": "St John's House,East Street, LEICESTER, LE16NB"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-04014026",
+     "name": "Progress Children's Services Limited",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-04014026",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Wolverhampton"
+    },
+    {
+     "id": "GB-FTS-1406",
+     "name": "The High Courts",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "London"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "other-icb-buyer-wrong-code",
+    "action": "rehome",
+    "target_org": 31542353,
+    "confidence": "high",
+    "note": "Buyer is NHS Black Country ICB (Dudley short-breaks contract; AGEM CSU contact at St John's House, Leicester) typed with BSol's sub-ICB code 15E. Target: QUA survivor 31542353."
+   }
+  },
+  {
+   "code": "15E",
+   "org_id": 31546689,
+   "notice_id": 46751084,
+   "section_id": "ORG-GB-NHS-15E#2",
+   "name": "Wake Green Surgery",
+   "date": "2025-10-03",
+   "why": "refused",
+   "publication_id": "062119-2025",
+   "published_at": "2025-10-03T12:35:12+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-15E",
+    "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD"
+   },
+   "title": "Enhanced Service Offer 2025/26 Moseley, Billesley & Yardley Wood PCN",
+   "description_head": "The service aims to support patient access to Primary Care and to improve life expectancy for people of Birmingham and Solihull. Services are aligned to five clinical areas that are prioritised in the BSol Integrated Care Strategy 2023-2033: \n\u2022 Circulatory Disease \n\u2022 Infant mortality \n\u2022 Respiratory Illness \n\u2022 Cancer \n\u2022 Mental Health",
+   "party": {
+    "id": "GB-NHS-15E",
+    "name": "Wake Green Surgery",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": "GB-NHS-15E",
+    "additional_identifiers": [],
+    "contact_email": null,
+    "contact_name": null,
+    "address": "Birmingham"
+   },
+   "other_parties": [
+    {
+     "id": "GB-NHS-15E",
+     "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+     "roles": [
+      "buyer"
+     ],
+     "identifier": "GB-NHS-15E",
+     "additional_identifiers": [],
+     "contact_email": "Bsolpc.contracts@nhs.net",
+     "contact_name": null,
+     "address": "NHS Birmingham and Solihull Integrated Care Board Alpha Tower, 8th Floor, Suffolk Street Queensway, Birmingham, B11TT"
+    },
+    {
+     "id": "GB-NHS-M85006",
+     "name": "3\tM85006\tGreenridge Surgery\tMoseley, Billesley & Yardley Wood PCN\t671 Yardley Wood Road\tBillesley\tB13 0HN\t 10,375 \t\u00a3122,423.06\t\u00a3193,836.52\tMasserat",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85006",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85018",
+     "name": "Yardley Wood Health Centre",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85018",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85105",
+     "name": "Victoria Road Surgery",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85105",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85118",
+     "name": "Baldwins Lane Surgery",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85118",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-Y02571",
+     "name": "Poplar Primary Care Centre",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-Y02571",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-FTS-162667",
+     "name": "Birmingham and Solihull ICB",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "BIRMINGHAM"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "shared-party-id-supplier",
+    "action": "rehome",
+    "target_org": 31601027,
+    "confidence": "high",
+    "note": "GP practice supplier given the ICB's party id; its own ODS code M85074 stands as 31601027."
+   }
+  },
+  {
+   "code": "15E",
+   "org_id": 31546689,
+   "notice_id": 46751166,
+   "section_id": "ORG-GB-NHS-15E#2",
+   "name": "College Road Surgery",
+   "date": "2025-10-03",
+   "why": "refused",
+   "publication_id": "062201-2025",
+   "published_at": "2025-10-03T14:35:59+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-15E",
+    "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD"
+   },
+   "title": "Enhanced Service Offer 2025/26 Kingstanding, Erdington & Nechells PCN",
+   "description_head": "The service aims to support patient access to Primary Care and to improve life expectancy for people of Birmingham and Solihull. Services are aligned to five clinical areas that are prioritised in the BSol Integrated Care Strategy 2023-2033: \n\u2022 Circulatory Disease \n\u2022 Infant mortality \n\u2022 Respiratory Illness \n\u2022 Cancer \n\u2022 Mental Health",
+   "party": {
+    "id": "GB-NHS-15E",
+    "name": "College Road Surgery",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": "GB-NHS-15E",
+    "additional_identifiers": [],
+    "contact_email": null,
+    "contact_name": null,
+    "address": "Birmingham"
+   },
+   "other_parties": [
+    {
+     "id": "GB-NHS-15E",
+     "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+     "roles": [
+      "buyer"
+     ],
+     "identifier": "GB-NHS-15E",
+     "additional_identifiers": [],
+     "contact_email": "Bsolpc.contracts@nhs.net",
+     "contact_name": null,
+     "address": "NHS Birmingham and Solihull Integrated Care Board Alpha Tower, 8th Floor, Suffolk Street Queensway, Birmingham, B11TT"
+    },
+    {
+     "id": "GB-NHS-M85060",
+     "name": "The Oaks Medical Centre",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85060",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85081",
+     "name": "The Dove Medical Practice",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85081",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-15E",
+     "name": "Small Heath Medical Practice",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-15E",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85732",
+     "name": "Bloomsbury Medical Centre",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85732",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85759",
+     "name": "Nechells Practice",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85759",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85792",
+     "name": "Cotmore Surgery",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85792",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-FTS-162667",
+     "name": "Birmingham and Solihull ICB",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "BIRMINGHAM"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "shared-party-id-supplier",
+    "action": "rehome",
+    "target_org": 31601028,
+    "confidence": "high",
+    "note": "GP practice supplier given the ICB's party id; its own ODS code M85087 stands as 31601028."
+   }
+  },
+  {
+   "code": "15E",
+   "org_id": 31546689,
+   "notice_id": 46751166,
+   "section_id": "ORG-GB-NHS-15E#3",
+   "name": "Small Heath Medical Practice",
+   "date": "2025-10-03",
+   "why": "refused",
+   "publication_id": "062201-2025",
+   "published_at": "2025-10-03T14:35:59+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-15E",
+    "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD"
+   },
+   "title": "Enhanced Service Offer 2025/26 Kingstanding, Erdington & Nechells PCN",
+   "description_head": "The service aims to support patient access to Primary Care and to improve life expectancy for people of Birmingham and Solihull. Services are aligned to five clinical areas that are prioritised in the BSol Integrated Care Strategy 2023-2033: \n\u2022 Circulatory Disease \n\u2022 Infant mortality \n\u2022 Respiratory Illness \n\u2022 Cancer \n\u2022 Mental Health",
+   "party": {
+    "id": "GB-NHS-15E",
+    "name": "Small Heath Medical Practice",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": "GB-NHS-15E",
+    "additional_identifiers": [],
+    "contact_email": null,
+    "contact_name": null,
+    "address": "Birmingham"
+   },
+   "other_parties": [
+    {
+     "id": "GB-NHS-15E",
+     "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+     "roles": [
+      "buyer"
+     ],
+     "identifier": "GB-NHS-15E",
+     "additional_identifiers": [],
+     "contact_email": "Bsolpc.contracts@nhs.net",
+     "contact_name": null,
+     "address": "NHS Birmingham and Solihull Integrated Care Board Alpha Tower, 8th Floor, Suffolk Street Queensway, Birmingham, B11TT"
+    },
+    {
+     "id": "GB-NHS-M85060",
+     "name": "The Oaks Medical Centre",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85060",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85081",
+     "name": "The Dove Medical Practice",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85081",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-15E",
+     "name": "College Road Surgery",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-15E",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85732",
+     "name": "Bloomsbury Medical Centre",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85732",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85759",
+     "name": "Nechells Practice",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85759",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-NHS-M85792",
+     "name": "Cotmore Surgery",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-NHS-M85792",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Birmingham"
+    },
+    {
+     "id": "GB-FTS-162667",
+     "name": "Birmingham and Solihull ICB",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "BIRMINGHAM"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "shared-party-id-supplier",
+    "action": "rehome",
+    "target_org": 31601029,
+    "confidence": "high",
+    "note": "GP practice supplier given the ICB's party id; its own ODS code M85108 stands as 31601029."
+   }
+  },
+  {
+   "code": "15C",
+   "org_id": 31566597,
+   "notice_id": 46907344,
+   "section_id": "ORG-GB-NHS-15C",
+   "name": "NHS Devon Integrated Care Board",
+   "date": "2024-10-30",
+   "why": "refused",
+   "publication_id": "035235-2024",
+   "published_at": "2024-10-30T16:59:56+00:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-15C",
+    "name": "NHS Devon Integrated Care Board"
+   },
+   "title": "NHS Devon - Care Co-ordination Hub for Devon",
+   "description_head": "This notice is placed as a Prior Information Notice (PIN) to inform the market of NHS Devon Integrated Care Board's (the Commissioner's), intention to recommission a Care Co-ordination Hub for Devon . The Commissioner would like to communicate planned market engagement event(s) and request expressions of interest for these.\nThe Care Co-ordination Hub provides a senior level, multi-disciplinary, cl",
+   "party": {
+    "id": "GB-NHS-15C",
+    "name": "NHS Devon Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-15C",
+    "additional_identifiers": [],
+    "contact_email": "d-icb.contracting@nhs.net",
+    "contact_name": null,
+    "address": "Aperture House, Rydon Lane, Exeter, EX2 5AZ"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "other-icb-buyer-wrong-code",
+    "action": "rehome",
+    "target_org": 30917049,
+    "confidence": "high",
+    "note": "Buyer is NHS Devon ICB (Aperture House, Exeter; d-icb.contracting) typed with BNSSG's sub-ICB code 15C. Target: QJK survivor 30917049."
+   }
+  },
+  {
+   "code": "15N",
+   "org_id": 31555903,
+   "notice_id": 46807952,
+   "section_id": "ORG-GB-NHS-15N",
+   "name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board",
+   "date": "2026-04-13",
+   "why": "refused",
+   "publication_id": "033070-2026",
+   "published_at": "2026-04-13T09:41:44+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-15N",
+    "name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board"
+   },
+   "title": "Discharge to Assess Community Beds",
+   "description_head": "NHS Bristol, North Somerset and South Gloucestershire ICB (\"the Commissioner\") sought to commission the block provision of Pathway 3 (P3) Discharge to Assess Community Beds for patients in BNSSG. These beds will be delivered at Crossley House, South Gloucestershire operated by Ablecare Homes.\nBNSSG ICB has implemented a Discharge to Assess model following hospital admission, in collaboration with ",
+   "party": {
+    "id": "GB-NHS-15N",
+    "name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-15N",
+    "additional_identifiers": [],
+    "contact_email": "scwcsu.cbprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Bristol"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "other-icb-buyer-wrong-code",
+    "action": "rehome",
+    "target_org": 31536069,
+    "confidence": "high",
+    "note": "Buyer is NHS BNSSG ICB (SCW CSU contact) typed with Devon's sub-ICB code 15N. Target: QUY survivor 31536069."
+   }
+  },
+  {
+   "code": "15N",
+   "org_id": 31555903,
+   "notice_id": 46807955,
+   "section_id": "ORG-GB-NHS-15N",
+   "name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board",
+   "date": "2026-04-13",
+   "why": "refused",
+   "publication_id": "033073-2026",
+   "published_at": "2026-04-13T09:46:50+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "tenderUpdate"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-15N",
+    "name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board"
+   },
+   "title": "Discharge to Assess Community Beds",
+   "description_head": "NHS Bristol, North Somerset and South Gloucestershire ICB (\"the Commissioner\") sought to commission the block provision of Pathway 3 (P3) Discharge to Assess Community Beds for patients in BNSSG. These beds will be delivered at Rose Garden and Olive Tree House in South Gloucestershire, operated by Allegra Care Group.\nBNSSG ICB has implemented a Discharge to Assess model following hospital admissio",
+   "party": {
+    "id": "GB-NHS-15N",
+    "name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-15N",
+    "additional_identifiers": [],
+    "contact_email": "scwcsu.cbprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Bristol"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "other-icb-buyer-wrong-code",
+    "action": "rehome",
+    "target_org": 31536069,
+    "confidence": "high",
+    "note": "As 46807952 (same day, sibling contract)."
+   }
+  },
+  {
+   "code": "11X",
+   "org_id": 30916970,
+   "notice_id": 46825611,
+   "section_id": "ORG-GB-NHS-11X",
+   "name": "Rural Practice Network",
+   "date": "2026-06-01",
+   "why": "refused",
+   "publication_id": "051545-2026",
+   "published_at": "2026-06-01T16:06:39+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-QSL",
+    "name": "NHS SOMERSET INTEGRATED CARE BOARD"
+   },
+   "title": "Social Prescribing Link Worker - Rural Practice Network",
+   "description_head": "Social prescribing is a key part of Universal Personalised Care, connecting people to non-clinical community activities and services that support their social, emotional, and practical wellbeing. Delivered by trained professionals, it offers a holistic, person-centred approach that empowers individuals, reduces reliance on clinical services, and strengthens local communities through meaningful eng",
+   "party": {
+    "id": "GB-NHS-11X",
+    "name": "Rural Practice Network",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": "GB-NHS-11X",
+    "additional_identifiers": [],
+    "contact_email": null,
+    "contact_name": null,
+    "address": "Castle Cary"
+   },
+   "other_parties": [
+    {
+     "id": "GB-NHS-QSL",
+     "name": "NHS SOMERSET INTEGRATED CARE BOARD",
+     "roles": [
+      "buyer"
+     ],
+     "identifier": "GB-NHS-QSL",
+     "additional_identifiers": [],
+     "contact_email": "somicb.contracts-admin@nhs.net",
+     "contact_name": null,
+     "address": "Yeovil, BA22 8HR"
+    },
+    {
+     "id": "GB-FTS-119761",
+     "name": "Somerset Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Yeovil"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "other-party-supplier",
+    "action": "out of scope (A2 held)",
+    "target_org": null,
+    "confidence": "medium",
+    "note": "Supplier 'Rural Practice Network' on a Somerset ICB award, typed with the sub-ICB code 11X; 11X is anchor-held, so no target was sought."
+   }
+  },
+  {
+   "code": "93C",
+   "org_id": 31570826,
+   "notice_id": 46955480,
+   "section_id": "ORG-GB-NHS-93C",
+   "name": "N E L Commissioning Support Unit",
+   "date": "2023-07-03",
+   "why": "refused",
+   "publication_id": "018790-2023",
+   "published_at": "2023-07-03T10:27:39+01:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-93C",
+    "name": "N E L Commissioning Support Unit"
+   },
+   "title": "NCL CCG Digital Inclusion Support Services - Multi lot",
+   "description_head": "The Service is intended to be procured by means of 2 separate lots:\nLot 1 -- Facilitate more vulnerable patients to access NHS appointments and services digitally, through placing of smart phones in libraries and community hubs and loans to patients\nLot 2 - Educate and support Haringey patients to access primary care through digital channels, improving access and reducing demands on general practi",
+   "party": {
+    "id": "GB-NHS-93C",
+    "name": "N E L Commissioning Support Unit",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": "GB-NHS-93C",
+    "additional_identifiers": [],
+    "contact_email": "taofeeq.ladega@nhs.net",
+    "contact_name": "Taofeeq Ladega",
+    "address": "4th Floor - Unex Tower, London, E15 1DA"
+   },
+   "other_parties": [
+    {
+     "id": "GB-FTS-86411",
+     "name": "Federated4Health",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Hornsey"
+    },
+    {
+     "id": "GB-FTS-86412",
+     "name": "NHS North East London",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "4th Floor - Unex Tower, London, E15 1DA"
+    },
+    {
+     "id": "GB-FTS-86413",
+     "name": "NHS NEL ICB",
+     "roles": [
+      "mediationBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "4th Floor - Unex Tower, London, E15 1DA"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "csu-own-party",
+    "action": "rehome",
+    "target_org": 31617815,
+    "confidence": "medium",
+    "note": "NEL CSU names itself as buyer (Unex Tower contact) on an NCL CCG procurement (Haringey), with NEL ICB as review/mediation body. No CSU body exists (0DJ inactive, no GBNHS0DJ org); NEL CSU stands as 5 provisional clusters. Target: the exact-name cluster 31617815 (8 mentions); the largest is 6325843 (323)."
+   }
+  },
+  {
+   "code": "RNZ91",
+   "org_id": 31618308,
+   "notice_id": 46934518,
+   "section_id": "ORG-GB-NHS-RNZ91",
+   "name": "Salisbury Medical Practice",
+   "date": "2024-03-27",
+   "why": "refused",
+   "publication_id": "010013-2024",
+   "published_at": "2024-03-27T11:40:59+00:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-92G",
+    "name": "NHS Bath and North East Somerset, Swindon and Wiltshire Integrated Care Board"
+   },
+   "title": "GP with Extended Role Services",
+   "description_head": "NHS Bath and North East Somerset Integrated Care Board (\"BSW\") is commissioning a GP with Extended role service for low risk basal cell carcinoma removal, carpal tunnel and vasectomy procedures.\nBSW is directly awarding a contract to the existing provider Salisbury Medical Practice in accordance with the criteria outlined in Regulation (9) of the Health Care Services (Provider Selection Regime) Re",
+   "party": {
+    "id": "GB-NHS-RNZ91",
+    "name": "Salisbury Medical Practice",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": "GB-NHS-RNZ91",
+    "additional_identifiers": [],
+    "contact_email": null,
+    "contact_name": null,
+    "address": "Fisherton House, Fountain Way, Wilton Road, Salisbury, SP2 7FD"
+   },
+   "other_parties": [
+    {
+     "id": "GB-NHS-92G",
+     "name": "NHS Bath and North East Somerset, Swindon and Wiltshire Integrated Care Board",
+     "roles": [
+      "buyer"
+     ],
+     "identifier": "GB-NHS-92G",
+     "additional_identifiers": [],
+     "contact_email": "angelamortley@nhs.net",
+     "contact_name": "Angela Mortley",
+     "address": "Jenner House Unit E3, Langley Park, Avon Way, Chippenham, SN15 1GG"
+    },
+    {
+     "id": "GB-FTS-109247",
+     "name": "NHS Bath and North East Somerset, Swindon and Wiltshire Integrated Care Board",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Jenner House Unit E3, Langley Park, Avon Way, Chippenham, SN15 1GG"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "site-own-name",
+    "action": "none",
+    "target_org": null,
+    "confidence": "high",
+    "note": "Supplier 'Salisbury Medical Practice' is the ODS name of RNZ91 itself; the holder is right and is no member."
+   }
+  },
+  {
+   "code": "RTR54",
+   "org_id": 31620988,
+   "notice_id": 46942387,
+   "section_id": "ORG-GB-NHS-RTR54",
+   "name": "North East and North Cumbria Integrated Care Board",
+   "date": "2023-02-14",
+   "why": "refused",
+   "publication_id": "004501-2023",
+   "published_at": "2023-02-14T12:59:43+00:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "planning"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-RTR54",
+    "name": "North East and North Cumbria Integrated Care Board"
+   },
+   "title": "Integrated GP Out of Hours Service",
+   "description_head": "NECS463 Integrated GP Out of Hours Service across the South Tees locality of Tees Valley for and on behalf of NHS North East and North Cumbria Integrated Care Board\nNorth of England Commissioning Support (NECS) working with NHS North East and North Cumbria Integrated Care Board in the localities of Middlesbrough, Redcar and Cleveland (South Tees) are conducting a Request For Information (RFI) exer",
+   "party": {
+    "id": "GB-NHS-RTR54",
+    "name": "North East and North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": "GB-NHS-RTR54",
+    "additional_identifiers": [],
+    "contact_email": "necsu.neprocurement@nhs.net",
+    "contact_name": null,
+    "address": "John Snow House, North Ormesby, DH1 3YG"
+   },
+   "other_parties": [],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-under-site-code",
+    "action": "rehome (optional)",
+    "target_org": 31556600,
+    "confidence": "high",
+    "note": "Buyer is NENC ICB (NECS John Snow House, South Tees locality) typed with South Tees Hospitals' site code RTR54. Not a member (other-body name); a 317 rehome to QHM survivor 31556600 empties the site holder."
+   }
+  },
+  {
+   "code": "X7V4Q",
+   "org_id": 31612702,
+   "notice_id": 46919481,
+   "section_id": "ORG-GB-NHS-X7V4Q",
+   "name": "NHS North East & North Cumbria Integrated Care Board",
+   "date": "2023-11-02",
+   "why": "refused",
+   "publication_id": "032388-2023",
+   "published_at": "2023-11-02T08:43:55+00:00",
+   "releases_in_package": 1,
+   "release_tags": [
+    "award",
+    "contract"
+   ],
+   "release_buyer": {
+    "id": "GB-NHS-X7V4Q",
+    "name": "NHS North East & North Cumbria Integrated Care Board"
+   },
+   "title": "Ophthalmology (Cataracts and Glaucoma)",
+   "description_head": "Awarding of: \nNorth of England Commissioning Support (NECS) are working for, and on behalf of, NHS North East & North Cumbria Integrated Care Board who wish to commission an Ophthalmology (Glaucoma and Cataracts) Service as one contract covering the following areas: North Tyneside Newcastle & Gateshead Northumberland The basic principles that mirror that of the open procedure will be followed for ",
+   "party": {
+    "id": "GB-NHS-X7V4Q",
+    "name": "NHS North East & North Cumbria Integrated Care Board",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": "GB-NHS-X7V4Q",
+    "additional_identifiers": [],
+    "contact_email": "necsu.neprocurement@nhs.net",
+    "contact_name": null,
+    "address": "Carlisle"
+   },
+   "other_parties": [
+    {
+     "id": "GB-COH-06722353",
+     "name": "Primary Eyecare Services",
+     "roles": [
+      "supplier"
+     ],
+     "identifier": "GB-COH-06722353",
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "Manchester"
+    },
+    {
+     "id": "GB-FTS-92",
+     "name": "Royal Courts of Justice",
+     "roles": [
+      "reviewBody"
+     ],
+     "identifier": null,
+     "additional_identifiers": [],
+     "contact_email": null,
+     "contact_name": null,
+     "address": "London"
+    }
+   ],
+   "nenc_listed_separately": false,
+   "reading": {
+    "kind": "nenc-under-site-code",
+    "action": "rehome (optional)",
+    "target_org": 31556600,
+    "confidence": "high",
+    "note": "Buyer is NENC ICB (NECS contact, ophthalmology award) typed with North Cumbria ICT's site code X7V4Q. Not a member; optional rehome to 31556600."
+   }
+  }
+ ]
+}
