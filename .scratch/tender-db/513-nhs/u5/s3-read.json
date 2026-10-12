@@ -1,0 +1,436 @@
+{
+ "checks": [
+  {
+   "code": "0AR",
+   "keep": 30929531,
+   "target": "ppon",
+   "losers": [
+    4058565,
+    31592074
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 55,
+   "mentions_now": 55,
+   "id_lookup": [
+    30929531
+   ],
+   "losers_http": {
+    "4058565": "308",
+    "31592074": "308"
+   }
+  },
+  {
+   "code": "0CX",
+   "keep": 6191087,
+   "target": "anchor",
+   "losers": [
+    5694794,
+    31616128
+   ],
+   "nonmembers": [
+    31572637
+   ],
+   "mentions_before_sum": 24927,
+   "mentions_now": 24927,
+   "id_lookup": [
+    6191087
+   ],
+   "losers_http": {
+    "5694794": "308",
+    "31616128": "308"
+   }
+  },
+  {
+   "code": "0DE",
+   "keep": 30916122,
+   "target": "ppon",
+   "losers": [
+    6340194,
+    7501468
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 325,
+   "mentions_now": 325,
+   "id_lookup": [
+    30916122
+   ],
+   "losers_http": {
+    "6340194": "308",
+    "7501468": "308"
+   }
+  },
+  {
+   "code": "0DF",
+   "keep": 30915590,
+   "target": "ppon",
+   "losers": [
+    13087055,
+    13252367,
+    30930432,
+    30968729,
+    31538082
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 126,
+   "mentions_now": 126,
+   "id_lookup": [
+    30915590
+   ],
+   "losers_http": {
+    "13087055": "308",
+    "13252367": "308",
+    "30930432": "308",
+    "30968729": "308",
+    "31538082": "308"
+   }
+  },
+  {
+   "code": "QGH",
+   "keep": 31542355,
+   "target": "ppon",
+   "losers": [
+    30916931
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 86,
+   "mentions_now": 86,
+   "id_lookup": [
+    31542355
+   ],
+   "losers_http": {
+    "30916931": "308"
+   }
+  },
+  {
+   "code": "QHG",
+   "keep": 30918226,
+   "target": "anchor",
+   "losers": [],
+   "nonmembers": [],
+   "mentions_before_sum": 114,
+   "mentions_now": 114,
+   "id_lookup": [
+    30918226
+   ],
+   "losers_http": {}
+  },
+  {
+   "code": "QHL",
+   "keep": 30916123,
+   "target": "ppon",
+   "losers": [
+    30915737,
+    30915738
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 307,
+   "mentions_now": 307,
+   "id_lookup": [
+    30916123
+   ],
+   "losers_http": {
+    "30915737": "308",
+    "30915738": "308"
+   }
+  },
+  {
+   "code": "QHM",
+   "keep": 31556600,
+   "target": "ppon",
+   "losers": [
+    30915134,
+    30930129,
+    30976504,
+    31538425,
+    31565552,
+    31593327,
+    31595235,
+    31604957,
+    31608998
+   ],
+   "nonmembers": [
+    3257070,
+    31547927,
+    31548114,
+    31577547,
+    31603816,
+    31605903,
+    31645251
+   ],
+   "mentions_before_sum": 2395,
+   "mentions_now": 2395,
+   "id_lookup": [
+    31556600
+   ],
+   "losers_http": {
+    "30915134": "308",
+    "30930129": "308",
+    "30976504": "308",
+    "31538425": "308",
+    "31565552": "308",
+    "31593327": "308",
+    "31595235": "308",
+    "31604957": "308",
+    "31608998": "308"
+   }
+  },
+  {
+   "code": "QJG",
+   "keep": 30914144,
+   "target": "anchor",
+   "losers": [
+    30914161,
+    30917668
+   ],
+   "nonmembers": [
+    31602019
+   ],
+   "mentions_before_sum": 486,
+   "mentions_now": 486,
+   "id_lookup": [
+    30914144
+   ],
+   "losers_http": {
+    "30914161": "308",
+    "30917668": "308"
+   }
+  },
+  {
+   "code": "QJK",
+   "keep": 30917049,
+   "target": "ppon",
+   "losers": [
+    30914151,
+    30914271,
+    30914831
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 422,
+   "mentions_now": 422,
+   "id_lookup": [
+    30917049
+   ],
+   "losers_http": {
+    "30914151": "308",
+    "30914271": "308",
+    "30914831": "308"
+   }
+  },
+  {
+   "code": "QKS",
+   "keep": 30914448,
+   "target": "anchor",
+   "losers": [
+    31543411
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 115,
+   "mentions_now": 115,
+   "id_lookup": [
+    30914448
+   ],
+   "losers_http": {
+    "31543411": "308"
+   }
+  },
+  {
+   "code": "QMM",
+   "keep": 31542073,
+   "target": "ppon",
+   "losers": [
+    30915248
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 112,
+   "mentions_now": 112,
+   "id_lookup": [
+    31542073
+   ],
+   "losers_http": {
+    "30915248": "308"
+   }
+  },
+  {
+   "code": "QNC",
+   "keep": 30915109,
+   "target": "anchor",
+   "losers": [
+    30915110,
+    31539307,
+    31544907,
+    31595208,
+    31595209,
+    31607403
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 253,
+   "mentions_now": 253,
+   "id_lookup": [
+    30915109
+   ],
+   "losers_http": {
+    "30915110": "308",
+    "31539307": "308",
+    "31544907": "308",
+    "31595208": "308",
+    "31595209": "308",
+    "31607403": "308"
+   }
+  },
+  {
+   "code": "QNQ",
+   "keep": 31552078,
+   "target": "ppon",
+   "losers": [
+    30913842,
+    30916858,
+    31540924
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 152,
+   "mentions_now": 152,
+   "id_lookup": [
+    31552078
+   ],
+   "losers_http": {
+    "30913842": "308",
+    "30916858": "308",
+    "31540924": "308"
+   }
+  },
+  {
+   "code": "QNX",
+   "keep": 30917229,
+   "target": "anchor",
+   "losers": [
+    30917230,
+    31541150,
+    31607703,
+    31632269
+   ],
+   "nonmembers": [
+    8569067,
+    31632073
+   ],
+   "mentions_before_sum": 344,
+   "mentions_now": 344,
+   "id_lookup": [
+    30917229
+   ],
+   "losers_http": {
+    "30917230": "308",
+    "31541150": "308",
+    "31607703": "308",
+    "31632269": "308"
+   }
+  },
+  {
+   "code": "QOC",
+   "keep": 31542354,
+   "target": "ppon",
+   "losers": [
+    30915757
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 79,
+   "mentions_now": 79,
+   "id_lookup": [
+    31542354
+   ],
+   "losers_http": {
+    "30915757": "308"
+   }
+  },
+  {
+   "code": "QOQ",
+   "keep": 31573365,
+   "target": "ppon",
+   "losers": [
+    30913653,
+    31535385,
+    31552257,
+    31570883,
+    31587871,
+    31591474,
+    31592886
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 331,
+   "mentions_now": 331,
+   "id_lookup": [
+    31573365
+   ],
+   "losers_http": {
+    "30913653": "308",
+    "31535385": "308",
+    "31552257": "308",
+    "31570883": "308",
+    "31587871": "308",
+    "31591474": "308",
+    "31592886": "308"
+   }
+  },
+  {
+   "code": "QOX",
+   "keep": 30913839,
+   "target": "anchor",
+   "losers": [],
+   "nonmembers": [],
+   "mentions_before_sum": 57,
+   "mentions_now": 57,
+   "id_lookup": [
+    30913839
+   ],
+   "losers_http": {}
+  },
+  {
+   "code": "QPM",
+   "keep": 31542357,
+   "target": "ppon",
+   "losers": [
+    30916368
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 66,
+   "mentions_now": 66,
+   "id_lookup": [
+    31542357
+   ],
+   "losers_http": {
+    "30916368": "308"
+   }
+  },
+  {
+   "code": "QRL",
+   "keep": 31552077,
+   "target": "ppon",
+   "losers": [
+    20902603,
+    30913796,
+    31543410,
+    31567317,
+    31580931,
+    31591850,
+    31605716,
+    31630906
+   ],
+   "nonmembers": [],
+   "mentions_before_sum": 168,
+   "mentions_now": 168,
+   "id_lookup": [
+    31552077
+   ],
+   "losers_http": {
+    "20902603": "308",
+    "30913796": "308",
+    "31543410": "308",
+    "31567317": "308",
+    "31580931": "308",
+    "31591850": "308",
+    "31605716": "308",
+    "31630906": "308"
+   }
+  }
+ ],
+ "fails": []
+}
