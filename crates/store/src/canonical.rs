@@ -7256,23 +7256,31 @@ async fn nhs_regrown_named_as_body(
 /// row named as the body halts on its first admitted name).
 const NHS_REGROWN_MENTIONS_READ: i64 = 4_096;
 
-/// Issue 519 U4 (review): the applied `GB:nhs-body` verdicts of one code, `(cohort,
+/// Issue 519 U4 (review): the recorded `GB:nhs-body` verdicts of one code, `(cohort,
 /// applied_at, applied_action)` — a seek on the verdict table's primary key prefix. A scoped
 /// unwind whose cohort has no standing ledger row reads them to tell a ONE-MEMBER fold (its
 /// action `recorded GBNHS<code> on <org>`: no loser, no row, only the code recorded) from a
-/// cohort already unwound (an applied merge whose rows are all retired) or one that never
-/// folded the code (no applied verdict: a typo).
-async fn nhs_body_applied_cohorts(conn: &Connection, code: &str) -> turso::Result<Vec<(String, i64, String)>> {
+/// cohort already unwound (an applied merge whose rows are all retired), one recorded but not
+/// folded yet (`applied_at` NULL: a capped run did not reach it), or one that never named the
+/// code (no verdict: a typo).
+async fn nhs_body_cohort_verdicts(
+    conn: &Connection,
+    code: &str,
+) -> turso::Result<Vec<(String, Option<i64>, String)>> {
     let mut rows = conn
         .query(
             "SELECT cohort, applied_at, applied_action FROM org_merge_verdicts \
-              WHERE country = 'GB' AND scheme = ? AND key = ? AND applied_at IS NOT NULL",
+              WHERE country = 'GB' AND scheme = ? AND key = ?",
             (t(NHS_BODY_SCHEME), t(code)),
         )
         .await?;
     let mut out = Vec::new();
     while let Some(row) = rows.next().await? {
-        out.push((text(&row, 0), int(&row, 1), opt_text_of(&row, 2).unwrap_or_default()));
+        let applied_at = match row.get_value(1)? {
+            Value::Integer(at) => Some(at),
+            _ => None,
+        };
+        out.push((text(&row, 0), applied_at, opt_text_of(&row, 2).unwrap_or_default()));
     }
     Ok(out)
 }
@@ -28664,6 +28672,11 @@ impl Db {
         // cohort), which last-in-first-out and `code_kept` read.
         let mut outside: Vec<Row> = Vec::new();
         let mut elsewhere: Vec<(i64, i64, i64, String, String)> = Vec::new();
+        // Issue 519 U4 (review): the standing rows that folded `args.code` as a CHILD code
+        // ("<parent code> (<cohort>)"). A child row carries its parent's `$.code`, so an
+        // unwind named by the child code finds no row of its own and would take 513's
+        // one-member path, dropping the child's `GBNHS<C>` under the parent's standing row.
+        let mut parents: BTreeSet<String> = BTreeSet::new();
         let mut rows = conn
             .query(
                 &format!(
@@ -28681,6 +28694,9 @@ impl Db {
             let code = opt_text_of(&row, 3).unwrap_or_default();
             let cohort = opt_text_of(&row, 15).unwrap_or_default();
             if code != args.code {
+                if opt_text_of(&row, 17).map(|j| nhs_json_strings(&j)).unwrap_or_default().iter().any(|c| c == args.code) {
+                    parents.insert(format!("{code} ({cohort})"));
+                }
                 if args.cohort.is_some() {
                     elsewhere.push((int(&row, 0), int(&row, 2), int(&row, 16), code, cohort));
                 }
@@ -28720,6 +28736,14 @@ impl Db {
                 ),
             )
         };
+        if ledger.is_empty() && outside.is_empty() && !parents.is_empty() {
+            return Err(turso::Error::Error(format!(
+                "nhs-body unwind {code}: {code} is a child code folded into body {} — unwind the parent's cohort \
+                 instead (`code` <parent>, `cohort` <cohort>); nothing was written",
+                parents.into_iter().collect::<Vec<_>>().join(", "),
+                code = args.code
+            )));
+        }
         if let Some(scope) = args.cohort.filter(|_| ledger.is_empty()) {
             // Issue 519 U4 (review): a scoped unwind whose cohort has NO standing row on the
             // code must not fall into the code-wide one-member path below — that drops
@@ -28728,7 +28752,19 @@ impl Db {
             // a finished scoped unwind or a typo in `cohort`. Only the cohort's OWN
             // one-member fold may take that path, and only while nothing else claims the
             // code; every other case refuses here, nothing written, saying which it is.
-            let verdicts = nhs_body_applied_cohorts(conn, args.code).await?;
+            let recorded = nhs_body_cohort_verdicts(conn, args.code).await?;
+            if recorded.iter().any(|(c, at, _)| c == scope && at.is_none()) {
+                return refuse(
+                    scope,
+                    format!(
+                        "the cohort's verdict on code {code} is recorded but not folded yet (a capped run did not \
+                         reach it), so there is nothing of it to unwind — name a code from the wet run's `folded[]`",
+                        code = args.code
+                    ),
+                );
+            }
+            let verdicts: Vec<(String, i64, String)> =
+                recorded.into_iter().filter_map(|(c, at, a)| at.map(|at| (c, at, a))).collect();
             let one_member = |action: &str| action.starts_with(NHS_BODY_ONE_MEMBER_ACTION);
             let Some((_, applied_at, action)) = verdicts.iter().find(|(c, ..)| c == scope) else {
                 return refuse(

@@ -2884,8 +2884,17 @@ impl Bed {
     }
 
     async fn unwind(&self, cohort: Option<&str>, dry_run: bool) -> store::turso::Result<store::NhsBodyUnwindReport> {
+        self.unwind_code("QMF", cohort, dry_run).await
+    }
+
+    async fn unwind_code(
+        &self,
+        code: &str,
+        cohort: Option<&str>,
+        dry_run: bool,
+    ) -> store::turso::Result<store::NhsBodyUnwindReport> {
         self.db
-            .unwind_nhs_body(store::NhsBodyUnwindArgs { code: "QMF", cohort, dry_run, register_identity, key, job_id: Some(79) })
+            .unwind_nhs_body(store::NhsBodyUnwindArgs { code, cohort, dry_run, register_identity, key, job_id: Some(79) })
             .await
     }
 
@@ -3464,6 +3473,97 @@ async fn a_scoped_unwind_naming_a_cohort_with_no_rows_says_so() {
         let msg = err.to_string();
         assert!(msg.contains("never folded QMF") && msg.contains("nothing was written"), "{msg}");
         assert!(!msg.contains("later cohort") && !msg.contains("513-u2-test (QMF)"), "{msg}");
+        assert_eq!(b.unwind_state().await, before, "dry_run {dry_run}: nothing written");
+    }
+    assert_eq!(b.holders_of("GBNHSQMF").await, vec![40]);
+}
+
+/// Review finding (issue 519 U4, second panel): a child row carries its PARENT's `$.code`,
+/// so an unwind named by the child code (`13T`) finds no row of its own. Code-wide it used
+/// to take 513's one-member path and drop `GBNHS13T` off the survivor while the parent's
+/// child-cohort row stood, its mentions still folded — a half-unwound body. It is refused,
+/// dry and wet, scoped or not, naming the parent's cohort; nothing written.
+#[tokio::test]
+async fn an_unwind_named_by_a_folded_child_code_is_refused() {
+    let b = bed("child-unwind-by-child-code").await;
+    b.qmf_body().await;
+    b.nel_13t(NEL_ICB).await;
+    b.child_verdict("QMF", vec![40, 41], vec![40, 41], 10).await;
+    assert_eq!(b.fold_all().await.folded.len(), 1);
+    assert_eq!(b.holders_of("GBNHS13T").await, vec![40]);
+    let before = b.unwind_state().await;
+    for (cohort, dry_run) in [(None, true), (None, false), (Some(CHILD_COHORT), true), (Some(CHILD_COHORT), false)] {
+        let err = b.unwind_code("13T", cohort, dry_run).await.expect_err("a child code is no body");
+        let msg = err.to_string();
+        assert!(
+            msg.contains("13T is a child code folded into body QMF (nhs-body-children-test)")
+                && msg.contains("nothing was written"),
+            "{msg}"
+        );
+        assert_eq!(b.unwind_state().await, before, "cohort {cohort:?} dry_run {dry_run}: nothing written");
+    }
+    assert_eq!(b.holders_of("GBNHS13T").await, vec![40], "the child's code still answers the survivor");
+}
+
+/// Review finding (issue 519 U4, second panel): the scoped unwind's ONE-MEMBER refusals.
+/// A later cohort's one-member fold over 513's standing rows recorded nothing of its own
+/// (513's row claims `GBNHSQMF`), and two one-member cohorts cannot tell which still
+/// stands. Either, unrefused, falls into the one-member path and drops `GBNHSQMF` under an
+/// applied verdict — finding 1's defect. Refused dry and wet, nothing written.
+#[tokio::test]
+async fn a_scoped_one_member_unwind_refuses_while_another_cohort_claims_the_code() {
+    let cohort = "later-one-member";
+    for (fixture, want) in [("earlier", "recorded nothing of its own"), ("twins", "cannot tell which")] {
+        let b = bed(&format!("child-unwind-one-member-{fixture}")).await;
+        if fixture == "earlier" {
+            b.qmf_folded().await;
+        } else {
+            b.qmf_one_member_folded().await;
+        }
+        b.db
+            .record_merge_verdicts(cohort, &[nhs_verdict("QMF", vec![40], Some(vec![40]), "merge", "high")], 20)
+            .await
+            .unwrap();
+        // 513 folded a day earlier, as on prod: folds in one second share `at`, and an equal
+        // instant reads as later, so last in, first out would refuse first (as safely, by
+        // another message).
+        b.conn.execute("UPDATE org_merge_log SET at = at - 86400", ()).await.unwrap();
+        b.conn.execute("UPDATE org_merge_verdicts SET applied_at = applied_at - 86400 WHERE applied_at IS NOT NULL", ()).await.unwrap();
+        let r = b.fold_all().await;
+        assert_eq!((r.merged_bodies, r.recorded_bodies, r.removed), (0, 1, 0), "{fixture}: {r:#?}");
+        assert!(
+            b.text_of(&format!("SELECT applied_action FROM org_merge_verdicts WHERE cohort = '{cohort}'"))
+                .await
+                .starts_with("recorded GBNHSQMF"),
+            "{fixture}: a one-member fold"
+        );
+        let before = b.unwind_state().await;
+        for dry_run in [true, false] {
+            let err = b.unwind(Some(cohort), dry_run).await.expect_err("another cohort claims the code");
+            let msg = err.to_string();
+            assert!(msg.contains(want) && msg.contains("nothing was written"), "{fixture}: {msg}");
+            assert_eq!(b.unwind_state().await, before, "{fixture} dry_run {dry_run}: nothing written");
+        }
+        assert_eq!(b.holders_of("GBNHSQMF").await, vec![40], "{fixture}: the code stands");
+    }
+}
+
+/// Review finding (issue 519 U4, second panel): a capped wet run folds the first admitted
+/// codes in code order, so a posted cohort can hold an UNAPPLIED verdict on a code it has
+/// not reached. A scoped unwind of that code says so — not "never folded … check the
+/// cohort's spelling", which sends the operator after a typo that is not there.
+#[tokio::test]
+async fn a_scoped_unwind_of_a_code_the_capped_run_has_not_reached_says_so() {
+    let b = bed("child-unwind-not-reached").await;
+    b.qmf_folded().await;
+    b.nel_13t(NEL_ICB).await;
+    b.child_verdict("QMF", vec![40, 41], vec![40, 41], 10).await;
+    let before = b.unwind_state().await;
+    for dry_run in [true, false] {
+        let err = b.unwind(Some(CHILD_COHORT), dry_run).await.expect_err("nothing folded yet");
+        let msg = err.to_string();
+        assert!(msg.contains("recorded but not folded yet") && msg.contains("nothing was written"), "{msg}");
+        assert!(!msg.contains("spelling"), "{msg}");
         assert_eq!(b.unwind_state().await, before, "dry_run {dry_run}: nothing written");
     }
     assert_eq!(b.holders_of("GBNHSQMF").await, vec![40]);

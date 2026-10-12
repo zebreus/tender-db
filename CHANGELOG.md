@@ -8,14 +8,16 @@ answers; this file exists for the rare case where one does.
 
 An NHS trust, ICB or other body that Find a Tender publishes under its letter-only ODS code (`GB-NHS-QWU`) in some
 notices and under its PPON in others, or under several spellings of its name, stood as several organizations, and the
-code itself found none of them. Each body on the frozen ODS list is now consolidated by a reviewed verdict: its rows
-fold into one survivor (its PPON organization where it has one), every folded row publishes `organization removed`
-and answers `308` to the survivor, `?identifier=` with the code answers the survivor, and later mentions under the code
-bind to it (issue 513; 171 bodies so far). Since issue 519, a sub-ICB location or trust site that publishes its own
-child code while naming itself as its parent body (`NHS Coventry and Warwickshire ICB - B2M3M`) folds into the parent
-the same way: its child code answers the parent, and a later mention under that code binds to the parent only when
-its name passes the same strict check the review used — any other name stays on its own organization. Nothing folds
-until each body is reviewed, so the change reaches `/v1` as the review runs.
+code itself found none of them. Each allowlisted body on the frozen ODS list is consolidated once a reviewed verdict
+for it is applied: its rows fold into one survivor (its PPON organization where it has one), every folded row
+publishes `organization removed` and answers `308` to the survivor, `?identifier=` with the code answers the survivor,
+and later mentions under any of the reviewed spellings bind to it — by name, never by the code: a coded mention under
+a spelling no review read stands as its own organization until the next review (issue 513; 171 bodies so far). Since
+issue 519, a sub-ICB location or trust site that publishes its own child code while naming itself as its parent body
+(`NHS Coventry and Warwickshire ICB - B2M3M`) folds into the parent the same way: its child code also answers the
+parent, and a later mention under that code binds to the parent only when its name passes the same strict check the
+review used — any other name stays on its own organization, which `?identifier=` then returns beside the parent.
+Nothing folds until each body is reviewed, so the change reaches `/v1` as the review runs.
 
 ## Unreleased (issue 469) — a UK college, charity or society published under its PPON is merged into its register entry
 

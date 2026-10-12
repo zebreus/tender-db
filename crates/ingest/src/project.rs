@@ -15555,8 +15555,8 @@ mod tests {
 
     /// Issue 519 U4: the production altid rules carry the STRICT child gate. `None` would
     /// silently disarm the nhs-body exact-triple arm (it arms nothing and logs `NOT armed`),
-    /// and 513's `census_check` in its place would admit what the census refused: it calls
-    /// an NHS England name `better`, where the child gate labels it `nhse`.
+    /// and 513's `census_check` in its place would gate by 513's rules, not the child map's:
+    /// it labels an NHS England name `better`, where the child gate labels it `nhse`.
     #[test]
     fn the_production_altid_rules_carry_the_strict_child_gate() {
         let check = altid_alias_rules().nhs_child_check.expect("the child gate is wired");

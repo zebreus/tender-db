@@ -253,3 +253,31 @@ New tests:
 | **Mutation:** the empty-scope branch off, the shared check off, the old `code_kept`; the 3 new tests | 3 FAILED, with the findings' own numbers: `merged_identifiers_dropped: 1, code_kept: false`; "later cohort … 513-u2-test (QMF)"; `moved: 2, by_identity: 2`. `canonical.rs` restored, `cmp` identical | 101 |
 | `nhs_body nhs_ods an_execute_without_an_expected_count_is_refused run_spec_futures_stay_inside_their_size_budgets an_interrupted_running_job_is_recovered_at_the_front` | nhs_ods 37 passed (2 ignored); 9 supervisor passed; plus 3 nhs_body-named store tests and the census date test | 0 |
 | `--exact` the budget test and `an_execute_without_an_expected_count_is_refused`, `--nocapture` | 2 passed; `run_match_identifiers_spec` 2,720 of 3,840; `run_nhs_body_canary` 360 of 512; `run_spec` 56 of 128 | 0 |
+
+## Second review (fix delta fe9edff..46affde; wf_63c23e7e-315, 3 lenses, each finding verified)
+
+Gate on 46affde was green (GATE-EXIT=0, 1174 s) before these; they were fixed on top and re-gated.
+
+- **Code-wide unwind named by a CHILD code** (verified real, should-fix). A child row carries its parent's
+  `$.code`, so `{code: "13T"}` found no row, took 513's one-member path and dropped `GBNHS13T` (or a zero-only
+  `GBNHS00P`) off the survivor while the parent's child-cohort row stood. Now `unwind_nhs_body` collects the standing
+  rows whose `child_codes` hold `args.code` and refuses, scoped or not, naming `<parent> (<cohort>)`. Test
+  `an_unwind_named_by_a_folded_child_code_is_refused` (dry/wet × scoped/unscoped).
+- **Runbook step 7 could not pass** (verified real). `max_groups` folds the first admitted codes in code order
+  (QGH, QHL, QHM, QJK, QMJ on the predicted census), so QWU is not reached and its child verdict is unapplied.
+  Step 6/7 now say so and name "a code in step 6's `folded[]`" (QHM). The empty-scope refusal reads every
+  recorded verdict (`nhs_body_cohort_verdicts`, `applied_at` optional) and says `recorded but not folded yet`
+  instead of the typo hint. Test `a_scoped_unwind_of_a_code_the_capped_run_has_not_reached_says_so`.
+- **The one-member `earlier` and `twins` refusals were untested** (verified real). Test
+  `a_scoped_one_member_unwind_refuses_while_another_cohort_claims_the_code` (both fixtures; 513's fold is
+  backdated a day, since folds in one second tie and a tie reads as later — LIFO would refuse first).
+- **CHANGELOG overstated 513** (verified real): 513 binds later mentions by reviewed NAME, never by the code;
+  "each body … is consolidated" became "once a reviewed verdict for it is applied"; a child code "also" answers the
+  parent (a refused mention's own row is returned beside it).
+- Mutation: each new test fails with its guard disabled (EXIT=101), `canonical.rs` restored and `cmp`-identical.
+- **Recorded, not fixed (nits, latent):**
+  - No scope covers "this cohort and every later one": two child cohorts folding one literal can only be rolled
+    back code-wide, which also dissolves 513's fold. Only an `identity`-kind regrowth can produce the shape.
+  - When two body codes share one survivor, `claimed` and the shared-literal check read only the same code's rows;
+    another code's fold of the same child triple would lose its mentions. Not reachable today (171 codes → 171
+    distinct keeps); extend both over `elsewhere` if a fold ever gives two codes one survivor.
