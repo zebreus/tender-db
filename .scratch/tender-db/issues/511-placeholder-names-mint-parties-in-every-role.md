@@ -1,6 +1,12 @@
 # 511 — placeholder names (pointers, withheld, `Various`, award summaries) mint parties in every role
 
-Status: ready-for-agent — KEEP RULES DEPLOYED 2026-10-12 (6faf241, with 513 U4). Re-dry job 2266 (`../511-placeholders/u3/plan-2266.json`): award_summary 240 orgs / 510 mentions (+38 orgs: the perfil genitive owners, e.g. 'perfil de contratante del gobierno de aragon', and the High Court 'but' clause), blank 3,566 / 29,386, placeholder 2,534 / 9,877, name 1,670 / 3,225; 42,488 mentions on 34,534 notices, 390 buyer rows on 389 notices. Dropped orgs 6,100 clear the restated floor of 5,928. The 10 perfil+genitive names still placeholder are intended junk ('ver perfil del contratante', '… del organo de contratacion', URL forms) plus one accepted cost ('ver perfil de contratante del hospital clinic de barcelona', stem not at position 0 of the owner). NEXT: buyer canary (refold-notices jobs 2267/2268 on the 389 buyer notices; pre-image `../511-placeholders/u3/canary/pre.json`), then wet with expect 34534, then the sweep.
+Status: ready-for-agent — UNIT 3 DRAINED 2026-10-12.
+- Buyer canary passed: 10 of 389 buyer notices changed Tender, all German award notices joining their contract notice once the placeholder buyer left; one refused split healed. See `../511-placeholders/u3/canary/result.md`.
+- Wet job 2270 → fold 2271 retired 38,700 mentions (dropped parties: 211 void, 9,179 placeholder, 29,525 blank; 3,358 tenders corrected). Auto sweep 2272 removed 5,631 orphan orgs.
+- Retired fell 205 short of the restated floor of 38,905. Residual dry 2273 (`../511-placeholders/u3/plan-2273-residual.json`) explains the gap: 851 drop-class mentions are KEPT by the fold, and the planned-but-unseen parties add 590. 604 of the 851 are TED's multilingual pointer: one party carries 'See Section VI.2/VI.3 Additional information' in 24 languages, and the all-names rule keeps it because the EL/LT/HU/… translations read as names. 144 of those 604 are also read as AwardSummary ('Additional information' taken as a name after the pointer).
+- Identified-placeholder sample: no real supplier was dropped. 's.o.' [0251411691] keys only junk org 22713056; 'Keine Angabe' [DE198511192] keys no other org.
+NEXT: unit 4 (precision), see the 'Unit 4' section below.
+Was: ready-for-agent — KEEP RULES DEPLOYED 2026-10-12 (6faf241, with 513 U4). Re-dry job 2266 (`../511-placeholders/u3/plan-2266.json`): award_summary 240 orgs / 510 mentions (+38 orgs: the perfil genitive owners, e.g. 'perfil de contratante del gobierno de aragon', and the High Court 'but' clause), blank 3,566 / 29,386, placeholder 2,534 / 9,877, name 1,670 / 3,225; 42,488 mentions on 34,534 notices, 390 buyer rows on 389 notices. Dropped orgs 6,100 clear the restated floor of 5,928. The 10 perfil+genitive names still placeholder are intended junk ('ver perfil del contratante', '… del organo de contratacion', URL forms) plus one accepted cost ('ver perfil de contratante del hospital clinic de barcelona', stem not at position 0 of the owner). NEXT: buyer canary (refold-notices jobs 2267/2268 on the 389 buyer notices; pre-image `../511-placeholders/u3/canary/pre.json`), then wet with expect 34534, then the sweep.
 Was: ready-for-agent — UNIT 3 READS DONE 2026-10-12 (wf_a3c63d17-e99: 700 non-exact folds and every list read; gap analysis). GAP EXPLAINED, so no regression. The floor counted the 522 scoped ingen/inget/nd orgs as Blank, while the plan's by_class shows them as name and the fold decides them per notice language. Like for like, the plan catches 185 more drop-class orgs than expected; the restated floor is 5,928, and the plan has 6,138. STOP for real-party losses, two patterns:
 - `Perfil del/de contratante de(l) <body>`: about 43 orgs, mostly specifications-provider / further-information slots, no winners or buyers;
 - `Not applicable, but proceedings may be started in the High Court…` (a review body).
@@ -76,4 +82,28 @@ Still open, as the decision lists:
 - whether to promote the "nobody" words to VoidLot (needs 510's per-word value/date table);
 - the deferred words `nil`, `ei`, `sin`, `vari`;
 - a follow-up issue for per-lot parsing of the ~500 award summaries, to be filed with unit 2.
+
+## Unit 4 — precision follow-up (filed 2026-10-12 from the unit 3 residual)
+
+What the fold keeps that the decision meant to drop, measured on residual dry 2273 and the gap analysis
+(wf_a3c63d17-e99):
+1. **TED translation echo.** TED r208/r209 publish a pointer winner in every EU language. Proposed rule in
+   `drop_decision`: when one of a party's names is `Placeholder` and carries a form section number (`VI.2`, `VI.3`,
+   `VI.4.2`, `II.2.3`), its other names that carry the same number are translations of it. 460 + 144 mentions.
+2. **A form section title after a pointer is not a name.** `pointer_names` reads 'Additional information' /
+   'Complementary information' / 'Place of performance' as a name, so 'See Section VI.3 Additional information'
+   becomes an AwardSummary.
+3. **Politeness before the stem.** 'Please see section VI.4.2' (378 orgs / 411 mentions, review and appeal slots),
+   'Please see section VI.4.3' (73 + 24), and 'please see Section VI.3.2' (38) read as names, because the stem does not
+   open the name.
+4. **Withheld phrasing outside the lexicon**:
+   - 'Information withheld for security reasons' (88);
+   - 'Due to the sensitive nature of this contract the supplier name will be withheld' (59 + 20);
+   - '… erfolgt hier keine Angabe' (19);
+   - 'This is not applicable in/to the UK' (15 + 14).
+5. **Identified withheld suppliers stay**: 'Withheld Section94 Supplier' [GBPPONPBXY3232WNHZ] is a real PPON with its
+   name withheld. Keep it, deliberately, with a test.
+
+Each item needs a keep test for its near misses before it is admitted, and the same dry → reads → canary → wet as
+unit 3.
 
