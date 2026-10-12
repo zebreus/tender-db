@@ -1,0 +1,235 @@
+{
+  "summary": "Build issue 513 U4 (nhs-body wet path, ledger-armed alias, scoped unwind, reports) and review adversarially",
+  "agentCount": 3,
+  "logs": [],
+  "result": {
+    "build": "U4 is built and nothing is committed. The focused tests pass, including every test in the U3/U4 list, the unwind round trip, the S5 rebuild test and the stack canary. Two things changed from the brief: the alias counters are on the diag log only, not the job row (the stack budget), and the loser-PPON alias arm is not built.\n\n**Test runs** (each with the gate flags and gate package set, output to `scratchpad/u4-*.log`):\n- `--test nhs_body`: EXIT=0, 33 passed. That is 13 new tests plus the existing U2 ones.\n- `--lib` filtered to `nhs_body`, `an_execute_without_an_expected_count_is_refused`, `run_spec_futures_stay_inside_their_size_budgets` and `alias_suffix`: EXIT=0, 6 supervisor tests passed.\n- `--test altid_merge`: EXIT=0, 81 passed.\n- All `--lib` suites: EXIT=0 (ingest 453, model 3, store 182, tender-db 199).\n- Ingest `--test project` and `--test project_incremental`: EXIT=0, 100 and 51 passed.\n\n**Files changed**\n- `crates/store/src/canonical.rs`\n- `crates/store/src/lib.rs` (re-exports only)\n- `crates/store/tests/nhs_body.rs`\n- `crates/app/src/supervisor.rs`\n- `docs/operations.md`\n\n**1. Wet path**\n- **Index:** a new partial index `org_merge_log_nhs_body` on `org_merge_log` where `rule = 'nhs-body'`.\n- **Census:** `plan_nhs_bodies` is now a wrapper around `plan_nhs_bodies_on(conn, …)`, so the wet run can re-plan under the writer. The census now also reports `admitted_codes`.\n- **`merge_nhs_bodies`:**\n  - It holds the writer from re-plan to the last fold.\n  - Parity is max(2%, 5) bodies against the stored set, with a `known_deferred` list for continuations as altid has. Over that, it aborts before any write.\n  - It folds only codes that are both live-admitted and in the stored set, in code order, capped by `max_groups`.\n  - The survivor is chosen as the brief says. When two or more PPON members are not settled by \"paired with the code\", the body is held as `survivor-ambiguous` and stays in the residual.\n  - Each body gets one `immediate` transaction: per loser the tenders are read, its references repointed (rule `nhs-body`), the row deleted, a ledger row written with the evidence fields you listed, and `removed` recorded. Then the survivor gets `changed`, `GBNHS<code>` is written as a merged identifier (national, GB, rule `nhs-body`), the verdict is stamped applied, and each touched tender gets `changed`.\n  - A one-member body only records its code.\n\n**2. Alias**\n- `arm_nhs_body_alias` is armed from inside `arm_altid_alias`, so `project.rs` is untouched. It is also callable on its own.\n- It follows the brief's rules: the newest row per key, a key claimed by two codes poisoned, anchor chains followed up to 8 hops with a cycle poisoning the key, D4's owned-elsewhere keys not armed, withheld triples refused, and a `keep` verdict on a code dropping its rows.\n- No rows means `nhs_body: None` and the resolver behaves exactly as before.\n- The bind sits at the head of the identifier-less branch, before the 234 probe, and is boxed. For a PPON target it tries the exact triple, then a re-key, then the canonical key, then an altid ledger move, and mints with `keep_name` if none hits. An anchor target goes through its own 234 key, minting a provisional if absent. Each bind records `GBNHS<code>` once per run.\n\n**3. Unwind:** `unwind_nhs_body` plus a new `match-org-identifiers` rule `nhs-body-unwind`, which takes a new `code` request field.\n- It moves the survivor's former members back: mentions with no identity whose name key is one of the losers' recorded keys go through 234; mentions carrying a loser's own literal go through E0.\n- It rebinds the party and bid-party rows, stamps the tenders stale and re-queues the notices so the next fold re-derives winners.\n- It moves the ledger rows to `nhs-body-retired`, and writes one `nhs-body-unwind` redirect per old loser so its id follows the unwound row.\n- It drops `GBNHS<code>` from the survivor. The verdict stays applied, so folding the body again needs a new verdict.\n\n**4. Reports:** `nhs-body-plan` now carries `nhs_body_merged` (each ledger row's evidence parsed back to JSON) and `nhs_body_regrown` (kinds `name` and `ppon`). After a wet run the stored plan is the residual, with `live_admitted_codes` beside it. The counts line gains the ledger and regrown figures. `operations.md` has the updated row, a new unwind row, the new report kind, the diag-line notes, and a five-step runbook (dry, capped wet 20, read, full wet, unwind).\n\n**Deviations**\n- **Alias counters are on the diag log only.** They are logged as `[issue 513] …` lines at arm and finish. Putting them on the fold's `Report` (and the job-row suffix) pushed `run_project` past its 472 KiB stack budget and the gauge test aborted. Removing them made it pass, so that budget has very little headroom left.\n- **The verdict stays applied after an unwind.** This is deliberate, so a second fold needs a fresh verdict.\n\n**Not done**\n- **The loser-PPON alias at 448's bar (RYA's second PPON).** A second PPON org of a body will be re-minted on its next PPON-first mention. It shows up in `nhs_body_regrown` as kind `ppon`, which trips S4 for that body.\n- **No `GBNHS` record after a rebuild for one-member bodies.** They have no loser, so they get no ledger row, and their code is lost when a rebuild empties the merged-identifier table.\n- **The S5 prod canary has no job of its own.** That is the check that re-resolves 3 notices for each of 3 bodies through a fresh resolver; no existing job does it.\n- **The v1 `docs.rs` note** that ODS codes are found through merged identifiers.",
+    "reviews": [
+      {
+        "lens": "correctness",
+        "verdict": "ship",
+        "findings": [
+          {
+            "severity": "should-fix",
+            "file_line": "crates/store/src/canonical.rs:26928 (unwind_nhs_body) and :26573 (nhs_body_ledger_listing)",
+            "problem": "The unwind finds the body's survivor by following the ledger's org-id `keep` through plain `read::resolve_org`, with no era or time check. After a from-archive rebuild, that old id belongs to an unrelated org, so the unwind dissolves against the wrong org and silently disarms the alias. The regrown listing has the same flaw: its `survivor` field points at the wrong org.",
+            "evidence": "`match crate::read::resolve_org(&conn, row.keep).await? { Live => survivors.insert(row.keep) ...}`. resolve_org answers Live for any id that exists (read.rs:4842-4845). strip_organization_indexes runs DROP TABLE organizations and recreates it with AUTOINCREMENT (canonical.rs ~13200-13212). org_merge_log is kept. The codebase states the hazard itself: \"A from-archive rebuild re-mints every org id from 1, so a ledger row from before it names ids that now belong to other companies\" (canonical.rs:5000-5006). It already has a guard built for exactly this, `merged_survivor` (era floor, hop and mint-time checks, :5009-5047), which the unwind does not use. The ledger evidence is identity-keyed (target_identity or anchor_name_norm+country), but the unwind never reads those fields. Failure: after a rebuild, S5's alias replays RTH onto one org at a new id. A later `nhs-body-unwind RTH` then takes the unrelated org that now holds the old keep id as the survivor. Its mentions carry none of the loser keys, so moved is about 0. The wet path still retires every RTH ledger row (the alias stops arming), writes no redirects and drops no GBNHSRTH. It reports success while the body stays merged. S6's safety net quietly fails.",
+            "fix": "Find the survivor from the identity-keyed evidence: for a PPON target, the identifier seek, then the canonical key, then the altid follow; for an anchor, the 234 probe on anchor_name_norm+country. Cross-check that against `merged_survivor(conn, keep, at, BackfillGuard era_floor)`. Refuse with nothing written when the result is OutOfTime, Unresolved or the two disagree. Use the same resolution for survivor_of in nhs_body_ledger_listing."
+          },
+          {
+            "severity": "should-fix",
+            "file_line": "crates/store/src/canonical.rs:6530 (nhs_body_survivor) / merge_nhs_bodies",
+            "problem": "A body with two or more PPON members, exactly one of them paired with the code, is folded. The other PPON orgs become losers and are deleted. No loser-PPON alias exists (design C U4's 448-bar arm, acknowledged not built), so the next PPON-first mention of a loser PPON mints that org again. The wet path does not hold such bodies.",
+            "evidence": "In `nhs_body_survivor`, the `several` arm picks the single member with non-empty `ppons` and returns it. Every other member, including one with a GB:ppon identifier, goes into `losers` and is deleted by nhs_body_fold. Its PPON survives only as an organization_merged_identifiers row. The resolver's org_of and canon_of preloads come from `organizations`, and merged_hit replays only 470's folded literals, so E0 mints a new org. That then shows up as `nhs_body_regrown` kind `ppon` (S4 trips). Census 2261 against the posted verdict file: 0 of 156 bodies have two or more PPON members, and no loser carries any identifier. So U5 is unaffected; a future cohort is not.",
+            "fix": "Until the loser-PPON arm exists, hold any body whose losers include a member whose identifier keys to GB:ppon (e.g. `held` reason `loser-ppon-unaliased`, kept in the residual). Or build the arm before a cohort with such a body is admitted."
+          },
+          {
+            "severity": "should-fix",
+            "file_line": ".scratch/tender-db/issues/513-letter-only-nhs-ods-codes-mint-no-identity.md (Units: U4; Stop rule S5)",
+            "problem": "\"The re-resolve read\" is not built. The issue's own U4 unit lists it, and S5's prod half needs it: 3 notices × 3 bodies re-resolved through a fresh resolver must agree 100%. No job can run that check, so U5 cannot evaluate S5 on prod.",
+            "evidence": "Issue Units: \"U4 One deploy ...: the wet path, the ledger-armed alias (boxed), the D7 unwind, the nhs_body_merged and nhs_body_regrown reports, and the re-resolve read.\" S5: \"On prod, 3 notices × 3 bodies (TED uncoded, FTS coded, PPON-first) re-resolved through a fresh resolver must agree 100%.\" The builder's report lists it as not done. The diff adds no such Spec or rule.",
+            "fix": "Add a read-only job, e.g. a `match-org-identifiers` rule `nhs-body-canary` taking notice ids. It opens a fresh armed resolver inside a transaction that is always rolled back, re-resolves those notices' mentions, and reports each binding against the stored organization_id."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:26923 (unwind_nhs_body `if ledger.is_empty()`) / nhs_body_fold one-member branch",
+            "problem": "One-member bodies write no ledger row, which has two effects. First, GBNHS<code> is lost on a rebuild (acknowledged). Second, the D7 unwind returns at `ledger.is_empty()` without doing anything, so a wrongly recorded one-member body's GBNHS<code> can never be removed by any job.",
+            "evidence": "37 of the 156 posted verdicts have one member (verdict file). nhs_body_fold with an empty `losers` only calls record_alias_identifier_as(GBNHS<code>, keep, 'nhs-body') and stamps the verdict. unwind_nhs_body: `report.ledger_rows = ledger.len(); if ledger.is_empty() { return Ok(report); }`. That leaves the organization_merged_identifiers row in place, and `?identifier=GBNHS<code>` keeps answering that org.",
+            "fix": "When there are no ledger rows, have the unwind delete `organization_merged_identifiers WHERE identifier = 'GBNHS'||code AND rule = 'nhs-body'` and report it. Or write a code-only marker row a rebuild can replay."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:17282-17304 (arm_nhs_body_alias_on chain loop)",
+            "problem": "Following a chain replaces the key's target but keeps the first row's keep_name. In a rebuild, a chained PPON target is then minted with whichever ledger key reaches it first in notice order: either the anchor body's keep_name or the PPON body's. The head name becomes order-dependent, which D5 rules out.",
+            "evidence": "`let snapshot: HashMap<(String,String), NhsBodyTarget> = keys.iter().map(|(k,v)| (k.clone(), v.target.clone()))` holds targets only. The loop then does `entry.target = next.clone();` and never updates `entry.keep_name`. nhs_body_alias_bind mints a PPON target with `t(&entry.keep_name)`.",
+            "fix": "Snapshot the (target, keep_name) pair and carry the next entry's keep_name along with its target at each hop."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:17337, 17433, 17463, 17476",
+            "problem": "Collapsed line continuations left runs of spaces inside the new string literals. The S4 diag line (`[issue 513] ... ARMED`) reads \"nhs-body ledger              row(s)\" and \"or a              broken anchor chain\", and three SQL literals have the same artifact.",
+            "evidence": "`grep -n 'ledger   '` matches the format string at 17337. The INSERT and SELECT literals at 17433, 17463 and 17476 contain long whitespace runs, e.g. `created_at)                              VALUES(...)`.",
+            "fix": "Put the `\\` line continuations back, as in the neighbouring [issue 448] diag line."
+          },
+          {
+            "severity": "minor",
+            "file_line": "scratchpad/u4-storelib.log, u4-ingest.log vs crates/store/src/canonical.rs mtime",
+            "problem": "The report says all `--lib` suites and the ingest project tests passed, but those runs predate the last canonical.rs edit. Only nhs_body (33) and 6 filtered supervisor tests ran after it.",
+            "evidence": "canonical.rs mtime is 01:08:21. The --lib suites (ingest 453, store 182, tender-db 199, model 3) are in u4-storelib.log at 01:01. Ingest project and project_incremental are in u4-ingest.log at 01:06; altid_merge is in u4-store7.log at 00:56. u4-final-store.log and u4-final-sup.log at 01:09 recompiled store and ran only the nhs_body suite and the 6 named supervisor tests.",
+            "fix": "Run ops/check.sh before committing (CLAUDE.md requires it anyway) and read GATE-EXIT."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/app/src/supervisor.rs:10383-10392 (wet arm `merge_nhs_bodies(...).await .map_err(...)?`)",
+            "problem": "If one body's transaction fails after earlier bodies have committed, the job returns Err without storing a report. The committed bodies' `folded` record is lost, and the stored plan still lists them in admitted_codes. A retry counts them as \"no longer admitted\". If more than 5 committed, it parity-aborts with \"nothing was written\", which is true for the retry but can be read as true for the failed run too. It fails safe.",
+            "evidence": "merge_nhs_bodies propagates `Box::pin(self.nhs_body_fold(...)).await?` after earlier per-body COMMITs and doorbells. In the supervisor, `?` skips put_report. The runbook's step 2 says a parity abort's \"nothing was written\" means re-run the dry plan.",
+            "fix": "On a fold error after at least one committed body, store the residual plan (codes not yet folded) before returning the error, or name the committed codes in the error text."
+          }
+        ]
+      },
+      {
+        "lens": "tests",
+        "verdict": "fix-first",
+        "findings": [
+          {
+            "severity": "should-fix",
+            "file_line": "crates/store/src/canonical.rs:27127",
+            "problem": "No test covers the unwind's rebinding of party and bid-party rows. D7 and S6 require the unwind to be tested before any wet run, and every wet unwind performs this write.",
+            "evidence": "Mutation M6c added `.filter(|_| false)` to the `moved_to` lookup, so no party or bid-party row is ever rebound. `--test nhs_body` still passed 33/33 (scratchpad/u4rv-M6c2.log), and the 3 supervisor nhs_body lib tests, including the census round trip with its wet unwind, passed (u4rv-M6c.log). For context, every required lens mutation was killed. Each file was restored after each run: sha256 matched and `git diff` was byte-identical to the builder's. Killed: M1, the parity drop at :26665, by a_body_parity_drift_aborts_before_any_write. M2, D4 off at :17321, by a_key_a_standing_row_owns_is_not_armed. M3, bind by GB-NHS code at the call site, by a_coded_mention_with_an_unreviewed_name_still_mints_its_own_cluster and the rebuild test. M4a, no wet GBNHS write at :26835, by 5 tests. M4b, no alias GBNHS write at :17500, by the rebuild test. M5, poisoning off at :17273, by a_name_claimed_by_two_bodies_binds_nobody. M6a, the mention UPDATE disabled at :27104, by the unwind round trip.",
+            "fix": "In the_unwind_round_trip_dissolves_the_body_back_through_234, before the fold, add a tender_version_parties row and a tender_version_bid_parties row that name a loser's mention (for example notice 102, as the fold test does for tender 9). After the wet unwind, assert they name the dissolved row and that r.parties == 1 and r.bid_parties == 1."
+          },
+          {
+            "severity": "should-fix",
+            "file_line": "crates/store/src/canonical.rs:26997",
+            "problem": "No test covers the unwind's E0 arm, which handles a mention carrying a loser's own literal (a loser PPON org). It is one of the two dissolve paths D7 names.",
+            "evidence": "Mutation M6b changed the arm to `(false && !mine && literals.contains(..))`. The store suite passed 33/33 (u4rv-M6b.log) and the supervisor lib nhs_body tests passed 3/3 (u4rv-M6b-lib.log). A scratch test (a body with two PPON members, one paired with the code) showed the arm works today: by_identity 1, and PPON B's mention landed on a re-minted row carrying GBPPONWXYZ1234ABCD. The current cohort never takes this path: none of the 156 admitted verdicts has 2 or more PPON members (105 have one, 51 have none, checked against u3/nhs-body-plan-2261.json and the verdicts JSON).",
+            "fix": "Turn the scratch shape into a real test using a letter-only code: org 31 is a PPON paired with the code, org 32 a PPON that is not paired and has a PPON-first mention, plus a provisional cluster. Fold, unwind, then assert by_identity == 1 and that the PPON mention is on a row carrying its own triple."
+          },
+          {
+            "severity": "should-fix",
+            "file_line": "crates/store/src/canonical.rs:17267",
+            "problem": "No test covers two alias arming rules: dropping a code's ledger rows when a `keep` verdict stands on it (:17267), and following anchor chains with the 8-hop limit and cycle poisoning (:17283-17305). Step 5 of the operations.md runbook relies on the keep drop.",
+            "evidence": "Mutations M7 (`claims.retain(|..| true || ..)`) and M8 (`snapshot.get(&at).filter(|_| false)`) were applied together, and `--test nhs_body` passed 33/33 (u4rv-M78.log). The test diff writes no keep verdict and no chained ledger rows. docs/operations.md:2236 says: \"Post a `keep` verdict for the body (the alias drops its rows while it stands)\".",
+            "fix": "Add three tests. (a) A keep verdict on a folded code: c.kept equals the row count, c.keys == 0, and the spelling binds by 234. (b) Two ledger rows of one code, where loser key → Anchor{K_a} at t1 and K_a → Ppon at t2: a mention on the first loser key binds the PPON org. (c) Two anchor rows pointing at each other are poisoned."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:27155",
+            "problem": "The unwind's redirect for an old loser looks up its head-name home before its identity home. A PPON loser whose head key also had name-bound mentions therefore redirects (308) to a new provisional row instead of the re-minted row that carries its own PPON.",
+            "evidence": "In a scratch test (code RET, PPON loser 32 'THE WALTON CENTRE B', with provisional twin 34 'The Walton Centre B'), the unwind printed \"RV notice 134 (PPON B) now on 37\" and \"RV loser 32 redirects to 35 (NULL|The Walton Centre B)\". Twin keys of this kind (a PPON org plus a NULL row on the same key) appear in 103 of the 156 admitted bodies, so a future body with a PPON loser would likely hit this.",
+            "fix": "When `row.literal` is non-empty, try the `Dest::Identity` home first and fall back to the name home."
+          },
+          {
+            "severity": "minor",
+            "file_line": "docs/operations.md:2236",
+            "problem": "Runbook step 5 has the operator post a `keep` verdict before unwinding. That keep verdict then outranks every later merge verdict for the code, so the body can never be admitted again. This contradicts \"a second fold needs a new verdict\". The step is also unnecessary, because the unwind retires the ledger rows in its own transaction, and while the keep stands before the unwind the alias stops arming the body, so its spellings regrow.",
+            "evidence": "merge_verdict_for orders by `(action = 'keep') DESC, reviewed_at DESC LIMIT 1` (canonical.rs:28578), and the census counts a `keep` status as not admitted. unwind_nhs_body runs `UPDATE org_merge_log SET rule = 'nhs-body-retired'` inside its immediate transaction.",
+            "fix": "Remove the keep-verdict instruction from step 5. If it is kept, state that it permanently bars the body from being re-folded."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:26653",
+            "problem": "After a wet run the stored nhs-body-plan carries the pre-fold `codes[]` from the live re-plan: folded bodies still show verdict.status 'admitted' and list their deleted losers as holders. Only `admitted_codes` is overwritten with the residual (supervisor.rs:3027), so the stored report contradicts itself.",
+            "evidence": "merge_nhs_bodies builds `report` from plan_nhs_bodies_on before any fold and never refreshes `codes`. nhs_body_plan_json stores it as is, apart from admitted_codes and live_admitted_codes. Runbook step 3 has the operator read this plan.",
+            "fix": "In operations.md step 3, say that holders and status come from a fresh dry run. Alternatively, drop or mark the `codes` entries of folded bodies in the stored wet plan."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:6446",
+            "problem": "A loser PPON org is folded even though no alias arm for loser PPONs exists. NhsBodyAlias holds name keys only (the 448-bar arm was not built). The next PPON-first mention of that PPON therefore re-mints its org, and S4 trips.",
+            "evidence": "In the RET scratch fold, PPON org 32 became a loser (`losers: [32, 33, 34]`) with no hold. nhs_body_survivor admits this whenever exactly one of several PPON members is paired with the code. The current cohort has no such body.",
+            "fix": "Until the loser-PPON arm exists, have merge_nhs_bodies hold any body whose losers include a GB:ppon member (reason `loser-ppon-unaliased`)."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:26835",
+            "problem": "One-member bodies write GBNHS<code> but no ledger row. A rebuild empties organization_merged_identifiers and nothing re-records the code, so `?identifier=GBNHS<code>` stops answering for those bodies. The builder disclosed this.",
+            "evidence": "In the 2261 plan with the posted verdicts, 37 of the 156 admitted bodies have exactly one member, and all 37 are clusters with no PPON. a_one_member_body_records_its_code_and_an_ambiguous_survivor_is_held asserts that org_merge_log has 0 rows.",
+            "fix": "Record a replayable marker for these bodies (for example, a ledger row the alias treats as an anchor self-key and only re-records the code from). Otherwise accept the gap in writing in the issue's trade-offs."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/tests/nhs_body.rs:118",
+            "problem": "The test fixture's register_identity lacks production's all-zero-digit rule. In the fixture GB-NHS-R0B normalises to identity GBNHSR0B, while production normalise_identifier returns None (project.rs:9003). An alias or unwind test on a zero-digit code (0AR, 0CX, 0DE, 0DF, R0A, R0B or R0D, all admitted) therefore exercises a branch production never takes.",
+            "evidence": "In the first scratch unwind, which used code R0B, the coded mentions stayed on the survivor (`moved 1 by_name 0 by_identity 1`) because the fixture gave them an identity. The letter-only rerun moved them by name.",
+            "fix": "Port the all-zero-digit filler rule (and the single-repeated-character rule) into the fixture's register_identity."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/store/src/canonical.rs:17337",
+            "problem": "The ARMED diag line that S4 reads contains runs of 14 spaces, because two line continuations are missing their `\\`.",
+            "evidence": "The raw source literal reads \"... nhs-body ledger              row(s); ... (claimed by two bodies, or a              broken anchor chain) ...\".",
+            "fix": "End each continued line of the format string with `\\`, as the [issue 448] line at :17143 does."
+          },
+          {
+            "severity": "minor",
+            "file_line": "crates/app/src/supervisor.rs:20188",
+            "problem": "The new arms leave run_match_identifiers_spec 40 bytes under its future-size budget, so the next arm added there (U5 or U6) will trip the gauge.",
+            "evidence": "A --nocapture run (u4rv-gauge.log) printed `future size: run_match_identifiers_spec = 3800 bytes (budget 3840)` and `run_project = 3688 bytes (budget 9000)`. Both the gauge and an_execute_without_an_expected_count_is_refused pass.",
+            "fix": "No change is needed for this deploy. Put the next nhs-body arm behind its own boxed fn rather than raising the budget."
+          }
+        ]
+      }
+    ]
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Build"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Review"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "build:u4",
+      "phaseIndex": 1,
+      "phaseTitle": "Build",
+      "agentId": "a5a2fbc6b987c1884",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791764319204,
+      "queuedAt": 1791764319201,
+      "attempt": 1,
+      "lastToolName": "Bash",
+      "lastToolSummary": "grep -n \"pub async fn merge_nhs_bodies\\|async fn nhs_body_f…",
+      "promptPreview": "Issue 513 (/home/user/tender-db/.scratch/tender-db/issues/513-letter-only-nhs-ods-codes-mint-no-identity.md): read \"Decision (unit 2, second)\" (D1-D8,\nunits, stop rules S0-S6, handoffs) and the U1/U2/U3 sections. The FULL design is design C in /home/user/tender-db/.scratch/tender-db/513-nhs/u1/design-panel-wf_75976f73.json\n(result.designs[key=C]: units U3 wet path, U4 alias, U5 supervisor/report, …",
+      "promptFramed": true,
+      "lastProgressAt": 1791767413155,
+      "tokens": 548377,
+      "toolCalls": 157,
+      "durationMs": 3093950,
+      "resultPreview": "U4 is built and nothing is committed. The focused tests pass, including every test in the U3/U4 list, the unwind round trip, the S5 rebuild test and the stack canary. Two things changed from the brief: the alias counters are on the diag log only, not the job row (the stack budget), and the loser-PPON alias arm is not built.\n\n**Test runs** (each with the gate flags and gate package set, output to `…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "review:correctness",
+      "phaseIndex": 2,
+      "phaseTitle": "Review",
+      "agentId": "a85628abfee0ac5a5",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791767415787,
+      "queuedAt": 1791767415755,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "ship",
+      "promptPreview": "Adversarial REVIEW of issue 513 U4 as built in /home/user/tender-db (uncommitted). Builder's report:\nU4 is built and nothing is committed. The focused tests pass, including every test in the U3/U4 list, the unwind round trip, the S5 rebuild test and the stack canary. Two things changed from the brief: the alias counters are on the diag log only, not the job row (the stack budget), and the loser-PP…",
+      "promptFramed": true,
+      "lastProgressAt": 1791768433328,
+      "tokens": 344163,
+      "toolCalls": 78,
+      "durationMs": 1017540,
+      "resultPreview": "{\"verdict\":\"ship\",\"findings\":[{\"severity\":\"should-fix\",\"file_line\":\"crates/store/src/canonical.rs:26928 (unwind_nhs_body) and :26573 (nhs_body_ledger_listing)\",\"problem\":\"The unwind finds the body's survivor by following the ledger's org-id `keep` through plain `read::resolve_org`, with no era or time check. After a from-archive rebuild, that old id belongs to an unrelated org, so the unwind disso…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "review:tests",
+      "phaseIndex": 2,
+      "phaseTitle": "Review",
+      "agentId": "adeeb07c10a849584",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791768435154,
+      "queuedAt": 1791768435147,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "fix-first",
+      "promptPreview": "Adversarial REVIEW of issue 513 U4 as built in /home/user/tender-db (uncommitted). Builder's report:\nU4 is built and nothing is committed. The focused tests pass, including every test in the U3/U4 list, the unwind round trip, the S5 rebuild test and the stack canary. Two things changed from the brief: the alias counters are on the diag log only, not the job row (the stack budget), and the loser-PP…",
+      "promptFramed": true,
+      "lastProgressAt": 1791770084756,
+      "tokens": 313735,
+      "toolCalls": 83,
+      "durationMs": 1649601,
+      "resultPreview": "{\"verdict\":\"fix-first\",\"findings\":[{\"severity\":\"should-fix\",\"file_line\":\"crates/store/src/canonical.rs:27127\",\"problem\":\"No test covers the unwind's rebinding of party and bid-party rows. D7 and S6 require the unwind to be tested before any wet run, and every wet unwind performs this write.\",\"evidence\":\"Mutation M6c added `.filter(|_| false)` to the `moved_to` lookup, so no party or bid-party row …"
+    }
+  ],
+  "totalTokens": 1206275,
+  "totalToolCalls": 318
+}
