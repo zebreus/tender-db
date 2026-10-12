@@ -1,0 +1,509 @@
+{
+ "code": "QMJ",
+ "census_2279": {
+  "code": "QMJ",
+  "coded_notices_after_legal_end": 2,
+  "coded_parties": 53,
+  "eligible": [
+   30915099,
+   30915101,
+   30915993,
+   30916245,
+   31536734,
+   31593612,
+   31625150
+  ],
+  "holder_ids": [
+   30915099,
+   30915101,
+   30915993,
+   30916245,
+   31536734,
+   31593612,
+   31625150
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": "13R",
+     "verdict": "better"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMF",
+     "QMJ"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 106,
+    "mentions_capped": false,
+    "mentions_read": 106,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS London Commercial Hub",
+    "name_norm": "nhs london commercial hub",
+    "name_norms": [
+     {
+      "n": 106,
+      "value": "nhs london commercial hub"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30915099,
+    "other_codes": [
+     "QMF"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 104,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMF"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMJ"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 48,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMJ"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 419,
+    "mentions_capped": false,
+    "mentions_read": 419,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North Central London Integrated Care Board",
+    "name_norm": "nhs north central london integrated care board",
+    "name_norms": [
+     {
+      "n": 419,
+      "value": "nhs north central london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30915101,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 370,
+      "raw": null
+     },
+     {
+      "n": 48,
+      "raw": "GB-NHS-QMJ"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-ECCG"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMJ"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 225,
+    "mentions_capped": false,
+    "mentions_read": 225,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North Central London ICB",
+    "name_norm": "nhs north central london icb",
+    "name_norms": [
+     {
+      "n": 225,
+      "value": "nhs north central london icb"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30915993,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 223,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS North Central London ICB"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMJ"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMJ"
+    ],
+    "identifier": "GBPPONPWBN7811DGVX",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 17,
+    "mentions_capped": false,
+    "mentions_read": 17,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North Central London Integrated Care Board",
+    "name_norm": "nhs north central london integrated care board",
+    "name_norms": [
+     {
+      "n": 17,
+      "value": "nhs north central london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30916245,
+    "other_codes": [],
+    "ppons": [
+     "PWBN7811DGVX"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 17,
+      "raw": "GB-PPON-PWBN-7811-DGVX"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMJ"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North Central London Integrated Care Board  London",
+    "name_norm": "nhs north central london integrated care board london",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs north central london integrated care board london"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31536734,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMJ"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMJ"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 12,
+    "mentions_capped": false,
+    "mentions_read": 12,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "North Central London Integrated Care Board",
+    "name_norm": "north central london integrated care board",
+    "name_norms": [
+     {
+      "n": 12,
+      "value": "north central london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31593612,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 11,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMJ"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMJ"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS NCL Integrated Care Board",
+    "name_norm": "nhs ncl integrated care board",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs ncl integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31625150,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMJ"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QMJ",
+   "legal_end": "2026-03-31",
+   "name": "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": [
+    "Z9B2Z"
+   ]
+  },
+  "ppons": [
+   "PWBN7811DGVX"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 53,
+    "tail": "QMJ"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "QMJ",
+   "decision": "merge",
+   "members": [
+    30915101,
+    30915993,
+    30916245,
+    31536734,
+    31593612,
+    31625150
+   ],
+   "confidence": "high",
+   "agree": false,
+   "disputed": [
+    31625150
+   ],
+   "ch_reason": "I agree with every classification. 30915099, the NEL-hosted Commercial Hub, is DIFFERENT for NCL, matching u1. ORD confirms the successor Z9B2Z 'NHS WEST AND NORTH LONDON INTEGRATED CARE BOARD' (predecessors QMJ and QRV), and no holder carries that name. 30916245 is the code's PPON org (PWBN7811DGVX, exact ODS name) and is the survivor. I dispute only 31625150 'NHS NCL Integrated Care Board'. It is SAME, but the check refuses it as 'zero'. The cited evidence is an acronym, which is not the ODS rename or predecessor evidence D3 requires, and the D3 graft names 'zero' explicitly; S1 allows 0 flagged members without evidence. It is a 1-mention org, so I drop it. If the owner accepts own-acronym evidence under D3, the reviewer's 6-member list stands.",
+   "rationale": "ODS QMJ is NHS North Central London ICB (RO261), legally ended 2026-03-31. ORD lists the successor Z9B2Z NHS West and North London ICB (predecessors QMJ and QRV). No holder carries the successor name, so D6's successor bar excludes nobody. Six holders are NCL spellings plus the PPON org PWBN7811DGVX: SAME, undenied, no elsewhere-owned keys. The 'zero' check refusal of 31625150 is overridden on cited acronym evidence (NCL = North Central London, coded QMJ). The London Commercial Hub is a unit hosted by NEL ICB (QMF): DIFFERENT. The survivor is the PPON org 30916245. reviewed_holders = holder_ids exactly: [30915099, 30915101, 30915993, 30916245, 31536734, 31593612, 31625150].",
+   "holders": [
+    {
+     "org_id": 30915099,
+     "class": "DIFFERENT",
+     "eligible": false,
+     "real_body": "NHS London Commercial Hub, a procurement unit hosted by NHS North East London ICB (QMF); own PPON PBWD-3998-QHRQ",
+     "reason": "Hosted by NEL ICB (FTS 033194-2025 / 033199-2025: 'NHS London Commercial Hub (hosted by NHS North East London ICB)'). It runs procurements for several London ICBs, including one QMJ-coded notice, but it is neither NCL ICB nor a unit NCL runs. Never a member (D6)."
+    },
+    {
+     "org_id": 30915101,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The exact ODS name of QMJ (NHS North Central London ICB). 48 coded mentions; its 'GB-NHS-ECCG' raw is junk. Check admits it, no flags. Largest SAME cluster."
+    },
+    {
+     "org_id": 30915993,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'NHS North Central London ICB', the ICB abbreviation. 225 mentions, 1 coded QMJ. Check admits it, no flags."
+    },
+    {
+     "org_id": 30916245,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The PPON org GBPPONPWBN7811DGVX (the code's PPON), named exactly as ODS. Not a minted identity. Check admits it, no flags. It becomes the survivor."
+    },
+    {
+     "org_id": 31536734,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ODS name with 'London' appended. Coded QMJ. Check admits it, no flags."
+    },
+    {
+     "org_id": 31593612,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ODS name without the 'NHS' prefix. Coded QMJ. Check admits it, no flags."
+    },
+    {
+     "org_id": 31625150,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'NHS NCL Integrated Care Board': NCL is the standard abbreviation of North Central London, and the rest is the ODS name. Its single mention publishes GB-NHS-QMJ. The check refuses it as 'zero' only because the acronym shares no spelled-out token. Cited evidence for the D3 flag: the body's own acronym, no rival NCL body, coded QMJ."
+    }
+   ],
+   "holder_ids": [
+    30915099,
+    30915101,
+    30915993,
+    30916245,
+    31536734,
+    31593612,
+    31625150
+   ]
+  }
+ ],
+ "ods_row": [
+  "QMJ",
+  "A",
+  "RC1",
+  "RO261",
+  "1",
+  "",
+  "Z9B2Z",
+  "2026-03-31",
+  "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD"
+ ]
+}

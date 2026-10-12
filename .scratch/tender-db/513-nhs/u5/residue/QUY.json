@@ -1,0 +1,248 @@
+{
+ "code": "QUY",
+ "census_2279": {
+  "code": "QUY",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 34,
+  "eligible": [
+   30914356,
+   31536069,
+   31609946
+  ],
+  "holder_ids": [
+   30914356,
+   31536069,
+   31609946
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 33,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QUY"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 163,
+    "mentions_capped": false,
+    "mentions_read": 163,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+    "name_norm": "nhs bristol, north somerset and south gloucestershire integrated care board",
+    "name_norms": [
+     {
+      "n": 163,
+      "value": "nhs bristol, north somerset and south gloucestershire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30914356,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 130,
+      "raw": null
+     },
+     {
+      "n": 33,
+      "raw": "GB-NHS-QUY"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QUY"
+    ],
+    "identifier": "GBPPONPPCD6597HCDW",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [
+     31592799
+    ],
+    "later_parties": 0,
+    "mentions": 5,
+    "mentions_capped": false,
+    "mentions_read": 5,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Bristol North Somerset & South Gloucestershire Integrated Care Board",
+    "name_norm": "nhs bristol north somerset & south gloucestershire integrated care board",
+    "name_norms": [
+     {
+      "n": 5,
+      "value": "nhs bristol north somerset & south gloucestershire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31536069,
+    "other_codes": [],
+    "ppons": [
+     "PPCD6597HCDW"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 5,
+      "raw": "GB-PPON-PPCD-6597-HCDW"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QUY"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Bristol, North East Somerset and South Gloucestershire Integrated Care Board",
+    "name_norm": "nhs bristol, north east somerset and south gloucestershire integrated care board",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs bristol, north east somerset and south gloucestershire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31609946,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QUY"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QUY",
+   "legal_end": null,
+   "name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "ppons": [
+   "PPCD6597HCDW"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 34,
+    "tail": "QUY"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "QUY",
+   "decision": "hold",
+   "members": [
+    30914356,
+    31536069,
+    31609946
+   ],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "All three holders are SAME. 30914356 is the exact ODS name with 33 coded. 31536069 is the PPON org (PPCD6597HCDW), the ODS name with '&' and no comma. 31609946 says 'North East Somerset' where it means 'North Somerset'; it is coded QUY, Bristol plus South Gloucestershire belong only to BNSSG, and no ICB has that name. All three are admitted with denied=[]. 31536069 has key_owners_elsewhere=[31592799]: a standing identifier-NULL row outside the holder set owns its head name_norm 234 key. key_owners_elsewhere is not a census denial, so the org still reads eligible, but D4 holds that member and S0 admits 0 elsewhere-owned keys. Dropping it would leave the provisional 30914356 as the anchor while the body's canonical PPON row stays outside, against D1's survivor rule, so I agree with hold over drop. 31592799 is not in any local scratch file and needs the human look. If the owner drops the PPON org instead, the fallback is merge [30914356,31609946]. reviewed_holders=[30914356,31536069,31609946].",
+   "rationale": "reviewed_holders=[30914356,31536069,31609946]. All three holders are SAME. D4 holds member 31536069, the PPON org and the intended survivor, because org 31592799 owns its alias key. 31592799 is an identifier-NULL row outside the holder set, likely an uncoded twin of the same body with the PPON's spelling. S0 admits 0 elsewhere-owned keys. Dropping the PPON org would make provisional 30914356 the anchor while a canonical PPON row exists, which reverses D1's survivor rule, so I hold rather than drop. If the owner prefers to drop it, the merge set is [30914356,31609946], with 30914356 as the provisional anchor.",
+   "holders": [
+    {
+     "org_id": 30914356,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD' is QUY's exact ODS name. 33 of 163 mentions coded QUY. Admitted, no flags."
+    },
+    {
+     "org_id": 31536069,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The PPON org (PPCD6597HCDW): 'NHS Bristol North Somerset & South Gloucestershire Integrated Care Board', with '&' for 'and' and no comma, 5 mentions. Admitted. BUT key_owners_elsewhere=[31592799]: its head name_norm 234 key is owned by a standing identifier-NULL row outside the body, so D4 holds this member (alias_key_owned_elsewhere)."
+    },
+    {
+     "org_id": 31609946,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'NHS Bristol, North East Somerset and South Gloucestershire Integrated Care Board' has 1 mention, coded QUY. 'North East Somerset' is a slip for 'North Somerset', probably carried over from Bath and North East Somerset (BSW ICB, QOX). Bristol plus South Gloucestershire belong only to BNSSG, and the check Admitted it."
+    }
+   ],
+   "holder_ids": [
+    30914356,
+    31536069,
+    31609946
+   ]
+  }
+ ],
+ "ods_row": [
+  "QUY",
+  "A",
+  "RC1",
+  "RO261",
+  "1",
+  "",
+  "",
+  "",
+  "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE INTEGRATED CARE BOARD"
+ ]
+}

@@ -1,0 +1,125 @@
+{
+ "code": "RFF",
+ "census_2279": {
+  "code": "RFF",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 1,
+  "eligible": [
+   31223758
+  ],
+  "holder_ids": [
+   31223758
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RFF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 2,
+    "mentions_capped": false,
+    "mentions_read": 2,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "EPSOM & ST HELIER UNIVERSITY HOSPITAL NHS TRUST",
+    "name_norm": "epsom & st helier university hospital nhs trust",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "epsom & st helier university hospital nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31223758,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RFF"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RFF",
+   "legal_end": null,
+   "name": "BARNSLEY HOSPITAL NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "ppons": [],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 1,
+    "tail": "RFF"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "RFF",
+   "decision": "none",
+   "members": [],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "Confirmed. The only holder, 31223758 'EPSOM & ST HELIER UNIVERSITY HOSPITAL NHS TRUST', is a different body. ORD gives RVR EPSOM AND ST HELIER UNIVERSITY HOSPITALS NHS TRUST, Active, in Carshalton. RFF is Barnsley Hospital NHS FT. The check refuses the name as zero, and its single GB-NHS-RFF mention is a wrong code. No holder is SAME, so the decision is none.",
+   "rationale": "The only holder is Epsom and St Helier (RVR), not Barnsley Hospital NHS FT. No holder is SAME, so there is no body verdict.",
+   "holders": [
+    {
+     "org_id": 31223758,
+     "class": "DIFFERENT",
+     "eligible": true,
+     "reason": "Epsom and St Helier University Hospitals NHS Trust is a different body, ODS RVR (Active), in Surrey and south London. Barnsley Hospital NHS FT is RFF, in South Yorkshire. The check refuses it as zero. Its one coded party carries GB-NHS-RFF by mistake.",
+     "real_body": "EPSOM AND ST HELIER UNIVERSITY HOSPITALS NHS TRUST (RVR)"
+    }
+   ],
+   "holder_ids": [
+    31223758
+   ]
+  }
+ ],
+ "ods_row": [
+  "RFF",
+  "A",
+  "RC1",
+  "RO197",
+  "1",
+  "",
+  "",
+  "",
+  "BARNSLEY HOSPITAL NHS FOUNDATION TRUST"
+ ]
+}

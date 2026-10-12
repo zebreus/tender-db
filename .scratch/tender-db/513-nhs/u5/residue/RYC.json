@@ -1,0 +1,214 @@
+{
+ "code": "RYC",
+ "census_2279": {
+  "code": "RYC",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 3,
+  "eligible": [
+   1263180,
+   30916110
+  ],
+  "holder_ids": [
+   1263180,
+   30916110
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 3,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RYC"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 209,
+    "mentions_capped": false,
+    "mentions_read": 209,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "East of England Ambulance Service NHS Trust",
+    "name_norm": "east of england ambulance service nhs trust",
+    "name_norms": [
+     {
+      "n": 209,
+      "value": "east of england ambulance service nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 1263180,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 202,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-RYC"
+     },
+     {
+      "n": 1,
+      "raw": "C/O West Midlands Ambulance Service NHS FT"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-East of England Ambulance Service NHS Trust"
+     },
+     {
+      "n": 1,
+      "raw": "N/A"
+     },
+     {
+      "n": 1,
+      "raw": "c/o West Midlands Ambulance Service NHS FT"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RYC"
+    ],
+    "identifier": "GBPPONPBNZ4155WXBZ",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [
+     31623946
+    ],
+    "later_parties": 0,
+    "mentions": 89,
+    "mentions_capped": false,
+    "mentions_read": 89,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "East of England Ambulance Service NHS Trust Headquarters",
+    "name_norm": "east of england ambulance service nhs trust headquarters",
+    "name_norms": [
+     {
+      "n": 71,
+      "value": "east of england ambulance service nhs trust"
+     },
+     {
+      "n": 18,
+      "value": "east of england ambulance service nhs trust headquarters"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30916110,
+    "other_codes": [],
+    "ppons": [
+     "PBNZ4155WXBZ"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 89,
+      "raw": "GB-PPON-PBNZ-4155-WXBZ"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYC",
+   "legal_end": null,
+   "name": "EAST OF ENGLAND AMBULANCE SERVICE NHS TRUST",
+   "predecessors": [
+    "RB4",
+    "RFU",
+    "RMZ"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "ppons": [
+   "PBNZ4155WXBZ"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 3,
+    "tail": "RYC"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "RYC",
+   "decision": "hold",
+   "members": [
+    1263180,
+    30916110
+   ],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "1263180 has the exact ODS name. 30916110 is the trust's PPON org PBNZ4155WXBZ, and 71 of its 89 mentions carry the plain trust name. ODS has a separate HQ site, RYC01, but a PPON registers the legal body, so the org is SAME and not HOSTED_OR_SITE. 30916110 has key_owners_elsewhere=[31623946] on its 'headquarters' head key. A merge verdict that includes it would get member-key-owned-elsewhere and not be admitted. Dropping it would leave the provisional cluster as survivor and split the body from its canonical PPON row, so I agree with hold.",
+   "rationale": "I am sure of both holders: both are SAME. Decision is hold because of D4: the SAME PPON org 30916110, the survivor, has a key owned elsewhere (31623946, probably an uncoded EEAST 'Headquarters' cluster). Dropping the PPON org would leave the provisional cluster as survivor and split the body from its canonical row, so I kept it. Someone needs to look at 31623946, then post the verdict again.",
+   "holders": [
+    {
+     "org_id": 1263180,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "Exact ODS name (East of England Ambulance Service NHS Trust); check admitted. The stray 'c/o West Midlands Ambulance Service' raw values come from collaborative ambulance procurements and do not change the identity."
+    },
+    {
+     "org_id": 30916110,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The trust's own PPON org (PBNZ4155WXBZ). It is the legal name plus 'Headquarters', and 71 of its 89 mentions carry the plain trust name. A PPON registers the legal body, not the HQ site. BUT key_owners_elsewhere=[31623946]: its head name key 'east of england ambulance service nhs trust headquarters' belongs to a standing identifier-NULL row outside the body. D4 holds this member."
+    }
+   ],
+   "holder_ids": [
+    1263180,
+    30916110
+   ]
+  }
+ ],
+ "ods_row": [
+  "RYC",
+  "A",
+  "RC1",
+  "RO197",
+  "1",
+  "RB4,RFU,RMZ",
+  "",
+  "",
+  "EAST OF ENGLAND AMBULANCE SERVICE NHS TRUST"
+ ]
+}

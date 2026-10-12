@@ -1,0 +1,313 @@
+{
+ "code": "RXT",
+ "census_2279": {
+  "code": "RXT",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 7,
+  "eligible": [
+   10958945,
+   13043614,
+   30926645,
+   30932865
+  ],
+  "holder_ids": [
+   10958945,
+   13043614,
+   30926645,
+   30932865
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 5,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RXT"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 155,
+    "mentions_capped": false,
+    "mentions_read": 155,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Birmingham & Solihull Mental Health NHS Foundation Trust",
+    "name_norm": "birmingham & solihull mental health nhs foundation trust",
+    "name_norms": [
+     {
+      "n": 155,
+      "value": "birmingham & solihull mental health nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 10958945,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 150,
+      "raw": null
+     },
+     {
+      "n": 5,
+      "raw": "GB-NHS-RXT"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": "RQ3",
+     "verdict": "better"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RXT"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 4,
+    "mentions_capped": false,
+    "mentions_read": 4,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Birmingham Women's and Children's Hospital NHS Foundation Trust",
+    "name_norm": "birmingham women's and children's hospital nhs foundation trust",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "birmingham women's and children's hospital nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 13043614,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RXT"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RXT"
+    ],
+    "identifier": "GBPPONPTMC2127TPCV",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [
+     30917358
+    ],
+    "later_parties": 0,
+    "mentions": 51,
+    "mentions_capped": false,
+    "mentions_read": 51,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Birmingham & Solihull Mental Health Foundation Trust",
+    "name_norm": "birmingham & solihull mental health foundation trust",
+    "name_norms": [
+     {
+      "n": 51,
+      "value": "birmingham & solihull mental health foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30926645,
+    "other_codes": [],
+    "ppons": [
+     "PTMC2127TPCV"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 51,
+      "raw": "GB-PPON-PTMC-2127-TPCV"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RXT"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Birmingham and Solihull Mental Health Foundation NHS Trust",
+    "name_norm": "birmingham and solihull mental health foundation nhs trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "birmingham and solihull mental health foundation nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30932865,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RXT"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RXT",
+   "legal_end": null,
+   "name": "BIRMINGHAM AND SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+   "predecessors": [
+    "RND",
+    "RNF"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "ppons": [
+   "PTMC2127TPCV"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 7,
+    "tail": "RXT"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "RXT",
+   "decision": "hold",
+   "members": [
+    10958945,
+    30926645,
+    30932865
+   ],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "10958945 ('&' spelling), 30932865 (word-order variant, coded RXT) and the PPON org 30926645 are all SAME. 13043614 is DIFFERENT: ODS ORD confirms RQ3 is the Active Birmingham Women's and Children's NHS FT, and the check returns 'better' with rival RQ3. 30926645 has key_owners_elsewhere=[30917358]. The census code (canonical.rs ~25594) gives any merge verdict that includes it the status member-key-owned-elsewhere, which is not admitted. Dropping it would make a provisional anchor the survivor and leave the canonical PPON row outside the body, against D1's survivor rule. So I agree with hold over that drop. Someone needs to look at 30917358, a standing uncoded BSMHFT-spelled row.",
+   "rationale": "I am sure of every holder: three SAME (two spellings plus the PPON org) and one DIFFERENT (RQ3, Birmingham Women's and Children's). Decision is hold, not merge, because of D4: the SAME PPON org 30926645, the natural survivor, has a key owned elsewhere (30917358, probably an uncoded BSMHFT cluster). Dropping the PPON org would leave a provisional anchor as survivor while the canonical PPON row stays split, so I did not drop it. Someone needs to look at 30917358 (fold it into the body, or release the key), then post the verdict again.",
+   "holders": [
+    {
+     "org_id": 10958945,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'&' spelling of the ODS name (Birmingham and Solihull Mental Health NHS FT); 5 coded parties; check admitted."
+    },
+    {
+     "org_id": 13043614,
+     "class": "DIFFERENT",
+     "eligible": false,
+     "real_body": "Birmingham Women's and Children's NHS Foundation Trust (RQ3)",
+     "reason": "A separate active trust, RQ3 (confirmed on ODS ORD). The check flags rival RQ3 'better'. One stray RXT code picked in error."
+    },
+    {
+     "org_id": 30926645,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The trust's own PPON org (PTMC2127TPCV), '&' spelling without 'NHS'; check admitted. BUT key_owners_elsewhere=[30917358]: its head name key 'birmingham & solihull mental health foundation trust' belongs to a standing identifier-NULL row outside the body. D4 holds this member (alias_key_owned_elsewhere), so the census would give the verdict status member-key-owned-elsewhere."
+    },
+    {
+     "org_id": 30932865,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "Word-order variant of the ODS name ('Foundation NHS Trust'); 1 coded party; check admitted."
+    }
+   ],
+   "holder_ids": [
+    10958945,
+    13043614,
+    30926645,
+    30932865
+   ]
+  }
+ ],
+ "ods_row": [
+  "RXT",
+  "A",
+  "RC1",
+  "RO197",
+  "1",
+  "RND,RNF",
+  "",
+  "",
+  "BIRMINGHAM AND SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST"
+ ]
+}

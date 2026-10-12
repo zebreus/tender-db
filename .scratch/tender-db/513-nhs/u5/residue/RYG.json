@@ -1,0 +1,261 @@
+{
+ "code": "RYG",
+ "census_2279": {
+  "code": "RYG",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 6,
+  "eligible": [
+   1691021,
+   4648675,
+   30918096
+  ],
+  "holder_ids": [
+   1691021,
+   4648675,
+   30918096
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 5,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 40,
+    "mentions_capped": false,
+    "mentions_read": 40,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Coventry and Warwickshire Partnership NHS Trust",
+    "name_norm": "coventry and warwickshire partnership nhs trust",
+    "name_norms": [
+     {
+      "n": 40,
+      "value": "coventry and warwickshire partnership nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 1691021,
+    "other_codes": [
+     "RGY"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 34,
+      "raw": null
+     },
+     {
+      "n": 5,
+      "raw": "GB-NHS-RYG"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RGY"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 32,
+    "mentions_capped": false,
+    "mentions_read": 32,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Coventry and Warwickshire Partnership Trust",
+    "name_norm": "coventry and warwickshire partnership trust",
+    "name_norms": [
+     {
+      "n": 32,
+      "value": "coventry and warwickshire partnership trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 4648675,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 31,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-RYG"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RYG"
+    ],
+    "identifier": "GBPPONPPBB6627GXNQ",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [
+     5317015
+    ],
+    "later_parties": 0,
+    "mentions": 4,
+    "mentions_capped": false,
+    "mentions_read": 4,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Coventry & Warwickshire Partnership Trust",
+    "name_norm": "coventry & warwickshire partnership trust",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "coventry & warwickshire partnership trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30918096,
+    "other_codes": [],
+    "ppons": [
+     "PPBB6627GXNQ"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 4,
+      "raw": "GB-PPON-PPBB-6627-GXNQ"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RYG",
+   "legal_end": null,
+   "name": "COVENTRY AND WARWICKSHIRE PARTNERSHIP NHS TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "ppons": [
+   "PPBB6627GXNQ"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 6,
+    "tail": "RYG"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "RYG",
+   "decision": "hold",
+   "members": [
+    1691021,
+    4648675,
+    30918096
+   ],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "All three holders are Coventry and Warwickshire Partnership NHS Trust. 1691021's other code, RGY, is a transposition typo: ODS answers 404 for RGY. 4648675 is the name without 'NHS'; 'Partnership' rules out RKB and the ICB. 30918096 is the PPON org PPBB6627GXNQ. The census lists 30918096 as eligible with denied=[], but key_owners_elsewhere=[5317015], so D4 holds that member. Dropping it would leave the body's PPON org outside, against D1, so hold is right. 5317015 needs a box look; it is probably an uncoded twin of the same body.",
+   "rationale": "All three holders are the same body, RYG, and every classification is certain. Held under D4: the PPON member 30918096, which is the natural D1 survivor, has its head key owned elsewhere by 5317015. 5317015 is probably an uncoded twin 'Coventry & Warwickshire Partnership Trust' of the same body, but I could not check it without the box. Dropping 30918096 would give an admissible 2-member merge [1691021, 4648675] with a provisional anchor, but it would leave the body's PPON org outside, against D1, so I did not drop it. A human should look at 5317015. reviewed_holders = [1691021, 4648675, 30918096].",
+   "holders": [
+    {
+     "org_id": 1691021,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "Exact ODS name Coventry and Warwickshire Partnership NHS Trust, with 5 RYG-coded mentions. Its other code, RGY (1 mention), is a transposition typo: ODS answers 404 for RGY.",
+     "real_body": "Coventry and Warwickshire Partnership NHS Trust (RYG)"
+    },
+    {
+     "org_id": 4648675,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ODS name without 'NHS', one RYG-coded mention. 'Partnership' tells it apart from UHCW (RKB) and the ICB (QWU).",
+     "real_body": "Coventry and Warwickshire Partnership NHS Trust (RYG)"
+    },
+    {
+     "org_id": 30918096,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The body's PPON org (PPBB6627GXNQ), 'Coventry & Warwickshire Partnership Trust'. But its head key 'coventry & warwickshire partnership trust' is owned by standing identifier-NULL org 5317015 outside the body (key_owners_elsewhere=[5317015]). D4 makes that alias_key_owned_elsewhere, so this member is held and the planner would mark the verdict member-key-owned-elsewhere.",
+     "real_body": "Coventry and Warwickshire Partnership NHS Trust (RYG)"
+    }
+   ],
+   "holder_ids": [
+    1691021,
+    4648675,
+    30918096
+   ]
+  }
+ ],
+ "ods_row": [
+  "RYG",
+  "A",
+  "RC1",
+  "RO197",
+  "1",
+  "",
+  "",
+  "",
+  "COVENTRY AND WARWICKSHIRE PARTNERSHIP NHS TRUST"
+ ]
+}

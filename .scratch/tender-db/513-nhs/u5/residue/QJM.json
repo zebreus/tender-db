@@ -1,0 +1,306 @@
+{
+ "code": "QJM",
+ "census_2279": {
+  "code": "QJM",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 409,
+  "eligible": [
+   20444933,
+   30913741,
+   31605215,
+   31605311
+  ],
+  "holder_ids": [
+   20444933,
+   30913741,
+   31605215,
+   31605311
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 3,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QJM"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 16,
+    "mentions_capped": false,
+    "mentions_read": 16,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Lincolnshire ICB",
+    "name_norm": "nhs lincolnshire icb",
+    "name_norms": [
+     {
+      "n": 16,
+      "value": "nhs lincolnshire icb"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 20444933,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 13,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-QJM"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 404,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QJM"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 855,
+    "mentions_capped": false,
+    "mentions_read": 855,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Lincolnshire Integrated Care Board",
+    "name_norm": "nhs lincolnshire integrated care board",
+    "name_norms": [
+     {
+      "n": 855,
+      "value": "nhs lincolnshire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30913741,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 451,
+      "raw": null
+     },
+     {
+      "n": 404,
+      "raw": "GB-NHS-QJM"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QJM"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS LINCOLNSHIRE INTEGRATED ACRE BOARD",
+    "name_norm": "nhs lincolnshire integrated acre board",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs lincolnshire integrated acre board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31605215,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QJM"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QJM"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS incolnshire Integrated Care Board",
+    "name_norm": "nhs incolnshire integrated care board",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs incolnshire integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31605311,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QJM"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QJM",
+   "legal_end": null,
+   "name": "NHS LINCOLNSHIRE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "ppons": [],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 409,
+    "tail": "QJM"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "QJM",
+   "decision": "merge",
+   "members": [
+    20444933,
+    30913741,
+    31605215,
+    31605311
+   ],
+   "confidence": "high",
+   "agree": false,
+   "disputed": [
+    31605311
+   ],
+   "ch_reason": "I agree 31605311 'NHS incolnshire Integrated Care Board' is SAME, a one-letter typo. I dispute only its eligibility. The check refuses it as 'zero'. D3, the nhs_ods.rs module doc and the panel graft all say a check-refused member needs HIGH 'with cited ODS rename or predecessor evidence', and the graft names 'zero' explicitly. S1 allows 0 flagged members without evidence. A typo of the current name is not ODS rename or predecessor evidence. Dropping it costs one mention, which stays a split provisional org (an accepted trade-off). If the owner rules that a cited own-name typo satisfies D3, the reviewer's 4-member list stands. 31605215 'ACRE' is admitted by the check, so it is a valid member. The other two holders are SAME and admitted. The survivor is the anchor 30913741.",
+   "rationale": "ODS QJM is NHS Lincolnshire ICB (RO261), Active, with no legal end. All four holders are the one body: the exact name, the ICB abbreviation, and two single-mention typos ('ACRE' for CARE; 'incolnshire'). The check's 'zero' refusal of 31605311 is overridden on cited typo evidence: one letter missing from the ODS name, coded QJM. There is no PPON holder, so the survivor is the anchor 30913741. No flags, denials or elsewhere-owned keys. reviewed_holders = holder_ids exactly: [20444933, 30913741, 31605215, 31605311].",
+   "holders": [
+    {
+     "org_id": 20444933,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'NHS Lincolnshire ICB', the ICB abbreviation of the ODS name. 3 coded mentions. Check admits it, no flags."
+    },
+    {
+     "org_id": 30913741,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The exact ODS name. 404 coded mentions. Check admits it, no flags. Largest cluster, so it becomes the anchor survivor (no PPON holder)."
+    },
+    {
+     "org_id": 31605215,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'NHS LINCOLNSHIRE INTEGRATED ACRE BOARD' misspells 'CARE' as 'ACRE'. Its single mention publishes GB-NHS-QJM. Check admits it."
+    },
+    {
+     "org_id": 31605311,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'NHS incolnshire Integrated Care Board' drops the leading L of 'Lincolnshire'. Otherwise it is the ODS name word for word, and its single mention publishes GB-NHS-QJM. The check refuses it as 'zero' only because the misspelt word shares no distinctive token. Cited evidence for the D3 flag: an obvious one-letter typo of the code's own ODS name, and no other Lincolnshire ICB exists."
+    }
+   ],
+   "holder_ids": [
+    20444933,
+    30913741,
+    31605215,
+    31605311
+   ]
+  }
+ ],
+ "ods_row": [
+  "QJM",
+  "A",
+  "RC1",
+  "RO261",
+  "1",
+  "",
+  "",
+  "",
+  "NHS LINCOLNSHIRE INTEGRATED CARE BOARD"
+ ]
+}

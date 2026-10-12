@@ -1,0 +1,199 @@
+{
+ "code": "RXF",
+ "census_2279": {
+  "code": "RXF",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 6,
+  "eligible": [
+   30917291,
+   31539005
+  ],
+  "holder_ids": [
+   30917291,
+   31539005
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RXF"
+    ],
+    "identifier": "GBPPONPTPB4248VJQT",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [
+     6724930
+    ],
+    "later_parties": 0,
+    "mentions": 30,
+    "mentions_capped": false,
+    "mentions_read": 30,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Mid Yorkshire Hospitals NHS Trust",
+    "name_norm": "mid yorkshire hospitals nhs trust",
+    "name_norms": [
+     {
+      "n": 27,
+      "value": "mid yorkshire hospitals nhs trust"
+     },
+     {
+      "n": 3,
+      "value": "mid yorkshire teaching nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30917291,
+    "other_codes": [],
+    "ppons": [
+     "PTPB4248VJQT"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 30,
+      "raw": "GB-PPON-PTPB-4248-VJQT"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 6,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RXF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 45,
+    "mentions_capped": false,
+    "mentions_read": 45,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "MID YORKSHIRE TEACHING NHS TRUST",
+    "name_norm": "mid yorkshire teaching nhs trust",
+    "name_norms": [
+     {
+      "n": 45,
+      "value": "mid yorkshire teaching nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31539005,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 39,
+      "raw": null
+     },
+     {
+      "n": 6,
+      "raw": "GB-NHS-RXF"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RXF",
+   "legal_end": null,
+   "name": "MID YORKSHIRE TEACHING NHS TRUST",
+   "predecessors": [
+    "RMW",
+    "RR4"
+   ],
+   "role": "RO197",
+   "successors": []
+  },
+  "ppons": [
+   "PTPB4248VJQT"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 6,
+    "tail": "RXF"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "RXF",
+   "decision": "hold",
+   "members": [
+    30917291,
+    31539005
+   ],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "The ODS ORD API confirms RXF is MID YORKSHIRE TEACHING NHS TRUST, Active RO197, operational since 2002-04-01 with no successors. The only Mid Yorkshire RO197 body ODS returns is RXF; 'MID YORKSHIRE HOSPITALS NHS TRUST' appears only as AFYR, an Inactive RO104 non-trust entry. So 'Mid Yorkshire Hospitals NHS Trust' is the same code's pre-rename name, not a predecessor or successor body. 30917291 is the code's PPON org, PTPB4248VJQT, carrying both the old name (27 mentions) and the new name (3); it is SAME. 31539005 has 45 mentions under the exact current name, 6 coded; it is SAME. Both pass the census's structural checks: admitted, no denials. However, 30917291 has key_owners_elsewhere=[6724930]: a standing identifier-NULL GB row outside the body owns its head-name key 'mid yorkshire hospitals nhs trust'. The census marks this status 'member-key-owned-elsewhere', and D4 holds the member. Dropping 30917291 would make the provisional cluster the survivor in place of the PPON org (D1), so holding is correct. A human should look at 6724930, which is likely the trust's uncoded old-name twin. Same members and decision as the reviewer.",
+   "rationale": "Both holders are certainly the RXF body: the PPON org carries the pre-2023 name 'Mid Yorkshire Hospitals NHS Trust', and the provisional cluster carries the current name. HOLD under D4: the PPON member 30917291 has its alias key owned elsewhere by org 6724930, a standing identifier-NULL row that is probably the same trust's old-name twin. The PPON org should be the survivor under D1, so dropping it to force a 1-member merge would be worse than holding. A human should look at 6724930: either fold it as a member in a refreshed census, or drop the alias key.",
+   "holders": [
+    {
+     "org_id": 30917291,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "PPON org GBPPONPTPB4248VJQT, head 'Mid Yorkshire Hospitals NHS Trust' (27 mentions) plus 'Mid Yorkshire Teaching NHS Trust' (3). That is RXF's former name: the trust was renamed in 2023, and ODS still shows RXF Active and operational since 2002, so this is a rename of the same code. Admitted, no structural denial. BUT key_owners_elsewhere=[6724930]: its head name key 'mid yorkshire hospitals nhs trust' is owned by a standing identifier-NULL org outside the body. That org is most likely the trust's uncoded old-name twin. D4 holds this member.",
+     "real_body": "MID YORKSHIRE TEACHING NHS TRUST (RXF), formerly Mid Yorkshire Hospitals NHS Trust"
+    },
+    {
+     "org_id": 31539005,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "Provisional 'MID YORKSHIRE TEACHING NHS TRUST' (45 mentions, 6 coded). This is the exact current ODS name. Admitted, no flags.",
+     "real_body": "MID YORKSHIRE TEACHING NHS TRUST (RXF)"
+    }
+   ],
+   "holder_ids": [
+    30917291,
+    31539005
+   ]
+  }
+ ],
+ "ods_row": [
+  "RXF",
+  "A",
+  "RC1",
+  "RO197",
+  "1",
+  "RMW,RR4",
+  "",
+  "",
+  "MID YORKSHIRE TEACHING NHS TRUST"
+ ]
+}

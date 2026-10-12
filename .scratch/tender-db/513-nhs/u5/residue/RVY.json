@@ -1,0 +1,185 @@
+{
+ "code": "RVY",
+ "census_2279": {
+  "code": "RVY",
+  "coded_notices_after_legal_end": 5,
+  "coded_parties": 5,
+  "eligible": [
+   31560273
+  ],
+  "holder_ids": [
+   30916239,
+   31560273
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": "RBN",
+     "verdict": "better"
+    },
+    "coded_parties": 4,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [
+     "successor-name"
+    ],
+    "generic": false,
+    "holder_of": [
+     "RVY"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 4,
+    "mentions_capped": false,
+    "mentions_read": 4,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Mersey West Lancashire Teaching Hospitals NHS Trust",
+    "name_norm": "mersey west lancashire teaching hospitals nhs trust",
+    "name_norms": [
+     {
+      "n": 4,
+      "value": "mersey west lancashire teaching hospitals nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30916239,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 4,
+      "raw": "GB-NHS-RVY"
+     }
+    ],
+    "stands": true,
+    "successor_name": "RBN",
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RVY"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Cambridge Community Services",
+    "name_norm": "cambridge community services",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "cambridge community services"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31560273,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RVY"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RVY",
+   "legal_end": "2023-06-30",
+   "name": "SOUTHPORT AND ORMSKIRK HOSPITAL NHS TRUST",
+   "predecessors": [
+    "REQ",
+    "RJV"
+   ],
+   "role": "RO197",
+   "successors": [
+    "RBN"
+   ]
+  },
+  "ppons": [],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 5,
+    "tail": "RVY"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "RVY",
+   "decision": "none",
+   "members": [],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "ORD: RBN 'MERSEY AND WEST LANCASHIRE TEACHING HOSPITALS NHS TRUST' has RVY as predecessor from 2023-07-01, and RVY's legal end is 2023-06-30. All 5 coded notices fall after the legal end. 30916239 'Mersey West Lancashire Teaching Hospitals NHS Trust' carries the successor's name. It is SUCCESSOR and denied as successor-name, so it is never a member. 31560273 'Cambridge Community Services' is Cambridgeshire Community Services NHS Trust: ORD RYV, legally ended 2026-03-31 with successor RY3. The code was picked by an RVY/RYV transposition, so it is DIFFERENT. No holder is Southport and Ormskirk Hospital NHS Trust itself, so there is no SAME holder and the decision is none.",
+   "rationale": "No holder is Southport and Ormskirk Hospital NHS Trust itself. One holder carries the RBN successor name, which is denied, and the other is the RYV neighbour picked by a transposition typo. All 5 coded notices fall after the 2023-06-30 legal end. No SAME holder, so the decision is none. reviewed_holders [30916239,31560273].",
+   "holders": [
+    {
+     "org_id": 30916239,
+     "class": "SUCCESSOR",
+     "eligible": false,
+     "real_body": "Mersey and West Lancashire Teaching Hospitals NHS Trust (RBN)",
+     "reason": "RVY (Southport and Ormskirk) legally ended on 2023-06-30. ODS gives RBN as its successor from 2023-07-01. This holder carries the successor's name, and the census denies it as successor-name. D6: never a member."
+    },
+    {
+     "org_id": 31560273,
+     "class": "DIFFERENT",
+     "eligible": true,
+     "real_body": "Cambridgeshire Community Services NHS Trust (RYV)",
+     "reason": "'Cambridge Community Services' is Cambridgeshire Community Services NHS Trust, ODS RYV. The RVY-for-RYV letter transposition picked a neighbour's code. The ODS check gives 'zero', and there is 1 mention. Not RVY's body."
+    }
+   ],
+   "holder_ids": [
+    30916239,
+    31560273
+   ]
+  }
+ ],
+ "ods_row": [
+  "RVY",
+  "A",
+  "RC1",
+  "RO197",
+  "1",
+  "REQ,RJV",
+  "RBN",
+  "2023-06-30",
+  "SOUTHPORT AND ORMSKIRK HOSPITAL NHS TRUST"
+ ]
+}

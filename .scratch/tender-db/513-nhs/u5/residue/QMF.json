@@ -1,0 +1,785 @@
+{
+ "code": "QMF",
+ "census_2279": {
+  "code": "QMF",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 139,
+  "eligible": [
+   5132172,
+   30914670,
+   30915099,
+   30976288,
+   31542989,
+   31561974,
+   31570524,
+   31570934,
+   31608373,
+   31608375,
+   31613968
+  ],
+  "holder_ids": [
+   5132172,
+   30914670,
+   30915099,
+   30976288,
+   31542989,
+   31561974,
+   31570524,
+   31570934,
+   31608373,
+   31608375,
+   31613968
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "role"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 66,
+    "mentions_capped": false,
+    "mentions_read": 66,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Barking, Havering and Redbridge University Hospitals NHS Trust",
+    "name_norm": "barking, havering and redbridge university hospitals nhs trust",
+    "name_norms": [
+     {
+      "n": 66,
+      "value": "barking, havering and redbridge university hospitals nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 5132172,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 64,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMF"
+     },
+     {
+      "n": 1,
+      "raw": "n/a"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 119,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK",
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 217,
+    "mentions_capped": false,
+    "mentions_read": 217,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North East London Integrated Care Board",
+    "name_norm": "nhs north east london integrated care board",
+    "name_norms": [
+     {
+      "n": 217,
+      "value": "nhs north east london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30914670,
+    "other_codes": [
+     "QKK"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 119,
+      "raw": "GB-NHS-QMF"
+     },
+     {
+      "n": 88,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-QKK"
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-UKI - London"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-London"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS NORTH EAST LONDON INTEGRATED CARE BOARD (QMF)"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS North East London"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": "13R",
+     "verdict": "better"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMF",
+     "QMJ"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 106,
+    "mentions_capped": false,
+    "mentions_read": 106,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS London Commercial Hub",
+    "name_norm": "nhs london commercial hub",
+    "name_norms": [
+     {
+      "n": 106,
+      "value": "nhs london commercial hub"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30915099,
+    "other_codes": [
+     "QMJ"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 104,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMF"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMJ"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 3,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 19,
+    "mentions_capped": false,
+    "mentions_read": 19,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North East London ICB",
+    "name_norm": "nhs north east london icb",
+    "name_norms": [
+     {
+      "n": 19,
+      "value": "nhs north east london icb"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30976288,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 16,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-QMF"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 3,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 13,
+    "mentions_capped": false,
+    "mentions_read": 13,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "North East London ICB",
+    "name_norm": "north east london icb",
+    "name_norms": [
+     {
+      "n": 13,
+      "value": "north east london icb"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31542989,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 9,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-QMF"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-https://northeastlondon.icb.nhs.uk"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": "QKK",
+     "verdict": "better"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMF"
+    ],
+    "identifier": "GBPPONPMLZ8385VMTM",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [
+     30914447
+    ],
+    "later_parties": 0,
+    "mentions": 5,
+    "mentions_capped": false,
+    "mentions_read": 5,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS South East London Integrated Care Board",
+    "name_norm": "nhs south east london integrated care board",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "nhs south east london integrated care board"
+     },
+     {
+      "n": 2,
+      "value": "nhs north east london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31561974,
+    "other_codes": [],
+    "ppons": [
+     "PMLZ8385VMTM"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 5,
+      "raw": "GB-PPON-PMLZ-8385-VMTM"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 4,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK",
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 20,
+    "mentions_capped": false,
+    "mentions_read": 20,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "North East London Integrated Care Board",
+    "name_norm": "north east london integrated care board",
+    "name_norms": [
+     {
+      "n": 20,
+      "value": "north east london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31570524,
+    "other_codes": [
+     "QKK"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 15,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-QMF"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QKK"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "coverage"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North East London Integrated Care Board (covering Barking & Dagenham, Havering and Redbridge)",
+    "name_norm": "nhs north east london integrated care board (covering barking & dagenham, havering and redbridge)",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs north east london integrated care board (covering barking & dagenham, havering and redbridge)"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31570934,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMF"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 3,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 3,
+    "mentions_capped": false,
+    "mentions_read": 3,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North East London Integrate Care Board",
+    "name_norm": "nhs north east london integrate care board",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "nhs north east london integrate care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31608373,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-NHS-QMF"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 3,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 3,
+    "mentions_capped": false,
+    "mentions_read": 3,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North East London Intergrated Care Board",
+    "name_norm": "nhs north east london intergrated care board",
+    "name_norms": [
+     {
+      "n": 3,
+      "value": "nhs north east london intergrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31608375,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-NHS-QMF"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 6,
+    "mentions_capped": false,
+    "mentions_read": 6,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North East London (NEL) Integrated Care Board (ICB)",
+    "name_norm": "nhs north east london (nel) integrated care board (icb)",
+    "name_norms": [
+     {
+      "n": 6,
+      "value": "nhs north east london (nel) integrated care board (icb)"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31613968,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 5,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QMF"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QMF",
+   "legal_end": null,
+   "name": "NHS NORTH EAST LONDON INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "ppons": [
+   "PMLZ8385VMTM"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 139,
+    "tail": "QMF"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "QMF",
+   "decision": "hold",
+   "members": [
+    30914670,
+    30976288,
+    31542989,
+    31570524,
+    31570934,
+    31608373,
+    31608375,
+    31613968
+   ],
+   "confidence": "high",
+   "agree": false,
+   "disputed": [
+    31570934
+   ],
+   "ch_reason": "I agree with every classification. 5132172 is BHRUT, DIFFERENT: ORD shows RF4 Active RO197. 30915099 is the London Commercial Hub, HOSTED: FTS 033194-2025 names it 'NHS London Commercial Hub (hosted by NHS North East London ICB)'. FTS 033194-2025 and 091170-2026 show NEL ICB with QMF plus PMLZ-8385-VMTM, so 31561974 is SAME by identity, SEL-labelled. It is ineligible: the check refuses it (better: QKK), and D4 holds it because 30914447 owns its key. I agree on hold, as with QKK. I dispute only 31570934 '\u2026(covering Barking & Dagenham, Havering and Redbridge)'. It is SAME, but the check refuses it on 'coverage'. D3 needs ODS rename or predecessor evidence, and an area parenthetical is neither. It is a 1-mention org, so I drop it. If the owner accepts this kind of evidence under D3, the reviewer's 8-member list stands. 31608373 and 31608375, the 'Integrate'/'Intergrated' typos, are admitted by the check, so they are valid members.",
+   "rationale": "ODS QMF is NHS North East London ICB (RO261), Active. Eight holders are NEL spellings, all SAME and undenied with no elsewhere-owned keys. The 'coverage' check refusal of 31570934 is overridden on cited evidence: the ODS name verbatim plus a parenthetical listing NEL boroughs. BHRUT (RF4) is DIFFERENT, and the London Commercial Hub is a unit hosted by NEL (HOSTED_OR_SITE). HOLD because the SAME PPON holder 31561974 needs a human look: its PMLZ-8385-VMTM is NEL ICB's own PPON (FTS 033194-2025, 033199-2025, 091170-2026, published beside QMF). It carries SEL's head name, its key is owned by 30914447 outside the body (D4), and the check refuses it (better: QKK). The planned 469 keep verdict on QMF\u2194PMLZ, and the D6 'swapped PPONs' premise, should be revisited: the PPON labels are swapped, not the PPON-code pairs. Two options. (a) Merge the eight listed members now with the anchor 30914670 as survivor, leaving the PPON org out as the adopted D6 'both stay anchors' intended (safe). (b) Re-label 31561974 via keep_name, leave its SEL key un-armed, and fold it in as survivor. Decide together with QKK. reviewed_holders = holder_ids exactly: [5132172, 30914670, 30915099, 30976288, 31542989, 31561974, 31570524, 31570934, 31608373, 31608375, 31613968].",
+   "holders": [
+    {
+     "org_id": 5132172,
+     "class": "DIFFERENT",
+     "eligible": false,
+     "real_body": "Barking, Havering and Redbridge University Hospitals NHS Trust (RF4)",
+     "reason": "A separate acute trust inside NEL. ORD shows RF4 as Active RO197 with an RE5/RE8 relationship to QMF. 1 stray QMF mention against 64 uncoded. The check refuses it on role (trust)."
+    },
+    {
+     "org_id": 30914670,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The exact ODS name of QMF. 119 coded QMF mentions; its 4 QKK and other junk raws are strays. Check admits it, no flags, no key owned elsewhere. It is also a QKK holder, but only QMF's verdict names it, so it is not contested. Largest SAME cluster and the anchor survivor."
+    },
+    {
+     "org_id": 30915099,
+     "class": "HOSTED_OR_SITE",
+     "eligible": false,
+     "reason": "NHS London Commercial Hub, a procurement unit hosted by NEL ICB. FTS 033194-2025 and 033199-2025 name it 'NHS London Commercial Hub (hosted by NHS North East London ICB)', with its own PPON PBWD-3998-QHRQ as procuringEntity. It has no ODS record; the check's rival 13R is ODS 'London Commissioning Hub' (RO98), a different thing. Never a member (D6)."
+    },
+    {
+     "org_id": 30976288,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'NHS North East London ICB', the ICB abbreviation. Check admits it, no flags."
+    },
+    {
+     "org_id": 31542989,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'North East London ICB': the abbreviation without NHS. Its raws include NEL ICB's own web address. Check admits it, no flags."
+    },
+    {
+     "org_id": 31561974,
+     "class": "SAME",
+     "eligible": false,
+     "reason": "The PPON org GBPPONPMLZ8385VMTM. FTS 033194-2025, 033199-2025 and 091170-2026 (fetched) show 'NHS North East London Integrated Care Board' as buyer with GB-NHS-QMF and GB-PPON-PMLZ-8385-VMTM (16 witnesses), so PMLZ is NEL ICB's own PPON and this row is QMF's PPON org. But its head name is 'NHS South East London Integrated Care Board' (3 of 5 mentions SEL, 2 NEL). The check refuses it (better: QKK), and its key is owned elsewhere by 30914447 (QKK's SEL cluster), so D4 holds it. Ineligible pending a human look."
+    },
+    {
+     "org_id": 31570524,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'North East London Integrated Care Board': 4 coded QMF mentions; 1 QKK stray. Check admits it, no flags. A QKK holder too, but only QMF names it."
+    },
+    {
+     "org_id": 31570934,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The exact ODS name plus '(covering Barking & Dagenham, Havering and Redbridge)', three boroughs inside NEL ICB. Its single mention publishes QMF. The check refuses it on 'coverage' only because of the borough words. Cited evidence for the D3 flag: the ODS name word for word, plus a parenthetical naming the contract's area within the ICB."
+    },
+    {
+     "org_id": 31608373,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'Integrate' is a typo of Integrated; otherwise the ODS name. 3 coded QMF mentions. Check admits it."
+    },
+    {
+     "org_id": 31608375,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'Intergrated' is a typo of Integrated; otherwise the ODS name. 3 coded QMF mentions. Check admits it."
+    },
+    {
+     "org_id": 31613968,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ODS name with '(NEL)' and '(ICB)' acronyms. Coded QMF. Check admits it, no flags."
+    }
+   ],
+   "holder_ids": [
+    5132172,
+    30914670,
+    30915099,
+    30976288,
+    31542989,
+    31561974,
+    31570524,
+    31570934,
+    31608373,
+    31608375,
+    31613968
+   ]
+  }
+ ],
+ "ods_row": [
+  "QMF",
+  "A",
+  "RC1",
+  "RO261",
+  "1",
+  "",
+  "",
+  "",
+  "NHS NORTH EAST LONDON INTEGRATED CARE BOARD"
+ ]
+}

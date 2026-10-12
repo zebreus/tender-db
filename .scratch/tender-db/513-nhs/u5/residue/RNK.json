@@ -1,0 +1,192 @@
+{
+ "code": "RNK",
+ "census_2279": {
+  "code": "RNK",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 4,
+  "eligible": [
+   1538916,
+   31554431
+  ],
+  "holder_ids": [
+   1538916,
+   31554431
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 4,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RNK"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 29,
+    "mentions_capped": false,
+    "mentions_read": 29,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Tavistock and Portman NHS Foundation Trust",
+    "name_norm": "tavistock and portman nhs foundation trust",
+    "name_norms": [
+     {
+      "n": 29,
+      "value": "tavistock and portman nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 1538916,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 25,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-RNK"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RNK"
+    ],
+    "identifier": "GBPPONPGGT9642DYWY",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [
+     31598112
+    ],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Tavistock and Portman NHS Trust",
+    "name_norm": "tavistock and portman nhs trust",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "tavistock and portman nhs trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31554431,
+    "other_codes": [],
+    "ppons": [
+     "PGGT9642DYWY"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-PPON-PGGT-9642-DYWY"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RNK",
+   "legal_end": "2026-03-31",
+   "name": "TAVISTOCK AND PORTMAN NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": [
+    "G6V2S"
+   ]
+  },
+  "ppons": [
+   "PGGT9642DYWY"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 4,
+    "tail": "RNK"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "RNK",
+   "decision": "hold",
+   "members": [
+    1538916,
+    31554431
+   ],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "Live ORD confirms RNK 'TAVISTOCK AND PORTMAN NHS FOUNDATION TRUST': legal end 2026-03-31, successor G6V2S (NORTH LONDON NHS FOUNDATION TRUST), RO57 foundation-trust role from 2006-11-01, only predecessor FBL (a DMU). An ORD name search for 'Tavistock' finds no other code named 'Tavistock and Portman NHS Trust', so the PPON org 31554431 carries RNK's own pre-2006 name and is SAME. Neither holder has a successor name, and coded_notices_after_legal_end is 0. 31554431 has key_owners_elsewhere=[31598112]: its head key is owned by an identifier-NULL row that is not a holder. Under D4 that member is held, and S0 admits 0 elsewhere-owned keys. Dropping the member would make the provisional cluster the survivor in place of the PPON org, against D1, so 'hold' with both members is the right call. No local file describes 31598112; it is probably an uncoded twin under the old name.",
+   "rationale": "Both holders are the RNK body. ORD confirms RNK's legal end on 2026-03-31, succeeded by G6V2S (North London NHS FT). Neither holder has a successor name, and coded_notices_after_legal_end is 0. The PPON member 31554431 has an elsewhere-owned alias key (owner 31598112, an identifier-NULL row that is not a holder). Under D4 that member is held, so the body is held instead of dropping the member. Dropping it would make the provisional cluster the survivor in place of the PPON org (D1). Someone needs to look at whether 31598112, probably an uncoded 'Tavistock and Portman NHS Trust' twin, changes the picture.",
+   "holders": [
+    {
+     "org_id": 1538916,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "Exact ODS name, Tavistock and Portman NHS Foundation Trust: 4 coded and 25 uncoded mentions. It is the code's own name, not a successor name. The check admits it."
+    },
+    {
+     "org_id": 31554431,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "RNK's PPON org (PGGT9642DYWY), named 'Tavistock and Portman NHS Trust', the body's pre-foundation-trust name. ORD shows the RO57 foundation-trust role starting 2006-11-01. Its only predecessor is FBL, a health authority, so no other body carries that name. The check admits it. BUT key_owners_elsewhere=[31598112]: its head key 'tavistock and portman nhs trust' is owned by a standing identifier-NULL row outside the body, so D4 holds this member."
+    }
+   ],
+   "holder_ids": [
+    1538916,
+    31554431
+   ]
+  }
+ ],
+ "ods_row": [
+  "RNK",
+  "A",
+  "RC1",
+  "RO197",
+  "1",
+  "",
+  "G6V2S",
+  "2026-03-31",
+  "TAVISTOCK AND PORTMAN NHS FOUNDATION TRUST"
+ ]
+}

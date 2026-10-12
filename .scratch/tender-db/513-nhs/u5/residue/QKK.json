@@ -1,0 +1,651 @@
+{
+ "code": "QKK",
+ "census_2279": {
+  "code": "QKK",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 153,
+  "eligible": [
+   30914447,
+   30914670,
+   30928152,
+   31534497,
+   31544853,
+   31556342,
+   31570524,
+   31576333,
+   31620803
+  ],
+  "holder_ids": [
+   30914447,
+   30914670,
+   30928152,
+   31534497,
+   31544853,
+   31556342,
+   31570524,
+   31576333,
+   31620803
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 109,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 241,
+    "mentions_capped": false,
+    "mentions_read": 241,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS South East London Integrated Care Board",
+    "name_norm": "nhs south east london integrated care board",
+    "name_norms": [
+     {
+      "n": 241,
+      "value": "nhs south east london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30914447,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 131,
+      "raw": null
+     },
+     {
+      "n": 109,
+      "raw": "GB-NHS-QKK"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS South East London Integrated Care Board"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": "QMF",
+     "verdict": "better"
+    },
+    "coded_parties": 4,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK",
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 217,
+    "mentions_capped": false,
+    "mentions_read": 217,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North East London Integrated Care Board",
+    "name_norm": "nhs north east london integrated care board",
+    "name_norms": [
+     {
+      "n": 217,
+      "value": "nhs north east london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30914670,
+    "other_codes": [
+     "QMF"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 119,
+      "raw": "GB-NHS-QMF"
+     },
+     {
+      "n": 88,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-QKK"
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-UKI - London"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-London"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS NORTH EAST LONDON INTEGRATED CARE BOARD (QMF)"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS North East London"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 5,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 11,
+    "mentions_capped": false,
+    "mentions_read": 11,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS South East London Integrated Care Board London",
+    "name_norm": "nhs south east london integrated care board london",
+    "name_norms": [
+     {
+      "n": 11,
+      "value": "nhs south east london integrated care board london"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30928152,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 6,
+      "raw": null
+     },
+     {
+      "n": 5,
+      "raw": "GB-NHS-QKK"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 15,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 41,
+    "mentions_capped": false,
+    "mentions_read": 41,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS South East London ICB",
+    "name_norm": "nhs south east london icb",
+    "name_norms": [
+     {
+      "n": 41,
+      "value": "nhs south east london icb"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31534497,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 26,
+      "raw": null
+     },
+     {
+      "n": 15,
+      "raw": "GB-NHS-QKK"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 14,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 21,
+    "mentions_capped": false,
+    "mentions_read": 21,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "South East London Integrated Care Board",
+    "name_norm": "south east london integrated care board",
+    "name_norms": [
+     {
+      "n": 21,
+      "value": "south east london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31544853,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 14,
+      "raw": "GB-NHS-QKK"
+     },
+     {
+      "n": 7,
+      "raw": null
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 3,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 6,
+    "mentions_capped": false,
+    "mentions_read": 6,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS South East London Integrated Care Board (SEL ICB)",
+    "name_norm": "nhs south east london integrated care board (sel icb)",
+    "name_norms": [
+     {
+      "n": 6,
+      "value": "nhs south east london integrated care board (sel icb)"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31556342,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-QKK"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": "QMF",
+     "verdict": "better"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK",
+     "QMF"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 20,
+    "mentions_capped": false,
+    "mentions_read": 20,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "North East London Integrated Care Board",
+    "name_norm": "north east london integrated care board",
+    "name_norms": [
+     {
+      "n": 20,
+      "value": "north east london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31570524,
+    "other_codes": [
+     "QMF"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 15,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-QMF"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QKK"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": "QMF",
+     "verdict": "better"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK"
+    ],
+    "identifier": "GBPPONPCXT8262NYRV",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS North East London Integrated Care Board",
+    "name_norm": "nhs north east london integrated care board",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "nhs north east london integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31576333,
+    "other_codes": [],
+    "ppons": [
+     "PCXT8262NYRV"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-PPON-PCXT-8262-NYRV"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 2,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QKK"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 2,
+    "mentions_capped": false,
+    "mentions_read": 2,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "South East London Integrated Care Board (ICB)",
+    "name_norm": "south east london integrated care board (icb)",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "south east london integrated care board (icb)"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31620803,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-QKK"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QKK",
+   "legal_end": null,
+   "name": "NHS SOUTH EAST LONDON INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "ppons": [
+   "PCXT8262NYRV"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 153,
+    "tail": "QKK"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "QKK",
+   "decision": "hold",
+   "members": [
+    30914447,
+    30928152,
+    31534497,
+    31544853,
+    31556342,
+    31620803
+   ],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "The six SEL spellings are SAME and the check admits all six. 30914670 and 31570524 are NEL ICB clusters (119 and 4 of their mentions are coded QMF): DIFFERENT. FTS 033033-2025 and 041616-2025 confirm the buyer 'NHS South East London Integrated Care Board' with GB-NHS-QKK plus GB-PPON-PCXT-8262-NYRV. So 31576333 is SAME by identity but labelled NEL; u1 had classed it DIFFERENT by name. It is ineligible: the check refuses it (better: QMF) with no ODS rename evidence. Under D4 its head key 'nhs north east london integrated care board' is owned by 30914670, a standing identifier-NULL non-member, so D4 holds it. The census misses this: key_owners_elsewhere excludes every holder of the code (canonical.rs ~25461), not every non-member, so it shows []. Option (b) would therefore pass the census unflagged. Hold is right: D1's survivor would be this PPON org, D6's 'both stay anchors' rested on the swapped-PPON premise, and the planned 469 keep verdict on QKK\u2194PCXT would deny a same-body pair.",
+   "rationale": "ODS QKK is NHS South East London ICB (RO261), Active. Six holders are SEL spellings, all SAME and undenied with no elsewhere-owned keys. Two holders (30914670, 31570524) are NEL ICB clusters carrying QKK strays: DIFFERENT, and members of QMF instead. HOLD because the SAME PPON holder 31576333 needs a human look. The adopted D6 assumed the London PPONs were swapped across bodies. The FTS witnesses (033033-2025, 041616-2025, 042734-2025) show instead that PCXT-8262-NYRV is SEL ICB's own PPON, published beside QKK. Only the PPON org's single mention carries NEL's name, so the planned 469 keep verdict on the QKK\u2194PCXT pair rests on a wrong premise. Two options. (a) Merge the six listed members now with the anchor 30914447 as survivor, leaving the PPON org out as the adopted D6 'both stay anchors' intended (safe). (b) Fold 31576333 in as survivor with keep_name 'NHS South East London Integrated Care Board' and its NEL head key un-armed. reviewed_holders = holder_ids exactly: [30914447, 30914670, 30928152, 31534497, 31544853, 31556342, 31570524, 31576333, 31620803].",
+   "holders": [
+    {
+     "org_id": 30914447,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The exact ODS name of QKK (NHS South East London ICB). 109 coded mentions. Check admits it, no flags, no key owned elsewhere."
+    },
+    {
+     "org_id": 30914670,
+     "class": "DIFFERENT",
+     "eligible": false,
+     "real_body": "NHS North East London Integrated Care Board (QMF)",
+     "reason": "The neighbouring ICB. 119 of its coded mentions publish QMF and only 4 publish QKK (dropdown strays). It is a SAME member of QMF's verdict, never QKK's."
+    },
+    {
+     "org_id": 30928152,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ODS name with 'London' appended. 5 coded mentions. Check admits it, no flags."
+    },
+    {
+     "org_id": 31534497,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'NHS South East London ICB', the ICB abbreviation. 15 coded mentions. Check admits it, no flags."
+    },
+    {
+     "org_id": 31544853,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ODS name without the 'NHS' prefix. 14 coded mentions. Check admits it, no flags."
+    },
+    {
+     "org_id": 31556342,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ODS name plus '(SEL ICB)'. 3 coded mentions. Check admits it, no flags."
+    },
+    {
+     "org_id": 31570524,
+     "class": "DIFFERENT",
+     "eligible": false,
+     "real_body": "NHS North East London Integrated Care Board (QMF)",
+     "reason": "'North East London Integrated Care Board': 4 QMF coded mentions against 1 QKK stray. The neighbouring ICB; a SAME member of QMF only."
+    },
+    {
+     "org_id": 31576333,
+     "class": "SAME",
+     "eligible": false,
+     "reason": "The PPON org GBPPONPCXT8262NYRV. FTS notices 033033-2025, 041616-2025 and 042734-2025 (fetched) show 'NHS South East London Integrated Care Board' as buyer with GB-NHS-QKK and additional identifier GB-PPON-PCXT-8262-NYRV (13 witnesses), so PCXT is SEL ICB's own PPON and this row is QKK's PPON org. But its only mention, and so its head name, is 'NHS North East London Integrated Care Board': a swapped label, not a swapped PPON. The check refuses it (better: QMF), and no ODS rename evidence exists. As survivor it would carry NEL's name and arm NEL's 234 key for SEL's body. Ineligible pending a human look (keep_name / alias-key handling)."
+    },
+    {
+     "org_id": 31620803,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ODS name without 'NHS', plus '(ICB)'. 2 coded mentions. Check admits it, no flags."
+    }
+   ],
+   "holder_ids": [
+    30914447,
+    30914670,
+    30928152,
+    31534497,
+    31544853,
+    31556342,
+    31570524,
+    31576333,
+    31620803
+   ]
+  }
+ ],
+ "ods_row": [
+  "QKK",
+  "A",
+  "RC1",
+  "RO261",
+  "1",
+  "",
+  "",
+  "",
+  "NHS SOUTH EAST LONDON INTEGRATED CARE BOARD"
+ ]
+}

@@ -1,0 +1,140 @@
+{
+ "code": "DQF",
+ "census_2279": {
+  "code": "DQF",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 0,
+  "eligible": [],
+  "holder_ids": [
+   31550606
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [
+     "minted-identity"
+    ],
+    "generic": false,
+    "holder_of": [
+     "DQF"
+    ],
+    "identifier": "GBCOH11258001",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [
+     14305379
+    ],
+    "later_parties": 1,
+    "mentions": 22,
+    "mentions_capped": false,
+    "mentions_read": 22,
+    "merged_identifiers": [
+     "GBPPONPHPR3762LPLP"
+    ],
+    "minted_identity": true,
+    "name": "CALDERDALE AND HUDDERSFIELD SOLUTIONS LTD",
+    "name_norm": "calderdale and huddersfield solutions ltd",
+    "name_norms": [
+     {
+      "n": 17,
+      "value": "calderdale and huddersfield solutions limited"
+     },
+     {
+      "n": 4,
+      "value": "calderdale and huddersfield solutions ltd"
+     },
+     {
+      "n": 1,
+      "value": "calderdale & huddersfield nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31550606,
+    "other_codes": [],
+    "ppons": [
+     "PHPR3762LPLP"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 17,
+      "raw": "GB-PPON-PHPR-3762-LPLP"
+     },
+     {
+      "n": 5,
+      "raw": "GB-COH-11258001"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": true,
+    "via": "party-later+ppon"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 1,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "DQF",
+   "legal_end": null,
+   "name": "CALDERDALE AND HUDDERSFIELD SOLUTIONS LIMITED",
+   "predecessors": [],
+   "role": "RO172",
+   "successors": []
+  },
+  "ppons": [
+   "PHPR3762LPLP"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 1,
+    "parties": 0,
+    "tail": "DQF"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "DQF",
+   "decision": "hold",
+   "members": [],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "The only holder, 31550606 'CALDERDALE AND HUDDERSFIELD SOLUTIONS LTD', is the code's own body: the ODS name for DQF (RO172) with 'Ltd' for 'Limited'. So it is SAME. It is ineligible. Its identifier is GBCOH11258001, which is not a PPON identity, so the census sets minted_identity and denies it as 'minted-identity'. canonical.rs ~25448 sets that flag for any identifier that is not a PPON, and the planner reports a verdict naming it as 'member-denied', so the SAME-PPON exception cannot rescue it. It is also under_review, and D4 holds it because its key is owned by 14305379. One stray 'calderdale & huddersfield nhs foundation trust' mention is noise. Members are empty, and a SAME holder is structurally denied, so the decision is 'hold', not 'none'. reviewed_holders = [31550606].",
+   "rationale": "The only holder is the code's own company, so it is SAME, but it is structurally denied (minted COH identity) and under review. Its 234 key is also owned outside the body by 14305379 (alias_key_owned_elsewhere), so D4 would hold it anyway. There is nothing to fold: the body is already one canonical COH org carrying the PPON. A 1-member verdict would only record GBNHSDQF, and that needs a human decision on whether D6's SAME-PPON-org exception covers a COH-identified org. Hold. reviewed_holders = [31550606], exactly as given.",
+   "holders": [
+    {
+     "org_id": 31550606,
+     "class": "SAME",
+     "eligible": false,
+     "reason": "Calderdale and Huddersfield Solutions Ltd: 'Ltd' for 'Limited' in the ODS name (RO172, a subsidiary under QWO). Its identifier GBCOH11258001 is this company: Companies House shows 'CALDERDALE AND HUDDERSFIELD SOLUTIONS LTD (11258001)'. It also holds the code's PPON PHPR3762LPLP as a merged identifier. One of its 22 mentions is a stray 'Calderdale & Huddersfield NHS Foundation Trust'. It is NOT eligible: structural denial 'minted-identity', under_review, and its head key is owned elsewhere by 14305379 (D4)."
+    }
+   ],
+   "holder_ids": [
+    31550606
+   ]
+  }
+ ],
+ "ods_row": [
+  "DQF",
+  "A",
+  "RC1",
+  "RO172",
+  "1",
+  "",
+  "",
+  "",
+  "CALDERDALE AND HUDDERSFIELD SOLUTIONS LIMITED"
+ ]
+}

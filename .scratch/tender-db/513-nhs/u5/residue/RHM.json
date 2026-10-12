@@ -1,0 +1,318 @@
+{
+ "code": "RHM",
+ "census_2279": {
+  "code": "RHM",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 28,
+  "eligible": [
+   2181541,
+   30926652,
+   30926769,
+   31624750
+  ],
+  "holder_ids": [
+   2181541,
+   30926652,
+   30926769,
+   31624750
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 26,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RHM"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 391,
+    "mentions_capped": false,
+    "mentions_read": 391,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "University Hospital Southampton NHS Foundation Trust",
+    "name_norm": "university hospital southampton nhs foundation trust",
+    "name_norms": [
+     {
+      "n": 391,
+      "value": "university hospital southampton nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 2181541,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 363,
+      "raw": null
+     },
+     {
+      "n": 26,
+      "raw": "GB-NHS-RHM"
+     },
+     {
+      "n": 1,
+      "raw": "GB-PPON-0"
+     },
+     {
+      "n": 1,
+      "raw": "United Kingdom"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RHM"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Coroners Adult Post-Mortem and Forensic services",
+    "name_norm": "coroners adult post-mortem and forensic services",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "coroners adult post-mortem and forensic services"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30926652,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RHM"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RHM"
+    ],
+    "identifier": "GBPPONPTRZ1736CQVH",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [
+     22035718
+    ],
+    "later_parties": 0,
+    "mentions": 18,
+    "mentions_capped": false,
+    "mentions_read": 18,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "University Hospital Southampton",
+    "name_norm": "university hospital southampton",
+    "name_norms": [
+     {
+      "n": 17,
+      "value": "university hospital southampton nhs foundation trust"
+     },
+     {
+      "n": 1,
+      "value": "university hospital southampton"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30926769,
+    "other_codes": [],
+    "ppons": [
+     "PTRZ1736CQVH"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 18,
+      "raw": "GB-PPON-PTRZ-1736-CQVH"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RHM"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "University Hospitals Southampton NHS",
+    "name_norm": "university hospitals southampton nhs",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "university hospitals southampton nhs"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31624750,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-RHM"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RHM",
+   "legal_end": null,
+   "name": "UNIVERSITY HOSPITAL SOUTHAMPTON NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "ppons": [
+   "PTRZ1736CQVH"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 28,
+    "tail": "RHM"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "RHM",
+   "decision": "hold",
+   "members": [
+    2181541,
+    31624750
+   ],
+   "confidence": "high",
+   "agree": false,
+   "disputed": [
+    30926769
+   ],
+   "ch_reason": "The classifications match. 2181541 is SAME (exact ODS name, 26 coded parties). 31624750 'University Hospitals Southampton NHS' is SAME, truncated with a plural slip, and admitted. 30926652 is NOT_ORG (a service title, check zero). 30926769 is the PPON org PTRZ1736CQVH: 17 of its 18 mentions carry the full trust name, so it is SAME. Its head key 'university hospital southampton' is owned by 22035718, outside the body. I also reach 'hold', because dropping the SAME PPON org would make a provisional anchor the survivor against D1. The dispute is the members list. 30926769 has no structural denial (the census lists it as eligible), so under the stated definition it is a member. D4's key ownership turns the DECISION into hold; it does not remove the member. The instruction is 'hold unless you drop the member'. The reviewer both dropped it (members [2181541, 31624750], eligible:false) AND chose hold, which matches neither branch. Keep the member and the result is hold [2181541, 30926769, 31624750]. Drop it and the result is merge [2181541, 31624750], the reviewer's stated fallback, which the census would admit. I recommend hold with the PPON org listed, pending a look at 22035718 (probably UHS's uncoded short-name twin, which can never be a member because it never carried the code).",
+   "rationale": "Every holder is clear, but the body's PPON org 30926769, the natural survivor under D1, is held by D4: its key 'university hospital southampton' is owned elsewhere by org 22035718, probably an uncoded cluster of the same trust. Dropping it would make provisional 2181541 the survivor and lock the PPON org out of this code's verdict. So I recommend hold until someone looks at 22035718. If the decision is to drop the member, the fallback verdict is merge [2181541, 31624750].",
+   "holders": [
+    {
+     "org_id": 2181541,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "Exact ODS name of RHM (University Hospital Southampton NHS FT). It holds 26 of the 28 coded parties and the check admits it."
+    },
+    {
+     "org_id": 30926652,
+     "class": "NOT_ORG",
+     "eligible": false,
+     "reason": "'Coroners Adult Post-Mortem and Forensic services' is a service or tender title, not an organisation. The check says zero and D6 bars it."
+    },
+    {
+     "org_id": 30926769,
+     "class": "SAME",
+     "eligible": false,
+     "reason": "The PPON org (PTRZ1736CQVH), 'University Hospital Southampton', is the trust's short name: 17 of its 18 mentions carry the full trust name. It is SAME, but key_owners_elsewhere=[22035718]: its head key 'university hospital southampton' is owned by a standing identifier-NULL org outside the body. D4 holds this member (alias_key_owned_elsewhere)."
+    },
+    {
+     "org_id": 31624750,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'University Hospitals Southampton NHS' is a truncated variant with a plural slip, same body. The check admits it."
+    }
+   ],
+   "holder_ids": [
+    2181541,
+    30926652,
+    30926769,
+    31624750
+   ]
+  }
+ ],
+ "ods_row": [
+  "RHM",
+  "A",
+  "RC1",
+  "RO197",
+  "1",
+  "",
+  "",
+  "",
+  "UNIVERSITY HOSPITAL SOUTHAMPTON NHS FOUNDATION TRUST"
+ ]
+}

@@ -1,0 +1,788 @@
+{
+ "code": "QYG",
+ "census_2279": {
+  "code": "QYG",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 652,
+  "eligible": [
+   30913962,
+   30916196,
+   30916198,
+   31541032,
+   31546209,
+   31551077,
+   31556030,
+   31579965,
+   31747045,
+   31747049,
+   31747053
+  ],
+  "holder_ids": [
+   30913962,
+   30916196,
+   30916198,
+   31541032,
+   31546209,
+   31551077,
+   31556030,
+   31579965,
+   31747045,
+   31747049,
+   31747053
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 584,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 784,
+    "mentions_capped": false,
+    "mentions_read": 784,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD",
+    "name_norm": "nhs cheshire and merseyside integrated care board",
+    "name_norms": [
+     {
+      "n": 784,
+      "value": "nhs cheshire and merseyside integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30913962,
+    "other_codes": [
+     "OYG",
+     "QYC"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 584,
+      "raw": "GB-NHS-QYG"
+     },
+     {
+      "n": 191,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-Children and Young People Online Counselling and Support in Liverpool"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-OYG"
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-STRATEGIC PARTNERSHIP - NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD (QYG)"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-Cheshire and Merseyside Integrated Care Board"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-NHS Cheshire and Merseyside Integrated Care Board"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-QYC"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 35,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 906,
+    "mentions_capped": false,
+    "mentions_read": 906,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Cheshire and Merseyside ICB",
+    "name_norm": "nhs cheshire and merseyside icb",
+    "name_norms": [
+     {
+      "n": 906,
+      "value": "nhs cheshire and merseyside icb"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30916196,
+    "other_codes": [
+     "OYG"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 867,
+      "raw": null
+     },
+     {
+      "n": 35,
+      "raw": "GB-NHS-QYG"
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-NHS Cheshire and Merseyside ICB"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-OYG"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 5,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 240,
+    "mentions_capped": false,
+    "mentions_read": 240,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Cheshire and Merseyside Integrated Care Board",
+    "name_norm": "cheshire and merseyside integrated care board",
+    "name_norms": [
+     {
+      "n": 240,
+      "value": "cheshire and merseyside integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30916198,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 235,
+      "raw": null
+     },
+     {
+      "n": 5,
+      "raw": "GB-NHS-QYG"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 3,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 16,
+    "mentions_capped": false,
+    "mentions_read": 16,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Cheshire and Merseyside Integrated Care Board (ICB)",
+    "name_norm": "nhs cheshire and merseyside integrated care board (icb)",
+    "name_norms": [
+     {
+      "n": 16,
+      "value": "nhs cheshire and merseyside integrated care board (icb)"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31541032,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 13,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-QYG"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 5,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 10,
+    "mentions_capped": false,
+    "mentions_read": 10,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Cheshire & Merseyside Integrated Care Board (ICB)",
+    "name_norm": "nhs cheshire & merseyside integrated care board (icb)",
+    "name_norms": [
+     {
+      "n": 10,
+      "value": "nhs cheshire & merseyside integrated care board (icb)"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31546209,
+    "other_codes": [
+     "0YD",
+     "OYD"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 5,
+      "raw": "GB-NHS-QYG"
+     },
+     {
+      "n": 3,
+      "raw": null
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-0YD"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-OYD"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 12,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 81,
+    "mentions_capped": false,
+    "mentions_read": 81,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Cheshire & Merseyside Integrated Care Board",
+    "name_norm": "nhs cheshire & merseyside integrated care board",
+    "name_norms": [
+     {
+      "n": 81,
+      "value": "nhs cheshire & merseyside integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31551077,
+    "other_codes": [
+     "OYG"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 66,
+      "raw": null
+     },
+     {
+      "n": 12,
+      "raw": "GB-NHS-QYG"
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-OYG"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 2,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 2,
+    "mentions_capped": false,
+    "mentions_read": 2,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Cheshire & Merseyside Integrated Care Board ICB",
+    "name_norm": "nhs cheshire & merseyside integrated care board icb",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "nhs cheshire & merseyside integrated care board icb"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31556030,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-QYG"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": "0CE",
+     "verdict": "tie"
+    },
+    "coded_parties": 3,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 5,
+    "mentions_capped": false,
+    "mentions_read": 5,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Cheshire and Merseyside",
+    "name_norm": "nhs cheshire and merseyside",
+    "name_norms": [
+     {
+      "n": 5,
+      "value": "nhs cheshire and merseyside"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31579965,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 3,
+      "raw": "GB-NHS-QYG"
+     },
+     {
+      "n": 2,
+      "raw": null
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Miriam Primary Care Group",
+    "name_norm": "miriam primary care group",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "miriam primary care group"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31747045,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QYG"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "non-nhs"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Miriam Primary Care Limited",
+    "name_norm": "miriam primary care limited",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "miriam primary care limited"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31747049,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QYG"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "zero"
+    },
+    "coded_parties": 1,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QYG"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 1,
+    "mentions_capped": false,
+    "mentions_read": 1,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "Paxton Medical Group",
+    "name_norm": "paxton medical group",
+    "name_norms": [
+     {
+      "n": 1,
+      "value": "paxton medical group"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31747053,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 1,
+      "raw": "GB-NHS-QYG"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QYG",
+   "legal_end": null,
+   "name": "NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "ppons": [
+   "PMYD9553QJQN"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 652,
+    "tail": "QYG"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "QYG",
+   "decision": "merge",
+   "members": [
+    30913962,
+    30916196,
+    30916198,
+    31541032,
+    31546209,
+    31551077,
+    31556030,
+    31579965
+   ],
+   "confidence": "high",
+   "agree": false,
+   "disputed": [
+    31579965
+   ],
+   "ch_reason": "I agree with every class. 31579965 'NHS Cheshire and Merseyside' is SAME: it is the ICB's operating brand, and all 3 of its coded mentions carry QYG. What I dispute is its membership. The check refuses it with a tie against 0CE. D3 says such a member needs HIGH 'with cited ODS rename or predecessor evidence' (the nhs_ods.rs module doc says the same). The reviewer cites a different kind of evidence: that the rival 0CE legally ended on 2014-09-30 (I confirmed this in ODS: Inactive, successor 0CY). That is not a rename or predecessor link: ODS records no former names for QYG, and 0CE is not QYG's predecessor. The owner's own example rejects the same argument. RCX 'Queen Elizabeth Hospital FT' was held even though its rival RG2 has been Inactive since 2009 and the notice carried RCX. So under D3 this member is held. I drop it and merge the other 7, which leaves this 5-mention cluster split as it is today. If the owner accepts a rival's legal end as D3 evidence, 31579965 joins and the reviewer's 8-member list stands. The other 7 SAME holders are admitted by the check and fine: no denial or flag, and key_owners_elsewhere is empty. The code's PPON (PMYD9553QJQN) has no holder org (no_target_ppon in the 2236 listing), so the largest SAME cluster anchors. I confirmed the three DIFFERENT holders in ODS: Miriam Primary Care Group is N85625 (CH41 8DB) and Paxton Medical Group is N85044 (CH41 0DD), both Wirral GP practices. Miriam Primary Care Limited is the practice's company.",
+   "rationale": "Eight SAME clusters of NHS Cheshire and Merseyside ICB (active RO261, no legal end) fold with no PPON holder present, so the largest SAME cluster anchors. One member, 31579965 'NHS Cheshire and Merseyside', is refused by the check (a tie with 0CE). I admit it on cited ODS evidence: 0CE, the Cheshire and Merseyside CSU, legally ended on 2014-09-30 (successor 0CY), and QYG has run from 2017. The three GP-provider holders are DIFFERENT and never members: Miriam Primary Care Group N85625, Miriam Primary Care Limited, and Paxton Medical Group N85044. No holder is denied, minted, generic, consortium-headed or successor-named, and no member's key is owned elsewhere.",
+   "holders": [
+    {
+     "org_id": 30913962,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "Exact ODS name of QYG; 584 of its mentions carry GB-NHS-QYG."
+    },
+    {
+     "org_id": 30916196,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ICB's name with 'ICB' for 'Integrated Care Board'."
+    },
+    {
+     "org_id": 30916198,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ICB's ODS name without the NHS prefix."
+    },
+    {
+     "org_id": 31541032,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "The ICB's ODS name with '(ICB)' added."
+    },
+    {
+     "org_id": 31546209,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'&' variant of the ICB's name with '(ICB)'. Its two stray 0YD/OYD raws (one each) do not change the body."
+    },
+    {
+     "org_id": 31551077,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'&' variant of the ICB's ODS name."
+    },
+    {
+     "org_id": 31556030,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'&' variant of the ICB's name with a repeated 'ICB'."
+    },
+    {
+     "org_id": 31579965,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "'NHS Cheshire and Merseyside' is the ICB's own operating brand, and all 3 coded mentions carry QYG. The check ties it with 0CE, but ODS shows 0CE (NHS Cheshire and Merseyside CSU) as Inactive: legal end 2014-09-30, successor 0CY (NHS North West CSU), operational end 2020-09-30. QYG has run from 2017-04-01 (STP RO262, then ICB). A body closed in 2014 cannot be the party of a GB-NHS-QYG notice. This is the cited ODS evidence D3 requires for a check-refused member."
+    },
+    {
+     "org_id": 31747045,
+     "class": "DIFFERENT",
+     "eligible": true,
+     "reason": "Miriam Primary Care Group, a GP practice in Birkenhead (CH41, ODS N85625) inside the ICB's area. It is a provider, not the ICB.",
+     "real_body": "Miriam Primary Care Group (GP practice, ODS N85625)"
+    },
+    {
+     "org_id": 31747049,
+     "class": "DIFFERENT",
+     "eligible": true,
+     "reason": "Miriam Primary Care Limited, the company behind the Miriam GP practice in Birkenhead (N85625). The check refuses it as non-NHS (legal form).",
+     "real_body": "Miriam Primary Care Limited (runs GP practice N85625)"
+    },
+    {
+     "org_id": 31747053,
+     "class": "DIFFERENT",
+     "eligible": true,
+     "reason": "Paxton Medical Group, a GP practice in Birkenhead (CH41 0DD, ODS N85044). It is a provider, not the ICB.",
+     "real_body": "Paxton Medical Group (GP practice, ODS N85044)"
+    }
+   ],
+   "holder_ids": [
+    30913962,
+    30916196,
+    30916198,
+    31541032,
+    31546209,
+    31551077,
+    31556030,
+    31579965,
+    31747045,
+    31747049,
+    31747053
+   ]
+  }
+ ],
+ "ods_row": [
+  "QYG",
+  "A",
+  "RC1",
+  "RO261",
+  "1",
+  "",
+  "",
+  "",
+  "NHS CHESHIRE AND MERSEYSIDE INTEGRATED CARE BOARD"
+ ]
+}

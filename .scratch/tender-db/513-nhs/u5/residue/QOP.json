@@ -1,0 +1,314 @@
+{
+ "code": "QOP",
+ "census_2279": {
+  "code": "QOP",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 11,
+  "eligible": [
+   1850341,
+   8572709,
+   30916695,
+   31620840
+  ],
+  "holder_ids": [
+   1850341,
+   8572709,
+   30916695,
+   31620840
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": "0AJ",
+     "verdict": "tie"
+    },
+    "coded_parties": 4,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QOP"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 11,
+    "mentions_capped": false,
+    "mentions_read": 11,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Greater Manchester",
+    "name_norm": "nhs greater manchester",
+    "name_norms": [
+     {
+      "n": 11,
+      "value": "nhs greater manchester"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 1850341,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 7,
+      "raw": null
+     },
+     {
+      "n": 4,
+      "raw": "GB-NHS-QOP"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": "0AJ",
+     "verdict": "tie"
+    },
+    "coded_parties": 2,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QOP"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 9,
+    "mentions_capped": false,
+    "mentions_read": 9,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS England Greater Manchester",
+    "name_norm": "nhs england greater manchester",
+    "name_norms": [
+     {
+      "n": 9,
+      "value": "nhs england greater manchester"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 8572709,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 7,
+      "raw": null
+     },
+     {
+      "n": 2,
+      "raw": "GB-NHS-QOP"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 3,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QOP"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 206,
+    "mentions_capped": false,
+    "mentions_read": 206,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS Greater Manchester Integrated Care Board",
+    "name_norm": "nhs greater manchester integrated care board",
+    "name_norms": [
+     {
+      "n": 206,
+      "value": "nhs greater manchester integrated care board"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30916695,
+    "other_codes": [
+     "TBC"
+    ],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 202,
+      "raw": null
+     },
+     {
+      "n": 3,
+      "raw": "GB-NHS-QOP"
+     },
+     {
+      "n": 1,
+      "raw": "GB-NHS-TBC"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 2,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "QOP"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 2,
+    "mentions_capped": false,
+    "mentions_read": 2,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "NHS England and NHS Greater Manchester Integrated Care Partnership",
+    "name_norm": "nhs england and nhs greater manchester integrated care partnership",
+    "name_norms": [
+     {
+      "n": 2,
+      "value": "nhs england and nhs greater manchester integrated care partnership"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31620840,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 2,
+      "raw": "GB-NHS-QOP"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "QOP",
+   "legal_end": null,
+   "name": "NHS GREATER MANCHESTER INTEGRATED CARE BOARD",
+   "predecessors": [],
+   "role": "RO261",
+   "successors": []
+  },
+  "ppons": [],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 11,
+    "tail": "QOP"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "QOP",
+   "decision": "hold",
+   "members": [
+    30916695
+   ],
+   "confidence": "medium",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "I reach the same classifications. 30916695 is QOP's exact ODS name with 206 mentions, so it is SAME and eligible; the GB-NHS-TBC raw is junk, and TBC is not an ODS code. 1850341 'NHS Greater Manchester' is UNSURE, a mixed cluster. I placed its id (1.85M) in 2011-12 by comparing ids of orgs whose names date them: Bolton NHS FT, named 2011, is 1.78M; Oxford Health is 1.86M; University Hospital Southampton FT, named October 2011, is 2.18M; the 2013-14 CSUs are 3.3-6.3M; HIOW ICB is 20.9M. So its first mention is the 2011-13 'NHS Greater Manchester' PCT cluster, which predates QOP's 2017 ODS start. Its 4 coded FTS mentions are QOP's own ICB brand. The check ties it with 0AJ and ORD holds no rename record, so it cannot be a member either way. The UNSURE rule makes the decision hold. 8572709 'NHS England Greater Manchester' is DIFFERENT: its id (8.57M) dates it to about 2015, and the name belongs to NHS England's GM area team (X24). 31620840, the joint label 'NHS England and NHS Greater Manchester ICP', names two bodies, NHS England and the ICP joint committee. Whether it is classed HOSTED_OR_SITE or as a consortium, it is not a member. Once 1850341 is resolved, the 1-member verdict on 30916695 is the expected outcome.",
+   "rationale": "Hold: 1850341 'NHS Greater Manchester' is UNSURE, a mixed cluster. Its org id puts its first mention before 2014 (the PCT cluster, or GM CSU 0AJ), while its 4 FTS mentions are QOP's. It cannot be a member in any outcome (the check ties it with 0AJ, and no ODS rename or predecessor record exists). 8572709 (NHS England's GM area team, X24) is DIFFERENT. 31620840 (joint NHS England + GM ICP label) is HOSTED_OR_SITE. The only SAME eligible holder is 30916695. To resolve: a bounded read of the notice dates of 1850341's 7 uncoded mentions. Either way QOP can then post a 1-member verdict on 30916695, and 1850341 stays out.",
+   "holders": [
+    {
+     "org_id": 1850341,
+     "class": "UNSURE",
+     "eligible": false,
+     "reason": "Mixed cluster. 'NHS Greater Manchester' is QOP's operating name today, and 4 FTS mentions carry GB-NHS-QOP. But the org id (1,850,341) sits among orgs first seen in 2009-13 notices (the lowest ICB-named org is 20.4M), so its first mention predates the ICB. That fits the 2011-13 'NHS Greater Manchester' PCT cluster or the GM CSU (0AJ, Inactive), a different body. 7 uncoded mentions are of unknown era. The check ties it with 0AJ, and no ODS rename or predecessor record links the name to QOP, so it cannot be a member in any outcome.",
+     "real_body": "mixed: pre-2014 'NHS Greater Manchester' (PCT cluster, or GM CSU 0AJ) plus QOP's own FTS-era mentions"
+    },
+    {
+     "org_id": 8572709,
+     "class": "DIFFERENT",
+     "eligible": false,
+     "reason": "'NHS England Greater Manchester' names NHS England's Greater Manchester area team (NHS England, ODS X24), not the ICB. The org id (8.57M) sits beside the 2015 SCW CSU org, i.e. the NHS England area-team era. 7 of its 9 mentions are uncoded, and 2 FTS mentions coded QOP are strays or post-delegation mis-coding. The check ties it with 0AJ.",
+     "real_body": "NHS England (ODS X24), Greater Manchester area team"
+    },
+    {
+     "org_id": 30916695,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "Exact ODS name of QOP (206 mentions); a stray GB-NHS-TBC placeholder raw is irrelevant."
+    },
+    {
+     "org_id": 31620840,
+     "class": "HOSTED_OR_SITE",
+     "eligible": false,
+     "reason": "Joint label 'NHS England and NHS Greater Manchester Integrated Care Partnership': NHS England plus the GM ICP, a statutory joint committee of the ICB and the 10 GM councils. A collaborative or consortium name, not the ICB's legal body.",
+     "real_body": "NHS England (X24) jointly with the Greater Manchester Integrated Care Partnership (ICB + councils joint committee)"
+    }
+   ],
+   "holder_ids": [
+    1850341,
+    8572709,
+    30916695,
+    31620840
+   ]
+  }
+ ],
+ "ods_row": [
+  "QOP",
+  "A",
+  "RC1",
+  "RO261",
+  "1",
+  "",
+  "",
+  "",
+  "NHS GREATER MANCHESTER INTEGRATED CARE BOARD"
+ ]
+}

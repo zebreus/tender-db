@@ -1,0 +1,193 @@
+{
+ "code": "RCB",
+ "census_2279": {
+  "code": "RCB",
+  "coded_notices_after_legal_end": 0,
+  "coded_parties": 44,
+  "eligible": [
+   30916881,
+   31535291
+  ],
+  "holder_ids": [
+   30916881,
+   31535291
+  ],
+  "holders": [
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 44,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RCB"
+    ],
+    "identifier": null,
+    "identifier_kind": null,
+    "key_owners_elsewhere": [],
+    "later_parties": 0,
+    "mentions": 63,
+    "mentions_capped": false,
+    "mentions_read": 63,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST",
+    "name_norm": "york and scarborough teaching hospitals nhs foundation trust",
+    "name_norms": [
+     {
+      "n": 63,
+      "value": "york and scarborough teaching hospitals nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 30916881,
+    "other_codes": [],
+    "ppons": [],
+    "provisional": true,
+    "raw_identifiers": [
+     {
+      "n": 44,
+      "raw": "GB-NHS-RCB"
+     },
+     {
+      "n": 19,
+      "raw": null
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "party"
+   },
+   {
+    "check": {
+     "rival": null,
+     "verdict": "admitted"
+    },
+    "coded_parties": 0,
+    "consortium": false,
+    "consortium_names": [],
+    "contested": false,
+    "country": "GB",
+    "denied": [],
+    "generic": false,
+    "holder_of": [
+     "RCB"
+    ],
+    "identifier": "GBPPONPNMY9834ZYJT",
+    "identifier_kind": "national",
+    "key_owners_elsewhere": [
+     30915212
+    ],
+    "later_parties": 0,
+    "mentions": 19,
+    "mentions_capped": false,
+    "mentions_read": 19,
+    "merged_identifiers": [],
+    "minted_identity": false,
+    "name": "York and Scarborough Teaching Hospital NHS Foundation Trust",
+    "name_norm": "york and scarborough teaching hospital nhs foundation trust",
+    "name_norms": [
+     {
+      "n": 16,
+      "value": "york and scarborough teaching hospital nhs foundation trust"
+     },
+     {
+      "n": 3,
+      "value": "york and scarborough teaching hospitals nhs foundation trust"
+     }
+    ],
+    "names_capped": false,
+    "org_id": 31535291,
+    "other_codes": [],
+    "ppons": [
+     "PNMY9834ZYJT"
+    ],
+    "provisional": false,
+    "raw_identifiers": [
+     {
+      "n": 19,
+      "raw": "GB-PPON-PNMY-9834-ZYJT"
+     }
+    ],
+    "stands": true,
+    "successor_name": null,
+    "under_review": false,
+    "via": "ppon"
+   }
+  ],
+  "holders_truncated": false,
+  "later_parties": 0,
+  "ods": {
+   "active": true,
+   "allow": true,
+   "code": "RCB",
+   "legal_end": null,
+   "name": "YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST",
+   "predecessors": [],
+   "role": "RO197",
+   "successors": []
+  },
+  "ppons": [
+   "PNMY9834ZYJT"
+  ],
+  "tails": [
+   {
+    "folded": false,
+    "later_parties": 0,
+    "parties": 44,
+    "tail": "RCB"
+   }
+  ],
+  "verdict": null
+ },
+ "adjudication_u3": [
+  {
+   "code": "RCB",
+   "decision": "hold",
+   "members": [
+    30916881
+   ],
+   "confidence": "high",
+   "agree": true,
+   "disputed": [],
+   "ch_reason": "ORD lists RCB as York and Scarborough Teaching Hospitals NHS FT, Active, with predecessors BF1 and RCC (2012). No holder carries a Scarborough and NE Yorkshire name. Both holders are SAME: 30916881 (exact name, 44 coded parties) and the PPON org 31535291 (PNMY9834ZYJT, singular 'Hospital'). The PPON org's 234 key 'york and scarborough teaching hospital nhs foundation trust' is owned by 30915212, which is not a holder (key_owners_elsewhere=[30915212]). Under D4 that member is held, and the census would mark any verdict naming it 'member-key-owned-elsewhere'. It is the D1 survivor-designate, so dropping it to post a 1-member merge that anchors the code on the provisional cluster would decide what needs a human look. The 1-member merge would fold nothing anyway, so holding costs nothing. I agree with excluding 31535291 from members and holding.",
+   "rationale": "Both holders are York and Scarborough Teaching Hospitals NHS FT (RO197, Active; ORD names RCC Scarborough and NE Yorkshire, 2012-07-01, as predecessor). The SAME PPON org, the D1 survivor, is held by D4 because 30915212 owns its key 'york and scarborough teaching hospital nhs foundation trust'. 30915212 is not a holder, so it cannot join the verdict, and it is very likely an uncoded cluster of the same trust. Held for a human look. The alternative is to drop 31535291 and post a 1-member merge of [30916881] that only records the code. reviewed_holders = [30916881, 31535291].",
+   "holders": [
+    {
+     "org_id": 30916881,
+     "class": "SAME",
+     "eligible": true,
+     "reason": "Exact ODS name, York and Scarborough Teaching Hospitals NHS Foundation Trust. 44 coded parties; the check admits it."
+    },
+    {
+     "org_id": 31535291,
+     "class": "SAME",
+     "eligible": false,
+     "reason": "The body's PPON org (PNMY9834ZYJT), named 'York and Scarborough Teaching Hospital NHS Foundation Trust' with singular 'Hospital'. It is SAME and the check admits it. But key_owners_elsewhere = [30915212]: a standing identifier-NULL GB row outside the body owns its 234 key. Under D4 the member is held, and the census would mark a verdict naming it 'member-key-owned-elsewhere'."
+    }
+   ],
+   "holder_ids": [
+    30916881,
+    31535291
+   ]
+  }
+ ],
+ "ods_row": [
+  "RCB",
+  "A",
+  "RC1",
+  "RO197",
+  "1",
+  "",
+  "",
+  "",
+  "YORK AND SCARBOROUGH TEACHING HOSPITALS NHS FOUNDATION TRUST"
+ ]
+}
