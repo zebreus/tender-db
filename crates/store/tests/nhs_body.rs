@@ -114,14 +114,21 @@ fn key(_country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str,
 }
 
 /// `project::normalise_identifier` in small: four characters up with a digit, so a
-/// letter-only NHS code mints nothing.
+/// letter-only NHS code mints nothing — and production's two filler rules, so a code whose
+/// only digits are zeros (`GB-NHS-R0B`, `0AR`) mints nothing either, as on prod.
 fn register_identity(raw: &str, country: Option<&str>) -> Option<store::Identifier> {
     let value = minted(raw);
-    (value.len() >= 4 && value.chars().any(|c| c.is_ascii_digit())).then(|| store::Identifier {
-        country: country.map(str::to_owned),
-        kind: "national".into(),
-        value,
-    })
+    if value.len() < 4 || !value.chars().any(|c| c.is_ascii_digit()) {
+        return None;
+    }
+    // All-zero and single-character fillers, verbatim.
+    if value.chars().filter(|c| c.is_ascii_digit()).all(|c| c == '0') {
+        return None;
+    }
+    if value.chars().skip(1).all(|c| c == value.as_bytes()[0] as char) {
+        return None;
+    }
+    Some(store::Identifier { country: country.map(str::to_owned), kind: "national".into(), value })
 }
 
 fn consortium(name: &str) -> bool {
@@ -1162,4 +1169,1030 @@ async fn an_existing_verdict_table_gains_the_reviewed_holders_column() {
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
+}
+
+// ---- Issue 513 U4: the wet path (`merge_nhs_bodies`), the ledger-armed alias, the unwind.
+
+const RTH_SPELLINGS: [&str; 3] =
+    ["Oxford University Hospitals NHS Foundation Trust", "Oxford University Hospitals NHS FT", "OUH Oxford"];
+const RTH_PPON_NAME: &str = "OXFORD UNIVERSITY HOSPITALS NHS FOUNDATION TRUST";
+
+/// `crosswalk::mention_key` in small, for the altid alias the fold arms beside the body
+/// alias: a GB `GB-PPON` raw to its PPON key.
+fn mention_key(country: Option<&str>, raw: &str) -> Option<(&'static str, String, bool, bool)> {
+    pair_key("GB-PPON", raw, country)
+}
+
+fn altid_rules() -> store::AltIdAliasRules {
+    store::AltIdAliasRules {
+        mention_key,
+        consortium,
+        legal_family: |_| None,
+        name_key: norm,
+        names_agree: |a, b| a == b,
+        trim: |s| s.to_owned(),
+        norm,
+        owner_mention_cap: store::ALTID_ALIAS_OWNER_MENTIONS,
+    }
+}
+
+/// A mention as the fold hands it to the resolver: GB, the published raw identifier, and
+/// the identity the normaliser mints from it (none for a letter-only NHS code).
+fn mention(notice: i64, name: &str, raw: Option<&str>) -> store::Mention {
+    store::Mention {
+        notice_id: notice,
+        section_id: "ORG-N".into(),
+        name: name.into(),
+        country: Some("GB".into()),
+        raw_identifier: raw.map(str::to_owned),
+        scheme: raw.map(|r| r.splitn(3, '-').take(2).collect::<Vec<_>>().join("-")),
+        identifier: raw.and_then(|r| register_identity(r, Some("GB"))),
+        variants: Vec::new(),
+    }
+}
+
+impl Bed {
+    /// Oxford's body as U3 found such bodies: three spelling clusters (1, 2, 3) its
+    /// `GB-NHS-RTH` parties bound by name — the first with an uncoded text-era mention too —
+    /// the PPON org (7) a PPON-first party names beside the code, and a stray (8,
+    /// `University of Oxford` typed RTH) the reviewer keeps out. The verdict: members
+    /// {1, 2, 3, 7} over the holders {1, 2, 3, 7, 8}.
+    async fn oxford(&self) {
+        for (i, name) in RTH_SPELLINGS.iter().enumerate() {
+            let org = i as i64 + 1;
+            self.provisional(org, name).await;
+            self.coded(100 + org, org, "GB-NHS-RTH").await;
+        }
+        self.notice(108, None).await;
+        self.mention(108, "ORG-U", 1, Some("GB"), None, "Oxford University Hospitals NHS Foundation Trust").await;
+        self.org(7, &minted(PPON), RTH_PPON_NAME).await;
+        self.notice(107, None).await;
+        self.party(107, "P", Some(7), Some("GB"), &[PPON, "GB-NHS-RTH"], RTH_PPON_NAME).await;
+        self.provisional(8, "University of Oxford").await;
+        self.coded(104, 8, "GB-NHS-RTH").await;
+        self.verdict("RTH", vec![1, 2, 3, 7], Some(vec![1, 2, 3, 7, 8]), "merge", "high").await;
+    }
+
+    /// The Clatterbridge body with no PPON org: two spelling clusters, the larger (11, two
+    /// coded mentions) the anchor, the smaller (12) its loser.
+    async fn clatterbridge(&self) {
+        self.provisional(11, "The Clatterbridge Cancer Centre NHS Foundation Trust").await;
+        self.coded(111, 11, "GB-NHS-REN").await;
+        self.coded(112, 11, "GB-NHS-REN").await;
+        self.provisional(12, "Clatterbridge Cancer Centre").await;
+        self.coded(113, 12, "GB-NHS-REN").await;
+        self.verdict("REN", vec![11, 12], Some(vec![11, 12]), "merge", "high").await;
+    }
+
+    async fn admitted(&self) -> Vec<String> {
+        self.plan().await.admitted_codes.iter().map(|c| (*c).to_owned()).collect()
+    }
+
+    async fn wet(&self, expect: &[String], cap: Option<u64>) -> store::turso::Result<NhsBodyReport> {
+        self.db
+            .merge_nhs_bodies(
+                args(NhsBodyCaps::PRODUCTION, 20),
+                store::NhsBodyWet { expect_codes: expect, known_deferred: &[], max_groups: cap, job_id: Some(77) },
+            )
+            .await
+    }
+
+    /// Dry, then wet over exactly what the dry run admitted.
+    async fn fold_all(&self) -> NhsBodyReport {
+        let expect = self.admitted().await;
+        let r = self.wet(&expect, None).await.expect("the wet run");
+        assert!(!r.stopped && r.residual_codes.is_empty() && r.held.is_empty(), "{r:#?}");
+        r
+    }
+
+    /// FTS notices the fold has not reached: one party section each, no mention.
+    async fn fresh(&self, notices: &[i64]) {
+        for &n in notices {
+            self.notice(n, None).await;
+            self.conn
+                .execute(
+                    "INSERT INTO notice_sections (notice_id, section_id, kind, parent_section_id)
+                     VALUES (?, 'ORG-N', 'Organization', 'PROCEDURE')",
+                    (Value::Integer(n),),
+                )
+                .await
+                .unwrap();
+        }
+    }
+
+    /// One fold's resolver over `mentions` — the canonical key and the consortium veto, as
+    /// the fold opens it — armed the way the fold arms it (`arm_altid_alias`, which arms
+    /// the body alias too), or not at all.
+    async fn resolve(&self, armed: bool, mentions: &[store::Mention]) -> (Vec<i64>, store::NhsBodyAliasCounts) {
+        let mut resolver =
+            self.db.mention_resolver(Some(key), Some(consortium), None, Some(norm), None, None, 20).await.unwrap();
+        if armed {
+            self.db.arm_altid_alias(&mut resolver, altid_rules()).await.unwrap();
+        }
+        let ids = self.db.resolve_mentions(&mut resolver, mentions, 1).await.unwrap();
+        let counts = store::Db::nhs_body_alias_counts(&resolver);
+        self.db.finish_mention_resolver(resolver).await.unwrap();
+        (ids, counts)
+    }
+
+    async fn text_of(&self, sql: &str) -> String {
+        let mut rows = self.conn.query(sql, ()).await.unwrap();
+        let got = match rows.next().await.unwrap().map(|r| r.get_value(0).unwrap()) {
+            Some(Value::Text(t)) => t,
+            other => panic!("{sql}: {other:?}"),
+        };
+        while rows.next().await.unwrap().is_some() {}
+        got
+    }
+
+    /// A hand-written `nhs-body` ledger row, the shape `merge_nhs_bodies` writes, for the
+    /// alias's poisoning and target rules.
+    async fn ledger(&self, keep: i64, loser: i64, code: &str, loser_key: &str, target: &str, at: i64) {
+        self.ledger_named(keep, loser, code, loser_key, target, &format!("Keep {code}"), at).await;
+    }
+
+    /// [`Self::ledger`] with the survivor's head name the row records (`keep_name`).
+    #[allow(clippy::too_many_arguments)]
+    async fn ledger_named(&self, keep: i64, loser: i64, code: &str, loser_key: &str, target: &str, keep_name: &str, at: i64) {
+        self.ledger_evidence(
+            keep,
+            loser,
+            &format!(
+                "\"code\":\"{code}\",{target},\"keep_name\":\"{keep_name}\",\"loser_name_norm\":\"{loser_key}\",\
+                 \"loser_country\":\"GB\""
+            ),
+            at,
+        )
+        .await;
+    }
+
+    /// An `nhs-body` ledger row carrying `fields` after the scheme.
+    async fn ledger_evidence(&self, keep: i64, loser: i64, fields: &str, at: i64) {
+        let evidence = format!("{{\"scheme\":\"GB:nhs-body\",{fields}}}");
+        self.conn
+            .execute(
+                "INSERT INTO org_merge_log (keep, loser, rule, evidence, job_id, at) VALUES (?, ?, 'nhs-body', ?, 1, ?)",
+                (Value::Integer(keep), Value::Integer(loser), Value::Text(evidence), Value::Integer(at)),
+            )
+            .await
+            .unwrap();
+    }
+
+    async fn holders_of(&self, identifier: &str) -> Vec<i64> {
+        let f = store::read::Filter { identifier: Some(identifier.into()), ..store::read::Filter::default() };
+        store::read::organizations(&self.conn, &f, store::read::Scope::Page { after: 0, limit: 10 })
+            .await
+            .unwrap()
+            .iter()
+            .map(|r| r.id)
+            .collect()
+    }
+}
+
+fn anchor_target(name_norm: &str) -> String {
+    format!("\"target\":\"anchor\",\"anchor_name_norm\":\"{name_norm}\",\"anchor_country\":\"GB\"")
+}
+
+fn ppon_target(literal: &str) -> String {
+    format!(
+        "\"target\":\"ppon\",\"target_identity\":\"{}\",\"target_identifier_kind\":\"national\",\"target_country\":\"GB\",\
+         \"target_ppon\":\"{}\"",
+        minted(literal),
+        minted(literal).strip_prefix("GBPPON").unwrap()
+    )
+}
+
+/// Design C's U3: a reviewed body folds its clusters into its PPON org. The losers are gone
+/// and every reference they held is on the survivor (mentions, party rows); each loser has
+/// one `nhs-body` ledger row whose evidence is identity-keyed (the alias replays from it)
+/// and names what a reader checks the fold by; a loser id answers 308 to the survivor; the
+/// code is recorded on the survivor, so `?identifier=GBNHSRTH` answers it; the verdict is
+/// stamped applied. The stray the reviewer kept out keeps every mention.
+#[tokio::test]
+async fn a_reviewed_nhs_body_folds_its_clusters_into_the_ppon_org() {
+    let b = bed("fold").await;
+    b.oxford().await;
+    b.conn
+        .execute(
+            "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id)
+             VALUES (9, 1, 'buyer', 2, 102, 'ORG-N102')",
+            (),
+        )
+        .await
+        .unwrap();
+    assert!(b.holders_of("GBNHSRTH").await.is_empty(), "no org answers the code before the fold");
+    let r = b.fold_all().await;
+    assert_eq!((r.expected_codes, r.deferred_codes.len(), r.expected_not_live), (1, 0, 0));
+    assert_eq!((r.merged_bodies, r.recorded_bodies, r.removed, r.mentions, r.parties), (1, 0, 3, 4, 1), "{r:#?}");
+    assert_eq!(r.tender_changes, 1);
+    assert_eq!(
+        r.folded,
+        vec![store::NhsBodyFolded { code: "RTH", keep: 7, target: "ppon", losers: vec![1, 2, 3] }]
+    );
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id IN (1, 2, 3)").await, 0, "the losers are gone");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 7").await, 5);
+    assert_eq!(b.count("SELECT organization_id FROM tender_version_parties WHERE tender_id = 9").await, 7);
+    // The non-member holder is untouched.
+    assert_eq!(b.count("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 8").await, 1);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id = 8").await, 1);
+    // The ledger, identity-keyed.
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body' AND keep = 7 AND job_id = 77").await, 3);
+    let evidence = b.text_of("SELECT evidence FROM org_merge_log WHERE loser = 2").await;
+    for (field, value) in [
+        ("scheme", "GB:nhs-body"),
+        ("code", "RTH"),
+        ("ods_name", "OXFORD UNIVERSITY HOSPITALS NHS FOUNDATION TRUST"),
+        ("target", "ppon"),
+        ("target_identity", "GBPPONPHDQ2359NZMP"),
+        ("target_identifier_kind", "national"),
+        ("target_country", "GB"),
+        ("target_ppon", PPON_KEY),
+        ("keep_name", RTH_PPON_NAME),
+        ("keep_id", "GBPPONPHDQ2359NZMP"),
+        ("loser_id", ""),
+        ("loser_kind", "name"),
+        ("loser_name", "Oxford University Hospitals NHS FT"),
+        ("loser_name_norm", "oxford university hospitals nhs ft"),
+        ("loser_country", "GB"),
+        ("cohort", "513-u2-test"),
+    ] {
+        assert!(evidence.contains(&format!("\"{field}\":\"{value}\"")), "{field} in {evidence}");
+    }
+    assert!(evidence.contains("\"loser_names\":[\"Oxford University Hospitals NHS FT\"]"), "{evidence}");
+    assert!(evidence.contains("\"job_id\":77"), "{evidence}");
+    assert_eq!(
+        b.count("SELECT COUNT(*) FROM org_merge_log WHERE json_extract(evidence, '$.loser_name_norms[0]') = 'oxford university hospitals nhs ft'")
+            .await,
+        1,
+        "the evidence parses as JSON"
+    );
+    assert_eq!(store::read::resolve_org(&b.conn, 2).await.unwrap(), store::read::OrgResolution::MergedInto(7));
+    assert_eq!(b.holders_of("GBNHSRTH").await, vec![7], "the code answers the survivor");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_verdicts WHERE key = 'RTH' AND applied_at IS NOT NULL").await, 1);
+    for (kind, id, op) in [("organization", 2, "removed"), ("organization", 7, "changed"), ("tender", 9, "changed")] {
+        assert_eq!(
+            b.count(&format!("SELECT COUNT(*) FROM changes WHERE entity_kind = '{kind}' AND entity_id = {id} AND op = '{op}'"))
+                .await,
+            1,
+            "{kind} {id} {op}"
+        );
+    }
+    // The report carries this run's ledger rows verbatim, and nothing regrew.
+    assert_eq!((r.ledger_rows, r.nhs_body_merged.len()), (3, 3));
+    assert!(r.nhs_body_merged.iter().all(|m| m.keep == 7 && m.evidence.contains("\"code\":\"RTH\"")));
+    assert!(r.nhs_body_regrown.is_empty(), "{:#?}", r.nhs_body_regrown);
+    // The re-dry: the verdict is applied, so nothing is admitted and a wet run folds nothing.
+    let again = b.plan().await;
+    assert_eq!(code(&again, "RTH").verdict.as_ref().map(|v| v.status), Some("applied"));
+    assert_eq!(code(&again, "RTH").holder_ids, vec![7, 8]);
+    assert!(again.admitted_codes.is_empty() && again.nhs_body_regrown.is_empty());
+}
+
+/// A body with no PPON org keeps its largest cluster as a provisional anchor, and the
+/// anchor replays: after the fold the next mention of the loser's spelling binds the
+/// anchor through the alias (the 234 probe would find nothing — the loser is gone — and
+/// mint), and the anchor's own spelling binds it through 234 as ever.
+#[tokio::test]
+async fn an_anchor_body_keeps_its_largest_cluster_and_replays_through_the_anchor_key() {
+    let b = bed("anchor").await;
+    b.clatterbridge().await;
+    let r = b.fold_all().await;
+    assert_eq!(
+        r.folded,
+        vec![store::NhsBodyFolded { code: "REN", keep: 11, target: "anchor", losers: vec![12] }]
+    );
+    let evidence = b.text_of("SELECT evidence FROM org_merge_log WHERE loser = 12").await;
+    assert!(
+        evidence.contains("\"target\":\"anchor\"")
+            && evidence.contains("\"anchor_name_norm\":\"the clatterbridge cancer centre nhs foundation trust\"")
+            && evidence.contains("\"anchor_country\":\"GB\""),
+        "{evidence}"
+    );
+    assert_eq!(b.holders_of("GBNHSREN").await, vec![11]);
+    b.fresh(&[300, 301]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b
+        .resolve(
+            true,
+            &[
+                mention(300, "Clatterbridge Cancer Centre", None),
+                mention(301, "The Clatterbridge Cancer Centre NHS Foundation Trust", None),
+            ],
+        )
+        .await;
+    assert_eq!(ids, vec![11, 11]);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs, "nothing minted");
+    assert_eq!((c.ledger_rows, c.keys, c.asked, c.bound, c.minted, c.refused), (1, 1, 1, 1, 0, 0), "{c:?}");
+}
+
+/// S2: a wet run whose live census drifted from the stored plan by more than max(2%, 5)
+/// bodies aborts before any write. Within tolerance it folds only live ∩ stored.
+#[tokio::test]
+async fn a_body_parity_drift_aborts_before_any_write() {
+    let b = bed("parity").await;
+    b.oxford().await;
+    let stale: Vec<String> = ["QKK", "QMF", "QNQ", "QRL", "R0B", "RET"].iter().map(|c| (*c).to_owned()).collect();
+    let err = b.wet(&stale, None).await.expect_err("seven bodies differ");
+    let msg = err.to_string();
+    assert!(msg.contains("nhs-body parity abort") && msg.contains("nothing was written"), "{msg}");
+    assert!(msg.contains("1 admitted since the dry run, 6 no longer admitted"), "{msg}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 0);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, 5);
+    // A live body the stored plan lacks is deferred, never folded.
+    let r = b.wet(&[], None).await.expect("within tolerance");
+    assert_eq!((r.deferred_codes.clone(), r.folded.len()), (vec!["RTH"], 0), "{r:#?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 0);
+}
+
+/// A capped run folds a prefix in code order and leaves the rest as the residual; the
+/// continuation, held to the residual, folds the rest.
+#[tokio::test]
+async fn a_capped_wet_run_leaves_a_residual() {
+    let b = bed("capped").await;
+    b.oxford().await;
+    b.clatterbridge().await;
+    let expect = b.admitted().await;
+    assert_eq!(expect, vec!["REN", "RTH"]);
+    let r = b.wet(&expect, Some(1)).await.unwrap();
+    assert_eq!(r.folded.iter().map(|f| f.code).collect::<Vec<_>>(), vec!["REN"]);
+    assert_eq!(r.residual_codes, vec!["RTH"]);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id IN (1, 2, 3)").await, 3, "RTH untouched");
+    let residual: Vec<String> = r.residual_codes.iter().map(|c| (*c).to_owned()).collect();
+    let r = b.wet(&residual, None).await.unwrap();
+    assert_eq!(r.folded.iter().map(|f| f.code).collect::<Vec<_>>(), vec!["RTH"]);
+    assert!(r.residual_codes.is_empty() && r.deferred_codes.is_empty(), "{r:#?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body'").await, 4);
+}
+
+/// A one-member body (the census already reads it as one org) folds nothing and records
+/// its code; two PPON members neither of which, or both of which, the code pairs are held.
+#[tokio::test]
+async fn a_one_member_body_records_its_code_and_an_ambiguous_survivor_is_held() {
+    let b = bed("one-member-fold").await;
+    b.provisional(21, "The Walton Centre NHS Foundation Trust").await;
+    b.coded(121, 21, "GB-NHS-RET").await;
+    b.verdict("RET", vec![21], Some(vec![21]), "merge", "high").await;
+    let r = b.fold_all().await;
+    assert_eq!((r.merged_bodies, r.recorded_bodies, r.removed), (0, 1, 0));
+    assert_eq!(b.holders_of("GBNHSRET").await, vec![21]);
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 0, "no loser, no ledger row");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_verdicts WHERE key = 'RET' AND applied_at IS NOT NULL").await, 1);
+
+    let ppon_b = "GB-PPON-WXYZ-1234-ABCD";
+    b.org(31, &minted(PPON), "Sunderland Trust A").await;
+    b.org(32, &minted(ppon_b), "Sunderland Trust B").await;
+    b.provisional(33, "South Tyneside and Sunderland NHS Foundation Trust").await;
+    b.coded(131, 33, "GB-NHS-R0B").await;
+    for (n, org, literal) in [(132, 31, PPON), (133, 32, ppon_b)] {
+        b.notice(n, None).await;
+        b.party(n, "P", Some(org), Some("GB"), &[literal, "GB-NHS-R0B"], "Sunderland Trust").await;
+    }
+    b.verdict("R0B", vec![31, 32, 33], Some(vec![31, 32, 33]), "merge", "high").await;
+    let expect = b.admitted().await;
+    assert_eq!(expect, vec!["R0B"]);
+    let r = b.wet(&expect, None).await.unwrap();
+    assert_eq!(
+        r.held,
+        vec![store::NhsBodyHeld { code: "R0B", reason: "survivor-ambiguous", members: vec![31, 32, 33] }]
+    );
+    assert_eq!(r.residual_codes, vec!["R0B"]);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id IN (31, 32, 33)").await, 3, "nothing folded");
+}
+
+/// The alias's reason to exist (design C's U4). After the fold the loser rows are gone, so
+/// the next uncoded mention of a merged spelling misses the 234 probe — which needs
+/// `identifier IS NULL`, and the survivor is the PPON org — and the unarmed fold mints the
+/// spelling's cluster again. Armed, it binds the survivor, mints nothing, and the code
+/// already stands on the survivor, so nothing is recorded twice.
+#[tokio::test]
+async fn the_next_uncoded_mention_of_a_merged_spelling_binds_the_survivor() {
+    let b = bed("next-mention").await;
+    b.oxford().await;
+    b.fold_all().await;
+    b.fresh(&[300, 301]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b.resolve(true, &[mention(300, "Oxford University Hospitals NHS FT", None)]).await;
+    assert_eq!(ids, vec![7]);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs);
+    assert_eq!((c.ledger_rows, c.keys, c.asked, c.bound, c.minted, c.refused, c.recorded), (3, 3, 1, 1, 0, 0, 0), "{c:?}");
+    let (ids, c) = b.resolve(false, &[mention(301, "Oxford University Hospitals NHS FT", None)]).await;
+    assert_ne!(ids[0], 7, "unarmed, the regrowth the alias prevents");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs + 1);
+    assert_eq!(c, store::NhsBodyAliasCounts::default(), "not armed, and says so");
+    // S4: the regrown spelling is listed by the next census.
+    let r = b.plan().await;
+    assert_eq!(r.nhs_body_regrown.len(), 1, "{:#?}", r.nhs_body_regrown);
+    let g = &r.nhs_body_regrown[0];
+    assert_eq!((g.code.as_str(), g.kind, g.key.as_str(), g.org_id, g.survivor), ("RTH", "name", "oxford university hospitals nhs ft|GB", ids[0], Some(7)));
+}
+
+/// S5's store test: a rebuild in notice order gives one org per body. The rebuild keeps
+/// `org_merge_log` and the verdicts and drops the org layer (ids renumber, the merged
+/// identifiers go); the body's history resolves uncoded spellings years before its first
+/// PPON mention. The first mention of the PPON body — a merged spelling — makes the alias
+/// MINT the PPON org, named by the ledger's `keep_name`; the PPON-first mention then hits
+/// it through the exact triple (E0); a coded second spelling binds it too; the code is
+/// re-recorded once. The anchor body replays through the anchor key the same way.
+#[tokio::test]
+async fn the_body_alias_survives_a_rebuild_in_notice_order() {
+    let b = bed("rebuild").await;
+    b.oxford().await;
+    b.clatterbridge().await;
+    b.fold_all().await;
+    for table in ["organization_mentions", "organization_names", "organization_merged_identifiers", "organizations"] {
+        b.conn.execute(&format!("DELETE FROM {table}"), ()).await.unwrap();
+    }
+    b.fresh(&[400, 401, 402, 403, 404, 405, 406]).await;
+    let (ids, c) = b
+        .resolve(
+            true,
+            &[
+                mention(400, "Oxford University Hospitals NHS FT", None),
+                mention(401, PPON_NAME_FIRST, Some(PPON)),
+                mention(402, "OUH Oxford", Some("GB-NHS-RTH")),
+                mention(403, "Oxford University Hospitals NHS Foundation Trust", None),
+                mention(404, "Clatterbridge Cancer Centre", Some("GB-NHS-REN")),
+                mention(405, "The Clatterbridge Cancer Centre NHS Foundation Trust", None),
+                mention(406, "University of Oxford", Some("GB-NHS-RTH")),
+            ],
+        )
+        .await;
+    let (rth, ren) = (ids[0], ids[4]);
+    assert_eq!(&ids[..4], &[rth; 4], "one org for the PPON body: {ids:?}");
+    assert_eq!(&ids[4..6], &[ren; 2], "one org for the anchor body: {ids:?}");
+    assert!(ids[6] != rth && ids[6] != ren, "the stray stays its own: {ids:?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, 3);
+    let head = b.text_of(&format!("SELECT name || '|' || identifier || '|' || provisional FROM organizations WHERE id = {rth}")).await;
+    assert_eq!(head, format!("{RTH_PPON_NAME}|GBPPONPHDQ2359NZMP|0"), "the PPON row, named by the ledger");
+    let anchor =
+        b.text_of(&format!("SELECT name || '|' || name_norm || '|' || provisional FROM organizations WHERE id = {ren}")).await;
+    assert_eq!(
+        anchor,
+        "The Clatterbridge Cancer Centre NHS Foundation Trust|the clatterbridge cancer centre nhs foundation trust|1"
+    );
+    assert_eq!((c.asked, c.bound, c.minted, c.refused), (4, 2, 2, 0), "{c:?}");
+    assert_eq!(c.recorded, 2, "the codes come back once each");
+    assert_eq!(b.holders_of("GBNHSRTH").await, vec![rth]);
+    assert_eq!(b.holders_of("GBNHSREN").await, vec![ren]);
+}
+
+const PPON_NAME_FIRST: &str = "Oxford University Hospitals NHS Foundation Trust (OUH)";
+
+/// Never by code: a coded mention whose name no reviewer read is not asked, and binds by
+/// 234 exactly as unarmed — it mints its own cluster, a newcomer holder for the next cohort.
+#[tokio::test]
+async fn a_coded_mention_with_an_unreviewed_name_still_mints_its_own_cluster() {
+    let b = bed("unreviewed").await;
+    b.oxford().await;
+    b.fold_all().await;
+    b.fresh(&[300]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b.resolve(true, &[mention(300, "Oxford Radcliffe Hospitals", Some("GB-NHS-RTH"))]).await;
+    assert_ne!(ids[0], 7);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs + 1);
+    assert_eq!((c.asked, c.bound, c.minted), (0, 0, 0), "{c:?}");
+    // The party's BT-501 row, as the parser leaves it: the census reads holders by it.
+    b.conn
+        .execute(
+            "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref)
+             VALUES (300, 'ORG-N', 'BT-501-Organization-Company', 0, 'GB-NHS', 'GB-NHS-RTH', 0)",
+            (),
+        )
+        .await
+        .unwrap();
+    let r = b.plan().await;
+    let rth = code(&r, "RTH");
+    assert!(rth.holder_ids.contains(&ids[0]), "a newcomer holder: {rth:#?}");
+    assert_eq!(rth.verdict.as_ref().map(|v| v.status), Some("applied"));
+}
+
+/// A key two bodies' ledger rows claim is poisoned: asked, refused, and bound by 234 as
+/// unarmed (here: the standing row is gone, so it mints).
+#[tokio::test]
+async fn a_name_claimed_by_two_bodies_binds_nobody() {
+    let b = bed("two-bodies").await;
+    b.provisional(40, "Keep RET").await;
+    b.provisional(41, "Keep REN").await;
+    b.ledger(40, 90, "RET", "walton and clatterbridge", "\"target\":\"anchor\",\"anchor_name_norm\":\"keep ret\",\"anchor_country\":\"GB\"", 1).await;
+    b.ledger(41, 91, "REN", "walton and clatterbridge", "\"target\":\"anchor\",\"anchor_name_norm\":\"keep ren\",\"anchor_country\":\"GB\"", 1).await;
+    b.ledger(41, 92, "REN", "clatterbridge only", "\"target\":\"anchor\",\"anchor_name_norm\":\"keep ren\",\"anchor_country\":\"GB\"", 1).await;
+    b.fresh(&[300, 301]).await;
+    let (ids, c) = b
+        .resolve(true, &[mention(300, "Walton and Clatterbridge", None), mention(301, "Clatterbridge only", None)])
+        .await;
+    assert!(ids[0] != 40 && ids[0] != 41, "{ids:?}");
+    assert_eq!(ids[1], 41);
+    assert_eq!((c.ledger_rows, c.keys, c.poisoned), (3, 1, 1), "{c:?}");
+    assert_eq!((c.asked, c.bound, c.refused, c.refused_poisoned), (2, 1, 1, 1), "{c:?}");
+}
+
+/// A PPON target binds only through ONE row carrying its exact triple, never under a
+/// `wrong` verdict: on two rows, or withheld, the key binds nobody (469 U5's rule), and
+/// the mention binds by 234.
+#[tokio::test]
+async fn a_withheld_or_shared_target_binds_nobody() {
+    let b = bed("shared").await;
+    b.org(50, &minted(PPON), "Trust One").await;
+    b.org(51, &minted(PPON), "Trust One again").await;
+    b.ledger(50, 90, "RTH", "a shared spelling", &ppon_target(PPON), 1).await;
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[mention(300, "A shared spelling", None)]).await;
+    assert!(ids[0] != 50 && ids[0] != 51, "{ids:?}");
+    assert_eq!((c.asked, c.refused, c.refused_shared, c.bound), (1, 1, 1, 0), "{c:?}");
+
+    let b = bed("withheld").await;
+    let other = "GB-PPON-WXYZ-1234-ABCD";
+    b.org(52, &minted(other), "Trust Two").await;
+    b.ledger(52, 91, "REN", "a withheld spelling", &ppon_target(other), 1).await;
+    b.db
+        .record_identifier_verdicts(
+            "513-test",
+            &[store::IdentifierVerdict {
+                org_id: 52,
+                identifier: minted(other),
+                verdict: "wrong".into(),
+                correct_identifier: None,
+                rationale: "fixture".into(),
+                confidence: "high".into(),
+            }],
+            0,
+        )
+        .await
+        .unwrap();
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[mention(300, "A withheld spelling", None)]).await;
+    assert_ne!(ids[0], 52);
+    assert_eq!((c.asked, c.refused_shared), (1, 1), "{c:?}");
+}
+
+/// A PPON survivor a later altid merge folded into a register org is FOLLOWED through the
+/// altid ledger (D5), never re-minted: the body's spelling binds the register org.
+#[tokio::test]
+async fn a_target_folded_by_a_later_altid_merge_is_followed_not_reminted() {
+    let b = bed("followed").await;
+    b.oxford().await;
+    b.fold_all().await;
+    // Issue 469 U5's shape: the PPON org 7 folded into a UKPRN org.
+    b.org(60, "GBUKPRN10001234", "Oxford University Hospitals").await;
+    b.conn.execute("UPDATE organization_mentions SET organization_id = 60 WHERE organization_id = 7", ()).await.unwrap();
+    b.conn.execute("DELETE FROM organizations WHERE id = 7", ()).await.unwrap();
+    b.conn
+        .execute(
+            "INSERT INTO org_merge_log (keep, loser, rule, evidence, job_id, at) VALUES (60, 7, 'e2-altid', ?, 2, 5)",
+            (Value::Text(format!(
+                "{{\"scheme\":\"GB:altid\",\"ppon\":\"{PPON_KEY}\",\"registry_scheme\":\"GB-UKPRN\",\
+                 \"registry_kind\":\"national\",\"registry\":\"GBUKPRN10001234\"}}"
+            )),),
+        )
+        .await
+        .unwrap();
+    b.fresh(&[300]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b.resolve(true, &[mention(300, "OUH Oxford", None)]).await;
+    assert_eq!(ids, vec![60]);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs, "not re-minted");
+    assert_eq!((c.asked, c.bound, c.minted), (1, 1, 0), "{c:?}");
+}
+
+/// Armed with no `nhs-body` row (every store before the first wet run), the resolver is the
+/// pre-513 one: unarmed state, zero counts, and the same binding an unarmed resolver gives.
+#[tokio::test]
+async fn an_unarmed_resolver_is_byte_identical() {
+    let b = bed("byte-identical").await;
+    b.provisional(70, "Oxford University Hospitals NHS FT").await;
+    b.fresh(&[300, 301, 302]).await;
+    let (armed, c) = b.resolve(true, &[mention(300, "Oxford University Hospitals NHS FT", None), mention(301, "New Body", None)]).await;
+    assert_eq!(c, store::NhsBodyAliasCounts::default());
+    let (unarmed, _) = b.resolve(false, &[mention(302, "Oxford University Hospitals NHS FT", None)]).await;
+    assert_eq!(armed[0], 70);
+    assert_eq!(unarmed[0], 70);
+    let mut resolver =
+        b.db.mention_resolver(Some(key), Some(consortium), None, Some(norm), None, None, 20).await.unwrap();
+    b.db.arm_nhs_body_alias(&mut resolver).await.unwrap();
+    assert_eq!(store::Db::nhs_body_alias_counts(&resolver), store::NhsBodyAliasCounts::default());
+    b.db.finish_mention_resolver(resolver).await.unwrap();
+}
+
+/// D4 at arming: a loser's key a standing identifier-NULL row owns stays that row's — the
+/// alias never takes a key from a row outside the body — and the census lists it regrown.
+#[tokio::test]
+async fn a_key_a_standing_row_owns_is_not_armed() {
+    let b = bed("owned").await;
+    b.oxford().await;
+    b.fold_all().await;
+    b.provisional(80, "OUH Oxford").await;
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[mention(300, "OUH Oxford", None)]).await;
+    assert_eq!(ids, vec![80]);
+    assert_eq!((c.keys, c.owned_elsewhere, c.asked), (2, 1, 0), "{c:?}");
+}
+
+/// The ledger reads run at every fold and every census: seeks through the partial index
+/// `org_merge_log_nhs_body`, never a walk of a ledger of millions of rows.
+#[tokio::test]
+async fn the_nhs_body_ledger_reads_seek_the_partial_index() {
+    let b = bed("ledger-plans").await;
+    for sql in [store::NHS_BODY_LEDGER_SQL, store::NHS_BODY_ALIAS_LEDGER_SQL] {
+        let mut rows = b.conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), ()).await.unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Ok(Value::Text(d)) = row.get_value(3) {
+                plan.push_str(&d);
+                plan.push('\n');
+            }
+        }
+        assert!(plan.contains("org_merge_log_nhs_body") && !plan.contains("SCAN org_merge_log\n"), "{sql}:\n{plan}");
+    }
+}
+
+/// D7, the round trip: fold, then unwind. Dry, it plans the dissolve and writes nothing.
+/// Wet, the merged spellings go back to their own provisional rows (234) and the
+/// survivor keeps its PPON mention; the ledger rows are retired and each loser id follows
+/// its spelling's new row; the code leaves the survivor; the moved notices are re-queued;
+/// and the alias, with no `nhs-body` row left, is not armed — the spelling binds its
+/// re-minted row by 234.
+#[tokio::test]
+async fn the_unwind_round_trip_dissolves_the_body_back_through_234() {
+    let b = bed("unwind").await;
+    b.oxford().await;
+    // A spelling a rehoming once put on the second cluster: not its head key, so the
+    // unwind finds it only through the ledger's `loser_name_norms`.
+    b.notice(109, None).await;
+    b.mention(109, "ORG-R", 2, Some("GB"), None, "OUH NHS FT (Oxford)").await;
+    // A party row and a bid-party row naming the second cluster's coded mention: the fold
+    // repoints them onto the survivor, and the unwind must take them back with it.
+    for sql in [
+        "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (9, 1, 'buyer', 2, 102, 'ORG-N102')",
+        "INSERT INTO tender_version_bid_parties (tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (9, 1, 1, 'tenderer', 2, 102, 'ORG-N102')",
+    ] {
+        b.conn.execute(sql, ()).await.unwrap();
+    }
+    b.fold_all().await;
+    assert_eq!(b.count("SELECT organization_id FROM tender_version_bid_parties WHERE tender_id = 9").await, 7);
+    let unwind =
+        |dry_run: bool| store::NhsBodyUnwindArgs { code: "RTH", dry_run, register_identity, key, job_id: Some(78) };
+    let dry = b.db.unwind_nhs_body(unwind(true)).await.unwrap();
+    assert_eq!((dry.ledger_rows, dry.survivor, dry.survivor_mentions), (3, Some(7), 6));
+    assert_eq!((dry.moved, dry.by_name, dry.by_identity, dry.minted), (5, 5, 0, 4), "{dry:#?}");
+    assert!(dry.targets.iter().any(|t| t.key == "ouh nhs ft (oxford)|GB" && t.mentions == 1), "{dry:#?}");
+    assert!(dry.targets.iter().all(|t| t.org_id.is_none() && !t.standing), "{dry:#?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body'").await, 3, "dry writes nothing");
+
+    let r = b.db.unwind_nhs_body(unwind(false)).await.unwrap();
+    assert_eq!((r.moved, r.minted, r.ledger_retired, r.redirects, r.merged_identifiers_dropped), (5, 4, 3, 3, 1), "{r:#?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 7").await, 1, "its PPON mention");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body'").await, 0);
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body-retired'").await, 3);
+    assert!(b.holders_of("GBNHSRTH").await.is_empty(), "the code left the survivor");
+    let ft = b
+        .count("SELECT organization_id FROM organization_mentions WHERE notice_id = 102")
+        .await;
+    assert_ne!(ft, 7);
+    assert_eq!(
+        b.text_of(&format!("SELECT name_norm FROM organizations WHERE id = {ft} AND identifier IS NULL")).await,
+        "oxford university hospitals nhs ft"
+    );
+    assert_eq!(store::read::resolve_org(&b.conn, 2).await.unwrap(), store::read::OrgResolution::MergedInto(ft));
+    // The party and bid-party rows went with the mention they name.
+    assert_eq!((r.parties, r.bid_parties), (1, 1), "{r:#?}");
+    assert_eq!(b.count("SELECT organization_id FROM tender_version_parties WHERE tender_id = 9").await, ft);
+    assert_eq!(b.count("SELECT organization_id FROM tender_version_bid_parties WHERE tender_id = 9").await, ft);
+    let announced = b.count("SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND entity_id = 9").await;
+    assert!(announced >= 2, "the fold's and the unwind's: {announced}");
+    // The first spelling's coded and uncoded mentions land on one row again.
+    assert_eq!(
+        b.count("SELECT COUNT(DISTINCT organization_id) FROM organization_mentions WHERE notice_id IN (101, 108)").await,
+        1
+    );
+    assert_eq!(b.count("SELECT COUNT(*) FROM notices WHERE id IN (101, 102, 103, 108) AND projected = 0").await, 4);
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[mention(300, "Oxford University Hospitals NHS FT", None)]).await;
+    assert_eq!(ids, vec![ft]);
+    assert_eq!(c, store::NhsBodyAliasCounts::default(), "nothing left to arm");
+    let after = b.plan().await;
+    assert!(after.nhs_body_merged.is_empty() && after.nhs_body_regrown.is_empty());
+    assert_eq!(code(&after, "RTH").verdict.as_ref().map(|v| v.status), Some("applied"), "a second fold needs a new verdict");
+}
+
+// ---- Issue 513 U4, the review fixes.
+
+/// The unwind's survivor is read from the ledger's IDENTITY-keyed evidence and held to the
+/// keep's chain (review finding): a from-archive rebuild re-mints every org id from 1 while
+/// `org_merge_log` persists, so a row's `keep` can come to name an unrelated company. Here
+/// the PPON body stands at a new id (70) and keep 7 is someone else's — who holds one of
+/// the body's spellings, so the old id-only read would have moved that mention off them.
+/// Dry and wet alike refuse with nothing written, and the census's regrown entry carries
+/// no survivor rather than the unrelated org.
+#[tokio::test]
+async fn an_unwind_whose_keep_now_names_an_unrelated_org_is_refused() {
+    let b = bed("renumbered").await;
+    b.oxford().await;
+    b.fold_all().await;
+    for sql in [
+        "UPDATE organizations SET id = 70 WHERE id = 7",
+        "UPDATE organization_mentions SET organization_id = 70 WHERE organization_id = 7",
+        "UPDATE organization_merged_identifiers SET org_id = 70 WHERE org_id = 7",
+    ] {
+        b.conn.execute(sql, ()).await.unwrap();
+    }
+    b.provisional(7, "Acme Facilities Ltd").await;
+    b.notice(150, None).await;
+    b.mention(150, "ORG-A", 7, Some("GB"), None, "OUH Oxford").await;
+    let state = "SELECT (SELECT COUNT(*) FROM organizations) || '|' || (SELECT COUNT(*) FROM changes) || '|' || \
+                 (SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body') || '|' || \
+                 (SELECT COUNT(*) FROM organization_merged_identifiers) || '|' || \
+                 (SELECT group_concat(notice_id || ':' || organization_id, ',') FROM organization_mentions)";
+    let before = b.text_of(state).await;
+    for dry_run in [true, false] {
+        let err = b
+            .db
+            .unwind_nhs_body(store::NhsBodyUnwindArgs { code: "RTH", dry_run, register_identity, key, job_id: None })
+            .await
+            .expect_err("the keep names an unrelated org");
+        let msg = err.to_string();
+        assert!(msg.contains("does not name one live survivor") && msg.contains("nothing was written"), "{msg}");
+        assert!(msg.contains("names org 70 but its keep 7 reaches org 7"), "{msg}");
+        assert_eq!(b.text_of(state).await, before, "dry_run {dry_run}: nothing written");
+    }
+    assert_eq!(b.holders_of("GBNHSRTH").await, vec![70]);
+    // S4's listing resolves its survivor the same way: none, never Acme.
+    b.provisional(80, "Oxford University Hospitals NHS FT").await;
+    let r = b.plan().await;
+    let g: Vec<_> = r.nhs_body_regrown.iter().filter(|g| g.org_id == 80).collect();
+    assert_eq!(g.len(), 1, "{:#?}", r.nhs_body_regrown);
+    assert_eq!((g[0].kind, g[0].survivor), ("name", None), "{g:#?}");
+}
+
+/// A body whose verdict makes a PPON org a LOSER is held (`loser-ppon-unaliased`, review
+/// finding): no alias re-binds a loser's PPON yet, so its next PPON-first mention would
+/// mint the org again. Here the code pairs the first PPON org (41) and the second (42)
+/// holds the code only through a coded party, so 41 would survive and 42 be deleted.
+#[tokio::test]
+async fn a_body_with_a_loser_ppon_org_is_held() {
+    let b = bed("loser-ppon").await;
+    let ppon_b = "GB-PPON-WXYZ-1234-ABCD";
+    b.org(41, &minted(PPON), "Clatterbridge Trust A").await;
+    b.org(42, &minted(ppon_b), "Clatterbridge Trust B").await;
+    b.provisional(43, "The Clatterbridge Cancer Centre NHS Foundation Trust").await;
+    b.notice(141, None).await;
+    b.party(141, "P", Some(41), Some("GB"), &[PPON, "GB-NHS-REN"], "Clatterbridge Trust A").await;
+    b.coded(142, 42, "GB-NHS-REN").await;
+    b.coded(143, 43, "GB-NHS-REN").await;
+    b.verdict("REN", vec![41, 42, 43], Some(vec![41, 42, 43]), "merge", "high").await;
+    let expect = b.admitted().await;
+    assert_eq!(expect, vec!["REN"]);
+    let r = b.wet(&expect, None).await.unwrap();
+    assert_eq!(
+        r.held,
+        vec![store::NhsBodyHeld { code: "REN", reason: "loser-ppon-unaliased", members: vec![41, 42, 43] }]
+    );
+    assert_eq!((r.residual_codes.clone(), r.folded.len()), (vec!["REN"], 0), "{r:#?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id IN (41, 42, 43)").await, 3, "nothing folded");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 0);
+}
+
+/// D7's E0 arm and the redirect order, on a ledger written for the shape the wet run now
+/// holds (`loser-ppon-unaliased`) — as a fold before that hold would have left it. RET was
+/// folded into PPON org 31: its losers were PPON org 32 (B), B's identifier-NULL twin 34
+/// on B's own head key, and a spelling cluster 33; B's PPON and the code were recorded on
+/// 31. The unwind sends B's PPON-first mention back through E0 to a row carrying B's
+/// triple, and the twin's and the cluster's spellings through 234; loser 32's id follows
+/// its PPON (the identity home), not the twin's NULL row its head key also reaches.
+#[tokio::test]
+async fn the_unwind_returns_a_loser_ppon_org_through_e0_and_redirects_it_by_identity() {
+    let b = bed("unwind-e0").await;
+    let (ppon_b, twin, cluster) = ("GB-PPON-WXYZ-1234-ABCD", "The Walton Centre B", "Walton Centre Liverpool");
+    let head = "THE WALTON CENTRE NHS FOUNDATION TRUST";
+    b.org(31, &minted(PPON), head).await;
+    // The losers stood once and the fold deleted them, so no mint reuses their ids.
+    b.org(32, &minted(ppon_b), twin).await;
+    b.provisional(33, cluster).await;
+    b.provisional(34, twin).await;
+    b.conn.execute("DELETE FROM organizations WHERE id IN (32, 33, 34)", ()).await.unwrap();
+    for (n, ids, name) in [
+        (131, vec![PPON, "GB-NHS-RET"], head),
+        (132, vec![ppon_b], twin),
+        (133, vec!["GB-NHS-RET"], twin),
+        (134, vec!["GB-NHS-RET"], cluster),
+    ] {
+        b.notice(n, None).await;
+        b.party(n, "N", Some(31), Some("GB"), &ids, name).await;
+    }
+    let at = 1_000;
+    let target = ppon_target(PPON);
+    let twin_key = store::org_name_norm(twin);
+    let losers = [
+        (32, minted(ppon_b), twin_key.clone()),
+        (34, String::new(), twin_key.clone()),
+        (33, String::new(), store::org_name_norm(cluster)),
+    ];
+    for (loser, literal, key) in losers {
+        let kind = if literal.is_empty() { "name" } else { "ppon" };
+        b.ledger_evidence(
+            31,
+            loser,
+            &format!(
+                "\"code\":\"RET\",{target},\"keep_name\":\"{head}\",\"loser_id\":\"{literal}\",\"loser_kind\":\"{kind}\",\
+                 \"loser_name_norm\":\"{key}\",\"loser_name_norms\":[\"{key}\"],\"loser_country\":\"GB\""
+            ),
+            at,
+        )
+        .await;
+    }
+    for (identifier, loser) in [(minted(ppon_b), 32), ("GBNHSRET".to_owned(), 31)] {
+        b.conn
+            .execute(
+                "INSERT INTO organization_merged_identifiers (identifier, identifier_kind, country, org_id, loser, rule)
+                 VALUES (?, 'national', 'GB', 31, ?, 'nhs-body')",
+                (Value::Text(identifier), Value::Integer(loser)),
+            )
+            .await
+            .unwrap();
+    }
+    let r = b
+        .db
+        .unwind_nhs_body(store::NhsBodyUnwindArgs { code: "RET", dry_run: false, register_identity, key, job_id: None })
+        .await
+        .unwrap();
+    assert_eq!((r.survivor, r.moved, r.by_name, r.by_identity, r.minted), (Some(31), 3, 2, 1, 3), "{r:#?}");
+    assert_eq!((r.ledger_retired, r.redirects, r.merged_identifiers_dropped), (3, 3, 2), "{r:#?}");
+    let b_row = b.count("SELECT organization_id FROM organization_mentions WHERE notice_id = 132").await;
+    assert_eq!(
+        b.text_of(&format!("SELECT identifier || '|' || name FROM organizations WHERE id = {b_row}")).await,
+        format!("{}|{twin}", minted(ppon_b)),
+        "B's PPON-first mention is on a row carrying its own triple"
+    );
+    let twin_row = b.count("SELECT organization_id FROM organization_mentions WHERE notice_id = 133").await;
+    assert!(twin_row != b_row && twin_row != 31, "the twin's spelling went by name");
+    assert_eq!(b.count("SELECT organization_id FROM organization_mentions WHERE notice_id = 131").await, 31, "A's own");
+    assert_eq!(store::read::resolve_org(&b.conn, 32).await.unwrap(), store::read::OrgResolution::MergedInto(b_row));
+    assert_eq!(store::read::resolve_org(&b.conn, 34).await.unwrap(), store::read::OrgResolution::MergedInto(twin_row));
+}
+
+/// A one-member body writes no ledger row — its fold only recorded the code — so its
+/// unwind drops that record (review finding: otherwise no job could ever remove it).
+#[tokio::test]
+async fn a_one_member_body_unwinds_to_dropping_its_code() {
+    let b = bed("one-member-unwind").await;
+    b.provisional(21, "The Walton Centre NHS Foundation Trust").await;
+    b.coded(121, 21, "GB-NHS-RET").await;
+    b.verdict("RET", vec![21], Some(vec![21]), "merge", "high").await;
+    b.fold_all().await;
+    assert_eq!(b.holders_of("GBNHSRET").await, vec![21]);
+    let unwind = |dry_run: bool| store::NhsBodyUnwindArgs { code: "RET", dry_run, register_identity, key, job_id: None };
+    let dry = b.db.unwind_nhs_body(unwind(true)).await.unwrap();
+    assert_eq!((dry.ledger_rows, dry.survivor, dry.merged_identifiers_dropped), (0, Some(21), 1), "{dry:#?}");
+    assert_eq!(b.holders_of("GBNHSRET").await, vec![21], "dry writes nothing");
+    let r = b.db.unwind_nhs_body(unwind(false)).await.unwrap();
+    assert_eq!((r.ledger_rows, r.survivor, r.merged_identifiers_dropped, r.moved), (0, Some(21), 1, 0), "{r:#?}");
+    assert!(b.holders_of("GBNHSRET").await.is_empty(), "the code left the org");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 21").await, 1);
+}
+
+/// A `keep` verdict standing on a folded code drops every ledger row of that code at
+/// arming: nothing is armed, and the spelling binds by 234 exactly as unarmed (the loser
+/// row is gone, so it mints).
+#[tokio::test]
+async fn a_keep_verdict_on_a_folded_code_drops_its_alias_rows() {
+    let b = bed("keep-drop").await;
+    b.oxford().await;
+    b.fold_all().await;
+    b.db.record_merge_verdicts("513-keep-test", &[nhs_verdict("RTH", vec![7], None, "keep", "high")], 1).await.unwrap();
+    b.fresh(&[300]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b.resolve(true, &[mention(300, "Oxford University Hospitals NHS FT", None)]).await;
+    assert_eq!((c.ledger_rows, c.kept, c.keys, c.asked), (3, 3, 0, 0), "{c:?}");
+    assert_ne!(ids[0], 7);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs + 1, "bound by 234: minted");
+}
+
+/// Chains: an anchor body (REN, its loser key → the anchor's key) whose anchor a later
+/// fold took into a PPON org (the anchor's key → the PPON). The loser's spelling follows
+/// the chain to the standing PPON org; and in a rebuild, the PPON org is minted under the
+/// PPON row's `keep_name` whichever key reaches it first (D5: the chained hop carries its
+/// own name, not the first row's).
+#[tokio::test]
+async fn an_anchor_chain_follows_to_the_ppon_org_and_mints_it_under_one_name() {
+    const ANCHOR: &str = "the clatterbridge cancer centre nhs foundation trust";
+    const ANCHOR_NAME: &str = "The Clatterbridge Cancer Centre NHS Foundation Trust";
+    const PPON_NAME: &str = "CLATTERBRIDGE CANCER CENTRE NHS FOUNDATION TRUST (PPON)";
+    async fn rows(b: &Bed) {
+        b.ledger_named(11, 12, "REN", "clatterbridge cancer centre", &anchor_target(ANCHOR), ANCHOR_NAME, 1).await;
+        b.ledger_named(60, 11, "REN", ANCHOR, &ppon_target(PPON), PPON_NAME, 2).await;
+    }
+    let (anchor_name, ppon_name) = (ANCHOR_NAME, PPON_NAME);
+    let b = bed("chain-standing").await;
+    b.org(60, &minted(PPON), ppon_name).await;
+    rows(&b).await;
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[mention(300, "Clatterbridge Cancer Centre", None)]).await;
+    assert_eq!(ids, vec![60], "the loser's spelling follows the chain");
+    assert_eq!((c.keys, c.poisoned, c.asked, c.bound, c.minted), (2, 0, 1, 1, 0), "{c:?}");
+
+    let mut heads = Vec::new();
+    for (case, order) in [("chain-rebuild-a", [0, 1]), ("chain-rebuild-b", [1, 0])] {
+        let b = bed(case).await;
+        rows(&b).await;
+        b.fresh(&[400, 401]).await;
+        let spellings = [("Clatterbridge Cancer Centre", 400), (anchor_name, 401)];
+        let mentions: Vec<store::Mention> =
+            order.iter().map(|&i| mention(spellings[i].1, spellings[i].0, None)).collect();
+        let (ids, c) = b.resolve(true, &mentions).await;
+        assert_eq!(ids[0], ids[1], "{case}: one org");
+        assert_eq!((c.minted, c.bound), (1, 1), "{case}: {c:?}");
+        heads.push(b.text_of(&format!("SELECT name || '|' || identifier FROM organizations WHERE id = {}", ids[0])).await);
+    }
+    assert_eq!(heads, vec![format!("{ppon_name}|{}", minted(PPON)); 2], "order-independent head");
+}
+
+/// Two anchor rows aimed at each other are a broken chain: both keys poisoned, so neither
+/// spelling binds through the alias.
+#[tokio::test]
+async fn a_two_row_anchor_cycle_is_poisoned() {
+    let b = bed("anchor-cycle").await;
+    b.ledger(40, 90, "RET", "walton a", &anchor_target("walton b"), 1).await;
+    b.ledger(41, 91, "RET", "walton b", &anchor_target("walton a"), 1).await;
+    b.fresh(&[300]).await;
+    let (_, c) = b.resolve(true, &[mention(300, "Walton A", None)]).await;
+    assert_eq!((c.ledger_rows, c.keys, c.poisoned), (2, 0, 2), "{c:?}");
+    assert_eq!((c.asked, c.refused, c.refused_poisoned, c.bound, c.minted), (1, 1, 1, 0, 0), "{c:?}");
+}
+
+/// A body's transaction that fails after an earlier body committed (review finding) ends
+/// the folding there: the report comes back with the committed body folded, the failed
+/// one and every later one in the residual and the error named — so the caller stores the
+/// residual. With nothing committed yet, the error itself, nothing written.
+#[tokio::test]
+async fn a_body_that_fails_after_a_commit_leaves_the_residual() {
+    let b = bed("fold-error").await;
+    b.oxford().await;
+    b.clatterbridge().await;
+    let expect = b.admitted().await;
+    assert_eq!(expect, vec!["REN", "RTH"]);
+    b.conn
+        .execute(
+            "CREATE TRIGGER t513 BEFORE DELETE ON organizations WHEN OLD.id = 1
+             BEGIN SELECT RAISE(ABORT, 'fixture: RTH refuses'); END",
+            (),
+        )
+        .await
+        .unwrap();
+    let r = b.wet(&expect, None).await.expect("REN committed, so the run reports");
+    assert_eq!(r.folded.iter().map(|f| f.code).collect::<Vec<_>>(), vec!["REN"]);
+    assert_eq!(r.residual_codes, vec!["RTH"]);
+    let failed = r.fold_error.clone().expect("the failure is named");
+    assert!(failed.starts_with("RTH: ") && failed.contains("fixture: RTH refuses"), "{failed}");
+    assert_eq!((r.merged_bodies, r.removed, r.mentions), (1, 1, 1), "RTH's rolled-back tallies are not counted: {r:#?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id IN (1, 2, 3)").await, 3, "RTH rolled back");
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body'").await, 1);
+    let residual: Vec<String> = r.residual_codes.iter().map(|c| (*c).to_owned()).collect();
+    let err = b.wet(&residual, None).await.expect_err("nothing committed: the error itself");
+    assert!(err.to_string().contains("fixture: RTH refuses"), "{err}");
+}
+
+/// S5's prod half, in the store: the canary opens a fresh resolver armed as the fold arms
+/// it and re-resolves a folded body's recorded mentions — the coded and uncoded spellings
+/// (the alias), the PPON-first party (E0), the stray (234) — and every one agrees with the
+/// org it is recorded on, inside a transaction that is rolled back: nothing is written.
+/// It is a real re-resolve, not the fold's idempotency early return: a mention recorded on
+/// the wrong org disagrees.
+#[tokio::test]
+async fn the_canary_re_resolves_a_folded_body_and_writes_nothing() {
+    let b = bed("canary").await;
+    b.oxford().await;
+    b.fold_all().await;
+    let canary = |notices: &'static [i64]| store::NhsBodyCanaryArgs {
+        notices,
+        identity: |raw, _scheme, country| raw.and_then(|r| register_identity(r, country)),
+        canon_key: Some(key),
+        consortium: Some(consortium),
+        anchors: None,
+        norm: Some(norm),
+        legal_form: None,
+        hard_scheme: None,
+        stoplist_cap: 20,
+        altid: altid_rules(),
+    };
+    let state = "SELECT (SELECT COUNT(*) FROM organizations) || '|' || (SELECT COUNT(*) FROM changes) || '|' || \
+                 (SELECT COUNT(*) FROM org_merge_log) || '|' || (SELECT COUNT(*) FROM organization_merged_identifiers) \
+                 || '|' || (SELECT group_concat(notice_id || ':' || section_id || ':' || organization_id, ',') \
+                            FROM organization_mentions)";
+    let before = b.text_of(state).await;
+    let r = b.db.nhs_body_canary(canary(&[101, 102, 103, 104, 107, 108, 999])).await.unwrap();
+    assert_eq!((r.mentions, r.agree, r.disagree, r.minted), (6, 6, 0, 0), "{r:#?}");
+    assert_eq!(r.notices_without_mentions, vec![999]);
+    for binding in &r.bindings {
+        let home = if binding.notice_id == 104 { 8 } else { 7 };
+        assert_eq!((binding.stored, binding.resolved, binding.agree), (home, home, true), "{binding:#?}");
+    }
+    assert_eq!((r.alias.asked, r.alias.bound, r.alias.minted, r.alias.refused), (4, 4, 0, 0), "{:?}", r.alias);
+    assert_eq!(b.text_of(state).await, before, "rolled back: nothing written");
+
+    b.conn.execute("UPDATE organization_mentions SET organization_id = 8 WHERE notice_id = 102", ()).await.unwrap();
+    let r = b.db.nhs_body_canary(canary(&[102])).await.unwrap();
+    assert_eq!((r.mentions, r.agree, r.disagree), (1, 0, 1), "{r:#?}");
+    assert_eq!((r.bindings[0].stored, r.bindings[0].resolved, r.bindings[0].agree), (8, 7, false));
+    assert_eq!(b.count("SELECT organization_id FROM organization_mentions WHERE notice_id = 102").await, 8, "untouched");
 }

@@ -198,6 +198,8 @@ Replaces the withdrawn D1–D4. All three judges ranked design C first. Counts a
 - Review costs ~2× 469 U6.
 - Hosted sites stay separate.
 - The legally-ended codes have no date fence.
+- A one-member body's `GBNHS<code>` is lost on a from-archive rebuild: its fold writes no ledger row (no loser), and
+  no marker row replays it (owner ruling on the U4 review, 2026-10-12). Its unwind drops the record.
 
 ### Owner notes on adoption (2026-10-11)
 

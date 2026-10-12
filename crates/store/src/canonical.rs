@@ -490,6 +490,10 @@ pub(crate) const SCHEMA: &str = "
     -- 5.76M), so the read is a seek through this partial index, which holds
     -- only the e2-altid rows. Built once when a store first opens with it.
     CREATE INDEX IF NOT EXISTS org_merge_log_e2_altid ON org_merge_log(rule) WHERE rule = 'e2-altid';
+    -- Issue 513 U4: the nhs-body alias reads the `nhs-body` merges at every fold, and the
+    -- census lists them (`nhs_body_merged`) and its unwind retires them — the same seek,
+    -- through this partial index over those rows alone.
+    CREATE INDEX IF NOT EXISTS org_merge_log_nhs_body ON org_merge_log(rule) WHERE rule = 'nhs-body';
 
     -- Issue 460: the identifiers a merge folded into an organization. The
     -- identity index is ONE column on `organizations`, and every merge deletes
@@ -4917,6 +4921,12 @@ pub(crate) const MERGED_BACKFILL_STANDING_SQL: &str =
 /// Nothing is written when the org already carries that identifier (the merge
 /// or the backfill wrote it). Returns whether it wrote.
 async fn record_alias_identifier(conn: &Connection, id: &Identifier, org: i64) -> turso::Result<bool> {
+    record_alias_identifier_as(conn, id, org, "altid-alias").await
+}
+
+/// [`record_alias_identifier`] under another `rule` — issue 513 U4's nhs-body alias and
+/// wet path record `GBNHS<code>` on a body's survivor as rule `nhs-body`.
+async fn record_alias_identifier_as(conn: &Connection, id: &Identifier, org: i64, rule: &str) -> turso::Result<bool> {
     let standing = conn
         .query(MERGED_ALIAS_STANDING_SQL, (t(&id.value), Value::Integer(org)))
         .await?
@@ -4930,13 +4940,14 @@ async fn record_alias_identifier(conn: &Connection, id: &Identifier, org: i64) -
         .execute(
             "INSERT OR IGNORE INTO organization_merged_identifiers \
                  (identifier, identifier_kind, country, org_id, loser, rule) \
-             VALUES (?, ?, ?, ?, ?, 'altid-alias')",
+             VALUES (?, ?, ?, ?, ?, ?)",
             (
                 t(&id.value),
                 t(&id.kind),
                 opt_text(id.country.as_deref()),
                 Value::Integer(org),
                 Value::Integer(org),
+                t(rule),
             ),
         )
         .await?;
@@ -6169,6 +6180,41 @@ pub struct NhsBodyReport {
     /// A holder's mention read or the holder listing was cut: the share is a sample.
     pub coded_share_partial: bool,
     pub stopped: bool,
+    // ---- Issue 513 U4: the ledger, regrowth, and the wet run.
+    /// The codes whose verdict this census admits, ascending — the reviewed set a wet run
+    /// is held to (after a wet run the supervisor stores the residual here instead).
+    pub admitted_codes: Vec<&'static str>,
+    /// Every `nhs-body` ledger row, the evidence verbatim, oldest first (S3's read).
+    pub ledger_rows: u64,
+    pub nhs_body_merged: Vec<NhsBodyMerged>,
+    pub nhs_body_merged_truncated: bool,
+    /// S4: reviewed keys standing on a live row again. 0 on every dry run, or halt.
+    pub nhs_body_regrown: Vec<NhsBodyRegrown>,
+    pub nhs_body_regrown_truncated: bool,
+    /// Wet only (zero or empty on a dry run): the stored set held to, the live admitted
+    /// codes it lacks (never folded), and the stored codes no longer admitted.
+    pub expected_codes: u64,
+    pub deferred_codes: Vec<&'static str>,
+    pub expected_not_live: u64,
+    /// The bodies folded (a one-member body only records its code), those held, and the
+    /// reviewed bodies left — a cap, a stop, a hold — that a continuation is held to.
+    pub folded: Vec<NhsBodyFolded>,
+    pub held: Vec<NhsBodyHeld>,
+    pub residual_codes: Vec<&'static str>,
+    pub merged_bodies: u64,
+    pub recorded_bodies: u64,
+    /// What the folds moved: loser rows removed, and the references repointed.
+    pub removed: u64,
+    pub mentions: u64,
+    pub parties: u64,
+    pub bid_parties: u64,
+    pub winners: u64,
+    pub winner_dups: u64,
+    pub tender_changes: u64,
+    /// Wet only: `<code>: <error>` when a body's transaction failed after at least one body
+    /// had committed — the folding stopped there, and the failed body and every later one
+    /// are in `residual_codes`.
+    pub fold_error: Option<String>,
 }
 
 /// Issue 513 U2: one notice's party mentions, with the name and the raw identifier the
@@ -6200,6 +6246,636 @@ pub const NHS_BODY_KEY_OWNERS_SQL: &str = "SELECT id FROM organizations \
 /// Issue 513 U2: the rows the key-owner probe reads before filtering out the body's own
 /// holders; one row per 234 key is the norm (234 reuses it), so this never binds.
 const NHS_BODY_KEY_OWNER_ROWS: i64 = 64;
+
+// ---- Issue 513 U4: the `nhs-body` wet path, its ledger, the alias it arms, and the unwind.
+
+/// Issue 513 U4: the ledger rule a body's fold writes (one row per loser), and the rule a
+/// scoped unwind moves those rows to — out of the partial index, so no alias arms them.
+pub const NHS_BODY_RULE: &str = "nhs-body";
+pub const NHS_BODY_RETIRED_RULE: &str = "nhs-body-retired";
+/// Issue 513 U4: an unwind's redirect row, old loser id → the org its name dissolved
+/// back into, so `read::resolve_org` (newest row per loser) follows the unwound state.
+pub const NHS_BODY_UNWIND_RULE: &str = "nhs-body-unwind";
+
+/// Issue 513 U4: every `nhs-body` ledger row — what the census lists verbatim
+/// (`nhs_body_merged`) and the unwind reads. A seek through the partial index
+/// `org_merge_log_nhs_body`, never the whole ledger (millions of p0 rows).
+pub const NHS_BODY_LEDGER_SQL: &str =
+    "SELECT keep, loser, evidence, job_id, at FROM org_merge_log WHERE rule = 'nhs-body'";
+
+/// Issue 513 U4: the alias's arming read — the same seek as [`NHS_BODY_LEDGER_SQL`], the
+/// identity-keyed evidence only (never an org id: a rebuild renumbers them). Flat fields,
+/// written by [`nhs_body_ledger_evidence`].
+pub const NHS_BODY_ALIAS_LEDGER_SQL: &str = "SELECT json_extract(evidence, '$.code'), \
+     json_extract(evidence, '$.target'), json_extract(evidence, '$.target_identity'), \
+     json_extract(evidence, '$.target_identifier_kind'), json_extract(evidence, '$.target_country'), \
+     json_extract(evidence, '$.target_ppon'), json_extract(evidence, '$.anchor_name_norm'), \
+     json_extract(evidence, '$.anchor_country'), json_extract(evidence, '$.keep_name'), \
+     json_extract(evidence, '$.loser_name_norm'), json_extract(evidence, '$.loser_country'), at \
+     FROM org_merge_log WHERE rule = 'nhs-body'";
+
+/// Issue 513 U4: one loser's distinct mention names, through `organization_mentions_org`
+/// — the evidence's `loser_names` / `loser_name_norms`, which the unwind re-resolves by.
+const NHS_BODY_LOSER_NAMES_SQL: &str = "SELECT name FROM organization_mentions WHERE organization_id = ?";
+
+/// Issue 513 U4: the raw names a ledger row lists per loser (its name_norms are uncapped
+/// up to [`NHS_BODY_LOSER_NORMS_CAP`]: the unwind moves mentions by them).
+const NHS_BODY_LOSER_NAMES_CAP: usize = 32;
+const NHS_BODY_LOSER_NORMS_CAP: usize = 1_024;
+
+/// Issue 513 U4: the ledger rows the census lists in `nhs_body_merged` (about 240 after
+/// the first cohort), and the regrown entries in `nhs_body_regrown`. Each cut says so.
+pub const NHS_BODY_MERGED_LISTING_CAP: usize = 5_000;
+
+/// Issue 513 U4: the wet inputs of [`Db::merge_nhs_bodies`] beside [`NhsBodyArgs`].
+pub struct NhsBodyWet<'a> {
+    /// The stored `nhs-body-plan`'s `admitted_codes` — the reviewed bodies, the only ones
+    /// a wet run folds, and the set its live re-plan is held to (max(2%, 5) bodies).
+    pub expect_codes: &'a [String],
+    /// A residual plan's `deferred_codes`: deferred ONCE already, so a continuation does
+    /// not count them as drift again (altid's `known_deferred`).
+    pub known_deferred: &'a [String],
+    /// Fold at most this many bodies (the capped first run, U5's 20).
+    pub max_groups: Option<u64>,
+    pub job_id: Option<i64>,
+}
+
+/// Issue 513 U4: one `nhs-body` ledger row, as the census lists it — the evidence
+/// verbatim (`org_merge_log` is not on /v1/sql's allow-list).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyMerged {
+    pub keep: i64,
+    pub loser: i64,
+    pub job_id: Option<i64>,
+    pub at: i64,
+    /// The flat JSON [`nhs_body_ledger_evidence`] wrote.
+    pub evidence: String,
+}
+
+/// Issue 513 U4 (S4): a reviewed key that stands on a live row again — a loser's 234 key
+/// owned by an identifier-NULL row other than the live survivor (`kind` `name`), or a
+/// loser PPON's triple carried by a row again (`ppon`). Zero on every dry run, or halt.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyRegrown {
+    pub code: String,
+    pub kind: &'static str,
+    /// `name_norm|country` for a name, the triple's value for a PPON.
+    pub key: String,
+    pub org_id: i64,
+    /// The live survivor the key belongs to, as the unwind finds it (`None`: the ledger's
+    /// evidence and its keep's chain do not name one live org — a rebuild renumbered it,
+    /// or the survivor is gone).
+    pub survivor: Option<i64>,
+}
+
+/// Issue 513 U4: a body the wet run would not fold, and why: `survivor-ambiguous` (two or
+/// more PPON members, and not exactly one of them paired with the code),
+/// `loser-ppon-unaliased` (a PPON org among the losers, which no alias re-binds yet) or
+/// `members-unlisted`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyHeld {
+    pub code: &'static str,
+    pub reason: &'static str,
+    pub members: Vec<i64>,
+}
+
+/// Issue 513 U4: one body a wet run folded (or, a one-member body, recorded).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyFolded {
+    pub code: &'static str,
+    pub keep: i64,
+    /// `ppon` (the body's SAME PPON org) or `anchor` (its largest cluster, provisional).
+    pub target: &'static str,
+    pub losers: Vec<i64>,
+}
+
+/// Issue 513 U4: the inputs of [`Db::unwind_nhs_body`].
+pub struct NhsBodyUnwindArgs<'a> {
+    /// The body's ODS code (`RTH`).
+    pub code: &'a str,
+    pub dry_run: bool,
+    /// `project::normalise_identifier`: which of the survivor's mentions carry an identity
+    /// (bound by E0), and which none (bound by name, 234).
+    pub register_identity: fn(&str, Option<&str>) -> Option<Identifier>,
+    /// `crosswalk::canonical_key_flat`: the survivor's PPON found by its canonical key, as
+    /// the alias finds it ([`nhs_body_target_org`]).
+    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+    pub job_id: Option<i64>,
+}
+
+/// Issue 513 U4 (D7): where one dissolved key's mentions go.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyUnwindTarget {
+    /// `name` (a 234 key, `name_norm|country`) or `identity` (an E0 triple's value).
+    pub kind: &'static str,
+    pub key: String,
+    pub mentions: u64,
+    /// The org they land on (`None` on a dry run that would mint it).
+    pub org_id: Option<i64>,
+    /// A standing row took them (`false`: minted, or would be).
+    pub standing: bool,
+}
+
+/// What the issue-513 U4 unwind of one body did (or, dry, would do).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+pub struct NhsBodyUnwindReport {
+    pub code: String,
+    pub dry_run: bool,
+    /// The body's `nhs-body` ledger rows.
+    pub ledger_rows: u64,
+    /// The live survivor every row names — its evidence's identity and its keep's chain
+    /// agreeing ([`nhs_body_survivor_now`]); for a one-member body (no ledger row), the org
+    /// its `GBNHS<code>` stands on.
+    pub survivor: Option<i64>,
+    pub survivor_mentions: u64,
+    /// Mentions re-resolved off the survivor — by name (234) and by identity (E0).
+    pub moved: u64,
+    pub by_name: u64,
+    pub by_identity: u64,
+    pub targets: Vec<NhsBodyUnwindTarget>,
+    pub minted: u64,
+    pub parties: u64,
+    pub bid_parties: u64,
+    pub tenders_stamped: u64,
+    pub notices_requeued: u64,
+    /// Ledger rows moved to `nhs-body-retired`, redirect rows written, and the merged
+    /// identifiers dropped off the survivor (`GBNHS<code>`, the losers' own literals).
+    pub ledger_retired: u64,
+    pub redirects: u64,
+    pub merged_identifiers_dropped: u64,
+}
+
+/// Issue 513 U4 (S5's prod half): the inputs of [`Db::nhs_body_canary`] — the notices to
+/// re-resolve, and the fold's own resolver rules (`ingest::project`'s two resolver sites,
+/// and their altid arming), so the canary's resolver is the fold's.
+pub struct NhsBodyCanaryArgs<'a> {
+    pub notices: &'a [i64],
+    /// `project::gated_identifier` (raw, scheme, country): the identity the fold gave the
+    /// recorded mention — the declared scheme's gate, then the normaliser.
+    pub identity: fn(Option<&str>, Option<&str>, Option<&str>) -> Option<Identifier>,
+    pub canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>>,
+    pub consortium: Option<fn(&str) -> bool>,
+    pub anchors: Option<fn(&str) -> Vec<(&'static str, String)>>,
+    pub norm: Option<fn(&str) -> String>,
+    pub legal_form: Option<fn(&str) -> Option<&'static str>>,
+    pub hard_scheme: Option<fn(&str) -> bool>,
+    pub stoplist_cap: usize,
+    pub altid: AltIdAliasRules,
+}
+
+/// Issue 513 U4 (S5): one recorded mention, re-resolved by the canary's fresh armed
+/// resolver, against the org it is recorded on.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NhsBodyCanaryBinding {
+    pub notice_id: i64,
+    pub section_id: String,
+    pub name: String,
+    pub raw_identifier: Option<String>,
+    /// The `organization_id` the mention is recorded on.
+    pub stored: i64,
+    /// Where the fresh resolver binds it (a minted id was rolled back with the rest).
+    pub resolved: i64,
+    pub minted: bool,
+    pub agree: bool,
+}
+
+/// What the issue-513 U4 canary found (S5's prod half: 100% agreement, or halt).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+pub struct NhsBodyCanaryReport {
+    pub notices: Vec<i64>,
+    /// Asked notices with no recorded mention: nothing there to re-resolve.
+    pub notices_without_mentions: Vec<i64>,
+    pub mentions: u64,
+    pub agree: u64,
+    pub disagree: u64,
+    pub minted: u64,
+    pub bindings: Vec<NhsBodyCanaryBinding>,
+    /// The nhs-body alias's own counts over the re-resolve (all zero when it is not armed).
+    pub alias: NhsBodyAliasCounts,
+}
+
+/// The most notices one canary run re-resolves (S5 asks 3 per body for 3 bodies).
+pub const NHS_BODY_CANARY_NOTICES_CAP: usize = 100;
+
+/// Issue 513 U4: what the alias did over one fold — the `[issue 513]` diag line. All zero
+/// on a resolver armed with no `nhs-body` row. `asked == bound + minted + refused`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct NhsBodyAliasCounts {
+    /// `nhs-body` ledger rows read at arming, and those a `keep` verdict on their code
+    /// dropped.
+    pub ledger_rows: u64,
+    pub kept: u64,
+    /// Reviewed (name_norm, country) keys armed.
+    pub keys: u64,
+    /// Keys two bodies' rows claim, or whose anchor chain cycles: never armed.
+    pub poisoned: u64,
+    /// Keys a standing identifier-NULL row outside the body owns (D4): never armed.
+    pub owned_elsewhere: u64,
+    /// GB identifier-less mentions on an armed (or poisoned) key…
+    pub asked: u64,
+    /// …bound to the target standing…
+    pub bound: u64,
+    /// …bound to the target the alias minted from the ledger (a rebuild in notice order)…
+    pub minted: u64,
+    /// …refused, and bound by 234 exactly as unarmed: the key is poisoned, or the PPON
+    /// target's triple stands on two or more rows or under a wrong/related verdict.
+    pub refused: u64,
+    pub refused_poisoned: u64,
+    pub refused_shared: u64,
+    /// Binds that recorded `GBNHS<code>` as a merged identifier of their org (once per
+    /// (code, org) a run; a rebuild empties that table — the 460 D5 pattern).
+    pub recorded: u64,
+}
+
+/// Issue 513 U4: where one armed key binds.
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+enum NhsBodyTarget {
+    /// The body's PPON org, by its exact triple (`org_of`), its canonical key, or an
+    /// altid ledger move of its PPON; minted from the ledger when absent.
+    Ppon { country: Option<String>, kind: String, identity: String, ppon: Option<String> },
+    /// The body's provisional anchor, by its own 234 key; minted when absent.
+    Anchor { name_norm: String, country: String },
+}
+
+#[derive(Clone, Debug)]
+struct NhsBodyKey {
+    code: String,
+    target: NhsBodyTarget,
+    /// The survivor's head name at the fold: the name any mint of the target takes, so the
+    /// head is order-independent (D5).
+    keep_name: String,
+}
+
+/// Issue 513 U4: the armed nhs-body alias a [`MentionResolver`] carries — reviewed 234 keys
+/// to identity-keyed targets, never org ids, so it survives a rebuild's renumbering.
+struct NhsBodyAlias {
+    keys: std::collections::HashMap<(String, String), NhsBodyKey>,
+    poisoned: std::collections::HashSet<(String, String)>,
+    /// The triples a `wrong` / unapplied `related` verdict names: a PPON target among them
+    /// binds nobody (469 U5's rule), in a rebuild too.
+    withheld_triples: std::collections::HashSet<(Option<String>, String, String)>,
+    counts: NhsBodyAliasCounts,
+    /// The (code, org) pairs whose `GBNHS<code>` a bind recorded or found this run.
+    recorded: std::collections::HashSet<(String, i64)>,
+}
+
+/// Issue 513 U4: one loser's line of the `nhs-body` ledger — flat, json_extract-readable,
+/// identity-keyed (the alias replays from it after a rebuild) and with the literals and
+/// names a reader and the unwind need. `keep_id` / `loser_id` are identifier LITERALS (the
+/// altid ledger's convention; `""` for none), never org ids.
+#[allow(clippy::too_many_arguments)]
+fn nhs_body_ledger_evidence(
+    code: &str,
+    ods_name: &str,
+    target: &NhsBodyTarget,
+    keep: &NhsBodyHolder,
+    loser: &NhsBodyHolder,
+    loser_ppon: Option<&str>,
+    loser_names: &[String],
+    loser_name_norms: &[String],
+    cohort: &str,
+    job_id: Option<i64>,
+) -> String {
+    let e = altid_json_esc;
+    let list = |xs: &[String]| xs.iter().map(|x| format!("\"{}\"", e(x))).collect::<Vec<_>>().join(",");
+    let target_fields = match target {
+        NhsBodyTarget::Ppon { country, kind, identity, ppon } => format!(
+            "\"target\":\"ppon\",\"target_identity\":\"{}\",\"target_identifier_kind\":\"{}\",\
+             \"target_country\":\"{}\",\"target_ppon\":\"{}\"",
+            e(identity),
+            e(kind),
+            e(country.as_deref().unwrap_or_default()),
+            e(ppon.as_deref().unwrap_or_default()),
+        ),
+        NhsBodyTarget::Anchor { name_norm, country } => format!(
+            "\"target\":\"anchor\",\"anchor_name_norm\":\"{}\",\"anchor_country\":\"{}\"",
+            e(name_norm),
+            e(country)
+        ),
+    };
+    format!(
+        "{{\"scheme\":\"{NHS_BODY_SCHEME}\",\"code\":\"{}\",\"ods_name\":\"{}\",{target_fields},\
+         \"keep_name\":\"{}\",\"keep_id\":\"{}\",\"loser_id\":\"{}\",\"loser_kind\":\"{}\",\
+         \"loser_name\":\"{}\",\"loser_name_norm\":\"{}\",\"loser_names\":[{}],\"loser_name_norms\":[{}],\
+         \"loser_country\":\"{}\",\"loser_ppon\":\"{}\",\"cohort\":\"{}\",\"job_id\":{}}}",
+        e(code),
+        e(ods_name),
+        e(&keep.name),
+        e(keep.identifier.as_deref().unwrap_or_default()),
+        e(loser.identifier.as_deref().unwrap_or_default()),
+        if loser_ppon.is_some() { "ppon" } else { "name" },
+        e(&loser.name),
+        e(&loser.name_norm),
+        list(loser_names),
+        list(loser_name_norms),
+        e(loser.country.as_deref().unwrap_or_default()),
+        e(loser_ppon.unwrap_or_default()),
+        e(cohort),
+        job_id.map_or_else(|| "null".to_owned(), |j| j.to_string()),
+    )
+}
+
+/// Issue 513 U4: what one body's fold transaction needs ([`Db::nhs_body_fold`]).
+struct NhsBodyFold<'a> {
+    entry: &'a NhsBodyCode,
+    keep: &'a NhsBodyHolder,
+    losers: &'a [&'a NhsBodyHolder],
+    target: &'a NhsBodyTarget,
+    cohort: &'a str,
+    key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+    now: i64,
+    job_id: Option<i64>,
+}
+
+/// Issue 513 U4: a holder's PPON key — its own identifier keying to `GB:ppon` — if any.
+fn nhs_body_ppon_of(
+    h: &NhsBodyHolder,
+    key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+) -> Option<String> {
+    let literal = h.identifier.as_deref()?;
+    match key(h.country.as_deref(), h.identifier_kind.as_deref().unwrap_or("national"), literal) {
+        Some(("GB:ppon", k, _, _)) => Some(k),
+        _ => None,
+    }
+}
+
+/// Issue 513 U4 (D1): a body's survivor among its verdict's members, and the target its
+/// ledger rows replay to. The SAME PPON org — the member whose own identifier keys to
+/// `GB:ppon`; of several, the one holding a PPON published beside the code (RYA: the real
+/// code's PPON), else `survivor-ambiguous` — or, with no PPON member, the largest cluster
+/// by mentions (lowest id on a tie) as a provisional anchor.
+fn nhs_body_survivor<'h>(
+    members: &[&'h NhsBodyHolder],
+    key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+) -> Result<(&'h NhsBodyHolder, NhsBodyTarget), &'static str> {
+    let ppons: Vec<(&'h NhsBodyHolder, String)> =
+        members.iter().filter_map(|h| nhs_body_ppon_of(h, key).map(|k| (*h, k))).collect();
+    let chosen = match &ppons[..] {
+        [] => None,
+        [one] => Some(one.clone()),
+        several => {
+            let paired: Vec<&(&NhsBodyHolder, String)> = several.iter().filter(|(h, _)| !h.ppons.is_empty()).collect();
+            match paired[..] {
+                [one] => Some(one.clone()),
+                _ => return Err("survivor-ambiguous"),
+            }
+        }
+    };
+    if let Some((h, k)) = chosen {
+        let target = NhsBodyTarget::Ppon {
+            country: h.country.clone(),
+            kind: h.identifier_kind.clone().unwrap_or_else(|| "national".to_owned()),
+            identity: h.identifier.clone().unwrap_or_default(),
+            ppon: Some(k),
+        };
+        return Ok((h, target));
+    }
+    let Some(anchor) = members.iter().copied().max_by(|a, b| a.mentions.cmp(&b.mentions).then(b.org_id.cmp(&a.org_id)))
+    else {
+        return Err("no-members");
+    };
+    let target = NhsBodyTarget::Anchor {
+        name_norm: anchor.name_norm.clone(),
+        country: anchor.country.clone().unwrap_or_else(|| "GB".to_owned()),
+    };
+    Ok((anchor, target))
+}
+
+/// Issue 513 U4: a flat JSON array of strings as SQLite's `json_extract` returns it, or as
+/// [`nhs_body_ledger_evidence`] wrote it — `["a","b \"c\""]` — back to its values. Only the
+/// escapes the ledger can hold are read (`\"`, `\\`, `\/`, `\uXXXX`); anything else yields
+/// what it can rather than failing an unwind.
+fn nhs_json_strings(json: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut chars = json.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c != '"' {
+            continue;
+        }
+        let mut value = String::new();
+        while let Some(c) = chars.next() {
+            match c {
+                '"' => break,
+                '\\' => match chars.next() {
+                    Some('u') => {
+                        let hex: String = chars.by_ref().take(4).collect();
+                        if let Some(ch) = u32::from_str_radix(&hex, 16).ok().and_then(char::from_u32) {
+                            value.push(ch);
+                        }
+                    }
+                    Some('n') => value.push('\n'),
+                    Some('t') => value.push('\t'),
+                    Some(other) => value.push(other),
+                    None => break,
+                },
+                c => value.push(c),
+            }
+        }
+        out.push(value);
+    }
+    out
+}
+
+/// Issue 513 U4: the target fields of an `nhs-body` ledger row, in the order
+/// [`nhs_body_target_at`] reads them — the identity-keyed evidence, never an org id.
+const NHS_BODY_TARGET_FIELDS: &str = "json_extract(evidence, '$.target'), json_extract(evidence, '$.target_identity'), \
+     json_extract(evidence, '$.target_identifier_kind'), json_extract(evidence, '$.target_country'), \
+     json_extract(evidence, '$.target_ppon'), json_extract(evidence, '$.anchor_name_norm'), \
+     json_extract(evidence, '$.anchor_country')";
+
+/// Issue 513 U4: a ledger row's target from the seven [`NHS_BODY_TARGET_FIELDS`] starting
+/// at column `i` (the alias's own parse). `None` for a row that names neither shape.
+fn nhs_body_target_at(row: &turso::Row, i: usize) -> Option<NhsBodyTarget> {
+    let field = |k: usize| opt_text_of(row, i + k).filter(|v| !v.is_empty());
+    match field(0)?.as_str() {
+        "ppon" => Some(NhsBodyTarget::Ppon {
+            country: field(3),
+            kind: field(2).unwrap_or_else(|| "national".to_owned()),
+            identity: field(1)?,
+            ppon: field(4),
+        }),
+        "anchor" => Some(NhsBodyTarget::Anchor { name_norm: field(5)?, country: field(6)? }),
+        _ => None,
+    }
+}
+
+/// Issue 513 U4: the org era's floor, as [`BackfillGuard::era_floor`] reads it — the mint
+/// time of the lowest live org id. A ledger row older than it names ids of an earlier era.
+async fn org_era_floor(conn: &Connection) -> turso::Result<Option<i64>> {
+    let mut rows = conn.query("SELECT created_at FROM organizations ORDER BY id LIMIT 1", ()).await?;
+    Ok(rows.next().await?.map(|row| int(&row, 0)))
+}
+
+/// Issue 513 U4: the orgs a GB canonical key stands on, as the resolver's `canon_of` holds
+/// them (E1, unfolded) but without its preload of every identified row: the literal
+/// spellings the crosswalk's GB arm reads to that key — `GBPPON<serial>` / `PPON<serial>`
+/// for a PPON, `<n>` / `GB<n>` / `COH<n>` / `GBCOH<n>` for a company number — each an
+/// identifier seek, each hit held to the injected `key` fn. Ascending ids.
+async fn gb_canon_owners(
+    conn: &Connection,
+    key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+    scheme: &'static str,
+    serial: &str,
+) -> turso::Result<Vec<i64>> {
+    let spellings: Vec<String> = match scheme {
+        "GB:ppon" => vec![format!("GBPPON{serial}"), format!("PPON{serial}")],
+        "GB:coh" => vec![serial.to_owned(), format!("GB{serial}"), format!("COH{serial}"), format!("GBCOH{serial}")],
+        _ => Vec::new(),
+    };
+    let wanted = ("GB".to_owned(), scheme, serial.to_owned());
+    let mut owners: BTreeSet<i64> = BTreeSet::new();
+    for literal in &spellings {
+        let mut rows = conn
+            .query("SELECT id, country, identifier_kind FROM organizations WHERE identifier = ?", (t(literal),))
+            .await?;
+        while let Some(row) = rows.next().await? {
+            let (country, kind) = (opt_text_of(&row, 1), text(&row, 2));
+            if resolver_canon_key(Some(key), country.as_deref(), &kind, literal) == Some((wanted.clone(), false)) {
+                owners.insert(int(&row, 0));
+            }
+        }
+    }
+    Ok(owners.into_iter().collect())
+}
+
+/// Issue 513 U4: the org a ledger row's identity-keyed target names now, as the alias finds
+/// it (D5), by seeks: a PPON target is the ONE row carrying its exact triple (the
+/// identifier seek), else the one row its canonical key stands on, else the one row an
+/// altid move of its PPON reached (issue 448/469's follow: a company number's key, or a
+/// register identity's exact `GB` triple; a `keep` verdict drops the move, two moves are a
+/// contradiction); an anchor is issue 234's probe on its own key (lowest id).
+/// `Err(why)` when none, or two, answer.
+async fn nhs_body_target_org(
+    conn: &Connection,
+    target: &NhsBodyTarget,
+    key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+) -> turso::Result<Result<i64, String>> {
+    let one = |ids: Vec<i64>, what: &str| -> Option<Result<i64, String>> {
+        match ids[..] {
+            [] => None,
+            [id] => Some(Ok(id)),
+            _ => Some(Err(format!("{} rows stand on {what} ({ids:?})", ids.len()))),
+        }
+    };
+    let (country, kind, identity, ppon) = match target {
+        NhsBodyTarget::Anchor { name_norm, country } => {
+            let mut rows = conn
+                .query(
+                    "SELECT id FROM organizations WHERE name_norm = ? AND country = ? AND identifier IS NULL \
+                      ORDER BY id LIMIT 1",
+                    (t(name_norm), t(country)),
+                )
+                .await?;
+            return Ok(rows
+                .next()
+                .await?
+                .map(|row| int(&row, 0))
+                .ok_or_else(|| format!("no identifier-NULL row stands on the anchor key {name_norm}|{country}")));
+        }
+        NhsBodyTarget::Ppon { country, kind, identity, ppon } => (country, kind, identity, ppon),
+    };
+    let exact = move |country: Option<&str>, kind: &str, identity: &str| {
+        let (country, kind, identity) = (country.unwrap_or_default().to_owned(), kind.to_owned(), identity.to_owned());
+        async move {
+            let mut rows = conn
+                .query(
+                    "SELECT id FROM organizations WHERE identifier = ? AND identifier_kind = ? \
+                        AND COALESCE(country, '') = ? ORDER BY id",
+                    (t(&identity), t(&kind), t(&country)),
+                )
+                .await?;
+            let mut ids = Vec::new();
+            while let Some(row) = rows.next().await? {
+                ids.push(int(&row, 0));
+            }
+            turso::Result::Ok(ids)
+        }
+    };
+    if let Some(hit) = one(exact(country.as_deref(), kind, identity).await?, &format!("the triple {identity}")) {
+        return Ok(hit);
+    }
+    let Some(ppon) = ppon else { return Ok(Err(format!("no row carries {identity}, and the row names no PPON key"))) };
+    if let Some(hit) = one(gb_canon_owners(conn, key, "GB:ppon", ppon).await?, &format!("the PPON key {ppon}")) {
+        return Ok(hit);
+    }
+    // The altid follow: the PPON org a later altid merge folded, through the moves the
+    // alias arms (the partial index `org_merge_log_e2_altid`).
+    let mut moves: BTreeSet<AltIdTarget> = BTreeSet::new();
+    let mut rows = conn.query(ALTID_ALIAS_LEDGER_SQL, ()).await?;
+    let mut ledger: Vec<(AltIdTarget, String)> = Vec::new();
+    while let Some(row) = rows.next().await? {
+        let field = |i: usize| opt_text_of(&row, i).filter(|v| !v.is_empty());
+        if field(1).as_deref() != Some(ppon.as_str()) {
+            continue;
+        }
+        if let Some(coh) = field(0) {
+            let keep_key = format!("{coh}~{ppon}");
+            ledger.push((AltIdTarget::Coh(coh), keep_key));
+        } else if let (Some(scheme), Some(kind), Some(identity)) = (field(2), field(3), field(4)) {
+            let keep_key = format!("{scheme}:{identity}~{ppon}");
+            ledger.push((AltIdTarget::Registry(kind, identity), keep_key));
+        }
+    }
+    drop(rows);
+    for (target, keep_key) in ledger {
+        let mut rows = conn
+            .query(
+                "SELECT 1 FROM org_merge_verdicts WHERE country = 'GB' AND scheme = 'GB:altid' AND action = 'keep' \
+                    AND key = ? LIMIT 1",
+                (t(&keep_key),),
+            )
+            .await?;
+        if rows.next().await?.is_none() {
+            moves.insert(target);
+        }
+    }
+    let found = match moves.into_iter().collect::<Vec<_>>().as_slice() {
+        [] => return Ok(Err(format!("no row carries {identity} or its PPON key, and no altid move of {ppon}"))),
+        [AltIdTarget::Coh(coh)] => {
+            one(gb_canon_owners(conn, key, "GB:coh", coh).await?, &format!("the company key {coh}"))
+        }
+        [AltIdTarget::Registry(kind, identity)] => {
+            one(exact(Some("GB"), kind, identity).await?, &format!("the register triple {identity}"))
+        }
+        several => return Ok(Err(format!("the PPON {ppon} moved to {} altid targets", several.len()))),
+    };
+    Ok(found.unwrap_or_else(|| Err(format!("the altid move of {ppon} reaches no row"))))
+}
+
+/// Issue 513 U4: the live org a body's ledger row names now — the unwind's survivor and the
+/// census's `survivor` — read twice and held to agreement (review finding: an org id alone
+/// will not do, since a from-archive rebuild re-mints every id from 1 while the ledger
+/// persists, so a row's `keep` can name an unrelated company):
+/// - by IDENTITY, from the evidence ([`nhs_body_target_org`]);
+/// - by ID, [`merged_survivor`] from the row's `keep` at its `at`, under the org era's
+///   floor (the backfill's three time checks).
+///
+/// `Err(why)` unless both answer the same live org.
+async fn nhs_body_survivor_now(
+    conn: &Connection,
+    target: &NhsBodyTarget,
+    keep: i64,
+    at: i64,
+    floor: Option<i64>,
+    key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+) -> turso::Result<Result<i64, String>> {
+    let by_identity = Box::pin(nhs_body_target_org(conn, target, key)).await?;
+    let by_id = merged_survivor(conn, keep, at, floor).await?;
+    Ok(match (by_identity, by_id) {
+        (Ok(org), MergedSurvivor::Live(live)) if org == live => Ok(org),
+        (Ok(org), MergedSurvivor::Live(live)) => {
+            Err(format!("its evidence names org {org} but its keep {keep} reaches org {live}"))
+        }
+        (Err(why), _) => Err(format!("its evidence names no single live org: {why}")),
+        (Ok(org), MergedSurvivor::OutOfTime) => Err(format!(
+            "its evidence names org {org} but its keep {keep} is out of time (an earlier org era: a rebuild \
+             renumbered it)"
+        )),
+        (Ok(org), MergedSurvivor::Unresolved) => {
+            Err(format!("its evidence names org {org} but its keep {keep} reaches no live org"))
+        }
+    })
+}
 
 /// Issue 469 U4: where one scheme's `both_distinct` register pairs landed in the DRY
 /// register planner — the company-number arm's gate counts, kept per scheme and apart
@@ -10844,6 +11520,10 @@ pub struct MentionResolver {
     /// `finish_mention_resolver`), where every inline copy is stack —
     /// `run_project`'s poll frame went over its budget (issue 467's tripwire).
     altid: Option<Box<AltIdAlias>>,
+    /// Issue 513 U4: the nhs-body alias — a body's reviewed 234 keys to its survivor —
+    /// `None` until [`Db::arm_nhs_body_alias`] finds `nhs-body` ledger rows, and `None` is
+    /// the byte-identical pre-513 resolver. Boxed for the same frames as `altid`.
+    nhs_body: Option<Box<NhsBodyAlias>>,
     /// Issue 452: canonical keys a WITHHELD org owns (a reviewer found the
     /// number is not that org's), with every standing owner of the key. Such a
     /// key never binds name-blind: a different spelling of the number binds to
@@ -16594,6 +17274,7 @@ impl Db {
             retire_corrections: 0,
             tenders_stamped: 0,
             altid: None,
+            nhs_body: None,
         })
     }
 
@@ -16765,7 +17446,347 @@ impl Db {
             owner_mention_names: HashMap::new(),
             owner_mentions_indexed,
         }));
+        // Issue 513 U4: the nhs-body alias rides the same arming, so the fold's two call
+        // sites arm both — after the altid alias, whose PPON moves it follows.
+        Box::pin(self.arm_nhs_body_alias_on(&conn, resolver)).await
+    }
+
+    /// Issue 513 U4, the PREVENTION half of the `nhs-body` wet path (D4/D5): arm `resolver`
+    /// with the reviewed keys the `nhs-body` folds recorded. [`Self::arm_altid_alias`] calls
+    /// it, so every fold arms it; a store-level caller may arm it alone.
+    pub async fn arm_nhs_body_alias(&self, resolver: &mut MentionResolver) -> turso::Result<()> {
+        let conn = self.conn().await;
+        Box::pin(self.arm_nhs_body_alias_on(&conn, resolver)).await
+    }
+
+    /// Issue 513 U4: [`Self::arm_nhs_body_alias`] on a held writer. Without the alias, a
+    /// fold re-mints every spelling a body's fold absorbed: the loser row is
+    /// gone, the issue-234 probe needs `identifier IS NULL` (a PPON survivor has one), and
+    /// the identifier-less branch mints. Armed, a GB identifier-less mention whose 234 key
+    /// (`org_name_norm`, register country) is a loser's own head key binds the body's
+    /// survivor, BEFORE the 234 probe ([`Db::nhs_body_alias_bind`]).
+    ///
+    /// The preload, one seek and a probe per key:
+    /// - `org_merge_log WHERE rule = 'nhs-body'` through `org_merge_log_nhs_body`: per row
+    ///   the loser's key and the identity-keyed target (the PPON triple, or the anchor's 234
+    ///   key) with the ledger's `keep_name` — never org ids, so a rebuild's renumbering
+    ///   does not matter (the rebuild keeps the log);
+    /// - rows whose code a `keep` verdict now stands on are dropped;
+    /// - per key the newest row; a key two codes' rows claim is POISONED, binding nobody;
+    /// - chains: an anchor target whose own key a later fold armed (the anchor folded into
+    ///   a PPON org by a later cohort) follows it, at most 8 hops; a cycle poisons;
+    /// - D4: a key a standing identifier-NULL row owns is not armed (unless it is the anchor
+    ///   target's own key, which 234 binds to the anchor anyway) — the alias never takes a
+    ///   key from a row outside the body;
+    /// - the triples a `wrong` / unapplied `related` verdict names (a PPON target among
+    ///   them binds nobody).
+    ///
+    /// No row: the resolver stays unarmed (`nhs_body: None`), byte-identical. Logged
+    /// `[issue 513]` either way.
+    async fn arm_nhs_body_alias_on(&self, conn: &Connection, resolver: &mut MentionResolver) -> turso::Result<()> {
+        use std::collections::{HashMap, HashSet};
+        resolver.nhs_body = None;
+        let mut counts = NhsBodyAliasCounts::default();
+        // (key) → (code, target, keep_name, at), every usable row.
+        let mut by_key: HashMap<(String, String), Vec<(String, NhsBodyTarget, String, i64)>> = HashMap::new();
+        let mut rows = conn.query(NHS_BODY_ALIAS_LEDGER_SQL, ()).await?;
+        while let Some(row) = rows.next().await? {
+            let field = |i: usize| opt_text_of(&row, i).filter(|v| !v.is_empty());
+            let (Some(code), Some(kind), Some(name_norm), Some(country)) = (field(0), field(1), field(9), field(10))
+            else {
+                continue;
+            };
+            let target = match kind.as_str() {
+                "ppon" => {
+                    let Some(identity) = field(2) else { continue };
+                    NhsBodyTarget::Ppon {
+                        country: field(4),
+                        kind: field(3).unwrap_or_else(|| "national".to_owned()),
+                        identity,
+                        ppon: field(5),
+                    }
+                }
+                "anchor" => {
+                    let (Some(name_norm), Some(country)) = (field(6), field(7)) else { continue };
+                    NhsBodyTarget::Anchor { name_norm, country }
+                }
+                _ => continue,
+            };
+            counts.ledger_rows += 1;
+            by_key.entry((name_norm, country)).or_default().push((code, target, field(8).unwrap_or_default(), int(&row, 11)));
+        }
+        drop(rows);
+        if counts.ledger_rows == 0 {
+            self.log_diag("[issue 513] resolver nhs-body alias: no nhs-body ledger row — not armed");
+            return Ok(());
+        }
+        let mut rows = conn
+            .query(
+                "SELECT key FROM org_merge_verdicts WHERE country = 'GB' AND scheme = ? AND action = 'keep'",
+                (t(NHS_BODY_SCHEME),),
+            )
+            .await?;
+        let mut kept: HashSet<String> = HashSet::new();
+        while let Some(row) = rows.next().await? {
+            kept.insert(text(&row, 0));
+        }
+        drop(rows);
+        let mut keys: HashMap<(String, String), NhsBodyKey> = HashMap::new();
+        let mut poisoned: HashSet<(String, String)> = HashSet::new();
+        for (key, mut claims) in by_key {
+            let before = claims.len();
+            claims.retain(|(code, ..)| !kept.contains(code));
+            counts.kept += (before - claims.len()) as u64;
+            if claims.is_empty() {
+                continue;
+            }
+            let codes: BTreeSet<&str> = claims.iter().map(|(code, ..)| code.as_str()).collect();
+            if codes.len() > 1 {
+                poisoned.insert(key);
+                continue;
+            }
+            if let Some((code, target, keep_name, _)) = claims.into_iter().max_by_key(|(.., at)| *at) {
+                keys.insert(key, NhsBodyKey { code, target, keep_name });
+            }
+        }
+        // Chains, over a snapshot of the armed (target, keep_name) pairs: each hop carries
+        // the next row's keep_name with its target, so a rebuild mints a chained target
+        // under the name of the body that holds it, whichever key reaches it first (D5).
+        let snapshot: HashMap<(String, String), (NhsBodyTarget, String)> =
+            keys.iter().map(|(k, v)| (k.clone(), (v.target.clone(), v.keep_name.clone()))).collect();
+        let mut broken: Vec<(String, String)> = Vec::new();
+        for (key, entry) in keys.iter_mut() {
+            let mut seen: Vec<(String, String)> = vec![key.clone()];
+            let mut hops = 0;
+            loop {
+                let NhsBodyTarget::Anchor { name_norm, country } = &entry.target else { break };
+                let at = (name_norm.clone(), country.clone());
+                if poisoned.contains(&at) {
+                    broken.push(key.clone());
+                    break;
+                }
+                let Some((next, next_name)) = snapshot.get(&at) else { break };
+                if *next == entry.target {
+                    break;
+                }
+                if seen.contains(&at) || hops >= 8 {
+                    broken.push(key.clone());
+                    break;
+                }
+                seen.push(at);
+                entry.target = next.clone();
+                entry.keep_name = next_name.clone();
+                hops += 1;
+            }
+        }
+        for key in broken {
+            keys.remove(&key);
+            poisoned.insert(key);
+        }
+        // D4: a key a standing identifier-NULL row owns stays with that row.
+        let mut owned: Vec<(String, String)> = Vec::new();
+        for (key, entry) in &keys {
+            if let NhsBodyTarget::Anchor { name_norm, country } = &entry.target
+                && (name_norm, country) == (&key.0, &key.1)
+            {
+                continue;
+            }
+            let mut rows = conn.query(NHS_BODY_KEY_OWNERS_SQL, (t(&key.0), t(&key.1), Value::Integer(1))).await?;
+            if rows.next().await?.is_some() {
+                owned.push(key.clone());
+            }
+        }
+        for key in owned {
+            keys.remove(&key);
+            counts.owned_elsewhere += 1;
+        }
+        counts.keys = keys.len() as u64;
+        counts.poisoned = poisoned.len() as u64;
+        let withheld_triples: HashSet<(Option<String>, String, String)> = withheld_identifier_triples(conn)
+            .await?
+            .into_iter()
+            .map(|(identifier, kind, country)| ((!country.is_empty()).then_some(country), kind, identifier))
+            .collect();
+        self.log_diag(&format!(
+            "[issue 513] resolver nhs-body alias ARMED for this run: {} reviewed key(s) from {} nhs-body ledger \
+             row(s); {} row(s) dropped by a keep verdict, {} key(s) poisoned (claimed by two bodies, or a \
+             broken anchor chain), {} owned by a standing identifier-NULL row outside the body (D4, not armed)",
+            counts.keys, counts.ledger_rows, counts.kept, counts.poisoned, counts.owned_elsewhere
+        ));
+        resolver.nhs_body = Some(Box::new(NhsBodyAlias {
+            keys,
+            poisoned,
+            withheld_triples,
+            counts,
+            recorded: HashSet::new(),
+        }));
         Ok(())
+    }
+
+    /// Issue 513 U4: the nhs-body alias's bind, asked by `resolve_one_mention` at the head
+    /// of the identifier-less branch, before issue 234's probe, for a mention with a
+    /// non-empty 234 key and a country. `Some((org, minted))` binds; `None` (no armed key, or
+    /// a refusal) leaves the mention to 234 exactly as unarmed. Never by code: the key is
+    /// the mention's name, and only reviewed names are keys.
+    ///
+    /// A PPON target (D5) is found as an identifier mention would find it: the exact triple
+    /// (`org_of`, refused when it stands on two or more rows or a wrong/related verdict
+    /// names it), a re-keyed literal, the canonical key (`canon_of`), an altid ledger move
+    /// of its PPON (the survivor folded later is followed, never re-minted) — and minted
+    /// when absent (a rebuild in notice order), named by the ledger's `keep_name`, claiming
+    /// `org_of` and `canon_of` as the E0 mint does. An anchor target binds through its own
+    /// 234 key, minted provisional and named `keep_name` when absent. Each bind records
+    /// `GBNHS<code>` on its org once per run (the 460 D5 pattern: a rebuild empties the
+    /// merged table).
+    #[allow(clippy::too_many_arguments)]
+    async fn nhs_body_alias_bind(
+        &self,
+        conn: &Connection,
+        name_norm: &str,
+        country: &str,
+        now: i64,
+        alias: &mut NhsBodyAlias,
+        org_of: &mut std::collections::HashMap<(Option<String>, String, String), i64>,
+        name_of: &mut std::collections::HashMap<(String, String), i64>,
+        canon_of: &mut std::collections::HashMap<(String, &'static str, String), i64>,
+        resolver_poisoned: &std::collections::HashSet<(String, &'static str, String)>,
+        guarded: &std::collections::HashMap<(String, &'static str, String), Vec<i64>>,
+        shared_triples: &std::collections::HashSet<(Option<String>, String, String)>,
+        rekeyed: &RekeyedLiterals,
+        canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>>,
+        altid: Option<&AltIdAlias>,
+        created_any: &mut bool,
+    ) -> turso::Result<Option<(i64, bool)>> {
+        let key = (name_norm.to_owned(), country.to_owned());
+        if alias.poisoned.contains(&key) {
+            alias.counts.asked += 1;
+            alias.counts.refused += 1;
+            alias.counts.refused_poisoned += 1;
+            return Ok(None);
+        }
+        let Some(entry) = alias.keys.get(&key) else { return Ok(None) };
+        let entry = entry.clone();
+        alias.counts.asked += 1;
+        let (org, minted) = match &entry.target {
+            NhsBodyTarget::Ppon { country, kind, identity, ppon } => {
+                let triple = (country.clone(), kind.clone(), identity.clone());
+                if shared_triples.contains(&triple) || alias.withheld_triples.contains(&triple) {
+                    alias.counts.refused += 1;
+                    alias.counts.refused_shared += 1;
+                    return Ok(None);
+                }
+                let canon = resolver_canon_key(canon_key, country.as_deref(), kind, identity)
+                    .filter(|(_, folded)| !folded)
+                    .map(|(ck, _)| ck);
+                let followed = || -> Option<i64> {
+                    let alias = altid?;
+                    let ppon = ppon.as_deref()?;
+                    match alias.alias_of.get(ppon)? {
+                        AltIdTarget::Coh(coh) => {
+                            let coh_key = ("GB".to_owned(), "GB:coh", coh.clone());
+                            (!resolver_poisoned.contains(&coh_key)).then(|| canon_of.get(&coh_key).copied()).flatten()
+                        }
+                        AltIdTarget::Registry(kind, identity) => {
+                            let triple = (Some("GB".to_owned()), kind.clone(), identity.clone());
+                            (!shared_triples.contains(&triple) && !alias.withheld_triples.contains(&triple))
+                                .then(|| org_of.get(&triple).copied())
+                                .flatten()
+                        }
+                    }
+                };
+                let found = org_of
+                    .get(&triple)
+                    .copied()
+                    .or_else(|| rekey_target(org_of, rekeyed, &triple))
+                    .or_else(|| {
+                        canon.as_ref().filter(|ck| !resolver_poisoned.contains(*ck)).and_then(|ck| canon_of.get(ck).copied())
+                    })
+                    .or_else(followed);
+                match found {
+                    Some(org) => (org, false),
+                    None => {
+                        conn.execute(
+                            "INSERT INTO organizations(country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
+                             VALUES(?, ?, ?, ?, ?, 0, ?)",
+                            (
+                                opt_text(country.as_deref()),
+                                t(kind),
+                                t(identity),
+                                t(&entry.keep_name),
+                                Value::Text(org_name_norm(&entry.keep_name)),
+                                Value::Integer(now),
+                            ),
+                        )
+                        .await?;
+                        let org = last_insert_rowid(conn).await?;
+                        org_of.insert(triple, org);
+                        if let Some(ck) = canon
+                            && !resolver_poisoned.contains(&ck)
+                            && !guarded.contains_key(&ck)
+                        {
+                            canon_of.entry(ck).or_insert(org);
+                        }
+                        (org, true)
+                    }
+                }
+            }
+            NhsBodyTarget::Anchor { name_norm, country } => {
+                let anchor_key = (name_norm.clone(), country.clone());
+                match name_of.get(&anchor_key).copied() {
+                    Some(org) => (org, false),
+                    None => {
+                        let mut rows = conn
+                            .query(
+                                "SELECT id FROM organizations \
+                                  WHERE name_norm = ? AND country = ? AND identifier IS NULL ORDER BY id LIMIT 1",
+                                (t(name_norm), t(country)),
+                            )
+                            .await?;
+                        let hit = rows.next().await?.map(|row| int(&row, 0));
+                        drop(rows);
+                        match hit {
+                            Some(org) => {
+                                name_of.insert(anchor_key, org);
+                                (org, false)
+                            }
+                            None => {
+                                conn.execute(
+                                    "INSERT INTO organizations(country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
+                                     VALUES(?, NULL, NULL, ?, ?, 1, ?)",
+                                    (t(country), t(&entry.keep_name), t(name_norm), Value::Integer(now)),
+                                )
+                                .await?;
+                                let org = last_insert_rowid(conn).await?;
+                                name_of.insert(anchor_key, org);
+                                (org, true)
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        if minted {
+            alias.counts.minted += 1;
+        } else {
+            alias.counts.bound += 1;
+        }
+        if alias.recorded.insert((entry.code.clone(), org)) {
+            let ods = Identifier {
+                country: Some("GB".to_owned()),
+                kind: "national".to_owned(),
+                value: format!("GBNHS{}", entry.code),
+            };
+            if record_alias_identifier_as(conn, &ods, org, NHS_BODY_RULE).await? {
+                alias.counts.recorded += 1;
+                // A fresh mint is announced `added` by the caller; a standing row's served
+                // merged identifiers grew.
+                if !minted {
+                    append_change(conn, "organization", org, None, "changed", now).await?;
+                }
+                *created_any = true;
+            }
+        }
+        Ok(Some((org, minted)))
     }
 
     /// What the issue-448 alias did over this resolver's life — read before
@@ -16773,6 +17794,15 @@ impl Db {
     /// pattern. All zero, `armed: false`, on an unarmed resolver.
     pub fn altid_alias_counts(resolver: &MentionResolver) -> AltIdAliasCounts {
         resolver.altid.as_ref().map(|a| a.counts).unwrap_or_default()
+    }
+
+    /// Issue 513 U4: what the nhs-body alias did over this resolver's life; all zero when
+    /// it was not armed (no `nhs-body` ledger row). Not carried on the fold's `Report`
+    /// (whose copies sit in `run_project`'s poll frame, issue 467's budget): the
+    /// `[issue 513]` diag line [`Db::finish_mention_resolver`] writes on every armed fold
+    /// is S4's read.
+    pub fn nhs_body_alias_counts(resolver: &MentionResolver) -> NhsBodyAliasCounts {
+        resolver.nhs_body.as_ref().map(|a| a.counts).unwrap_or_default()
     }
 
     /// Issue 448 unit 3: the alias's bind, asked by `resolve_one_mention` only
@@ -17521,6 +18551,18 @@ impl Db {
                 c.owner_names_capped
             ));
         }
+        // Issue 513 U4: whenever the nhs-body alias was armed, zeros included (S4 reads
+        // refusals against binds on every fold).
+        if let Some(a) = &resolver.nhs_body {
+            let c = &a.counts;
+            self.log_diag(&format!(
+                "[issue 513] resolver nhs-body alias: {} reviewed-spelling mention(s) asked, {} bound to the \
+                 standing survivor, {} bound to a survivor minted from the ledger, {} refused ({} poisoned key, \
+                 {} shared/withheld PPON target) and bound by 234 as without the alias; GBNHS code recorded \
+                 on {} org(s)",
+                c.asked, c.bound, c.minted, c.refused, c.refused_poisoned, c.refused_shared, c.recorded
+            ));
+        }
         // Zeros included (the issue-318 rule): a fold's log says the guard was
         // asked nothing, rather than leaving that to a missing line.
         self.log_diag(&format!(
@@ -18162,7 +19204,37 @@ impl Db {
                 let country: Option<String> =
                     m.country.as_deref().map(|c| register_jurisdiction(c).to_owned());
                 let scope = (!name_norm.is_empty()).then_some(()).and(country.clone());
-                if let Some(country) = &scope {
+                // Issue 513 U4: a reviewed body spelling binds the body's survivor BEFORE
+                // the 234 probe, which needs `identifier IS NULL` and so cannot find a PPON
+                // survivor, and whose loser row the fold deleted. `None` on an unarmed
+                // resolver (no `nhs-body` ledger row), which is therefore byte-identical.
+                // Boxed, so the bind's state stays off this future's frame (CLAUDE.md).
+                let nhs_hit = match (&scope, resolver.nhs_body.as_deref_mut()) {
+                    (Some(country), Some(alias)) => {
+                        Box::pin(self.nhs_body_alias_bind(
+                            conn,
+                            &name_norm,
+                            country,
+                            now,
+                            alias,
+                            &mut *org_of,
+                            &mut *name_of,
+                            &mut resolver.canon_of,
+                            &resolver.poisoned,
+                            &resolver.guarded,
+                            &resolver.shared_triples,
+                            &resolver.rekeyed,
+                            resolver.canon_key,
+                            resolver.altid.as_deref(),
+                            &mut resolver.created_any,
+                        ))
+                        .await?
+                    }
+                    _ => None,
+                };
+                if let Some(hit) = nhs_hit {
+                    hit
+                } else if let Some(country) = &scope {
                     let key = (name_norm.clone(), country.clone());
                     if let Some(&org_id) = name_of.get(&key) {
                         (org_id, false)
@@ -25068,8 +26140,21 @@ impl Db {
     ///
     /// Read-only, on a pooled reader: it never takes the writer.
     pub async fn plan_nhs_bodies(&self, args: NhsBodyArgs<'_>) -> turso::Result<NhsBodyReport> {
-        use std::collections::{BTreeMap, HashMap, HashSet};
         let conn = self.reader().await?;
+        let mut report = Box::pin(self.plan_nhs_bodies_on(&conn, &args)).await?;
+        if !report.stopped {
+            Box::pin(self.nhs_body_ledger_listing(&conn, args.key, &mut report)).await?;
+        }
+        Ok(report)
+    }
+
+    /// Issue 513 U4: [`Self::plan_nhs_bodies`]' census on `conn` — a pooled reader for the
+    /// dry census, the WRITER for [`Self::merge_nhs_bodies`]' live re-plan (altid's shape:
+    /// no write lands between the plan the gates judged and the folds that act on it). The
+    /// helpers it calls (`merge_verdict_for`) read through the pool, never the writer, so
+    /// holding it cannot deadlock.
+    async fn plan_nhs_bodies_on(&self, conn: &Connection, args: &NhsBodyArgs<'_>) -> turso::Result<NhsBodyReport> {
+        use std::collections::{BTreeMap, HashMap, HashSet};
         let caps = args.caps;
         let mut report = NhsBodyReport { ods_version: args.ods_version, ..NhsBodyReport::default() };
 
@@ -25615,7 +26700,11 @@ impl Db {
                 };
                 *report.verdict_status.entry(status).or_default() += 1;
                 match status {
-                    "admitted" => report.admitted_verdict += 1,
+                    "admitted" => {
+                        report.admitted_verdict += 1;
+                        // Issue 513 U4: the reviewed set a wet run is held to (code order).
+                        report.admitted_codes.push(code);
+                    }
                     "keep" => report.verdict_keep += 1,
                     _ => report.verdict_stale += 1,
                 }
@@ -25704,6 +26793,964 @@ impl Db {
         report.countryless_sample = sampled(&conn, countryless).await?;
         report.non_gb_sample = sampled(&conn, non_gb).await?;
         report.other_nhs_sample = sampled(&conn, other_nhs).await?;
+        Ok(report)
+    }
+
+    /// Issue 513 U4: the census's ledger half, on `conn` — every `nhs-body` ledger row with
+    /// its evidence verbatim (`nhs_body_merged`, S3's read: `org_merge_log` is not on
+    /// /v1/sql), and S4's `nhs_body_regrown`: each loser's 234 key standing on an
+    /// identifier-NULL row other than its live survivor (the key regrew a provisional), and
+    /// each loser literal carried by a row again (its PPON org re-minted). Reads only: the
+    /// ledger through `org_merge_log_nhs_body`, a 234-key probe per key, an identifier seek
+    /// per literal, and per fold the survivor the unwind would find
+    /// ([`nhs_body_survivor_now`]: the evidence's identity and the keep's chain must agree,
+    /// else `survivor` is `None`).
+    async fn nhs_body_ledger_listing(
+        &self,
+        conn: &Connection,
+        key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+        report: &mut NhsBodyReport,
+    ) -> turso::Result<()> {
+        use std::collections::HashMap;
+        let mut merged: Vec<NhsBodyMerged> = Vec::new();
+        let mut rows = conn.query(NHS_BODY_LEDGER_SQL, ()).await?;
+        while let Some(row) = rows.next().await? {
+            merged.push(NhsBodyMerged {
+                keep: int(&row, 0),
+                loser: int(&row, 1),
+                evidence: text(&row, 2),
+                job_id: opt_int_of(&row, 3),
+                at: int(&row, 4),
+            });
+        }
+        drop(rows);
+        merged.sort_by_key(|m| (m.at, m.loser));
+        report.ledger_rows = merged.len() as u64;
+        report.nhs_body_merged_truncated = merged.len() > NHS_BODY_MERGED_LISTING_CAP;
+        merged.truncate(NHS_BODY_MERGED_LISTING_CAP);
+        report.nhs_body_merged = merged;
+
+        // (code, loser 234 key, loser country, loser literal, keep, at, target), one per
+        // ledger row.
+        type Key = (String, String, String, String, i64, i64, Option<NhsBodyTarget>);
+        let mut keys: BTreeSet<Key> = BTreeSet::new();
+        let mut rows = conn
+            .query(
+                &format!(
+                    "SELECT keep, at, json_extract(evidence, '$.code'), json_extract(evidence, '$.loser_name_norm'), \
+                            json_extract(evidence, '$.loser_country'), json_extract(evidence, '$.loser_id'), \
+                            {NHS_BODY_TARGET_FIELDS} \
+                       FROM org_merge_log WHERE rule = 'nhs-body'"
+                ),
+                (),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            keys.insert((
+                opt_text_of(&row, 2).unwrap_or_default(),
+                opt_text_of(&row, 3).unwrap_or_default(),
+                opt_text_of(&row, 4).unwrap_or_default(),
+                opt_text_of(&row, 5).unwrap_or_default(),
+                int(&row, 0),
+                int(&row, 1),
+                nhs_body_target_at(&row, 6),
+            ));
+        }
+        drop(rows);
+        let floor = org_era_floor(conn).await?;
+        // One resolution per fold (its keep, instant and target), as the unwind resolves it.
+        let mut survivor_of: HashMap<(i64, i64, Option<NhsBodyTarget>), Option<i64>> = HashMap::new();
+        let mut regrown: Vec<NhsBodyRegrown> = Vec::new();
+        for (code, name_norm, country, literal, keep, at, target) in keys {
+            let fold = (keep, at, target);
+            let survivor = match survivor_of.get(&fold) {
+                Some(s) => *s,
+                None => {
+                    let s = match &fold.2 {
+                        Some(target) => Box::pin(nhs_body_survivor_now(conn, target, keep, at, floor, key)).await?.ok(),
+                        None => None,
+                    };
+                    survivor_of.insert(fold, s);
+                    s
+                }
+            };
+            if !name_norm.is_empty() && !country.is_empty() {
+                let mut rows = conn
+                    .query(
+                        NHS_BODY_KEY_OWNERS_SQL,
+                        (t(&name_norm), t(&country), Value::Integer(NHS_BODY_KEY_OWNER_ROWS)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    let org = int(&row, 0);
+                    if Some(org) != survivor {
+                        regrown.push(NhsBodyRegrown {
+                            code: code.clone(),
+                            kind: "name",
+                            key: format!("{name_norm}|{country}"),
+                            org_id: org,
+                            survivor,
+                        });
+                    }
+                }
+            }
+            if !literal.is_empty() {
+                let mut rows =
+                    conn.query("SELECT id FROM organizations WHERE identifier = ?", (t(&literal),)).await?;
+                while let Some(row) = rows.next().await? {
+                    let org = int(&row, 0);
+                    if Some(org) != survivor {
+                        regrown.push(NhsBodyRegrown {
+                            code: code.clone(),
+                            kind: "ppon",
+                            key: literal.clone(),
+                            org_id: org,
+                            survivor,
+                        });
+                    }
+                }
+            }
+        }
+        regrown.sort_by(|a, b| (&a.code, a.kind, &a.key, a.org_id).cmp(&(&b.code, b.kind, &b.key, b.org_id)));
+        regrown.dedup();
+        report.nhs_body_regrown_truncated = regrown.len() > NHS_BODY_MERGED_LISTING_CAP;
+        regrown.truncate(NHS_BODY_MERGED_LISTING_CAP);
+        report.nhs_body_regrown = regrown;
+        Ok(())
+    }
+
+    /// Issue 513 U4: the WET `nhs-body` run (decision "unit 2, second", design C's U3).
+    ///
+    /// 1. LIVE RE-PLAN under the writer, held to the end ([`Self::plan_nhs_bodies_on`]):
+    ///    no write lands between the census the verdicts were admitted by and the folds.
+    /// 2. PARITY (S2, the altid pattern): the live `admitted_codes` against the stored
+    ///    plan's (`wet.expect_codes`); a symmetric difference over max(2% of the stored set,
+    ///    5) aborts before any write. A live-admitted code the stored plan lacks was never
+    ///    read in a dry plan: `deferred_codes`, never folded.
+    /// 3. Per admitted body in the stored set, code order, at most `max_groups`: the
+    ///    survivor is the body's SAME PPON org — the member carrying a `GB:ppon` identifier;
+    ///    of several, the one holding a PPON published beside the code (RYA: the real
+    ///    code's), else the body is held (`survivor-ambiguous`) — or, with no PPON member,
+    ///    its largest cluster by mentions (lowest id on a tie), a provisional anchor. A body
+    ///    with a PPON org among its LOSERS is held too (`loser-ppon-unaliased`): no alias
+    ///    at 448's bar re-binds a loser's PPON yet, so its next PPON-first mention would
+    ///    mint it again.
+    /// 4. One `BEGIN IMMEDIATE` per body: per loser its tenders read, its references
+    ///    repointed onto the survivor (`repoint_org_references`, rule `nhs-body`: a loser
+    ///    PPON becomes a merged identifier), the row deleted, the `nhs-body` ledger row with
+    ///    identity-keyed evidence ([`nhs_body_ledger_evidence`]), `organization removed`;
+    ///    then `organization changed` on the survivor, `GBNHS<code>` written to
+    ///    `organization_merged_identifiers` (kind national, GB, rule `nhs-body`) so
+    ///    `?identifier=GBNHS<code>` answers it, the verdict stamped applied, and the
+    ///    tenders' `changed`. COMMIT, a TRUNCATE checkpoint, the doorbell. A one-member
+    ///    body only records its code. The stop is polled between bodies, so a stopped run
+    ///    stands on a committed prefix. A body's transaction that FAILS after at least one
+    ///    body committed ends the folding there: the error goes in `fold_error`, the failed
+    ///    body and every later one in the residual, and the report comes back `Ok` so the
+    ///    caller records the residual before it reports the failure (before the first
+    ///    commit, the error itself: nothing was written).
+    /// 5. The ledger listing re-read, so the report carries this run's rows (S3).
+    pub async fn merge_nhs_bodies(&self, args: NhsBodyArgs<'_>, wet: NhsBodyWet<'_>) -> turso::Result<NhsBodyReport> {
+        let conn = self.conn().await;
+        let mut report = Box::pin(self.plan_nhs_bodies_on(&conn, &args)).await?;
+        if report.stopped {
+            return Ok(report);
+        }
+        let expect: BTreeSet<&str> = wet.expect_codes.iter().map(String::as_str).collect();
+        let live: BTreeSet<&str> = report.admitted_codes.iter().copied().collect();
+        let deferred: Vec<&'static str> = report.admitted_codes.iter().copied().filter(|c| !expect.contains(c)).collect();
+        let known: BTreeSet<&str> = wet.known_deferred.iter().map(String::as_str).collect();
+        let unforeseen = deferred.iter().filter(|c| !known.contains(**c)).count() as u64;
+        let gone = expect.iter().filter(|c| !live.contains(**c)).count() as u64;
+        let drift = unforeseen + gone;
+        let tolerance = (expect.len() as u64 / 50).max(5);
+        if drift > tolerance {
+            return Err(turso::Error::Error(format!(
+                "nhs-body parity abort: the live census admits {} bodies, the stored plan {} — {drift} \
+                 differ ({unforeseen} admitted since the dry run, {gone} no longer admitted), over the max(2%, 5) \
+                 tolerance of {tolerance}; nothing was written. Re-run the dry plan and review it",
+                live.len(),
+                expect.len(),
+            )));
+        }
+        report.expected_codes = expect.len() as u64;
+        report.deferred_codes = deferred;
+        report.expected_not_live = gone;
+
+        let now = crate::now_unix();
+        let cap = wet.max_groups.unwrap_or(u64::MAX);
+        let mut done = 0u64;
+        let mut touched: BTreeSet<i64> = BTreeSet::new();
+        let mut residual: Vec<&'static str> = Vec::new();
+        let bodies: Vec<NhsBodyCode> =
+            report.codes.iter().filter(|c| live.contains(c.code) && expect.contains(c.code)).cloned().collect();
+        for entry in &bodies {
+            if report.stopped || report.fold_error.is_some() || done >= cap {
+                residual.push(entry.code);
+                continue;
+            }
+            if (args.stop)() {
+                report.stopped = true;
+                residual.push(entry.code);
+                continue;
+            }
+            let Some(verdict) = entry.verdict.as_ref() else {
+                residual.push(entry.code);
+                continue;
+            };
+            // Admitted ⇒ every member is a listed, standing holder.
+            let members: Vec<&NhsBodyHolder> = verdict
+                .members
+                .iter()
+                .filter_map(|m| entry.holders.iter().find(|h| h.org_id == *m))
+                .collect();
+            if members.len() != verdict.members.len() || members.is_empty() {
+                report.held.push(NhsBodyHeld { code: entry.code, reason: "members-unlisted", members: verdict.members.clone() });
+                residual.push(entry.code);
+                continue;
+            }
+            let (keep, target) = match nhs_body_survivor(&members, args.key) {
+                Ok(found) => found,
+                Err(reason) => {
+                    report.held.push(NhsBodyHeld { code: entry.code, reason, members: verdict.members.clone() });
+                    residual.push(entry.code);
+                    continue;
+                }
+            };
+            let losers: Vec<&NhsBodyHolder> = members.iter().copied().filter(|h| h.org_id != keep.org_id).collect();
+            // The review's finding: a loser PPON org would be deleted with no alias to bind
+            // its PPON again (`NhsBodyAlias` holds name keys only), so its next PPON-first
+            // mention re-mints it and S4 trips. Held until that arm exists.
+            if losers.iter().any(|h| nhs_body_ppon_of(h, args.key).is_some()) {
+                report.held.push(NhsBodyHeld {
+                    code: entry.code,
+                    reason: "loser-ppon-unaliased",
+                    members: verdict.members.clone(),
+                });
+                residual.push(entry.code);
+                continue;
+            }
+            let fold = NhsBodyFold {
+                entry,
+                keep,
+                losers: &losers,
+                target: &target,
+                cohort: &verdict.cohort,
+                key: args.key,
+                now,
+                job_id: wet.job_id,
+            };
+            // The fold's tallies, taken back if its transaction rolls back.
+            let tallies = (
+                report.removed,
+                report.mentions,
+                report.parties,
+                report.bid_parties,
+                report.winners,
+                report.winner_dups,
+            );
+            let body_touched = match Box::pin(self.nhs_body_fold(&conn, &fold, &mut report)).await {
+                Ok(t) => t,
+                // Nothing committed yet: the error as is — nothing was written, and the
+                // stored plan stands.
+                Err(e) if report.folded.is_empty() => return Err(e),
+                Err(e) => {
+                    (
+                        report.removed,
+                        report.mentions,
+                        report.parties,
+                        report.bid_parties,
+                        report.winners,
+                        report.winner_dups,
+                    ) = tallies;
+                    report.fold_error = Some(format!("{}: {e}", entry.code));
+                    residual.push(entry.code);
+                    continue;
+                }
+            };
+            touched.extend(body_touched);
+            report.folded.push(NhsBodyFolded {
+                code: entry.code,
+                keep: keep.org_id,
+                target: match target {
+                    NhsBodyTarget::Ppon { .. } => "ppon",
+                    NhsBodyTarget::Anchor { .. } => "anchor",
+                },
+                losers: losers.iter().map(|h| h.org_id).collect(),
+            });
+            if losers.is_empty() {
+                report.recorded_bodies += 1;
+            } else {
+                report.merged_bodies += 1;
+            }
+            done += 1;
+            let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+            // The doorbell per committed body, so a subscriber hears a long run's folds as
+            // they land.
+            let _ = self.publish_cursor(&conn).await;
+        }
+        report.residual_codes = residual;
+        report.tender_changes = touched.len() as u64;
+        Box::pin(self.nhs_body_ledger_listing(&conn, args.key, &mut report)).await?;
+        Ok(report)
+    }
+
+    /// Issue 513 U4: one body's fold, in its own transaction ([`Self::merge_nhs_bodies`]
+    /// step 4). Returns the tenders whose party rows it repointed.
+    async fn nhs_body_fold(
+        &self,
+        conn: &Connection,
+        fold: &NhsBodyFold<'_>,
+        report: &mut NhsBodyReport,
+    ) -> turso::Result<BTreeSet<i64>> {
+        let job = || fold.job_id.map_or(Value::Null, Value::Integer);
+        let keep = fold.keep.org_id;
+        let code = fold.entry.code;
+        Self::immediate(conn, async {
+            let mut touched: BTreeSet<i64> = BTreeSet::new();
+            for loser in fold.losers {
+                let mut trows = conn
+                    .query(
+                        "SELECT tender_id FROM tender_version_parties WHERE organization_id = ? \
+                         UNION SELECT tender_id FROM tender_version_bid_parties WHERE organization_id = ? \
+                         UNION SELECT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
+                        (Value::Integer(loser.org_id), Value::Integer(loser.org_id), Value::Integer(loser.org_id)),
+                    )
+                    .await?;
+                while let Some(row) = trows.next().await? {
+                    touched.insert(int(&row, 0));
+                }
+                drop(trows);
+                // Every distinct name the loser's mentions publish, and their 234 keys: the
+                // record a reader checks the fold by, and the keys the unwind moves back.
+                let mut names: std::collections::BTreeMap<String, u64> = std::collections::BTreeMap::new();
+                let mut rows = conn.query(NHS_BODY_LOSER_NAMES_SQL, (Value::Integer(loser.org_id),)).await?;
+                while let Some(row) = rows.next().await? {
+                    *names.entry(opt_text_of(&row, 0).unwrap_or_default()).or_default() += 1;
+                }
+                drop(rows);
+                let mut norms: BTreeSet<String> =
+                    names.keys().map(|n| org_name_norm(n)).filter(|n| !n.is_empty()).collect();
+                norms.insert(loser.name_norm.clone());
+                let mut by_count: Vec<(&String, &u64)> = names.iter().collect();
+                by_count.sort_by(|a, b| b.1.cmp(a.1).then_with(|| a.0.cmp(b.0)));
+                let loser_names: Vec<String> =
+                    by_count.into_iter().take(NHS_BODY_LOSER_NAMES_CAP).map(|(n, _)| n.clone()).collect();
+                let loser_norms: Vec<String> = norms.into_iter().take(NHS_BODY_LOSER_NORMS_CAP).collect();
+                let loser_ppon = loser.identifier.as_deref().and_then(|literal| {
+                    let kind = loser.identifier_kind.as_deref().unwrap_or("national");
+                    match (fold.key)(loser.country.as_deref(), kind, literal) {
+                        Some(("GB:ppon", key, _, _)) => Some(key),
+                        _ => None,
+                    }
+                });
+                let evidence = nhs_body_ledger_evidence(
+                    code,
+                    fold.entry.ods.name,
+                    fold.target,
+                    fold.keep,
+                    loser,
+                    loser_ppon.as_deref(),
+                    &loser_names,
+                    &loser_norms,
+                    fold.cohort,
+                    fold.job_id,
+                );
+                let moved = repoint_org_references(conn, keep, loser.org_id, NHS_BODY_RULE).await?;
+                report.mentions += moved.mentions;
+                report.parties += moved.parties;
+                report.bid_parties += moved.bid_parties;
+                report.winners += moved.winners;
+                report.winner_dups += moved.winner_dups;
+                conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser.org_id),)).await?;
+                conn.execute(
+                    "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) VALUES(?, ?, 'nhs-body', ?, ?, ?)",
+                    (Value::Integer(keep), Value::Integer(loser.org_id), t(&evidence), job(), Value::Integer(fold.now)),
+                )
+                .await?;
+                append_change(conn, "organization", loser.org_id, None, "removed", fold.now).await?;
+                report.removed += 1;
+            }
+            // The code, lookup-only, on the survivor: `?identifier=GBNHS<code>` answers it.
+            let ods = Identifier { country: Some("GB".to_owned()), kind: "national".to_owned(), value: format!("GBNHS{code}") };
+            record_alias_identifier_as(conn, &ods, keep, NHS_BODY_RULE).await?;
+            append_change(conn, "organization", keep, None, "changed", fold.now).await?;
+            // Issue 362's stamp: the verdict records the fold it caused, in the same
+            // transaction.
+            let action = if fold.losers.is_empty() {
+                format!("recorded GBNHS{code} on {keep}")
+            } else {
+                format!("merged {} row(s) into {keep}", fold.losers.len())
+            };
+            conn.execute(
+                "UPDATE org_merge_verdicts SET applied_at = ?, applied_action = ?, job_id = ? \
+                  WHERE country = 'GB' AND scheme = ? AND key = ? AND cohort = ?",
+                (Value::Integer(fold.now), Value::Text(action), job(), t(NHS_BODY_SCHEME), t(code), t(fold.cohort)),
+            )
+            .await?;
+            for &tid in &touched {
+                append_change(conn, "tender", tid, None, "changed", fold.now).await?;
+            }
+            Ok(touched)
+        })
+        .await
+    }
+
+    /// Issue 513 U4 (D7): the scoped UNWIND of one body's `nhs-body` folds — it must exist,
+    /// and be tested, before any wet run (S6: no rollback past U4 without it).
+    ///
+    /// 1. The body's ledger rows (`json_extract(evidence, '$.code')`, through the partial
+    ///    index), and the live survivor each names ([`nhs_body_survivor_now`]: the
+    ///    evidence's identity — the PPON's triple, key or altid move, or the anchor's 234
+    ///    key — held to the keep's chain under the org era's floor). A row whose two
+    ///    readings disagree, or are out of time (a rebuild renumbered its keep), or rows
+    ///    naming two survivors, refuse with nothing written: unwind any later fold of the
+    ///    survivor first. A body with no ledger row (a one-member body, whose fold only
+    ///    recorded its code) unwinds to dropping its `GBNHS<code>` record.
+    /// 2. The survivor's mentions that the folds moved there — the dissolve, back through
+    ///    the resolver's own two arms: a mention with no identity (the normaliser mints
+    ///    none) whose 234 key (`org_name_norm`, register country) is one of the losers'
+    ///    recorded keys goes to the lowest-id identifier-NULL row on that key, or a minted
+    ///    provisional (issue 234's arm); a mention whose identity is a loser's own literal
+    ///    (its PPON org) goes to the row carrying that triple, or a minted one (E0). The
+    ///    survivor's own mentions — its PPON's, its own 234 key's — stay.
+    /// 3. Wet, in one transaction: the mentions and their party / bid-party rows rebound;
+    ///    the tenders of the moved notices stamped stale and those notices re-queued, so
+    ///    the next fold re-derives their winner rows (the dissolve's tier-5 rule); the rows
+    ///    moved to rule `nhs-body-retired` (the alias stops arming them); per old loser a
+    ///    `nhs-body-unwind` row to the org it dissolved into — a loser with a literal
+    ///    (a PPON org) to the row carrying it, else the row its head key went to — so its
+    ///    id follows the unwound state (newest row wins); `GBNHS<code>` and each loser's
+    ///    own literal dropped off the survivor; the change events. The verdict stays
+    ///    applied: a second fold needs a new verdict.
+    ///
+    /// Dry: the same plan, nothing written.
+    pub async fn unwind_nhs_body(&self, args: NhsBodyUnwindArgs<'_>) -> turso::Result<NhsBodyUnwindReport> {
+        use std::collections::{HashMap, HashSet};
+        let writer = self.conn().await;
+        let conn: &Connection = &writer;
+        let mut report =
+            NhsBodyUnwindReport { code: args.code.to_owned(), dry_run: args.dry_run, ..NhsBodyUnwindReport::default() };
+        /// One ledger row of the body.
+        struct Row {
+            keep: i64,
+            loser: i64,
+            at: i64,
+            name_norm: String,
+            country: String,
+            norms: Vec<String>,
+            literal: String,
+            target: Option<NhsBodyTarget>,
+        }
+        let mut ledger: Vec<Row> = Vec::new();
+        let mut rows = conn
+            .query(
+                &format!(
+                    "SELECT keep, loser, at, json_extract(evidence, '$.code'), json_extract(evidence, '$.loser_name_norm'), \
+                            json_extract(evidence, '$.loser_country'), json_extract(evidence, '$.loser_name_norms'), \
+                            json_extract(evidence, '$.loser_id'), {NHS_BODY_TARGET_FIELDS} \
+                       FROM org_merge_log WHERE rule = 'nhs-body'"
+                ),
+                (),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            if opt_text_of(&row, 3).as_deref() != Some(args.code) {
+                continue;
+            }
+            ledger.push(Row {
+                keep: int(&row, 0),
+                loser: int(&row, 1),
+                at: int(&row, 2),
+                name_norm: opt_text_of(&row, 4).unwrap_or_default(),
+                country: opt_text_of(&row, 5).unwrap_or_default(),
+                norms: opt_text_of(&row, 6).map(|j| nhs_json_strings(&j)).unwrap_or_default(),
+                literal: opt_text_of(&row, 7).unwrap_or_default(),
+                target: nhs_body_target_at(&row, 8),
+            });
+        }
+        drop(rows);
+        report.ledger_rows = ledger.len() as u64;
+        if ledger.is_empty() {
+            // A one-member body (the review's finding): its fold moved nothing and wrote no
+            // ledger row, only `GBNHS<code>` on the org — so that record is all there is to
+            // unwind, wherever it stands (rule `nhs-body` only: never another arm's record).
+            let ods = format!("GBNHS{}", args.code);
+            let mut rows = conn
+                .query(
+                    "SELECT org_id FROM organization_merged_identifiers WHERE identifier = ? AND rule = 'nhs-body' \
+                      ORDER BY org_id",
+                    (t(&ods),),
+                )
+                .await?;
+            let mut holders: Vec<i64> = Vec::new();
+            while let Some(row) = rows.next().await? {
+                holders.push(int(&row, 0));
+            }
+            drop(rows);
+            holders.dedup();
+            report.survivor = match holders[..] {
+                [one] => Some(one),
+                _ => None,
+            };
+            if args.dry_run || holders.is_empty() {
+                report.merged_identifiers_dropped = holders.len() as u64;
+                return Ok(report);
+            }
+            let now = crate::now_unix();
+            report.merged_identifiers_dropped = Self::immediate(conn, async {
+                let dropped = conn
+                    .execute(
+                        "DELETE FROM organization_merged_identifiers WHERE identifier = ? AND rule = 'nhs-body'",
+                        (t(&ods),),
+                    )
+                    .await?;
+                for &org in &holders {
+                    append_change(conn, "organization", org, None, "changed", now).await?;
+                }
+                Ok(dropped)
+            })
+            .await?;
+            let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
+            self.publish_cursor(conn).await?;
+            return Ok(report);
+        }
+        // Each fold's survivor, by identity AND by id (one resolution per keep, instant
+        // and target); any disagreement refuses before a write.
+        let floor = org_era_floor(conn).await?;
+        let mut resolved: HashMap<(i64, i64, NhsBodyTarget), i64> = HashMap::new();
+        let mut survivors: BTreeSet<i64> = BTreeSet::new();
+        for row in &ledger {
+            let Some(target) = row.target.clone() else {
+                return Err(turso::Error::Error(format!(
+                    "nhs-body unwind {}: the ledger row of loser {} names no target in its evidence; nothing was \
+                     written",
+                    args.code, row.loser
+                )));
+            };
+            let fold = (row.keep, row.at, target);
+            let survivor = match resolved.get(&fold) {
+                Some(s) => *s,
+                None => match Box::pin(nhs_body_survivor_now(conn, &fold.2, row.keep, row.at, floor, args.key)).await? {
+                    Ok(s) => {
+                        resolved.insert(fold, s);
+                        s
+                    }
+                    Err(why) => {
+                        return Err(turso::Error::Error(format!(
+                            "nhs-body unwind {}: the ledger row of loser {} does not name one live survivor — {why}; \
+                             nothing was written (unwind any later fold of the survivor first)",
+                            args.code, row.loser
+                        )));
+                    }
+                },
+            };
+            survivors.insert(survivor);
+        }
+        let survivor = match survivors.iter().collect::<Vec<_>>()[..] {
+            [s] => *s,
+            _ => {
+                return Err(turso::Error::Error(format!(
+                    "nhs-body unwind {}: the ledger rows name {} live survivors ({survivors:?}); nothing was written",
+                    args.code,
+                    survivors.len()
+                )));
+            }
+        };
+        report.survivor = Some(survivor);
+        let own: (Option<String>, Option<String>, Option<String>) = {
+            let mut rows = conn
+                .query(
+                    "SELECT country, identifier_kind, identifier FROM organizations WHERE id = ?",
+                    (Value::Integer(survivor),),
+                )
+                .await?;
+            match rows.next().await? {
+                Some(row) => (opt_text_of(&row, 0), opt_text_of(&row, 1), opt_text_of(&row, 2)),
+                None => (None, None, None),
+            }
+        };
+        let keys: HashSet<(String, String)> = ledger
+            .iter()
+            .flat_map(|r| {
+                std::iter::once(r.name_norm.clone())
+                    .chain(r.norms.iter().cloned())
+                    .filter(|n| !n.is_empty())
+                    .map(|n| (n, r.country.clone()))
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        let literals: HashSet<&str> = ledger.iter().map(|r| r.literal.as_str()).filter(|l| !l.is_empty()).collect();
+
+        /// Where a moved mention goes: a 234 key, or an E0 triple.
+        #[derive(Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+        enum Dest {
+            Name(String, String),
+            Identity(Option<String>, String, String),
+        }
+        // (rowid, notice, section, name, destination)
+        let mut moves: Vec<(i64, i64, String, String, Dest)> = Vec::new();
+        let mut rows = conn
+            .query(
+                "SELECT rowid, notice_id, section_id, name, country, raw_identifier FROM organization_mentions \
+                  WHERE organization_id = ?",
+                (Value::Integer(survivor),),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            report.survivor_mentions += 1;
+            let name = opt_text_of(&row, 3).unwrap_or_default();
+            let country = opt_text_of(&row, 4);
+            let raw = opt_text_of(&row, 5);
+            let dest = match raw.as_deref().and_then(|r| (args.register_identity)(r, country.as_deref())) {
+                Some(id) => {
+                    let mine = own.0 == id.country && own.1.as_deref() == Some(id.kind.as_str()) && own.2.as_deref() == Some(id.value.as_str());
+                    (!mine && literals.contains(id.value.as_str())).then(|| Dest::Identity(id.country, id.kind, id.value))
+                }
+                None => {
+                    let key = (org_name_norm(&name), country.as_deref().map(register_jurisdiction).unwrap_or_default().to_owned());
+                    (!key.0.is_empty() && keys.contains(&key)).then(|| Dest::Name(key.0, key.1))
+                }
+            };
+            if let Some(dest) = dest {
+                moves.push((int(&row, 0), int(&row, 1), text(&row, 2), name, dest));
+            }
+        }
+        drop(rows);
+
+        // Each destination's standing row (the resolver's own probes, lowest id first). A
+        // 234 key the survivor itself is the first owner of — an anchor's own key — stays.
+        let mut standing: HashMap<Dest, Option<i64>> = HashMap::new();
+        for (.., dest) in &moves {
+            if standing.contains_key(dest) {
+                continue;
+            }
+            let found = match dest {
+                Dest::Name(name_norm, country) => {
+                    let mut rows = conn
+                        .query(
+                            "SELECT id FROM organizations WHERE name_norm = ? AND country = ? AND identifier IS NULL \
+                              ORDER BY id LIMIT 1",
+                            (t(name_norm), t(country)),
+                        )
+                        .await?;
+                    rows.next().await?.map(|row| int(&row, 0))
+                }
+                Dest::Identity(country, kind, value) => {
+                    let mut rows = conn
+                        .query(
+                            "SELECT id FROM organizations WHERE identifier = ? AND identifier_kind = ? \
+                                AND COALESCE(country, '') = ? ORDER BY id LIMIT 1",
+                            (t(value), t(kind), t(country.as_deref().unwrap_or_default())),
+                        )
+                        .await?;
+                    rows.next().await?.map(|row| int(&row, 0))
+                }
+            };
+            standing.insert(dest.clone(), found);
+        }
+        moves.retain(|(.., dest)| standing.get(dest).copied().flatten() != Some(survivor));
+        report.moved = moves.len() as u64;
+        report.by_name = moves.iter().filter(|m| matches!(m.4, Dest::Name(..))).count() as u64;
+        report.by_identity = report.moved - report.by_name;
+        let mut per_dest: std::collections::BTreeMap<Dest, u64> = std::collections::BTreeMap::new();
+        for (.., dest) in &moves {
+            *per_dest.entry(dest.clone()).or_default() += 1;
+        }
+        let label = |dest: &Dest| match dest {
+            Dest::Name(n, c) => ("name", format!("{n}|{c}")),
+            Dest::Identity(_, _, v) => ("identity", v.clone()),
+        };
+        report.minted = per_dest.keys().filter(|d| standing.get(*d).copied().flatten().is_none()).count() as u64;
+        if args.dry_run {
+            report.targets = per_dest
+                .iter()
+                .map(|(dest, n)| {
+                    let (kind, key) = label(dest);
+                    let org = standing.get(dest).copied().flatten();
+                    NhsBodyUnwindTarget { kind, key, mentions: *n, org_id: org, standing: org.is_some() }
+                })
+                .collect();
+            return Ok(report);
+        }
+
+        let now = crate::now_unix();
+        let job = || args.job_id.map_or(Value::Null, Value::Integer);
+        let code = args.code;
+        let result = Self::immediate(&conn, async {
+            // Mint the destinations no row stands on, named by their first mention.
+            let mut org_of: HashMap<Dest, (i64, bool)> = HashMap::new();
+            for (dest, _) in &per_dest {
+                if let Some(org) = standing.get(dest).copied().flatten() {
+                    org_of.insert(dest.clone(), (org, true));
+                    continue;
+                }
+                let name = moves.iter().find(|m| &m.4 == dest).map(|m| m.3.clone()).unwrap_or_default();
+                match dest {
+                    Dest::Name(name_norm, country) => {
+                        conn.execute(
+                            "INSERT INTO organizations(country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
+                             VALUES(?, NULL, NULL, ?, ?, 1, ?)",
+                            (t(country), t(&name), t(name_norm), Value::Integer(now)),
+                        )
+                        .await?;
+                    }
+                    Dest::Identity(country, kind, value) => {
+                        conn.execute(
+                            "INSERT INTO organizations(country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
+                             VALUES(?, ?, ?, ?, ?, 0, ?)",
+                            (opt_text(country.as_deref()), t(kind), t(value), t(&name), Value::Text(org_name_norm(&name)), Value::Integer(now)),
+                        )
+                        .await?;
+                    }
+                }
+                let org = last_insert_rowid(conn).await?;
+                append_change(conn, "organization", org, None, "added", now).await?;
+                org_of.insert(dest.clone(), (org, false));
+            }
+            let mut moved_to: HashMap<(i64, String), i64> = HashMap::new();
+            for (rowid, notice, section, _, dest) in &moves {
+                let org = org_of[dest].0;
+                conn.execute(
+                    "UPDATE organization_mentions SET organization_id = ? WHERE rowid = ?",
+                    (Value::Integer(org), Value::Integer(*rowid)),
+                )
+                .await?;
+                moved_to.insert((*notice, section.clone()), org);
+            }
+            // The party and bid-party rows that name a moved mention, found through the
+            // survivor's own `_org` range and rebound by rowid.
+            let mut touched: BTreeSet<i64> = BTreeSet::new();
+            let mut parties = 0u64;
+            let mut bid_parties = 0u64;
+            for (table, counter) in [("tender_version_parties", &mut parties), ("tender_version_bid_parties", &mut bid_parties)] {
+                let mut hits: Vec<(i64, i64, i64)> = Vec::new();
+                let mut rows = conn
+                    .query(
+                        &format!(
+                            "SELECT rowid, mention_notice_id, mention_section_id, tender_id FROM {table} \
+                              WHERE organization_id = ?"
+                        ),
+                        (Value::Integer(survivor),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    if let Some(org) = moved_to.get(&(int(&row, 1), text(&row, 2))) {
+                        hits.push((int(&row, 0), *org, int(&row, 3)));
+                    }
+                }
+                drop(rows);
+                for (rowid, org, tender) in hits {
+                    conn.execute(
+                        &format!("UPDATE {table} SET organization_id = ? WHERE rowid = ?"),
+                        (Value::Integer(org), Value::Integer(rowid)),
+                    )
+                    .await?;
+                    *counter += 1;
+                    touched.insert(tender);
+                }
+            }
+            let notices: Vec<i64> = moves.iter().map(|m| m.1).collect::<BTreeSet<_>>().into_iter().collect();
+            let stamped = stamp_tenders_of_notices_stale(conn, notices.clone()).await?;
+            let requeued = Self::requeue_notice_ids(conn, &notices, false).await?;
+            // The ledger: retired, and each old loser redirected to where it dissolved — a
+            // loser with its own literal (a PPON org) to the row carrying that literal again,
+            // before the row its head key went to: a PPON org's twin NULL row on the same key
+            // is the usual shape (103 of U3's 156 bodies), and its spellings are not its id.
+            let mut retired = 0u64;
+            let mut redirects = 0u64;
+            for row in &ledger {
+                retired += conn
+                    .execute(
+                        "UPDATE org_merge_log SET rule = 'nhs-body-retired' WHERE loser = ? AND at = ? AND rule = 'nhs-body'",
+                        (Value::Integer(row.loser), Value::Integer(row.at)),
+                    )
+                    .await?;
+                let identity_home = (!row.literal.is_empty())
+                    .then(|| org_of.iter().find(|(d, _)| matches!(d, Dest::Identity(_, _, v) if *v == row.literal)))
+                    .flatten()
+                    .map(|(_, (org, _))| *org);
+                let home = identity_home.or_else(|| {
+                    org_of.get(&Dest::Name(row.name_norm.clone(), row.country.clone())).map(|(org, _)| *org)
+                });
+                if let Some(home) = home {
+                    let evidence = format!(
+                        "{{\"scheme\":\"{NHS_BODY_SCHEME}\",\"code\":\"{}\",\"survivor\":{survivor},\"unwound\":\"{}\"}}",
+                        altid_json_esc(code),
+                        NHS_BODY_RULE
+                    );
+                    conn.execute(
+                        "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) VALUES(?, ?, 'nhs-body-unwind', ?, ?, ?)",
+                        (Value::Integer(home), Value::Integer(row.loser), t(&evidence), job(), Value::Integer(now.max(row.at + 1))),
+                    )
+                    .await?;
+                    redirects += 1;
+                }
+            }
+            let mut dropped = conn
+                .execute(
+                    "DELETE FROM organization_merged_identifiers WHERE identifier = ? AND org_id = ? AND rule = 'nhs-body'",
+                    (Value::Text(format!("GBNHS{code}")), Value::Integer(survivor)),
+                )
+                .await?;
+            for row in ledger.iter().filter(|r| !r.literal.is_empty()) {
+                dropped += conn
+                    .execute(
+                        "DELETE FROM organization_merged_identifiers WHERE identifier = ? AND loser = ? AND org_id = ?",
+                        (t(&row.literal), Value::Integer(row.loser), Value::Integer(survivor)),
+                    )
+                    .await?;
+            }
+            append_change(conn, "organization", survivor, None, "changed", now).await?;
+            for (org, standing) in org_of.values() {
+                if *standing {
+                    append_change(conn, "organization", *org, None, "changed", now).await?;
+                }
+            }
+            for &tid in &touched {
+                append_change(conn, "tender", tid, None, "changed", now).await?;
+            }
+            let targets: Vec<NhsBodyUnwindTarget> = per_dest
+                .iter()
+                .map(|(dest, n)| {
+                    let (kind, key) = label(dest);
+                    let (org, standing) = org_of[dest];
+                    NhsBodyUnwindTarget { kind, key, mentions: *n, org_id: Some(org), standing }
+                })
+                .collect();
+            Ok((targets, parties, bid_parties, stamped, requeued, retired, redirects, dropped))
+        })
+        .await?;
+        let (targets, parties, bid_parties, stamped, requeued, retired, redirects, dropped) = result;
+        report.targets = targets;
+        report.parties = parties;
+        report.bid_parties = bid_parties;
+        report.tenders_stamped = stamped;
+        report.notices_requeued = requeued;
+        report.ledger_retired = retired;
+        report.redirects = redirects;
+        report.merged_identifiers_dropped = dropped;
+        let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+        self.publish_cursor(&conn).await?;
+        Ok(report)
+    }
+
+    /// Issue 513 U4, S5's prod half: the RE-RESOLVE canary. "3 notices × 3 bodies re-resolved
+    /// through a fresh resolver must agree 100%" — so a fresh resolver, opened and armed as
+    /// the fold opens it ([`NhsBodyCanaryArgs`]: both aliases), re-resolves every recorded
+    /// mention of `notices` and each binding is reported against the stored
+    /// `organization_id`. Read-only by construction: the re-resolve runs on the writer inside
+    /// one `BEGIN IMMEDIATE` that is ALWAYS rolled back, so whatever the resolver writes —
+    /// a refreshed mention row, a mint, a `GBNHS` record, a change event — never lands.
+    ///
+    /// Each mention is rebuilt from its recorded row (the four published facts the fold
+    /// keeps, the identity through `args.identity`) and handed to the resolver as a STALE
+    /// recorded mention, so it takes the new-mention path rather than the idempotency
+    /// early return, which would keep it where it is and agree by construction. The
+    /// resolver opens before the transaction (it takes the writer itself), and is dropped,
+    /// never finished: finishing rings the doorbell.
+    pub async fn nhs_body_canary(&self, args: NhsBodyCanaryArgs<'_>) -> turso::Result<NhsBodyCanaryReport> {
+        let mut resolver = Box::pin(self.mention_resolver(
+            args.canon_key,
+            args.consortium,
+            args.anchors,
+            args.norm,
+            args.legal_form,
+            args.hard_scheme,
+            args.stoplist_cap,
+        ))
+        .await?;
+        Box::pin(self.arm_altid_alias(&mut resolver, args.altid)).await?;
+        let mut report = NhsBodyCanaryReport { notices: args.notices.to_vec(), ..NhsBodyCanaryReport::default() };
+        let writer = self.conn().await;
+        let conn: &Connection = &writer;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let body = Box::pin(async {
+            let now = crate::now_unix();
+            for &notice in args.notices {
+                // (rowid, section, stored org, name, country, raw, scheme), the PK's seek.
+                let mut recorded: Vec<(i64, String, i64, String, Option<String>, Option<String>, Option<String>)> =
+                    Vec::new();
+                let mut rows = conn
+                    .query(
+                        "SELECT rowid, section_id, organization_id, name, country, raw_identifier, scheme \
+                           FROM organization_mentions WHERE notice_id = ? ORDER BY section_id",
+                        (Value::Integer(notice),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    recorded.push((
+                        int(&row, 0),
+                        text(&row, 1),
+                        int(&row, 2),
+                        opt_text_of(&row, 3).unwrap_or_default(),
+                        opt_text_of(&row, 4),
+                        opt_text_of(&row, 5),
+                        opt_text_of(&row, 6),
+                    ));
+                }
+                drop(rows);
+                if recorded.is_empty() {
+                    report.notices_without_mentions.push(notice);
+                }
+                for (rowid, section, stored, name, country, raw, scheme) in recorded {
+                    let m = Mention {
+                        notice_id: notice,
+                        section_id: section.clone(),
+                        name: name.clone(),
+                        country: country.clone(),
+                        raw_identifier: raw.clone(),
+                        scheme: scheme.clone(),
+                        identifier: (args.identity)(raw.as_deref(), scheme.as_deref(), country.as_deref()),
+                        variants: Vec::new(),
+                    };
+                    // A recorded row that publishes nothing `m` does: stale, so re-resolved.
+                    let stale = RecordedMention {
+                        rowid: Some(rowid),
+                        org_id: stored,
+                        name: None,
+                        country: None,
+                        raw_identifier: None,
+                        scheme: Some("\u{1}nhs-body-canary".to_owned()),
+                    };
+                    let mut mention_of = std::collections::HashMap::from([((notice, section.clone()), stale)]);
+                    let (resolved, minted) =
+                        Box::pin(self.resolve_one_mention(conn, &m, now, &mut resolver, &mut mention_of)).await?;
+                    let agree = resolved == stored && !minted;
+                    report.mentions += 1;
+                    if agree {
+                        report.agree += 1;
+                    } else {
+                        report.disagree += 1;
+                    }
+                    report.minted += u64::from(minted);
+                    report.bindings.push(NhsBodyCanaryBinding {
+                        notice_id: notice,
+                        section_id: section,
+                        name,
+                        raw_identifier: raw,
+                        stored,
+                        resolved,
+                        minted,
+                        agree,
+                    });
+                }
+            }
+            turso::Result::Ok(())
+        })
+        .await;
+        // ALWAYS rolled back, the canary's pass or fail alike (issue 498's helper commits on
+        // Ok, so not `Db::immediate`).
+        if !conn.is_autocommit().unwrap_or(false) {
+            let _ = conn.execute("ROLLBACK", ()).await;
+        }
+        if !conn.is_autocommit().unwrap_or(true) {
+            return Err(turso::Error::Error(
+                "nhs-body canary: the ROLLBACK left the writer inside its transaction (issue 498)".to_owned(),
+            ));
+        }
+        body?;
+        report.alias = Self::nhs_body_alias_counts(&resolver);
         Ok(report)
     }
 

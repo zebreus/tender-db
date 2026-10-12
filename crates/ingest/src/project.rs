@@ -2048,8 +2048,9 @@ pub async fn project_with_progress_phase2_stoppable(
 /// Issue 448 unit 3: the rules the fold arms the resolver's altid alias with —
 /// the SAME `crosswalk` fns the altid arm (`match-org-identifiers` rule `altid`)
 /// takes, so the bind that replays a merge reads identifiers and names exactly
-/// as the merge did.
-fn altid_alias_rules() -> store::AltIdAliasRules {
+/// as the merge did. Public for issue 513 U4's nhs-body canary, whose resolver must be
+/// armed as the fold's is.
+pub fn altid_alias_rules() -> store::AltIdAliasRules {
     store::AltIdAliasRules {
         mention_key: crate::crosswalk::mention_key,
         consortium: crate::crosswalk::consortium_name,
@@ -4641,7 +4642,10 @@ pub fn blank_identifier_echoes(identifier: &str, name: &str) -> bool {
 /// signature change for a question the normaliser should not be asked: it converts a
 /// STRING to an identifier, while this is a decision about whether a MENTION's identifier
 /// may key a merge.
-fn gated_identifier(raw: Option<&str>, scheme: Option<&str>, country: Option<&str>) -> Option<Identifier> {
+///
+/// Public for issue 513 U4's nhs-body canary, which rebuilds a recorded mention's identity
+/// from its stored row (raw, scheme, country) exactly as the fold gave it.
+pub fn gated_identifier(raw: Option<&str>, scheme: Option<&str>, country: Option<&str>) -> Option<Identifier> {
     raw.filter(|_| !scheme_never_keys(scheme)).and_then(|raw| normalise_identifier(raw, country))
 }
 

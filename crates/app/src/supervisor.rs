@@ -416,9 +416,18 @@ enum Spec {
     MatchOrgIdentifiersRekey { dry_run: bool, max_groups: Option<u64> },
     /// Issue 513 U2: the `nhs-body` census — every holder of every allowlisted NHS ODS
     /// code, the structural denials and whether each body's reviewed verdict is still
-    /// admissible. Dry only: records `nhs-body-plan`. `dry_run: false` is refused at
-    /// enqueue and here (the wet path, the fold, is U4).
-    MatchOrgIdentifiersNhsBody { dry_run: bool },
+    /// admissible. Dry records `nhs-body-plan`. Issue 513 U4: wet folds only that stored
+    /// plan's `admitted_codes` (the reviewed bodies), at most `max_groups` of them, and
+    /// re-records the residual.
+    MatchOrgIdentifiersNhsBody { dry_run: bool, max_groups: Option<u64> },
+    /// Issue 513 U4 (D7): the scoped unwind of one body's `nhs-body` folds — retire its
+    /// ledger rows and dissolve the survivor's former members back through 234/E0. Dry
+    /// by default; records `nhs-body-unwind`.
+    MatchOrgIdentifiersNhsBodyUnwind { code: String, dry_run: bool },
+    /// Issue 513 U4 (S5's prod half): re-resolve these notices' recorded mentions through a
+    /// fresh, armed resolver inside a transaction that is always rolled back, and report
+    /// each binding against the stored org. Read-only; records `nhs-body-canary`.
+    MatchOrgIdentifiersNhsBodyCanary { notices: Vec<i64> },
     ApplyCaseReviews { dry_run: bool },
     /// Issue 312: the symmetric UNDO for `ApplyCaseReviews` — restore the
     /// identifiers whose pre-image value is a platform GUID, which the
@@ -1116,7 +1125,9 @@ pub struct JobRequest {
     /// hour of sweeping.
     pub tables: Option<Vec<String>>,
     /// `refold-notices` only: the explicit notice ids to re-fold (issue 58 v2's
-    /// step-3 exerciser). Capped — see [`REFOLD_NOTICES_CAP`].
+    /// step-3 exerciser). Capped — see [`REFOLD_NOTICES_CAP`]. Also `match-org-identifiers`
+    /// rule `nhs-body-canary` (issue 513 U4): the notices to re-resolve, at most
+    /// [`store::NHS_BODY_CANARY_NOTICES_CAP`]; refused on every other rule.
     pub notices: Option<Vec<i64>>,
     /// `mark-skipped-siblings` execute only: the number of in-scope rows the
     /// sibling guard is EXPECTED to reject (issue 84, the 154).
@@ -1136,10 +1147,15 @@ pub struct JobRequest {
     /// Stage-2 same-country canonical-key merge, the default), `r3` (the
     /// Stage-3 NULL-country checksum-anchor rescue), `e0` (issue 329's exact
     /// triples), `altid` (issue 448's company-number/PPON pairs; a wet run
-    /// merges only the stored dry plan's reviewed pairs), `rekey` (issue 453) or
-    /// `nhs-body` (issue 513 U2's census; dry only). Anything else is rejected at
-    /// enqueue.
+    /// merges only the stored dry plan's reviewed pairs), `rekey` (issue 453),
+    /// `nhs-body` (issue 513: the census, and since U4 the wet fold of the stored
+    /// plan's admitted bodies), `nhs-body-unwind` (issue 513 U4, with `code`) or
+    /// `nhs-body-canary` (issue 513 U4, with `notices`; read-only). Anything else is
+    /// rejected at enqueue.
     pub rule: Option<String>,
+    /// `match-org-identifiers` rule `nhs-body-unwind` only: the ODS code of the body
+    /// to unwind (`RTH`). Required there, refused elsewhere.
+    pub code: Option<String>,
     /// `scan-org-match-keys` wet runs only: write at most this many edges —
     /// the design's capped first prod run (issue 300 Stage 4). The census
     /// still runs whole, so parity stays a whole-plan check. Omitted means
@@ -1551,20 +1567,51 @@ impl Supervisor {
                     "e0" => Spec::MatchOrgIdentifiersE0 { dry_run, max_groups },
                     "altid" => Spec::MatchOrgIdentifiersAltId { dry_run, max_groups },
                     "rekey" => Spec::MatchOrgIdentifiersRekey { dry_run, max_groups },
-                    // Issue 513 U2: the census only. Refused wet HERE, before a job row
-                    // exists — the merge is U4's, and a queued wet job would read as one.
-                    "nhs-body" if !dry_run => return Err(NHS_BODY_WET_REFUSAL.to_owned()),
-                    "nhs-body" => Spec::MatchOrgIdentifiersNhsBody { dry_run },
+                    // Issue 513: the census dry; since U4 a wet run folds the stored plan's
+                    // admitted bodies (the arm refuses without one).
+                    "nhs-body" => Spec::MatchOrgIdentifiersNhsBody { dry_run, max_groups },
+                    // Issue 513 U4 (D7): one body's unwind, named by its ODS code.
+                    "nhs-body-unwind" => {
+                        let code = nhs_body_unwind_code(req.code.as_deref())?;
+                        Spec::MatchOrgIdentifiersNhsBodyUnwind { code, dry_run }
+                    }
+                    // Issue 513 U4 (S5): the read-only re-resolve canary over named notices.
+                    "nhs-body-canary" => {
+                        let notices = nhs_body_canary_notices(req.notices.as_deref(), req.dry_run)?;
+                        Spec::MatchOrgIdentifiersNhsBodyCanary { notices }
+                    }
                     other => {
                         return Err(format!(
-                            "match-org-identifiers: unknown rule '{other}' (r2, r3, e0, altid, rekey or nhs-body)"
+                            "match-org-identifiers: unknown rule '{other}' (r2, r3, e0, altid, rekey, nhs-body, \
+                             nhs-body-unwind or nhs-body-canary)"
                         ));
                     }
                 };
+                if rule != "nhs-body-unwind" && req.code.is_some() {
+                    return Err(format!(
+                        "match-org-identifiers: `code` is for rule nhs-body-unwind only, not '{rule}'"
+                    ));
+                }
+                if rule != "nhs-body-canary" && req.notices.is_some() {
+                    return Err(format!(
+                        "match-org-identifiers: `notices` is for rule nhs-body-canary only, not '{rule}'"
+                    ));
+                }
+                let scope = match &spec {
+                    Spec::MatchOrgIdentifiersNhsBodyUnwind { code, .. } => format!(" code={code}"),
+                    Spec::MatchOrgIdentifiersNhsBodyCanary { notices } => {
+                        let shown: Vec<String> = notices.iter().map(i64::to_string).collect();
+                        format!(" notices={}", shown.join(","))
+                    }
+                    _ => String::new(),
+                };
                 let params = match (dry_run, max_groups) {
-                    (true, _) => format!("match-org-identifiers {rule} dry-run"),
-                    (false, Some(cap)) => format!("match-org-identifiers {rule} cap={cap}"),
-                    (false, None) => format!("match-org-identifiers {rule}"),
+                    _ if matches!(spec, Spec::MatchOrgIdentifiersNhsBodyCanary { .. }) => {
+                        format!("match-org-identifiers {rule}{scope} read-only")
+                    }
+                    (true, _) => format!("match-org-identifiers {rule}{scope} dry-run"),
+                    (false, Some(cap)) => format!("match-org-identifiers {rule}{scope} cap={cap}"),
+                    (false, None) => format!("match-org-identifiers {rule}{scope}"),
                 };
                 Ok(vec![self.push("match-org-identifiers", params, spec).await])
             }
@@ -2972,11 +3019,177 @@ fn altid_registry_summary(r: &store::AltIdMergeReport) -> String {
     )
 }
 
-/// Issue 513 U2: why a wet `nhs-body` run is refused — at enqueue, and by the arm if a
-/// job reaches it anyway. The rule is a census until U4 builds the fold.
-const NHS_BODY_WET_REFUSAL: &str = "match-org-identifiers nhs-body REFUSED: nhs-body wet path is U4; not built \
-     — the rule is a dry census for now ({\"kind\":\"match-org-identifiers\",\"rule\":\"nhs-body\"}); \
-     nothing was written";
+/// Issue 513 U4: an unwind's `code` — required, and an ODS code's shape (three ASCII
+/// letters or digits; upper-cased), refused at enqueue so a typo never queues.
+fn nhs_body_unwind_code(code: Option<&str>) -> Result<String, String> {
+    let code = code.map(str::trim).unwrap_or_default().to_ascii_uppercase();
+    if code.len() == 3 && code.bytes().all(|b| b.is_ascii_alphanumeric()) {
+        Ok(code)
+    } else {
+        Err(format!(
+            "match-org-identifiers nhs-body-unwind: `code` must be the body's three-character ODS code \
+             (e.g. \"RTH\"), got {code:?}"
+        ))
+    }
+}
+
+/// Issue 513 U4: a canary's `notices` — required, at most
+/// [`store::NHS_BODY_CANARY_NOTICES_CAP`], deduplicated in the order given; a wet request
+/// is refused (the canary writes nothing, so `dry_run: false` names a different job).
+fn nhs_body_canary_notices(notices: Option<&[i64]>, dry_run: Option<bool>) -> Result<Vec<i64>, String> {
+    if dry_run == Some(false) {
+        return Err("match-org-identifiers nhs-body-canary is read-only: `dry_run: false` is refused".to_owned());
+    }
+    let mut seen = std::collections::BTreeSet::new();
+    let notices: Vec<i64> = notices.unwrap_or_default().iter().copied().filter(|n| seen.insert(*n)).collect();
+    if notices.is_empty() {
+        return Err("match-org-identifiers nhs-body-canary needs `notices`: the notice ids to re-resolve".to_owned());
+    }
+    if notices.len() > store::NHS_BODY_CANARY_NOTICES_CAP {
+        return Err(format!(
+            "match-org-identifiers nhs-body-canary refuses {} notices (cap {}): S5 reads 3 per body",
+            notices.len(),
+            store::NHS_BODY_CANARY_NOTICES_CAP
+        ));
+    }
+    Ok(notices)
+}
+
+/// Issue 513 U4: a canary's counts line — agreement first, then each disagreeing binding
+/// (notice/section: stored → resolved), at most 20 named.
+fn nhs_body_canary_summary(r: &store::NhsBodyCanaryReport) -> String {
+    let off: Vec<String> = r
+        .bindings
+        .iter()
+        .filter(|b| !b.agree)
+        .take(20)
+        .map(|b| {
+            format!(
+                "{}/{} {} → {}{}",
+                b.notice_id,
+                b.section_id,
+                b.stored,
+                b.resolved,
+                if b.minted { " (minted)" } else { "" }
+            )
+        })
+        .collect();
+    format!(
+        "{} mention(s) of {} notice(s) re-resolved: {} agree, {} disagree{}{}; nhs-body alias asked {}, bound {}, \
+         minted {}, refused {}",
+        r.mentions,
+        r.notices.len(),
+        r.agree,
+        r.disagree,
+        if off.is_empty() { String::new() } else { format!(" ({})", off.join(", ")) },
+        if r.notices_without_mentions.is_empty() {
+            String::new()
+        } else {
+            format!("; no recorded mention on {:?}", r.notices_without_mentions)
+        },
+        r.alias.asked,
+        r.alias.bound,
+        r.alias.minted,
+        r.alias.refused,
+    )
+}
+
+/// Issue 513 U4: `nhs-body-plan` as stored — the census as serialised, each ledger row's
+/// evidence parsed back to JSON (S3 reads it; the ledger is not on /v1/sql), and on a wet
+/// run the RESIDUAL as `admitted_codes` (R2's residual rule: a continuation holds itself
+/// to the reviewed bodies still unfolded) with the live census's own set beside it. A sync
+/// free fn, so its temporaries stay off the boxed arm's poll frame (issue 467's lesson).
+fn nhs_body_plan_json(r: &store::NhsBodyReport, dry_run: bool, wall_readable: bool) -> Result<serde_json::Value, String> {
+    let mut body = serde_json::to_value(r).map_err(|e| e.to_string())?;
+    if let Some(all) = body.as_object_mut() {
+        all.insert("dry_run".to_owned(), dry_run.into());
+        // The R3 panel's catch, as altid carries it: a blind wall's "not generic" is not a
+        // readable one.
+        all.insert("generic_wall_readable".to_owned(), wall_readable.into());
+        all.insert("residual_of_wet_run".to_owned(), (!dry_run).into());
+        if !dry_run {
+            all.insert("live_admitted_codes".to_owned(), serde_json::json!(r.admitted_codes));
+            all.insert("admitted_codes".to_owned(), serde_json::json!(r.residual_codes));
+            // `codes[]` is the live census from BEFORE the folds (its holders and verdict
+            // status are pre-fold): each body this run folded says so, so the stored report
+            // does not contradict itself. A fresh dry run reads the post-fold state.
+            let folded: std::collections::BTreeSet<&str> = r.folded.iter().map(|f| f.code).collect();
+            if let Some(serde_json::Value::Array(codes)) = all.get_mut("codes") {
+                for entry in codes {
+                    let code = entry.get("code").and_then(serde_json::Value::as_str).unwrap_or_default().to_owned();
+                    if let Some(entry) = entry.as_object_mut() {
+                        entry.insert("folded".to_owned(), folded.contains(code.as_str()).into());
+                    }
+                }
+            }
+        }
+        if let Some(serde_json::Value::Array(rows)) = all.get_mut("nhs_body_merged") {
+            for row in rows {
+                if let Some(evidence) = row.get_mut("evidence")
+                    && let Some(text) = evidence.as_str()
+                    && let Ok(parsed) = serde_json::from_str::<serde_json::Value>(text)
+                {
+                    *evidence = parsed;
+                }
+            }
+        }
+    }
+    Ok(body)
+}
+
+/// Issue 513 U4: a wet `nhs-body` run's clause — what it folded and moved, what it held,
+/// the parity it held, and the residual it re-recorded.
+fn nhs_body_wet_clause(r: &store::NhsBodyReport) -> String {
+    let held: Vec<String> = r.held.iter().map(|h| format!("{} {}", h.code, h.reason)).collect();
+    format!(
+        "folded {} reviewed bodies ({} merged, {} one-member bodies recording their code; {} org rows \
+         removed, {} mentions, {} parties, {} bid-parties, {} winners repointed, {} winner dups deleted, {} \
+         tenders touched); held {}{}; held against {} stored: {} deferred as admitted since the dry run, {} no \
+         longer admitted; residual {} bodies re-recorded",
+        r.folded.len(),
+        r.merged_bodies,
+        r.recorded_bodies,
+        r.removed,
+        r.mentions,
+        r.parties,
+        r.bid_parties,
+        r.winners,
+        r.winner_dups,
+        r.tender_changes,
+        r.held.len(),
+        if held.is_empty() { String::new() } else { format!(" ({})", held.join(", ")) },
+        r.expected_codes,
+        r.deferred_codes.len(),
+        r.expected_not_live,
+        r.residual_codes.len(),
+    )
+}
+
+/// Issue 513 U4: an unwind's counts line.
+fn nhs_body_unwind_summary(r: &store::NhsBodyUnwindReport) -> String {
+    format!(
+        "{}: {} nhs-body ledger row(s), survivor {}; {} of its {} mentions moved off ({} by name through 234, {} by \
+         identity through E0) onto {} org(s), {} of them minted; {} party and {} bid-party rows rebound; {} tenders \
+         stamped stale, {} notices re-queued; {} ledger rows retired, {} loser ids redirected, {} merged \
+         identifiers dropped",
+        r.code,
+        r.ledger_rows,
+        r.survivor.map_or_else(|| "none".to_owned(), |s| s.to_string()),
+        r.moved,
+        r.survivor_mentions,
+        r.by_name,
+        r.by_identity,
+        r.targets.len(),
+        r.minted,
+        r.parties,
+        r.bid_parties,
+        r.tenders_stamped,
+        r.notices_requeued,
+        r.ledger_retired,
+        r.redirects,
+        r.merged_identifiers_dropped,
+    )
+}
 
 /// Issue 513 U2: the nhs-body census's counts line — the harvest, the bodies, the
 /// structural denials (nonzero, in D6's order) and the verdicts; a cut list or a blind
@@ -3002,12 +3215,19 @@ fn nhs_body_summary(r: &store::NhsBodyReport, wall_readable: bool) -> String {
     if r.off_allowlist_truncated {
         cut.push(format!("off-allowlist tails listed {} of {}", r.off_allowlist.len(), r.off_allowlist_seen));
     }
+    if r.nhs_body_merged_truncated {
+        cut.push(format!("ledger rows listed {} of {}", r.nhs_body_merged.len(), r.ledger_rows));
+    }
+    if r.nhs_body_regrown_truncated {
+        cut.push(format!("regrown keys listed {}", r.nhs_body_regrown.len()));
+    }
     format!(
         "ODS {}; {} FTS notices, {} coded GB parties ({} on the allowlist, {} of them by an O/0 fold; {} \
          more publish a code behind another first identifier; {} country-less, {} non-GB and {} other \
          GB-NHS values counted apart), {} code/PPON pairs; {} codes, \
          {} holders ({} holding two or more codes); {} tails off the allowlist; denied: {}; {} eligible \
-         holder entries, {} keys owned outside their body; verdicts: {} admitted, {} not admitted{}, {} keep{}{}",
+         holder entries, {} keys owned outside their body; verdicts: {} admitted, {} not admitted{}, {} keep; \
+         ledger: {} nhs-body rows, {} keys regrown (S4){}{}",
         r.ods_version,
         r.fts_notices,
         r.coded_parties,
@@ -3029,6 +3249,8 @@ fn nhs_body_summary(r: &store::NhsBodyReport, wall_readable: bool) -> String {
         r.verdict_stale,
         if stale.is_empty() { String::new() } else { format!(" ({})", stale.join(", ")) },
         r.verdict_keep,
+        r.ledger_rows,
+        r.nhs_body_regrown.len(),
         if cut.is_empty() { String::new() } else { format!(" — CUT: {}", cut.join("; ")) },
         if wall_readable {
             ""
@@ -5983,7 +6205,13 @@ impl Supervisor {
             | Spec::MatchOrgIdentifiersR3 { .. }
             | Spec::MatchOrgIdentifiersRekey { .. }
             | Spec::MatchOrgIdentifiersAltId { .. }
-            | Spec::MatchOrgIdentifiersNhsBody { .. } => off_frame(|| self.run_match_identifiers_spec(job)).await,
+            | Spec::MatchOrgIdentifiersNhsBody { .. }
+            | Spec::MatchOrgIdentifiersNhsBodyUnwind { .. } => off_frame(|| self.run_match_identifiers_spec(job)).await,
+            // Issue 513 U4 (S5): the canary is its own fn, its body on the heap —
+            // `run_match_identifiers_spec` sits ~40 bytes under its future-size budget.
+            Spec::MatchOrgIdentifiersNhsBodyCanary { .. } => {
+                Box::pin(async move { off_frame(|| self.run_nhs_body_canary(job)).await }).await
+            }
             Spec::FoldOrgCountries { .. }
             | Spec::ApplyCountryVerdicts { .. }
             | Spec::ApplyRehoming { .. }
@@ -10144,18 +10372,19 @@ impl Supervisor {
                     format!("match-org-identifiers altid (issue 448) WET: {merged}. Live plan: {summary}")
                 })
             }).await,
-            Spec::MatchOrgIdentifiersNhsBody { dry_run } => Box::pin(async move {
-                // Issue 513 U2: the nhs-body census (decision "unit 2, second", design C's
-                // U2) — every holder of every allowlisted ODS code, uncapped, with what the
-                // reviewer and the challenger read (U3) and whether each body's verdict is
-                // still admissible. Writes nothing but its report. Boxed like altid:
-                // run_spec is one future over every arm (CLAUDE.md's stack note).
-                if !*dry_run {
-                    return Err(NHS_BODY_WET_REFUSAL.to_owned());
-                }
-                // altid's dry refusals, for altid's reason: the generic-wall flag reads
-                // `org_match_keys`, so a half-built or superseded keyspace refuses; an
-                // EMPTY one runs and says the wall was blind.
+            Spec::MatchOrgIdentifiersNhsBody { dry_run, max_groups } => Box::pin(async move {
+                // Issue 513: the nhs-body rule (decision "unit 2, second", design C). Dry, the
+                // U2 census — every holder of every allowlisted ODS code, uncapped, with what
+                // the reviewer and the challenger read and whether each body's verdict is
+                // still admissible — plus (U4) the ledger read verbatim and S4's regrown keys.
+                // Wet (U4), the fold of the stored plan's admitted bodies, under the writer,
+                // held to that plan (S2). Boxed like altid: run_spec is one future over every
+                // arm (CLAUDE.md's stack note).
+                let dry_run = *dry_run;
+                // altid's refusals, for altid's reason: the generic-wall denial reads
+                // `org_match_keys`, so a half-built or superseded keyspace refuses both ways,
+                // and an EMPTY one refuses a wet run (a dry one runs and says the wall was
+                // blind) — a fold must not admit a generic member because the wall saw nothing.
                 let (watermark, epoch) =
                     self.db.org_match_keys_state().await.map_err(|e| e.to_string())?;
                 let keys = self.db.org_match_keys_count().await.map_err(|e| e.to_string())?;
@@ -10166,62 +10395,224 @@ impl Supervisor {
                          keyspace of {keys} rows"
                     ));
                 }
+                let rebuild = "run a WET build first: \
+                               {\"kind\":\"build-org-match-keys\",\"dry_run\":false}";
                 if keys > 0 && epoch != ingest::crosswalk::NAME_KEY_EPOCH {
                     return Err(format!(
                         "match-org-identifiers nhs-body REFUSED: org_match_keys carries keys epoch \
                          {epoch:?}, this binary's is {:?} — the generic-name wall would answer about \
-                         a superseded keyspace; run a WET build first: \
-                         {{\"kind\":\"build-org-match-keys\",\"dry_run\":false}}",
+                         a superseded keyspace; {rebuild}",
                         ingest::crosswalk::NAME_KEY_EPOCH
                     ));
                 }
-                self.set_phase("planning", None, None, "harvesting the FTS GB-NHS parties".to_owned());
+                if !dry_run && keys == 0 {
+                    return Err(format!(
+                        "match-org-identifiers nhs-body REFUSED: org_match_keys is empty, so the \
+                         generic-name wall cannot see anything — {rebuild}; nothing was written"
+                    ));
+                }
+                // A wet run REQUIRES the recorded plan: its `admitted_codes` are the reviewed
+                // bodies, the only ones a wet run folds and the set its live re-plan is held
+                // to. A plan from before U4 has none: re-run the dry plan.
+                let mut expect: Vec<String> = Vec::new();
+                let mut known_deferred: Vec<String> = Vec::new();
+                if !dry_run {
+                    let (body, _) = self
+                        .db
+                        .latest_report("nhs-body-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "match-org-identifiers nhs-body REFUSED: no stored nhs-body-plan — run the \
+                             dry plan first ({\"kind\":\"match-org-identifiers\",\"rule\":\"nhs-body\"}) \
+                             and review it; nothing was written"
+                                .to_owned()
+                        })?;
+                    let v: serde_json::Value = serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    let codes = |field: &str| -> Result<Vec<String>, String> {
+                        v[field]
+                            .as_array()
+                            .ok_or_else(|| {
+                                format!(
+                                    "match-org-identifiers nhs-body REFUSED: the stored nhs-body-plan has no \
+                                     `{field}` (a plan from before issue 513 U4) — re-run the dry plan and \
+                                     review it; nothing was written"
+                                )
+                            })?
+                            .iter()
+                            .map(|c| c.as_str().map(str::to_owned).ok_or_else(|| format!("nhs-body-plan {field} holds a non-string")))
+                            .collect()
+                    };
+                    expect = codes("admitted_codes")?;
+                    if v["residual_of_wet_run"].as_bool() == Some(true) {
+                        known_deferred = codes("deferred_codes").unwrap_or_default();
+                    }
+                    // Issue 442: the fold deletes organizations with foreign keys ON.
+                    Box::pin(self.refuse_without_org_fk_indexes("match-org-identifiers nhs-body")).await?;
+                }
+                self.set_phase(
+                    if dry_run { "planning" } else { "merging" },
+                    None,
+                    None,
+                    "harvesting the FTS GB-NHS parties".to_owned(),
+                );
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
-                let r = self
-                    .db
-                    .plan_nhs_bodies(store::NhsBodyArgs {
-                        tail: ingest::nhs_ods::nhs_tail,
-                        survivor_code: ingest::nhs_ods::survivor_code,
-                        ods: ingest::nhs_ods::census_code,
-                        check: ingest::nhs_ods::census_check,
-                        ods_version: ingest::nhs_ods::VERSION,
-                        pair_key: ingest::crosswalk::altid_pair_key,
-                        key: ingest::crosswalk::canonical_key_flat,
-                        register_identity: ingest::project::normalise_identifier,
-                        consortium: ingest::crosswalk::consortium_name,
-                        norm: ingest::project::match_norm,
-                        stoplist_cap: SCAN_STOPLIST_CAP,
-                        caps: store::NhsBodyCaps::PRODUCTION,
-                        stop: &stop,
-                    })
-                    .await
-                    .map_err(|e| e.to_string())?;
-                // A stopped census is partial; recorded, it would read as every holder.
-                if r.stopped {
-                    return Ok("match-org-identifiers nhs-body STOPPED during the census: nothing was \
-                               recorded, and the previously recorded plan was left untouched"
-                        .to_owned());
+                let args = store::NhsBodyArgs {
+                    tail: ingest::nhs_ods::nhs_tail,
+                    survivor_code: ingest::nhs_ods::survivor_code,
+                    ods: ingest::nhs_ods::census_code,
+                    check: ingest::nhs_ods::census_check,
+                    ods_version: ingest::nhs_ods::VERSION,
+                    pair_key: ingest::crosswalk::altid_pair_key,
+                    key: ingest::crosswalk::canonical_key_flat,
+                    register_identity: ingest::project::normalise_identifier,
+                    consortium: ingest::crosswalk::consortium_name,
+                    norm: ingest::project::match_norm,
+                    stoplist_cap: SCAN_STOPLIST_CAP,
+                    caps: store::NhsBodyCaps::PRODUCTION,
+                    stop: &stop,
+                };
+                let r = if dry_run {
+                    self.db.plan_nhs_bodies(args).await
+                } else {
+                    let wet = store::NhsBodyWet {
+                        expect_codes: &expect,
+                        known_deferred: &known_deferred,
+                        max_groups: *max_groups,
+                        job_id: Some(job_id as i64),
+                    };
+                    self.db.merge_nhs_bodies(args, wet).await
                 }
-                let mut body = serde_json::to_value(&r).map_err(|e| e.to_string())?;
-                if let Some(all) = body.as_object_mut() {
-                    all.insert("dry_run".to_owned(), true.into());
-                    // The R3 panel's catch, as altid carries it: a blind wall's "not
-                    // generic" is not a readable one.
-                    all.insert("generic_wall_readable".to_owned(), (keys > 0).into());
+                .map_err(|e| e.to_string())?;
+                // A stopped census is partial; recorded, it would read as every holder. A wet
+                // run stopped before its first fold wrote nothing: the reviewed plan stands.
+                if r.stopped && r.folded.is_empty() {
+                    return Ok(if dry_run {
+                        "match-org-identifiers nhs-body STOPPED during the census: nothing was \
+                         recorded, and the previously recorded plan was left untouched"
+                            .to_owned()
+                    } else {
+                        "match-org-identifiers nhs-body STOPPED before the first fold: nothing was \
+                         written, and the previously recorded plan was left untouched"
+                            .to_owned()
+                    });
                 }
+                let body = nhs_body_plan_json(&r, dry_run, keys > 0)?;
                 self.db
                     .put_report("nhs-body-plan", &body.to_string(), store::now_unix())
                     .await
                     .map_err(|e| e.to_string())?;
+                // A body's transaction failed after earlier bodies committed: the residual
+                // (that body and every later one) is stored above, so the failure names
+                // what DID land and a re-run continues under parity.
+                if let Some(failed) = &r.fold_error {
+                    let committed: Vec<&str> = r.folded.iter().map(|f| f.code).collect();
+                    return Err(format!(
+                        "match-org-identifiers nhs-body (issue 513 U4) FAILED at body {failed}, after {} bod(ies) \
+                         committed ({}); the residual plan ({} reviewed bodies not folded) is stored as \
+                         nhs-body-plan, so a re-run continues under parity: {}",
+                        committed.len(),
+                        committed.join(", "),
+                        r.residual_codes.len(),
+                        nhs_body_wet_clause(&r)
+                    ));
+                }
+                let summary = nhs_body_summary(&r, keys > 0);
+                Ok(if dry_run {
+                    format!(
+                        "match-org-identifiers nhs-body (issue 513) DRY RUN — census recorded as \
+                         nhs-body-plan, nothing written: {summary}"
+                    )
+                } else if r.stopped {
+                    format!(
+                        "match-org-identifiers nhs-body (issue 513 U4) STOPPED between bodies: {}; a re-run \
+                         continues under parity. Live census: {summary}",
+                        nhs_body_wet_clause(&r)
+                    )
+                } else {
+                    format!(
+                        "match-org-identifiers nhs-body (issue 513 U4) WET: {}. Live census: {summary}",
+                        nhs_body_wet_clause(&r)
+                    )
+                })
+            }).await,
+            Spec::MatchOrgIdentifiersNhsBodyUnwind { code, dry_run } => Box::pin(async move {
+                // Issue 513 U4 (D7): one body's unwind — its nhs-body ledger rows retired and
+                // the survivor's former members dissolved back through 234/E0. Dry plans and
+                // writes only its report. Boxed like every match-identifiers arm.
+                let dry_run = *dry_run;
+                if !dry_run {
+                    Box::pin(self.refuse_without_org_fk_indexes("match-org-identifiers nhs-body-unwind")).await?;
+                }
+                self.set_phase(
+                    if dry_run { "planning" } else { "merging" },
+                    None,
+                    None,
+                    format!("unwinding the {code} body"),
+                );
+                let r = self
+                    .db
+                    .unwind_nhs_body(store::NhsBodyUnwindArgs {
+                        code,
+                        dry_run,
+                        register_identity: ingest::project::normalise_identifier,
+                        key: ingest::crosswalk::canonical_key_flat,
+                        job_id: Some(job.id as i64),
+                    })
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let body = serde_json::to_string(&r).map_err(|e| e.to_string())?;
+                self.db.put_report("nhs-body-unwind", &body, store::now_unix()).await.map_err(|e| e.to_string())?;
                 Ok(format!(
-                    "match-org-identifiers nhs-body (issue 513 U2) DRY RUN — census recorded as \
-                     nhs-body-plan, nothing written: {}",
-                    nhs_body_summary(&r, keys > 0)
+                    "match-org-identifiers nhs-body-unwind (issue 513 U4) {}: {}",
+                    if dry_run { "DRY RUN — nothing written" } else { "WET" },
+                    nhs_body_unwind_summary(&r)
                 ))
             }).await,
             _ => Err(misrouted(job, "run_match_identifiers_spec")),
         }
+    }
+
+    /// Issue 513 U4, S5's prod half: the `nhs-body-canary` — "3 notices × 3 bodies (TED
+    /// uncoded, FTS coded, PPON-first) re-resolved through a fresh resolver must agree 100%".
+    /// The store opens the resolver with the fold's own rules and arming
+    /// (`ingest::project`'s resolver sites, `altid_alias_rules`), re-resolves each recorded
+    /// mention of the named notices inside a transaction it always rolls back, and reports
+    /// every binding against the stored org. Writes nothing but its report. Its own fn
+    /// (`run_spec`'s note): `run_match_identifiers_spec` has no room for another arm.
+    async fn run_nhs_body_canary(&self, job: &Job) -> Result<String, String> {
+        let Spec::MatchOrgIdentifiersNhsBodyCanary { notices } = &job.spec else {
+            return Err(misrouted(job, "run_nhs_body_canary"));
+        };
+        self.set_phase(
+            "planning",
+            None,
+            None,
+            format!("re-resolving {} notice(s) in a rolled-back transaction", notices.len()),
+        );
+        let r = Box::pin(self.db.nhs_body_canary(store::NhsBodyCanaryArgs {
+            notices,
+            identity: ingest::project::gated_identifier,
+            canon_key: Some(ingest::crosswalk::canonical_key_flat),
+            consortium: Some(ingest::crosswalk::consortium_name),
+            anchors: Some(ingest::idgate::checksum_anchors),
+            norm: Some(ingest::project::match_norm),
+            legal_form: Some(ingest::crosswalk::legal_form_family),
+            hard_scheme: Some(ingest::idgate::hard_scheme),
+            stoplist_cap: ingest::idgate::STOPLIST_CAP,
+            altid: ingest::project::altid_alias_rules(),
+        }))
+        .await
+        .map_err(|e| e.to_string())?;
+        let body = serde_json::to_string(&r).map_err(|e| e.to_string())?;
+        Box::pin(self.db.put_report("nhs-body-canary", &body, store::now_unix())).await.map_err(|e| e.to_string())?;
+        Ok(format!(
+            "match-org-identifiers nhs-body-canary (issue 513 U4, S5) READ-ONLY — re-resolved in a rolled-back \
+             transaction, recorded as nhs-body-canary, nothing else written; {}: {}",
+            if r.disagree == 0 && r.mentions > 0 { "AGREES" } else { "DOES NOT AGREE 100%" },
+            nhs_body_canary_summary(&r)
+        ))
     }
 
     /// `run_spec`'s family of the country folds and verdicts, the rehoming, and their review
@@ -17873,37 +18264,107 @@ mod tests {
             id,
             kind: "match-org-identifiers".into(),
             params: String::new(),
-            spec: Spec::MatchOrgIdentifiersNhsBody { dry_run: dry },
+            spec: Spec::MatchOrgIdentifiersNhsBody { dry_run: dry, max_groups: None },
             resume_after: None,
         }
     }
 
-    /// Issue 513 U2: `nhs-body` is a rule of `match-org-identifiers`, dry unless told
-    /// otherwise; a mistyped rule's refusal names it; and a WET run is refused — at
-    /// enqueue, before a job row exists, and by the arm should one reach it — because the
-    /// fold is U4's and is not built.
+    fn nhs_body_unwind_job(id: u64, code: &str, dry: bool) -> Job {
+        Job {
+            id,
+            kind: "match-org-identifiers".into(),
+            params: String::new(),
+            spec: Spec::MatchOrgIdentifiersNhsBodyUnwind { code: code.into(), dry_run: dry },
+            resume_after: None,
+        }
+    }
+
+    fn nhs_body_canary_job(id: u64, notices: &[i64]) -> Job {
+        Job {
+            id,
+            kind: "match-org-identifiers".into(),
+            params: String::new(),
+            spec: Spec::MatchOrgIdentifiersNhsBodyCanary { notices: notices.to_vec() },
+            resume_after: None,
+        }
+    }
+
+    /// Issue 513: `nhs-body` is a rule of `match-org-identifiers`, dry unless told
+    /// otherwise, and a mistyped rule's refusal names it and `nhs-body-unwind`. Since U4 a
+    /// wet run enqueues (capped by `max_groups`), and the arm refuses it while there is
+    /// nothing reviewed to hold it to: an empty key satellite, then no stored plan, then a
+    /// plan from before U4 (no `admitted_codes`) — each refusal writes nothing. The unwind
+    /// needs a three-character `code` and upper-cases it; `code` on another rule refuses.
+    /// The canary needs `notices` (deduplicated, capped), is read-only (`dry_run: false`
+    /// refuses), and `notices` on another rule refuses.
     #[tokio::test]
-    async fn the_unknown_rule_message_lists_nhs_body_and_a_wet_nhs_body_run_is_refused() {
-        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+    async fn the_unknown_rule_message_lists_nhs_body_and_a_wet_run_needs_a_reviewed_plan() {
+        let (db, conn, path) = altid_fixture("nhs-body-rules").await;
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
         let mut typo = req("match-org-identifiers");
         typo.rule = Some("nhs_body".into());
         let err = sup.enqueue_request(&typo).await.expect_err("an unknown rule is refused");
-        assert!(err.contains("nhs-body"), "the message must list the rule: {err}");
+        assert!(err.contains("nhs-body") && err.contains("nhs-body-unwind"), "the message must list the rules: {err}");
         let mut wet = req("match-org-identifiers");
         wet.rule = Some("nhs-body".into());
         wet.dry_run = Some(false);
-        let err = sup.enqueue_request(&wet).await.expect_err("the wet path is U4's");
-        assert!(err.contains("nhs-body wet path is U4; not built"), "{err}");
-        assert!(sup.queued().is_empty(), "a refused wet run queues nothing");
-        let err = sup.run_spec(&nhs_body_job(2, false)).await.expect_err("the arm refuses too");
-        assert!(err.contains("nhs-body wet path is U4; not built"), "{err}");
-        assert!(sup.db().latest_report("nhs-body-plan").await.unwrap().is_none(), "nothing recorded");
+        wet.max_groups = Some(20);
+        sup.enqueue_request(&wet).await.expect("a wet run enqueues since U4");
         let mut dry = req("match-org-identifiers");
         dry.rule = Some("nhs-body".into());
         sup.enqueue_request(&dry).await.expect("the census enqueues, dry by default");
-        let queued = sup.queued();
-        assert_eq!(queued.len(), 1);
-        assert_eq!(queued[0].params, "match-org-identifiers nhs-body dry-run");
+        let mut unwind = req("match-org-identifiers");
+        unwind.rule = Some("nhs-body-unwind".into());
+        let err = sup.enqueue_request(&unwind).await.expect_err("an unwind names its body");
+        assert!(err.contains("`code`"), "{err}");
+        unwind.code = Some("RTHX".into());
+        assert!(sup.enqueue_request(&unwind).await.is_err(), "an ODS code is three characters");
+        unwind.code = Some("rth".into());
+        sup.enqueue_request(&unwind).await.expect("the unwind enqueues, dry by default");
+        let mut stray = req("match-org-identifiers");
+        stray.rule = Some("altid".into());
+        stray.code = Some("RTH".into());
+        let err = sup.enqueue_request(&stray).await.expect_err("code is the unwind's only");
+        assert!(err.contains("nhs-body-unwind only"), "{err}");
+        let mut canary = req("match-org-identifiers");
+        canary.rule = Some("nhs-body-canary".into());
+        let err = sup.enqueue_request(&canary).await.expect_err("a canary names its notices");
+        assert!(err.contains("needs `notices`"), "{err}");
+        canary.notices = Some((1..=(store::NHS_BODY_CANARY_NOTICES_CAP as i64 + 1)).collect());
+        assert!(sup.enqueue_request(&canary).await.is_err(), "capped");
+        canary.notices = Some(vec![14, 16, 14]);
+        canary.dry_run = Some(false);
+        let err = sup.enqueue_request(&canary).await.expect_err("the canary is read-only");
+        assert!(err.contains("read-only"), "{err}");
+        canary.dry_run = None;
+        sup.enqueue_request(&canary).await.expect("the canary enqueues");
+        let mut stray = req("match-org-identifiers");
+        stray.rule = Some("nhs-body".into());
+        stray.notices = Some(vec![14]);
+        let err = sup.enqueue_request(&stray).await.expect_err("notices is the canary's only");
+        assert!(err.contains("nhs-body-canary only"), "{err}");
+        let params: Vec<String> = sup.queued().iter().map(|q| q.params.clone()).collect();
+        assert_eq!(
+            params,
+            vec![
+                "match-org-identifiers nhs-body cap=20",
+                "match-org-identifiers nhs-body dry-run",
+                "match-org-identifiers nhs-body-unwind code=RTH dry-run",
+                "match-org-identifiers nhs-body-canary notices=14,16 read-only",
+            ],
+        );
+
+        let err = sup.run_spec(&nhs_body_job(2, false)).await.expect_err("an empty satellite refuses a wet run");
+        assert!(err.contains("org_match_keys is empty") && err.contains("nothing was written"), "{err}");
+        altid_satellite(&conn).await;
+        let err = sup.run_spec(&nhs_body_job(3, false)).await.expect_err("no stored plan refuses");
+        assert!(err.contains("no stored nhs-body-plan") && err.contains("nothing was written"), "{err}");
+        assert!(sup.db().latest_report("nhs-body-plan").await.unwrap().is_none(), "nothing recorded");
+        sup.db().put_report("nhs-body-plan", r#"{"codes":[],"dry_run":true}"#, store::now_unix()).await.unwrap();
+        let err = sup.run_spec(&nhs_body_job(4, false)).await.expect_err("a pre-U4 plan refuses");
+        assert!(err.contains("no `admitted_codes`") && err.contains("re-run the dry plan"), "{err}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 2, "nothing was written");
+        remove_db(&path);
     }
 
     /// Issue 513 U2, through the PRODUCTION table and rules (`ingest::nhs_ods`, the
@@ -18049,6 +18510,72 @@ mod tests {
         assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 6);
         assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_log").await, 0);
         assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_verdicts WHERE applied_at IS NOT NULL").await, 0);
+        assert_eq!(v["admitted_codes"], serde_json::json!(["RTH"]), "{body}");
+
+        // Issue 513 U4, the round trip: the wet run folds the admitted body into its PPON org
+        // (7), ledgered, the code recorded on it, the verdict stamped; the stored plan is the
+        // residual (nothing left) with the ledger's evidence parsed back to JSON.
+        altid_satellite(&conn).await;
+        db.build_organization_indexes().await.unwrap();
+        let msg = sup.run_spec(&nhs_body_job(5, false)).await.expect("the wet run folds");
+        assert!(msg.contains("WET: folded 1 reviewed bodies (1 merged") && msg.contains("2 org rows removed"), "{msg}");
+        assert!(msg.contains("held against 1 stored: 0 deferred") && msg.contains("residual 0 bodies"), "{msg}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (5, 6)").await, 0);
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 7").await, 3);
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body' AND keep = 7").await, 2);
+        assert_eq!(
+            altid_count(&conn, "SELECT COUNT(*) FROM organization_merged_identifiers WHERE identifier = 'GBNHSRTH' AND org_id = 7")
+                .await,
+            1
+        );
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_verdicts WHERE applied_at IS NOT NULL").await, 1);
+        let (v, body) = plan().await;
+        assert_eq!((v["dry_run"].as_bool(), v["residual_of_wet_run"].as_bool()), (Some(false), Some(true)), "{body}");
+        assert_eq!(v["admitted_codes"], serde_json::json!([]), "the residual: {body}");
+        assert_eq!(v["live_admitted_codes"], serde_json::json!(["RTH"]), "{body}");
+        assert_eq!(v["folded"][0]["keep"], 7, "{body}");
+        assert_eq!(v["folded"][0]["target"], "ppon", "{body}");
+        // `codes[]` is the pre-fold census: the folded body says so, the other does not.
+        let folded = |code: &str| code_of(&v, code)["folded"].as_bool();
+        assert_eq!((folded("RTH"), folded("R0B")), (Some(true), Some(false)), "{body}");
+        assert_eq!(v["ledger_rows"], 2, "{body}");
+        let evidence = &v["nhs_body_merged"][0]["evidence"];
+        assert_eq!((evidence["code"].as_str(), evidence["target"].as_str()), (Some("RTH"), Some("ppon")), "{body}");
+        assert_eq!(evidence["target_identity"], "GBPPONPHDQ2359NZMP", "{body}");
+        assert_eq!(evidence["cohort"], "nhs-body-ods-confirmed-test", "{body}");
+        // The re-dry: the body reads as one org, its verdict applied, nothing regrown (S4).
+        let msg = sup.run_spec(&nhs_body_job(6, true)).await.expect("the census re-runs");
+        assert!(msg.contains("ledger: 2 nhs-body rows, 0 keys regrown"), "{msg}");
+        let (v, body) = plan().await;
+        assert_eq!(code_of(&v, "RTH")["holder_ids"], serde_json::json!([7, 8]), "{body}");
+        assert_eq!(code_of(&v, "RTH")["verdict"]["status"], "applied", "{body}");
+        assert_eq!(v["nhs_body_regrown"], serde_json::json!([]), "{body}");
+
+        // S5's prod half, through the production rules: the coded spellings, the PPON-first
+        // party and the stray re-resolve through a fresh armed resolver onto the orgs they
+        // are recorded on, and the rolled-back transaction leaves every row as it was.
+        let on_7 = "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 7";
+        let mentions_before = altid_count(&conn, on_7).await;
+        let msg = sup.run_spec(&nhs_body_canary_job(9, &[14, 15, 16, 17, 99])).await.expect("the canary runs");
+        assert!(msg.contains("READ-ONLY") && msg.contains("AGREES"), "{msg}");
+        assert!(msg.contains("4 mention(s) of 5 notice(s) re-resolved: 4 agree, 0 disagree"), "{msg}");
+        assert!(msg.contains("no recorded mention on [99]"), "{msg}");
+        assert!(msg.contains("nhs-body alias asked 2, bound 2"), "the two spellings, by the alias: {msg}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 4, "nothing minted");
+        assert_eq!(altid_count(&conn, on_7).await, mentions_before);
+        let (body, _) = sup.db().latest_report("nhs-body-canary").await.unwrap().expect("recorded");
+        assert!(body.contains("\"agree\":4") && body.contains("\"disagree\":0"), "{body}");
+
+        // D7: the unwind, dry then wet — the two spellings dissolve back to their own rows.
+        let msg = sup.run_spec(&nhs_body_unwind_job(7, "RTH", true)).await.expect("the dry unwind");
+        assert!(msg.contains("DRY RUN") && msg.contains("2 of its 3 mentions moved off (2 by name"), "{msg}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body'").await, 2, "dry");
+        let msg = sup.run_spec(&nhs_body_unwind_job(8, "RTH", false)).await.expect("the wet unwind");
+        assert!(msg.contains("WET") && msg.contains("2 ledger rows retired, 2 loser ids redirected"), "{msg}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'nhs-body'").await, 0);
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 7").await, 1);
+        let (body, _) = sup.db().latest_report("nhs-body-unwind").await.unwrap().expect("recorded");
+        assert!(body.contains("\"code\":\"RTH\"") && body.contains("\"moved\":2"), "{body}");
         remove_db(&path);
     }
 
@@ -19927,6 +20454,9 @@ mod tests {
         gauge("run_provisional_spec", std::mem::size_of_val(&sup.run_provisional_spec(&j)), 2_688);
         gauge("run_org_merge_health_spec", std::mem::size_of_val(&sup.run_org_merge_health_spec(&j)), 1_536);
         gauge("run_match_identifiers_spec", std::mem::size_of_val(&sup.run_match_identifiers_spec(&j)), 3_840);
+        // Issue 513 U4: the nhs-body canary, its own fn because the family above is full
+        // (264 bytes measured 2026-10-12).
+        gauge("run_nhs_body_canary", std::mem::size_of_val(&sup.run_nhs_body_canary(&j)), 512);
         gauge("run_country_spec", std::mem::size_of_val(&sup.run_country_spec(&j)), 2_688);
         gauge("run_identity_census_spec", std::mem::size_of_val(&sup.run_identity_census_spec(&j)), 1_792);
         gauge("run_census_spec", std::mem::size_of_val(&sup.run_census_spec(&j)), 1_792);
@@ -19953,6 +20483,7 @@ mod tests {
         poll_once_within("run_provisional_spec", 46 * 1024, || sup.run_provisional_spec(&refused));
         poll_once_within("run_org_merge_health_spec", 39 * 1024, || sup.run_org_merge_health_spec(&refused));
         poll_once_within("run_match_identifiers_spec", 71 * 1024, || sup.run_match_identifiers_spec(&refused));
+        poll_once_within("run_nhs_body_canary", 39 * 1024, || sup.run_nhs_body_canary(&refused));
         poll_once_within("run_country_spec", 63 * 1024, || sup.run_country_spec(&refused));
         poll_once_within("run_identity_census_spec", 56 * 1024, || sup.run_identity_census_spec(&refused));
         poll_once_within("run_census_spec", 69 * 1024, || sup.run_census_spec(&refused));
