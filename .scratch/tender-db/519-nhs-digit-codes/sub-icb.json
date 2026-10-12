@@ -1,0 +1,1409 @@
+[
+ {
+  "code": "B2M3M",
+  "org": 30917969,
+  "name": "NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD",
+  "mentions": 600,
+  "ods_name": "NHS COVENTRY AND WARWICKSHIRE ICB - B2M3M",
+  "icb_now": "QWU",
+  "icb_history": [
+   [
+    "QWU",
+    "2020-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QWU",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31542351,
+    "NHS Coventry and Warwickshire Integrated Care Board",
+    89
+   ]
+  ]
+ },
+ {
+  "code": "13T",
+  "org": 31600907,
+  "name": "NORTH OF ENGLAND COMMISSIONING SUPPORT",
+  "mentions": 504,
+  "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 13T",
+  "icb_now": "QHM",
+  "icb_history": [
+   [
+    "QHM",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QHM",
+  "name_overlap": 0.17,
+  "icb_survivor": [
+   [
+    31556600,
+    "NHS North East and North Cumbria Integrated Care Board",
+    2395
+   ]
+  ]
+ },
+ {
+  "code": "26A",
+  "org": 30915273,
+  "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+  "mentions": 115,
+  "ods_name": "NHS NORFOLK AND SUFFOLK ICB - 26A",
+  "icb_now": "T6Y0W",
+  "icb_history": [
+   [
+    "QMM",
+    "2019-10-23",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "T6Y0W",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": 30919647,
+  "icb_code_org_mentions": 46,
+  "name_icb": "QMM",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31542073,
+    "NHS Norfolk and Waveney Integrated Care Board",
+    112
+   ]
+  ]
+ },
+ {
+  "code": "92G",
+  "org": 30913840,
+  "name": "NHS Bath and North East Somerset, Swindon and Wiltshire Integrated Care Board",
+  "mentions": 80,
+  "ods_name": "NHS BATH AND NORTH EAST SOMERSET, SWINDON AND WILTSHIRE ICB - 92G",
+  "icb_now": "QOX",
+  "icb_history": [
+   [
+    "QOX",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QOX",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30913839,
+    "NHS Bath and North East Somerset, Swindon and Wiltshire Integrated Care Board",
+    57
+   ]
+  ]
+ },
+ {
+  "code": "D4U1Y",
+  "org": 31535814,
+  "name": "NHS Frimley ICB",
+  "mentions": 65,
+  "ods_name": "NHS FRIMLEY ICB - D4U1Y",
+  "icb_now": "QRL",
+  "icb_history": [
+   [
+    "QNQ",
+    "2020-10-23",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "QRL",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QNQ",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31552078,
+    "NHS Frimley Integrated Care Board",
+    152
+   ]
+  ]
+ },
+ {
+  "code": "72Q",
+  "org": 30926709,
+  "name": "NHS South East London Integrated Care Board",
+  "mentions": 47,
+  "ods_name": "NHS SOUTH EAST LONDON ICB - 72Q",
+  "icb_now": "QKK",
+  "icb_history": [
+   [
+    "QKK",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QKK",
+  "name_overlap": 1.0,
+  "icb_survivor": []
+ },
+ {
+  "code": "15E",
+  "org": 31546689,
+  "name": "NHS BIRMINGHAM AND SOLIHULL INTEGRATED CARE BOARD",
+  "mentions": 46,
+  "ods_name": "NHS BIRMINGHAM AND SOLIHULL ICB - 15E",
+  "icb_now": "QHL",
+  "icb_history": [
+   [
+    "QHL",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QHL",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30916123,
+    "NHS Birmingham and Solihull Integrated Care Board",
+    307
+   ]
+  ]
+ },
+ {
+  "code": "91Q",
+  "org": 31537488,
+  "name": "NHS KENT AND MEDWAY INTEGRATED CARE BOARD",
+  "mentions": 41,
+  "ods_name": "NHS KENT AND MEDWAY ICB - 91Q",
+  "icb_now": "QKS",
+  "icb_history": [
+   [
+    "QKS",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QKS",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30914448,
+    "NHS Kent and Medway Integrated Care Board",
+    115
+   ]
+  ]
+ },
+ {
+  "code": "36L",
+  "org": 31543312,
+  "name": "NHS SOUTH WEST LONDON INTEGRATED CARE BOARD",
+  "mentions": 33,
+  "ods_name": "NHS SOUTH WEST LONDON ICB - 36L",
+  "icb_now": "QWE",
+  "icb_history": [
+   [
+    "QWE",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QWE",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30915087,
+    "NHS South West London Integrated Care Board",
+    255
+   ]
+  ]
+ },
+ {
+  "code": "15C",
+  "org": 31566597,
+  "name": "NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board",
+  "mentions": 31,
+  "ods_name": "NHS BRISTOL, NORTH SOMERSET AND SOUTH GLOUCESTERSHIRE ICB - 15C",
+  "icb_now": "QUY",
+  "icb_history": [
+   [
+    "QUY",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QUY",
+  "name_overlap": 1.0,
+  "icb_survivor": []
+ },
+ {
+  "code": "15N",
+  "org": 31555903,
+  "name": "NHS Devon Integrated Care Board",
+  "mentions": 31,
+  "ods_name": "NHS DEVON ICB - 15N",
+  "icb_now": "QJK",
+  "icb_history": [
+   [
+    "QJK",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QJK",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30917049,
+    "NHS DEVON INTEGRATED CARE BOARD",
+    422
+   ]
+  ]
+ },
+ {
+  "code": "11X",
+  "org": 30916970,
+  "name": "NHS Somerset Integrated Care Board",
+  "mentions": 30,
+  "ods_name": "NHS SOMERSET ICB - 11X",
+  "icb_now": "QSL",
+  "icb_history": [
+   [
+    "QSL",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QSL",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30967505,
+    "NHS SOMERSET INTEGRATED CARE BOARD",
+    32
+   ]
+  ]
+ },
+ {
+  "code": "A3A8R",
+  "org": 30915550,
+  "name": "NHS North East London Integrated Care Board (NEL ICB)",
+  "mentions": 25,
+  "ods_name": "NHS NORTH EAST LONDON ICB - A3A8R",
+  "icb_now": "QMF",
+  "icb_history": [
+   [
+    "QMF",
+    "2020-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QMF",
+  "name_overlap": 0.75,
+  "icb_survivor": []
+ },
+ {
+  "code": "15A",
+  "org": 31534640,
+  "name": "NHS Thames Valley Integrated Care Board",
+  "mentions": 23,
+  "ods_name": "NHS THAMES VALLEY ICB - 15A",
+  "icb_now": "S0E4D",
+  "icb_history": [
+   [
+    "QU9",
+    "2020-04-01",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "S0E4D",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "S0E4D",
+  "name_overlap": 1.0,
+  "icb_survivor": []
+ },
+ {
+  "code": "93C",
+  "org": 31570826,
+  "name": "NHS North Central London Integrated Care Board",
+  "mentions": 23,
+  "ods_name": "NHS WEST AND NORTH LONDON ICB - 93C",
+  "icb_now": "Z9B2Z",
+  "icb_history": [
+   [
+    "QMJ",
+    "2019-10-23",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "Z9B2Z",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": 31534689,
+  "icb_code_org_mentions": 4,
+  "name_icb": "QMJ",
+  "name_overlap": 1.0,
+  "icb_survivor": []
+ },
+ {
+  "code": "D2P2L",
+  "org": 31545773,
+  "name": "NHS BLACK COUNTRY INTEGRATED CARE BOARD",
+  "mentions": 16,
+  "ods_name": "NHS BLACK COUNTRY ICB - D2P2L",
+  "icb_now": "QUA",
+  "icb_history": [
+   [
+    "QUA",
+    "2020-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QUA",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31542353,
+    "NHS Black Country Integrated Care Board",
+    83
+   ]
+  ]
+ },
+ {
+  "code": "03K",
+  "org": 31591587,
+  "name": "NHS Humber and North Yorkshire ICB",
+  "mentions": 12,
+  "ods_name": "NHS HUMBER AND NORTH YORKSHIRE ICB - 03K",
+  "icb_now": null,
+  "icb_history": [],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": null,
+  "name_overlap": 0,
+  "icb_survivor": null
+ },
+ {
+  "code": "M1J4Y",
+  "org": 31592285,
+  "name": "NHS Bedfordshire, Luton and Milton Keynes Integrated Care Board",
+  "mentions": 11,
+  "ods_name": "NHS CENTRAL EAST ICB - M1J4Y",
+  "icb_now": "S1Y5D",
+  "icb_history": [
+   [
+    "QHG",
+    "2020-10-23",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "S1Y5D",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QHG",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30918226,
+    "NHS Bedfordshire, Luton and Milton Keynes Integrated Care Board",
+    114
+   ]
+  ]
+ },
+ {
+  "code": "06H",
+  "org": 31537455,
+  "name": "Cambridgeshire & Peterborough Integrated Care Board",
+  "mentions": 10,
+  "ods_name": "NHS CENTRAL EAST ICB - 06H",
+  "icb_now": "S1Y5D",
+  "icb_history": [
+   [
+    "QUE",
+    "2020-04-01",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "S1Y5D",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QUE",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31542038,
+    "NHS CAMBRIDGESHIRE AND PETERBOROUGH INTEGRATED CARE BOARD",
+    1862
+   ]
+  ]
+ },
+ {
+  "code": "D9Y0V",
+  "org": 31597942,
+  "name": "NHS HAMPSHIRE AND THE ISLE OF WIGHT INTEGRATED CARE BOARD",
+  "mentions": 10,
+  "ods_name": "NHS HAMPSHIRE AND ISLE OF WIGHT ICB - D9Y0V",
+  "icb_now": "QRL",
+  "icb_history": [
+   [
+    "QRL",
+    "2020-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QRL",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31552077,
+    "NHS Hampshire and Isle of Wight Integrated Care Board",
+    168
+   ]
+  ]
+ },
+ {
+  "code": "03N",
+  "org": 31593407,
+  "name": "NHS South Yorkshire Integrated Care Board",
+  "mentions": 8,
+  "ods_name": "NHS SOUTH YORKSHIRE ICB - 03N",
+  "icb_now": "QF7",
+  "icb_history": [
+   [
+    "QF7",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": 31538551,
+  "icb_code_org_mentions": 6,
+  "name_icb": "QF7",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31538551,
+    "NHS SOUTH YORKSHIRE INTEGRATED CARE BOARD",
+    6
+   ]
+  ]
+ },
+ {
+  "code": "10Q",
+  "org": 31566140,
+  "name": "NHS Buckinghamshire, Oxfordshire and Berkshire West ICB",
+  "mentions": 8,
+  "ods_name": "NHS THAMES VALLEY ICB - 10Q",
+  "icb_now": "S0E4D",
+  "icb_history": [
+   [
+    "QU9",
+    "2020-04-01",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "S0E4D",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QU9",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31557628,
+    "NHS Buckinghamshire, Oxfordshire and Berkshire West (BOB) Integrated Care Board (ICB)",
+    6
+   ]
+  ]
+ },
+ {
+  "code": "16C",
+  "org": 31614680,
+  "name": "NHS North East and North Cumbria Integrated Care Board",
+  "mentions": 8,
+  "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 16C",
+  "icb_now": "QHM",
+  "icb_history": [
+   [
+    "QHM",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QHM",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31556600,
+    "NHS North East and North Cumbria Integrated Care Board",
+    2395
+   ]
+  ]
+ },
+ {
+  "code": "05D",
+  "org": 31539308,
+  "name": "NHS Staffordshire and Stoke-on-Trent Integrated Care Board",
+  "mentions": 6,
+  "ods_name": "NHS STAFFORDSHIRE AND STOKE-ON-TRENT ICB - 05D",
+  "icb_now": "QNC",
+  "icb_history": [
+   [
+    "QNC",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QNC",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30915109,
+    "NHS Staffordshire and Stoke-on-Trent Integrated Care Board",
+    253
+   ]
+  ]
+ },
+ {
+  "code": "99C",
+  "org": 31614001,
+  "name": "North East and North Cumbria Integrated Care Board",
+  "mentions": 6,
+  "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 99C",
+  "icb_now": "QHM",
+  "icb_history": [
+   [
+    "QHM",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QHM",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31556600,
+    "NHS North East and North Cumbria Integrated Care Board",
+    2395
+   ]
+  ]
+ },
+ {
+  "code": "03R",
+  "org": 31541083,
+  "name": "West Yorkshire Integrated Care Board",
+  "mentions": 5,
+  "ods_name": "NHS WEST YORKSHIRE ICB - 03R",
+  "icb_now": "QWO",
+  "icb_history": [
+   [
+    "QWO",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QWO",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30917022,
+    "NHS West Yorkshire Integrated Care Board",
+    591
+   ]
+  ]
+ },
+ {
+  "code": "03W",
+  "org": 31602970,
+  "name": "NHS Leicester, Leicestershire and Rutland Integrated Care Board",
+  "mentions": 5,
+  "ods_name": "NHS LEICESTER, LEICESTERSHIRE AND RUTLAND ICB - 03W",
+  "icb_now": "QK1",
+  "icb_history": [
+   [
+    "QK1",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": 30916103,
+  "icb_code_org_mentions": 49,
+  "name_icb": "QK1",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30916103,
+    "NHS Leicester, Leicestershire and Rutland Integrated Commissioning Board (LLR ICB)",
+    49
+   ]
+  ]
+ },
+ {
+  "code": "M2L0M",
+  "org": 30915758,
+  "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+  "mentions": 4,
+  "ods_name": "NHS SHROPSHIRE, TELFORD AND WREKIN ICB - M2L0M",
+  "icb_now": "QOC",
+  "icb_history": [
+   [
+    "QOC",
+    "2020-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QOC",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31542354,
+    "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+    79
+   ]
+  ]
+ },
+ {
+  "code": "01A",
+  "org": 31613615,
+  "name": "Lancashire & South Cumbria Integrated Care Board",
+  "mentions": 3,
+  "ods_name": "NHS LANCASHIRE AND SOUTH CUMBRIA ICB - 01A",
+  "icb_now": "QE1",
+  "icb_history": [
+   [
+    "QE1",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": 30915463,
+  "icb_code_org_mentions": 359,
+  "name_icb": "QE1",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30915463,
+    "NHS Lancashire and South Cumbria Integrated Care Board",
+    359
+   ]
+  ]
+ },
+ {
+  "code": "11J",
+  "org": 31575718,
+  "name": "NHS Dorset Integrated Care Board",
+  "mentions": 3,
+  "ods_name": "NHS DORSET ICB - 11J",
+  "icb_now": "QVV",
+  "icb_history": [
+   [
+    "QVV",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QVV",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31571396,
+    "NHS Dorset Integrated Care Board",
+    157
+   ]
+  ]
+ },
+ {
+  "code": "15F",
+  "org": 31612327,
+  "name": "NHS West Yorkshire Integrated Care Board (Leeds Place)",
+  "mentions": 3,
+  "ods_name": "NHS WEST YORKSHIRE ICB - 15F",
+  "icb_now": "QWO",
+  "icb_history": [
+   [
+    "QWO",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QWO",
+  "name_overlap": 0.5,
+  "icb_survivor": [
+   [
+    30917022,
+    "NHS West Yorkshire Integrated Care Board",
+    591
+   ]
+  ]
+ },
+ {
+  "code": "70F",
+  "org": 31614401,
+  "name": "NHS Sussex ICB",
+  "mentions": 3,
+  "ods_name": "NHS SURREY AND SUSSEX ICB - 70F",
+  "icb_now": "S9B9J",
+  "icb_history": [
+   [
+    "QNX",
+    "2019-10-23",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "S9B9J",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": 30968686,
+  "icb_code_org_mentions": 45,
+  "name_icb": "QNX",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30917229,
+    "NHS Sussex Integrated Care Board",
+    344
+   ]
+  ]
+ },
+ {
+  "code": "W2U3Z",
+  "org": 31567224,
+  "name": "NHS North West London Integrated Care Board",
+  "mentions": 3,
+  "ods_name": "NHS WEST AND NORTH LONDON ICB - W2U3Z",
+  "icb_now": "Z9B2Z",
+  "icb_history": [
+   [
+    "QRV",
+    "2020-10-23",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "Z9B2Z",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": 31534689,
+  "icb_code_org_mentions": 4,
+  "name_icb": "Z9B2Z",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31534689,
+    "NHS West and North London Integrated Care Board",
+    4
+   ]
+  ]
+ },
+ {
+  "code": "02E",
+  "org": 31612258,
+  "name": "NHS Cheshire and Merseyside ICB",
+  "mentions": 2,
+  "ods_name": "NHS CHESHIRE AND MERSEYSIDE ICB - 02E",
+  "icb_now": "QYG",
+  "icb_history": [
+   [
+    "QYG",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QYG",
+  "name_overlap": 1.0,
+  "icb_survivor": []
+ },
+ {
+  "code": "06Q",
+  "org": 31625011,
+  "name": "NHS Mid & South Essex Integrated Care Board",
+  "mentions": 2,
+  "ods_name": "NHS ESSEX ICB - 06Q",
+  "icb_now": "D7T5G",
+  "icb_history": [
+   [
+    "QH8",
+    "2020-04-01",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "D7T5G",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": 31575964,
+  "icb_code_org_mentions": 25,
+  "name_icb": "QH8",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30915607,
+    "Mid and South Essex Integrated Care Board",
+    29
+   ]
+  ]
+ },
+ {
+  "code": "14J",
+  "org": 31604394,
+  "name": "NHS Greater Manchester Integrated Care Board",
+  "mentions": 2,
+  "ods_name": "GREATER MANCHESTER COMMISSIONING HUB",
+  "icb_now": null,
+  "icb_history": [],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": null,
+  "name_overlap": 0,
+  "icb_survivor": null
+ },
+ {
+  "code": "14N",
+  "org": 31620331,
+  "name": "NHS England Yorkshire & Humber",
+  "mentions": 2,
+  "ods_name": "YORKSHIRE AND HUMBER - H&J COMMISSIONING HUB",
+  "icb_now": null,
+  "icb_history": [],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": null,
+  "name_overlap": 0,
+  "icb_survivor": null
+ },
+ {
+  "code": "15M",
+  "org": 31606796,
+  "name": "NHS Derby and Derbyshire Integrated Care Board",
+  "mentions": 2,
+  "ods_name": "NHS DERBY AND DERBYSHIRE ICB - 15M",
+  "icb_now": "QJ2",
+  "icb_history": [
+   [
+    "QJ2",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": 31545866,
+  "icb_code_org_mentions": 25,
+  "name_icb": "QJ2",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31545866,
+    "NHS DERBY AND DERBYSHIRE INTEGRATED CARE BOARD",
+    25
+   ]
+  ]
+ },
+ {
+  "code": "42D",
+  "org": 31619860,
+  "name": "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+  "mentions": 2,
+  "ods_name": "NHS HUMBER AND NORTH YORKSHIRE ICB - 42D",
+  "icb_now": "QOQ",
+  "icb_history": [
+   [
+    "QOQ",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QOQ",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31573365,
+    "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+    331
+   ]
+  ]
+ },
+ {
+  "code": "78H",
+  "org": 31606157,
+  "name": "NHS Northamptonshire ICB",
+  "mentions": 2,
+  "ods_name": "NHS NORTHAMPTONSHIRE ICB - 78H",
+  "icb_now": "QPM",
+  "icb_history": [
+   [
+    "QPM",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QPM",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31542357,
+    "NHS Northamptonshire Integrated Care Board",
+    66
+   ]
+  ]
+ },
+ {
+  "code": "01H",
+  "org": 31604393,
+  "name": "NHS North East and North Cumbria Integrated Care Board",
+  "mentions": 1,
+  "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 01H",
+  "icb_now": "QHM",
+  "icb_history": [
+   [
+    "QHM",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QHM",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31556600,
+    "NHS North East and North Cumbria Integrated Care Board",
+    2395
+   ]
+  ]
+ },
+ {
+  "code": "02Y",
+  "org": 31570761,
+  "name": "NHS Humber and North Yorkshire Integrated Care Board",
+  "mentions": 1,
+  "ods_name": "NHS HUMBER AND NORTH YORKSHIRE ICB - 02Y",
+  "icb_now": "QOQ",
+  "icb_history": [
+   [
+    "QOQ",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QOQ",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31573365,
+    "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+    331
+   ]
+  ]
+ },
+ {
+  "code": "03Q",
+  "org": 30915681,
+  "name": "NHS England North East and Yorkshire",
+  "mentions": 1,
+  "ods_name": "NHS HUMBER AND NORTH YORKSHIRE ICB - 03Q",
+  "icb_now": "QOQ",
+  "icb_history": [
+   [
+    "QOQ",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QOQ",
+  "name_overlap": 0.4,
+  "icb_survivor": [
+   [
+    31573365,
+    "NHS Humber and North Yorkshire Integrated Care Board (ICB)",
+    331
+   ]
+  ]
+ },
+ {
+  "code": "04Y",
+  "org": 31649328,
+  "name": "NHS Shropshire, Telford and Wrekin Integrated Care Board",
+  "mentions": 1,
+  "ods_name": "NHS STAFFORDSHIRE AND STOKE-ON-TRENT ICB - 04Y",
+  "icb_now": "QNC",
+  "icb_history": [
+   [
+    "QNC",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QNC",
+  "name_overlap": 0.0,
+  "icb_survivor": [
+   [
+    30915109,
+    "NHS Staffordshire and Stoke-on-Trent Integrated Care Board",
+    253
+   ]
+  ]
+ },
+ {
+  "code": "05V",
+  "org": 31625518,
+  "name": "NHS Staffordshire and Stoke-on-Trent Integrated Care Board",
+  "mentions": 1,
+  "ods_name": "NHS STAFFORDSHIRE AND STOKE-ON-TRENT ICB - 05V",
+  "icb_now": "QNC",
+  "icb_history": [
+   [
+    "QNC",
+    "2020-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QNC",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30915109,
+    "NHS Staffordshire and Stoke-on-Trent Integrated Care Board",
+    253
+   ]
+  ]
+ },
+ {
+  "code": "06K",
+  "org": 31616626,
+  "name": "NHS Hertfordshire and West Essex Integrated Care Board",
+  "mentions": 1,
+  "ods_name": "NHS CENTRAL EAST ICB - 06K",
+  "icb_now": "S1Y5D",
+  "icb_history": [
+   [
+    "QM7",
+    "2020-04-01",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "S1Y5D",
+    "2026-04-01",
+    "2026-04-07",
+    "Inactive"
+   ],
+   [
+    "S1Y5D",
+    "2026-04-08",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QM7",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31602729,
+    "Hertfordshire and West Essex Integrated Care Board",
+    4
+   ]
+  ]
+ },
+ {
+  "code": "06N",
+  "org": 31631584,
+  "name": "Hertfordshire and West Essex Integrated Care Board",
+  "mentions": 1,
+  "ods_name": "NHS CENTRAL EAST ICB - 06N",
+  "icb_now": "S1Y5D",
+  "icb_history": [
+   [
+    "QM7",
+    "2020-04-01",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "S1Y5D",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QM7",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31602729,
+    "Hertfordshire and West Essex Integrated Care Board",
+    4
+   ]
+  ]
+ },
+ {
+  "code": "18C",
+  "org": 31575075,
+  "name": "NHS Herefordshire and Worcestershire Integrated Care Board",
+  "mentions": 1,
+  "ods_name": "NHS HEREFORDSHIRE AND WORCESTERSHIRE ICB - 18C",
+  "icb_now": "QGH",
+  "icb_history": [
+   [
+    "QGH",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QGH",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31542355,
+    "NHS Herefordshire and Worcestershire Integrated Care Board",
+    86
+   ]
+  ]
+ },
+ {
+  "code": "27D",
+  "org": 31605500,
+  "name": "NHS Cheshire and Merseyside ICB",
+  "mentions": 1,
+  "ods_name": "NHS CHESHIRE AND MERSEYSIDE ICB - 27D",
+  "icb_now": "QYG",
+  "icb_history": [
+   [
+    "QYG",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QYG",
+  "name_overlap": 1.0,
+  "icb_survivor": []
+ },
+ {
+  "code": "36J",
+  "org": 31587867,
+  "name": "NHS West Yorkshire Integrated Care Board (ICB)",
+  "mentions": 1,
+  "ods_name": "NHS WEST YORKSHIRE ICB - 36J",
+  "icb_now": "QWO",
+  "icb_history": [
+   [
+    "QWO",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QWO",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    30917022,
+    "NHS West Yorkshire Integrated Care Board",
+    591
+   ]
+  ]
+ },
+ {
+  "code": "84H",
+  "org": 31634553,
+  "name": "NHS North East and North Cumbria Integrated Care Boards",
+  "mentions": 1,
+  "ods_name": "NHS NORTH EAST AND NORTH CUMBRIA ICB - 84H",
+  "icb_now": "QHM",
+  "icb_history": [
+   [
+    "QHM",
+    "2019-10-23",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": null,
+  "icb_code_org_mentions": null,
+  "name_icb": "QHM",
+  "name_overlap": 0.75,
+  "icb_survivor": [
+   [
+    31556600,
+    "NHS North East and North Cumbria Integrated Care Board",
+    2395
+   ]
+  ]
+ },
+ {
+  "code": "92A",
+  "org": 31608314,
+  "name": "NHS Surrey Heartlands ICB",
+  "mentions": 1,
+  "ods_name": "NHS SURREY AND SUSSEX ICB - 92A",
+  "icb_now": "S9B9J",
+  "icb_history": [
+   [
+    "QXU",
+    "2019-10-23",
+    "2026-03-31",
+    "Inactive"
+   ],
+   [
+    "S9B9J",
+    "2026-04-01",
+    null,
+    "Active"
+   ]
+  ],
+  "icb_code_org": 30968686,
+  "icb_code_org_mentions": 45,
+  "name_icb": "QXU",
+  "name_overlap": 1.0,
+  "icb_survivor": [
+   [
+    31552079,
+    "NHS Surrey Heartlands Integrated Care Board",
+    244
+   ]
+  ]
+ }
+]

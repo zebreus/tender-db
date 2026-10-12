@@ -1,6 +1,7 @@
 # 519 — NHS sub-ICB location codes and typo ODS codes mint identities of their own, so one NHS body stands as several canonical orgs
 
-Status: needs-triage — filed 2026-10-11 from issue 513 unit 1 (`../513-nhs/u1/u1-results.md` §2, §4).
+Status: ready-for-agent — UNIT 1 MEASURED 2026-10-12 (`../519-nhs-digit-codes/unit1-results.md`). 2,057 GB-NHS identity orgs / 8,049 mentions were read with indexed seeks; the identity index serves the prefix, so the dry report was not needed. ODS records were fetched for all 1,733 off-table codes. Most are correct own-codes: GP practices, pharmacies, providers (1,527 / 2,668). The split class is A: sub-ICB locations, 52 orgs / 1,844 mentions. 39 of them (1,170 mentions) carry their parent ICB's name beside its standing 513 body, e.g. B2M3M Coventry and Warwickshire, 600. 13T (504) is the CSU, not the ICB. Parents are dated (the 2026-04 mergers). Also measured: trust sites (25 / 36), NHS England codes (24 / 383), foreign or junk values under the scheme (195 + 52 / 517), and typos (RF1, T6YOW, QHL15E). NEXT: the unit 2 decision. Option (a) is leading: extend 513's reviewed verdicts to RO98 / RO198 child codes via a frozen dated child map, plus 452 identifier verdicts for typos and foreign values. Do it before 469 U7.
+Was: needs-triage — filed 2026-10-11 from issue 513 unit 1 (`../513-nhs/u1/u1-results.md` §2, §4).
 Kind: data quality (organization identity)
 Relates to:
 - 513 (letter-only ODS codes; this is the digit-bearing half);
