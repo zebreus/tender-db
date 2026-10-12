@@ -1,6 +1,13 @@
 # 514 — spellings of one register number (label text, linked-charity suffixes) split one registry identity
 
-Status: ready-for-agent — UNIT 1 MEASURED 2026-10-11 (`../514-register-spellings/`: census plus skeptic, wf_0e6a29e9-c2e; 29 + 15 bounded indexed reads, 0 × 408). There are 36 in-scheme splits (73 orgs, 852 mentions): MPR 15, CHC 15, UKPRN 5, NIC 1, SC 0. 34 are name-confirmed and 1 is partial (1179472). The cross-prefix mass is much larger, mostly Companies House mirrors of FCA numbers (`GBCOHIP…`/`GBCOHRS…`): about 3.2k more mentions for MPR. NEXT: the unit-2 decision, i.e. a per-scheme canonical form, the name gate reading ALL of an org's names (not the head name), the cross-scheme Companies House mirror question, and a 345-style re-key. Design panel first.
+Status: ready-for-agent — UNIT 2 DECIDED 2026-10-12 (`../514-register-spellings/unit2-decision.md`; design panel wf_9e0f1ab7-2e7, 3 designs, 2 judges, synthesis; all 12 owner rulings adopted). MINIMAL is adopted: a live-normaliser rewrite of only the spellings that 469's REGISTRIES shape refuses, into shaped values.
+- Rewrite rules: UKPRN repeated token; CHC with 9 closed charity labels; NIC with 3 labels (spelling kept); MPR `IP`+5 digits+`R` and `REGNO`+R-number. The token, digits and R are never changed.
+- Repair: the 345 re-key, bound to its plan.
+- Merge: R2's E0, with a reviewed verdict on every group as the name gate.
+- Reach: 26 of 36 splits, 743 of 852 mentions, no trap literal touched.
+- Deferred: RS00NNNN → bare and IP0 (unit 3, with the Companies House mirror), generic CHC labels and compounds.
+NEXT: 'Measure first' (the E0 wall test; P0 on prod; register records for the 54 numbers; the review packet), then the build units in §7.
+Was: ready-for-agent — UNIT 1 MEASURED 2026-10-11 (`../514-register-spellings/`: census plus skeptic, wf_0e6a29e9-c2e; 29 + 15 bounded indexed reads, 0 × 408). There are 36 in-scheme splits (73 orgs, 852 mentions): MPR 15, CHC 15, UKPRN 5, NIC 1, SC 0. 34 are name-confirmed and 1 is partial (1179472). The cross-prefix mass is much larger, mostly Companies House mirrors of FCA numbers (`GBCOHIP…`/`GBCOHRS…`): about 3.2k more mentions for MPR. NEXT: the unit-2 decision, i.e. a per-scheme canonical form, the name gate reading ALL of an org's names (not the head name), the cross-scheme Companies House mirror question, and a 345-style re-key. Design panel first.
 Was: ready-for-agent — triaged 2026-10-11 with issue 469 U2/U3's evidence. NEXT: unit 1, measure the standing
 spelling pairs per scheme (two orgs holding two spellings of one register number).
 Was: needs-triage — filed 2026-10-11 from issue 469's unit-2 decision (decision 4: spelling repair stays out of the 469 arm).
