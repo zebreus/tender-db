@@ -1,0 +1,2785 @@
+[
+ {
+  "pub": "013127-2026",
+  "label": "G05 mover 31562679",
+  "sha256": "3d794ed600042feaf1ae92acb31d66e9c60d47b20d52cf27070484a8d84146e0",
+  "ocid": "ocds-h6vhtk-06533a",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2026-02-12T16:23:21Z",
+  "title": "Eating Disorders Service",
+  "buyer": "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+  "parties": [
+   {
+    "id": "GB-FTS-140442",
+    "name": "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     null,
+     null,
+     "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG31",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.bsmhft.nhs.uk",
+    "scale": null
+   },
+   {
+    "id": "GB-CHC-Registered Charity 1185092",
+    "name": "First Steps ED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "Registered Charity 1185092",
+     "First Steps ED"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Derby",
+     "UKF",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-FTS-123665",
+    "name": "BSMHFT",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "BSMHFT"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "013127-2026-1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "First Steps ED"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "036329-2026",
+  "label": "G05 twin",
+  "sha256": "d9e060411e71974d3f95c767c86a59762f03f8dbb7ae36b032736e8117d3b9dc",
+  "ocid": "ocds-h6vhtk-0687e3",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2026-04-21T17:10:33+01:00",
+  "title": "The Provision of a Children and Young Peoples' Mental Health Service (CYPMHS) Early Help Eating Disorder Service",
+  "buyer": "Hertfordshire County Council",
+  "parties": [
+   {
+    "id": "GB-FTS-141099",
+    "name": "Hertfordshire County Council",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     null,
+     null,
+     "Hertfordshire County Council"
+    ],
+    "additional": [],
+    "address": [
+     "County Hall",
+     "Hertford",
+     "UKH23",
+     "SG138DQ",
+     "United Kingdom"
+    ],
+    "web": "https://www.hertfordshire.gov.uk",
+    "scale": null
+   },
+   {
+    "id": "GB-CHC-1185092",
+    "name": "First Steps ED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "1185092",
+     "First Steps ED"
+    ],
+    "additional": [],
+    "address": [
+     "Woburn House, Vernongate,",
+     "Derby",
+     "UKF11",
+     "DE1 1UL",
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-FTS-114606",
+    "name": "Independent Choice and Procurement Panel",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "Independent Choice and Procurement Panel"
+    ],
+    "additional": [],
+    "address": [
+     "Wellington House",
+     "London",
+     null,
+     "SE1 8UG",
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "036329-2026-1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "First Steps ED"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "008610-2025",
+  "label": "G05 twin",
+  "sha256": "07cccc7f46f909e6e0be15c3be83dd37f3893a3d404129be5c530f6938881e2a",
+  "ocid": "ocds-h6vhtk-04eb3a",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2025-03-10T16:54:14Z",
+  "title": "Children's and Young Person's Community Eating Disorder Service",
+  "buyer": "NHS Leicester, Leicestershire and Rutland ICB",
+  "parties": [
+   {
+    "id": "GB-NHS-QK1",
+    "name": "NHS Leicester, Leicestershire and Rutland ICB",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-NHS",
+     "QK1",
+     "NHS Leicester, Leicestershire and Rutland ICB"
+    ],
+    "additional": [],
+    "address": [
+     "Room G30, Pen Lloyd Building, County Hall, Glenfield",
+     "Leicester",
+     "UKF",
+     "LE3 8TB",
+     "United Kingdom"
+    ],
+    "web": "https://leicesterleicestershireandrutland.icb.nhs.uk/",
+    "scale": null
+   },
+   {
+    "id": "GB-CHC-1185092",
+    "name": "First Steps ED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "1185092",
+     "First Steps ED"
+    ],
+    "additional": [],
+    "address": [
+     "Woburn House, Vernon Gate",
+     "Derby",
+     "UKF11",
+     "DE1 1UL",
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-FTS-138074",
+    "name": "NHS Leicester, Leicestershire and Rutland ICB",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "NHS Leicester, Leicestershire and Rutland ICB"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Leicester",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "008610-2025-1",
+    "title": "Children's and Young Person's Community Eating Disorder Service",
+    "status": "active",
+    "suppliers": [
+     "First Steps ED"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "035140-2024",
+  "label": "G05 twin",
+  "sha256": "92c43cf9b94f052ff40bab70dee8b2d0308c563a416079553f8bd9dff353beb1",
+  "ocid": "ocds-h6vhtk-04b27c",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2024-10-30T11:01:55Z",
+  "title": "First Steps Eating Disorder Enhanced Service",
+  "buyer": "NHS Leicester, Leicestershire & Rutland Integrated Care Board",
+  "parties": [
+   {
+    "id": "GB-NHS-QK1",
+    "name": "NHS Leicester, Leicestershire & Rutland Integrated Care Board",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-NHS",
+     "QK1",
+     "NHS Leicester, Leicestershire & Rutland Integrated Care Board"
+    ],
+    "additional": [],
+    "address": [
+     "County Hall, Glenfield, Leicester  LE3 8TB",
+     "Glenfield, Leicester",
+     "UKF21",
+     "LE3 8TB",
+     "United Kingdom"
+    ],
+    "web": "https://leicesterleicestershireandrutland.icb.nhs.uk/",
+    "scale": null
+   },
+   {
+    "id": "GB-CHC-1185092",
+    "name": "First Steps Eating Disorder (ED)",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "1185092",
+     "First Steps Eating Disorder (ED)"
+    ],
+    "additional": [],
+    "address": [
+     "Woburn House, Vernon Gate",
+     "Derby",
+     "UKF11",
+     "DE1 1UL",
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-FTS-128663",
+    "name": "NHS Leicester, Leicestershire & Rutland Integrated Care Board",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "NHS Leicester, Leicestershire & Rutland Integrated Care Board"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "County Hall, Glenfield, Leicester  LE3 8TB",
+     null,
+     "LE3 8TB",
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "035140-2024-ED/QK1/2024-25-1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "First Steps Eating Disorder (ED)"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "003935-2025",
+  "label": "G11 mover",
+  "sha256": "38f43cce8c07e36c214a7562b2f7d372818f51f958b09bf7d03f425f0d82ed0d",
+  "ocid": "ocds-h6vhtk-04a49b",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2025-02-06T11:39:26Z",
+  "title": "B2G MWX: Minor Works and all associated works, supplies and services",
+  "buyer": "GOLD HILL HA (B2G)",
+  "parties": [
+   {
+    "id": "GB-MPR-IP17437R",
+    "name": "GOLD HILL HA (B2G)",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP17437R",
+     "GOLD HILL HA (B2G)"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "GERRARDS CROSS",
+     "UK",
+     "SL9 9RF",
+     "United Kingdom"
+    ],
+    "web": "https://www.b2g.services",
+    "scale": null
+   },
+   {
+    "id": "GB-COH-2529333",
+    "name": "Aspect Group Services Limited",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "2529333",
+     "Aspect Group Services Limited"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Wymondham",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-5426784",
+    "name": "BPM Contracting Services Ltd",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "5426784",
+     "BPM Contracting Services Ltd"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Bath",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-5771179",
+    "name": "Ensigna Construction Ltd",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "5771179",
+     "Ensigna Construction Ltd"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Bromley",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-5392794",
+    "name": "Etec Contract Services Ltd",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "5392794",
+     "Etec Contract Services Ltd"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "South Woodford",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-4638969",
+    "name": "Fortem Solutions Limited",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "4638969",
+     "Fortem Solutions Limited"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Letchworth Garden City",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-COH-1371473",
+    "name": "M & J Group (Construction & Roofing) Ltd",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "1371473",
+     "M & J Group (Construction & Roofing) Ltd"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Bedford",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-COH-11726156",
+    "name": "Maguire Bros Limited",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "11726156",
+     "Maguire Bros Limited"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Surbiton",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-04296835",
+    "name": "R. Benson Property Maintenance Ltd",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "04296835",
+     "R. Benson Property Maintenance Ltd"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Chesham",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-8534898",
+    "name": "Re-Gen (UK) Construction Limited",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "8534898",
+     "Re-Gen (UK) Construction Limited"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Billericay",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-1977118",
+    "name": "Saltash Enterprises Ltd",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "1977118",
+     "Saltash Enterprises Ltd"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "London",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-FTS-69064",
+    "name": "THE HIGH COURT",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "THE HIGH COURT"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "LONDON",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "003935-2025-1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "Aspect Group Services Limited",
+     "BPM Contracting Services Ltd",
+     "Ensigna Construction Ltd",
+     "Etec Contract Services Ltd",
+     "Fortem Solutions Limited",
+     "M & J Group (Construction & Roofing) Ltd",
+     "Maguire Bros Limited",
+     "R. Benson Property Maintenance Ltd",
+     "Re-Gen (UK) Construction Limited",
+     "Saltash Enterprises Ltd"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "031367-2024",
+  "label": "G11 mover (Gold Hill Care)",
+  "sha256": "5d7782282a035000654b0b1aca822141db3239bdef6cbebcc79ebf86575d329c",
+  "ocid": "ocds-h6vhtk-04a49b",
+  "tag": [
+   "planning"
+  ],
+  "date": "2024-10-01T13:51:52+01:00",
+  "title": "B2G MWX: Minor Works and all associated works, supplies and services",
+  "buyer": "Gold Hill Care (B2G)",
+  "parties": [
+   {
+    "id": "GB-MPR-IP17437R",
+    "name": "Gold Hill Care (B2G)",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP17437R",
+     "Gold Hill Care (B2G)"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Gerrards Cross",
+     "UK",
+     "SL9 9RF",
+     "United Kingdom"
+    ],
+    "web": "http://www.b2g.services",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "007930-2024",
+  "label": "G11 mover",
+  "sha256": "a200170263c7460a03a5693b764a9ddf2fa6544a9f3a20cf067f2c3f2d716ef5",
+  "ocid": "ocds-h6vhtk-0447e9",
+  "tag": [
+   "planning"
+  ],
+  "date": "2024-03-12T18:14:22Z",
+  "title": "B2G Pitched and Solar Roofing solutions and all associated works, goods and services",
+  "buyer": "Gold Hill HA",
+  "parties": [
+   {
+    "id": "GB-MPR-IP17437R",
+    "name": "Gold Hill HA",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP17437R",
+     "Gold Hill HA"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "GERRARDS CROSS",
+     "UKJ13",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.b2g.services",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "012930-2024",
+  "label": "G11 mover",
+  "sha256": "5b0292d926cad9eb2207583eab7c210c430ff6ed740a71f3935935517778719c",
+  "ocid": "ocds-h6vhtk-0447e9",
+  "tag": [
+   "tender"
+  ],
+  "date": "2024-04-22T12:15:27+01:00",
+  "title": "B2G Pitched and Solar Roofing solutions and all associated works, goods and services",
+  "buyer": "Gold Hill HA",
+  "parties": [
+   {
+    "id": "GB-MPR-IP17437R",
+    "name": "Gold Hill HA",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP17437R",
+     "Gold Hill HA"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "GERRARDS CROSS",
+     "UKJ13",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.b2g.services",
+    "scale": null
+   },
+   {
+    "id": "GB-FTS-69064",
+    "name": "THE HIGH COURT",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "THE HIGH COURT"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "LONDON",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "007144-2023",
+  "label": "G11 mover",
+  "sha256": "6777e1d0e279bb60db854a7f22d3106eb12effcc3ad4a1de219e52177c962ecd",
+  "ocid": "ocds-h6vhtk-035994",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2023-03-10T17:33:05Z",
+  "title": "B2G Framework: Flat roofing full systems and all associated works, supplies and services",
+  "buyer": "Gold Hill HA",
+  "parties": [
+   {
+    "id": "GB-MPR-IP17437R",
+    "name": "Gold Hill HA",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP17437R",
+     "Gold Hill HA"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Gerrards Cross",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.b2g.services",
+    "scale": null
+   },
+   {
+    "id": "GB-COH-2992960",
+    "name": "Alumasc Building Products Ltd",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "2992960",
+     "Alumasc Building Products Ltd"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "St Helens",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.alumascroofing.com/",
+    "scale": "large"
+   },
+   {
+    "id": "GB-COH-1900160",
+    "name": "ICB (Waterproofing) Ltd",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "1900160",
+     "ICB (Waterproofing) Ltd"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Poole",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.icb.uk.com/",
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-2678296",
+    "name": "IKO PLC",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "2678296",
+     "IKO PLC"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Wigan",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": "https://www.ikogroup.co.uk",
+    "scale": "large"
+   },
+   {
+    "id": "GB-COH-3727617",
+    "name": "Langley Waterproofing Systems Limited",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "3727617",
+     "Langley Waterproofing Systems Limited"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Daventry",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.langley.co.uk",
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-2081046",
+    "name": "Triflex (UK) Ltd",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "2081046",
+     "Triflex (UK) Ltd"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Stone",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.triflex.co.uk",
+    "scale": "sme"
+   },
+   {
+    "id": "GB-FTS-41681",
+    "name": "The Supreme Court",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "The Supreme Court"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "London",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "007144-2023-1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "Alumasc Building Products Ltd",
+     "ICB (Waterproofing) Ltd",
+     "IKO PLC",
+     "Langley Waterproofing Systems Limited",
+     "Triflex (UK) Ltd"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "022147-2024",
+  "label": "G11 mover",
+  "sha256": "d43a83ded0e1c6e475d80c30738f1c5ba04dee36b0550a685eb0d092423702ad",
+  "ocid": "ocds-h6vhtk-0447e9",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2024-07-18T00:32:36+01:00",
+  "title": "B2G Pitched and Solar Roofing solutions and all associated works, goods and services",
+  "buyer": "GOLD HILL HA",
+  "parties": [
+   {
+    "id": "GB-MPR-IP17437R",
+    "name": "GOLD HILL HA",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP17437R",
+     "GOLD HILL HA"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "GERRARDS CROSS",
+     "UK",
+     "SL99EB",
+     "United Kingdom"
+    ],
+    "web": "http://www.b2g.services",
+    "scale": null
+   },
+   {
+    "id": "GB-COH-10179644",
+    "name": "ASHE ROOFING LIMITED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "10179644",
+     "ASHE ROOFING LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "HITCHIN",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-3985694",
+    "name": "BBR ROOFING LIMITED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "3985694",
+     "BBR ROOFING LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "BOOTLE",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-782931",
+    "name": "BREYER GROUP PLC",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "782931",
+     "BREYER GROUP PLC"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "ROMFORD",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-COH-06528721",
+    "name": "CAMBRIDGE FLAT ROOFING COMPANY LIMITED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "06528721",
+     "CAMBRIDGE FLAT ROOFING COMPANY LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "ELY",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-03746288",
+    "name": "CENTRAL ROOFING AND BUILDING SERVICES LIMITED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "03746288",
+     "CENTRAL ROOFING AND BUILDING SERVICES LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "HEREFORD",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-02650749",
+    "name": "DLP SERVICES (NORTHERN) LIMITED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "02650749",
+     "DLP SERVICES (NORTHERN) LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "SALFORD",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-00846751",
+    "name": "A.& E.ELKINS LIMITED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "00846751",
+     "A.& E.ELKINS LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "LONDON",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-10349320",
+    "name": "HIGHVIEW ROOFING AND EXTERNALS LTD",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "10349320",
+     "HIGHVIEW ROOFING AND EXTERNALS LTD"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "BILLERICAY",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-01633007",
+    "name": "JOHN FLOWERS LIMITED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "01633007",
+     "JOHN FLOWERS LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "WASHINGTON",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-04563382",
+    "name": "KINGSLEY ROOFING (SOUTHERN) LTD",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "04563382",
+     "KINGSLEY ROOFING (SOUTHERN) LTD"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "FERRING",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-01371473",
+    "name": "M & J GROUP (CONSTRUCTION & ROOFING) LTD",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "01371473",
+     "M & J GROUP (CONSTRUCTION & ROOFING) LTD"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "BEDFORD",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-12560828",
+    "name": "MILESTONE SOUTH EAST LIMITED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "12560828",
+     "MILESTONE SOUTH EAST LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "BARNET",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-12437855",
+    "name": "SAMUEL MOORE ROOFING LTD",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "12437855",
+     "SAMUEL MOORE ROOFING LTD"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "REDCAR",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-11206086",
+    "name": "STOIC ROOFING AND CONSTRUCTION LIMITED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "11206086",
+     "STOIC ROOFING AND CONSTRUCTION LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "OLNEY",
+     "UK",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-FTS-69064",
+    "name": "THE HIGH COURT",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "THE HIGH COURT"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "LONDON",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "022147-2024-1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "ASHE ROOFING LIMITED",
+     "BBR ROOFING LIMITED",
+     "BREYER GROUP PLC",
+     "CAMBRIDGE FLAT ROOFING COMPANY LIMITED",
+     "CENTRAL ROOFING AND BUILDING SERVICES LIMITED",
+     "DLP SERVICES (NORTHERN) LIMITED",
+     "A.& E.ELKINS LIMITED",
+     "HIGHVIEW ROOFING AND EXTERNALS LTD",
+     "JOHN FLOWERS LIMITED",
+     "KINGSLEY ROOFING (SOUTHERN) LTD",
+     "M & J GROUP (CONSTRUCTION & ROOFING) LTD",
+     "MILESTONE SOUTH EAST LIMITED",
+     "SAMUEL MOORE ROOFING LTD",
+     "STOIC ROOFING AND CONSTRUCTION LIMITED"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "036345-2024",
+  "label": "G11 mover",
+  "sha256": "56063868ce77f931e4a4aae20eb10b901daa418c975d56b86eac87e076639daa",
+  "ocid": "ocds-h6vhtk-04a49b",
+  "tag": [
+   "tender"
+  ],
+  "date": "2024-11-11T08:08:30Z",
+  "title": "B2G MWX: Minor Works and all associated works, supplies and services",
+  "buyer": "Gold Hill HA (B2G)",
+  "parties": [
+   {
+    "id": "GB-MPR-IP17437R",
+    "name": "Gold Hill HA (B2G)",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP17437R",
+     "Gold Hill HA (B2G)"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "GERRARDS CROSS",
+     "UKJ13",
+     "SL9 9RF",
+     "United Kingdom"
+    ],
+    "web": "https://www.b2g.services",
+    "scale": null
+   },
+   {
+    "id": "GB-FTS-69064",
+    "name": "THE HIGH COURT",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "THE HIGH COURT"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "LONDON",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "021648-2022",
+  "label": "G11 twin",
+  "sha256": "022e6172458948dbed46bc6d8fdafbb33ddbfb72c49566ab01033231ebce6fe0",
+  "ocid": "ocds-h6vhtk-035994",
+  "tag": [
+   "planning"
+  ],
+  "date": "2022-08-08T07:49:57+01:00",
+  "title": "B2G Framework: Flat Roofing Systems and all associated works, supplies and services",
+  "buyer": "Gold Hill HA",
+  "parties": [
+   {
+    "id": "GB-MPR-17437 R",
+    "name": "Gold Hill HA",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "17437 R",
+     "Gold Hill HA"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "CHALFONT ST PETER",
+     "UKJ13",
+     "SL9 9DF",
+     "United Kingdom"
+    ],
+    "web": "http://www.b2g.services",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "033096-2022",
+  "label": "G11 twin",
+  "sha256": "2a7706751bc6ef273791ede32375733b7c9981708096c8e59699e7246219318d",
+  "ocid": "ocds-h6vhtk-035994",
+  "tag": [
+   "tender"
+  ],
+  "date": "2022-11-22T15:23:13Z",
+  "title": "B2G Framework: Flat roofing full systems and all associated works, supplies and services",
+  "buyer": "Gold Hill HA",
+  "parties": [
+   {
+    "id": "GB-MPR-17437R",
+    "name": "Gold Hill HA",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "17437R",
+     "Gold Hill HA"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Gerrards Cross",
+     "UKJ13",
+     "SL9 9RF",
+     "United Kingdom"
+    ],
+    "web": "http://www.b2g.services",
+    "scale": null
+   },
+   {
+    "id": "GB-FTS-69064",
+    "name": "THE HIGH COURT",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "THE HIGH COURT"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "LONDON",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "033097-2022",
+  "label": "G11 twin",
+  "sha256": "8e7453cc5ae95cf92a1ffa1cb43faf39b8d4638f6f4c5df0d3d393c269eaf24b",
+  "ocid": "ocds-h6vhtk-038758",
+  "tag": [
+   "tender"
+  ],
+  "date": "2022-11-22T15:23:28Z",
+  "title": "B2G DPS - Construction and RMI works, supplies and services",
+  "buyer": "Gold Hill HA",
+  "parties": [
+   {
+    "id": "GB-MPR-17437 R",
+    "name": "Gold Hill HA",
+    "roles": [
+     "buyer",
+     "centralPurchasingBody"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "17437 R",
+     "Gold Hill HA"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Gerrards Cross",
+     "UKJ13",
+     "SL9 9RF",
+     "United Kingdom"
+    ],
+    "web": "http://www.b2g.services",
+    "scale": null
+   },
+   {
+    "id": "GB-FTS-69064",
+    "name": "THE HIGH COURT",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "THE HIGH COURT"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "LONDON",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "013844-2025",
+  "label": "G17 mover",
+  "sha256": "ef0c3ee5bfbd4d81b986a7ec3a186a01401109dce29f1c5bb086439b7b37f038",
+  "ocid": "ocds-h6vhtk-04ff51",
+  "tag": [
+   "tenderUpdate"
+  ],
+  "date": "2025-04-09T09:47:15+01:00",
+  "title": "Dynamic Purchasing System for Building Safety and Security Systems Reference number: 3205 - 2020",
+  "buyer": "CLARION HOUSING GROUP LIMITED",
+  "parties": [
+   {
+    "id": "GB-MPR-IP28038R",
+    "name": "CLARION HOUSING GROUP LIMITED",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP28038R",
+     "CLARION HOUSING GROUP LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     "5th Floor Greater London House Hampstead Road",
+     "London",
+     "UKI31",
+     "NW17QX",
+     "United Kingdom"
+    ],
+    "web": "https://www.clarionhg.com/",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "013851-2025",
+  "label": "G17 mover",
+  "sha256": "c917731d5ffd51a947b72088f191dc7fa2ff7398b9f9ab1bcad29f6f5c495e38",
+  "ocid": "ocds-h6vhtk-04ff56",
+  "tag": [
+   "tenderUpdate"
+  ],
+  "date": "2025-04-09T09:56:02+01:00",
+  "title": "DPS for Asset Management Survey and Consultancy Reference number: 6119",
+  "buyer": "CLARION HOUSING GROUP LIMITED",
+  "parties": [
+   {
+    "id": "GB-MPR-IP28038R",
+    "name": "CLARION HOUSING GROUP LIMITED",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP28038R",
+     "CLARION HOUSING GROUP LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     "5th Floor Greater London House Hampstead Road",
+     "London",
+     "UKI31",
+     "NW17QX",
+     "United Kingdom"
+    ],
+    "web": "https://www.clarionhg.com/",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "013856-2025",
+  "label": "G17 mover",
+  "sha256": "e1817e9338d32f6c34d3e32a9ad079d630be35c94e6d242cfb150f646116f5ee",
+  "ocid": "ocds-h6vhtk-04ff59",
+  "tag": [
+   "tenderUpdate"
+  ],
+  "date": "2025-04-09T10:04:49+01:00",
+  "title": "Dynamic Purchasing System for Cladding Replacement and Remedial Works",
+  "buyer": "CLARION HOUSING GROUP LIMITED",
+  "parties": [
+   {
+    "id": "GB-MPR-IP28038R",
+    "name": "CLARION HOUSING GROUP LIMITED",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP28038R",
+     "CLARION HOUSING GROUP LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     "5th Floor Greater London House Hampstead Road",
+     "London",
+     "UKI31",
+     "NW17QX",
+     "United Kingdom"
+    ],
+    "web": "https://www.clarionhg.com/",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "015012-2025",
+  "label": "G17 mover",
+  "sha256": "65ce4813c40b43e47d16ad6aeaec605e8d0d0a05e93b703e5ad70503d7bc00c6",
+  "ocid": "ocds-h6vhtk-02d75b",
+  "tag": [
+   "tenderUpdate"
+  ],
+  "date": "2025-04-14T14:56:40+01:00",
+  "title": "DPS for Creative and Marketing services",
+  "buyer": "Clarion Housing Group",
+  "parties": [
+   {
+    "id": "GB-MPR-IP28038R",
+    "name": "Clarion Housing Group",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP28038R",
+     "Clarion Housing Group"
+    ],
+    "additional": [],
+    "address": [
+     "Level 6, 6 More London Place, Tooley Street",
+     "London",
+     "UK",
+     "SE1 2DA",
+     "United Kingdom"
+    ],
+    "web": "https://www.clarionhg.com",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "015014-2025",
+  "label": "G17 mover",
+  "sha256": "e8686b8fa89f4e6ce976f871253b259f90154d0d76eb4d89439f4377e68b7c30",
+  "ocid": "ocds-h6vhtk-02b9fc",
+  "tag": [
+   "tenderUpdate"
+  ],
+  "date": "2025-04-14T15:00:03+01:00",
+  "title": "Fire Risk Assessments",
+  "buyer": "Clarion Housing Group",
+  "parties": [
+   {
+    "id": "GB-MPR-IP28038R",
+    "name": "Clarion Housing Group",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP28038R",
+     "Clarion Housing Group"
+    ],
+    "additional": [],
+    "address": [
+     "Level 6, 6 More London Place",
+     "London",
+     "UK",
+     "SE1 2DA",
+     "United Kingdom"
+    ],
+    "web": "https://www.clarionhg.com/",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "015018-2025",
+  "label": "G17 mover",
+  "sha256": "b613e8d957d155e720b308e80be6f9fe7033fefec83f11411f173888cf3701e6",
+  "ocid": "ocds-h6vhtk-02eaf4",
+  "tag": [
+   "tenderUpdate"
+  ],
+  "date": "2025-04-14T15:02:05+01:00",
+  "title": "Dynamic Purchasing System for Building Safety and Security Systems - Additional Lots",
+  "buyer": "Clarion Housing Group",
+  "parties": [
+   {
+    "id": "GB-MPR-IP28038R",
+    "name": "Clarion Housing Group",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP28038R",
+     "Clarion Housing Group"
+    ],
+    "additional": [],
+    "address": [
+     "Level 6, 6 More London Place, Tooley Street",
+     "London",
+     "UK",
+     "SE1 2DA",
+     "United Kingdom"
+    ],
+    "web": "https://www.clarionhg.com",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "016696-2023",
+  "label": "G23 mover",
+  "sha256": "bdfe09f12b41af7807be5e0e03205499bf1966833e5c713c5ab79547df232d3b",
+  "ocid": "ocds-h6vhtk-02cee0",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2023-06-13T12:05:11+01:00",
+  "title": "Financial Trading",
+  "buyer": "Sheffield Hallam University",
+  "parties": [
+   {
+    "id": "GB-UKPRN-UKPRN: 10005790",
+    "name": "Sheffield Hallam University",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-UKPRN",
+     "UKPRN: 10005790",
+     "Sheffield Hallam University"
+    ],
+    "additional": [],
+    "address": [
+     "City Campus,Howard Street",
+     "SHEFFIELD",
+     "UKE32",
+     "S11WB",
+     "United Kingdom"
+    ],
+    "web": "http://www.shu.ac.uk",
+    "scale": null
+   },
+   {
+    "id": "GB-COH-09545988",
+    "name": "Zishi Cornerstone Limited",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "09545988",
+     "Zishi Cornerstone Limited"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Kent",
+     "UKJ4",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.thezishi.com",
+    "scale": "large"
+   },
+   {
+    "id": "GB-FTS-10248",
+    "name": "Sheffield Hallam University",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "Sheffield Hallam University"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Sheffield",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.shu.ac.uk",
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "016696-2023-1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "Zishi Cornerstone Limited"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "034344-2024",
+  "label": "L03",
+  "sha256": "c995c856334dfb08fce3e3539904cc7f33849dfd3b0a188883b915d3e79a7900",
+  "ocid": "ocds-h6vhtk-04b099",
+  "tag": [
+   "tender"
+  ],
+  "date": "2024-10-23T15:45:52+01:00",
+  "title": "Mount Zion Apostolic Church - Main Contractor SQ",
+  "buyer": "Mount Zion Apostolic Church",
+  "parties": [
+   {
+    "id": "GB-CHC-Charity number: 1068106",
+    "name": "Mount Zion Apostolic Church",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "Charity number: 1068106",
+     "Mount Zion Apostolic Church"
+    ],
+    "additional": [],
+    "address": [
+     "Mount Zion Apostolic Church, Churchfield Lane",
+     "Nottingham",
+     "UKF14",
+     "NG7 5QS",
+     "United Kingdom"
+    ],
+    "web": "https://pulseassociateslimited.sharepoint.com/:f:/s/MountZionApostolicChurch-SQ/Etv7s_4WIPRIklDGqE-f9ZAB7l_dvLR5Sm_V4_yA5f5H_A?e=jIGm1e",
+    "scale": null
+   },
+   {
+    "id": "GB-FTS-128026",
+    "name": "Mount Zion Apostolic Church",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "Mount Zion Apostolic Church"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Nottingham",
+     null,
+     "NG7 5QS",
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "009304-2025",
+  "label": "L09",
+  "sha256": "5d51fc0122572b831458ae81e7be64f10a2a8d5c6b38e4b82eff390153e58b4c",
+  "ocid": "ocds-h6vhtk-04ecf5",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2025-03-13T16:09:44Z",
+  "title": "Provision of spiritual care counselling",
+  "buyer": "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+  "parties": [
+   {
+    "id": "GB-FTS-140442",
+    "name": "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     null,
+     null,
+     "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG31",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.bsmhft.nhs.uk",
+    "scale": null
+   },
+   {
+    "id": "GB-CHC-Registered Charity 1133510",
+    "name": "Karis Neighbourhood Scheme",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "Registered Charity 1133510",
+     "Karis Neighbourhood Scheme"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-FTS-123665",
+    "name": "BSMHFT",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "BSMHFT"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "009304-2025-1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "Karis Neighbourhood Scheme"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "013001-2026",
+  "label": "L15",
+  "sha256": "9481981481fe46e9f7107fc0a2e40b20b5e40df4376188791a2b84b40ce96795",
+  "ocid": "ocds-h6vhtk-0652e8",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2026-02-12T14:59:30Z",
+  "title": "Outcome from the invitation to submit bids for Priorities of the Learning Disability and Autism Transformation Group",
+  "buyer": "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+  "parties": [
+   {
+    "id": "GB-FTS-140442",
+    "name": "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     null,
+     null,
+     "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG31",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.bsmhft.nhs.uk",
+    "scale": null
+   },
+   {
+    "id": "GB-CHC-Company no: 7945421",
+    "name": "Solihull Action Through Advocacy",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "Company no: 7945421",
+     "Solihull Action Through Advocacy"
+    ],
+    "additional": [],
+    "address": [
+     "11-13 Land Lane",
+     "Marston Green",
+     "UKG3",
+     "B37 7DE",
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-COH-Company Registration Number 14350512",
+    "name": "Ways For Wellbeing",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "Company Registration Number 14350512",
+     "Ways For Wellbeing"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG3",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "sme"
+   },
+   {
+    "id": "GB-CHC-Registered Charity No. 1072258",
+    "name": "Birmingham Irish Association",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "Registered Charity No. 1072258",
+     "Birmingham Irish Association"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG3",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-COH-Company number 16061795",
+    "name": "Flourish Community Health Collaborative CIC",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "Company number 16061795",
+     "Flourish Community Health Collaborative CIC"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG3",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-COH-Company number 09700274",
+    "name": "BFB Labs",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "Company number 09700274",
+     "BFB Labs"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "London",
+     "UKG",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-CHC-Registered Charity Number 517077",
+    "name": "Autism West Midlands",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "Registered Charity Number 517077",
+     "Autism West Midlands"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG3",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-COH-Company number 11868613",
+    "name": "Ordinary Magic CIC",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "Company number 11868613",
+     "Ordinary Magic CIC"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Shirley",
+     "UKG3",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-CHC-Registered charity no. 1034581",
+    "name": "Birmingham Disability Resource Centre",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "Registered charity no. 1034581",
+     "Birmingham Disability Resource Centre"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG3",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-CHC-Charity number: 1179683",
+    "name": "Seven Up Charity",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "Charity number: 1179683",
+     "Seven Up Charity"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG3",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-CHC-Registered Charity No. 1104951",
+    "name": "St Andrews Healthcare",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "Registered Charity No. 1104951",
+     "St Andrews Healthcare"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG3",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-FTS-123665",
+    "name": "BSMHFT",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "BSMHFT"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "013001-2026-1",
+    "title": "Green Offer Collaborative",
+    "status": "active",
+    "suppliers": [
+     "Solihull Action Through Advocacy"
+    ],
+    "value": null
+   },
+   {
+    "id": "013001-2026-2",
+    "title": "Ways for Wellbeing",
+    "status": "active",
+    "suppliers": [
+     "Ways For Wellbeing"
+    ],
+    "value": null
+   },
+   {
+    "id": "013001-2026-3",
+    "title": "Communitas",
+    "status": "active",
+    "suppliers": [
+     "Birmingham Irish Association"
+    ],
+    "value": null
+   },
+   {
+    "id": "013001-2026-4",
+    "title": "Road Maps",
+    "status": "active",
+    "suppliers": [
+     "Flourish Community Health Collaborative CIC"
+    ],
+    "value": null
+   },
+   {
+    "id": "013001-2026-5",
+    "title": "Lumi Nova",
+    "status": "active",
+    "suppliers": [
+     "BFB Labs"
+    ],
+    "value": null
+   },
+   {
+    "id": "013001-2026-6",
+    "title": "Learning Disability Keyworking",
+    "status": "active",
+    "suppliers": [
+     "Autism West Midlands"
+    ],
+    "value": null
+   },
+   {
+    "id": "013001-2026-7",
+    "title": "Ordinary Magic",
+    "status": "active",
+    "suppliers": [
+     "Ordinary Magic CIC"
+    ],
+    "value": null
+   },
+   {
+    "id": "013001-2026-8",
+    "title": "Learning Disability Menopause",
+    "status": "active",
+    "suppliers": [
+     "Birmingham Disability Resource Centre"
+    ],
+    "value": null
+   },
+   {
+    "id": "013001-2026-9",
+    "title": "Seven Up",
+    "status": "active",
+    "suppliers": [
+     "Seven Up Charity"
+    ],
+    "value": null
+   },
+   {
+    "id": "013001-2026-10",
+    "title": "Adult Autism Waiting List Initiative",
+    "status": "active",
+    "suppliers": [
+     "St Andrews Healthcare"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "008954-2025",
+  "label": "L15",
+  "sha256": "486a77c65d6370cb2ecfe79fe467e140cdb7e6b59e95f75b97631f99819b9ba8",
+  "ocid": "ocds-h6vhtk-04ec12",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2025-03-12T12:17:45Z",
+  "title": "Provision of CYP support services",
+  "buyer": "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+  "parties": [
+   {
+    "id": "GB-FTS-140442",
+    "name": "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     null,
+     null,
+     "BIRMINGHAM & SOLIHULL MENTAL HEALTH NHS FOUNDATION TRUST"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG31",
+     null,
+     "United Kingdom"
+    ],
+    "web": "http://www.bsmhft.nhs.uk",
+    "scale": null
+   },
+   {
+    "id": "GB-CHC-Registered Charity Number 517077",
+    "name": "Autism West Midlands",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-CHC",
+     "Registered Charity Number 517077",
+     "Autism West Midlands"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     "UKG",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-FTS-123665",
+    "name": "BSMHFT",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "BSMHFT"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Birmingham",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "008954-2025-1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "Autism West Midlands"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "015430-2024",
+  "label": "L21",
+  "sha256": "0abb3ab59eb125f32f425856f29b2121e3a55ff01dec07dbd2a49029debe4ea8",
+  "ocid": "ocds-h6vhtk-0459bd",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2024-05-15T12:24:11+01:00",
+  "title": "Replacement Stairlifts - East",
+  "buyer": "ACCENT HOUSING LIMITED",
+  "parties": [
+   {
+    "id": "GB-MPR-IP19229R",
+    "name": "ACCENT HOUSING LIMITED",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-MPR",
+     "IP19229R",
+     "ACCENT HOUSING LIMITED"
+    ],
+    "additional": [],
+    "address": [
+     "Charlestown House,Acorn Park Industrial Estate, Charlestown",
+     "SHIPLEY",
+     "UKE41",
+     "BD1  4AS",
+     "United Kingdom"
+    ],
+    "web": "https://www.accentgroup.org/",
+    "scale": null
+   },
+   {
+    "id": "GB-COH-07445476",
+    "name": "Norse Eastern Limited",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "07445476",
+     "Norse Eastern Limited"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "Norfolk",
+     "UKH",
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": "large"
+   },
+   {
+    "id": "GB-FTS-92",
+    "name": "Royal Courts of Justice",
+    "roles": [
+     "reviewBody"
+    ],
+    "identifier": [
+     null,
+     null,
+     "Royal Courts of Justice"
+    ],
+    "additional": [],
+    "address": [
+     null,
+     "London",
+     null,
+     null,
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   }
+  ],
+  "awards": [
+   {
+    "id": "015430-2024-1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "Norse Eastern Limited"
+    ],
+    "value": null
+   }
+  ]
+ },
+ {
+  "pub": "037757-2026",
+  "label": "L27",
+  "sha256": "bacecf01339c17d4c707fd2eb6e2d7ab37d3391bb9726093b32e9406289edbac",
+  "ocid": "ocds-h6vhtk-068b0a",
+  "tag": [
+   "tender"
+  ],
+  "date": "2026-04-24T16:47:23+01:00",
+  "title": "Finance system software including installation and ongoing support and maintenance",
+  "buyer": "WARRINGTON & VALE ROYAL COLLEGE",
+  "parties": [
+   {
+    "id": "GB-UKPRN-UKPRN 10007339",
+    "name": "WARRINGTON & VALE ROYAL COLLEGE",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-UKPRN",
+     "UKPRN 10007339",
+     null
+    ],
+    "additional": [
+     [
+      "GB-PPON",
+      "PWJY-2846-LPTY"
+     ]
+    ],
+    "address": [
+     "Warrington & Vale Royal College Winwick Road",
+     "Warrington",
+     "UKD61",
+     "WA2 8QA",
+     "United Kingdom"
+    ],
+    "web": "http://www.wvr.ac.uk",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "042181-2026",
+  "label": "L27",
+  "sha256": "00dd7b67bdc3283a8f199bf168eb5b79b9390c215aa52c7d05659cabaf57a2e4",
+  "ocid": "ocds-h6vhtk-068b0a",
+  "tag": [
+   "tenderUpdate"
+  ],
+  "date": "2026-05-07T17:31:44+01:00",
+  "title": "Finance system software including installation and ongoing support and maintenance",
+  "buyer": "WARRINGTON & VALE ROYAL COLLEGE",
+  "parties": [
+   {
+    "id": "GB-UKPRN-UKPRN 10007339",
+    "name": "WARRINGTON & VALE ROYAL COLLEGE",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-UKPRN",
+     "UKPRN 10007339",
+     null
+    ],
+    "additional": [
+     [
+      "GB-PPON",
+      "PWJY-2846-LPTY"
+     ]
+    ],
+    "address": [
+     "Warrington & Vale Royal College Winwick Road",
+     "Warrington",
+     "UKD61",
+     "WA2 8QA",
+     "United Kingdom"
+    ],
+    "web": "http://www.wvr.ac.uk",
+    "scale": null
+   }
+  ],
+  "awards": []
+ },
+ {
+  "pub": "051291-2026",
+  "label": "L27",
+  "sha256": "f38894260b3c24e4cd1436308cf84a5ef6e7d42a75131087c9163a25e6e09eaf",
+  "ocid": "ocds-h6vhtk-068b0a",
+  "tag": [
+   "award",
+   "contract"
+  ],
+  "date": "2026-06-01T11:35:43+01:00",
+  "title": "Finance system software including installation and ongoing support and maintenance",
+  "buyer": "WARRINGTON & VALE ROYAL COLLEGE",
+  "parties": [
+   {
+    "id": "GB-UKPRN-UKPRN 10007339",
+    "name": "WARRINGTON & VALE ROYAL COLLEGE",
+    "roles": [
+     "buyer"
+    ],
+    "identifier": [
+     "GB-UKPRN",
+     "UKPRN 10007339",
+     null
+    ],
+    "additional": [
+     [
+      "GB-PPON",
+      "PWJY-2846-LPTY"
+     ]
+    ],
+    "address": [
+     "Warrington & Vale Royal College Winwick Road",
+     "Warrington",
+     "UKD61",
+     "WA2 8QA",
+     "United Kingdom"
+    ],
+    "web": null,
+    "scale": null
+   },
+   {
+    "id": "GB-COH-04816673",
+    "name": "TECHNOLOGY SERVICES GROUP LIMITED",
+    "roles": [
+     "supplier"
+    ],
+    "identifier": [
+     "GB-COH",
+     "04816673",
+     null
+    ],
+    "additional": [
+     [
+      "GB-PPON",
+      "PVTX-8995-JXNW"
+     ]
+    ],
+    "address": [
+     "Kingsway North Kingsway North",
+     "Gateshead",
+     "UKC22",
+     "NE11 0JZ",
+     "United Kingdom"
+    ],
+    "web": "http://www.tsg.com",
+    "scale": "sme"
+   }
+  ],
+  "awards": [
+   {
+    "id": "1",
+    "title": null,
+    "status": "active",
+    "suppliers": [
+     "TECHNOLOGY SERVICES GROUP LIMITED"
+    ],
+    "value": null
+   }
+  ]
+ }
+]

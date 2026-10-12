@@ -1,0 +1,55 @@
+{
+ "batch": 5,
+ "role": "challenger",
+ "date": "2026-10-12",
+ "evidence": {
+  "prod": "challenger-b5/c5-01..04 (journal.jsonl): 4 bounded index-served reads, 0 x 408, 0 retries, no drift since r5-01",
+  "registers": "CC extract 2026-10-12 (zip sha256 re-verified, full scan by number and name), FCA SocietyList.csv (sha256 re-verified), UKRLP raw detail pages, compass-uk.org service page, TNL Community Fund record, web searches"
+ },
+ "rulings": [
+  {
+   "key": "G06 national:GBCHC208078",
+   "agree": true,
+   "corrected_decision": "merge",
+   "correction": "Record fix: the 'CRUSE' mention is on notice 46923980 (BNSSG ICB Community Mental Health Framework Supporting Services, 2023-12, raw GB-CHC-208078). Notice 46793467 carries the 'Cruse Bereavement Care' mention. Both notices come from BNSSG, so the short-form reading stands."
+  },
+  {
+   "key": "G12 national:GBMPR19059R",
+   "agree": true,
+   "corrected_decision": "merge"
+  },
+  {
+   "key": "G18 national:GBMPR30167R",
+   "agree": true,
+   "corrected_decision": "merge"
+  },
+  {
+   "key": "G24 national:GBUKPRN10007157",
+   "agree": true,
+   "corrected_decision": "merge",
+   "correction": "E0's automatic head-name rule will deny this group, because it compares 'Sheffield Hallam University' with 'UNIVERSITY OF SHEFFIELD'. So the HIGH merge verdict on exactly [31558903, 31630773] must be posted before the gate (S8). The head-name refresh and detaching the stray 46778882 mention to Hallam (30915632, GBUKPRN10005790) should be filed as follow-ups."
+  },
+  {
+   "key": "L04 GBCHC1072258",
+   "agree": true,
+   "corrected_decision": "move-ok"
+  },
+  {
+   "key": "L10 GBCHC1175670",
+   "agree": true,
+   "corrected_decision": "move-ok"
+  },
+  {
+   "key": "L16 GBCHC518048",
+   "agree": true,
+   "corrected_decision": "move-ok",
+   "correction": "Replace the 'fits a health and wellbeing charity' inference with the source. compass-uk.org/services/compass-birmingham-mhst/ is Compass Birmingham MHST, and its footer reads 'Registered charity number 518048'. 'COMPASS' is also a CC working name of 700335 and 1154512, so it is the number plus this source that resolves the name."
+  },
+  {
+   "key": "L22 GBMPR21180R",
+   "agree": true,
+   "corrected_decision": "move-ok"
+  }
+ ],
+ "note": "Full reasons are in the StructuredOutput rulings returned to the orchestrator."
+}

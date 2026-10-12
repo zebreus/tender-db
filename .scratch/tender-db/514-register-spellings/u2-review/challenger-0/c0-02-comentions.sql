@@ -1,0 +1,1 @@
+SELECT notice_id, section_id, organization_id, name, raw_identifier, country FROM organization_mentions WHERE notice_id IN (46869506,46869190,46869201,46825577,46868893,46730362,46796184,46758503,46920273,46988113,46761819,47260436) LIMIT 100

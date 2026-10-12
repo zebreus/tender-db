@@ -1,0 +1,102 @@
+{
+ "reviewer": 0,
+ "rule": "index % 6 == 0 over packet.json entries",
+ "date": "2026-10-12",
+ "items": [
+  {
+   "key": "G01",
+   "kind": "group",
+   "decision": "merge",
+   "members": [
+    31537211,
+    31594929
+   ],
+   "register_match": "CC 1088835 NO LIMITS (SOUTH), Registered, co 04183173, prev names NO LIMITS SOUTH / NO LIMITS (SOUTHAMPTON), web nolimitshelp.org.uk",
+   "reason": "31537211: 'No Limits Safe Haven' 2/2, a sourced service (holder's own site, the CC web address: 'Safe Haven Southampton' under Our Services, at 35 The Avenue SO17 1XN = CC address, footer Charity No. 1088835 / Co. 04183173). 31594929: 'No Limits' 1/1, the holder's brand. (c) nothing. Caveat: 'No Limits' is also the name of unrelated CC 1015507 (Halesowen church, GBP 11k); the published number 1088835 decides it."
+  },
+  {
+   "key": "G07",
+   "kind": "group",
+   "decision": "merge",
+   "members": [
+    31561821,
+    31594691
+   ],
+   "register_match": "CC 216250 BARNARDO'S, Registered, co 00061625; bare number = main charity (linked charities are 216250-N)",
+   "reason": "31561821 9/9 holder: Barnardo's 5, Barnardos 2, Barnados 1 (typo), Barnardo's Central Region 1 (a region, not a linked charity). 31594691 'Barnardos' 1/1. (c) nothing. Packet nit: the two 'previous names' belong to linked charities 84 and 86, not the main charity."
+  },
+  {
+   "key": "G13",
+   "kind": "group",
+   "decision": "merge",
+   "members": [
+    31550337,
+    31613175
+   ],
+   "register_match": "FCA 19341R Habinteg Housing Association Limited, Registered (CSV + page); no lookalike society",
+   "reason": "31550337 'Habinteg Housing Association Limited' 1/1 (exact). 31613175 'Habinteg Housing Association Ltd' 1/1. (c) nothing. The survivor is the mover, and its head is the exact FCA name."
+  },
+  {
+   "key": "G19",
+   "kind": "group",
+   "decision": "merge",
+   "members": [
+    31551789,
+    31551790
+   ],
+   "register_match": "FCA 30301R Herts Urgent Care (HUC) Limited, Registered; former name Herts Urgent Care Limited (2023-06-21)",
+   "reason": "Both members are 'HERTS URGENT CARE (HUC) LIMITED' 2/2, the exact FCA name. Both sit on the same 2 notices (46761819, 47260436): one publisher wrote 30301R and IP30301R. E0's consortium veto reads names, not co-mentions, so it does not fire. (c) nothing."
+  },
+  {
+   "key": "G25",
+   "kind": "group",
+   "decision": "merge",
+   "members": [
+    31549754,
+    31633713
+   ],
+   "register_match": "UKRLP 10007788 UNIVERSITY OF CAMBRIDGE, active (trading: University of Cambridge, Cambridge University); OfS Register legal name 'The Chancellor, Masters, and Scholars of the University of Cambridge' (469 U6 registers/ukrlp.json)",
+   "reason": "A5 is sourced: OfS lists the statutory name under UKPRN 10007788. 31549754 13/13 holder: 7 UKRLP/OfS exact, 6 statutory. Mover 31633713: statutory name 1/1 (notice 46988113, beside the twin's statutory notices 46990569/71). (c) nothing. The survivor is the lower id, which is G4's holder (its 469 U6 PPON merge is applied)."
+  },
+  {
+   "key": "L05",
+   "kind": "mover",
+   "decision": "move-ok",
+   "members": [
+    31594822
+   ],
+   "register_match": "CC 1073926 BIRMINGHAM AND SOLIHULL WOMEN'S AID, Registered (working name BIRMINGHAM & SOLIHULL WOMEN'S AID)",
+   "reason": "'Birmingham Solihull Womens Aid' 1/1 is the holder's name without '&' or the apostrophe. In the full CC extract the only other match is a working name of 700818, removed in 2000. No org holds GBCHC1073926 today."
+  },
+  {
+   "key": "L11",
+   "kind": "mover",
+   "decision": "move-ok",
+   "members": [
+    31594828
+   ],
+   "register_match": "CC 1179376 Oasis Mental Health Support, Registered, Solihull (prev SOLIHULL MIND)",
+   "reason": "'Oasis mental health support' 1/1 is the exact holder name, ignoring case. No other Oasis mental-health charity is in the full extract. No org holds GBCHC1179376 today."
+  },
+  {
+   "key": "L17",
+   "kind": "mover",
+   "decision": "move-ok",
+   "members": [
+    31575623
+   ],
+   "register_match": "CC 518610 Age Connects West Midlands, Registered, Sutton Coldfield (prev AGE CONCERN BIRMINGHAM)",
+   "reason": "'Age Connect West Midlands' 1/1 is a near-spelling, missing the 's'. In the full extract every other 'Age Connect(s)' charity is Welsh, so nothing is confusable. No org holds GBCHC518610 today."
+  },
+  {
+   "key": "L23",
+   "kind": "mover",
+   "decision": "move-ok",
+   "members": [
+    31609584
+   ],
+   "register_match": "FCA 26511R Two Saints Limited, Registered (CSV + page); no lookalike society",
+   "reason": "'Two Saints Ltd' 1/1 is the holder's name (Ltd for Limited). No org holds GBMPR26511R today."
+  }
+ ]
+}

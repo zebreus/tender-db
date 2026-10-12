@@ -1,0 +1,1 @@
+SELECT organization_id, name, raw_identifier, scheme, country, COUNT(*) AS n, MIN(notice_id) AS first_notice, MAX(notice_id) AS last_notice FROM organization_mentions WHERE organization_id IN (30976449) GROUP BY organization_id, name, raw_identifier, scheme, country LIMIT 100

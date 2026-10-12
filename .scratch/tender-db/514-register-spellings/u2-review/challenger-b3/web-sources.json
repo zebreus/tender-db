@@ -1,0 +1,30 @@
+[
+ {
+  "url": "https://www.mtvh.co.uk/about-us/group-companies/",
+  "http": 200,
+  "file": "web-mtvh-group-companies.html",
+  "sha256": "5067616da3606c00ae1b5650479569303c5af2f3052dfad0dad1d22e97e96bfb",
+  "at": "2026-10-12",
+  "quote": "Metropolitan Thames Valley is the trading name for Metropolitan Housing Trust Limited (MHT) and Thames Valley Housing Association Limited (TVH) and their subsidiaries. ... Metropolitan Housing Trust Limited ... Charitable Community Benefit Society 16337R ... RSH registration L0726 ... Thames Valley Housing Association Limited ... Non Charitable Community Benefit Society 17375R Registered Provider: RSH registration L0514 Registered office Premier House, 52 London Road, Twickenham"
+ },
+ {
+  "url": "https://www.mtvh.co.uk/terms-and-conditions-for-mtvh-website/",
+  "http": 200,
+  "file": "web-mtvh-terms.html",
+  "sha256": "ec74fc0de87e36d2a9fe3deeaade3bd3e29c138f45995c657b92ff07603d13bc",
+  "at": "2026-10-12",
+  "quote": "Metropolitan Thames Valley (MTVH) is the trading name for Metropolitan Housing Trust Limited (MHT) and Thames Valley Housing Association Limited (TVH)."
+ },
+ {
+  "url": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+  "file": "(session scratchpad 514u2/dl-fca-csv-1/SocietyList.csv)",
+  "sha256": "fc4a5c159c2b839eaa410129d4bf12babf198f6beb3ef3aac92f38ed183d5193",
+  "note": "same file as registers/fetch-manifest.json; rows read: 17375R Thames Valley Housing Association Limited Registered; 25301R TVCHA Registered - Transferred Engagements; 30666R Your Housing Group Limited Registered (same address as 17704R); 27793R sole Greenwich Leisure society; 30178R/8711/29882R Incommunities"
+ },
+ {
+  "url": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip (+ charity_other_names.zip)",
+  "file": "c3-cc-search.json (rows extracted by name/number pattern)",
+  "sha256_zip": "48039d964567ea9e6d518e7c7758854a697b9b7d9f2b8654d78625f718715bab",
+  "note": "same zips as the manifest (48039d96..., ef861b31...)"
+ }
+]

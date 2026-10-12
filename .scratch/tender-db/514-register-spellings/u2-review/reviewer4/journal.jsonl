@@ -1,0 +1,4 @@
+{"call": "r4-01", "tag": "mentions-with-dates-of-reviewer-4-orgs", "sql_file": "r4-01-mentions.sql", "index": "organization_mentions_org + notices pk", "rc": 0, "rows": 30, "truncated": false, "is_408": false, "out": "r4-01-mentions.out", "at": "2026-10-12"}
+{"call": "r4-02", "tag": "gold-hill-notice-texts", "sql_file": "r4-02-goldhill-texts.sql", "index": "notice_texts by notice_id", "rc": 0, "rows": 7, "truncated": false, "is_408": false, "out": "r4-02-goldhill-texts.out", "at": "2026-10-12"}
+{"call": "r4-03", "tag": "field-inventory-two-notices", "sql_file": "r4-03-fields.sql", "index": "notice_texts by notice_id", "rc": 0, "rows": 8, "truncated": false, "is_408": false, "out": "r4-03-fields.out", "at": "2026-10-12"}
+{"call": "r4-04", "tag": "mover-notice-texts", "sql_file": "r4-04-mover-texts.sql", "index": "notice_texts by notice_id", "rc": 0, "rows": 38, "truncated": false, "is_408": false, "out": "r4-04-mover-texts.out", "at": "2026-10-12"}

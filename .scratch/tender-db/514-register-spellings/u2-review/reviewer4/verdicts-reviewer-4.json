@@ -1,0 +1,102 @@
+{
+ "reviewer": 4,
+ "rule": "index % 6 == 4 over packet.json entries (indices 4,10,16,22,28,34,40,46,52)",
+ "date": "2026-10-12",
+ "checked": "Packet names cross-checked against u2-review/prod/01-06 raw rows, and registers against registers/raw (cc-extract-rows.json, mpr/*-page.html and SocietyList-rows.csv, ukrlp/*_detail.html). Four extra bounded reads are in journal.jsonl (no 408s, no retries).",
+ "items": [
+  {
+   "key": "G05",
+   "kind": "group",
+   "decision": "merge",
+   "members": [
+    31562679,
+    31571677
+   ],
+   "register_match": "CC 1185092 FIRST STEPS ED, Registered CIO (2019-08-29), Derby DE1 1UL, web firststepsed.co.uk; CC activities: 'First Steps ED is a national eating disorder charity'",
+   "reason": "(a) one holder. (b) 31562679 (mover) 'First Steps ED' 1/1 = exact register name (notice 46788439, BSMHFT 'Eating Disorders Service'). 31571677 (twin) 'First Steps ED' 2/3 + 'First Steps Eating Disorder (ED)' 1/3 = 3/3, the spelled-out form sourced from the CC activities text. (c) no other entity on either member. Survivor is mover 31562679 (lower id); head names identical. Existing-verdict listing (P0 #3, org_merge_verdicts) is still unread; a standing keep from any cohort would deny the group regardless (S8)."
+  },
+  {
+   "key": "G11",
+   "kind": "group",
+   "decision": "merge",
+   "members": [
+    31593260,
+    31631085
+   ],
+   "register_match": "FCA 17437R Gold Hill Housing Association Limited, Registered Society (1966-04-01), no name changes, no transfers; SIC 87300 residential care for elderly/disabled; Chalfont St Peter SL9 9RF",
+   "reason": "(a) one holder. (b) 31593260 (mover, 7): 'Gold Hill HA' 3 + 'GOLD HILL HA' 1 + 'Gold Hill HA (B2G)' 1 + 'GOLD HILL HA (B2G)' 1 = 6/7 (86%) naming the holder (HA = Housing Association; B2G = the framework, notices 46932435/47179017 'B2G Pitched and Solar Roofing\u2026' / 'B2G MWX: Minor Works\u2026'). 31631085 (twin): 'Gold Hill HA' 3/3. (c) 'Gold Hill Care (B2G)' 1/7 (14%), same B2G MWX framework (notice 46904090), unsourced care brand of a care-SIC society; below the 1/5 floor even if it were a separate body. Survivor is mover 31593260, head 'GOLD HILL HA (B2G)' - cosmetic (decision risk 9). Existing-verdict listing (P0 #3, org_merge_verdicts) is still unread; a standing keep from any cohort would deny the group regardless (S8)."
+  },
+  {
+   "key": "G17",
+   "kind": "group",
+   "decision": "merge",
+   "members": [
+    31534486,
+    31596599
+   ],
+   "register_match": "FCA 28038R Clarion Housing Group Limited, Registered Society (1994-09-01); former names Affinity Sutton Group / The Affinity Homes Group / Downland Affinity Group / Downland Housing Group / Argus HA",
+   "reason": "(a) one holder. (b) 31534486 (twin, 138): 'Clarion Housing Group' 121 (PPON) + 'CLARION HOUSING GROUP LIMITED' 15 (GB-MPR-28038R) + 'Clarion Housing Group Limited' 1 = 137/138 (99.3%). 31596599 (mover): 'CLARION HOUSING GROUP LIMITED' 3 + 'Clarion Housing Group' 3 = 6/6. (c) 'Clarion Housing Association Ltd' 1/138 (0.7%), the separate member society (469 U6 verdict), a stray below 1/5; nothing on the mover. Survivor 31534486 = lower id and the already-applied 469 U6 altid target (GB-MPR:GBMPR28038R~PQND5289JNDN), so the alias is kept (G4). Existing-verdict listing (P0 #3, org_merge_verdicts) is still unread; a standing keep from any cohort would deny the group regardless (S8)."
+  },
+  {
+   "key": "G23",
+   "kind": "group",
+   "decision": "merge",
+   "members": [
+    30915632,
+    31624379
+   ],
+   "register_match": "UKRLP 10005790 SHEFFIELD HALLAM UNIVERSITY, active, City Campus Pond Street S1 1WB; no trading names",
+   "reason": "(a) one holder. (b) 30915632 (twin, 182): 'Sheffield Hallam University' 174 + 'SHEFFIELD HALLAM UNIVERSITY' 1 + '\u2026 (CRESR)' 1 + 'Centre for Behavioural Science\u2026, Sheffield Hallam University' 1 = 177/182 (97.3%) sourced; + 'Sheffield Polytechnic' 2 (predecessor name, not on UKRLP) = 179/182. 31624379 (mover): 'Sheffield Hallam University' 1/1 (notice 46953451, beside the FTS buyer org of the same name). (c) strays at 1/182 (0.5%) each: Access UK Ltd, Sheffield Hallam University Enterprises Ltd, University of Sheffield; all below 1/5. Survivor 30915632 = lower id and 469 U6 altid target (GB-UKPRN:GBUKPRN10005790~PVMW4512JZYY). Existing-verdict listing (P0 #3, org_merge_verdicts) is still unread; a standing keep from any cohort would deny the group regardless (S8)."
+  },
+  {
+   "key": "L03",
+   "kind": "mover",
+   "decision": "move-ok",
+   "members": [
+    31608050
+   ],
+   "register_match": "CC 1068106 MOUNT ZION APOSTOLIC CHURCH, Registered (1998-02-12), Nottingham NG7 5QS, no other names",
+   "reason": "Rule (b): 'Mount Zion Apostolic Church' 1/1 = exact register name (notice 46906609 'Mount Zion Apostolic Church - Main Contractor SQ'; the church is its own buyer). No other entity. No org holds GBCHC1068106 today, so this is a re-key only. GBCHCCHARITYNUMBER1068106 -> GBCHC1068106 under the CHC CHARITYNUMBER label."
+  },
+  {
+   "key": "L09",
+   "kind": "mover",
+   "decision": "move-ok",
+   "members": [
+    31594841
+   ],
+   "register_match": "CC 1133510 KARIS NEIGHBOUR SCHEME, Registered charitable company 06595341, c/o Church of the Redeemer, Edgbaston B16 8UU; working name WHOLECARE(KNS)",
+   "reason": "Rule (b): 'Karis Neighbourhood Scheme' 1/1, a near-spelling of the register name (Neighbour/Neighbourhood). Context agrees: notice 46869237 is BSMHFT (Birmingham) 'Provision of spiritual care counselling', and the charity is a Birmingham church-based support scheme. No other entity. GBCHC1133510 has no holder today, so this is a re-key only."
+  },
+  {
+   "key": "L15",
+   "kind": "mover",
+   "decision": "move-ok",
+   "members": [
+    31562629
+   ],
+   "register_match": "CC 517077 AUTISM.WEST MIDLANDS (main charity, linked 0), Registered charitable company 01953344, Birmingham B29 6NA; previous name WEST MIDLANDS AUTISTIC SOCIETY LIMITED",
+   "reason": "Rule (b): 'Autism West Midlands' 3/3 = the register name without the dot (notices 46788314/46868887/47287106, BSMHFT Birmingham). The bare 517077 is the main charity; linked 517077-4 '(CCS)' is registered but not named. No other entity. GBCHC517077 has no holder today, so this is a re-key only."
+  },
+  {
+   "key": "L21",
+   "kind": "mover",
+   "decision": "move-ok",
+   "members": [
+    31601449
+   ],
+   "register_match": "FCA 19229R Accent Housing Limited, Registered Society (1969-09-17), Bradford BD1 4AS; former names Accent Foundation / Accent Homes / Bradford and Northern HA",
+   "reason": "Rule (b): 'ACCENT HOUSING LIMITED' 1/1 = exact register name (notice 46890022 'Replacement Stairlifts - East'). No other entity. GBMPR19229R has no holder today, so this is a re-key only. IP19229R is MPR (a)'s exact Companies House IP+R form."
+  },
+  {
+   "key": "L27",
+   "kind": "mover",
+   "decision": "move-ok",
+   "members": [
+    31572226
+   ],
+   "register_match": "UKRLP 10007339 Warrington and Vale Royal College, active, Winwick Road WA2 8QA; trading name WARRINGTON & VALE ROYAL COLLEGE",
+   "reason": "Rule (b): 'WARRINGTON & VALE ROYAL COLLEGE' 3/3 = the exact UKRLP trading name (notices 46812499/46816424/46825360). No other entity. GBUKPRN10007339 has no holder today, so this is a re-key only."
+  }
+ ]
+}

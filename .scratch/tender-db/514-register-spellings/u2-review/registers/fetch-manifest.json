@@ -1,0 +1,969 @@
+{
+ "numbers": {
+  "MPR": [
+   "16243R",
+   "16337R",
+   "17437R",
+   "17704R",
+   "19059R",
+   "19229R",
+   "19341R",
+   "21180R",
+   "21256R",
+   "26511R",
+   "27440R",
+   "27566R",
+   "27793R",
+   "28038R",
+   "29840R",
+   "30167R",
+   "30178R",
+   "30301R",
+   "30938R"
+  ],
+  "UKPRN": [
+   "10004116",
+   "10005790",
+   "10007157",
+   "10007339",
+   "10007788",
+   "10007798"
+  ],
+  "CHC": [
+   "1003906",
+   "1034581",
+   "1068106",
+   "1072258",
+   "1073926",
+   "1077607",
+   "1088835",
+   "1094458",
+   "1104951",
+   "1107830",
+   "1122831",
+   "1133510",
+   "1159706",
+   "1175670",
+   "1179376",
+   "1179683",
+   "1185092",
+   "1205036",
+   "208078",
+   "216250",
+   "221124",
+   "271028",
+   "279057",
+   "517077",
+   "518048",
+   "518610",
+   "518753"
+  ],
+  "NIC": [
+   "102575"
+  ]
+ },
+ "requests": [
+  {
+   "url": "https://www.charitycommissionni.org.uk/charity-search/charity-details-page/?regId=102575&subId=0",
+   "final": "https://www.charitycommissionni.org.uk/charity-search/charity-details-page/?regId=102575&subId=0",
+   "http": 200,
+   "bytes": 87357,
+   "sha256": "d99a1c94db9e84a862bd09164599734e3441d0c95a6a952c021712af15014aa3",
+   "file": "registers/raw/ccni/102575-page.html",
+   "at": "2026-10-12T05:29:51Z"
+  },
+  {
+   "url": "https://www.charitycommissionni.org.uk/api/charity-details/exportToCsv?regId=102575&subId=0",
+   "final": "https://www.charitycommissionni.org.uk/api/charity-details/exportToCsv?regId=102575&subId=0",
+   "http": 200,
+   "bytes": 2841,
+   "sha256": "8a147e992ee501a11fa262d7333d74a900d51086acd812f4006888534c88bda8",
+   "file": "registers/raw/ccni/102575-csv.csv",
+   "at": "2026-10-12T05:29:54Z"
+  },
+  {
+   "url": "https://www.charitycommissionni.org.uk/api/charity-search/results?homePageId=c0884e5e-b621-4563-a378-2b313e15c74a&searchText=102575&pageNumber=1",
+   "final": "https://www.charitycommissionni.org.uk/api/charity-search/results?homePageId=c0884e5e-b621-4563-a378-2b313e15c74a&searchText=102575&pageNumber=1",
+   "http": 200,
+   "bytes": 687,
+   "sha256": "c1320138b46db2edba86f4b834edad938bb000d6b5f429604e696660f63ae34a",
+   "file": "registers/raw/ccni/102575-search.json",
+   "at": "2026-10-12T05:29:57Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search/provider/10004116",
+   "final": "https://ukrlp.education.gov.uk/search/provider/10004116",
+   "http": 200,
+   "bytes": 21044,
+   "sha256": "882c996c4505edd1d089cbe580be72529cafc23188b8fbd26844300eb1943a82",
+   "file": "registers/raw/ukrlp/10004116_detail.html",
+   "at": "2026-10-12T05:29:58Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10004116&UKPRNStatusFilter=active&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10004116&UKPRNStatusFilter=active&Page=1",
+   "http": 200,
+   "bytes": 27121,
+   "sha256": "b3eefe0c9c9ea73f0b168bc2a79cb7dedb1f74e363ccbd7729e91697c877ef5e",
+   "file": "registers/raw/ukrlp/10004116_active.html",
+   "at": "2026-10-12T05:30:01Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10004116&UKPRNStatusFilter=deactivated&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10004116&UKPRNStatusFilter=deactivated&Page=1",
+   "http": 200,
+   "bytes": 25402,
+   "sha256": "95e7511966446ab2cc1fe79ad8043bc5f01cd903df279f5bb7233c0430685e93",
+   "file": "registers/raw/ukrlp/10004116_deactivated.html",
+   "at": "2026-10-12T05:30:03Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search/provider/10005790",
+   "final": "https://ukrlp.education.gov.uk/search/provider/10005790",
+   "http": 200,
+   "bytes": 21182,
+   "sha256": "2530dd3858f81939efabaf34de60c4652597de71ba984e0bf7bcdc050c7620cb",
+   "file": "registers/raw/ukrlp/10005790_detail.html",
+   "at": "2026-10-12T05:30:05Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10005790&UKPRNStatusFilter=active&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10005790&UKPRNStatusFilter=active&Page=1",
+   "http": 200,
+   "bytes": 27124,
+   "sha256": "d4a051b424d4ed485bc701013ef172845d46a74994331fb26d3ddfd1864cc86a",
+   "file": "registers/raw/ukrlp/10005790_active.html",
+   "at": "2026-10-12T05:30:07Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10005790&UKPRNStatusFilter=deactivated&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10005790&UKPRNStatusFilter=deactivated&Page=1",
+   "http": 200,
+   "bytes": 25402,
+   "sha256": "2b04c271aa34627a45276510b85231d4700325d751b6df4626435ae2bb722a29",
+   "file": "registers/raw/ukrlp/10005790_deactivated.html",
+   "at": "2026-10-12T05:30:09Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search/provider/10007157",
+   "final": "https://ukrlp.education.gov.uk/search/provider/10007157",
+   "http": 200,
+   "bytes": 21467,
+   "sha256": "f131b821f553851dcf662e7b96a9583ff76cce738a180104ceab610003ab0372",
+   "file": "registers/raw/ukrlp/10007157_detail.html",
+   "at": "2026-10-12T05:30:10Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10007157&UKPRNStatusFilter=active&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10007157&UKPRNStatusFilter=active&Page=1",
+   "http": 200,
+   "bytes": 27123,
+   "sha256": "9012e347fdf0169f4388662136ffe1729efa57bfcabf2f0bf391e70957797c63",
+   "file": "registers/raw/ukrlp/10007157_active.html",
+   "at": "2026-10-12T05:30:12Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10007157&UKPRNStatusFilter=deactivated&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10007157&UKPRNStatusFilter=deactivated&Page=1",
+   "http": 200,
+   "bytes": 25402,
+   "sha256": "73984c1bbe477badb8addca603466db05e9f3aae0cbb8aa62d359501d44687a9",
+   "file": "registers/raw/ukrlp/10007157_deactivated.html",
+   "at": "2026-10-12T05:30:14Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search/provider/10007339",
+   "final": "https://ukrlp.education.gov.uk/search/provider/10007339",
+   "http": 200,
+   "bytes": 21501,
+   "sha256": "4f904d5affa0c48911dc94c4d8f33bb15d68ac1bc4fcc6e0b585d4bd53bbe689",
+   "file": "registers/raw/ukrlp/10007339_detail.html",
+   "at": "2026-10-12T05:30:16Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10007339&UKPRNStatusFilter=active&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10007339&UKPRNStatusFilter=active&Page=1",
+   "http": 200,
+   "bytes": 27136,
+   "sha256": "63470a523db93fe2ca3214c0a149313c15ab39c2e9c178a56ff39c37c97c10a0",
+   "file": "registers/raw/ukrlp/10007339_active.html",
+   "at": "2026-10-12T05:30:18Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10007339&UKPRNStatusFilter=deactivated&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10007339&UKPRNStatusFilter=deactivated&Page=1",
+   "http": 200,
+   "bytes": 25402,
+   "sha256": "11d935d3267430c0a0bd82216dd3d4801d71023b5010e5fbdac52429632446cb",
+   "file": "registers/raw/ukrlp/10007339_deactivated.html",
+   "at": "2026-10-12T05:30:20Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search/provider/10007788",
+   "final": "https://ukrlp.education.gov.uk/search/provider/10007788",
+   "http": 200,
+   "bytes": 21043,
+   "sha256": "4b0b3db2fb946e3e2855b60210e252e297e750ff66426f0ec97b449a06d69401",
+   "file": "registers/raw/ukrlp/10007788_detail.html",
+   "at": "2026-10-12T05:30:22Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10007788&UKPRNStatusFilter=active&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10007788&UKPRNStatusFilter=active&Page=1",
+   "http": 200,
+   "bytes": 27123,
+   "sha256": "583b500ec09e3454d8404cf13bb45c6027bba182fdc3ff404a73e49d1bedd2b7",
+   "file": "registers/raw/ukrlp/10007788_active.html",
+   "at": "2026-10-12T05:30:24Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10007788&UKPRNStatusFilter=deactivated&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10007788&UKPRNStatusFilter=deactivated&Page=1",
+   "http": 200,
+   "bytes": 25402,
+   "sha256": "5493a6ea598c3ec5b11a33436611ee7955a93c3490511328a0d361f09934b09d",
+   "file": "registers/raw/ukrlp/10007788_deactivated.html",
+   "at": "2026-10-12T05:30:26Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search/provider/10007798",
+   "final": "https://ukrlp.education.gov.uk/search/provider/10007798",
+   "http": 200,
+   "bytes": 21407,
+   "sha256": "fa2b5f55fd773cef1de35cbf0c1ad2b4ae524a2e697274b5d7a03fcacc3646ee",
+   "file": "registers/raw/ukrlp/10007798_detail.html",
+   "at": "2026-10-12T05:30:28Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10007798&UKPRNStatusFilter=active&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10007798&UKPRNStatusFilter=active&Page=1",
+   "http": 200,
+   "bytes": 27127,
+   "sha256": "e96d478b159df02fe3f1200527f5bfdb7674543af35c2099bd3634985cd8cf45",
+   "file": "registers/raw/ukrlp/10007798_active.html",
+   "at": "2026-10-12T05:30:30Z"
+  },
+  {
+   "url": "https://ukrlp.education.gov.uk/search?SearchTerm=10007798&UKPRNStatusFilter=deactivated&Page=1",
+   "final": "https://ukrlp.education.gov.uk/search?SearchTerm=10007798&UKPRNStatusFilter=deactivated&Page=1",
+   "http": 200,
+   "bytes": 25402,
+   "sha256": "83f245cd548b6eee73689d54c1a4de13c56c851315be6910c0994d64bdce1b81",
+   "file": "registers/raw/ukrlp/10007798_deactivated.html",
+   "at": "2026-10-12T05:30:32Z"
+  },
+  {
+   "url": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+   "final": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+   "http": 200,
+   "bytes": 7324088,
+   "sha256": "fc4a5c159c2b839eaa410129d4bf12babf198f6beb3ef3aac92f38ed183d5193",
+   "file": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/514u2/dl-fca-csv-1/SocietyList.csv",
+   "at": "2026-10-12T05:30:42Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=16243R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=16243R",
+   "http": 200,
+   "bytes": 17355,
+   "sha256": "062d4a5aad9223cde2428f3ecfddabeab55c9080e4c11551ed26000b4c2c49b0",
+   "file": "registers/raw/mpr/16243R-search.html",
+   "at": "2026-10-12T05:30:44Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/7028",
+   "final": "https://mutuals.fca.org.uk/Search/Society/7028",
+   "http": 200,
+   "bytes": 32035,
+   "sha256": "84cba18ff548d9da93fce6aa65ec0ad2ef616f0fd4ec5f8698106e318d07be8e",
+   "file": "registers/raw/mpr/16243R-page.html",
+   "at": "2026-10-12T05:30:46Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=7028",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=7028",
+   "http": 200,
+   "bytes": 108,
+   "sha256": "96fc1924acc0ce2d6af6dec4902b75d4c94afa3ba62fc6da34ba4798a543c95f",
+   "file": "registers/raw/mpr/16243R-namechanges.html",
+   "at": "2026-10-12T05:30:49Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=7028",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=7028",
+   "http": 200,
+   "bytes": 115,
+   "sha256": "e5105e8c2d6454b7ec43fe2b57429f75d5fedea0eb4a06f20d1b427ebaa83d30",
+   "file": "registers/raw/mpr/16243R-transfers.html",
+   "at": "2026-10-12T05:30:51Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=16337R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=16337R",
+   "http": 200,
+   "bytes": 17318,
+   "sha256": "2808bebf33b51ea28b6ae718c063a4f0749eeb876198b50352b3920acbf9e1b4",
+   "file": "registers/raw/mpr/16337R-search.html",
+   "at": "2026-10-12T05:30:53Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/28016",
+   "final": "https://mutuals.fca.org.uk/Search/Society/28016",
+   "http": 200,
+   "bytes": 31996,
+   "sha256": "7771a86ba3356bf624efd333e5b0e8b46e609dddb2bde0ba2d3f3a1fa98e0bd2",
+   "file": "registers/raw/mpr/16337R-page.html",
+   "at": "2026-10-12T05:30:55Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=28016",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=28016",
+   "http": 200,
+   "bytes": 44,
+   "sha256": "3490c460f2ae22124e38837e7a67f51748d47ced91f345f04ae5e7338252cd21",
+   "file": "registers/raw/mpr/16337R-namechanges.html",
+   "at": "2026-10-12T05:30:57Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=28016",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=28016",
+   "http": 200,
+   "bytes": 573,
+   "sha256": "855a82549a8bc84a272e9b2cf39db753298ff4030436c74b0d6269880d2fc1ec",
+   "file": "registers/raw/mpr/16337R-transfers.html",
+   "at": "2026-10-12T05:31:00Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=17437R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=17437R",
+   "http": 200,
+   "bytes": 17357,
+   "sha256": "cc2ef04bbbbdfc4aecb797ca83e1384abef614a9a03787121ac04eb6e4edf72c",
+   "file": "registers/raw/mpr/17437R-search.html",
+   "at": "2026-10-12T05:31:02Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/6661",
+   "final": "https://mutuals.fca.org.uk/Search/Society/6661",
+   "http": 200,
+   "bytes": 32042,
+   "sha256": "22a3553a264507e0ea1ad247e06c4704b4e103d00be9c2825f889f2abb44ea9c",
+   "file": "registers/raw/mpr/17437R-page.html",
+   "at": "2026-10-12T05:31:05Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=6661",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=6661",
+   "http": 200,
+   "bytes": 44,
+   "sha256": "3490c460f2ae22124e38837e7a67f51748d47ced91f345f04ae5e7338252cd21",
+   "file": "registers/raw/mpr/17437R-namechanges.html",
+   "at": "2026-10-12T05:31:07Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=6661",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=6661",
+   "http": 200,
+   "bytes": 44,
+   "sha256": "3490c460f2ae22124e38837e7a67f51748d47ced91f345f04ae5e7338252cd21",
+   "file": "registers/raw/mpr/17437R-transfers.html",
+   "at": "2026-10-12T05:31:09Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=17704R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=17704R",
+   "http": 200,
+   "bytes": 17340,
+   "sha256": "21822c015d542b140b52a8e4f88a6fd1f73a3f9affe80d0b560c3023619b591e",
+   "file": "registers/raw/mpr/17704R-search.html",
+   "at": "2026-10-12T05:31:11Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/14109",
+   "final": "https://mutuals.fca.org.uk/Search/Society/14109",
+   "http": 200,
+   "bytes": 31977,
+   "sha256": "f9087a953799c62dd262ae7a4a8d169efb6841baacdc362cc69260843c22a8da",
+   "file": "registers/raw/mpr/17704R-page.html",
+   "at": "2026-10-12T05:31:13Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=14109",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=14109",
+   "http": 200,
+   "bytes": 191,
+   "sha256": "eaa4bf8fbe88d1d17f294f84c4cce96d5536b27170c190e1bcda1dba02825831",
+   "file": "registers/raw/mpr/17704R-namechanges.html",
+   "at": "2026-10-12T05:31:15Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=14109",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=14109",
+   "http": 200,
+   "bytes": 615,
+   "sha256": "cb31bf215c9ceb4716a5885505d2cb37948c472133355f8587e4b10fb9a0668c",
+   "file": "registers/raw/mpr/17704R-transfers.html",
+   "at": "2026-10-12T05:31:18Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=19059R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=19059R",
+   "http": 200,
+   "bytes": 17317,
+   "sha256": "638d0620e530f0c5828b2fa5ce450e4d42a3d086dd102f5f83d27a29fc6089e0",
+   "file": "registers/raw/mpr/19059R-search.html",
+   "at": "2026-10-12T05:31:20Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/13186",
+   "final": "https://mutuals.fca.org.uk/Search/Society/13186",
+   "http": 200,
+   "bytes": 31983,
+   "sha256": "23845027b305587967caac74d8257fe95a59dd7225c363d98cc89da2e6375fa6",
+   "file": "registers/raw/mpr/19059R-page.html",
+   "at": "2026-10-12T05:31:22Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=13186",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=13186",
+   "http": 200,
+   "bytes": 44,
+   "sha256": "3490c460f2ae22124e38837e7a67f51748d47ced91f345f04ae5e7338252cd21",
+   "file": "registers/raw/mpr/19059R-namechanges.html",
+   "at": "2026-10-12T05:31:24Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=13186",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=13186",
+   "http": 200,
+   "bytes": 1327,
+   "sha256": "4410c15de609bb5a70cec13a1912d2190ef4cb7b9296e45ffcb4d2607b4aceaa",
+   "file": "registers/raw/mpr/19059R-transfers.html",
+   "at": "2026-10-12T05:31:27Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=19229R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=19229R",
+   "http": 200,
+   "bytes": 17334,
+   "sha256": "098d617a106bfa9443c41faf6f2800bd59f4bd29a6dfa75754e6577926a442e3",
+   "file": "registers/raw/mpr/19229R-search.html",
+   "at": "2026-10-12T05:31:29Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/28303",
+   "final": "https://mutuals.fca.org.uk/Search/Society/28303",
+   "http": 200,
+   "bytes": 31979,
+   "sha256": "53edb136bfbe63da0e2b432a233171ca2b111890978b5ffa50dff152243ac171",
+   "file": "registers/raw/mpr/19229R-page.html",
+   "at": "2026-10-12T05:31:32Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=28303",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=28303",
+   "http": 200,
+   "bytes": 191,
+   "sha256": "6beae27a50eca06a48870397cf6f6f2b9735d01e012cad38b63fc790139b80eb",
+   "file": "registers/raw/mpr/19229R-namechanges.html",
+   "at": "2026-10-12T05:31:34Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=28303",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=28303",
+   "http": 200,
+   "bytes": 495,
+   "sha256": "7e50c531e78896824203b2f3275aaaf2e659b15f403b2361688a5037e976f41a",
+   "file": "registers/raw/mpr/19229R-transfers.html",
+   "at": "2026-10-12T05:31:36Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=19341R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=19341R",
+   "http": 200,
+   "bytes": 17374,
+   "sha256": "907d9a6e41a84b97580a9e78d15e0564214e4d0ef97a80a20e16cea85fcd5a93",
+   "file": "registers/raw/mpr/19341R-search.html",
+   "at": "2026-10-12T05:31:38Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/7004",
+   "final": "https://mutuals.fca.org.uk/Search/Society/7004",
+   "http": 200,
+   "bytes": 32063,
+   "sha256": "cb7fc8153f10d03de34a7299fcc652970fb2eb13bcd9e4d5b7626a8ba4e7f3e2",
+   "file": "registers/raw/mpr/19341R-page.html",
+   "at": "2026-10-12T05:31:40Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=7004",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=7004",
+   "http": 200,
+   "bytes": 44,
+   "sha256": "3490c460f2ae22124e38837e7a67f51748d47ced91f345f04ae5e7338252cd21",
+   "file": "registers/raw/mpr/19341R-namechanges.html",
+   "at": "2026-10-12T05:31:42Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=7004",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=7004",
+   "http": 200,
+   "bytes": 92,
+   "sha256": "5388b0ff10c86fc7786efb62d0e97319a674b865da5b993c168d9d37c65a2570",
+   "file": "registers/raw/mpr/19341R-transfers.html",
+   "at": "2026-10-12T05:31:44Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=21180R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=21180R",
+   "http": 200,
+   "bytes": 17316,
+   "sha256": "6ab9d87492c0abe3c95157bed756033cc950fef82f9102af001dd0e64b1105c5",
+   "file": "registers/raw/mpr/21180R-search.html",
+   "at": "2026-10-12T05:31:46Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/6232",
+   "final": "https://mutuals.fca.org.uk/Search/Society/6232",
+   "http": 200,
+   "bytes": 31989,
+   "sha256": "f776424832a0c30070f859b0339c960a4a7270830e7fd9e8665300a3f407124f",
+   "file": "registers/raw/mpr/21180R-page.html",
+   "at": "2026-10-12T05:31:49Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=6232",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=6232",
+   "http": 200,
+   "bytes": 183,
+   "sha256": "8022723412a5559b04bf144213a2c9d3ea2ecc4395239e0e7c96c462821181a5",
+   "file": "registers/raw/mpr/21180R-namechanges.html",
+   "at": "2026-10-12T05:31:50Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=6232",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=6232",
+   "http": 200,
+   "bytes": 107,
+   "sha256": "045d9bbd69e9fef1e0516d30dc9aae334c220e88709ddd2ed2927d632d28d32e",
+   "file": "registers/raw/mpr/21180R-transfers.html",
+   "at": "2026-10-12T05:31:52Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=21256R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=21256R",
+   "http": 200,
+   "bytes": 17350,
+   "sha256": "aaa7e8194ff60b1296a97ebb9acda6b5a335e9b681733dd9f5078ac955053da2",
+   "file": "registers/raw/mpr/21256R-search.html",
+   "at": "2026-10-12T05:31:55Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/28819",
+   "final": "https://mutuals.fca.org.uk/Search/Society/28819",
+   "http": 200,
+   "bytes": 32000,
+   "sha256": "51068b18641d2be97a3cae561af197298a8b7d6aed3008fc38aadccae376ae4b",
+   "file": "registers/raw/mpr/21256R-page.html",
+   "at": "2026-10-12T05:31:57Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=28819",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=28819",
+   "http": 200,
+   "bytes": 98,
+   "sha256": "8fd670921f32f98c5606bbc681168d94663c987b966b12eceb005c9bab48211f",
+   "file": "registers/raw/mpr/21256R-namechanges.html",
+   "at": "2026-10-12T05:31:59Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=28819",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=28819",
+   "http": 200,
+   "bytes": 248,
+   "sha256": "0f8035312c61722802609096ee60ab0e309cbbf921b01bd9632b3ca9cb3908ee",
+   "file": "registers/raw/mpr/21256R-transfers.html",
+   "at": "2026-10-12T05:32:01Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=26511R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=26511R",
+   "http": 200,
+   "bytes": 17302,
+   "sha256": "25456d000efeeb8bb4cabbc97a07fcca762dff6f36edd0a66629ddbdae56eafa",
+   "file": "registers/raw/mpr/26511R-search.html",
+   "at": "2026-10-12T05:32:03Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/20608",
+   "final": "https://mutuals.fca.org.uk/Search/Society/20608",
+   "http": 200,
+   "bytes": 31898,
+   "sha256": "8863853d05b063e65796cde5313b5077545a4279434e7c99da8b0b0dc4d6ffee",
+   "file": "registers/raw/mpr/26511R-page.html",
+   "at": "2026-10-12T05:32:06Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=20608",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=20608",
+   "http": 200,
+   "bytes": 175,
+   "sha256": "b7d03d26e49d22ee1d82b28ef2b604ad65df8a7c05d187a87202554a051a02b7",
+   "file": "registers/raw/mpr/26511R-namechanges.html",
+   "at": "2026-10-12T05:32:08Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=20608",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=20608",
+   "http": 200,
+   "bytes": 102,
+   "sha256": "eaa768f8d0778791c028f498fccc1b883fe50328585a3d7acdb6698a75035498",
+   "file": "registers/raw/mpr/26511R-transfers.html",
+   "at": "2026-10-12T05:32:10Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=27440R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=27440R",
+   "http": 200,
+   "bytes": 17326,
+   "sha256": "a135dcac7674a28d2b2885743a8b350907ed76a5e98550bbe50a755049dc9472",
+   "file": "registers/raw/mpr/27440R-search.html",
+   "at": "2026-10-12T05:32:12Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/7264",
+   "final": "https://mutuals.fca.org.uk/Search/Society/7264",
+   "http": 200,
+   "bytes": 32008,
+   "sha256": "14c756d73e84e1bce27dfe842b5f9445397e4b3d40fbe9297bb6798d97430c46",
+   "file": "registers/raw/mpr/27440R-page.html",
+   "at": "2026-10-12T05:32:14Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=7264",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=7264",
+   "http": 200,
+   "bytes": 98,
+   "sha256": "f8e0800b33f478d56b0810f73dee7b735e0df918cf6703728b6f6493f275d47a",
+   "file": "registers/raw/mpr/27440R-namechanges.html",
+   "at": "2026-10-12T05:32:16Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=7264",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=7264",
+   "http": 200,
+   "bytes": 44,
+   "sha256": "3490c460f2ae22124e38837e7a67f51748d47ced91f345f04ae5e7338252cd21",
+   "file": "registers/raw/mpr/27440R-transfers.html",
+   "at": "2026-10-12T05:32:18Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=27566R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=27566R",
+   "http": 200,
+   "bytes": 17337,
+   "sha256": "ee26477797e259b149a1797cb2b9d3e62c6d47971b30bba174b6879e70258efb",
+   "file": "registers/raw/mpr/27566R-search.html",
+   "at": "2026-10-12T05:32:20Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/27201",
+   "final": "https://mutuals.fca.org.uk/Search/Society/27201",
+   "http": 200,
+   "bytes": 32053,
+   "sha256": "f2f043364818f4039ccad7714780e06b1f7dbfb8d9fa5dcc736b2603f3f29cf8",
+   "file": "registers/raw/mpr/27566R-page.html",
+   "at": "2026-10-12T05:32:23Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=27201",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=27201",
+   "http": 200,
+   "bytes": 129,
+   "sha256": "7dfc37f1c015594d007515142179296b9f95a95df0a23a1f4de9ad24108ae2e8",
+   "file": "registers/raw/mpr/27566R-namechanges.html",
+   "at": "2026-10-12T05:32:25Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=27201",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=27201",
+   "http": 200,
+   "bytes": 44,
+   "sha256": "3490c460f2ae22124e38837e7a67f51748d47ced91f345f04ae5e7338252cd21",
+   "file": "registers/raw/mpr/27566R-transfers.html",
+   "at": "2026-10-12T05:32:26Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=27793R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=27793R",
+   "http": 200,
+   "bytes": 17317,
+   "sha256": "98bf9546aa6d6761539fc559c46e6d4a22f1ac0e0e70b6bf83f22ff523905999",
+   "file": "registers/raw/mpr/27793R-search.html",
+   "at": "2026-10-12T05:32:29Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/5175",
+   "final": "https://mutuals.fca.org.uk/Search/Society/5175",
+   "http": 200,
+   "bytes": 31925,
+   "sha256": "fd245ce080ac2a68af78c0759efa104da705445ee3bf1ce9f8fb75035cba48f1",
+   "file": "registers/raw/mpr/27793R-page.html",
+   "at": "2026-10-12T05:32:31Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=5175",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=5175",
+   "http": 200,
+   "bytes": 44,
+   "sha256": "3490c460f2ae22124e38837e7a67f51748d47ced91f345f04ae5e7338252cd21",
+   "file": "registers/raw/mpr/27793R-namechanges.html",
+   "at": "2026-10-12T05:32:33Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=5175",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=5175",
+   "http": 200,
+   "bytes": 217,
+   "sha256": "c233992cfff8a7f6cf9ccbd7764c98fdd96ac6f934ee0da2c911cb849e4cdc62",
+   "file": "registers/raw/mpr/27793R-transfers.html",
+   "at": "2026-10-12T05:32:35Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=28038R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=28038R",
+   "http": 200,
+   "bytes": 17332,
+   "sha256": "053b10134e7699b6b7dbc4c386cb22aa689e04c6116cb71b4647296f68e26122",
+   "file": "registers/raw/mpr/28038R-search.html",
+   "at": "2026-10-12T05:32:37Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/4027",
+   "final": "https://mutuals.fca.org.uk/Search/Society/4027",
+   "http": 200,
+   "bytes": 31999,
+   "sha256": "229ea04c88dfbcaa3d490d2154de3c649811b7039ab413af325561fc66a68a0e",
+   "file": "registers/raw/mpr/28038R-page.html",
+   "at": "2026-10-12T05:32:39Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=4027",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=4027",
+   "http": 200,
+   "bytes": 289,
+   "sha256": "d8128b730aef9111304295ede111fd4d810a541fd95f5e0a2aef2cfeff94c42e",
+   "file": "registers/raw/mpr/28038R-namechanges.html",
+   "at": "2026-10-12T05:32:42Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=4027",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=4027",
+   "http": 200,
+   "bytes": 160,
+   "sha256": "126f57b2472bd0a7048e3115ade819c4f3df16a92200b4edc09c172c9961f78f",
+   "file": "registers/raw/mpr/28038R-transfers.html",
+   "at": "2026-10-12T05:32:44Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=29840R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=29840R",
+   "http": 200,
+   "bytes": 17283,
+   "sha256": "09b7f061961ee1cd4ac6741932debd5c1db42ae0c95be0dfeeaebee377db14ad",
+   "file": "registers/raw/mpr/29840R-search.html",
+   "at": "2026-10-12T05:32:46Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/29188",
+   "final": "https://mutuals.fca.org.uk/Search/Society/29188",
+   "http": 200,
+   "bytes": 31896,
+   "sha256": "f2506248ac33e9353621e1cfeb009e844a0350d8ba0cd50c45585f32e716e6bd",
+   "file": "registers/raw/mpr/29840R-page.html",
+   "at": "2026-10-12T05:32:48Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=29188",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=29188",
+   "http": 200,
+   "bytes": 109,
+   "sha256": "9acd61c47eee26b82b7f5f7d927972bc1acd878876a11e63186199b72feb6664",
+   "file": "registers/raw/mpr/29840R-namechanges.html",
+   "at": "2026-10-12T05:32:50Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=29188",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=29188",
+   "http": 200,
+   "bytes": 105,
+   "sha256": "deb77f99e32c410360a306a3f6b58afb278ba8a01bf283f8a9c51aba7131ba7c",
+   "file": "registers/raw/mpr/29840R-transfers.html",
+   "at": "2026-10-12T05:32:51Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30167R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30167R",
+   "http": 200,
+   "bytes": 17317,
+   "sha256": "c626ee006d4d36210d1e22b7c64b64b675200e2ca42eaf18495ba9a8625c4895",
+   "file": "registers/raw/mpr/30167R-search.html",
+   "at": "2026-10-12T05:32:54Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/277",
+   "final": "https://mutuals.fca.org.uk/Search/Society/277",
+   "http": 200,
+   "bytes": 31960,
+   "sha256": "a15159640e3cce5fda1991b1b43c59a64dd2eab794bf8844b1a7f1d37aa3ba56",
+   "file": "registers/raw/mpr/30167R-page.html",
+   "at": "2026-10-12T05:32:56Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=277",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=277",
+   "http": 200,
+   "bytes": 147,
+   "sha256": "a01162b90f1ff2a12f813d2da8342c05c2b6b8c92c8224b862cde462780487af",
+   "file": "registers/raw/mpr/30167R-namechanges.html",
+   "at": "2026-10-12T05:32:58Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=277",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=277",
+   "http": 200,
+   "bytes": 304,
+   "sha256": "02285861ffa5e587f08d8899489cf9d8dcfbed63a70c801cfe75fd4f67cf041c",
+   "file": "registers/raw/mpr/30167R-transfers.html",
+   "at": "2026-10-12T05:33:00Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30178R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30178R",
+   "http": 200,
+   "bytes": 17315,
+   "sha256": "2d82bc2f0658cbb89f1c7cd6ce0a74c5a953e34ecf553cff636944bbdf587bd3",
+   "file": "registers/raw/mpr/30178R-search.html",
+   "at": "2026-10-12T05:33:02Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/9492",
+   "final": "https://mutuals.fca.org.uk/Search/Society/9492",
+   "http": 200,
+   "bytes": 31951,
+   "sha256": "feaa5e4753aeb5996181d962f6743cb50287dde38c1fe6af8e82fffefcc034d6",
+   "file": "registers/raw/mpr/30178R-page.html",
+   "at": "2026-10-12T05:33:04Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=9492",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=9492",
+   "http": 200,
+   "bytes": 95,
+   "sha256": "c419d8614ff9ad0299f5a2e9ce274352a1f794bc0d051e900e8aee9375f7518f",
+   "file": "registers/raw/mpr/30178R-namechanges.html",
+   "at": "2026-10-12T05:33:06Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=9492",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=9492",
+   "http": 200,
+   "bytes": 613,
+   "sha256": "7f2b8fb5baee8f18948cdc874e4cd7fe010042b61d81abafdfa2d87d0c5ea05f",
+   "file": "registers/raw/mpr/30178R-transfers.html",
+   "at": "2026-10-12T05:33:09Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30301R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30301R",
+   "http": 200,
+   "bytes": 17344,
+   "sha256": "bdcf92b9cf398694962b02dfb7e147865bdcc8028479f9a9c2f2f53a2eebe2b0",
+   "file": "registers/raw/mpr/30301R-search.html",
+   "at": "2026-10-12T05:33:11Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/8766",
+   "final": "https://mutuals.fca.org.uk/Search/Society/8766",
+   "http": 200,
+   "bytes": 32058,
+   "sha256": "3f62e1ad8824c56e7ca21e764b723d6f8a8a6e0f7f126ca24798d007f4e7800d",
+   "file": "registers/raw/mpr/30301R-page.html",
+   "at": "2026-10-12T05:33:13Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=8766",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=8766",
+   "http": 200,
+   "bytes": 86,
+   "sha256": "eacaa875ce24665c0501e4e51a70a5ac3894f6c04c57e6706ded193b5cd76319",
+   "file": "registers/raw/mpr/30301R-namechanges.html",
+   "at": "2026-10-12T05:33:15Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=8766",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=8766",
+   "http": 200,
+   "bytes": 44,
+   "sha256": "3490c460f2ae22124e38837e7a67f51748d47ced91f345f04ae5e7338252cd21",
+   "file": "registers/raw/mpr/30301R-transfers.html",
+   "at": "2026-10-12T05:33:17Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30938R",
+   "final": "https://mutuals.fca.org.uk/Search/Search?SearchTerm=30938R",
+   "http": 200,
+   "bytes": 17337,
+   "sha256": "57235fe7935468db4e89dd9a5c7a9ce7c1abe1e690fbf0ab655de5399c1abfe2",
+   "file": "registers/raw/mpr/30938R-search.html",
+   "at": "2026-10-12T05:33:19Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Search/Society/26655",
+   "final": "https://mutuals.fca.org.uk/Search/Society/26655",
+   "http": 200,
+   "bytes": 31985,
+   "sha256": "eeaa56903de6d82fb633e7d59ba987ccaa77dc723a37ef7531559bf11c5bb8d0",
+   "file": "registers/raw/mpr/30938R-page.html",
+   "at": "2026-10-12T05:33:21Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=26655",
+   "final": "https://mutuals.fca.org.uk/Societies/GetNameChanges?societyId=26655",
+   "http": 200,
+   "bytes": 44,
+   "sha256": "3490c460f2ae22124e38837e7a67f51748d47ced91f345f04ae5e7338252cd21",
+   "file": "registers/raw/mpr/30938R-namechanges.html",
+   "at": "2026-10-12T05:33:23Z"
+  },
+  {
+   "url": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=26655",
+   "final": "https://mutuals.fca.org.uk/Societies/GetTransfers?societyId=26655",
+   "http": 200,
+   "bytes": 382,
+   "sha256": "d2aedc9030aac5b236d334f6b8b24e26f9d2f9705ed045624136e1d3dd893e0f",
+   "file": "registers/raw/mpr/30938R-transfers.html",
+   "at": "2026-10-12T05:33:25Z"
+  },
+  {
+   "url": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+   "final": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+   "http": 200,
+   "bytes": 56902273,
+   "sha256": "48039d964567ea9e6d518e7c7758854a697b9b7d9f2b8654d78625f718715bab",
+   "file": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/514u2/dl-cc-charity-1/publicextract.charity.zip",
+   "at": "2026-10-12T05:33:44Z",
+   "records_streamed": 398681
+  },
+  {
+   "url": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity_other_names.zip",
+   "final": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity_other_names.zip",
+   "http": 200,
+   "bytes": 4190894,
+   "sha256": "ef861b3142d38df78086f464283d06fa4ee06977d095cf4340c98e07d48f477f",
+   "file": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/514u2/dl-cc-other_names-1/publicextract.charity_other_names.zip",
+   "at": "2026-10-12T05:33:53Z",
+   "records_streamed": 175062
+  }
+ ]
+}

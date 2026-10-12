@@ -1,0 +1,1 @@
+SELECT m.organization_id, m.notice_id, m.name, m.raw_identifier, n.published_at FROM organization_mentions m JOIN notices n ON n.id = m.notice_id WHERE m.organization_id IN (31562660,31594752,31535844,31594839,30913929,31543018,31621236,31631048,31562667,31594819,31537996,31613230,31573433) LIMIT 100

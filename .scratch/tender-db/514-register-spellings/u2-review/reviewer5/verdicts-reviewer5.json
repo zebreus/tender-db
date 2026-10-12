@@ -1,0 +1,32 @@
+{
+ "reviewer": 5,
+ "rule": "index % 6 == 5 over packet.json entries (G06, G12, G18, G24, L04, L10, L16, L22)",
+ "date": "2026-10-12",
+ "checks": "mention names re-read on prod (r5-01: 32 mentions over 12 orgs, identical to the packet); notice party names and titles (r5-02, r5-03); CC rows re-read from registers/raw/cc/cc-extract-rows.json; FCA SocietyList-rows.csv and mpr/*-page.html, *-namechanges.html; UKRLP 10007157 detail page. No 408, no retries.",
+ "items": [
+  {"key": "G06", "kind": "group", "decision": "merge", "members": [31564669, 31594774],
+   "register_match": "CC 208078 Cruse Bereavement Support, Registered, charitable company 00638709; previous names CRUSE BEREAVEMENT CARE, CRUSE BEREAVEMENT CARE LIMITED, CRUSE CLUBS LIMITED; no linked charities",
+   "reason": "31564669: 3/3 name the holder: 'Cruse Bereavement Support' 1 (register name), 'Cruse Bereavement Care' 1 (previous name), 'CRUSE' 1 (short form; the BNSSG notice 46793467 is titled 'CRUSE Bereavement Support'). 31594774: 'Cruse Bereavement Support' 1/1 (BSMHFT bereavement counselling). (c) nothing. Survivor 31564669 (the twin). Outside this unit: Cruse is also split across GBCOH00638709, GBCOH638709, a PPON and an NHS code (519 name-twins), which is altid work."},
+  {"key": "G12", "kind": "group", "decision": "merge", "members": [31564048, 31619954],
+   "register_match": "FCA 19059R Sanctuary Housing Association, Registered Society, registered 1969-05-05; no name changes; 19 transfers in, none relevant",
+   "reason": "31564048: 'SANCTUARY HOUSING ASSOCIATION' 1 + 'Sanctuary Housing Association' 1 = 2/2, the exact register name (KPMG external audit notices). 31619954: 'Sanctuary Housing Association' 1/1 (South Tyneside housing support). No subsidiary name (Sanctuary Scotland, Sanctuary Affordable Housing, Sanctuary Care) appears, so (c) has nothing. Survivor 31564048 (the twin)."},
+  {"key": "G18", "kind": "group", "decision": "merge", "members": [31604789, 31618490],
+   "register_match": "FCA 30167R Town and Country Housing, Registered Society, registered 2007-01-17; former names Town and Country Housing Group (to 2019-05-09), Town and Country Housing Group Limited (to 2008-01-10)",
+   "reason": "31604789: 'Town & Country Housing' 1/1 (its own catering-services notice). 31618490: 'Town and Country Housing' 1/1 (KCHFT care navigator). Both are the register name, with '&' for 'and'. (c) nothing. The survivor is the mover 31604789 (lower id), so the head name becomes 'Town & Country Housing'. That is cosmetic."},
+  {"key": "G24", "kind": "group", "decision": "merge", "members": [31558903, 31630773],
+   "register_match": "UKRLP 10007157 University of Sheffield, active; trading names THE UNIVERSITY OF SHEFFIELD, University of Sheffield; Western Bank, Sheffield S10 2TN",
+   "reason": "31558903: 15/16 (93.75%) name the holder ('UNIVERSITY OF SHEFFIELD' 13, 'The University of Sheffield' 1, 'University of Sheffield' 1). 'Sheffield Hallam University' 1/16 (6.25%) is a separate entity, so it is below the 1/5 floor and counts as a stray. Notice 46778882 shows the cause: SHU is the buyer and published itself under ORG-GB-UKPRN-10007157 and ORG-GB-FTS-4485, but its own UKPRN is 10005790. This is the decision's §3.2(c) example. 31630773: 'UNIVERSITY OF SHEFFIELD' 1/1. Survivor 31558903 (the twin). Its head name 'Sheffield Hallam University' is wrong and is won by that single stray mention, while organization_names reads UNIVERSITY OF SHEFFIELD. This is cosmetic and should get a head-name refresh, but it does not block the merge, and the stray mention already sits on 31558903 whatever we decide."},
+  {"key": "L04", "kind": "mover", "decision": "move-ok", "members": [31562627],
+   "register_match": "CC 1072258 BIRMINGHAM IRISH ASSOCIATION, Registered, charitable company 03628076; previous names I.W.I.C, IRISH IN BIRMINGHAM; working name IRISH WELFARE AND INFORMATION CENTRE",
+   "reason": "'Birmingham Irish Association' 2/2 (100%), the exact register name. The mentions come from BSMHFT's LD and Autism Transformation Group bid outcome (46788314, 47287106). No other GB org holds GBCHC1072258 today."},
+  {"key": "L10", "kind": "mover", "decision": "move-ok", "members": [31598277],
+   "register_match": "CC 1175670 MENTAL HEALTH INNOVATIONS, Registered CIO; previous name MENTAL HEALTH INNOVATION; working name MHI",
+   "reason": "'Mental Health Innovations' 1/1 (100%), the exact register name. The notice is 46877907, BSMHFT 'Mental Health Crisis Text Messaging Service', which is MHI's service. No other org holds GBCHC1175670."},
+  {"key": "L16", "kind": "mover", "decision": "move-ok", "members": [31562674],
+   "register_match": "CC 518048 Compass - Services to Improve Health and Wellbeing, Registered, charitable company 02054594; working name COMPASS; previous name COMPASS - SERVICES TO TACKLE PROBLEM DRUG USE",
+   "reason": "'Compass' 2/2 (100%), which is the register's working name for 518048. On its own 'Compass' is a generic name, but the publisher (BSMHFT) put this charity number next to it on both notices (46788427, 46805334, Birmingham mental-health-in-schools teams), which fits a health and wellbeing charity. No other entity name appears, and no other org holds GBCHC518048."},
+  {"key": "L22", "kind": "mover", "decision": "move-ok", "members": [31567617],
+   "register_match": "FCA 21180R The Cadarn Housing Group Limited, Registered Society, registered 1974-05-31; name changes: Newydd Housing Association Limited (to 1998), The Cadarn Housing Group Limited (to 2020-09-24), Newydd Group Limited (to 2024-09-24), then back to Cadarn",
+   "reason": "'Cadarn Housing Group (AA58745)' 1/1 (100%), the current register name plus a publisher reference. Notice 46800200 (2026-03) is Cadarn's own pest-control tender, run 'on behalf of Cadwyn Housing Association Limited and Newydd Housing Association (1974) Limited'. So the mention is the group parent on the parent's number. The subsidiaries are named only as beneficiaries, and neither one is the mention name. No other org holds GBMPR21180R. This is not a subsidiary-on-parent case."}
+ ]
+}

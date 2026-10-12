@@ -1,0 +1,1749 @@
+<!doctype html>
+<html lang="en">
+<head>
+    
+    <script nonce="CRLT73Yq2M1H3ctMZa4t">
+        var _rollbarConfig = {
+            accessToken: "8dc9fadfe13a4c13a584378d5d9bf456",
+            captureUncaught: true,
+            scrubTelemetryInputs:true,
+            captureUnhandledRejections: true,
+            payload: {
+                environment: "production"
+            }
+        };
+        // Rollbar Snippet
+        !function(r){var e={};function o(n){if(e[n])return e[n].exports;var t=e[n]={i:n,l:!1,exports:{}};return r[n].call(t.exports,t,t.exports,o),t.l=!0,t.exports}o.m=r,o.c=e,o.d=function(r,e,n){o.o(r,e)||Object.defineProperty(r,e,{enumerable:!0,get:n})},o.r=function(r){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(r,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(r,"__esModule",{value:!0})},o.t=function(r,e){if(1&e&&(r=o(r)),8&e)return r;if(4&e&&"object"==typeof r&&r&&r.__esModule)return r;var n=Object.create(null);if(o.r(n),Object.defineProperty(n,"default",{enumerable:!0,value:r}),2&e&&"string"!=typeof r)for(var t in r)o.d(n,t,function(e){return r[e]}.bind(null,t));return n},o.n=function(r){var e=r&&r.__esModule?function(){return r.default}:function(){return r};return o.d(e,"a",e),e},o.o=function(r,e){return Object.prototype.hasOwnProperty.call(r,e)},o.p="",o(o.s=0)}([function(r,e,o){"use strict";var n=o(1),t=o(5);_rollbarConfig=_rollbarConfig||{},_rollbarConfig.rollbarJsUrl=_rollbarConfig.rollbarJsUrl||"https://cdn.rollbar.com/rollbarjs/refs/tags/v2.22.0/rollbar.min.js",_rollbarConfig.async=void 0===_rollbarConfig.async||_rollbarConfig.async;var a=n.setupShim(window,_rollbarConfig),l=t(_rollbarConfig);window.rollbar=n.Rollbar,a.loadFull(window,document,!_rollbarConfig.async,_rollbarConfig,l)},function(r,e,o){"use strict";var n=o(2),t=o(3);function a(r){return function(){try{return r.apply(this,arguments)}catch(r){try{console.error("[Rollbar]: Internal error",r)}catch(r){}}}}var l=0;function i(r,e){this.options=r,this._rollbarOldOnError=null;var o=l++;this.shimId=function(){return o},"undefined"!=typeof window&&window._rollbarShims&&(window._rollbarShims[o]={handler:e,messages:[]})}var s=o(4),d=function(r,e){return new i(r,e)},c=function(r){return new s(d,r)};function u(r){return a((function(){var e=this,o=Array.prototype.slice.call(arguments,0),n={shim:e,method:r,args:o,ts:new Date};window._rollbarShims[this.shimId()].messages.push(n)}))}i.prototype.loadFull=function(r,e,o,n,t){var l=!1,i=e.createElement("script"),s=e.getElementsByTagName("script")[0],d=s.parentNode;i.crossOrigin="",i.src=n.rollbarJsUrl,o||(i.async=!0),i.onload=i.onreadystatechange=a((function(){if(!(l||this.readyState&&"loaded"!==this.readyState&&"complete"!==this.readyState)){i.onload=i.onreadystatechange=null;try{d.removeChild(i)}catch(r){}l=!0,function(){var e;if(void 0===r._rollbarDidLoad){e=new Error("rollbar.js did not load");for(var o,n,a,l,i=0;o=r._rollbarShims[i++];)for(o=o.messages||[];n=o.shift();)for(a=n.args||[],i=0;i<a.length;++i)if("function"==typeof(l=a[i])){l(e);break}}"function"==typeof t&&t(e)}()}})),d.insertBefore(i,s)},i.prototype.wrap=function(r,e,o){try{var n;if(n="function"==typeof e?e:function(){return e||{}},"function"!=typeof r)return r;if(r._isWrap)return r;if(!r._rollbar_wrapped&&(r._rollbar_wrapped=function(){o&&"function"==typeof o&&o.apply(this,arguments);try{return r.apply(this,arguments)}catch(o){var e=o;throw e&&("string"==typeof e&&(e=new String(e)),e._rollbarContext=n()||{},e._rollbarContext._wrappedSource=r.toString(),window._rollbarWrappedError=e),e}},r._rollbar_wrapped._isWrap=!0,r.hasOwnProperty))for(var t in r)r.hasOwnProperty(t)&&(r._rollbar_wrapped[t]=r[t]);return r._rollbar_wrapped}catch(e){return r}};for(var p="log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,captureEvent,captureDomContentLoaded,captureLoad".split(","),f=0;f<p.length;++f)i.prototype[p[f]]=u(p[f]);r.exports={setupShim:function(r,e){if(r){var o=e.globalAlias||"Rollbar";if("object"==typeof r[o])return r[o];r._rollbarShims={},r._rollbarWrappedError=null;var l=new c(e);return a((function(){e.captureUncaught&&(l._rollbarOldOnError=r.onerror,n.captureUncaughtExceptions(r,l,!0),e.wrapGlobalEventHandlers&&t(r,l,!0)),e.captureUnhandledRejections&&n.captureUnhandledRejections(r,l,!0);var a=e.autoInstrument;return!1!==e.enabled&&(void 0===a||!0===a||"object"==typeof a&&a.network)&&r.addEventListener&&(r.addEventListener("load",l.captureLoad.bind(l)),r.addEventListener("DOMContentLoaded",l.captureDomContentLoaded.bind(l))),r[o]=l,l}))()}},Rollbar:c}},function(r,e,o){"use strict";function n(r,e,o,n){r._rollbarWrappedError&&(n[4]||(n[4]=r._rollbarWrappedError),n[5]||(n[5]=r._rollbarWrappedError._rollbarContext),r._rollbarWrappedError=null);var t=e.handleUncaughtException.apply(e,n);o&&o.apply(r,n),"anonymous"===t&&(e.anonymousErrorsPending+=1)}r.exports={captureUncaughtExceptions:function(r,e,o){if(r){var t;if("function"==typeof e._rollbarOldOnError)t=e._rollbarOldOnError;else if(r.onerror){for(t=r.onerror;t._rollbarOldOnError;)t=t._rollbarOldOnError;e._rollbarOldOnError=t}e.handleAnonymousErrors();var a=function(){var o=Array.prototype.slice.call(arguments,0);n(r,e,t,o)};o&&(a._rollbarOldOnError=t),r.onerror=a}},captureUnhandledRejections:function(r,e,o){if(r){"function"==typeof r._rollbarURH&&r._rollbarURH.belongsToShim&&r.removeEventListener("unhandledrejection",r._rollbarURH);var n=function(r){var o,n,t;try{o=r.reason}catch(r){o=void 0}try{n=r.promise}catch(r){n="[unhandledrejection] error getting `promise` from event"}try{t=r.detail,!o&&t&&(o=t.reason,n=t.promise)}catch(r){}o||(o="[unhandledrejection] error getting `reason` from event"),e&&e.handleUnhandledRejection&&e.handleUnhandledRejection(o,n)};n.belongsToShim=o,r._rollbarURH=n,r.addEventListener("unhandledrejection",n)}}}},function(r,e,o){"use strict";function n(r,e,o){if(e.hasOwnProperty&&e.hasOwnProperty("addEventListener")){for(var n=e.addEventListener;n._rollbarOldAdd&&n.belongsToShim;)n=n._rollbarOldAdd;var t=function(e,o,t){n.call(this,e,r.wrap(o),t)};t._rollbarOldAdd=n,t.belongsToShim=o,e.addEventListener=t;for(var a=e.removeEventListener;a._rollbarOldRemove&&a.belongsToShim;)a=a._rollbarOldRemove;var l=function(r,e,o){a.call(this,r,e&&e._rollbar_wrapped||e,o)};l._rollbarOldRemove=a,l.belongsToShim=o,e.removeEventListener=l}}r.exports=function(r,e,o){if(r){var t,a,l="EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload".split(",");for(t=0;t<l.length;++t)r[a=l[t]]&&r[a].prototype&&n(e,r[a].prototype,o)}}},function(r,e,o){"use strict";function n(r,e){this.impl=r(e,this),this.options=e,function(r){for(var e=function(r){return function(){var e=Array.prototype.slice.call(arguments,0);if(this.impl[r])return this.impl[r].apply(this.impl,e)}},o="log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,_createItem,wrap,loadFull,shimId,captureEvent,captureDomContentLoaded,captureLoad".split(","),n=0;n<o.length;n++)r[o[n]]=e(o[n])}(n.prototype)}n.prototype._swapAndProcessMessages=function(r,e){var o,n,t;for(this.impl=r(this.options);o=e.shift();)n=o.method,t=o.args,this[n]&&"function"==typeof this[n]&&("captureDomContentLoaded"===n||"captureLoad"===n?this[n].apply(this,[t[0],o.ts]):this[n].apply(this,t));return this},r.exports=n},function(r,e,o){"use strict";r.exports=function(r){return function(e){if(!e&&!window._rollbarInitialized){for(var o,n,t=(r=r||{}).globalAlias||"Rollbar",a=window.rollbar,l=function(r){return new a(r)},i=0;o=window._rollbarShims[i++];)n||(n=o.handler),o.handler._swapAndProcessMessages(l,o.messages);window[t]=n,window._rollbarInitialized=!0}}}}]);
+        // End Rollbar Snippet
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="UTF-8" >
+    <title>Group companies - Metropolitan Thames Valley</title>
+    <link rel="stylesheet" href="https://www.mtvh.co.uk/wp-content/themes/mtvh/style.css?ver=20-08-20" type="text/css" media="screen" >
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
+    <link rel='shortcut icon' type='image/x-icon' href='https://www.mtvh.co.uk/wp-content/themes/mtvh/img/mtvh-rgb-logo-full-colour.ico' >
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="rollbar-client-access-token" content="8dc9fadfe13a4c13a584378d5d9bf456" >
+    <meta name="rollbar-environment" content="production" >
+    <link rel="author" href="https://www.mtvh.co.uk/wp-content/themes/mtvh/humans.txt" >
+    <link rel="pingback" href="https://www.mtvh.co.uk/xmlrpc.php" >
+       <script nonce="CRLT73Yq2M1H3ctMZa4t" src="https://www.google.com/recaptcha/api.js?render=6LdXq5ocAAAAAJKjTAwG-JiZCv_LD4MEXAWusff9" ></script>
+    <!-- Google Tag Manager wp-singular page-template page-template-page-interstitial page-template-page-interstitial-php page page-id-96 page-child parent-pageid-113198 wp-theme-mtvh-->
+    <script nonce="CRLT73Yq2M1H3ctMZa4t">(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-WHP2RVL');
+    </script>
+    <script nonce="CRLT73Yq2M1H3ctMZa4t">
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){window.dataLayer.push(arguments);}
+    </script>
+    <!-- End Google Tag Manager -->
+
+    <meta name='robots' content='index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' />
+
+	<!-- This site is optimized with the Yoast SEO plugin v28.5 - https://yoast.com/product/yoast-seo-wordpress/ -->
+	<meta name="description" content="An overview of the individual companies which, together, form MTVH." />
+	<link rel="canonical" href="https://www.mtvh.co.uk/about-us/group-companies/" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:type" content="article" />
+	<meta property="og:title" content="Group companies - Metropolitan Thames Valley" />
+	<meta property="og:description" content="An overview of the individual companies which, together, form MTVH." />
+	<meta property="og:url" content="https://www.mtvh.co.uk/about-us/group-companies/" />
+	<meta property="og:site_name" content="Metropolitan Thames Valley" />
+	<meta property="article:publisher" content="https://www.facebook.com/mettvh/" />
+	<meta property="article:modified_time" content="2026-07-23T14:50:49+00:00" />
+	<meta property="og:image" content="https://www.mtvh.co.uk/wp-content/uploads/2023/12/mtvh-logo-e1748421685961.jpg" />
+	<meta property="og:image:width" content="384" />
+	<meta property="og:image:height" content="386" />
+	<meta property="og:image:type" content="image/jpeg" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@MetTVH" />
+	<script nonce="CRLT73Yq2M1H3ctMZa4t" type="application/ld+json" class="yoast-schema-graph">{"@context":"https:\/\/schema.org","@graph":[{"@type":"WebPage","@id":"https:\/\/www.mtvh.co.uk\/about-us\/group-companies\/","url":"https:\/\/www.mtvh.co.uk\/about-us\/group-companies\/","name":"Group companies - Metropolitan Thames Valley","isPartOf":{"@id":"https:\/\/www.mtvh.co.uk\/#website"},"datePublished":"2018-09-18T10:07:09+00:00","dateModified":"2026-07-23T14:50:49+00:00","description":"An overview of the individual companies which, together, form MTVH.","breadcrumb":{"@id":"https:\/\/www.mtvh.co.uk\/about-us\/group-companies\/#breadcrumb"},"inLanguage":"en-US","potentialAction":[{"@type":"ReadAction","target":["https:\/\/www.mtvh.co.uk\/about-us\/group-companies\/"]}]},{"@type":"BreadcrumbList","@id":"https:\/\/www.mtvh.co.uk\/about-us\/group-companies\/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/www.mtvh.co.uk\/"},{"@type":"ListItem","position":2,"name":"About us","item":"https:\/\/www.mtvh.co.uk\/about-us\/"},{"@type":"ListItem","position":3,"name":"Group companies"}]},{"@type":"WebSite","@id":"https:\/\/www.mtvh.co.uk\/#website","url":"https:\/\/www.mtvh.co.uk\/","name":"Metropolitan Thames Valley","description":"Metropolitan Thames Valley","publisher":{"@id":"https:\/\/www.mtvh.co.uk\/#organization"},"potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https:\/\/www.mtvh.co.uk\/?s={search_term_string}"},"query-input":{"@type":"PropertyValueSpecification","valueRequired":true,"valueName":"search_term_string"}}],"inLanguage":"en-US"},{"@type":"Organization","@id":"https:\/\/www.mtvh.co.uk\/#organization","name":"Metropolitan Thames Valley","url":"https:\/\/www.mtvh.co.uk\/","logo":{"@type":"ImageObject","inLanguage":"en-US","@id":"https:\/\/www.mtvh.co.uk\/#\/schema\/logo\/image\/","url":"https:\/\/www.mtvh.co.uk\/wp-content\/uploads\/2022\/07\/mtvh-rgb-logo-full-colour.png","contentUrl":"https:\/\/www.mtvh.co.uk\/wp-content\/uploads\/2022\/07\/mtvh-rgb-logo-full-colour.png","width":419,"height":140,"caption":"Metropolitan Thames Valley"},"image":{"@id":"https:\/\/www.mtvh.co.uk\/#\/schema\/logo\/image\/"},"sameAs":["https:\/\/www.facebook.com\/mettvh\/","https:\/\/x.com\/MetTVH","https:\/\/www.linkedin.com\/company\/metropolitan-thames-valley\/"]}]}</script>
+	<!-- / Yoast SEO plugin. -->
+
+
+<link rel='dns-prefetch' href='//consent.cookiefirst.com' />
+<link rel="alternate" title="oEmbed (JSON)" type="application/json+oembed" href="https://www.mtvh.co.uk/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.mtvh.co.uk%2Fabout-us%2Fgroup-companies%2F" />
+<link rel="alternate" title="oEmbed (XML)" type="text/xml+oembed" href="https://www.mtvh.co.uk/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.mtvh.co.uk%2Fabout-us%2Fgroup-companies%2F&#038;format=xml" />
+<style id="wp-img-auto-sizes-contain-inline-css">
+img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
+/*# sourceURL=wp-img-auto-sizes-contain-inline-css */
+</style>
+<link rel='stylesheet' id='main-css' href='https://www.mtvh.co.uk/wp-content/themes/mtvh/build/css/custom.css?cachebreak=9Oct2026-11-15-00&#038;ver=7.1.3' media='all' />
+<style id="classic-theme-styles-inline-css">
+/*! This file is auto-generated */
+.wp-block-button__link{color:#fff;background-color:#32373c;border-radius:9999px;box-shadow:none;text-decoration:none;padding:calc(.667em + 2px) calc(1.333em + 2px);font-size:1.125em}.wp-block-file__button{background:#32373c;color:#fff;text-decoration:none}
+/*# sourceURL=/wp-includes/css/classic-themes.min.css */
+</style>
+
+<style id="global-styles-inline-css">
+:root{--wp--preset--aspect-ratio--square: 1;--wp--preset--aspect-ratio--4-3: 4/3;--wp--preset--aspect-ratio--3-4: 3/4;--wp--preset--aspect-ratio--3-2: 3/2;--wp--preset--aspect-ratio--2-3: 2/3;--wp--preset--aspect-ratio--16-9: 16/9;--wp--preset--aspect-ratio--9-16: 9/16;--wp--preset--color--black: #000000;--wp--preset--color--cyan-bluish-gray: #abb8c3;--wp--preset--color--white: #ffffff;--wp--preset--color--pale-pink: #f78da7;--wp--preset--color--vivid-red: #cf2e2e;--wp--preset--color--luminous-vivid-orange: #ff6900;--wp--preset--color--luminous-vivid-amber: #fcb900;--wp--preset--color--light-green-cyan: #7bdcb5;--wp--preset--color--vivid-green-cyan: #00d084;--wp--preset--color--pale-cyan-blue: #8ed1fc;--wp--preset--color--vivid-cyan-blue: #0693e3;--wp--preset--color--vivid-purple: #9b51e0;--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple: linear-gradient(135deg,rgb(6,147,227) 0%,rgb(155,81,224) 100%);--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan: linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%);--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange: linear-gradient(135deg,rgb(252,185,0) 0%,rgb(255,105,0) 100%);--wp--preset--gradient--luminous-vivid-orange-to-vivid-red: linear-gradient(135deg,rgb(255,105,0) 0%,rgb(207,46,46) 100%);--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray: linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%);--wp--preset--gradient--cool-to-warm-spectrum: linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%);--wp--preset--gradient--blush-light-purple: linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%);--wp--preset--gradient--blush-bordeaux: linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%);--wp--preset--gradient--luminous-dusk: linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%);--wp--preset--gradient--pale-ocean: linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%);--wp--preset--gradient--electric-grass: linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%);--wp--preset--gradient--midnight: linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%);--wp--preset--font-size--small: 13px;--wp--preset--font-size--medium: 20px;--wp--preset--font-size--large: 36px;--wp--preset--font-size--x-large: 42px;--wp--preset--spacing--20: 0.44rem;--wp--preset--spacing--30: 0.67rem;--wp--preset--spacing--40: 1rem;--wp--preset--spacing--50: 1.5rem;--wp--preset--spacing--60: 2.25rem;--wp--preset--spacing--70: 3.38rem;--wp--preset--spacing--80: 5.06rem;--wp--preset--shadow--natural: 6px 6px 9px rgba(0, 0, 0, 0.2);--wp--preset--shadow--deep: 12px 12px 50px rgba(0, 0, 0, 0.4);--wp--preset--shadow--sharp: 6px 6px 0px rgba(0, 0, 0, 0.2);--wp--preset--shadow--outlined: 6px 6px 0px -3px rgb(255, 255, 255), 6px 6px rgb(0, 0, 0);--wp--preset--shadow--crisp: 6px 6px 0px rgb(0, 0, 0);}.wp-block-button{--wp--preset--dimension--25: 25%;--wp--preset--dimension--50: 50%;--wp--preset--dimension--75: 75%;--wp--preset--dimension--100: 100%;}:where(body) { margin: 0; }:where(.is-layout-flex){gap: 0.5em;}:where(.is-layout-grid){gap: 0.5em;}body .is-layout-flex{display: flex;}.is-layout-flex{flex-wrap: wrap;align-items: center;}.is-layout-flex > :is(*, div){margin: 0;}body .is-layout-grid{display: grid;}.is-layout-grid > :is(*, div){margin: 0;}body{padding-top: 0px;padding-right: 0px;padding-bottom: 0px;padding-left: 0px;}:root :where(.wp-element-button, .wp-block-button__link){background-color: #32373c;border-width: 0;color: #fff;font-family: inherit;font-size: inherit;font-style: inherit;font-weight: inherit;letter-spacing: inherit;line-height: inherit;padding-top: calc(0.667em + 2px);padding-right: calc(1.333em + 2px);padding-bottom: calc(0.667em + 2px);padding-left: calc(1.333em + 2px);text-decoration: none;text-transform: inherit;}.has-black-color{color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-color{color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-color{color: var(--wp--preset--color--white) !important;}.has-pale-pink-color{color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-color{color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-color{color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-color{color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-color{color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-color{color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-color{color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-color{color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-color{color: var(--wp--preset--color--vivid-purple) !important;}.has-black-background-color{background-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-background-color{background-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-background-color{background-color: var(--wp--preset--color--white) !important;}.has-pale-pink-background-color{background-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-background-color{background-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-background-color{background-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-background-color{background-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-background-color{background-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-background-color{background-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-background-color{background-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-background-color{background-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-background-color{background-color: var(--wp--preset--color--vivid-purple) !important;}.has-black-border-color{border-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-border-color{border-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-border-color{border-color: var(--wp--preset--color--white) !important;}.has-pale-pink-border-color{border-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-border-color{border-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-border-color{border-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-border-color{border-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-border-color{border-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-border-color{border-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-border-color{border-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-border-color{border-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-border-color{border-color: var(--wp--preset--color--vivid-purple) !important;}.has-vivid-cyan-blue-to-vivid-purple-gradient-background{background: var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple) !important;}.has-light-green-cyan-to-vivid-green-cyan-gradient-background{background: var(--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan) !important;}.has-luminous-vivid-amber-to-luminous-vivid-orange-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange) !important;}.has-luminous-vivid-orange-to-vivid-red-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-orange-to-vivid-red) !important;}.has-very-light-gray-to-cyan-bluish-gray-gradient-background{background: var(--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray) !important;}.has-cool-to-warm-spectrum-gradient-background{background: var(--wp--preset--gradient--cool-to-warm-spectrum) !important;}.has-blush-light-purple-gradient-background{background: var(--wp--preset--gradient--blush-light-purple) !important;}.has-blush-bordeaux-gradient-background{background: var(--wp--preset--gradient--blush-bordeaux) !important;}.has-luminous-dusk-gradient-background{background: var(--wp--preset--gradient--luminous-dusk) !important;}.has-pale-ocean-gradient-background{background: var(--wp--preset--gradient--pale-ocean) !important;}.has-electric-grass-gradient-background{background: var(--wp--preset--gradient--electric-grass) !important;}.has-midnight-gradient-background{background: var(--wp--preset--gradient--midnight) !important;}.has-small-font-size{font-size: var(--wp--preset--font-size--small) !important;}.has-medium-font-size{font-size: var(--wp--preset--font-size--medium) !important;}.has-large-font-size{font-size: var(--wp--preset--font-size--large) !important;}.has-x-large-font-size{font-size: var(--wp--preset--font-size--x-large) !important;}
+/*# sourceURL=global-styles-inline-css */
+</style>
+
+<link rel='stylesheet' id='cookiefirst-gdpr-cookie-consent-banner-css' href='https://www.mtvh.co.uk/wp-content/plugins/cookiefirst-gdpr-cookie-consent-banner/public/css/cookiefirst-plugin-public.css?ver=2.0.0' media='all' />
+<script nonce="CRLT73Yq2M1H3ctMZa4t" id="jquery-js-before">
+window.wp_consent_type = "optin";
+//# sourceURL=jquery-js-before
+</script>
+<script nonce="CRLT73Yq2M1H3ctMZa4t" id="vendor.min.js-js" src="https://www.mtvh.co.uk/wp-content/themes/mtvh/build/js/vendor.min.js?cachebreak=9Oct2026-11-15-00&#038;ver=1"></script>
+<script nonce="CRLT73Yq2M1H3ctMZa4t" id="cookiefirst-gdpr-cookie-consent-banner-js" src="https://www.mtvh.co.uk/wp-content/plugins/cookiefirst-gdpr-cookie-consent-banner/public/js/cookiefirst-plugin-public.js?ver=2.0.0"></script>
+<script nonce="CRLT73Yq2M1H3ctMZa4t" id="cookiefirst-script-js" src="https://consent.cookiefirst.com/sites/mtvh.co.uk-f1bdb1da-d459-4358-ad8a-b635a3843d32/consent.js?ver=2.0.0"></script>
+<link rel="icon" href="https://www.mtvh.co.uk/wp-content/uploads/2022/07/cropped-cropped-MTVH-favicon-512x512px-32x32.png" sizes="32x32" />
+<link rel="icon" href="https://www.mtvh.co.uk/wp-content/uploads/2022/07/cropped-cropped-MTVH-favicon-512x512px-192x192.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="https://www.mtvh.co.uk/wp-content/uploads/2022/07/cropped-cropped-MTVH-favicon-512x512px-180x180.png" />
+<meta name="msapplication-TileImage" content="https://www.mtvh.co.uk/wp-content/uploads/2022/07/cropped-cropped-MTVH-favicon-512x512px-270x270.png" />
+
+</head>
+	<body class="wp-singular page-template page-template-page-interstitial page-template-page-interstitial-php page page-id-96 page-child parent-pageid-113198 wp-theme-mtvh ">
+	<!-- Google Tag Manager (noscript) -->
+	<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WHP2RVL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+	<!-- End Google Tag Manager (noscript) -->
+		<a class="skip-to-content-link" href="#content">Skip to main content</a>
+	    <div class="emergency-banner">
+        <div class="container">
+                                                                                                                                                                                                    </div>
+    </div>
+
+	<div class="navbar-corporate d-none d-lg-block">
+    <nav class="container" role="navigation" aria-label="Site Heading navigation">
+        <ul>
+                        <li><a   href="https://www.mtvh.co.uk/about-us/" >About us</a></li>
+                        <li><a   href="https://www.mtvh.co.uk/about-us/careers/" >Careers</a></li>
+                        <li><a   href="https://www.mtvh.co.uk/about-us/investor-relations/" >Investor relations</a></li>
+                        <li><a   href="https://www.mtvh.co.uk/about-us/news/" >News</a></li>
+                    </ul>
+    </nav>
+</div>
+	<div class="container container--nav" >
+												<div id="navigation" class="navbar navbar--narrow">
+<div class="navbar__wrapper container">
+	<a href="/" aria-label="M T V H Home"  class="no-deco"><div class="logo"  ></div></a>
+	<div class="site-search site-search--md">
+		<form action="https://www.mtvh.co.uk" role="search"  method="get" id="search-desk" class="search-form">
+			<div class="input-group md-form form-sm form-2 pl-0">
+				<input class="form-control" name="s" type="text" placeholder="Search" aria-label="Search">
+				<button class="input-group-text red lighten-3" id="submit-search-form-desktop" aria-label="Search">
+					 <svg width="21" height="19" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<circle cx="8.083" cy="8.083" r="7.083" stroke="#3C3C3C" stroke-width="2"/>
+						<path transform="rotate(-135 14.145 4.685)" stroke="#3C3C3C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1-1h8.017"/>
+					</svg>
+				</button>
+			</div>
+		</form>
+	</div>
+	<div class="navbutton">
+					<a class="login-link" href="https://mtvh.online/" target="">
+				<span class="padd">Sign in</span>
+			</a>
+				<button class="hamburger hamburger--slider js-hamburger collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-mtvh" aria-controls="navbar-mtvh" aria-expanded="false" >
+					<span class="hamburger-box">
+						<span class="hamburger-inner"></span>
+					</span>
+			<span class="padd">Menu</span>
+		</button>
+	</div>
+	<div class="nav-right">
+		<ul>
+
+							<li><a href="https://www.mtvh.co.uk/mtvh-online/" target="">Get an account</a></li>
+										<li><a class="btn__login btn btn__animated btn__animated--primary btn__animated" href="https://mtvh.online/" target="">Sign in</a></li>
+					</ul>
+	</div>
+	</div>
+	<div class="collapse navbar-collapse "  id="navbar-mtvh">
+		<div class="navbar-collapse-wrapper">
+			<div class="site-search site-search--sm">
+			<a class="nav-link collapsed" data-toggle="collapse" data-target="#search-form-desktop" >Search <span class="fa fa-search"></span></a>
+			<form action="https://www.mtvh.co.uk" role="search" method="get" class="search-form" id="search-form" >
+				<div class="input-group form-2 pl-0">
+					<input class="form-control" name="s" type="text" placeholder="Search" aria-label="Search">
+					<div class="input-group-append">
+						<span class="input-group-text red lighten-3" id="submit-search-form">
+							 <svg width="21" height="19" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<circle cx="8.083" cy="8.083" r="7.083" stroke="#3C3C3C" stroke-width="2"/>
+								<path transform="rotate(-135 14.145 4.685)" stroke="#3C3C3C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1-1h8.017"/>
+							</svg>
+						</span>
+					</div>
+				</div>
+			</form>
+		</div>
+		<label></label>
+		<div class="nav-content">
+			<div class="col-6 navbar-col navbar-col__left"></div>
+			<div class="col-6 navbar-col navbar-col__right"></div>
+			<div class="col-6 navbar-col navbar-col__right--clonned"></div>
+		</div>
+	</div>
+			<div class="navbar-corporate d-md-block d-lg-none">
+			<div class="container navbar-corporate-container">
+				<ul>
+									<li><a  href="https://www.mtvh.co.uk/about-us/" >About us</a></li>
+									<li><a  href="https://www.mtvh.co.uk/about-us/careers/" >Careers</a></li>
+									<li><a  href="https://www.mtvh.co.uk/about-us/investor-relations/" >Investor relations</a></li>
+									<li><a  href="https://www.mtvh.co.uk/about-us/news/" >News</a></li>
+								</ul>
+		 	</div>
+		</div>
+			</div>
+</div>
+<div class="unsupported-message">
+	<div class="unsupported-message-wrapper">
+		<div class="container">
+			<button class="unsupported-message__close"><span aria-hidden="true">Close</span></button>
+			<div class="unsupported-message__title">Update your web browser to keep using the website</div>
+			<div class="unsupported-message__body">It looks like you’re using an old version of your web browser.
+				<span>This means our website may not work properly.</span><span>Please update your web browser to keep using the website.</span></div>
+			<div>Choose your browser and follow the instructions for updating it:</div>
+			<ul>
+				<li><a target="_blank" href="https://www.google.com/chrome/">Google Chrome</a></li>
+				<li><a target="_blank" href="https://www.mozilla.org/en-GB/firefox/new/">Mozilla Firefox</a></li>
+				<li><a target="_blank" href="https://support.apple.com/en-gb/safari">Safari</a></li>
+				<li><a target="_blank" href="https://www.microsoft.com/en-us/edge?form=MA13FJ&exp=e404">Microsoft Edge</a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+<div class="nav-backdrop fade"></div>
+<nav id="site-navigation" class="navbar navbar-expand-lg"  aria-label="Site navigation">
+	<div class="collapse navbar-collapse nav-top">
+					<ul class="navbar-nav primary-nav" data-id="1">
+
+																								<li class="nav-item dropdown disabled " data-self="3251" >
+							<a data-parent="1"  data-child="3251" data-id="3251"
+							   class="primary-link nav-link has-child  "
+							   href="https://www.mtvh.co.uk/manage-your-home/"  aria-haspopup="true" aria-expanded="false"
+							   id="dropdown3251" data-bs-toggle="dropdown" >Manage your home
+							</a>
+							<div  class="dropdown-menu dropdown-menu-level2  ">
+								<ul class="navbar-nav"  data-id="3251">
+																			<li class="nav-item nav-item--back-to"><a data-target="submenu-3251" class="back-to" data-self="3251" data-parent="1"  href="#">Back to Manage your home</a></li>
+										<li class="nav-item show">
+											<a  href="https://www.mtvh.co.uk/manage-your-home/" class="nav-link">Manage your home </a>
+										</li>
+									
+																			<li class="nav-item" data-self="3252">
+																						<a href="https://www.mtvh.co.uk/manage-your-home/payments/" aria-expanded="false"  data-parent="3251" data-id="3252"
+											   class="nav-link-3 nav-link has-child">Payments</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="3252" data-parent="3252">
+																													<li class="nav-item">
+																<a data-parent="3252" href="https://www.mtvh.co.uk/manage-your-home/payments/" class="nav-link ">Payments </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3252" href="https://www.mtvh.co.uk/manage-your-home/payments/understanding-your-service-charge/" class="nav-link ">Understanding your service charge </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3252" href="https://www.mtvh.co.uk/manage-your-home/payments/direct-debits/" class="nav-link ">Direct Debits </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3252" href="https://www.mtvh.co.uk/manage-your-home/payments/your-social-rent/" class="nav-link ">Your social rent </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3252" href="https://www.mtvh.co.uk/manage-your-home/payments/request-a-refund/" class="nav-link ">Request a refund </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3252" href="https://www.mtvh.co.uk/manage-your-home/payments/bills-and-insurance/" class="nav-link ">Bills and insurance </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="3253">
+																						<a href="https://www.mtvh.co.uk/manage-your-home/repairs/" aria-expanded="false"  data-parent="3251" data-id="3253"
+											   class="nav-link-3 nav-link has-child">Repairs</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="3253" data-parent="3253">
+																													<li class="nav-item">
+																<a data-parent="3253" href="https://www.mtvh.co.uk/manage-your-home/repairs/" class="nav-link ">Repairs </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3253" href="https://www.mtvh.co.uk/manage-your-home/repairs/emergency-repairs/" class="nav-link ">Emergency repairs </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3253" href="https://www.mtvh.co.uk/manage-your-home/repairs/repair-responsibilities/" class="nav-link ">Repair responsibilities </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3253" href="https://www.mtvh.co.uk/manage-your-home/repairs/request-repair/" class="nav-link ">Request a repair </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3253" href="https://www.mtvh.co.uk/manage-your-home/repairs/track-your-repair/" class="nav-link ">Track your repair </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3253" href="https://www.mtvh.co.uk/manage-your-home/repairs/your-estate/" class="nav-link ">Your estate </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3253" href="https://www.mtvh.co.uk/manage-your-home/repairs/dealing-with-damp-and-mould/" class="nav-link ">Dealing with damp and mould </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3253" href="https://www.mtvh.co.uk/manage-your-home/repairs/common-home-repairs/" class="nav-link ">Fixing common home repairs yourself </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="4503">
+																							<a   href="https://www.mtvh.co.uk/manage-your-home/parking/" class="nav-link" >Parking </a>
+																					</li>
+																			<li class="nav-item" data-self="4392">
+																							<a   href="https://www.mtvh.co.uk/manage-your-home/pets-in-your-home/" class="nav-link" >Pets in your home </a>
+																					</li>
+																			<li class="nav-item" data-self="111943">
+																						<a href="https://www.mtvh.co.uk/manage-your-home/keeping-safe-in-your-home/" aria-expanded="false"  data-parent="3251" data-id="111943"
+											   class="nav-link-3 nav-link has-child">Keeping safe in your home</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="111943" data-parent="111943">
+																													<li class="nav-item">
+																<a data-parent="111943" href="https://www.mtvh.co.uk/manage-your-home/keeping-safe-in-your-home/fire-safety-advice/" class="nav-link ">Fire safety advice </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="111943" href="https://www.mtvh.co.uk/manage-your-home/keeping-safe-in-your-home/gas-electric-and-other-checks/" class="nav-link ">Gas, electric and other checks </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="111943" href="https://www.mtvh.co.uk/manage-your-home/keeping-safe-in-your-home/building-safety/" class="nav-link ">Safety in high-rise buildings </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="113333">
+																						<a href="https://www.mtvh.co.uk/manage-your-home/tenants/" aria-expanded="false"  data-parent="3251" data-id="113333"
+											   class="nav-link-3 nav-link has-child">Tenants</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="113333" data-parent="113333">
+																													<li class="nav-item">
+																<a data-parent="113333" href="https://www.mtvh.co.uk/manage-your-home/tenants/your-responsibilities-as-a-tenant/" class="nav-link ">Your responsibilities as a tenant </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="113333" href="https://www.mtvh.co.uk/manage-your-home/tenants/moving-out-and-ending-your-tenancy/" class="nav-link ">Moving out and ending your tenancy </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="113333" href="https://www.mtvh.co.uk/manage-your-home/tenants/request-aids-and-adaptations-for-your-home/" class="nav-link ">Request aids and adaptations for your home </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="3258">
+																						<a href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/" aria-expanded="false"  data-parent="3251" data-id="3258"
+											   class="nav-link-3 nav-link has-child">Homeowners and shared owners</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="3258" data-parent="3258">
+																													<li class="nav-item">
+																<a data-parent="3258" href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/" class="nav-link ">Homeowners and shared owners </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3258" href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/homeowners/" class="nav-link ">Homeowners </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3258" href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/shared-owners/" class="nav-link ">Shared owners </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3258" href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/section-20-consultation/" class="nav-link ">Section 20 consultation </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3258" href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/warranty-for-new-builds/" class="nav-link ">Warranty for new builds </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3258" href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/buildings-insurance/" class="nav-link ">Buildings insurance </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3258" href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/ews1/" class="nav-link ">EWS1 information </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3258" href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/home-improvements-and-alterations/" class="nav-link ">Home improvements and alterations </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3258" href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/equity-loans/" class="nav-link ">Equity loans </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3258" href="https://www.mtvh.co.uk/manage-your-home/homeowners-and-shared-owners/moving-in-to-your-new-build-home/" class="nav-link ">Moving in to your new build home </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="4118">
+																						<a href="https://www.mtvh.co.uk/manage-your-home/manage-your-keyworker-home/" aria-expanded="false"  data-parent="3251" data-id="4118"
+											   class="nav-link-3 nav-link has-child">Manage your keyworker home</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="4118" data-parent="4118">
+																													<li class="nav-item">
+																<a data-parent="4118" href="https://www.mtvh.co.uk/manage-your-home/manage-your-keyworker-home/" class="nav-link ">Manage your keyworker home </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="4118" href="https://www.mtvh.co.uk/manage-your-home/manage-your-keyworker-home/keyworker-housing-offices/" class="nav-link ">Keyworker housing offices </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="4118" href="https://www.mtvh.co.uk/manage-your-home/manage-your-keyworker-home/your-keyworker-tenancy/" class="nav-link ">Your keyworker tenancy </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																	</ul>
+							</div>
+						</li>
+																									<li class="nav-item dropdown disabled " data-self="3245" >
+							<a data-parent="1"  data-child="3245" data-id="3245"
+							   class="primary-link nav-link has-child  "
+							   href="https://www.mtvh.co.uk/find-a-home/"  aria-haspopup="true" aria-expanded="false"
+							   id="dropdown3245" data-bs-toggle="dropdown" >Find a home
+							</a>
+							<div  class="dropdown-menu dropdown-menu-level2  ">
+								<ul class="navbar-nav"  data-id="3245">
+																			<li class="nav-item nav-item--back-to"><a data-target="submenu-3245" class="back-to" data-self="3245" data-parent="1"  href="#">Back to Find a home</a></li>
+										<li class="nav-item show">
+											<a  href="https://www.mtvh.co.uk/find-a-home/" class="nav-link">Find a home </a>
+										</li>
+									
+																			<li class="nav-item" data-self="3246">
+																						<a href="https://www.mtvh.co.uk/find-a-home/buy-a-home/" aria-expanded="false"  data-parent="3245" data-id="3246"
+											   class="nav-link-3 nav-link has-child">Buy a home</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="3246" data-parent="3246">
+																													<li class="nav-item">
+																<a data-parent="3246" href="https://www.mtvh.co.uk/find-a-home/buy-a-home/" class="nav-link ">Buy a home </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3246" href="https://www.mtvh.co.uk/find-a-home/buy-a-home/shared-ownership/" class="nav-link ">Buy a home through shared ownership </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3246" href="https://www.mtvh.co.uk/find-a-home/buy-a-home/buying-your-rented-home/" class="nav-link ">Buy your rented home </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="3248">
+																							<a   href="https://www.mtvh.co.uk/find-a-home/rent-a-home/" class="nav-link" >Rent a home </a>
+																					</li>
+																			<li class="nav-item" data-self="4619">
+																						<a href="https://www.mtvh.co.uk/find-a-home/moving-home/" aria-expanded="false"  data-parent="3245" data-id="4619"
+											   class="nav-link-3 nav-link has-child">Move home</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="4619" data-parent="4619">
+																													<li class="nav-item">
+																<a data-parent="4619" href="https://www.mtvh.co.uk/find-a-home/moving-home/swap-your-home-with-another-tenant-mutual-exchange/" class="nav-link ">Swap your home with another tenant (mutual exchange) </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="4619" href="https://www.mtvh.co.uk/find-a-home/moving-home/move-to-an-empty-home/" class="nav-link ">Move to an empty home </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="3249">
+																						<a href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/" aria-expanded="false"  data-parent="3245" data-id="3249"
+											   class="nav-link-3 nav-link has-child">Find keyworker housing</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="3249" data-parent="3249">
+																													<li class="nav-item">
+																<a data-parent="3249" href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/" class="nav-link ">Find keyworker housing </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3249" href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/surrey/" class="nav-link ">Ashford Hospital and St Peter’s Hospital, Surrey </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3249" href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/frimley/" class="nav-link ">Frimley Park Hospital, Surrey </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3249" href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/hammersmith/" class="nav-link ">Hammersmith Hospital, London </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3249" href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/heatherwood/" class="nav-link ">Heatherwood Hospital, Berkshire </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3249" href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/hillingdon/" class="nav-link ">Hillingdon Hospital, Uxbridge </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3249" href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/nuffield/" class="nav-link ">Nuffield Orthopaedic Centre, Oxford </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3249" href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/queen-victoria/" class="nav-link ">Queen Victoria Hospital, West Sussex </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3249" href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/st-georges/" class="nav-link ">St George’s Hospital, London </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3249" href="https://www.mtvh.co.uk/find-a-home/keyworker-housing/stoke-mandeville/" class="nav-link ">Stoke Mandeville Hospital, Buckinghamshire </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="4662">
+																							<a   href="https://www.mtvh.co.uk/find-a-home/homes-for-over-55s/" class="nav-link" >Homes for over 55s </a>
+																					</li>
+																	</ul>
+							</div>
+						</li>
+																									<li class="nav-item dropdown disabled " data-self="3263" >
+							<a data-parent="1"  data-child="3263" data-id="3263"
+							   class="primary-link nav-link has-child  "
+							   href="https://www.mtvh.co.uk/support-and-advice/"  aria-haspopup="true" aria-expanded="false"
+							   id="dropdown3263" data-bs-toggle="dropdown" >Support &#038; advice
+							</a>
+							<div  class="dropdown-menu dropdown-menu-level2  ">
+								<ul class="navbar-nav"  data-id="3263">
+																			<li class="nav-item nav-item--back-to"><a data-target="submenu-3263" class="back-to" data-self="3263" data-parent="1"  href="#">Back to Support &#038; advice</a></li>
+										<li class="nav-item show">
+											<a  href="https://www.mtvh.co.uk/support-and-advice/" class="nav-link">Support &#038; advice </a>
+										</li>
+									
+																			<li class="nav-item" data-self="4305">
+																						<a href="https://www.mtvh.co.uk/support-and-advice/anti-social-behaviour/" aria-expanded="false"  data-parent="3263" data-id="4305"
+											   class="nav-link-3 nav-link has-child">Anti-social behaviour</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="4305" data-parent="4305">
+																													<li class="nav-item">
+																<a data-parent="4305" href="https://www.mtvh.co.uk/support-and-advice/anti-social-behaviour/" class="nav-link ">Anti-social behaviour </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="4305" href="https://www.mtvh.co.uk/support-and-advice/anti-social-behaviour/dealing-with-anti-social-behaviour/" class="nav-link ">Dealing with anti-social behaviour </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="4305" href="https://www.mtvh.co.uk/support-and-advice/anti-social-behaviour/dealing-with-irritating-or-annoying-behaviour/" class="nav-link ">Dealing with irritating or annoying behaviour </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="4305" href="https://www.mtvh.co.uk/support-and-advice/anti-social-behaviour/hate-crime-and-harassment/" class="nav-link ">Hate crime and harassment </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="110002">
+																						<a href="https://www.mtvh.co.uk/support-and-advice/help-with-money-and-bills/" aria-expanded="false"  data-parent="3263" data-id="110002"
+											   class="nav-link-3 nav-link has-child">Help with money and bills</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="110002" data-parent="110002">
+																													<li class="nav-item">
+																<a data-parent="110002" href="https://www.mtvh.co.uk/support-and-advice/help-with-money-and-bills/" class="nav-link ">Help with money and bills </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="110002" href="https://www.mtvh.co.uk/support-and-advice/help-with-money-and-bills/money-advice/" class="nav-link ">Money advice </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="110002" href="https://www.mtvh.co.uk/support-and-advice/help-with-money-and-bills/claiming-benefits/" class="nav-link ">Claiming benefits </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="111857">
+																						<a href="https://www.mtvh.co.uk/support-and-advice/report-abuse-or-neglect-safeguarding/" aria-expanded="false"  data-parent="3263" data-id="111857"
+											   class="nav-link-3 nav-link has-child">Report abuse or neglect</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="111857" data-parent="111857">
+																													<li class="nav-item">
+																<a data-parent="111857" href="https://www.mtvh.co.uk/support-and-advice/report-abuse-or-neglect-safeguarding/" class="nav-link ">Report abuse or neglect </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="111857" href="https://www.mtvh.co.uk/support-and-advice/report-abuse-or-neglect-safeguarding/domestic-abuse/" class="nav-link ">Domestic abuse </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="107727">
+																							<a   href="https://www.mtvh.co.uk/support-and-advice/find-a-service/" class="nav-link" >Find a care and support service </a>
+																					</li>
+																			<li class="nav-item" data-self="3264">
+																						<a href="https://www.mtvh.co.uk/support-and-advice/community-support/" aria-expanded="false"  data-parent="3263" data-id="3264"
+											   class="nav-link-3 nav-link has-child">Support for your community</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="3264" data-parent="3264">
+																													<li class="nav-item">
+																<a data-parent="3264" href="https://www.mtvh.co.uk/support-and-advice/community-support/" class="nav-link ">Support for your community </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3264" href="https://www.mtvh.co.uk/support-and-advice/community-support/get-help-finding-job-in-london/" class="nav-link ">Love London Working (closed) </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3264" href="https://www.mtvh.co.uk/support-and-advice/community-support/respecting-your-neighbours/" class="nav-link ">Respecting your neighbours </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																	</ul>
+							</div>
+						</li>
+																									<li class="nav-item dropdown disabled  active current_page_parent " data-self="113211" >
+							<a data-parent="1"  data-child="113211" data-id="113211"
+							   class="primary-link nav-link has-child  active"
+							   href="https://www.mtvh.co.uk/about-us/"  aria-haspopup="true" aria-expanded="false"
+							   id="dropdown113211" data-bs-toggle="dropdown" >About us
+							</a>
+							<div  class="dropdown-menu dropdown-menu-level2   active ">
+								<ul class="navbar-nav"  data-id="113211">
+																			<li class="nav-item nav-item--back-to"><a data-target="submenu-113211" class="back-to" data-self="113211" data-parent="1"  href="#">Back to About us</a></li>
+										<li class="nav-item show">
+											<a  href="https://www.mtvh.co.uk/about-us/" class="nav-link">About us </a>
+										</li>
+									
+																			<li class="nav-item" data-self="113224">
+																							<a   href="https://www.mtvh.co.uk/about-us/board-and-executive/" class="nav-link" >Board and executive </a>
+																					</li>
+																			<li class="nav-item" data-self="113225">
+																							<a   href="https://www.mtvh.co.uk/about-us/news/" class="nav-link" >News </a>
+																					</li>
+																			<li class="nav-item" data-self="115236">
+																							<a   href="https://www.mtvh.co.uk/about-us/mtvh-2030-strategy/" class="nav-link" >MTVH 2030 strategy </a>
+																					</li>
+																			<li class="nav-item" data-self="113226">
+																							<a   href="https://www.mtvh.co.uk/about-us/our-promise-to-you/" class="nav-link" >Our promise to you </a>
+																					</li>
+																			<li class="nav-item" data-self="113378">
+																							<a   href="https://www.mtvh.co.uk/about-us/our-policies/" class="nav-link" >Our policies </a>
+																					</li>
+																			<li class="nav-item" data-self="113227">
+																							<a   href="https://www.mtvh.co.uk/about-us/investor-relations/" class="nav-link" >Investor relations </a>
+																					</li>
+																			<li class="nav-item" data-self="113228">
+																							<a   href="https://www.mtvh.co.uk/about-us/group-companies/" class="nav-link" >Group companies </a>
+																					</li>
+																			<li class="nav-item" data-self="113229">
+																							<a   href="https://www.mtvh.co.uk/about-us/our-developments/" class="nav-link" >Developments </a>
+																					</li>
+																			<li class="nav-item" data-self="113230">
+																							<a   href="https://www.mtvh.co.uk/about-us/migration-foundation/" class="nav-link" >Migration Foundation </a>
+																					</li>
+																			<li class="nav-item" data-self="113231">
+																							<a   href="https://www.mtvh.co.uk/about-us/publications/" class="nav-link" >Publications </a>
+																					</li>
+																			<li class="nav-item" data-self="113232">
+																							<a   href="https://www.mtvh.co.uk/about-us/supplying-us/" class="nav-link" >Supplying us </a>
+																					</li>
+																			<li class="nav-item" data-self="113233">
+																							<a   href="https://www.mtvh.co.uk/about-us/careers/" class="nav-link" >Working at MTVH </a>
+																					</li>
+																	</ul>
+							</div>
+						</li>
+																									<li class="nav-item dropdown disabled " data-self="1902" >
+							<a data-parent="1"  data-child="1902" data-id="1902"
+							   class="primary-link nav-link has-child  "
+							   href="https://www.mtvh.co.uk/contact-us/"  aria-haspopup="true" aria-expanded="false"
+							   id="dropdown1902" data-bs-toggle="dropdown" >Contact us
+							</a>
+							<div  class="dropdown-menu dropdown-menu-level2 dropdown-menu-right ">
+								<ul class="navbar-nav"  data-id="1902">
+																			<li class="nav-item nav-item--back-to"><a data-target="submenu-1902" class="back-to" data-self="1902" data-parent="1"  href="#">Back to Contact us</a></li>
+										<li class="nav-item show">
+											<a  href="https://www.mtvh.co.uk/contact-us/" class="nav-link">Contact us </a>
+										</li>
+									
+																			<li class="nav-item" data-self="110138">
+																						<a href="https://www.mtvh.co.uk/contact-us/report-a-problem/" aria-expanded="false"  data-parent="1902" data-id="110138"
+											   class="nav-link-3 nav-link has-child">Report a problem</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="110138" data-parent="110138">
+																													<li class="nav-item">
+																<a data-parent="110138" href="https://www.mtvh.co.uk/contact-us/report-a-problem/" class="nav-link ">Report a problem </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="110138" href="https://www.mtvh.co.uk/contact-us/report-a-problem/make-a-complaint-about-mtvh/" class="nav-link ">Make a complaint about MTVH </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																			<li class="nav-item" data-self="108335">
+																							<a   href="https://www.mtvh.co.uk/contact-us/office-locations/" class="nav-link" >Office locations </a>
+																					</li>
+																			<li class="nav-item" data-self="112745">
+																							<a   href="https://www.mtvh.co.uk/contact-us/service-standards/" class="nav-link" >Service standards </a>
+																					</li>
+																			<li class="nav-item" data-self="3268">
+																						<a href="https://www.mtvh.co.uk/share-your-voice/" aria-expanded="false"  data-parent="1902" data-id="3268"
+											   class="nav-link-3 nav-link has-child">Share your voice</a>
+											<div  class="dropdown-menu  dropdown-menu-level3">
+												<ul class="navbar-nav"  data-id="3268" data-parent="3268">
+																													<li class="nav-item">
+																<a data-parent="3268" href="https://www.mtvh.co.uk/share-your-voice/" class="nav-link ">Share your voice </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3268" href="https://www.mtvh.co.uk/share-your-voice/ways-to-share-your-voice/" class="nav-link ">Ways to share your voice </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3268" href="https://www.mtvh.co.uk/share-your-voice/resident-groups/" class="nav-link ">Resident groups </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3268" href="https://www.mtvh.co.uk/share-your-voice/neighbourhood-champions/" class="nav-link ">Neighbourhood champions </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3268" href="https://www.mtvh.co.uk/share-your-voice/share-your-feedback-when-it-suits-you/" class="nav-link ">Share your feedback when it suits you </a>
+															</li>
+																													<li class="nav-item">
+																<a data-parent="3268" href="https://www.mtvh.co.uk/share-your-voice/help-hold-us-accountable-through-forums/" class="nav-link ">Help hold us accountable through forums </a>
+															</li>
+																											</ul>
+											</div>
+																					</li>
+																	</ul>
+							</div>
+						</li>
+												</ul>
+			</div>
+</nav>
+
+									</div>
+
+			
+<div class="container">
+    <div class="breadcrumbs  breadcrumbs--no-shadow " >
+                <div class="row">
+            <div class="col-md-12">
+                                    <nav id="breadcrumbs" class="main-breadcrumbs" aria-label="Breadcrumb navigation"><span><span><a href="https://www.mtvh.co.uk/">Home</a></span> <div class="divider">/</div> <span><a href="https://www.mtvh.co.uk/about-us/">About us</a></span> <div class="divider">/</div> <span class="breadcrumb_last" aria-current="page"><strong>Group companies</strong></span></span></nav>
+                            </div>
+        </div>
+    </div>
+</div>
+<div   role="main"   class="main mt-0  ">
+			<div class="container">
+			<div class="d-none d-lg-block sidenav    sidenav--absolute ">
+    <nav class="sidenav--sticky" id="sidenav"  aria-label="Pages in this section">
+        <div class="sidenav--inner" >
+
+                                              <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/board-and-executive/"
+                       class="nav-link                              ">
+                        Board and executive
+                    </a>
+                                                                        <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/board-and-executive/independent-committee-members/"
+                                   class="nav-link ">
+                                   Independent committee members
+                                </a>
+                            </span>
+                                                            </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/news/"
+                       class="nav-link                              ">
+                        News
+                    </a>
+                                    </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/mtvh-2030-strategy/"
+                       class="nav-link                              ">
+                        MTVH 2030 strategy
+                    </a>
+                                    </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/our-promise-to-you/"
+                       class="nav-link                              ">
+                        Our promise to you
+                    </a>
+                                                                        <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/our-promise-to-you/stairs/"
+                                   class="nav-link ">
+                                   STAIRs &#8211; Social Tenants Access to Information Requirements
+                                </a>
+                            </span>
+                                                                                                                                            <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/our-promise-to-you/tenant-satisfaction-measures-2025-to-2026/"
+                                   class="nav-link ">
+                                   Tenant Satisfaction Measures, 2025 to 2026
+                                </a>
+                            </span>
+                                                                                                                                            <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/our-promise-to-you/residents-influencing-improvements-to-our-service/"
+                                   class="nav-link ">
+                                   Residents influencing improvements to our service
+                                </a>
+                            </span>
+                                                            </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/our-policies/"
+                       class="nav-link                              ">
+                        Our policies
+                    </a>
+                                    </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/investor-relations/"
+                       class="nav-link                              ">
+                        Investor relations
+                    </a>
+                                                                        <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/investor-relations/financial-overview/"
+                                   class="nav-link ">
+                                   Financial overview
+                                </a>
+                            </span>
+                                                                                                <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/investor-relations/mtvh-at-a-glance/"
+                                   class="nav-link ">
+                                   MTVH at a glance
+                                </a>
+                            </span>
+                                                                                                <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/investor-relations/sustainable-investment/"
+                                   class="nav-link ">
+                                   Sustainable investment
+                                </a>
+                            </span>
+                                                                                                <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/investor-relations/corporate-governance/"
+                                   class="nav-link ">
+                                   Corporate governance
+                                </a>
+                            </span>
+                                                                                                <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/investor-relations/documents/"
+                                   class="nav-link ">
+                                   Documents
+                                </a>
+                            </span>
+                                                            </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/group-companies/"
+                       class="nav-link  activeside                            ">
+                        Group companies
+                    </a>
+                                    </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/our-developments/"
+                       class="nav-link                              ">
+                        Developments
+                    </a>
+                                    </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/migration-foundation/"
+                       class="nav-link                              ">
+                        Migration Foundation
+                    </a>
+                                    </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/publications/"
+                       class="nav-link                              ">
+                        Publications
+                    </a>
+                                    </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/supplying-us/"
+                       class="nav-link                              ">
+                        Supplying us
+                    </a>
+                                                                        <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/supplying-us/policies-and-terms-for-our-suppliers/"
+                                   class="nav-link ">
+                                   Policies and terms for our suppliers
+                                </a>
+                            </span>
+                                                                                                <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/supplying-us/modern-slavery-statement/"
+                                   class="nav-link ">
+                                   Modern slavery statement
+                                </a>
+                            </span>
+                                                            </span>
+                                                  <span>
+                    <a  href="https://www.mtvh.co.uk/about-us/careers/"
+                       class="nav-link                              ">
+                        Working at MTVH
+                    </a>
+                                                                        <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/careers/vacancies/"
+                                   class="nav-link ">
+                                   Job vacancies
+                                </a>
+                            </span>
+                                                                                                <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/careers/mtvh-benefits/"
+                                   class="nav-link ">
+                                   Benefits
+                                </a>
+                            </span>
+                                                                                                <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/careers/diversity-and-inclusion/"
+                                   class="nav-link ">
+                                   Diversity and inclusion
+                                </a>
+                            </span>
+                                                                                                <span>
+                                <a   href="https://www.mtvh.co.uk/about-us/careers/tips-on-applying/"
+                                   class="nav-link ">
+                                   Tips on how to apply
+                                </a>
+                            </span>
+                                                            </span>
+                            </div>
+    </nav>
+</div>
+		</div>
+		<div class="hero-content hero-content--purple  hero-content--texture
+ hero-content--brick ">
+    <div class="container " >
+        <div class="row no-gutters">
+
+                <div  id="hero-content"  class="hero-content-copy   col-12 col-md-7 offset-lg-3 col-lg-6" >
+
+                    <div class="hero-content-container    d-sm-flex " >
+                        <div class="hero-content-inner flex-fill ">
+                        <div class="hero-content__textbox">
+                                                        <h1 class="hero-content__title ">Group companies </h1>
+                        </div>
+                                                   </div>
+                    </div>
+                </div>
+                        </div>
+    </div>
+</div>
+
+
+
+		<div id="content" class="container " >
+		<div class="row">
+										<div class="col offset-lg-3 col-lg-9 post-type-page investor-flex-content"  id="96">
+				
+				
+																					                                                        <div class="row text-block  text-block--first-spacing      text-block--bottom-extra_sm ">
+        <div class="col-12 col-md-10 cms-content
+        ">
+           <p class="bold-h3">An overview of the individual companies that form Metropolitan Thames Valley.</p>
+
+        </div>
+                </div>
+                                                                                                                                 <div class="row text-block      text-block--bottom-small ">
+        <div class="col-12 col-md-10 cms-content
+        ">
+           <p>Metropolitan Thames Valley is the trading name for Metropolitan Housing Trust Limited (MHT) and Thames Valley Housing Association Limited (TVH) and their subsidiaries.</p>
+<p>MHT and TVH are registered societies for the beneﬁt of the community and are regulated by the Social Housing Regulator. MHT is authorised and regulated by the Financial Conduct Authority. MHT is an exempt charity.</p>
+<p>&nbsp;</p>
+
+        </div>
+                <div class="col-12 ">
+            <div class="btn__action ">
+                                    <a class="btn btn__animated btn__animated--primary" href="https://www.mtvh.co.uk/wp-content/uploads/2025/07/GROUP-Structure-Chart-16-07-2025.pdf" class="link">View the group companies chart</a>
+                                            </div>
+        </div>
+                </div>
+                                                                                                                                                                                      <!-- page-accordion -->
+    <div class="page-accordion col-12 col-md-11 cms-content  page-accordion--bottom-small " id="page-accordion">
+    
+                <h2 class="main-heading ">How MTVH is structured </h2>                <h3 class="sub-heading"><strong>List of companies</strong></h3>
+                        
+    <div class="card-wrapper">
+            <div class="card">
+            <div class="card-header" id="heading-accordion_924-1">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-1"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-1">
+                        <span>Metropolitan Housing Trust Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-1" class="collapse "  data-parent="#heading-accordion_924-1">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Charitable Community Benefit Society 16337R-registered with the UK Financial Conduct Authority (FCA Reference 723654)</p>
+<p>Registered Provider – RSH registration L0726</p>
+<h5><strong>Registered office</strong></h5>
+<p>The Grange<br />
+100 High Street Southgate London<br />
+N14 6PW</p>
+<p>&nbsp;</p>
+<p>VAT number: 342 8213 73</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-2">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-2"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-2">
+                        <span>Thames Valley Housing Association Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-2" class="collapse "  data-parent="#heading-accordion_924-2">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Non Charitable Community Benefit Society 17375R</p>
+<p>Registered Provider: RSH registration L0514</p>
+<h5><strong>Registered office</strong></h5>
+<p>Premier House, 52 London Road, Twickenham TW13RP</p>
+<p>&nbsp;</p>
+<p><a title="" name="_Hlk132713244"></a>VAT number: 342 8213 73</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-3">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-3"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-3">
+                        <span>EM Property Services Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-3" class="collapse "  data-parent="#heading-accordion_924-3">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by shares -2373603 registered at Companies House, England and Wales</p>
+<p>&nbsp;</p>
+<h5><strong>Registered office</strong></h5>
+<p>The Grange<br />
+100 High Street Southgate London<br />
+N14 6PW</p>
+<p>&nbsp;</p>
+<p>VAT number: 342 8213 73</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-4">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-4"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-4">
+                        <span>Metropolitan Living Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-4" class="collapse "  data-parent="#heading-accordion_924-4">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by shares – 4405968 registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>The Grange<br />
+100 High Street Southgate London<br />
+N14 6PW</p>
+<p>VAT number: 342 8213 73</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-5">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-5"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-5">
+                        <span>Metropolitan Funding PLC</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-5" class="collapse "  data-parent="#heading-accordion_924-5">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Public Limited Company – 6560355 registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>The Grange<br />
+100 High Street Southgate London<br />
+N14 6PW</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-6">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-6"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-6">
+                        <span>West Bridgford LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-6" class="collapse "  data-parent="#heading-accordion_924-6">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC414053 registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Cowley Business Park, Cowley, Uxbridge, Middlesex, England, UB8 2AL</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-7">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-7"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-7">
+                        <span>MTVH Foundation Limited </span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-7" class="collapse "  data-parent="#heading-accordion_924-7">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by guarantee without share capital</p>
+<h5><strong>Registered office</strong></h5>
+<p>Premier House, 52 London Road, Twickenham, England, TW1 3RP</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-8">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-8"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-8">
+                        <span>Westleigh Cherrybank LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-8" class="collapse "  data-parent="#heading-accordion_924-8">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC334831 registered at Companies House, England and Wales</p>
+<p>Dormant</p>
+<h5><strong>Registered office</strong></h5>
+<p>Tudorgate, Grange Business Park, Enderby Road, Whetstone Leicester, LE8 6E7</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-9">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-9"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-9">
+                        <span>Barratt Metropolitan LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-9" class="collapse "  data-parent="#heading-accordion_924-9">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC320725 registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Barratt House Cartwright Way, Forest Business Park Bardon Hill, Coalville, Leicestershire, LE67 1UF</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-10">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-10"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-10">
+                        <span>West Hendon Service Charge Endowment CIC</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-10" class="collapse "  data-parent="#heading-accordion_924-10">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Community Interest Company – 09370766 registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>The Grange<br />
+100 High Street Southgate London<br />
+N14 6PW</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-11">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-11"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-11">
+                        <span>Metropolitan Development Services Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-11" class="collapse "  data-parent="#heading-accordion_924-11">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by shares – 05623548 registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>The Grange<br />
+100 High Street Southgate London<br />
+N14 6PW</p>
+<p>&nbsp;</p>
+<p>VAT number: 285 2903 82</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-12">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-12"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-12">
+                        <span>Longsdale Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-12" class="collapse "  data-parent="#heading-accordion_924-12">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by shares – 02353918 registered at Companies House, England and Wales</p>
+<p>Dormant</p>
+<h5><strong>Registered office</strong></h5>
+<p>The Grange<br />
+100 High Street Southgate London<br />
+N14 6PW</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-13">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-13"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-13">
+                        <span>SpiritaGen Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-13" class="collapse "  data-parent="#heading-accordion_924-13">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by shares – 5863123 registered at Companies House, England and Wales</p>
+<p>Dormant</p>
+<h5><strong>Registered office</strong></h5>
+<p>The Grange<br />
+100 High Street Southgate London<br />
+N14 6PW</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-14">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-14"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-14">
+                        <span>Metropolitan Home Ownership Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-14" class="collapse "  data-parent="#heading-accordion_924-14">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by shares – 5173350 registered at Companies House, England and Wales</p>
+<p>Dormant</p>
+<h5><strong>Registered office</strong></h5>
+<p>The Grange<br />
+100 High Street Southgate London<br />
+N14 6PW</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-15">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-15"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-15">
+                        <span>Thames Valley Charitable Housing Association Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-15" class="collapse "  data-parent="#heading-accordion_924-15">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Charitable Community Benefit Society 25301R</p>
+<h5><strong>Registered office</strong></h5>
+<p>Premier House<br />
+52 London Road<br />
+Twickenham TW13RP</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-16">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-16"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-16">
+                        <span>TVH PRS Holdings Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-16" class="collapse "  data-parent="#heading-accordion_924-16">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by shares – 7999529 registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Premier House<br />
+52 London Road<br />
+Twickenham TW13RP</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-17">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-17"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-17">
+                        <span>TVH PRS 2 Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-17" class="collapse "  data-parent="#heading-accordion_924-17">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by shares – 08897239<br />
+registered at Companies House, England and Wales</p>
+<h5>Registered office</h5>
+<p>Premier House<br />
+52 London Road<br />
+Twickenham TW13RP</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-18">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-18"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-18">
+                        <span>PRS Services Management LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-18" class="collapse "  data-parent="#heading-accordion_924-18">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC388820 registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Premier House<br />
+52 London Road<br />
+Twickenham TW13RP</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-19">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-19"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-19">
+                        <span>Evolution (Woking) Holdings Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-19" class="collapse "  data-parent="#heading-accordion_924-19">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by shares – 08705424 registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Premier House<br />
+52 London Road<br />
+Twickenham TW13RP</p>
+<p>VAT number: 175 0365 12</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-20">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-20"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-20">
+                        <span>Evolution (Woking) Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-20" class="collapse "  data-parent="#heading-accordion_924-20">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Private company limited by shares – 08706370 (wholly owned subsidiary of Evolution (Woking) Holdings Limited) registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Premier House<br />
+52 London Road<br />
+Twickenham TW13RP</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-21">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-21"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-21">
+                        <span>Opal Land LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-21" class="collapse "  data-parent="#heading-accordion_924-21">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC364228 (SPV joint venture with Galliford Try Homes Limited) registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Cowley Business Park<br />
+Cowley, Uxbridge<br />
+Middlesex UB8 2AL</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-22">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-22"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-22">
+                        <span>Grange Walk LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-22" class="collapse "  data-parent="#heading-accordion_924-22">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC395922 (SPV joint venture with Galliford Try Homes Limited) registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Cowley Business Park<br />
+Cowley, Uxbridge<br />
+Middlesex UB8 2AL</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-23">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-23"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-23">
+                        <span>Opal (Earlsfield) LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-23" class="collapse "  data-parent="#heading-accordion_924-23">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC388771 (SPV joint venture with Galliford Try Homes Limited) registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Cowley Business Park<br />
+Cowley, Uxbridge<br />
+Middlesex UB8 2AL</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-24">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-24"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-24">
+                        <span>Opal (Silvertown) LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-24" class="collapse "  data-parent="#heading-accordion_924-24">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC396959 (SPV joint venture with Galliford Try Homes Limited) registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Cowley Business Park<br />
+Cowley, Uxbridge<br />
+Middlesex UB8 2AL</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-25">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-25"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-25">
+                        <span>Opal (St Bernard's) LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-25" class="collapse "  data-parent="#heading-accordion_924-25">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC379543 (SPV joint venture with Galliford Try Homes Limited) registered at Companies House, England and Wales</p>
+<h5><strong>Registered office</strong></h5>
+<p>Cowley Business Park<br />
+Cowley, Uxbridge<br />
+Middlesex UB8 2AL</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-26">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-26"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-26">
+                        <span>Bovis Homes Cambourne West LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-26" class="collapse "  data-parent="#heading-accordion_924-26">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC428960 registered at Companies House, England and Wales.</p>
+<h5><strong>Registered office</strong></h5>
+<p>11 Tower View, Kings Hill, West Mailing, Kent, ME19 4UY</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-27">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-27"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-27">
+                        <span>Clapham Park (Metropolitan Countryside) LLP</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-27" class="collapse "  data-parent="#heading-accordion_924-27">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5><strong>Legal status/registration body</strong></h5>
+<p>Limited Liability Partnership – OC441934<br />
+Registered at Companies House, England and Wales.</p>
+<h5><strong>Registered office</strong></h5>
+<p>Countryside House, The Drive, Brentwood, Essex, CM13 3AT</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-28">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-28"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-28">
+                        <span>SOJV LLP </span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-28" class="collapse "  data-parent="#heading-accordion_924-28">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5 class="x_MsoNormal"><strong>Legal status / registration body</strong></h5>
+<p class="x_MsoNormal">Limited Liability Partnership &#8211; OC444541</p>
+<p class="x_MsoNormal">Registered at Companies House, England and Wales.</p>
+<h5 class="x_MsoNormal"><strong>Registered Office</strong></h5>
+<p class="x_MsoNormal">One Coleman Street, London, United Kingdom, EC2R 5AA</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                    <div class="card">
+            <div class="card-header" id="heading-accordion_924-29">
+                <h4 class="h4 mb-0">
+                    <button class="btn collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-accordion_924-29"
+                            aria-expanded="false" aria-controls="collapse-accordion_924-29">
+                        <span>Times Square Estate Management Company Limited</span>
+                    </button>
+                </h4>
+            </div>
+            <div id="collapse-accordion_924-29" class="collapse "  data-parent="#heading-accordion_924-29">
+                <div class="card-body">
+                                                                        <div class="row">
+                                <div class="col-12">
+                                    <h5 class="x_MsoNormal"><strong>Legal status / registration body</strong></h5>
+<p class="x_MsoNormal">Private company limited by guarantee without share capital &#8211; 10049311</p>
+<p class="x_MsoNormal">Registered at Companies House, England and Wales.</p>
+<h5 class="x_MsoNormal"><strong>Registered Office</strong></h5>
+<p class="x_MsoNormal">The Grange, High Street, London, England, N14 6PW</p>
+
+                                </div>
+                            </div>
+                                                            </div>
+            </div>
+        </div>
+                </div>
+</div>
+<!-- accordion  end -->
+                                    																					<!-- page-accordion -->
+<!-- accordion  end -->
+											</div>
+		</div>
+	</div>
+</div>
+
+												<div class="footer">
+    <footer>
+    <div class="container">
+        <div class="row  no-gutters footnav">
+            <div class="col-10 col-md-9">
+               <div class="row">
+                                                                        <div class="col-sm-12 col-md-6 col-lg-4 item" >
+                                <a  href="https://www.mtvh.co.uk/terms-and-conditions-for-mtvh-website/" >
+                                    Terms and conditions
+                                </a>
+                            </div>
+                                                    <div class="col-sm-12 col-md-6 col-lg-4 item" >
+                                <a  href="https://www.mtvh.co.uk/privacy-policy/" >
+                                    Privacy policy
+                                </a>
+                            </div>
+                                                    <div class="col-sm-12 col-md-6 col-lg-4 item" >
+                                <a  href="https://www.mtvh.co.uk/cookie-policy/" >
+                                    Cookie policy
+                                </a>
+                            </div>
+                                                    <div class="col-sm-12 col-md-6 col-lg-4 item" >
+                                <a  href="https://www.mtvh.co.uk/about-us/supplying-us/modern-slavery-statement/" >
+                                    Modern slavery statement
+                                </a>
+                            </div>
+                                                    <div class="col-sm-12 col-md-6 col-lg-4 item" >
+                                <a  href="https://www.mtvh.co.uk/about-us/our-policies/" >
+                                    Our policies
+                                </a>
+                            </div>
+                                                    <div class="col-sm-12 col-md-6 col-lg-4 item" >
+                                <a  href="https://www.mtvh.co.uk/accessibility/" >
+                                    Accessibility statement
+                                </a>
+                            </div>
+                                                           </div>
+            </div>
+
+            <div class="col-2 col-md-3 social-icons">
+                                    <a href="https://www.facebook.com/mettvh/"  aria-label="MTVH on Facebook (opens in new tab)" target="_blank"><span class="icon facebook"></span></a>
+                                                    <a href="https://twitter.com/MetTVH" aria-label="MTVH on Twitter (opens in new tab)" target="_blank"><span class="icon twitter" ></span></a>
+                                                    <a href="https://www.instagram.com/mettvh/" aria-label="MTVH on Instagram (opens in new tab)" target="_blank"><span class="icon instagram" ></span></a>
+                                                    <a href="https://www.linkedin.com/company/metropolitan-thames-valley/" aria-label="MTVH on LinkedIn (opens in new tab)" target="_blank"><span class="icon linkedin" ></span></a>
+                            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row ">
+            <div class="col-lg copyright" id="footer">
+                <p>This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a>
+                    and <a href="https://policies.google.com/terms" target="_blank">Terms of Service</a> apply.</p>
+                <p>Copyright &copy; 2026 Metropolitan Thames Valley Housing </p>
+            </div>
+                            <div class="col-lg-4 order-first order-md-1">
+                    <a href="https://www.mtvh.co.uk/accessibility/#dac" aria-label="" ><span class="dac" ></span></a>
+                </div>
+                </div>
+    </div>
+    </footer>
+</div>
+<div class="back-to-top">
+    <div class="container">
+        <div class="row back-to-top-wrapper">
+            <div class="col text-end back-to-top-col"><a href="#navigation">Back to top</a></div>
+        </div>
+    </div>
+</div>
+<div class="cookie-warning">
+    <div class="container " >
+        <div class="row">
+            <div class="col ">
+                <div class="content cms-content"><p>We use cookies on our website to give you the most relevant experience by remembering your preferences and repeat visits. By clicking “Accept”, you consent to the use of ALL the cookies. However you may visit Cookie Settings to provide a controlled consent.</p>
+</div><div class="cta" style=";"><a href=""  class="cta-close" >Accept</a></div>
+            </div>
+        </div>
+    </div>
+</div>
+							
+	<script nonce="CRLT73Yq2M1H3ctMZa4t" type="application/javascript">
+		var enableOldCookieAlert=0;
+	</script>
+	<script nonce="CRLT73Yq2M1H3ctMZa4t" type="speculationrules">
+{"prefetch":[{"source":"document","where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":["/wp-*.php","/wp-admin/*","/wp-content/uploads/*","/wp-content/*","/wp-content/plugins/*","/wp-content/themes/mtvh/*","/*\\?(.+)"]}},{"not":{"selector_matches":"a[rel~=\"nofollow\"]"}},{"not":{"selector_matches":".no-prefetch, .no-prefetch a"}}]},"eagerness":"conservative"}]}
+</script>
+<script nonce="CRLT73Yq2M1H3ctMZa4t" id="main.min.js-js" src="https://www.mtvh.co.uk/wp-content/themes/mtvh/build/js/main.min.js?cachebreak=9Oct2026-11-15-00&#038;ver=9Oct2026-11-15-00"></script>
+<script nonce="CRLT73Yq2M1H3ctMZa4t" id="cookiefirst-plugin-public-js-extra">
+var cookieFirstConfig = {"version":"2.0.0","api_key":"f1bdb1da...","consent_type":"opt-in","script_loading":"do-nothing","debug_mode":"","wp_consent_api_active":"","category_mapping":{"advertising":[],"functional":[],"performance":[],"necessary":[]}};
+//# sourceURL=cookiefirst-plugin-public-js-extra
+</script>
+<script nonce="CRLT73Yq2M1H3ctMZa4t" id="cookiefirst-plugin-public-js" src="https://www.mtvh.co.uk/wp-content/plugins/cookiefirst-gdpr-cookie-consent-banner/includes/../public/js/cookiefirst-plugin-public.js?ver=2.0.0"></script>
+
+		</body>
+</html>

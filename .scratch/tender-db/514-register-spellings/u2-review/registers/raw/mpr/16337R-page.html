@@ -1,0 +1,774 @@
+
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script nonce="Hlbq2XryoU+I0o3ajWaJ8bG0" async src="https://www.googletagmanager.com/gtag/js?id=G-E9V8LY73S9"></script>
+    
+    <script nonce="Hlbq2XryoU+I0o3ajWaJ8bG0">
+
+        function deleteCookies() {
+            var name, allCookies = document.cookie.split(';');
+
+            var expires = new Date(new Date().getTime() + parseInt(-1) * 1000 * 60 * 60 * 24);
+
+
+            for (var i = 0; i < allCookies.length; i++) {
+                name = allCookies[i].substr(0, allCookies[i].indexOf("="));
+                name = name.replace(/^\s+|\s+$/g, "");
+
+                if (name != ".AspNet.Consent") {
+
+                    if (name.startsWith("ai_")) {
+                        document.cookie = name + " = ; expires = " + expires.toGMTString() + "; path =/;";
+                    }
+                    else {
+                        document.cookie = name + " = ; expires = " + expires.toGMTString() + "; path =/; domain=" + document.domain + ";";
+
+                        var domain = document.domain;
+
+                        while (domain.indexOf(".") != -1) {
+                            // This ensures we delete for any cookies set at a subdomain
+                            domain = domain.substring(domain.indexOf("."))
+                            document.cookie = name + " = ; expires = " + expires.toGMTString() + "; path =/; domain=" + domain + ";";
+
+                            if (domain.startsWith(".")) {
+                                domain = domain.substring(1);
+                            }
+                        }
+
+
+                    }
+                }
+            }
+
+        }
+
+        function getCookie(c_name) {
+            var name, value, allCookies = document.cookie.split(";");
+            for (var i = 0; i < allCookies.length; i++) {
+                name = allCookies[i].substr(0, allCookies[i].indexOf("="));
+                value = allCookies[i].substr(allCookies[i].indexOf("=") + 1);
+                name = name.replace(/^\s+|\s+$/g, "");
+                if (name == c_name) {
+                    return unescape(value);
+                }
+            }
+        }
+        
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() { dataLayer.push(arguments); }
+        // make sure we deny by default
+
+        gtag('consent', 'default', {
+            'ad_storage': 'denied',
+            'analytics_storage': 'denied',
+            'wait_for_update': 500
+        });
+
+        gtag('js', new Date());
+        gtag('config', 'G-E9V8LY73S9', { 'cookie_domain': document.domain });
+    </script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <title>Mutuals Public Register: Metropolitan Housing Trust Limited</title>
+    <link nonce="PBEp3bc02z8jfbtSgIQiGem/" rel="stylesheet" href="https://mutuals.fca.org.uk/cdn/assets/bundle.min.css?v=1.2026.1.1" />
+</head>
+<body>
+
+
+
+
+<div id="cookieConsent" class="cookie" role="alert">
+    <p class="cookie-text">
+        We use cookies to improve your online experience. Some of these cookies are necessary to make the site work. We use other optional cookies to understand how the website is used. All our cookie data is anonymised. Please let us know if you agree to these optional cookies. Find out more in our <a href="/home/cookies">cookie policy</a>.
+    </p>
+   
+        <button type="button" class="btn btn-primary accept-policy" data-dismiss="alert" aria-label="Accept Cookie Policy" data-cookie-string=".AspNet.Consent = yes; expires = Tue, 12 Oct 2027 05:30:55 GMT; path =/; secure; samesite = none">
+            <span aria-hidden="true">Yes, I agree</span>
+        </button>
+        <button type="button" class="btn btn-secondary decline-policy" data-dismiss="alert" aria-label="Reject Cookie Policy"  data-cookie-string=".AspNet.Consent = no; expires = Tue, 12 Oct 2027 05:30:55 GMT; path =/; secure; samesite = none">
+            <span aria-hidden="true">No, I don't agree</span>
+        </button>
+</div>
+    <script type="text/javascript" nonce="Hlbq2XryoU+I0o3ajWaJ8bG0">
+        (function () {
+
+            var buttons = document.getElementsByClassName("btn");
+
+            for (i = 0; i < buttons.length; i++) {
+                buttons[i].addEventListener("click", function (event) {                    
+                    document.cookie = this.dataset.cookieString;
+                    window.location.reload();
+
+                }, false);
+            }            
+        })();
+    </script>
+
+    <header role="banner">
+        <div class="container-fluid">
+            <a class="sr-only sr-only-focusable" href="#" id="skipLink">Skip to Main Content</a>
+            <a href="/"><img src="https://mutuals.fca.org.uk/cdn/assets/logo-small.png" alt="Financial Conduct Authority Logo" /></a>
+            <h1 class="pull-right">Mutuals Public Register</h1>
+        </div>
+    </header>
+    <main class="container-fluid" id="mainContent">
+        <section class="row">
+
+            <section class="col-sm-8 col-md-9 sm-reduced-padding">
+
+<form action="/Search/Search" method="get">    <div class="well searchBox">
+        <div class="row">
+            <div class="col-xs-8 col-sm-8 col-md-10">
+                <div class="form-group">
+                    <span class="field-validation-valid text-danger" data-valmsg-for="SearchTerm" data-valmsg-replace="true"></span>
+                    <select data-val="true" data-val-required="A search term is required." htmlAttributes="{ class = form-control }" id="SearchTerm" name="SearchTerm"><option value="">Search by society name or registration number</option>
+</select>
+                </div>
+            </div>
+            <div class="col-xs-4 col-sm-2 col-md-2">
+                <button type="submit" class="btn btn-primary" value="Search" id="Search">Search</button>
+            </div>
+        </div>
+        <div class="row" id="searchFilterToggle">
+            <div class="col-sm-12">
+                <a href="#" class="show_hide" role="button" aria-label="Search Filters" aria-expanded="false">
+                    <i class="fa fa-plus-square fa-2x"></i>&nbsp;Search Filters
+                </a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="searchFilters" id="searchFilters">
+                <div id="searchFiltersList">
+<br />
+
+<div class="col-md-12">
+    <input id="reset" type="reset" class="btn btn-sm btn-default" value="Clear Search Filters" />
+</div>
+<br />
+<br />
+<div>
+    <div class="col-md-5 searchBox">  
+        <fieldset>
+            <legend>Registration Acts</legend>
+
+        </fieldset>
+    </div>
+    <div class="col-md-3 searchBox searchBoxDelimiter">
+        <fieldset>
+            <legend>
+                Registered As
+            </legend>
+
+        </fieldset>
+    </div>
+    <div class="col-md-4 searchBox">
+        <fieldset>
+            <legend>
+                Society Status
+            </legend>
+        </fieldset>
+    </div>
+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+                <section class="main-content">
+                    
+<div id="MainBody">
+    <div class="container-fluid sm-reduced-padding">
+        <div><h1>Metropolitan Housing Trust Limited</h1></div>
+        <div><strong>Registration Number: 16337R</strong></div>
+        <br />
+        <ul class="brand nav nav-tabs">
+            <li class="active"><a data-toggle="tab" href="#Overview">Overview</a></li>
+            <li><a data-toggle="tab" href="#Documents">Documents</a></li>
+            <li><a data-toggle="tab" href="#TransfersOfEngagement">Transfers</a></li>
+            <li><a data-toggle="tab" href="#NameChanges">Name Changes</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <div id="Overview" class="tab-pane fade in active">
+                <div class="panel panel-default sm-reduced-padding">
+                    <div class="panel-body sm-reduced-padding">
+                        <form class="form-horizontal condensed">
+
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="Status">Status</label>
+                                <div class="col-xs-6 col-md-8">Registered</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="RegisteredAs">Registration as</label>
+                                <div class="col-xs-6 col-md-8">Registered Society</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="RegistrationDate">Registration Date</label>
+                                <div class="col-xs-6 col-md-8">26 April 1963</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="RegistrationAct">Registration Act</label>
+                                <div class="col-xs-6 col-md-8">Co-operative and Community Benefit Societies Act 2014</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="Address">Address</label>
+                                <div class="col-xs-6 col-md-8">
+                                    The Grange <br />
+                                    100 High Street<br />
+                                    London<br />
+                                    <br />
+                                    N14 6PW<br />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="DateOfLastMove">Date of last move</label>
+                                <div class="col-xs-6 col-md-8">19 June 2013</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="FinancialYearEnd">Financial Year End</label>
+                                <div class="col-xs-6 col-md-8">31/03</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="StandardIndustrialClassificationCode">Standard Industrial Classification Code (SIC)</label>
+                                <div class="col-xs-6 col-md-8">68201 - Renting and operating of Housing Association real estate</div>
+                            </div>
+                                                    
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="DeregistrationDate">Deregistration Date</label>
+                                <div class="col-xs-6 col-md-8"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="DeregistrationMethod">Deregistration Method</label>
+                                <div class="col-xs-6 col-md-8"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="TransferredToNumber">Transferred to Society/Company Number</label>
+                                <div class="col-xs-6 col-md-8"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="TransferredToName">Transferred to Society/Company Name</label>
+                                <div class="col-xs-6 col-md-8"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-6 col-md-4" for="TransferredToMethod">Transfer Method</label>
+                                <div class="col-xs-6 col-md-8"></div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div id="Documents" class="tab-pane fade">
+                <div id="DocumentPageList">
+    <div class="panel panel-default society-panel">
+        <div class="panel-body">
+            <label>Public File Status:&nbsp;</label>all processed public records we hold for this society are available below.<br />
+            <label>Filter by document type:</label>
+            <table class="table table-bordered table-striped table-condensed" id="documentsTable">
+                <thead>
+                    <tr>
+                        <td>Date of Document</td>
+                        <td>Description</td>
+                        <td>Category 1</td>
+                        <td>Category 2</td>
+                        <td class="text-center">Download</td>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript" nonce="Hlbq2XryoU+I0o3ajWaJ8bG0">
+   
+    function populateDocumentsTable() {
+        $("#documentsTable").dataTable({
+            "autoWidth": false,
+            "bServerSide": false, /* if this is true sorting and paging will not work */
+            "bProcessing": true,
+            "sAjaxSource": "/Documents/GetSocietiesDocument",            
+            "fnServerParams": function(aoData) {
+                aoData.push(
+                    { "name": "societyId", "value": 28016 }
+                );
+            },
+            searchPanes: {     
+                layout: 'columns-2',
+                panes: [
+                    {
+                        header: 'Document Type (click to select and deselect)',
+                        options: [                            
+                            
+                            {
+                                label: 'Address Changes',
+                                value: function (rowData, rowIdx) {  
+                                    resetPaging(this);
+                                    return rowData[2] === 'Address Changes' || rowData[3] === 'Address Changes';
+                                },
+                            },
+                            {
+                                label: 'Annual Returns and Accounts',
+                                value: function (rowData, rowIdx) {
+                                    resetPaging(this);
+                                    return rowData[2] === 'Annual Returns and Accounts' || rowData[3] === 'Annual Returns and Accounts';
+                                },
+                            },
+                            {
+                                label: 'Amalgamations and transfers',
+                                value: function (rowData, rowIdx) {
+                                    resetPaging(this);
+                                    return rowData[2] === 'Amalgamations and transfers' || rowData[3] === 'Amalgamations and transfers';
+                                },
+                            },                            
+                            {
+                                label: 'Appointments',
+                                value: function (rowData, rowIdx) {
+                                    resetPaging(this);
+                                    return rowData[2] === 'Appointments' || rowData[3] === 'Appointments';
+                                },
+                            },
+                            {
+                                label: 'Charges',
+                                value: function (rowData, rowIdx) {
+                                    resetPaging(this);
+                                    return rowData[2] === 'Charges' || rowData[3] === 'Charges';
+                                },
+                            },
+                            {
+                                label: 'Names',
+                                value: function (rowData, rowIdx) {
+                                    resetPaging(this);
+                                    return rowData[2] === 'Names' || rowData[3] === 'Names';
+                                },
+                            },
+                            {
+                                label: 'Other',
+                                value: function (rowData, rowIdx) {
+                                    resetPaging(this);
+                                    return rowData[2] === 'Other' || rowData[3] === 'Other';
+                                },
+                            },
+                            {
+                                label: 'Registration',
+                                value: function (rowData, rowIdx) {
+                                    resetPaging(this);
+                                    return rowData[2] === 'Registration' || rowData[3] === 'Registration';
+                                },
+                            },
+                            {
+                                label: 'Rules',
+                                value: function (rowData, rowIdx) {
+                                    resetPaging(this);
+                                    return rowData[2] === 'Rules' || rowData[3] === 'Rules';
+                                },
+                            }
+                        ],
+                        dtOpts: {
+                            scrollY: '150px',
+                            searching: false                        
+                        }
+                    }
+                ]
+            },
+            dom: 'Plfrtip',
+            "bPaginate": true,
+            "bInfo": true,
+            "aaSorting": [[0, "desc"]],
+            "oLanguage": { "sZeroRecords": "No documents available for this society" },
+            "bDestroy": true,
+            "displayLength": 10,
+            "stateSave": false,
+            "bProcessing": false,           
+            "bSort": true,
+            "columnDefs": [{
+                orderable: true,
+                searchPanes: {
+                    show: false
+                },
+                targets: '_all'
+            }],
+            "bFilter": true,
+            "bLengthChange": false,
+            "fnProcessingIndicator": false,
+            "aoColumns": [
+                {
+                    "targets": [0],
+                    width: '200px',
+                },
+                { "targets": [1] },
+                { "targets": [2], visible: false },
+                { "targets": [3], visible: false},
+                {
+                    "data": null,
+                    "targets": [4],
+                    "sortable": false,
+                    "className": "text-center",
+                    "width": "1px",
+                    "mRender": function (data) {
+                        var url = '/Documents/Download' + "/" + data[4];
+                        var link = '<a class="btn btn-primary btn-sm" href="{url}" aria-label="{aria}"><i class="fa fa-download"></i></a>';
+                        return link.replace('{url}', url).replace("{aria}",data[5]);
+
+                    }
+                }
+            ]
+        });
+    }
+
+    function resetPaging(table) {        
+        if (table.page() > 0) {
+            table.page(0).draw(true);
+        }
+    }
+</script>
+
+            </div>
+            <div id="TransfersOfEngagement" class="tab-pane fade">
+                <div id="TransferPageList">
+    <div class="panel panel-default society-panel">
+        <div class="panel-body">
+            <table class="table table-bordered table-striped table-condensed" id="transfersTable">
+                <thead>
+                    <tr>
+                        <td>Transfer Date</td>
+                        <td>Transferred Society Name</td>
+                        <td>Transferred Society Number</td>
+                        <td>Transfer Type</td>
+                    </tr>
+                </thead>
+            </table>      
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" nonce="Hlbq2XryoU+I0o3ajWaJ8bG0">
+    function populateTransfersTable() {
+
+
+        $("#transfersTable").dataTable({
+            "autoWidth": false,
+            "bServerSide": false, /* if this is true sorting and paging will not work */
+            "bProcessing": true,
+            "sAjaxSource": "/Societies/GetTransfers",
+            "fnServerParams": function(aoData) {
+                aoData.push(
+                    { "name": "societyId", "value": 28016 }
+                );
+            },
+            "bPaginate": true,
+            "bInfo": true,
+            "aaSorting": [[0, "desc"]],
+            "oLanguage": { "sZeroRecords": "No transfer of engagements received by this society." },
+            "bDestroy": true,
+            "displayLength": 10,
+            "stateSave": false,
+            "bProcessing": false,
+            "bSort": true,
+            "columnDefs": [{ orderable: true, targets: '_all' }],
+            "bFilter": false,
+            "bLengthChange": false,
+            "fnProcessingIndicator": false,
+            "aoColumns": [
+                { "targets": [0], width: '200px' },
+                { "targets": [1]},
+                { "targets": [2],width: '200px' },
+                { "targets": [3],width: '200px' }
+            ]
+        });
+    }
+</script>
+
+            </div>
+            <div id="NameChanges" class="tab-pane fade">
+                <div id="NameChangePageList">
+    <div class="panel panel-default society-panel">
+        <div class="panel-body">
+            <table class="table table-bordered table-striped table-condensed" id="nameChangesTable">
+                <thead>
+                    <tr>
+                        <td>Date of Name Change</td>
+                        <td>Previous Name</td>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" nonce="Hlbq2XryoU+I0o3ajWaJ8bG0">
+    function populateNameChangesTable() {
+
+        $("#nameChangesTable").dataTable({
+            "autoWidth": false,
+            "bServerSide": false, /* if this is true sorting and paging will not work */
+            "bProcessing": true,
+            "sAjaxSource": "/Societies/GetNameChanges",
+            "fnServerParams": function(aoData) {
+                aoData.push(
+                    { "name": "societyId", "value": 28016 }
+                );
+            },
+            "bPaginate": true,
+            "bInfo": true,
+            "aaSorting": [[0, "desc"]],
+            "oLanguage": { "sZeroRecords": "No name changes for this society" },
+            "bDestroy": true,
+            "displayLength": 10,
+            "stateSave": false,
+            "bProcessing": false,
+            "bSort": true,
+            "columnDefs": [{ orderable: true, targets: '_all' }],
+            "bFilter": false,
+            "bLengthChange": false,
+            "fnProcessingIndicator": false,
+            "aoColumns": [
+                { "targets": [0],width: '200px' },
+                { "targets": [1]}               
+            ]
+        });
+    }
+</script>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+                </section>
+            </section>
+            <section class="col-sm-4 col-md-3">
+                
+<span id="otherLinks" class="brand-primary-menu">Other Mutuals Links</span>
+<ul class="links-menu" aria-describedby="otherLinks">
+	<li>
+		<a href="https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv"><strong>Download the Register</strong> (CSV of basic society details)</a>
+	</li>
+	<li>
+	<a href="/home/glossary"><strong>Glossary</strong> and other information about the register</a> 
+	</li>
+	<li>
+	<a href="/home/requestdigitisation"><strong>Request digitisation</strong> of files not currently available online</a> 
+	</li>
+	<li>
+	<a target="_blank" href="https://societyportal.fca.org.uk"><strong>Mutuals Society Portal</strong> (submit application forms or register new societies)</a>
+	</li>
+</ul>
+<span id="otherRegisters" class="brand-primary-menu">Other Registers</span>
+<ul class="links-menu" aria-describedby="otherRegisters">
+	<li>
+	<a target="_blank" href="https://www.fca.org.uk/firms/financial-services-register"><strong>Financial Services Register</strong> for details on firms regulated by the PRA and/or FCA.</a> 
+	</li>
+	<li>
+	<a target="_blank" href="https://www.gov.uk/government/organisations/companies-house"><strong>Companies House</strong> for details of other bodies corporate.</a>
+	</li>
+</ul>
+            </section>
+
+        </section>
+    </main>
+    <footer>
+        <div class="container-fluid">
+
+            <div class="layout-footer well sm-reduced-padding">
+                <div class="row">
+                    <div class="col-xs-6 col-md-9 sm-reduced-padding">
+                        <ul>
+                            <li><a href="https://www.fca.org.uk/contact" target="_blank">Contact Us</a></li>
+                            <li><a href="/home/privacy">Privacy</a></li>
+                            <li><a href="/home/accessibilitystatement">Accessibility Statement</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-xs-6 col-md-3 sm-reduced-padding">
+                        <ul>
+                            <li>Financial Conduct Authority</li>
+                            <li>12 Endeavour Square</li>
+                            <li>London</li>
+                            <li>E20 IJN</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12 col-sm-9 sm-reduced-padding">
+                        <ul>
+                            <li>Copyright &copy; 2026 FCA. All rights reserved.</li>
+                        </ul>
+                    </div>
+                    <div class="col-xs-12 col-md-3 sm-reduced-padding">
+                        <ul>
+                            <li>Company no. 01920623</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script nonce="Hlbq2XryoU+I0o3ajWaJ8bG0" src="https://mutuals.fca.org.uk/cdn/assets/bundle.min.js?v=1.2026.1.1" type="text/javascript"></script>
+    
+
+    <script type="text/javascript" nonce="Hlbq2XryoU+I0o3ajWaJ8bG0">
+        $(function () {
+            populateDocumentsTable();
+            populateTransfersTable();
+            populateNameChangesTable();
+        });
+    </script>
+
+<script type='text/javascript' nonce="Hlbq2XryoU+I0o3ajWaJ8bG0">
+
+
+        function grantGoogleConsent() {
+
+        gtag('consent', 'update', {
+            'ad_storage': 'granted',
+            'analytics_storage': 'granted'
+        });
+
+        }
+
+        if (getCookie(".AspNet.Consent") == "yes") {            
+            var appInsights = window.appInsights ||
+                function (config) {
+                    function r(configName) {
+                        t[configName] = function () {
+                            var args = arguments;
+                            t.queue.push(function () { t[configName].apply(t, args); })
+                        }
+                    }
+
+                    var t = { config: config }, u = document, e = window, o = 'script', s = u.createElement(o), i, f;
+
+                    s.src = config.url || '//az416426.vo.msecnd.net/scripts/a/ai.0.js';
+                    u.getElementsByTagName(o)[0].parentNode.appendChild(s);
+
+                    t.cookie = u.cookie;
+                    t.queue = [];
+
+                    i = ['Event', 'Exception', 'Metric', 'PageView', 'Trace', 'Ajax'];
+                    while (i.length) r('track' + i.pop());
+
+                    r('setAuthenticatedUserContext');
+                    r('clearAuthenticatedUserContext');
+
+                    if (!config.disableExceptionTracking) {
+                        var onError = 'onerror';
+                        r('_' + onError);
+                        f = e[onError];
+                        e[onError] = function (msg, url, lineNo, colNo, error) {
+                            var handled = f && f(msg, url, lineNo, colNo, error);
+                            if (handled !== true) t['_' + onError](msg, url, lineNo, colNo, error);
+                            return handled;
+                        };
+                    }
+
+                    return t;
+                }({
+                    connectionString:""
+                });
+
+                window.appInsights = appInsights;
+                appInsights.trackPageView();
+
+            grantGoogleConsent();
+        }
+        else {
+            // this makes sure we remove any that we didn't have consent
+            deleteCookies();
+        }
+    
+
+    function setSearchCriteria() {
+        var data = {
+            id: 'Metropolitan Housing Trust Limited (16337R)',
+            text: 'Metropolitan Housing Trust Limited (16337R)'
+        };
+
+
+
+        var newOption = new Option(data.text, data.id, true, true);
+        $('#SearchTerm').append(newOption).trigger('change');
+
+        var RegistrationActList = "";
+        var RegisteredAs = "";
+        var SocietyStatusList = "";
+
+
+        jQuery.each(RegistrationActList, function (index, value) {
+            jQuery.each(value, function (i, v) {
+                if (i === "Value") {
+                    $("#RegistrationActList" + v.toString()).prop('checked', true);
+                }
+                if (i === "Text") {
+                    $("#RegActs").append("<li>" + v + "</li>");
+                }
+            });
+        });
+
+
+        jQuery.each(RegisteredAs, function (index, value) {
+            jQuery.each(value, function (i, v) {
+                if (i === "Value") {
+                    $("#RegisteredAs" + v.toString()).prop('checked', true);
+                }
+                if (i === "Text") {
+                    $("#RegAs").append("<li>" + v + "</li>");
+                }
+            });
+        });
+
+
+
+        jQuery.each(SocietyStatusList, function (index, value) {
+            jQuery.each(value, function (i, v) {
+                if (i === "Value") {
+                    $("#SocietyStatusList" + v.toString()).prop('checked', true);
+                }
+                if (i === "Text") {
+                    $("#Status").append("<li>" + v + "</li>");
+                }
+            });
+        });
+
+        if ($("#RegActs").children().length > 0) {
+            $("#RegistrationActs").show();
+        } else {
+            $("#RegistrationActs").hide();
+        }
+
+
+        if ($("#RegAs").children().length > 0) {
+            $("#RegisteredAs").show();
+        } else {
+            $("#RegisteredAs").hide();
+        }
+
+
+        if ($("#Status").children().length > 0) {
+            $("#SocietyStatusList").show();
+        } else {
+            $("#SocietyStatusList").hide();
+        }
+
+    }
+
+    $(function () {
+        setSearchCriteria();
+        var tag = $(".select2-selection__arrow").find("b");
+        tag.removeAttr("role");
+    });
+
+
+    </script>
+
+</body>
+</html>
+
+

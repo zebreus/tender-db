@@ -1,0 +1,1 @@
+SELECT id, country, identifier_kind, identifier, name, provisional FROM organizations WHERE country = 'GB' AND identifier_kind = 'national' AND identifier IN ('GBCHC519639','GBCHC279057','GBCHC1034581','GBCHC1107830','GBMPR17704R','GBMPR30178R') LIMIT 20

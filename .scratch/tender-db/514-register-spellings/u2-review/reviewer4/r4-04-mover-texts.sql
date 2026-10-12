@@ -1,0 +1,1 @@
+SELECT notice_id, section_id, field_id, ordinal, substr(value, 1, 240) AS value FROM notice_texts WHERE notice_id IN (46869237, 46906609, 46788314, 46868887, 46890022, 46812499, 46788439, 46953451) AND field_id IN ('BT-500-Organization-Company', 'BT-21-Procedure') LIMIT 120

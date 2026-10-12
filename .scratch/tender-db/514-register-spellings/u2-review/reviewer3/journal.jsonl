@@ -1,0 +1,2 @@
+{"call": "r3-01", "tag": "holders-of-cab-and-lone-canonicals", "sql_file": "r3-01-cab-holders.sql", "index": "organizations_identity", "rc": 0, "rows": 0, "truncated": false, "is_408": false, "out": "r3-01-cab-holders.out", "at": "2026-10-12"}
+{"call": "r3-02", "tag": "mention-of-31594820", "sql_file": "r3-02-cab-mention.sql", "index": "organization_mentions_org", "rc": 0, "rows": 1, "truncated": false, "is_408": false, "out": "r3-02-cab-mention.out", "at": "2026-10-12"}

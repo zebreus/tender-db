@@ -1,0 +1,1 @@
+SELECT notice_id, section_id, field_id, substr(value,1,400) AS v FROM notice_texts WHERE notice_id IN (46730362,46796184,46869506,46910644,46988113) AND field_id IN ('title','description','BT-21-Procedure','BT-21-Lot','BT-24-Procedure','BT-24-Lot') LIMIT 40

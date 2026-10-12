@@ -1,0 +1,1 @@
+SELECT organization_id, name, raw_identifier, scheme, country, COUNT(*) AS n FROM organization_mentions WHERE organization_id IN (30929619) GROUP BY organization_id, name, raw_identifier, scheme, country LIMIT 100

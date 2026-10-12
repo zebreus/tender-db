@@ -1,0 +1,2900 @@
+{
+ "issue": 514,
+ "unit": "U2.1 register records",
+ "fetched": [
+  "2026-10-12"
+ ],
+ "requests": 100,
+ "non_200": [],
+ "count": 53,
+ "found": 53,
+ "records": {
+  "GBMPR16243R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "16243R",
+   "found": true,
+   "name": "Hastoe Housing Association Limited",
+   "fca_society_name": "Hastoe Housing Association Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1962-12-04",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "Marina House, 17 Marina Place,Hampton Wick,Surrey KT1 4BH",
+   "page": {
+    "name": "Hastoe Housing Association Limited",
+    "registration_number": "16243R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "04 December 1962",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "Marina House, 17 Marina Place, Hampton Wick, Kingston Upon Thames, Surrey, KT1 4BH",
+    "DateOfLastMove": "25 October 2006",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "24/11/1994",
+     "former_name": "The Sutton (Hastoe) Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "31/08/2018",
+     "from_society": "Hastoe Wyvern Housing Association Limited",
+     "from_society_number": "25888",
+     "type": "TE"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/16243R-search.html",
+    "registers/raw/mpr/16243R-page.html",
+    "registers/raw/mpr/16243R-namechanges.html",
+    "registers/raw/mpr/16243R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR16337R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "16337R",
+   "found": true,
+   "name": "Metropolitan Housing Trust Limited",
+   "fca_society_name": "Metropolitan Housing Trust Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1963-04-26",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "The Grange,100 High Street, N14 6PW",
+   "page": {
+    "name": "Metropolitan Housing Trust Limited",
+    "registration_number": "16337R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "26 April 1963",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "The Grange, 100 High Street, London, N14 6PW",
+    "DateOfLastMove": "19 June 2013",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [],
+   "transfers_in": [
+    {
+     "date": "08/10/2018",
+     "from_society": "Thames Valley Charitable Housing Association Limited",
+     "from_society_number": "25301",
+     "type": "TE"
+    },
+    {
+     "date": "26/01/2017",
+     "from_society": "Clapham Park Homes Limited",
+     "from_society_number": "7451",
+     "type": "TE"
+    },
+    {
+     "date": "05/01/2015",
+     "from_society": "Metropolitan Support Trust Limited",
+     "from_society_number": "7042",
+     "type": "TE"
+    },
+    {
+     "date": "30/03/2012",
+     "from_society": "Spirita Limited",
+     "from_society_number": "30151",
+     "type": "TE"
+    },
+    {
+     "date": "30/03/2012",
+     "from_society": "Granta Housing Society Limited",
+     "from_society_number": "21287",
+     "type": "TE"
+    },
+    {
+     "date": "30/03/2006",
+     "from_society": "Llangattock Housing Association Limited",
+     "from_society_number": "20163",
+     "type": "TE"
+    },
+    {
+     "date": "14/05/2004",
+     "from_society": "Metropolitan Home Ownership Limited",
+     "from_society_number": "23203",
+     "type": "TE"
+    },
+    {
+     "date": "16/07/1992",
+     "from_society": "South East Regional Housing Association Limited",
+     "from_society_number": "18698",
+     "type": "TE"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/16337R-search.html",
+    "registers/raw/mpr/16337R-page.html",
+    "registers/raw/mpr/16337R-namechanges.html",
+    "registers/raw/mpr/16337R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR17437R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "17437R",
+   "found": true,
+   "name": "Gold Hill Housing Association Limited",
+   "fca_society_name": "Gold Hill Housing Association Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1966-04-01",
+   "deregistration_date": null,
+   "sic": "87300 - Residential care activities for the elderly and disabled",
+   "address": "The Hub, Church Lane,Chalfont St Peter, Gerrards Cross, SL9 9RF",
+   "page": {
+    "name": "Gold Hill Housing Association Limited",
+    "registration_number": "17437R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "01 April 1966",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "The Hub, Church Lane, Chalfont St Peter, Gerrards Cross, Buckinghamshire, SL9 9RF",
+    "DateOfLastMove": "07 June 2022",
+    "FinancialYearEnd": "31/01",
+    "StandardIndustrialClassificationCode": "87300 - Residential care activities for the elderly and disabled",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [],
+   "transfers_in": [],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/17437R-search.html",
+    "registers/raw/mpr/17437R-page.html",
+    "registers/raw/mpr/17437R-namechanges.html",
+    "registers/raw/mpr/17437R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR17704R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "17704R",
+   "found": true,
+   "name": "Your Housing Limited",
+   "fca_society_name": "Your Housing Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1966-12-01",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "Youggle House, 130 Birchwood Boulevard,Birchwood,Cheshire WA3 7QH",
+   "page": {
+    "name": "Your Housing Limited",
+    "registration_number": "17704R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "01 December 1966",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "Youggle House, 130 Birchwood Boulevard, Birchwood, Warrington, Cheshire, WA3 7QH",
+    "DateOfLastMove": "09 June 2021",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "31/07/2017",
+     "former_name": "Arena Housing Group Limited"
+    },
+    {
+     "changed": "19/10/2006",
+     "former_name": "Arena Housing Association Limited"
+    },
+    {
+     "changed": "07/09/2001",
+     "former_name": "Liver Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "06/03/2024",
+     "from_society": "Gorse Stacks Mutual Housing Association Limited",
+     "from_society_number": "25832",
+     "type": "Full"
+    },
+    {
+     "date": "13/03/2019",
+     "from_society": "Arena Options Limited",
+     "from_society_number": "11044",
+     "type": "Full"
+    },
+    {
+     "date": "13/03/2019",
+     "from_society": "Arena Homes Limited",
+     "from_society_number": "30060",
+     "type": "Full"
+    },
+    {
+     "date": "15/01/2019",
+     "from_society": "Partington Housing Association Limited",
+     "from_society_number": "27231",
+     "type": "Full"
+    },
+    {
+     "date": "31/07/2017",
+     "from_society": "Headrow Limited",
+     "from_society_number": "21086",
+     "type": "TE"
+    },
+    {
+     "date": "31/07/2017",
+     "from_society": "Manchester and District Housing Association Limited",
+     "from_society_number": "16434",
+     "type": "TE"
+    },
+    {
+     "date": "31/07/2017",
+     "from_society": "Moorlands Housing",
+     "from_society_number": "30941",
+     "type": "TE"
+    },
+    {
+     "date": "31/07/2017",
+     "from_society": "Tung Sing Housing Association Limited",
+     "from_society_number": "24701",
+     "type": "TE"
+    },
+    {
+     "date": "05/10/2001",
+     "from_society": "Grosvenor Housing Association Limited",
+     "from_society_number": "19752",
+     "type": "TE"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/17704R-search.html",
+    "registers/raw/mpr/17704R-page.html",
+    "registers/raw/mpr/17704R-namechanges.html",
+    "registers/raw/mpr/17704R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR19059R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "19059R",
+   "found": true,
+   "name": "Sanctuary Housing Association",
+   "fca_society_name": "Sanctuary Housing Association",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1969-05-05",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "Chamber Court, Castle Street,WORCESTER, WR1 3ZQ",
+   "page": {
+    "name": "Sanctuary Housing Association",
+    "registration_number": "19059R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "05 May 1969",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "Chamber Court, Castle Street, WORCESTER, WR1 3ZQ",
+    "DateOfLastMove": "08 October 2002",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [],
+   "transfers_in": [
+    {
+     "date": "31/01/2025",
+     "from_society": "\"Johnnie\" Johnson Housing Trust Limited",
+     "from_society_number": "19198",
+     "type": "Full"
+    },
+    {
+     "date": "25/11/2016",
+     "from_society": "Sanctuary (North West) Housing Association Limited",
+     "from_society_number": "19012",
+     "type": "TE"
+    },
+    {
+     "date": "25/11/2016",
+     "from_society": "Rochford Housing Association Limited",
+     "from_society_number": "30108",
+     "type": "TE"
+    },
+    {
+     "date": "31/03/2015",
+     "from_society": "Chester & District Housing Trust Limited",
+     "from_society_number": "32370",
+     "type": "TE"
+    },
+    {
+     "date": "05/11/2014",
+     "from_society": "Haven Green Housing Association Limited",
+     "from_society_number": "15497",
+     "type": "TE"
+    },
+    {
+     "date": "28/12/2011",
+     "from_society": "The Beth Johnson Housing Association Limited",
+     "from_society_number": "21440",
+     "type": "TE"
+    },
+    {
+     "date": "26/04/2011",
+     "from_society": "Shaftesbury Housing Association",
+     "from_society_number": "19574",
+     "type": "TE"
+    },
+    {
+     "date": "31/03/2011",
+     "from_society": "Carr-Gomm",
+     "from_society_number": "31169",
+     "type": "TE"
+    },
+    {
+     "date": "31/03/2011",
+     "from_society": "Charter Community Services Limited",
+     "from_society_number": "29908",
+     "type": "TE"
+    },
+    {
+     "date": "31/03/2011",
+     "from_society": "Riviera Housing Trust Limited",
+     "from_society_number": "30664",
+     "type": "TE"
+    },
+    {
+     "date": "31/03/2011",
+     "from_society": "Banbury Homes Housing Association Limited",
+     "from_society_number": "27909",
+     "type": "TE"
+    },
+    {
+     "date": "31/03/2011",
+     "from_society": "Charter Community Housing Limited",
+     "from_society_number": "30649",
+     "type": "TE"
+    },
+    {
+     "date": "31/03/2010",
+     "from_society": "Hereward Housing Association Limited",
+     "from_society_number": "27514",
+     "type": "TE"
+    },
+    {
+     "date": "31/08/2009",
+     "from_society": "Kingsmead Homes (Hackney) Limited",
+     "from_society_number": "30707",
+     "type": "TE"
+    },
+    {
+     "date": "05/01/1998",
+     "from_society": "Housemartin Housing Association Limited",
+     "from_society_number": "17624",
+     "type": "TE"
+    },
+    {
+     "date": "13/01/1995",
+     "from_society": "Glaid Housing Association Limited",
+     "from_society_number": "17158",
+     "type": "TE"
+    },
+    {
+     "date": "04/10/1994",
+     "from_society": "Sylvan Hall Housing Association Limited",
+     "from_society_number": "17251",
+     "type": "TE"
+    },
+    {
+     "date": "06/07/1992",
+     "from_society": "Spiral Housing Association Limited",
+     "from_society_number": "22996",
+     "type": "TE"
+    },
+    {
+     "date": "05/01/1989",
+     "from_society": "Bethany Housing Association Limited",
+     "from_society_number": "23544",
+     "type": "RC"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/19059R-search.html",
+    "registers/raw/mpr/19059R-page.html",
+    "registers/raw/mpr/19059R-namechanges.html",
+    "registers/raw/mpr/19059R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR19229R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "19229R",
+   "found": true,
+   "name": "Accent Housing Limited",
+   "fca_society_name": "Accent Housing Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1969-09-17",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "3rd Floor Scorex House,1 Bolton Road,West Yorkshire BD1 4AS",
+   "page": {
+    "name": "Accent Housing Limited",
+    "registration_number": "19229R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "17 September 1969",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "3rd Floor Scorex House, 1 Bolton Road, Bradford, West Yorkshire, BD1 4AS",
+    "DateOfLastMove": "30 March 2024",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "01/08/2016",
+     "former_name": "Accent Foundation Limited"
+    },
+    {
+     "changed": "26/05/2004",
+     "former_name": "Accent Homes Limited"
+    },
+    {
+     "changed": "05/08/1997",
+     "former_name": "Bradford and Northern Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "02/04/2024",
+     "from_society": "Domus Services Limited",
+     "from_society_number": "9204",
+     "type": "Full"
+    },
+    {
+     "date": "31/03/2020",
+     "from_society": "Accent Corporate Services Limited",
+     "from_society_number": "29264",
+     "type": "Full"
+    },
+    {
+     "date": "02/02/2018",
+     "from_society": "Accent Corporate Services Limited",
+     "from_society_number": "29264",
+     "type": "TE"
+    },
+    {
+     "date": "01/08/2016",
+     "from_society": "Accent Nene Limited",
+     "from_society_number": "20876",
+     "type": "TE"
+    },
+    {
+     "date": "01/08/2016",
+     "from_society": "Accent Peerless Limited",
+     "from_society_number": "27556",
+     "type": "TE"
+    },
+    {
+     "date": "24/03/1994",
+     "from_society": "National & Provincial Housing Association Limited",
+     "from_society_number": "23730",
+     "type": "TE"
+    },
+    {
+     "date": "13/04/1992",
+     "from_society": "Durham Mineworkers Housing Association Limited",
+     "from_society_number": "25282",
+     "type": "te"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/19229R-search.html",
+    "registers/raw/mpr/19229R-page.html",
+    "registers/raw/mpr/19229R-namechanges.html",
+    "registers/raw/mpr/19229R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR19341R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "19341R",
+   "found": true,
+   "name": "Habinteg Housing Association Limited",
+   "fca_society_name": "Habinteg Housing Association Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1970-02-06",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "Chapman House, Unit 1, Adwalton Business Park,132 Wakefield Road, Drighlington, BD11 1DR",
+   "page": {
+    "name": "Habinteg Housing Association Limited",
+    "registration_number": "19341R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "06 February 1970",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "Chapman House, Unit 1, Adwalton Business Park, 132 Wakefield Road, Drighlington, Bradford, BD11 1DR",
+    "DateOfLastMove": "18 December 2021",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [],
+   "transfers_in": [
+    {
+     "date": "28/02/2010",
+     "from_society": "Livability Housing",
+     "from_society_number": "19332",
+     "type": "TE"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/19341R-search.html",
+    "registers/raw/mpr/19341R-page.html",
+    "registers/raw/mpr/19341R-namechanges.html",
+    "registers/raw/mpr/19341R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR21180R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "21180R",
+   "found": true,
+   "name": "The Cadarn Housing Group Limited",
+   "fca_society_name": "The Cadarn Housing Group Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1974-05-31",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "5 Village Way,Tongwynlais, CF15 7NE",
+   "page": {
+    "name": "The Cadarn Housing Group Limited",
+    "registration_number": "21180R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "31 May 1974",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "5 Village Way, Tongwynlais, Cardiff, CF15 7NE",
+    "DateOfLastMove": "30 September 2020",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "24/09/2024",
+     "former_name": "Newydd Group Limited"
+    },
+    {
+     "changed": "24/09/2020",
+     "former_name": "The Cadarn Housing Group Limited"
+    },
+    {
+     "changed": "04/06/1998",
+     "former_name": "Newydd Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "03/03/2004",
+     "from_society": "Community Design Service Limited",
+     "from_society_number": "29082",
+     "type": "TE"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/21180R-search.html",
+    "registers/raw/mpr/21180R-page.html",
+    "registers/raw/mpr/21180R-namechanges.html",
+    "registers/raw/mpr/21180R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR21256R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "21256R",
+   "found": true,
+   "name": "North Star Housing Group",
+   "fca_society_name": "North Star Housing Group",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1974-08-16",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "Endeavour House,St. Mark's Court, Thornaby,Cleveland TS17 6QN",
+   "page": {
+    "name": "North Star Housing Group",
+    "registration_number": "21256R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "16 August 1974",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "Endeavour House, St. Mark's Court, Thornaby, STOCKTON-ON-TEES, Cleveland, TS17 6QN",
+    "DateOfLastMove": "03 October 2006",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "02/11/2020",
+     "former_name": "Endeavour Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "02/11/2020",
+     "from_society": "Teesdale Housing Association Limited",
+     "from_society_number": "30015",
+     "type": "Full"
+    },
+    {
+     "date": "02/11/2020",
+     "from_society": "North Star Housing Group Limited",
+     "from_society_number": "30011",
+     "type": "Full"
+    },
+    {
+     "date": "02/11/2020",
+     "from_society": "Darlington Housing Association Limited",
+     "from_society_number": "21751",
+     "type": "Full"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/21256R-search.html",
+    "registers/raw/mpr/21256R-page.html",
+    "registers/raw/mpr/21256R-namechanges.html",
+    "registers/raw/mpr/21256R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR26511R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "26511R",
+   "found": true,
+   "name": "Two Saints Limited",
+   "fca_society_name": "Two Saints Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1989-03-30",
+   "deregistration_date": null,
+   "sic": "55900 - Other accommodation",
+   "address": "69 High Street,Fareham, PO16 7BB",
+   "page": {
+    "name": "Two Saints Limited",
+    "registration_number": "26511R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "30 March 1989",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "69 High Street, Fareham, Hampshire, PO16 7BB",
+    "DateOfLastMove": "11 October 2021",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "55900 - Other accommodation",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "28/02/2001",
+     "former_name": "St Petroc (Wessex) Housing Association Limited"
+    },
+    {
+     "changed": "02/02/1993",
+     "former_name": "St Petroc (Portsmouth) Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "05/07/2018",
+     "from_society": "The Real World Trust Limited",
+     "from_society_number": "7766",
+     "type": "TE"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/26511R-search.html",
+    "registers/raw/mpr/26511R-page.html",
+    "registers/raw/mpr/26511R-namechanges.html",
+    "registers/raw/mpr/26511R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR27440R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "27440R",
+   "found": true,
+   "name": "Creative Support Limited",
+   "fca_society_name": "Creative Support Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1991-08-01",
+   "deregistration_date": null,
+   "sic": "87200 - Residential care activities for learning difficulties, mental health and substance abuse",
+   "address": "Wellington House ,131 Wellington Road South, SK1 3TS",
+   "page": {
+    "name": "Creative Support Limited",
+    "registration_number": "27440R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "01 August 1991",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "Wellington House, 131 Wellington Road South, Stockport, SK1 3TS",
+    "DateOfLastMove": "13 January 2017",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "87200 - Residential care activities for learning difficulties, mental health and substance abuse",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "24/02/1994",
+     "former_name": "Manchester Housing Consortium Limited"
+    }
+   ],
+   "transfers_in": [],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/27440R-search.html",
+    "registers/raw/mpr/27440R-page.html",
+    "registers/raw/mpr/27440R-namechanges.html",
+    "registers/raw/mpr/27440R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR27566R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "27566R",
+   "found": true,
+   "name": "The National Development Team for Inclusion",
+   "fca_society_name": "The National Development Team for Inclusion",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1992-02-24",
+   "deregistration_date": null,
+   "sic": "70229 - Management consultancy activities other than financial management",
+   "address": "Cambridge House,Henry Street,Somerset BA1 1BT",
+   "page": {
+    "name": "The National Development Team for Inclusion",
+    "registration_number": "27566R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "24 February 1992",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "Cambridge House, Henry Street, Bath, Somerset, BA1 1BT",
+    "DateOfLastMove": "04 April 2026",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "70229 - Management consultancy activities other than financial management",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "02/03/2009",
+     "former_name": "The National Development Team for People With Learning Disabilities"
+    }
+   ],
+   "transfers_in": [],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/27566R-search.html",
+    "registers/raw/mpr/27566R-page.html",
+    "registers/raw/mpr/27566R-namechanges.html",
+    "registers/raw/mpr/27566R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR27793R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "27793R",
+   "found": true,
+   "name": "Greenwich Leisure Limited",
+   "fca_society_name": "Greenwich Leisure Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1993-05-26",
+   "deregistration_date": null,
+   "sic": "93130 - Fitness facilities",
+   "address": "Middlegate House,The Royal Arsenal, SE18 6SX",
+   "page": {
+    "name": "Greenwich Leisure Limited",
+    "registration_number": "27793R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "26 May 1993",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "Middlegate House, The Royal Arsenal, London, SE18 6SX",
+    "DateOfLastMove": "07 May 2015",
+    "FinancialYearEnd": "31/12",
+    "StandardIndustrialClassificationCode": "93130 - Fitness facilities",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [],
+   "transfers_in": [
+    {
+     "date": "01/05/2018",
+     "from_society": "Welwyn Hatfield Leisure Limited",
+     "from_society_number": "29635",
+     "type": "TE"
+    },
+    {
+     "date": "01/02/2015",
+     "from_society": "Carlisle Leisure Limited",
+     "from_society_number": "29466",
+     "type": "TE"
+    },
+    {
+     "date": "12/01/2011",
+     "from_society": "Wycombe Leisure Limited",
+     "from_society_number": "28432",
+     "type": "TE"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/27793R-search.html",
+    "registers/raw/mpr/27793R-page.html",
+    "registers/raw/mpr/27793R-namechanges.html",
+    "registers/raw/mpr/27793R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR28038R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "28038R",
+   "found": true,
+   "name": "Clarion Housing Group Limited",
+   "fca_society_name": "Clarion Housing Group Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "1994-09-01",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "5th Floor, Greater London House,Hampstead Road, NW1 7QX",
+   "page": {
+    "name": "Clarion Housing Group Limited",
+    "registration_number": "28038R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "01 September 1994",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "5th Floor, Greater London House, Hampstead Road, London, NW1 7QX",
+    "DateOfLastMove": "21 August 2024",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "29/11/2016",
+     "former_name": "Affinity Sutton Group Limited"
+    },
+    {
+     "changed": "02/10/2006",
+     "former_name": "The Affinity Homes Group Limited"
+    },
+    {
+     "changed": "05/04/2004",
+     "former_name": "Downland Affinity Group Limited"
+    },
+    {
+     "changed": "01/04/2003",
+     "former_name": "Downland Housing Group Limited"
+    },
+    {
+     "changed": "01/11/1995",
+     "former_name": "Argus Housing Association Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "29/11/2016",
+     "from_society": "Circle Anglia Limited",
+     "from_society_number": "27604",
+     "type": "TE"
+    },
+    {
+     "date": "17/12/2003",
+     "from_society": "The Affinity Homes Group Limited",
+     "from_society_number": "29318",
+     "type": "TE"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/28038R-search.html",
+    "registers/raw/mpr/28038R-page.html",
+    "registers/raw/mpr/28038R-namechanges.html",
+    "registers/raw/mpr/28038R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR29840R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "29840R",
+   "found": true,
+   "name": "Local Space",
+   "fca_society_name": "Local Space",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "2004-10-06",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "58 Romford Road, E15 4BZ",
+   "page": {
+    "name": "Local Space",
+    "registration_number": "29840R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "06 October 2004",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "58 Romford Road, London, E15 4BZ",
+    "DateOfLastMove": "27 July 2021",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "25/04/2019",
+     "former_name": "Local Space"
+    },
+    {
+     "changed": "25/04/2019",
+     "former_name": "Local Space Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "01/04/2007",
+     "from_society": "Passmore Urban Renewal Limited",
+     "from_society_number": "29153",
+     "type": "TE"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/29840R-search.html",
+    "registers/raw/mpr/29840R-page.html",
+    "registers/raw/mpr/29840R-namechanges.html",
+    "registers/raw/mpr/29840R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR30167R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "30167R",
+   "found": true,
+   "name": "Town and Country Housing",
+   "fca_society_name": "Town and Country Housing",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "2007-01-17",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "Monson house,Monson Way,Kent TN11LQ",
+   "page": {
+    "name": "Town and Country Housing",
+    "registration_number": "30167R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "17 January 2007",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "Monson house, Monson Way, Tunbridge Wells, Kent, TN11LQ",
+    "DateOfLastMove": "09 May 2019",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "09/05/2019",
+     "former_name": "Town and Country Housing Group"
+    },
+    {
+     "changed": "10/01/2008",
+     "former_name": "Town and Country Housing Group Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "04/04/2023",
+     "from_society": "Rosebery Housing Association Limited",
+     "from_society_number": "27671",
+     "type": "Full"
+    },
+    {
+     "date": "31/03/2015",
+     "from_society": "TCHG Living Limited",
+     "from_society_number": "26702",
+     "type": "TE"
+    },
+    {
+     "date": "30/03/2007",
+     "from_society": "High Weald Housing Association Limited",
+     "from_society_number": "26702",
+     "type": "TE"
+    },
+    {
+     "date": "30/03/2007",
+     "from_society": "White Cliffs Housing Association Limited",
+     "from_society_number": "29016",
+     "type": "TE"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/30167R-search.html",
+    "registers/raw/mpr/30167R-page.html",
+    "registers/raw/mpr/30167R-namechanges.html",
+    "registers/raw/mpr/30167R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR30178R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "30178R",
+   "found": true,
+   "name": "Incommunities Limited",
+   "fca_society_name": "Incommunities Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "2007-01-26",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "The Quays,Victoria Street,Bradford BD17 7BN",
+   "page": {
+    "name": "Incommunities Limited",
+    "registration_number": "30178R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "26 January 2007",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "The Quays, Victoria Street, Shipley, Bradford, BD17 7BN",
+    "DateOfLastMove": "31 May 2013",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "22/05/2008",
+     "former_name": "Bradford Community Housing Limited"
+    }
+   ],
+   "transfers_in": [
+    {
+     "date": "01/12/2021",
+     "from_society": "Incommunities Group Limited",
+     "from_society_number": "8711",
+     "type": "Full"
+    },
+    {
+     "date": "01/12/2021",
+     "from_society": "Sadeh Lok Limited",
+     "from_society_number": "26410",
+     "type": "Full"
+    },
+    {
+     "date": "26/01/2007",
+     "from_society": "North Bradford Community Housing Trust Limited",
+     "from_society_number": "29980",
+     "type": "AM"
+    },
+    {
+     "date": "26/01/2007",
+     "from_society": "Bradford West City Community Housing Trust Limited",
+     "from_society_number": "29978",
+     "type": "AM"
+    },
+    {
+     "date": "26/01/2007",
+     "from_society": "Shipley Community Housing Trust Limited",
+     "from_society_number": "29979",
+     "type": "AM"
+    },
+    {
+     "date": "26/01/2007",
+     "from_society": "East Bradford Community Housing Trust Limited",
+     "from_society_number": "29982",
+     "type": "AM"
+    },
+    {
+     "date": "26/01/2007",
+     "from_society": "Aire Wharfe Community Housing Trust Limited",
+     "from_society_number": "29977",
+     "type": "AM"
+    },
+    {
+     "date": "26/01/2007",
+     "from_society": "South Bradford Community Housing Trust Limited",
+     "from_society_number": "29981",
+     "type": "AM"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/30178R-search.html",
+    "registers/raw/mpr/30178R-page.html",
+    "registers/raw/mpr/30178R-namechanges.html",
+    "registers/raw/mpr/30178R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR30301R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "30301R",
+   "found": true,
+   "name": "Herts Urgent Care (HUC) Limited",
+   "fca_society_name": "Herts Urgent Care (HUC) Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "2007-08-01",
+   "deregistration_date": null,
+   "sic": "84120 - Regulation of health care, education, cultural and other social services, not incl. social security",
+   "address": "Herts Urgent Care,Ascots Lane,Hertfordshire AL7 4HL",
+   "page": {
+    "name": "Herts Urgent Care (HUC) Limited",
+    "registration_number": "30301R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "01 August 2007",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "Herts Urgent Care, Ascots Lane, Welwyn Garden City, Hertfordshire, AL7 4HL",
+    "DateOfLastMove": "10 September 2008",
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "84120 - Regulation of health care, education, cultural and other social services, not incl. social security",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [
+    {
+     "changed": "21/06/2023",
+     "former_name": "Herts Urgent Care Limited"
+    }
+   ],
+   "transfers_in": [],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/30301R-search.html",
+    "registers/raw/mpr/30301R-page.html",
+    "registers/raw/mpr/30301R-namechanges.html",
+    "registers/raw/mpr/30301R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBMPR30938R": {
+   "scheme": "MPR",
+   "register": "FCA Mutuals Public Register",
+   "number": "30938R",
+   "found": true,
+   "name": "The Riverside Group Limited",
+   "fca_society_name": "The Riverside Group Limited",
+   "status": "Registered",
+   "registered_as": "Registered Society",
+   "registration_act": "Co-operative and Community Benefit Societies Act 2014",
+   "registration_date": "2010-03-31",
+   "deregistration_date": null,
+   "sic": "68201 - Renting and operating of Housing Association real estate",
+   "address": "2 Estuary Boulevard,Estuary Commerce Park, Speke, L24 8RF",
+   "page": {
+    "name": "The Riverside Group Limited",
+    "registration_number": "30938R",
+    "Status": "Registered",
+    "RegisteredAs": "Registered Society",
+    "RegistrationDate": "31 March 2010",
+    "RegistrationAct": "Co-operative and Community Benefit Societies Act 2014",
+    "Address": "2 Estuary Boulevard, Estuary Commerce Park, Speke, Liverpool, L24 8RF",
+    "DateOfLastMove": null,
+    "FinancialYearEnd": "31/03",
+    "StandardIndustrialClassificationCode": "68201 - Renting and operating of Housing Association real estate",
+    "DeregistrationDate": null,
+    "DeregistrationMethod": null,
+    "TransferredToNumber": null,
+    "TransferredToName": null,
+    "TransferredToMethod": null
+   },
+   "former_names": [],
+   "transfers_in": [
+    {
+     "date": "31/03/2026",
+     "from_society": "Evolve TRGL Limited",
+     "from_society_number": "9708",
+     "type": "Full"
+    },
+    {
+     "date": "31/03/2023",
+     "from_society": "One Housing Group Limited",
+     "from_society_number": "20453",
+     "type": "Full"
+    },
+    {
+     "date": "31/03/2023",
+     "from_society": "TPHA Limited",
+     "from_society_number": "23381",
+     "type": "Full"
+    },
+    {
+     "date": "31/03/2020",
+     "from_society": "Impact Housing Association Limited",
+     "from_society_number": "21411",
+     "type": "Full"
+    },
+    {
+     "date": "31/03/2010",
+     "from_society": "TRGL No 1 Limited",
+     "from_society_number": "30670",
+     "type": "AM"
+    },
+    {
+     "date": "31/03/2010",
+     "from_society": "English Churches Housing Group Limited",
+     "from_society_number": "10022",
+     "type": "AM"
+    }
+   ],
+   "society_id": null,
+   "sources": {
+    "csv": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+    "page": null
+   },
+   "raw": [
+    "registers/raw/mpr/30938R-search.html",
+    "registers/raw/mpr/30938R-page.html",
+    "registers/raw/mpr/30938R-namechanges.html",
+    "registers/raw/mpr/30938R-transfers.html",
+    "registers/raw/mpr/SocietyList-rows.csv"
+   ]
+  },
+  "GBUKPRN10004116": {
+   "scheme": "UKPRN",
+   "register": "UKRLP",
+   "number": "10004116",
+   "found": true,
+   "name": "EAST COAST COLLEGE",
+   "status": "active",
+   "trading_names": [],
+   "legal_address": "ST. PETERS STREET, LOWESTOFT, SUFFOLK, NR32 2NB",
+   "search_list_name": "EAST COAST COLLEGE",
+   "page_title": "Provider details for EAST COAST COLLEGE",
+   "sources": {
+    "detail": "https://ukrlp.education.gov.uk/search/provider/10004116"
+   },
+   "raw": [
+    "registers/raw/ukrlp/10004116_detail.html",
+    "registers/raw/ukrlp/10004116_active.html",
+    "registers/raw/ukrlp/10004116_deactivated.html"
+   ]
+  },
+  "GBUKPRN10005790": {
+   "scheme": "UKPRN",
+   "register": "UKRLP",
+   "number": "10005790",
+   "found": true,
+   "name": "SHEFFIELD HALLAM UNIVERSITY",
+   "status": "active",
+   "trading_names": [],
+   "legal_address": "City Campus, Pond Street, Sheffield, South Yorkshire, S1 1WB",
+   "search_list_name": "SHEFFIELD HALLAM UNIVERSITY",
+   "page_title": "Provider details for SHEFFIELD HALLAM UNIVERSITY",
+   "sources": {
+    "detail": "https://ukrlp.education.gov.uk/search/provider/10005790"
+   },
+   "raw": [
+    "registers/raw/ukrlp/10005790_detail.html",
+    "registers/raw/ukrlp/10005790_active.html",
+    "registers/raw/ukrlp/10005790_deactivated.html"
+   ]
+  },
+  "GBUKPRN10007157": {
+   "scheme": "UKPRN",
+   "register": "UKRLP",
+   "number": "10007157",
+   "found": true,
+   "name": "University of Sheffield",
+   "status": "active",
+   "trading_names": [
+    "THE UNIVERSITY OF SHEFFIELD",
+    "University of Sheffield"
+   ],
+   "legal_address": "Western Bank, Sheffield, South Yorkshire, S10 2TN",
+   "search_list_name": "University of Sheffield",
+   "page_title": "Provider details for University of Sheffield",
+   "sources": {
+    "detail": "https://ukrlp.education.gov.uk/search/provider/10007157"
+   },
+   "raw": [
+    "registers/raw/ukrlp/10007157_detail.html",
+    "registers/raw/ukrlp/10007157_active.html",
+    "registers/raw/ukrlp/10007157_deactivated.html"
+   ]
+  },
+  "GBUKPRN10007339": {
+   "scheme": "UKPRN",
+   "register": "UKRLP",
+   "number": "10007339",
+   "found": true,
+   "name": "Warrington and Vale Royal College",
+   "status": "active",
+   "trading_names": [
+    "WARRINGTON & VALE ROYAL COLLEGE"
+   ],
+   "legal_address": "Winwick Road, Warrington, Cheshire, WA2 8QA",
+   "search_list_name": "Warrington and Vale Royal College",
+   "page_title": "Provider details for Warrington and Vale Royal College",
+   "sources": {
+    "detail": "https://ukrlp.education.gov.uk/search/provider/10007339"
+   },
+   "raw": [
+    "registers/raw/ukrlp/10007339_detail.html",
+    "registers/raw/ukrlp/10007339_active.html",
+    "registers/raw/ukrlp/10007339_deactivated.html"
+   ]
+  },
+  "GBUKPRN10007788": {
+   "scheme": "UKPRN",
+   "register": "UKRLP",
+   "number": "10007788",
+   "found": true,
+   "name": "UNIVERSITY OF CAMBRIDGE",
+   "status": "active",
+   "trading_names": [
+    "University of Cambridge",
+    "Cambridge University"
+   ],
+   "legal_address": "THE OLD SCHOOLS, TRINITY LANE, CAMBRIDGE, CB2 1TN",
+   "search_list_name": "UNIVERSITY OF CAMBRIDGE",
+   "page_title": "Provider details for UNIVERSITY OF CAMBRIDGE",
+   "sources": {
+    "detail": "https://ukrlp.education.gov.uk/search/provider/10007788"
+   },
+   "raw": [
+    "registers/raw/ukrlp/10007788_detail.html",
+    "registers/raw/ukrlp/10007788_active.html",
+    "registers/raw/ukrlp/10007788_deactivated.html"
+   ]
+  },
+  "GBUKPRN10007798": {
+   "scheme": "UKPRN",
+   "register": "UKRLP",
+   "number": "10007798",
+   "found": true,
+   "name": "University of Manchester",
+   "status": "active",
+   "trading_names": [
+    "THE UNIVERSITY OF MANCHESTER",
+    "University of Manchester"
+   ],
+   "legal_address": "OXFORD ROAD, MANCHESTER, M13 9PL",
+   "search_list_name": "University of Manchester",
+   "page_title": "Provider details for University of Manchester",
+   "sources": {
+    "detail": "https://ukrlp.education.gov.uk/search/provider/10007798"
+   },
+   "raw": [
+    "registers/raw/ukrlp/10007798_detail.html",
+    "registers/raw/ukrlp/10007798_active.html",
+    "registers/raw/ukrlp/10007798_deactivated.html"
+   ]
+  },
+  "GBCHC1003906": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1003906",
+   "found": true,
+   "name": "BIRMINGHAM ASSOCIATION FOR MENTAL HEALTH",
+   "status": "Registered",
+   "date_of_registration": "1991-08-16",
+   "date_of_removal": null,
+   "company_number": "02024372",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 10170340.0,
+   "web": "www.birminghammind.org",
+   "other_names": [
+    {
+     "type": "Working name",
+     "name": "BIRMINGHAM MIND",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1003906"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1034581": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1034581",
+   "found": true,
+   "name": "BIRMINGHAM DISABILITY RESOURCE CENTRE",
+   "status": "Registered",
+   "date_of_registration": "1994-03-07",
+   "date_of_removal": null,
+   "company_number": "02897250",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 1649451.0,
+   "web": "http://www.disability.co.uk",
+   "other_names": [],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1034581"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1068106": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1068106",
+   "found": true,
+   "name": "MOUNT ZION APOSTOLIC CHURCH",
+   "status": "Registered",
+   "date_of_registration": "1998-02-12",
+   "date_of_removal": null,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 420103.0,
+   "web": "www.mountzionapostolicchurch.co.uk",
+   "other_names": [],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1068106"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1072258": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1072258",
+   "found": true,
+   "name": "BIRMINGHAM IRISH ASSOCIATION",
+   "status": "Registered",
+   "date_of_registration": "1998-11-03",
+   "date_of_removal": null,
+   "company_number": "03628076",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 727580.0,
+   "web": "www.birish.org.uk",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "I.W.I.C",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Working name",
+     "name": "IRISH WELFARE AND INFORMATION CENTRE",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "IRISH IN BIRMINGHAM",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1072258"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1073926": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1073926",
+   "found": true,
+   "name": "BIRMINGHAM AND SOLIHULL WOMEN'S AID",
+   "status": "Registered",
+   "date_of_registration": "1999-02-12",
+   "date_of_removal": null,
+   "company_number": "03509538",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 8293567.0,
+   "web": "www.bswaid.org",
+   "other_names": [
+    {
+     "type": "Working name",
+     "name": "BIRMINGHAM & SOLIHULL WOMEN'S AID",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "BIRMINGHAM WOMEN'S AID",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1073926"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1077607": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1077607",
+   "found": true,
+   "name": "DAYBREAK FAMILY GROUP CONFERENCES",
+   "status": "Registered",
+   "date_of_registration": "1999-09-30",
+   "date_of_removal": null,
+   "company_number": "03780726",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 953980.0,
+   "web": "www.daybreakfgc.org.uk",
+   "other_names": [],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1077607"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1088835": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1088835",
+   "found": true,
+   "name": "NO LIMITS (SOUTH)",
+   "status": "Registered",
+   "date_of_registration": "2001-10-10",
+   "date_of_removal": null,
+   "company_number": "04183173",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 4695543.0,
+   "web": "WWW.NOLIMITSHELP.ORG.UK",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "NO LIMITS (SOUTHAMPTON)",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "NO LIMITS SOUTH",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1088835"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1094458": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1094458",
+   "found": true,
+   "name": "ST MARTIN'S CENTRE FOR HEALTH AND HEALING",
+   "status": "Registered",
+   "date_of_registration": "2002-11-01",
+   "date_of_removal": null,
+   "company_number": "04421138",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 727060.0,
+   "web": "www.smchh.co.uk",
+   "other_names": [],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1094458"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1104951": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1104951",
+   "found": true,
+   "name": "ST ANDREW'S HEALTHCARE",
+   "status": "Registered",
+   "date_of_registration": "2004-07-16",
+   "date_of_removal": null,
+   "company_number": "05176998",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 235558118.0,
+   "web": "www.standrewshealthcare.co.uk",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "ST ANDREW'S GROUP OF HOSPITALS",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 1,
+    "registered": 1,
+    "sample": [
+     {
+      "linked_charity_number": 1,
+      "name": "ST ANDREW'S HOSPITAL",
+      "status": "Registered"
+     }
+    ]
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1104951"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1107830": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1107830",
+   "found": true,
+   "name": "Citizens Advice Mid Mercia",
+   "status": "Registered",
+   "date_of_registration": "2005-01-27",
+   "date_of_removal": null,
+   "company_number": "05311627",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 5085640.0,
+   "web": "www.citizensadvice.org.uk/local/mid-mercia",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "SOUTH DERBYSHIRE CITIZENS ADVICE BUREAU",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Working name",
+     "name": "Citizens Advice Mid Mercia",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1107830"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1122831": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1122831",
+   "found": true,
+   "name": "ACACIA FAMILY SUPPORT",
+   "status": "Registered",
+   "date_of_registration": "2008-02-18",
+   "date_of_removal": null,
+   "company_number": "06217626",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 762556.0,
+   "web": "www.acacia.org.uk",
+   "other_names": [],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1122831"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1133510": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1133510",
+   "found": true,
+   "name": "KARIS NEIGHBOUR SCHEME",
+   "status": "Registered",
+   "date_of_registration": "2010-01-12",
+   "date_of_removal": null,
+   "company_number": "06595341",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 409323.0,
+   "web": "www.karisneighbourscheme.org",
+   "other_names": [
+    {
+     "type": "Working name",
+     "name": "WHOLECARE(KNS)",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1133510"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1159706": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1159706",
+   "found": true,
+   "name": "ANAWIM - BIRMINGHAM’S CENTRE FOR WOMEN LIMITED",
+   "status": "Registered",
+   "date_of_registration": "2014-12-22",
+   "date_of_removal": null,
+   "company_number": "09322109",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 2171640.0,
+   "web": "www.anawim.co.uk",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "ANAWIM ? WOMEN WORKING TOGETHER",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Working name",
+     "name": "ANAWIM OR ANAWIM - WWT",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "ANAWIM - WOMEN WORKING TOGETHER",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1159706"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1175670": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1175670",
+   "found": true,
+   "name": "MENTAL HEALTH INNOVATIONS",
+   "status": "Registered",
+   "date_of_registration": "2017-11-09",
+   "date_of_removal": null,
+   "company_number": null,
+   "charity_type": "CIO",
+   "is_cio": true,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 8708665.0,
+   "web": "www.mentalhealthinnovations.org",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "MENTAL HEALTH INNOVATION",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Working name",
+     "name": "MHI",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1175670"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1179376": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1179376",
+   "found": true,
+   "name": "Oasis Mental Health Support",
+   "status": "Registered",
+   "date_of_registration": "2018-07-30",
+   "date_of_removal": null,
+   "company_number": "10716963",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 408360.0,
+   "web": "www.oasismentalhealthsupport.org.uk",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "SOLIHULL MIND",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "OASIS MENTAL HEALTH SUPPORT",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1179376"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1179683": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1179683",
+   "found": true,
+   "name": "SEVEN UP CHARITY",
+   "status": "Registered",
+   "date_of_registration": "2018-08-28",
+   "date_of_removal": null,
+   "company_number": null,
+   "charity_type": "CIO",
+   "is_cio": true,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 196631.0,
+   "web": "www.seven-up.co.uk",
+   "other_names": [
+    {
+     "type": "Working name",
+     "name": "SEVEN UP",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1179683"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1185092": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1185092",
+   "found": true,
+   "name": "FIRST STEPS ED",
+   "status": "Registered",
+   "date_of_registration": "2019-08-29",
+   "date_of_removal": null,
+   "company_number": null,
+   "charity_type": "CIO",
+   "is_cio": true,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 1398731.0,
+   "web": "www.firststepsed.co.uk",
+   "other_names": [],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1185092"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC1205036": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "1205036",
+   "found": true,
+   "name": "CENTRAL JAMIA MOSQUE GHAMKOL SHARIF",
+   "status": "Registered",
+   "date_of_registration": "2023-10-03",
+   "date_of_removal": null,
+   "company_number": null,
+   "charity_type": "CIO",
+   "is_cio": true,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 0.0,
+   "web": "https://gsmosque.org/",
+   "other_names": [
+    {
+     "type": "Working name",
+     "name": "DAR UL ULOOM ISLAMIA RIZWIA (BRALAWAI)",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1205036"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC208078": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "208078",
+   "found": true,
+   "name": "Cruse Bereavement Support",
+   "status": "Registered",
+   "date_of_registration": "1962-09-22",
+   "date_of_removal": null,
+   "company_number": "00638709",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 6428706.0,
+   "web": "www.cruse.org.uk",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "CRUSE BEREAVEMENT CARE",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "CRUSE BEREAVEMENT CARE LIMITED",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "CRUSE CLUBS LIMITED",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/208078"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC216250": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "216250",
+   "found": true,
+   "name": "BARNARDO'S",
+   "status": "Registered",
+   "date_of_registration": "1963-01-18",
+   "date_of_removal": null,
+   "company_number": "00061625",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 340251582.0,
+   "web": "www.barnardos.org.uk",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "THE BARNARDO'S VILLAGE CHARITY",
+     "linked_charity_number": 84
+    },
+    {
+     "type": "Previous name",
+     "name": "THE GEORGE NICHOL CHARITY FOR BARNARDOS",
+     "linked_charity_number": 86
+    }
+   ],
+   "linked_charities": {
+    "total": 93,
+    "registered": 11,
+    "sample": [
+     {
+      "linked_charity_number": 1,
+      "name": "HENRY SYLLA BICKLEY (DR BARNARDO'S CHARITIES FOR SEA TRAINING OF BOYS)",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 2,
+      "name": "BEATRICE BUTTERFIELD (DR BARNARDO'S CHARITIES FOR SEA TRAINING OF BOYS)",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 3,
+      "name": "MR AND MRS J CROMPTON'S ENDOWMENT (DR BARNARDO'S CHARITIES FOR SEA TRAINING OF BOYS)",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 4,
+      "name": "THE RUTHERFORD TREAT",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 5,
+      "name": "THEODORE ALPHONSE POIROTTE",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 6,
+      "name": "MARY WRIGHTSON",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 7,
+      "name": "MUSTARD SEED FUND",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 8,
+      "name": "THE GODFREY BIRD TRUST",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 9,
+      "name": "DONZEL EMIGRATION FUND",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 10,
+      "name": "CHARLES TODD",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 11,
+      "name": "DAME PIERSONS FUND",
+      "status": "Registered"
+     },
+     {
+      "linked_charity_number": 12,
+      "name": "JULIE THOMAS",
+      "status": "Removed"
+     }
+    ]
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/216250"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC221124": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "221124",
+   "found": true,
+   "name": "CHURCH OF ENGLAND CHILDREN'S SOCIETY",
+   "status": "Registered",
+   "date_of_registration": "1964-05-07",
+   "date_of_removal": null,
+   "company_number": "00040004",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 40642000.0,
+   "web": "www.childrenssociety.org.uk",
+   "other_names": [
+    {
+     "type": "Working name",
+     "name": "THE CHILDREN'S SOCIETY",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 33,
+    "registered": 14,
+    "sample": [
+     {
+      "linked_charity_number": 1,
+      "name": "ASHDON ALL SAINTS HOUSE FUND",
+      "status": "Registered"
+     },
+     {
+      "linked_charity_number": 2,
+      "name": "THE ANNIE BAGSHAW CHILDREN'S FUND",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 3,
+      "name": "GRACE FARRAR AWARD",
+      "status": "Registered"
+     },
+     {
+      "linked_charity_number": 4,
+      "name": "HOME OF THE GOOD SHEPHERD SWANSEA",
+      "status": "Registered"
+     },
+     {
+      "linked_charity_number": 5,
+      "name": "SOMERSET HOME ENDOWMENT FUND",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 6,
+      "name": "ST MICHAEL'S HOUSE HOOR CROSS",
+      "status": "Registered"
+     },
+     {
+      "linked_charity_number": 7,
+      "name": "FRIARS HOUSE IPSWICH",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 8,
+      "name": "ERNEST BAILEY RESIDENTIAL NURSERY MATLOCK",
+      "status": "Registered"
+     },
+     {
+      "linked_charity_number": 9,
+      "name": "STOCKWELL ROAD INDUSTRIAL FUND",
+      "status": "Registered"
+     },
+     {
+      "linked_charity_number": 10,
+      "name": "EDITH MARY BULWER'S CHILDREN'S HOME FUND",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 11,
+      "name": "THE CONSTANCE BUNYON ENDOWMENT FUND",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 12,
+      "name": "THE FRANCES POCHIN HOSTEL",
+      "status": "Registered"
+     }
+    ]
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/221124"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC271028": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "271028",
+   "found": true,
+   "name": "Rethink Mental Illness",
+   "status": "Registered",
+   "date_of_registration": "1991-10-31",
+   "date_of_removal": null,
+   "company_number": "01227970",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 43932000.0,
+   "web": "www.rethink.org",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "NATIONAL SCHIZOPHRENIA FELLOWSHIP",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Working name",
+     "name": "RETHINK",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "RETHINK MENTAL ILLNESS",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 3,
+    "registered": 1,
+    "sample": [
+     {
+      "linked_charity_number": 1,
+      "name": "BEFRIENDING VISITORS SERVICE",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 2,
+      "name": "BEFRIENDING VISITORS SERVICE",
+      "status": "Registered"
+     },
+     {
+      "linked_charity_number": 3,
+      "name": "CAREFUND",
+      "status": "Removed"
+     }
+    ]
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/271028"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC279057": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "279057",
+   "found": true,
+   "name": "THE NATIONAL ASSOCIATION OF CITIZENS ADVICE BUREAUX",
+   "status": "Registered",
+   "date_of_registration": "1980-01-21",
+   "date_of_removal": null,
+   "company_number": "01436945",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 167831000.0,
+   "web": "www.citizensadvice.org.uk",
+   "other_names": [
+    {
+     "type": "Working name",
+     "name": "CITIZENS ADVICE",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Working name",
+     "name": "CITIZENS ADVICE CYMRU",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Working name",
+     "name": "CITIZENS ADVICE CYNGOR AR BOPETH",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Working name",
+     "name": "NACAB",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 1,
+    "registered": 1,
+    "sample": [
+     {
+      "linked_charity_number": 1,
+      "name": "CITIZENS ADVICE BUREAUX TRUST",
+      "status": "Registered"
+     }
+    ]
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/279057"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC517077": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "517077",
+   "found": true,
+   "name": "AUTISM.WEST MIDLANDS",
+   "status": "Registered",
+   "date_of_registration": "1986-01-13",
+   "date_of_removal": null,
+   "company_number": "01953344",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 8428000.0,
+   "web": "www.autismwestmidlands.org.uk",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "WEST MIDLANDS AUTISTIC SOCIETY LIMITED",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "W.M.A.S (CODDINGTON COURT) LIMITED",
+     "linked_charity_number": 4
+    },
+    {
+     "type": "Previous name",
+     "name": "W.M.A.S. (GORSE FARM) LIMITED",
+     "linked_charity_number": 1
+    },
+    {
+     "type": "Previous name",
+     "name": "W.M.A.S. (OAKFIELD HOUSE) LIMITED",
+     "linked_charity_number": 2
+    },
+    {
+     "type": "Previous name",
+     "name": "W.M.A.S. (UPPER FORD LODGE) LIMITED",
+     "linked_charity_number": 3
+    },
+    {
+     "type": "Previous name",
+     "name": "W.M.A.S. (SERPENTINE ROAD) LIMITED",
+     "linked_charity_number": 5
+    }
+   ],
+   "linked_charities": {
+    "total": 5,
+    "registered": 1,
+    "sample": [
+     {
+      "linked_charity_number": 1,
+      "name": "AUTISM.WEST MIDLANDS (GF) LIMITED",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 2,
+      "name": "AUTISM.WEST MIDLANDS (OFH) LIMITED",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 3,
+      "name": "AUTISM.WEST MIDLANDS (UFL)",
+      "status": "Removed"
+     },
+     {
+      "linked_charity_number": 4,
+      "name": "AUTISM.WEST MIDLANDS (CCS)",
+      "status": "Registered"
+     },
+     {
+      "linked_charity_number": 5,
+      "name": "AUTISM.WEST MIDLANDS (PP)",
+      "status": "Removed"
+     }
+    ]
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/517077"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC518048": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "518048",
+   "found": true,
+   "name": "Compass - Services to Improve Health and Wellbeing",
+   "status": "Registered",
+   "date_of_registration": "1986-11-25",
+   "date_of_removal": null,
+   "company_number": "02054594",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 21268592.0,
+   "web": "www.compass-uk.org",
+   "other_names": [
+    {
+     "type": "Working name",
+     "name": "COMPASS",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "COMPASS - SERVICES TO TACKLE PROBLEM DRUG USE",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/518048"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC518610": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "518610",
+   "found": true,
+   "name": "Age Connects West Midlands",
+   "status": "Registered",
+   "date_of_registration": "1987-03-20",
+   "date_of_removal": null,
+   "company_number": "02104152",
+   "charity_type": "Charitable company",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 2733831.0,
+   "web": "www.ageconcernbirmingham.org.uk",
+   "other_names": [
+    {
+     "type": "Previous name",
+     "name": "AGE CONCERN BIRMINGHAM",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "BIRMINGHAM AGE CONCERN",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/518610"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBCHC518753": {
+   "scheme": "CHC",
+   "register": "Charity Commission for England and Wales (register extract)",
+   "number": "518753",
+   "found": true,
+   "name": "SOLIHULL BEREAVEMENT COUNSELLING SERVICE",
+   "status": "Registered",
+   "date_of_registration": "1987-04-27",
+   "date_of_removal": null,
+   "company_number": null,
+   "charity_type": "Other",
+   "is_cio": false,
+   "insolvent": false,
+   "in_administration": false,
+   "latest_income": 66978.0,
+   "web": "solihullbereavement.org",
+   "other_names": [
+    {
+     "type": "Working name",
+     "name": "S B C S",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "SOLIHULL BEREAVMENT COUNSELLING SERVICES (SBCS)",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Previous name",
+     "name": "SOLIHULL BEREAVMENT COUNSELLING SERVICE (SBCS)",
+     "linked_charity_number": 0
+    },
+    {
+     "type": "Working name",
+     "name": "SOLIHULL BEREAVEMENT COUNSELLING SERVICE (SBCS)",
+     "linked_charity_number": 0
+    }
+   ],
+   "linked_charities": {
+    "total": 0,
+    "registered": 0,
+    "sample": []
+   },
+   "extract_date": "2026-10-12T00:00:00",
+   "sources": {
+    "extract": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip",
+    "page": "https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/518753"
+   },
+   "raw": [
+    "registers/raw/cc/cc-extract-rows.json"
+   ]
+  },
+  "GBNICNIC102575": {
+   "scheme": "NIC",
+   "register": "Charity Commission for Northern Ireland",
+   "number": "102575",
+   "found": true,
+   "name": "Radius Housing Association Limited",
+   "status": "Received: on time",
+   "date_registered": "2016-04-04",
+   "company_number": "0",
+   "other_name": null,
+   "public_address": "John Mclean, Radius Housing Association Limited, 3 - 7 Redburn Square, Holywood, County Down, BT18 9HZ",
+   "search_hit": [
+    {
+     "regNo": "102575",
+     "subNo": "0",
+     "name": "Radius Housing Association Limited",
+     "orgType": "Up-to-date",
+     "url": "https://www.charitycommissionni.org.uk/charity-search/charity-details-page/?regId=102575&subId=0",
+     "hideStatus": false,
+     "statusLabel": "Received: on time",
+     "statusCssStyle": "status"
+    }
+   ],
+   "sources": {
+    "page": "https://www.charitycommissionni.org.uk/charity-search/charity-details-page/?regId=102575&subId=0"
+   },
+   "raw": [
+    "registers/raw/ccni/102575-page.html",
+    "registers/raw/ccni/102575-csv.csv",
+    "registers/raw/ccni/102575-search.json"
+   ]
+  }
+ }
+}

@@ -1,0 +1,22 @@
+{
+ "batch": 4,
+ "role": "challenger",
+ "date": "2026-10-12",
+ "evidence": {
+  "prod": "c4-01 notices by pk (30 rows), c4-02 organizations_identity holders of 9 canonical + 9 stored + 9 related numbers (14 rows); 0 x 408, 0 retries. Mention counts re-derived from prod/02-mnames-members.out: identical to the packet.",
+  "fts": "c4-fts-parties.json: party name, identifier, role and address for all 29 published notices behind the batch",
+  "registers": "c4-cc-search.json (full CC extract, zip sha256 = manifest); FCA SocietyList.csv (sha256 = manifest); Companies House search pages (web-ch-*.html)"
+ },
+ "rulings": [
+  {"key": "G05", "agree": true, "corrected_decision": "merge"},
+  {"key": "G11", "agree": true, "corrected_decision": "merge", "correction": "'Gold Hill Care (B2G)' is sourced, not unsourced: FTS 031367-2024 gives it as buyer+CPB with GB-MPR IP17437R at SL9 9RF, the society's FCA address, on the same 'B2G MWX' framework that 'Gold Hill HA (B2G)' publishes (003935-2025, 036345-2024). No CH company, CC charity or FCA society bears the name. (b) is 7/7, (c) 0."},
+  {"key": "G17", "agree": true, "corrected_decision": "merge", "note": "Clarion Housing Association Limited is FCA 7686 (no R), registered 2018-01-02, same NW1 7QX address; no prod org holds GBMPR7686/7686R."},
+  {"key": "G23", "agree": true, "corrected_decision": "merge", "correction": "In FTS 016696-2023 the UKPRN party is the BUYER; GB-FTS-10248 (same name) is the review body."},
+  {"key": "L03", "agree": true, "corrected_decision": "move-ok", "note": "CC 1211498 MOUNT ZION APOSTOLIC CHURCH is a second registered charity at the same Churchfield Lane NG7 5QS address, registered 2024-12-19, after the notice (2024-10-23). No prod org holds GBCHC1211498. The rewrite only re-keys the 1068106 the publisher wrote."},
+  {"key": "L09", "agree": true, "corrected_decision": "move-ok", "note": "Predecessor CC 1077200 KARIS NEIGHBOUR SCHEME was removed on 2021-04-30, before the notice (2025-03-13). No other Karis charity is in Birmingham."},
+  {"key": "L15", "agree": true, "corrected_decision": "move-ok"},
+  {"key": "L21", "agree": true, "corrected_decision": "move-ok", "note": "Parent Accent Group Limited 30444R is Registered at the same BD1 4AS address. The mention names ACCENT HOUSING LIMITED, which is 19229R, not the Group."},
+  {"key": "L27", "agree": true, "corrected_decision": "move-ok"}
+ ],
+ "note": "Full reasons are in the StructuredOutput rulings returned to the orchestrator."
+}

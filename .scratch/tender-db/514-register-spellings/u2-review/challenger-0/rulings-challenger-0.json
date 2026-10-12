@@ -1,0 +1,68 @@
+{
+ "batch": 0,
+ "role": "challenger",
+ "date": "2026-10-12",
+ "rulings": [
+  {
+   "key": "G01",
+   "agree": true,
+   "corrected_decision": "merge",
+   "reason": "Refutation failed, but the cited source is the wrong service. Both of 31537211's notices (46730362, 46796184) are NHS Frimley ICB's Young Person's Safe Haven for North-East Hampshire and Farnham, not Safe Haven Southampton (which sits in HIOW ICB). The holder's own site lists that service too, as 'Safe Haven NEHF' under Our Services, with footer Charity No. 1088835 / Co. 04183173. Saved as challenger-0/web-nolimits-safe-haven-nehf.html: (b) is sourced, but cite NEHF, not Southampton. Mover 31594929's notice 46869506 is NHS Hampshire and IoW ICB, 'commission No Limits to provide ED Youth Workers', so it is the Hampshire charity. Both West Midlands lookalikes are B62 Halesowen: 1015507 NO LIMITS (GBP 11k) and 1127368 NO LIMITS COMMUNITY PROJECT, which the reviewer missed. Geography rules both out, not only the number. (c) nothing."
+  },
+  {
+   "key": "G07",
+   "agree": true,
+   "corrected_decision": "merge",
+   "reason": "Checked the extract. Every registered Barnardo-named row on 216250 other than linked 0 is a named fund (linked 84-91). None is a region, so 'Barnardo's Central Region' (1/9) is a branch of the main charity. The non-216250 Barnardo charities (238581, 277479, 1052435, 1073191) are all Removed. Mover notice 46868893 is from BSMHFT (Birmingham), where the national charity operates. No trading-subsidiary name on any mention. (c) nothing."
+  },
+  {
+   "key": "G13",
+   "agree": true,
+   "corrected_decision": "merge",
+   "reason": "The FCA CSV holds one Habinteg society, and number 19341 carries only suffix R. The CC's 261302 HABINTEG HOUSING ASSOCIATION LIMITED was removed in 1992. No 'Ulster' or other subsidiary wording on either mention. Mover notice 46758503 is co-mentioned with Wandle HA (London); twin notice 46920273 has a single mention. Both names are the FCA name (Limited/Ltd). (c) nothing."
+  },
+  {
+   "key": "G19",
+   "agree": true,
+   "corrected_decision": "merge",
+   "reason": "The FCA CSV holds one Herts Urgent Care society, and 30301 carries only suffix R. The CC 'HUC' hit is 1167273, Hyde Young Peoples Enterprise (SK14), unrelated. Both members sit on the same 2 notices (46761819, 47260436; NHS England + Cambridgeshire and Peterborough ICB, which HUC serves) under the exact post-2023 name. Searched canonical.rs: the only co-occurrence check is the altid planner's 'cooccurring' (around line 25271), not E0. So no co-mention veto applies, as the reviewer said. (c) nothing."
+  },
+  {
+   "key": "G25",
+   "agree": true,
+   "corrected_decision": "merge",
+   "reason": "Statutory name confirmed as sourced. In 469-registry-pairs/u6/registers/ukrlp.json, GB-UKPRN-10007788 lists it in other_names and as ofs_register legal_name ('The Chancellor, Masters, and Scholars of the University of Cambridge'). Mover notice 46988113 is the University's own Construction Professional Services Framework, with buyer 'University of Cambridge' (2989299, no identifier). So the statutory-name mention with 'UKPRN: 10007788' is the University itself. A department such as CUP&A would still be the same legal entity. (c) nothing."
+  },
+  {
+   "key": "L05",
+   "agree": true,
+   "corrected_decision": "move-ok",
+   "reason": "In the extract, 700818 is BIRMINGHAM WOMEN'S REFUGE GROUP, removed 2000-06-16; 'Birmingham Women's Aid' is its working name and 1073926's previous name. No Solihull Women's Aid charity exists, so nothing is confusable with 'Birmingham Solihull'. Notice 46869190's buyer is BSMHFT (Birmingham & Solihull MH FT); the register address is B5 Birmingham. No current holder of GBCHC1073926 (re-read c0-04)."
+  },
+  {
+   "key": "L11",
+   "agree": true,
+   "corrected_decision": "move-ok",
+   "reason": "Exact name. The only other Oasis health charity in the extract is 1135978 OASIS COMMUNITY HEALTH, removed 2014. The register is in Solihull (B92), and notice 46869201's buyer is BSMHFT. No current holder of GBCHC1179376."
+  },
+  {
+   "key": "L17",
+   "agree": true,
+   "corrected_decision": "move-ok",
+   "reason": "No 'Age Connect' (without the s) charity exists in the extract. Every other 'Age Connects' charity or working name is Welsh (Flint, Cardiff, Torfaen, Morgannwg, Neath Port Talbot, North Wales). The register is Sutton Coldfield, Birmingham (formerly Age Concern Birmingham), and notice 46825577's buyer is BSMHFT. Same publisher batch as L14's wrong number, but this name matches 518610. No current holder."
+  },
+  {
+   "key": "L23",
+   "agree": true,
+   "corrected_decision": "move-ok",
+   "reason": "The FCA CSV holds one Two Saints society, and 26511 carries only suffix R. The CC's 1037615 TWO SAINTS TRUST (removed 2016, GBP 12) is not FCA-numbered. Notice 46910644 is the Inclusive Lives supported-living framework of Southampton City Council and HIOW ICB; Two Saints is in Fareham, Hampshire. No current holder of GBMPR26511R."
+  }
+ ],
+ "evidence": [
+  "journal.jsonl",
+  "c0-01..04 *.sql/*.out",
+  "web-sources.json",
+  "web-nolimits-safe-haven-nehf.html",
+  "CC extract 2026-10-12 and FCA SocietyList.csv (scratchpad 514u2, sha256 in ../registers/fetch-manifest.json)"
+ ]
+}

@@ -1,0 +1,2410 @@
+{
+ "issue": 514,
+ "unit": "U2.1 review packet, step 1",
+ "date": "2026-10-12",
+ "source": "unit-1 census rows raw/001-004 (calls 1-4) for identifiers and head names; raw/016-017 (calls 16-17) and raw/018-019, 021-029 (calls 18-19, 21-29) for mention counts and raw identifiers; rules from unit2-decision.md §1.3, invariants §1.2",
+ "summary": {
+  "rows_scanned": {
+   "001-mpr.out": 135,
+   "002-nic.out": 19,
+   "003-ukprn.out": 522,
+   "004-chc.out": 748
+  },
+  "rows_rewritten": 54,
+  "rows_rewritten_by_scheme": {
+   "MPR": 19,
+   "NIC": 1,
+   "UKPRN": 6,
+   "CHC": 28
+  },
+  "rows_rewritten_by_rule": {
+   "MPR-a": 18,
+   "MPR-b": 1,
+   "NIC": 1,
+   "UKPRN": 6,
+   "CHC": 28
+  },
+  "movers_in_groups": 27,
+  "e0_groups": 26,
+  "e0_groups_reunion_onto_twin": 25,
+  "e0_groups_movers_reunite": 1,
+  "group_members": 52,
+  "group_sizes": {
+   "2": 26
+  },
+  "group_mentions": 743,
+  "lone_movers": 27,
+  "lone_movers_by_rule": {
+   "CHC": 18,
+   "MPR-a": 8,
+   "UKPRN": 1
+  },
+  "lone_mover_mentions": 42,
+  "orgs_to_review": 79
+ },
+ "groups": [
+  {
+   "canonical": "GBCHC1088835",
+   "scheme": "CHC",
+   "number": "1088835",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31537211,
+     "stored_identifier": "GBCHC1088835",
+     "head_name": "No Limits Safe Haven",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-1088835",
+       "scheme": "GB-CHC",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31594929,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNO1088835",
+     "head_name": "No Limits",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity No. 1088835",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 3,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31537211
+  },
+  {
+   "canonical": "GBCHC1104951",
+   "scheme": "CHC",
+   "number": "1104951",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31562628,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNO1104951",
+     "head_name": "St Andrews Healthcare",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity No. 1104951",
+       "scheme": "GB-CHC",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31607602,
+     "stored_identifier": "GBCHC1104951",
+     "head_name": "St Andrews Healthcare",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-1104951",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 3,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31562628
+  },
+  {
+   "canonical": "GBCHC1122831",
+   "scheme": "CHC",
+   "number": "1122831",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31562660,
+     "stored_identifier": "GBCHCCHARITYNUMBER1122831",
+     "head_name": "Arcacia Family Support",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity number: 1122831",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31594752,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNO1122831",
+     "head_name": "Arcacia Family Support",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity No: 1122831",
+       "scheme": "GB-CHC",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 3,
+   "kind": "movers reunite",
+   "survivor_if_merged": 31562660
+  },
+  {
+   "canonical": "GBCHC1159706",
+   "scheme": "CHC",
+   "number": "1159706",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 30916610,
+     "stored_identifier": "GBCHC1159706",
+     "head_name": "Anawim",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-1159706",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31542854,
+     "stored_identifier": "GBCHCCHARITYNUMBER1159706",
+     "head_name": "Anawim",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 5,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity Number 1159706",
+       "scheme": "GB-CHC",
+       "n": 5
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    }
+   ],
+   "mentions": 6,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 30916610
+  },
+  {
+   "canonical": "GBCHC1185092",
+   "scheme": "CHC",
+   "number": "1185092",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31562679,
+     "stored_identifier": "GBCHCREGISTEREDCHARITY1185092",
+     "head_name": "First Steps ED",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity 1185092",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31571677,
+     "stored_identifier": "GBCHC1185092",
+     "head_name": "First Steps ED",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 3,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-1185092",
+       "scheme": "GB-CHC",
+       "n": 3
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 4,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31562679
+  },
+  {
+   "canonical": "GBCHC208078",
+   "scheme": "CHC",
+   "number": "208078",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31564669,
+     "stored_identifier": "GBCHC208078",
+     "head_name": "Cruse Bereavement Care",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 3,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-208078",
+       "scheme": "GB-CHC",
+       "n": 3
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31594774,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNO208078",
+     "head_name": "Cruse Bereavement Support",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity No. 208078",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 4,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31564669
+  },
+  {
+   "canonical": "GBCHC216250",
+   "scheme": "CHC",
+   "number": "216250",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31561821,
+     "stored_identifier": "GBCHC216250",
+     "head_name": "Barnardo's",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 9,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-216250",
+       "scheme": "GB-CHC",
+       "n": 9
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31594691,
+     "stored_identifier": "GBCHCCHARITYNUMBER216250",
+     "head_name": "Barnardos",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-charity number 216250",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 10,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31561821
+  },
+  {
+   "canonical": "GBCHC221124",
+   "scheme": "CHC",
+   "number": "221124",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31562686,
+     "stored_identifier": "GBCHCCHARITYREGISTRATIONNO221124",
+     "head_name": "The Children's Society",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity Registration No. 221124",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31645298,
+     "stored_identifier": "GBCHC221124",
+     "head_name": "The Children's Society",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-221124",
+       "scheme": "GB-CHC",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 3,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31562686
+  },
+  {
+   "canonical": "GBCHC271028",
+   "scheme": "CHC",
+   "number": "271028",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31535844,
+     "stored_identifier": "GBCHC271028",
+     "head_name": "Rethink Mental Illness",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 6,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-271028",
+       "scheme": "GB-CHC",
+       "n": 6
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31594839,
+     "stored_identifier": "GBCHCREGISTEREDCHARITY271028",
+     "head_name": "Rethink - Redwoods",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity 271028",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 7,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31535844
+  },
+  {
+   "canonical": "GBMPR16337R",
+   "scheme": "MPR",
+   "number": "16337R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 30976449,
+     "stored_identifier": "GBMPR16337R",
+     "head_name": "Metropolitan Housing Trust Limited",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 104,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-16337R",
+       "scheme": "GB-MPR",
+       "n": 71
+      },
+      {
+       "raw_identifier": "GB-PPON-PMCL-4972-LYCY",
+       "scheme": "GB-PPON",
+       "n": 33
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31553962,
+     "stored_identifier": "GBMPRIP16337R",
+     "head_name": "Metropolitan Housing Trust Limited",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP16337R",
+       "scheme": "GB-MPR",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    }
+   ],
+   "mentions": 106,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 30976449
+  },
+  {
+   "canonical": "GBMPR17437R",
+   "scheme": "MPR",
+   "number": "17437R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31593260,
+     "stored_identifier": "GBMPRIP17437R",
+     "head_name": "GOLD HILL HA (B2G)",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 7,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP17437R",
+       "scheme": "GB-MPR",
+       "n": 7
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31631085,
+     "stored_identifier": "GBMPR17437R",
+     "head_name": "Gold Hill HA",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 3,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-17437 R",
+       "scheme": "GB-MPR",
+       "n": 2
+      },
+      {
+       "raw_identifier": "GB-MPR-17437R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 10,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31593260
+  },
+  {
+   "canonical": "GBMPR19059R",
+   "scheme": "MPR",
+   "number": "19059R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31564048,
+     "stored_identifier": "GBMPR19059R",
+     "head_name": "SANCTUARY HOUSING ASSOCIATION",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-19059R",
+       "scheme": "GB-MPR",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31619954,
+     "stored_identifier": "GBMPRIP19059R",
+     "head_name": "Sanctuary Housing Association",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP19059R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 3,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31564048
+  },
+  {
+   "canonical": "GBMPR19341R",
+   "scheme": "MPR",
+   "number": "19341R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31550337,
+     "stored_identifier": "GBMPRIP19341R",
+     "head_name": "Habinteg Housing Association Limited",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP19341R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31613175,
+     "stored_identifier": "GBMPR19341R",
+     "head_name": "Habinteg Housing Association Ltd",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-19341R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 2,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31550337
+  },
+  {
+   "canonical": "GBMPR21256R",
+   "scheme": "MPR",
+   "number": "21256R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31611304,
+     "stored_identifier": "GBMPR21256R",
+     "head_name": "North Star Housing Group",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-21256R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31622550,
+     "stored_identifier": "GBMPRIP21256R",
+     "head_name": "NORTH STAR HOUSING GROUP",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP21256R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 2,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31611304
+  },
+  {
+   "canonical": "GBMPR27440R",
+   "scheme": "MPR",
+   "number": "27440R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 30913929,
+     "stored_identifier": "GBMPR27440R",
+     "head_name": "Creative Support",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 9,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-PPON-PQBH-3597-XBJD",
+       "scheme": "GB-PPON",
+       "n": 7
+      },
+      {
+       "raw_identifier": "GB-MPR-27440R",
+       "scheme": "GB-MPR",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31543018,
+     "stored_identifier": "GBMPRIP27440R",
+     "head_name": "Creative Support Limited",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP27440R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    }
+   ],
+   "mentions": 10,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 30913929
+  },
+  {
+   "canonical": "GBMPR27793R",
+   "scheme": "MPR",
+   "number": "27793R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31614098,
+     "stored_identifier": "GBMPRIP27793R",
+     "head_name": "Greenwich Leisure Limited",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP27793R",
+       "scheme": "GB-MPR",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31624556,
+     "stored_identifier": "GBMPR27793R",
+     "head_name": "Greenwich Leisure Limited",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-27793R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 3,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31614098
+  },
+  {
+   "canonical": "GBMPR28038R",
+   "scheme": "MPR",
+   "number": "28038R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31534486,
+     "stored_identifier": "GBMPR28038R",
+     "head_name": "CLARION HOUSING GROUP LIMITED",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 138,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-PPON-PQND-5289-JNDN",
+       "scheme": "GB-PPON",
+       "n": 123
+      },
+      {
+       "raw_identifier": "GB-MPR-28038R",
+       "scheme": "GB-MPR",
+       "n": 15
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31596599,
+     "stored_identifier": "GBMPRIP28038R",
+     "head_name": "CLARION HOUSING GROUP LIMITED",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 6,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP28038R",
+       "scheme": "GB-MPR",
+       "n": 6
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 144,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31534486
+  },
+  {
+   "canonical": "GBMPR30167R",
+   "scheme": "MPR",
+   "number": "30167R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31604789,
+     "stored_identifier": "GBMPRIP30167R",
+     "head_name": "Town & Country Housing",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP30167R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31618490,
+     "stored_identifier": "GBMPR30167R",
+     "head_name": "Town and Country Housing",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-30167R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 2,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31604789
+  },
+  {
+   "canonical": "GBMPR30301R",
+   "scheme": "MPR",
+   "number": "30301R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31551789,
+     "stored_identifier": "GBMPR30301R",
+     "head_name": "HERTS URGENT CARE (HUC) LIMITED",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-30301R",
+       "scheme": "GB-MPR",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31551790,
+     "stored_identifier": "GBMPRIP30301R",
+     "head_name": "HERTS URGENT CARE (HUC) LIMITED",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP30301R",
+       "scheme": "GB-MPR",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    }
+   ],
+   "mentions": 4,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31551789
+  },
+  {
+   "canonical": "GBMPR30938R",
+   "scheme": "MPR",
+   "number": "30938R",
+   "rules": [
+    "MPR-b"
+   ],
+   "members": [
+    {
+     "org_id": 30914487,
+     "stored_identifier": "GBMPR30938R",
+     "head_name": "The Riverside Group Limited",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 116,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-30938R",
+       "scheme": "GB-MPR",
+       "n": 116
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31591848,
+     "stored_identifier": "GBMPRREGNO30938R",
+     "head_name": "The Riverside Group trading as One Housing Group",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-b",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-Reg No 30938R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 117,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 30914487
+  },
+  {
+   "canonical": "GBNICNIC102575",
+   "scheme": "NIC",
+   "number": "NIC102575",
+   "rules": [
+    "NIC"
+   ],
+   "members": [
+    {
+     "org_id": 31621236,
+     "stored_identifier": "GBNICNIC102575",
+     "head_name": "Radius Housing Association Ltd",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-NIC-NIC102575",
+       "scheme": "GB-NIC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/002-nic.out (call 2)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31631048,
+     "stored_identifier": "GBNICCHARITYCOMMISSIONNONIC102575",
+     "head_name": "RADIUS HOUSING ASSOCIATION LTD",
+     "provisional": 0,
+     "moves": true,
+     "rule": "NIC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-NIC-Charity Commission No NIC102575",
+       "scheme": "GB-NIC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/002-nic.out (call 2)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 2,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31621236
+  },
+  {
+   "canonical": "GBUKPRN10004116",
+   "scheme": "UKPRN",
+   "number": "10004116",
+   "rules": [
+    "UKPRN"
+   ],
+   "members": [
+    {
+     "org_id": 31549563,
+     "stored_identifier": "GBUKPRN10004116",
+     "head_name": "East Coast College",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 7,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-10004116",
+       "scheme": "GB-UKPRN",
+       "n": 7
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31622719,
+     "stored_identifier": "GBUKPRNGBUKPRN10004116",
+     "head_name": "East Coast College",
+     "provisional": 0,
+     "moves": true,
+     "rule": "UKPRN",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-GB-UKPRN10004116",
+       "scheme": "GB-UKPRN",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 8,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31549563
+  },
+  {
+   "canonical": "GBUKPRN10005790",
+   "scheme": "UKPRN",
+   "number": "10005790",
+   "rules": [
+    "UKPRN"
+   ],
+   "members": [
+    {
+     "org_id": 30915632,
+     "stored_identifier": "GBUKPRN10005790",
+     "head_name": "Sheffield Hallam University",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 182,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-10005790",
+       "scheme": "GB-UKPRN",
+       "n": 171
+      },
+      {
+       "raw_identifier": "GB-PPON-PVMW-4512-JZYY",
+       "scheme": "GB-PPON",
+       "n": 11
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31624379,
+     "stored_identifier": "GBUKPRNUKPRN10005790",
+     "head_name": "Sheffield Hallam University",
+     "provisional": 0,
+     "moves": true,
+     "rule": "UKPRN",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-UKPRN: 10005790",
+       "scheme": "GB-UKPRN",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 183,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 30915632
+  },
+  {
+   "canonical": "GBUKPRN10007157",
+   "scheme": "UKPRN",
+   "number": "10007157",
+   "rules": [
+    "UKPRN"
+   ],
+   "members": [
+    {
+     "org_id": 31558903,
+     "stored_identifier": "GBUKPRN10007157",
+     "head_name": "Sheffield Hallam University",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 16,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-10007157",
+       "scheme": "GB-UKPRN",
+       "n": 16
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31630773,
+     "stored_identifier": "GBUKPRNUKPRN10007157",
+     "head_name": "UNIVERSITY OF SHEFFIELD",
+     "provisional": 0,
+     "moves": true,
+     "rule": "UKPRN",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-UKPRN 10007157",
+       "scheme": "GB-UKPRN",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 17,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31558903
+  },
+  {
+   "canonical": "GBUKPRN10007788",
+   "scheme": "UKPRN",
+   "number": "10007788",
+   "rules": [
+    "UKPRN"
+   ],
+   "members": [
+    {
+     "org_id": 31549754,
+     "stored_identifier": "GBUKPRN10007788",
+     "head_name": "UNIVERSITY OF CAMBRIDGE",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 13,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-10007788",
+       "scheme": "GB-UKPRN",
+       "n": 11
+      },
+      {
+       "raw_identifier": "GB-PPON-PMCX-4817-NTNG",
+       "scheme": "GB-PPON",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/016-mcount1.out",
+      "raws": "raw/018-mraw1.out"
+     }
+    },
+    {
+     "org_id": 31633713,
+     "stored_identifier": "GBUKPRNUKPRN10007788",
+     "head_name": "The Chancellor, Masters and Scholars of the University of Cambridge",
+     "provisional": 0,
+     "moves": true,
+     "rule": "UKPRN",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-UKPRN: 10007788",
+       "scheme": "GB-UKPRN",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 14,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31549754
+  },
+  {
+   "canonical": "GBUKPRN10007798",
+   "scheme": "UKPRN",
+   "number": "10007798",
+   "rules": [
+    "UKPRN"
+   ],
+   "members": [
+    {
+     "org_id": 31600847,
+     "stored_identifier": "GBUKPRN10007798",
+     "head_name": "UNIVERSITY OF MANCHESTER",
+     "provisional": 0,
+     "moves": false,
+     "rule": null,
+     "mentions": 51,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-10007798",
+       "scheme": "GB-UKPRN",
+       "n": 51
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    },
+    {
+     "org_id": 31612560,
+     "stored_identifier": "GBUKPRNUKPRN10007798",
+     "head_name": "UNIVERSITY OF MANCHESTER",
+     "provisional": 0,
+     "moves": true,
+     "rule": "UKPRN",
+     "mentions": 22,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-UKPRN 10007798",
+       "scheme": "GB-UKPRN",
+       "n": 21
+      },
+      {
+       "raw_identifier": "GB-UKPRN-UKPRN10007798",
+       "scheme": "GB-UKPRN",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 73,
+   "kind": "reunion onto a standing twin",
+   "survivor_if_merged": 31600847
+  }
+ ],
+ "lone_movers": [
+  {
+   "canonical": "GBCHC1003906",
+   "scheme": "CHC",
+   "number": "1003906",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31562667,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNO1003906",
+     "head_name": "Birmingham Mind",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 7,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-registered charity no. 1003906",
+       "scheme": "GB-CHC",
+       "n": 6
+      },
+      {
+       "raw_identifier": "GB-CHC-registered charity (no. 1003906)",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 7,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1034581",
+   "scheme": "CHC",
+   "number": "1034581",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31562630,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNO1034581",
+     "head_name": "Birmingham Disability Resource Centre",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered charity no. 1034581",
+       "scheme": "GB-CHC",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/023-mraw-rest2.out",
+      "raws": "raw/023-mraw-rest2.out"
+     }
+    }
+   ],
+   "mentions": 2,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1068106",
+   "scheme": "CHC",
+   "number": "1068106",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31608050,
+     "stored_identifier": "GBCHCCHARITYNUMBER1068106",
+     "head_name": "Mount Zion Apostolic Church",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity number: 1068106",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/026-mraw-rest5.out",
+      "raws": "raw/026-mraw-rest5.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1072258",
+   "scheme": "CHC",
+   "number": "1072258",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31562627,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNO1072258",
+     "head_name": "Birmingham Irish Association",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity No. 1072258",
+       "scheme": "GB-CHC",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/023-mraw-rest2.out",
+      "raws": "raw/023-mraw-rest2.out"
+     }
+    }
+   ],
+   "mentions": 2,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1073926",
+   "scheme": "CHC",
+   "number": "1073926",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31594822,
+     "stored_identifier": "GBCHCCHARITYNO1073926",
+     "head_name": "Birmingham Solihull Womens Aid",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity No: 1073926",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/025-mraw-rest4.out",
+      "raws": "raw/025-mraw-rest4.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1077607",
+   "scheme": "CHC",
+   "number": "1077607",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31618870,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNO1077607",
+     "head_name": "Daybreak Family Group Conference",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity No 1077607",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/027-mraw-rest6.out",
+      "raws": "raw/027-mraw-rest6.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1094458",
+   "scheme": "CHC",
+   "number": "1094458",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31594819,
+     "stored_identifier": "GBCHCCHARITYNO1094458",
+     "head_name": "St Martins Centre for health and healing",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity No.1094458",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/025-mraw-rest4.out",
+      "raws": "raw/025-mraw-rest4.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1107830",
+   "scheme": "CHC",
+   "number": "1107830",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31537995,
+     "stored_identifier": "GBCHCCHARITYREGISTRATIONNUMBER1107830",
+     "head_name": "Citizens Advice Mid Mercia",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity Registration Number 1107830",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/022-mraw-rest1.out",
+      "raws": "raw/022-mraw-rest1.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1133510",
+   "scheme": "CHC",
+   "number": "1133510",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31594841,
+     "stored_identifier": "GBCHCREGISTEREDCHARITY1133510",
+     "head_name": "Karis Neighbourhood Scheme",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity 1133510",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/025-mraw-rest4.out",
+      "raws": "raw/025-mraw-rest4.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1175670",
+   "scheme": "CHC",
+   "number": "1175670",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31598277,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNUMBER1175670",
+     "head_name": "Mental Health Innovations",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered charity number 1175670",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/025-mraw-rest4.out",
+      "raws": "raw/025-mraw-rest4.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1179376",
+   "scheme": "CHC",
+   "number": "1179376",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31594828,
+     "stored_identifier": "GBCHCCHARITYNUMBER1179376",
+     "head_name": "Oasis mental health support",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity Number 1179376",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/025-mraw-rest4.out",
+      "raws": "raw/025-mraw-rest4.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1179683",
+   "scheme": "CHC",
+   "number": "1179683",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31562625,
+     "stored_identifier": "GBCHCCHARITYNUMBER1179683",
+     "head_name": "Seven Up Charity",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity number: 1179683",
+       "scheme": "GB-CHC",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/023-mraw-rest2.out",
+      "raws": "raw/023-mraw-rest2.out"
+     }
+    }
+   ],
+   "mentions": 2,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC1205036",
+   "scheme": "CHC",
+   "number": "1205036",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31537996,
+     "stored_identifier": "GBCHCCHARITYNUMBER1205036",
+     "head_name": "Ghamkol Sharif Central Jamia Charity",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity number: 1205036",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/022-mraw-rest1.out",
+      "raws": "raw/022-mraw-rest1.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC279057",
+   "scheme": "CHC",
+   "number": "279057",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31594820,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNUMBER279057",
+     "head_name": "Birmingham Citizens Advice Bureaux",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered charity number 279057",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/025-mraw-rest4.out",
+      "raws": "raw/025-mraw-rest4.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC517077",
+   "scheme": "CHC",
+   "number": "517077",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31562629,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNUMBER517077",
+     "head_name": "Autism West Midlands",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 3,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity Number 517077",
+       "scheme": "GB-CHC",
+       "n": 3
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/023-mraw-rest2.out",
+      "raws": "raw/023-mraw-rest2.out"
+     }
+    }
+   ],
+   "mentions": 3,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC518048",
+   "scheme": "CHC",
+   "number": "518048",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31562674,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNUMBER518048",
+     "head_name": "Compass",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered charity number 518048",
+       "scheme": "GB-CHC",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/023-mraw-rest2.out",
+      "raws": "raw/023-mraw-rest2.out"
+     }
+    }
+   ],
+   "mentions": 2,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC518610",
+   "scheme": "CHC",
+   "number": "518610",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31575623,
+     "stored_identifier": "GBCHCCHARITYNUMBER518610",
+     "head_name": "Age Connect West Midlands",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Charity number: 518610",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/024-mraw-rest3.out",
+      "raws": "raw/024-mraw-rest3.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBCHC518753",
+   "scheme": "CHC",
+   "number": "518753",
+   "rules": [
+    "CHC"
+   ],
+   "members": [
+    {
+     "org_id": 31594838,
+     "stored_identifier": "GBCHCREGISTEREDCHARITYNO518753",
+     "head_name": "Solihull Bereavement Counselling Services",
+     "provisional": 0,
+     "moves": true,
+     "rule": "CHC",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-CHC-Registered Charity No. 518753",
+       "scheme": "GB-CHC",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/004-chc.out (call 4)",
+      "mentions": "raw/025-mraw-rest4.out",
+      "raws": "raw/025-mraw-rest4.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBMPR16243R",
+   "scheme": "MPR",
+   "number": "16243R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31613230,
+     "stored_identifier": "GBMPRIP16243R",
+     "head_name": "Hastoe Housing",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP16243R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBMPR17704R",
+   "scheme": "MPR",
+   "number": "17704R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 30975000,
+     "stored_identifier": "GBMPRIP17704R",
+     "head_name": "Your Housing Limited",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP17704R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/021-mraw-rest0.out",
+      "raws": "raw/021-mraw-rest0.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBMPR19229R",
+   "scheme": "MPR",
+   "number": "19229R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31601449,
+     "stored_identifier": "GBMPRIP19229R",
+     "head_name": "ACCENT HOUSING LIMITED",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP19229R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBMPR21180R",
+   "scheme": "MPR",
+   "number": "21180R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31567617,
+     "stored_identifier": "GBMPRIP21180R",
+     "head_name": "Cadarn Housing Group (AA58745)",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP21180R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/024-mraw-rest3.out",
+      "raws": "raw/024-mraw-rest3.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBMPR26511R",
+   "scheme": "MPR",
+   "number": "26511R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31609584,
+     "stored_identifier": "GBMPRIP26511R",
+     "head_name": "Two Saints Ltd",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP26511R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBMPR27566R",
+   "scheme": "MPR",
+   "number": "27566R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31600628,
+     "stored_identifier": "GBMPRIP27566R",
+     "head_name": "National Development Team for Inclusion",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP27566R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBMPR29840R",
+   "scheme": "MPR",
+   "number": "29840R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31573433,
+     "stored_identifier": "GBMPRIP29840R",
+     "head_name": "LOCAL SPACE",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 2,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP29840R",
+       "scheme": "GB-MPR",
+       "n": 2
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 2,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBMPR30178R",
+   "scheme": "MPR",
+   "number": "30178R",
+   "rules": [
+    "MPR-a"
+   ],
+   "members": [
+    {
+     "org_id": 31575842,
+     "stored_identifier": "GBMPRIP30178R",
+     "head_name": "INCOMMUNITIES LIMITED",
+     "provisional": 0,
+     "moves": true,
+     "rule": "MPR-a",
+     "mentions": 1,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-MPR-IP30178R",
+       "scheme": "GB-MPR",
+       "n": 1
+      }
+     ],
+     "census": {
+      "row": "raw/001-mpr.out (call 1)",
+      "mentions": "raw/017-mcount2.out",
+      "raws": "raw/019-mraw2.out"
+     }
+    }
+   ],
+   "mentions": 1,
+   "kind": "lone mover"
+  },
+  {
+   "canonical": "GBUKPRN10007339",
+   "scheme": "UKPRN",
+   "number": "10007339",
+   "rules": [
+    "UKPRN"
+   ],
+   "members": [
+    {
+     "org_id": 31572226,
+     "stored_identifier": "GBUKPRNUKPRN10007339",
+     "head_name": "WARRINGTON & VALE ROYAL COLLEGE",
+     "provisional": 0,
+     "moves": true,
+     "rule": "UKPRN",
+     "mentions": 3,
+     "mention_raws": [
+      {
+       "raw_identifier": "GB-UKPRN-UKPRN 10007339",
+       "scheme": "GB-UKPRN",
+       "n": 3
+      }
+     ],
+     "census": {
+      "row": "raw/003-ukprn.out (call 3)",
+      "mentions": "raw/024-mraw-rest3.out",
+      "raws": "raw/024-mraw-rest3.out"
+     }
+    }
+   ],
+   "mentions": 3,
+   "kind": "lone mover"
+  }
+ ]
+}

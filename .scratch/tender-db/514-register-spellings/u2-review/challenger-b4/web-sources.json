@@ -1,0 +1,33 @@
+[
+ {
+  "url": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/<publication_id> (29 packages, publication ids from c4-01-notices.out)",
+  "http": 200,
+  "file": "c4-fts-parties.json (party names, identifiers, roles and addresses extracted; per-package sha256 inside)",
+  "note": "429s from FTS were retried with backoff until 200; packages: 003935-2025, 007144-2023, 007930-2024, 008610-2025, 008954-2025, 009304-2025, 012930-2024, 013001-2026, 013127-2026, 013844-2025, 013851-2025, 013856-2025, 015012-2025, 015014-2025, 015018-2025, 015430-2024, 016696-2023, 021648-2022, 022147-2024, 031367-2024, 033096-2022, 033097-2022, 034344-2024, 035140-2024, 036329-2026, 036345-2024, 037757-2026, 042181-2026, 051291-2026"
+ },
+ {
+  "url": "https://find-and-update.company-information.service.gov.uk/search/companies?q=GOLD+HILL+CARE",
+  "http": 200,
+  "file": "web-ch-search-gold-hill-care.html",
+  "sha256": "c54b27d7b8903d4a7f2a7f63902ef409da4c2871d57018b7d16b44d2980922be",
+  "quote": "no company named GOLD HILL CARE; nearest hits are GOLD AND HILL LTD (Luton) and GOLDEN HILL ... companies"
+ },
+ {
+  "url": "https://find-and-update.company-information.service.gov.uk/search/companies?q=GOLD+HILL+HOUSING",
+  "http": 200,
+  "file": "web-ch-search-gold-hill-housing.html",
+  "sha256": "84f2f94dd47fad9d5c0a7dccde114907cd03605e7d7caa80f7547c8b16b6ff6c",
+  "quote": "GOLD HILL HOUSING ASSOCIATION LIMITED | IP17437R (the Companies House mirror of FCA 17437R)"
+ },
+ {
+  "url": "https://ccewuksprdoneregsadata1.blob.core.windows.net/data/json/publicextract.charity.zip (+ charity_other_names.zip)",
+  "sha256_zip": "48039d964567ea9e6d518e7c7758854a697b9b7d9f2b8654d78625f718715bab",
+  "file": "c4-cc-search.json (rows by name pattern FIRST STEPS / MOUNT ZION APOSTOLIC / KARIS / AUTISM WEST MIDLANDS / GOLD HILL and by number)",
+  "note": "same zip as registers/fetch-manifest.json (48039d96...), re-hashed"
+ },
+ {
+  "url": "https://fcastoragemprprod.blob.core.windows.net/societylist/SocietyList.csv",
+  "sha256": "fc4a5c159c2b839eaa410129d4bf12babf198f6beb3ef3aac92f38ed183d5193",
+  "note": "rows read: 17437R Gold Hill Housing Association Limited (The Hub, Church Lane, Chalfont St Peter, Gerrards Cross SL9 9RF, SIC 87300) is the only Gold Hill society; 28038R Clarion Housing Group Limited and 7686 Clarion Housing Association Limited (both NW1 7QX); 19229R Accent Housing Limited and 30444R Accent Group Limited (both Scorex House BD1 4AS, Registered)"
+ }
+]

@@ -1,0 +1,21 @@
+{
+ "batch": 1,
+ "role": "challenger",
+ "date": "2026-10-12",
+ "evidence": {
+  "prod": "challenger-b1/c1-01..04 (journal.jsonl): 4 bounded index-served reads, 0 x 408, 0 retries",
+  "registers": "registers/raw (CC extract rows, FCA pages/transfers/namechanges, UKRLP detail/active/deactivated) plus the full FCA SocietyList.csv download (sha256 fc4a5c15..., manifest entry) for predecessor societies 30011R, 20453R, 30015R, 21751R, 23381R"
+ },
+ "rulings": [
+  {"key": "G02 national:GBCHC1104951", "agree": true, "corrected_decision": "merge"},
+  {"key": "G08 national:GBCHC221124", "agree": true, "corrected_decision": "merge"},
+  {"key": "G14 national:GBMPR21256R", "agree": true, "corrected_decision": "merge"},
+  {"key": "G20 national:GBMPR30938R", "agree": true, "corrected_decision": "merge"},
+  {"key": "G26 national:GBUKPRN10007798", "agree": true, "corrected_decision": "merge"},
+  {"key": "L06 GBCHC1077607", "agree": true, "corrected_decision": "move-ok"},
+  {"key": "L12 GBCHC1179683", "agree": true, "corrected_decision": "move-ok"},
+  {"key": "L18 GBCHC518753", "agree": true, "corrected_decision": "move-ok"},
+  {"key": "L24 GBMPR27566R", "agree": true, "corrected_decision": "move-ok"}
+ ],
+ "note": "Reasons are in the StructuredOutput rulings returned to the orchestrator."
+}

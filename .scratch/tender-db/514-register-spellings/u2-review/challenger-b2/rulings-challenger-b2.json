@@ -1,0 +1,21 @@
+{
+ "batch": 2,
+ "role": "challenger",
+ "date": "2026-10-12",
+ "evidence": {
+  "prod": "challenger-b2/c2-01..02 (journal.jsonl): 2 bounded index-served reads, 0 x 408, 0 retries",
+  "registers": "CC extract 2026-10-12 (zip sha256 re-verified, full scan by number, name, address and postcode); CQC location, provider and registration pages for Redwoods 1-130502608 plus NHS.uk; CCNI CSV and name search for 102575; FCA SocietyList.csv"
+ },
+ "rulings": [
+  {"key": "G03 national:GBCHC1122831", "agree": true, "corrected_decision": "merge"},
+  {"key": "G09 national:GBCHC271028", "agree": true, "corrected_decision": "merge"},
+  {"key": "G15 national:GBMPR27440R", "agree": true, "corrected_decision": "merge"},
+  {"key": "G21 national:GBNICNIC102575", "agree": true, "corrected_decision": "merge"},
+  {"key": "L01 GBCHC1003906", "agree": true, "corrected_decision": "move-ok"},
+  {"key": "L07 GBCHC1094458", "agree": true, "corrected_decision": "move-ok"},
+  {"key": "L13 GBCHC1205036", "agree": true, "corrected_decision": "move-ok", "correction": "The reason's lookalike scan is incomplete. 517381 DAR UL ULOOM ISLAMIA RIZWIA (BRALAWAI) is a Trust, registered in 1986 and still Registered, with income of 499,488 in FY 2025-03. Its contact address is 'Central Jamia Mosque Ghamkol Sharif, 150 Golden Hillock Road, B10 0DX', and its name is the CIO's working name, so it is the predecessor at the same address. The verdict should record it. Only the CIO's registered name and number match the mention, so the decision stands."},
+  {"key": "L19 GBMPR16243R", "agree": true, "corrected_decision": "move-ok"},
+  {"key": "L25 GBMPR29840R", "agree": true, "corrected_decision": "move-ok"}
+ ],
+ "note": "Reasons are in the StructuredOutput rulings returned to the orchestrator."
+}

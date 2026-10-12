@@ -1,0 +1,22 @@
+{
+ "batch": 3,
+ "role": "challenger",
+ "date": "2026-10-12",
+ "evidence": {
+  "prod": "challenger-b3/c3-01..05 (journal.jsonl): 5 bounded index-served reads (organization_mentions_org, organizations_identity, notices/notice_texts by notice id), 0 x 408, 0 retries",
+  "registers": "full CC extract + other-names zips (sha256 48039d96..., ef861b31..., re-verified = manifest), pattern search saved as c3-cc-search.json; FCA SocietyList.csv (sha256 fc4a5c15..., = manifest); registers/raw/ukrlp/10004116_detail.html",
+  "web": "web-sources.json: MTVH group-companies and terms pages (saved here)"
+ },
+ "rulings": [
+  {"key": "G04", "agree": true, "corrected_decision": "merge"},
+  {"key": "G10", "agree": true, "corrected_decision": "merge", "correction": "The reason's brand claim is wrong. 'Metropolitan Thames Valley' is the shared trading name of MHT 16337R AND Thames Valley Housing Association Limited 17375R (still Registered, RSH L0514), per mtvh.co.uk. The 2018 TE was from TVCHA 25301R, not TVH. Count the 15 MTVH mentions as NOT naming the holder: (b) 89/104 = 85.6% > 50%; (c) <= 14.4% < 1/5. The merge stands."},
+  {"key": "G16", "agree": true, "corrected_decision": "merge"},
+  {"key": "G22", "agree": true, "corrected_decision": "merge"},
+  {"key": "L02", "agree": true, "corrected_decision": "move-ok"},
+  {"key": "L08", "agree": true, "corrected_decision": "move-ok"},
+  {"key": "L14", "agree": true, "corrected_decision": "move-hold"},
+  {"key": "L20", "agree": true, "corrected_decision": "move-ok", "note": "Your Housing Group Limited 30666R (the parent, same address) is prod org 30929619, and all 42 of its mentions say 'Your Housing Group (Limited)'. The mover's 'Your Housing Limited' names 17704R."},
+  {"key": "L26", "agree": true, "corrected_decision": "move-ok"}
+ ],
+ "note": "Full reasons are in the StructuredOutput rulings returned to the orchestrator."
+}
