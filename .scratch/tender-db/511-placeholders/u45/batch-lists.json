@@ -1,0 +1,7149 @@
+{
+"legal_form": [
+{
+"identifier": null,
+"mentions": 10,
+"name": "As in I.1 above",
+"org": 1189933
+},
+{
+"identifier": null,
+"mentions": 21,
+"name": "Same as VI.4.1",
+"org": 1209529
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As in VI.4.1",
+"org": 1216641
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 1228225
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 1229601
+},
+{
+"identifier": null,
+"mentions": 80,
+"name": "As VI.4.1",
+"org": 1232481
+},
+{
+"identifier": null,
+"mentions": 4,
+"name": "As In Vi.1.4",
+"org": 1234043
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 1238412
+},
+{
+"identifier": null,
+"mentions": 55,
+"name": "As VI.3.1",
+"org": 1246935
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 1261213
+},
+{
+"identifier": null,
+"mentions": 52,
+"name": "As I.1 and VI.4.2",
+"org": 1287625
+},
+{
+"identifier": null,
+"mentions": 16,
+"name": "Same as point VI.3.1",
+"org": 1288246
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 1291157
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 1291158
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 1291570
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 1317501
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1.",
+"org": 1337022
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1.",
+"org": 1337026
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 1348278
+},
+{
+"identifier": null,
+"mentions": 13,
+"name": "As in I.1",
+"org": 1352212
+},
+{
+"identifier": null,
+"mentions": 7,
+"name": "As VI.3.1",
+"org": 1398165
+},
+{
+"identifier": null,
+"mentions": 6,
+"name": "As in section I - I.1 above",
+"org": 1402638
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 1415143
+},
+{
+"identifier": null,
+"mentions": 15,
+"name": "As I.1",
+"org": 1415798
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 1421581
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "Gatwick Airport Limited - see section VI - all documents are available for download via Delta",
+"org": 1430896
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in Section VI.4.2",
+"org": 1474949
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 1500849
+},
+{
+"identifier": null,
+"mentions": 7,
+"name": "Same as point VI.4.1",
+"org": 1533534
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 1533554
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 1540433
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 1546342
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 1578829
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 1578830
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 1578831
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As in Section VI.3.2 below",
+"org": 1599867
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1",
+"org": 1639559
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 1644543
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 1644562
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in Section I.1 above",
+"org": 1646217
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 1649777
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 1649781
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 1671596
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 1712216
+},
+{
+"identifier": null,
+"mentions": 12,
+"name": "As in VI.3.1",
+"org": 1713407
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 1727275
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1.",
+"org": 1728486
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As shown in section I.1 above",
+"org": 1745577
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1)",
+"org": 1758032
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 1784419
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "as in I.1",
+"org": 1798761
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "as VI.4.1",
+"org": 1827848
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 1829346
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 1829350
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1)",
+"org": 1862231
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 1875599
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 1875600
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "as per VI.3.1",
+"org": 1880530
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 1892842
+},
+{
+"identifier": null,
+"mentions": 4,
+"name": "As per I.1",
+"org": 1899392
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 1904711
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 1904712
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point I.1)",
+"org": 1907462
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 1938421
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 1938422
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 1944092
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 1952290
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 1952291
+},
+{
+"identifier": null,
+"mentions": 9,
+"name": "As Section I.1) of this contract notice",
+"org": 1973832
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 1977189
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per the body in I.1",
+"org": 1979758
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 2005290
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2056225
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2056226
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 2063357
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As stated in I.1",
+"org": 2063674
+},
+{
+"identifier": null,
+"mentions": 4,
+"name": "As set out in Section I.1",
+"org": 2073395
+},
+{
+"identifier": null,
+"mentions": 11,
+"name": "As in section VI.4.2 below",
+"org": 2085070
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1.",
+"org": 2101146
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 2121972
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2148102
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point I.1.",
+"org": 2148391
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As stated at V.1 3.1 above",
+"org": 2173225
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "as in I.1",
+"org": 2179257
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 2181128
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2185027
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As defined in VI.3 of this notice",
+"org": 2212537
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2225244
+},
+{
+"identifier": null,
+"mentions": 9,
+"name": "As I.1 and VI.4.2",
+"org": 2228094
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2240943
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2258907
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2262460
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2262706
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2262707
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 2271529
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 2271531
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2272823
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2272824
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 2288113
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2288138
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 2288141
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 2297821
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 2323190
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2350648
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2350690
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2367383
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2367384
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 2373801
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As stated in section II.1.5) Short description of the contract or purchase(s)",
+"org": 2403961
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2415770
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2415771
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 2417069
+},
+{
+"identifier": null,
+"mentions": 5,
+"name": "As VI.3",
+"org": 2417216
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As In VI.4.1",
+"org": 2440218
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As In VI.4.1",
+"org": 2440219
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1",
+"org": 2444416
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in Section II.1.4 of this notice",
+"org": 2451247
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As detailed in IV.3 additional information",
+"org": 2464365
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As defined in Section VI.2 of this notice",
+"org": 2464652
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As stated in Section VI.3.2",
+"org": 2480322
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 2534583
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 2554890
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 2554891
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 2554892
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2559467
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2559468
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 2583811
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2613665
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2613666
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2651233
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2670982
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As listed in II.1.4)",
+"org": 2678428
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2702621
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 2711854
+},
+{
+"identifier": "ASSTATEDINII2",
+"mentions": 1,
+"name": "As stated in II.2",
+"org": 2712162
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 2716429
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 2750951
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 2765470
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2780217
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 2780218
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 2833541
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 2872045
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "Application must be submitted electronically to \"Byggeweb\" A / S (see section. VI.3)",
+"org": 2916635
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 2924352
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As set out in I.1 above",
+"org": 2934554
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 2948307
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 2968795
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As above at VI.4.1.",
+"org": 2996634
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 3019714
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 3030704
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1.",
+"org": 3039653
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1 and VI",
+"org": 3060195
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "AS I.1 ABOVE",
+"org": 3067737
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As set out in I.1 above",
+"org": 3107990
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "Same as in VI.3.1.",
+"org": 3147055
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 3152323
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 3154751
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 3155088
+},
+{
+"identifier": null,
+"mentions": 10,
+"name": "As in section v.1.4.2 below",
+"org": 3168667
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 3180319
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 3180376
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 3181195
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in section v.1.4.2",
+"org": 3202019
+},
+{
+"identifier": null,
+"mentions": 10,
+"name": "Same as VI.4.1 above.",
+"org": 3233144
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 3292137
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As in point VI.3.1 above.",
+"org": 3310054
+},
+{
+"identifier": null,
+"mentions": 6,
+"name": "As detailed in I.1)",
+"org": 3320951
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in I.1.",
+"org": 3320953
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per VI.3.1 above",
+"org": 3328356
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 3350708
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 3366943
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 3390790
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1.",
+"org": 3414496
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Westgate Oxford Alliance Limited Partnership acting by Westage Oxford Alliance GP Limited (see Section VI.2)",
+"org": 3435516
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As set out in section II.1.4",
+"org": 3467838
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As detailed in section II.2.1",
+"org": 3503061
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As set out in Section VI.3",
+"org": 3534195
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 3534914
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 3547112
+},
+{
+"identifier": null,
+"mentions": 11,
+"name": "As VI.3.1)",
+"org": 3572856
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 3609927
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 3612114
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 3639989
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 3655880
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 3684539
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 3684541
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 3692216
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Address as per I.1) above.",
+"org": 3694315
+},
+{
+"identifier": null,
+"mentions": 5,
+"name": "As in I.1)",
+"org": 3706090
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "as defined in section VI.3 of this Contract Notice",
+"org": 3716126
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1.",
+"org": 3722433
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1.",
+"org": 3722434
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 3741571
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1) above.",
+"org": 3743150
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per section V.1.3.",
+"org": 3743512
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per section V.1.3.",
+"org": 3743514
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 3747840
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 3748701
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 3750464
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As set out in Section I.1 above",
+"org": 3752578
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 3795358
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 3795359
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 3795360
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as in point VI.4.1",
+"org": 3804664
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As set out at I.1",
+"org": 3807617
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As detailed in Section I.1) above",
+"org": 3839461
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "as in point VI.4.1.",
+"org": 3858496
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 3869405
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 3870807
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 3875092
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As I.1) and VI.4.2), UK",
+"org": 3886402
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 3900874
+},
+{
+"identifier": null,
+"mentions": 17,
+"name": "As VI.4.1)",
+"org": 3901495
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 3931735
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 3973924
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per section II.2.1)",
+"org": 3977340
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 4002349
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 4002350
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 4018207
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1)",
+"org": 4029504
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 4047964
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As at VI.4.1.",
+"org": 4057575
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 4107386
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 4171884
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 4217568
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1.",
+"org": 4226530
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1",
+"org": 4251034
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per section VI.4.1.",
+"org": 4259786
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as VI.3.1",
+"org": 4264831
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 4279104
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 4279105
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 4289581
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 4289582
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in II.1",
+"org": 4293823
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 4293968
+},
+{
+"identifier": null,
+"mentions": 4,
+"name": "As per VI.4.1",
+"org": 4295326
+},
+{
+"identifier": null,
+"mentions": 12,
+"name": "As stated in section I.1",
+"org": 4314014
+},
+{
+"identifier": null,
+"mentions": 12,
+"name": "As in section VI.4.2) below",
+"org": 4319759
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 4343036
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 4349403
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 4362058
+},
+{
+"identifier": null,
+"mentions": 4,
+"name": "As per section II.2.1",
+"org": 4366368
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As in Section VI.1).",
+"org": 4380528
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 4384163
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 4384164
+},
+{
+"identifier": null,
+"mentions": 4,
+"name": "GAS NATURAL COMERCIALIZADORA, S.A. (Ver información adicional)",
+"org": 4385402
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "ENDESA ENERGÍA, S.A. (Ver información adicional)",
+"org": 4385406
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 4396503
+},
+{
+"identifier": null,
+"mentions": 12,
+"name": "As I.1 and VI.4.2, UK",
+"org": 4402914
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1.",
+"org": 4404944
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 4413728
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 4413729
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1",
+"org": 4418482
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as VI.3.1",
+"org": 4438826
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 4443146
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As VI.4.1)",
+"org": 4494187
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As specified in section I.1 and the address/URL details remain the same.",
+"org": 4519721
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 4523881
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 4525557
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 4537980
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As listed in Section II.8",
+"org": 4555361
+},
+{
+"identifier": "ASSETOUTINSECTIONVI2",
+"mentions": 1,
+"name": "As set out in section VI.2",
+"org": 4605279
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 4656676
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 4672089
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 4672090
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 4677996
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1.",
+"org": 4751306
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As stated in Section VI.2",
+"org": 4782350
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1.",
+"org": 4800765
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As set out in Section VI.3 of this notice",
+"org": 4826162
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 4854322
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 4876497
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 4885011
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "NOE CPC member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers. For full details see section II.1.2 Main place of delivery.",
+"org": 4885352
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in II.1.2)",
+"org": 4885421
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 4900337
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "NOECPC member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers. For full details see section II.1.2 Main place of delivery.",
+"org": 4908603
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per section VI.2) Additional Information",
+"org": 4929772
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in Section IV.3) Additional Information",
+"org": 4947635
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 4989593
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 4995667
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per those listed in additional information section VI.2)",
+"org": 4995889
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1).",
+"org": 4995911
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Merthyr Tydfil County Borough Council and such other local authorities in Wales as may join the Hub at a later date or may be substituted for existing members of the Hub (see Section II.1.5 for further details).",
+"org": 4996666
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "as detailed in Sec C II.7",
+"org": 5001860
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "as in I.1",
+"org": 5008798
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As described in IV.2",
+"org": 5068625
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As set out at I.1)",
+"org": 5080173
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 5083906
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5115753
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5115754
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "as in I.1.",
+"org": 5116074
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "as in I.1.",
+"org": 5116075
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5129772
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5129773
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in Section II.1.5",
+"org": 5143129
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in Section II.1.2",
+"org": 5163980
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As listed in VI.2",
+"org": 5195886
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 5220935
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 5226558
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 5226559
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 5231887
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per section VI.2",
+"org": 5250308
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 5251144
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in Section VI.2) Additional Information",
+"org": 5307096
+},
+{
+"identifier": null,
+"mentions": 5,
+"name": "As per I.1",
+"org": 5310987
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 5334023
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 5372961
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As detailed in Section II.1.2 Main place of delivery",
+"org": 5388150
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 5425110
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 5425119
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As specified in section I.1",
+"org": 5433679
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5489730
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5489731
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5489732
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 5507972
+},
+{
+"identifier": null,
+"mentions": 8,
+"name": "As per VI.4.2",
+"org": 5517964
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 5555011
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As detailed in Section VI.2 Additional Information",
+"org": 5563012
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As VI.4.1 and VI.4.2",
+"org": 5569701
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As described in VI.3",
+"org": 5586863
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 5612429
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5618681
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5618682
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as in point VI.4.1",
+"org": 5619885
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "as in point VI.3.1",
+"org": 5619891
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 5640315
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Not applicable — The framework contract was not awarded as the offer submitted was not compliant with the criteria laid down in the tender specifications.",
+"org": 5646489
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 5650243
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As specified in section I.1)",
+"org": 5653341
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As VI.4.1 and VI.4.2",
+"org": 5762998
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As provided within Section VI.3",
+"org": 5854330
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 5865681
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per VI.3.1",
+"org": 5869160
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 5881864
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As listed in II.1.4",
+"org": 5898979
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As above (Please see IV.4.1)",
+"org": 5918116
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as VI.3.1",
+"org": 5920763
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As described in section VI.3",
+"org": 5934272
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 5934491
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5972666
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 5972667
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 5978128
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 6014933
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 6023871
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As in VI.4.1 above",
+"org": 6035054
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 6074103
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As stated in section VI.3)",
+"org": 6112558
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1",
+"org": 6144418
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as VI.3.1",
+"org": 6180641
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 6193089
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As per those listed in the additional information field VI.3)",
+"org": 6196768
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in Section I.1)",
+"org": 6250397
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As I.1) and VI.4.2)",
+"org": 6250670
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 6253187
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as VI.3.1",
+"org": 6253210
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per information provided within Section II.2.1",
+"org": 6328186
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 6347660
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1.",
+"org": 6357330
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1",
+"org": 6395155
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As described in VI.2",
+"org": 6424612
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "NOECPC Member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers  For full details see section II.1.2 Main Place of Delivery",
+"org": 6433983
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 6506955
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 6538226
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "as in I.1.",
+"org": 6543081
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1)",
+"org": 6601330
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 6613772
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As specified in section VI.3",
+"org": 6618089
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "NOE CPC Member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers. For full details see section II.1.2 Mail place of delivery",
+"org": 6625653
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As described in Section II.1.5",
+"org": 6628244
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 6661571
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 6661592
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 6668174
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "as in I.1) above",
+"org": 6673072
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 6673914
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As noted in VI.4.1",
+"org": 6685586
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 6711355
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as in point VI.4.1",
+"org": 6745761
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As indicated below in II.1.5)",
+"org": 6751105
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 6751753
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 6842756
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 6856532
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 6860595
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 6873897
+},
+{
+"identifier": null,
+"mentions": 5,
+"name": "As per those listed in the additional information field VI.3",
+"org": 6877830
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As defined in section VI.3",
+"org": 6924241
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as in point VI.4.1",
+"org": 6963348
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 6992319
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 7004425
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 7004435
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 7004439
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 7008515
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As specified in section II.1.4",
+"org": 7052217
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 7086522
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As set out above in VI.3) Additional information",
+"org": 7087913
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as VI.3.1",
+"org": 7116518
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 7116522
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per those listed in the additional information field Section VI.2)",
+"org": 7132706
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As stated in I.1)",
+"org": 7210671
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "same as in point VI.4.1",
+"org": 7216314
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 7263559
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in Article VI.4.1",
+"org": 7275538
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As detailed in section II.2.1",
+"org": 7304898
+},
+{
+"identifier": null,
+"mentions": 5,
+"name": "As stated in Section I.1)",
+"org": 7330735
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 7357992
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As per those listed in the additional information field VI.2)",
+"org": 7412264
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As indicated below in VI.3) Additional Information",
+"org": 7438741
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 7464034
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 7464035
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per section VI.3",
+"org": 7503400
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 7507993
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 7515107
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 7535951
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 7547821
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per information provided within Section II.2.1)",
+"org": 7554549
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As set out in section VI.4.1 of Contract Notice",
+"org": 7585276
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Blaenau Gwent CBC, Merthyr Tydfil CBC, Torfaen CBC and such other local authorities in Wales as may join the Hub at a later date or may be substituted for existing members of the Hub (see section 11.1.4 for further details)",
+"org": 7610068
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As specified in Section II.1.4)",
+"org": 7740683
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As stated in section VI.2)",
+"org": 7754396
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in section II.2.1) of the corresponding Contract Notice",
+"org": 7839496
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 7849039
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in (I.1))",
+"org": 7858783
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in (I.1))",
+"org": 7858784
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in (I.1))",
+"org": 7858785
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1)",
+"org": 7896309
+},
+{
+"identifier": null,
+"mentions": 8,
+"name": "As I.1)",
+"org": 7896311
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1)",
+"org": 7896313
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per I.1)",
+"org": 7896333
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per I.1)",
+"org": 7896335
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1)",
+"org": 7896349
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1)",
+"org": 7896353
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per section I.1)",
+"org": 7899300
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 7900562
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As in VI.3.1) above",
+"org": 7924374
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1) above",
+"org": 7924415
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As above in VI.3.1)",
+"org": 7924639
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 7956605
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 7956606
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As defined in section VI.3)",
+"org": 8007454
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 8031847
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 8115448
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As in Section V.1.4.2) below",
+"org": 8117744
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per section II.1.4)",
+"org": 8142738
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As specified in Section VI.2)",
+"org": 8185488
+},
+{
+"identifier": null,
+"mentions": 10,
+"name": "As Listed under VI.2)",
+"org": 8241464
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in (I.1)",
+"org": 8282196
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in (I.1)",
+"org": 8282197
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in (I.1)",
+"org": 8282198
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 8350987
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As set out in Contract notice VI.3) Additional information",
+"org": 8353768
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1)",
+"org": 8369939
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1)",
+"org": 8369940
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per VI.4.2) below",
+"org": 8397982
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per VI.4.2) above",
+"org": 8397984
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As at I.1)",
+"org": 8404599
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 8411737
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 8411738
+},
+{
+"identifier": null,
+"mentions": 23,
+"name": "As in VI.4.1",
+"org": 8413426
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 8443300
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1)",
+"org": 8450424
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As detailed in Section II.2.1)",
+"org": 8466368
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Hertfordshire County Council on behalf of Hertfordshire Catering Limited — This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details",
+"org": 8725826
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 8893726
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per I.1) above",
+"org": 9003564
+},
+{
+"identifier": null,
+"mentions": 5,
+"name": "As VI.4.1 above",
+"org": 9368631
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "as in Part VI.4.1",
+"org": 9556128
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As in section VI.4.3) below",
+"org": 9598663
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As in Section I.1",
+"org": 9822086
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per VI.4.1)",
+"org": 10047096
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "as in VI.3.1)",
+"org": 10098263
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As in section VI.4.3 below",
+"org": 10261601
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in section VI.4.3)",
+"org": 10464401
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Please refer to VI.4.3) as above",
+"org": 10477039
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per Part VI.4.1",
+"org": 10655594
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As stated above at VI.4.1",
+"org": 11005841
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per VI.4.2 below",
+"org": 11422236
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per VI.4.2 above",
+"org": 11422238
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Accor-Pannonia Hotels Zrt. (wih 9 Hotels — see Section VI.3 for additional information",
+"org": 11733582
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As set out in VI.4.1)",
+"org": 11773299
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As stated in VI.4.3",
+"org": 12024746
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As in I.1.",
+"org": 12176218
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As in VI.4.1)",
+"org": 12486950
+},
+{
+"identifier": null,
+"mentions": 6,
+"name": "As per Section VI.4.1)",
+"org": 13553296
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per Section IV.4.1)",
+"org": 13553297
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in Section VI.4.1)",
+"org": 14383172
+},
+{
+"identifier": null,
+"mentions": 13,
+"name": "As per Regulation 50(6)(a) — information withheld for security reasons",
+"org": 15118804
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per Regulation 50 6 a — withheld for security reasons, information will be released to the Commission on request",
+"org": 15478000
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per Regulation 50(6)(a) — information is withheld for security reasons. Details will be provided to the Commission on request.",
+"org": 15562670
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As per Regulation 506a — information withheld for security reasons",
+"org": 16038944
+},
+{
+"identifier": null,
+"mentions": 6,
+"name": "As per VI.4.1",
+"org": 16099030
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Vermeer Infrastructuur bv te Hoofddorp. Percelen: niet van toepassing",
+"org": 30729752
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "WESTLEA HOUSING ASSOCIATION LIMITED ON BEHALF OF ITSELF AND SOVEREIGN HOUSING ASSOCIATION LIMITED (SEE SECTION VI.4 FOR MORE DETAILS)",
+"org": 31208290
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "SOUTH WILTSHIRE PRIMARY CARE TRUST AS LEAD AUTHORITY FOR THE WILTSHIRE AND SWINDON LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)",
+"org": 31228627
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "SOUTHEND-ON-SEA NHS PRIMARY CARE TRUST AS LEAD AUTHORITY FOR THE SOUTH EAST ESSEX LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)",
+"org": 31230013
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "BURY PRIMARY CARE TRUST, AS LEAD AUTHORITY FOR THE BURY TAMESIDE & GLOSSOP LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4). PLEASE ALSO SEE ADDITIONAL INFORMATION SECTION BELOW",
+"org": 31233298
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "BEDFORD PRIMARY CARE TRUST AS LEAD AUTHORITY FOR THE SOUTH EAST MIDLANDS LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)",
+"org": 31235654
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "NORTHAMPTONSHIRE HEARTLANDS PCT AS LEAD AUTHORITY FOR THE SOUTH MIDLANDS NHS LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)",
+"org": 31235965
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "BOLTON PRIMARY CARE TRUST AS LEAD AUTHORITY FOR THE BOLTON, ROCHDALE AND HEYWOOD & MIDDLESTON LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)",
+"org": 31236234
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "NORTHAMPTONSHIRE HEARTLANDS PCT AS LEAD AUTHORITY FOR THE SOUTH MIDLANDS NHS LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.3)",
+"org": 31236957
+},
+{
+"identifier": null,
+"mentions": 9,
+"name": "ROYAL BOROUGH OF KINGSTON UPON THAMES AS LEAD BOROUGH ON BEHALF OF ITSELF AND THE CONTRACTING AUTHORITIES WITHIN THE SOUTH LONDON WASTE PARTNERSHIP (SEE SECTION VI.3)",
+"org": 31284459
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "THE SEVEN TSOS IN THE CENTRAL WESTERN REGION AS MENTIONED BELOW: CEGEDEL NET S.A. (LUXEMBOURG), ELIA SYSTEM OPERATOR SA (BELGIUM), ENBW TRANSPORTNETZE AG (GERMANY), E.ON NETZ GMBH (GERMANY), RTE EDF TRANSPORT (FRANCE), RWE TRANSPORTNETZ STROM GMBH (GERMANY), TENNET TSO B.V. (THE NETHERLANDS) (SEE SECTION VI,VI.3 FOR FURTHER INFORMATION ABOUT TENDERING PARTY /CONTRACTING ENTITY)",
+"org": 31328502
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "COMMUNITY HEALTH PARTNERSHIPS LIMITED ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES: SEE SECTION VI.3",
+"org": 31345216
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "EASTERN SHIRES PURCHASING ORGANISATION (SEE WWW.ESPO.ORG) ON BEHALF OF EMBC PROCUREMENT LIMITED [EMBC] - SEE SECTION VI.2",
+"org": 31371984
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As VI.4.1",
+"org": 31378822
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31379792
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31379793
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1",
+"org": 31381522
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 31381524
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 31386763
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31391179
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31391180
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 31395015
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1.",
+"org": 31395019
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as VI.3.1",
+"org": 31395020
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1",
+"org": 31399824
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1",
+"org": 31404423
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1",
+"org": 31408316
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1",
+"org": 31409185
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31410341
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31410342
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31421216
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31421217
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31421220
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31421221
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31424834
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31424835
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 31430429
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 31430431
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.3.1.",
+"org": 31430433
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 31435256
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As VI.3",
+"org": 31438335
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 31442870
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31452105
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31452106
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 31458328
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 31459536
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31460346
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31460347
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31460981
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31460982
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 31462410
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 31462415
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.3.1.",
+"org": 31465705
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 31468596
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1.",
+"org": 31469878
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 31472341
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31477112
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 31479249
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1",
+"org": 31479252
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 31482737
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 31490209
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As in VI.4.2",
+"org": 31491209
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in point VI.4.1.",
+"org": 31492614
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31493008
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31493009
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1.",
+"org": 31496063
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31500343
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31500344
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Same as in point VI.4.1",
+"org": 31501523
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As set out in VI.4.2",
+"org": 31516830
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31517213
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As I.1",
+"org": 31517214
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31518032
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31518033
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "Royal Mail Group Limited (see Section VI.3)",
+"org": 31524368
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1 above",
+"org": 31524420
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in I.1",
+"org": 31529427
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4.1",
+"org": 31529646
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As In VI.4.1",
+"org": 31529647
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As above in VI.4.1",
+"org": 31615353
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As stated at Section VI.4 above",
+"org": 31630618
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in section I.1)",
+"org": 31631583
+},
+{
+"identifier": null,
+"mentions": 1,
+"name": "As in VI.4. above",
+"org": 31634045
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As address above in Section Vi.4.1",
+"org": 31634548
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As above in Section Vi.4.2",
+"org": 31634549
+},
+{
+"identifier": null,
+"mentions": 3,
+"name": "As per Regulation 50(6)(a) - information withheld for security reasons",
+"org": 31634912
+},
+{
+"identifier": null,
+"mentions": 2,
+"name": "As per VI.4.1) Review body",
+"org": 31642773
+},
+{
+"identifier": "GBCOHASPERREGULATION506AINFORMATIONWITHHELDFORSECURITYREASONS",
+"mentions": 1,
+"name": "As per Regulation 50(6)(a) - information withheld for security reasons",
+"org": 31647442
+}
+],
+"digit_only": [
+{
+"mentions": 1,
+"name": "0",
+"org": 23095417
+}
+],
+"identified": [
+{
+"country": "GB",
+"identifier": "ASSTATEDINII2",
+"mentions": 1,
+"name": "As stated in II.2",
+"org": 2712162
+},
+{
+"country": null,
+"identifier": "ANSCHRIFTSIEHENRI1",
+"mentions": 1,
+"name": "Anschrift siehe Nr. I.1",
+"org": 3084281
+},
+{
+"country": "GB",
+"identifier": "ASSETOUTINSECTIONVI2",
+"mentions": 1,
+"name": "As set out in section VI.2",
+"org": 4605279
+},
+{
+"country": "AT",
+"identifier": "KEINEANGABEGEM62ABS3BVERGG2018",
+"mentions": 0,
+"name": "keine Angabe gemäß § 62 Abs. 3 BVergG 2018.",
+"org": 17888810
+},
+{
+"country": "DE",
+"identifier": "0251411691",
+"mentions": 28,
+"name": "s.o.",
+"org": 22713056
+},
+{
+"country": "GB",
+"identifier": "GBPPONPBXY3232WNHZ",
+"mentions": 9,
+"name": "Withheld Section94 Supplier",
+"org": 30914328
+},
+{
+"country": "GB",
+"identifier": "GBPPONPGYY2165QXNQ",
+"mentions": 2,
+"name": "Withheld Section94 Supplier 2",
+"org": 31548264
+}
+],
+"identified_blank": [
+{
+"country": "HR",
+"echo": false,
+"identifier": "19645926433",
+"mentions": 8,
+"name": "ND",
+"org": 14319858
+},
+{
+"country": "BE",
+"echo": false,
+"identifier": "BE0464910706",
+"mentions": 3,
+"name": "NC+",
+"org": 15906016
+},
+{
+"country": "NL",
+"echo": false,
+"identifier": "89270",
+"mentions": 1,
+"name": "Nvt",
+"org": 22519580
+},
+{
+"country": "ES",
+"echo": false,
+"identifier": "891440",
+"mentions": 1,
+"name": "No hay",
+"org": 22525406
+},
+{
+"country": "FR",
+"echo": false,
+"identifier": "1300050100002A",
+"mentions": 1,
+"name": "SANS OBJET",
+"org": 22780502
+},
+{
+"country": "DE",
+"echo": false,
+"identifier": "T04089980",
+"mentions": 32,
+"name": "Nicht vorhanden",
+"org": 23018279
+},
+{
+"country": "DK",
+"echo": false,
+"identifier": "38160540",
+"mentions": 1,
+"name": "0",
+"org": 23095417
+},
+{
+"country": "FR",
+"echo": false,
+"identifier": "1070567193",
+"mentions": 1,
+"name": "sans objet",
+"org": 23153045
+},
+{
+"country": "DE",
+"echo": false,
+"identifier": "2VERGABEKAMMERBEIMLANDESVERWALTUNGSAMTSACHSENANHALT",
+"mentions": 2,
+"name": "keine",
+"org": 23307388
+},
+{
+"country": "DE",
+"echo": false,
+"identifier": "5B2CDD611F94440AB9B99C4BCBC04EA0",
+"mentions": 2,
+"name": "./.",
+"org": 23644454
+},
+{
+"country": "DE",
+"echo": false,
+"identifier": "CA433C7CE1D8477DAA13A5C0E12F932A",
+"mentions": 2,
+"name": "-",
+"org": 24291539
+},
+{
+"country": "DE",
+"echo": false,
+"identifier": "E866626EF23F4F53A2E838FE6ACCF1C7",
+"mentions": 2,
+"name": ".",
+"org": 24291540
+}
+],
+"scoped": {
+"in_scope": [
+{
+"country": "DK",
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 1889418
+},
+{
+"country": "NO",
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 10042095
+}
+],
+"out_of_scope": [
+{
+"country": "FR",
+"identifier": null,
+"mentions": 134,
+"name": "Ingen",
+"org": 1188404
+},
+{
+"country": "HR",
+"identifier": "19645926433",
+"mentions": 8,
+"name": "ND",
+"org": 14319858
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "InGen",
+"org": 25263107
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "InGen",
+"org": 28851107
+}
+],
+"unknown": [
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 1211974
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 1484017
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 1737206
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 1946579
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 2191161
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 2356187
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Nd",
+"org": 3030824
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3184103
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 3199156
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 3199161
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 3199162
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 3199166
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3362282
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3362284
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3362299
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 3470859
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3610701
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3610702
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3610703
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3610706
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3610707
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 3742267
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 3745283
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3981128
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 3981129
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 4365331
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 4506985
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 4593365
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 4801379
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 4803157
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 4981607
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 4995390
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 5185505
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 5185506
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 5267403
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 5381809
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 5381810
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 5381811
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 5381846
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 5381857
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 5427905
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 5427938
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 5835758
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 6129319
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 6176244
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 6249600
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 6249605
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 6350273
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 6597905
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 7244004
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7347688
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7361505
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7361506
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7361508
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7361509
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7361510
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 7384395
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7384404
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7469643
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7752221
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7752243
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 7752245
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24700623
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24700638
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 24707112
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24750155
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 24795938
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 24818922
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24824051
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24847301
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24877549
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24877555
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24880832
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 24897053
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24934132
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24937581
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 24963764
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25001944
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 25016838
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25041834
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25054110
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25174341
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25186157
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25238899
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25250714
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25255850
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25269307
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25279492
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25283262
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25294109
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25296218
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25329238
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25343999
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25345835
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25350169
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25352833
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25355328
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25370235
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25402641
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25496966
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25511966
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25518148
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25543281
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25580279
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25588141
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25588289
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25588290
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25588291
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25588302
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25588324
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25588335
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25588346
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25588357
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25599350
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25625881
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25652851
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25684783
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25694698
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25696636
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25710394
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25714861
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25715111
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25716326
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25717928
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25726017
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25733372
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25733485
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25733486
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25733488
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25733489
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25733490
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25733491
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25733492
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25733493
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25750792
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25753058
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25753442
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25759655
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25760135
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25761924
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25763658
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25775697
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25783182
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25795261
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25795634
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25879963
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25909150
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25911267
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25921652
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25947576
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25972676
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25973117
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25974420
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25979397
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 25982670
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25986680
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 25989669
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 26013488
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 26018623
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 26024389
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 26025765
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28286242
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28303380
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28310629
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28337423
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28364973
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28364978
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28380897
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28493993
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28493995
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28493996
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28493997
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28493998
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28499864
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28539497
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN (lots 253 - 825 - 1077 - 1081 - 1210 - 1212 - 1215 - 1222 - 1223 - 1228 - 1230 - 1232 - 1340)",
+"org": 28565470
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 28642532
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28642537
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28679485
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 28717047
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 28813390
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28813391
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28813392
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28813603
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28817151
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28851329
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28893380
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28932025
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28971774
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28972994
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 28984568
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29027773
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29042933
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29054341
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29115539
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29115540
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29115543
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29115545
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29115549
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29115551
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29115554
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29115556
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29199065
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29207658
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29241344
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29243680
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 29261575
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29264599
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29264607
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29264614
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29277506
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29277507
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29277508
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29277509
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29277571
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29277574
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 29310710
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 29310725
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 29387362
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 29393498
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29410773
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29420603
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29425043
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 29442173
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29463850
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29463858
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29463869
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen (lot 241)",
+"org": 29581998
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29598659
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29615898
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29641202
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 29661748
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 29661812
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 29676144
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 29707824
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29719340
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29751212
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 29781990
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29784248
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29812386
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 29820610
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29844572
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29852633
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29884025
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29892218
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29937066
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 29960655
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30012969
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30052096
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30052097
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30052098
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30052101
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30052103
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30052106
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30052109
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30052112
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30052114
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30065851
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30065852
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30065853
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30085851
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30095489
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30112474
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30132966
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30155173
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30158174
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30158175
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30158179
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30158180
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30158184
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30158188
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30158190
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30158193
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30158195
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30158196
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30379733
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30379736
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30379742
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30379757
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30380299
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30393794
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30400535
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30456949
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30456950
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30456951
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30456952
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30456953
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30456954
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30456955
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30457783
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30461306
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30461312
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30461317
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30461318
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30461322
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30461326
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30461331
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30461344
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "ingen",
+"org": 30487260
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30487909
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30491521
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30494689
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30494690
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30494773
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30494882
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30510187
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 30510491
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30520088
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30523342
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30523343
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 30765391
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31211483
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31381698
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31381705
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31436008
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31455016
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31455017
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31455018
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31455019
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31455020
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31663107
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31671063
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31676349
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31684230
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31687825
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31687903
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31689338
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31689888
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31696162
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31701053
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31704156
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31704811
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31706359
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31713784
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31713988
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31716740
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31716978
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31719721
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31719742
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31721629
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31724170
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31724301
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31737432
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31740585
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31740586
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31747671
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31749828
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31755945
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31777766
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31781915
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31781916
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31785278
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31785279
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31785280
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31785281
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31785282
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31785283
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31785284
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31785285
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31786554
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31786555
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31786556
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31821536
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31821537
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31821538
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31821539
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31825048
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31825063
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31838182
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31846220
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31846237
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31846238
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31846239
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31846240
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31849497
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31854099
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31854108
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31854110
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31854111
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31854112
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31858239
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31858241
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31858242
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31858243
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31858245
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31865514
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31872542
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31873547
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31878143
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31878145
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31878146
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31878147
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31878148
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31878151
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31878172
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31880033
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31885138
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31890398
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31890404
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31902046
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31902963
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31903963
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31903964
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31903965
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31903966
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31903971
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31913280
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31913281
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31914397
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31914506
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31914614
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31914615
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31914783
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916114
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916188
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916189
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916190
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916191
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916192
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916194
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916197
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916199
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916202
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916203
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916377
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916385
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916386
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916387
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916534
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916535
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916536
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916537
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916538
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916541
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916543
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916544
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916551
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916564
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916673
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916694
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916695
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916700
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916730
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "INGEN",
+"org": 31916734
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916883
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916885
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916887
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916888
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31916890
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31917559
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31917560
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31917562
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31917804
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31917805
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31918170
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31918283
+},
+{
+"country": null,
+"identifier": null,
+"mentions": 1,
+"name": "Ingen",
+"org": 31919248
+}
+]
+},
+"long": [
+{
+"mentions": 5,
+"name": "The UK does not have any such body with responsibility for appeal procedures. Please see section VI.3.2. Body responsible for mediation procedures The UK does not have any body with responsibility for mediation procedures",
+"org": 1201577
+},
+{
+"mentions": 1,
+"name": "The UK does not have any such body with responsibility for appeal procedures. Please see section VI.3.2. Body responsible for mediation procedures the UK does not have a body responsible for mediation procedures",
+"org": 1279796
+},
+{
+"mentions": 2,
+"name": "This is an award notice and this tender opportunity is now closed. Please see section V (Award of Contract) for further details. Hertfordshire County Council",
+"org": 2532916
+},
+{
+"mentions": 1,
+"name": "Please see section II.1.5 for details of the contracting authorities that will be entitled to agree call off contracts under the framework agreement.",
+"org": 3823889
+},
+{
+"mentions": 3,
+"name": "NOE CPC member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers. For full details see section II.1.2 Main place of delivery.",
+"org": 4885352
+},
+{
+"mentions": 2,
+"name": "NOECPC member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers. For full details see section II.1.2 Main place of delivery.",
+"org": 4908603
+},
+{
+"mentions": 1,
+"name": "Merthyr Tydfil County Borough Council and such other local authorities in Wales as may join the Hub at a later date or may be substituted for existing members of the Hub (see Section II.1.5 for further details).",
+"org": 4996666
+},
+{
+"mentions": 7,
+"name": "for Information on Contracting Authorities and how to express an interest, please see Section VI.3) Additional Information",
+"org": 5067321
+},
+{
+"mentions": 1,
+"name": "Organisation: Refer to point VI.4.2 Body responsible for mediation procedures (if applicable) Organisation: Not applicable",
+"org": 5080530
+},
+{
+"mentions": 1,
+"name": "Hertfordshire County Council - This is an award notice and this tender opportunity is now closed. Please see section V (Award of Contract) for further details.",
+"org": 5377479
+},
+{
+"mentions": 1,
+"name": "Not applicable — The framework contract was not awarded as the offer submitted was not compliant with the criteria laid down in the tender specifications.",
+"org": 5646489
+},
+{
+"mentions": 7,
+"name": "For details of the Contracting Authorities and for Information on how to express an interest, please see Section VI.3) Additional Information",
+"org": 6292363
+},
+{
+"mentions": 1,
+"name": "NOECPC Member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers  For full details see section II.1.2 Main Place of Delivery",
+"org": 6433983
+},
+{
+"mentions": 1,
+"name": "NOE CPC Member bodies as listed at http://www.noecpc.nhs.uk/our-current-customers. For full details see section II.1.2 Mail place of delivery",
+"org": 6625653
+},
+{
+"mentions": 5,
+"name": "The name (s) of the winning tenderers are being withheld for security reasons; however, these will be made available to the commission on request",
+"org": 7313721
+},
+{
+"mentions": 1,
+"name": "The name(s) of the winning tenderer(s) are being withheld for security reasons, however these will be made available to the commission on request",
+"org": 7503608
+},
+{
+"mentions": 1,
+"name": "Blaenau Gwent CBC, Merthyr Tydfil CBC, Torfaen CBC and such other local authorities in Wales as may join the Hub at a later date or may be substituted for existing members of the Hub (see section 11.1.4 for further details)",
+"org": 7610068
+},
+{
+"mentions": 1,
+"name": "This is an award notice and this opportunity is now closed. Please see section V) (Award of Contract) for further details",
+"org": 7610087
+},
+{
+"mentions": 11,
+"name": "For details of the Contracting Authorities and for information on how to express an interest, please see Section VI.3) Additional Information of the contract notice",
+"org": 7664891
+},
+{
+"mentions": 1,
+"name": "The name(s) of the winning tenderer(s) are being withheld for security reasons, however these will be made available to the commission on request",
+"org": 7930298
+},
+{
+"mentions": 2,
+"name": "None / not applicable. If you have a complaint or seek to challenge the outcome, please seek independent legal advice on how to proceed",
+"org": 8152391
+},
+{
+"mentions": 14,
+"name": "None/not applicable. If you have a complaint or seek to challenge the outcome, please seek independent legal advice on how to proceed",
+"org": 8173573
+},
+{
+"mentions": 2,
+"name": "None/ not applicable. If you have a complaint or seek to challenge the outcome, please seek independent legal advice on how to proceed",
+"org": 8638455
+},
+{
+"mentions": 1,
+"name": "Hertfordshire County Council on behalf of Hertfordshire Catering Limited — This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details",
+"org": 8725826
+},
+{
+"mentions": 1,
+"name": "Hertfordshire County Council — This is an award notice and this tender opportunity is now closed. Please see section V (Award of Contract) for further details.",
+"org": 9246890
+},
+{
+"mentions": 1,
+"name": "Hertfordshire County Council — This is an award notice and this opportunity is now closed. Please see section II.1.4) for further details",
+"org": 9595120
+},
+{
+"mentions": 1,
+"name": "Secretaria general técnica del departamento de vertebración del territorio, movilidad y vivienda (Forma de presentación Ver información adicional en http://www.aragon.es/DepartamentosOrganismosPublicos/Departamentos/VertebracionTerritorioMovilidadVivienda)",
+"org": 9872038
+},
+{
+"mentions": 1,
+"name": "None / not applicable. If you have a complaint or seek to challenge the outcome, please seek independent legal advice on how to procede",
+"org": 10023449
+},
+{
+"mentions": 13,
+"name": "This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details. Hertfordshire County Council",
+"org": 10556560
+},
+{
+"mentions": 3,
+"name": "This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details.",
+"org": 10804641
+},
+{
+"mentions": 3,
+"name": "This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details - Hertfordshire County Council",
+"org": 11217024
+},
+{
+"mentions": 1,
+"name": "This is an award notcie and this opportunity is now closed. Please see section V (Aard of Contract) for further details. Hertfordshire County Council",
+"org": 11542772
+},
+{
+"mentions": 3,
+"name": "Hertfordshire County Council — This is an award notice and this opportunity is now closed. Please see section V (Award of Contract) for further details.",
+"org": 12388071
+},
+{
+"mentions": 4,
+"name": "A full list of successful suppliers will be made available on Contracts Finder. Please see Section VI.3) Additional information.",
+"org": 12511510
+},
+{
+"mentions": 1,
+"name": "This is an award notice and this opportunity is now closed. Please see section V) (Award of Contract) for further details. Hertfordshire County Council",
+"org": 14573954
+},
+{
+"mentions": 1,
+"name": "As per Regulation 50(6)(a) — information is withheld for security reasons. Details will be provided to the Commission on request.",
+"org": 15562670
+},
+{
+"mentions": 1,
+"name": "Die Benennung der Vergabekammer erfolgt vorsorglich und unter dem Vorbehalt, dass der Auftraggeber diese nicht für zuständig hält, siehe oben IV.3)1: Vergabekammer Bremen Senatorin für Klimaschutz, Umwelt, Mobilität, Stadtentwicklung und Wohnungsbau",
+"org": 20614261
+},
+{
+"mentions": 1,
+"name": "Die Benennung der Vergabekammer erfolgt vorsorglich und unter dem Vorbehalt, dass der Auftraggeber diese nicht für zuständig hält, siehe oben VI.3 Nr.1 : Vergabekammer Bremen Senatorin für Klimaschutz, Umwelt, Mobilität, Stadtentwicklung und Wohnungsbau",
+"org": 21241406
+},
+{
+"mentions": 1,
+"name": "WESTLEA HOUSING ASSOCIATION LIMITED ON BEHALF OF ITSELF AND SOVEREIGN HOUSING ASSOCIATION LIMITED (SEE SECTION VI.4 FOR MORE DETAILS)",
+"org": 31208290
+},
+{
+"mentions": 2,
+"name": "SOUTH WILTSHIRE PRIMARY CARE TRUST AS LEAD AUTHORITY FOR THE WILTSHIRE AND SWINDON LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)",
+"org": 31228627
+},
+{
+"mentions": 1,
+"name": "SOUTHEND-ON-SEA NHS PRIMARY CARE TRUST AS LEAD AUTHORITY FOR THE SOUTH EAST ESSEX LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)",
+"org": 31230013
+},
+{
+"mentions": 1,
+"name": "BURY PRIMARY CARE TRUST, AS LEAD AUTHORITY FOR THE BURY TAMESIDE & GLOSSOP LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4). PLEASE ALSO SEE ADDITIONAL INFORMATION SECTION BELOW",
+"org": 31233298
+},
+{
+"mentions": 1,
+"name": "BEDFORD PRIMARY CARE TRUST AS LEAD AUTHORITY FOR THE SOUTH EAST MIDLANDS LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)",
+"org": 31235654
+},
+{
+"mentions": 1,
+"name": "NORTHAMPTONSHIRE HEARTLANDS PCT AS LEAD AUTHORITY FOR THE SOUTH MIDLANDS NHS LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)",
+"org": 31235965
+},
+{
+"mentions": 1,
+"name": "BOLTON PRIMARY CARE TRUST AS LEAD AUTHORITY FOR THE BOLTON, ROCHDALE AND HEYWOOD & MIDDLESTON LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.4)",
+"org": 31236234
+},
+{
+"mentions": 1,
+"name": "NORTHAMPTONSHIRE HEARTLANDS PCT AS LEAD AUTHORITY FOR THE SOUTH MIDLANDS NHS LIFT ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES (SEE SECTION VI.3)",
+"org": 31236957
+},
+{
+"mentions": 1,
+"name": "TAMESIDE METROPOLITAN BOROUGH COUNCIL ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES: SEE SECTION VI.3, SERVICES FOR CHILDREN AND YOUNG PEOPLE",
+"org": 31282413
+},
+{
+"mentions": 9,
+"name": "ROYAL BOROUGH OF KINGSTON UPON THAMES AS LEAD BOROUGH ON BEHALF OF ITSELF AND THE CONTRACTING AUTHORITIES WITHIN THE SOUTH LONDON WASTE PARTNERSHIP (SEE SECTION VI.3)",
+"org": 31284459
+},
+{
+"mentions": 1,
+"name": "SUFFOLK COUNTY COUNCIL (SEE SECTION VI.3 \"ADDITIONAL INFORMATION\" REGARDING THE CONTRACTING AUTHORITIES WHO MAY POTENTIALLY USE THE CONTRACT)",
+"org": 31313049
+},
+{
+"mentions": 1,
+"name": "ARC 21 AND/OR ANY OF ITS CONSTITUENT COUNCILS (CURRENTLY ANTRIM BOROUGH COUNCIL, ARDS BOROUGH COUNCIL, BALLYMENA BOROUGH COUNCIL, BELFAST CITY COUNCIL, CARRICKFERGUS BOROUGH COUNCIL, CASTLEREAGH BOROUGH COUNCIL, DOWN DISTRICT COUNCIL, LARNE BOROUGH COUNCIL, LISBURN CITY COUNCIL, NEWTOWNABBEY BOROUGH COUNCIL AND NORTH DOWN BOROUGH COUNCIL), AND/OR ANY OTHER COUNCILS OR LOCAL OR REGIONAL AUTHORITIES",
+"org": 31320217
+},
+{
+"mentions": 1,
+"name": "THE SEVEN TSOS IN THE CENTRAL WESTERN REGION AS MENTIONED BELOW: CEGEDEL NET S.A. (LUXEMBOURG), ELIA SYSTEM OPERATOR SA (BELGIUM), ENBW TRANSPORTNETZE AG (GERMANY), E.ON NETZ GMBH (GERMANY), RTE EDF TRANSPORT (FRANCE), RWE TRANSPORTNETZ STROM GMBH (GERMANY), TENNET TSO B.V. (THE NETHERLANDS) (SEE SECTION VI,VI.3 FOR FURTHER INFORMATION ABOUT TENDERING PARTY /CONTRACTING ENTITY)",
+"org": 31328502
+},
+{
+"mentions": 1,
+"name": "LONDON BOROUGH OF CAMDEN ON BEHALF OF ITSELF AND THE FOLLOWING CONTRACTING AUTHORITIES; SEE SECTION VI.2 (ADDITIONAL INFORMATION)",
+"org": 31371355
+},
+{
+"mentions": 1,
+"name": "EASTERN SHIRES PURCHASING ORGANISATION (SEE WWW.ESPO.ORG) ON BEHALF OF EMBC PROCUREMENT LIMITED [EMBC] - SEE SECTION VI.2",
+"org": 31371984
+},
+{
+"mentions": 2,
+"name": "This is an award notice and this opportunity is closed. Please see section V (award of contract) for further details. Hertfordshire County Council ",
+"org": 31642518
+}
+]
+}

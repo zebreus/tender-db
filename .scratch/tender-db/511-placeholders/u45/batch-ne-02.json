@@ -1,0 +1,2739 @@
+[
+{
+"classes": [
+"placeholder"
+],
+"fold": "please refer to section vi 3 additional information of this notice",
+"mentions": 10,
+"names": [
+"Please refer to section VI.3 Additional information of this notice",
+"Please refer to Section VI.3) Additional Information of this notice",
+"Please refer to section VI.3 Additional Information of this notice"
+],
+"orgs": 3,
+"roles": {
+"purchasing-body": 7,
+"winner": 4
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please see section v1 2 additional information",
+"mentions": 10,
+"names": [
+"Please see section V1.2 Additional Information",
+"Please see section V1.2) — Additional Information",
+"Please see Section V1.2 Additional Information"
+],
+"orgs": 3,
+"roles": {
+"purchasing-body": 2,
+"winner": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please see vi 4 3 below",
+"mentions": 10,
+"names": [
+"please see VI.4.3 below"
+],
+"orgs": 1,
+"roles": {
+"Lot-ReviewOrg": 2,
+"review-body": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "refer to vi 3 2",
+"mentions": 10,
+"names": [
+"Refer to VI.3.2",
+"Refer to VI.3.2)"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 4,
+"review-body": 6
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "regierung von oberbayern vob stelle siehe oben",
+"mentions": 10,
+"names": [
+"Regierung von Oberbayern, VOB-Stelle (siehe oben)"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 10,
+"mediation-body": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s o ziff vi 3 nr 1 der bekanntmachung",
+"mentions": 10,
+"names": [
+"S.o. Ziff. VI.3) Nr. 1 der Bekanntmachung",
+"S. o. Ziff. VI.3) Nr. 1 der Bekanntmachung",
+"s. o. Ziff. VI.3) Nr. 1 der Bekanntmachung"
+],
+"orgs": 3,
+"roles": {
+"review-body": 13
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s vi 1",
+"mentions": 10,
+"names": [
+"S. VI.1)",
+"S. VI.1"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 2,
+"review-body": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s vi 4 2",
+"mentions": 10,
+"names": [
+"s. VI.4.2)"
+],
+"orgs": 1,
+"roles": {
+"review-body": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s ziff vi 3 1",
+"mentions": 10,
+"names": [
+"s. Ziff. VI.3.1",
+"s. Ziff VI.3.1",
+"S. Ziff. VI.3.1)"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "same as vi 4 1 above",
+"mentions": 10,
+"names": [
+"Same as VI.4.1 above."
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 12,
+"mediation-body": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "see vi 4 3 above",
+"mentions": 10,
+"names": [
+"See VI.4.3) above",
+"See VI.4.3 Above"
+],
+"orgs": 2,
+"roles": {
+"review-body": 12
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe punkt i 1 der veroffentlichung",
+"mentions": 10,
+"names": [
+"Siehe Punkt I.1) der Veröffentlichung",
+"Siehe Punkt I.1 der Veröffentlichung.",
+"Siehe Punkt I.1 der Veröffentlichung"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 11
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "tak jak w pkt vi 4",
+"mentions": 10,
+"names": [
+"tak jak w pkt. VI.4)",
+"tak jak w pkt VI.4",
+"Tak jak w pkt.VI.4)"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 22
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "thuringenforst anstalt offentlichen rechts siehe oben unter i 1",
+"mentions": 10,
+"names": [
+"ThüringenForst – Anstalt öffentlichen Rechts (siehe oben unter I.1)",
+"ThüringenForst - Anstalt öffentlichen Rechts (siehe oben unter I.1)"
+],
+"orgs": 2,
+"roles": {
+"review-body": 12
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "vgl ziffer vi 4 1",
+"mentions": 10,
+"names": [
+"Vgl. Ziffer VI.4.1",
+"Vgl. Ziffer VI.4.1)",
+"vgl. Ziffer VI.4.1)"
+],
+"orgs": 4,
+"roles": {
+"appeal-information": 8,
+"review-body": 3
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "voir i 1",
+"mentions": 10,
+"names": [
+"Voir I.1",
+"Voir I.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 10
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "voir informations citees a l article vi 3 informations complementaires",
+"mentions": 10,
+"names": [
+"Voir informations citées à l'article VI.3) Informations complémentaires"
+],
+"orgs": 1,
+"roles": {
+"further-information": 1,
+"specifications-provider": 3,
+"tender-receipt": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "as section i 1 of this contract notice",
+"mentions": 9,
+"names": [
+"As Section I.1) of this contract notice"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 3,
+"mediation-body": 4,
+"review-body": 3
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "cf point vi 4 1",
+"mentions": 9,
+"names": [
+"cf. point VI.4.1).",
+"Cf point VI.4.1)",
+"Cf. point VI.4.1"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "i 1",
+"mentions": 9,
+"names": [
+"I.1)",
+"I.1"
+],
+"orgs": 9,
+"roles": {
+"appeal-information": 4,
+"winner": 7
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "in tend system please see section vi 3 additional information",
+"mentions": 9,
+"names": [
+"In-Tend System - please see section VI.3 - Additional Information"
+],
+"orgs": 1,
+"roles": {
+"further-information": 7,
+"specifications-provider": 7,
+"tender-receipt": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "jak wyzej w pkt vi 4 1",
+"mentions": 9,
+"names": [
+"Jak wyżej - w pkt. VI.4.1)",
+"jak wyżej w pkt VI.4.1)",
+"jak wyżej w pkt VI.4.1"
+],
+"orgs": 5,
+"roles": {
+"appeal-information": 14,
+"mediation-body": 3
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "jw zgodnie z pkt vi 3 1",
+"mentions": 9,
+"names": [
+"jw. zgodnie z pkt VI.3.1",
+"jw. zgodnie z pkt. VI.3.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "patrz vi 4 1 organ odpowiedzialny za procedury odwolawcze",
+"mentions": 9,
+"names": [
+"patrz VI.4.1) Organ odpowiedzialny za procedury odwoławcze",
+"patrz - VI.4.1) Organ odpowiedzialny za procedury odwoławcze",
+"patrz – VI.4.1) Organ odpowiedzialny za procedury odwoławcze"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 11
+}
+},
+{
+"classes": [
+"award_summary"
+],
+"fold": "perfil del contratante de la pagina web de la fabrica nacional de moneda y timbre real casa de la moneda",
+"mentions": 9,
+"names": [
+"Perfil del contratante de la página WEB de la Fábrica Nacional de Moneda y Timbre - Real Casa de la Moneda"
+],
+"orgs": 1,
+"roles": {
+"specifications-provider": 20
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please refer to section ii 2 1 total quantity or scope",
+"mentions": 9,
+"names": [
+"Please refer to section II.2.1 total quantity or scope",
+"Please refer to Section II.2.1) Total Quantity or Scope"
+],
+"orgs": 2,
+"roles": {
+"purchasing-body": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please see the item under section vi 4 2",
+"mentions": 9,
+"names": [
+"Please see the item under section VI.4.2",
+"Please see the item under section VI.4.2)"
+],
+"orgs": 2,
+"roles": {
+"review-body": 12
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "please see vi 2 additional information for supplier award breakdown",
+"mentions": 9,
+"names": [
+"Please see VI.2) Additional Information for Supplier Award breakdown"
+],
+"orgs": 1,
+"roles": {
+"winner": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please see vi 3 above",
+"mentions": 9,
+"names": [
+"Please see VI.3) above",
+"Please see VI.3 above."
+],
+"orgs": 2,
+"roles": {
+"further-information": 8,
+"specifications-provider": 8,
+"tender-receipt": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "punti di contatto di cui al punto i 1 del bando",
+"mentions": 9,
+"names": [
+"Punti di contatto di cui al punto I.1 del bando"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "refer to information contained in section vi 4 2",
+"mentions": 9,
+"names": [
+"refer to information contained in Section VI.4.2)",
+"Refer to information contained in Section VI.4.2.",
+"refer to information contained in Section VI.4.2"
+],
+"orgs": 3,
+"roles": {
+"review-body": 18
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "refer to section vi 3",
+"mentions": 9,
+"names": [
+"Refer to Section VI.3",
+"Refer to Section VI.3)",
+"Refer to section VI.3"
+],
+"orgs": 4,
+"roles": {
+"further-information": 5,
+"specifications-provider": 5,
+"tender-receipt": 11
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "royal borough of kingston upon thames as lead borough on behalf of itself and the contracting authorities within the sou",
+"mentions": 9,
+"names": [
+"ROYAL BOROUGH OF KINGSTON UPON THAMES AS LEAD BOROUGH ON BEHALF OF ITSELF AND THE CONTRACTING AUTHORITIES WITHIN THE SOUTH LONDON WASTE PARTNERSHIP (SEE SECTION VI.3)"
+],
+"orgs": 1,
+"roles": {
+"buyer": 9
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "s o whg eberswalde ziff i 1",
+"mentions": 9,
+"names": [
+"s. o. WHG Eberswalde (Ziff. I.1.)",
+"s.o. WHG Eberswalde (Ziff. I.1.)"
+],
+"orgs": 2,
+"roles": {
+"mediation-body": 4,
+"review-body": 5
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s ziff vi 4 1",
+"mentions": 9,
+"names": [
+"S. Ziff. VI.4.1",
+"s. Ziff. VI.4.1",
+"S. Ziff. VI.4.1)"
+],
+"orgs": 4,
+"roles": {
+"appeal-information": 10,
+"mediation-body": 2,
+"review-body": 1
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "se referer a l article vi 4 1 ci dessus",
+"mentions": 9,
+"names": [
+"Se référer à l'article VI.4.1) ci-dessus"
+],
+"orgs": 1,
+"roles": {
+"review-body": 11
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "se vi 4 1",
+"mentions": 9,
+"names": [
+"Se VI.4.1"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 17
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "see details at vi 3 2",
+"mentions": 9,
+"names": [
+"See details at VI.3.2",
+"See Details at VI.3.2)"
+],
+"orgs": 2,
+"roles": {
+"review-body": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "see point vi 4 1",
+"mentions": 9,
+"names": [
+"See point VI.4.1.",
+"See point VI.4.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 13,
+"review-body": 1
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "see vi 2 4 above",
+"mentions": 9,
+"names": [
+"See VI.2.4 above",
+"See VI.2.4) above"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 9,
+"review-body": 1
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe angaben unter vi 2",
+"mentions": 9,
+"names": [
+"Siehe Angaben unter VI.2)"
+],
+"orgs": 1,
+"roles": {
+"winner": 9
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "siehe kontakstelle unter punkt i 1",
+"mentions": 9,
+"names": [
+"siehe Kontakstelle unter Punkt I.1)",
+"siehe Kontakstelle unter Punkt I.1",
+"Siehe Kontakstelle unter Punkt I.1)"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 6,
+"review-body": 4
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe kontaktstelle i 1",
+"mentions": 9,
+"names": [
+"siehe Kontaktstelle I.1)",
+"Siehe Kontaktstelle I.1)",
+"siehe Kontaktstelle I.1"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 11
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe ziffer vi 3",
+"mentions": 9,
+"names": [
+"Siehe Ziffer VI.3).",
+"Siehe Ziffer VI.3"
+],
+"orgs": 2,
+"roles": {
+"review-body": 6,
+"winner": 3
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "vds punto i 1",
+"mentions": 9,
+"names": [
+"Vds. punto I.1",
+"vds. punto I.1).",
+"Vds punto I.1."
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 12,
+"review-body": 1
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "withheld section94 supplier",
+"mentions": 9,
+"names": [
+"Withheld Section94 Supplier"
+],
+"orgs": 1,
+"roles": {
+"Tenderer": 31
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "zgodnie z pkt vi 4 1 niniejszego ogloszenia",
+"mentions": 9,
+"names": [
+"zgodnie z pkt.VI.4.1 niniejszego ogłoszenia",
+"zgodnie z pkt VI.4.1 niniejszego ogłoszenia",
+"zgodnie z pkt. VI.4.1 niniejszego ogłoszenia"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 3,
+"review-body": 15
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "zie afdeling vi 2",
+"mentions": 9,
+"names": [
+"Zie afdeling VI.2",
+"Zie afdeling VI.2."
+],
+"orgs": 2,
+"roles": {
+"winner": 9
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "zie het gestelde in afdeling iv 3 3 van deze aankondiging",
+"mentions": 9,
+"names": [
+"Zie het gestelde in afdeling IV.3.3 van deze aankondiging"
+],
+"orgs": 1,
+"roles": {
+"further-information": 2,
+"specifications-provider": 18
+}
+},
+{
+"classes": [
+"award_summary"
+],
+"fold": "3 sublotes varios proveedores homologados con diferentes porcentajes de descuento el listado de proveedores homologados ",
+"mentions": 8,
+"names": [
+"3 sublotes, varios proveedores homologados con diferentes porcentajes de descuento. El listado de proveedores homologados para este lote se ha publicado en el perfil del contratante del Gobierno de Aragón https://servicios.aragon.es/pcon/pcon-public/controlAdjudicacionPublico?accion=ACCION_SELECCIONAR_ADJUDICACION_PUBLICO&iddatoadjudicacion=545389"
+],
+"orgs": 1,
+"roles": {
+"winner": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "as per section vi 4 1",
+"mentions": 8,
+"names": [
+"As per section VI.4.1.",
+"As per Section VI.4.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 3,
+"mediation-body": 9,
+"review-body": 2
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "as per those listed in the additional information field vi 3",
+"mentions": 8,
+"names": [
+"As per those listed in the additional information field VI.3)",
+"As per those listed in the additional information field VI.3"
+],
+"orgs": 2,
+"roles": {
+"purchasing-body": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "as per vi 4 2",
+"mentions": 8,
+"names": [
+"As per VI.4.2"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 6,
+"mediation-body": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "cf article vi 3 1",
+"mentions": 8,
+"names": [
+"Cf. article VI.3.1",
+"Cf article VI.3.1)",
+"Cf. article VI.3.1)"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "cf rubrique vi 2 informations complementaires",
+"mentions": 8,
+"names": [
+"Cf rubrique Vi.2) informations complémentaires"
+],
+"orgs": 1,
+"roles": {
+"winner": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "come riportato al punto i 1 del presente avviso",
+"mentions": 8,
+"names": [
+"Come riportato al punto I.1) del presente avviso"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 6,
+"review-body": 6
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "for details of awarded suppliers please see section v1 2",
+"mentions": 8,
+"names": [
+"For details of awarded suppliers please see Section V1.2",
+"For details of awarded suppliers please see Section V1.2)",
+"For details of awarded suppliers, please see section V1.2"
+],
+"orgs": 3,
+"roles": {
+"winner": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "idem paragraphe vi 4 1",
+"mentions": 8,
+"names": [
+"idem paragraphe VI.4.1)",
+"idem paragraphe VI.4.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "j w dla punktu vi 4 1",
+"mentions": 8,
+"names": [
+"j.w dla punktu VI.4.1",
+"j.w. dla punktu VI.4.1."
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 20
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please refer to section ii 1 4",
+"mentions": 8,
+"names": [
+"Please refer to Section II.1.4",
+"Please refer to Section II.1.4)",
+"Please refer to section II.1.4"
+],
+"orgs": 3,
+"roles": {
+"further-information": 1,
+"purchasing-body": 2,
+"tender-receipt": 1,
+"winner": 4
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please refer to section ii 1 5 short description of the contract or purchase",
+"mentions": 8,
+"names": [
+"Please refer to Section II.1.5) Short Description of the Contract or Purchase"
+],
+"orgs": 1,
+"roles": {
+"further-information": 6,
+"purchasing-body": 1,
+"specifications-provider": 5,
+"tender-receipt": 5
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please refer to vi 4 3 above",
+"mentions": 8,
+"names": [
+"Please refer to VI.4.3 above",
+"Please refer to VI.4.3) Above"
+],
+"orgs": 2,
+"roles": {
+"review-body": 8
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "refer to instructions contained in section vi 3 2",
+"mentions": 8,
+"names": [
+"Refer to instructions contained in Section VI.3.2",
+"Refer to instructions contained in Section VI.3.2)"
+],
+"orgs": 2,
+"roles": {
+"mediation-body": 1,
+"review-body": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "refer to vi 4 3",
+"mentions": 8,
+"names": [
+"Refer to VI.4.3"
+],
+"orgs": 1,
+"roles": {
+"Lot-ReviewOrg": 3,
+"appeal-information": 1,
+"mediation-body": 1,
+"review-body": 3
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s o ziff vi 3 nr 4 der bekanntmachung",
+"mentions": 8,
+"names": [
+"s.o. Ziff. VI.3) Nr. 4 der Bekanntmachung",
+"s. o. Ziff. VI.3) Nr. 4 der Bekanntmachung"
+],
+"orgs": 2,
+"roles": {
+"mediation-body": 5,
+"review-body": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s punkt vi 4 1",
+"mentions": 8,
+"names": [
+"s. Punkt VI.4.1)",
+"s. Punkt VI.4.1",
+"s. Punkt VI.4.1."
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 6,
+"mediation-body": 4
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "se punkt vi 3",
+"mentions": 8,
+"names": [
+"Se punkt VI.3)"
+],
+"orgs": 2,
+"roles": {
+"further-information": 1,
+"purchasing-body": 11,
+"tender-receipt": 2
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "se reporter a la rubrique vi 3 relative aux informations complementaires",
+"mentions": 8,
+"names": [
+"se reporter à la rubrique Vi.3) relative aux informations complémentaires.",
+"Se reporter à la rubrique VI.3 relative aux informations complémentaires:",
+"se reporter à la rubrique Vi.3 relative aux informations complémentaires -"
+],
+"orgs": 3,
+"roles": {
+"tender-receipt": 16
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "see section vi complementary information",
+"mentions": 8,
+"names": [
+"See Section VI: complementary information"
+],
+"orgs": 1,
+"roles": {
+"Tenderer": 16
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "see short decriptiom ii 1 4",
+"mentions": 8,
+"names": [
+"See Short Decriptiom II.1.4"
+],
+"orgs": 1,
+"roles": {
+"purchasing-body": 8
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "see vi 3 additional information scms",
+"mentions": 8,
+"names": [
+"See VI.3) Additional information - SCMS"
+],
+"orgs": 1,
+"roles": {
+"further-information": 7,
+"specifications-provider": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "sh ziffer vi 4 1",
+"mentions": 8,
+"names": [
+"sh. Ziffer VI.4.1)",
+"sh. Ziffer VI.4.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe angaben unter ziff vi 3 1",
+"mentions": 8,
+"names": [
+"Siehe Angaben unter Ziff. VI.3.1)."
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe iv 3 1",
+"mentions": 8,
+"names": [
+"siehe IV.3.1)",
+"Siehe IV.3.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 8
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "siehe kontaktdaten unter nr i 1",
+"mentions": 8,
+"names": [
+"Siehe Kontaktdaten unter Nr. I.1).",
+"siehe Kontaktdaten unter Nr. I.1"
+],
+"orgs": 2,
+"roles": {
+"review-body": 8
+}
+},
+{
+"classes": [
+"award_summary"
+],
+"fold": "siehe oben uvs",
+"mentions": 8,
+"names": [
+"siehe oben - UVS!",
+"siehe oben - UVS!!"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 4,
+"mediation-body": 4
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "siehe punkt vi 4 1 vgw",
+"mentions": 8,
+"names": [
+"Siehe Punkt VI.4.1 – VGW",
+"Siehe Punkt VI.4.1) – VGW"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 12
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "the uk does not have any such body with responsibility for appeal procedures please see section vi 3 2",
+"mentions": 8,
+"names": [
+"The UK does not have any such body with responsibility for appeal procedures. Please see Section VI.3.2)",
+"The UK does not have any such body with responsibility for appeal procedures. Please see section VI.3.2",
+"The UK does not have any such body with responsibility for appeal procedures. Please see section VI.3.2."
+],
+"orgs": 3,
+"roles": {
+"mediation-body": 1,
+"review-body": 7
+}
+},
+{
+"classes": [
+"award_summary"
+],
+"fold": "ver anexo publicado en el perfil del contratante www hospitalclinic org proveidors plataforma electronica de contratacio",
+"mentions": 8,
+"names": [
+"Ver anexo publicado en el Perfil del Contratante www.hospitalclinic.org/. proveïdors / Plataforma electrónica de contratación pública de la Generalitat de Catalunya",
+"Ver anexo publicado en el Perfil del Contratante: www.hospitalclinic.org / proveïdors / Plataforma electrónica de contratación pública de la Generalitat de Catalunya",
+"Ver anexo publicado en el perfil del contratante www.hospitalclinic.org/.proveïdors / Plataforma electrónica de contratación pública de la Generalitat de Catalunya"
+],
+"orgs": 4,
+"roles": {
+"winner": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "vgl i 1 vergabestelle",
+"mentions": 8,
+"names": [
+"Vgl. I.1) Vergabestelle",
+"vgl. I.1 Vergabestelle"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 2,
+"review-body": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "vi 4 2 below",
+"mentions": 8,
+"names": [
+"VI.4.2 below",
+"VI.4.2) below"
+],
+"orgs": 2,
+"roles": {
+"mediation-body": 4,
+"review-body": 4
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "vi 4 3",
+"mentions": 8,
+"names": [
+"VI.4.3",
+"VI.4.3)"
+],
+"orgs": 3,
+"roles": {
+"Lot-Mediator": 2,
+"Lot-ReviewOrg": 4,
+"mediation-body": 1,
+"review-body": 3
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "voir point vi 3 1",
+"mentions": 8,
+"names": [
+"voir point Vi.3.1",
+"Voir point VI.3.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "voir supra rubrique i 1",
+"mentions": 8,
+"names": [
+"voir supra rubrique I.1"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 2,
+"review-body": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "wie oben nr vi 3 1",
+"mentions": 8,
+"names": [
+"Wie oben Nr. VI.3.1)"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "wie vi 1",
+"mentions": 8,
+"names": [
+"wie VI.1",
+"Wie VI.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 7,
+"mediation-body": 2
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "zie vi 7",
+"mentions": 8,
+"names": [
+"zie VI.7"
+],
+"orgs": 1,
+"roles": {
+"winner": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "as detailed in i 1",
+"mentions": 7,
+"names": [
+"As detailed in I.1)",
+"As detailed in I.1."
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 4,
+"mediation-body": 2,
+"review-body": 2
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "as detailed in section ii 2 1",
+"mentions": 7,
+"names": [
+"As detailed in section II.2.1",
+"As detailed in Section II.2.1)"
+],
+"orgs": 3,
+"roles": {
+"purchasing-body": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "as vi 3",
+"mentions": 7,
+"names": [
+"As VI.3"
+],
+"orgs": 2,
+"roles": {
+"further-information": 5,
+"specifications-provider": 2,
+"tender-receipt": 5
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "cfr vi 2 autres informations",
+"mentions": 7,
+"names": [
+"Cfr VI.2) Autres informations"
+],
+"orgs": 1,
+"roles": {
+"winner": 7
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "details of supplier withheld for reasons of security",
+"mentions": 7,
+"names": [
+"Details of supplier withheld for reasons of security"
+],
+"orgs": 2,
+"roles": {
+"winner": 7
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "for information on contracting authorities and how to express an interest please see section vi 3 additional information",
+"mentions": 7,
+"names": [
+"for Information on Contracting Authorities and how to express an interest, please see Section VI.3) Additional Information"
+],
+"orgs": 1,
+"roles": {
+"purchasing-body": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "meme entite que celle mentionnee en i 1",
+"mentions": 7,
+"names": [
+"même entité que celle mentionnée en I.1",
+"Même entité que celle mentionnée en I.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 8,
+"mediation-body": 1
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "n a see section vi 3 2",
+"mentions": 7,
+"names": [
+"N/A See Section VI.3.2)"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "patrz pkt vi 3 1",
+"mentions": 7,
+"names": [
+"patrz pkt VI.3.1)",
+"patrz pkt VI.3.1",
+"patrz pkt. - VI.3.1)"
+],
+"orgs": 4,
+"roles": {
+"appeal-information": 7
+}
+},
+{
+"classes": [
+"award_summary"
+],
+"fold": "perfil de contratante de la consejeria de hacienda de la cam",
+"mentions": 7,
+"names": [
+"Perfil de Contratante de la Consejería de Hacienda de la CAM"
+],
+"orgs": 1,
+"roles": {
+"specifications-provider": 18
+}
+},
+{
+"classes": [
+"award_summary"
+],
+"fold": "perfil del contratante del ayuntamiento de san fernando",
+"mentions": 7,
+"names": [
+"Perfil del contratante del Ayuntamiento de San Fernando"
+],
+"orgs": 1,
+"roles": {
+"specifications-provider": 15
+}
+},
+{
+"classes": [
+"award_summary"
+],
+"fold": "perfil del contratante www vitoria gasteiz org y en la fotocopisteria arco",
+"mentions": 7,
+"names": [
+"Perfil del contratante(www.vitoria-gasteiz.org) y en la Fotocopisteria Arco",
+"Perfil del contratante (www.vitoria-gasteiz.org) y en la Fotocopisteria Arco"
+],
+"orgs": 2,
+"roles": {
+"specifications-provider": 14
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please refer to section vi 3 2 below",
+"mentions": 7,
+"names": [
+"Please refer to section VI.3.2 below"
+],
+"orgs": 1,
+"roles": {
+"mediation-body": 3,
+"review-body": 5
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please refer to vi 3 additional information",
+"mentions": 7,
+"names": [
+"Please refer to VI.3) Additional Information",
+"Please refer to VI.3 Additional Information"
+],
+"orgs": 3,
+"roles": {
+"further-information": 2,
+"purchasing-body": 7,
+"specifications-provider": 2,
+"tender-receipt": 2
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please see section vi 2 additional information",
+"mentions": 7,
+"names": [
+"Please see section VI.2) Additional Information",
+"Please see Section VI.2 (Additional information)"
+],
+"orgs": 3,
+"roles": {
+"purchasing-body": 4,
+"winner": 3
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please see the item under section vi 4 2 below",
+"mentions": 7,
+"names": [
+"Please see the item under section VI.4.2 below"
+],
+"orgs": 1,
+"roles": {
+"review-body": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s o i 1",
+"mentions": 7,
+"names": [
+"S.o. (I.1))",
+"S. o. I.1",
+"s.o. I.1."
+],
+"orgs": 4,
+"roles": {
+"appeal-information": 4,
+"mediation-body": 4,
+"specifications-provider": 5
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "s vi 4 1 vergabekammer bei der bezirksregierung koln",
+"mentions": 7,
+"names": [
+"s. VI.4.1): Vergabekammer bei der Bezirksregierung Köln"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "same as point vi 4 1",
+"mentions": 7,
+"names": [
+"Same as point VI.4.1"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 10
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "se referer au point vi 2 autres informations",
+"mentions": 7,
+"names": [
+"Se référer au point VI.2 autres informations"
+],
+"orgs": 1,
+"roles": {
+"winner": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "se reporter a l article vi 3",
+"mentions": 7,
+"names": [
+"Se reporter à l'article VI.3 !!!",
+"!!! se reporter à l'article VI.3 !!!",
+"se reporter à l'article VI.3"
+],
+"orgs": 3,
+"roles": {
+"tender-receipt": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "see additional information at vi 3",
+"mentions": 7,
+"names": [
+"See additional information at VI.3"
+],
+"orgs": 1,
+"roles": {
+"specifications-provider": 5,
+"tender-receipt": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "see ii 1 5",
+"mentions": 7,
+"names": [
+"See II.1.5",
+"See II.1.5)"
+],
+"orgs": 3,
+"roles": {
+"purchasing-body": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "see vi 4 4 below",
+"mentions": 7,
+"names": [
+"See VI.4.4) Below",
+"See VI.4.4 below"
+],
+"orgs": 2,
+"roles": {
+"Lot-ReviewOrg": 3,
+"mediation-body": 2,
+"review-body": 2
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe abschn vi 4 1",
+"mentions": 7,
+"names": [
+"siehe Abschn. VI.4.1",
+"Siehe Abschn. VI.4.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 11
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe abschnitt vi 2 zusatzliche informationen",
+"mentions": 7,
+"names": [
+"siehe Abschnitt VI.2 Zusätzliche Informationen"
+],
+"orgs": 1,
+"roles": {
+"AWARD_AND_CONTRACT_VALUE": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe auch i 1",
+"mentions": 7,
+"names": [
+"Siehe auch I.1)",
+"siehe auch I.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 6,
+"review-body": 3
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe i 1 oder vi 3 1",
+"mentions": 7,
+"names": [
+"siehe I.1) oder VI.3.1)",
+"siehe I.1 oder VI.3.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 11
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe nr vi 3 1",
+"mentions": 7,
+"names": [
+"Siehe Nr. VI.3.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe punkt vi 2",
+"mentions": 7,
+"names": [
+"Siehe Punkt VI.2",
+"Siehe Punkt VI.2)"
+],
+"orgs": 3,
+"roles": {
+"further-information": 1,
+"winner": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe punkt vi 3 zusatzliche angaben",
+"mentions": 7,
+"names": [
+"Siehe Punkt VI.3)\nZusätzliche Angaben",
+"Siehe Punkt VI.3) Zusätzliche Angaben",
+"Siehe Punkt VI.3 Zusätzliche Angaben"
+],
+"orgs": 3,
+"roles": {
+"purchasing-body": 3,
+"winner": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe unter ziffer vi 4 1",
+"mentions": 7,
+"names": [
+"Siehe unter Ziffer VI.4.1)"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 15
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe unter ziffer vi 4 1 der vorliegenden bekanntmachung",
+"mentions": 7,
+"names": [
+"Siehe unter Ziffer VI.4.1) der vorliegenden Bekanntmachung"
+],
+"orgs": 1,
+"roles": {
+"review-body": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "tak jak w pkt vi 4 1",
+"mentions": 7,
+"names": [
+"tak jak w pkt VI.4.1)",
+"Tak jak w pkt.VI.4.1",
+"Tak jak w pkt. VI.4.1)"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 11
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "vedasi p to i 1 ufficio protocollo",
+"mentions": 7,
+"names": [
+"vedasi p.to I.1 - ufficio protocollo"
+],
+"orgs": 1,
+"roles": {
+"tender-receipt": 16
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "vedasi punto vi 4 1",
+"mentions": 7,
+"names": [
+"Vedasi punto VI.4.1"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 1,
+"mediation-body": 4,
+"review-body": 2
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "vergabekammer des landes berlin siehe oben",
+"mentions": 7,
+"names": [
+"Vergabekammer des Landes Berlin (siehe oben)",
+"Vergabekammer des Landes Berlin (siehe oben )"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 4,
+"mediation-body": 3,
+"review-body": 3
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "vgl vi 3 1",
+"mentions": 7,
+"names": [
+"Vgl.VI.3.1",
+"Vgl. VI.3.1",
+"vgl. VI.3.1)"
+],
+"orgs": 4,
+"roles": {
+"appeal-information": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "vgl ziffer vi 4 3",
+"mentions": 7,
+"names": [
+"Vgl. Ziffer VI.4.3)."
+],
+"orgs": 1,
+"roles": {
+"review-body": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "vgl ziffer vi 4 oder i 1",
+"mentions": 7,
+"names": [
+"vgl. Ziffer VI.4 oder I.1",
+"Vgl. Ziffer VI.4) oder I.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "vgs punto i 1",
+"mentions": 7,
+"names": [
+"Vgs punto I.1)",
+"Vgs. punto I.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "viz bod vi 4 1",
+"mentions": 7,
+"names": [
+"Viz bod VI.4.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 13,
+"review-body": 1
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "voir article vi 2",
+"mentions": 7,
+"names": [
+"Voir article VI.2"
+],
+"orgs": 1,
+"roles": {
+"winner": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "voir article vi 3 3",
+"mentions": 7,
+"names": [
+"Voir article VI.3.3"
+],
+"orgs": 1,
+"roles": {
+"mediation-body": 2,
+"review-body": 5
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "voir rubrique ii 2 4",
+"mentions": 7,
+"names": [
+"Voir rubrique II.2.4"
+],
+"orgs": 1,
+"roles": {
+"winner": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "voir vi 2",
+"mentions": 7,
+"names": [
+"voir VI.2",
+"Voir VI.2",
+"Voir VI.2)"
+],
+"orgs": 3,
+"roles": {
+"winner": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "wie iv 3 1",
+"mentions": 7,
+"names": [
+"wie IV.3.1)",
+"Wie IV.3.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 7,
+"mediation-body": 1
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "wie punkt vi 4 1",
+"mentions": 7,
+"names": [
+"Wie Punkt VI.4.1)",
+"Wie Punkt VI.4.1",
+"wie Punkt VI.4.1."
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 6,
+"review-body": 1
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "wie unter vi 3 1",
+"mentions": 7,
+"names": [
+"Wie unter VI.3.1)",
+"wie unter VI.3.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 5,
+"mediation-body": 2
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "zgodnie z pkt vi 4 1",
+"mentions": 7,
+"names": [
+"zgodnie z pkt. VI.4.1)",
+"zgodnie z pkt. VI.4.1",
+"zgodnie z pkt VI.4.1)"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 4,
+"mediation-body": 2,
+"review-body": 3
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "zie het gestelde in vi 3",
+"mentions": 7,
+"names": [
+"Zie het gestelde in VI.3",
+"Zie het gestelde in VI.3)"
+],
+"orgs": 2,
+"roles": {
+"further-information": 11
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "zie punt vi 3 van deze publicatie",
+"mentions": 7,
+"names": [
+"Zie punt VI.3 van deze publicatie",
+"Zie punt VI.3) van deze publicatie"
+],
+"orgs": 2,
+"roles": {
+"specifications-provider": 6,
+"tender-receipt": 8
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "zie vi 3",
+"mentions": 7,
+"names": [
+"zie VI.3"
+],
+"orgs": 1,
+"roles": {
+"further-information": 5,
+"specifications-provider": 3,
+"tender-receipt": 3
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "zie vi 3 nadere inlichtingen",
+"mentions": 7,
+"names": [
+"Zie VI.3. Nadere Inlichtingen",
+"Zie VI.3) Nadere inlichtingen",
+"Zie VI.3 Nadere Inlichtingen"
+],
+"orgs": 3,
+"roles": {
+"specifications-provider": 4,
+"tender-receipt": 2,
+"winner": 4
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "ωσ vi 4 1",
+"mentions": 7,
+"names": [
+"Ως VI.4.1"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 7,
+"mediation-body": 1
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "as in section i i 1 above",
+"mentions": 6,
+"names": [
+"As in section I - I.1 above"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "as per section ii 2 1",
+"mentions": 6,
+"names": [
+"As per section II.2.1)",
+"As per section II.2.1"
+],
+"orgs": 2,
+"roles": {
+"purchasing-body": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "auftraggeber gem pkt i 1",
+"mentions": 6,
+"names": [
+"Auftraggeber gem. Pkt. I.1)",
+"Auftraggeber gem. Pkt.I.1"
+],
+"orgs": 2,
+"roles": {
+"further-information": 2,
+"specifications-provider": 2,
+"tender-receipt": 2
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "cf informations point vi 3",
+"mentions": 6,
+"names": [
+"Cf. informations point VI.3"
+],
+"orgs": 1,
+"roles": {
+"further-information": 3,
+"specifications-provider": 3,
+"tender-receipt": 3
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "cf rubirque vi 4 1",
+"mentions": 6,
+"names": [
+"cf rubirque Vi.4.1"
+],
+"orgs": 1,
+"roles": {
+"review-body": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "cf vi 3 2",
+"mentions": 6,
+"names": [
+"Cf. VI.3.2)",
+"cf VI.3.2",
+"cf. VI.3.2"
+],
+"orgs": 3,
+"roles": {
+"review-body": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "confer article vi 4 1",
+"mentions": 6,
+"names": [
+"Confer article VI.4.1).",
+"Confer article VI.4.1"
+],
+"orgs": 2,
+"roles": {
+"review-body": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "for details of the awarded suppliers please see section vi 3",
+"mentions": 6,
+"names": [
+"For details of the awarded suppliers, please see section VI.3",
+"For details of the awarded suppliers, please see section VI.3)",
+"For details of the awarded suppliers please see Section VI.3)"
+],
+"orgs": 3,
+"roles": {
+"winner": 6
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "for names of suppliers please see section 6",
+"mentions": 6,
+"names": [
+"For names of suppliers please see section 6"
+],
+"orgs": 1,
+"roles": {
+"winner": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "j w zgodnie z pkt vi 4 1",
+"mentions": 6,
+"names": [
+"j.w. zgodnie z pkt VI.4.1",
+"j.w. zgodnie z pkt.VI.4.1"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 10
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "jak vi 3 1",
+"mentions": 6,
+"names": [
+"jak VI.3.1",
+"jak VI.3.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "jak w pkt iv 3 1",
+"mentions": 6,
+"names": [
+"jak w pkt IV.3.1)",
+"jak w pkt IV.3.1",
+"jak w pkt.IV.3.1"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "jak w pkt vi 4 1 powyzej",
+"mentions": 6,
+"names": [
+"jak w pkt. VI.4.1 powyżej"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "patrz vi 3 1",
+"mentions": 6,
+"names": [
+"patrz VI.3.1",
+"patrz VI.3.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please refer to section vi 4 2 of this notice",
+"mentions": 6,
+"names": [
+"Please refer to section VI.4.2 of this notice"
+],
+"orgs": 1,
+"roles": {
+"review-body": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please refer to vi 2 additional information of this notice",
+"mentions": 6,
+"names": [
+"Please refer to VI.2 Additional Information of this notice",
+"Please refer to VI.2) Additional Information of this notice"
+],
+"orgs": 2,
+"roles": {
+"purchasing-body": 9
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please refer to vi 4 2 above",
+"mentions": 6,
+"names": [
+"Please refer to VI.4.2 above"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 12
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "please see section vi 3",
+"mentions": 6,
+"names": [
+"Please see section VI.3",
+"Please see Section VI.3)"
+],
+"orgs": 3,
+"roles": {
+"purchasing-body": 5,
+"winner": 4
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "refer to section ii 1 2 for other contracting",
+"mentions": 6,
+"names": [
+"Refer to Section II.1.2) for other contracting"
+],
+"orgs": 1,
+"roles": {
+"purchasing-body": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "refer to vi 4 2 below",
+"mentions": 6,
+"names": [
+"Refer to VI.4.2 below"
+],
+"orgs": 2,
+"roles": {
+"mediation-body": 2,
+"review-body": 4
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "rif punto iv 4 1",
+"mentions": 6,
+"names": [
+"Rif. punto IV.4.1",
+"Rif. punto IV.4.1)"
+],
+"orgs": 2,
+"roles": {
+"review-body": 11
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "rv partner 1 keine angabe aus grunden des wettbewerbs",
+"mentions": 6,
+"names": [
+"RV-Partner 1 (Keine Angabe aus Gründen des Wettbewerbs)"
+],
+"orgs": 1,
+"roles": {
+"winner": 6
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "rv partner 2 keine angabe aus grunden des wettbewerbs",
+"mentions": 6,
+"names": [
+"RV-Partner 2 (Keine Angabe aus Gründen des Wettbewerbs)"
+],
+"orgs": 1,
+"roles": {
+"winner": 6
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "rv partner 3 keine angabe aus grunden des wettbewerbs",
+"mentions": 6,
+"names": [
+"RV-Partner 3 (Keine Angabe aus Gründen des Wettbewerbs)"
+],
+"orgs": 1,
+"roles": {
+"winner": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s kontaktstelle ziff i 1",
+"mentions": 6,
+"names": [
+"S. Kontaktstelle, Ziff. I.1)"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 12
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s o unter i 1",
+"mentions": 6,
+"names": [
+"S. o. unter I.1.",
+"s.o. unter I.1",
+"s. o. unter I.1)"
+],
+"orgs": 3,
+"roles": {
+"mediation-body": 5,
+"review-body": 2
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "s vi 2",
+"mentions": 6,
+"names": [
+"s. VI.2",
+"S. VI.2)",
+"S. VI.2"
+],
+"orgs": 3,
+"roles": {
+"winner": 9
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "s vi 4 vergabekammer bei der bezirksregierung koln",
+"mentions": 6,
+"names": [
+"s. VI.4): Vergabekammer bei der Bezirksregierung Köln"
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 7
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "see additional information at section vi 3",
+"mentions": 6,
+"names": [
+"See additional information at Section VI.3)"
+],
+"orgs": 1,
+"roles": {
+"buyer": 1,
+"winner": 5
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "see list of participating institutions agencies and bodies see point vi 3",
+"mentions": 6,
+"names": [
+"See list of participating institutions, agencies and bodies (see Point VI.3)"
+],
+"orgs": 1,
+"roles": {
+"buyer": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "see point vi 3 1",
+"mentions": 6,
+"names": [
+"See point VI.3.1.",
+"See point VI.3.1)"
+],
+"orgs": 2,
+"roles": {
+"appeal-information": 7
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "siehe abschnit i 1",
+"mentions": 6,
+"names": [
+"siehe Abschnit I.1"
+],
+"orgs": 1,
+"roles": {
+"review-body": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe abschnitt vi 3",
+"mentions": 6,
+"names": [
+"Siehe Abschnitt VI.3",
+"Siehe Abschnitt VI.3)"
+],
+"orgs": 2,
+"roles": {
+"review-body": 6,
+"winner": 1
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "siehe abschnittt vi 4 1",
+"mentions": 6,
+"names": [
+"Siehe Abschnittt VI.4.1)",
+"Siehe Abschnittt VI.4.1"
+],
+"orgs": 3,
+"roles": {
+"appeal-information": 1,
+"review-body": 6
+}
+},
+{
+"classes": [
+"placeholder"
+],
+"fold": "siehe angaben unter ziff iv 4 1",
+"mentions": 6,
+"names": [
+"Siehe Angaben unter Ziff. IV.4.1)."
+],
+"orgs": 1,
+"roles": {
+"appeal-information": 6
+}
+},
+{
+"classes": [
+"name"
+],
+"fold": "siehe die unter vi 4 1 bezeichnete stelle",
+"mentions": 6,
+"names": [
+"Siehe die unter VI.4.1) bezeichnete Stelle"
+],
+"orgs": 1,
+"roles": {
+"review-body": 6
+}
+}
+]
