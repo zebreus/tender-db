@@ -6046,7 +6046,8 @@ pub struct NhsBodyVerdict {
     /// (the holder listing was cut), `stale` (the live holders are not the reviewed ones),
     /// `members-not-live`, `member-gone` (a member's org row no longer stands),
     /// `contested`, `member-denied`, `member-key-owned-elsewhere` (D4: a standing
-    /// identifier-NULL row outside the body owns a member's 234 key, so U4 would hold it).
+    /// identifier-NULL row outside the body owns a LOSER's 234 key, so U4 would hold it;
+    /// the survivor's own key is never armed, so its owner holds nothing — U6).
     pub status: &'static str,
     /// For `stale`: the live holders the reviewer never read, and the read ones gone.
     pub newcomers: Vec<i64>,
@@ -26688,9 +26689,24 @@ impl Db {
                                 "contested"
                             } else if any_member(|x| !x.denied.is_empty()) {
                                 "member-denied"
-                            } else if any_member(|x| !x.key_owners_elsewhere.is_empty()) {
-                                // D4: U4 would hold this member (`alias_key_owned_elsewhere`),
-                                // so the verdict could not fold what it names.
+                            } else if {
+                                // D4: U4 would hold a LOSER whose key a row outside the body
+                                // owns (`alias_key_owned_elsewhere`), so the verdict could not
+                                // fold what it names. Issue 513 U6: the member the fold keeps
+                                // is exempt — the alias arms loser keys only
+                                // (`NHS_BODY_ALIAS_LEDGER_SQL` reads `$.loser_name_norm`), so a
+                                // survivor's key owned by its uncoded twin guards nothing and
+                                // only kept the body's own PPON org out (RHM, RNK, RXT, …). The
+                                // twin stays split, E3's accepted cost. An ambiguous survivor
+                                // exempts nobody (the wet run holds it anyway).
+                                let members: Vec<&NhsBodyHolder> = v
+                                    .members
+                                    .iter()
+                                    .filter_map(|m| entry.holders.iter().find(|x| x.org_id == *m))
+                                    .collect();
+                                let keep = nhs_body_survivor(&members, args.key).ok().map(|(h, _)| h.org_id);
+                                members.iter().any(|x| Some(x.org_id) != keep && !x.key_owners_elsewhere.is_empty())
+                            } {
                                 "member-key-owned-elsewhere"
                             } else {
                                 "admitted"

@@ -107,3 +107,54 @@ What the fold keeps that the decision meant to drop, measured on residual dry 22
 Each item needs a keep test for its near misses before it is admitted, and the same dry → reads → canary → wet as
 unit 3.
 
+### Unit 4 build review (2026-10-12): fixes and open points
+
+Fixed in the build (uncommitted at the time of writing; `partyname.rs`, `project.rs`):
+- **Item 1 seeds only from a bare pointer.** A placeholder whose text after its stem still names something
+  (`partyname::names_after_stem`: references stripped, an opening separator stripped, section titles blanked,
+  but no separator required) no longer seeds the echo. Before this fix, EN `See Section VI.3 Kier Construction`
+  (a `Placeholder`, because the keep rule wants a separator) swept its DE copy `Siehe Abschnitt VI.3 Kier
+  Construction` and dropped a real party. Before unit 4, that DE name kept the party. The residual's `Please
+  see section VI.4.3 Translink` (1 mention, review body) was the live case. The 460 + 144 still seed. A
+  capitalised common noun in the tail also withholds the seed (`Please see section VI.3 for list of awarded
+  Suppliers`). This errs toward keeping a name.
+- **The legal-form guard** also reads `plc`, `LLP`, `Inc`, `LLC`, `KG`, `AS`, `A/S`, `OÜ`, `d.o.o.` and `a.s.`
+  (`LEGAL_FORM_TOKENS`).
+- **The walk's net reads every copy the echo sweeps.** A party's head name is its first-seen copy, which is
+  the ORIGINAL language's (`r209::parse` walks the primary original first). So a FR- or DE-original pointer
+  winner heads as `Voir point VI.2) Autres informations.`, and before this fix `mentions_placeholder` missed
+  it. The echo is the first drop rule where the party drops while its head name stays unclassified.
+  `mentions_placeholder` now adds `echo_shaped`, a form section number in a translated pointer's shape. The
+  next dry's `by_class.name` grows by such names (`Referat II.3`-style buyers). They cost a refold each, and
+  the fold decides. How many non-English-head echo parties exist is unmeasured; the next dry counts them.
+- **Keep tests added:**
+  - an `AwardSummary` copy with no legal form (`siehe oben: Vergabekammer Südbayern (VI.3)`). ORG-8's
+    `mbH` used to hide the class guard;
+  - `Translink` and `Kier Construction` with their DE copies;
+  - `Acme plc`;
+  - a FR-first party that still drops.
+
+Open, before the wet run:
+- **Item 1 canary (mandatory).** In `TED_VI2_POINTER`, the PL, SK, SL, GA, BG, RO and HR strings are
+  reconstructions, and so is every VI.3 translation. The read showed PL only as `Zob. sekcja VI. …`. A
+  party drops only when EVERY copy is classed. If one real copy writes the number another way (`VI. 2`, a
+  homoglyph numeral), the party is kept and the test stays green. So the unit-4 canary refolds 12516947
+  and 19530163 and asserts that ORG-2 and ORG-10 are gone. The check is a bounded PK read, `SELECT
+  organization_id, name FROM organization_mentions WHERE notice_id = ? AND section_id = ?`, which must
+  return no row after the fold. **Stop** if either survives. The fix is to read that party's 24
+  `TED-OFFICIALNAME` values (bounded, by notice) and replace the reconstructed strings with them.
+- **Item 5 contradicts the decision, and it needs a ruling.** Item 5 says to keep `Withheld Section94
+  Supplier` [GBPPONPBXY3232WNHZ] deliberately, with a test. Three things already pin the opposite:
+  - decision §4 guard 3: "`Placeholder` gets no identifier guard";
+  - `unit1-decision.md` line 188: one PPON on all 123 mentions, covering different withheld suppliers;
+  - the test `a_placeholder_party_with_an_identifier_is_dropped` (project.rs), which decides this exact name
+    with a gated identifier as `Placeholder`, dropped, and counted in `placeholder_identified`.
+
+  No keep test was added. A "keep" ruling would need an identifier guard on `Placeholder`, a flipped pin,
+  and an amendment to §4. A "drop" ruling amends item 5 and cites that test as the pin. The recommendation
+  is drop, because the PPON names the placeholder, not a supplier. The build agent explained the 9
+  surviving mentions of org 30914328 this way: an FTS `parties[]` entry with no name mints an empty-named
+  mention that binds by the PPON, and the drop rule never sees a name. That is unconfirmed. Confirm it with
+  a bounded indexed read of those 9 rows (`organization_mentions_org`: `SELECT notice_id, section_id, name,
+  raw_identifier FROM organization_mentions WHERE organization_id = 30914328`).
+

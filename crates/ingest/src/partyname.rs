@@ -50,6 +50,13 @@
 //! - the fold keeps a [`NotAName::Blank`] party that carries an identifier unless the
 //!   identifier echoes a non-name (the projection's guard, not this module's).
 //!
+//! Issue 511's unit 4 (the residual after the unit-3 wet run, dry 2273) closes what the
+//! anchor and the all-names rule left: a polite first word before a pointer
+//! ([`POINTER_LEAD_INS`]: `Please see section VI.4.2`), a form section's own title after one
+//! ([`FORM_SECTION_TITLES`]: `See section VI.3 (Additional Information)`), the UK and German
+//! withheld and not-applicable sentences (whole values, [`withheld_by_reference`]), and the
+//! shape the fold's TED translation echo reads ([`form_section_tokens`], [`translation_shaped`]).
+//!
 //! The real names beside the phrases stay names — `Desierto OÜ`, `DESERTOT`, `VÁRIOS
 //! MUNDOS`, `NIL d.o.o.`, `N/A s.r.o.`, `Void arhitektura`, `Gestiver Información SL`,
 //! `Bank of America, N.A.`, `X Corp` — pinned by the tests below.
@@ -189,6 +196,13 @@ const PLACEHOLDER_STEMS: [(&str, StemAt); 11] = [
     (" keine angabe", StemAt::Start),
 ];
 
+/// Issue 511 unit 4 (residual dry 2273): the polite words a pointer may open with, on the fold —
+/// `Please see section VI.4.2` (378 orgs / 411 mentions, review and appeal slots), `please see
+/// Section VI.3.2`, `Please see Section VI.4.3)`. Admitted only as the name's first word (after
+/// one optional lot designator) and only directly before an anchored [`POINTER_STEMS`] stem, so
+/// `Acme Ltd – please see section VI.3` stays a name and `Please Hold Ltd` never reaches a stem.
+const POINTER_LEAD_INS: [&str; 2] = [" please", " kindly"];
+
 /// The pointer stems among [`PLACEHOLDER_STEMS`]: the ones a name may follow
 /// ([`pointer_names`]: `siehe oben: NEB Betriebsgesellschaft mbH`).
 const POINTER_STEMS: [&str; 8] = [
@@ -210,7 +224,7 @@ const BLANK_STEMS: [&str; 3] = [" nie dotyczy", " not applicable", " niet van to
 /// elsewhere or plural. Classed by what each says in a winner slot (issue 511 §1): `tbc`,
 /// `unknown` and the other "name missing" words moved here from [`BLANK_WHOLE`] (66
 /// winner/bidder rows between them, none with an identifier).
-const PLACEHOLDER_WHOLE: [&str; 64] = [
+const PLACEHOLDER_WHOLE: [&str; 70] = [
     // The name is missing or pending.
     "k a",
     "ka",
@@ -247,6 +261,16 @@ const PLACEHOLDER_WHOLE: [&str; 64] = [
     "not published",
     "not disclosed",
     "non communique",
+    // Issue 511 unit 4 (residual dry 2273): the UK's withheld-supplier sentences, whole — 88
+    // `Tenderer`/winner mentions on the first, 59 + 20 on the sensitive-contract pair.
+    "information withheld for security reasons",
+    "due to the sensitive nature of this contract the supplier name will be withheld",
+    "due to the sensitive nature of this contract the supplier name will be withheld from publication",
+    "due to the sensitive nature of this contract the supplier name is withheld from publication",
+    // The s.94 sentences on the withheld-supplier PPON `PBXY-3232-WNHZ` (org 30914328, read
+    // 2026-10-12): the one PPON stands for unrelated suppliers, so it names none of them.
+    "information withheld due to security",
+    "this information has been omitted from this notice in accordance with s 94 procurement act 2023",
     // Plural: the award went to several, named nowhere.
     "various",
     "various suppliers",
@@ -286,7 +310,7 @@ const PLACEHOLDER_WHOLE: [&str; 64] = [
 /// [`VOID_WHOLE`]: they fill review and mediation slots as often as winner slots, and
 /// promoting one needs 510's per-word value/date table (511 §8.7). `n a`, `na`, `nc`, `n d`
 /// and `none specified` are ambiguous in a winner slot and stay here, asserting nothing.
-const BLANK_WHOLE: [&str; 56] = [
+const BLANK_WHOLE: [&str; 59] = [
     "n a",
     "no procede",
     "x",
@@ -343,6 +367,29 @@ const BLANK_WHOLE: [&str; 56] = [
     "nem relevans",
     "neni",
     "ei ole",
+    // Issue 511 unit 4 (residual dry 2273): UK review and `Lot-ReviewOrg` slots, 15 + 14 + 1
+    // mentions — "not applicable", so the slot holds nothing.
+    "this is not applicable in the uk",
+    "this is not applicable to the uk",
+    "this is not applicable in uk",
+];
+
+/// Issue 511 unit 4 (residual dry 2273): the German "no information is given here" a winner
+/// slot closes on, padded like a stem and matched at the END of the whole value — `unter
+/// Bezugnahme auf § 39 Abs 6 Nr. 4 VgV erfolgt hier keine Angabe` (19 mentions), `Unter Berufung
+/// auf Art. 24 Abs. 2 erfolgt keine Angabe` (13), `1 VOL/A Abschnitt 4 SKR erfolgt hier keine
+/// Angabe`. A withheld winner, so `Placeholder`; read only after a legal reference
+/// ([`withheld_by_reference`]).
+const NO_INFORMATION_TAILS: [&str; 4] =
+    [" erfolgt hier keine angabe", " erfolgt keine angabe", " erfolgt hier keine angaben", " erfolgt keine angaben"];
+
+/// The folded words a legal reference before a [`NO_INFORMATION_TAILS`] phrase is written with
+/// (`unter Bezugnahme auf`, `Unter Berufung auf Artikel 24 Absatz 2 der Richtlinie 93/38 EWG`, `§ 11
+/// SKR Abs. 2 (VOL/A-SKR)`, `gem. § 39 VgV i. V. m.`); any word with a digit counts too.
+const REFERENCE_HEAD_WORDS: [&str; 36] = [
+    "unter", "bezugnahme", "berufung", "auf", "gemass", "gem", "nach", "i", "v", "m", "art", "artikel", "abs",
+    "absatz", "satz", "nr", "ziff", "ziffer", "buchst", "lit", "der", "des", "die", "richtlinie", "ewg", "eg",
+    "vgv", "vol", "vob", "a", "skr", "sektvo", "konzvgv", "gwb", "abschnitt", "und",
 ];
 
 /// Issue 511 guard 2: the short whole values with measured real-name collisions, `Blank`
@@ -501,14 +548,17 @@ pub fn not_a_name(name: &str) -> Option<NotAName> {
 ///    other digit-only names (`1`, `360`, `24/7`) stay names;
 /// 2. a void stem: [`NotAName::AwardSummary`] when the name also names an award, else
 ///    [`NotAName::VoidLot`] (510);
-/// 3. a placeholder stem: [`NotAName::AwardSummary`] when a pointer is followed by a name
-///    ([`pointer_names`], a perfil stem's genitive owner included: [`perfil_owner`]), a
+/// 3. a placeholder stem — an anchored pointer stem may follow one polite first word
+///    ([`POINTER_LEAD_INS`]: `Please see section VI.4.2`): [`NotAName::AwardSummary`] when a
+///    pointer is followed by a name ([`pointer_names`], a form section's own title not counted:
+///    [`FORM_SECTION_TITLES`]; a perfil stem's genitive owner included: [`perfil_owner`]), a
 ///    boundary stem follows one ([`named_before_stem`]) or the name has a summary's shape
 ///    ([`summary_shape`]), else [`NotAName::Placeholder`];
 /// 4. a blank stem: [`NotAName::AwardSummary`] for a summary's shape or a `but` clause that
 ///    names a body ([`but_names`]), else [`NotAName::Blank`];
 /// 5. the whole values: 510's void ones first (with its reason and prefix rules), then
-///    [`PLACEHOLDER_WHOLE`], [`BLANK_WHOLE`], and [`SCOPED_WHOLE`] in its languages and a
+///    [`PLACEHOLDER_WHOLE`] (and a legal reference closing on `erfolgt hier keine Angabe`:
+///    [`withheld_by_reference`]), [`BLANK_WHOLE`], and [`SCOPED_WHOLE`] in its languages and a
 ///    plain case — after a bare lot qualifier only; one that names a company or a list is
 ///    an [`NotAName::AwardSummary`] ([`bare_lot_qualifier`]).
 pub fn not_a_name_in(name: &str, lang: Option<&str>) -> Option<NotAName> {
@@ -526,19 +576,7 @@ pub fn not_a_name_in(name: &str, lang: Option<&str>) -> Option<NotAName> {
         // award would contradict the publisher, so it is a summary (the fold keeps it).
         return Some(if names_an_award(name, &full) { NotAName::AwardSummary } else { NotAName::VoidLot });
     }
-    // Issue 511: the anchor. The stems open the name, after one optional lot designator
-    // (`Lot 3: not applicable`); the head is a suffix of `padded` that keeps its boundary
-    // space, so nothing is built per name for it.
-    let rest = after_lot_designator(&full);
-    let head = match rest.len() {
-        0 => "",
-        n if n == full.len() => padded.as_str(),
-        n => &padded[full.len() - n..],
-    };
-    let hit = PLACEHOLDER_STEMS.iter().find_map(|(stem, at)| match at {
-        StemAt::Start => head.starts_with(stem).then(|| (*stem, *at, padded.len() - head.len())),
-        StemAt::Boundary => padded.find(stem).map(|pos| (*stem, *at, pos)),
-    });
+    let (head, hit) = placeholder_hit(&full, &padded);
     if let Some((stem, at, pos)) = hit {
         let pointer = POINTER_STEMS.contains(&stem) && pointer_names(name, &padded, stem, pos);
         // A boundary stem may close a name, so what precedes it is read too (the unit-2
@@ -570,7 +608,7 @@ pub fn not_a_name_in(name: &str, lang: Option<&str>) -> Option<NotAName> {
         return (!names_an_award(name, &full)).then_some(NotAName::VoidLot);
     }
     let scoped = SCOPED_WHOLE.iter().find(|(word, _)| *word == whole);
-    let class = if PLACEHOLDER_WHOLE.contains(&whole) {
+    let class = if PLACEHOLDER_WHOLE.contains(&whole) || withheld_by_reference(whole) {
         Some(NotAName::Placeholder)
     } else if BLANK_WHOLE.contains(&whole)
         || scoped.is_some_and(|(_, langs)| lang.is_some_and(|l| langs.contains(&l)) && plain_case(name))
@@ -590,6 +628,61 @@ pub fn not_a_name_in(name: &str, lang: Option<&str>) -> Option<NotAName> {
         }
         _ => class,
     }
+}
+
+/// The anchored head of a fold and the placeholder stem it holds, as [`not_a_name_in`] reads
+/// them: `full` the fold, `padded` it with its leading space. The head is a suffix of
+/// `padded` that keeps its boundary space (so nothing is built per name for it): the stems
+/// open the name after one optional lot designator (issue 511's anchor: `Lot 3: not
+/// applicable`) and, before an anchored pointer stem only, one polite first word (issue 511
+/// unit 4: [`POINTER_LEAD_INS`], `Please see section VI.4.2`) — the stem's position, and the
+/// keep rule after it, read as without it. The hit is (stem, anchor, byte position in
+/// `padded`): a [`StemAt::Start`] stem opening the head, or a [`StemAt::Boundary`] stem
+/// anywhere.
+fn placeholder_hit<'p>(full: &str, padded: &'p str) -> (&'p str, Option<(&'static str, StemAt, usize)>) {
+    let rest = after_lot_designator(full);
+    let head = match rest.len() {
+        0 => "",
+        n if n == full.len() => padded,
+        n => &padded[full.len() - n..],
+    };
+    let head = POINTER_LEAD_INS
+        .iter()
+        .find_map(|lead| head.strip_prefix(lead))
+        .filter(|rest| {
+            PLACEHOLDER_STEMS.iter().any(|(stem, at)| *at == StemAt::Start && POINTER_STEMS.contains(stem) && rest.starts_with(stem))
+        })
+        .unwrap_or(head);
+    let hit = PLACEHOLDER_STEMS.iter().find_map(|(stem, at)| match at {
+        StemAt::Start => head.starts_with(stem).then(|| (*stem, *at, padded.len() - head.len())),
+        StemAt::Boundary => padded.find(stem).map(|pos| (*stem, *at, pos)),
+    });
+    (head, hit)
+}
+
+/// Issue 511 unit 4 (the review of item 1): whether the text after `name`'s placeholder stem
+/// names something — the pointer keep rule's reading ([`pointer_names`]: the section references
+/// stripped, an opening separator and the references after it stripped, the form section titles
+/// blanked) WITHOUT its separator requirement. The fold's translation echo seeds only from a
+/// placeholder this is false for ([`crate::project`]'s `translation_echoes`): `See Section VI.3
+/// Kier Construction` and the residual's `Please see section VI.4.3 Translink` are
+/// `Placeholder` (no separator, so the keep rule never reads the tail), but the tail names a
+/// body, and its untranslated copy `Siehe Abschnitt VI.3 Kier Construction` keeps the party.
+/// `See Section VI.2 'Additional information'.` (the 460) and `See section VI.3 (Additional
+/// Information)` (the 144) leave only a blanked title, and seed. False for a name with no
+/// placeholder stem (a whole value names nothing after it); true when the fold's words and the
+/// raw name's runs do not line up, erring toward a name.
+pub fn names_after_stem(name: &str) -> bool {
+    let full = fold(name);
+    if full.is_empty() {
+        return false;
+    }
+    let padded = format!(" {full}");
+    let Some((stem, _, pos)) = placeholder_hit(&full, &padded).1 else { return false };
+    let Some(after) = after_stem(name, &padded, stem, pos) else { return true };
+    let (rest, _) = strip_references(after);
+    let rest = open_separator(rest).map_or(rest, |after| strip_references(after).0);
+    names_something(&without_section_titles(rest))
 }
 
 /// Issue 511's raw-name arm: a non-empty name with no alphanumeric character (`.`, `-`,
@@ -638,7 +731,8 @@ pub fn scoped_languages(word: &str) -> &'static [&'static str] {
 
 /// The walk's net for issue 511's `refold-placeholder-names` (an injectable `fn(&str) ->
 /// bool`, as [`mentions_void`] is 510's): the raw-name arm, any placeholder or blank stem
-/// at ANY left word boundary, and any whole value, scoped words included — before the
+/// at ANY left word boundary, any whole value, scoped words included, and a translated
+/// pointer's shape with a form section number (unit 4's echo, [`echo_shaped`]) — before the
 /// anchor, the pointer keep rule, [`summary_shape`] and the language scope. The job
 /// re-queues every hit [`not_a_name`] does not read as an [`NotAName::AwardSummary`], so
 /// the fold decides the anchor, the scope and the identifier guard, and its dry plan lists
@@ -657,8 +751,97 @@ pub fn mentions_placeholder(name: &str) -> bool {
     }
     let stripped = strip_lot_qualifier(name).map(fold);
     let whole = stripped.as_deref().unwrap_or(&full);
-    PLACEHOLDER_WHOLE.contains(&whole) || BLANK_WHOLE.contains(&whole) || SCOPED_WHOLE.iter().any(|(w, _)| *w == whole)
+    PLACEHOLDER_WHOLE.contains(&whole)
+        || BLANK_WHOLE.contains(&whole)
+        || SCOPED_WHOLE.iter().any(|(w, _)| *w == whole)
+        // Issue 511 unit 4: the ` keine angabe` stem above already catches every such hit; named
+        // here so the net lists every rule the fold drops by.
+        || withheld_by_reference(whole)
+        // Issue 511 unit 4 (the review of item 1): every name the fold's translation echo can
+        // sweep. A party's head name is its first-seen copy, the ORIGINAL language's (`r209::parse`
+        // walks the primary original first), so a FR-original pointer winner heads as `Voir point
+        // VI.2) Autres informations.` while the English placeholder that drops it is a later name
+        // no walk reads; the echo is the first drop rule whose party drops with its head name
+        // unclassified.
+        || echo_shaped(name)
 }
+
+/// Issue 511 unit 4: whether `raw` is what the fold's translation echo reads as a translated
+/// pointer when its party's placeholder carries the same number — a form section number
+/// ([`form_section_tokens`]) in a translated pointer's shape ([`translation_shaped`]). The walk's
+/// net arm for the echo ([`mentions_placeholder`]): it costs a refold for a short name that cites
+/// a section (`Referat II.3`), and the fold decides.
+fn echo_shaped(raw: &str) -> bool {
+    !form_section_tokens(raw).is_empty() && translation_shaped(raw)
+}
+
+/// Issue 511 unit 4: whether a whole value (`whole`, the fold after a bare lot qualifier) is a
+/// legal reference followed by a [`NO_INFORMATION_TAILS`] phrase — every word before the phrase a
+/// [`REFERENCE_HEAD_WORDS`] word or one with a digit (`unter Bezugnahme auf § 39 Abs 6 Nr. 4 VgV
+/// erfolgt hier keine Angabe`, `1 erfolgt hier keine Angabe`, the bare phrase). A name before the
+/// phrase leaves the whole a name (`Stadtwerke Kiel – erfolgt keine Angabe`, `Müller GmbH
+/// (erfolgt hier keine Angabe)`).
+fn withheld_by_reference(whole: &str) -> bool {
+    let padded = format!(" {whole}");
+    NO_INFORMATION_TAILS.iter().find_map(|tail| padded.strip_suffix(tail)).is_some_and(|head| {
+        head.split(' ')
+            .filter(|w| !w.is_empty())
+            .all(|w| REFERENCE_HEAD_WORDS.contains(&w) || w.bytes().any(|b| b.is_ascii_digit()))
+    })
+}
+
+/// Issue 511 unit 4 item 1: the form section numbers `raw` carries, lowercased — a whitespace
+/// token that, its surrounding punctuation off, is a [`ROMAN`] numeral and one or more dotted
+/// digit groups (`VI.2`, `VI.4.2`, `II.2.3`; `VI.2)`, `VI.2.,`, `(IV.1.1)`). Not a bare `VI`,
+/// not an arabic `6.3.2`, not a malformed `V1.3` or `VI3.2`. The fold's translation echo
+/// compares them between one party's names ([`crate::project`]'s `translation_echoes`).
+pub fn form_section_tokens(raw: &str) -> Vec<String> {
+    raw.split_whitespace()
+        .map(|t| t.trim_matches(|c: char| !c.is_alphanumeric()))
+        .filter(|t| {
+            let mut parts = t.split('.');
+            t.contains('.')
+                && parts.next().is_some_and(|numeral| ROMAN.contains(&numeral.to_lowercase().as_str()))
+                && parts.all(|part| !part.is_empty() && part.bytes().all(|b| b.is_ascii_digit()))
+        })
+        .map(str::to_lowercase)
+        .collect()
+}
+
+/// A translated pointer's length cap, in whitespace words ([`translation_shaped`]): TED's
+/// translations of `See Section VI.2 'Additional information'` run to seven
+/// (`Lásd a VI.2., További információk című pontot.`).
+const TRANSLATION_MAX_WORDS: usize = 12;
+
+/// Issue 511 unit 4 item 1: whether `raw` has the shape of a translated pointer rather than a
+/// party's name — at most [`TRANSLATION_MAX_WORDS`] words and no company legal form
+/// ([`names_a_legal_form`]). `Müller Bau GmbH (siehe Abschnitt VI.3)` is a party that cites the
+/// section, and keeps its party.
+pub fn translation_shaped(raw: &str) -> bool {
+    raw.split_whitespace().count() <= TRANSLATION_MAX_WORDS && !names_a_legal_form(raw)
+}
+
+/// Whether `raw` carries a company legal form by any of the crate's readings: [`company_token`]
+/// (`SA`, `GmbH`, `Ltd`, `s.r.l.`), [`polish_company_form`], the crosswalk's family tokens
+/// ([`crate::crosswalk::legal_form_family`]: `AG`, `Oy`, `s.r.o.`, `Kft`) and
+/// [`LEGAL_FORM_TOKENS`] (`mbH`, `plc`, `A/S`, `d.o.o.`). Errs toward a form: a hit keeps a party.
+fn names_a_legal_form(raw: &str) -> bool {
+    company_token(raw)
+        || polish_company_form(&format!(" {}", fold(raw)))
+        || crate::crosswalk::legal_form_family(raw).is_some()
+        || raw
+            .split_whitespace()
+            .any(|t| LEGAL_FORM_TOKENS.contains(&t.trim_matches(|c: char| !c.is_alphanumeric() && c != '.')))
+}
+
+/// The legal forms the crate's other readings leave out, as whole whitespace tokens with their
+/// dots ([`names_a_legal_form`]): the German ones [`names_something`] reads, and the UK, US,
+/// Nordic, Baltic, Slavic and German partnership forms the review of issue 511 unit 4 found
+/// [`translation_shaped`] passing (`Acme plc VI.3`, `Acme A/S VI.3`, `Acme d.o.o. VI.3`).
+const LEGAL_FORM_TOKENS: [&str; 20] = [
+    "mbH", "e.V.", "e.V", "gGmbH", "plc", "Plc", "PLC", "LLP", "Inc", "Inc.", "INC", "KG", "AS", "A/S", "OÜ", "d.o.o.",
+    "D.O.O.", "a.s.", "A.S.", "LLC",
+];
 
 /// Whether `name` is exactly an issue-511 lexicon entry: the raw-name arm, a whole value,
 /// or a stem's own words and nothing else (`Siehe oben`). The drain's dry plan must read
@@ -735,7 +918,77 @@ fn pointer_names(raw: &str, padded: &str, stem: &str, pos: usize) -> bool {
         None if PERFIL_STEMS.contains(&stem) && pos == 0 => return perfil_owner(after),
         None => return false,
     };
-    names_something(rest)
+    // Issue 511 unit 4: a form section's own title names the section, not a body.
+    names_something(&without_section_titles(rest))
+}
+
+/// Issue 511 unit 4 item 2 (residual dry 2273): the titles TED's standard forms give their
+/// sections, on the fold — a closed list, not a rule about capitals. After a pointer one names
+/// the section pointed at, not a body, so [`pointer_names`] reads past it: `See section VI.3
+/// (Additional Information)` (144 winner mentions read as summaries with its spellings), `See
+/// Section VI: Complementary Information`, `See Section II.2.3) Place of performance`, `Please see
+/// section II.1.5 Short Description`. Taken from the plan's `non_exact` list and the 2008 and
+/// 2014 form labels.
+const FORM_SECTION_TITLES: [&str; 28] = [
+    // Section VI: complementary information; VI.2 / VI.3 additional information; VI.3 / VI.4 the
+    // review procedures (2008 and 2014 numbering).
+    "additional information",
+    "complementary information",
+    "procedures for review",
+    "review procedures",
+    "review procedure",
+    "review body",
+    "procedures for appeal",
+    "body responsible for appeal procedures",
+    "body responsible for mediation procedures",
+    "lodging of appeals",
+    // Section II: the object.
+    "object of the contract",
+    "scope of the procurement",
+    "short description",
+    "description of the procurement",
+    "place of performance",
+    "main place of delivery",
+    "main place of performance",
+    "award criteria",
+    "information about lots",
+    "information about variants",
+    "information about options",
+    "information about european union funds",
+    // Sections I, III, IV and V.
+    "contracting authority",
+    "contracting entity",
+    "conditions for participation",
+    "administrative information",
+    "award of contract",
+    "information about tenders",
+];
+
+/// `s` with every [`FORM_SECTION_TITLES`] phrase blanked out — whole words, compared on the fold,
+/// each replaced by as many spaces, so what is left (a body named beside a title, `High Court of
+/// Justice (additional information)`, and its punctuation) reads as before. `s` itself when it
+/// holds no title.
+fn without_section_titles(s: &str) -> std::borrow::Cow<'_, str> {
+    let runs = alphanumeric_runs(s);
+    let words: Vec<String> = runs.iter().map(|&(start, end)| fold(&s[start..end])).collect();
+    let mut title = vec![false; words.len()];
+    for phrase in FORM_SECTION_TITLES {
+        let phrase: Vec<&str> = phrase.split(' ').collect();
+        for (at, window) in words.windows(phrase.len()).enumerate() {
+            if window.iter().zip(&phrase).all(|(word, p)| word == p) {
+                title[at..at + phrase.len()].fill(true);
+            }
+        }
+    }
+    if !title.contains(&true) {
+        return std::borrow::Cow::Borrowed(s);
+    }
+    let mut out = s.to_owned();
+    for (&(start, end), _) in runs.iter().zip(&title).filter(|(_, title)| **title) {
+        // Same byte length, so the later runs' ranges stay valid.
+        out.replace_range(start..end, &" ".repeat(end - start));
+    }
+    std::borrow::Cow::Owned(out)
 }
 
 /// The raw text after a stem (`stem`, found at byte `pos` of `padded`, the space-padded
@@ -1490,8 +1743,9 @@ fn bare_lot_qualifier(group: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        BLANK_STEMS, BLANK_WHOLE, NotAName, PERFIL_STEMS, PLACEHOLDER_STEMS, PLACEHOLDER_WHOLE, POINTER_STEMS, SCOPED_WHOLE,
-        VOID_STEMS, VOID_WHOLE, fold, is_exact_entry, mentions_placeholder, not_a_name, not_a_name_in,
+        BLANK_STEMS, BLANK_WHOLE, FORM_SECTION_TITLES, NO_INFORMATION_TAILS, NotAName, PERFIL_STEMS, PLACEHOLDER_STEMS,
+        PLACEHOLDER_WHOLE, POINTER_LEAD_INS, POINTER_STEMS, REFERENCE_HEAD_WORDS, SCOPED_WHOLE, VOID_STEMS, VOID_WHOLE, fold,
+        is_exact_entry, mentions_placeholder, not_a_name, not_a_name_in,
     };
 
     /// One prod specimen per entry, and the spellings the 508 lists missed.
@@ -1856,6 +2110,15 @@ mod tests {
         for whole in &wholes {
             assert_eq!(fold(whole), *whole, "{whole:?}");
             assert_eq!(wholes.iter().filter(|w| *w == whole).count(), 1, "{whole:?} is in one list only");
+        }
+        // Issue 511 unit 4's lists: padded where they are matched as a `contains` or a suffix,
+        // folded wherever they are compared word for word.
+        for padded in POINTER_LEAD_INS.iter().chain(&NO_INFORMATION_TAILS) {
+            let bare = padded.strip_prefix(' ').unwrap_or_else(|| panic!("{padded:?} lacks its boundary space"));
+            assert_eq!(fold(bare), bare, "{padded:?}");
+        }
+        for word in FORM_SECTION_TITLES.iter().chain(&REFERENCE_HEAD_WORDS) {
+            assert_eq!(fold(word), *word, "{word:?}");
         }
     }
 
@@ -2308,5 +2571,229 @@ mod tests {
     fn not_applicable_is_a_blank_slot() {
         assert_eq!(not_a_name("Not applicable"), Some(NotAName::Blank));
         assert_eq!(not_a_name("Not applicable (lot 2)"), Some(NotAName::Blank));
+    }
+
+    /// Issue 511 unit 4 item 2 (residual dry 2273: 144 winner mentions read as summaries): a TED
+    /// form section's own title after a pointer is the section's name, not a body's — `See
+    /// section VI.3 (Additional Information)` points, as `See Section VI.3 Additional
+    /// information` always did. A real body beside a title still names itself.
+    #[test]
+    fn a_form_section_title_after_a_pointer_is_no_name() {
+        for pointer in [
+            "See Section VI.3 Additional information",
+            "See Section VI.3) Additional information",
+            "See section VI.3 (Additional Information)",
+            "See Section VI.2 'Additional information'.",
+            "See Section VI.2 'Additional information'",
+            "See Section VI.2 Additional information",
+            "see section VI complementary information",
+            "See Section VI: complementary information",
+            "See Section VI: Complementary Information",
+            "See section II.2.3 Place of performance",
+            "See Section II.2.3) Place of performance",
+            "See section VI.3 - Additional Information",
+            "See Section II.1.2: Main place of delivery",
+            "See section V (Award of Contract)",
+            "See section VI.4: Review procedures",
+            // A malformed reference (`V1.3` for `VI.3`) names nothing either (2 mentions in 2273).
+            "See Section V1.3 Additional information",
+        ] {
+            assert_eq!(not_a_name(pointer), Some(NotAName::Placeholder), "{pointer}");
+            assert!(mentions_placeholder(pointer), "the walk's net catches {pointer}");
+        }
+        for kept in [
+            "siehe oben: NEB Betriebsgesellschaft mbH (die hiesige Angabe ist Pflicht)",
+            "See section VI.4.1: High Court of Justice",
+            "See section VI.4.1: High Court of Justice (additional information)",
+            "See Section VI.3 (Additional Information: Royal Courts of Justice)",
+            "see section Royal Courts of Justice",
+            "See section 1 Contracting authority for details of Viridian Group Ltd contacts",
+        ] {
+            assert_eq!(not_a_name(kept), Some(NotAName::AwardSummary), "{kept}");
+        }
+        assert_eq!(super::without_section_titles("High Court (Additional Information)"), format!("High Court ({})", " ".repeat(22)));
+        assert_eq!(super::without_section_titles("Additional informationQual"), "Additional informationQual", "whole words only");
+    }
+
+    /// Issue 511 unit 4 item 3 (residual dry 2273: `Please see section VI.4.2` 378 orgs / 411
+    /// mentions, `please see Section VI.3.2` 267 / 315, `Please see Section VI.4.3)` 5 / 106): a
+    /// polite first word before a pointer stem leaves the pointer a pointer. Only `please` and
+    /// `kindly`, only first, only directly before the stem.
+    #[test]
+    fn politeness_before_a_pointer_stem_is_still_the_pointer() {
+        for pointer in [
+            "Please see section VI.4.2",
+            "Please see section VI.4.2.",
+            "please see section Vi.4.2",
+            "please see Section VI.3.2",
+            "Please see Section VI.4.3)",
+            "Please see section 6.3.2 below",
+            "Please see section VI.3 below",
+            "Kindly see section VI.3",
+            "Lot 2: please see section VI.3",
+            // A pointer to the suppliers names none of them (19 + 2 winner mentions).
+            "Please see section VI.3 for list of awarded Suppliers",
+            "Please see Section VI.3) for list of awarded suppliers",
+            // With item 2's titles.
+            "Please see section V1.2 Additional Information",
+            "Please see Section VI.2 (Additional information)",
+            "Please see section VI) — VI.3) Additional Information",
+        ] {
+            assert_eq!(not_a_name(pointer), Some(NotAName::Placeholder), "{pointer}");
+            assert!(mentions_placeholder(pointer), "the walk's net catches {pointer}");
+        }
+        assert_eq!(not_a_name("Please see section VI.4.1: High Court of Justice"), Some(NotAName::AwardSummary), "the keep rule");
+        for name in [
+            "Siemens – see section VI.3",
+            "Acme Ltd – please see section VI.3",
+            "Kindly Care Services – see section VI.3",
+            "Please Hold Ltd",
+            "Pleasance Theatre Trust",
+            "Pleased to see section heads",
+        ] {
+            assert_eq!(not_a_name(name), None, "{name}");
+        }
+    }
+
+    /// Issue 511 unit 4 item 4 (residual dry 2273): the withheld and not-applicable sentences the
+    /// lexicon missed, each an exact shape — whole values, or the German `… erfolgt (hier) keine
+    /// Angabe` after a legal reference only. Withheld is `Placeholder`, not applicable `Blank`.
+    #[test]
+    fn withheld_and_not_applicable_sentences_have_their_class() {
+        use NotAName::{Blank, Placeholder};
+        for (name, class, exact) in [
+            ("Information withheld for security reasons", Placeholder, true),
+            ("Due to the sensitive nature of this contract the supplier name will be withheld", Placeholder, true),
+            ("Due to the sensitive nature of this contract the supplier name will be withheld from publication", Placeholder, true),
+            ("Due to the sensitive nature of this contract the supplier name is withheld from publication", Placeholder, true),
+            ("Information withheld due to security.", Placeholder, true),
+            ("This information has been omitted from this notice in accordance with s.94 Procurement Act 2023", Placeholder, true),
+            ("unter Bezugnahme auf § 39 Abs 6 Nr. 4 VgV erfolgt hier keine Angabe", Placeholder, false),
+            ("Unter Berufung auf Art. 24 Abs. 2 erfolgt keine Angabe", Placeholder, false),
+            ("Unter Berufung auf Artikel 24 Abs. 2 der Richtlinie 93/38 EWG erfolgt hier keine Angabe", Placeholder, false),
+            ("Unter Berufung auf § 11 SKR Abs. 2 (VOL/A-SKR) erfolgt hier keine Angabe", Placeholder, false),
+            ("1 VOL/A Abschnitt 4 SKR erfolgt hier keine Angabe", Placeholder, false),
+            ("1 erfolgt hier keine Angabe", Placeholder, false),
+            ("This is not applicable in the UK", Blank, true),
+            ("This is not applicable to the UK", Blank, true),
+            ("This is not applicable in UK", Blank, true),
+        ] {
+            assert_eq!(not_a_name(name), Some(class), "{name}");
+            assert!(mentions_placeholder(name), "the walk's net catches {name}");
+            assert_eq!(is_exact_entry(name), exact, "{name}");
+        }
+        for name in [
+            "Stadtwerke Kiel – erfolgt keine Angabe",
+            "Müller GmbH (erfolgt hier keine Angabe)",
+            "Information Withheld Ltd",
+            "Due Diligence Partners Ltd",
+        ] {
+            assert_eq!(not_a_name(name), None, "{name}");
+        }
+    }
+
+    /// Issue 511 unit 4 item 1: the form section numbers a name carries, for the fold's
+    /// translation echo — a Roman numeral and dotted digits, its surrounding punctuation off, any
+    /// case; and the shape a translation of a pointer has (short, no legal form).
+    #[test]
+    fn form_section_tokens_and_the_translation_shape() {
+        use super::{form_section_tokens, translation_shaped};
+        for (raw, tokens) in [
+            ("See Section VI.2 'Additional information'.", vec!["vi.2"]),
+            ("Lásd a VI.2., További információk című pontot.", vec!["vi.2"]),
+            ("Skatīt VI.2) iedaļu \"Papildu informācija\".", vec!["vi.2"]),
+            ("please see section Vi.4.2", vec!["vi.4.2"]),
+            ("See Section II.2.3) Place of performance", vec!["ii.2.3"]),
+            ("(IV.1.1)", vec!["iv.1.1"]),
+            ("See Section VI: complementary information", vec![]),
+            ("Please see section 6.3.2 below", vec![]),
+            ("See Section V1.3", vec![]),
+            ("See Section VI3.2", vec![]),
+            ("Acme Ltd", vec![]),
+        ] {
+            assert_eq!(form_section_tokens(raw), tokens, "{raw}");
+        }
+        assert!(translation_shaped("Se punkt VI.2) Yderligere oplysninger"));
+        assert!(translation_shaped("Βλέπε Τμήμα VI.2 «Πρόσθετες πληροφορίες»."));
+        for party in [
+            "Müller Bau GmbH (siehe Abschnitt VI.3)",
+            "Acme Ltd, see VI.3",
+            "Olprint Sp. z o.o. (VI.3)",
+            "Nordic Oy VI.3",
+            "Verein für Bildung e.V. VI.3",
+            "Consortium of the participating institutions of the Netherlands Aerospace Laboratory listed in VI.3 below",
+            // The forms the crate's other readings leave out (the review).
+            "Acme plc VI.3",
+            "Acme LLP (VI.3)",
+            "Acme Inc. VI.3",
+            "Acme A/S VI.3",
+            "Acme AS VI.3",
+            "Acme OÜ VI.3",
+            "Acme d.o.o. VI.3",
+            "Acme a.s. VI.3",
+            "Acme GmbH & Co. KG VI.3",
+            "Acme Bau KG VI.3",
+        ] {
+            assert!(!translation_shaped(party), "{party}");
+        }
+    }
+
+    /// Issue 511 unit 4, the review of item 1: the fold's translation echo seeds only from a bare
+    /// pointer — nothing named after its stem once the references are stripped and the section
+    /// titles blanked, the keep rule's separator requirement aside — and the walk's net reads
+    /// every name the echo can sweep, because a non-English original heads its party with one.
+    #[test]
+    fn a_bare_pointer_seeds_the_echo_and_the_net_reads_every_copy_it_sweeps() {
+        use super::names_after_stem;
+        for bare in [
+            "See Section VI.2 'Additional information'.",
+            "See Section VI.3 Additional information",
+            "See section VI.3 (Additional Information)",
+            "See Section VI.3) Additional information",
+            "Please see section VI.4.2",
+            "Please see Section VI.4.3)",
+            "please see Section VI.3.2",
+            "siehe oben unter Ziffer VI.4.1",
+            // No stem: a whole value names nothing after one.
+            "Various suppliers",
+            "unter Bezugnahme auf § 39 Abs 6 Nr. 4 VgV erfolgt hier keine Angabe",
+        ] {
+            assert!(!names_after_stem(bare), "{bare} is a bare pointer");
+        }
+        // A body after the number with no separator: `Placeholder` (the keep rule wants one), but
+        // not bare, so it seeds nothing — the residual's `Translink` (1 mention, review body).
+        for named in [
+            "See Section VI.3 Kier Construction",
+            "Please see section VI.4.3 Translink",
+            "See section VI.4.3 Translink",
+            "See Section VI.3 Acme plc",
+            // A capitalised noun withholds the seed too, erring toward a name.
+            "Please see section VI.3 for list of awarded Suppliers",
+        ] {
+            assert_eq!(not_a_name(named), Some(NotAName::Placeholder), "premise: {named}");
+            assert!(names_after_stem(named), "{named} names something after its stem");
+        }
+        assert!(names_after_stem("See section VI.4.1: High Court of Justice"), "the keep rule's own case");
+        // The net: a FR- or DE-original award heads its pointer party with the translation.
+        for copy in [
+            "Voir point VI.2) Autres informations.",
+            "siehe Abschnitt VI.2 „Sonstige Informationen“.",
+            "Βλέπε Τμήμα VI.2 «Πρόσθετες πληροφορίες».",
+            "Lásd a VI.2., További információk című pontot.",
+            "Siehe Abschnitt VI.4.3 Translink",
+        ] {
+            assert_eq!(not_a_name(copy), None, "premise: {copy} reads as a name alone");
+            assert!(mentions_placeholder(copy), "the walk's net catches {copy}");
+            assert!(!is_exact_entry(copy), "and the dry plan lists {copy} for reading");
+        }
+        for name in [
+            "Müller Bau GmbH (siehe Abschnitt VI.3)",
+            "Consortium of the participating institutions of the Netherlands Aerospace Laboratory listed in VI.3 below",
+            "Se punkt VI Yderligere oplysninger",
+            "Region Hovedstaden",
+            "Acme Ltd",
+        ] {
+            assert!(!mentions_placeholder(name), "{name}");
+        }
     }
 }

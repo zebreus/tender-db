@@ -911,9 +911,13 @@ async fn a_holder_whose_org_is_gone_is_denied_and_its_verdict_never_admitted() {
 
 /// D4: a member's alias key is its own 234 key (head `name_norm`, GB), and one a standing
 /// identifier-NULL row OUTSIDE the body owns is `alias_key_owned_elsewhere` at U4 — that
-/// member is held. The census names the owner on the holder and holds the verdict
-/// (`member-key-owned-elsewhere`, not admitted). A verdict that leaves the holder out of
-/// its members is not held by it.
+/// member is held when it would be a LOSER. The census names the owner on the holder and
+/// holds the verdict (`member-key-owned-elsewhere`, not admitted). A verdict that leaves the
+/// holder out of its members is not held by it.
+///
+/// Issue 513 U6: the member the fold KEEPS is exempt. The alias arms loser keys only, so the
+/// body's own PPON org — whose head key its uncoded twin owns (RHM, RNK, RXT on prod) — no
+/// longer holds the verdict; the twin stays outside, split as before.
 #[tokio::test]
 async fn a_member_whose_key_a_row_outside_the_body_owns_holds_the_verdict() {
     let b = bed("key-owner").await;
@@ -933,10 +937,25 @@ async fn a_member_whose_key_a_row_outside_the_body_owns_holds_the_verdict() {
     assert_eq!(holder(rth, 7).key_owners_elsewhere, vec![50], "{rth:#?}");
     assert!(holder(rth, 1).key_owners_elsewhere.is_empty());
     assert_eq!(r.key_owned_elsewhere, 1);
-    assert_eq!(rth.eligible, vec![1, 7], "D4 holds the verdict, not the holder's listing");
+    assert_eq!(rth.eligible, vec![1, 7], "D4 holds a verdict, never the holder's listing");
+    assert_eq!(
+        rth.verdict.as_ref().map(|v| v.status),
+        Some("admitted"),
+        "org 7 is the survivor (the PPON member), and the alias never arms a survivor's key"
+    );
+
+    // The loser's key owned outside the body: org 1's twin, a second identifier-NULL row on
+    // its 234 key that publishes no code. Now the verdict is held.
+    b.provisional(51, "Oxford University Hospitals NHS FT").await;
+    let r = b.plan().await;
+    let rth = code(&r, "RTH");
+    assert_eq!(holder(rth, 1).key_owners_elsewhere, vec![51], "{rth:#?}");
+    assert_eq!(r.key_owned_elsewhere, 2);
     assert_eq!(rth.verdict.as_ref().map(|v| v.status), Some("member-key-owned-elsewhere"));
     assert_eq!((r.admitted_verdict, r.verdict_status.get("member-key-owned-elsewhere")), (0, Some(&1)));
 
+    // Without the PPON org, the anchor is the largest cluster: org 1 alone keeps, so its own
+    // key's owner holds nothing either.
     b.verdict("RTH", vec![1], Some(vec![1, 7]), "merge", "high").await;
     let r = b.plan().await;
     assert_eq!(code(&r, "RTH").verdict.as_ref().map(|v| v.status), Some("admitted"));
