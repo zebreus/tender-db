@@ -577,3 +577,18 @@ None outright. Item 2's remedy was taken with one correction: exact-only lost on
   plus this directory.
 - `ops/check.sh` was not run, as the task instructed. It still has to run before the commit.
 - The commit file list is unchanged.
+
+## Second review (fix delta 80157d3..1st commit; wf_151870b7-e19, 2 lenses, findings verified)
+
+- **`template_pointed` read from the first bracket to the last** (verified real, should-fix). So
+  `Los wurde nicht vergeben (siehe VI.2). Los 2: Müller Bau (siehe VI.3)` read VoidLot and would drop a real winner.
+  The Swedish shape did the same. The pointer must now be ONE group closing the name: a second `(`/`[` inside it
+  refuses. None of the 23 pointed TED copies has one.
+- **`mentions_void` read a template after ANY lot group** (nit; fixed because it is the same risk class).
+  `names_an_award` uses it as its "this entry is void" test, so `1) nessuna aggiudicazione - 2) procedura infruttuosa
+  (lotto 3 Rossi Costruzioni)` lost its award. A template now counts there only as `classify` reads one: whole, or
+  before a bare lot qualifier. The walk net still covers every template the fold drops.
+- Tests: both multi-group names and both numbered summaries were added to
+  `real_names_beside_teds_templates_are_names`. Each fix's mutation fails its case (EXIT=101), and `partyname.rs`
+  was restored byte-identical. Focused partyname + walk runs: EXIT=0.
+- The walk lens found nothing.

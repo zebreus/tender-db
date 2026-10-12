@@ -2714,10 +2714,15 @@ pub fn mentions_void(name: &str) -> bool {
     if VOID_STEMS.iter().any(|stem| padded.contains(stem)) {
         return true;
     }
-    let stripped = strip_lot_qualifier(name).map(fold);
+    let qualifier = lot_qualifier(name);
+    let stripped = qualifier.map(|(head, _)| fold(head));
     let whole = stripped.as_deref().unwrap_or(&full);
+    // Issue 525: a template only as [`classify`] reads one (whole, or before a BARE lot
+    // qualifier), since `names_an_award` asks this whether an entry is void: `procedura
+    // infruttuosa (lotto 3 Rossi Costruzioni)` names a winner and is no void entry.
+    let template = VOID_TEMPLATES.contains(&whole) && qualifier.is_none_or(|(_, group)| bare_lot_qualifier(group));
     VOID_WHOLE.contains(&whole)
-        || VOID_TEMPLATES.contains(&whole)
+        || template
         || template_pointed(name)
         || reason_head(name).is_some_and(|head| VOID_WHOLE.contains(&fold(head).as_str()))
         || void_prefix(name)
@@ -2770,6 +2775,11 @@ fn template_pointed(name: &str) -> bool {
     let trimmed = name.trim().trim_end_matches(|c: char| c.is_whitespace() || ".,;:".contains(c));
     let Some(open) = trimmed.find(['(', '[']) else { return false };
     let Some(inner) = trimmed[open + 1..].strip_suffix([')', ']']) else { return false };
+    // ONE group closing the name: a second opener means text sits between two groups (`… (siehe
+    // VI.2). Los 2: Müller Bau (siehe VI.3)`), which this rule must never read past.
+    if inner.contains(['(', '[']) {
+        return false;
+    }
     VOID_TEMPLATES.contains(&fold(&trimmed[..open]).as_str())
         && has_form_reference(inner)
         && translation_shaped(inner)
@@ -3487,9 +3497,22 @@ mod tests {
             "Lote no adjudicado por falta de ofertas",
             // A qualifier that says more than which lot, and a pointer group that names a company.
             "Lote no adjudicado (lote 3 adjudicado a Pérez SL)",
+            // Kept by its legal form (`translation_shaped`), not by the name after the reference.
             "Los wurde nicht vergeben (siehe Müller Bau AG, VI.2)",
+            // The second review: a pointer is ONE group closing the name, so a winner named between
+            // two groups is never read past.
+            "Los wurde nicht vergeben (siehe VI.2). Los 2: Müller Bau (siehe VI.3)",
+            "Delen har inte tilldelats (se avsnitt VI.2). Del 2 tilldelad Svensson Bygg (se VI.3)",
         ] {
             assert_eq!(not_a_name(name), None, "{name}");
+        }
+        // The second review: a numbered list whose second entry is a template with a qualifier that
+        // names a winner keeps its award (the entry is not void), as it did before issue 525.
+        for summary in [
+            "1) nessuna aggiudicazione - 2) procedura infruttuosa (lotto 3 Rossi Costruzioni)",
+            "1) infructueux - 2) no tenders were received (lot 3 Dupont et Fils)",
+        ] {
+            assert_ne!(not_a_name(summary), Some(NotAName::VoidLot), "{summary}");
         }
     }
 
