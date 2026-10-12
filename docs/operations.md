@@ -1799,11 +1799,34 @@ rate is expected (withheld results become `selec-w` with no winner, dated blank 
 /root/aj.sh /admin/jobs '{"kind":"refold-placeholder-names","dry_run":false,"expect":N}'  # wet + the fold
 ```
 
+Since issue 511 unit 5 a SECTION-REFERENCE POINTER is `Placeholder` too (`partyname::section_reference_pointer`):
+a name made of nothing but closed-list words — a pointer in any language the dry plan and TED's
+template hold (`siehe`, `see`, `wie`, `jak w`, `cf`, `voir`, `vedasi`, `zie`, `όπως`, `véase`, …), locators
+(`Ziffer`, `pkt`, `rubrique`, `punto`), positions (`above`, `ci-dessus`), the notice (`der Bekanntmachung`)
+and form titles or section I's labels — around form section references (`VI.4.1`, `I.1)`): `siehe VI.4.1`,
+`As in I.1 above`, `jak w pkt VI.4.1) ogłoszenia`, and the award heading alone in a winner slot, `V.1) AWARD
+AND CONTRACT VALUE:`. A body's name beside the pointer keeps it a name (`Krajowa Izba Odwoławcza – jak
+wyżej w pkt VI.4.1)`, `Referat II.3`), and so does a company named in list words where a body's name
+stands (the unit 5 review): after a separator past the reference (`See section VI.2: Avis` stays the
+`AwardSummary` it was), in a lot-numbered winner slot (`I.4) Avis`, `I.3) Point P`: a label closes on
+labels), or a locator that points at no reference (`Point P (voir I.1)`). Dry 2283 re-run through it
+(`.scratch/tender-db/511-placeholders/u5-build/simulation.md`): 1,319 `name` folds / 19,993 orgs / 53,302
+mentions become `Placeholder`.
+
 The walk's net (`partyname::mentions_placeholder`) is the raw-name arm, any placeholder or blank stem at
-any word boundary and every whole value, scoped words included, and since issue 511 unit 4 any short name
-with a form section number and no legal form (`echo_shaped`). The fold's TED translation echo drops such a
-copy with its party's bare English pointer, and a FR- or DE-original notice makes that copy the party's
-head name, `Voir point VI.2) Autres informations.`. Every hit but an `AwardSummary` is
+any word boundary and every whole value, scoped words included, the section-reference pointers, and every
+name the fold's TED translation echo can sweep (`echo_shaped`): a form section number in a pointer-led
+copy of twelve words or fewer with no legal form. The echo drops such a copy with its party's bare
+pointer, and a non-English original makes that copy the party's head name. Unit 4's echo arm took any
+short name with a section number (dry 2283: 25,333 orgs, 1,277 buyer rows, `Stadtverwaltung
+Kaiserslautern - Stabstelle IV.1 …`); unit 5 narrowed the echo and its arm to pointer-led copies, and
+the same re-run puts the net at about 22,450 orgs and 114 buyer rows. The echo still seeds only from
+unit 4's bare placeholders (`partyname::echo_seed`), never from a pointer only unit 5 classes (a
+bilingual award's FI `Katso kohta VI.4.1` would sweep its SV copy naming the review body), and sweeps
+only a copy a `SECTION_POINTERS` word opens — so a TED pointer party that survives the canary means an
+opener or a title is missing from `partyname`'s lists (Croatian, TED's 24th language from 2013 on, is
+reconstructed there from the form labels, not read off a notice). The net is a superset of the fold's
+drops by contract (pinned name by name and party by party). Every hit but an `AwardSummary` is
 re-queued, so the fold — not the walk — decides the anchor, the language scope and guard 3, and a hit
 the fold keeps costs a refold and nothing else. `exempted` lists the award summaries, never re-queued.
 Its index reads (`tender_version_parties_org_role`, `tenders_procedure_key`, `tender_versions_notice`)
