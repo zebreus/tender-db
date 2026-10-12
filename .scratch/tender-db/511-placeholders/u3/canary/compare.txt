@@ -1,0 +1,13 @@
+buyer notices 389: Tender changed 10 (2.6%), key only 0
+  24907468 {'keys': ['d2f61a21-ef81-47fd-8e9f-2b4d557b1b06'], 'tenders': [8814389]} -> {'keys': ['2c7df408-cf13-4f4a-a505-9c15e4bbf129'], 'tenders': [207079]}
+  24910752 {'keys': ['416aae08-9479-4afd-a335-07267dd32143'], 'tenders': [8812206]} -> {'keys': ['31e98a94-e9a2-4507-bc9b-3425f3c77d32'], 'tenders': [231408]}
+  25126935 {'keys': ['535d64f4-17a4-439f-a97a-78e6c90998c0'], 'tenders': [8812495]} -> {'keys': ['f2001578-92ee-4fcf-ae7c-2a5e6b48f6a3'], 'tenders': [1103606]}
+  25214947 {'keys': ['4d067918-0373-4e05-8f9d-48e7f7f98be1'], 'tenders': [8812393]} -> {'keys': ['bc5df7de-a3c2-4db1-9979-ca26afe3f9ec'], 'tenders': [860829]}
+  25216305 {'keys': ['a000ecde-2b45-4ca7-83ae-9ffda68771df'], 'tenders': [8813627]} -> {'keys': ['bc5df7de-a3c2-4db1-9979-ca26afe3f9ec'], 'tenders': [860829]}
+  25217183 {'keys': ['33bb211f-8f51-4001-a184-4fe103f91c59'], 'tenders': [8812008]} -> {'keys': ['bc5df7de-a3c2-4db1-9979-ca26afe3f9ec'], 'tenders': [860829]}
+  25218886 {'keys': ['33bb211f-8f51-4001-a184-4fe103f91c59'], 'tenders': [8812008]} -> {'keys': ['bc5df7de-a3c2-4db1-9979-ca26afe3f9ec'], 'tenders': [860829]}
+  25696628 {'keys': ['fe2d96b7-9245-478c-a94d-e05fbeb34383'], 'tenders': [8815087]} -> {'keys': ['2e919579-0720-4e05-b72d-06d1eeeeb11d'], 'tenders': [216329]}
+  25711735 {'keys': ['f1b34fa6-eac5-416a-8530-624917afc5af'], 'tenders': [8814885]} -> {'keys': ['2e919579-0720-4e05-b72d-06d1eeeeb11d'], 'tenders': [216329]}
+  25741160 {'keys': ['refused:9c410797-ca1e-41ca-8699-5bda73f39762:#gd05e3e94'], 'tenders': [8816977]} -> {'keys': ['4d113557-a016-4a23-b045-ee83f18bd986'], 'tenders': [354400]}
+family changes beyond the buyer notices: 1
+  ('9c410797-ca1e-41ca-8699-5bda73f39762', '24889194', ('8816978', 'refused:9c410797-ca1e-41ca-8699-5bda73f39762:AT:national:FN248730F'), None)
