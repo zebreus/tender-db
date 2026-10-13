@@ -84,6 +84,13 @@
 //! oddelek VI.3)`), each copy a pointer by itself, with the fold's TED template signal for the
 //! wordings no list holds ([`template_shaped`], the projection's `template_echoes`).
 //!
+//! Issue 520's unit 2 (`.scratch/tender-db/520-award-summaries/unit1-decision.md` §4.1) narrows
+//! [`names_an_award`] to the award a void phrase states. Of the 376 names the void walk kept after
+//! issue 525, 185 were void prose its signals misread — one lot's BOAMP void sentence, `n'a pas été
+//! attribué`, `en cours d'attribution`, a list of void lots only, a reason after a `;`, a failed
+//! bidder, the text era's `Desierto. SECTION VI` spill — and seven narrowings inside its own arms
+//! (D1–D7) make 173 of them void lots; no name with a winner moves.
+//!
 //! The real names beside the phrases stay names — `Desierto OÜ`, `DESERTOT`, `VÁRIOS
 //! MUNDOS`, `NIL d.o.o.`, `N/A s.r.o.`, `Void arhitektura`, `Gestiver Información SL`,
 //! `Bank of America, N.A.`, `X Corp` — pinned by the tests below.
@@ -759,6 +766,128 @@ const AWARD_NOUNS: [&str; 26] = [
     "gegund",
 ];
 
+/// Issue 520 (D3): the [`AWARD_NOUNS`] that are participles. One names the party only before the
+/// party's preposition ([`PARTY_PREPOSITIONS`]: `lote 1 adjudicado a Construcciones Pérez`, `lotto 1
+/// aggiudicato alla ditta Rossi`) or as a label (`fournisseur retenu = zoll medical France`); `awarded
+/// as part of a new project`, `wordt gegund op totaal der percelen` and `l'offre retenue` name nobody.
+const AWARD_PARTICIPLES: [&str; 14] = [
+    "retenu",
+    "retenue",
+    "adjudicado",
+    "adjudicada",
+    "adjudicados",
+    "adjudicadas",
+    "aggiudicato",
+    "aggiudicata",
+    "aggiudicati",
+    "attribuito",
+    "attribuita",
+    "attribuiti",
+    "awarded",
+    "gegund",
+];
+
+/// Issue 520 (D3): the folded prepositions that introduce the party after an award participle, by
+/// the participle's start (`adjudicado a`, `aggiudicato alla`, `all'impresa`, `awarded to`, `gegund
+/// aan`). By language, since the review: `awarded as part of a new project` holds the Spanish `a`
+/// four words on. `retenu` takes none; it names the party as a label or after a copula.
+const PARTY_PREPOSITIONS: [(&str, &[&str]); 5] = [
+    ("adjudicad", &["a", "al"]),
+    ("aggiudicat", &["a", "al", "alla", "alle", "allo", "ai", "agli", "all"]),
+    ("attribuit", &["a", "al", "alla", "alle", "allo", "ai", "agli", "all"]),
+    ("awarded", &["to"]),
+    ("gegund", &["aan"]),
+];
+
+/// Issue 520 (D3, the review): how many words may stand between an award participle and its
+/// party's preposition, in one clause — a date or an adverb (`gegund op 12-03-2014 aan`, `aggiudicato
+/// in data 12/03/2014 alla ditta`, `adjudicado posteriormente por procedimiento negociado a`).
+const PARTICIPLE_REACH: usize = 6;
+
+/// Issue 520 (D3, the review): the folded words a label may hold between its awardee noun and its
+/// `:` — an entry number and its mark, and a short complement with no verb (`Titulaire du marché :`,
+/// `titulaire n°1 :`, `Nom du titulaire / organisme :`, `Attributaire après négociation :`).
+const LABEL_COMPLEMENTS: [&str; 18] = [
+    "du", "de", "des", "d", "la", "le", "l", "les", "marche", "lot", "lots", "contrat", "accord", "cadre", "organisme",
+    "apres", "negociation", "n",
+];
+
+/// Issue 520 (D3, the review): the folded words for a company that an awardee noun names the party
+/// with (`Resultó adjudicataria la empresa Construcciones Pérez`, `aggiudicataria la ditta Rossi`).
+const COMPANY_NOUNS: [&str; 9] =
+    ["empresa", "ditta", "impresa", "societa", "societe", "entreprise", "sociedad", "firma", "compagnia"];
+
+/// Issue 520 (D3, the review): the folded copulas after which `retenu(e)` names its subject (`la
+/// société Storz a été retenue`) and before which it names what follows (`l'entreprise retenue est
+/// Dupont Frères`).
+const COPULAS: [&str; 7] = ["ete", "est", "sont", "etait", "etaient", "fut", "furent"];
+
+/// Issue 520 (D2c, D6b, the review): the folded words of an award already made. A relaunch still to
+/// come ([`RELAUNCH_INTENT`]) governs nothing past one: `Après avoir décidé de relancer en procédure
+/// négociée, le marché a été conclu avec la société Dupont`, `Décision de négocier : marché conclu
+/// avec Dupont SARL`. `a été` / `ont été` count too ([`intent_spans`]).
+const PAST_AWARDS: [&str; 10] = [
+    "conclu", "conclue", "conclus", "notifie", "notifiee", "notifies", "attribue", "attribuee", "attribues", "attribuees",
+];
+
+/// Issue 520 (D2c, D4b, D6b): the folded words of a relaunch still to come, the infinitive and the
+/// future (`Déclaré infructueux - à relancer en marché négocié … avec les sociétés ayant soumissionné`,
+/// `Il a donc été proposé de négocier avec les sociétés candidates`, `un marché négocié … sera passé
+/// avec la STÉ France Télécom`). A company named after one in its sentence is one the buyer may
+/// negotiate with, not the one the lot went to; after the past participle it is (`relancé en
+/// procédure négocié … avec la société B BRAUN`).
+const RELAUNCH_INTENT: [&str; 3] = ["relancer", "negocier", "sera"];
+
+/// Issue 520 (D4b): what opens a relaunch on the space-padded fold (`relancé`, `Recomposition d'un
+/// lot`, `Ce lot a été décomposé en 2 nouveaux lots`, `lancer une nouvelle procédure`, `se reporter
+/// au lot no9`). The lot designators after one, in its sentence, number the new procedure's lots,
+/// not the parts of the void lot's summary.
+const RELAUNCH_MARKERS: [&str; 6] =
+    [" relanc", " recomposition", " decompos", " nouvelle procedure", " nouveaux lots", " se reporter"];
+
+/// Issue 520 (D5): the relaunch notes a void lot's `;`-separated reason goes on to (the 510 list), and
+/// the publication references that cite the relaunch (`annonce(s) n° 116`, `JOUE: n° 2014/S
+/// 250-444751`, `BOAMP: B n° 250`), on the space-padded fold: a segment holding one names nobody.
+const RELAUNCH_NOTES: [&str; 8] = [
+    " relanc",
+    " nouvelle consultation",
+    " nueva licitaci",
+    " nuova gara",
+    " nuevo procedimiento",
+    " annonce",
+    " joue",
+    " boamp",
+];
+
+/// Issue 520 (D5, D6a): the folded word stems of an offer or a bidder (`Aucune offre n'a été déposée`,
+/// `oferta excluida`, `oferty odrzucone`, `l'unica offerta ricevuta`, `el licitador ha renunciado`,
+/// `soumissionnaire`, `Wykonawca wykluczony`, `geen geldige inschrijvingen`), matched at a word's
+/// start. A segment that speaks of one gives the reason the lot is void; a company named after one,
+/// in a sentence that rejects it ([`OFFER_REJECTIONS`]), is the bidder.
+const OFFER_WORDS: [&str; 7] = ["offre", "offert", "ofert", "licitador", "soumissionn", "wykonawc", "inschrijving"];
+
+/// Issue 520 (D6a): the folded word stems that reject an offer (`l'offre du groupement auxi+/ sas
+/// Viviani est inacceptable`, `Offres déclarées irrégulières`, `ha escluso dalla gara l'unica offerta …
+/// UnipolSai S.p.A.`, `oferta excluida`, `écartée`), matched at a word's start.
+const OFFER_REJECTIONS: [&str; 5] = ["inacceptab", "irreguli", "esclus", "excluid", "ecarte"];
+
+/// Issue 520 (D5, the review): the folded word stems that say an offer failed or was missing, beside
+/// [`OFFER_REJECTIONS`], matched at a word's start: a reason segment speaks of an offer AND of its
+/// failure (`Aucune offre n'a été déposée`, `oferty odrzucone`, `nie wpłynęła żadna oferta`, `el
+/// licitador ha renunciado`, `le nombre d'offres conformes n'étant pas suffisant`). An offer alone
+/// names the winner in Polish (`wybrano ofertę firmy …`, `Wykonawca: Jan Kowalski`) and in French
+/// (`offre de la société Dupont retenue`, `le seul soumissionnaire, Dupont Frères`).
+const OFFER_FAILURES: [&str; 9] =
+    ["odrzuc", "wyklucz", "brak", "zadn", "renunci", "retir", "insuffis", "irrecevab", "ongeldig"];
+
+/// Issue 520 (D5, the review): the folded words that negate an offer in a reason segment — the
+/// [`NEGATIONS`] that cannot be a number mark (`n°` folds to `n`, `nº` to `no`), and the Polish and
+/// Dutch `nie`, `geen`.
+const OFFER_NEGATIONS: [&str; 19] = [
+    "non", "pas", "sans", "aucun", "aucune", "not", "niet", "sin", "ningun", "ninguno", "ninguna", "nessun", "nessuno",
+    "nessuna", "alcun", "faute", "absence", "nie", "geen",
+];
+
 /// The words that negate an award word before it (`pas d'attributaire`, `no adjudicado`,
 /// `ningún adjudicatario`, `nessun aggiudicatario`, `faute d'attributaire`).
 const NEGATIONS: [&str; 20] = [
@@ -775,6 +904,12 @@ const NEGATION_FILLERS: [&str; 30] = [
     "contract", "contrat", "contratto", "contrato", "offre", "offres", "oferta", "ofertas", "offerta", "offerte",
     "candidature", "candidat", "tender",
 ];
+
+/// Issue 520 (D2a, the review): [`NEGATION_FILLERS`] without its nouns, the words skipped between
+/// `attribué` and its negation (`Le marché n'a pas été attribué`). A noun there is what the
+/// negation denies (`Pas d'offre … attribué à X`, `faute d'offre, attribué à`), not the award.
+const CLAUSE_FILLERS: [&str; 17] =
+    ["d", "de", "du", "des", "l", "la", "le", "un", "une", "el", "del", "di", "hay", "ha", "sido", "a", "ete"];
 
 /// Company forms as published, compared on the raw token with its surrounding punctuation
 /// trimmed and its dots removed ([`company_token`]): a void phrase beside one names the
@@ -2810,23 +2945,36 @@ fn reason_head(name: &str) -> Option<&str> {
 
 /// Whether a name that carries a void stem also names an award (issue 510's drain review):
 /// - [`award_clause`]: the lot was then awarded (`puis attribué à`, `avec la société`);
-/// - an awardee noun not negated ([`AWARD_NOUNS`]: `mandataire`, `titulaire`, …);
-/// - [`several_lots`]: a per-lot summary (`Lot 1) X. Lot 2) Infructueux`);
+/// - an awardee noun not negated ([`AWARD_NOUNS`]: `mandataire`, `titulaire`, …) that labels
+///   a party ([`award_awardee_noun`]);
+/// - [`several_lots`]: a per-lot summary (`Lot 1) X. Lot 2) Infructueux`), one of whose lots
+///   is not void ([`award_several_lots`]);
 /// - [`mixed_segments`]: `;`-separated entries, one with no void phrase (`zone A : Firm ;
-///   zone B : infructueux`);
-/// - a company form among its raw tokens ([`COMPANY_TOKENS`]).
+///   zone B : infructueux`) and no reason ([`award_mixed_segments`]);
+/// - a company form among its raw tokens ([`COMPANY_TOKENS`]) that is no bidder's
+///   ([`award_company_token`]).
 ///
-/// Each errs toward keeping the party: a summary of void lots only (`Les lots 2 et 11 sont
-/// déclarés sans suite. Le lot 10 est déclaré infructueux`) stays an organization for issue
-/// 511, which costs a junk name and never a real award.
+/// Each errs toward keeping the party, which costs a junk name and never a real award. Issue
+/// 520's unit 1 (`.scratch/tender-db/520-award-summaries/unit1-decision.md` §4.1) read the 376
+/// names the void walk kept: 185 were void prose these signals misread, so seven narrowings
+/// (D1–D7) quiet them inside this function's own arms — one lot's BOAMP void sentence
+/// ([`lot_title_void`]), a negated, earlier or intended award ([`award_clause`]), an awardee
+/// word that labels nobody, a list of void lots (`Les lots 2 et 11 sont déclarés sans suite.
+/// Le lot 10 est déclaré infructueux`, kept until then), a reason segment, a bidder, and a
+/// void head before a spilled section ([`named_before_spill`]). The shared shape helpers 511
+/// reads stay as they were ([`summary_shape`], [`named_before_stem`], [`names_a_legal_form`],
+/// [`names_something`]).
 fn names_an_award(raw: &str, folded: &str) -> bool {
+    if lot_title_void(raw, folded) {
+        return false;
+    }
     let words: Vec<&str> = folded.split(' ').collect();
     let padded = format!(" {folded}");
-    award_clause(folded)
-        || awardee_noun(&words)
-        || several_lots(&words)
-        || mixed_segments(raw)
-        || company_token(raw)
+    award_clause(raw, folded)
+        || award_awardee_noun(raw, &words)
+        || award_several_lots(raw, &words)
+        || award_mixed_segments(raw)
+        || award_company_token(raw)
         || polish_company_form(&padded)
         || AWARD_PHRASES.iter().any(|phrase| padded.contains(phrase))
         || only_an_earlier_void(&padded)
@@ -2834,10 +2982,8 @@ fn names_an_award(raw: &str, folded: &str) -> bool {
             padded.find(heading).is_some_and(|at| padded[at + heading.len()..].chars().any(char::is_alphabetic))
         })
         || address(raw, &words)
-        || numbered_entries(raw)
-        || lettered_entries(raw)
         || rebate(raw)
-        || named_before_spill(folded)
+        || named_before_spill(raw, folded)
         || labelled_entries(raw)
 }
 
@@ -2987,13 +3133,37 @@ fn rebate(raw: &str) -> bool {
 
 /// The award notice's next section spilled into the slot after the winner's name (`Zundel Et
 /// Kohler. SECTION VI: OTHER INFORMATION … VI.7) Other information: Lots Infructueux`): the
-/// head before `section vi` names a party when it carries no void stem.
-fn named_before_spill(folded: &str) -> bool {
+/// head before `section vi` names a party when it says nothing void. Issue 520 (D7): nothing
+/// void as [`mentions_void`] reads it — a void whole value, reason head or prefix too, not only
+/// a stem — once a trailing `see` is off, since the text era's spills open with the void phrase
+/// itself (`Desierto. SECTION VI: OTHER INFORMATION VI.3) Date of contract award: 2.1.2004`, `Gara
+/// deserta per mancanza di offerte valide. SECTION VI`, `No contract awarded. SECTION VI: …
+/// Limerick City Council`) and TED's pointer names the section (`No Contract awarded, see section
+/// VI.2`). What follows the head's last `:` or `;` is read alone too: a name there ([`names_something`])
+/// that says nothing void and gives no reason (a negation, an offer: `Desierto: Ninguna oferta`)
+/// keeps the party.
+fn named_before_spill(raw: &str, folded: &str) -> bool {
     let padded = format!(" {folded} ");
-    padded.find(" section vi ").is_some_and(|at| {
+    let Some(at) = padded.find(" section vi ") else { return false };
+    let runs = alphanumeric_runs(raw);
+    if runs.len() != folded.split(' ').count() {
+        // The fold's words and the raw runs do not line up: the 510 reading, erring toward a name.
         let head = &padded[..at];
-        head.chars().any(char::is_alphabetic) && !VOID_STEMS.iter().any(|stem| head.contains(stem))
-    })
+        return head.chars().any(char::is_alphabetic) && !VOID_STEMS.iter().any(|stem| head.contains(stem));
+    }
+    // The head's words, by the fold's words (one per alphanumeric run of `raw`), a trailing `see` off.
+    let mut words = padded[..at].split_whitespace().count();
+    if words > 0 && fold(&raw[runs[words - 1].0..runs[words - 1].1]) == "see" {
+        words -= 1;
+    }
+    let head = if words == 0 { "" } else { &raw[..runs[words - 1].1] };
+    // The review: a name after the head's last `:` or `;` is the winner the void phrase led to (`Not
+    // awarded in first round, re-tendered: Acme Construction. SECTION VI`).
+    let last = head.rsplit([':', ';']).next().unwrap_or(head);
+    let reason =
+        fold(last).split(' ').any(|w| NEGATIONS.contains(&w) || OFFER_WORDS.iter().any(|stem| w.starts_with(stem)));
+    let named_last = last.len() < head.len() && names_something(last) && !mentions_void(last) && !reason;
+    head.chars().any(char::is_alphabetic) && (!mentions_void(head) || named_last)
 }
 
 /// A company form among the raw tokens ([`COMPANY_TOKENS`], [`COMPANY_FORMS_DOTTED`]), each
@@ -3018,14 +3188,153 @@ fn company_token(raw: &str) -> bool {
 /// [`NEGATION_FILLERS`] word is not a [`NEGATIONS`] word (`pas d'attributaire`, `no hay
 /// adjudicatario`).
 fn awardee_noun(words: &[&str]) -> bool {
-    words.iter().enumerate().any(|(i, w)| {
-        AWARD_NOUNS.contains(w)
-            && !words[..i]
-                .iter()
-                .rev()
-                .find(|b| !NEGATION_FILLERS.contains(*b))
-                .is_some_and(|b| NEGATIONS.contains(b))
-    })
+    words.iter().enumerate().any(|(i, w)| AWARD_NOUNS.contains(w) && !negated(&words[..i]))
+}
+
+/// Whether the word after `before` is negated: the nearest word of `before` that is not a
+/// [`NEGATION_FILLERS`] word is a [`NEGATIONS`] word (`pas d'attributaire`, `no hay
+/// adjudicatario`, `Le marché n'a pas été attribué`).
+fn negated(before: &[&str]) -> bool {
+    before.iter().rev().find(|b| !NEGATION_FILLERS.contains(*b)).is_some_and(|b| NEGATIONS.contains(b))
+}
+
+/// Issue 520 (D3): [`awardee_noun`] where the word names the party — as a label (`Attributaire:
+/// ARDP`, `Nom du titulaire: Keolis`, `titulaire 1: SAGA titulaire 2: Chapelec`, `fournisseur
+/// retenu = zoll medical France`: [`labels`]), never `attribution`, whose label heads a date (`Date
+/// d'attribution : CAO du 17.4.2013`); as `(mandataire)`; as `attribution à` (`Lot 3) attribution
+/// à: SA Maîtres Laitiers Distribution`); as a participle that names its party
+/// ([`participle_names`]: `lote 1 adjudicado a Construcciones Pérez`, `la société Storz a été
+/// retenue`); or as a noun right before the party (`titulaire Dupont Frères`, `Resultó
+/// adjudicataria la empresa Construcciones Pérez`: [`noun_names`]). The descriptive and
+/// hypothetical uses name nobody: `en cours d'attribution`, `Voir l'avis d'attribution … pour
+/// l'entreprise attributaire du lot`, `ne permettent pas d'en établir l'attribution`,
+/// `l'attributaire pressenti`, `la liquidation judiciaire de la société attributaire`,
+/// `accord-cadre multi-attributaire`, `désistement du titulaire`, `l'offre retenue`, `propuesto
+/// adjudicatario`, `awarded as part of a new project`. 510's negation test stays ([`negated`]).
+fn award_awardee_noun(raw: &str, words: &[&str]) -> bool {
+    let runs = alphanumeric_runs(raw);
+    if runs.len() != words.len() {
+        // The fold's words and the raw runs do not line up: the 510 reading, erring toward a name.
+        return awardee_noun(words);
+    }
+    awardee_noun(words)
+        && words.iter().enumerate().any(|(i, w)| {
+            let (from, to) = runs[i];
+            AWARD_NOUNS.contains(w)
+                && !negated(&words[..i])
+                && if *w == "attribution" {
+                    words.get(i + 1) == Some(&"a")
+                } else {
+                    labels(&raw[to..])
+                        || (*w == "mandataire" && raw[..from].trim_end().ends_with('(') && closes_group(&raw[to..]))
+                        || if AWARD_PARTICIPLES.contains(w) {
+                            participle_names(raw, &runs, words, i)
+                        } else {
+                            noun_names(raw, &runs, words, i)
+                        }
+                }
+        })
+}
+
+/// Whether the text right after a word makes the word a label: a `:`, `=` or full-width `：` — or a
+/// spaced dash before a capitalised word (`Attributaire - Keolis`) — after an optional plural mark,
+/// entry number and short complement ([`LABEL_COMPLEMENTS`]: `titulaire 1: SAGA`, `Titulaire(s) :`,
+/// `titulaire n°1 :`, `Titulaire du marché :`, `Nom du titulaire / organisme :`).
+fn labels(after: &str) -> bool {
+    let mut rest = after;
+    let mut words = 0;
+    loop {
+        rest = rest.trim_start();
+        if let Some(r) = ["(s)", "(S)", "(es)"].iter().find_map(|mark| rest.strip_prefix(mark)) {
+            rest = r;
+            continue;
+        }
+        if let Some(r) = rest.strip_prefix(['/', '\'', '’', '°', 'º']) {
+            rest = r;
+            continue;
+        }
+        let run = rest.find(|c: char| !c.is_alphanumeric()).unwrap_or(rest.len());
+        if run == 0 || words == 6 {
+            break;
+        }
+        let word = fold(&rest[..run]);
+        let word = word.as_str();
+        if !(digits_only(word) || NUMBER_MARKS.contains(&word) || LABEL_COMPLEMENTS.contains(&word)) {
+            break;
+        }
+        rest = &rest[run..];
+        words += 1;
+    }
+    rest.starts_with([':', '=', '：'])
+        || ["- ", "– ", "— "].iter().any(|dash| {
+            rest.strip_prefix(dash).is_some_and(|r| r.trim_start().chars().next().is_some_and(char::is_uppercase))
+        })
+}
+
+/// Whether `(mandataire` closes its group: `)` next, or one word and then `)` (`(mandataire
+/// solidaire)`).
+fn closes_group(after: &str) -> bool {
+    let rest = after.trim_start();
+    let rest = rest.trim_start_matches(char::is_alphabetic).trim_start();
+    rest.starts_with(')')
+}
+
+/// Issue 520 (D3): whether the award participle `words[i]` ([`AWARD_PARTICIPLES`]) names its party:
+/// its language's preposition within [`PARTICIPLE_REACH`] words in its clause ([`PARTY_PREPOSITIONS`]:
+/// `lote 1 adjudicado a`, `gegund op 12-03-2014 aan Bouwbedrijf Jansen`, `awarded on 12.3.2014 to`);
+/// for `retenu(e)`, a copula before it with a subject that is no offer (`la société Storz a été
+/// retenue`) or after it before a capitalised word (`l'entreprise retenue est Dupont Frères`), or a
+/// capitalised name right before it (`: Keolis retenu`). `wordt gegund op totaal der percelen`,
+/// `awarded as part of a new project`, `l'offre retenue` and `Pas d'attributaire retenu` name nobody.
+fn participle_names(raw: &str, runs: &[(usize, usize)], words: &[&str], i: usize) -> bool {
+    let w = words[i];
+    let gap = |k: usize| &raw[runs[k - 1].1..runs[k].0];
+    if let Some((_, prepositions)) = PARTY_PREPOSITIONS.iter().find(|(start, _)| w.starts_with(start)) {
+        return (i + 1..words.len().min(i + PARTICIPLE_REACH + 2))
+            .take_while(|&k| !clause_break(gap(k)))
+            .any(|k| prepositions.contains(&words[k]));
+    }
+    let offer = |word: &str| {
+        OFFER_WORDS.iter().any(|stem| word.starts_with(stem))
+            || word.starts_with("candidat")
+            || AWARD_NOUNS.contains(&word)
+            || LOT_DESIGNATORS.contains(&word)
+    };
+    // A copula before it: the subject is the nearest word before the copula and its auxiliary.
+    let copula = i > 0 && COPULAS.contains(&words[i - 1]);
+    let subject = words[..i.saturating_sub(1)].iter().rev().find(|b| !["a", "ont", "n", "ne"].contains(*b));
+    let capitalised = |k: usize| raw[runs[k].0..].chars().next().is_some_and(char::is_uppercase);
+    (copula && subject.is_some_and(|s| !offer(s)))
+        || (words.get(i + 1).is_some_and(|n| COPULAS.contains(n)) && i + 2 < words.len() && capitalised(i + 2))
+        || (i > 0 && capitalised(i - 1) && gap(i).trim().is_empty() && !offer(words[i - 1]))
+}
+
+/// Issue 520 (D3): whether the awardee noun `words[i]` is followed by its party — a capitalised word
+/// right after it that is no lot, void or negation word (`titulaire Dupont Frères`), or a company
+/// word after an optional article ([`COMPANY_NOUNS`]: `adjudicataria la empresa Construcciones
+/// Pérez`, `aggiudicataria la ditta Rossi`). `l'entreprise attributaire du lot`, `1 attributaire ne
+/// convient pas` and `Attributaire non designe` name nobody.
+fn noun_names(raw: &str, runs: &[(usize, usize)], words: &[&str], i: usize) -> bool {
+    let Some(&next) = words.get(i + 1) else { return false };
+    let spaced = raw[runs[i].1..runs[i + 1].0].trim().is_empty();
+    let capitalised = raw[runs[i + 1].0..].chars().next().is_some_and(char::is_uppercase);
+    let company = |k: usize| words.get(k).is_some_and(|w| COMPANY_NOUNS.contains(w));
+    (spaced
+        && capitalised
+        && !LOT_DESIGNATORS.contains(&next)
+        && !NEGATIONS.contains(&next)
+        && !mentions_void(&raw[runs[i + 1].0..runs[i + 1].1]))
+        || company(i + 1)
+        || (["la", "el", "il", "lo", "le", "l"].contains(&next) && company(i + 2))
+}
+
+/// Issue 520 (the review): whether the text between two words ends a clause — a `,`, `;`, `:`,
+/// bracket, ellipsis, line break, dash, spaced hyphen or a `.` that a space follows. A cut too many
+/// only shortens what one word reads (a negation, a participle's reach, an offer's rejection).
+fn clause_break(gap: &str) -> bool {
+    gap.contains([',', ';', ':', '(', ')', '[', ']', '…', '–', '—', '\n'])
+        || gap.contains(". ")
+        || gap.contains(" - ")
 }
 
 /// Two or more DISTINCT numbered lot designators (`lot 1 … lot 3`, `sous lot 5b … lot 6`,
@@ -3093,6 +3402,196 @@ fn several_lots(words: &[&str]) -> bool {
     several || codes.len() >= 3
 }
 
+/// Issue 520 (D4): [`several_lots`] as an award reads it — a list names an award only when one of
+/// its lots is not void:
+/// - a number mark glued to its number is the number (`Le lot no 3 a été déclarée infructueux. Le
+///   présent avis ne concerne que le lot no3`: one lot);
+/// - the lot designators after a relaunch marker number the new procedure's lots
+///   ([`words_before_relaunch`]: `Ce lot a été décomposé en 2 nouveaux lots: lot nº 06 — …, lot nº 07
+///   — …`, `lancer une nouvelle procédure … lot no 3 - agence Paul Signac lot no 4 - agence
+///   Beaumonts`);
+/// - a list whose every lot entry is void is void ([`every_lot_void`]: `lot 9: Sans suite Lot 10:
+///   Infructueux`, `Les lots n° 1 et 3 ont été déclarés infructueux. Le lot n° 2 a été déclaré sans
+///   suite`, `Perceel 2 en Perceel 4 worden niet gegund`).
+///
+/// `several_lots` must hold on the whole fold too (`words`), so the arm only ever quiets: a relaunch
+/// cut joins what is left of its sentence to the next one, and `Lot relancé. 4 offres` must not
+/// read as lot 4 (the review). [`numbered_entries`] and [`lettered_entries`] count as before: each
+/// already needs an entry that names something, and an entry the designators miss (`lot 43
+/// INFRUCTUEUX - 44 reckitt benckiser 28692.07`, `Lot 1 : Keolis / 2 : sans suite`) is one of theirs.
+fn award_several_lots(raw: &str, words: &[&str]) -> bool {
+    let own = words_before_relaunch(raw);
+    let own: Vec<&str> = own.iter().map(String::as_str).collect();
+    (several_lots(words) && several_lots(&own) && !every_lot_void(raw))
+        || numbered_entries(raw)
+        || lettered_entries(raw)
+}
+
+/// `raw`'s folded words without each sentence's relaunch (a [`RELAUNCH_MARKERS`] phrase and the
+/// rest of its sentence: [`sentences`]), each glued number mark read as its number
+/// ([`glued_number`]). A new entry of the summary ends the relaunch early — a lot label followed by
+/// its `:` or `)` ([`entry_label`]: `Lot 1 infructueux et relancé, lot 2 : Dupont`), which the new
+/// procedure's lots are not written with (`lot nº 06 — bâtiments démontables`).
+fn words_before_relaunch(raw: &str) -> Vec<String> {
+    let mut words = Vec::new();
+    for sentence in sentences(raw) {
+        let runs = alphanumeric_runs(sentence);
+        let folded: Vec<String> = runs.iter().map(|&(from, to)| fold(&sentence[from..to])).collect();
+        let folded: Vec<&str> = folded.iter().map(String::as_str).collect();
+        let mut k = 0;
+        while k < folded.len() {
+            let padded = format!(" {}", folded[k..].join(" "));
+            if RELAUNCH_MARKERS.iter().any(|marker| padded.starts_with(marker)) {
+                match (k + 1..folded.len()).find(|&j| entry_label(sentence, &runs, &folded, j)) {
+                    Some(j) => k = j,
+                    None => break,
+                }
+                continue;
+            }
+            words.push(glued_number(folded[k]).to_owned());
+            k += 1;
+        }
+    }
+    words
+}
+
+/// A folded word that is a number mark glued to its number (`no3`, `nº12`) as the number;
+/// any other word as it is.
+fn glued_number(word: &str) -> &str {
+    NUMBER_MARKS.iter().find_map(|mark| word.strip_prefix(mark).filter(|rest| digits_only(rest))).unwrap_or(word)
+}
+
+/// A non-empty run of ASCII digits.
+fn digits_only(s: &str) -> bool {
+    !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit())
+}
+
+/// Issue 520 (D4c): whether `raw` lists lot entries and every one is void. An entry runs from a lot
+/// designator with its number (as [`several_lots`] reads one, [`lot_label`]) to the next; the text
+/// before the first is no entry. An entry holding only a conjunction after its label joins the next
+/// one (`Perceel 2 en Perceel 4 worden niet gegund`, `Lot 1) et lot 2) Marché classé sans suite`);
+/// as the last entry, it keeps the summary. An entry with nothing after its label keeps it, wherever
+/// it stands: the winner was named before the label (`Paredes lot 506 - lots 501 à 505
+/// infructueux`, `Orthomed : lots nº 25 et 26 / lot nº 24 : infructueux`), or the slot cut the list
+/// short (`Lot 1) déclaré infructueux. Lots 2)`). Any entry that is no void verdict naming nobody
+/// keeps it too ([`void_entry`]: `Lot 1) Dupont. Lot 2) infructueux`, `Lot 2 : Dupont (marché
+/// négocié, AO infructueux)`).
+fn every_lot_void(raw: &str) -> bool {
+    let runs = alphanumeric_runs(raw);
+    let words: Vec<String> = runs.iter().map(|&(from, to)| fold(&raw[from..to])).collect();
+    let words: Vec<&str> = words.iter().map(String::as_str).collect();
+    // Each entry: (the run its designator opens, the run after its label).
+    let mut entries: Vec<(usize, usize)> = Vec::new();
+    let mut i = 0;
+    while i < words.len() {
+        match lot_label(raw, &runs, &words, i) {
+            Some(after) => {
+                entries.push((i, after));
+                i = after;
+            }
+            None => i += 1,
+        }
+    }
+    !entries.is_empty()
+        && entries.iter().enumerate().all(|(k, &(_, after))| {
+            let end = entries.get(k + 1).map_or(raw.len(), |&(next, _)| runs[next].0);
+            let start = runs.get(after).map_or(raw.len(), |run| run.0).min(end);
+            let text = &raw[start..end];
+            let folded = fold(text);
+            if folded.is_empty() {
+                return false;
+            }
+            if folded.split(' ').all(|w| LOT_CONJUNCTIONS.contains(&w)) {
+                // A conjunction only: joins the next entry, or keeps the summary as the last.
+                return k + 1 < entries.len();
+            }
+            void_entry(text)
+        })
+}
+
+/// Issue 520 (D4c, the review): whether a lot entry's text is a void verdict that names nobody — its
+/// head (before the first break, [`reason_head`]) says the lot is void ([`mentions_void`]), so no
+/// name stands before the verdict, and the whole text reads void ([`is_void_lot`]), so no award
+/// follows it. `: Dupont (marché négocié, AO infructueux)` names Dupont before its earlier void call,
+/// which read alone would be a void lot.
+fn void_entry(text: &str) -> bool {
+    let text = text
+        .trim_start_matches(|c: char| !c.is_alphanumeric())
+        .trim_end_matches(|c: char| c.is_whitespace() || "-–—/.,;:".contains(c));
+    let head = reason_head(text).unwrap_or(text);
+    mentions_void(head) && is_void_lot(text)
+}
+
+/// The label of a lot entry opening at `words[i]` (one folded word per alphanumeric run of `raw`,
+/// `runs`), as [`several_lots`] reads a designator: a [`LOT_DESIGNATORS`] word, up to two number
+/// marks or void words, and a number (digits, a glued number mark: [`glued_number`], or a [`ROMAN`]
+/// numeral) — or a designator glued to its digits (`lot1096`). The label runs on over more of the
+/// number written with a number's punctuation ([`number_gap`], [`label_number`]: `Sublote 9.1`, `Lot
+/// 2011-231 01`, `lots 4b/4c`, `Lot 9 A`, `Lots 1, 2`), and over a conjunction only before another
+/// number (`Lots 2a et 2c`, `lots 501 à 505`) — never across a `:` or `)`, where the entry's text
+/// opens (`Lot 1 : 3M`, `Lot 1 : A.C.H.`), and never over a conjunction that the next designator
+/// follows (`Perceel 2 en Perceel 4`). The index after the label, or `None`.
+fn lot_label(raw: &str, runs: &[(usize, usize)], words: &[&str], i: usize) -> Option<usize> {
+    let w = words[i];
+    let mut j = i + 1;
+    if LOT_DESIGNATORS.contains(&w) {
+        // The marks and void words several_lots skips (`lot nº 3`, `lots infructueux : 1501`).
+        let void_word = |word: &str| {
+            VOID_STEMS.iter().any(|stem| stem.trim_start().split(' ').next().is_some_and(|head| word.starts_with(head)))
+        };
+        while j < words.len() && j <= i + 2 && (NUMBER_MARKS.contains(&words[j]) || void_word(words[j])) {
+            j += 1;
+        }
+        let n = glued_number(words.get(j)?);
+        if !(n.bytes().any(|b| b.is_ascii_digit()) || ROMAN.contains(&n)) {
+            return None;
+        }
+        j += 1;
+    } else if !LOT_DESIGNATORS.iter().any(|d| w.strip_prefix(d).is_some_and(digits_only)) {
+        return None;
+    }
+    let joined = |k: usize| k < words.len() && number_gap(&raw[runs[k - 1].1..runs[k].0]);
+    // A number at `k`, or a number mark that a number follows (`Lots n° 1 et n° 2`).
+    let mark = |k: usize| NUMBER_MARKS.contains(&words[k]) && joined(k + 1) && label_number(words[k + 1]);
+    let number_at = |k: usize| joined(k) && (label_number(glued_number(words[k])) || mark(k));
+    loop {
+        if number_at(j) {
+            j += if label_number(glued_number(words[j])) { 1 } else { 2 };
+        } else if joined(j) && LOT_CONJUNCTIONS.contains(&words[j]) && number_at(j + 1) {
+            j += 2;
+        } else {
+            return Some(j);
+        }
+    }
+}
+
+/// Issue 520 (D4c): a folded word that goes on a lot's number — digits, digits and a sub-lot letter
+/// (`2a`, `4c`), a lone letter (`Lot 9 A`) or a [`ROMAN`] numeral; never a word of several letters
+/// (`Lote 2 no adjudicado`), and a sub-lot code only where a number's punctuation joins it
+/// ([`number_gap`]: not `Lot 1 : 3M`).
+fn label_number(w: &str) -> bool {
+    let digits = w.bytes().take_while(u8::is_ascii_digit).count();
+    digits_only(w)
+        || (digits > 0 && w.len() == digits + 1 && w.as_bytes()[digits].is_ascii_alphabetic())
+        || w.chars().count() == 1
+        || ROMAN.contains(&w)
+}
+
+/// Issue 520 (D4c): whether the text between two runs joins parts of one lot number: spaces and a
+/// number's punctuation only (`.`, `-`, `/`, `,`, `°`, `º`), and no sentence end (`. `).
+fn number_gap(gap: &str) -> bool {
+    gap.chars().all(|c| c.is_whitespace() || ".-/,°º".contains(c)) && !gap.contains(". ")
+}
+
+/// Issue 520 (D4b): a lot label at `words[j]` ([`lot_label`]) followed by its `:` or `)`, which opens
+/// a summary's entry (`lot 2 : Dupont`, `Lot 3) Martin`).
+fn entry_label(raw: &str, runs: &[(usize, usize)], words: &[&str], j: usize) -> bool {
+    lot_label(raw, runs, words, j).is_some_and(|after| {
+        let end = runs[after - 1].1;
+        raw[end..].trim_start().starts_with([':', ')'])
+    })
+}
+
 /// Two or more `;`-separated entries with letters, one of which names something: no void
 /// stem, not a void whole value, and not a relaunch note (`infructueux ; relance en procédure
 /// adaptée` is one void lot).
@@ -3111,17 +3610,350 @@ fn mixed_segments(raw: &str) -> bool {
         })
 }
 
-/// Whether a folded void phrase goes on to say the lot was awarded after all: an
-/// `attribué` form not right after `non` / `pas` / `sans`, or `avec la société`.
-fn award_clause(folded: &str) -> bool {
+/// Issue 520 (D5): [`mixed_segments`] where a segment names a party. The name is split at a `;`
+/// outside parentheses once `&amp;` is decoded (`(cf avis JOUE no 2012/s 133-221467 du 13.7.2012;
+/// et Annonce no 484, BOAMP no 134b, du 13.7.2012)`, `de marque O&Amp;K`), and a segment names
+/// nobody when it is void ([`mentions_void`]), a blank value (`néant`: [`BLANK_WHOLE`]), a reason
+/// that speaks of an offer or a bidder and of its failure ([`offer_failure`]: `Aucune offre n'a été
+/// déposée; le lot n° 2 a été déclaré infructueux`, `Desierto; el licitador ha renunciado a la
+/// adjudicación del contrato`) or a relaunch note ([`RELAUNCH_NOTES`]: `; annonce(s) n° 116`). `Bp
+/// innovis ; infructueux` names one, and so does `część 2 – wybrano ofertę firmy Usługi
+/// Transportowe Jan Kowalski`.
+fn award_mixed_segments(raw: &str) -> bool {
+    if !mixed_segments(raw) {
+        return false;
+    }
+    // `&amp;` decoded in any case, byte for byte on the ASCII lowercase.
+    let lower = raw.to_ascii_lowercase();
+    let mut decoded = String::with_capacity(raw.len());
+    let mut at = 0;
+    while let Some(found) = lower[at..].find("&amp;") {
+        decoded.push_str(&raw[at..at + found + 1]);
+        at += found + "&amp;".len();
+    }
+    decoded.push_str(&raw[at..]);
+    let mut segments: Vec<String> = vec![String::new()];
+    let mut depth = 0usize;
+    for c in decoded.chars() {
+        match c {
+            '(' => depth += 1,
+            ')' => depth = depth.saturating_sub(1),
+            ';' if depth == 0 => {
+                segments.push(String::new());
+                continue;
+            }
+            _ => {}
+        }
+        segments.last_mut().expect("one segment").push(c);
+    }
+    segments.retain(|segment| segment.chars().any(char::is_alphabetic));
+    segments.len() >= 2
+        && segments.iter().any(|segment| {
+            let folded = fold(segment);
+            let padded = format!(" {folded}");
+            !mentions_void(segment)
+                && !BLANK_WHOLE.contains(&folded.as_str())
+                && !offer_failure(&folded)
+                && !RELAUNCH_NOTES.iter().any(|note| padded.contains(note))
+        })
+}
+
+/// Issue 520 (D5, the review): whether a folded segment gives the reason the lot is void — an offer
+/// or bidder word ([`OFFER_WORDS`]) beside a word for its failure ([`OFFER_REJECTIONS`],
+/// [`OFFER_FAILURES`], [`OFFER_NEGATIONS`]: `oferty odrzucone`, `Offres inacceptables`, `nie wpłynęła
+/// żadna oferta`). An offer word alone names the winner (`najkorzystniejsza oferta: PHU Kowalski`,
+/// `Wykonawca: Jan Kowalski`, `offre de la société Dupont retenue après négociation`).
+fn offer_failure(folded: &str) -> bool {
+    let starts = |w: &str, stems: &[&str]| stems.iter().any(|stem| w.starts_with(stem));
     let words: Vec<&str> = folded.split(' ').collect();
+    words.iter().any(|w| starts(w, &OFFER_WORDS))
+        && words
+            .iter()
+            .any(|w| starts(w, &OFFER_REJECTIONS) || starts(w, &OFFER_FAILURES) || OFFER_NEGATIONS.contains(w))
+}
+
+/// Whether a void phrase (`raw`, folded `folded`) goes on to say the lot was awarded after all:
+/// an `attribué` form not negated, or `avec la société`. Issue 520 (D2) reads the award it
+/// states, no other:
+/// - the negation is the nearest word before it in its clause that is no [`CLAUSE_FILLERS`] word
+///   ([`clause_break`]: `Le marché n'a pas été attribué`, whose word right before is `été`). The
+///   clause, since the review: `Pas d'offre. Attribué à Léo Lagrange` and `Infructueux (pas
+///   d'offre), attribué à Dupont` negate the offer, not the award; and the restrictive `ne … que`
+///   is no negation (`il n'a été attribué qu'après négociation à la société Martin`);
+/// - `déjà attribué` is another procedure's award (`A 97.23.19) sans suite (déjà attribué au lot
+///   A 12)`, `Lot déjà attribué a été déclaré sans suite`, `déjà été attribué`);
+/// - `avec la société` that a relaunch still to come governs ([`intent_spans`]: `Déclaré
+///   infructueux - à relancer en marché négocié … avec les sociétés ayant soumissionné`) names whom
+///   the buyer will negotiate with.
+///
+/// An award word with no negation is never read as void: `257 lots attribués`, `attribué par
+/// marché négocié … suite à appel d'offres infructueux` and `attribué le 28.10.2013` keep their
+/// party, and so does `relancé en procédure négocié … avec la société B BRAUN` (a past relaunch).
+fn award_clause(raw: &str, folded: &str) -> bool {
+    let words: Vec<&str> = folded.split(' ').collect();
+    let runs = alphanumeric_runs(raw);
+    let aligned = runs.len() == words.len();
     let awarded = words.iter().enumerate().any(|(i, w)| {
-        matches!(*w, "attribue" | "attribuee" | "attribues" | "attribuees" | "attribuer")
-            && !(i > 0 && matches!(words[i - 1], "non" | "pas" | "sans"))
+        if !matches!(*w, "attribue" | "attribuee" | "attribues" | "attribuees" | "attribuer") {
+            return false;
+        }
+        if !aligned {
+            // The fold's words and the raw runs do not line up: the 510 reading, erring toward a name.
+            return !(i > 0 && matches!(words[i - 1], "non" | "pas" | "sans"));
+        }
+        // The verb's clause: from the word after the last clause break before it.
+        let from = (1..=i).rev().find(|&k| clause_break(&raw[runs[k - 1].1..runs[k].0])).unwrap_or(0);
+        let before = words[from..i].iter().rev().find(|b| !CLAUSE_FILLERS.contains(*b));
+        let restrictive = words.get(i + 1).is_some_and(|n| matches!(*n, "qu" | "que"));
+        !before.is_some_and(|b| *b == "deja" || (NEGATIONS.contains(b) && !restrictive))
     });
-    let padded = format!(" {folded} ");
     awarded
-        || [" avec la societe ", " avec l entreprise ", " avec les societes "].iter().any(|p| padded.contains(p))
+        || sentences(raw).iter().any(|sentence| {
+            let runs = alphanumeric_runs(sentence);
+            let folded: Vec<String> = runs.iter().map(|&(from, to)| fold(&sentence[from..to])).collect();
+            let words: Vec<&str> = folded.iter().map(String::as_str).collect();
+            let spans = intent_spans(sentence, &runs, &words);
+            (0..words.len()).any(|k| avec_cue(&words, k) && !spans.iter().any(|&(from, to)| from < k && k < to))
+        })
+}
+
+/// Whether `words[k]` opens the `avec la société` cue (`avec l'entreprise`, `avec les sociétés`).
+fn avec_cue(words: &[&str], k: usize) -> bool {
+    words[k] == "avec"
+        && matches!(words.get(k + 1..k + 3), Some(["la", "societe"] | ["l", "entreprise"] | ["les", "societes"]))
+}
+
+/// Issue 520 (D2c, D6b): the word ranges of one sentence (`words`, one folded word per run of
+/// `raw`, `runs`) that a relaunch still to come governs ([`RELAUNCH_INTENT`]): from the intent word
+/// to the first award already made after it ([`PAST_AWARDS`], `a été`, `ont été`: `Après avoir décidé
+/// de relancer …, le marché a été conclu avec la société Dupont`) or the first new lot ([`lot_label`]:
+/// `Lot infructueux, sera relancé - Lot 2: Dupont SARL`), or to the sentence's end. A lot after the
+/// intent's own `avec les sociétés` stays governed: the cue's list names the bidders the buyer will
+/// negotiate with (`à relancer … avec les sociétés ayant soumissionné à l'appel d'offre : lot 5 :
+/// Société Massias`).
+fn intent_spans(raw: &str, runs: &[(usize, usize)], words: &[&str]) -> Vec<(usize, usize)> {
+    let mut spans = Vec::new();
+    for (i, w) in words.iter().enumerate() {
+        if !RELAUNCH_INTENT.contains(w) {
+            continue;
+        }
+        let mut cue = false;
+        let mut end = words.len();
+        for j in i + 1..words.len() {
+            cue |= avec_cue(words, j);
+            let past = PAST_AWARDS.contains(&words[j]) || (words[j] == "ete" && matches!(words[j - 1], "a" | "ont"));
+            if past || (!cue && lot_label(raw, runs, words, j).is_some()) {
+                end = j;
+                break;
+            }
+        }
+        spans.push((i, end));
+    }
+    spans
+}
+
+/// Issue 520 (D1): BOAMP's void sentence for ONE lot, `Le lot <n> : <the lot's title> a été
+/// déclaré infructueux` (or `sans suite`). The title is free text, and every keep signal fires
+/// inside one: a second designator (`Le lot 102 : lot B10: Menuiseries bois PVC serrurerie vitrerie
+/// (Genevois)`, `le lot 1 : Lot no1 : …`, `Le lot 6: Lot 2011-231 01 Communauté de Communes du
+/// Genevois`, the sub-lot codes `nob02`), a `;` (`Rd1005; Rd24 et Rd32`, `O&Amp;K`), an awardee
+/// word (`la réalisation par le titulaire de diagnostics`), a brand (`de marque JCB`), a typo (`SAU`
+/// for *sauf*), bullets. So the name is void when the raw text opens with `Le lot <n°?> <digits>
+/// :`, holds `le lot` nowhere else, the fold closes on the verdict whose subject is no other lot
+/// (`; lot 2 a été déclaré infructueux`), and no award clause speaks ([`award_clause`]). `Le lot 3: X.
+/// Le lot 4: Dupont SARL a été déclaré infructueux`, `Le lot 1 : Keolis. Le lot 2 a été déclaré
+/// infructueux` (a second lot, its colon or not), `lot 25) la société Storz a été retenue. Le lot 32
+/// a été déclaré infructueux` (no opener) and `Le lot 2 : attribué à Dupont SARL ; le lot 2b a été
+/// déclaré infructueux` stay summaries.
+fn lot_title_void(raw: &str, folded: &str) -> bool {
+    let lower = raw.trim_start().to_lowercase();
+    // Every `le lot` at a word boundary, its colon or not: the opener must be the only one.
+    let lots = lower
+        .match_indices("le lot")
+        .filter(|(at, _)| {
+            !lower[..*at].chars().next_back().is_some_and(char::is_alphanumeric)
+                && !lower[at + "le lot".len()..].chars().next().is_some_and(char::is_alphanumeric)
+        })
+        .count();
+    let words: Vec<&str> = folded.split(' ').collect();
+    let declared = |w: &str| matches!(w, "declare" | "declaree" | "declares" | "declarees");
+    let (verdict, subject) = match words.as_slice() {
+        [subject @ .., "a", "ete", declare, "infructueux" | "infructueuse" | "infructueuses"]
+        | [subject @ .., "a", "ete", declare, "sans", "suite"] => (declared(declare), subject),
+        _ => (false, &[][..]),
+    };
+    // The verdict's subject is another lot: `lot 2`, `lot n 2`, `lot no2`, `lot2` — not a sub-lot
+    // code that closes the title (`(sous lot nob06) a été déclaré sans suite`).
+    let numbered = |w: &&str| {
+        let n = glued_number(w);
+        let digits = n.bytes().take_while(u8::is_ascii_digit).count();
+        digits > 0 && (digits == n.len() || (digits + 1 == n.len() && n.as_bytes()[digits].is_ascii_alphabetic()))
+    };
+    let other_lot = match subject {
+        [.., "lot" | "lots", n] | [.., "lot" | "lots", "n" | "no" | "nº" | "o", n] => numbered(n),
+        [.., glued] => glued.strip_prefix("lot").is_some_and(digits_only),
+        [] => false,
+    };
+    lots == 1 && lot_opener(&lower, 0) && verdict && !other_lot && !award_clause(raw, folded)
+}
+
+/// Whether the lowercased `lower` holds a lot opener at byte `at`: `le lot`, at a word boundary,
+/// then an optional number mark (`n°`, `nº`, `no`) and the lot's digits, then a `:` (`Le lot 102 :
+/// lot B10`, `le lot 01: Terrassement`, `Le lot n° 2 :`).
+fn lot_opener(lower: &str, at: usize) -> bool {
+    if !lower[at..].starts_with("le lot") || lower[..at].chars().next_back().is_some_and(char::is_alphanumeric) {
+        return false;
+    }
+    let rest = &lower[at + "le lot".len()..];
+    if !rest.starts_with(char::is_whitespace) {
+        return false;
+    }
+    let mut rest = rest.trim_start();
+    let mark = rest.split_whitespace().next().unwrap_or("");
+    if NUMBER_MARKS.contains(&mark.trim_end_matches(['.', '°'])) || mark == "n°" {
+        rest = rest[mark.len()..].trim_start();
+    }
+    let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+    digits > 0 && rest[digits..].trim_start().starts_with(':')
+}
+
+/// Issue 520: `raw` cut into its sentences, for the rules that read one ([`award_clause`]'s
+/// relaunch intent, [`award_several_lots`]' relaunch markers, [`award_company_token`]'s bidders):
+/// at a `;`, a line break or an ellipsis, after a `.` that a space or the end follows, and — since
+/// the review — after a `.` glued between a word of two letters or more and a capital (`sera
+/// relancé.Lot 2: Dupont SARL`; not the dots of `S.A.`, `S.p.A.`). A cut too many (`art. 35`) only
+/// lets a keep signal count again, so each rule errs toward keeping the party.
+fn sentences(raw: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let mut from = 0;
+    let chars: Vec<(usize, char)> = raw.char_indices().collect();
+    for (k, &(at, c)) in chars.iter().enumerate() {
+        let next = chars.get(k + 1).map(|&(_, n)| n);
+        let end = match c {
+            ';' | '\n' | '…' => true,
+            '.' => {
+                let word = chars[..k].iter().rev().take_while(|(_, b)| b.is_alphabetic()).count();
+                next.is_none_or(char::is_whitespace) || (word >= 2 && next.is_some_and(char::is_uppercase))
+            }
+            _ => false,
+        };
+        if end {
+            let to = at + c.len_utf8();
+            out.push(&raw[from..to]);
+            from = to;
+        }
+    }
+    if from < raw.len() {
+        out.push(&raw[from..]);
+    }
+    out
+}
+
+/// Issue 520 (D6): [`company_token`] where the form is no bidder's. It does not count when it
+/// stands in a rejected offer's span ([`rejected_offer_spans`]: `l'offre du groupement auxi+/ sas
+/// Viviani est inacceptable`, `ha escluso dalla gara l'unica offerta ricevuta dalla compagnia
+/// UnipolSai S.p.A.`), where a relaunch still to come governs it ([`intent_spans`]: `sera passé avec
+/// la STÉ France Télécom`, `à relancer … avec les sociétés ayant soumissionné … : lot 5 : Société
+/// Massias`), or in a failed bidder's line ([`bidder_before_void_lot`]: `Société Sindarro Lot déclaré
+/// infructueux relancé en marché négocié`). `Yvelin SA. Lot 2 : infructueux`, `DESIERTO, S.L.`,
+/// `Lot infructueux, sera relancé. Lot 2: Dupont SARL` (a new sentence), `Infructueux (1 offre
+/// irrégulière), relancé … et conclu avec Promocash SAS` (another clause) and `Décision de négocier :
+/// marché conclu avec Dupont SARL` (an award already made) keep theirs.
+fn award_company_token(raw: &str) -> bool {
+    company_token(raw)
+        && !bidder_before_void_lot(raw)
+        && sentences(raw).iter().any(|sentence| company_token(&winner_text(sentence)))
+}
+
+/// `sentence` without the spans a bidder is named in ([`rejected_offer_spans`], [`intent_spans`]),
+/// the pieces left joined by a space.
+fn winner_text(sentence: &str) -> String {
+    let runs = alphanumeric_runs(sentence);
+    let folded: Vec<String> = runs.iter().map(|&(from, to)| fold(&sentence[from..to])).collect();
+    let words: Vec<&str> = folded.iter().map(String::as_str).collect();
+    let mut spans = rejected_offer_spans(sentence, &runs, &words);
+    spans.extend(intent_spans(sentence, &runs, &words));
+    spans.sort_unstable();
+    let byte = |k: usize| runs.get(k).map_or(sentence.len(), |run| run.0);
+    let mut text = String::new();
+    let mut at = 0;
+    for (from, to) in spans {
+        if byte(from) > at {
+            text.push_str(&sentence[at..byte(from)]);
+            text.push(' ');
+        }
+        at = at.max(byte(to));
+    }
+    text.push_str(&sentence[at..]);
+    text
+}
+
+/// Issue 520 (D6a): the word ranges of one sentence that name a rejected offer's bidder. Each clause
+/// ([`clause_break`], but a comma: `l'offre de la société X SA, jugée irrégulière, …`) is cut at its
+/// offer words ([`OFFER_WORDS`]); an offer's span runs from the word after it to the next offer word,
+/// an award made or kept ([`PAST_AWARDS`], `retenu(e)`: `1 offre irrégulière, relancé … et conclu
+/// avec Promocash SAS`) or the clause's end, and names the bidder when a rejection
+/// ([`OFFER_REJECTIONS`]) stands in it — or, for the clause's first offer, before it (`ha escluso
+/// dalla gara l'unica offerta ricevuta dalla compagnia UnipolSai S.p.A.`). `l'offre de Dupont SARL a
+/// été retenue, les autres offres étant irrégulières` rejects the others, not Dupont's.
+fn rejected_offer_spans(raw: &str, runs: &[(usize, usize)], words: &[&str]) -> Vec<(usize, usize)> {
+    let starts = |w: &str, stems: &[&str]| stems.iter().any(|stem| w.starts_with(stem));
+    let ends_span = |w: &str| starts(w, &OFFER_WORDS) || PAST_AWARDS.contains(&w) || w.starts_with("retenu");
+    let mut spans = Vec::new();
+    let mut clause = 0;
+    for end in 1..=words.len() {
+        if end < words.len() {
+            let gap = &raw[runs[end - 1].1..runs[end].0];
+            if !clause_break(gap) || gap.trim() == "," {
+                continue;
+            }
+        }
+        let offers: Vec<usize> = (clause..end).filter(|&k| starts(words[k], &OFFER_WORDS)).collect();
+        for (n, &offer) in offers.iter().enumerate() {
+            let to = (offer + 1..end).find(|&k| ends_span(words[k])).unwrap_or(end);
+            let from = if n == 0 { clause } else { offer };
+            if words[from..to].iter().any(|w| starts(w, &OFFER_REJECTIONS)) {
+                spans.push((offer + 1, to));
+            }
+        }
+        clause = end;
+    }
+    spans
+}
+
+/// Issue 520 (D6c): a failed bidder named before the void verdict on its whole lot — `Société`
+/// or `Sté`, the bidder's name (one to four words, no number), then `Lot déclaré(e) infructueux`
+/// with no lot number anywhere, no award clause ([`award_clause`]), and nothing after the verdict
+/// that names an award, a company form or an award word (`marché notifié à Société Dupont`, since
+/// the review): `Société Sindarro Lot déclaré infructueux relancé en marché négocié avec publicité
+/// et mise enconcurence (date limite le 10 juin 2008)`, `Société Energys. Lot déclaré infructueux …`,
+/// `Société SOTEP Lot Déclaré infructueux et sera relancé …`. The relaunch's deadline fell after the
+/// notice, and the awarded lots of the same notice name their winners with an address and a value.
+fn bidder_before_void_lot(raw: &str) -> bool {
+    let folded = fold(raw);
+    let words: Vec<&str> = folded.split(' ').collect();
+    let Some(lot) = words.iter().position(|w| *w == "lot") else { return false };
+    let digit = |w: &&str| w.bytes().any(|b| b.is_ascii_digit());
+    // A lot number anywhere: a designator whose next word past the number marks holds a digit.
+    let numbered = words.iter().enumerate().any(|(i, w)| {
+        LOT_DESIGNATORS.contains(w) && words[i + 1..].iter().find(|next| !NUMBER_MARKS.contains(*next)).is_some_and(digit)
+    });
+    // What follows the verdict: no company form, and no award word.
+    let runs = alphanumeric_runs(raw);
+    let award_word = |w: &&str| {
+        PAST_AWARDS.contains(w) || AWARD_NOUNS.contains(w) || matches!(*w, "attribuer" | "passe" | "signe")
+    };
+    let quiet_after = runs.len() == words.len()
+        && runs.get(lot + 2).is_some_and(|run| !company_token(&raw[run.1..]))
+        && !words.iter().skip(lot + 3).any(award_word);
+    matches!(words[0], "societe" | "ste")
+        && (2..=5).contains(&lot)
+        && !words[1..lot].iter().any(digit)
+        && words.get(lot + 1).is_some_and(|w| w.starts_with("declare"))
+        && words.get(lot + 2).is_some_and(|w| w.starts_with("infructu"))
+        && !numbered
+        && quiet_after
+        && !award_clause(raw, &folded)
 }
 
 /// `name` without ONE trailing parenthetical lot qualifier — `(lote 3)`,
@@ -3295,7 +4127,6 @@ mod tests {
             "Getinge France. SECTION VI: OTHER INFORMATION VI.7) Other information: Tous les autres lots (sur 123 lots au total) sont infructueux.",
             "Lot A) Rivadis. Lot B) Ontex. Lot C) Maury. Lot E) infructueux.",
             "A) Coca à Lille. B) Placé: sans suite. C) SRTT à Grande-Synthe.",
-            "Société Sindarro Lot déclaré infructueux relancé en marché négocié avec publicité",
             "Procédure de marché négocié après appel d'offres infructueux: 5 Mepy Système",
             "Rang 1 Helmlinger. Rang 2 Jonnette. Rang 3 infructueux",
             "SPIE secteurs 5A à 5D/ infructueux 5E 5F/ Marc Elec 5G/ Chenelec 5H",
@@ -3371,17 +4202,1006 @@ mod tests {
             "Lot infructueux faute d'attributaire",
             "Declarado desierto, no hay adjudicatario",
             "Nessuna aggiudicazione, non è stato individuato alcun aggiudicatario",
+            // Issue 520 D6c: the cohort read's failed bidder, named before its lot's void verdict (the
+            // relaunch's deadline fell after the notice), read as a summary until then.
+            "Société Sindarro Lot déclaré infructueux relancé en marché négocié avec publicité",
         ] {
             assert_eq!(not_a_name(void), Some(NotAName::VoidLot), "{void}");
             assert!(super::mentions_void(void), "{void}");
         }
         assert_eq!(
             not_a_name("Sublote 9.1: Declarado desierto. Sublote 9.2: Declarado desierto."),
-            Some(NotAName::AwardSummary),
-            "a summary of void lots only is kept — the accepted cost (a junk name, never a lost award)"
+            Some(NotAName::VoidLot),
+            "issue 520 D4c: a summary of void lots only is void (kept until then, the accepted cost)"
         );
         assert!(super::mentions_void("Lot 1) Dupont. Lot 2) infructueux"), "the walk's net still catches a summary");
         assert!(!super::mentions_void("ACME SA"));
+    }
+
+    /// The two-sided check of issue 520's narrowings: each name `names` lists reads `class`. An id
+    /// is the walk's org (520 unit 1, `unit1-classified.json`; the name as the dry report
+    /// `void-names-refold-after-dry.json` prints it); id 0 marks a near miss written for the test.
+    fn assert_class(names: &[(u64, &str)], class: Option<NotAName>) {
+        for (org, name) in names {
+            assert_eq!(not_a_name(name), class, "{org}: {name}");
+        }
+    }
+
+    /// Issue 520 D1 (unit-1 decision §4.1, 68 orgs / 70 mentions): BOAMP's void sentence for one
+    /// lot, `Le lot <n> : <title> a été déclaré infructueux`, is void whatever its title holds — a
+    /// second designator, a `;`, `titulaire`, a brand, the typo `SAU`, bullets. Two openers, no
+    /// opener, or an award clause keep the summary.
+    #[test]
+    fn one_lots_void_sentence_is_void() {
+        assert_class(
+            &[
+                (3666893, "Le lot 102 : lot B10: Menuiseries bois PVC serrurerie vitrerie (Genevois) a été déclaré infructueux"),
+                (31481092, "Le lot 6: Lot 2011-231 01 Communauté de Communes du Genevois a été déclaré Infructueux"),
+                (4133918, "Le lot 91 : lot 9 A: Fourniture de pièces détachées pour l'entretien d'engins et matériel de marque JCB (type chargeur ou centrale hydraulique) a été déclaré infructueux"),
+                (1513898, "Le lot 3: Diagnostics sur bâtiments occupés à usage principal d'habitation Le présent lot a pour objet la réalisation par le titulaire de diagnostics sur bâtiments occupés à usage principal d'habitation à réaliser au fur et à mesure des besoins de Paris habitat-OPH. a été déclaré sans suite"),
+                (5772779, "le lot 002 : B Gros oeuvre étendu : Fondations spéciales (sous-lot nob02) - gros oeuvre (sous-lot nob03) - charpente métallique (sous-lot nob04) - etanchéité (sous-lot nob05) - façade brique (sous lot nob06) a été déclaré sans suite"),
+                (5101244, "Le lot 6: livres scolaires et documents pédagogiques d'accompagnement (SAU ouvrages distribués exclusivement par les éditeurs eux-mêmes et livres de fonction et documentaires pour les bibliothèques des écoles) a été déclaré sans suite"),
+                (1392146, "Le lot 1: secteur du canton d'Evian - Rd1005; Rd24 et Rd32 a été déclaré Infructueux"),
+                (3107850, "le lot 8 : Electricite, Courant Fort - courant Faible ; a été déclaré Infructueux"),
+                (1537987, "le lot 1: Rédaction d'un feuillet du magazine qui sera constitué au maximum de: - 2 doubles pages de portraits d'entreprises, associations, clubs de sports .... - 1 double page patrimoine, faune ou flore du département a été déclaré Infructueux"),
+                (2021395, "le lot 12: sans objet se reporter au lot no9 plomberie sanitaire a été déclaré infructueux"),
+                (4133921, "Le lot 11 : Fourniture de pièces détachées et prestations de maintenance pour l'entretien d'engins de TP de marque O&Amp;K (type Niveleuse) a été déclaré infructueux"),
+            ],
+            Some(NotAName::VoidLot),
+        );
+        assert_class(
+            &[
+                (31738609, "lot 25) la société Storz a été retenue. Le lot 32 a été déclaré infructueux"),
+                (0, "Le lot 3: Fourniture de mobilier. Le lot 4: Dupont SARL a été déclaré infructueux"),
+                (0, "Le lot 2 : attribué à Dupont SARL ; le lot 2b a été déclaré infructueux"),
+                // The U2 review: a second lot written without its colon is a second lot, and so is
+                // a verdict whose subject is another lot (`; lot 2 a été déclaré`).
+                (0, "Le lot 1 : Keolis. Le lot 2 a été déclaré infructueux"),
+                (0, "Le lot 1 : Keolis, le lot 2 a été déclaré infructueux"),
+                (0, "Le lot 1 : Société Dupont ; le lot 2 a été déclaré infructueux"),
+                (0, "Le lot 1 : Dupont SARL. Les lots 2 à 4 : sans suite. Le lot 5 a été déclaré infructueux"),
+                (0, "Le lot 1 : Menuiserie Dupont SARL - 69000 Lyon. Le lot 2 a été déclaré infructueux"),
+                (0, "Le lot 1 : Attributaire : Martin SARL. Le lot 2 a été déclaré infructueux"),
+                (0, "Le lot 1 : attribution à Martin SARL. Le lot 2 a été déclaré sans suite"),
+                (0, "Le lot 1 : Keolis ; lot 2 a été déclaré infructueux"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        // A sub-lot code closing the title is no other lot (5772779 above: `(sous lot nob06) a été
+        // déclaré sans suite`); a sub-lot number is.
+        assert_class(&[(0, "Le lot 3 : façade brique (sous lot nob06) a été déclaré sans suite")], Some(NotAName::VoidLot));
+        assert_class(&[(0, "Le lot 3 : Dupont SARL ; sous lot 3b a été déclaré sans suite")], Some(NotAName::AwardSummary));
+    }
+
+    /// Issue 520 D2 (17 orgs): `award_clause` reads the award it states — `n'a pas été attribué` is
+    /// negated by the nearest word no filler is (`pas`), `déjà attribué` is another procedure's
+    /// award, and `avec la société` after `relancer` / `négocier` / `sera` in its sentence names whom
+    /// the buyer will negotiate with. A past relaunch's `avec la société`, an award after the void
+    /// call, and an award word with no negation keep the party.
+    #[test]
+    fn a_negated_earlier_or_intended_award_is_no_award() {
+        assert_class(
+            &[
+                (1171947, "Procédure incomplète. Le marché n'a pas été attribué. Appel d'offres sans suite"),
+                (7093933, "Le lot n° 2 n'a pas été attribué et fut déclaré sans suite"),
+                (31674188, "A 97.23.18) sans suite (déjà attribué au lots A 06 et A 12)"),
+                (3526991, "décalré infructueux= le lot 2 infructueux et de le relancer en marché négocié en application de l'article 35 - iI - 3ème alinéa du code des marchés publics, avec la société LHENRY"),
+                (4032000, "Offres déclarées irrégulières. Lot déclaré donc infructueux. Il a donc été proposé de négocier avec les sociétés candidates dans le cadre de la procédure prévue à l'article 35-I-1 3ème alinéa du code des marchés publics par une lettre de consultation dont le formalisme est prévu à l'article 66 du co"),
+                (2131011, "Le marché n'a pas été attribué: la procédure est déclarée infructueuse le 17.4.2012"),
+                (31400142, "Le Lot n'a pas été attribué (lot infructueux)"),
+                (6069583, "Le lot n° 2 du marché n'a pas été attribué. Le lot n° 2 est infructueux"),
+                (31674189, "A 97.23.19) sans suite (déjà attribué au lot A 12)"),
+                (6011832, "le lot 01: Terrassement substitution de sol: Lot déjà attribué a été déclaré sans suite"),
+                (3526206, "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - i - 1er alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 1 : société TIB"),
+            ],
+            Some(NotAName::VoidLot),
+        );
+        assert_class(
+            &[
+                (1435457, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Sandoz suite à procédure négociée avec publicité avec mise en concurrence (IAP 11-32 C)"),
+                (1397079, "Lot déclaré infructueux lors de l'appel d'offre puis relancé en procédure négocié sans mise en concurrence et sans publicité (art.35-2.3) avec la société B BRAUN"),
+                (0, "Sans suite, marché passé avec la société Dupont"),
+                (4552687, "marché déclaré infructueux et relancé sous la forme d'un marché négocié article 33-i1°2ème du décret 2005-1742 du 32/12/2005.marché attribué le 9/12/13 à Assurances securité 59000 Lille"),
+                // 520's residual and F-P rows: the award word is not negated, so they stay kept.
+                (4409817, "Projet déclaré sans suite : relancé sous le n° de projet ESID 12 418, attribué le 28.10.2013"),
+                (1341883, "Demander le détail à la cellule marchés sont établis 66 marchés pour l'ensemble des 257 lots attribués Les 74 lots infructueux sont relancés 2 lots sans suite (n° 12 et 300)"),
+                (31486027, "attribué par marché négocié passé selon art. 35-I.1 du CMP suite à appel d'offres infructueux (publicité AAPC parue dans BOAMP no 83 du 28.4.2011 - annonce no 221 et JOUE no 2011/S 81-133894 du 27.4.2011)"),
+                // The U2 review: the negation is read in the verb's clause and not through a noun —
+                // these negate the offer, not the award — and `ne … que` restricts, it does not negate.
+                (0, "Lot infructueux faute d'offre, attribué à Dupont Frères après négociation"),
+                (0, "Infructueux (pas d'offre), attribué à Dupont Frères après négociation"),
+                (0, "Infructueux : aucune offre, attribué à Promocash par marché négocié"),
+                (0, "Infructueux faute d'offres. Attribué ensuite à Dupont Frères"),
+                (0, "Lot déclaré infructueux (aucune offre). Attribué après négociation à la société Martin."),
+                (0, "Infructueux faute de candidature. Le contrat a été attribué à Dupont."),
+                (0, "Lot déclaré infructueux en première phase, il n'a été attribué qu'après négociation à la société Martin"),
+                // A relaunch intent governs nothing past an award made, or past a new lot.
+                (0, "Lot infructueux. Après avoir décidé de relancer en procédure négociée, le marché a été conclu avec la société Dupont"),
+                (0, "Lot 1 infructueux : à relancer.Lot 2 : marché passé avec la société Martin"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        // The 7151483 template without its middle sentence names its winner (a plain name after a
+        // void prefix), as 510 read it.
+        assert_class(
+            &[
+                (0, "Pas d'offre. Attribué à Léo Lagrange"),
+                (0, "Pas d'offre - attribué à l'entreprise Promocash après négociation"),
+            ],
+            None,
+        );
+        // `déjà` read past the fillers, as the negation is.
+        assert_class(&[(0, "Lot sans suite (déjà été attribué au lot A 12)")], Some(NotAName::VoidLot));
+    }
+
+    /// Whether `name`'s awardee word names a party (issue 520 D3, `award_awardee_noun`).
+    fn awardee_labels(name: &str) -> bool {
+        let folded = fold(name);
+        super::award_awardee_noun(name, &folded.split(' ').collect::<Vec<_>>())
+    }
+
+    /// Issue 520 D3 (39 orgs / 47 mentions): an awardee word names a party only as a label, as
+    /// `(mandataire)`, as `attribution à`, or as a participle before the party's preposition — not
+    /// in `en cours d'attribution`, `établir l'attribution`, `l'attributaire pressenti`, `la société
+    /// attributaire` in liquidation, `désistement du titulaire`, `propuesto adjudicatario` or
+    /// `awarded as part of a new project`.
+    #[test]
+    fn an_awardee_word_must_label_a_party() {
+        let void = [
+            (4774593, "décision de déclarer infructueux le lot nº 10 - plomberie sanitaire pour le motif suivant : toutes les offres réceptionnées sur ce lot ont été déclarées soit irrégulières soit inacceptables et ne permettent pas d'en établir l'attribution, de plus les crédits budgétaires alloués au marché après évalu"),
+            (6286857, "Suite à la cession de l'entreprise pressentie attributaire et conformément à l'article 59.IV du code des marchés publics, le marché est déclaré sans suite pour motif d'intérêt général. Avis nº 14-167620 publié au BOAMP et au JOUE"),
+            (31489554, "Lot infructueux. En cours d'attribution, suite marché négocié sans publicité."),
+            (7596880, "Not awarded (was retended and awarded as part of a new project)"),
+            (10528138, "Desierto, al retirar su oferta el único licitador propuesto adjudicatario"),
+            (5611738, "Sans suite, en cours d'attribution"),
+            (6499376, "infructueux suite à désistement du titulaire"),
+            (31383538, "Lot infructueux et relancer selon une procédure négocié après publicité préalable et mise en concurence selon l'article 35-1 du code des marchés publics. Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot."),
+            (7395857, "Declaré sans suite en raison de la liquidation judiciaire de la société attributaire"),
+            (6654938, "L'attributaire pressenti pour ce lot ayant modifié son offre, elle ne correspond plus au besoin du pouvoir adjudicateur. Lot declare sans suite"),
+            (1633917, "résultat du concours: déclaration sans suite pour motif de défaillance du mandataire de l'équipe, suite à la liquidation judiciaire de l'agence Toth-Fasquelle préalablement à la signature du marché de maîtrise d'oeuvre"),
+            (28821451, "Not Awarded - Other FE College awarded area. V.5) THE CONTRACT IS LIKELY TO BE SUB-CONTRACTED: No"),
+        ];
+        assert_class(&void, Some(NotAName::VoidLot));
+        for (org, name) in void {
+            assert!(!awardee_labels(name), "{org}: {name}");
+        }
+        // Each names its awardee by a label (`Nom du titulaire:`, `Attributaire:`, `fournisseur retenu =`).
+        let labelled = [(6191476, "Déclaré infructueux. Consultation relancée en procédure adaptée. Nom du titulaire: Keolis"), (7030205, "Lot infructueux relancé suivant procédure négociée sans publicité et sans concurrence en application de l'article 35 Ii-3 du code des marchés publics par lettre de consultation du 9.1.2015 et lettre de négociation du 07/04/15. Attributaire: ARDP"), (3982542, "infructueux. Relancé sous forme de marché négocié : 013086 - fournisseur retenu = zoll medical France"), (7805728, "Marché infructueux, recours à procédure négociée: titulaire: SMACL"), (1621278, "ce lot a été déclaré infructueux par la CAO et une procédure négociée à été mise en place conformément à l'art 35 du CMP et sans nouvelle mesure de publicité. Nom de l'attributaire: Brake France Service"), (5425803, "Lot 10a: déclaration sans suite lot 10b: procédure infructueuse lot 10c titulaire 1: SAGA titulaire 2: Chapelec")];
+        assert_class(&labelled, Some(NotAName::AwardSummary));
+        for (org, name) in labelled {
+            assert!(awardee_labels(name), "{org}: {name}");
+        }
+        for name in [
+            "GRPT GCC (mandataire) et Andre BTP, suite à procédure négociée après AO infructueux",
+            "Lots 1) et 2) déclarés infructueux. Lot 3) attribution à: SA Maîtres Laitiers Distribution",
+            "Lote 2 declarado desierto; lote 1 adjudicado a Construcciones Pérez",
+            "Lotto 2 nessuna aggiudicazione, lotto 1 aggiudicato alla ditta Rossi",
+            "Lot 2 not awarded; lot 1 awarded to Acme Ltd",
+            "Perceel 2 niet gegund; perceel 1 gegund aan Bouwbedrijf Jansen",
+        ] {
+            assert!(awardee_labels(name), "{name}");
+        }
+        assert!(!awardee_labels("Infructueux. Date d'attribution : CAO du 17.4.2013."), "an attribution label heads a date");
+        assert!(!awardee_labels("Pas d'attributaire, lot infructueux"), "510's negation stays");
+        // The U2 review: a label with a plural mark, an entry number, a short complement, a dash or
+        // a full-width colon; a participle whose preposition follows a date or an adverb; `retenu(e)`
+        // after a copula or a name; a noun right before its party or a company word.
+        let review = [
+            "Lot infructueux relancé en procédure négociée. Attributaire(s) : Keolis",
+            "Lot infructueux relancé en procédure négociée. Titulaire(s) : Keolis",
+            "Lot infructueux relancé en procédure négociée. Titulaire du marché : Keolis",
+            "Lot infructueux relancé en procédure négociée. Nom du titulaire / organisme : Keolis",
+            "Lot infructueux relancé en procédure négociée. Attributaire n° 1 : Keolis",
+            "Lot infructueux relancé en procédure négociée. Attributaire - Keolis",
+            "Lot infructueux relancé en procédure négociée. Attributaire： Keolis",
+            "Marché infructueux, recours à procédure négociée: titulaire n°1 : SMACL",
+            "Lot infructueux relancé. Attributaire après négociation : Dupont Frères",
+            "Infructueux. Relancé en procédure négociée, titulaire Dupont Frères",
+            "Infructueux. Après négociation, l'entreprise retenue est Dupont Frères",
+            "Niet gegund in eerste ronde, na heraanbesteding gegund op 12-03-2014 aan Bouwbedrijf Jansen",
+            "Declarado desierto en primera licitación y adjudicado el 12/03/2014 a Construcciones Pérez",
+            "Declarado desierto en primera licitación y adjudicado posteriormente por procedimiento negociado a Construcciones Pérez",
+            "Nessuna aggiudicazione nella prima seduta, aggiudicato in data 12/03/2014 alla ditta Rossi Costruzioni",
+            "Lot déclaré infructueux puis relancé en procédure négociée : la société Storz a été retenue",
+            "La société Storz a été retenue. Le lot 32 a été déclaré infructueux",
+            "Infructueux en première phase. Relancé en procédure négociée : Keolis retenu",
+            "Declarado desierto el lote 2. Resultó adjudicataria la empresa Construcciones Pérez",
+            "Nessuna aggiudicazione per il lotto 2, aggiudicataria la ditta Rossi Costruzioni",
+            "Marché infructueux, relancé en négocié: groupement Gidef (mandataire solidaire) / Auxet",
+        ];
+        assert_class(&review.map(|name| (0, name)), Some(NotAName::AwardSummary));
+        for name in review {
+            assert!(awardee_labels(name), "{name}");
+        }
+        // A void prefix then the named party: a name, as 510 read it.
+        assert_class(
+            &[
+                (0, "Desierto en primera licitación, adjudicado definitivamente a Construcciones Pérez"),
+                (0, "Lotto deserto in prima gara, aggiudicato definitivamente alla ditta Rossi Costruzioni"),
+                (0, "Not awarded initially, subsequently awarded on 12.3.2014 to Acme Services"),
+            ],
+            None,
+        );
+        // Still nobody: the reach stops at the clause, `awarded` takes `to` only, `retenu` after an
+        // offer or a candidate, and a noun before a lowercase word.
+        for name in [
+            "Not Awarded - Other FE College awarded area. V.5) THE CONTRACT IS LIKELY TO BE SUB-CONTRACTED: No",
+            "Not awarded (was retended and awarded as part of a new project)",
+            "Lot infructueux : l'offre a été retenue puis retirée",
+            "Lot 2 : sans suite. Le candidat retenu s'est désisté",
+            "Pas d'attributaire retenu pour l'instant. Décision de la commission",
+            "Attributaire non designe - lot infructueux",
+        ] {
+            assert!(!awardee_labels(name), "{name}");
+        }
+    }
+
+    /// Issue 520 D4 (11 orgs / 12 mentions): a list of lots names an award only when one of its
+    /// lots is not void — a glued number mark is its number, a relaunch's designators belong to the
+    /// relaunch, and a list whose every entry is void is void. A cut list (an empty last entry), a
+    /// lettered heading, and every text-era `Lot n)` list of class C keep their summary.
+    #[test]
+    fn a_list_of_void_lots_is_void() {
+        assert_class(
+            &[
+                (2948392, "lot 9: Sans suite Lot 10: Infructueux"),
+                (4726611, "Sublote 9.1: Declarado desierto. Sublote 9.2: Declarado desierto. Sublote 9.3: Declarado desierto."),
+                (7815395, "Les lots n° 1 et 3 ont été déclarés infructueux. Le lot n° 2 a été déclaré sans suite"),
+                (6333652, "Le présent lot n'a reçu aucune offre. Il est déclaré sans suite à l'article 59-III du code des marchés publics. Ce lot a été décomposé en 2 nouveaux lots: lot nº 06 — bâtiments démontables, lot nº 07 — travaux d'installation des bâtiments démontables, et relancé en appel d'offres ouvert le 17.7.2014"),
+                (12169942, "Perceel 2 en Perceel 4 worden niet gegund. Er zijn geen geldige inschrijvingen ontvangen."),
+                (3717094, "lot 1 sans suite Lot 3 infructueux"),
+                (5425806, "Lots 2a et 2c: procédure infructueuse lot 2b: déclaration sans suite"),
+                (5425808, "Lot 4a: procédure infructueuse lots 4b/4c: déclaration sans suite"),
+                (30680275, "Marché numéro: 01072 - Lot 1) et lot 2) Marché classé sans suite"),
+                (31428159, "Lot 1 sans suite / lot 2 infructueux"),
+                // With D3: the relaunch's `en vue de l'attribution de 2 marchés`, the label `Date
+                // d'attribution :`.
+                (1537305, "Marché classé sans suite. Il a été décidé de lancer une nouvelle procédure en appel d'offres ouvert européen en vue de l'attribution de 2 marchés se décomposant de la manière suvante: lot no 3 - agence Paul Signac lot no 4 - agence Beaumonts."),
+                (3556403, "Infructuosité. Le lot no 3 a été déclarée infructueux. Le présent avis ne concerne que le lot no3 -Sud-Ouest). Date d'attribution : CAO du 17.4.2013."),
+                (0, "Les lots 2 et 11 sont déclarés sans suite. Le lot 10 est déclaré infructueux"),
+            ],
+            Some(NotAName::VoidLot),
+        );
+        assert_class(
+            &[
+                (30698459, "Lot 1) déclaré infructueux. Lots 2)"),
+                (31731990, "G) non attribué. Marché conserves: A)"),
+                (0, "Lot 1) Dupont. Lot 2) infructueux"),
+                (2957546, "lot 26: Carestream Lot 27: Sans suite lot 28: CARESTREAM"),
+                (26966868, "Lote I: declarado desierto. Lote II: Winterthur Seguros Generales"),
+                (30687978, "Lote 1) Declarado desierto. Lote 2) Limpiezas Luz"),
+                (30695615, "A) non attribué. B1) et B2) Climelec"),
+                (31735007, "Lot 1) Blin. Lot 2) Prodirest. Lot 3) Ouest Distribution. Lot 4) Ouest Distribution. Lot 5) Corol Jeager. Lot 6) Déclaré infructueux. Lot 7) Prodirest. Lot 8) Déclaré infructueux. Lot 9) Déclaré infructueux. Lot 10) Blin. Lot 11) Prodirest. Lot 12) Déclare infructueux. Lot 13) Ame Haslé. Lot 14) Gef"),
+                // 520's residual: one verdict governs a list whose entries carry none of their own.
+                (31391828, "non retenus: lots 6-44-56-68-74-91-94-95 sans suite: lots 9-65-92-96"),
+                (23532535, "Déclaration sans suite du lot n°15 et du lot n°17- Recomposition d’un lot -Relance de consultation du lot n°15 « Chape-Carrelage-Faïence »."),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        assert_class(&[(28310858, "Desierto lote 4 y 5 por falta de licitadores. Desierto lotes 1")], None);
+        // The U2 review's near misses, each a summary at HEAD: an entry the designators miss is a
+        // numbered entry (`- 44 reckitt …`, 3371523's own template cut to two lots); an entry with
+        // nothing after its label keeps the summary wherever it stands (the winner named first, the
+        // B1 lists); a winner made of digit words or initials is no part of a label; an entry that
+        // names its winner before its own earlier void call is no void verdict; and a relaunch ends
+        // at the summary's next entry.
+        assert_class(
+            &[
+                (0, "lot 43 INFRUCTUEUX - 44 reckitt benckiser 28692.07"),
+                (0, "lot268 infructueux - 269sanofi AV"),
+                (0, "lot 1045 sans suite - 1046 serb 83268ht"),
+                (0, "Lot 1 Keolis - 2 infructueux"),
+                (0, "Lot 1 : Keolis / 2 : sans suite"),
+                (0, "lot 43 Reckitt Benckiser 28692.07 - 44 INFRUCTUEUX"),
+                (0, "Lots 1 et 2 infructueux - 3 Keolis"),
+                (0, "Paredes lot 506 - lots 501 à 505 infructueux"),
+                (0, "Gallego secteurs 3A à 3D / secteurs 3E à 3H infructueux"),
+                (0, "Mongin Jauffret : lots 1504 et 1505. Lots 1501, 1502 et 1503 : infructueux"),
+                (0, "Orthomed : lots nº 25 et 26 / lot nº 24 : infructueux"),
+                (0, "Carestream : lots 26 et 28 - lot 27 : sans suite"),
+                (0, "Lot 1 : 3M. Lot 2 : infructueux"),
+                (0, "Lot 1 : A.C.H. Lot 2 : sans suite"),
+                (0, "Lot 1 : infructueux. Lot 2 : Dupont (marché négocié, AO infructueux)"),
+                (0, "Lot 1 : infructueux. Lot 2 : sans suite puis relancé, titulaire du marché : Dupont"),
+                (0, "Lot 1 infructueux et relancé, lot 2 : Dupont"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        // Every entry void, its conjunction joined, its numbers in the label: void. And the arm only
+        // quiets: a relaunch cut must not pair `Lot relancé.` with the next sentence's number, so a
+        // name void at HEAD stays void.
+        assert_class(
+            &[
+                (0, "Lot 1 : infructueux. Lot 2 : sans suite"),
+                (0, "Lot 1 et Lot 2 : infructueux"),
+                (0, "Lots 1 et 2 : infructueux. Lot 3 : sans suite"),
+                (0, "Lote 1: declarado desierto. Lote 2: declarado desierto"),
+                (0, "Lot 1 : déclaré infructueux (offre de Dupont SARL irrégulière). Lot 2 : sans suite"),
+                (0, "Infructueux. Lot 3 : 2 offres reçues. Lot relancé. 4 offres"),
+            ],
+            Some(NotAName::VoidLot),
+        );
+    }
+
+    /// Issue 520 D5 (12 orgs / 15 mentions): a `;` segment that gives the reason (an offer or a
+    /// bidder), a blank (`néant`) or the relaunch's publication (`annonce`, `JOUE`, `BOAMP`) names
+    /// nobody, and a `;` inside parentheses or an `&amp;` splits nothing.
+    #[test]
+    fn a_reason_segment_names_nobody() {
+        let void = [
+            (1513105, "Aucune offre n'a été déposée; le lot n° 2 a été déclaré infructueux"),
+            (3534542, "La SEMAPA a déclaré sans suite l'appel d'offres relatif au marché de prestations de maquettistes ; le nombre d'offres conformes n'étant pas suffisant pour répondre aux besoins de la consultation"),
+            (1814340, "Zadanie unieważnione - Wykonawcy wykluczeni; oferty odrzucone"),
+            (11663720, "Desierto; el licitador ha renunciado a la adjudicación del contrato"),
+            (2678824, "Déclaré sans suite pour motif d'intérêt général et relancé (cf avis JOUE no 2012/s 133-221467 du 13.7.2012; et Annonce no 484, BOAMP no 134b, du 13.7.2012)"),
+            (1710867, "néant; la consultation a été déclarée infructueuse en raison de l'absence d'offre recevable"),
+            (5148433, "Offres inacceptables ; lot déclaré infructueux"),
+            (6357683, "Lot déclaré sans-suite et relancé en décembre 2014, sous les références suivantes: JOUE: n° 2014/S 250-444751 du 30.12.2014 — BOAMP: B n° 250 du 30.12.2014; annonce(s) n° 116"),
+            (7075593, "postępowanie unieważniono – ofertę odrzucono; Wykonawca wykluczony – nie spełnia warunków udziału w postępowaniu"),
+            (11663718, "Desierto; oferta excluida del proceso de valoración"),
+            (2369100, "nie wpłynęła żadna oferta; postepowanie unieważniono art. 93 ust. 1 pkt 1 Pzp"),
+            (5961568, "déclaré sans suite pour un motif d'intérêt général (redéfinition du besoin) - relance en 2 lots distincts (publicité de la relance: JOUE 2014/S 161-289268 du 23.8.2014 / BOAMP parution nº 20140161b; annonce nº 63 du 23.8.2014 / profil acheteur achatpublic.com et site de la ville: 21.8.2014)"),
+        ];
+        assert_class(&void, Some(NotAName::VoidLot));
+        for (org, name) in void {
+            assert!(!super::award_mixed_segments(name), "{org}: {name}");
+        }
+        let named = [
+            (4836476, "Bp innovis ; infructueux"),
+            (1722465, "2012023401 = Cle de Sol; 2012023402 = Infructueux; 2012043401 = Logis Services; 2012053401 = ATH; 2012053402 = MCB; 2012053403 = Vittet; 2012093401 = Laffin"),
+            (0, "2013023201/zone Belley-Bas Bugey : Sarl Mcb - 01300 Chazey Bons ; 2013073202/zone Bresse : infructueux"),
+        ];
+        assert_class(&named, Some(NotAName::AwardSummary));
+        for (org, name) in named {
+            assert!(super::award_mixed_segments(name), "{org}: {name}");
+        }
+        // The U2 review: an offer or a bidder word alone is no reason — Polish names the winner as
+        // the chosen offer or under `Wykonawca`, French as the offer kept or the sole bidder.
+        let review = [
+            "Część 1 unieważniona; część 2 – wybrano ofertę firmy Usługi Transportowe Jan Kowalski",
+            "Zadanie nr 1 – postępowanie unieważnione; zadanie nr 2 – najkorzystniejsza oferta: PHU Kowalski",
+            "Część nr 1 – unieważniono; część nr 2 – Wykonawca: Jan Kowalski Usługi Remontowe",
+            "Zadanie 1 – postępowanie unieważnione; Zadanie 2 – Wykonawca Jan Kowalski, Kraków",
+            "Część 1 unieważniona; część 2: wybrany wykonawca Jan Kowalski",
+            "Lot infructueux en première consultation ; offre de la société Dupont retenue après négociation",
+            "Infructueux ; marché négocié conclu avec le seul soumissionnaire, Dupont Frères",
+            "Lot 2 infructueux ; l'offre de la société Keolis a été retenue",
+            "Lot 2 infructueux ; offre de Keolis retenue",
+        ];
+        assert_class(&review.map(|name| (0, name)), Some(NotAName::AwardSummary));
+        for name in review {
+            assert!(super::award_mixed_segments(name), "{name}");
+        }
+        assert_eq!(not_a_name("Desierto el lote 2; lote único: oferta de Construcciones Pérez"), None);
+    }
+
+    /// Issue 520 D6 (9 orgs): a company form names a bidder, not a winner, after an offer word in a
+    /// sentence that rejects the offer, after `relancer` / `négocier` / `sera` in its sentence, or in
+    /// `Société X Lot déclaré infructueux …` with no lot number and no award cue. A form before a
+    /// lot's verdict, a form in a new sentence, and `DESIERTO, S.L.` keep their party.
+    #[test]
+    fn a_bidder_is_no_winner() {
+        let void = [
+            (31527955, "Société Sindarro Lot déclaré infructueux relancé en marché négocié avec publicité et mise enconcurence (date limite le 10 juin 2008)"),
+            (1974244, "la commission d'appel d'offres décide d'interrompre les discussions et déclare la consultation infructueuse car l'offre du groupement auxi+/ sas Viviani est inacceptable"),
+            (11251840, "Lotto non aggiudicato in quanto la commissione ha escluso dalla gara l’unica offerta ricevuta dalla compagnia UnipolSai S.p.A. — Ag. Marcantoni — in quanto le varianti proposte sono state ritenute in grado di comportare una sostanziale modifica della copertura assicurativa richiesta tali da evidenzi"),
+            (1506401, "Aucune offre n'ayant été déposée, un marché négocié sans publicité et sans mise en concurrence, sera passé avec la STÉ France Télécom"),
+            (31527961, "Société SOTEP Lot Déclaré infructueux et sera relancé en marché negocié avec publicité et mise en concurence (date limite le 10 juin 2008)"),
+            (31527956, "Société Sanchez lot déclaré infructueux relancé en marché négocié avec publicité et mise en concurence (date limite le 10 juin 2008)"),
+            (31527960, "Société Energys. Lot déclaré infructueux relancé en marché négocié avec publicité et mise en concurence (date limite le 10 juin 2008)"),
+            (31527964, "Société Spada. Lot déclarée infructueux relancé en procédure négocié avec publicité et mise en concurence (date limite le 10 juin 2008)"),
+            (31527968, "Société Herman Aluminium Lot déclaré infructueux, relancé en marché négocié avec publicité avec mise en concurence (date limite le 10 juin 2008)"),
+            // With D2c: `à relancer … avec les sociétés ayant soumissionné … : lot 5 : Société Massias`.
+            (3526210, "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - i 1er alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 5 : Société Massias"),
+        ];
+        assert_class(&void, Some(NotAName::VoidLot));
+        for (org, name) in void {
+            assert!(!super::award_company_token(name), "{org}: {name}");
+        }
+        let kept = [
+            (0, "Yvelin SA. Lot 2 : infructueux"),
+            (6603163, "Stryker France SAS: lot nº 36 sans suite: lot nº 37"),
+            (1844226, "BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins"),
+            (0, "Lot infructueux, sera relancé. Lot 2: Dupont SARL"),
+        ];
+        assert_class(&kept, Some(NotAName::AwardSummary));
+        assert!(super::award_company_token("Lot infructueux, sera relancé. Lot 2: Dupont SARL"), "a new sentence");
+        assert!(super::award_company_token("Société Dupont Lot déclaré infructueux, lot 2 : Martin"), "a lot number: a list");
+        assert_eq!(not_a_name("DESIERTO, S.L."), None);
+        // The U2 review: the rejection must be the form's own offer's (not the other offers', not
+        // in another clause); an intent governs nothing past an award made or a new lot, nor across
+        // a glued sentence end, a line break or an ellipsis; and a failed bidder's line names no
+        // award after its verdict.
+        let review = [
+            "Lot infructueux en première consultation. Relancé : l'offre de Dupont SARL a été retenue, les autres offres étant irrégulières.",
+            "Infructueux (1 offre irrégulière), relancé en procédure négociée et conclu avec Promocash SAS",
+            "Infructueux, 1 offre irrégulière, relancé en procédure négociée et conclu avec Promocash SAS",
+            "Infructueux. Décision de négocier : marché conclu avec Dupont SARL",
+            "Société Dupont Lot déclaré infructueux puis négocié : marché notifié à Société Dupont le 3.6.2008",
+            "Lot infructueux, sera relancé.Lot 2: Dupont SARL",
+            "Lot infructueux, sera relancé\nLot 2: Dupont SARL",
+            "Lot infructueux, sera relancé - Lot 2: Dupont SARL",
+            "Lot infructueux, sera relancé… Lot 2: Dupont SARL",
+            "Lot 1 infructueux et sera relancé, lot 2 : Dupont SARL",
+        ];
+        assert_class(&review.map(|name| (0, name)), Some(NotAName::AwardSummary));
+        for name in review {
+            assert!(super::award_company_token(name), "{name}");
+        }
+        assert_eq!(not_a_name("Lotto deserto: offerta della ditta Bianchi esclusa, aggiudicato poi alla Rossi S.r.l."), None);
+        // The rejected offer's owner between commas stays a bidder.
+        let bidder = "L'offre de la société Dupont SA, jugée irrégulière, a été écartée. Lot infructueux";
+        assert_eq!(not_a_name(bidder), Some(NotAName::VoidLot));
+        assert!(!super::award_company_token(bidder));
+    }
+
+    /// Issue 520 D7 (14 orgs): the head before a spilled `SECTION VI` names a party only when it
+    /// says nothing void — a whole value, a reason head or a prefix, once a trailing `see` is off.
+    /// A company's name there keeps it, a company named like the phrase included.
+    #[test]
+    fn a_void_head_before_a_spilled_section_is_void() {
+        let spilled = |name: &str| super::named_before_spill(name, &fold(name));
+        let void = [
+            (25755356, "Desierto. SECTION VI: OTHER INFORMATION VI.3) Date of contract award: 2.1.2004. VI.4) Number of tenders received: 12. VI.5) This contract was subject to a notice in the OJ: Yes. Of: 21.10.2003. VI.7) Other information: I"),
+            (29760975, "No contract awarded. SECTION VI: COMPLEMENTARY INFORMATION VI.2) ADDITIONAL INFORMATION: (ET Ref:42985). VI.3) PROCEDURES FOR APPEAL: VI.3.1) Body responsible for appeal procedures: Limerick City Council"),
+            (30537999, "No award made. SECTION VI: OTHER INFORMATION VI.4) Number of tenders received:"),
+            (14580326, "No Contract awarded, see section VI.2"),
+            (31854611, "Not awarded. Procedure cancelled according to FOA § 22-1.. SECTION VI: COMPLEMENTARY INFORMATION VI.2) ADDITIONAL INFORMATION: Criterias for area"),
+            (25043000, "Gara deserta per mancanza di offerte valide. SECTION VI: OTHER INFORMATION VI.3) Date of contract award: 8.4.2005. VI.4) Number of tenders received: 3. VI.7) Other information:"),
+            (30899597, "No contract awarded — see section VI.2)"),
+            (30336777, "Not awarded. Section VI: Complementary information VI.1) Contract related to a project and/or programme financed by EU funds: No. VI.2) Additional information:"),
+            (30786740, "Desiertos.. SECTION VI: OTHER INFORMATION VI.1) Non-mandatory notice: No. VI.2) Reference number attributed to the file by the contracting authority: 15-3-2.1-0027/2003. VI.3) Date of contract award:"),
+        ];
+        assert_class(&void, Some(NotAName::VoidLot));
+        for (org, name) in void {
+            assert!(!spilled(name), "{org}: {name}");
+        }
+        let named = [
+            (0, "Zundel Et Kohler. SECTION VI: OTHER INFORMATION VI.7) Other information: Lots Infructueux (sans relance en marché négocié): 001"),
+            (0, "Getinge France. SECTION VI: OTHER INFORMATION VI.7) Other information: Tous les autres lots (sur 123 lots au total) sont infructueux."),
+        ];
+        assert_class(&named, Some(NotAName::AwardSummary));
+        for (org, name) in named {
+            assert!(spilled(name), "{org}: {name}");
+        }
+        assert!(spilled("Desierto Florido SL. SECTION VI: OTHER INFORMATION VI.7) Other information: Lote 2 declarado desierto"), "a company named like the phrase");
+        // The U2 review: a winner after the head's last `:` names the party; a reason there does not.
+        let winner = "Not awarded in first round, re-tendered: Acme Construction. SECTION VI: OTHER INFORMATION";
+        assert!(spilled(winner));
+        assert_eq!(not_a_name(winner), None);
+        for name in [
+            "Not awarded: no bids received. SECTION VI: OTHER INFORMATION",
+            "Desierto: Ninguna oferta. SECTION VI: OTHER INFORMATION",
+        ] {
+            assert!(!spilled(name), "{name}");
+            assert_eq!(not_a_name(name), Some(NotAName::VoidLot), "{name}");
+        }
+    }
+
+    /// Issue 520 (§7): the narrowings live in `names_an_award`'s own arms only, so the shape helpers
+    /// issue 511 reads give the answers they gave — on 511's specimens, and on 520's void names, which
+    /// keep their summary shape for a placeholder or blank stem's keep rule though they no longer name
+    /// an award.
+    #[test]
+    fn the_shared_shape_helpers_are_unchanged() {
+        use super::{names_a_legal_form, names_something, summary_shape};
+        let shaped = |name: &str| summary_shape(name, &fold(name));
+        for name in [
+            "Lot 2: not applicable. Lot 1: ACME Ltd",
+            "Nie dotyczy (część 2); część 1: X sp. z o.o.",
+            "Lot 1: ACME Ltd, Lot 2: Beta Ltd",
+            "lot 3 : Société Martin SAS",
+            // 520's D names: the shape is there; only the award reading changed.
+            "Le lot 102 : lot B10: Menuiseries bois PVC serrurerie vitrerie (Genevois) a été déclaré infructueux",
+            "Société Sindarro Lot déclaré infructueux relancé en marché négocié avec publicité",
+            "lot 9: Sans suite Lot 10: Infructueux",
+            "Sublote 9.1: Declarado desierto. Sublote 9.2: Declarado desierto.",
+            "la commission d'appel d'offres décide d'interrompre les discussions et déclare la consultation infructueuse car l'offre du groupement auxi+/ sas Viviani est inacceptable",
+        ] {
+            assert!(shaped(name), "{name}");
+        }
+        for name in [
+            "See section VI.3 for the list of awarded suppliers",
+            "Not applicable, see section VI.4",
+            "nie dotyczy",
+            "Procédure incomplète. Le marché n'a pas été attribué. Appel d'offres sans suite",
+            "Sans suite, en cours d'attribution",
+        ] {
+            assert!(!shaped(name), "{name}");
+        }
+        for name in ["Firma AS", "Hansen A/S", "Norconsult AS", "Société Sindarro Lot déclaré infructueux", "UnipolSai S.p.A."] {
+            assert!(names_a_legal_form(name), "{name}");
+        }
+        for name in ["As in I.1 above", "AS VI.4.1", "Sans suite, en cours d'attribution"] {
+            assert!(!names_a_legal_form(name), "{name}");
+        }
+        for name in [": High Court of Justice", " NEB Betriebsgesellschaft mbH", "Société Sindarro", " Stryker France SAS"] {
+            assert!(names_something(name), "{name}");
+        }
+        for name in ["", " VI3.2", " siehe oben", " 4.1)"] {
+            assert!(!names_something(name), "{name}");
+        }
+        // `named_before_stem`, through the boundary stems it reads.
+        assert_eq!(not_a_name("Ayuntamiento de Madrid (véase perfil del contratante)"), Some(NotAName::AwardSummary));
+        assert_eq!(not_a_name("Serco — disclosure would prejudice commercial interests"), Some(NotAName::AwardSummary));
+        assert_eq!(not_a_name("Véase perfil del contratante"), Some(NotAName::Placeholder));
+    }
+
+    /// Issue 520 unit 1's D class (§4.1, Appendix A): every org the decision moves to `VoidLot` — 173
+    /// orgs, D1 to D7 and the three that need two rules — now reads void. The names are the dry
+    /// report's (`void-names-refold-after-dry.json`, cut at 300 characters); the three cut D1 rows a
+    /// challenger read in full carry the tail they quote (`unit1-classified.json`), joined with `…`.
+    #[test]
+    fn every_void_520_exemption_is_a_void_lot() {
+        assert_class(
+            &[
+                // D1: one lot's BOAMP void sentence.
+                (1392146, "Le lot 1: secteur du canton d'Evian - Rd1005; Rd24 et Rd32 a été déclaré Infructueux"),
+                (1513898, "Le lot 3: Diagnostics sur bâtiments occupés à usage principal d'habitation Le présent lot a pour objet la réalisation par le titulaire de diagnostics sur bâtiments occupés à usage principal d'habitation à réaliser au fur et à mesure des besoins de Paris habitat-OPH. a été déclaré sans suite"),
+                (1537987, "le lot 1: Rédaction d'un feuillet du magazine qui sera constitué au maximum de: - 2 doubles pages de portraits d'entreprises, associations, clubs de sports .... - 1 double page patrimoine, faune ou flore du département a été déclaré Infructueux"),
+                (1943868, "Le lot 1: génie civil marché de travaux (lot pricipal) décomposé en une tranche ferme et 3 tranches conditionnelles: TF: parc Paul Vernet; TC1: parc Clos de la Tour; TC2: parc Porte d'Orée; TC3: parc Agricola. A été déclaré sans suite"),
+                (1943869, "Le lot 2: fourniture et pose de matériel d'exploitation de stationnement. Marché de fournitures décomposé en une tranche ferme et 4 tranches conditionnelles: TF: parc Paul Vernet; TC1: parc Clos de la Tour; TC2: parc Porte d'Orée; TC3: parc Agricola; TC4: parc Aubenas. A été déclaré sans suite"),
+                (2021395, "le lot 12: sans objet se reporter au lot no9 plomberie sanitaire a été déclaré infructueux"),
+                (2378132, "Le lot 3: portage de courses et de personnes sur le Val de Marne Le présent lot porte sur la réalisation de missions d'accompagnement et d'aide à la personne relatives au portage de courses et de personnes sur Paris et petite couronne à réaliser au fur et à mesure des besoins. Les prestations donner … trois (3) titulaires seront désignés … a été déclaré infructueux"),
+                (2528483, "Le lot 1: Lot 1-2012-225-01 Syndicat intercommunal de la Vallée d'abondance a été déclaré Sans suite"),
+                (2847767, "le lot 3: Lot 03 A: Ite parement pierre et lot et Lot 03 B: Ite enduits a été déclaré infructueux"),
+                (2900386, "Le Lot 2: acheminement du trafic sortant sur les accès du lot 1 et accessible en présélection du transporteur. A été déclaré infructueux"),
+                (2900516, "Le lot 2: lot no2 a été déclaré infructueux"),
+                (3066482, "le lot 3 : Lot no3 : Films Radiographiques Specifiques Aux Besoins De La Radiotherapie a été déclaré Sans Suite"),
+                (3107850, "le lot 8 : Electricite, Courant Fort - courant Faible ; a été déclaré Infructueux"),
+                (3238976, "le lot 2 : Lot no2 - sorties scolaires, périscolaires, extrascolaires et autres a été déclaré Infructueux"),
+                (3425880, "le lot 47 : Prothèse de tête radiale pivotante ; mise à disposition à la demande a été déclaré Infructueux"),
+                (3666893, "Le lot 102 : lot B10: Menuiseries bois PVC serrurerie vitrerie (Genevois) a été déclaré infructueux"),
+                (3666894, "Le lot 103 : lot C10: Menuiseries bois PVC serrurerie vitrerie (Chablais) a été déclaré infructueux"),
+                (3666895, "Le lot 104 : lot D10: Menuiseries bois PVS serrurerie vitrerie (Vallée de l'arve) a été déclaré infructueux"),
+                (3666903, "Le lot 92 : lot B9: Stores volets occultation (Genevois) a été déclaré infructueux"),
+                (3666904, "Le lot 93 : lot C9: Stores volets occultation (Chablais) a été déclaré infructueux"),
+                (3666905, "Le lot 94 : lot D9: Stores volets occultation (Vallée de l'arve) a été déclaré infructueux"),
+                (3666906, "Le lot 101 : lot A10: Menuiseries bois PVC serrurerie vitrerie (Annecy) a été déclaré infructueux"),
+                (3915725, "le lot 9 : Lot 9b : Ossature bois, Charpente - capitainerie a été déclaré sans suite"),
+                (3915726, "le lot 10 : Lot 9c : Couverture, Bardage, Etanchéité - capitainerie a été déclaré sans suite"),
+                (3915727, "le lot 11 : Lot 9d : Châssis, Murs Rideaux - capitainerie a été déclaré sans suite"),
+                (3915728, "le lot 12 : Lot 9e : Metallerie, Portes Métalliques - capitainerie a été déclaré sans suite"),
+                (3915729, "le lot 13 : Lot 9f : Menuiseries intérieures, Plâtrerie - capitainerie a été déclaré sans suite"),
+                (3915730, "le lot 14 : Lot 9g : Electricité Chauffage - capitainerie a été déclaré sans suite"),
+                (3915731, "le lot 15 : Lot 9h : Ventilation - capitainerie a été déclaré sans suite"),
+                (3915732, "le lot 16 : Lot 9i : Plomberie, Sanitaire - capitainerie a été déclaré sans suite"),
+                (3915733, "le lot 17 : Lot 9j : Peinture, revêtement de sols - capitainerie a été déclaré sans suite"),
+                (3915742, "le lot 8 : Lot 9a : Gros-Oeuvre - capitainerie a été déclaré sans suite"),
+                (3984070, "Le lot 4 : lot 7 : cloisons doublage et faux plafonds a été déclaré sans suite"),
+                (3984072, "Le lot 6 : lot 10 : équipements sportifs a été déclaré sans suite"),
+                (3984073, "Le lot 7 : lot 11 : peintures interieures a été déclaré sans suite"),
+                (4133918, "Le lot 91 : lot 9 A: Fourniture de pièces détachées pour l'entretien d'engins et matériel de marque JCB (type chargeur ou centrale hydraulique) a été déclaré infructueux"),
+                (4133919, "Le lot 92 : Lot 9 B : Prestations de maintenance pour l'entretien d'engins et matériel de marque JCB (type chargeur ou centrale hydraulique) a été déclaré infructueux"),
+                (4133921, "Le lot 11 : Fourniture de pièces détachées et prestations de maintenance pour l'entretien d'engins de TP de marque O&Amp;K (type Niveleuse) a été déclaré infructueux"),
+                (4133935, "Le lot 21 : lot 2 A : Fourniture de pièces détachées pour l'entretien d'engins de TP de marque Dynapac (type Compacteur) a été déclaré infructueux"),
+                (4133936, "Le lot 22 : lot 2 B : Prestations de maintenance pour l'entretien d'engins de TP de marque Dynapac (type Compacteur) a été déclaré infructueux"),
+                (4272807, "le lot 2 : 1 carrosserie de Bibliobus prévue pour aller sur un porteur nu caractéristiques du lot no1 (Aoo) a été déclaré sans suite"),
+                (4425125, "Le lot 115 : lot B11 C11 Sols souples Genevois et Chablais a été déclaré infructueux"),
+                (4425126, "Le lot 114 : lot D11 Sols souples Arve a été déclaré infructueux"),
+                (4425128, "Le lot 55 : lot B5 C5 Plomberie chauffage climatisation vmc genevois chablais a été déclaré infructueux"),
+                (4425129, "Le lot 54 : lot D5 Plomberie chauffage climatisation vmc arve a été déclaré infructueux"),
+                (4425130, "Le lot 61 : lot A6 Couverture charpente zinguerie Annecy a été déclaré infructueux"),
+                (4425131, "Le lot 65 : lot B6 C6 Couverture chapente zinguerie genevois chablais a été déclaré infructueux"),
+                (4425132, "Le lot 64 : lot D6 Couverture charpente zinguerie Arve a été déclaré infructueux"),
+                (4764054, "le lot 1 : Lot no1 : réparation des volets roulants pour les RPA Balaÿ et Bel Horizon a été déclaré infructueux"),
+                (4846679, "le lot 115 : lot B11 C11 Sols souples genevois chablais a été déclaré INFRUCTUEUX"),
+                (5101244, "Le lot 6: livres scolaires et documents pédagogiques d'accompagnement (SAU ouvrages distribués exclusivement par les éditeurs eux-mêmes et livres de fonction et documentaires pour les bibliothèques des écoles) a été déclaré sans suite"),
+                (5605092, "Le lot 6 : lot M6 Palneca - ajaccio a été déclaré infructueux"),
+                (5772779, "le lot 002 : B Gros oeuvre étendu : Fondations spéciales (sous-lot nob02) - gros oeuvre (sous-lot nob03) - charpente métallique (sous-lot nob04) - etanchéité (sous-lot nob05) - façade brique (sous lot nob06) a été déclaré sans suite"),
+                (5772782, "le lot 005 : E Finitions : Menuiseries bois courantes (portes bois) (sous-lot noe09) - cloisons, Plafonds, Peinture (sous-lot noe10) - carrelage, Faïence, Sols souples (sous-lot noe11), a été déclaré sans suite"),
+                (5772784, "le lot 007 : G lots techniques : appareils élévateurs (sous-lot nog12) - cVC, Désenfumage, Plomberie Sanitaire (sous-lot nog13) - electricité courants forts et courants faibles,vdi,ssi (sous-lot nog14) a été déclaré sans suite"),
+                (31427032, "Le lot 3: entretien des espaces verts aux aobrds de bâtiments et équipements entretien des ensemencements (tonte); entretien des espaces arborés, massifs et plantations et maintenance des barrières et clôtures. a été déclaré sans suite"),
+                (31450417, "Le Lot 2: Gros Oeuvre - Clos et Couvert - Amenagements Interieurs. Le présent lot concerne tous les corps d'État techniques de bâtiment et intègre les spécialités suivantes: protection; gros oeuvre; charpente bois; charpente métallique; couverture ardoises et zinc; menuiseries extérieures bois; serr … ascenseurs a été déclaré infructueux"),
+                (31471384, "Le lot 6: service d'assurance pour les travaux de construction neuve de logements locatifs sociaux \"Zac Ballastière Sud lots 3-2, 3-3 - 94450 Limeil-Brévannes\" a été déclaré infructueux"),
+                (31473527, "Le lot 1: Ressources humaines et sciences sociales. Emploi et droits sociaux, inclusion; Politique régionale et développement local,cohésion du territoire. Agriculture, pêche et qualité alimentaire; politique environnementale, innovation, entreprise. Culture, et a été déclaré Sans Suite"),
+                (31481076, "Le lot 5: Lot 2011-210 02 Communauté de Communes de la Rive-Gauche-du-Lac a été déclaré infructueux"),
+                (31481089, "Le lot 9: Lot 2011-216 01 Communauté de Communes du Pays de Cruseilles a été déclaré Infructueux"),
+                (31481092, "Le lot 6: Lot 2011-231 01 Communauté de Communes du Genevois a été déclaré Infructueux"),
+                (31481093, "Le lot 7: Lot 2011-231 02 Communauté de Communes du Genevois a été déclaré Infructueux"),
+                (31481094, "Le lot 8: Lot 2011-231 03 Communauté de Communes du Genevois a été déclaré Infructueux"),
+                (31481098, "Le lot 3: lot 2011-230 01 Communauté de communes de la Vallée Verte a été déclaré infructueux"),
+                (31481123, "Le lot 7: Lot 2011-231 02 Communauté de communes du Genevois a été déclaré sans suite"),
+                (31491050, "Le lot 13: Agencement - TF: Etudes d'exécution; - TC1: Fauteuils pliants avec tablettes (300 unités env) - TC2: Fauteuils pliants (300 unités env. a été déclaré Sans Suite"),
+                (31491056, "Le lot 6: Electricité courants forts et courants faibles 6.01 Courants forts - Poste de transformation (1000 kva); - Onduleur (220 kva); - Alimentation ASI (100 kva); - Tgbt et distribution principale (sur 11000 mètres carrés Shon); - Distribution secondaire (30 tableaux divisionnaires env.); - Ecla … a été déclaré Sans Suite"),
+                // D2a: `n'a pas été attribué`.
+                (1171947, "Procédure incomplète. Le marché n'a pas été attribué. Appel d'offres sans suite"),
+                (2131011, "Le marché n'a pas été attribué: la procédure est déclarée infructueuse le 17.4.2012"),
+                (3314070, "le lot n'a pas été attribué, la procédure a été déclarée infructueuse"),
+                (4229970, "ce lot no 2 de la procédure n'a pas été attribué et a été déclaré infructueux"),
+                (6069583, "Le lot n° 2 du marché n'a pas été attribué. Le lot n° 2 est infructueux"),
+                (7093933, "Le lot n° 2 n'a pas été attribué et fut déclaré sans suite"),
+                (7524029, "Le lot n° 1 n'a pas été attribué. Au regard de l'article 59-IV, ce lot est déclaré sans suite pour le motif d'intérêt général suivant: compte-tenu du contexte de fusion entre BBA et les communautés de communes avoisinantes, les besoins devront être redéfinis par rapport à ce qui avait été initialeme"),
+                (31400142, "Le Lot n'a pas été attribué (lot infructueux)"),
+                // D2b: `déjà attribué`.
+                (6011832, "le lot 01: Terrassement substitution de sol: Lot déjà attribué a été déclaré sans suite"),
+                (31674188, "A 97.23.18) sans suite (déjà attribué au lots A 06 et A 12)"),
+                (31674189, "A 97.23.19) sans suite (déjà attribué au lot A 12)"),
+                // D2c: `avec la société` after a relaunch to come.
+                (3526206, "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - i - 1er alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 1 : société TIB"),
+                (3526207, "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - iI - 3ème alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 2 : société picot petit"),
+                (3526208, "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 I 1er du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 3 : société Sides"),
+                (3526209, "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - iI 3 ème alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 4 : société WAS"),
+                (3526991, "décalré infructueux= le lot 2 infructueux et de le relancer en marché négocié en application de l'article 35 - iI - 3ème alinéa du code des marchés publics, avec la société LHENRY"),
+                (4032000, "Offres déclarées irrégulières. Lot déclaré donc infructueux. Il a donc été proposé de négocier avec les sociétés candidates dans le cadre de la procédure prévue à l'article 35-I-1 3ème alinéa du code des marchés publics par une lettre de consultation dont le formalisme est prévu à l'article 66 du co"),
+                // D3: an awardee word that labels nobody.
+                (1300853, "Marché déclaré sans suite à relancer en MAPA compte tenu de son montant (l'accord cadre était multi attributaires hors une seule offres était conforme)"),
+                (1610364, "Lot 4 est déclaré sans suite pour motif d'intérêt général. En effet, après évaluation des besoins à satisfaire, l'Université de Nice Sophia Antipolis est dans l'incapacité de prendre en charge budgétaire l'offre retenue"),
+                (1633917, "résultat du concours: déclaration sans suite pour motif de défaillance du mandataire de l'équipe, suite à la liquidation judiciaire de l'agence Toth-Fasquelle préalablement à la signature du marché de maîtrise d'oeuvre"),
+                (1753646, "lot declare sans suite pour motif D'Interet general une seule offre ayant ete Reçue alors que la rmn-gp souhaitait conclure un accord-cadre multi-attributaire"),
+                (1861834, "Lot classé \"sans suite\" et ce pour motif d'intérêt général (art. 59 du CMP). En effet, seul 1 candidat a déposé une offre conforme mais 1 attributaire ne convient pas pour le bon fonctionnement de l'établissement"),
+                (1861839, "Lot classé \"sans suite\" et ce pour motif d'intérêt général et ce conformément à l'article 59 du code des marchés publics. En effet, seul 1 candidat a déposé une offre conforme mais 1 attributaire ne convient pas pour le bon fonctionnement de l'établissement"),
+                (3720532, "le lot no2 a été déclaré infructueux, les offres reçues ont été déclarées irrégulières car ne respectant pas la rubrique Iv.2.1.2 de l'avis d'appel public à la concurrence (annexes financière dûment complétées). En vertu de l'article 35.i.1 du code des marchés publics, un marché négocié sera relancé"),
+                (4774593, "décision de déclarer infructueux le lot nº 10 - plomberie sanitaire pour le motif suivant : toutes les offres réceptionnées sur ce lot ont été déclarées soit irrégulières soit inacceptables et ne permettent pas d'en établir l'attribution, de plus les crédits budgétaires alloués au marché après évalu"),
+                (4774594, "décision de déclarer infructueux le Lot nº 11 - chauffage - ventilation - climatisation pour le motif suivant : toutes les offres réceptionnées sur ce lot ont été déclarées inacceptables et ne permettent pas d'en établir l'attribution car les crédits budgétaires alloués au marché après évaluation du"),
+                (4774596, "décision de déclarer infructueux le lot nº 13 - toiles tendues pour le motif suivant : la seule offre réceptionnée sur ce lot a été déclarée inacceptable et ne permet pas d'en établir l'attribution car les crédits budgétaires alloués au marché après évaluation du besoin à satisfaire ne permettent pa"),
+                (4774599, "décision de déclarer infructueux le lot nº 16 - plomberie process pour le motif suivant : la seule offre réceptionnée pour ce lot a été déclarée inacceptables et ne permet pas d'en établir l'attribution car les crédits budgétaires alloués au marché après évaluation du besoin à satisfaire ne permette"),
+                (4774607, "décision de déclarer infructueux le lot nº 05 - menuiseries extérieures alu et pvc - serrurerie pour le motif suivant : toutes les offres réceptionnées sur ce lot ont été déclarées soit irrégulières soit inacceptables et ne permettent pas d'en établir l'attribution, de plus les crédits budgétaires a"),
+                (4774610, "décision de déclarer sans suite le lot nº 08 - revêtements de sols durs et souples pour le motif suivant : toutes les offres réceptionnées sur ce lot ont été déclarées soit irrégulières soit inacceptables et ne permettent pas d'en établir l'attribution, de plus les crédits budgétaires alloués au mar"),
+                (4877271, "décision de déclarer sans suite le Lot no15 - captage pompage et rejet pour le motif suivant : La seule offre réceptionnée pour ce lot a été déclarée inacceptable et ne permet pas d'en établir l'attribution car les crédits budgétaires alloués au marché après évaluation du besoin à satisfaire ne perm"),
+                (4885217, "ce lot a été déclaré sans suite par décision du pouvoir adjudicateur en date du 11 juillet 2013. En effet, les prestations objet du lot 13 sont couvertes par un accord-cadre multi-attributaire en cours de validité, conclu par l'université Joseph Fourier. Les titulaires de cet accord-cadre bénéficien"),
+                (5543579, "Aucun nom d'attributaire n'est mentionné compte tenu du fait que le lot 4 a été déclaré sans suite. un complément d'information est apporté à la Rubrique V.2 Autres informations point 2"),
+                (5611738, "Sans suite, en cours d'attribution"),
+                (6286857, "Suite à la cession de l'entreprise pressentie attributaire et conformément à l'article 59.IV du code des marchés publics, le marché est déclaré sans suite pour motif d'intérêt général. Avis nº 14-167620 publié au BOAMP et au JOUE"),
+                (6499376, "infructueux suite à désistement du titulaire"),
+                (6654938, "L'attributaire pressenti pour ce lot ayant modifié son offre, elle ne correspond plus au besoin du pouvoir adjudicateur. Lot declare sans suite"),
+                (6688295, "Ce lot déclaré sans suite a fait l'objet d'une relance. Un avis d'attribution est en cours de publication"),
+                (6825282, "Pour information, ce lot a été déclaré infructueux en commission d'appel d'offres. Par conséquent, ce lot n'a pas fait l'objet d'une attribution"),
+                (7024169, "Pas d'attributaire retenu pour l'instant. Décision de la commission d'appels d'offres repoussée"),
+                (7395857, "Declaré sans suite en raison de la liquidation judiciaire de la société attributaire"),
+                (7517636, "Lot Déclaré sans suite pour motif d'intérêt général: les motifs sont fondés sur le besoin du pouvoir adjudicateur modifié entre le recensement des besoins et la date de la commission interne d'attribution"),
+                (7596880, "Not awarded (was retended and awarded as part of a new project)"),
+                (7596896, "Not awarded (was retendered and awarded as part of a new project)"),
+                (7732764, "Marché déclaré sans suite en effet les réactifs de ce lot sont utilisés uniquement en cas de validation d'une nouvelle méthode d'analyse, ce qui n'a pas lieu d'être puisque le titulaire pressenti pour l'attribution du lot 1 est identique à celui du précédent marché"),
+                (7732765, "Marché déclaré sans suite en effet les réactifs de ces lots sont utilisés uniquement en cas de validation d'une nouvelle méthode d'analyse, ce qui n'a pas lieu d'être puisque le titulaire pressenti pour l'attribution du lot 1 est identique à celui du précédent marché"),
+                (9907415, "Marché déclaré sans suite le 15.6.2017, en raison d'une modification opérée par l'attributaire de son offre initiale lors d'une demande de prolongation de validité de celle-ci post attribution."),
+                (10528138, "Desierto, al retirar su oferta el único licitador propuesto adjudicatario"),
+                (28821451, "Not Awarded - Other FE College awarded area. V.5) THE CONTRACT IS LIKELY TO BE SUB-CONTRACTED: No"),
+                (31383538, "Lot infructueux et relancer selon une procédure négocié après publicité préalable et mise en concurence selon l'article 35-1 du code des marchés publics. Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot."),
+                (31383542, "Lot infructueux et relancer selon une procédure négocié après publicité préalable et mise en concurence selon l'article 35-1 du code des marchés publics. Voir l'avis d'attribution no10-279996 pour l'entreprise attributaire du lot."),
+                (31415171, "Lot déclaré infructueux lors de l'attribution du 13.12.2010 relancé en procédure négociée selon l'art. 35-I-1 dernier alinéa du CMP) - en cours d'attribution"),
+                (31424633, "Attributaire non designe - lot infructueux"),
+                (31425155, "Non attribuée - en cours d'analyse - attribution reportée"),
+                (31489554, "Lot infructueux. En cours d'attribution, suite marché négocié sans publicité."),
+                (31489559, "Lot infructueux. En cours d'attribution, suite marché négocié avec publicité."),
+                // D4: a list of void lots.
+                (2948392, "lot 9: Sans suite Lot 10: Infructueux"),
+                (3717094, "lot 1 sans suite Lot 3 infructueux"),
+                (4726611, "Sublote 9.1: Declarado desierto. Sublote 9.2: Declarado desierto. Sublote 9.3: Declarado desierto."),
+                (4885215, "décision du pouvoir adjudicateur du 14 octobre 2013 - lot déclaré sans suite pour le motif suivant : \" l'organisation du lot par son contenu de prestations relatives à des métiers différents a rendu la réponse difficile. Donc pour un motif d'intérêt général, d'ordre économique et technique, ce lot e"),
+                (5425806, "Lots 2a et 2c: procédure infructueuse lot 2b: déclaration sans suite"),
+                (5425808, "Lot 4a: procédure infructueuse lots 4b/4c: déclaration sans suite"),
+                (6333652, "Le présent lot n'a reçu aucune offre. Il est déclaré sans suite à l'article 59-III du code des marchés publics. Ce lot a été décomposé en 2 nouveaux lots: lot nº 06 — bâtiments démontables, lot nº 07 — travaux d'installation des bâtiments démontables, et relancé en appel d'offres ouvert le 17.7.2014"),
+                (7815395, "Les lots n° 1 et 3 ont été déclarés infructueux. Le lot n° 2 a été déclaré sans suite"),
+                (12169942, "Perceel 2 en Perceel 4 worden niet gegund. Er zijn geen geldige inschrijvingen ontvangen."),
+                (30680275, "Marché numéro: 01072 - Lot 1) et lot 2) Marché classé sans suite"),
+                (31428159, "Lot 1 sans suite / lot 2 infructueux"),
+                // D5: a reason segment.
+                (1513105, "Aucune offre n'a été déposée; le lot n° 2 a été déclaré infructueux"),
+                (1710867, "néant; la consultation a été déclarée infructueuse en raison de l'absence d'offre recevable"),
+                (1814340, "Zadanie unieważnione - Wykonawcy wykluczeni; oferty odrzucone"),
+                (2369100, "nie wpłynęła żadna oferta; postepowanie unieważniono art. 93 ust. 1 pkt 1 Pzp"),
+                (2678824, "Déclaré sans suite pour motif d'intérêt général et relancé (cf avis JOUE no 2012/s 133-221467 du 13.7.2012; et Annonce no 484, BOAMP no 134b, du 13.7.2012)"),
+                (3534542, "La SEMAPA a déclaré sans suite l'appel d'offres relatif au marché de prestations de maquettistes ; le nombre d'offres conformes n'étant pas suffisant pour répondre aux besoins de la consultation"),
+                (5148433, "Offres inacceptables ; lot déclaré infructueux"),
+                (5961568, "déclaré sans suite pour un motif d'intérêt général (redéfinition du besoin) - relance en 2 lots distincts (publicité de la relance: JOUE 2014/S 161-289268 du 23.8.2014 / BOAMP parution nº 20140161b; annonce nº 63 du 23.8.2014 / profil acheteur achatpublic.com et site de la ville: 21.8.2014)"),
+                (6357683, "Lot déclaré sans-suite et relancé en décembre 2014, sous les références suivantes: JOUE: n° 2014/S 250-444751 du 30.12.2014 — BOAMP: B n° 250 du 30.12.2014; annonce(s) n° 116"),
+                (7075593, "postępowanie unieważniono – ofertę odrzucono; Wykonawca wykluczony – nie spełnia warunków udziału w postępowaniu"),
+                (11663718, "Desierto; oferta excluida del proceso de valoración"),
+                (11663720, "Desierto; el licitador ha renunciado a la adjudicación del contrato"),
+                // D6: a bidder.
+                (1506401, "Aucune offre n'ayant été déposée, un marché négocié sans publicité et sans mise en concurrence, sera passé avec la STÉ France Télécom"),
+                (1974244, "la commission d'appel d'offres décide d'interrompre les discussions et déclare la consultation infructueuse car l'offre du groupement auxi+/ sas Viviani est inacceptable"),
+                (11251840, "Lotto non aggiudicato in quanto la commissione ha escluso dalla gara l’unica offerta ricevuta dalla compagnia UnipolSai S.p.A. — Ag. Marcantoni — in quanto le varianti proposte sono state ritenute in grado di comportare una sostanziale modifica della copertura assicurativa richiesta tali da evidenzi"),
+                (31527955, "Société Sindarro Lot déclaré infructueux relancé en marché négocié avec publicité et mise enconcurence (date limite le 10 juin 2008)"),
+                (31527956, "Société Sanchez lot déclaré infructueux relancé en marché négocié avec publicité et mise en concurence (date limite le 10 juin 2008)"),
+                (31527960, "Société Energys. Lot déclaré infructueux relancé en marché négocié avec publicité et mise en concurence (date limite le 10 juin 2008)"),
+                (31527961, "Société SOTEP Lot Déclaré infructueux et sera relancé en marché negocié avec publicité et mise en concurence (date limite le 10 juin 2008)"),
+                (31527964, "Société Spada. Lot déclarée infructueux relancé en procédure négocié avec publicité et mise en concurence (date limite le 10 juin 2008)"),
+                (31527968, "Société Herman Aluminium Lot déclaré infructueux, relancé en marché négocié avec publicité avec mise en concurence (date limite le 10 juin 2008)"),
+                // D7: a void head before a spilled section.
+                (14580326, "No Contract awarded, see section VI.2"),
+                (25043000, "Gara deserta per mancanza di offerte valide. SECTION VI: OTHER INFORMATION VI.3) Date of contract award: 8.4.2005. VI.4) Number of tenders received: 3. VI.7) Other information:"),
+                (25755356, "Desierto. SECTION VI: OTHER INFORMATION VI.3) Date of contract award: 2.1.2004. VI.4) Number of tenders received: 12. VI.5) This contract was subject to a notice in the OJ: Yes. Of: 21.10.2003. VI.7) Other information: I"),
+                (25893172, "Nicht vergeben. SECTION VI: OTHER INFORMATION VI.3) Date of contract award: 25.7.2003. VI.4) Number of tenders received: Bis zu 4. VI.5) This contract was subject to a notice in the OJ: Yes. Of: 27.5.2003. VI.7) Other information: I"),
+                (29760975, "No contract awarded. SECTION VI: COMPLEMENTARY INFORMATION VI.2) ADDITIONAL INFORMATION: (ET Ref:42985). VI.3) PROCEDURES FOR APPEAL: VI.3.1) Body responsible for appeal procedures: Limerick City Council"),
+                (30336777, "Not awarded. Section VI: Complementary information VI.1) Contract related to a project and/or programme financed by EU funds: No. VI.2) Additional information:"),
+                (30535445, "Desiertos. SECTION VI: OTHER INFORMATION VI.1) Non-mandatory notice: No. VI.2) Reference number attributed to the file by the contracting authority: 15-3-2.1-0043/2003. VI.3) Date of contract award:"),
+                (30535976, "Desierto. SECTION VI: OTHER INFORMATION VI.1) Non-mandatory notice: No. VI.2) Reference number attributed to the file by the contracting authority: 06-5-2.1-0075/2003. VI.3) Date of contract award: 22.7.2003. VI.4) Number of tenders received:"),
+                (30537999, "No award made. SECTION VI: OTHER INFORMATION VI.4) Number of tenders received:"),
+                (30538906, "Desierto. SECTION VI: OTHER INFORMATION VI.2) Reference number attributed to the file by the contracting authority: RQ/01/001/S. VI.3) Date of contract award:"),
+                (30539882, "Desierto. SECTION VI: OTHER INFORMATION VI.1) Non-mandatory notice: No. VI.2) Reference number attributed to the file by the contracting authority: CC04/140. VI.3) Date of contract award:"),
+                (30786740, "Desiertos.. SECTION VI: OTHER INFORMATION VI.1) Non-mandatory notice: No. VI.2) Reference number attributed to the file by the contracting authority: 15-3-2.1-0027/2003. VI.3) Date of contract award:"),
+                (30899597, "No contract awarded — see section VI.2)"),
+                (31854611, "Not awarded. Procedure cancelled according to FOA § 22-1.. SECTION VI: COMPLEMENTARY INFORMATION VI.2) ADDITIONAL INFORMATION: Criterias for area"),
+                // Two rules together: D3 and D4 (1537305, 3556403), D2c and D6b (3526210).
+                (1537305, "Marché classé sans suite. Il a été décidé de lancer une nouvelle procédure en appel d'offres ouvert européen en vue de l'attribution de 2 marchés se décomposant de la manière suvante: lot no 3 - agence Paul Signac lot no 4 - agence Beaumonts."),
+                (3556403, "Infructuosité. Le lot no 3 a été déclarée infructueux. Le présent avis ne concerne que le lot no3 -Sud-Ouest). Date d'attribution : CAO du 17.4.2013."),
+                (3526210, "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - i 1er alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 5 : Société Massias"),
+            ],
+            Some(NotAName::VoidLot),
+        );
+    }
+
+    /// Issue 520 unit 1's kept classes (§4.2–§4.5, Appendix A): every A, B, C and F org, and the
+    /// 12-org D residual, keeps the class it read before the narrowings — an award summary the fold
+    /// keeps, or a plain name. 31375951 (F-P) carries the tail a challenger read past the 300-character
+    /// cut (`61 lots attribués à 29 fournisseurs`): on its cut name alone it reads void, as before.
+    /// 7969717 (residual) reads void by itself, as before: EP 18715886's 24-language composite keeps its
+    /// party by the fold's majority (2 of 24 copies void), a gap of issue 525's templates.
+    #[test]
+    fn every_kept_520_exemption_keeps_its_class() {
+        // A1 (47): an award clause or an awardee label.
+        assert_class(
+            &[
+                (1397079, "Lot déclaré infructueux lors de l'appel d'offre puis relancé en procédure négocié sans mise en concurrence et sans publicité (art.35-2.3) avec la société B BRAUN"),
+                (1397080, "Lot déclaré infructueux lors de l'appel d'offre puis relancé en procédure négocié sans mise en concurrence et dispensé de publicité (art.35-I.1°) avec la Société Vascutek"),
+                (1435451, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Arrow Génériques suite à procédure négociée sans publicité avec mise en concurrence"),
+                (1435452, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Abbott Products suite à procédure négociée sans publicité sans mise en concurrence"),
+                (1435453, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Fresenius Kabi suite à procédure négociée sans publicité avec mise en concurrence"),
+                (1435455, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Sanofi Aventis suite à procédure négociée sans publicité avec mise en concurrence"),
+                (1435456, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Grunenthal/CSP suite à procédure négociée sans publicité avec mise en concurrence"),
+                (1435457, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Sandoz suite à procédure négociée avec publicité avec mise en concurrence (IAP 11-32 C)"),
+                (1484019, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Bionobis suite à un marché négocié sans concurrence"),
+                (1484119, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société CSL Berhing, suite marché négocié sans concurrence"),
+                (1484121, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société LFB BIOMEDICAMENTS, suite marché négocié sans concurrence"),
+                (1503868, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la société Henry Schein suite à la passation d'un marché négocié sans publicité avec mise en concurrence."),
+                (1621278, "ce lot a été déclaré infructueux par la CAO et une procédure négociée à été mise en place conformément à l'art 35 du CMP et sans nouvelle mesure de publicité. Nom de l'attributaire: Brake France Service"),
+                (1668604, "procédure infructueuse, le marché a été relancé en marché négocié sans publication, ni mise en concurrence, en application de l'article 35-I-1 du code des marchés publics, puis attribué dans le cadre de cette nouvelle procédure à la Sarltacavl, pour un montant (TTC) du DDED de 408 994,55 EUR"),
+                (1986366, "lot déclaré infructueux lors de l'appel d'offre puis attribué à la société Peters suite à un marché négocié sans mise en concurrence"),
+                (2381362, "lot 30 relancé en marché négocié 35 II 3. Lot 31 déclaré sans suite. Lot 32 attribué à Pierre Fabre Dermatologie le 5.6.2012 (no marché 2012-2177)"),
+                (2973447, "Lot infructueux relancé en marché négocié. Le lot est attribué à l'esat \"Les Ateliers de Polangis\""),
+                (3863573, "Le marché a été infructueux. Après négociation, le marché a été attribué à Thermo Onix LTD"),
+                (3982542, "infructueux. Relancé sous forme de marché négocié : 013086 - fournisseur retenu = zoll medical France"),
+                (4552687, "marché déclaré infructueux et relancé sous la forme d'un marché négocié article 33-i1°2ème du décret 2005-1742 du 32/12/2005.marché attribué le 9/12/13 à Assurances securité 59000 Lille"),
+                (4782526, "Déclaré infructueux et relancé en procédure négociée de l'article 35-I-1° du code des marchés publics. La commission d'appel d'offres réunie le 23.12.2013 a décidé d'attribuer ce lot à la société Eiffage Construction SISE rue François Durieux – 59174 La Sentinelle CE pour un montant fina lde 5 141 1"),
+                (6191476, "Déclaré infructueux. Consultation relancée en procédure adaptée. Nom du titulaire: Keolis"),
+                (7030205, "Lot infructueux relancé suivant procédure négociée sans publicité et sans concurrence en application de l'article 35 Ii-3 du code des marchés publics par lettre de consultation du 9.1.2015 et lettre de négociation du 07/04/15. Attributaire: ARDP"),
+                (7030206, "Lot infructueux relancé suivant procédure négociée sans publicité et sans concurrence en application de l'article 35 Ii-3 du code des marchés publics, par lettre de consultation du 9.1.2015 et lettre de négociation du 07/04/15. Attributaire: JV Distribution"),
+                (7279113, "infructueux — suite à négociation attribué à société Somatico"),
+                (7791659, "Infructueux. Le lot a été relancé en procédure négociée (art 35 II 3°) et a été attribué à l'entreprise Transgourmet (44470 Carquefou)"),
+                (7791721, "Infructueux. Le lot a été relancé en procédure négociée et a été attribué à L'entreprise Lodfirais (24100 Bergerac)"),
+                (7791767, "Infructueux (1 offre irrégulière). Le lot a été relancé en procédure négociée (article 35.II.1 CMP) et a été attribué à l'entreprise Promocash (02100 Saint-Quentin)"),
+                (7805728, "Marché infructueux, recours à procédure négociée: titulaire: SMACL"),
+                (9104280, "À la suite de l'infructuosité de ce marché, celui-ci a été relancé selon la procédure prévue à l'article 30 du décret n° 2016-360. Il a été attribué à l'entreprise OTIS"),
+                (9104287, "À la suite de l'infructuosité de ce marché, celui-ci a été relancé selon la procédure prévue à l'article 30 du décret n° 2016-360. Il a été attribué à l'entreprise Menuiserie du Chalonnais"),
+                (31381712, "Déclaré infructueux lors de l'appel d'offres. Relancé en procédure négociée sans publicité sans mise en concurrence et attribuée à LD Bio Diagnostics."),
+                (31393407, "lot 16-1 lait frais est déclaré sans suite le lot 16-2 est attribué à Nectarys"),
+                (31482009, "lot déclaré infructueux le 21.2.2011, procédure négociée relancée avec nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Faure/Annequin"),
+                (31482010, "lot déclaré infructueux le 21.2.2011, procédure négociée relancée sans nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Berthelet"),
+                (31482011, "lot déclaré infructueux le 21.2.2011, procédure négociée relancée sans nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Segui"),
+                (31482013, "Lot déclaré infructueux le 21.2.2011, procédure négociée relancée sans nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Cars du Trièves"),
+                (31482014, "lot déclaré infructueux le 21.2.2011, procédure négociée relancée avec nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Faure/Eyraud"),
+                (31482016, "Lot déclaré infructueux le 21.2.2011, procédure négociée relancée sans nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Eyraud/Perraud"),
+                (31738609, "lot 25) la société Storz a été retenue. Le lot 32 a été déclaré infructueux"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        assert_class(
+            &[
+                (7151483, "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à Léo Lagrange"),
+                (7151494, "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à FAIL 13"),
+                (7151502, "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à C.A.J.L"),
+                (7151511, "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à Apis"),
+                (7151529, "Pas d'offre. Relancé en procédure 35.ii.3 Attribué à Léo Lagrange (AAPC n° 2015_20403_0016)"),
+                (7151543, "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à A.E.C. Castellane"),
+                (7151562, "pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à san see"),
+            ],
+            None,
+        );
+        // A2 (10): a name before a void tail.
+        assert_class(
+            &[
+                (1844226, "BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins"),
+                (1844229, "BGE Guyane 16 rue Lieutenant Becker 97300 Cayenne - la consultation a été déclarée sans suite pour les parts non couvertes des besoins"),
+                (1844232, "BGE Guyane 16 rue Lieutenant Becker 97300 Cayenne/ la consultation a été déclarée sans suite pour les parts non couvertes des besoins"),
+                (2035260, "LV Consultants Cv1 Simarouba - 97310 Kourou, FRANCE/ La consultation a été déclarée sans suite pour la part du marché non couverte des besoins"),
+                (2734624, "GRPT GCC (mandataire) et Andre BTP, suite à procédure négociée après AO infructueux"),
+                (2734625, "GRPT vallée sas (mandataire), La Comec et Arbat System, suite à procédure négociée après AO infructueux"),
+                (3993625, "Pentax France life care montants mini : lot 10 : 10 054 EUR HT et lot 11 : 4 399 EUR HT Les lots 1 à 9 sont déclarés sans suite"),
+                (4836476, "Bp innovis ; infructueux"),
+                (31689490, "Procédure de marché négocié après appel d'offres infructueux: 5) Mepy Système"),
+                (31739133, "Importaciones Canarias de Automóviles SA (Lote A2.5). Se ha declarado desierto el Lote A3.2. Nacionalidad: española"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        // B1 (13): one distinct winner in a list grammar.
+        assert_class(
+            &[
+                (2957546, "lot 26: Carestream Lot 27: Sans suite lot 28: CARESTREAM"),
+                (5351956, "lot 7.0401 : pansements raffin Lot 7.04.02 : sans suite"),
+                (5351964, "lot 9.02.01 : sans suite Lot 9.02.02 : Vygon"),
+                (6603163, "Stryker France SAS: lot nº 36 sans suite: lot nº 37"),
+                (7685392, "Gallego secteurs 3A à 3D / infructueux secteurs 3E à 3H /"),
+                (7685396, "Dubreuilh secteurs 7A 7B / Infructueux secteurs 7C 7D"),
+                (8747281, "Secteur 74 Sud: AMS (+30 %) et non attribué (infructueux) secteur 74 Nord: AMS (+30 %) et non attribué (infructueux)"),
+                (8747284, "74 secteur Sud: ACS DECO (+5 %) et non attribué (infructueux) 74 secteur Nord: ACS DECO (+3 %) et non attribué (infructueux)"),
+                (8788741, "Secteur Allier: lot non attribué (infructueux) Secteur Puy-de-Dôme: Dômes Etanch (0 %)"),
+                (8788743, "Secteur Allier: lot non attribué (infructueux) Secteur Puy-de-Dôme: SARF (0 %)"),
+                (31518419, "Paredes lot 506 i Les Paluds - 140 avenue du Millet Bp 1340 lots 501 à 505 infructueux"),
+                (31919182, "Agence d'Amboise : appel d'offres déclaré sans suite - Agence de Chinon : savelys GDF suez"),
+                (31919183, "Mongin Jauffret : lots 1504 et 1505 Zi Delta industrie la Valentine lots infructueux : 1501, 1502 et 1503"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        // B2 (10): co-winners of one result.
+        assert_class(
+            &[
+                (1813067, "1/ Gidef, 37 rue du chemin latérale, 93140 Bondy - 2/ Auxet, Bât 1, apt du gazon, Res. Les champs, 97139 Les Abymes. La consultation a été déclarée sans suite pour la part non couverte des besoins"),
+                (1813070, "1/ CE Cedille, quartier AKR, 97218 Basse Pointe - 2/ Gidef, 37 rue du chemin latérale, 93140 Bondy. La consultation a été déclarée sans suite pour la part non couverte des besoins"),
+                (1813087, "1/ Gidef, 37 rue du chemin latérale, 93140 Bondy - 2/ AECD, 56 avenue des Chutes Lavie, 13004 Marseille. La consultation a été déclarée sans suite pour la part non couverte des besoins"),
+                (1844213, "Equinoxe Formation Rocade Zéphir Centre Commercial Katoury 97300 Cayenne / BGE Guyane 16 rue Lt Becker 97300 Cayenne/ La consultation a été déclarée sans suite pour la part non couverte des besoins"),
+                (1844215, "BGE Guyane 16 rue Lt Becker 97300 Cayenne / Equinoxe Formation Rocade Zéphir Centre Commercial Katoury 97300 Cayenne / La consultation a été déclarée sans suite pour la part non couverte des besoins"),
+                (1844218, "BGE Guyane 16 rue Lt Becker 97300 Cayenne/ Equinoxe Formation Rocade Zéphir Centre Commercial Katoury 97300 Cayenne/ La consultation a été déclarée sans suite pour la part non couverte des besoins"),
+                (1844224, "BG Guyane 16 rue Lt Becker 97300 Cayenne / Point Com 77 rue René Jadfard 97300 Cayenne / La consultation a été déclarée sans suite sur la part non couverte des besoins"),
+                (4726614, "Sublote 12.1: Bernadí, S.A.; Expert Line, S.L.; S&T 96, S.L. Sublote 12.2: Declarado desierto. Sublote 12.3: Declarado desierto."),
+                (5425803, "Lot 10a: déclaration sans suite lot 10b: procédure infructueuse lot 10c titulaire 1: SAGA titulaire 2: Chapelec"),
+                (15591728, "Rang 1: Helmlinger, Rang 2: Jonnette, Rang 3: Infructueux"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        // B3 (76): several winners in one award block.
+        assert_class(
+            &[
+                (1722464, "2012021901 = JBE Electrcité; 2012021902 = Someci; 2012021903 = Burdiwatt; 2012021904 = Infructueux; 2012031901 = Mont Blanc Electrcité; 2012051901 = ATH; 2012051902 = Krice Elec; 2012061901 & 2012061902 = Infructueux; 2012061903 = Sanuelec; 2012071901 = Coteb; 2012071902 = Gandit; 2012081901 = SPIE "),
+                (1722465, "2012023401 = Cle de Sol; 2012023402 = Infructueux; 2012043401 = Logis Services; 2012053401 = ATH; 2012053402 = MCB; 2012053403 = Vittet; 2012093401 = Laffin"),
+                (1722466, "2012030801 = Infructueux; 2012040801 = Decobois; 2012050801 = ATH; 2012050802 = Logis Services; 2012050803 = Infructueux; 2012070801 = Logis Services; 2012080801 = Menui 2 B; 2012080802 = Allo Lyon Depannage; 2012080803 = Villette Renovations"),
+                (1722468, "2012041701 = DFG Travaux; 2012041702 = SETIM; 2012041703 = DFG Travaux; 2012051701 = ATH; 2012051702 = Proxiserve; 2012051703 = SETIM; 2012051704 = Thermy Confort; 2012051705 = Infructueux; 2012061701 = Proxiserve; 2012061702 = Proxiserve; 2012061703 = Magnien; 2012061704 = Magnien; 2012061705 = Pro"),
+                (1722469, "2012043201 = Logis Services; 2012063201 = ART SMA; 2012073201 = Infructueux; 2012083201 = Logis Services"),
+                (2381358, "lot 10 attribué à Bayer Santé Familiale le 5.6.2012 (no marché 2012-2179). Lot 11 relancé en marché négocié 35 II 3. Lot 12 relancé en marché négocié 35i1. Lot 13 déclaré sans suite (arrêt de commercialisation). Lot 14 attribué à Pfizer le 5.6.2012 (no marché 2012-2180)"),
+                (2381360, "lot 19 attribué à Mylan le 5.6.2012 (no marché 2012-2183). Lot 20 attribué à Pierre Fabre Dermatologie le 5.6.2012 (nomarché 2012-2177). Lot 21 déclaré sans suite. Lot 22 attribué à EG Labo le 5.6.2012 (no marché 2012-2184)"),
+                (2381361, "lot 23 attribué à Pierre Fabre Dermatologie le 5.6.2012 (no marché 2012-2177). Lot 24 déclaré sans suite. Lot 25 attribué à Sinclair Pharma le 5.6.2012 (no marché 2012-2185). Lots 26 et 28 attribués à Glaxosmithline le 5.6.2012 (no marché 2012-2186). Lot 29 attribué à MSD France le 5.6.2012 (no marc"),
+                (2450314, "procédure déclaré sans suite relancée en 2 lots distincts: 5a menuiseries intérieures bois: attributaire: L'Art du bois, 2 rue Georges Politzer 38 Echirolles. Montant HT: 48 225,34 EUR. Date d'attribution: 24.4.2012. 5b mobilier bois: attributaire: Ellipse Bois, ZA en Chuel, 69 Quincieux. Montant HT"),
+                (2957539, "lot 35: ETIAM Lot 36: KEOSYS Lot 37: Infructueux"),
+                (2957542, "lot 1: Philips Lot 2: Philips Lot 3: Infructueux Lot 4: PHILIPS Lot 5: SIGIL Lot 6: PHILIPS Lot 7: Sans suite"),
+                (2957543, "lot 8: ge medical systems Lot 9: ge medical systems Lot 10: Sans suite Lot 11: SIGIL Lot 12: Infructueux Lot 13: Sans suite"),
+                (2957545, "lots 19 à 22: EUROMEDICA Lot 23: SIGIL Lots 24 et 25: Infructueux"),
+                (2957549, "lot 32: Medrad Lot 33: Covidien Lot 34: Infructueux"),
+                (3219667, "2013023401/zone Bourgoin Jallieu-Nord Isère : Jonyk Franck - 69720 St Laurent de Mure ; 2013023402/zone Belley-Bas Bugey : Infructueux ; 2013023403/zone Bourgoin Jallieu-Nord Isère : Sarl Da Cunha - 69124 Colombier Saugnieu ; 2013033401/zone Pays de Gex : SOS 01 Dépannage - 01360 St Genis Pouilly ; "),
+                (3219671, "2013023201/zone Belley-Bas Bugey : Sarl Mcb - 01300 Chazey Bons ; 2013033201/zone Pays de Gex : AMS - 74000 Annecy ; 2013033202/zone Pays de Gex : SOS 01 Dépannage - 01630 St Genis Pouilly ; 2013073201 Zone Bresse : Logis Services - 69120 Vaulx en Velin ; 2013073202/zone Bresse : infructueux ; 20130"),
+                (3219672, "2013024201/zone Bourgoin Jallieu-Nord Isère : Abs décors - 38090 Villefontaine ; 2013024202/zone Bourgoin Jallieu-Nord Isère : Parducci - 69140 Rillieux la Pape ; 2013024203/zone Bourgoin Jallieu-Nord Isère : Netsol expansion - 69150 Décines ; 2013024204/zone Belley-Bas Bugey : Infructueux ; 2013034"),
+                (3371493, "lot268 sanofi av - 269sanofi AV - 270renaudin - 271navartis P - 272 PFIZER - 273msd - 274 sanofi av - 275aguettant - 276arrow G - 277healthcare - 278astra Z - 279 PFIZER - 280mylan - 281arrow G - 282 sans suite - 283 ACTELION - 284leo P - 285leo P - 286infructueux - 287bms - 288infructueux - 289sans"),
+                (3371495, "lot 418 - gLAXOSMITHKLINE - 1691.1ht Lot419 GLAXOSMITHKLINE - 94488.6 ht lot 420 - msd f 32544.72 ht lot 421 sanofi av - 69365.01 ht lot 422 sans suite lot 423 sanofi av 1352.46 LOT 424 meda p 1447.2"),
+                (3371500, "lot 643 - sans suite - lOT 644 MYLAN - 2459.7ht LOT 645 infructueux lot 646 BMS - 26581.5 ht lot 647 msd france 63072 ht lot 648 janssen c 30016.8 ht lot 649 BMS 2208.91ht LOT 650 jansse c 353446.8 ht lot 651 viiv healthcare 891 ht lot 652 boehringer ingelheim 7608.9 LOT 653 TOCHE 1575 ht lot 654 ms"),
+                (3371513, "lot1045sans SUITE- lot1046infructueux- lot1047serb 83268ht- lOT 1048-sans suite- lot 1049serb 4032ht- lot1050infructueux- lot1051infructueux- lot1052cooper 3817.965ht- lot1053ferring 6780ht- lot1054ipsen P 60000- 1055csp 7650- 1056ferring 2520- 1057-genzyme256300.5ht- lot1058infructueux- lot1059stal"),
+                (3371518, "lot1096 INFRUCTUEUX- lot1097 fresenius k 22500- lot1098 fresenius m 396- lot1099 INFRUCTUEUX- lot1100 INFRUCTUEUX- lot1101 INFRUCTUEUX- lot1102 INFRUCTUEUX- lot1103 INFRUCTUEUX- lot1104 BAXTER 42750- lot1105 maco p 27090- lot1106 HOSPAL 256 690ht-lot 1107 HEMOTECH 84000ht- lot1108 HOSPAL 31500ht- lo"),
+                (3371519, "lot1125 INFRUCTUEUX- lot1126 GILBERT 11400 Ht-Lot1127 BAXTER 13241.8ht- lot1128 BAXTER 169215ht- lot1129 AGUETTANT 12884.7ht- lot1130 fresenius k 7650ht- lot1131 Gilbert48000ht- lot1132 fresenius k 368269.7ht- lot1133 AGUETTANT 199566.2ht-"),
+                (3371520, "lot1112 AGUETTANT 42600.36- lot1113 INTERSURGICAL 9765- lot1114 STALLERGENES 862.56- lot1115 DIAGAST 136797.8- lot1116 INFRUCTUEUX- lot1117 INFRUCTUEUX- lot1118 chaix et 6190.954- lot1119 sans suite- lot1120 FENWALL 3060 HT- lot1121 GENZYME 156000 HT- lot1122 GILBERT 5353.92ht-lot1123 sans suite- lo"),
+                (3371521, "lot470 INFRUCTUEUX - lOT 471infructueux- lOT 472infrucueux- lOT 473carl ZEISS 6300ht- lOT 474alcon 88500ht - lOT 475 PHYSIOL 32850 (H.T.)."),
+                (3371523, "lot 43 INFRUCTUEUX - 44 reckitt benckiser 28692.07 - 45 reckitt b 165.24 - 46 ipsen p 2497.138- 47 ASTELLAS 590.15- 48 BMS 35091.84 - 49 AGUETTANT 17954.86 - 50 PFM 63767.71 - 51 CSP 16062.45 - 52 INFRUCTUIEUX - 53 sans suite - 54 arrow g 9005.64 - 55 INFRUCTUEUX - 56 sans suite - 57ipsen P 4395.461"),
+                (3371525, "lot109 BAYER 5530.56 - 110 INFRUCTUEUX - 111cooper 6243.12 - 112 leo p 977 - 113 leo p 643.37 - 113 leo p 453.6 - 114 leo p 1092.6 - 115 eg labo csp 12315.58 - 116 COOPER 2787.89 - 117 CSP 9538.36 - 118 galenique v 10108.17 - 119 INFRUCTUEUX - 120 galeniques v 36010.62 - 121 merck s 19041.03 - 122 n"),
+                (4048470, "pro a pro (lots no 47, 48, 49, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 68, 69) SODIAL (lot no 52), lot no 67 (sans suite)"),
+                (4804536, "2014024201/zone Belley-Bas Bugey : PARDUCCI -69140 rillieux la pape ; 2014024202/zone Belley bas Bugey : ezm peinture - 01300 BELLEY ; 2014024203/zone Belley Bas Bugey : INFRUCTUEUX ; 2014034201/zone Pays de Gex : cazajous decor - 01200 bellegarde sur valserine ; 2014034202/zone Pays de Gex : NUANCE"),
+                (5351950, "lot 6.01.01 : PARAMAT Lot 6.01.02 : PARAMAT Lot 6.01.03 : PARAMAT Lot 6.01.04 : PARAMAT Lot 6.01.05 : PARAMAT Lot 6.01.06 : sans suite Lot 6.01.07 : novo nordisk Lot 6.01.08 : APOTECNIA Lot 6.01.09 : APOTECNIA Lot 6.01.10 APOTECNIA Lot 6.01.11 : APOTECNIA Lot 6.01.12 : APOTECNIA Lot 6.01.13 : APOTEC"),
+                (5351959, "lot 8.03.01 : pansements raffin Lot 8.03.02 : pansements raffin Lot 8.03.03 : pansements raffin Lot 8.03.04 : pansements raffin Lot 8.03.05 : Hartmann Lot 8.03.06 : Hartmann Lot 8.03.07 : Hartmann Lot 8.03.08 : sans suite Lot 8.03.09 : molnlycke healthcare Lot 8.03.10 : molnlycke healthcare Lot 8.03"),
+                (5351961, "lot 8.05.01 : pansements raffin Lot 8.05.02 : Lohmann et Rausscher Lot 8.05.03 : Hartmann Lot 8.05.04 : sans suite"),
+                (5351965, "lot 10.01.01 : Paramat Lot 10.01.02 : pansements raffins Lot 10.01.03 : sans suite"),
+                (5351966, "lot 10.02.01 : Teleflex Lot 10.02.02 : Novo Nordisk Lot 10.02.03 : ABS Lot 10.02.04 : BSN médical Lot 10.02.05 : sans suite Lot 10.02.06 : Cooper"),
+                (6603158, "Infructueux: lot nº 24 Orthomed: lots nº 25 et 26 Biotech Ortho: lot nº 27"),
+                (6603162, "Biotech Ortho: lot nº 32 Zimmer France: lot nº 33 Depuy France SA: lot nº 34 lot nº 35: infructueux"),
+                (6603175, "Depuy France sa: lots 2, 3, 4 Stryker France SAS: lot 5 Arthrex: lot 6 sans suite: lot 7"),
+                (7512199, "Lots 2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 attribués à TOPOS SARL —  4 rue des Artisans — 67270 Bernardswiller — lots 21 et 22 attribués à G2C Territoire — 26 chemin de Fondeyre —  31200 Toulouse — lots 1, 3, 9, 23 déclarés sans suite"),
+                (7685393, "Acorus secteurs 4A et 4D/ Maisonning 4B et 4C/ Infructueux secteurs 4E et 4F / Chenelec secteurs 4G et 4H"),
+                (7685394, "SPIE secteurs 5A à 5D/ infructueux 5E 5F/ Marc Elec 5G/ Chenelec 5H"),
+                (7685395, "Acorus secteurs 6A à 6D/ Infructueux secteurs 6E 6F / Chenelec secteurs 6G 6H"),
+                (8788747, "Secteur Allier: grange (0 %) et Fayolle (-4 %) Secteur Puy-de-Dôme: lot non attribué (infructueux)"),
+                (8788751, "Secteur Allier: AFP (0 %); DIAZ (-4 %) et infructueux Secteur Puy-de-Dôme: AFP (-23 %); SARF (-10 %); Volcapaint (-10 %) et Vallée Dome Finitions (0 %)"),
+                (9811971, "Lot 1: Meal-o-Matic; Lots 2,4 et 5: Carolo Drink Service; Lot 3: non attribué; Lot 6: Topsec Équipement"),
+                (10497189, "Secteur 1-2-3 MENUISERIE NORD GIRONDE; Secteur 4 HAROCARENE; Secteur 5-6 Procédure infructueuse."),
+                (23645704, "CAT8-MS1 - Attribué à Ganix, CAT8-MS2 - Attribué à RacinesUrbaines, CAT8-MS3 - Attribué à Rebiffé, CAT8-MS4 - Non attribué, CAT8-MS5 - Attribué à Ets Lefeuvre, CAT8-MS6 - Attribué à LePain2Mains"),
+                (31393408, "Gaudais Distribution (lots 1-1, 1-3, 1-5) Pomona Passion Frois (lots 1-2,1-4) Transgourmet (lot 1-6) lot 1-7 est déclaré sans suite Earl Lefleche (lot 1-6)"),
+                (31428158, "Lot 3 Brake / lot 9 Davigel / lot 5 le Roy / lots 7,2,4,10 le Saint / lot 11 Pomona PF / lot 6, 1 Pomona TA / lot 8 infructueux"),
+                (31428160, "Lots 9, 10, 4, 5, 8, 6, 7 Bernard / lots 2,13 Brake / lots 3,1 Pomona PF / lot 14 SDA / lot 15 terre et plume / lots 11,12 sans suite"),
+                (31497710, "GE Healthcare Clinical Systems - 69760 Limonest: lot 1: 157 555,30 EUR HT; Philips France - 92156 Suresnes: lot 2: 150 845,70 EUR HT; lot 3: 77702,90 EUR HT; lot 4: 51217,50 EUR HT; lot 5: 28 199 EUR HT; le lot 6 a été déclaré sans suite"),
+                (31518405, "Adhesia lot 1001 et 1006 Coldis : lots 103, 1004, 1005 et 1007 lots infructueux : 1002"),
+                (31518406, "Coldis : lots 1101, 1102, 1103, 1104, 1105 et 1107 Abena frantex : lot 1111 lots infructueux : 1107, 1108, 1109 et 1110"),
+                (31518407, "Mongin jauffret lot 1220 à lot 1237 Chomette favor : lot 1238 sauf lot 1226 infructueux"),
+                (31518408, "Paredes : lot 1301, 1309, 1310, 1311, 1317, 1319 1320, 1324, 1325, 1327, 1328 et 1329 Coldis : lot 1302, 1308, 1312, 1318, 1321 et 1323 Argos hygiène : lots 1313, 1314 et 1322 Cedisud : lot 1315 Chomette favor : lot 1316 lots infructueux : 1303, 1304, 1305, 1306, 1307, 1326 et 1329"),
+                (31518409, "Paredes : lot 1330 Coldis : lot 1331 Abena frantex : lot 1332 Groupe 5 s : lot 1333 Coldis : lot 1335 et 1337 Eif : lot 1336 lot infructueux : 1334"),
+                (31518416, "Usagunic lots 2001 et 2002 Apmp lot 2003 lots infructueux : 2004, 2005 et 2006"),
+                (31518420, "Argos hygiène lots 601 et 612 Eumarcom lots 602 et 616 Coldis lots 603, 615, 618 et 620 Paredes lots 604, 605, 607, 610 et 619 Thermofina lot 608 lots infructueux : 609, 611, 613 et 614"),
+                (31518422, "Coldis lots 901, 902, 903 et 909 Argos lots 904, 906, 908 Phs lot 907 Adhesia lot 910 lots infructueux : 905 et 911"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        assert_class(
+            &[
+                (1642155, "BRI: lot 1: marché n° 12.001 / Arthrex: lots 7 et 10: marché n° 12.006/ Stryker: lots 8-9-24-25-27: marché n° 12.009 / Heraeus: lots 4 et 5: marché n° 12.004 / Science et médecine: lots 6-19-20: marché n° 12.005 Zimmer France: lot 3: marché n° 12.003 Orthofix: lot 26: marché n° 12.008/ Compagnie fin"),
+                (3219666, "2013021901/zone Belley Bas Bugey : Gandit - 69120 Vaulx-en-Velin ; 2013031901/zone Pays de Gex : JS Electricité - 01200 Confort ; 2013051901/zone Oyonnax : ABT Electricité - 01000 Bourg-en-Bresse ; 2013051902/zone Oyonnax - Pascal Gritti - 01110 Hauteville-Lompnes ; 2013061901/zone Chalon-sur-Saône "),
+                (3219668, "2013020801/zone Bourgoin-Nord Isère : Logis services - 69120 Vaulx en Velin ; 2013020802/zone Belley-Bas Bugey : Sarl MCB - 01300 Chazey-Bons ; 2013030801/ Zone Pays de Gex : SOS 01 Dépannage - 01630 St Genis Pouilly ; 2013060801/zone Agence de Chalon : RB dépannage - 71000 Maçon ; 2013060802/zone A"),
+                (3290486, "096-13 LOT 1 A.C.H. - Depann'Express 40100 DAX 097-13 Lot3 TSMP 40180 NARROSSE 098-13 Lot4 CG.POSES 40390 st laurent de gosse 099-13 LOT 5 andre morlaes 40400 TARTAS 100-13 LOT 6 eurl vieira 40990 st paul les dax 101-13 LOT 7 eurl denis crepin 40400 carcen ponson 102-13 LOT 8 massy et fils 40180 HEU"),
+                (3371526, "lot 197 LFB Bi969134 - 198 lfb bio 142692 - 199 lfb bio 98455 - 200 lfb bio 98455 - 200 lfb bio 4995220 - 201 BAXTER 1011344 - 202 BAXTER 81225 - 203 lfb bio 946.74 - 204 TAKEDA 249000 - 205 novo n 5413632 - 206 lfb bio 2702700 - 207 lfb bio 151200 -208 lfb bio 1438080 - 209 lfb bio 126480 - 211 INF"),
+                (3586203, "Sous-lot nº 1 – barquettes, assiettes à usage unique et papier film : Firplast SAS, 4/6 rue de Provence, 69800 Saint-Priest. Montant : 149 755 EUR HT. Sous-lot nº 2 – vaisselle à usage unique : Paredes, 1 rue Georges Besse, BP 302, ZI de Revoisson, 69745 Genas Cedex. Montant : 5 206 EUR HT. Sous-lot"),
+                (4359873, "-321-13 lots 1-2-3-4-14-15 france inox 40180 SAUBUSSE -322-13 lot6 compagnie hobart 77183 croissu beaubourg -323-13 lot7 aft equipement 34210 ARBONNE -324-13 lots 8-9 ESSOR 64600 ANGLET -325-13 lot10 le froid pyreneen 64140 BILLERE -326-13 Lot 11 SEFTI 40350 POUILLON Les lots 12, 13, sont déclarés i"),
+                (4804532, "2014033401/zone Pays de Gex : ninet gavin - 01200 LANCRANS ; 2014033402/zone Bellegarde sur Valserine : CUTELLE - 01200 bellegarde sur valserine ; 2014053401/zone Oyonnax : logis services - 69120 vaulx en velin ; 2014063401/zone Autun : art sma - 71230 st vallier ; 2014063402/zone Autun : bois serru"),
+                (4804533, "2014030801/zone Pays de Gex : ninet gavin - 01200 LANCRANS ; 2014030802/zone Pays de Gex : DUCIMETIERE - 01200 GENISSIAT ; 2014030803/zone Bellegarde sur Valserine : ninet gavin - 01200 LANCRANS ; 2014050801/ zone Oyonnax : VITTET - 01100 OYONNAX ; 2014060801/zone Autun : art sma - 71230 st vallier "),
+                (4804535, "2014020801/zone Bourgoin Jallieu-Nord Isère : logis services - 69120 vaulx en velin ; 2014020802/zone Bourgoin Jallieu-Nord Isère : EGV - 69100 VILLEURBANNE ; 2014020803/zone Belley-Bas Bugey : logis services - 69120 vaulx en velin ; 2014020804/zone Belley-Bas Bugey : MCB - 01300 chazey bons ; 20140"),
+                (4804537, "2014022801/zone Belley Bas Bugey : BATILYON - 69140 rillieux la pape ; 2014022802/zone Belley Bas Bugey : PARDUCCI - 69140 rillieux la pape ; 2014022803/zone Belley-Bas Bugey : BERNARD - 38690 TORCHEFELON ; 2014022804/zone Bourgoin Jallieu-Nord Isère : abs decors - 38090 VILLEFONTAINE ; 2014022805/z"),
+                (6209983, "2015020801/zone Bourgoin-Jallieu-Nord Isère: Ecco bat service — 38090 Villefontaine; 2015020802/zone Belley-Bas Bugey: ID services — 42500 Saint-Romain-en-Jarez; 2015040801/zone agence de Rillieux: Serfal — 69009 Lyon; 2015040802/zone agence de Rillieux: SEMI — 69800 Saint-Priest; 2015040803/zone ag"),
+                (6209984, "2015024201/zone Bourgoin-Jallieu-Nord Isère: Parducci — 69140 Rillieux-la-Pape; 2015024202/zopne Bourgoin-Jallieu-Nord Isère: ABS deocrs — 38090 Villefontaine; 2015024203/zone Bourgoin-Jallieu-Nord Isère: SCOP NEA — 73492 La Ravoire; 2015024204/zone Belley-Bas Bugey: Parducci — 69140 Rillieux-la-Pap"),
+                (6672986, "2 lots attribués à la société Alere (78350)le 27/04/2015; 11 lots attribués à la société Becton Dickinson (38801) le 16/04/2015; 22 lots attribués à la société Biomérieux (69280) le 15/04/2015; 6 lots attribués à la société Bio-Rad (92430) le 17/04/2015; 1 lot attribué à la société Elitech (92800) l"),
+                (6672989, "2 lots attribués à la société Alldiag (67038) le 24/04/2015; 1 lot attribué à la société Bio-Rad (92430) le 07/05/2015; 26 lots attribués à la société CML (77792) le 17/04/2015; 4 lots attribués à la société Greiner Bio One (91941) le 16/04/2015; 3 lots attribués à la société Less France (77500) le "),
+                (7674818, "orthomed(2015-2652) pour les lots 1,2,et4; GROUPE Lepine(2015-2658) pour les lots 5,6 et9; BIOTECH Ortho(2015-2657) pour les lots8,34,35,36,37 et 38; Depuy(2015-2660) pour les lots 7,12,14,19,20,21,22,23,24,25,26,29,31 et 33; ETHICON Sas(2015-2659) pour le lot 30; FH Orthopedics(2015-2651) pour le l"),
+                (31414415, "Lots suivants attribués à la société RMI, 1 rue Blaise Pascal, 54320 Maxeville, FRANCE: 4.1 (écrans TFT): 5 439,15 EUR HT / 4.2 (portables): 36 319,94 EUR HT / 4.3 (unités centrales): 22 445,10 EUR HT / 4.7 (routeurs): 1 413,65 EUR HT / 4.8 (téléphones IP): 3 140,00 EUR HT / 4.9 (complément HP Blade"),
+                (31528120, "MARCHE 4008821.083-08 ALDIS-BORGEL Lots : 11-12-14-18 MARCHE 4008821.084-08 BRAKE Lots : 21 MARCHE 4008821.085-08 CAFES RICHARD Lots : 19 MARCHE 4008821.086-08 FRIGERAL Lots : 20 MARCHE 4008821.087-08 POMONA Lots : 4-24 MARCHE 4008821.088-08 PRO A PRO DISTRIBUTION SUD Lots : 10-15 MARCHE 4008821.089"),
+            ],
+            None,
+        );
+        // C (29): text-era `Lot n)` lists.
+        assert_class(
+            &[
+                (26966868, "Lote I: declarado desierto. Lote II: Winterthur Seguros Generales"),
+                (27028633, "Lot 1) non attribution pour cause administratif. Lot 2) Hospithera"),
+                (27567379, "Lot 3) Figuères Services. Lots 1 et 2 déclarés infructueux"),
+                (30593829, "lot 2) sans suite. lot 3) Aloka Sàrl"),
+                (30665788, "Lot 3) sans suite. Lot 4) Ets. S.A.D. (73)"),
+                (30666364, "Lot 1) véhicules légers: Foucque. Lot 2) engin équipé d'un robot tailleur: infructueux. Lot 3) engin de terrassement: Nassibou. Lot 4) engin de nivelage-compactage: Nicisa. Lot 5) camion de dépannage"),
+                (30680323, "Lot 1) Vallée de l'Oise et lot 2 (vallée de la Serre et du Vilpion): déclarés infructueux. Lot 2) Vallée de la Marne: IWACO France"),
+                (30686841, "Lot 1) SPLO. Lot 2) SPLO. Lot 3) Distralls. Lot 4) SPLO. Lot 5) Prodirest. Lot 6) SPLO. Lot 7) Prodirest. Lot 8) Prodirest. Lot 9) Prodirest. Lot 10) Déclaré infructueux. Lot 11) Déclaré infructueux. Lot 12) Distralis. Lot 13) Rault"),
+                (30687978, "Lote 1) Declarado desierto. Lote 2) Limpiezas Luz"),
+                (30688273, "Lot 1) sans suite. Lot 2) Astem Sécurité"),
+                (30689270, "Lot 1) Dactyl Buro. Lot 2) Buro +. Lot 3) infructueux. Lot 4) Buro +. Lot 5) infructueux. Lot 6) Willecocq. Lot 7) Rover. Lot 8) Navarre. Lot 8bis) Willecocq. Lot 9) infructueux. Lot 10) Buro +"),
+                (30690240, "Lots 1) et 2) Entreprise Mazza. Lot 3) GCTélécom Lor 4) déclaré sans suite"),
+                (30695615, "A) non attribué. B1) et B2) Climelec"),
+                (30698459, "Lot 1) déclaré infructueux. Lots 2)"),
+                (30820452, "Lot 1) USP Normandie SA. Lot 2) déclaré infructueux. Lot 3) déclaré infructueux"),
+                (31689502, "Bernas Médical. Procédure de marché négocié après appel d'offres infructueux: 28) Kodack"),
+                (31731990, "G) non attribué. Marché conserves: A)"),
+                (31731993, "E) non attribué. Marché produits d'entretien: A)"),
+                (31733948, "Lot 1) Sté Doumenge. Lot 2) SA Rault. Lot 3) Sté Discol-Prodirest. Lot 4) SA Rault. Lot 5) Lot infructueux. Lot 6) Sté Discol-Prodirest. Lot 7) Sté Doumenge. Lot 8) Sté Doumenge. Lot 9) Sté Elidis. Lot 10) Sté Andrieux. Lot 11) Sté GDA. Lot 12) Sté Krill. Lot 13) Sté Krill. Lot 14) Sté GDA. Lot 15) "),
+                (31734131, "Lot 1) Sans suite. Lot 2) Infructueux. Lot 3) Progetech. Lot 4) Vidalauto. Lot 5) Vidalauto. Lot 6) Vidalauto Lot 7) L'approvisionnement électrique. Lot 8) Vidalauto. Lot 9) Descours et Cabaud. Lot 10) Vidalauto. Lot 11) Vidalauto. Lot 12) Vidalauto. Lot 13) Vidalauto. Lot 14) Descours et Cabaud. Lo"),
+                (31734422, "lot 4) Marché infructueux. Marché 4: SA Cofida d'Hauwers"),
+                (31735007, "Lot 1) Blin. Lot 2) Prodirest. Lot 3) Ouest Distribution. Lot 4) Ouest Distribution. Lot 5) Corol Jeager. Lot 6) Déclaré infructueux. Lot 7) Prodirest. Lot 8) Déclaré infructueux. Lot 9) Déclaré infructueux. Lot 10) Blin. Lot 11) Prodirest. Lot 12) Déclare infructueux. Lot 13) Ame Haslé. Lot 14) Gef"),
+                (31738162, "Lot 1) Société SEF Environnement. Lot 2) Société France Elagage. Lot 3) Société SEF Environnement. Lot 4) et 5) lot déclaré infructueux - il sera relancé ultérieurement sous forme de marché négocié"),
+                (31738464, "Lot 1) Norisolec. Lot 2) Non attribué. Lot 3) Millery. Lot 4) Thommeret. Lot 5) Sauval. Lot 6) Isaac. Lot 7) Cuiller. Lot 8) Roussel. Lot 9) SGM. Lot 10) Menuiserie Devilloise. Lot 11) Delaloche. Lot 12) Abrisol. Lot 13) CTMC. Lot 14) Gamm. Lot 15) Sogeris. Lot 16) Savec. Lot 17) Follin. Lot 18) ATC"),
+                (31740148, "Lot 1) Roche Diagnostics. Lot 2) Dade Behring. Lot 3) Biomerieux. Lot 4) Infructueux. Lot 5) Biomerieux. Lot 6) Biomerieux. Lot 7) Biomedical Diagnostics. Lot 8) Abbott. Lot 9) Biomerieux. Lot 10) Abbott. Lot 11) Instrumentation Laboratory. Lot 12) Sebia. Lot 13) Abbott. Lot 14) Servibio. Lot 15) Se"),
+                (31740189, "Lot n° 1) Renault France VI S.A. Lot n° 2) SES. Lot n° 3) W41 TP. Lots n° 4) et n° 6) Coullare. Lot n° 5) Mauguin CMTP. Lot n° 7) CTD Pulvérisation. Lot n° 8) Europe Service. Lot n° 9) appel d'offres déclaré sans suite. Une nouvelle procédure est engagée"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        assert_class(
+            &[
+                (31734397, "Lot 1) Tissus Gisele. Lot 2) Tissus Gisele. Lot 3) Mulliez. Lot 4) Tissus Gisele. Lot 5) Tissus Gisele. Lot 6) Tissus Gisele. Lot 7) Tissus Gisele. Lot 8) Centraco. Lot 9) Aucune réponse. Lot 10) CTD. Lot 11) CTD. Lot 12) CTD. Lot 13) TTE. Lot 14) Mulliez. Lot 15) Mulliez. Lot 16) Mulliez. Lot 17) H"),
+                (31736174, "Lot 1) Didactic. Lot 2) Vygon. Lot 3) LPI. Lot 4) LPI. Lot 5) Allegiance. Lot 6) Terumo. Lot 7) Vygon. Lot 8) NM Medical. Lot 9) Porges. Lot 10) Owen Mumford. Lot 11) CIM. Lot 12) Swann Morton. Lot 13) Bbraun. Lot 14) Tyco. Lot 15) Tyco. Lot 16) Peters. Lot 17) Tyco. Lot 18) Dorvit. Lot 19) Non attr"),
+                (31737127, "Lot 1) \"papier offset\": société Antalis. Lot 2) \"papier bristol et dossiers\": société Buhrmann. Lot 3) \"papier autocopiant\": société Top Papers. Lot 4) \"papier photocopieurs et imprimantes\": société Agenpa. Lot 5) \"papier quadrichromie\": société Papeteries du Dauphiné. Lot 6) \"papier autocollant\": s"),
+            ],
+            None,
+        );
+        // F (6): an award with no name (F-P), and eForms tenderers marked not awarded (F-role).
+        assert_class(
+            &[
+                (1341883, "Demander le détail à la cellule marchés sont établis 66 marchés pour l'ensemble des 257 lots attribués Les 74 lots infructueux sont relancés 2 lots sans suite (n° 12 et 300)"),
+                (31375951, "Au terme de cette analyse et conformément aux avis et suggestions émis par commission des dispositifs médicaux, réunie le 6 décembre dernier, les choix opérés sont les suivants: - 11 lots ont été déclarés \"Sans suite\", - 5 lots sont déclarés \"Infructueux\", en raison de l'absence de soumissionnaire,  … 61 lots attribués à 29 fournisseurs"),
+                (31377625, "La consultation comportait 310 lots (circuits). 220 lots ont été attribués le 22.7.2010. 90 lots ont été déclarés infructueux - aucune consultation n'a été relancé pour ces lots. La liste des attributaires des 220 marchés (circuits) est présentée ci-dessous. Le circuit se décompose de la façon suiva"),
+                (31486027, "attribué par marché négocié passé selon art. 35-I.1 du CMP suite à appel d'offres infructueux (publicité AAPC parue dans BOAMP no 83 du 28.4.2011 - annonce no 221 et JOUE no 2011/S 81-133894 du 27.4.2011)"),
+                (30533823, "Humble Inpect B.V. (niet gegunde partij)"),
+                (30533824, "Provadi B.V. (niet gegunde partij)"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        // The D residual (11 of 12): each costs a junk leaf name, never an award.
+        assert_class(
+            &[
+                (4409817, "Projet déclaré sans suite : relancé sous le n° de projet ESID 12 418, attribué le 28.10.2013"),
+                (4409820, "Projet déclaré sans suite : relancé sous le n° de projet ESID 12 419, attribué le 28.10.2013"),
+                (4409821, "Projet déclaré sans suite : relancé sous le n° de projet ESID 12 420, attribué le 28.10.2013"),
+                (4802635, "Perceel 1 wordt niet gegund – opdracht wordt gegund op totaal der percelen = perceel 3"),
+                (4802636, "Perceel 2 wordt niet gegund – opdracht wordt gegund op totaal der percelen = perceel 3"),
+                (10893714, "Perceel 1 NIET gegungd B.V."),
+                (23532535, "Déclaration sans suite du lot n°15 et du lot n°17- Recomposition d’un lot -Relance de consultation du lot n°15 « Chape-Carrelage-Faïence »."),
+                (31391828, "non retenus: lots 6-44-56-68-74-91-94-95 sans suite: lots 9-65-92-96"),
+                (31497872, "Le directeur de l'atelier industriel de l'aéronautique de Clermont-Ferrand à déclaré sans suite les lots 10, 15, 17, et 19 indiqués ci-dessus en date du 1.7.2011 et les lots 14 et 18 indiqués ci-dessus déclarés sans suite par le directeur de l'AIA de Clermont-Ferrand en date du 5.9.2011"),
+                (31733023, "aucune entreprise ne s'est portée candidate pour le marché négocié passé suite à l'appel d'offres infructueux"),
+            ],
+            Some(NotAName::AwardSummary),
+        );
+        assert_class(
+            &[
+                (28310858, "Desierto lote 4 y 5 por falta de licitadores. Desierto lotes 1"),
+            ],
+            None,
+        );
+        assert_class(&[(7969717, "Non applicable — Aucune offre n'a été reçue — Lot 5 non attribué")], Some(NotAName::VoidLot));
     }
 
     /// TED's "not awarded" in every language one r208 winner slot carried (notice 17674598):

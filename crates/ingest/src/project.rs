@@ -15789,9 +15789,11 @@ mod tests {
     /// Issue 525, the review: TED's own pointer after a template (12381194's ORG-4, `Los wurde nicht
     /// vergeben (siehe Abschnitt VI Ziffer VI.2 „Sonstige Informationen“).`) reads void by the
     /// template — otherwise an exact value, so a template followed by anything else is a name — and
-    /// the party drops on 510's majority rule, 15 of 23 (a copy whose pointer the lists do not read
-    /// stays a name). 18715886's ORG-6 is the named residue: every copy carries lot 5's number, no
-    /// exact value holds it, and the fold keeps the party, which the walk exempts with its tally.
+    /// the party drops on 510's majority rule, 17 of 23 (a copy whose pointer the lists do not read
+    /// stays a name; 15 until issue 520's D7 read the EN copy's `Lot not awarded (see` as a void head
+    /// and its D3 the PT copy's `não adjudicado` as no awardee). 18715886's ORG-6 is the named residue:
+    /// every copy carries lot 5's number, no exact value holds it, and the fold keeps the party, which
+    /// the walk exempts with its tally.
     #[test]
     fn a_template_with_teds_pointer_drops_and_the_lot_numbered_compound_is_kept() {
         use placeholder_511::*;
@@ -15801,7 +15803,7 @@ mod tests {
         let void = |template: &[(&str, &str)]| {
             template.iter().filter(|(_, name)| crate::partyname::not_a_name(name) == Some(NotAName::VoidLot)).count()
         };
-        assert_eq!(void(&TED_LOT_NOT_AWARDED_POINTED), 15);
+        assert_eq!(void(&TED_LOT_NOT_AWARDED_POINTED), 17);
         assert_eq!(void(&TED_NOT_APPLICABLE_NO_TENDERS_LOT_5), 2);
         let parsed = multilingual(
             &[
