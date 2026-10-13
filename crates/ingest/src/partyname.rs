@@ -4555,6 +4555,28 @@ pub fn award_winner(name: &str) -> Option<String> {
     (!lot_entry_names_another(name, &runs, &words, &starts)).then_some(winner)
 }
 
+/// Issue 527: TenderNed's correction marks each tenderer of a re-published award after its name,
+/// `(gegunde partij)` for the one awarded and `(niet gegunde partij)` for the others (00798764-2024:
+/// `Planon Building Management B.V. (gegunde partij)`, `Humble Inpect B.V. (niet gegunde partij)`).
+/// The name without its mark, and whether the mark says the party was NOT awarded; `None` for a name
+/// without one. Only a closing bracket group whose fold is exactly one of the two marks counts (`niet-
+/// gegunde partij` folds the same), so `Gegunde Partijen Holding` and `X (gegund)` are no marks.
+pub fn award_annotation(name: &str) -> Option<(&str, bool)> {
+    let trimmed = name.trim_end();
+    let inside = trimmed.strip_suffix(')')?;
+    let open = inside.rfind('(')?;
+    let not_awarded = match fold(&inside[open + 1..]).as_str() {
+        "niet gegunde partij" => true,
+        "gegunde partij" => false,
+        _ => return None,
+    };
+    let base = inside[..open].trim_end();
+    // The review: a base with an unclosed bracket (`Foo (Bar (niet gegunde partij))`) or no letter or
+    // digit (`- (gegunde partij)`) is no name the mark sits after.
+    let balanced = base.matches('(').count() == base.matches(')').count();
+    (balanced && base.chars().any(char::is_alphanumeric)).then_some((base, not_awarded))
+}
+
 /// Issue 520 U6 (A2, unit-1 decision §4.2): the one awardee a reviewed summary names before a void tail,
 /// as published, or `None`. A2's reliable subset is these five rows, read whole — the name's fold equals a
 /// row's (`/` or ` - ` between the same words reads the same) — and nothing else:
@@ -6878,6 +6900,33 @@ mod tests {
         (31689490, "Procédure de marché négocié après appel d'offres infructueux: 5) Mepy Système"),
         (31739133, "Importaciones Canarias de Automóviles SA (Lote A2.5). Se ha declarado desierto el Lote A3.2. Nacionalidad: española"),
     ];
+
+    /// Issue 527: TenderNed's award marks, read only as a closing bracket group whose fold is exactly a
+    /// mark.
+    #[test]
+    fn award_annotation_reads_tenderneds_marks_only() {
+        for (name, base, not_awarded) in [
+            ("Humble Inpect B.V. (niet gegunde partij)", "Humble Inpect B.V.", true),
+            ("Provadi B.V. (niet-gegunde partij) ", "Provadi B.V.", true),
+            ("PVM Eindhoven B.V. (NIET GEGUNDE PARTIJ)", "PVM Eindhoven B.V.", true),
+            ("Planon Building Management B.V. (gegunde partij)", "Planon Building Management B.V.", false),
+        ] {
+            assert_eq!(super::award_annotation(name), Some((base, not_awarded)), "{name}");
+        }
+        for name in [
+            "Gegunde Partijen Holding",
+            "Dupont B.V. (gegund)",
+            "Dupont B.V. (niet gegund)",
+            "Dupont B.V. (niet gegunde partij) Utrecht",
+            "(niet gegunde partij)",
+            "Dupont B.V.",
+            "Dupont B.V. (Utrecht)",
+            "Foo (Bar (niet gegunde partij))",
+            "- (gegunde partij)",
+        ] {
+            assert_eq!(super::award_annotation(name), None, "{name}");
+        }
+    }
 
     /// Issue 520 U6 (A2, unit-1 decision §4.2; panels wf_8883fc55-316 and wf_421af829-0da): the five
     /// reviewed rows name their winner, read whole on the fold (a `/` for a ` - ` reads the same), and

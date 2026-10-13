@@ -4,6 +4,15 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 527) — a tenderer the notice marks "niet gegunde partij" is not served as a winner
+
+When TenderNed re-publishes an award with each tenderer marked after its name — `(gegunde partij)` for the one
+awarded, `(niet gegunde partij)` for the others — the marked losers are no longer served as that notice's
+result's winners, even where its contract lists their tenders. They keep their bids (`?bidder=`), and both marks
+are dropped from the names served for those mentions. One tender carried the marks when this shipped (Gemeente
+Maastricht, 00798764-2024). Its earlier, unmarked award (00792573-2024) still lists every tenderer as a winner,
+and an organization first seen under a marked name keeps that name as its served name, until later work.
+
 ## Unreleased (issue 520) — an award summary that names one winner binds to that winner
 
 Issue 510 kept, as published, a winner "name" that states a void lot but also seemed to name an award. Three

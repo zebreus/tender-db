@@ -4467,6 +4467,50 @@ fn buyer_winner_sections(
     flagged
 }
 
+/// Issue 527: the tenderer sections of one notice whose name the publisher marks as not awarded
+/// ([`crate::partyname::award_annotation`]: TenderNed's `Humble Inpect B.V. (niet gegunde partij)` on
+/// 24400562, where the contract lists all five tenders and the marks are the only sign of which won).
+/// The tenderers are every eForms `TenderingParty` member in the `tenderer` role, through `alias` to the
+/// outermost party, read under its first published name with the mark still on it ([`party_names`]; the
+/// mention drops it); each marked outer section is returned with its nested inner halves, since a member
+/// reference may name either. A result whose every winning tenderer is marked keeps them all.
+fn not_awarded_sections(
+    sdk01: bool,
+    sections: &HashMap<&str, &store::Section>,
+    alias: &HashMap<String, String>,
+    parsed: &Parsed,
+    raw: &RawResults,
+) -> Vec<String> {
+    let outer = |id: &str| -> String { alias.get(id).cloned().unwrap_or_else(|| id.to_owned()) };
+    let tenderers: BTreeSet<String> = raw
+        .parties
+        .iter()
+        .flat_map(|p| p.members.iter().filter(|(role, _)| role == "tenderer").map(|(_, s)| outer(s)))
+        .collect();
+    if tenderers.is_empty() {
+        return Vec::new();
+    }
+    let wanted: BTreeSet<&str> = tenderers.iter().map(String::as_str).collect();
+    let names = party_names(sdk01, sections, alias, parsed, &wanted);
+    let mut marked: Vec<String> = tenderers
+        .into_iter()
+        .filter(|s| {
+            names
+                .get(s.as_str())
+                .and_then(|name| crate::partyname::award_annotation(name))
+                .is_some_and(|(_, not_awarded)| not_awarded)
+        })
+        .collect();
+    if marked.is_empty() {
+        return marked;
+    }
+    let inner: Vec<String> = alias.iter().filter(|(_, o)| marked.contains(o)).map(|(i, _)| i.clone()).collect();
+    marked.extend(inner);
+    marked.sort();
+    marked.dedup();
+    marked
+}
+
 /// Whether `field` names a party in the dialect: the name rule of
 /// [`NoticeState::mentions`] (eForms BT-500 / the legacy `OFFICIALNAME` family, or
 /// sdk-0.1's party-name fields).
@@ -5473,6 +5517,7 @@ impl NoticeState {
         if !raw_results.is_empty() {
             raw_results.buyer_winner_sections =
                 buyer_winner_sections(sdk01, &sections, &org_alias, parsed, &raw_roles, &raw_results);
+            raw_results.not_awarded_sections = not_awarded_sections(sdk01, &sections, &org_alias, parsed, &raw_results);
         }
         // Award-side roles sit under the results graph, which has no Lot
         // ancestor — resolve their Lot through the graph instead (issue 04's
@@ -5641,6 +5686,15 @@ impl NoticeState {
             };
             match &value.value {
                 NoticeValue::Text { value, lang } if is_name => {
+                    // Issue 527: TenderNed's award mark is no part of the company's name — an eForms name
+                    // (BT-500, where the winner filter acts on the mark) serves without it, whichever way
+                    // it marks the party (`Planon Building Management B.V.`). A legacy or sdk-0.1 name keeps
+                    // it: nothing there reads the mark, and it is the only sign a party lost.
+                    let value = match crate::partyname::award_annotation(value) {
+                        Some((base, _)) if !sdk01 && field == ORG_NAME_FIELD => base.to_owned(),
+                        _ => value.clone(),
+                    };
+                    let value = &value;
                     // The designated single head keeps its first-seen semantics.
                     if mention.name.is_empty() {
                         mention.name.clone_from(value);
@@ -6587,6 +6641,10 @@ struct RawResults {
     /// inner half of one) that are the notice's own buyer ([`buyer_winner_sections`]).
     /// Empty for nearly every notice; no names are kept.
     buyer_winner_sections: Vec<String>,
+    /// Issue 527: the tenderer Organization sections (outermost, and each nested inner half of one)
+    /// whose name the notice marks `(niet gegunde partij)` ([`not_awarded_sections`]): no winners,
+    /// whatever the results graph says. Empty for nearly every notice.
+    not_awarded_sections: Vec<String>,
 }
 
 #[derive(Default)]
@@ -7143,6 +7201,17 @@ impl RawResults {
                 } else {
                     contract_bids
                 };
+                // Issue 527: the marked tenderers this result skips — none when every tenderer of its
+                // winning bids is marked (the mark then decides nothing the graph does not; a result
+                // with no winner would be worse than the publisher's list).
+                let marked = |section: &str| self.not_awarded_sections.iter().any(|s| s == section);
+                let every_tenderer_marked = !self.not_awarded_sections.is_empty()
+                    && winning
+                        .iter()
+                        .flat_map(|b| members_of(b.party_ref.as_deref()))
+                        .filter(|p| p.role == "tenderer")
+                        .all(|p| marked(&p.section_id));
+                let not_awarded_in = |section: &str| !every_tenderer_marked && marked(section);
                 // Legacy blocks carry the awarded value and the winner(s)
                 // directly; eForms resolves them through the bid/contract graph.
                 let (cents, currency) = if r.direct_cents.is_some() {
@@ -7165,10 +7234,13 @@ impl RawResults {
                 // that positively says otherwise (`clos-nw`, `no-rece`, `open-nw`) still
                 // suppresses, which is the case this gate was protecting.
                 } else if matches!(r.decision.as_deref(), Some("selec-w") | None) {
+                    // Issue 527: a tenderer the notice marks `(niet gegunde partij)` did not win, even
+                    // where the contract lists its tender; it keeps its bid — unless every winner is
+                    // marked, where the publisher's graph stands (`not_awarded_in`).
                     winning
                         .iter()
                         .flat_map(|b| members_of(b.party_ref.as_deref()))
-                        .filter(|p| p.role == "tenderer")
+                        .filter(|p| p.role == "tenderer" && !not_awarded_in(&p.section_id))
                         .map(|p| p.organization_id)
                         .collect()
                 } else {
@@ -7189,7 +7261,7 @@ impl RawResults {
                         winning
                             .iter()
                             .flat_map(|b| members_of(b.party_ref.as_deref()))
-                            .filter(|p| p.role == "tenderer")
+                            .filter(|p| p.role == "tenderer" && !not_awarded_in(&p.section_id))
                             .map(|p| (p.organization_id, flagged(&p.section_id)))
                             .collect()
                     };
@@ -11161,6 +11233,128 @@ mod tests {
             ordinal,
             value: store::NoticeValue::Classification { scheme: scheme.into(), code: code.into() },
         }
+    }
+
+    /// Issue 527 (24400562, tender 229981): TenderNed's corrected award lists every tender under the
+    /// result and marks each tenderer after its name. A tenderer marked `(niet gegunde partij)` is no
+    /// winner — the result serves the one marked `(gegunde partij)` — on the OPT-320 path and on the
+    /// settled-contract path the real notice takes, and every tenderer keeps its bid. Both marks leave the
+    /// eForms mention's name and its labelled copies; a notice with no marks is untouched, and one whose
+    /// every tenderer is marked keeps the publisher's winners.
+    #[test]
+    fn a_tenderer_marked_niet_gegunde_partij_is_no_winner() {
+        let section = |id: &str, kind: &str| store::Section { id: id.into(), kind: kind.into(), parent: None };
+        let id_ref = |section: &str, field: &str, target: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: target.into(), is_ref: true },
+        };
+        let id_val = |section: &str, field: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: value.into(), is_ref: false },
+        };
+        // One lot, one result referencing a tender per organization, each tender its own party. With
+        // `contract`, 24400562's own shape: the result references a sixth tender beside them (OPT-320) and a
+        // settled contract (OPT-315) lists the organizations' tenders (BT-3202), which then decides.
+        let award_with = |orgs: &[(&str, &str)], contract: bool| -> Parsed {
+            let mut p = Parsed {
+                sections: vec![section("PROC", "Notice"), section("LOT-0", "Lot"), section("RES-0", "LotResult")],
+                values: vec![
+                    store::ValueRow {
+                        section_id: "RES-0".into(),
+                        field_id: "BT-142-LotResult".into(),
+                        ordinal: 0,
+                        value: NoticeValue::Code { list: None, code: "selec-w".into() },
+                    },
+                    id_val("RES-0", "BT-13713-LotResult", "LOT-0"),
+                    text_value("ORG-9", ORG_NAME_FIELD, 0, Some("NLD"), "Gemeente Maastricht"),
+                    id_ref("PROC", "OPT-300-Procedure-Buyer", "ORG-9"),
+                ],
+            };
+            p.sections.push(section("ORG-9", ORGANIZATION_KIND));
+            if contract {
+                p.sections.push(section("CON-0", "SettledContract"));
+                p.sections.push(section("TEN-X", "LotTender"));
+                p.values.push(id_ref("RES-0", "OPT-315-LotResult", "CON-0"));
+                p.values.push(id_ref("RES-0", "OPT-320-LotResult", "TEN-X"));
+                p.values.push(id_val("TEN-X", "BT-13714-Tender", "LOT-0"));
+            }
+            for (i, (org, name)) in orgs.iter().enumerate() {
+                let (ten, tpa) = (format!("TEN-{i}"), format!("TPA-{i}"));
+                p.sections.push(section(org, ORGANIZATION_KIND));
+                p.sections.push(section(&ten, "LotTender"));
+                p.sections.push(section(&tpa, "TenderingParty"));
+                p.values.push(text_value(org, ORG_NAME_FIELD, 0, Some("NLD"), name));
+                p.values.push(id_ref("RES-0", "OPT-320-LotResult", &ten));
+                if contract {
+                    p.values.push(id_ref("CON-0", "BT-3202-Contract", &ten));
+                }
+                p.values.push(id_val(&ten, "BT-13714-Tender", "LOT-0"));
+                p.values.push(id_ref(&ten, "OPT-310-Tender", &tpa));
+                p.values.push(id_ref(&tpa, "OPT-300-Tenderer", org));
+            }
+            p
+        };
+        let award = |orgs: &[(&str, &str)]| award_with(orgs, false);
+        let round = |parsed: &Parsed| -> Round {
+            let notice = store::NoticeRef {
+                id: 24_400_562,
+                source: "ted".into(),
+                publication_id: "00798764-2024".into(),
+                profile: "eforms:eforms-sdk-1.7".into(),
+            };
+            let mut state = NoticeState::read(&notice, parsed);
+            let orgs: HashMap<String, i64> = [("ORG-1", 1_001), ("ORG-2", 1_002), ("ORG-3", 1_003), ("ORG-9", 1_009)]
+                .into_iter()
+                .map(|(s, o)| (s.to_owned(), o))
+                .collect();
+            state.bind_organizations(&orgs);
+            state.round.expect("an award notice binds a round")
+        };
+        let marked = award(&[
+            ("ORG-1", "Planon Building Management B.V. (gegunde partij)"),
+            ("ORG-2", "Humble Inpect B.V. (niet gegunde partij)"),
+            ("ORG-3", "Provadi B.V. (niet-gegunde partij)"),
+        ]);
+        let r = round(&marked);
+        assert_eq!(r.lot_results[0].winners, vec![1_001], "the marked losers are no winners");
+        let mut tenderers: Vec<i64> = r.bids.iter().flat_map(|b| b.parties.iter().map(|p| p.organization_id)).collect();
+        tenderers.sort_unstable();
+        assert_eq!(tenderers, vec![1_001, 1_002, 1_003], "every tenderer keeps its bid");
+        let (mentions, ..) = NoticeState::mentions_and_dropped(false, 24_400_562, &marked);
+        let named: Vec<(&str, &str)> = mentions.iter().map(|m| (m.section_id.as_str(), m.name.as_str())).collect();
+        assert_eq!(
+            named,
+            vec![
+                ("ORG-1", "Planon Building Management B.V."),
+                ("ORG-2", "Humble Inpect B.V."),
+                ("ORG-3", "Provadi B.V."),
+                ("ORG-9", "Gemeente Maastricht"),
+            ]
+        );
+        assert_eq!(mentions[1].variants, vec![("NLD".to_owned(), "Humble Inpect B.V.".to_owned())], "the labelled copy too");
+        // v2 (24424017) names the same five unmarked: nothing to act on, every tenderer stays a winner.
+        let unmarked = award(&[("ORG-1", "Planon Building Management B.V."), ("ORG-2", "Humble Inpect B.V."), ("ORG-3", "Provadi B.V.")]);
+        assert_eq!(round(&unmarked).lot_results[0].winners, vec![1_001, 1_002, 1_003]);
+        // 24400562's own path: the settled contract lists the three tenders and decides the winners.
+        let contract = award_with(
+            &[
+                ("ORG-1", "Planon Building Management B.V. (gegunde partij)"),
+                ("ORG-2", "Humble Inpect B.V. (niet gegunde partij)"),
+                ("ORG-3", "Provadi B.V. (niet gegunde partij)"),
+            ],
+            true,
+        );
+        let r = round(&contract);
+        assert_eq!(r.contracts.len(), 1, "premise: the contract path");
+        assert_eq!(r.lot_results[0].winners, vec![1_001], "the contract's marked tenders are no winners");
+        // Every tenderer marked (the review): the mark decides nothing, the publisher's graph stands rather
+        // than a `selec-w` result with no winner.
+        let all_marked = award(&[("ORG-2", "Humble Inpect B.V. (niet gegunde partij)"), ("ORG-3", "Provadi B.V. (niet gegunde partij)")]);
+        assert_eq!(round(&all_marked).lot_results[0].winners, vec![1_002, 1_003]);
     }
 
     /// Issue 484 unit 3: the winner a notice names as its own buyer is flagged on its
