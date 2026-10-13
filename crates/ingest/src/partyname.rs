@@ -3223,7 +3223,7 @@ fn named_before_spill(raw: &str, folded: &str) -> bool {
 /// A company form among the raw tokens ([`COMPANY_TOKENS`], [`COMPANY_FORMS_DOTTED`]), each
 /// trimmed of surrounding punctuation (`Yvelin SA.`, `«SARL»`) and compared without its dots.
 /// `SA` before a [`POSSESSIVE_NEXT`] word is the possessive in capitals, not a company.
-fn company_token(raw: &str) -> bool {
+pub fn company_token(raw: &str) -> bool {
     let tokens: Vec<&str> = raw
         .split(|c: char| c.is_whitespace() || ",;:()/[]".contains(c))
         .map(|t| t.trim_matches(|c: char| !c.is_alphanumeric()))
@@ -5515,6 +5515,36 @@ pub fn opens_with_company_word(name: &str) -> bool {
 /// subject carries none (`Terrassement - VRD`, `Alpes Maritime`, `Champagne`).
 pub fn company_sign(name: &str) -> bool {
     company_token(name) || opens_with_company_word(name)
+}
+
+/// Issue 526's third review: the folded nouns that introduce a company in a lot list's field or label, where
+/// the abbreviations do not (`Ste-Foy-lès-Lyon` is Sainte-Foy, `Ets Nord Picardie` is a branch).
+const LIST_COMPANY_NOUNS: [&str; 3] = ["societe", "entreprise", "groupement"];
+
+/// Issue 526's third review: the folded words after a [`LIST_COMPANY_NOUNS`] word that make the phrase a kind of
+/// company or a relation, not one (`société anonyme`, `entreprise individuelle`, `entreprise du groupe Vinci`).
+const COMPANY_KIND_WORDS: [&str; 22] = [
+    "anonyme", "individuelle", "unipersonnelle", "simplifiee", "par", "actions", "a", "responsabilite", "limitee",
+    "en", "nom", "collectif", "commandite", "cooperative", "civile", "generale", "secondaire", "du", "de", "d",
+    "groupe", "filiale",
+];
+
+/// Issue 526's third review: whether `name` opens with a [`LIST_COMPANY_NOUNS`] word (after an article) and names
+/// a company after it: not only kind words (`société anonyme`), and no `groupe` or `filiale` relation.
+pub fn opens_with_company_noun(name: &str) -> bool {
+    let folded = fold(name);
+    let mut words = folded.split(' ').filter(|w| !w.is_empty());
+    let first = match words.next() {
+        Some("la" | "le" | "l" | "les") => words.next(),
+        first => first,
+    };
+    if !first.is_some_and(|w| LIST_COMPANY_NOUNS.contains(&w)) {
+        return false;
+    }
+    let rest: Vec<&str> = words.collect();
+    !rest.is_empty()
+        && !rest.iter().all(|w| COMPANY_KIND_WORDS.contains(w) || GENERIC_COMPANY_WORDS.contains(w))
+        && !rest.iter().any(|w| matches!(*w, "groupe" | "filiale"))
 }
 
 /// Issue 520 U4: whether an extracted name can be the awardee — it opens with a letter, holds two letters

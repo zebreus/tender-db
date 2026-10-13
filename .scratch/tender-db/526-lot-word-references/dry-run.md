@@ -90,3 +90,23 @@ The first build of these rules regressed six cases on the sample, and each was f
 - Against the ca096af build, 93 notices change. Every name removed is a heading, a subject or a fragment.
 - The residue still includes `Champagne` (2053729) and `Canton Ouest`: a subject followed by a company with no
   company sign.
+
+## Third review (wf_6e92c784-dae, 12 agents, on 5337b57)
+
+The review confirmed seven findings. All are fixed and tested, mostly by narrowing the second round's rules:
+
+| finding | fix |
+| --- | --- |
+| A company-word heading label (`Entreprise retenue:`, `Société attributaire:`, `Groupement solidaire:`, `Ste-Geneviève-des-Bois:`) became a hub, and its lots were dropped. | A company label needs a legal form or `société`, `entreprise` or `groupement` before a name. It must carry no award word and not be a generic phrase. |
+| The company-word field rule replaced a company with its town (`Ste-Foy`), its branch (`Ets Nord Picardie`), its kind (`société anonyme`) or a relation (`entreprise du groupe Vinci`). | The rule takes only `société`, `entreprise` or `groupement` followed by a name. |
+| The field-colon scan took a contact, a subcontractor, a member or the head office (`Contact person: John Smith`, `sous-traitant: X`, `Siège social: Lyon`). | Any role or contact word before the colon refuses it. |
+| A company's own lot list (`Siemens SA: lots 1) et 3); lot 2) Philips SA, Suresnes`) swallowed Philips SA. | An addressed or signed keyed entry ends the list. |
+| The heading rule dropped a winner (`Spie Trindel. Lot 2: infructueux`). | A heading only opens a list at lot 1, and never carries a company sign. |
+| **Real (2111622, 2120723):** an empty 2004–2005 provider slot (`Lot 4) V.1) Award and contract value V.1.1) Name and address of successful supplier, …provider: Smiths Médical`) duplicated the next award's winner. | `keyed_name` never reads past a form item (`n)`), and such an entry is not counted. |
+
+**Re-measured (out9):**
+- The control is unchanged.
+- Against out8, 4 lot-sample notices move:
+  - 2111622 goes from 12 to 10 names and 2120723 from 3 to 2 (the duplicates are gone);
+  - 1293291 drops one junk fragment;
+  - 1610125 regains `I. Siemens SAS`, the old parser's reading.
