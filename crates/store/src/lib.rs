@@ -59,7 +59,7 @@ pub use canonical::{
     GenericWallReport, InflatedKey,
     GhostCensusReport, GhostNotice,
     NameAttribution, NameAttributionReport,
-    AddressStrip, NamePollutionReport, PollutedName,
+    AddressStrip, NAME_PHRASE_CEILING, NamePhraseHit, NamePhraseReport, NamePollutionReport, PollutedName,
     MintedCountryFix, MintedCountryReport,
     AltIdAliasCounts, AltIdAliasRules, AltIdListing, AltIdMergeArgs, AltIdMergeReport, RegistryMember, RegistryPairCounts, RegistrySample,
     RegistryNhsEntry, RegistryNhsHolder, REGISTRY_NHS_LISTING_CAP, REGISTRY_NHS_PPON_HOLDERS, REGISTRY_NHS_REGISTER_HOLDERS,

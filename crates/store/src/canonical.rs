@@ -10699,6 +10699,70 @@ pub struct PollutedName {
     pub verdict: &'static str,
 }
 
+/// Issue 527 unit 1: one organization a [`Db::name_phrase_census`] phrase reaches — through its served
+/// name (`head`) or only through a mention's published name (`mention`) — with what it serves.
+#[derive(Debug, Default, Clone)]
+pub struct NamePhraseHit {
+    pub org_id: i64,
+    pub country: String,
+    /// The organization's served name.
+    pub name: String,
+    pub identifier: Option<String>,
+    /// The asked phrases (folded) its served name or a mention's name holds, in the asked order.
+    pub phrases: Vec<String>,
+    /// `head` when the served name holds a phrase, else `mention`.
+    pub source: &'static str,
+    /// One published mention name that holds a phrase, when only a mention does.
+    pub mention_name: Option<String>,
+    pub mentions: u64,
+    /// Distinct tenders whose served version (`current_seq`) names it a lot result's winner, the buyer
+    /// as its own winner aside (`is_buyer`) — what `?winner=` serves.
+    pub winner_tenders: u64,
+    /// Distinct tenders per role it holds in their served version: party roles as `tender_version_parties`
+    /// spells them, bid roles as `bid:<role>` (`bid:tenderer`, what `?bidder=` serves).
+    pub roles: std::collections::BTreeMap<String, u64>,
+}
+
+/// Issue 527 unit 1: [`Db::name_phrase_census`]'s answer. Read-only.
+#[derive(Debug, Default, Clone)]
+pub struct NamePhraseReport {
+    pub rows_walked: u64,
+    pub mentions_walked: u64,
+    /// Distinct organizations reached, head or mention.
+    pub orgs: u64,
+    /// …of which the served name holds a phrase.
+    pub head_orgs: u64,
+    /// Mention rows whose published name holds a phrase.
+    pub mention_rows: u64,
+    /// Distinct organizations per phrase, every asked phrase listed (0 when it reached none). A phrase
+    /// inside another asked phrase counts the longer one's organizations too (`gegunde partij` holds every
+    /// `niet gegunde partij`); [`NamePhraseReport::by_phrase_set`] separates them.
+    pub by_phrase: std::collections::BTreeMap<String, u64>,
+    /// Distinct organizations per exact set of phrases held, the phrases in the asked order joined by
+    /// ` + ` (`gegunde partij` alone vs `niet gegunde partij + gegunde partij`).
+    pub by_phrase_set: std::collections::BTreeMap<String, u64>,
+    pub by_country: std::collections::BTreeMap<String, u64>,
+    /// Organizations reached that are served as a winner, and the distinct tenders that serve any of them
+    /// as one (a tender two of them share counts once).
+    pub winner_orgs: u64,
+    pub winner_tenders: u64,
+    /// Distinct tenders per role across the organizations reached (as [`NamePhraseHit::roles`]).
+    pub roles: std::collections::BTreeMap<String, u64>,
+    /// Organizations reached only through a mention whose `organizations` row no longer exists: their
+    /// mention rows count in `mention_rows`, and they are in no other tally.
+    pub mention_orphans: u64,
+    /// The first `cap` organizations by id.
+    pub rows: Vec<NamePhraseHit>,
+    pub truncated: bool,
+    /// More than [`NAME_PHRASE_CEILING`] organizations were reached: the walk kept counting rows but
+    /// read nothing more for the extra ones, so `orgs` and the role tallies are a lower bound.
+    pub ceiling_hit: bool,
+    pub stopped: bool,
+}
+
+/// Issue 527 unit 1: the most organizations [`Db::name_phrase_census`] carries into its second pass.
+pub const NAME_PHRASE_CEILING: usize = 200_000;
+
 /// One address-shaped name (issue 330's second measurement): what a
 /// key-builder-side strip of the trailing postal block would change for it.
 #[derive(Debug, Default, Clone)]
@@ -35005,6 +35069,248 @@ impl Db {
             (args.progress)(report.rewritten, &format!("re-keying: {} of {total} rows rewritten", report.rewritten));
         }
         Ok(())
+    }
+
+    /// Issue 527 unit 1: which organizations a folded phrase reaches (`gegunde partij`), through their
+    /// served name and, with `mentions`, through any mention's published name, and what they serve — the
+    /// mention count, the distinct tenders they win, and the distinct tenders per party role. A name holds
+    /// a phrase when its fold (`fold`, the app's `partyname::fold`), padded with spaces, holds the phrase
+    /// padded the same way: whole words only. This writes nothing; it walks `organizations` by id and,
+    /// with `mentions`, `organization_mentions` by notice-id window, reading the stop flag between pages,
+    /// then seeks the reached ids on the `organization_id` indexes. `cap` bounds the listing, never the
+    /// tallies.
+    pub async fn name_phrase_census(
+        &self,
+        phrases: &[String],
+        fold: fn(&str) -> String,
+        mentions: bool,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+        progress: &(dyn Fn(u64, &str) + Sync),
+    ) -> turso::Result<NamePhraseReport> {
+        use std::collections::{BTreeMap, HashSet};
+        let mut report = NamePhraseReport::default();
+        let reader = self.reader().await?;
+        let mut asked: Vec<String> = Vec::new();
+        for phrase in phrases.iter().map(|p| p.trim().to_owned()).filter(|p| !p.is_empty()) {
+            if !asked.contains(&phrase) {
+                asked.push(phrase);
+            }
+        }
+        let padded: Vec<String> = asked.iter().map(|p| format!(" {p} ")).collect();
+        let held = |name: &str| -> Vec<String> {
+            let key = format!(" {} ", fold(name));
+            asked.iter().zip(&padded).filter(|(_, p)| key.contains(p.as_str())).map(|(p, _)| p.clone()).collect()
+        };
+        let mut hits: BTreeMap<i64, NamePhraseHit> = BTreeMap::new();
+
+        // Pass 1: every served name, by id.
+        let mut after = 0i64;
+        loop {
+            if stop() {
+                return Ok(NamePhraseReport { stopped: true, ..Default::default() });
+            }
+            let mut page = 0u64;
+            let mut rows = reader
+                .query(
+                    "SELECT id, country, name, identifier FROM organizations WHERE id > ? ORDER BY id LIMIT 100000",
+                    (Value::Integer(after),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                after = int(&row, 0);
+                page += 1;
+                report.rows_walked += 1;
+                let name = text(&row, 2);
+                let found = held(&name);
+                if found.is_empty() {
+                    continue;
+                }
+                if hits.len() >= NAME_PHRASE_CEILING {
+                    report.ceiling_hit = true;
+                    continue;
+                }
+                hits.insert(
+                    after,
+                    NamePhraseHit {
+                        org_id: after,
+                        country: text(&row, 1),
+                        name,
+                        identifier: opt_text_of(&row, 3),
+                        phrases: found,
+                        source: "head",
+                        ..Default::default()
+                    },
+                );
+            }
+            if page == 0 {
+                break;
+            }
+            progress(report.rows_walked, "walking organization names");
+        }
+        report.head_orgs = hits.len() as u64;
+
+        // Pass 1b: every published mention name, by notice-id window; an org reached only here is
+        // read afterwards.
+        if mentions {
+            let max_notice = {
+                let mut rows = reader.query("SELECT MAX(notice_id) FROM organization_mentions", ()).await?;
+                match rows.next().await? {
+                    Some(row) => opt_int_of(&row, 0).unwrap_or(0),
+                    None => 0,
+                }
+            };
+            const WINDOW: i64 = 20_000;
+            let mut mention_only: BTreeMap<i64, (Vec<String>, String)> = BTreeMap::new();
+            let mut from = 0i64;
+            while from < max_notice {
+                if stop() {
+                    return Ok(NamePhraseReport { stopped: true, ..Default::default() });
+                }
+                let mut rows = reader
+                    .query(
+                        "SELECT organization_id, name FROM organization_mentions WHERE notice_id > ? AND notice_id <= ?",
+                        (Value::Integer(from), Value::Integer(from + WINDOW)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    report.mentions_walked += 1;
+                    let name = text(&row, 1);
+                    let found = held(&name);
+                    if found.is_empty() {
+                        continue;
+                    }
+                    report.mention_rows += 1;
+                    let org = int(&row, 0);
+                    if let Some(hit) = hits.get_mut(&org) {
+                        for phrase in found {
+                            if !hit.phrases.contains(&phrase) {
+                                hit.phrases.push(phrase);
+                            }
+                        }
+                    } else if let Some((seen, _)) = mention_only.get_mut(&org) {
+                        for phrase in found {
+                            if !seen.contains(&phrase) {
+                                seen.push(phrase);
+                            }
+                        }
+                    } else if hits.len() + mention_only.len() >= NAME_PHRASE_CEILING {
+                        report.ceiling_hit = true;
+                    } else {
+                        mention_only.insert(org, (found, name));
+                    }
+                }
+                from += WINDOW;
+                progress(report.mentions_walked, "walking mention names");
+            }
+            let ids: Vec<i64> = mention_only.keys().copied().collect();
+            for chunk in ids.chunks(IN_CHUNK) {
+                let sql = format!(
+                    "SELECT id, country, name, identifier FROM organizations WHERE id IN ({})",
+                    placeholders(chunk.len())
+                );
+                let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+                let mut rows = reader.query(&sql, params).await?;
+                while let Some(row) = rows.next().await? {
+                    let id = int(&row, 0);
+                    let Some((found, mention_name)) = mention_only.remove(&id) else { continue };
+                    hits.insert(
+                        id,
+                        NamePhraseHit {
+                            org_id: id,
+                            country: text(&row, 1),
+                            name: text(&row, 2),
+                            identifier: opt_text_of(&row, 3),
+                            phrases: found,
+                            source: "mention",
+                            mention_name: Some(mention_name),
+                            ..Default::default()
+                        },
+                    );
+                }
+            }
+            report.mention_orphans = mention_only.len() as u64;
+        }
+
+        // Pass 2: what each reached organization serves — its mentions, and the winner and role rows of
+        // each tender's served version — on the organization_id indexes.
+        let ids: Vec<i64> = hits.keys().copied().collect();
+        progress(0, &format!("reading what {} organization(s) serve", ids.len()));
+        let mut won_anywhere: HashSet<i64> = HashSet::new();
+        let mut roles_anywhere: HashSet<(String, i64)> = HashSet::new();
+        for (done, chunk) in ids.chunks(IN_CHUNK).enumerate() {
+            if stop() {
+                return Ok(NamePhraseReport { stopped: true, ..Default::default() });
+            }
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let marks = placeholders(chunk.len());
+            let sql = format!("SELECT organization_id FROM organization_mentions WHERE organization_id IN ({marks})");
+            let mut rows = reader.query(&sql, params.clone()).await?;
+            while let Some(row) = rows.next().await? {
+                if let Some(hit) = hits.get_mut(&int(&row, 0)) {
+                    hit.mentions += 1;
+                }
+            }
+            let sql = format!(
+                "SELECT w.organization_id, w.tender_id FROM tender_version_result_winners w \
+                   JOIN tenders t ON t.id = w.tender_id AND t.current_seq = w.seq \
+                  WHERE w.organization_id IN ({marks}) AND w.is_buyer IS NULL"
+            );
+            let mut won: HashSet<(i64, i64)> = HashSet::new();
+            let mut rows = reader.query(&sql, params.clone()).await?;
+            while let Some(row) = rows.next().await? {
+                won.insert((int(&row, 0), int(&row, 1)));
+            }
+            for (org, tender) in won {
+                won_anywhere.insert(tender);
+                if let Some(hit) = hits.get_mut(&org) {
+                    hit.winner_tenders += 1;
+                }
+            }
+            let mut held_roles: HashSet<(i64, String, i64)> = HashSet::new();
+            for (table, prefix) in [("tender_version_parties", ""), ("tender_version_bid_parties", "bid:")] {
+                let sql = format!(
+                    "SELECT p.organization_id, p.role, p.tender_id FROM {table} p \
+                       JOIN tenders t ON t.id = p.tender_id AND t.current_seq = p.seq \
+                      WHERE p.organization_id IN ({marks})"
+                );
+                let mut rows = reader.query(&sql, params.clone()).await?;
+                while let Some(row) = rows.next().await? {
+                    held_roles.insert((int(&row, 0), format!("{prefix}{}", text(&row, 1)), int(&row, 2)));
+                }
+            }
+            for (org, role, tender) in held_roles {
+                roles_anywhere.insert((role.clone(), tender));
+                if let Some(hit) = hits.get_mut(&org) {
+                    *hit.roles.entry(role).or_default() += 1;
+                }
+            }
+            progress(((done + 1) * IN_CHUNK).min(ids.len()) as u64, "reading what the reached organizations serve");
+        }
+
+        for phrase in &asked {
+            report.by_phrase.insert(phrase.clone(), 0);
+        }
+        for hit in hits.values_mut() {
+            // The asked order, whichever pass found a phrase first.
+            hit.phrases.sort_by_key(|p| asked.iter().position(|a| a == p));
+            report.orgs += 1;
+            for phrase in &hit.phrases {
+                *report.by_phrase.entry(phrase.clone()).or_default() += 1;
+            }
+            *report.by_phrase_set.entry(hit.phrases.join(" + ")).or_default() += 1;
+            *report.by_country.entry(hit.country.clone()).or_default() += 1;
+            if hit.winner_tenders > 0 {
+                report.winner_orgs += 1;
+            }
+        }
+        report.winner_tenders = won_anywhere.len() as u64;
+        for (role, _) in roles_anywhere {
+            *report.roles.entry(role).or_default() += 1;
+        }
+        report.truncated = hits.len() > cap;
+        report.rows = hits.into_values().take(cap).collect();
+        Ok(report)
     }
 
     /// The issue-330 measurement: organization names carrying a line break, and

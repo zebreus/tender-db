@@ -359,3 +359,153 @@ async fn the_address_listing_has_its_own_cap() {
     assert_eq!(r.address_rows.len(), 4);
     assert!(r.address_truncated);
 }
+
+// Issue 527 unit 1: `name_phrase_census`, the read-only walk that finds which organizations a phrase
+// reaches (TenderNed's `(niet gegunde partij)` on a losing tenderer) through their served name and,
+// optionally, a mention's published name, and what they serve. It shares this file's fixtures.
+
+/// The app passes `partyname::fold`; the store cannot reach it, so the tests fold the plain way:
+/// lower-case, every non-alphanumeric a space, spaces collapsed.
+fn plain_fold(name: &str) -> String {
+    let spaced: String = name.chars().map(|c| if c.is_alphanumeric() { c.to_ascii_lowercase() } else { ' ' }).collect();
+    spaced.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// A Tender whose served version is `current_seq`.
+async fn tender(conn: &turso::Connection, id: i64, current_seq: i64) {
+    conn.execute(
+        "INSERT INTO tenders (id, source, kind, created_at, current_seq) VALUES (?, 'ted', 'procurement', 0, ?)",
+        (Value::Integer(id), Value::Integer(current_seq)),
+    )
+    .await
+    .unwrap();
+}
+
+async fn win(conn: &turso::Connection, tender: i64, seq: i64, org: i64) {
+    win_as(conn, tender, seq, org, None).await;
+}
+
+async fn win_as(conn: &turso::Connection, tender: i64, seq: i64, org: i64, is_buyer: Option<i64>) {
+    conn.execute(
+        "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id, is_buyer)
+         VALUES (?, ?, 1, ?, ?)",
+        (Value::Integer(tender), Value::Integer(seq), Value::Integer(org), is_buyer.map_or(Value::Null, Value::Integer)),
+    )
+    .await
+    .unwrap();
+}
+
+async fn bid_party(conn: &turso::Connection, tender: i64, seq: i64, role: &str, org: i64) {
+    conn.execute(
+        "INSERT INTO tender_version_bid_parties (tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (?, ?, 1, ?, ?, 1, 'ORG-1')",
+        (Value::Integer(tender), Value::Integer(seq), Value::Text(role.into()), Value::Integer(org)),
+    )
+    .await
+    .unwrap();
+}
+
+async fn party(conn: &turso::Connection, tender: i64, seq: i64, role: &str, org: i64) {
+    conn.execute(
+        "INSERT INTO tender_version_parties (tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (?, ?, NULL, ?, ?, 1, 'ORG-1')",
+        (Value::Integer(tender), Value::Integer(seq), Value::Text(role.into()), Value::Integer(org)),
+    )
+    .await
+    .unwrap();
+}
+
+async fn phrases(db: &store::Db, asked: &[&str], mentions: bool, cap: usize) -> store::NamePhraseReport {
+    let asked: Vec<String> = asked.iter().map(|p| plain_fold(p)).collect();
+    db.name_phrase_census(&asked, plain_fold, mentions, cap, &never, &|_, _| {}).await.unwrap()
+}
+
+/// The specimen of 527 (24400562): a loser served as a winner, with its annotation in the served name;
+/// the real winner, whose served name is clean but whose mention carries `(gegunde partij)`; a name
+/// that holds the words only as part of others; and a clean name. The served-name walk reaches the
+/// loser alone, under both phrases it holds; the mention walk adds the winner, as `mention`, with the
+/// name that reached it. Wins and roles are read from each tender's SERVED version only (tender 10's
+/// version 1 is superseded; tender 12 serves the loser as its own buyer-winner, which `?winner=` leaves
+/// out), a tender two of them share counts once in the report, and `by_phrase_set` tells the winner
+/// annotation alone from the loser's.
+#[tokio::test]
+async fn a_phrase_reaches_served_names_and_with_mentions_published_names() {
+    let (db, conn) = open("np-phrase").await;
+    org(&conn, 1, "NL", "Humble Inpect B.V. (niet gegunde partij)", &["Humble Inpect B.V. (niet gegunde partij)"]).await;
+    org(&conn, 2, "NL", "Planon Building Management bv", &["Planon Building Management B.V. (gegunde partij)", "Planon BV"]).await;
+    org(&conn, 3, "NL", "Gegunde Partijen Holding", &["Gegunde Partijen Holding"]).await;
+    org(&conn, 4, "NL", "Acme", &["Acme"]).await;
+    tender(&conn, 10, 2).await;
+    tender(&conn, 11, 1).await;
+    tender(&conn, 12, 1).await;
+    tender(&conn, 13, 2).await;
+    win(&conn, 10, 1, 1).await;
+    win(&conn, 10, 2, 1).await;
+    win_as(&conn, 12, 1, 1, Some(1)).await;
+    win(&conn, 13, 1, 1).await;
+    party(&conn, 10, 1, "winner", 1).await;
+    party(&conn, 10, 2, "winner", 1).await;
+    bid_party(&conn, 10, 2, "tenderer", 1).await;
+    bid_party(&conn, 13, 1, "tenderer", 1).await;
+    win(&conn, 10, 2, 2).await;
+    win(&conn, 11, 1, 2).await;
+    let asked = ["(niet gegunde partij)", "gegunde partij", "Niet Gegunde Partij"];
+
+    let r = phrases(&db, &asked, false, 10).await;
+    assert_eq!((r.rows_walked, r.mentions_walked), (4, 0));
+    assert_eq!((r.orgs, r.head_orgs, r.mention_rows), (1, 1, 0));
+    let loser = &r.rows[0];
+    assert_eq!((loser.org_id, loser.source, loser.mentions), (1, "head", 1));
+    assert_eq!(loser.phrases, vec!["niet gegunde partij".to_owned(), "gegunde partij".to_owned()], "folded twins count once");
+    assert_eq!(loser.winner_tenders, 1, "tender 10's served version; 12 is a buyer-winner, 13's version 1 superseded");
+    assert_eq!(loser.roles.get("winner"), Some(&1), "two versions of tender 10 are one tender");
+    assert_eq!(loser.roles.get("bid:tenderer"), Some(&1), "a bid row of a superseded version is not served");
+    assert_eq!(r.by_phrase.get("niet gegunde partij"), Some(&1));
+    assert_eq!(r.by_phrase.get("gegunde partij"), Some(&1));
+    assert_eq!(r.by_phrase_set.get("niet gegunde partij + gegunde partij"), Some(&1));
+    assert_eq!((r.winner_orgs, r.winner_tenders), (1, 1));
+
+    let r = phrases(&db, &asked, true, 10).await;
+    assert_eq!(r.mentions_walked, 5);
+    assert_eq!((r.orgs, r.head_orgs, r.mention_rows, r.mention_orphans), (2, 1, 2, 0));
+    let winner = r.rows.iter().find(|h| h.org_id == 2).expect("the mention walk reaches the clean-named winner");
+    assert_eq!(winner.source, "mention");
+    assert_eq!(winner.name, "Planon Building Management bv");
+    assert_eq!(winner.mention_name.as_deref(), Some("Planon Building Management B.V. (gegunde partij)"));
+    assert_eq!(winner.phrases, vec!["gegunde partij".to_owned()]);
+    assert_eq!((winner.mentions, winner.winner_tenders), (2, 2));
+    assert!(r.rows.iter().all(|h| h.org_id != 3), "`gegunde partijen` does not hold the whole words");
+    assert_eq!(r.by_phrase.get("gegunde partij"), Some(&2));
+    assert_eq!(r.by_phrase_set.get("gegunde partij"), Some(&1), "the winner annotation alone");
+    assert_eq!((r.winner_orgs, r.winner_tenders), (2, 2), "tender 10, which both hold, counts once");
+    assert_eq!(r.by_country.get("NL"), Some(&2));
+    let r = phrases(&db, &["onbekende frase"], true, 10).await;
+    assert_eq!((r.orgs, r.by_phrase.get("onbekende frase")), (0, Some(&0)), "an asked phrase that reaches none reads 0");
+}
+
+/// A mention whose organization row is gone is counted as an orphan, never dropped silently.
+#[tokio::test]
+async fn a_mention_of_a_missing_organization_is_an_orphan() {
+    let (db, conn) = open("np-phrase-orphan").await;
+    org(&conn, 1, "NL", "Acme", &["Acme (niet gegunde partij)"]).await;
+    conn.execute("DELETE FROM organizations WHERE id = 1", ()).await.unwrap();
+    let r = phrases(&db, &["niet gegunde partij"], true, 10).await;
+    assert_eq!((r.mention_rows, r.mention_orphans, r.orgs), (1, 1, 0));
+}
+
+/// `cap` bounds the listing, never the tallies; a stop returns `stopped` and nothing else.
+#[tokio::test]
+async fn the_phrase_listing_is_capped_and_a_stop_stores_nothing() {
+    let (db, conn) = open("np-phrase-cap").await;
+    for n in 1..=5i64 {
+        org(&conn, n, "NL", &format!("Bedrijf {n} B.V. (niet gegunde partij)"), &[]).await;
+    }
+    let r = phrases(&db, &["niet gegunde partij"], true, 2).await;
+    assert_eq!(r.orgs, 5);
+    assert_eq!(r.rows.len(), 2);
+    assert!(r.truncated && !r.ceiling_hit);
+    let asked = vec!["niet gegunde partij".to_owned()];
+    let r = db.name_phrase_census(&asked, plain_fold, true, 2, &|| true, &|_, _| {}).await.unwrap();
+    assert!(r.stopped);
+    assert_eq!((r.orgs, r.rows.len()), (0, 0));
+}

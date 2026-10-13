@@ -493,6 +493,9 @@ enum Spec {
     /// Issue 330: organization names carrying a line break, and whether the
     /// notice published it that way. Read-only measurement.
     NamePollutionCensus,
+    /// Issue 527 unit 1: which organizations a phrase reaches through their served name (and, with
+    /// `mentions`, any mention's published name), and what they serve. Read-only.
+    NamePhraseCensus { phrases: Vec<String>, mentions: bool },
     /// Issue 331: does duplication actually push a name key over the
     /// genericness wall? Read-only measurement.
     GenericWallCensus,
@@ -1191,7 +1194,18 @@ pub struct JobRequest {
     /// year's absents older than 30 days are re-asked
     /// (`fts::audit::CURRENT_YEAR_ABSENT_RECHECK_SECS`).
     pub recheck_absent_days: Option<u64>,
+    /// `name-phrase-census` only (issue 527 unit 1): the phrases to look for, as published or
+    /// folded (`niet gegunde partij`); each is folded and matched as whole words. 1 to
+    /// [`NAME_PHRASE_MAX`] of them, each of three letters or more once folded.
+    pub phrases: Option<Vec<String>>,
+    /// `name-phrase-census` only: also walk every mention's published name (about six times the
+    /// organization walk), so an organization whose served name is clean but whose mentions carry the
+    /// phrase is found too. Omitted, the served names only.
+    pub mentions: Option<bool>,
 }
+
+/// Issue 527 unit 1: the most phrases one `name-phrase-census` takes.
+const NAME_PHRASE_MAX: usize = 20;
 
 impl Supervisor {
     /// The store handle, for read-only operator surfaces that need it (the stored
@@ -1924,6 +1938,35 @@ impl Supervisor {
                 )
                 .await,
             ]),
+            "name-phrase-census" => {
+                // Folded once, here, and deduplicated in the asked order: `(niet gegunde partij)` and
+                // `Niet Gegunde Partij` are one phrase, and would otherwise count each organization twice.
+                let mut phrases: Vec<String> = Vec::new();
+                for phrase in req.phrases.clone().unwrap_or_default().iter().map(|p| ingest::partyname::fold(p)) {
+                    if !phrases.contains(&phrase) {
+                        phrases.push(phrase);
+                    }
+                }
+                if phrases.is_empty() || phrases.len() > NAME_PHRASE_MAX {
+                    return Err(format!(
+                        "name-phrase-census needs 1 to {NAME_PHRASE_MAX} phrases (`phrases`), got {}",
+                        phrases.len()
+                    ));
+                }
+                if let Some(short) = phrases.iter().find(|p| p.chars().filter(|c| c.is_alphanumeric()).count() < 3) {
+                    return Err(format!(
+                        "name-phrase-census refuses the phrase {short:?}: under three letters once folded, it \
+                         would reach most of the corpus"
+                    ));
+                }
+                let mentions = req.mentions.unwrap_or(false);
+                let params = format!(
+                    "name-phrase-census {}{}",
+                    phrases.iter().map(|p| format!("{p:?}")).collect::<Vec<_>>().join(","),
+                    if mentions { " +mentions" } else { "" }
+                );
+                Ok(vec![self.push("name-phrase-census", params, Spec::NamePhraseCensus { phrases, mentions }).await])
+            }
             "duplicate-identity-census" => Ok(vec![
                 self.push(
                     "duplicate-identity-census",
@@ -4186,6 +4229,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     "provisional-echo-census",
     "fold-provisional-echoes",
     "name-pollution-census",
+    // Issue 527 unit 1: read before every page of both walks and every chunk of the seeks; a
+    // stopped run stores no report.
+    "name-phrase-census",
     "generic-wall-census",
     "generic-statistic-census",
     "name-attribution-probe",
@@ -6565,6 +6611,7 @@ impl Supervisor {
             | Spec::GenericStatisticCensus
             | Spec::GenericWallCensus
             | Spec::NamePollutionCensus
+            | Spec::NamePhraseCensus { .. }
             | Spec::ProvisionalEchoCensus { .. }
             | Spec::DuplicateIdentityCensus
             | Spec::CountryTypoCensus
@@ -12726,6 +12773,92 @@ impl Supervisor {
                     SCAN_STOPLIST_CAP,
                 ))
             }).await,
+            Spec::NamePhraseCensus { phrases, mentions } => Box::pin(async move {
+                // BOXED, as every census arm here: `run_spec`'s one future must not grow with it.
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("walking", None, None, "issue 527: reading organization names".to_owned());
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                const CAP: usize = 500;
+                let r = self
+                    .db
+                    .name_phrase_census(phrases, ingest::partyname::fold, *mentions, CAP, &stop, &progress)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("name-phrase-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let body = serde_json::json!({
+                    "phrases": phrases,
+                    // Whether the mention walk ran: without it `mention_rows` 0 says nothing.
+                    "mentions": mentions,
+                    "cap": CAP,
+                    "ceiling": store::NAME_PHRASE_CEILING,
+                    "mentions_walked": r.mentions_walked,
+                    "rows_walked": r.rows_walked,
+                    "orgs": r.orgs,
+                    "head_orgs": r.head_orgs,
+                    "mention_rows": r.mention_rows,
+                    "by_phrase": r.by_phrase,
+                    "by_phrase_set": r.by_phrase_set,
+                    "by_country": r.by_country,
+                    "mention_orphans": r.mention_orphans,
+                    "winner_orgs": r.winner_orgs,
+                    "winner_tenders": r.winner_tenders,
+                    "roles": r.roles,
+                    "truncated": r.truncated,
+                    "ceiling_hit": r.ceiling_hit,
+                    "rows": r.rows.iter().map(|h| serde_json::json!({
+                        "org_id": h.org_id,
+                        "country": h.country,
+                        "name": h.name,
+                        "identifier": h.identifier,
+                        "phrases": h.phrases,
+                        "source": h.source,
+                        "mention_name": h.mention_name,
+                        "mentions": h.mentions,
+                        "winner_tenders": h.winner_tenders,
+                        "roles": h.roles,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("name-phrase-census", &body, store::now_unix())
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "name-phrase-census (issue 527): {} organization name(s){} walked; {} organization(s) \
+                     reached ({} by the served name, {} mention row(s) hold a phrase{}); by phrase {:?}, by \
+                     exact set {:?}; {} of them are served as a winner on {} distinct tender(s); distinct \
+                     tenders per served role {:?}{}{}. NOTHING IS WRITTEN.",
+                    r.rows_walked,
+                    if *mentions { format!(" and {} mention name(s)", r.mentions_walked) } else { String::new() },
+                    r.orgs,
+                    r.head_orgs,
+                    r.mention_rows,
+                    if r.mention_orphans > 0 {
+                        format!(", {} of their organizations gone", r.mention_orphans)
+                    } else {
+                        String::new()
+                    },
+                    r.by_phrase,
+                    r.by_phrase_set,
+                    r.winner_orgs,
+                    r.winner_tenders,
+                    r.roles,
+                    if r.truncated { format!("; the listing shows the first {CAP}") } else { String::new() },
+                    if r.ceiling_hit {
+                        format!(
+                            "; CEILING: more than {} organizations reached, the tallies are a lower bound",
+                            store::NAME_PHRASE_CEILING
+                        )
+                    } else {
+                        String::new()
+                    },
+                ))
+            }).await,
             Spec::NamePollutionCensus => Box::pin(async move {
                 // BOXED. `run_spec` is one async match over every `Spec` arm,
                 // so every arm's locals live in ONE future — and adding this
@@ -16468,6 +16601,7 @@ mod tests {
                 "provisional-echo-census",
                 "fold-provisional-echoes",
                 "name-pollution-census",
+                "name-phrase-census",
                 "generic-wall-census",
                 "generic-statistic-census",
                 "name-attribution-probe",
@@ -20069,6 +20203,37 @@ mod tests {
         assert_eq!(queued[0].kind, "refold-sections");
         assert_eq!(queued[0].params, "refold-sections GroupComposition");
         assert_eq!(queued[1].kind, "project", "without the fold the requeue changes nothing");
+    }
+
+    /// Issue 527 unit 1: `name-phrase-census` folds its phrases, refuses none or too many and any
+    /// phrase too short to be specific, and records the folded phrases (and `+mentions`) in its params
+    /// line, so the job log says what was looked for.
+    #[tokio::test]
+    async fn name_phrase_census_folds_and_bounds_its_phrases() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ask = |phrases: Option<Vec<&str>>, mentions: Option<bool>| JobRequest {
+            kind: "name-phrase-census".into(),
+            phrases: phrases.map(|p| p.into_iter().map(str::to_owned).collect()),
+            mentions,
+            ..Default::default()
+        };
+        assert!(sup.enqueue_request(&ask(None, None)).await.is_err(), "no phrase, nothing to look for");
+        let distinct: Vec<String> = (0..=NAME_PHRASE_MAX).map(|n| format!("frase nummer {n}")).collect();
+        assert!(sup.enqueue_request(&ask(Some(distinct.iter().map(String::as_str).collect()), None)).await.is_err());
+        let twins = vec!["gegunde partij"; NAME_PHRASE_MAX + 1];
+        sup.enqueue_request(&ask(Some(twins), None)).await.expect("21 folded twins are one phrase");
+        let err = sup.enqueue_request(&ask(Some(vec!["gegunde partij", "(a)"]), None)).await.expect_err("too short");
+        assert!(err.contains("three letters"), "{err}");
+        sup.enqueue_request(&ask(Some(vec!["(niet gegunde partij)", "Gegunde Partij", "Niet Gegunde Partij"]), Some(true)))
+            .await
+            .expect("two specific phrases enqueue, the folded twin once");
+        sup.enqueue_request(&ask(Some(vec!["gegunde partij"]), None)).await.expect("served names only");
+        let queued = sup.queued();
+        assert_eq!(queued[0].kind, "name-phrase-census");
+        assert_eq!(queued[0].params, r#"name-phrase-census "gegunde partij""#, "the twins, once");
+        assert_eq!(queued[1].params, r#"name-phrase-census "niet gegunde partij","gegunde partij" +mentions"#);
+        assert_eq!(queued[2].params, r#"name-phrase-census "gegunde partij""#);
+        assert!(!heavy_write_kind("name-phrase-census"), "read-only: coverage keeps refreshing");
     }
 
     /// Issue 58 v2, step 3: `refold-notices` takes a NAMED list, and its guard is a
