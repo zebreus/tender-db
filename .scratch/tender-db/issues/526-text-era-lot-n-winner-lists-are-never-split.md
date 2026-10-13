@@ -1,7 +1,10 @@
 # 526 — text-era `Lot n)` winner lists are never split, so one list mints one org
 
-Status: ready-for-agent — filed 2026-10-12 from 520 unit 1 (§4.4). Unit 1 BUILT 2026-10-13 (9a87f98 + the review commit;
-measured on 1,508 real bodies, `../526-lot-word-references/dry-run.md`). NEXT: gate, deploy, then the pre-2004 text drain below.
+Status: ready-for-agent — filed 2026-10-12 from 520 unit 1 (§4.4). Unit 1 BUILT and DEPLOYED 2026-10-13. The build
+went through four review rounds (9a87f98, ca096af, 5337b57, 6b6e92e, 214ab64); each round is in
+`../526-lot-word-references/dry-run.md`. DRAIN QUEUED 2026-10-13 ~17:55 UTC as jobs 2398–2413, eight rounds of reparse
+plus project over text fetches 270–401. NEXT: per round, read `unmatched` and `re-keyed` (both 0); then the auto orphan
+sweep (dry and wet by hand if over 10,000); then the Verify and the baseline counts in `dry-run.md`.
 Kind: data quality (text parser; organizations)
 Relates to: 520 (unit 1 §4.4, `../520-award-summaries/unit1-decision.md`) (award summaries; its A1 extractor `partyname::award_winner`), 484/485/244 (`lot_prefix_len`, `winner_segments`), 491 (the reparse path), 510/511 (`plausible_name` refuses every non-name).
 
@@ -92,3 +95,15 @@ one `project`, sized well under the 500 k FULL-fallback line:
 - **The auto orphan sweep** queues behind the first fold that re-binds anything. It caps at 10,000; above that
   it records a plan, then dry and wet by hand.
 - **After the drain**, re-read the baseline counts in `dry-run.md` and the Verify below.
+
+## Drain log
+
+- **Deploy.** 214ab64 deployed (gate green, 148 suites).
+- **Probe 2397** (`text after 291`, 1 package): fetch 292 re-parsed 16,472 notices, with 0 unmatched, 0 re-keyed and
+  0 now failing. 109 text packages remain past it, so text runs through fetch 401.
+  - It stamped 2,830,901 Tenders epoch-stale. That is per profile, as documented.
+  - The exhibit 1831781 (20187-2002) now serves Ame Haslé, Geffrault, Brake France, Blin, Prodirest, Ouest
+    Distribution ×2, Corol Jeager, Prodirest, Blin and Prodirest. The void lots name nobody.
+- **Rounds queued.** Each round is a reparse followed by one project. They are 2398/2399 (after 269, 13
+  packages), 2400/2401 (282, 13), 2402/2403 (295, 15), 2404/2405 (310, 17), 2406/2407 (327, 18), 2408/2409 (345, 17),
+  2410/2411 (362, 18) and 2412/2413 (380, 21).
