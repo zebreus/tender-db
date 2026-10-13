@@ -806,7 +806,9 @@ const PARTICIPLE_REACH: usize = 6;
 
 /// Issue 520 (D3, the review): the folded words a label may hold between its awardee noun and its
 /// `:` — an entry number and its mark, and a short complement with no verb (`Titulaire du marché :`,
-/// `titulaire n°1 :`, `Nom du titulaire / organisme :`, `Attributaire après négociation :`).
+/// `titulaire n°1 :`, `Nom du titulaire / organisme :`, `Attributaire après négociation :`). Since the
+/// second review this closed list binds a participle's label only; a noun's takes any word that is
+/// no negation, copula or awardee word ([`labels`]).
 const LABEL_COMPLEMENTS: [&str; 18] = [
     "du", "de", "des", "d", "la", "le", "l", "les", "marche", "lot", "lots", "contrat", "accord", "cadre", "organisme",
     "apres", "negociation", "n",
@@ -828,6 +830,15 @@ const COPULAS: [&str; 7] = ["ete", "est", "sont", "etait", "etaient", "fut", "fu
 /// avec Dupont SARL`. `a été` / `ont été` count too ([`intent_spans`]).
 const PAST_AWARDS: [&str; 10] = [
     "conclu", "conclue", "conclus", "notifie", "notifiee", "notifies", "attribue", "attribuee", "attribues", "attribuees",
+];
+
+/// Issue 520 (D2c, D6b, the second review): the folded participles that state an award made when no
+/// future stands before them ([`intent_spans`]): `Décision de négocier : marché passé avec Dupont
+/// SARL`, `marché signé avec`, `marché confié à`. Not [`PAST_AWARDS`]: `un marché négocié … sera passé
+/// avec la STÉ France Télécom` is still to come.
+const PAST_PARTICIPLES: [&str; 12] = [
+    "passe", "passee", "passes", "passees", "signe", "signee", "signes", "signees", "confie", "confiee", "confies",
+    "confiees",
 ];
 
 /// Issue 520 (D2c, D4b, D6b): the folded words of a relaunch still to come, the infinitive and the
@@ -3141,7 +3152,8 @@ fn rebate(raw: &str) -> bool {
 /// Limerick City Council`) and TED's pointer names the section (`No Contract awarded, see section
 /// VI.2`). What follows the head's last `:` or `;` is read alone too: a name there ([`names_something`])
 /// that says nothing void and gives no reason (a negation, an offer: `Desierto: Ninguna oferta`)
-/// keeps the party.
+/// keeps the party — where the head holds no void stem, so 510 kept it too (the second review: the
+/// arm only ever quiets, and `Infructueux : Voir section VI.3` stays void).
 fn named_before_spill(raw: &str, folded: &str) -> bool {
     let padded = format!(" {folded} ");
     let Some(at) = padded.find(" section vi ") else { return false };
@@ -3158,11 +3170,15 @@ fn named_before_spill(raw: &str, folded: &str) -> bool {
     }
     let head = if words == 0 { "" } else { &raw[..runs[words - 1].1] };
     // The review: a name after the head's last `:` or `;` is the winner the void phrase led to (`Not
-    // awarded in first round, re-tendered: Acme Construction. SECTION VI`).
+    // awarded in first round, re-tendered: Acme Construction. SECTION VI`) — only where the 510
+    // reading already keeps the name, its head holding no void stem (the second review: D7 only ever
+    // quiets; `Infructueux : Voir section VI.3`, `Infructueux : LOT 3. SECTION VI` and `Lot déclaré
+    // infructueux : Relance en procédure négociée. SECTION VI` stay void, as 510 read them).
+    let base_keeps = !VOID_STEMS.iter().any(|stem| padded[..at].contains(stem));
     let last = head.rsplit([':', ';']).next().unwrap_or(head);
     let reason =
         fold(last).split(' ').any(|w| NEGATIONS.contains(&w) || OFFER_WORDS.iter().any(|stem| w.starts_with(stem)));
-    let named_last = last.len() < head.len() && names_something(last) && !mentions_void(last) && !reason;
+    let named_last = base_keeps && last.len() < head.len() && names_something(last) && !mentions_void(last) && !reason;
     head.chars().any(char::is_alphabetic) && (!mentions_void(head) || named_last)
 }
 
@@ -3225,7 +3241,7 @@ fn award_awardee_noun(raw: &str, words: &[&str]) -> bool {
                 && if *w == "attribution" {
                     words.get(i + 1) == Some(&"a")
                 } else {
-                    labels(&raw[to..])
+                    labels(&raw[to..], !AWARD_PARTICIPLES.contains(w))
                         || (*w == "mandataire" && raw[..from].trim_end().ends_with('(') && closes_group(&raw[to..]))
                         || if AWARD_PARTICIPLES.contains(w) {
                             participle_names(raw, &runs, words, i)
@@ -3238,9 +3254,13 @@ fn award_awardee_noun(raw: &str, words: &[&str]) -> bool {
 
 /// Whether the text right after a word makes the word a label: a `:`, `=` or full-width `：` — or a
 /// spaced dash before a capitalised word (`Attributaire - Keolis`) — after an optional plural mark,
-/// entry number and short complement ([`LABEL_COMPLEMENTS`]: `titulaire 1: SAGA`, `Titulaire(s) :`,
-/// `titulaire n°1 :`, `Titulaire du marché :`, `Nom du titulaire / organisme :`).
-fn labels(after: &str) -> bool {
+/// entry number and short complement of up to six words ([`LABEL_COMPLEMENTS`]: `titulaire 1: SAGA`,
+/// `Titulaire(s) :`, `titulaire n°1 :`, `Titulaire du marché :`, `Nom du titulaire / organisme :`).
+/// For a noun (`open`), since the second review, the complement may hold any word that is no
+/// negation, copula or awardee word (`Titulaire du marché négocié :`, `Attributaire désigné :`,
+/// `attributaire unique :`; not `Attributaire non designe - …`); a participle's keeps the closed
+/// list (`wordt gegund op totaal der percelen = perceel 3` names nobody).
+fn labels(after: &str, open: bool) -> bool {
     let mut rest = after;
     let mut words = 0;
     loop {
@@ -3259,7 +3279,9 @@ fn labels(after: &str) -> bool {
         }
         let word = fold(&rest[..run]);
         let word = word.as_str();
-        if !(digits_only(word) || NUMBER_MARKS.contains(&word) || LABEL_COMPLEMENTS.contains(&word)) {
+        let listed = digits_only(word) || NUMBER_MARKS.contains(&word) || LABEL_COMPLEMENTS.contains(&word);
+        let free = open && !NEGATIONS.contains(&word) && !COPULAS.contains(&word) && !AWARD_NOUNS.contains(&word);
+        if !(listed || free) {
             break;
         }
         rest = &rest[run..];
@@ -3283,8 +3305,9 @@ fn closes_group(after: &str) -> bool {
 /// its language's preposition within [`PARTICIPLE_REACH`] words in its clause ([`PARTY_PREPOSITIONS`]:
 /// `lote 1 adjudicado a`, `gegund op 12-03-2014 aan Bouwbedrijf Jansen`, `awarded on 12.3.2014 to`);
 /// for `retenu(e)`, a copula before it with a subject that is no offer (`la société Storz a été
-/// retenue`) or after it before a capitalised word (`l'entreprise retenue est Dupont Frères`), or a
-/// capitalised name right before it (`: Keolis retenu`). `wordt gegund op totaal der percelen`,
+/// retenue`) or after it before the party ([`party_after_copula`]: `l'entreprise retenue est Dupont
+/// Frères`, `l'entreprise retenue est la société Dupont`), or a capitalised name right before it (`:
+/// Keolis retenu`). `wordt gegund op totaal der percelen`,
 /// `awarded as part of a new project`, `l'offre retenue` and `Pas d'attributaire retenu` name nobody.
 fn participle_names(raw: &str, runs: &[(usize, usize)], words: &[&str], i: usize) -> bool {
     let w = words[i];
@@ -3305,15 +3328,42 @@ fn participle_names(raw: &str, runs: &[(usize, usize)], words: &[&str], i: usize
     let subject = words[..i.saturating_sub(1)].iter().rev().find(|b| !["a", "ont", "n", "ne"].contains(*b));
     let capitalised = |k: usize| raw[runs[k].0..].chars().next().is_some_and(char::is_uppercase);
     (copula && subject.is_some_and(|s| !offer(s)))
-        || (words.get(i + 1).is_some_and(|n| COPULAS.contains(n)) && i + 2 < words.len() && capitalised(i + 2))
+        || (words.get(i + 1).is_some_and(|n| COPULAS.contains(n)) && party_after_copula(raw, runs, words, i + 2))
         || (i > 0 && capitalised(i - 1) && gap(i).trim().is_empty() && !offer(words[i - 1]))
 }
 
+/// Issue 520 (D3, the second review): whether the words from `words[k]`, right after a copula, name
+/// the party — after an optional article, a company word ([`COMPANY_NOUNS`]: `est la société Dupont`,
+/// `est l'entreprise Dupont Frères`) or a capitalised word that is no lot, negation or void word (`est
+/// Dupont Frères`). `le titulaire est défaillant` names nobody.
+fn party_after_copula(raw: &str, runs: &[(usize, usize)], words: &[&str], k: usize) -> bool {
+    let capitalised = |k: usize| raw[runs[k].0..].chars().next().is_some_and(char::is_uppercase);
+    let article = words.get(k).is_some_and(|w| matches!(*w, "la" | "le" | "l" | "les"));
+    if article && k + 1 >= words.len() {
+        // A name cut right after its article (`… le candidat retenu est La`): the capitalised article
+        // is all that is left of the party, as the copula's first reading took it.
+        return capitalised(k);
+    }
+    let k = if article { k + 1 } else { k };
+    // A lot designator is no party only as a lot, with its number (`est lot 2`); a name that opens on
+    // the word (`Zone Ouest Transports`, `Secteur Nord BTP`) is one (the third review).
+    let a_lot = LOT_DESIGNATORS.contains(&words[k.min(words.len().saturating_sub(1))])
+        && words.get(k + 1).is_some_and(|n| n.bytes().any(|b| b.is_ascii_digit()) || ROMAN.contains(n));
+    k < words.len()
+        && (COMPANY_NOUNS.contains(&words[k])
+            || (capitalised(k)
+                && !a_lot
+                && !NEGATIONS.contains(&words[k])
+                && !mentions_void(&raw[runs[k].0..runs[k].1])))
+}
+
 /// Issue 520 (D3): whether the awardee noun `words[i]` is followed by its party — a capitalised word
-/// right after it that is no lot, void or negation word (`titulaire Dupont Frères`), or a company
+/// right after it that is no lot, void or negation word (`titulaire Dupont Frères`), a company
 /// word after an optional article ([`COMPANY_NOUNS`]: `adjudicataria la empresa Construcciones
-/// Pérez`, `aggiudicataria la ditta Rossi`). `l'entreprise attributaire du lot`, `1 attributaire ne
-/// convient pas` and `Attributaire non designe` name nobody.
+/// Pérez`, `aggiudicataria la ditta Rossi`), or — since the second review — a copula and the party
+/// ([`party_after_copula`]: `le titulaire est Dupont Frères`, `l'attributaire est l'entreprise Dupont
+/// Frères`). `l'entreprise attributaire du lot`, `1 attributaire ne convient pas`, `Attributaire non
+/// designe` and `le titulaire est défaillant` name nobody.
 fn noun_names(raw: &str, runs: &[(usize, usize)], words: &[&str], i: usize) -> bool {
     let Some(&next) = words.get(i + 1) else { return false };
     let spaced = raw[runs[i].1..runs[i + 1].0].trim().is_empty();
@@ -3326,6 +3376,7 @@ fn noun_names(raw: &str, runs: &[(usize, usize)], words: &[&str], i: usize) -> b
         && !mentions_void(&raw[runs[i + 1].0..runs[i + 1].1]))
         || company(i + 1)
         || (["la", "el", "il", "lo", "le", "l"].contains(&next) && company(i + 2))
+        || (COPULAS.contains(&next) && party_after_copula(raw, runs, words, i + 2))
 }
 
 /// Issue 520 (the review): whether the text between two words ends a clause — a `,`, `;`, `:`,
@@ -3335,6 +3386,13 @@ fn clause_break(gap: &str) -> bool {
     gap.contains([',', ';', ':', '(', ')', '[', ']', '…', '–', '—', '\n'])
         || gap.contains(". ")
         || gap.contains(" - ")
+}
+
+/// Issue 520 (the second review): whether the text between two words ends a sentence, as
+/// [`sentences`] cuts one — a `;`, a line break, an ellipsis or a `.` that a space follows. Only the
+/// plain ends: a cut too few only lets `ne … que` restrict across it (an award read, as 510 read it).
+fn sentence_end(gap: &str) -> bool {
+    gap.contains([';', '\n', '…']) || gap.contains(". ")
 }
 
 /// Two or more DISTINCT numbered lot designators (`lot 1 … lot 3`, `sous lot 5b … lot 6`,
@@ -3430,8 +3488,9 @@ fn award_several_lots(raw: &str, words: &[&str]) -> bool {
 /// `raw`'s folded words without each sentence's relaunch (a [`RELAUNCH_MARKERS`] phrase and the
 /// rest of its sentence: [`sentences`]), each glued number mark read as its number
 /// ([`glued_number`]). A new entry of the summary ends the relaunch early — a lot label followed by
-/// its `:` or `)` ([`entry_label`]: `Lot 1 infructueux et relancé, lot 2 : Dupont`), which the new
-/// procedure's lots are not written with (`lot nº 06 — bâtiments démontables`).
+/// its `:` or `)` or by a capitalised winner ([`entry_label`]: `Lot 1 infructueux et relancé, lot 2 :
+/// Dupont`, `…, lot 2 Dupont Frères, lot 3 Martin`), which the new procedure's lots are not written
+/// with (`lot nº 06 — bâtiments démontables`).
 fn words_before_relaunch(raw: &str) -> Vec<String> {
     let mut words = Vec::new();
     for sentence in sentences(raw) {
@@ -3584,11 +3643,18 @@ fn number_gap(gap: &str) -> bool {
 }
 
 /// Issue 520 (D4b): a lot label at `words[j]` ([`lot_label`]) followed by its `:` or `)`, which opens
-/// a summary's entry (`lot 2 : Dupont`, `Lot 3) Martin`).
+/// a summary's entry (`lot 2 : Dupont`, `Lot 3) Martin`) — or, since the second review, by a
+/// capitalised word that is no void word, the winner written straight after its label (`, lot 2
+/// Dupont Frères, lot 3 Martin`). The new procedure's lots take a dash and a lowercase title (`lot nº
+/// 06 — bâtiments démontables`, `lot no 3 - agence Paul Signac`); a lowercase winner (`, lot 2
+/// dupont`) stays cut with them.
 fn entry_label(raw: &str, runs: &[(usize, usize)], words: &[&str], j: usize) -> bool {
     lot_label(raw, runs, words, j).is_some_and(|after| {
         let end = runs[after - 1].1;
-        raw[end..].trim_start().starts_with([':', ')'])
+        let rest = raw[end..].trim_start();
+        rest.starts_with([':', ')'])
+            || (rest.starts_with(char::is_uppercase)
+                && runs.get(after).is_some_and(|&(from, to)| !mentions_void(&raw[from..to])))
     })
 }
 
@@ -3660,17 +3726,27 @@ fn award_mixed_segments(raw: &str) -> bool {
 
 /// Issue 520 (D5, the review): whether a folded segment gives the reason the lot is void — an offer
 /// or bidder word ([`OFFER_WORDS`]) beside a word for its failure ([`OFFER_REJECTIONS`],
-/// [`OFFER_FAILURES`], [`OFFER_NEGATIONS`]: `oferty odrzucone`, `Offres inacceptables`, `nie wpłynęła
-/// żadna oferta`). An offer word alone names the winner (`najkorzystniejsza oferta: PHU Kowalski`,
-/// `Wykonawca: Jan Kowalski`, `offre de la société Dupont retenue après négociation`).
+/// [`OFFER_FAILURES`], [`OFFER_NEGATIONS`] near the offer: `oferty odrzucone`, `Offres inacceptables`,
+/// `nie wpłynęła żadna oferta`). An offer word alone names the winner (`najkorzystniejsza oferta: PHU
+/// Kowalski`, `Wykonawca: Jan Kowalski`, `offre de la société Dupont retenue après négociation`).
 fn offer_failure(folded: &str) -> bool {
     let starts = |w: &str, stems: &[&str]| stems.iter().any(|stem| w.starts_with(stem));
     let words: Vec<&str> = folded.split(' ').collect();
-    words.iter().any(|w| starts(w, &OFFER_WORDS))
-        && words
-            .iter()
-            .any(|w| starts(w, &OFFER_REJECTIONS) || starts(w, &OFFER_FAILURES) || OFFER_NEGATIONS.contains(w))
+    let offers: Vec<usize> = (0..words.len()).filter(|&k| starts(words[k], &OFFER_WORDS)).collect();
+    // A negation counts within [`OFFER_REACH`] words of an offer word only (the second review): a
+    // winning offer's segment negates other things (`seule offre reçue : Dupont Frères, retenue sans
+    // négociation`).
+    let near_offer = |k: usize| offers.iter().any(|&o| o.abs_diff(k) <= OFFER_REACH);
+    !offers.is_empty()
+        && words.iter().enumerate().any(|(k, w)| {
+            starts(w, &OFFER_REJECTIONS) || starts(w, &OFFER_FAILURES) || (OFFER_NEGATIONS.contains(w) && near_offer(k))
+        })
 }
+
+/// Issue 520 (D5, the second review): how many words from an offer word an [`OFFER_NEGATIONS`] word
+/// may stand and still negate it (`Aucune offre`, `nie wpłynęła żadna oferta`, `le nombre d'offres
+/// conformes n'étant pas suffisant`).
+const OFFER_REACH: usize = 4;
 
 /// Whether a void phrase (`raw`, folded `folded`) goes on to say the lot was awarded after all:
 /// an `attribué` form not negated, or `avec la société`. Issue 520 (D2) reads the award it
@@ -3679,9 +3755,14 @@ fn offer_failure(folded: &str) -> bool {
 ///   ([`clause_break`]: `Le marché n'a pas été attribué`, whose word right before is `été`). The
 ///   clause, since the review: `Pas d'offre. Attribué à Léo Lagrange` and `Infructueux (pas
 ///   d'offre), attribué à Dupont` negate the offer, not the award; and the restrictive `ne … que`
-///   is no negation (`il n'a été attribué qu'après négociation à la société Martin`);
+///   is no negation (`il n'a été attribué qu'après négociation à la société Martin`, `n'a été
+///   attribué, après négociation, qu'à …`: an `n'` and a `qu'` later in its sentence). 510's
+///   reading stays the floor, since the second review: `non`, `pas` or `sans` right before the verb
+///   negates it across any break (`Lot 2 : Non - Attribué`, `non attribué, que la commission
+///   relancera`);
 /// - `déjà attribué` is another procedure's award (`A 97.23.19) sans suite (déjà attribué au lot
-///   A 12)`, `Lot déjà attribué a été déclaré sans suite`, `déjà été attribué`);
+///   A 12)`, `Lot déjà attribué a été déclaré sans suite`, `déjà été attribué au lot`) — unless the
+///   verb goes on to `à` its party (`déjà été attribué à l'entreprise Dupont Frères`);
 /// - `avec la société` that a relaunch still to come governs ([`intent_spans`]: `Déclaré
 ///   infructueux - à relancer en marché négocié … avec les sociétés ayant soumissionné`) names whom
 ///   the buyer will negotiate with.
@@ -3697,15 +3778,32 @@ fn award_clause(raw: &str, folded: &str) -> bool {
         if !matches!(*w, "attribue" | "attribuee" | "attribues" | "attribuees" | "attribuer") {
             return false;
         }
-        if !aligned {
-            // The fold's words and the raw runs do not line up: the 510 reading, erring toward a name.
-            return !(i > 0 && matches!(words[i - 1], "non" | "pas" | "sans"));
+        // The 510 reading is the floor (the second review): `non`, `pas` or `sans` right before the
+        // verb negates it, whatever stands between (`Lot 2 : Non - Attribué`, `non\nattribué`, `NON –
+        // ATTRIBUÉ`). It is also the whole reading when the fold's words and the raw runs do not line up.
+        if i > 0 && matches!(words[i - 1], "non" | "pas" | "sans") {
+            return false;
         }
+        if !aligned {
+            return true;
+        }
+        let gap = |k: usize| &raw[runs[k - 1].1..runs[k].0];
         // The verb's clause: from the word after the last clause break before it.
-        let from = (1..=i).rev().find(|&k| clause_break(&raw[runs[k - 1].1..runs[k].0])).unwrap_or(0);
+        let from = (1..=i).rev().find(|&k| clause_break(gap(k))).unwrap_or(0);
         let before = words[from..i].iter().rev().find(|b| !CLAUSE_FILLERS.contains(*b));
-        let restrictive = words.get(i + 1).is_some_and(|n| matches!(*n, "qu" | "que"));
-        !before.is_some_and(|b| *b == "deja" || (NEGATIONS.contains(b) && !restrictive))
+        // `ne … que` restricts, it does not negate: an `n'` whose `qu'` follows in the sentence (`n'a été
+        // attribué qu'après négociation`, `n'a été attribué, après négociation, qu'à la société Martin`).
+        // Only `n'` / `ne`: `non attribué, que la commission relancera` stays negated.
+        let restrictive = before.is_some_and(|b| matches!(*b, "n" | "ne"))
+            && (i + 1..words.len()).take_while(|&k| !sentence_end(gap(k))).any(|k| matches!(words[k], "qu" | "que"));
+        // `déjà` before the verb is another procedure's award, unless the verb goes on to its party (the
+        // second review: `il a depuis déjà été attribué à l'entreprise Dupont Frères`), not to a lot
+        // (`déjà attribué au lot A 12`) or an auxiliary (`Lot déjà attribué a été déclaré sans suite`).
+        let to_party = words.get(i + 1) == Some(&"a") && {
+            let k = i + 2 + usize::from(words.get(i + 2).is_some_and(|w| matches!(*w, "l" | "la" | "le" | "les")));
+            words.get(k).is_some_and(|w| *w != "ete" && !LOT_DESIGNATORS.contains(w))
+        };
+        !before.is_some_and(|b| (*b == "deja" && !to_party) || (NEGATIONS.contains(b) && !restrictive))
     });
     awarded
         || sentences(raw).iter().any(|sentence| {
@@ -3726,7 +3824,9 @@ fn avec_cue(words: &[&str], k: usize) -> bool {
 /// Issue 520 (D2c, D6b): the word ranges of one sentence (`words`, one folded word per run of
 /// `raw`, `runs`) that a relaunch still to come governs ([`RELAUNCH_INTENT`]): from the intent word
 /// to the first award already made after it ([`PAST_AWARDS`], `a été`, `ont été`: `Après avoir décidé
-/// de relancer …, le marché a été conclu avec la société Dupont`) or the first new lot ([`lot_label`]:
+/// de relancer …, le marché a été conclu avec la société Dupont`; a [`PAST_PARTICIPLES`] word with no
+/// future between, since the second review: `Décision de négocier : marché passé avec Dupont SARL`,
+/// not `sera passé avec la STÉ France Télécom`) or the first new lot ([`lot_label`]:
 /// `Lot infructueux, sera relancé - Lot 2: Dupont SARL`), or to the sentence's end. A lot after the
 /// intent's own `avec les sociétés` stays governed: the cue's list names the bidders the buyer will
 /// negotiate with (`à relancer … avec les sociétés ayant soumissionné à l'appel d'offre : lot 5 :
@@ -3741,7 +3841,12 @@ fn intent_spans(raw: &str, runs: &[(usize, usize)], words: &[&str]) -> Vec<(usiz
         let mut end = words.len();
         for j in i + 1..words.len() {
             cue |= avec_cue(words, j);
-            let past = PAST_AWARDS.contains(&words[j]) || (words[j] == "ete" && matches!(words[j - 1], "a" | "ont"));
+            // The second review: `passé`, `signé`, `confié` state an award made too, unless a future
+            // stands between (`sera passé avec la STÉ France Télécom`, `sera ensuite passé`).
+            let future = words[i..j].iter().any(|w| matches!(*w, "sera" | "seront" | "etre"));
+            let past = PAST_AWARDS.contains(&words[j])
+                || (words[j] == "ete" && matches!(words[j - 1], "a" | "ont"))
+                || (!future && PAST_PARTICIPLES.contains(&words[j]));
             if past || (!cue && lot_label(raw, runs, words, j).is_some()) {
                 end = j;
                 break;
@@ -3760,9 +3865,11 @@ fn intent_spans(raw: &str, runs: &[(usize, usize)], words: &[&str]) -> Vec<(usiz
 /// word (`la réalisation par le titulaire de diagnostics`), a brand (`de marque JCB`), a typo (`SAU`
 /// for *sauf*), bullets. So the name is void when the raw text opens with `Le lot <n°?> <digits>
 /// :`, holds `le lot` nowhere else, the fold closes on the verdict whose subject is no other lot
-/// (`; lot 2 a été déclaré infructueux`), and no award clause speaks ([`award_clause`]). `Le lot 3: X.
-/// Le lot 4: Dupont SARL a été déclaré infructueux`, `Le lot 1 : Keolis. Le lot 2 a été déclaré
-/// infructueux` (a second lot, its colon or not), `lot 25) la société Storz a été retenue. Le lot 32
+/// (`; lot 2 a été déclaré infructueux`), no later sentence or dashed piece opens on another lot
+/// (`… Dupont SARL. Lot 2 : Charpente a été déclaré infructueux`), and no award clause speaks
+/// ([`award_clause`]). `Le lot 3: X. Le lot 4: Dupont SARL a été déclaré infructueux`, `Le lot 1 :
+/// Keolis. Le lot 2 a été déclaré infructueux` (a second lot, its colon or not), `Le lot 1 : Dupont
+/// SARL - lot 2 (Sols) a été déclaré infructueux`, `lot 25) la société Storz a été retenue. Le lot 32
 /// a été déclaré infructueux` (no opener) and `Le lot 2 : attribué à Dupont SARL ; le lot 2b a été
 /// déclaré infructueux` stay summaries.
 fn lot_title_void(raw: &str, folded: &str) -> bool {
@@ -3794,7 +3901,29 @@ fn lot_title_void(raw: &str, folded: &str) -> bool {
         [.., glued] => glued.strip_prefix("lot").is_some_and(digits_only),
         [] => false,
     };
-    lots == 1 && lot_opener(&lower, 0) && verdict && !other_lot && !award_clause(raw, folded)
+    // The second review: a later sentence ([`sentences`]) or a later piece after a spaced dash that
+    // opens on another lot, `le` or not, is a second lot (`… Dupont SARL. Lot 2 : Charpente a été
+    // déclaré infructueux`, `Le lot 2 : Keolis SA ; lot 3 - Transport scolaire a été déclaré
+    // infructueux`, `Le lot 1 : Dupont SARL - lot 2 (Sols) a été déclaré infructueux`). The title's own
+    // designators stand in the opener's piece (`Le lot 102 : lot B10:`, `le lot 2 : Lot no2 - sorties
+    // scolaires`), and its dashes go on to a title (`- gros oeuvre (sous-lot nob03)`).
+    let opens_lot = |piece: &str| {
+        let piece = fold(piece);
+        match piece.split(' ').collect::<Vec<_>>().as_slice() {
+            ["lot" | "lots", mark, n, ..] if NUMBER_MARKS.contains(mark) && numbered(n) => true,
+            ["lot" | "lots", n, ..] => numbered(n),
+            [glued, ..] => glued.strip_prefix("lot").is_some_and(|n| numbered(&n)),
+            [] => false,
+        }
+    };
+    let later_lot = sentences(raw)
+        .into_iter()
+        .flat_map(|sentence| sentence.split(" - "))
+        .flat_map(|piece| piece.split(" – "))
+        .flat_map(|piece| piece.split(" — "))
+        .skip(1)
+        .any(opens_lot);
+    lots == 1 && lot_opener(&lower, 0) && verdict && !other_lot && !later_lot && !award_clause(raw, folded)
 }
 
 /// Whether the lowercased `lower` holds a lot opener at byte `at`: `le lot`, at a word boundary,
@@ -3892,7 +4021,9 @@ fn winner_text(sentence: &str) -> String {
 /// ([`clause_break`], but a comma: `l'offre de la société X SA, jugée irrégulière, …`) is cut at its
 /// offer words ([`OFFER_WORDS`]); an offer's span runs from the word after it to the next offer word,
 /// an award made or kept ([`PAST_AWARDS`], `retenu(e)`: `1 offre irrégulière, relancé … et conclu
-/// avec Promocash SAS`) or the clause's end, and names the bidder when a rejection
+/// avec Promocash SAS`), the first comma after its rejection (the second review: `offres
+/// irrégulières, marché négocié avec Dupont SARL`, `l'offre de Martin SA étant irrégulière, marché
+/// confié à Dupont SARL`) or the clause's end, and names the bidder when a rejection
 /// ([`OFFER_REJECTIONS`]) stands in it — or, for the clause's first offer, before it (`ha escluso
 /// dalla gara l'unica offerta ricevuta dalla compagnia UnipolSai S.p.A.`). `l'offre de Dupont SARL a
 /// été retenue, les autres offres étant irrégulières` rejects the others, not Dupont's.
@@ -3910,9 +4041,15 @@ fn rejected_offer_spans(raw: &str, runs: &[(usize, usize)], words: &[&str]) -> V
         }
         let offers: Vec<usize> = (clause..end).filter(|&k| starts(words[k], &OFFER_WORDS)).collect();
         for (n, &offer) in offers.iter().enumerate() {
-            let to = (offer + 1..end).find(|&k| ends_span(words[k])).unwrap_or(end);
             let from = if n == 0 { clause } else { offer };
-            if words[from..to].iter().any(|w| starts(w, &OFFER_REJECTIONS)) {
+            let rejected = |k: usize| words[from..k].iter().any(|w| starts(w, &OFFER_REJECTIONS));
+            // The second review: a comma after the rejection closes the rejected offer's span
+            // (`offres irrégulières, marché négocié avec Dupont SARL`); one before it does not
+            // (`l'offre de la société X SA, jugée irrégulière, …`).
+            let to = (offer + 1..end)
+                .find(|&k| ends_span(words[k]) || (rejected(k) && raw[runs[k - 1].1..runs[k].0].contains(',')))
+                .unwrap_or(end);
+            if rejected(to) {
                 spans.push((offer + 1, to));
             }
         }
@@ -4264,8 +4401,26 @@ mod tests {
                 (0, "Le lot 1 : Attributaire : Martin SARL. Le lot 2 a été déclaré infructueux"),
                 (0, "Le lot 1 : attribution à Martin SARL. Le lot 2 a été déclaré sans suite"),
                 (0, "Le lot 1 : Keolis ; lot 2 a été déclaré infructueux"),
+                // The second review: a later sentence or dashed piece that opens on another lot, `le`
+                // or not, a title between its number and the verdict.
+                (0, "Le lot 1 : Gros oeuvre - Titulaire : Dupont SARL. Lot 2 : Charpente a été déclaré infructueux"),
+                (0, "Le lot 1 : Eiffage Construction SAS. Lot 2 : Electricité a été déclaré infructueux."),
+                (0, "Le lot 1 : Peinture : Dupont SARL ; lot 2 (Sols) a été déclaré infructueux"),
+                (0, "Le lot 2 : Keolis SA ; lot 3 - Transport scolaire a été déclaré infructueux"),
+                (0, "Le lot 1 : Voirie, entreprise retenue : Colas. Lot 2 : Réseaux a été déclaré infructueux"),
+                (0, "Le lot 1 : Dupont SARL - lot 2 (Sols) a été déclaré infructueux"),
+                (0, "Le lot 1 : Dupont SARL – lot n° 2 : Sols a été déclaré sans suite"),
+                (0, "Le lot 1 : Dupont SARL. Lot2 : Sols a été déclaré infructueux"),
             ],
             Some(NotAName::AwardSummary),
+        );
+        // A later piece that opens on a lot word but no lot number is the title's.
+        assert_class(
+            &[
+                (0, "Le lot 4 : Gros oeuvre - lots techniques a été déclaré infructueux"),
+                (0, "Le lot 4 : Voirie ; lotissement des Prés a été déclaré infructueux"),
+            ],
+            Some(NotAName::VoidLot),
         );
         // A sub-lot code closing the title is no other lot (5772779 above: `(sous lot nob06) a été
         // déclaré sans suite`); a sub-lot number is.
@@ -4318,8 +4473,29 @@ mod tests {
                 // A relaunch intent governs nothing past an award made, or past a new lot.
                 (0, "Lot infructueux. Après avoir décidé de relancer en procédure négociée, le marché a été conclu avec la société Dupont"),
                 (0, "Lot 1 infructueux : à relancer.Lot 2 : marché passé avec la société Martin"),
+                // The second review: `passé` with no future before it is an award made; `ne … que`
+                // restricts across a comma; `déjà` before an award to a party is no other procedure's.
+                (0, "Infructueux. Décision de relancer en procédure négociée : marché passé avec la société Dupont"),
+                (0, "Infructueux. Le lot n'a été attribué, après négociation, qu'à la société Martin"),
+                (0, "Lot initialement déclaré infructueux, il a depuis déjà été attribué à l'entreprise Dupont Frères après négociation"),
             ],
             Some(NotAName::AwardSummary),
+        );
+        // The second review: 510's reading is the floor — `non` right before the verb negates it
+        // across a spaced hyphen, a line break and a dash; a `que` restricts only an `n'` (`ne … pas`
+        // and `non` stay negations); a future still governs `passé`; and `déjà attribué` to lots
+        // stays another procedure's.
+        assert_class(
+            &[
+                (0, "Lot 2 : Non - Attribué"),
+                (0, "Lot 2 : non\nattribué"),
+                (0, "Lot 4 – NON – ATTRIBUÉ"),
+                (0, "Lot 2 non attribué, que la commission relancera"),
+                (0, "Lot infructueux : le lot n'a pas été attribué, que la commission relancera"),
+                (0, "Lot infructueux, à relancer : le marché sera ensuite passé avec la société Dupont"),
+                (0, "Lot sans suite, déjà attribué aux lots 3 et 4"),
+            ],
+            Some(NotAName::VoidLot),
         );
         // The 7151483 template without its middle sentence names its winner (a plain name after a
         // void prefix), as 510 read it.
@@ -4408,6 +4584,21 @@ mod tests {
             "Declarado desierto el lote 2. Resultó adjudicataria la empresa Construcciones Pérez",
             "Nessuna aggiudicazione per il lotto 2, aggiudicataria la ditta Rossi Costruzioni",
             "Marché infructueux, relancé en négocié: groupement Gidef (mandataire solidaire) / Auxet",
+            // The second review: a noun's label takes any complement with no negation, copula or
+            // awardee word; a copula then the party, after an article or a company word, names it.
+            "Lot infructueux, relancé en procédure négociée. Titulaire du marché négocié : Dupont Frères",
+            "Lot infructueux. Titulaire du marché après relance : Dupont Frères",
+            "Lot infructueux. Titulaire après mise en concurrence : Dupont Frères",
+            "Lot infructueux. Attributaire du marché passé en procédure négociée : Dupont Frères",
+            "Lot infructueux, attributaire unique : Dupont Frères",
+            "Première procédure infructueuse. Attributaire désigné : Dupont Frères",
+            "Lot infructueux en premier tour. Après négociation, l'entreprise retenue est la société Dupont",
+            "Lot infructueux en première consultation. Après négociation, le candidat retenu est l'entreprise Dupont Frères",
+            // The third review: a party that opens on a lot designator word, and one cut after its article.
+            "Lot infructueux en premier tour. Après négociation, le candidat retenu est Zone Ouest Transports",
+            "Lot infructueux en premier tour. Après négociation, le candidat retenu est Secteur Nord BTP",
+            "Lot infructueux en première consultation. Après négociation, le titulaire est Dupont Frères",
+            "Lot infructueux en première consultation. Après négociation, l'attributaire est l'entreprise Dupont Frères",
         ];
         assert_class(&review.map(|name| (0, name)), Some(NotAName::AwardSummary));
         for name in review {
@@ -4432,6 +4623,17 @@ mod tests {
             "Pas d'attributaire retenu pour l'instant. Décision de la commission",
             "Attributaire non designe - lot infructueux",
         ] {
+            assert!(!awardee_labels(name), "{name}");
+        }
+        // The second review: a negation still ends a noun's label, and a copula before a lowercase
+        // word or a negation names nobody.
+        let nobody = [
+            "Lot infructueux : attributaire non désigné : voir avis ultérieur",
+            "Lot infructueux, le titulaire est défaillant",
+            "Lot infructueux : l'attributaire n'est pas désigné",
+        ];
+        assert_class(&nobody.map(|name| (0, name)), Some(NotAName::VoidLot));
+        for name in nobody {
             assert!(!awardee_labels(name), "{name}");
         }
     }
@@ -4504,6 +4706,10 @@ mod tests {
                 (0, "Lot 1 : infructueux. Lot 2 : Dupont (marché négocié, AO infructueux)"),
                 (0, "Lot 1 : infructueux. Lot 2 : sans suite puis relancé, titulaire du marché : Dupont"),
                 (0, "Lot 1 infructueux et relancé, lot 2 : Dupont"),
+                // The second review: a winner written straight after its label, capitalised, also
+                // ends the relaunch.
+                (0, "Lot 1 infructueux et relancé, lot 2 Dupont Frères, lot 3 Martin"),
+                (0, "Lots 1 et 2 infructueux et relancés, lot 3 Dupont Frères"),
             ],
             Some(NotAName::AwardSummary),
         );
@@ -4518,6 +4724,7 @@ mod tests {
                 (0, "Lote 1: declarado desierto. Lote 2: declarado desierto"),
                 (0, "Lot 1 : déclaré infructueux (offre de Dupont SARL irrégulière). Lot 2 : sans suite"),
                 (0, "Infructueux. Lot 3 : 2 offres reçues. Lot relancé. 4 offres"),
+                (0, "Lot 1 infructueux et relancé, Lot 2 Sans suite"),
             ],
             Some(NotAName::VoidLot),
         );
@@ -4567,6 +4774,8 @@ mod tests {
             "Infructueux ; marché négocié conclu avec le seul soumissionnaire, Dupont Frères",
             "Lot 2 infructueux ; l'offre de la société Keolis a été retenue",
             "Lot 2 infructueux ; offre de Keolis retenue",
+            // The second review: a negation far from the offer word is no offer's failure.
+            "Infructueux au premier tour ; au second tour, seule offre reçue : Dupont Frères, retenue sans négociation",
         ];
         assert_class(&review.map(|name| (0, name)), Some(NotAName::AwardSummary));
         for name in review {
@@ -4623,16 +4832,30 @@ mod tests {
             "Lot infructueux, sera relancé - Lot 2: Dupont SARL",
             "Lot infructueux, sera relancé… Lot 2: Dupont SARL",
             "Lot 1 infructueux et sera relancé, lot 2 : Dupont SARL",
+            // The second review: a comma after the rejection closes the rejected offer, and `passé`,
+            // `signé`, `confié` with no future before them are awards made.
+            "Infructueux : offres irrégulières, marché négocié avec Dupont SARL",
+            "Appel d'offres infructueux, offres irrégulières écartées, marché négocié avec Dupont SARL",
+            "Appel d'offres infructueux, l'offre de Martin SA étant irrégulière, marché négocié avec Dupont SARL",
+            "Lot infructueux, l'offre de Martin SA ayant été jugée irrégulière, marché confié à Dupont SARL après négociation",
+            "Infructueux. Décision de négocier : marché passé avec Dupont SARL",
+            "Lot infructueux, décision de négocier, marché signé avec Dupont SARL",
+            "Infructueux. Décision de négocier : marché confié à Dupont SARL",
         ];
         assert_class(&review.map(|name| (0, name)), Some(NotAName::AwardSummary));
         for name in review {
             assert!(super::award_company_token(name), "{name}");
         }
         assert_eq!(not_a_name("Lotto deserto: offerta della ditta Bianchi esclusa, aggiudicato poi alla Rossi S.r.l."), None);
-        // The rejected offer's owner between commas stays a bidder.
-        let bidder = "L'offre de la société Dupont SA, jugée irrégulière, a été écartée. Lot infructueux";
-        assert_eq!(not_a_name(bidder), Some(NotAName::VoidLot));
-        assert!(!super::award_company_token(bidder));
+        // The rejected offer's owner between commas stays a bidder: the comma before the rejection
+        // does not close its span (the second review keeps that while the one after it does).
+        for bidder in [
+            "L'offre de la société Dupont SA, jugée irrégulière, a été écartée. Lot infructueux",
+            "Lot infructueux : l'offre de Martin SA, irrégulière, a été écartée",
+        ] {
+            assert_eq!(not_a_name(bidder), Some(NotAName::VoidLot), "{bidder}");
+            assert!(!super::award_company_token(bidder), "{bidder}");
+        }
     }
 
     /// Issue 520 D7 (14 orgs): the head before a spilled `SECTION VI` names a party only when it
@@ -4672,6 +4895,13 @@ mod tests {
         for name in [
             "Not awarded: no bids received. SECTION VI: OTHER INFORMATION",
             "Desierto: Ninguna oferta. SECTION VI: OTHER INFORMATION",
+            // The second review: a capitalised word after the head's `:` is no winner where the head
+            // holds a void stem — 510 read each of these void, and D7 only quiets.
+            "Infructueux : Voir section VI.3 Informations complémentaires",
+            "Infructueux : LOT 3. SECTION VI : RENSEIGNEMENTS COMPLÉMENTAIRES",
+            "Lot 3 déclaré sans suite : Se reporter à la section VI.3",
+            "Lot déclaré infructueux : Relance en procédure négociée. SECTION VI: RENSEIGNEMENTS COMPLÉMENTAIRES",
+            "Déclaré sans suite : Motif d'intérêt général. SECTION VI: RENSEIGNEMENTS COMPLÉMENTAIRES",
         ] {
             assert!(!spilled(name), "{name}");
             assert_eq!(not_a_name(name), Some(NotAName::VoidLot), "{name}");

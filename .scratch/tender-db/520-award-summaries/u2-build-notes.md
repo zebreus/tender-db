@@ -316,3 +316,186 @@ the probe is gone. Disk after: target 14G, 6.2G free on `/`. `project.rs` is unc
 
 Before staging, run `git diff` on both source files. The tree held no other agent's hunks during this pass. The
 next step is `ops/check.sh`; F18's prod measurement must come before U3's wet run.
+
+## Second review fixes (2026-10-13)
+
+A second adversarial review of f57324f (520 U2, gated green) returned 8 verified findings and 2 nits (this session's
+scratchpad, `520u2-review2.json`, keys `real[]` and `nits[]`; each verifier's minimal fix was read before building).
+All are fixed in the working tree, **not committed**. `ops/check.sh` was not run (out of scope for this pass), and
+nothing on prod was touched. Only `crates/ingest/src/partyname.rs` changed; `project.rs` is as U2 left it.
+
+**How they were checked.** A temporary `#[ignore]` probe, a `#[path]` module inside partyname's test module,
+compiled three copies of the non-test code into one test binary: fe4fe13's partyname (before 520, the base for the
+invariant), f57324f's, and the worktree's. Each string got all three classes. The probe and its hook are deleted;
+`git status` shows only `partyname.rs` and this file. The scratch copies, the probe and the outputs are in this
+session's scratchpad (`r520fix2/`). Of the 58 specimens written from the findings, 40 read wrong at f57324f, each as
+its finding said; the other 18 are near misses that f57324f already read right and that the fixes must keep.
+
+### What was fixed
+
+| finding | rule | fix (all in `partyname.rs`) |
+|---|---|---|
+| D1 later lot (should) | D1, `lot_title_void` | `later_lot`: the name is cut at `sentences` and then at ` - `, ` – `, ` — `. If any piece after the first opens on `lot`/`lots`, an optional number mark and a lot number (or a glued `lot2`, `lotno2`), D1 does not fire. The title's own designators stand in the opener's piece (`Le lot 102 : lot B10:`, `le lot 2 : Lot no2 - sorties …`). No D1 name among the 376 has a lot number after a break, and all 68 still move. |
+| D6a comma (should) | D6a, `rejected_offer_spans` | An offer's span also ends at the first comma after its rejection has been read (`offres irrégulières, marché négocié avec Dupont SARL`). A comma before the rejection still does not cut, so the owner in `l'offre de la société X SA, jugée irrégulière, …` stays a bidder. |
+| PAST (should) | D2c and D6b, `intent_spans` | New `PAST_PARTICIPLES` (`passé`, `signé`, `confié`, 12 forms) end an intent's span when no `sera`/`seront`/`être` stands between the intent word and the participle. They are not added to `PAST_AWARDS`, so 1506401 (`sera passé avec la STÉ France Télécom`) stays void. |
+| D3 label complements (should) | D3, `labels(after, open)` | For an awardee noun, the complement before `:` may be any word that is not a `NEGATIONS`, `COPULAS` or `AWARD_NOUNS` word, still at most 6 words (`Titulaire du marché négocié :`, `Attributaire désigné :`, `attributaire unique :`). Participles keep the closed `LABEL_COMPLEMENTS`, so `gegund op totaal der percelen = perceel 3` (4802635, 4802636) stays nobody. |
+| D3 copulas (should) | D3, `party_after_copula` | After a copula comes an optional article (`la`/`le`/`l`/`les`), then a `COMPANY_NOUNS` word or a capitalised word that is not a lot, negation or void word. `participle_names` uses it in place of "a capital right after" (`l'entreprise retenue est la société Dupont`). `noun_names` gains it as a new branch (`le titulaire est Dupont Frères`, `l'attributaire est l'entreprise Dupont Frères`). `le titulaire est défaillant` stays nobody. |
+| D4b relaunch cut (should) | D4b, `entry_label` | A lot label followed by a capitalised word that is not void now also opens a summary entry, so the relaunch cut ends there (`…relancé, lot 2 Dupont Frères, lot 3 Martin`). The new procedure's lots in the D4b specimens are written with a dash and a lowercase title (`lot nº 06 — bâtiments`, `lot no 3 - agence`), so they stay cut. |
+| D7 (must) | D7, `named_before_spill` | `named_last` now also requires `base_keeps`: the folded head before ` section vi ` holds no `VOID_STEMS` stem, which is exactly the case where 510 kept the name. `Infructueux : Voir section VI.3 …`, `Infructueux : LOT 3. SECTION VI …`, `Lot 3 déclaré sans suite : Se reporter à la section VI.3` and `Lot déclaré infructueux : Relance en procédure négociée. SECTION VI` are void again. The Acme `re-tendered:` case is still a name. |
+| D2a (should) | D2a, `award_clause` | The 510 reading is the floor in both branches: `non`/`pas`/`sans` right before the verb negates it whatever stands between (`Lot 2 : Non - Attribué`, `non\nattribué`, `NON – ATTRIBUÉ`). The `ne … que` cancel applies only when the negation is `n'`/`ne` (`Lot 2 non attribué, que la commission relancera` stays negated). |
+| nit 0 (trivial, fixed) | D2b and `ne … que`, `award_clause` | `déjà` blocks the award unless the verb is followed by `à`, an optional article, and a word that is neither `été` nor a lot designator (`déjà été attribué à l'entreprise Dupont Frères` keeps it; `déjà attribué au lot`, `aux lots` and `Lot déjà attribué a été déclaré` stay another procedure's). The restrictive `n'` accepts a `qu'`/`que` anywhere later in its sentence (new `sentence_end`: `;`, line break, `…`, `. `), so `n'a été attribué, après négociation, qu'à la société Martin` keeps it. |
+| nit 1 (trivial, fixed) | D5, `offer_failure` | An `OFFER_NEGATIONS` word counts only within `OFFER_REACH` (4) words of an offer word (`seule offre reçue : Dupont Frères, retenue sans négociation` names its winner). Rejection and failure stems still count anywhere in the segment. All 12 D5 orgs still move. |
+
+One shape moves past both readings: `… le lot n'a pas été attribué, que …` is now VoidLot. Both fe4fe13 and f57324f
+read it AwardSummary, because f57324f took the `que` after `pas` as restrictive. It is a negated award naming no
+one. It is the only literal whose class differs between f57324f and the worktree, and it is a test written in this pass.
+
+### The invariant, by construction
+
+Every arm of the worktree's `names_an_award` now implies an arm of fe4fe13's:
+- **`award_clause`.** The verb branch requires `words[i-1] ∉ {non, pas, sans}`, which is 510's own test. The cue
+  branch reads per-sentence folds whose words are the whole fold's words: `match_norm` splits on the same characters
+  as `alphanumeric_runs`, and `fold_latin` maps one char to one char. So a cue found there is also in 510's padded fold.
+- **The wrapped arms.** `award_awardee_noun` requires `awardee_noun(words)`. `award_several_lots` requires
+  `several_lots(words)` or a numbered or lettered entry. `award_mixed_segments` requires `mixed_segments`, and
+  `award_company_token` requires `company_token`.
+- **`named_before_spill`.** The misaligned branch is 510's reading. In the aligned branch, `!mentions_void(head)`
+  implies no stem in the head, since `mentions_void` checks the stems and no stem runs into the trailing `see` it
+  drops. `named_last` now requires `base_keeps`.
+- **`lot_title_void`** only returns false.
+- **Every other arm** is unchanged byte for byte.
+
+`classify` calls `names_an_award` only to choose AwardSummary (or None) over VoidLot. So a name that is VoidLot at
+fe4fe13 is VoidLot now.
+
+### Measured (probe, the final file)
+
+The probe set has 32,256 distinct strings:
+- every string literal of the 224 `.rs` files under `crates/`, the worktree with this pass's tests (31,822 not
+  already among the inputs below);
+- every string literal of fe4fe13's `partyname.rs` and `project.rs` and of f57324f's `partyname.rs`;
+- the 376 exempted names of `void-names-refold-after-dry.json`, 380 strings with the four tails;
+- the 58 finding specimens.
+
+1. **INVARIANT.** 0 strings that read VoidLot at fe4fe13 read anything else now. At f57324f there were 9 such
+   strings: the D7 and D2a specimens.
+2. **The 376.** They classify identically to f57324f, org for org, which is the decision's expectation:
+
+   | | D (173) | D residual (12) | A (57) | B (99) | C (29) | F (6) |
+   |---|---|---|---|---|---|---|
+   | fe4fe13, as cut | AS 145, N 26, V 2 | AS 10, V 1, N 1 | AS 50, N 7 | AS 81, N 18 | AS 26, N 3 | AS 5, V 1 |
+   | worktree, as cut | V 170, N 3 | AS 10, V 1, N 1 | AS 50, N 7 | AS 81, N 18 | AS 26, N 3 | AS 5, V 1 |
+   | worktree, with the four tails | V 173 | AS 10, V 1 (7969717), N 1 | AS 50, N 7 | AS 81, N 18 | AS 26, N 3 | AS 6 |
+
+   - All 173 D orgs read VoidLot, plus 7969717.
+   - No A, B, C, F or residual org changes class against fe4fe13.
+   - The 3 D rows that read N as cut are 2378132, 31450417 and 31491056, as before.
+   - The F row that reads V as cut is 31375951, as before.
+3. **Every class change against fe4fe13.** 200 strings change, all of them to VoidLot (172 AwardSummary → VoidLot,
+   28 None → VoidLot). No string moves between AwardSummary and None.
+   - **171 are names among the 376, all D:** D1 68, D3 38, D7 14, D5 12, D4 10, D6 9, D2a 8, D2c 6, D2b 3, D3+D4 2,
+     D2c+D6b 1. The cut 3720532 and 4885215, and 7969717, already read VoidLot at fe4fe13.
+   - **29 are other literals, all test strings of 520:**
+     - the decision's two intended test flips: Sindarro (both forms) and `Sublote 9.1 … 9.2: Declarado desierto.`;
+     - the U2 notes' documented four: `Les lots 2 et 11 sont déclarés sans suite. Le lot 10 est déclaré
+       infructueux`, `Infructueux. Date d'attribution : CAO du 17.4.2013.`, and TED's EN and PT pointed copies in
+       `project.rs` (Deviations 1);
+     - U2's own void near misses (13): `Le lot 3 : façade brique (sous lot nob06) …`, `Lot infructueux : l'offre a
+       été retenue puis retirée`, `Lot 2 : sans suite. Le candidat retenu s'est désisté`, `Pas d'attributaire retenu
+       pour l'instant. …`, `Lot 1 : infructueux. Lot 2 : sans suite`, `Lot 1 et Lot 2 : infructueux`, `Lots 1 et 2 :
+       infructueux. Lot 3 : sans suite`, `Lote 1: declarado desierto. Lote 2: declarado desierto`, `Lot 1 : déclaré
+       infructueux (offre de Dupont SARL irrégulière). Lot 2 : sans suite`, `Not awarded: no bids received. SECTION
+       VI …`, `Desierto: Ninguna oferta. SECTION VI …`, `L'offre de la société Dupont SA, jugée irrégulière, a été
+       écartée. Lot infructueux`, `Lot sans suite (déjà été attribué au lot A 12)`;
+     - this pass's void near misses (9): `Le lot 4 : Voirie ; lotissement des Prés …`, `Lot 1 infructueux et relancé,
+       Lot 2 Sans suite`, `Lot infructueux : attributaire non désigné : voir avis ultérieur`, `Lot infructueux :
+       l'attributaire n'est pas désigné`, `Lot infructueux : l'offre de Martin SA, irrégulière, a été écartée`, `Lot
+       infructueux, le titulaire est défaillant`, `Lot infructueux, à relancer : le marché sera ensuite passé avec la
+       société Dupont`, `Lot sans suite, déjà attribué aux lots 3 et 4`, `Lot infructueux : le lot n'a pas été
+       attribué, que la commission relancera`.
+
+   Each of the 29 is void prose that names no winner. Every one except the last already read VoidLot at f57324f.
+   Between f57324f and the worktree, the literals that were already in the tree changed 0 times.
+
+### Tests added (partyname.rs, near misses with id 0)
+
+| test | finding | kept (`AwardSummary` / `None`) | void (`VoidLot`) |
+|---|---|---|---|
+| `one_lots_void_sentence_is_void` | D1 | the reviewer's 5, plus ` - lot 2 (Sols)`, ` – lot n° 2 :`, `. Lot2 :` | `- lots techniques`, `; lotissement des Prés` (no lot number) |
+| `a_negated_earlier_or_intended_award_is_no_award` | D2a, PAST (D2c), nit 0 | `… marché passé avec la société Dupont`, `n'a été attribué, après négociation, qu'à …`, `déjà été attribué à l'entreprise Dupont Frères` | `Non - Attribué`, `non\nattribué`, `NON – ATTRIBUÉ`, `non attribué, que …`, `n'a pas été attribué, que …`, `sera ensuite passé avec la société Dupont`, `déjà attribué aux lots 3 et 4` |
+| `an_awardee_word_must_label_a_party` | D3 labels, D3 copulas | 6 labels and 4 copula forms, each also `awardee_labels` | `attributaire non désigné :`, `le titulaire est défaillant`, `l'attributaire n'est pas désigné`, each also `!awardee_labels` |
+| `a_list_of_void_lots_is_void` | D4b | `…, lot 2 Dupont Frères, lot 3 Martin`, `Lots 1 et 2 … relancés, lot 3 Dupont Frères` | `…relancé, Lot 2 Sans suite` |
+| `a_reason_segment_names_nobody` | nit 1 | `seule offre reçue : Dupont Frères, retenue sans négociation`, also `award_mixed_segments` | — |
+| `a_bidder_is_no_winner` | D6a, PAST (D6b) | the reviewer's 4 D6a names and 3 `passé`/`signé`/`confié` names, each also `award_company_token` | `l'offre de Martin SA, irrégulière, a été écartée`, also `!award_company_token` |
+| `a_void_head_before_a_spilled_section_is_void` | D7 | the Acme `None` (unchanged) | the reviewer's 4 and `Déclaré sans suite : Motif d'intérêt général. SECTION VI …`, each also `!spilled` |
+
+**Red check.** The final test module was run on f57324f's non-test code: 42 passed and 7 failed, the 7 being the
+rule tests. EXIT 101. The file was restored byte for byte (`cmp`).
+
+**Mutation check.** Each fix was turned off in turn (13 mutants) and the `partyname::` tests were run. Every mutant
+had EXIT 101, no compile error, and the file restored identical (`cmp`). The mutants are in `r520fix2/mut/`.
+
+| off | failing tests |
+|---|---|
+| D1 later lot | one_lots_void_sentence_is_void |
+| D2a floor | a_negated_earlier_or_intended_award_is_no_award |
+| D2a restrictive `n'` only | a_negated_earlier_or_intended_award_is_no_award |
+| nit 0 `que` later in the sentence | a_negated_earlier_or_intended_award_is_no_award |
+| nit 0 `déjà` to a party | a_negated_earlier_or_intended_award_is_no_award |
+| D3 free label words | an_awardee_word_must_label_a_party |
+| D3 noun copula | an_awardee_word_must_label_a_party |
+| D4b capitalised entry | a_list_of_void_lots_is_void |
+| D6a comma | a_bidder_is_no_winner |
+| PAST participles | a_bidder_is_no_winner, a_negated_earlier_or_intended_award_is_no_award |
+| PAST future guard | a_bidder_is_no_winner, a_negated_earlier_or_intended_award_is_no_award, every_void_520_exemption_is_a_void_lot (1506401) |
+| D7 `base_keeps` | a_void_head_before_a_spilled_section_is_void |
+| nit 1 offer reach | a_reason_segment_names_nobody |
+
+### Left as they are
+
+- **D4b, a lowercase winner after a relaunch** (`…relancé, lot 2 dupont`) stays cut, as the D4b verifier noted.
+  Opening an entry on any word without a dash would come close to the D4b specimens' own shape.
+- **D5, a negation inside `OFFER_REACH`** still reads as a reason (`offre de Dupont SARL non anormalement basse`).
+- **D1's later-lot check reads `lot`/`lots` only.** BOAMP's sentence is French, and the other designators
+  (`tranche`, `partie`, `secteur`) are common in titles.
+
+### EXITs (gate flags + gate package set, never piped, `> file; echo EXIT=$?`)
+
+| run | command tail | EXIT | result |
+|---|---|---:|---|
+| red check: final tests on f57324f's non-test code | `--lib -- partyname::` | 101 | ingest 42 passed, 7 failed (the 7 rule tests); file restored, `cmp` identical |
+| mutation sweep (13 mutants) | `--lib -- partyname::` | 101 each | each fails its rule's test (table above); file restored, `cmp` identical |
+| partyname tests | `--lib -- partyname::` | 0 | ingest 49 passed, 2 ignored (511's simulations), 0 failed |
+| all lib suites | `--lib` | 0 | ingest 521, model 3, store 182, tender_db (server) 207; 0 failed |
+| integration neighbours | `--test project --test text --test r208 --test r209 --test project_golden --test project_incremental` | 0 | project 102, project_golden 11, project_incremental 51, r208 15, r209 19, text 13; 0 failed |
+
+None of the three green logs holds an `error`, `FAILED` or `panicked` line. The probe runs (EXIT 0 each) are not
+counted. Disk after: target 14G, 6.9G free on `/`.
+
+### Commit file list (updated)
+
+- `crates/ingest/src/partyname.rs`: U2's rules, the first review's fixes and these fixes, with docs and tests.
+  The change is +2074/−38 against fe4fe13 and +262/−46 against f57324f.
+- `.scratch/tender-db/520-award-summaries/u2-build-notes.md`: this file.
+
+`project.rs` has no change against f57324f. Before staging, run `git diff` on `partyname.rs`: the tree held no other
+agent's hunks during this pass. Next comes `ops/check.sh`, and F18's prod measurement must still come before U3's wet run.
+
+## Third check (wf_cd50049c-c58's independent check, then the owner)
+
+- The independent check confirmed all 8 second-review fixes. It also confirmed the invariant (no name that reads
+  VoidLot at fe4fe13 reads anything else now) two ways: by construction, and over 32,363 strings compiled side by side.
+- It found one new problem in the costly direction (low). `party_after_copula` refused any capitalised party opening on
+  a lot designator word ('le candidat retenu est Zone Ouest Transports' / 'Secteur Nord BTP'), and a name cut right
+  after its article. Fixed by the owner: a designator is refused only as a lot with its number, and a capitalised
+  article that ends the name stands for the party. Both specimens were added to the D3 kept near misses. Reverting the
+  fix makes `an_awardee_word_must_label_a_party` fail (EXIT=101), and the file was restored byte-identical.
+- The check's other findings are recorded, not fixed. All are in the cheap direction (a junk leaf name stays kept;
+  never a lost award, never an un-void against fe4fe13):
+  - the 'ne … que' cancel reaching a subordinating 'que';
+  - OFFER_REACH=4 missing far negations;
+  - D4b's capitalised-title end of a relaunch;
+  - open noun labels whose complement names nobody ('attributaire pressenti : aucun');
+  - `to_party` after 'déjà … attribué à';
+  - the D6a comma cut keeping a bidder named after it.
+  The U3 dry run's listing shows their cost on prod.
