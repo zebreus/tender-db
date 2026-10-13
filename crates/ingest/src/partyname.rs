@@ -5476,6 +5476,47 @@ fn descriptor_names(after: &str) -> bool {
     next.len() < after.len() && (NAME_CONNECTORS.contains(&word) || NAME_ADJECTIVES.contains(&fold(word).as_str()))
 }
 
+/// Issue 526's review: the folded words a text-era list introduces a company with (`Entreprise Malet`,
+/// `Société Laser`, `Ets Dupont`, `Groupement Gascheau/Muller`).
+/// The plural `entreprises` is a heading's (`Entreprises attributaires:`, `Entreprises retenues`), not one.
+const LIST_DESCRIPTORS: [&str; 9] =
+    ["societe", "ste", "entreprise", "ets", "etablissements", "etab", "etabl", "groupement", "esat"];
+
+/// Issue 526's review: the folded words a company is introduced with that name none on their own
+/// (`Groupement d'entreprises solidaires`, `Société`, `entreprise conjointe`).
+const GENERIC_COMPANY_WORDS: [&str; 24] = [
+    "societe", "societes", "ste", "entreprise", "entreprises", "ets", "etablissements", "groupement", "groupements",
+    "solidaire", "solidaires", "conjoint", "conjoints", "conjointe", "momentane", "momentanee", "d", "de", "des",
+    "du", "l", "la", "le", "les",
+];
+
+/// Issue 526's review: whether `name` is only words a company is introduced with (`Groupement d'entreprises
+/// solidaires`): a descriptor, not a company.
+pub fn generic_company_phrase(name: &str) -> bool {
+    let folded = fold(name);
+    let mut words = folded.split(' ').filter(|w| !w.is_empty()).peekable();
+    words.peek().is_some() && words.all(|w| GENERIC_COMPANY_WORDS.contains(&w))
+}
+
+/// Issue 526's review: whether `name` opens with a [`LIST_DESCRIPTORS`] word, after an article (`Entreprise
+/// Malet`, `la Société Elidis Occitanie`).
+pub fn opens_with_company_word(name: &str) -> bool {
+    let folded = fold(name);
+    let mut words = folded.split(' ').filter(|w| !w.is_empty());
+    let first = match words.next() {
+        Some("la" | "le" | "l" | "les") => words.next(),
+        first => first,
+    };
+    first.is_some_and(|w| LIST_DESCRIPTORS.contains(&w))
+}
+
+/// Issue 526's review: whether `name` carries a sign of a company — a legal form ([`COMPANY_TOKENS`],
+/// [`COMPANY_FORMS_DOTTED`]: `Dupont SA`) or an opening [`LIST_DESCRIPTORS`] word (`Société Laser`). A lot's
+/// subject carries none (`Terrassement - VRD`, `Alpes Maritime`, `Champagne`).
+pub fn company_sign(name: &str) -> bool {
+    company_token(name) || opens_with_company_word(name)
+}
+
 /// Issue 520 U4: whether an extracted name can be the awardee — it opens with a letter, holds two letters
 /// or digits at least and at most [`WINNER_MAX_CHARS`] characters; its first word is no count, pointer or
 /// role ([`COUNT_NOUNS`], [`WINNER_POINTERS`], [`WINNER_ROLES`]); it is no descriptor alone (`la

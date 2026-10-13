@@ -62,3 +62,31 @@
 | `-1` | 147 |
 
 Verify exhibit: `Lot 1) Blin` → 1 (31735007).
+
+## Second review (wf_78c49010-3c4, 13 agents, on ca096af)
+
+Six findings were confirmed, in four classes. Each is now fixed and tested
+(`a_lot_list_names_its_winners_not_its_headings_or_subjects`):
+
+| class | defect | fix |
+| --- | --- | --- |
+| A | The award reader was opened on any prefixed entry, so on bare `1)` / `1:` / `A:` entries a cue after the comma stole the head (`1) Dupont SA, Paris. Le lot 2 a été attribué à la société Martin` gave Martin, where the old parser gave Dupont SA). | Only the head's own cue opens the reader. |
+| B | A heading before the lot list became a name (`Rabais. Lot 1) Exbrayat`). | A comma-less entry with no lot word, right before the value's first lot entry, names nobody. |
+| C | Capitalised lot subjects became hub names (`Hérault`, `Var`, `Bière`, `Terrassement - VRD`). | `<subject>: <company>` takes the company: the last colon part outside parentheses, never after a contact or role label. A subject head takes the company-word field after it (`Entreprise Malet`). `Société Laser: lot 1) …` names the company once, and its lots are subjects. A heading label (`Architectes attributaires:`) opens the lots as winners. A void field after the head (`Lot Sans Suite`) names nobody. `sous-lot 1A)` is a reference. |
+| D | In a 2004–2010 block, a keyed list that collapsed to one name took the block's total. | The keyed entries the bar refuses still count in the pairing. |
+
+The first build of these rules regressed six cases on the sample, and each was fixed with a test:
+- `Telis; Bull; lot 2)` lost Bull: a heading only opens a list.
+- `Multi attributaire: Cébéa Activ` was read as an award cue.
+- `Att: Richard Perry` was taken as the company.
+- `zone géographique Nord` won over `Gozzi Sport 2000`: the last colon part wins.
+- `(mandataire: Ancelin)` was split inside its parentheses.
+- `Entreprises attributaires:` was taken as a company label: the plural is a heading.
+
+**Final sample (out8):**
+- The 596-notice control is unchanged from the first build.
+- In the lot sample, names keep a lot reference in 208 cases. 5,483 names are read against the old parser's
+  4,644, and every name in three or more notices is a company.
+- Against the ca096af build, 93 notices change. Every name removed is a heading, a subject or a fragment.
+- The residue still includes `Champagne` (2053729) and `Canton Ouest`: a subject followed by a company with no
+  company sign.

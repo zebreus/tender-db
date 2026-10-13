@@ -586,8 +586,8 @@ fn lot_prefix_len(value: &str) -> Option<usize> {
     Some(at + terminator.len_utf8())
 }
 
-/// Issue 526: the words a reference that names its lot opens with, longest first.
-const LOT_WORDS: [&str; 4] = ["lotes", "lots", "lote", "lot"];
+/// Issue 526: the words a reference that names its lot opens with, longest first (`sous-lot 1A)`, 2027973).
+const LOT_WORDS: [&str; 6] = ["sous-lots", "sous-lot", "lotes", "lots", "lote", "lot"];
 
 /// Issue 526: what joins the numbers of one lot reference — a list word or a range (`1, 2 et 3`, `1 and 2`,
 /// `1 y 2`, `1 à 4`, `1-3`).
@@ -936,7 +936,7 @@ fn awarded_names(body: &str) -> Vec<String> {
         return Vec::new();
     }
     let (flat, line_starts) = flatten_lines(body);
-    awarded_names_at(body, &flat, &line_starts).into_iter().map(|(_, name)| name).collect()
+    awarded_names_at(body, &flat, &line_starts).into_iter().filter_map(|(_, name)| name).collect()
 }
 
 /// Whether a body can carry a winner label at all: the gate in front of the flatten.
@@ -959,8 +959,9 @@ fn may_award(body: &str) -> bool {
 /// label, so a name printed under its own label's `Contract No` line lands in that line's
 /// block. A 2010-print name sits at the start of its line ([`line_awarded_names`]). The
 /// names of one value share one place, which is what tells the pairing that a block names
-/// several winners.
-fn awarded_names_at(body: &str, flat: &str, line_starts: &[usize]) -> Vec<(usize, String)> {
+/// several winners. A `None` is a lot-keyed entry the keyed bar refused (issue 526's review,
+/// [`names_in_value_counted`]): no name, but the pairing still counts it.
+fn awarded_names_at(body: &str, flat: &str, line_starts: &[usize]) -> Vec<(usize, Option<String>)> {
     let authority = awarding_authority(flat);
 
     let mut names = Vec::new();
@@ -1027,10 +1028,12 @@ fn awarded_names_at(body: &str, flat: &str, line_starts: &[usize]) -> Vec<(usize
             }
         };
         let place = value_at + hop;
-        names.extend(names_in_value(value, item_end.is_some(), authority.as_ref()).into_iter().map(|n| (place, n)));
+        let (named, refused) = names_in_value_counted(value, item_end.is_some(), authority.as_ref());
+        names.extend(named.into_iter().map(|n| (place, Some(n))));
+        names.extend(std::iter::repeat_n((place, None), refused));
         at = value_at;
     }
-    names.extend(line_awarded_names(body, authority.as_ref(), line_starts));
+    names.extend(line_awarded_names(body, authority.as_ref(), line_starts).into_iter().map(|(p, n)| (p, Some(n))));
     names
 }
 
@@ -1039,11 +1042,29 @@ fn awarded_names_at(body: &str, flat: &str, line_starts: &[usize]) -> Vec<(usize
 /// value — an item stop, a successor marker, a line end — which is what makes a
 /// comma-less entry safe to take whole.
 fn names_in_value(value: &str, bounded: bool, authority: Option<&Authority>) -> Vec<String> {
+    names_in_value_counted(value, bounded, authority).0
+}
+
+/// [`names_in_value`], and how many lot-keyed entries of the value the keyed bar refused although the
+/// old reading would have named them (issue 526's review). The award pairing counts them: a list that
+/// collapses to one name (`Lot 1: Dupont SA, Paris; Lot 2: 3M France, Cergy.`) is still a list, and its
+/// block's one total is not the one remaining winner's.
+fn names_in_value_counted(value: &str, bounded: bool, authority: Option<&Authority>) -> (Vec<String>, usize) {
     // (name, whether the segment is the authority's own contact entry)
     let mut found: Vec<(String, bool)> = Vec::new();
+    let mut refused = 0usize;
     let segments = winner_segments(value);
     let last = segments.len() - 1;
-    for (k, segment) in segments.into_iter().enumerate() {
+    // Issue 526's review: whether each entry opens with a reference that names its lot — which makes a
+    // bare entry right before it a heading (`Entreprises retenues; Notation; Rabais. Lot 1) Exbrayat`).
+    let opens_lot: Vec<bool> = segments.iter().map(|s| lot_word_prefix_len(s.trim_start()).is_some()).collect();
+    // Issue 526's review: inside a company's own lot list (`Société Laser: lot 1) Alpes Maritime; lot 3)
+    // Bouches du Rhône`, 1354130), the keyed entries that follow name its lots' subjects, not winners.
+    let mut label_run = false;
+    // Whether a keyed entry came before: a heading opens the list, it never sits inside it (`Lot 1): Telis;
+    // Bull; lot 2): Steria`, 1060452, names Bull).
+    let mut seen_keyed = false;
+    for (k, segment) in segments.iter().enumerate() {
         // Issue 526's review: a separator ends every entry but the last, so only the last can be the window's
         // cut — and a reader that looks past the first comma must not read a cut name.
         let whole = bounded || k < last;
@@ -1060,6 +1081,26 @@ fn names_in_value(value: &str, bounded: bool, authority: Option<&Authority>) -> 
         if segment.is_empty() {
             continue;
         }
+        // Issue 526's review: a label before a lot list. A company's (`Société Laser: lot 1) Alpes Maritime`)
+        // names the winner of the lots after it, which are subjects; a heading's (`Architectes attributaires:
+        // lot 1) Fernandez`, 966610; `Cahier A: lot 1) Centraver`) names nobody, and the list is the winners.
+        let segment = match label_before_lots(segment) {
+            Some(colon) => {
+                let label = trim_sentence_period(segment[..colon].trim());
+                if crate::partyname::company_sign(label)
+                    && plausible_name(label)
+                    && crate::partyname::plausible_winner(label)
+                {
+                    label_run = true;
+                    let contact = authority.is_some_and(|a| a.contact_entry(label, segment));
+                    found.push((label.to_owned(), contact));
+                    continue;
+                }
+                label_run = false;
+                segment[colon + 1..].trim_start()
+            }
+            None => segment,
+        };
         // The name ends at the first comma — the address follows it in every
         // measured shape. With no comma, the name is the whole segment, which is
         // safe only because the item stop already bounded it: with NEITHER boundary
@@ -1085,47 +1126,68 @@ fn names_in_value(value: &str, bounded: bool, authority: Option<&Authority>) -> 
         let keyed = names_lot(&segment[..segment.len() - unprefixed.len()]);
         let prefixed = unprefixed.len() < segment.len();
         let segment = unprefixed;
-        let (name, bounded) = match segment.find(',') {
+        if label_run {
+            if keyed {
+                continue;
+            }
+            label_run = false;
+        }
+        // Issue 526's review: a bare entry with no address and no lot word right before the value's first lot
+        // entry is the list's heading (`Rabais. Lot 1) Exbrayat`, 1986857; `Attributaires. Lot 1) …`), not a
+        // winner.
+        if !prefixed
+            && !seen_keyed
+            && !segment.contains(',')
+            && find_ascii_ci(segment, "lot").is_none()
+            && opens_lot.get(k + 1) == Some(&true)
+        {
+            continue;
+        }
+        seen_keyed |= keyed;
+        let (head, bounded) = match segment.find(',') {
             Some(comma) => (&segment[..comma], true),
             None => (segment, bounded),
         };
         if !bounded {
             continue;
         }
-        // Issue 526: a keyed lot entry that is an award sentence, not a name (`lot 3) la société Storz a
-        // été retenue`, `Lot 2) attribué à Dupont SA`), names its one awardee when 520's reader finds one
-        // in it ([`crate::partyname::award_winner`]: its cues and refusals). The reader sees the entry WITH
-        // its lot reference, so a head that names this lot's winner is not stolen by a cue after the comma
-        // (`Lot 1) Dupont SA, Paris. Le lot 2 a été attribué à la société Martin` stays Dupont SA: 520's
-        // per-lot list refusal), and only an entry the window did not cut is read past its first comma. A
-        // keyed entry whose head is an award sentence that no reader resolves (`Lot 2) sera attribué
-        // ultérieurement`) names nobody.
-        if prefixed && crate::partyname::may_name_a_winner(segment) {
-            if whole {
-                if let Some(winner) = crate::partyname::award_winner(trim_sentence_period(entry.trim()))
-                    .filter(|winner| plausible_name(winner))
-                {
-                    let contact = authority.is_some_and(|a| a.contact_entry(&winner, segment));
-                    found.push((winner, contact));
-                    continue;
-                }
+        // Issue 526: a lot entry whose head is an award sentence, not a name (`lot 3) la société Storz a été
+        // retenue`, `Lot 2 : attribué à Martin SA`), names its one awardee when 520's reader finds one in it
+        // ([`crate::partyname::award_winner`]: its cues and refusals); a keyed one names nobody otherwise
+        // (`Lot 2) sera attribué ultérieurement`). Only the head's own cue opens the reader (the review: a cue
+        // after the comma is another sentence's — `1) Dupont SA, Paris. Le lot 2 a été attribué à la société
+        // Martin` stays Dupont SA), and the reader sees the entry WITH its lot reference, past the comma only
+        // when the window did not cut it.
+        // The company a keyed entry names when its head is the lot's subject ([`keyed_name`]); a subject with
+        // a label (`Multi attributaire: Cébéa Activ`, 1504469) is no award sentence.
+        let subject = if keyed { keyed_name(segment, head) } else { head };
+        if subject.len() == head.len() && prefixed && crate::partyname::may_name_a_winner(head) {
+            let read = if whole { entry } else { &entry[..entry.len() - segment.len() + head.len()] };
+            if let Some(winner) =
+                crate::partyname::award_winner(trim_sentence_period(read.trim())).filter(|winner| plausible_name(winner))
+            {
+                let contact = authority.is_some_and(|a| a.contact_entry(&winner, segment));
+                found.push((winner, contact));
+                continue;
             }
-            if keyed && crate::partyname::may_name_a_winner(name) {
+            if keyed {
+                if plausible_name(trim_sentence_period(head.trim())) {
+                    refused += 1;
+                }
                 continue;
             }
         }
-        let name = trim_sentence_period(name.trim());
+        let name = trim_sentence_period(subject.trim());
         // Issue 526's review: a keyed entry's name is no pointer, role, count, status or figure (`Lot 2)
         // Idem`, `même titulaire`, `en cours`, `Lot 1: 12 véhicules`: [`crate::partyname::plausible_winner`]),
         // holds no further lot reference (`Lots 1) oder 2) X` left `oder 2) X`), and holds a capital: an
         // all-lower-case head is the lot's description, the company after its comma (`Lot 3) papier, Sopaco
         // …`, 1644391; `Lots 3.1), 3.2) and 4) were not awarded`, 1599991; on the 912-notice sample, 8 of the
         // 9 such heads; the ninth, `euromedis`, is refused with them).
-        if keyed
-            && (!crate::partyname::plausible_winner(name)
-                || name.as_bytes().windows(2).any(|w| w[0].is_ascii_digit() && w[1] == b')')
-                || !name.chars().any(char::is_uppercase))
-        {
+        if keyed && (!keyed_bar(name) || keyed_lot_void(segment, head)) {
+            if plausible_name(name) {
+                refused += 1;
+            }
             continue;
         }
         // Issue 526: a slot that names the lot and no winner (`Lot 3`, 2225908; `lots 11`).
@@ -1142,7 +1204,124 @@ fn names_in_value(value: &str, bounded: bool, authority: Option<&Authority>) -> 
     // the notice says (3002722, 3009398: the publisher repeated its own block in
     // V.3), and serving it as published is the projection's call, not this one's.
     let others = found.iter().filter(|(_, contact)| !contact).count();
-    found.into_iter().filter(|(_, contact)| others == 0 || !contact).map(|(n, _)| n).collect()
+    (found.into_iter().filter(|(_, contact)| others == 0 || !contact).map(|(n, _)| n).collect(), refused)
+}
+
+/// Issue 526's review: the bar a keyed lot entry's name meets — [`crate::partyname::plausible_winner`], no
+/// further lot reference (`n)`), and a capital or an opening company word (`entreprise travaux du midi`).
+fn keyed_bar(name: &str) -> bool {
+    crate::partyname::plausible_winner(name)
+        && !name.as_bytes().windows(2).any(|w| w[0].is_ascii_digit() && w[1] == b')')
+        && (name.chars().any(char::is_uppercase) || crate::partyname::opens_with_company_word(name))
+}
+
+/// Issue 526's review: the company a keyed lot entry names when its head is the lot's subject, or `head`.
+///
+/// - `<subject>: <company>` in the head (`VRD: Colas IDF Normandie`, `contrôle technique: Alpes Contrôle`,
+///   `Fahrgestell: Mercedes Benz AG`, `Marché n° 02 20 216: zone géographique Nord: Gozzi Sport 2000`): the
+///   LAST part after a colon outside parentheses that meets the [`keyed_bar`], when the part before the first
+///   colon carries no company sign (`Ancelin/Forclum (mandataire: Ancelin)` stays whole);
+/// - a subject head with no company sign, then a field that opens with a company word (`Lot 1) Terrassement
+///   - VRD, Entreprise Malet, 30, avenue de Larrieu`, 1996797; `Lot 6) Bière, Société Elidis Occitanie`); a
+///   field that is only such words (`Groupement d'entreprises solidaires`, 2017396) gives way to the next;
+/// - a subject head with no company sign, then `<places>: <company>` in the fields after it, before any
+///   figure, sentence end or contact label (`Lot 1) Besançon-Planoise, Saône: Renaissance Décor, F-25120
+///   Maîche`, 1939180; not `Avon Friends of the Earth, Att: Richard Perry`, 1964336).
+///
+/// A subject followed by an unmarked company (`Lot 1) Champagne, Midi-pyrenees boissons, F-31124 …`, 2053729)
+/// cannot be told from a company followed by its town, so it stays the head.
+fn keyed_name<'a>(segment: &'a str, head: &'a str) -> &'a str {
+    let parts = colon_parts(head);
+    if parts.len() > 1 {
+        if crate::partyname::company_sign(parts[0]) {
+            return head;
+        }
+        return parts[1..].iter().rev().map(|part| part.trim()).find(|part| keyed_bar(trim_sentence_period(part))).unwrap_or(head);
+    }
+    if crate::partyname::company_sign(head) {
+        return head;
+    }
+    let fields: Vec<&str> = segment[head.len()..].split(',').skip(1).map(str::trim).collect();
+    if let Some(first) = fields.first() {
+        if crate::partyname::opens_with_company_word(first) {
+            if !crate::partyname::generic_company_phrase(first) && keyed_bar(trim_sentence_period(first)) {
+                return first;
+            }
+            if let Some(next) = fields.get(1).filter(|next| {
+                crate::partyname::generic_company_phrase(first) && !next.bytes().any(|b| b.is_ascii_digit())
+            }) {
+                if keyed_bar(trim_sentence_period(next)) {
+                    return next;
+                }
+            }
+        }
+    }
+    for field in fields {
+        if field.contains(". ") || field.bytes().any(|b| b.is_ascii_digit()) {
+            break;
+        }
+        if let Some((before, after)) = field.split_once(": ") {
+            let after = after.trim();
+            let contact = CONTACT_LABELS.contains(&crate::partyname::fold(before).as_str());
+            if !contact && !crate::partyname::company_sign(before) && keyed_bar(trim_sentence_period(after)) {
+                return after;
+            }
+            break;
+        }
+    }
+    head
+}
+
+/// Issue 526's review: the folded labels of a contact or role field, whose colon introduces a person, a
+/// number or one member of the winner, never the winner (`Att: Richard Perry`, 1964336; `ANC Eurovia
+/// Bretagnel/SACER/MARC, Mandataire: Eurovia`, 1944880, names the consortium).
+const CONTACT_LABELS: [&str; 19] = [
+    "att", "attn", "attention", "a l attention de", "contact", "tel", "telephone", "fax", "telefax", "telecopie",
+    "telecopieur", "e mail", "email", "url", "internet", "web", "mandataire", "mandataire commun", "chef de file",
+];
+
+/// Issue 526's review: `text` cut at each `: ` outside parentheses.
+fn colon_parts(text: &str) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let (mut depth, mut start) = (0i32, 0usize);
+    let bytes = text.as_bytes();
+    for (i, &b) in bytes.iter().enumerate() {
+        match b {
+            b'(' => depth += 1,
+            b')' => depth -= 1,
+            b':' if depth == 0 && bytes.get(i + 1) == Some(&b' ') => {
+                parts.push(&text[start..i]);
+                start = i + 2;
+            }
+            _ => {}
+        }
+    }
+    parts.push(&text[start..]);
+    parts
+}
+
+/// Issue 526's review: whether a keyed entry's field after its head says the lot was not awarded
+/// (`Lot 3) Vin mousseux, Lot Sans Suite.`, 2053729): the head is then the lot's subject, and nobody won.
+fn keyed_lot_void(segment: &str, head: &str) -> bool {
+    segment[head.len()..]
+        .split(',')
+        .nth(1)
+        .map(|field| trim_sentence_period(field.trim()))
+        .is_some_and(|field| !field.contains(". ") && crate::partyname::mentions_void(field))
+}
+
+/// Issue 526's review: where a label ends before a lot list it heads (`Société Laser: lot 1) Alpes Maritime`,
+/// `Architectes attributaires: lot 1) Fernandez`): the colon, when the text after it opens with a
+/// reference that names its lot and the label is short, has no comma and is no lot reference itself.
+fn label_before_lots(segment: &str) -> Option<usize> {
+    if lot_prefix_len(segment).is_some() {
+        return None;
+    }
+    let colon = segment.match_indices(':').map(|(i, _)| i).find(|&i| {
+        lot_word_prefix_len(segment[i + 1..].trim_start()).is_some()
+    })?;
+    let label = &segment[..colon];
+    (!label.trim().is_empty() && label.len() <= 120 && !label.contains(',')).then_some(colon)
 }
 
 /// The heading the 2010 print ends its line with (issue 508). It is
@@ -1627,7 +1806,8 @@ fn awarded_names_and_values(body: &str) -> Vec<(String, Option<Money>)> {
     let (flat, line_starts) = flatten_lines(body);
     let named = awarded_names_at(body, &flat, &line_starts);
     // No name, or no money word at all ([`awarded_value`]'s own gate): nothing to pair.
-    let blocks = if named.is_empty() || (find_ascii_ci(body, "PRICE").is_none() && find_ascii_ci(body, "VALUE").is_none())
+    let blocks = if named.iter().all(|(_, name)| name.is_none())
+        || (find_ascii_ci(body, "PRICE").is_none() && find_ascii_ci(body, "VALUE").is_none())
     {
         Vec::new()
     } else {
@@ -1638,6 +1818,7 @@ fn awarded_names_and_values(body: &str) -> Vec<(String, Option<Money>)> {
         let i = blocks.partition_point(|b| b.span.start <= at);
         (i > 0 && at < blocks[i - 1].span.end).then(|| i - 1)
     };
+    // A refused keyed entry counts as a name here (issue 526's review): its list is still a list.
     let homes: Vec<Option<usize>> = named.iter().map(|(at, _)| home(*at)).collect();
     let mut names_in = vec![0usize; blocks.len()];
     for b in homes.iter().flatten() {
@@ -1646,7 +1827,8 @@ fn awarded_names_and_values(body: &str) -> Vec<(String, Option<Money>)> {
     named
         .into_iter()
         .zip(homes)
-        .map(|((at, name), home)| {
+        .filter_map(|((at, name), home)| {
+            let name = name?;
             // Only the text from the award's own name on: every print states the value item
             // after the winner item (V.4 after V.3), so a figure BEFORE the name is the
             // previous award's tail — reached when a stray line-start `Lot No` (an address,
@@ -1656,7 +1838,7 @@ fn awarded_names_and_values(body: &str) -> Vec<(String, Option<Money>)> {
                 .filter(|&b| names_in[b] == 1 && !blocks[b].nested)
                 .and_then(|b| flat.get(at.max(blocks[b].span.start)..blocks[b].span.end))
                 .and_then(block_value);
-            (name, value)
+            Some((name, value))
         })
         .collect()
 }
@@ -3870,6 +4052,100 @@ mod tests {
         ] {
             assert_eq!(lot_word_prefix_len(value), None, "{value}");
         }
+    }
+
+    /// Issue 526's second review: a cue after the comma never opens the award reader (it is another
+    /// sentence's), a heading before a lot list names nobody, a lot's subject yields to the company the
+    /// entry names, a company's own lot list names the company once, and a list that collapses to one name
+    /// keeps no figure.
+    #[test]
+    fn a_lot_list_names_its_winners_not_its_headings_or_subjects() {
+        let names = |value: &str| names_in_value(value, true, None);
+        for value in [
+            "1) Dupont SA, Paris. Le lot 2 a été attribué à la société Martin",
+            "A: Dupont SA, Paris. La société Martin a été retenue",
+            "1: Dupont SA, Paris. Le lot 2 a été attribué à la société Martin",
+            "Lot 1) Dupont SA, Paris. Le marché a été attribué à la société Martin",
+        ] {
+            assert_eq!(names(value), vec!["Dupont SA"], "{value}");
+        }
+        assert_eq!(names("1) la société Martin a été retenue"), vec!["Martin"], "the head's own cue opens the reader");
+        assert_eq!(
+            names("Entreprises retenues; Notation; Rabais. Lot 1) Exbrayat/chabuel; 78,25; -16. Lot 2) Spac/sacer; 83,875"),
+            vec!["Entreprises retenues", "Notation", "Exbrayat/chabuel", "Spac/sacer"],
+            "the bare entry right before the list is its heading (1986857)"
+        );
+        assert_eq!(names("Dupont SA, Paris. Lot 2) Martin SA, Lyon"), vec!["Dupont SA", "Martin SA"]);
+        assert_eq!(
+            names(
+                "Société Laser: lot 1) Alpes Maritime; lot 3) Bouches du Rhône; Société Onet Propreté: lot 7) Gard; \
+                 lot 8) Hérault; lot 10) Var"
+            ),
+            vec!["Société Laser", "Société Onet Propreté"],
+            "a company's own lot list names the company; the lots are its subjects (1354130)"
+        );
+        assert_eq!(
+            names("Architectes attributaires: lot 1) Fernandez; lot 2) Pous; Cahier A: lot 3) Centraver"),
+            vec!["Fernandez", "Pous", "Centraver"],
+            "a heading's lot list is the winners (966610, 1027355)"
+        );
+        assert_eq!(
+            names(
+                "Lot 1) Terrassement - VRD, Entreprise Malet, 30, avenue de Larrieu, F-31081 Toulouse. Lot 2) \
+                 Gros-oeuvre, entreprise travaux du midi, 90, route de Seysses"
+            ),
+            vec!["Entreprise Malet", "entreprise travaux du midi"],
+            "a subject head yields to the company word after it (1996797)"
+        );
+        assert_eq!(
+            names("Lot 1) Besançon-Planoise, Saône: Renaissance Décor, F-25120 Maîche. Lot 7) Bureaux du Siège: Franche-Comté Nettoyage, F-25000 Besançon"),
+            vec!["Renaissance Décor", "Franche-Comté Nettoyage"],
+            "`<subject>: <company>` names the company (1939180)"
+        );
+        assert_eq!(
+            names("Lot 1) VRD: Colas IDF Normandie. Lot 2) Éclairage: Spie Trindel: 5. Lot 3) contrôle technique: Alpes Contrôle"),
+            vec!["Colas IDF Normandie", "Spie Trindel", "Alpes Contrôle"]
+        );
+        assert_eq!(
+            names("Lot 1) Champagne, Midi-pyrenees boissons, F-31124 Portet. Lot 3) Vin mousseux, Lot Sans Suite. Lot 5) Bière, Société Elidis Occitanie, F-31400 Toulouse"),
+            vec!["Champagne", "Société Elidis Occitanie"],
+            "a void lot names nobody; an unmarked company after a subject cannot be told from a town (2053729)"
+        );
+        assert_eq!(names("Lot 1) Dupont SA, Lyon: Agence Rhône"), vec!["Dupont SA"], "a company head keeps its name");
+        // The sample's regressions on the first build of these rules.
+        assert_eq!(names("Lot 1): Telis; Bull; lot 2): Steria; IBM; lot 3): Arche; IBM."), vec!["Telis", "Bull", "Steria", "IBM", "Arche", "IBM"]);
+        assert_eq!(
+            names("lot 1) Multi attributaire: Cébéa Activ; PB Concept; lot 4) Attributaire unique: Infopoint"),
+            vec!["Cébéa Activ", "PB Concept", "Infopoint"],
+            "1504469"
+        );
+        assert_eq!(names("Lot 4) Avon Friends of the Earth, Att: Richard Perry, Trelanny House"), vec!["Avon Friends of the Earth"]);
+        assert_eq!(names("lot 1) ANC Eurovia Bretagnel/SACER/MARC, Mandataire: Eurovia, 7, rue Alfred Kastler"), vec!["ANC Eurovia Bretagnel/SACER/MARC"]);
+        assert_eq!(names("Lot 1) Marché n° 02 20 216: zone géographique Nord: Gozzi Sport 2000, 50, cours Becquart"), vec!["Gozzi Sport 2000"]);
+        assert_eq!(names("lot 2) Ancelin/Forclum (mandataire: Ancelin), F-44000 Nantes"), vec!["Ancelin/Forclum (mandataire: Ancelin)"]);
+        assert_eq!(
+            names("Entreprises attributaires: marché n° 61.001.11.02.175: lot 1) Sarl Lavnet, Zone Industrielle; marché n° 61.001.11.02.176: lot 2) SAS Alençon-Net, parc"),
+            vec!["Sarl Lavnet", "SAS Alençon-Net"],
+            "a heading's label never opens a company's lot list (2021347)"
+        );
+        assert_eq!(
+            names("Lot 3) Canton Sud, Groupement d'entreprises solidaires, Sacer Atlantique/Screg Sud Ouest, Mandataire: Sacer Atlantique, F-31150 Bruguières"),
+            vec!["Sacer Atlantique/Screg Sud Ouest"],
+            "a generic company phrase gives way to the company after it (2017396)"
+        );
+        assert_eq!(
+            names("Lot 1: sous-lot 1A) Novelli; sous-lot 1B) Pouletty. Lot 2: sous-lot 2A) Cegelec Centre Est; sous-lots 2C) et 2D) infructueux"),
+            vec!["Novelli", "Pouletty", "Cegelec Centre Est"],
+            "2027973"
+        );
+        let (named, refused) = names_in_value_counted("Lot 1: Dupont SA, Paris; Lot 2: 3M France, Cergy.", true, None);
+        assert_eq!((named, refused), (vec!["Dupont SA".to_owned()], 1));
+        let body = "SECTION V: AWARD OF CONTRACT\nCONTRACT NO: 1\nV.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \nAWARDED: Lot 1: Dupont SA, Paris; Lot 2: 3M France, Cergy.\nV.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\nValue: 500 000 EUR.\nExcluding VAT.";
+        assert_eq!(
+            awarded_names_and_values(body),
+            vec![("Dupont SA".to_owned(), None)],
+            "a list that collapses to one name keeps no figure (the review's 2004–2010 block)"
+        );
     }
 
     /// Issue 485: a phone number is not a lot reference, and a contact line is not a

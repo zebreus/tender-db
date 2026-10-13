@@ -15,7 +15,10 @@ was split across one organization per lot-number spelling. After the re-parse of
 - a lot reference is never part of a name, and a slot that names only a lot (`Lot 3`), a pointer (`Lot 2) Idem`),
   a status (`en cours`, `were not awarded`), a price or a lot's lower-case description (`Lot 3) papier, Sopaco`)
   is no organization;
-- a keyed award sentence names its awardee (`lot 3) la société Storz a été retenue` → `Storz`).
+- a keyed award sentence names its awardee (`lot 3) la société Storz a été retenue` → `Storz`);
+- an entry that names its lot's subject before the company names the company (`Lot 1) VRD: Colas IDF Normandie`,
+  `Lot 1) Terrassement - VRD, Entreprise Malet` → `Colas IDF Normandie`, `Entreprise Malet`), and a company's own
+  lot list (`Société Laser: lot 1) Alpes Maritime; lot 3) …`) names the company once.
 
 On a 912-notice sample, names carrying a lot reference fell from 4,423 to 208. Lettered and Roman lot labels
 (`Lot A)`, `Lot III:`, about 250 organizations) are kept as published. The prefixed organizations are removed
