@@ -6413,3 +6413,110 @@ async fn an_incremental_refold_retires_a_standing_inner_half_mention() {
 async fn a_full_fold_retires_a_standing_inner_half_mention() {
     a_standing_inner_half_mention_is_retired_by_a_refold(Refold::Full).await;
 }
+
+// ------------------- issue 520 U4: an award summary's one winner
+
+/// 1435451's template (520 unit-1 decision, App. B) naming the defence fixture's own winner.
+const A1_SUMMARY: &str = "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Indaeltrac suite à procédure négociée sans publicité avec mise en concurrence";
+
+/// Issue 520 U4: the stock U5 drains. The defence award's winner slot holds an A1 summary, folded before
+/// U4: its mention names the summary and binds an organization of that name. The first fold here binds
+/// the winner already, so the stock is written back as prod holds it (the 525 walk test's way): the
+/// mention and its organization under the summary. Then the publisher's other notice names `Indaeltrac`
+/// (RO) plainly and is folded, so the winner's organization stands when the summary's notice is
+/// re-queued. Returns (db, path, the award notice, the summary's organization, the winner's).
+async fn a1_summary_stock(name: &str) -> (Db, String, i64, i64, i64) {
+    let (db, fetch_id, path) = scratch(name).await;
+    let (notice, _, summary) = defence_award_with_winner(fetch_id, A1_SUMMARY);
+    db.record_notice(&notice, &Parse::Parsed(summary)).await.expect("record");
+    let first = project::project(&db, false).await.expect("first fold");
+    assert_eq!(first.extracted.count, 1, "premise: U4 binds the winner at first sight");
+    let summary_org = scalar(&db, "SELECT organization_id FROM organization_mentions WHERE name = 'Indaeltrac'").await;
+    let quoted = A1_SUMMARY.replace('\'', "''");
+    db.execute_for_test(&format!("UPDATE organizations SET name = '{quoted}', name_norm = 'summary' WHERE id = {summary_org}"))
+        .await
+        .expect("the summary's organization, as prod holds it");
+    db.execute_for_test(&format!("UPDATE organization_mentions SET name = '{quoted}' WHERE organization_id = {summary_org}"))
+        .await
+        .expect("its mention");
+    let (other, mut plain) = one_buyer(fetch_id, "Indaeltrac");
+    for value in &mut plain.values {
+        if value.field_id == "BT-514-Organization-Company" {
+            value.value = NoticeValue::Code { list: None, code: "ROU".into() };
+        }
+    }
+    db.record_notice(&other, &Parse::Parsed(plain)).await.expect("record the plain name");
+    project::project_incremental(&db).await.expect("fold the plain name");
+    let winner_org = scalar(&db, "SELECT id FROM organizations WHERE name = 'Indaeltrac'").await;
+    assert_ne!(winner_org, summary_org, "premise: the winner's organization is its own");
+    let award = scalar(&db, &format!("SELECT id FROM notices WHERE publication_id = '{}'", notice.publication_id)).await;
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {summary_org}")).await,
+        1,
+        "premise: the summary's mention stands"
+    );
+    (db, path, award, summary_org, winner_org)
+}
+
+/// The void walk's wet re-queue of one notice (`refold-void-names`): unprojected, its Tenders
+/// epoch-stale (the issue-179 pair), for the paired fold.
+async fn requeue_for_the_walk(db: &Db, notice: i64) {
+    db.unmark_projected_by_ids(&[notice]).await.expect("re-queue");
+    db.stamp_stale_for_notices(&[notice]).await.expect("stamp");
+}
+
+/// Issue 520 U4 (unit-1 decision §5): the walk re-queues a mention whose party the fold keeps under its
+/// award summary's one winner, and the paired fold rebinds it — the recorded mention under the summary
+/// re-resolves through the resolver as the winner's name (issue 434's refresh), binds the organization of
+/// that name and country that already stands (issue 234), and its result winner moves with it. The
+/// summary's organization is left with no mention, for the orphan sweep; nothing is retired, and the
+/// result stays `selec-w`.
+#[tokio::test]
+async fn a_refold_rebinds_the_mention_to_the_winner() {
+    let (db, path, award, summary_org, winner_org) = a1_summary_stock("520-rebind").await;
+    requeue_for_the_walk(&db, award).await;
+    let report = project::project_incremental(&db).await.expect("the paired fold");
+    assert_eq!((report.mentions_refreshed, report.mentions_rebound, report.mentions_retired), (1, 1, 0));
+    let section = query_text(&db, &format!("SELECT section_id FROM organization_mentions WHERE notice_id = {award} AND name = 'Indaeltrac'"))
+        .await
+        .expect("the renamed mention");
+    assert_eq!(report.extracted.count, 1);
+    assert_eq!(report.extracted.sample, vec![(award, section, A1_SUMMARY.to_owned(), "Indaeltrac".to_owned())]);
+    assert_eq!(
+        scalar(&db, &format!("SELECT organization_id FROM organization_mentions WHERE notice_id = {award} AND name = 'Indaeltrac'")).await,
+        winner_org,
+        "the standing organization of the winner's name absorbs it"
+    );
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organizations WHERE name = 'Indaeltrac'").await, 1, "no second Indaeltrac");
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {summary_org}")).await,
+        0,
+        "the summary's organization is orphaned"
+    );
+    assert_eq!(scalar(&db, &format!("SELECT COUNT(*) FROM tender_version_result_winners WHERE organization_id = {summary_org}")).await, 0);
+    assert!(scalar(&db, &format!("SELECT COUNT(*) FROM tender_version_result_winners WHERE organization_id = {winner_org}")).await >= 1);
+    assert_eq!(scalar(&db, &format!("SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = {summary_org}")).await, 0);
+    assert_eq!(query_text(&db, "SELECT decision FROM tender_version_lot_results").await.as_deref(), Some("selec-w"));
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 520 U4: a refold of a party already bound under its winner is idempotent — the recorded mention
+/// already names the winner, so nothing is refreshed or rebound (the summary's organization is not
+/// revived), though the fold reads the summary's winner again.
+#[tokio::test]
+async fn a_second_refold_of_a_renamed_party_rebinds_nothing() {
+    let (db, path, award, summary_org, winner_org) = a1_summary_stock("520-idempotent").await;
+    requeue_for_the_walk(&db, award).await;
+    let first = project::project_incremental(&db).await.expect("the paired fold");
+    assert_eq!(first.mentions_rebound, 1, "premise");
+    requeue_for_the_walk(&db, award).await;
+    let again = project::project_incremental(&db).await.expect("a second refold");
+    assert_eq!((again.mentions_refreshed, again.mentions_rebound, again.mentions_retired), (0, 0, 0));
+    assert_eq!(again.extracted.count, 1, "the fold still reads the summary's winner");
+    assert_eq!(
+        scalar(&db, &format!("SELECT organization_id FROM organization_mentions WHERE notice_id = {award} AND name = 'Indaeltrac'")).await,
+        winner_org
+    );
+    assert_eq!(scalar(&db, &format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {summary_org}")).await, 0);
+    let _ = std::fs::remove_file(&path);
+}

@@ -1790,6 +1790,16 @@ copy (about 39M rows, several times the org walk): a party the majority rule dro
 copy reads as a name stays outside the net, so add the template's copies to the lexicon when one
 shows up. `long` lists every void name over 120 characters (summaries the exemption missed) and
 `distinct` the void names by fold. An org with mentions on both sides is in `top` and in `exempted`.
+Issue 520 U4: a mention whose party the fold keeps under its award summary's one winner
+(`partyname::award_winner`, `… puis attribué à la Société Arrow Génériques suite à …` → `Arrow
+Génériques`) is re-queued too and listed under `extracted` (`{org, name, winner, notice}`, counted on the
+job line, its notices in `notices` and `expect`); the paired fold rebinds each to the winner's
+organization and retires none (`mentions_rebound`, and the fold row's `extracted winners (issue 520)`
+sample). An organization that carries an identifier is exempted instead, its reason naming the winner:
+the resolver binds its mention by the identifier, so no rename moves it. Before that wet run (U5) read
+every row against 520's unit-1 App. B and stop on one not there: `jq -r '.extracted[] | [.org, .winner,
+.notice] | @tsv'` on the report body, and `jq -r '.exempted[] | select(.reason | test("issue 520")) |
+[.org, .reason] | @tsv'` for the identified ones.
 Before the wet run read three lists:
 `notices_by_profile` against the census shape (r208 ≈ 8.5k, text ≈ 0.7k, internal-ojs ≈ 150, r209 ≈ 140,
 eForms ≈ 50 notices), `identified` (matches carrying an identifier) and `legal_form` (matches whose name

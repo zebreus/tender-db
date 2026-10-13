@@ -85,6 +85,10 @@ pub struct Report {
     pub mentions_retired: u64,
     /// Issue 511: the parties the decider dropped this run, per class ([`DroppedParties`]).
     pub dropped: DroppedParties,
+    /// Issue 520 U4: the kept parties whose award summary named one winner, bound under it this run
+    /// ([`ExtractedWinners`]). Boxed (issue 467): every `Report` temporary of the fold's poll frames takes
+    /// a slot at O0, and the inline 32 bytes pushed the supervisor's `run_project` past its poll budget.
+    pub extracted: Box<ExtractedWinners>,
     /// Issue 448 unit 3: what the resolver's altid alias did — PPON-first
     /// mentions asked, bound to the company-number org, refused. Durable for
     /// the reason `wall` is; `armed: false` when no resolver was opened.
@@ -174,6 +178,39 @@ impl DroppedParties {
         self.blank += other.blank;
         self.placeholder_identified += other.placeholder_identified;
         let room = DROPPED_SAMPLE.saturating_sub(self.sample.len());
+        self.sample.extend(other.sample.into_iter().take(room));
+    }
+}
+
+/// How many extracted winners [`ExtractedWinners::sample`] keeps per run.
+pub const EXTRACTED_SAMPLE: usize = 20;
+
+/// Issue 520 U4 (A1, unit-1 decision §4.2, §5): the kept parties whose void-net copies all named one
+/// winner ([`crate::partyname::award_winner`]), across the notices whose mentions this run read, on
+/// OUTERMOST sections. Each mention is minted under the winner's name instead of the summary's, so a
+/// recorded one re-resolves (`mentions_refreshed`) and moves to the winner's organization
+/// (`mentions_rebound`), and the summary's is the orphan sweep's.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ExtractedWinners {
+    pub count: u64,
+    /// Up to [`EXTRACTED_SAMPLE`] of them, first seen: (notice, section, the name as published, the
+    /// winner).
+    pub sample: Vec<(i64, String, String, String)>,
+}
+
+impl ExtractedWinners {
+    /// One extracted winner of `notice`.
+    fn record(&mut self, notice: i64, section: &str, name: &str, winner: &str) {
+        self.count += 1;
+        if self.sample.len() < EXTRACTED_SAMPLE {
+            self.sample.push((notice, section.to_owned(), name.to_owned(), winner.to_owned()));
+        }
+    }
+
+    /// Another tally into this one, the sample still bounded.
+    pub fn add(&mut self, other: ExtractedWinners) {
+        self.count += other.count;
+        let room = EXTRACTED_SAMPLE.saturating_sub(self.sample.len());
         self.sample.extend(other.sample.into_iter().take(room));
     }
 }
@@ -1888,10 +1925,11 @@ pub async fn project_with_progress_phase2_stoppable(
              skipping Phase-1 and re-running grouping + Phase-2 (salvage)"
         );
     } else {
-        let (notices, mentions, stopped, citations, f14, procedure, refresh, alias, dropped) =
+        let (notices, mentions, stopped, citations, f14, procedure, refresh, alias, dropped, extracted) =
             build_plan(db, now, total, &mut on_progress, stop).await?;
         report.alias = alias;
         report.dropped = dropped;
+        report.extracted = Box::new(extracted);
         report.stopped = stopped;
         report.notices = notices;
         report.mentions = mentions;
@@ -2098,6 +2136,7 @@ async fn build_plan(
     store::MentionRefresh,
     store::AltIdAliasCounts,
     DroppedParties,
+    ExtractedWinners,
 )> {
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
@@ -2129,6 +2168,8 @@ async fn build_plan(
         void: Vec<(i64, String)>,
         /// Issue 511: those parties per class, summed by the writer half.
         dropped: DroppedParties,
+        /// Issue 520 U4: the chunk's kept parties minted under an extracted winner, summed the same way.
+        extracted: ExtractedWinners,
         /// Issue 364's per-kind tally for this chunk's notices, summed by the
         /// writer half — the sweep is where `Ident::read` runs.
         citations: CitationGate,
@@ -2180,6 +2221,7 @@ async fn build_plan(
                     let mut mentions: Vec<Mention> = Vec::new();
                     let mut void: Vec<(i64, String)> = Vec::new();
                     let mut dropped = DroppedParties::default();
+                    let mut extracted = ExtractedWinners::default();
                     let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
                     let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(chunk.len());
                     let mut citations = CitationGate::default();
@@ -2187,11 +2229,12 @@ async fn build_plan(
                     let mut procedure = ProcedureTally::default();
                     for (notice, parsed) in &chunk {
                         let ident = Ident::read(notice, parsed);
-                        let (notice_mentions, skipped, notice_dropped) =
+                        let (notice_mentions, skipped, notice_dropped, notice_extracted) =
                             NoticeState::mentions_and_dropped(ident.sdk01, notice.id, parsed);
                         mentions.extend(notice_mentions);
                         void.extend(skipped.into_iter().map(|section| (notice.id, section)));
                         dropped.add(notice_dropped);
+                        extracted.add(notice_extracted);
                         citations.add(ident.citations);
                         f14.add(ident.f14_targets);
                         procedure.add(ident.procedure);
@@ -2202,7 +2245,17 @@ async fn build_plan(
                     SweepClock::add(&clock.decode_ns, decode);
                     let send = std::time::Instant::now();
                     if tx
-                        .send(Ok(PlanChunk { rows, guard_sections, mentions, void, dropped, citations, f14, procedure }))
+                        .send(Ok(PlanChunk {
+                            rows,
+                            guard_sections,
+                            mentions,
+                            void,
+                            dropped,
+                            extracted,
+                            citations,
+                            f14,
+                            procedure,
+                        }))
                         .is_err()
                     {
                         return; // the writer half bailed on an error
@@ -2215,6 +2268,7 @@ async fn build_plan(
 
     let (mut notices, mut mentions_total) = (0u64, 0u64);
     let mut dropped = DroppedParties::default();
+    let mut extracted = ExtractedWinners::default();
     let mut citations = CitationGate::default();
     let mut f14 = F14TargetGate::default();
     let mut procedure = ProcedureTally::default();
@@ -2245,6 +2299,7 @@ async fn build_plan(
         };
         notices += chunk.rows.len() as u64;
         dropped.add(std::mem::take(&mut chunk.dropped));
+        extracted.add(std::mem::take(&mut chunk.extracted));
         citations.add(chunk.citations);
         f14.add(chunk.f14);
         procedure.add(chunk.procedure);
@@ -2363,7 +2418,7 @@ async fn build_plan(
         t0.elapsed().as_secs_f64(),
         if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
-    Ok((notices, mentions_total, stopped, citations, f14, procedure, refresh, alias, dropped))
+    Ok((notices, mentions_total, stopped, citations, f14, procedure, refresh, alias, dropped, extracted))
 }
 
 /// Run only the interruptible PREFIX of a full rebuild — clear the canonical
@@ -2378,7 +2433,7 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
         db.clear_canonical().await?;
         db.strip_organization_indexes().await?;
         let total = db.parsed_notice_count().await?;
-        let (notices, mentions, _, citations, f14_targets, procedure, refresh, alias, dropped) =
+        let (notices, mentions, _, citations, f14_targets, procedure, refresh, alias, dropped, extracted) =
             build_plan(db, store::now_unix(), total, |_| {}, &|| false).await?;
         Ok::<Report, turso::Error>(Report {
             notices,
@@ -2390,6 +2445,7 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
             mentions_rebound: refresh.rebound,
             mentions_retired: refresh.retired,
             dropped,
+            extracted: Box::new(extracted),
             alias,
             ..Default::default()
         })
@@ -3212,10 +3268,12 @@ fn incremental_plan_rows(
     for (notice, p) in parsed {
         let ident = Ident::read(notice, p);
         if changed_set.contains(&notice.id) {
-            let (notice_mentions, skipped, dropped) = NoticeState::mentions_and_dropped(ident.sdk01, notice.id, p);
+            let (notice_mentions, skipped, dropped, extracted) =
+                NoticeState::mentions_and_dropped(ident.sdk01, notice.id, p);
             mentions.extend(notice_mentions);
             void.extend(skipped.into_iter().map(|section| (notice.id, section)));
             report.dropped.add(dropped);
+            report.extracted.add(extracted);
         }
         // Issue 364: counted in the PLAN build only — pass 1 reads the same
         // notices' identity again, and counting there too would double every
@@ -4503,6 +4561,10 @@ struct DropDecision {
     /// when [`drop_decision`] is asked to explain ([`fold_parties`], the walk's read), so the
     /// fold's own hot loop allocates nothing for it.
     kept: Vec<(String, KeptParty)>,
+    /// Issue 520 U4: every outermost party kept whose void-net copies all name one winner
+    /// ([`extracted_winner`]), with the winner — the name [`NoticeState::mentions_and_dropped`] mints
+    /// its mention under.
+    renamed: BTreeMap<String, String>,
 }
 
 /// Issue 525: why the fold keeps a named party ([`drop_decision`]'s tally of it), for the
@@ -4538,13 +4600,17 @@ impl KeptParty {
 }
 
 /// Issue 525: the fold's verdict on one party section of a notice ([`FoldParties::verdict`]).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PartyVerdict {
     /// The fold drops the party, with its class: no mention is minted for it and a recorded one
     /// at this key is retired.
     Dropped(NotAName),
     /// The fold keeps the party, and why.
     Kept(KeptParty),
+    /// Issue 520 U4: the fold keeps the party under the one winner its award summary names
+    /// ([`extracted_winner`]): its mention is minted under that name, so a recorded one at this key —
+    /// the outer section, where the fold mints — re-resolves and moves to the winner's organization.
+    Renamed(String),
     /// No party section by this id in the parse (it moved, or the parse is not there): the walk
     /// cannot decide, so it re-queues.
     Unknown,
@@ -4554,19 +4620,25 @@ pub enum PartyVerdict {
 pub struct FoldParties {
     dropped: BTreeMap<String, NotAName>,
     kept: HashMap<String, KeptParty>,
+    renamed: BTreeMap<String, String>,
     alias: HashMap<String, String>,
     parties: std::collections::HashSet<String>,
 }
 
 impl FoldParties {
     /// The verdict on the party section `section` — outer or a nested inner half, the key a
-    /// recorded mention may stand at.
+    /// recorded mention may stand at. Issue 520 U4: [`PartyVerdict::Renamed`] at the outer section
+    /// only, the key the fold mints the winner's mention at; a recorded inner half of a renamed party
+    /// reads [`PartyVerdict::Kept`], as before, since no fold rewrites it.
     pub fn verdict(&self, section: &str) -> PartyVerdict {
         if let Some(class) = self.dropped.get(section) {
             return PartyVerdict::Dropped(*class);
         }
         if !self.parties.contains(section) {
             return PartyVerdict::Unknown;
+        }
+        if let Some(winner) = self.renamed.get(section) {
+            return PartyVerdict::Renamed(winner.clone());
         }
         let outer = self.alias.get(section).map_or(section, String::as_str);
         PartyVerdict::Kept(self.kept.get(outer).copied().unwrap_or_default())
@@ -4602,11 +4674,19 @@ pub fn fold_parties(profile: &str, parsed: &Parsed) -> FoldParties {
     let alias = nested_org_aliases(&sections, kinds);
     let decision = drop_decision(sdk01, &sections, &alias, parsed, true);
     let parties = parsed.sections.iter().filter(|s| kinds.contains(&s.kind.as_str())).map(|s| s.id.clone()).collect();
-    FoldParties { dropped: decision.sections, kept: decision.kept.into_iter().collect(), alias, parties }
+    FoldParties {
+        dropped: decision.sections,
+        kept: decision.kept.into_iter().collect(),
+        renamed: decision.renamed,
+        alias,
+        parties,
+    }
 }
 
 /// [`dropped_party_sections`]' decision; see there. `explain` also records each named party
-/// it keeps and why ([`DropDecision::kept`]).
+/// it keeps and why ([`DropDecision::kept`]). Issue 520 U4: every call records each kept party whose
+/// void-net copies all name one winner ([`DropDecision::renamed`], [`extracted_winner`]) — the fold
+/// mints its mention under that name.
 fn drop_decision(
     sdk01: bool,
     sections: &HashMap<&str, &store::Section>,
@@ -4648,11 +4728,16 @@ fn drop_decision(
     }
     let mut decided: Vec<(&str, NotAName)> = Vec::new();
     let mut kept: Vec<(String, KeptParty)> = Vec::new();
+    // Issue 520 U4: the kept parties whose void-net copies all name one winner.
+    let mut renamed: BTreeMap<String, String> = BTreeMap::new();
     for (owner, names) in &tally {
         let void = names.iter().filter(|(_, class)| *class == Some(NotAName::VoidLot)).count();
         if names.iter().any(|(_, class)| *class == Some(NotAName::AwardSummary)) {
             if explain {
                 kept.push(((*owner).to_owned(), KeptParty { void, names: names.len(), summary: true, identified: false }));
+            }
+            if let Some(winner) = extracted_winner(names) {
+                renamed.insert((*owner).to_owned(), winner);
             }
             continue;
         }
@@ -4669,6 +4754,10 @@ fn drop_decision(
         } else {
             if explain {
                 kept.push(((*owner).to_owned(), KeptParty { void, names: names.len(), ..KeptParty::default() }));
+            }
+            // A name after a void prefix (`Pas d'offre. … Attribué à Léo Lagrange`) reads as a name.
+            if let Some(winner) = extracted_winner(names) {
+                renamed.insert((*owner).to_owned(), winner);
             }
             continue;
         };
@@ -4704,7 +4793,7 @@ fn drop_decision(
             }
         }
     }
-    let mut out = DropDecision { sections: BTreeMap::new(), outer: Vec::new(), kept };
+    let mut out = DropDecision { sections: BTreeMap::new(), outer: Vec::new(), kept, renamed };
     for (owner, class) in decided {
         let names = &tally[owner];
         let gated = identity.get(owner).and_then(|(raw, scheme, country)| {
@@ -4731,6 +4820,48 @@ fn drop_decision(
         .collect();
     out.sections.extend(inner);
     out
+}
+
+/// Issue 520 U4 (A1, unit-1 decision §4.2, §5): the one winner a kept party's award summary names, or
+/// `None`. Only the party's copies in the void net ([`crate::partyname::mentions_void`]) are read for it —
+/// an ordinary name never is — and every one of them must name the SAME winner
+/// ([`crate::partyname::award_winner`]): a copy that names another, names none, or reads as a dropping
+/// non-name (a TED template beside the summary) keeps the summary. Since the review (§4.2's "the party's
+/// copies disagree"), a copy outside the net must name the same company too — its words hold the
+/// winner's, or the winner's hold its (`Promocash SAS` beside `Promocash`) — else (`Transgourmet
+/// Opérations`) the summary stays, rather than the winner's organization taking another company's name
+/// as a variant. `names` are the party's copies with their classes, as [`drop_decision`] tallies them.
+fn extracted_winner(names: &[(&str, Option<NotAName>)]) -> Option<String> {
+    // The fold's hot loop: a party with no cue word in any copy reads nothing more.
+    if !names.iter().any(|(name, _)| crate::partyname::may_name_a_winner(name)) {
+        return None;
+    }
+    let mut winner: Option<String> = None;
+    for (name, class) in names {
+        if !crate::partyname::mentions_void(name) {
+            continue;
+        }
+        if !matches!(class, None | Some(NotAName::AwardSummary)) {
+            return None;
+        }
+        let named = crate::partyname::award_winner(name)?;
+        match &winner {
+            Some(first) if *first != named => return None,
+            Some(_) => {}
+            None => winner = Some(named),
+        }
+    }
+    let winner = winner?;
+    let words = |name: &str| format!(" {} ", crate::partyname::fold(name));
+    let key = words(&winner);
+    names
+        .iter()
+        .filter(|(name, _)| !crate::partyname::mentions_void(name))
+        .all(|(name, _)| {
+            let other = words(name);
+            other.contains(&key) || key.contains(&other)
+        })
+        .then_some(winner)
 }
 
 /// Issue 511 unit 4 item 1 (residual dry 2273: 460 + 144 winner mentions kept): TED's
@@ -5385,13 +5516,18 @@ impl NoticeState {
     /// rather than left standing, at whichever half it was recorded. Every class rides one
     /// list: the retirement is class-blind.
     fn mentions_and_void(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<Mention>, Vec<String>) {
-        let (mentions, skipped, _) = Self::mentions_and_dropped(sdk01, notice_id, parsed);
+        let (mentions, skipped, ..) = Self::mentions_and_dropped(sdk01, notice_id, parsed);
         (mentions, skipped)
     }
 
     /// [`Self::mentions_and_void`], and the skipped parties counted per class for
-    /// [`Report::dropped`] (issue 511) — what the plan sweeps read.
-    fn mentions_and_dropped(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<Mention>, Vec<String>, DroppedParties) {
+    /// [`Report::dropped`] (issue 511) — what the plan sweeps read — and, since issue 520 U4, the kept
+    /// parties minted under their award summary's one winner for [`Report::extracted`].
+    fn mentions_and_dropped(
+        sdk01: bool,
+        notice_id: i64,
+        parsed: &Parsed,
+    ) -> (Vec<Mention>, Vec<String>, DroppedParties, ExtractedWinners) {
         let sections: HashMap<&str, &store::Section> =
             parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
 
@@ -5494,6 +5630,26 @@ impl NoticeState {
             }
         }
 
+        // Issue 520 U4 (A1, unit-1 decision §4.2): a kept party whose void-net copies all name one
+        // winner is minted under the winner's name — its head and every labelled copy in the void net
+        // (`Lot déclaré infructueux … puis attribué à la Société Arrow Génériques suite à …` → `Arrow
+        // Génériques`). Identity stays the resolver's (issue 234): the mention binds the organization of
+        // that name and country where one exists, else mints one, and a recorded mention under the
+        // summary re-resolves and moves there. The result stays `selec-w`; no figure is read (491).
+        let mut extracted = ExtractedWinners::default();
+        for (section, winner) in &decision.renamed {
+            let Some(mention) = mentions.get_mut(section.as_str()) else { continue };
+            extracted.record(notice_id, section, &mention.name, winner);
+            if crate::partyname::mentions_void(&mention.name) {
+                mention.name.clone_from(winner);
+            }
+            for (_, variant) in &mut mention.variants {
+                if crate::partyname::mentions_void(variant) {
+                    variant.clone_from(winner);
+                }
+            }
+        }
+
         let mentions = mentions
             .into_values()
             .map(|mut m| {
@@ -5512,7 +5668,7 @@ impl NoticeState {
                 m
             })
             .collect();
-        (mentions, skipped, dropped)
+        (mentions, skipped, dropped, extracted)
     }
 
     /// Turn the notice-local role references into party facts — and the
@@ -14709,7 +14865,7 @@ mod tests {
                 ("ORG-4".to_owned(), NotAName::Blank),
             ])
         );
-        let (mentions, skipped, dropped) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        let (mentions, skipped, dropped, _) = NoticeState::mentions_and_dropped(false, 9, &parsed);
         assert_eq!(mentions.len(), 1, "only the buyer mints");
         assert_eq!(skipped.len(), 3);
         assert_eq!((dropped.void, dropped.placeholder, dropped.blank, dropped.placeholder_identified), (0, 2, 1, 1));
@@ -14817,7 +14973,7 @@ mod tests {
         parsed.sections.push(section("ORG-2", ORGANIZATION_KIND, Some("ORG-1")));
         parsed.values.push(text_value("ORG-2", "TED-OFFICIALNAME", 0, None, "N/A"));
         assert_eq!(decided(false, &parsed).len(), 2, "the outer section and its inner half");
-        let (_, skipped, dropped) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        let (_, skipped, dropped, _) = NoticeState::mentions_and_dropped(false, 9, &parsed);
         assert_eq!(skipped, vec!["ORG-1".to_owned(), "ORG-2".to_owned()]);
         assert_eq!((dropped.blank, dropped.total()), (1, 1));
         assert_eq!(results(&bound("ted-export-r209", &parsed)), vec![(Some("clos-nw".into()), vec![])]);
@@ -14887,7 +15043,7 @@ mod tests {
             decided(false, &parsed),
             BTreeMap::from([("ORG-1".to_owned(), NotAName::Placeholder), ("ORG-2".to_owned(), NotAName::Placeholder)])
         );
-        let (mentions, skipped, dropped) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        let (mentions, skipped, dropped, _) = NoticeState::mentions_and_dropped(false, 9, &parsed);
         assert_eq!(skipped, vec!["ORG-1".to_owned(), "ORG-2".to_owned()]);
         assert_eq!(mentions.iter().map(|m| m.section_id.as_str()).collect::<Vec<_>>(), vec!["ORG-3", "ORG-9"]);
         assert_eq!((dropped.placeholder, dropped.total()), (2, 2));
@@ -15897,7 +16053,7 @@ mod tests {
             decided(false, &parsed),
             BTreeMap::from([("ORG-2".to_owned(), NotAName::VoidLot), ("ORG-3".to_owned(), NotAName::VoidLot)])
         );
-        let (mentions, retired, dropped) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        let (mentions, retired, dropped, _) = NoticeState::mentions_and_dropped(false, 9, &parsed);
         assert_eq!(retired, vec!["ORG-2".to_owned(), "ORG-3".to_owned()], "both halves' keys reach the retire");
         assert_eq!(mentions.iter().map(|m| m.section_id.as_str()).collect::<Vec<_>>(), vec!["ORG-1", "ORG-4"]);
         assert_eq!((dropped.void, dropped.total()), (1, 1), "one party");
@@ -15962,7 +16118,7 @@ mod tests {
             let notice = store::NoticeRef { id: 9, source: "ted".into(), publication_id: "9-2024".into(), profile: profile.into() };
             let mut chunk = vec![(notice, parsed.clone())];
             normalise_de1(&mut chunk);
-            let (_, retired, _) = NoticeState::mentions_and_dropped(is_sdk01_profile(profile), 9, &chunk[0].1);
+            let (_, retired, ..) = NoticeState::mentions_and_dropped(is_sdk01_profile(profile), 9, &chunk[0].1);
             let walked: Vec<String> = parsed
                 .sections
                 .iter()
@@ -15993,6 +16149,112 @@ mod tests {
         // Guard 3 keeps a blank party with a gated identifier: the walk says so.
         let identified = eforms(&[("Procedure-Buyer", "Morsø Kommune", "DNK", ""), ("Tenderer", "0", "DNK", "38160540")], Some("DAN"));
         assert_eq!(kept(fold_parties("eforms:eforms-sdk-1.10", &identified).verdict("ORG-2")), "party kept: 0/1 names void, a gated identifier");
+    }
+
+    /// Issue 520 U4 (unit-1 decision §4.2, §5; 7791767 and 7151483, App. B): a party the fold keeps
+    /// for its award summary binds under the one winner its void-net copies name. The mention's head and
+    /// every labelled copy in the void net read the winner (`Promocash`), a copy outside the net keeps its
+    /// text (`Promocash SAS`), and a plain name after `Pas d'offre` binds the same way (`Léo Lagrange`).
+    /// Nothing is dropped or retired, the result stays `selec-w` with every winner, the run counts the
+    /// extractions with their summaries, and the walk's verdict is `Renamed` at the outer key. An ordinary
+    /// party beside them is never read.
+    #[test]
+    fn a_summary_party_binds_its_extracted_winner() {
+        use placeholder_511::*;
+        const PROMOCASH: &str = "Infructueux (1 offre irrégulière). Le lot a été relancé en procédure négociée (article 35.II.1 CMP) et a été attribué à l'entreprise Promocash (02100 Saint-Quentin)";
+        const LAGRANGE: &str = "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à Léo Lagrange";
+        let parsed = multilingual(
+            &[
+                ("ORG-1", &[(Some("FR"), PROMOCASH), (Some("EN"), "Promocash SAS"), (Some("DE"), PROMOCASH)]),
+                ("ORG-2", &[(Some("FR"), LAGRANGE)]),
+                ("ORG-3", &[(Some("FR"), "Transgourmet Opérations")]),
+            ],
+            &["ORG-1", "ORG-2", "ORG-3"],
+        );
+        assert_eq!(crate::partyname::not_a_name(PROMOCASH), Some(NotAName::AwardSummary), "premise");
+        assert_eq!(crate::partyname::not_a_name(LAGRANGE), None, "premise: a name after a void prefix");
+        assert!(crate::partyname::mentions_void(LAGRANGE), "premise: in the walk's net");
+        assert_eq!(decided(false, &parsed), BTreeMap::new(), "nothing is dropped");
+        let (mentions, retired, dropped, extracted) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        assert!(retired.is_empty() && dropped.total() == 0, "nothing is retired");
+        let named: Vec<(&str, &str)> = mentions.iter().map(|m| (m.section_id.as_str(), m.name.as_str())).collect();
+        assert_eq!(
+            named,
+            vec![("ORG-1", "Promocash"), ("ORG-2", "Léo Lagrange"), ("ORG-3", "Transgourmet Opérations"), ("ORG-9", "Ville de Lyon")]
+        );
+        let variants: Vec<&str> = mentions[0].variants.iter().map(|(_, name)| name.as_str()).collect();
+        assert_eq!(variants, vec!["Promocash", "Promocash SAS", "Promocash"], "every void-net copy, no other");
+        assert_eq!(
+            extracted,
+            ExtractedWinners {
+                count: 2,
+                sample: vec![
+                    (9, "ORG-1".into(), PROMOCASH.into(), "Promocash".into()),
+                    (9, "ORG-2".into(), LAGRANGE.into(), "Léo Lagrange".into()),
+                ],
+            }
+        );
+        assert_eq!(results(&bound("ted-export-r208", &parsed)), vec![(Some("selec-w".into()), vec![1_001, 1_002, 1_003])]);
+        let parties = fold_parties("ted-export-r208", &parsed);
+        assert_eq!(parties.verdict("ORG-1"), PartyVerdict::Renamed("Promocash".into()));
+        assert_eq!(parties.verdict("ORG-2"), PartyVerdict::Renamed("Léo Lagrange".into()));
+        assert!(matches!(parties.verdict("ORG-3"), PartyVerdict::Kept(_)), "an ordinary name is never read");
+        assert!(matches!(parties.verdict("ORG-9"), PartyVerdict::Kept(_)));
+    }
+
+    /// Issue 520 U4 (§4.2, "the party's copies disagree"): a kept party is renamed only when EVERY
+    /// void-net copy names the SAME winner. Two copies naming two winners (ORG-1), a summary that names
+    /// none beside one that names a winner (ORG-2), and TED's void template beside a summary (ORG-3, copies
+    /// that read as dropping non-names) keep the summary as published: the mention's head stays the summary,
+    /// nothing is extracted, and the walk's verdict stays `Kept` — exempted, never re-queued. Copies that
+    /// agree (ORG-4) bind the winner. Since the review, a copy outside the net that names another company
+    /// (ORG-5, `Transgourmet Opérations`) keeps the summary too, so the winner's organization takes no other
+    /// company's name as a variant; one that names the winner with more words binds (ORG-6).
+    #[test]
+    fn copies_that_disagree_keep_the_summary() {
+        use placeholder_511::*;
+        const DUPONT: &str = "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Dupont SARL suite à procédure négociée";
+        const MARTIN: &str = "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Martin SA suite à procédure négociée";
+        let parsed = multilingual(
+            &[
+                ("ORG-1", &[(Some("FR"), DUPONT), (Some("EN"), MARTIN)]),
+                ("ORG-2", &[(Some("FR"), DUPONT), (Some("EN"), "Lot 1) Sarl Bremond. Lot 2) Infructueux")]),
+                ("ORG-3", &[(Some("FR"), DUPONT), (Some("EN"), "Lot not awarded"), (Some("DE"), "Los wurde nicht vergeben")]),
+                ("ORG-4", &[(Some("FR"), DUPONT), (Some("EN"), DUPONT)]),
+                ("ORG-5", &[(Some("FR"), DUPONT), (Some("EN"), "Transgourmet Opérations")]),
+                ("ORG-6", &[(Some("FR"), DUPONT), (Some("EN"), "Dupont SARL Lyon")]),
+            ],
+            &["ORG-1", "ORG-2", "ORG-3", "ORG-4", "ORG-5", "ORG-6"],
+        );
+        assert_eq!(crate::partyname::award_winner(MARTIN).as_deref(), Some("Martin SA"), "premise");
+        assert_eq!(crate::partyname::award_winner("Lot 1) Sarl Bremond. Lot 2) Infructueux"), None, "premise");
+        assert_eq!(decided(false, &parsed), BTreeMap::new(), "an award summary keeps every party");
+        let (mentions, _, _, extracted) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        let named: Vec<(&str, &str)> = mentions.iter().map(|m| (m.section_id.as_str(), m.name.as_str())).collect();
+        assert_eq!(
+            named,
+            vec![
+                ("ORG-1", DUPONT),
+                ("ORG-2", DUPONT),
+                ("ORG-3", DUPONT),
+                ("ORG-4", "Dupont SARL"),
+                ("ORG-5", DUPONT),
+                ("ORG-6", "Dupont SARL"),
+                ("ORG-9", "Ville de Lyon")
+            ]
+        );
+        assert_eq!((extracted.count, extracted.sample.len()), (2, 2), "ORG-4 and ORG-6");
+        let parties = fold_parties("ted-export-r208", &parsed);
+        let kept = |verdict: PartyVerdict| match verdict {
+            PartyVerdict::Kept(kept) => kept.reason(),
+            other => panic!("{other:?}"),
+        };
+        assert_eq!(kept(parties.verdict("ORG-1")), "party kept: 0/2 names void, an award summary among them");
+        assert_eq!(kept(parties.verdict("ORG-2")), "party kept: 0/2 names void, an award summary among them");
+        assert_eq!(kept(parties.verdict("ORG-3")), "party kept: 2/3 names void, an award summary among them");
+        assert_eq!(parties.verdict("ORG-4"), PartyVerdict::Renamed("Dupont SARL".into()));
+        assert_eq!(kept(parties.verdict("ORG-5")), "party kept: 0/2 names void, an award summary among them");
+        assert_eq!(parties.verdict("ORG-6"), PartyVerdict::Renamed("Dupont SARL".into()));
     }
 
     /// Issue 512: the text parser stores the "every tender was rejected" marker as a Code

@@ -91,6 +91,13 @@
 //! bidder, the text era's `Desierto. SECTION VI` spill — and seven narrowings inside its own arms
 //! (D1–D7) make 173 of them void lots; no name with a winner moves.
 //!
+//! Issue 520's unit 4 (§4.2) reads the one awardee such a kept phrase names ([`award_winner`]: `Lot
+//! déclaré infructueux … puis attribué à la Société Arrow Génériques suite à …` → `Arrow Génériques`,
+//! `Attributaire: ARDP` → `ARDP`), so the fold binds the party under the winner's own name instead of
+//! the summary; two or more names, a list, a bidder, a future or a pointer name nobody, and since the
+//! adversarial review neither does an award its clause refuses, plans, negates or undoes, nor a role, a
+//! count or a status where the name would stand.
+//!
 //! The real names beside the phrases stay names — `Desierto OÜ`, `DESERTOT`, `VÁRIOS
 //! MUNDOS`, `NIL d.o.o.`, `N/A s.r.o.`, `Void arhitektura`, `Gestiver Información SL`,
 //! `Bank of America, N.A.`, `X Corp` — pinned by the tests below.
@@ -3774,37 +3781,7 @@ fn award_clause(raw: &str, folded: &str) -> bool {
     let words: Vec<&str> = folded.split(' ').collect();
     let runs = alphanumeric_runs(raw);
     let aligned = runs.len() == words.len();
-    let awarded = words.iter().enumerate().any(|(i, w)| {
-        if !matches!(*w, "attribue" | "attribuee" | "attribues" | "attribuees" | "attribuer") {
-            return false;
-        }
-        // The 510 reading is the floor (the second review): `non`, `pas` or `sans` right before the
-        // verb negates it, whatever stands between (`Lot 2 : Non - Attribué`, `non\nattribué`, `NON –
-        // ATTRIBUÉ`). It is also the whole reading when the fold's words and the raw runs do not line up.
-        if i > 0 && matches!(words[i - 1], "non" | "pas" | "sans") {
-            return false;
-        }
-        if !aligned {
-            return true;
-        }
-        let gap = |k: usize| &raw[runs[k - 1].1..runs[k].0];
-        // The verb's clause: from the word after the last clause break before it.
-        let from = (1..=i).rev().find(|&k| clause_break(gap(k))).unwrap_or(0);
-        let before = words[from..i].iter().rev().find(|b| !CLAUSE_FILLERS.contains(*b));
-        // `ne … que` restricts, it does not negate: an `n'` whose `qu'` follows in the sentence (`n'a été
-        // attribué qu'après négociation`, `n'a été attribué, après négociation, qu'à la société Martin`).
-        // Only `n'` / `ne`: `non attribué, que la commission relancera` stays negated.
-        let restrictive = before.is_some_and(|b| matches!(*b, "n" | "ne"))
-            && (i + 1..words.len()).take_while(|&k| !sentence_end(gap(k))).any(|k| matches!(words[k], "qu" | "que"));
-        // `déjà` before the verb is another procedure's award, unless the verb goes on to its party (the
-        // second review: `il a depuis déjà été attribué à l'entreprise Dupont Frères`), not to a lot
-        // (`déjà attribué au lot A 12`) or an auxiliary (`Lot déjà attribué a été déclaré sans suite`).
-        let to_party = words.get(i + 1) == Some(&"a") && {
-            let k = i + 2 + usize::from(words.get(i + 2).is_some_and(|w| matches!(*w, "l" | "la" | "le" | "les")));
-            words.get(k).is_some_and(|w| *w != "ete" && !LOT_DESIGNATORS.contains(w))
-        };
-        !before.is_some_and(|b| (*b == "deja" && !to_party) || (NEGATIONS.contains(b) && !restrictive))
-    });
+    let awarded = (0..words.len()).any(|i| award_verb(raw, &runs, &words, aligned, i));
     awarded
         || sentences(raw).iter().any(|sentence| {
             let runs = alphanumeric_runs(sentence);
@@ -3813,6 +3790,54 @@ fn award_clause(raw: &str, folded: &str) -> bool {
             let spans = intent_spans(sentence, &runs, &words);
             (0..words.len()).any(|k| avec_cue(&words, k) && !spans.iter().any(|&(from, to)| from < k && k < to))
         })
+}
+
+/// Whether the fold's word `words[i]` is an `attribué` form that states an award ([`award_clause`]'s
+/// verb branch, one word at a time; `runs` are `raw`'s alphanumeric runs, one per word when `aligned`):
+/// not negated in its clause, not `déjà` another procedure's.
+fn award_verb(raw: &str, runs: &[(usize, usize)], words: &[&str], aligned: bool, i: usize) -> bool {
+    award_verb_in(raw, runs, words, aligned, i, None)
+}
+
+/// [`award_verb`], given the first word of the verb's clause when the caller has read it once for every
+/// word (`clause`: [`winner_cues`], the review — a scan back per verb made a long clause quadratic).
+fn award_verb_in(
+    raw: &str,
+    runs: &[(usize, usize)],
+    words: &[&str],
+    aligned: bool,
+    i: usize,
+    clause: Option<usize>,
+) -> bool {
+    if !matches!(words[i], "attribue" | "attribuee" | "attribues" | "attribuees" | "attribuer") {
+        return false;
+    }
+    // The 510 reading is the floor (the second review): `non`, `pas` or `sans` right before the
+    // verb negates it, whatever stands between (`Lot 2 : Non - Attribué`, `non\nattribué`, `NON –
+    // ATTRIBUÉ`). It is also the whole reading when the fold's words and the raw runs do not line up.
+    if i > 0 && matches!(words[i - 1], "non" | "pas" | "sans") {
+        return false;
+    }
+    if !aligned {
+        return true;
+    }
+    let gap = |k: usize| &raw[runs[k - 1].1..runs[k].0];
+    // The verb's clause: from the word after the last clause break before it.
+    let from = clause.unwrap_or_else(|| (1..=i).rev().find(|&k| clause_break(gap(k))).unwrap_or(0));
+    let before = words[from..i].iter().rev().find(|b| !CLAUSE_FILLERS.contains(*b));
+    // `ne … que` restricts, it does not negate: an `n'` whose `qu'` follows in the sentence (`n'a été
+    // attribué qu'après négociation`, `n'a été attribué, après négociation, qu'à la société Martin`).
+    // Only `n'` / `ne`: `non attribué, que la commission relancera` stays negated.
+    let restrictive = before.is_some_and(|b| matches!(*b, "n" | "ne"))
+        && (i + 1..words.len()).take_while(|&k| !sentence_end(gap(k))).any(|k| matches!(words[k], "qu" | "que"));
+    // `déjà` before the verb is another procedure's award, unless the verb goes on to its party (the
+    // second review: `il a depuis déjà été attribué à l'entreprise Dupont Frères`), not to a lot
+    // (`déjà attribué au lot A 12`) or an auxiliary (`Lot déjà attribué a été déclaré sans suite`).
+    let to_party = words.get(i + 1) == Some(&"a") && {
+        let k = i + 2 + usize::from(words.get(i + 2).is_some_and(|w| matches!(*w, "l" | "la" | "le" | "les")));
+        words.get(k).is_some_and(|w| *w != "ete" && !LOT_DESIGNATORS.contains(w))
+    };
+    !before.is_some_and(|b| (*b == "deja" && !to_party) || (NEGATIONS.contains(b) && !restrictive))
 }
 
 /// Whether `words[k]` opens the `avec la société` cue (`avec l'entreprise`, `avec les sociétés`).
@@ -4135,6 +4160,690 @@ fn bare_lot_qualifier(group: &str) -> bool {
     })
 }
 
+/// Issue 520 U4 (A1): the folded `attribué` forms whose award clause names its party ([`award_winner`]
+/// cue a); the infinitive names it only as `d'attribuer ce lot à` (cue b).
+const AWARDED_FORMS: [&str; 4] = ["attribue", "attribuee", "attribues", "attribuees"];
+
+/// Issue 520 U4 (A1): how many words after an `attribué` form its party's `à` may stand, in one sentence
+/// — `le <date>` (`attribué le 9/12/13 à Assurances securité`) and `dans le cadre de cette nouvelle
+/// procédure` (`puis attribué dans le cadre de cette nouvelle procédure à la Sarltacavl`).
+const AWARD_REACH: usize = 8;
+
+/// Issue 520 U4 (A1): the folded futures beside [`RELAUNCH_INTENT`] — an award still to come names no
+/// winner (`un marché négocié … sera passé avec la STÉ France Télécom`, `pour être attribué à`).
+const FUTURE_AWARDS: [&str; 4] = ["seront", "serait", "seraient", "etre"];
+
+/// Issue 520 U4 (A1, the review): the folded words that, in an `attribué`'s clause before it, make the
+/// award one that is not, or no longer, made — a subjunctive or a conditional (`Il est envisagé qu'il
+/// soit attribué à`, `aurait été attribué à`), a plan or a refusal (`prévu`, `proposé`, `pressenti`,
+/// `refusé`, `impossible`), `jamais`, and an earlier award (`Le lot 3, initialement attribué à la société
+/// Dupont, a été déclaré sans suite`, `Marché précédemment attribué à`). Such a cue names nobody.
+const AWARD_DOUBTS: [&str; 31] = [
+    "soit", "soient", "aurait", "auraient", "pourrait", "pourraient", "pourra", "pourront", "devrait", "devraient",
+    "devra", "devront", "si", "envisage", "envisagee", "envisages", "envisagees", "prevu", "prevue", "propose",
+    "proposee", "pressenti", "pressentie", "refuse", "refusee", "impossible", "jamais", "initialement",
+    "precedemment", "anciennement", "auparavant",
+];
+
+/// Issue 520 U4 (A1, the review): the folded adverbs a negation reads past before `attribué` (`Lot pas
+/// encore attribué à`, `non encore attribué à`) — [`award_verb`] reads the nearest word only.
+const NEGATED_ADVERBS: [&str; 2] = ["encore", "toujours"];
+
+/// Issue 520 U4 (A1, cue b, the review): the folded decisions after which `d'attribuer ce lot à` states
+/// the award (`La commission d'appel d'offres réunie le 23.12.2013 a décidé d'attribuer ce lot à la
+/// société Eiffage Construction`). Any other governor names nobody: a refusal (`La CAO a refusé
+/// d'attribuer`), an impossibility (`Il n'a pas été possible d'attribuer`), a plan (`envisage d'attribuer`).
+const AWARD_DECISIONS: [&str; 5] = ["decide", "decidee", "decides", "decidees", "decident"];
+
+/// Issue 520 U4 (A1, cue c, the review): the folded words right before an awardee label that make it an
+/// earlier or a later awardee's (`Ancien titulaire: Dupont`, `Précédent attributaire : Dupont SARL`).
+const LABEL_QUALIFIERS: [&str; 10] =
+    ["ancien", "ancienne", "anciens", "precedent", "precedente", "ex", "futur", "future", "initial", "initiale"];
+
+/// Issue 520 U4 (A1, cue d): the folded past participles of a relaunch, after which `avec la société X`
+/// closing the name is the relaunch's award (`relancé en procédure négocié … avec la société B BRAUN`).
+const PAST_RELAUNCH: [&str; 8] =
+    ["relance", "relancee", "relances", "relancees", "negocie", "negociee", "negocies", "negociees"];
+
+/// Issue 520 U4 (A1, cue d, the review): the folded words a past relaunch's procedure is described with
+/// between its participle and `avec la société X` (`relancé en procédure négocié sans mise en concurrence
+/// et dispensé de publicité (art.35-I.1°) avec la Société Vascutek`), beside numbers, number marks and
+/// roman numerals. Any other word there governs the `avec` instead — a failure, a negation, another verb
+/// (`mais déclaré sans suite après échec des négociations avec`, `négocié sans succès avec`,
+/// `négociations rompues avec`, `aucun accord trouvé avec`) — and names no relaunch's awardee.
+const RELAUNCH_PROCEDURE: [&str; 43] = [
+    "en", "de", "d", "du", "des", "la", "le", "l", "les", "et", "ni", "a", "au", "aux", "selon", "sous", "par", "sans",
+    "avec", "procedure", "marche", "negocie", "negociee", "mise", "concurrence", "publicite", "publication",
+    "prealable", "nouvelle", "forme", "dispense", "dispensee", "article", "art", "alinea", "code", "marches",
+    "publics", "cmp", "decret", "application", "er", "eme",
+];
+
+/// Issue 520 U4 (A1): the folded words after `à` (and its article) that make it no party's preposition
+/// (`attribué à l'issue de la négociation à la société X`, `à compter du`, `à partir du`, `à la suite
+/// de`, `à hauteur de`; the review: `à titre provisoire`, `à nouveau`, `à l'unanimité`, `à la majorité`,
+/// `à l'occasion de`, `à défaut de`, `à l'article 35`, `à la fin de`): the cue reads on to the next `à`.
+const NO_PARTY_AFTER: [&str; 23] = [
+    "issue", "compter", "partir", "suite", "hauteur", "titre", "nouveau", "unanimite", "majorite", "occasion", "defaut",
+    "article", "art", "raison", "cause", "condition", "travers", "exception", "terme", "date", "fin", "effet", "moins",
+];
+
+/// Issue 520 U4 (A1, the review): the folded words right before an `à` that make it no party's
+/// preposition (`attribué, conformément à l'article 35, à la société Dupont`, `suite à une procédure
+/// négociée à`, `grâce à`, `jusqu'à`, `par recours à`): the cue reads on to the next `à`.
+const NO_PARTY_BEFORE: [&str; 7] = ["conformement", "suite", "grace", "jusqu", "recours", "quant", "relativement"];
+
+/// Issue 520 U4 (A1, the review): the folded word stems that, after the name in its sentence, undo the
+/// award it states or make it an earlier one (`Lot attribué à la société Martin, qui s'est désistée`,
+/// `(annulé)`, `résilié pour faute`, `qui a été mise en liquidation`, `Attributaire : Dupont SARL
+/// (désisté)`, `la société Dupont a été retenue mais s'est désistée`), matched at a word's start; and
+/// `sans suite` (`Le marché attribué à la société Dupont a été déclaré sans suite`). Such a cue names nobody.
+const AWARD_UNDONE: [&str; 16] = [
+    "desist", "annul", "resili", "liquidation", "defaill", "faillite", "renonc", "retir", "retrait", "abandon",
+    "forfait", "caduc", "rompu", "rupture", "initialement", "precedemment",
+];
+
+/// Issue 520 U4 (A1): a count or a set where the winner would stand (`61 lots attribués à 29
+/// fournisseurs`, `attribué à plusieurs entreprises`; the review: `deux entreprises`, `des entreprises
+/// différentes`, `chacun des candidats`, `un prestataire local`, `un montant de 12 000 EUR`): no one
+/// awardee. Folded, the extracted name's first word.
+const COUNT_NOUNS: [&str; 33] = [
+    "fournisseurs", "fournisseur", "lots", "lot", "marches", "marche", "societes", "entreprises", "titulaires",
+    "attributaires", "plusieurs", "un", "une", "deux", "trois", "quatre", "cinq", "des", "ces", "chacun", "chacune",
+    "chaque", "tous", "toutes", "divers", "diverses", "differents", "differentes", "certains", "certaines", "aucun",
+    "aucune", "autres",
+];
+
+/// Issue 520 U4 (A1): a pointer where the winner would stand (`Attributaire : voir l'annexe`, `cf avis
+/// d'attribution`; the review: `idem lot 1`, `ibid`, `ci-dessous`, `identique au lot n° 3`, `se reporter
+/// à l'avis`, `consulter l'avis`, `la société suivante`, `la même entreprise`). Folded, the extracted
+/// name's first word.
+const WINNER_POINTERS: [&str; 26] = [
+    "voir", "cf", "see", "siehe", "ver", "vease", "idem", "ibid", "ci", "identique", "meme", "memes", "suivant",
+    "suivante", "suivants", "suivantes", "se", "consulter", "reporter", "precite", "precitee", "ledit", "ladite",
+    "celui", "celle", "lui",
+];
+
+/// Issue 520 U4 (A1, the review): a role, a body, a quality or a status where the winner's name would
+/// stand (`titulaire du lot 1`, `l'unique soumissionnaire`, `l'entreprise ayant remis la meilleure
+/// offre`, `l'entreprise mieux-disante`, `l'offre économiquement la plus avantageuse`, `la CAO du 12 mai`,
+/// `la séance du 12 mai`, `pouvoir adjudicateur`, `Monsieur le Maire`, `ce lot`, `en cours`, `non
+/// désigné`, `pas de titulaire`, `inconnu`): every notice that writes it would share one organization.
+/// Folded, the extracted name's first word.
+const WINNER_ROLES: [&str; 41] = [
+    "titulaire", "attributaire", "soumissionnaire", "soumissionnaires", "candidat", "candidats", "candidate",
+    "prestataire", "prestataires", "offre", "offres", "unique", "seul", "seule", "mieux", "moins", "meilleur",
+    "meilleure", "ayant", "montant", "cao", "commission", "seance", "pouvoir", "acheteur", "monsieur", "madame", "ce",
+    "cet", "cette", "en", "non", "pas", "personne", "rien", "inconnu", "inconnue", "confidentiel", "confidentielle",
+    "ancien", "precedent",
+];
+
+/// Issue 520 U4 (A1): the folded descriptors an awardee is introduced with and that the name drops (`la
+/// Société Arrow Génériques`, `l'entreprise Promocash`, `l'esat "Les Ateliers de Polangis"`, `la STÉ`).
+const WINNER_DESCRIPTORS: [&str; 4] = ["societe", "ste", "entreprise", "esat"];
+
+/// Issue 520 U4 (A1, the review): the folded words that, right after a descriptor, make it part of the
+/// legal name (`la Société Générale`, `la Société Française de Restauration`, `l'Entreprise Générale de
+/// Bâtiment`, `la STE Nouvelle Dupont`): the descriptor stays, as after a lower-case connector (`la
+/// Société des Eaux de Marseille`, `la Société d'Exploitation des Transports`: [`NAME_CONNECTORS`]).
+const NAME_ADJECTIVES: [&str; 24] = [
+    "generale", "general", "francaise", "nouvelle", "europeenne", "nationale", "internationale", "industrielle",
+    "commerciale", "civile", "cooperative", "anonyme", "mutuelle", "centrale", "regionale", "immobiliere",
+    "financiere", "fonciere", "technique", "auxiliaire", "parisienne", "lyonnaise", "marseillaise", "publique",
+];
+
+/// Issue 520 U4 (A1, the review): the lower-case connectors after which a descriptor is part of the legal
+/// name ([`NAME_ADJECTIVES`]), as published — not `De Dietrich`, a name of its own.
+const NAME_CONNECTORS: [&str; 4] = ["de", "des", "du", "d"];
+
+/// Issue 520 U4 (A1, the review): the folded company abbreviations written with a final dot before the
+/// name (`Ets. Dupont`, `la Sté. Dupont`, `Cie. Générale des Eaux`, `Assoc. Léo Lagrange`, `St. Gobain`):
+/// their dot ends no sentence, and alone they are no name.
+const NAME_ABBREVIATIONS: [&str; 8] = ["ets", "ste", "cie", "st", "assoc", "etab", "etabl", "soc"];
+
+/// Issue 520 U4 (A1, the review): the folded words that open the next sentence or field after a dotted
+/// legal form or an initial (`Dupont S.A. Montant HT : …`, `Dupont S.A.S. Date d'attribution : …`, `Martin
+/// J. Le marché a été notifié`): the name ends with that dot. `A.E.C. Castellane` stays whole.
+const FIELD_OPENERS: [&str; 26] = [
+    "le", "la", "les", "l", "un", "une", "il", "elle", "ce", "cette", "montant", "date", "adresse", "lot", "lots",
+    "marche", "prix", "valeur", "offre", "nombre", "attributaire", "titulaire", "duree", "objet", "decision", "suite",
+];
+
+/// Issue 520 U4 (A1, the review): the folded word stems a lot entry opens on when it relaunches its lot
+/// rather than naming a winner (`lot 30 relancé en marché négocié 35 II 3`).
+const RELAUNCH_STEMS: [&str; 5] = ["relanc", "negoci", "reporter", "recompos", "decompos"];
+
+/// Issue 520 U4 (A1, the review): how many bytes past a name's opening [`winner_end`] reads — one cue's
+/// scan of the whole rest made the extractor quadratic on a long text. A name that has not ended by
+/// then ran on, and [`plausible_winner`] refuses it ([`WINNER_MAX_CHARS`]).
+const WINNER_SCAN: usize = 240;
+
+/// Issue 520 U4 (A1, the review): the longest name, in characters, that [`plausible_winner`] takes.
+const WINNER_MAX_CHARS: usize = 120;
+
+/// Issue 520 U4 (A1, unit-1 decision §4.2): whether `name` holds a word any [`award_winner`] cue needs
+/// (`attribu…`, `titulaire`, `retenu`, `avec l…`), compared on the raw bytes, ASCII case-blind, with
+/// nothing allocated — the fold's gate before it reads a kept party's copies.
+pub fn may_name_a_winner(name: &str) -> bool {
+    ["attribu", "titulaire", "retenu", "avec l"].iter().any(|cue| find_ascii_ci(name, cue).is_some())
+}
+
+/// The first byte at which `needle` (ASCII) stands in `hay`, ASCII case-blind. A match opens on a
+/// char boundary: UTF-8 never puts an ASCII byte inside a multi-byte char.
+fn find_ascii_ci(hay: &str, needle: &str) -> Option<usize> {
+    let (hay, needle) = (hay.as_bytes(), needle.as_bytes());
+    (needle.len() <= hay.len())
+        .then(|| hay.windows(needle.len()).position(|w| w.eq_ignore_ascii_case(needle)))
+        .flatten()
+}
+
+/// Issue 520 U4 (A1, unit-1 decision §4.2): the one awardee a void phrase names, as published (`CSL
+/// Berhing`, `Sarltacavl`, `san see`), or `None`. The fold reads it only for a party it keeps whose
+/// copies are in the void net ([`mentions_void`]) — an award summary (`Lot déclaré infructueux … puis
+/// attribué à la Société Arrow Génériques suite à procédure négociée`) or a name after a void prefix
+/// (`Pas d'offre. Relancé en procédure 35.ii.3 … Attribué à Léo Lagrange`); ordinary names never.
+///
+/// The cues, the measured French forms:
+/// - (a) an `attribué(e)(s)` that states an award ([`award_verb`]: not negated in its clause, not `déjà`
+///   another procedure's; nor, since the review, negated past `encore` or doubted: [`AWARD_DOUBTS`]),
+///   with no relaunch or award still to come before it in its clause ([`RELAUNCH_INTENT`],
+///   [`FUTURE_AWARDS`]), followed in its sentence within [`AWARD_REACH`] words by `à` and an optional
+///   `:` (`attribué le 9/12/13 à`, `marché attribué à: Berthelet`) — not an adverbial `à`
+///   ([`NO_PARTY_BEFORE`], [`NO_PARTY_AFTER`]: `conformément à l'article 35`, `à titre provisoire`);
+/// - (b) `d'attribuer ce lot à` after a decision ([`AWARD_DECISIONS`]: `a décidé d'attribuer ce lot à`);
+/// - (c) a label: `Nom du titulaire:`, `Nom de l'attributaire:`, `Attributaire:`, `titulaire:` (an awardee
+///   word straight before its `:`, not negated, not an earlier one's: [`LABEL_QUALIFIERS`]) and
+///   `fournisseur retenu =`;
+/// - (d) `avec la société X` / `avec l'entreprise X` closing the name, after a past relaunch
+///   ([`PAST_RELAUNCH`]) in its sentence with only its procedure between ([`RELAUNCH_PROCEDURE`]), and with
+///   no [`RELAUNCH_INTENT`] or [`FUTURE_AWARDS`] word before it;
+/// - (e) `la société X a été retenue`, not negated (`aucune société n'a été retenue`), with no relaunch to
+///   come after it in its sentence.
+///
+/// A cue whose own sentence undoes the award after the name ([`AWARD_UNDONE`]: `qui s'est désistée`,
+/// `(annulé)`, `résilié`) names nobody. The name drops its descriptor (`la Société`, `société`,
+/// `l'entreprise`, `L'entreprise`, `LA SOCIÉTÉ`, `l'esat`, `la STÉ` — unless the legal name goes on from
+/// it: `la Société Générale`, `la Société des Eaux de Marseille`), a lower-case article (`la Sarltacavl`;
+/// `La Poste` keeps its capital `La`) and its quotes, and ends where [`winner_end`] says: ` suite`, `,`,
+/// `:`, ` (`, ` pour un montant`, ` après négociation`, ` SISE`, ` le <digit>`, a spaced dash, a five-digit
+/// postcode, a line break, a sentence end (a `.` that does not follow a single letter or a company
+/// abbreviation: `A.E.C. Castellane`, `C.A.J.L`, `Ets. Dupont` stay whole; `Dupont S.A. Montant …` ends at
+/// `S.A.`), a list separator (`;`, ` / `), the next cue, or the end of the text.
+///
+/// `None` with no cue; for a name that opens with no letter (`à 29 fournisseurs`), on a count, a pointer
+/// or a role ([`COUNT_NOUNS`], [`WINNER_POINTERS`], [`WINNER_ROLES`]), that is a descriptor alone, cut
+/// mid-phrase, holds another party's `à` or another lot, or is itself a non-name ([`plausible_winner`]);
+/// for two or more distinct names (`lot 10 attribué à Bayer Santé Familiale … Lot 14 attribué à Pfizer`,
+/// `titulaire 1: SAGA titulaire 2: Chapelec`, two `attributaire:` labels); when a list separator after
+/// the name opens a segment that is not void (`Lots suivants attribués à la société RMI, … / 4.2
+/// (portables): …`); and when a lot entry no cue reads names a winner (`Lot 1) attribué à Dupont. Lot 2)
+/// Martin`: [`lot_entry_names_another`]). A future counterparty (`sera passé avec la STÉ France
+/// Télécom`), a relaunch's bidders (`à relancer … avec les sociétés ayant soumissionné`), a failed,
+/// rejected or excluded bidder, a pointer (`Voir l'avis d'attribution … pour l'entreprise attributaire du
+/// lot`) and an award with no party (`257 lots attribués`, `attribué le 28.10.2013`, `attribué par marché
+/// négocié`) name nobody.
+pub fn award_winner(name: &str) -> Option<String> {
+    if !may_name_a_winner(name) {
+        return None;
+    }
+    let runs = alphanumeric_runs(name);
+    let folded: Vec<String> = runs.iter().map(|&(from, to)| fold(&name[from..to])).collect();
+    let words: Vec<&str> = folded.iter().map(String::as_str).collect();
+    let cues = winner_cues(name, &runs, &words);
+    let starts: Vec<usize> = cues.iter().map(|cue| cue.at).collect();
+    // The winner as published, and its fold (distinct names compare on it).
+    let mut winner: Option<(String, String)> = None;
+    for cue in &cues {
+        let end = winner_end(name, cue.name, &starts);
+        // Cue e's name ends before `a été retenue` at the latest, and at its own terminators before that.
+        let end = cue.until.map_or(end, |until| until.min(end));
+        // Cue d names the winner only where it closes the name (`… avec la société B BRAUN`).
+        if cue.closing && !name[end..].trim_matches(|c: char| c.is_whitespace() || c == '.').is_empty() {
+            continue;
+        }
+        // The review: an award its own sentence undoes after the name (`, qui s'est désistée`).
+        if undone_after(&name[end..]) {
+            continue;
+        }
+        let candidate = strip_winner(&name[cue.name..end]);
+        // A later cue's text is a tail of the first one's, so the first reads every separator after it.
+        if !plausible_winner(&candidate) || (winner.is_none() && listed_after(&name[cue.name..])) {
+            return None;
+        }
+        let key = fold(&candidate);
+        match &winner {
+            Some((_, first)) if *first != key => return None,
+            Some(_) => {}
+            None => winner = Some((candidate, key)),
+        }
+    }
+    let (winner, _) = winner?;
+    (!lot_entry_names_another(name, &runs, &words, &starts)).then_some(winner)
+}
+
+/// Issue 520 U4: one [`award_winner`] cue — where it opens (`at`, the next cue's name ends there), where
+/// its name opens, where that name ends at the latest when the cue says so (cue e: before `a été
+/// retenue`), and whether the name must close the text (cue d).
+struct WinnerCue {
+    at: usize,
+    name: usize,
+    until: Option<usize>,
+    closing: bool,
+}
+
+/// Issue 520 U4: every [`award_winner`] cue in `raw` (`runs` its alphanumeric runs, `words` their folds,
+/// one per run), in text order. Each word's clause and sentence, and where the next future or doubt word
+/// stands, are read once (the review: a re-scan per cue made a long text quadratic).
+fn winner_cues(raw: &str, runs: &[(usize, usize)], words: &[&str]) -> Vec<WinnerCue> {
+    let gap = |k: usize| &raw[runs[k - 1].1..runs[k].0];
+    let future = |w: &str| RELAUNCH_INTENT.contains(&w) || FUTURE_AWARDS.contains(&w);
+    // Per word: the first word of its clause, as [`award_verb`] reads one, and its sentence's number.
+    let (mut clause, mut sentence) = (vec![0; words.len()], vec![0; words.len()]);
+    for k in 1..words.len() {
+        clause[k] = if clause_break(gap(k)) { k } else { clause[k - 1] };
+        sentence[k] = sentence[k - 1] + usize::from(sentence_end(gap(k)));
+    }
+    // Per word: the next future word, and the next doubt, at it or after it.
+    let (mut next_future, mut next_doubt) = (vec![None; words.len() + 1], vec![None; words.len() + 1]);
+    for k in (0..words.len()).rev() {
+        next_future[k] = if future(words[k]) { Some(k) } else { next_future[k + 1] };
+        next_doubt[k] = if AWARD_DOUBTS.contains(&words[k]) { Some(k) } else { next_doubt[k + 1] };
+    }
+    let between = |next: &[Option<usize>], from: usize, to: usize| next[from].is_some_and(|k| k < to);
+    // The review: a negation the nearest word hides (`Lot pas encore attribué`, `non encore attribué`).
+    let negated_past_adverb = |i: usize| {
+        let mut before = words[clause[i]..i].iter().rev().filter(|b| !CLAUSE_FILLERS.contains(*b));
+        before.next().is_some_and(|b| NEGATED_ADVERBS.contains(b))
+            && before.next().is_some_and(|b| NEGATIONS.contains(b))
+    };
+    // `à` as published: the fold reads the verb `a` the same way (`Lot déjà attribué a été déclaré`).
+    let to = |k: usize| matches!(&raw[runs[k].0..runs[k].1], "à" | "À");
+    // The byte after run `k`, past spaces and one `:` (`attribué à: Faure/Annequin`).
+    let past_colon = |k: usize| {
+        let rest = &raw[runs[k].1..];
+        let trimmed = rest.trim_start();
+        runs[k].1 + rest.len() - trimmed.len() + trimmed.strip_prefix(':').map_or(0, |_| 1)
+    };
+    // The byte after a label's mark, when one of `marks` follows run `k` past spaces.
+    let label = |k: usize, marks: &[char]| {
+        let rest = &raw[runs[k].1..];
+        let trimmed = rest.trim_start();
+        let mark = trimmed.chars().next().filter(|c| marks.contains(c))?;
+        Some(runs[k].1 + rest.len() - trimmed.len() + mark.len_utf8())
+    };
+    let procedural = |w: &str| {
+        RELAUNCH_PROCEDURE.contains(&w)
+            || NUMBER_MARKS.contains(&w)
+            || ROMAN.contains(&w)
+            || w.bytes().any(|b| b.is_ascii_digit())
+    };
+    let first_future = next_future[0];
+    let mut cues = Vec::new();
+    // Cue d: the last past relaunch participle, and whether only its procedure stands after it.
+    let (mut relaunched, mut procedure_only): (Option<usize>, bool) = (None, false);
+    for i in 0..words.len() {
+        let w = words[i];
+        let clause_future = between(&next_future, clause[i], i);
+        // (a) `attribué … à`.
+        if AWARDED_FORMS.contains(&w)
+            && award_verb_in(raw, runs, words, true, i, Some(clause[i]))
+            && !clause_future
+            && !between(&next_doubt, clause[i], i)
+            && !negated_past_adverb(i)
+        {
+            let party = (i + 1..words.len().min(i + AWARD_REACH + 1))
+                .take_while(|&k| !sentence_end(gap(k)))
+                .find(|&k| {
+                    let next = k + 1 + usize::from(words.get(k + 1).is_some_and(|n| matches!(*n, "l" | "la" | "le" | "les")));
+                    to(k)
+                        && !NO_PARTY_BEFORE.contains(&words[k - 1])
+                        && !words.get(next).is_some_and(|n| NO_PARTY_AFTER.contains(n))
+                });
+            if let Some(k) = party {
+                cues.push(WinnerCue { at: runs[i].0, name: past_colon(k), until: None, closing: false });
+            }
+        }
+        // (b) `a décidé d'attribuer ce lot à`.
+        if w == "attribuer"
+            && i >= 2
+            && words[i - 1] == "d"
+            && AWARD_DECISIONS.contains(&words[i - 2])
+            && clause[i] <= i - 2
+            && !negated(&words[clause[i]..i - 2])
+            && words.get(i + 1..i + 3) == Some(&["ce", "lot"][..])
+            && i + 3 < words.len()
+            && to(i + 3)
+            && award_verb_in(raw, runs, words, true, i, Some(clause[i]))
+            && !clause_future
+        {
+            cues.push(WinnerCue { at: runs[i - 1].0, name: past_colon(i + 3), until: None, closing: false });
+        }
+        // (c) The awardee labels.
+        if matches!(w, "attributaire" | "titulaire")
+            && !negated(&words[..i])
+            && !(i > 0 && LABEL_QUALIFIERS.contains(&words[i - 1]))
+            && let Some(name) = label(i, &[':', '：'])
+        {
+            cues.push(WinnerCue { at: runs[i].0, name, until: None, closing: false });
+        }
+        if w == "retenu"
+            && i > 0
+            && words[i - 1] == "fournisseur"
+            && let Some(name) = label(i, &['='])
+        {
+            cues.push(WinnerCue { at: runs[i - 1].0, name, until: None, closing: false });
+        }
+        // (d) `avec la société X` closing the name, after a past relaunch in its sentence with only its
+        // procedure between, and before no future one.
+        if w == "avec"
+            && matches!(words.get(i + 1..i + 3), Some(["la", "societe"] | ["l", "entreprise"]))
+            && relaunched.is_some_and(|j| sentence[j] == sentence[i])
+            && procedure_only
+            && first_future.is_none_or(|f| f > i)
+        {
+            cues.push(WinnerCue { at: runs[i].0, name: runs[i + 1].0, until: None, closing: true });
+        }
+        // (e) `la société X a été retenue`, the name from the company word to the verdict.
+        if w == "a"
+            && words.get(i + 1) == Some(&"ete")
+            && words.get(i + 2).is_some_and(|r| matches!(*r, "retenue" | "retenu"))
+            && !(i > 0 && matches!(words[i - 1], "n" | "ne"))
+            && !next_future[i + 3].is_some_and(|f| sentence[f] == sentence[i])
+            && let Some(k) = (i.saturating_sub(7)..i)
+                .rev()
+                .find(|&k| words[k] == "societe" || (words[k] == "entreprise" && k > 0 && words[k - 1] == "l"))
+            && !words[k.saturating_sub(2)..k].iter().any(|q| NEGATIONS.contains(q) || *q == "nulle")
+        {
+            let at = if k > 0 && matches!(words[k - 1], "la" | "l") { runs[k - 1].0 } else { runs[k].0 };
+            // The name opens after the company word, unless the legal name goes on from it (`la Société
+            // Générale a été retenue`): [`strip_winner`] reads the descriptor then.
+            let name = if descriptor_names(&raw[runs[k].1..]) { at } else { runs[k].1 };
+            cues.push(WinnerCue { at, name, until: Some(runs[i].0), closing: false });
+        }
+        if PAST_RELAUNCH.contains(&w) {
+            (relaunched, procedure_only) = (Some(i), true);
+        } else if !procedural(w) {
+            procedure_only = false;
+        }
+    }
+    cues.sort_by_key(|cue| cue.at);
+    cues
+}
+
+/// Issue 520 U4: whether `rest` — what follows a name, to its sentence's end (and at most
+/// [`WINNER_SCAN`] bytes) — undoes the award ([`AWARD_UNDONE`], `sans suite`).
+fn undone_after(rest: &str) -> bool {
+    let rest = &rest[..floor_boundary(rest, WINNER_SCAN)];
+    let end = [rest.find([';', '\n', '…']), rest.find(". ")].into_iter().flatten().min().unwrap_or(rest.len());
+    let folded = fold(&rest[..end]);
+    let words: Vec<&str> = folded.split(' ').collect();
+    words.iter().any(|w| AWARD_UNDONE.iter().any(|stem| w.starts_with(stem)))
+        || words.windows(2).any(|pair| pair == ["sans", "suite"])
+}
+
+/// Issue 520 U4: where the name that opens at byte `from` of `raw` ends ([`award_winner`]'s terminators),
+/// within [`WINNER_SCAN`] bytes:
+/// - `,`, `;`, `:`, a line break (the review: `Dupont SARL\nAdresse : …`, `Dupont : 12 000 EUR HT`);
+/// - after whitespace of any kind (the review: a tab or a no-break space as much as a space): `(`, a
+///   dash or a `/` that whitespace follows, whole-word ` suite` and ` SISE` (ASCII case-blind), ` le
+///   <digit>`, ` pour un montant` / ` pour le lot` / ` après négociation` / ` par marché négocié`
+///   ([`award_circumstance`]), ` en date`, ` qui`, ` dont`, ` a été` / ` ont été` (`Dupont a été
+///   résilié`), a five-digit postcode (`Assurances securité 59000 Lille`);
+/// - a sentence end: a `.` after digits or after two letters or more that are no company abbreviation
+///   ([`NAME_ABBREVIATIONS`]: `Ets. Dupont` goes on); after a single letter, only where whitespace and a
+///   capitalised field or sentence opener follow ([`FIELD_OPENERS`]: `Martin J. Le marché`) or the
+///   dotted letters spell a legal form ([`COMPANY_FORMS_DOTTED`]: `Dupont S.A. Montant`) — the dot kept;
+/// - the next cue (`cues`, where each opens, in order), or the end of the text.
+fn winner_end(raw: &str, from: usize, cues: &[usize]) -> usize {
+    let text = &raw[from..floor_boundary(raw, from + WINNER_SCAN)];
+    let mut end = text.find([',', ';', ':', '：', '\n', '\r']).unwrap_or(text.len());
+    // The alphanumeric run that opens `s`.
+    fn run(s: &str) -> &str {
+        &s[..s.find(|c: char| !c.is_alphanumeric()).unwrap_or(s.len())]
+    }
+    // A sentence end first: it bounds the scan below.
+    for (at, _) in text[..end].match_indices('.') {
+        let letters = text[..at].chars().rev().take_while(|c| c.is_alphabetic()).count();
+        if letters != 1 {
+            let opens = text[..at].char_indices().rev().nth(letters.saturating_sub(1)).map_or(at, |(k, _)| k);
+            let token = &text[opens..at];
+            if letters >= 2 && NAME_ABBREVIATIONS.contains(&fold(token).as_str()) {
+                continue;
+            }
+            end = at;
+            break;
+        }
+        // A dotted letter: the name goes on (`A.E.C. Castellane`), unless the next sentence or field opens.
+        let after = &text[at + 1..];
+        let opener = after.trim_start();
+        if opener.len() == after.len() || !opener.starts_with(char::is_uppercase) {
+            continue;
+        }
+        let dotted: String = text[..at]
+            .rsplit(char::is_whitespace)
+            .next()
+            .unwrap_or("")
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .collect::<String>()
+            .to_lowercase();
+        if FIELD_OPENERS.contains(&fold(run(opener)).as_str()) || COMPANY_FORMS_DOTTED.contains(&dotted.as_str()) {
+            end = at + 1;
+            break;
+        }
+    }
+    // The folded word after the run that opens `s`, past whitespace.
+    let next_word = |s: &str| {
+        let rest = &s[run(s).len()..];
+        let trimmed = rest.trim_start();
+        (trimmed.len() < rest.len()).then(|| fold(run(trimmed)))
+    };
+    for (at, c) in text[..end].char_indices() {
+        if !c.is_whitespace() {
+            continue;
+        }
+        let rest = &text[at + c.len_utf8()..];
+        let word = run(rest);
+        let after_word = &rest[word.len()..];
+        let stops = rest.starts_with('(')
+            || (rest.starts_with(['-', '–', '—', '/']) && rest.chars().nth(1).is_some_and(char::is_whitespace))
+            || word.eq_ignore_ascii_case("suite")
+            || word.eq_ignore_ascii_case("sise")
+            || (word.eq_ignore_ascii_case("le")
+                && after_word.starts_with(char::is_whitespace)
+                && after_word.trim_start().starts_with(|c: char| c.is_ascii_digit()))
+            || award_circumstance(word, after_word)
+            || matches!(word, "qui" | "dont")
+            || (word == "en" && next_word(rest).as_deref() == Some("date"))
+            || (matches!(word, "a" | "ont") && next_word(rest).as_deref() == Some("ete"))
+            || (word.len() == 5 && word.bytes().all(|b| b.is_ascii_digit()));
+        if stops {
+            end = at;
+            break;
+        }
+    }
+    let next = cues.partition_point(|&cue| cue <= from);
+    if let Some(&cue) = cues.get(next) {
+        end = end.min(cue - from);
+    }
+    from + end
+}
+
+/// The largest char boundary of `s` at or below `at` (`s.len()` past its end).
+fn floor_boundary(s: &str, at: usize) -> usize {
+    let mut at = at.min(s.len());
+    while !s.is_char_boundary(at) {
+        at -= 1;
+    }
+    at
+}
+
+/// Issue 520 U4: whether `word` (`pour`, `après`, `par`, any case) and what follows it (`rest`) state the
+/// award's circumstance, not the name's own words: a figure or a lot after `pour` (`pour un montant`,
+/// `pour le lot 2`; not `Association pour la Formation`), a procedure after `après` or `par` (`après
+/// négociation`, `par marché négocié`, `par la commission`; the build's deviation 4, closed by the
+/// review: `Dupont Frères après négociation` read as one name).
+fn award_circumstance(word: &str, rest: &str) -> bool {
+    const FIGURES: [&str; 7] = ["lot", "lots", "montant", "marche", "prix", "total", "somme"];
+    const PROCEDURES: [&str; 16] = [
+        "negociation", "negociations", "marche", "procedure", "appel", "mise", "consultation", "avis", "decision",
+        "deliberation", "lettre", "voie", "analyse", "relance", "commission", "cao",
+    ];
+    let preposition = match word.len() {
+        3..=6 => fold(word),
+        _ => return false,
+    };
+    if !matches!(preposition.as_str(), "pour" | "apres" | "par") {
+        return false;
+    }
+    // The two words after it: a short prefix of `rest` holds them.
+    let folded = fold(&rest[..floor_boundary(rest, 48)]);
+    let mut words = folded.split(' ').filter(|w| !w.is_empty());
+    let (first, second) = (words.next().unwrap_or(""), words.next().unwrap_or(""));
+    let article = matches!(first, "le" | "la" | "les" | "l" | "un" | "une");
+    match preposition.as_str() {
+        "pour" => matches!(first, "un" | "une" | "total" | "somme") || FIGURES.contains(&first) || (article && FIGURES.contains(&second)),
+        "apres" | "par" => PROCEDURES.contains(&first) || (article && PROCEDURES.contains(&second)),
+        _ => false,
+    }
+}
+
+/// Issue 520 U4: `raw` without the punctuation and spaces at its edges — keeping the final dot of a
+/// dotted legal form or an initial (`Dupont S.A.`, `Martin J.`; the review: the trim took it).
+fn trim_winner(raw: &str) -> &str {
+    let edge = |c: char| c.is_whitespace() || ".,:;-–—".contains(c);
+    let name = raw.trim_matches(edge);
+    let start = raw.len() - raw.trim_start_matches(edge).len();
+    let end = start + name.len();
+    let mut tail = name.chars().rev();
+    let dotted =
+        tail.next().is_some_and(char::is_alphabetic) && tail.next().is_some_and(|c| c == '.' || c.is_whitespace());
+    if dotted && raw[end..].starts_with('.') { &raw[start..=end] } else { name }
+}
+
+/// Issue 520 U4: `raw` without its descriptor (`la Société`, `l'entreprise`, `L'entreprise`, `LA SOCIÉTÉ`,
+/// `l'esat`, `la STÉ` — after an article any case; bare, only `société`, so `Société Générale` keeps its
+/// name), unless the legal name goes on from it ([`descriptor_names`]: `la Société Générale` →
+/// `Société Générale`); a lower-case article (`la Sarltacavl`; `La Poste` keeps its capital `La`); its
+/// quotes (`l'esat "Les Ateliers de Polangis"`; inside the name, the review: `la société "Les Jardins"
+/// SARL` → `Les Jardins SARL`, none left unbalanced); and the punctuation around it ([`trim_winner`]).
+fn strip_winner(raw: &str) -> String {
+    const ARTICLES: [&str; 11] = ["la ", "La ", "LA ", "l'", "L'", "l’", "L’", "l´", "L´", "lʼ", "Lʼ"];
+    const QUOTES: &str = "\"«»“”„";
+    let name = trim_winner(raw);
+    let (article, rest) =
+        ARTICLES.iter().find_map(|a| name.strip_prefix(a).map(|r| (true, r.trim_start()))).unwrap_or((false, name));
+    let (noun, after) = rest.split_at(rest.find(|c: char| !c.is_alphanumeric()).unwrap_or(rest.len()));
+    let descriptor = if article { WINNER_DESCRIPTORS.contains(&fold(noun).as_str()) } else { noun == "société" };
+    let name = match descriptor {
+        true if descriptor_names(after) => rest,
+        true if !after.is_empty() => after.trim_start(),
+        _ => name,
+    };
+    let name =
+        ["la ", "le ", "les ", "l'", "l’", "l´", "lʼ"].iter().find_map(|a| name.strip_prefix(a)).unwrap_or(name);
+    let unquoted = if name.contains(|c: char| QUOTES.contains(c)) {
+        name.split(|c: char| QUOTES.contains(c)).flat_map(str::split_whitespace).collect::<Vec<_>>().join(" ")
+    } else {
+        name.to_owned()
+    };
+    trim_winner(unquoted.trim_matches(|c: char| c.is_whitespace() || c == '\'')).to_owned()
+}
+
+/// Issue 520 U4 (the review): whether the words after a descriptor (`after`, from the byte after it)
+/// make it part of the legal name — whitespace, then an adjective of one ([`NAME_ADJECTIVES`]: `Société
+/// Générale`) or a lower-case connector ([`NAME_CONNECTORS`]: `Société des Eaux de Marseille`).
+fn descriptor_names(after: &str) -> bool {
+    let next = after.trim_start();
+    let word = &next[..next.find(|c: char| !c.is_alphanumeric()).unwrap_or(next.len())];
+    next.len() < after.len() && (NAME_CONNECTORS.contains(&word) || NAME_ADJECTIVES.contains(&fold(word).as_str()))
+}
+
+/// Issue 520 U4: whether an extracted name can be the awardee — it opens with a letter, holds two letters
+/// or digits at least and at most [`WINNER_MAX_CHARS`] characters; its first word is no count, pointer or
+/// role ([`COUNT_NOUNS`], [`WINNER_POINTERS`], [`WINNER_ROLES`]); it is no descriptor alone (`la
+/// société`, `l'entreprise, pour un montant`) and no company abbreviation alone (`Ets`); it does not end on a
+/// connector (`Dupont et`) nor hold another party's `à` or another lot (`Dupont SARL et lot 4 à Martin
+/// SA`, `Dupont et à la société Martin`, `titre provisoire à Dupont`); and it is no non-name itself
+/// ([`not_a_name`], [`mentions_void`]).
+fn plausible_winner(name: &str) -> bool {
+    let folded = fold(name);
+    let words: Vec<&str> = folded.split(' ').filter(|w| !w.is_empty()).collect();
+    let Some(&head) = words.first() else { return false };
+    name.starts_with(char::is_alphabetic)
+        && name.chars().filter(|c| c.is_alphanumeric()).count() >= 2
+        && name.chars().count() <= WINNER_MAX_CHARS
+        && !COUNT_NOUNS.contains(&head)
+        && !WINNER_POINTERS.contains(&head)
+        && !WINNER_ROLES.contains(&head)
+        && !(words.len() == 1 && (WINNER_DESCRIPTORS.contains(&head) || NAME_ABBREVIATIONS.contains(&head)))
+        && !matches!(words.last(), Some(&("et" | "ou" | "de" | "du" | "des" | "la" | "le" | "les")))
+        && !name.split_whitespace().any(|w| matches!(w, "à" | "À"))
+        && !words
+            .windows(2)
+            .any(|pair| LOT_DESIGNATORS.contains(&pair[0]) && pair[1].bytes().any(|b| b.is_ascii_digit()))
+        && not_a_name(name).is_none()
+        && !mentions_void(name)
+}
+
+/// Issue 520 U4: whether a list separator (`;`, ` / `) in `text` — what follows a name's opening — is
+/// followed by a segment that names something: not void, with letters (`RMI, … / 4.2 (portables): 36
+/// 319,94 EUR HT`; not `Dupont SARL ; lot 2 infructueux`).
+fn listed_after(text: &str) -> bool {
+    text.split(';').flat_map(|segment| segment.split(" / ")).skip(1).any(|segment| {
+        segment.chars().any(char::is_alphabetic) && !mentions_void(segment)
+    })
+}
+
+/// Issue 520 U4 (the review): whether a lot entry that no cue reads names a winner of its own — the text
+/// is then a per-lot list (`Lot 1) attribué à Dupont. Lot 2) Martin. Lot 3) infructueux`, `Lot 2 attribué
+/// à Dupont, lot 3 : Martin SARL, lot 4 infructueux`), whose other awardees one name would drop: a B or C
+/// list never extracts (unit-1 decision §4.3, §4.4). Entries as [`every_lot_void`] reads them
+/// ([`lot_label`], `raw`'s `runs` and their folded `words`); one that holds a cue's start (`cues`, in
+/// order), or opens in a cue's clause (`attribué à la société Dupont pour le lot 2`), is that cue's. An
+/// entry is no winner when its head is void or opens on a relaunch ([`RELAUNCH_STEMS`]: `Lot 31 déclaré
+/// sans suite`, `lot 30 relancé en marché négocié 35 II 3`, `Le lot 32 a été déclaré infructueux`), or
+/// when a conjunction alone joins it to the next. An entry with nothing after its label (a list the slot
+/// cut short: `Lots 2)`) may name anyone, so it counts.
+fn lot_entry_names_another(raw: &str, runs: &[(usize, usize)], words: &[&str], cues: &[usize]) -> bool {
+    let mut entries: Vec<(usize, usize)> = Vec::new();
+    let mut i = 0;
+    while i < words.len() {
+        match lot_label(raw, runs, words, i) {
+            Some(after) => {
+                entries.push((i, after));
+                i = after;
+            }
+            None => i += 1,
+        }
+    }
+    entries.iter().enumerate().any(|(k, &(open, after))| {
+        let (start, end) = (runs[open].0, entries.get(k + 1).map_or(raw.len(), |&(next, _)| runs[next].0));
+        // A cue's own entry: the cue opens in it, or the entry opens in the cue's clause (`attribué à la
+        // société Dupont pour le lot 2`; not `attribué à Dupont, lot 3 : Martin SARL`).
+        let before = cues.partition_point(|&cue| cue < start);
+        let in_clause = before > 0 && {
+            let cue = cues[before - 1];
+            start - cue <= WINNER_SCAN && !clause_break(&raw[cue..start])
+        };
+        if in_clause || cues.get(before).is_some_and(|&cue| cue < end) {
+            return false;
+        }
+        let text = raw[runs.get(after).map_or(raw.len(), |run| run.0).min(end)..end]
+            .trim_end_matches(|c: char| c.is_whitespace() || "-–—/.,;:".contains(c));
+        let folded = fold(text);
+        if folded.is_empty() {
+            return true;
+        }
+        if folded.split(' ').all(|w| LOT_CONJUNCTIONS.contains(&w)) {
+            return k + 1 == entries.len();
+        }
+        let head = reason_head(text).unwrap_or(text);
+        let opens = fold(head);
+        let opens = opens.split(' ').next().unwrap_or("");
+        !(mentions_void(head) || RELAUNCH_STEMS.iter().any(|stem| opens.starts_with(stem)))
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
@@ -4361,6 +5070,16 @@ mod tests {
     fn assert_class(names: &[(u64, &str)], class: Option<NotAName>) {
         for (org, name) in names {
             assert_eq!(not_a_name(name), class, "{org}: {name}");
+        }
+    }
+
+    /// Issue 520 U4: [`assert_class`], and the A1 extractor names no winner in any of `names`
+    /// ([`super::award_winner`]) — every class of unit 1 but A1: the D void prose, the B lists and
+    /// co-winners, the C `Lot n)` lists, the F rows, the A2 names before a void tail and the D residual.
+    fn assert_class_and_no_winner(names: &[(u64, &str)], class: Option<NotAName>) {
+        assert_class(names, class);
+        for (org, name) in names {
+            assert_eq!(super::award_winner(name), None, "{org}: {name}");
         }
     }
 
@@ -4961,9 +5680,10 @@ mod tests {
     /// orgs, D1 to D7 and the three that need two rules — now reads void. The names are the dry
     /// report's (`void-names-refold-after-dry.json`, cut at 300 characters); the three cut D1 rows a
     /// challenger read in full carry the tail they quote (`unit1-classified.json`), joined with `…`.
+    /// Since U4 none of them names a winner either ([`super::award_winner`]).
     #[test]
     fn every_void_520_exemption_is_a_void_lot() {
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 // D1: one lot's BOAMP void sentence.
                 (1392146, "Le lot 1: secteur du canton d'Evian - Rd1005; Rd24 et Rd32 a été déclaré Infructueux"),
@@ -5158,7 +5878,9 @@ mod tests {
     /// keeps, or a plain name. 31375951 (F-P) carries the tail a challenger read past the 300-character
     /// cut (`61 lots attribués à 29 fournisseurs`): on its cut name alone it reads void, as before.
     /// 7969717 (residual) reads void by itself, as before: EP 18715886's 24-language composite keeps its
-    /// party by the fold's majority (2 of 24 copies void), a gap of issue 525's templates.
+    /// party by the fold's majority (2 of 24 copies void), a gap of issue 525's templates. Since U4
+    /// (§4.2) only the A1 rows name a winner ([`award_winner_names_the_one_awardee`]): no A2, B, C, F or
+    /// residual name does — a B list must never extract.
     #[test]
     fn every_kept_520_exemption_keeps_its_class() {
         // A1 (47): an award clause or an awardee label.
@@ -5220,7 +5942,7 @@ mod tests {
             None,
         );
         // A2 (10): a name before a void tail.
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 (1844226, "BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins"),
                 (1844229, "BGE Guyane 16 rue Lieutenant Becker 97300 Cayenne - la consultation a été déclarée sans suite pour les parts non couvertes des besoins"),
@@ -5236,7 +5958,7 @@ mod tests {
             Some(NotAName::AwardSummary),
         );
         // B1 (13): one distinct winner in a list grammar.
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 (2957546, "lot 26: Carestream Lot 27: Sans suite lot 28: CARESTREAM"),
                 (5351956, "lot 7.0401 : pansements raffin Lot 7.04.02 : sans suite"),
@@ -5255,7 +5977,7 @@ mod tests {
             Some(NotAName::AwardSummary),
         );
         // B2 (10): co-winners of one result.
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 (1813067, "1/ Gidef, 37 rue du chemin latérale, 93140 Bondy - 2/ Auxet, Bât 1, apt du gazon, Res. Les champs, 97139 Les Abymes. La consultation a été déclarée sans suite pour la part non couverte des besoins"),
                 (1813070, "1/ CE Cedille, quartier AKR, 97218 Basse Pointe - 2/ Gidef, 37 rue du chemin latérale, 93140 Bondy. La consultation a été déclarée sans suite pour la part non couverte des besoins"),
@@ -5271,7 +5993,7 @@ mod tests {
             Some(NotAName::AwardSummary),
         );
         // B3 (76): several winners in one award block.
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 (1722464, "2012021901 = JBE Electrcité; 2012021902 = Someci; 2012021903 = Burdiwatt; 2012021904 = Infructueux; 2012031901 = Mont Blanc Electrcité; 2012051901 = ATH; 2012051902 = Krice Elec; 2012061901 & 2012061902 = Infructueux; 2012061903 = Sanuelec; 2012071901 = Coteb; 2012071902 = Gandit; 2012081901 = SPIE "),
                 (1722465, "2012023401 = Cle de Sol; 2012023402 = Infructueux; 2012043401 = Logis Services; 2012053401 = ATH; 2012053402 = MCB; 2012053403 = Vittet; 2012093401 = Laffin"),
@@ -5334,7 +6056,7 @@ mod tests {
             ],
             Some(NotAName::AwardSummary),
         );
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 (1642155, "BRI: lot 1: marché n° 12.001 / Arthrex: lots 7 et 10: marché n° 12.006/ Stryker: lots 8-9-24-25-27: marché n° 12.009 / Heraeus: lots 4 et 5: marché n° 12.004 / Science et médecine: lots 6-19-20: marché n° 12.005 Zimmer France: lot 3: marché n° 12.003 Orthofix: lot 26: marché n° 12.008/ Compagnie fin"),
                 (3219666, "2013021901/zone Belley Bas Bugey : Gandit - 69120 Vaulx-en-Velin ; 2013031901/zone Pays de Gex : JS Electricité - 01200 Confort ; 2013051901/zone Oyonnax : ABT Electricité - 01000 Bourg-en-Bresse ; 2013051902/zone Oyonnax - Pascal Gritti - 01110 Hauteville-Lompnes ; 2013061901/zone Chalon-sur-Saône "),
@@ -5358,7 +6080,7 @@ mod tests {
             None,
         );
         // C (29): text-era `Lot n)` lists.
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 (26966868, "Lote I: declarado desierto. Lote II: Winterthur Seguros Generales"),
                 (27028633, "Lot 1) non attribution pour cause administratif. Lot 2) Hospithera"),
@@ -5389,7 +6111,7 @@ mod tests {
             ],
             Some(NotAName::AwardSummary),
         );
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 (31734397, "Lot 1) Tissus Gisele. Lot 2) Tissus Gisele. Lot 3) Mulliez. Lot 4) Tissus Gisele. Lot 5) Tissus Gisele. Lot 6) Tissus Gisele. Lot 7) Tissus Gisele. Lot 8) Centraco. Lot 9) Aucune réponse. Lot 10) CTD. Lot 11) CTD. Lot 12) CTD. Lot 13) TTE. Lot 14) Mulliez. Lot 15) Mulliez. Lot 16) Mulliez. Lot 17) H"),
                 (31736174, "Lot 1) Didactic. Lot 2) Vygon. Lot 3) LPI. Lot 4) LPI. Lot 5) Allegiance. Lot 6) Terumo. Lot 7) Vygon. Lot 8) NM Medical. Lot 9) Porges. Lot 10) Owen Mumford. Lot 11) CIM. Lot 12) Swann Morton. Lot 13) Bbraun. Lot 14) Tyco. Lot 15) Tyco. Lot 16) Peters. Lot 17) Tyco. Lot 18) Dorvit. Lot 19) Non attr"),
@@ -5398,7 +6120,7 @@ mod tests {
             None,
         );
         // F (6): an award with no name (F-P), and eForms tenderers marked not awarded (F-role).
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 (1341883, "Demander le détail à la cellule marchés sont établis 66 marchés pour l'ensemble des 257 lots attribués Les 74 lots infructueux sont relancés 2 lots sans suite (n° 12 et 300)"),
                 (31375951, "Au terme de cette analyse et conformément aux avis et suggestions émis par commission des dispositifs médicaux, réunie le 6 décembre dernier, les choix opérés sont les suivants: - 11 lots ont été déclarés \"Sans suite\", - 5 lots sont déclarés \"Infructueux\", en raison de l'absence de soumissionnaire,  … 61 lots attribués à 29 fournisseurs"),
@@ -5410,7 +6132,7 @@ mod tests {
             Some(NotAName::AwardSummary),
         );
         // The D residual (11 of 12): each costs a junk leaf name, never an award.
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 (4409817, "Projet déclaré sans suite : relancé sous le n° de projet ESID 12 418, attribué le 28.10.2013"),
                 (4409820, "Projet déclaré sans suite : relancé sous le n° de projet ESID 12 419, attribué le 28.10.2013"),
@@ -5425,13 +6147,368 @@ mod tests {
             ],
             Some(NotAName::AwardSummary),
         );
-        assert_class(
+        assert_class_and_no_winner(
             &[
                 (28310858, "Desierto lote 4 y 5 por falta de licitadores. Desierto lotes 1"),
             ],
             None,
         );
-        assert_class(&[(7969717, "Non applicable — Aucune offre n'a été reçue — Lot 5 non attribué")], Some(NotAName::VoidLot));
+        assert_class_and_no_winner(&[(7969717, "Non applicable — Aucune offre n'a été reçue — Lot 5 non attribué")], Some(NotAName::VoidLot));
+    }
+
+    /// Issue 520 U4 (unit-1 decision §4.2, Appendix B): the A1 extractor names the one awardee of each
+    /// of the 47 A1 orgs (49 mentions), exactly as App. B reads it and as published — `CSL Berhing`,
+    /// `Sarltacavl`, `Léo Lagrange`, `san see` — from its award clause (`attribué à`, `d'attribuer ce lot
+    /// à`, `avec la société` closing a past relaunch, `la société X a été retenue`) or its awardee label
+    /// (`Attributaire:`, `Nom du titulaire:`, `titulaire:`, `fournisseur retenu =`). Each is in the walk's
+    /// net and a name the fold keeps (an award summary, or a plain name after `Pas d'offre`), so the fold
+    /// consults it. The strip and terminator cases keep a capital article (`La Poste`), single-letter dots
+    /// (`A.E.C. Castellane`, `C.A.J.L`) and a slash pair (`Grunenthal/CSP`), and end at a comma (`CSL
+    /// Berhing,`), a postcode, a date, `SISE`, a void segment. The near misses (§4.2) name a future
+    /// counterparty, a relaunch's bidders, a failed, rejected, excluded or liquidated bidder, a pointer, an
+    /// award with no party, a count, or several awardees: nothing.
+    #[test]
+    fn award_winner_names_the_one_awardee() {
+        const A1: [(u64, &str, &str); 47] = [
+            (1397079, "Lot déclaré infructueux lors de l'appel d'offre puis relancé en procédure négocié sans mise en concurrence et sans publicité (art.35-2.3) avec la société B BRAUN", "B BRAUN"),
+            (1397080, "Lot déclaré infructueux lors de l'appel d'offre puis relancé en procédure négocié sans mise en concurrence et dispensé de publicité (art.35-I.1°) avec la Société Vascutek", "Vascutek"),
+            (1435451, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Arrow Génériques suite à procédure négociée sans publicité avec mise en concurrence", "Arrow Génériques"),
+            (1435452, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Abbott Products suite à procédure négociée sans publicité sans mise en concurrence", "Abbott Products"),
+            (1435453, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Fresenius Kabi suite à procédure négociée sans publicité avec mise en concurrence", "Fresenius Kabi"),
+            (1435455, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Sanofi Aventis suite à procédure négociée sans publicité avec mise en concurrence", "Sanofi Aventis"),
+            (1435456, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Grunenthal/CSP suite à procédure négociée sans publicité avec mise en concurrence", "Grunenthal/CSP"),
+            (1435457, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Sandoz suite à procédure négociée avec publicité avec mise en concurrence (IAP 11-32 C)", "Sandoz"),
+            (1484019, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société Bionobis suite à un marché négocié sans concurrence", "Bionobis"),
+            (1484119, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société CSL Berhing, suite marché négocié sans concurrence", "CSL Berhing"),
+            (1484121, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la Société LFB BIOMEDICAMENTS, suite marché négocié sans concurrence", "LFB BIOMEDICAMENTS"),
+            (1503868, "Lot déclaré infructueux lors de l'appel d'offre puis attribué à la société Henry Schein suite à la passation d'un marché négocié sans publicité avec mise en concurrence.", "Henry Schein"),
+            (1621278, "ce lot a été déclaré infructueux par la CAO et une procédure négociée à été mise en place conformément à l'art 35 du CMP et sans nouvelle mesure de publicité. Nom de l'attributaire: Brake France Service", "Brake France Service"),
+            (1668604, "procédure infructueuse, le marché a été relancé en marché négocié sans publication, ni mise en concurrence, en application de l'article 35-I-1 du code des marchés publics, puis attribué dans le cadre de cette nouvelle procédure à la Sarltacavl, pour un montant (TTC) du DDED de 408 994,55 EUR", "Sarltacavl"),
+            (1986366, "lot déclaré infructueux lors de l'appel d'offre puis attribué à la société Peters suite à un marché négocié sans mise en concurrence", "Peters"),
+            (2381362, "lot 30 relancé en marché négocié 35 II 3. Lot 31 déclaré sans suite. Lot 32 attribué à Pierre Fabre Dermatologie le 5.6.2012 (no marché 2012-2177)", "Pierre Fabre Dermatologie"),
+            (2973447, "Lot infructueux relancé en marché négocié. Le lot est attribué à l'esat \"Les Ateliers de Polangis\"", "Les Ateliers de Polangis"),
+            (3863573, "Le marché a été infructueux. Après négociation, le marché a été attribué à Thermo Onix LTD", "Thermo Onix LTD"),
+            (3982542, "infructueux. Relancé sous forme de marché négocié : 013086 - fournisseur retenu = zoll medical France", "zoll medical France"),
+            (4552687, "marché déclaré infructueux et relancé sous la forme d'un marché négocié article 33-i1°2ème du décret 2005-1742 du 32/12/2005.marché attribué le 9/12/13 à Assurances securité 59000 Lille", "Assurances securité"),
+            (4782526, "Déclaré infructueux et relancé en procédure négociée de l'article 35-I-1° du code des marchés publics. La commission d'appel d'offres réunie le 23.12.2013 a décidé d'attribuer ce lot à la société Eiffage Construction SISE rue François Durieux – 59174 La Sentinelle CE pour un montant fina lde 5 141 1", "Eiffage Construction"),
+            (6191476, "Déclaré infructueux. Consultation relancée en procédure adaptée. Nom du titulaire: Keolis", "Keolis"),
+            (7030205, "Lot infructueux relancé suivant procédure négociée sans publicité et sans concurrence en application de l'article 35 Ii-3 du code des marchés publics par lettre de consultation du 9.1.2015 et lettre de négociation du 07/04/15. Attributaire: ARDP", "ARDP"),
+            (7030206, "Lot infructueux relancé suivant procédure négociée sans publicité et sans concurrence en application de l'article 35 Ii-3 du code des marchés publics, par lettre de consultation du 9.1.2015 et lettre de négociation du 07/04/15. Attributaire: JV Distribution", "JV Distribution"),
+            (7151483, "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à Léo Lagrange", "Léo Lagrange"),
+            (7151494, "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à FAIL 13", "FAIL 13"),
+            (7151502, "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à C.A.J.L", "C.A.J.L"),
+            (7151511, "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à Apis", "Apis"),
+            (7151529, "Pas d'offre. Relancé en procédure 35.ii.3 Attribué à Léo Lagrange (AAPC n° 2015_20403_0016)", "Léo Lagrange"),
+            (7151543, "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à A.E.C. Castellane", "A.E.C. Castellane"),
+            (7151562, "pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à san see", "san see"),
+            (7279113, "infructueux — suite à négociation attribué à société Somatico", "Somatico"),
+            (7791659, "Infructueux. Le lot a été relancé en procédure négociée (art 35 II 3°) et a été attribué à l'entreprise Transgourmet (44470 Carquefou)", "Transgourmet"),
+            (7791721, "Infructueux. Le lot a été relancé en procédure négociée et a été attribué à L'entreprise Lodfirais (24100 Bergerac)", "Lodfirais"),
+            (7791767, "Infructueux (1 offre irrégulière). Le lot a été relancé en procédure négociée (article 35.II.1 CMP) et a été attribué à l'entreprise Promocash (02100 Saint-Quentin)", "Promocash"),
+            (7805728, "Marché infructueux, recours à procédure négociée: titulaire: SMACL", "SMACL"),
+            (9104280, "À la suite de l'infructuosité de ce marché, celui-ci a été relancé selon la procédure prévue à l'article 30 du décret n° 2016-360. Il a été attribué à l'entreprise OTIS", "OTIS"),
+            (9104287, "À la suite de l'infructuosité de ce marché, celui-ci a été relancé selon la procédure prévue à l'article 30 du décret n° 2016-360. Il a été attribué à l'entreprise Menuiserie du Chalonnais", "Menuiserie du Chalonnais"),
+            (31381712, "Déclaré infructueux lors de l'appel d'offres. Relancé en procédure négociée sans publicité sans mise en concurrence et attribuée à LD Bio Diagnostics.", "LD Bio Diagnostics"),
+            (31393407, "lot 16-1 lait frais est déclaré sans suite le lot 16-2 est attribué à Nectarys", "Nectarys"),
+            (31482009, "lot déclaré infructueux le 21.2.2011, procédure négociée relancée avec nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Faure/Annequin", "Faure/Annequin"),
+            (31482010, "lot déclaré infructueux le 21.2.2011, procédure négociée relancée sans nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Berthelet", "Berthelet"),
+            (31482011, "lot déclaré infructueux le 21.2.2011, procédure négociée relancée sans nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Segui", "Segui"),
+            (31482013, "Lot déclaré infructueux le 21.2.2011, procédure négociée relancée sans nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Cars du Trièves", "Cars du Trièves"),
+            (31482014, "lot déclaré infructueux le 21.2.2011, procédure négociée relancée avec nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Faure/Eyraud", "Faure/Eyraud"),
+            (31482016, "Lot déclaré infructueux le 21.2.2011, procédure négociée relancée sans nouvelle publicité selon les termes de l'article 35.I al.1 du code des marchés publics, marché attribué à: Eyraud/Perraud", "Eyraud/Perraud"),
+            (31738609, "lot 25) la société Storz a été retenue. Le lot 32 a été déclaré infructueux", "Storz"),
+        ];
+        for (org, name, winner) in A1 {
+            assert_eq!(super::award_winner(name).as_deref(), Some(winner), "{org}: {name}");
+            assert!(mentions_void(name), "{org}: the walk's net holds it");
+            assert!(matches!(not_a_name(name), None | Some(NotAName::AwardSummary)), "{org}: the fold keeps it");
+        }
+        // Strip and terminator cases (id 0: written for the test).
+        for (name, winner) in [
+            ("Lot déclaré infructueux puis attribué à La Poste", "La Poste"),
+            ("Lot infructueux, relancé et attribué à la Société Dupont SARL ; lot 2 infructueux", "Dupont SARL"),
+            ("Infructueux, puis attribué à l'entreprise Martin Frères - 69003 Lyon", "Martin Frères"),
+            ("Infructueux. Lot relancé, attribué à Durand BTP 69003 Lyon", "Durand BTP"),
+            ("Lot infructueux. Relancé et attribué à « Les Jardins de Cocagne »", "Les Jardins de Cocagne"),
+            ("Lot infructueux puis attribué à l'issue de la négociation à la société Dupont SARL", "Dupont SARL"),
+            ("Infructueux. Le lot a été attribué à la société Dupont. Le lot 2 a été attribué à la Société DUPONT", "Dupont"),
+            ("Infructueux, relancé en procédure négociée avec la société Martin Frères.", "Martin Frères"),
+            ("Infructueux. Relancé : Attributaire : Keolis Lyon", "Keolis Lyon"),
+        ] {
+            assert_eq!(super::award_winner(name).as_deref(), Some(winner), "0: {name}");
+        }
+        // The near misses: each names no one awardee.
+        for (org, name) in [
+            // A future counterparty, a relaunch's bidders (D2c, D6b).
+            (1506401, "Aucune offre n'ayant été déposée, un marché négocié sans publicité et sans mise en concurrence, sera passé avec la STÉ France Télécom"),
+            (3526206, "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - i - 1er alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 1 : société TIB"),
+            (3526210, "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - i 1er alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 5 : Société Massias"),
+            (3526991, "décalré infructueux= le lot 2 infructueux et de le relancer en marché négocié en application de l'article 35 - iI - 3ème alinéa du code des marchés publics, avec la société LHENRY"),
+            (4032000, "Offres déclarées irrégulières. Lot déclaré donc infructueux. Il a donc été proposé de négocier avec les sociétés candidates dans le cadre de la procédure prévue à l'article 35-I-1 3ème alinéa du code des marchés publics par une lettre de consultation dont le formalisme est prévu à l'article 66 du co"),
+            (0, "Lot infructueux, il sera attribué à la société Dupont"),
+            (0, "Lot infructueux à relancer : la société Dupont a été retenue pour négocier"),
+            // A failed, rejected, excluded or liquidated bidder (D6, D3).
+            (31527955, "Société Sindarro Lot déclaré infructueux relancé en marché négocié avec publicité et mise enconcurence (date limite le 10 juin 2008)"),
+            (31527961, "Société SOTEP Lot Déclaré infructueux et sera relancé en marché negocié avec publicité et mise en concurence (date limite le 10 juin 2008)"),
+            (1974244, "la commission d'appel d'offres décide d'interrompre les discussions et déclare la consultation infructueuse car l'offre du groupement auxi+/ sas Viviani est inacceptable"),
+            (11251840, "Lotto non aggiudicato in quanto la commissione ha escluso dalla gara l’unica offerta ricevuta dalla compagnia UnipolSai S.p.A. — Ag. Marcantoni — in quanto le varianti proposte sono state ritenute in grado di comportare una sostanziale modifica della copertura assicurativa richiesta tali da evidenzi"),
+            (1633917, "résultat du concours: déclaration sans suite pour motif de défaillance du mandataire de l'équipe, suite à la liquidation judiciaire de l'agence Toth-Fasquelle préalablement à la signature du marché de maîtrise d'oeuvre"),
+            (7395857, "Declaré sans suite en raison de la liquidation judiciaire de la société attributaire"),
+            // A pointer, a negated or another procedure's award, an award with no party, a count.
+            (31383538, "Lot infructueux et relancer selon une procédure négocié après publicité préalable et mise en concurence selon l'article 35-1 du code des marchés publics. Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot."),
+            (0, "Lot infructueux - Attributaire : voir annexe"),
+            (0, "Lot infructueux. Le marché n'a pas été attribué à la société Dupont"),
+            (4409817, "Projet déclaré sans suite : relancé sous le n° de projet ESID 12 418, attribué le 28.10.2013"),
+            (31674188, "A 97.23.18) sans suite (déjà attribué au lots A 06 et A 12)"),
+            (1341883, "Demander le détail à la cellule marchés sont établis 66 marchés pour l'ensemble des 257 lots attribués Les 74 lots infructueux sont relancés 2 lots sans suite (n° 12 et 300)"),
+            (31375951, "Au terme de cette analyse et conformément aux avis et suggestions émis par commission des dispositifs médicaux, réunie le 6 décembre dernier, les choix opérés sont les suivants: - 11 lots ont été déclarés \"Sans suite\", - 5 lots sont déclarés \"Infructueux\", en raison de l'absence de soumissionnaire,  … 61 lots attribués à 29 fournisseurs"),
+            (31486027, "attribué par marché négocié passé selon art. 35-I.1 du CMP suite à appel d'offres infructueux (publicité AAPC parue dans BOAMP no 83 du 28.4.2011 - annonce no 221 et JOUE no 2011/S 81-133894 du 27.4.2011)"),
+            (0, "Infructueux, relancé en procédure négociée avec la société Dupont, pour un montant de 3 000 EUR"),
+            // Two or more awardees, or a list after the name (B).
+            (2381358, "lot 10 attribué à Bayer Santé Familiale le 5.6.2012 (no marché 2012-2179). Lot 11 relancé en marché négocié 35 II 3. Lot 12 relancé en marché négocié 35i1. Lot 13 déclaré sans suite (arrêt de commercialisation). Lot 14 attribué à Pfizer le 5.6.2012 (no marché 2012-2180)"),
+            (6672986, "2 lots attribués à la société Alere (78350)le 27/04/2015; 11 lots attribués à la société Becton Dickinson (38801) le 16/04/2015; 22 lots attribués à la société Biomérieux (69280) le 15/04/2015; 6 lots attribués à la société Bio-Rad (92430) le 17/04/2015; 1 lot attribué à la société Elitech (92800) l"),
+            (7512199, "Lots 2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 attribués à TOPOS SARL —  4 rue des Artisans — 67270 Bernardswiller — lots 21 et 22 attribués à G2C Territoire — 26 chemin de Fondeyre —  31200 Toulouse — lots 1, 3, 9, 23 déclarés sans suite"),
+            (23645704, "CAT8-MS1 - Attribué à Ganix, CAT8-MS2 - Attribué à RacinesUrbaines, CAT8-MS3 - Attribué à Rebiffé, CAT8-MS4 - Non attribué, CAT8-MS5 - Attribué à Ets Lefeuvre, CAT8-MS6 - Attribué à LePain2Mains"),
+            (5425803, "Lot 10a: déclaration sans suite lot 10b: procédure infructueuse lot 10c titulaire 1: SAGA titulaire 2: Chapelec"),
+            (0, "Lot infructueux. titulaire: SAGA titulaire: Chapelec"),
+            (2450314, "procédure déclaré sans suite relancée en 2 lots distincts: 5a menuiseries intérieures bois: attributaire: L'Art du bois, 2 rue Georges Politzer 38 Echirolles. Montant HT: 48 225,34 EUR. Date d'attribution: 24.4.2012. 5b mobilier bois: attributaire: Ellipse Bois, ZA en Chuel, 69 Quincieux. Montant HT"),
+            (31414415, "Lots suivants attribués à la société RMI, 1 rue Blaise Pascal, 54320 Maxeville, FRANCE: 4.1 (écrans TFT): 5 439,15 EUR HT / 4.2 (portables): 36 319,94 EUR HT / 4.3 (unités centrales): 22 445,10 EUR HT / 4.7 (routeurs): 1 413,65 EUR HT / 4.8 (téléphones IP): 3 140,00 EUR HT / 4.9 (complément HP Blade"),
+            (0, "Lot infructueux puis attribué à la société Dupont SARL ; lot 2 : Martin SA"),
+        ] {
+            assert_eq!(super::award_winner(name), None, "{org}: {name}");
+        }
+        // A name with none of the cue words reads nothing, and ordinary names never reach the cues.
+        assert!(!super::may_name_a_winner("Lot 1) Sarl Bremond. Lot 2) Infructueux"));
+        assert!(super::may_name_a_winner("Pas d'offre. ATTRIBUÉ À Apis"));
+    }
+
+    /// Issue 520 U4, the adversarial review: a cue names the awardee only when the clause around the name
+    /// states an award made and kept. Each of these names nobody — a negated or quantified cue e
+    /// (`aucune société n'a été retenue`, which read the elided `n'` as an org named `n`); a cue d whose
+    /// `avec` another clause governs (failed or broken-off negotiations, a contract not concluded or
+    /// rescinded, in its own sentence or not); a cue a or b under a refusal, an impossibility, a plan, a
+    /// subjunctive, a `jamais`, a negation past `encore`, or an earlier award; an award its sentence undoes
+    /// after the name (withdrawn, annulled, rescinded, liquidated) or a former awardee's label; a per-lot
+    /// list whose other entry names another winner (§4.3/§4.4: B and C never extract) or two awardees glued
+    /// into one name; and a role, a pointer, a count, a quality or a status where the name would stand,
+    /// which every notice writing it would share as one organization. The counterparts that state the
+    /// award still name it.
+    #[test]
+    fn award_winner_reads_the_clause_around_the_name() {
+        for name in [
+            // Cue e negated or quantified, or undone after the name.
+            "Lot infructueux, aucune société n'a été retenue (Dupont SARL écartée)",
+            "Lot infructueux : aucune société n'a été retenue. Lot 2 : Dupont SARL",
+            "Lot infructueux. la société Dupont, attributaire pressentie, a été retenue puis s'est désistée",
+            "Lot infructueux. la société Dupont a été retenue mais s'est désistée",
+            // Cue d governed by another clause.
+            "Lot infructueux relancé en procédure négociée mais déclaré sans suite après échec des négociations avec la société Dupont",
+            "Lot infructueux relancé en procédure négociée, négociations rompues avec la société Dupont",
+            "Lot infructueux relancé en procédure négociée. Négociations en cours avec la société Dupont",
+            "Lot infructueux relancé en procédure négociée, aucun accord trouvé avec la société Dupont",
+            "Lot infructueux relancé en procédure négociée ; marché non conclu avec la société Dupont",
+            "Lot infructueux relancé en procédure négociée ; contrat résilié avec la société Dupont",
+            "Lot infructueux relancé en procédure négociée ; litige en cours avec la société Dupont",
+            "Lot infructueux relancé en procédure négociée ; l'offre a été rejetée après négociation avec la société Dupont",
+            "Lot infructueux, négocié sans succès avec la société Dupont",
+            // Cues a and b refused, impossible, planned, subjunctive, never, not yet.
+            "Lot infructueux. La CAO a refusé d'attribuer ce lot à la société Dupont",
+            "Lot infructueux. Il n'a pas été possible d'attribuer ce lot à la société Dupont",
+            "Lot infructueux. Il est impossible d'attribuer ce lot à la société Dupont",
+            "Lot infructueux. La CAO envisage d'attribuer ce lot à la société Dupont",
+            "Lot infructueux. La CAO a renoncé d'attribuer ce lot à la société Dupont",
+            "Lot infructueux. Lot pas encore attribué à la société Dupont",
+            "Lot infructueux. Lot non encore attribué à la société Dupont",
+            "Lot infructueux. Jamais attribué à la société Dupont",
+            "Lot infructueux. Il est envisagé qu'il soit attribué à la société Dupont",
+            // An earlier award, or one undone after the name.
+            "Le lot 3, initialement attribué à la société Dupont, a été déclaré sans suite suite à la liquidation judiciaire de celle-ci",
+            "Lot infructueux. Marché précédemment attribué à la société Dupont",
+            "Lot infructueux. Lot attribué à la société Martin, qui s'est désistée",
+            "Lot infructueux. Lot attribué à la société Martin (annulé)",
+            "Lot infructueux. Lot attribué à la société Martin - décision annulée par le tribunal administratif",
+            "Lot sans suite : marché attribué à la société Dupont, résilié pour faute",
+            "Lot infructueux puis attribué à la société Dupont qui a été mise en liquidation",
+            "Lot infructueux. Le marché attribué à la société Dupont a été résilié.",
+            "Lot déclaré sans suite. Attributaire : Dupont SARL (désisté)",
+            "Lot déclaré sans suite. Titulaire : Dupont SARL - marché résilié",
+            "Lot déclaré infructueux. Ancien titulaire: Dupont",
+            "Lot déclaré infructueux. Précédent attributaire : Dupont SARL",
+            // A per-lot list with another winner, or two awardees in one name.
+            "Lot 1) attribué à Dupont. Lot 2) Martin. Lot 3) infructueux",
+            "Lot 1 : infructueux - Lot 2 attribué à Dupont - Lot 3 : Martin SARL",
+            "Lot 2 attribué à Dupont, lot 3 : Martin SARL, lot 4 infructueux",
+            "Lot 1) infructueux. Lot 2) attribué à la société Dupont. Lot 3) Martin SA",
+            "Lot 1 attributaire : Dupont. Lot 2 : Martin. Lot 3 : sans suite",
+            "lot 1 infructueux ; lot 2 attribué à Dupont SARL, lot 3 Martin SA",
+            "Lot 1) Martin. Lot 2) attribué à Dupont. Lot 3) infructueux",
+            "Lots 1 et 2 infructueux, lot 3 attribué à Dupont SARL et lot 4 à Martin SA",
+            "Lot infructueux puis attribué à la société Dupont et à la société Martin",
+            "Lot infructueux puis attribué à la société Dupont à Lyon",
+            // A role, a pointer, a count, a quality or a status where the name would stand.
+            "Lot infructueux. Attributaire : idem lot 1",
+            "Lot infructueux puis attribué à l'unique soumissionnaire, la société Dupont",
+            "Lot infructueux. Lot attribué à l'entreprise",
+            "Lot infructueux puis attribué à la société (voir annexe)",
+            "Lot infructueux puis attribué à la société.",
+            "Lot infructueux puis attribué à l'entreprise, pour un montant de 5000 EUR",
+            "Lot infructueux puis attribué à la société suivante : Dupont",
+            "Lot infructueux. Attributaire : titulaire du lot 1",
+            "Lot infructueux. Attributaire : attributaire du lot 1",
+            "Lot infructueux puis attribué à l'attributaire du lot 2",
+            "Lot infructueux puis attribué à l'entreprise ayant remis la meilleure offre",
+            "Lot infructueux puis attribué à l'entreprise mieux-disante",
+            "Lot infructueux puis attribué à deux entreprises",
+            "Lot infructueux puis attribué à trois sociétés",
+            "Lot infructueux puis attribué à des entreprises différentes",
+            "Lot infructueux puis attribué à chacun des candidats",
+            "Lot infructueux puis attribué à la même entreprise que le lot 2",
+            "Lot infructueux puis attribué à la même entreprise",
+            "Lot infructueux puis attribué à un prestataire local",
+            "Lot infructueux puis attribué à l'offre économiquement la plus avantageuse",
+            "Lot infructueux puis attribué à un montant de 12 000 EUR",
+            "Lot infructueux. Montant attribué à ce lot : 0 EUR",
+            "Lot infructueux puis attribué à la CAO du 12 mai",
+            "Lot infructueux puis attribué à la séance du 12 mai",
+            "Lot infructueux puis attribué au pouvoir adjudicateur à Monsieur le Maire",
+            "Lot infructueux puis attribué à Monsieur le Maire",
+            "Lot infructueux puis attribué à la candidat classé premier",
+            "Lot infructueux. Attributaire : idem",
+            "Lot infructueux. Attributaire : ibid",
+            "Lot infructueux. Attributaire : même",
+            "Lot infructueux. Attributaire : ci-dessous",
+            "Lot infructueux. Attributaire : ci-après",
+            "Lot infructueux. Attributaire : identique au lot n° 3",
+            "Lot infructueux. Attributaire : se reporter à l'avis d'attribution",
+            "Lot infructueux. Attributaire : consulter l'avis d'attribution",
+            "Lot infructueux. Attributaire : en cours",
+            "Lot infructueux. Attributaire : en attente",
+            "Lot infructueux. Attributaire : à venir",
+            "Lot infructueux. Attributaire : à désigner",
+            "Lot infructueux. Attributaire : non désigné",
+            "Lot infructueux. Attributaire : non publié",
+            "Lot infructueux. Attributaire : confidentiel",
+            "Lot infructueux. Attributaire : inconnu",
+            "Lot infructueux. Attributaire : personne",
+            "Lot infructueux. Attributaire : rien",
+            "Lot infructueux. Attributaire : pas de titulaire",
+            "Lot infructueux puis attribué à Ets.",
+        ] {
+            assert_eq!(super::award_winner(name), None, "{name}");
+        }
+        // The counterparts: an award stated and kept names its awardee.
+        for (name, winner) in [
+            ("Lot infructueux. la société Dupont SARL, Lyon, a été retenue", "Dupont SARL"),
+            ("Lot infructueux, il n'a été attribué qu'après négociation à la société Martin", "Martin"),
+            ("Lot initialement déclaré infructueux, il a depuis déjà été attribué à l'entreprise Dupont Frères après négociation", "Dupont Frères"),
+            ("Lot infructueux. Suite au désistement de la société Martin, le lot a été attribué à la société Dupont", "Dupont"),
+            ("Lot infructueux. La CAO réunie le 3.2.2014 a décidé d'attribuer ce lot à la société Dupont", "Dupont"),
+            ("Lot infructueux. Nouvel attributaire : Dupont SARL", "Dupont SARL"),
+            ("Lot 1) infructueux. Lot 2) attribué à la société Dupont. Lot 3) sans suite", "Dupont"),
+            ("Lot infructueux puis attribué à la société Dupont pour le lot 2", "Dupont"),
+        ] {
+            assert_eq!(super::award_winner(name).as_deref(), Some(winner), "{name}");
+        }
+    }
+
+    /// Issue 520 U4, the adversarial review: where the name ends and what it drops. An adverbial `à`
+    /// (`conformément à l'article 35`, `suite à`, `à titre provisoire`, `à l'unanimité`) is no party's,
+    /// so the cue reads on to the next one; the name ends at a line break, a field's colon, `pour le lot`,
+    /// `en date du`, `après négociation`, `par marché négocié`, a cue e's own terminators, any whitespace
+    /// before a terminator (a tab, a no-break space), and after a dotted legal form or an initial when the
+    /// next field opens (`Dupont S.A. Montant`, the dot kept) — not after a company abbreviation's dot
+    /// (`Ets. Dupont`) nor inside a name (`Association pour la Formation`, `Peinture par Excellence`). A
+    /// descriptor the legal name goes on from stays (`la Société Générale`, `la Société des Eaux de
+    /// Marseille`), an upper-case or acute-accent article goes, and quotes inside the name go in pairs.
+    #[test]
+    fn award_winner_ends_and_strips_the_name_as_published() {
+        for (name, winner) in [
+            // An adverbial `à`.
+            ("Lot infructueux, attribué, conformément à l'article 35, à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué suite à une procédure négociée à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué grâce à une négociation à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué par recours à une procédure négociée à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué jusqu'à la fin de l'année à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué à titre provisoire à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué à titre définitif à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué à nouveau à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué à l'unanimité à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué à la majorité à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué à l'occasion de la relance à la société Dupont", "Dupont"),
+            ("Lot infructueux, attribué à défaut d'autre offre à la société Dupont", "Dupont"),
+            ("Lot infructueux puis attribué à titre provisoire à Dupont", "Dupont"),
+            // Line breaks, colons, figures, dates, procedures.
+            ("Lot infructueux\nAttributaire : Dupont SARL\nAdresse : rue de la Paix Lyon", "Dupont SARL"),
+            ("Lot infructueux puis attribué à Dupont SARL\nMontant : 12 000 EUR HT", "Dupont SARL"),
+            ("Lot infructueux.\nAttributaire : Dupont\r\nAdresse : 1 rue de la Paix", "Dupont"),
+            ("Lot infructueux puis attribué à la société Dupont : 12 000 EUR HT", "Dupont"),
+            ("Lot infructueux puis attribué à la société Dupont en date du 12/05/2014", "Dupont"),
+            ("Lot infructueux faute d'offre, attribué à Dupont Frères après négociation", "Dupont Frères"),
+            ("Infructueux : aucune offre, attribué à Promocash par marché négocié", "Promocash"),
+            ("Lot infructueux puis attribué à l'Association pour la Formation des Adultes", "Association pour la Formation des Adultes"),
+            ("Lot infructueux puis attribué à Peinture par Excellence", "Peinture par Excellence"),
+            // Any whitespace before a terminator.
+            ("Lot déclaré infructueux puis attribué à la Société Dupont\nsuite à procédure négociée", "Dupont"),
+            ("Lot infructueux puis attribué à Dupont\tsuite à procédure négociée", "Dupont"),
+            ("Lot infructueux puis attribué à la société Dupont\u{a0}suite à procédure négociée", "Dupont"),
+            ("Lot infructueux puis attribué à Dupont\u{a0}pour un montant de 5000 EUR", "Dupont"),
+            ("Lot infructueux puis attribué à Dupont\u{a0}(69003 Lyon)", "Dupont"),
+            // Cue e's terminators.
+            ("Lot 3) infructueux. La société Dupont (69003 Lyon) a été retenue", "Dupont"),
+            ("Lot infructueux. La société Dupont - 69003 Lyon a été retenue", "Dupont"),
+            ("Lot infructueux. Après négociation, la société Dupont, mieux-disante, a été retenue", "Dupont"),
+            ("Lot infructueux. Société Dupont a été retenue", "Dupont"),
+            // Dotted legal forms, initials and company abbreviations.
+            ("Lot infructueux puis attribué à Dupont S.A. Montant HT : 48 225,34 EUR", "Dupont S.A."),
+            ("Lot infructueux puis attribué à Dupont S.A.R.L. Montant du marché : 12000 EUR HT", "Dupont S.A.R.L."),
+            ("Lot infructueux. Attributaire : Dupont S.A.S. Date d'attribution : 24.4.2012", "Dupont S.A.S."),
+            ("Lot infructueux puis attribué à Martin J. Le marché a été notifié le 6 janvier", "Martin J."),
+            ("Lot infructueux puis attribué à Dupont S.A.", "Dupont S.A."),
+            ("Lot infructueux puis attribué à la société Dupont S.A. pour un montant de 5000 EUR", "Dupont S.A."),
+            ("Lot infructueux puis attribué à Ets. Dupont et Fils", "Ets. Dupont et Fils"),
+            ("Lot infructueux puis attribué à la Sté. Dupont", "Dupont"),
+            ("Lot infructueux puis attribué à Cie. Générale des Eaux", "Cie. Générale des Eaux"),
+            ("Lot infructueux puis attribué à Assoc. Léo Lagrange", "Assoc. Léo Lagrange"),
+            ("Lot infructueux puis attribué à St. Gobain", "St. Gobain"),
+            // A descriptor of the legal name stays; one before the name goes, in any case and spelling.
+            ("Lot infructueux, relancé et attribué à la Société Générale", "Société Générale"),
+            ("Lot infructueux, relancé et attribué à la Société des Eaux de Marseille", "Société des Eaux de Marseille"),
+            ("Lot infructueux, relancé et attribué à la Société Française de Restauration", "Société Française de Restauration"),
+            ("Lot infructueux, relancé et attribué à la Société d'Exploitation des Transports", "Société d'Exploitation des Transports"),
+            ("Lot infructueux, relancé et attribué à l'Entreprise Générale de Bâtiment", "Entreprise Générale de Bâtiment"),
+            ("Lot infructueux, relancé et attribué à la STE Nouvelle Dupont", "STE Nouvelle Dupont"),
+            ("Lot infructueux, relancé en procédure négociée avec la Société Générale", "Société Générale"),
+            ("Lot infructueux. Attributaire : la Société Générale", "Société Générale"),
+            ("Lot infructueux. La Société Générale a été retenue", "Société Générale"),
+            ("Lot infructueux puis attribué à la société De Dietrich", "De Dietrich"),
+            ("LOT INFRUCTUEUX PUIS ATTRIBUÉ À LA SOCIÉTÉ DUPONT", "DUPONT"),
+            ("LOT INFRUCTUEUX, RELANCÉ EN PROCÉDURE NÉGOCIÉE AVEC LA SOCIÉTÉ DUPONT", "DUPONT"),
+            ("Lot infructueux puis attribué à l´entreprise Dupont", "Dupont"),
+            // Quotes inside the name go in pairs.
+            ("Lot infructueux puis attribué à la société \"Les Jardins\" SARL", "Les Jardins SARL"),
+            ("Lot infructueux puis attribué à « Les Jardins » de Cocagne", "Les Jardins de Cocagne"),
+        ] {
+            assert_eq!(super::award_winner(name).as_deref(), Some(winner), "{name}");
+        }
+        // Past the cue's reach once the adverbial `à` is skipped: nobody, never `article 35-II-3° du CMP`.
+        assert_eq!(super::award_winner("Lot infructueux, attribué conformément à l'article 35-II-3° du CMP à la société Dupont"), None);
+    }
+
+    /// Issue 520 U4, the adversarial review: the extractor reads a long text once — each cue's scan is
+    /// bounded and each word's clause, sentence and doubts are read up front. Before, 1,000 award clauses
+    /// (32 KB) took 4.2 s and 128 KB 66 s in the test profile; 128 KB now takes well under a second.
+    #[test]
+    fn award_winner_reads_a_long_text_once() {
+        for (unit, winner) in [
+            ("Le lot est attribué à Dupont. ", Some("Dupont")),
+            ("relancé en procédure négociée avec la société Dupont, pour un montant de 5 EUR ", None),
+            ("attribué à Dupont et ", None),
+        ] {
+            let text = format!("Lot infructueux. {}", unit.repeat(4_000));
+            let started = std::time::Instant::now();
+            assert_eq!(super::award_winner(&text).as_deref(), winner, "{unit}");
+            assert!(started.elapsed() < std::time::Duration::from_secs(5), "{unit}: {:?}", started.elapsed());
+        }
     }
 
     /// TED's "not awarded" in every language one r208 winner slot carried (notice 17674598):
