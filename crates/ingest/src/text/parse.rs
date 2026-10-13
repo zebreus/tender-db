@@ -536,7 +536,8 @@ const LOT_PREFIX_MAX: usize = 24;
 /// The terminator may also be `)` — `6.  Supplier(s): 1) CGC, BP 129, … 2) Furic …`
 /// (900123), `1) Biotronik France, … 2) Ela Médical, …` (2002409) — and then the
 /// reference must be ONE run of digits: `(a)`/`a)` enumerate clauses, and a `)` after
-/// anything else closes a parenthesis inside a name (issue 484 review).
+/// anything else closes a parenthesis inside a name (issue 484 review). Further references
+/// chain on to it (`10) et 11) Maquet`: [`lot_chain_end`], issue 526).
 fn lot_prefix_len(value: &str) -> Option<usize> {
     // Issue 526: a reference that names its lot (`Lot 1) X`, `Lots 2), 3) et 4) X`, `Lote n° 3) X`).
     if let Some(len) = lot_word_prefix_len(value) {
@@ -551,7 +552,9 @@ fn lot_prefix_len(value: &str) -> Option<usize> {
         return None;
     }
     if terminator == ')' {
-        return head.bytes().all(|b| b.is_ascii_digit()).then_some(at + 1);
+        // Issue 526: further references chain on (`10) et 11) Maquet`, `8)-11)-12) Prodirest`, `51), 54) et 55)
+        // GEMS`), or the name keeps them (`et 11) Maquet`, about 6,000 organizations on 2026-10-13).
+        return head.bytes().all(|b| b.is_ascii_digit()).then(|| lot_chain_end(value, at + 1));
     }
     // Two digit groups with nothing but whitespace between them are a phone number,
     // not a lot list (issue 485): `Tel. 952 12 50 00. URL: …` split at the `.` after
@@ -583,74 +586,166 @@ fn lot_prefix_len(value: &str) -> Option<usize> {
     Some(at + terminator.len_utf8())
 }
 
-/// Issue 526: the length of a leading reference that names its lot — `Lot`, `Lots`, `Lote` or `Lotes` (any
-/// case, then a space), an optional number mark (`n°`, `nº`, `no`, `nr`), one to three digits with an
-/// optional `bis` or one-letter suffix, and `)` or `:` — chained by `,`, `et`, `and`, `y` or a space to
-/// further `<digits>)` references (`Lots 1) et 2)`, `Lots 2), 3) et 4)`, `Lots 2) 8) 20)`); or `None`.
-/// The 1997–2003 text print keys its winner lists this way (`Lot 1) Blin. Lot 2) Prodirest.`, 20187-2002),
-/// and the bare-digits rule ([`lot_prefix_len`]'s `)` branch) never read it, so one list minted one
-/// organization and every prefixed name split a company. A name that merely opens with the word stays whole:
-/// `LOT Polish Airlines` (no number), `Lot-et-Garonne` (no space), `Lot unique: X` and `Lot A) X` (no digits).
-/// Within [`LOT_PREFIX_MAX`].
-fn lot_word_prefix_len(value: &str) -> Option<usize> {
+/// Issue 526: the words a reference that names its lot opens with, longest first.
+const LOT_WORDS: [&str; 4] = ["lotes", "lots", "lote", "lot"];
+
+/// Issue 526: what joins the numbers of one lot reference — a list word or a range (`1, 2 et 3`, `1 and 2`,
+/// `1 y 2`, `1 à 4`, `1-3`).
+const LOT_LIST_SEPARATORS: [&str; 16] =
+    [", ", ",", " and ", " et ", " y ", " e ", " und ", " ou ", " or ", " & ", " à ", " a ", " to ", " - ", " – ", "-"];
+
+/// Issue 526: how long a reference that names its lot, or a chain of `)` references, may run. Unlike
+/// [`LOT_PREFIX_MAX`] it bounds a reference of numbers and list words only, and the 1998–2003 hospital supply
+/// lists run long: `lots 2), 3), 11), 13), … 106) et 107) Cis Bio International` (1486368) holds 46.
+const LOT_LIST_MAX: usize = 400;
+
+/// Issue 526: a lot word and its spaces at `i` ([`LOT_WORDS`], any case): the byte after them.
+fn lot_word_end(value: &str, i: usize) -> Option<usize> {
     let bytes = value.as_bytes();
-    let word = ["lotes", "lots", "lote", "lot"]
-        .into_iter()
-        .find(|w| bytes.len() > w.len() && bytes[..w.len()].eq_ignore_ascii_case(w.as_bytes()))?;
-    let mut i = word.len();
-    if bytes.get(i) != Some(&b' ') {
+    let rest = &bytes[i..];
+    let word = LOT_WORDS.iter().find(|w| rest.len() > w.len() && rest[..w.len()].eq_ignore_ascii_case(w.as_bytes()))?;
+    let mut j = i + word.len();
+    if bytes.get(j) != Some(&b' ') {
         return None;
     }
-    while bytes.get(i) == Some(&b' ') {
-        i += 1;
+    while bytes.get(j) == Some(&b' ') {
+        j += 1;
     }
-    // One reference at `i`: a number mark, digits, a suffix, then `)` (or `:` for the first). The byte
-    // after it, or `None`.
-    let reference = |mut i: usize, first: bool| -> Option<usize> {
-        let rest = &value[i..];
-        for mark in ["n°", "nº", "no.", "no", "nr.", "nr"] {
-            if rest.len() > mark.len() && rest.is_char_boundary(mark.len()) && rest[..mark.len()].eq_ignore_ascii_case(mark) {
-                let after = rest[mark.len()..].trim_start_matches(' ');
-                if after.starts_with(|c: char| c.is_ascii_digit()) {
-                    i += rest.len() - after.len();
-                }
-                break;
-            }
-        }
-        let start = i;
-        while bytes.get(i).is_some_and(u8::is_ascii_digit) {
-            i += 1;
-        }
-        if i == start || i - start > 3 {
-            return None;
-        }
-        if value.len() >= i + 3 && value.is_char_boundary(i + 3) && value[i..i + 3].eq_ignore_ascii_case("bis") {
-            i += 3;
-        } else if bytes.get(i).is_some_and(u8::is_ascii_alphabetic) && !bytes.get(i + 1).is_some_and(u8::is_ascii_alphabetic) {
-            i += 1;
-        }
-        match bytes.get(i) {
-            Some(b')') => Some(i + 1),
-            Some(b':') if first => Some(i + 1),
-            _ => None,
-        }
-    };
-    let mut end = reference(i, true)?;
-    if bytes[end - 1] == b')' {
-        // Further references, each behind a separator.
-        'chain: loop {
-            for sep in [", ", ",", " et ", " and ", " y ", " "] {
-                if value[end..].starts_with(sep) {
-                    if let Some(next) = reference(end + sep.len(), false) {
-                        end = next;
-                        continue 'chain;
-                    }
-                }
+    Some(j)
+}
+
+/// Issue 526: one lot number at `i` — an optional number mark (`n°`, `nº`, `no`, `nr`), one to three digits,
+/// an optional sub-lot (`7.2`) and an optional `bis` (`8bis`, `1 bis`) or one-letter suffix (`3a`): the byte
+/// after it.
+fn lot_number_end(value: &str, mut i: usize) -> Option<usize> {
+    let bytes = value.as_bytes();
+    let rest = &value[i..];
+    for mark in ["n°", "nº", "no.", "no", "nr.", "nr"] {
+        if rest.len() > mark.len() && rest.is_char_boundary(mark.len()) && rest[..mark.len()].eq_ignore_ascii_case(mark) {
+            let after = rest[mark.len()..].trim_start_matches(' ');
+            if after.starts_with(|c: char| c.is_ascii_digit()) {
+                i += rest.len() - after.len();
             }
             break;
         }
     }
-    (end - 1 <= LOT_PREFIX_MAX).then_some(end)
+    let start = i;
+    while bytes.get(i).is_some_and(u8::is_ascii_digit) {
+        i += 1;
+    }
+    if i == start || i - start > 3 {
+        return None;
+    }
+    // A sub-lot: one or two digits after a dot (`lot 7.2:`), never a figure's thousands (`1.250`).
+    if bytes.get(i) == Some(&b'.') {
+        let digits = bytes[i + 1..].iter().take_while(|b| b.is_ascii_digit()).count();
+        if (1..=2).contains(&digits) {
+            i += 1 + digits;
+        }
+    }
+    let bis = |at: usize| {
+        value.len() >= at + 3
+            && value.is_char_boundary(at + 3)
+            && value[at..at + 3].eq_ignore_ascii_case("bis")
+            && !bytes.get(at + 3).is_some_and(u8::is_ascii_alphabetic)
+    };
+    if bis(i) {
+        i += 3;
+    } else if bytes.get(i) == Some(&b' ') && bis(i + 1) {
+        i += 4;
+    } else if bytes.get(i).is_some_and(u8::is_ascii_alphabetic) && !bytes.get(i + 1).is_some_and(u8::is_ascii_alphabetic) {
+        i += 1;
+    }
+    Some(i)
+}
+
+/// Issue 526: lot numbers at `i` joined by [`LOT_LIST_SEPARATORS`], a later one optionally repeating the lot
+/// word (`1, 2 et 3`, `7.1 and 7.3`, `1, lot 2 and lot 5`): the byte after the last.
+fn lot_list_end(value: &str, i: usize) -> Option<usize> {
+    let mut end = lot_number_end(value, i)?;
+    'list: loop {
+        for sep in LOT_LIST_SEPARATORS {
+            if value[end..].starts_with(sep) {
+                let at = end + sep.len();
+                if let Some(next) = lot_number_end(value, lot_word_end(value, at).unwrap_or(at)) {
+                    end = next;
+                    continue 'list;
+                }
+            }
+        }
+        return Some(end);
+    }
+}
+
+/// Issue 526: after a `)` reference ending at `end`, the further `)` references chained to it by a separator
+/// or a space (`1) et 2)`, `2), 3) et 4)`, `2) 8) 20)`, `1) à 4)`, `1), lot 3)`): the byte after the last, and
+/// after a `:` or dash that follows it (`Lot 1): X`, `Lot 1) - X`). Within [`LOT_LIST_MAX`]; a longer chain
+/// stops where it was.
+fn lot_chain_end(value: &str, mut end: usize) -> usize {
+    let bytes = value.as_bytes();
+    'chain: loop {
+        for sep in LOT_LIST_SEPARATORS.iter().chain(&[" "]) {
+            if value[end..].starts_with(sep) {
+                let at = end + sep.len();
+                if let Some(next) = lot_list_end(value, lot_word_end(value, at).unwrap_or(at))
+                    .filter(|&next| next < LOT_LIST_MAX && bytes.get(next) == Some(&b')'))
+                {
+                    end = next + 1;
+                    continue 'chain;
+                }
+            }
+        }
+        break;
+    }
+    // The review: punctuation after the reference is not the name's, nor is a sub-lot's label.
+    let rest = value[end..].trim_start_matches(' ');
+    let end = match rest.chars().next() {
+        Some(mark @ (':' | '-' | '–')) => value.len() - rest.len() + mark.len_utf8(),
+        _ => end,
+    };
+    sub_lot_label_end(value, end)
+}
+
+/// Issue 526: the length of a leading reference that names its lot, or `None`: `Lot`, `Lots`, `Lote` or
+/// `Lotes` (any case, then a space), a list of lot numbers ([`lot_list_end`]), then `)` (and the references
+/// chained to it, [`lot_chain_end`]) or `:` (also ` :`, the French spacing).
+///
+/// The text print keys its winner lists this way — `Lot 1) Blin. Lot 2) Prodirest.` (20187-2002), `Lot 1:
+/// Spie Trindel; lot 2: Philips` and `lots 7, 8, 9 and 10: Carabelli` (1993–1996) — and the bare-digits rule
+/// ([`lot_prefix_len`]'s `)` branch) never read it, so one list minted one organization, every prefixed
+/// name split a company, and a list cut at its first comma minted `lots 7`. A name that merely opens with the
+/// word stays whole: `LOT Polish Airlines` (no number), `Lot-et-Garonne` (no space), `Lot unique: X` and
+/// `Lot A) X` (no digits), `Lot 1 Holdings` and `Lot No 4, Hal Far` (no `)` or `:` after the numbers).
+/// Within [`LOT_LIST_MAX`].
+fn lot_word_prefix_len(value: &str) -> Option<usize> {
+    let bytes = value.as_bytes();
+    let end = lot_list_end(value, lot_word_end(value, 0)?)?;
+    if end >= LOT_LIST_MAX {
+        return None;
+    }
+    match bytes.get(end) {
+        Some(b')') => Some(lot_chain_end(value, end + 1)),
+        Some(b':') => Some(sub_lot_label_end(value, end + 1)),
+        Some(b' ') if bytes.get(end + 1) == Some(&b':') => Some(sub_lot_label_end(value, end + 2)),
+        _ => None,
+    }
+}
+
+/// Issue 526: past a sub-lot's letter label after the reference ending at `end` — `lot 04) a: Hexacath`,
+/// `Lot 1: a) Inforlab Chimie` (1561325, 2019095) — or `end`.
+fn sub_lot_label_end(value: &str, end: usize) -> usize {
+    let rest = value[end..].trim_start_matches(' ');
+    match rest.as_bytes() {
+        [letter, b')' | b':', b' ', ..] if letter.is_ascii_alphabetic() => value.len() - rest.len() + 2,
+        _ => end,
+    }
+}
+
+/// Issue 526: whether `name` is a lot reference and nothing else (`Lot 3`, `lots 11`, `Lot 1, lot 2`): the
+/// slot named the lot, not its winner.
+fn bare_lot_reference(name: &str) -> bool {
+    let name = name.trim_end_matches(['.', ' ']);
+    lot_word_end(name, 0).and_then(|i| lot_list_end(name, i)).is_some_and(|end| end == name.len())
 }
 
 /// Whether `head` holds two runs of digits separated only by spaces — phone notation.
@@ -749,7 +844,10 @@ fn winner_segments(value: &str) -> Vec<&str> {
                 next > i + 1 && (lot_prefix_len(&value[next..]).is_some() || entry_after_contact(value, i, next))
             };
             if separates && next > start {
-                segments.push(&value[start..i]);
+                // A `.` stays on its entry, and [`trim_sentence_period`] decides whether it ends the sentence
+                // or an abbreviation (issue 526's review: `Lot 1) Dupont S.A. Lot 2) Martin S.A.` keeps both
+                // `S.A.` — two spellings are two organizations, issue 234).
+                segments.push(&value[start..if bytes[i] == b'.' { i + 1 } else { i }]);
                 start = next;
                 i = next;
                 continue;
@@ -943,7 +1041,12 @@ fn awarded_names_at(body: &str, flat: &str, line_starts: &[usize]) -> Vec<(usize
 fn names_in_value(value: &str, bounded: bool, authority: Option<&Authority>) -> Vec<String> {
     // (name, whether the segment is the authority's own contact entry)
     let mut found: Vec<(String, bool)> = Vec::new();
-    for segment in winner_segments(value) {
+    let segments = winner_segments(value);
+    let last = segments.len() - 1;
+    for (k, segment) in segments.into_iter().enumerate() {
+        // Issue 526's review: a separator ends every entry but the last, so only the last can be the window's
+        // cut — and a reader that looks past the first comma must not read a cut name.
+        let whole = bounded || k < last;
         let segment = segment.trim_start();
         // A contract reference is not a name (issue 484), but what follows it may be:
         // 2002406 opens its value with `Contrato n° S-036/02-DJ.` as a segment of its
@@ -963,7 +1066,23 @@ fn names_in_value(value: &str, bounded: bool, authority: Option<&Authority>) -> 
         // the segment is the raw 256-byte window, and a "name" that long mints one
         // organization per notice and poisons an identity that has no identifier to
         // fall back on. Refuse it instead.
-        let unprefixed = strip_lot_prefix(segment);
+        let entry = segment;
+        // Issue 526: an entry keyed by a reference that names its lot (`Lot 2) X`, `1) Lot 1) X`: the prefix
+        // stripped holds the word); a list split per lot yields its pointers, statuses and goods as entries of
+        // their own, so its name is held to the awardee's bar below.
+        let once = strip_lot_prefix(segment);
+        let twice = strip_lot_prefix(once);
+        let names_lot = |head: &str| find_ascii_ci(head, "lot").is_some();
+        // A second reference beside a lot word's: an entry numbered before its lot reference (`2) lots 3), 7)
+        // et 16) B. Braun Médical`, 1505765), or a sub-entry numbered after it (`Lot 9: 1: Prodirest`, 2016618).
+        let unprefixed = if twice.len() < once.len()
+            && (names_lot(&segment[..segment.len() - once.len()]) || names_lot(&once[..once.len() - twice.len()]))
+        {
+            twice
+        } else {
+            once
+        };
+        let keyed = names_lot(&segment[..segment.len() - unprefixed.len()]);
         let prefixed = unprefixed.len() < segment.len();
         let segment = unprefixed;
         let (name, bounded) = match segment.find(',') {
@@ -975,18 +1094,44 @@ fn names_in_value(value: &str, bounded: bool, authority: Option<&Authority>) -> 
         }
         // Issue 526: a keyed lot entry that is an award sentence, not a name (`lot 3) la société Storz a
         // été retenue`, `Lot 2) attribué à Dupont SA`), names its one awardee when 520's reader finds one
-        // in it ([`crate::partyname::award_winner`]: its cues and refusals); otherwise it is read as
-        // before. Only a keyed lot entry holding a cue word is read this way.
+        // in it ([`crate::partyname::award_winner`]: its cues and refusals). The reader sees the entry WITH
+        // its lot reference, so a head that names this lot's winner is not stolen by a cue after the comma
+        // (`Lot 1) Dupont SA, Paris. Le lot 2 a été attribué à la société Martin` stays Dupont SA: 520's
+        // per-lot list refusal), and only an entry the window did not cut is read past its first comma. A
+        // keyed entry whose head is an award sentence that no reader resolves (`Lot 2) sera attribué
+        // ultérieurement`) names nobody.
         if prefixed && crate::partyname::may_name_a_winner(segment) {
-            if let Some(winner) = crate::partyname::award_winner(trim_sentence_period(segment.trim()))
-                .filter(|winner| plausible_name(winner))
-            {
-                let contact = authority.is_some_and(|a| a.contact_entry(&winner, segment));
-                found.push((winner, contact));
+            if whole {
+                if let Some(winner) = crate::partyname::award_winner(trim_sentence_period(entry.trim()))
+                    .filter(|winner| plausible_name(winner))
+                {
+                    let contact = authority.is_some_and(|a| a.contact_entry(&winner, segment));
+                    found.push((winner, contact));
+                    continue;
+                }
+            }
+            if keyed && crate::partyname::may_name_a_winner(name) {
                 continue;
             }
         }
         let name = trim_sentence_period(name.trim());
+        // Issue 526's review: a keyed entry's name is no pointer, role, count, status or figure (`Lot 2)
+        // Idem`, `même titulaire`, `en cours`, `Lot 1: 12 véhicules`: [`crate::partyname::plausible_winner`]),
+        // holds no further lot reference (`Lots 1) oder 2) X` left `oder 2) X`), and holds a capital: an
+        // all-lower-case head is the lot's description, the company after its comma (`Lot 3) papier, Sopaco
+        // …`, 1644391; `Lots 3.1), 3.2) and 4) were not awarded`, 1599991; on the 912-notice sample, 8 of the
+        // 9 such heads; the ninth, `euromedis`, is refused with them).
+        if keyed
+            && (!crate::partyname::plausible_winner(name)
+                || name.as_bytes().windows(2).any(|w| w[0].is_ascii_digit() && w[1] == b')')
+                || !name.chars().any(char::is_uppercase))
+        {
+            continue;
+        }
+        // Issue 526: a slot that names the lot and no winner (`Lot 3`, 2225908; `lots 11`).
+        if bare_lot_reference(name) {
+            continue;
+        }
         if plausible_name(name) {
             let contact = authority.is_some_and(|a| a.contact_entry(name, segment));
             found.push((name.to_owned(), contact));
@@ -3583,7 +3728,7 @@ mod tests {
         assert_eq!(lot_prefix_len("1) CGC"), Some(2), "the bare digits keep their rule");
         assert_eq!(
             winner_segments("Lot 1) Blin. Lot 2) Prodirest. Lot 3) Société Dupont"),
-            vec!["Lot 1) Blin", "Lot 2) Prodirest", "Lot 3) Société Dupont"]
+            vec!["Lot 1) Blin.", "Lot 2) Prodirest.", "Lot 3) Société Dupont"]
         );
         let body = "1.  Awarding authority: Ville de Toulon, Hôtel de Ville, F-83000 Toulon.\n\
                     3.  Date of award: 1. 2. 2002.\n\
@@ -3598,6 +3743,133 @@ mod tests {
                     6.  Supplier(s): Lot 1).\n\
                     9.  Notice published on: 3. 4. 2002.";
         assert!(awarded_names(bare).is_empty(), "a bare `Lot 1)` mints nothing");
+    }
+
+    /// Issue 526's review: what the per-lot split must not mint. A keyed entry's name is held to the
+    /// awardee's bar, a head is not stolen by a cue after its comma, a cut window is not read past its
+    /// comma, an abbreviation keeps its dot, and a partly read list leaves no reference in the name.
+    #[test]
+    fn a_keyed_lot_entry_is_held_to_the_awardees_bar() {
+        let names = |value: &str, bounded: bool| names_in_value(value, bounded, None);
+        assert_eq!(names("Lote 1) Declarado desierto. Lote 2) Limpiezas Luz", true), vec!["Limpiezas Luz"]);
+        assert_eq!(
+            names("Lot 1) Dupont SA, Paris. Le lot 2 a été attribué à la société Martin", true),
+            vec!["Dupont SA"],
+            "the head names lot 1's winner; the cue after the comma is another lot's"
+        );
+        assert_eq!(names("Lot 1) Dupont SA, Paris. Lot 2 : attribué à Martin SA", true), vec!["Dupont SA", "Martin SA"]);
+        assert_eq!(
+            names("Lot 3: Sistema Compositi; lots 4 and 5: Bieffe Helmets; lots 7, 8, 9 and 10: Carabelli; lot 21: GI.PI.", true),
+            vec!["Sistema Compositi", "Bieffe Helmets", "Carabelli", "GI.PI"],
+            "the 1993–1996 colon lists (75324) name each lot's winner, and no `lots 7`"
+        );
+        assert_eq!(
+            names("Lot 1) Blin. Lot 3) la société Storz a été retenue. Lot 4) Prodirest", true),
+            vec!["Blin", "Storz", "Prodirest"]
+        );
+        assert!(
+            names("Lot 2) après négociation, attribué à la société Dupont Constru", false)
+                .iter()
+                .all(|n| !n.contains("Constru")),
+            "a cut window is not read past its first comma"
+        );
+        assert_eq!(
+            names(
+                "Lot 1) Blin. Lot 2) Idem. Lot 3) idem lot 1. Lot 4) en cours. Lot 5) sera attribué ultérieurement. \
+                 Lot 6) même titulaire. Lot 7) la société Martin a été retenue, la société Durand ayant été écartée",
+                true
+            ),
+            vec!["Blin"],
+            "pointers, statuses and an unresolved award sentence name nobody"
+        );
+        assert_eq!(names("Dupont SA, Paris. Lot 1: 12 véhicules", true), vec!["Dupont SA"]);
+        assert!(names("Lot 1: 120 000 EUR HT", true).is_empty(), "a price is no name");
+        assert_eq!(
+            names("1) Lot 1) imprimés, Italic, chemin Baudioux; 2) lot 3) papier, Sopaco; Lots 3.1), 3.2) and 4) were not awarded", true),
+            Vec::<String>::new(),
+            "a lot's lower-case description is no name (1644391, 1599991)"
+        );
+        assert_eq!(
+            names("Lot 1) Dupont S.A. Lot 2) Martin S.A.", true),
+            vec!["Dupont S.A.", "Martin S.A."],
+            "an abbreviation keeps its dot on every entry"
+        );
+        assert_eq!(names("1: Discol. 2: Rault. 3: Sarl Fuseau", true), vec!["Discol", "Rault", "Sarl Fuseau"]);
+        for (value, rest) in [
+            ("Lots 1) à 4) Dupont", "Dupont"),
+            ("Lotes 1) a 4) Limpiezas Luz", "Limpiezas Luz"),
+            ("Lots 1) & 2) Dupont", "Dupont"),
+            ("Lots 1) - 2) Dupont", "Dupont"),
+            ("Lots 1) ou 2) Dupont", "Dupont"),
+            ("Lot 1): Dupont", "Dupont"),
+            ("Lot 1)- Dupont", "Dupont"),
+            ("Lot 1) – Dupont", "Dupont"),
+            ("Lots 1) 2) et 3): Dupont", "Dupont"),
+            ("Lots 1) 2) 3D Systems", "3D Systems"),
+            ("Lot 12) 3M France", "3M France"),
+            ("Lot 1 : Dupont", "Dupont"),
+            ("lots 7, 8, 9 and 10: Carabelli", "Carabelli"),
+            ("Lots 1 and 2: Societe Digital Equipment France", "Societe Digital Equipment France"),
+            ("lot 7.2: Societe Maintronic", "Societe Maintronic"),
+            ("lots 7.1 and 7.3 and 7.5: Cegelec", "Cegelec"),
+            ("Lot 1, lot 2 and lot 5: Dupont", "Dupont"),
+            ("Lotes 1 y 2: Limpiezas Luz", "Limpiezas Luz"),
+            ("Lots 1-3: Dupont", "Dupont"),
+            ("Lots n° 1 et n° 2) Dupont", "Dupont"),
+            ("Lots 1) 2) 3) 4) 5) 6) 7) 8) Dupont", "Dupont"),
+        ] {
+            let len = lot_prefix_len(value).unwrap_or_else(|| panic!("{value}"));
+            assert_eq!(value[len..].trim_start(), rest, "{value}");
+        }
+        assert!(names("Lots 1) oder 2) Dupont", true).is_empty(), "a reference left in the name refuses it");
+        assert_eq!(
+            names("10) et 11) Maquet; 20) Olympus; 51), 54) et 55) GEMS; 8)-11)-12) Prodirest; 90), 91) et 510) Hill Rom", true),
+            vec!["Maquet", "Olympus", "GEMS", "Prodirest", "Hill Rom"],
+            "bare references chain on too (1586001, 1676001): no `et 11) Maquet`"
+        );
+        assert_eq!(
+            names("2) lots 3), 7), 16) et 98) B. Braun Médical; 3) lots 1), 22) à 24) Baxter SA", true),
+            vec!["B. Braun Médical", "Baxter SA"],
+            "an entry numbered before its lot reference (1505765)"
+        );
+        assert_eq!(
+            names(
+                "lots 2), 3), 11), 13), 17), 20), 22), 23), 24), 27), 28), 34), 35), 38), 41), 49), 50), 51), \
+                 52), 57), 58), 59), 62) et 107) Cis Bio International; lot 14) Brahms",
+                true
+            ),
+            vec!["Cis Bio International", "Brahms"],
+            "a long reference list is still a reference (1486368)"
+        );
+        assert_eq!(
+            names("lot 04) a: Hexacath, 4, passage Saint-Antoine; lot 04) b: Guidant, 9, rue d'Estienne", true),
+            vec!["Hexacath", "Guidant"],
+            "a sub-lot's letter label is the reference's (1561325)"
+        );
+        assert_eq!(names("Lot 1: a) Inforlab Chimie, F-Chelles (77). Lot 2: Sté Charlyrobot", true), vec!["Inforlab Chimie", "Sté Charlyrobot"]);
+        assert!(names("Lot 3", true).is_empty(), "a slot naming only the lot names nobody (2225908)");
+        assert!(names("lots 11, lot 12 and lot 15", true).is_empty());
+        assert_eq!(names("et 1 bis) Philips France", true), vec!["et 1 bis) Philips France"], "no reference opens it");
+        assert_eq!(names("1) et 1 bis) Philips France", true), vec!["Philips France"]);
+        assert_eq!(
+            names("Lot 9: 1: Prodirest. Lot 10: 1: Disval", true),
+            vec!["Prodirest", "Disval"],
+            "a sub-entry numbered after the lot's reference (2016618)"
+        );
+        assert_eq!(names("Lots 1) und 2) Dupont", true), vec!["Dupont"]);
+        for value in [
+            "Lot nº",
+            "Lot n€ 3) X",
+            "Lot 3é) X",
+            "Lot é",
+            "Lot 1, 2 rue des Lilas",
+            "Lot No 4, Hal Far",
+            "Lot 1.250: Dupont",
+            "Lot 1 a été attribué à Dupont",
+            "Lot 1 & 2 Trading Ltd",
+        ] {
+            assert_eq!(lot_word_prefix_len(value), None, "{value}");
+        }
     }
 
     /// Issue 485: a phone number is not a lot reference, and a contact line is not a

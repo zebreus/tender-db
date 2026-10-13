@@ -4,6 +4,23 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 526) — 1993–2003 winner lists keyed by lot are read one winner per lot
+
+The oldest award notices list their winners lot by lot — `Lot 1) Blin. Lot 2) Prodirest.`, `Lot 1: Spie
+Trindel; lot 2: Philips`, `lots 7, 8, 9 and 10: Carabelli`, `10) et 11) Maquet`. These lists were read as one
+organization per list or per comma (`Lot 1) Blin. Lot 2) Prodirest. …`, `lots 7`, `et 11) Maquet`), so a company
+was split across one organization per lot-number spelling. After the re-parse of the 1992–2003 notices:
+- each lot's winner is served under the company's own name (`Blin`, `Prodirest`), merging with the same name
+  elsewhere;
+- a lot reference is never part of a name, and a slot that names only a lot (`Lot 3`), a pointer (`Lot 2) Idem`),
+  a status (`en cours`, `were not awarded`), a price or a lot's lower-case description (`Lot 3) papier, Sopaco`)
+  is no organization;
+- a keyed award sentence names its awardee (`lot 3) la société Storz a été retenue` → `Storz`).
+
+On a 912-notice sample, names carrying a lot reference fell from 4,423 to 208. Lettered and Roman lot labels
+(`Lot A)`, `Lot III:`, about 250 organizations) are kept as published. The prefixed organizations are removed
+(`organization removed`), and the affected Tenders publish `tender changed`.
+
 ## Unreleased (issue 528) — Dutch award prose in a winner slot is read as what it says
 
 About 130 organizations were named after Dutch award prose sitting in a winner slot rather than after a company.

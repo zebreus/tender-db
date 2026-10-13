@@ -5499,7 +5499,11 @@ fn descriptor_names(after: &str) -> bool {
 /// - an elided `à` (`Dupont ainsi qu'à la société Martin`), or a second party joined on (`Dupont et la
 ///   société Martin`, `Dupont avec la société Martin`, `Dupont SARL et Martin SA` — a company form on both
 ///   sides of ` et `; `Ets. Dupont et Fils` passes).
-fn plausible_winner(name: &str) -> bool {
+///
+/// Issue 526: the text parser holds the name of a keyed lot entry (`Lot 2) X`) to the same bar, since a
+/// list split per lot yields its pointers (`Lot 2) Idem`, `même titulaire`), statuses (`en cours`) and
+/// goods or prices (`Lot 1: 12 véhicules`) as entries of their own.
+pub fn plausible_winner(name: &str) -> bool {
     let folded = fold(name);
     let words: Vec<&str> = folded.split(' ').filter(|w| !w.is_empty()).collect();
     let Some(&first) = words.first() else { return false };
