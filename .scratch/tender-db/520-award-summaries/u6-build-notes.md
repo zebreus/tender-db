@@ -83,3 +83,15 @@ pairs. On them `void_tail_winner` answers exactly:
 - 2734625 → `GRPT vallée sas (mandataire), La Comec et Arbat System`.
 
 No org of either GRPT name exists, so each mints one.
+
+## Drain (2026-10-13)
+
+- Gate green at 5a43e1b, then deployed at 5a43e1b (queue idle).
+- Dry 2380 extracted 6 mentions of 5 orgs on 2 notices (r208), exactly the five rows (`void-names-refold-2380-dry.json`). None of them is identified, and A2's other 5 rows stay exempted.
+- Wet 2381 (expect 2) → fold 2382: 6 mentions refreshed and re-bound, 7 correction rows, 2 tenders written.
+- Sweep 2383 swept 5 of 5, each published as `organization removed`.
+- Verify:
+  - 1844226, 1844229, 1844232, 2734624 and 2734625 answer 404.
+  - BGE Guyane 1844216 holds 11 mentions (from 7).
+  - The GRPT consortia are minted as 31922245 and 31922246.
+  - Dry 2384 converges: 0 void, 0 extracted, 151 kept exemptions.
