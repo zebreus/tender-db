@@ -389,3 +389,133 @@ Prefix as above (`CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TE
 Probe, mutation and log files are in this session's scratchpad (`u4rf/`). Before staging, run `git diff` on each
 file as before. Next steps: `ops/check.sh`, then the deploy, then U5's dry run, read against App. B and against
 `exempted[]` reasons containing `issue 520`.
+
+## Second review fixes (2026-10-13, after the second adversarial panel)
+
+Still in the working tree on top of `f378bb5`, **not committed**, `ops/check.sh` not run, nothing on prod touched.
+The panel had 10 verified findings and 2 nits (`520u4-review2.json` in the session scratchpad). All 12 are fixed.
+Each finding's specimens are in the new test `award_winner_reads_the_second_review`: 118 cases, each a wrong
+extraction that now reads `None` or the true awardee, beside the counterparts that still name one. The rule is
+that every fix refuses, or ends a name earlier, and never widens. There is one exception: a leading dotted legal
+form now keeps the name it opens. Where several readings were possible I chose the refusal.
+
+### Per finding
+
+| # | finding | fix | where |
+|---|---|---|---|
+| 0 | a leading dotted form cut to the form alone (`la S.A.R.L. Dupont` gave `S.A.R.L.`) | `winner_end`: a `COMPANY_FORMS_DOTTED` form with only an article or descriptor before it does not end the name. If the next field opens there instead, the name ends at the form: a `FIELD_OPENERS` word other than an article before a capital (`S.A.R.L. Montant`, `S.A.R.L. Le marché`). Backstop: `plausible_winner` refuses a name that is a legal form alone (dotted forms, and `COMPANY_TOKENS` folded: `S.A.R.L.`, `S.A.S.`, `SARL`). Results: `S.A.R.L. Dupont`, `S.A.S. Dupont Frères`, `S.A. Martin et Fils`, `E.T.S. Dupont`, `S.A.R.L. Les Jardins de Cocagne`, and cue e's `S.A.R.L. Dupont`. For cue e, a `.` after a single letter or a company abbreviation is not counted as a sentence split. `A.B.C. Les Peintres` is unchanged: not a form, the verifier's design trade-off | `winner_end`, `plausible_winner`, cue e |
+| 1 | cue e named a company from an earlier clause or sentence | cue e is refused when the company is in another sentence, when a `COMPLEMENT_PREPOSITIONS` word stands before `la société` (`désistement de`, `L'offre de`, `Le recours de`), or when the name ended early and the gap before `a été retenue` is not an apposition (`apposition`: it ends in `,` or `)`, or is an address starting with a postcode). The pinned `Dupont SARL, Lyon,`, `(69003 Lyon)` and `- 69003 Lyon` keep their names | `winner_cues` (e), `award_winner` |
+| 2 | procedure, amount, address or agent tails glued onto the name | `award_circumstance` ends the name at `pour <digits>` and at `par <article> <lower-case word>`. `plausible_winner` refuses a `NAME_TAILS` word after the first word, read as published in lower case or capitals, so `Restaurant Au Bon Coin` stays a name (`dans`, `selon`, `lors`, `sous`, `au(x)`, `en`, `montant`, `notifié`, `sans`, `mais`, `puis`, `vain`, …). It also refuses a figure (`€`, `FIGURE_TOKENS`) and a number followed by a street word | `award_circumstance`, `plausible_winner` |
+| 3 | an award undone later, or a pluperfect | `undone_after` reads every sentence in the 240-byte window after the name. In the name's own sentence, an undo stem, a rejection stem or `sans suite` refuses (as before). In any sentence, an undo stem, a rejection stem or a void verdict (`mentions_void`) refuses, unless that sentence names a numbered lot whose number appears nowhere before it (Storz's `Le lot 32`, `; lot 2 infructueux`). Its result is now `return None` (it was `continue`). `avait`/`avaient` were added to `AWARD_DOUBTS`, and cue b now reads the doubts too | `undone_after`, `AWARD_DOUBTS`, cue b |
+| 4 | another contract's award, the incumbent's, a scored bidder's, a framework | `AWARD_CONTEXT` holds `déjà`, `actuel*`, `sortant*`, `prolong*`, `avenant`, `reconduit*`, `accord`, `note*`, `seuil`, and the joint-award words. If one of these words, or an undo or rejection stem, stands anywhere in the cue's sentence or the next, the cue gets `refused`, which makes the whole answer `None`. The test is per sentence, not per clause: the incumbent's `actuel,` stands in the clause before the verb. `déjà` moved here from the suggested `AWARD_DOUBTS`. Verifier-refuted part: `Lot 3 … intégrées au lot 2 attribué à la société Dupont` still gives `Dupont` (the 2381362 rule), and is pinned | `winner_cues` |
+| 5 | a selection-stage `retenue` | cue e is refused for `candidat…` up to 3 words before the company, for `pour` + a purpose right after the verdict (not `pour le lot 2`, `pour un montant`, `pour 5 000`), for a `SELECTION_STAGE` word later in its sentence (`admis(e)`, `négociation`, `candidature`, `phase`, `présenter`, `participer`, …), and for the complement rule (`L'offre de la société`). `BIDDER_REJECTIONS` (`inacceptab`, `irrégul`, `écarté`, `rejet`, `exclu`, …) is read after the name like `AWARD_UNDONE` | `winner_cues` (e), `undone_after` |
+| 6 | a qualifier or a possessive taken as the winner | `strip_winner`: when a dropped descriptor or a lower-case article leaves a lower-case word, the answer is no name. This is tested after unquoting; the `descriptor_names` arm (`société des Eaux de Marseille`) is exempt. Cue e: a lower-case name after the descriptor it dropped is refused. `POSSESSIVES` heads are refused, case-sensitive | `strip_winner`, `award_winner`, `plausible_winner` |
+| 7 | label status values | `plausible_winner` refuses an unaccented `A`/`a` followed by an `-er`/`-ir`/`-re` word (`A définir`, `A DEFINIR`; `A.E.C. Castellane` passes). After a capital article, the next word is the head checked against every list, and a descriptor standing alone is refused (`Le même`, `La même entreprise`, `LA SOCIÉTÉ`; `La Poste` passes). `STATUS_HEADS` and `RELAUNCH_STEMS` heads are refused, as are `en cours` and `en attente` | `plausible_winner` |
+| 8 | co-winner lists | `listed_names_after`: when the name ends at a `,` or a dash and, in the same sentence, two or more items starting with a capital follow, or one that carries a company form or is joined by ` et `, the answer is `None`. `plausible_winner` also refuses an elided `qu'à`; `et`/`ou`/`ainsi`/`avec` followed by an optional article and a descriptor; and a company form on both sides of ` et ` (`Ets. Dupont et Fils` passes). Joint-award words are in `AWARD_CONTEXT` | `listed_names_after`, `plausible_winner` |
+| 9 | cue d's name absorbed a failure tail | `runs_on`: a cue-d name holding a lower-case word that is not `de`/`des`/`du`/`d`/`et`/`la`/`le`/`les` and has no apostrophe is refused. The case-blind `NAME_TAILS` catch it in capitals | `award_winner` |
+| nit 0 | `à été` read as the party's `à` | an `à` followed by `été` ends cue a's reach: no cue (`None`), never `été notifié`. The suggested `NO_PARTY_AFTER` entry would read on to the next `à`, a new way to extract, so it was not used. `à été` also ends a name | `winner_cues` (a), `winner_end` |
+| nit 1 | the fold's `extracted` count was higher than the walk's | `mentions_and_dropped` counts only heads it actually renames, on mentions without a gated identifier. A head outside the net (`Promocash SAS` first) and an identified party are still `Renamed` and still have their void-net copies rewritten, but are not counted. Doc on `ExtractedWinners`; runbook: an identified sibling is `mentions_refreshed`, and the rebind count to read is `mentions_rebound` | `project.rs`, `docs/operations.md`; test `an_extracted_winner_counts_only_a_head_that_rebinds` |
+
+### Accepted costs (each one refuses; the party keeps its summary)
+
+- **Literals that existed at `f378bb5` and now read `None`.** These are the only ones:
+  - `Lot 2 infructueux ; l'offre de la société Keolis a été retenue` (Keolis): a classifier literal, not an `award_winner` pin. The complement rule refuses `L'offre de la société X a été retenue`.
+  - `Lot initialement déclaré infructueux, il a depuis déjà été attribué à l'entreprise Dupont Frères après négociation` (Dupont Frères): `déjà`, finding 4. Moved to the `None` cases.
+  - `Lot infructueux. Suite au désistement de la société Martin, le lot a été attribué à la société Dupont` (Dupont): an undo anywhere in the sentence refuses, per this pass's rule. Moved to the `None` cases.
+- **A void verdict after the name refuses**, unless it is in another numbered lot's sentence. Example: `attribué à X suite à appel d'offres infructueux`.
+- **A `NAME_TAILS` word in lower case or capitals refuses.** Examples: `Médecins sans Frontières`, `RESTAURANT AU BON COIN`.
+- **Context words in the sentence or the next refuse**, even where they are innocent: `accord`, `note`, `multi`, `traitant`, `titulaires`, `mandataire`.
+- **A lower-case name after an article or descriptor refuses.** Example: `la sarl dupont`.
+- **A `relanc…`/`négoci…` head refuses.** Example: `Négociants Réunis`.
+- **Two capitalised comma items after a name refuse.** Example: `Dupont, Zone Industrielle, Lyon`.
+- **An unaccented `A` before an `-er`/`-ir`/`-re` word refuses.**
+
+### The side-by-side probe (temporary `#[ignore]` test; deleted; `git status` shows only the 3 intended files)
+
+The probe loaded the `f378bb5` extractor next to the new one: `partyname.rs` up to its tests module, from the
+scratchpad, included as a `#[path]` module.
+
+1. **The 47 App. B rows.** They come from the 376 names of `../525-void-templates/void-names-refold-after-dry.json`
+   `exempted[]`; the 203 names of `void-names-refold-2360-dry.json` are a subset of them. All 47 extract their
+   exact App. B string (47/47).
+2. **The other 329 of the 376.** These are the classified rows of `unit1-classified.json`. None of them extracts:
+   0 of 329.
+3. **Every string literal.** The probe read 225 files: the 224 `.rs` files under `crates/` and the `f378bb5`
+   `partyname.rs`. That is 33,056 distinct literals; 162 extract under the new code. Old and new output differ on
+   101 literals:
+   - **91 changed only toward `None`.**
+   - **7 are dotted-form corrections**, from the form to the form plus the name: `S.A.R.L.` to `S.A.R.L. Dupont`
+     (twice, cue a and cue e), `S.A.R.L. Les Jardins de Cocagne`, `S.A.S. Dupont Frères`, `S.A. Martin et Fils`,
+     `E.T.S. Dupont`, `S.A. Les Rapides Varois`.
+   - **3 names end earlier**, finding 2's own specimens: `Dupont pour 3 ans`, `Dupont pour 48 225` and `Dupont par
+     le pouvoir adjudicateur` now give `Dupont`.
+   - **No literal went from `None` to a name.**
+   - **Only 3 of the 101 existed at `f378bb5`.** They are the three listed under Accepted costs; every other change
+     is a specimen this pass added.
+   - **The new test is red against `f378bb5`.** On the old column, 100 of its 118 cases read differently from what
+     the test asserts, and they give the reviewers' quoted junk (`S.A.R.L.`, `Dupont pour 48 225`, `Dupont ayant
+     été écartée`, `A définir`, `été notifié`, `Dupont sans succès`, …). The other 18 are counterparts, or near
+     misses that were already `None` (`Le même que pour le lot 2`, which the verifier refuted; `admise à négocier`;
+     `à été notifié à la société Dupont`).
+
+### EXITs (gate flags + gate package set, never piped; `> file 2>&1; echo EXIT=$?`)
+
+Prefix: `CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p model -p store -p ingest
+-p tender-db --features tender-db/server`.
+
+| run | tail | EXIT | result |
+|---|---|---:|---|
+| probe 1 (first cut) | `--lib -- zz_u4r2_probe --ignored` | 0 | 47/47, 0/329; 1 specimen off (cue e `S.A.R.L.`'s dots split the sentence), fixed |
+| probe 2 / 3 (with partyname) | `--lib -- zz_u4r2_probe --include-ignored partyname:: …` | 101 | 0 test failures in my code; the 101 is from the two env-only `issue_511_unit_{5,6}_simulation` (`--include-ignored`, no `ISSUE_511_PLAN`) |
+| **final probe** | `--lib -- zz_u4r2_probe --ignored` | 0 | the numbers above |
+| partyname | `--lib -- partyname::` | 0 | 54 passed, 2 ignored |
+| ingest lib (all lib suites) | `--lib` | 0 | ingest 529 / 4 ignored, model 3, store 182, tender_db 212; 0 failed |
+| integration neighbours | `--test project --test text --test r208 --test r209 --test project_golden --test project_incremental` | 0 | project 104, project_golden 11, project_incremental 51, r208 15, r209 19, text 13; 0 failed |
+| supervisor walk + budget | `--lib -- the_void_walk an_identified_summary_party an_org_kept_and_extracted the_void_split the_extracted_suffix refold_void_names the_dropped_suffix run_spec_futures_stay_inside_their_size_budgets an_execute_without_an_expected_count_is_refused` | 0 | tender_db 11 passed |
+
+- **Warnings:** only the two that were already there (`tests/project.rs:552`, `tests/project_incremental.rs:1217`).
+- **Stack budget:** `run_project`'s frame budget is untouched. This pass changes no async fn, no `Report` field and
+  no `Spec` arm. `award_winner` and `mentions_and_dropped` are sync and are not reached in the budget test's
+  empty-corpus poll, and the budget test is green.
+- **Disk:** target 14G, 5.9G free.
+
+### Files
+
+- `crates/ingest/src/partyname.rs`:
+  - new constants: `AWARD_CONTEXT`, `SELECTION_STAGE`, `COMPLEMENT_PREPOSITIONS`, `BIDDER_REJECTIONS`, `NAME_TAILS`,
+    `FIGURE_TOKENS`, `STATUS_HEADS`, `POSSESSIVES`; `AWARD_DOUBTS` +2;
+  - `WinnerCue.{introduced, refused}`;
+  - `winner_cues`: context per sentence, cue b doubts, cue e refusals, `à été`;
+  - `award_winner`;
+  - `undone_after` rewritten;
+  - `apposition`, `runs_on`, `listed_names_after`;
+  - `winner_end` (leading form, `à été`), `award_circumstance`, `strip_winner`, `plausible_winner`;
+  - docs and the module paragraph;
+  - one new test; two pre-existing positives moved to `None`.
+- `crates/ingest/src/project.rs`: the `extracted` count, the `ExtractedWinners` doc, one new test.
+- `docs/operations.md`: the runbook line on the identified sibling and on `mentions_rebound`.
+
+## Third check (wf_8fde69d9-1d4's independent check, then the owner)
+
+- The check confirmed all 10 second-review findings and both nits as fixed, and app_b_exact: the 47 App. B winners
+  extract exactly, and none of the other 329 names extracts.
+- It found one regression in the costly direction (should-fix). The new `pour <digits>` and `par <article>
+  <lower-case>` stops ended a name before a second awardee, so `attribué à Dupont pour 12 000 € HT et à Martin pour
+  8 000 € HT` extracted `Dupont`; f378bb5 refused it.
+- It also found the junk side of those stops (low): `Insertion par l'emploi` was cut to `Insertion`, and
+  `Association pour 1 avenir` to `Association`.
+- Fixed by the owner:
+  - `second_awardee_after` refuses a second party after the name in its sentence: `et à` / `et au(x)` (not `et a
+    été`), `ainsi qu'à`, `puis à`;
+  - `pour <digits>` stops only when a unit follows the figure (HT, TTC, EUR, euros, an(s), mois, jours, semaines);
+  - `par` stops only before a procedure word or a closed agent list (pouvoir, acheteur, adjudicateur, maître,
+    personne, représentant, président, jury, collectivité, ville, commune, conseil, bureau, comité, direction,
+    assemblée).
+- Tests: three joint awards refuse; `… pour 3 ans et a été notifié` still gives `Dupont`; four names keep their words.
+- Mutation: switching off the refusal and widening the agent list makes the second-review test fail (EXIT=101), and
+  the file was restored byte-identical. partyname: EXIT=0, 54 passed, including the 47-winner pin.
+- Left as noted by the check (cheap direction or unchanged from f378bb5):
+  - closed-list tails (`via une procédure négociée`, `Dupont Montant : …`, an address after the name);
+  - an undo more than 240 bytes after the name;
+  - a leading non-form initialism before a field opener (`A.B.C. Les Peintres`);
+  - contrived `Titulaire : S.A.S. Notification …`.

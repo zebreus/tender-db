@@ -1796,7 +1796,11 @@ Génériques`) is re-queued too and listed under `extracted` (`{org, name, winne
 job line, its notices in `notices` and `expect`); the paired fold rebinds each to the winner's
 organization and retires none (`mentions_rebound`, and the fold row's `extracted winners (issue 520)`
 sample). An organization that carries an identifier is exempted instead, its reason naming the winner:
-the resolver binds its mention by the identifier, so no rename moves it. Before that wet run (U5) read
+the resolver binds its mention by the identifier, so no rename moves it to another organization (a
+paired fold over a re-queued sibling notice still rewrites that mention's name and its void-net
+variants to the winner: `mentions_refreshed`, not `mentions_rebound`). The fold row's `extracted
+winners` counts only the heads it renames on mentions no identifier binds, so read `mentions_rebound`
+as what moved. Before that wet run (U5) read
 every row against 520's unit-1 App. B and stop on one not there: `jq -r '.extracted[] | [.org, .winner,
 .notice] | @tsv'` on the report body, and `jq -r '.exempted[] | select(.reason | test("issue 520")) |
 [.org, .reason] | @tsv'` for the identified ones.

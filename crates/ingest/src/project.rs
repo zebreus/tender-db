@@ -189,7 +189,10 @@ pub const EXTRACTED_SAMPLE: usize = 20;
 /// winner ([`crate::partyname::award_winner`]), across the notices whose mentions this run read, on
 /// OUTERMOST sections. Each mention is minted under the winner's name instead of the summary's, so a
 /// recorded one re-resolves (`mentions_refreshed`) and moves to the winner's organization
-/// (`mentions_rebound`), and the summary's is the orphan sweep's.
+/// (`mentions_rebound`), and the summary's is the orphan sweep's. Counted (the second review's nit) only
+/// where the head itself is renamed — not a party first seen outside the void net (`Promocash SAS`
+/// beside a summary) — and the mention carries no identifier, which would bind it to its own
+/// organization (the walk exempts those): what a paired fold rebinds by name.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ExtractedWinners {
     pub count: u64,
@@ -5636,12 +5639,16 @@ impl NoticeState {
         // Génériques`). Identity stays the resolver's (issue 234): the mention binds the organization of
         // that name and country where one exists, else mints one, and a recorded mention under the
         // summary re-resolves and moves there. The result stays `selec-w`; no figure is read (491).
-        let mut extracted = ExtractedWinners::default();
+        // The second review's nit: only a head the winner actually renames is counted, and only on a
+        // mention its identifier does not bind (below) — what the walk lists as `extracted` and the
+        // paired fold rebinds. A head outside the net (`Promocash SAS` first seen, the summary second)
+        // keeps its name, and an identified party binds its identifier's org, as the walk's
+        // identified exemption says.
+        let mut renamed_heads: Vec<(&str, String, &str)> = Vec::new();
         for (section, winner) in &decision.renamed {
             let Some(mention) = mentions.get_mut(section.as_str()) else { continue };
-            extracted.record(notice_id, section, &mention.name, winner);
             if crate::partyname::mentions_void(&mention.name) {
-                mention.name.clone_from(winner);
+                renamed_heads.push((section.as_str(), std::mem::replace(&mut mention.name, winner.clone()), winner));
             }
             for (_, variant) in &mut mention.variants {
                 if crate::partyname::mentions_void(variant) {
@@ -5650,7 +5657,7 @@ impl NoticeState {
             }
         }
 
-        let mentions = mentions
+        let mentions: Vec<Mention> = mentions
             .into_values()
             .map(|mut m| {
                 // Canonicalise the country to alpha-2 (issue 48) before it is
@@ -5668,6 +5675,12 @@ impl NoticeState {
                 m
             })
             .collect();
+        let mut extracted = ExtractedWinners::default();
+        for (section, published, winner) in &renamed_heads {
+            if mentions.iter().any(|m| m.section_id == *section && m.identifier.is_none()) {
+                extracted.record(notice_id, section, published, winner);
+            }
+        }
         (mentions, skipped, dropped, extracted)
     }
 
@@ -16255,6 +16268,41 @@ mod tests {
         assert_eq!(parties.verdict("ORG-4"), PartyVerdict::Renamed("Dupont SARL".into()));
         assert_eq!(kept(parties.verdict("ORG-5")), "party kept: 0/2 names void, an award summary among them");
         assert_eq!(parties.verdict("ORG-6"), PartyVerdict::Renamed("Dupont SARL".into()));
+    }
+
+    /// Issue 520 U4, the second review's nit: the run counts an extracted winner only where the fold
+    /// renames the mention's head and no identifier binds the mention — what the walk lists as
+    /// `extracted` and a paired fold rebinds. A party first seen outside the void net (`Promocash SAS`,
+    /// its summary second) keeps its head and binds as before, and an identified party binds its
+    /// identifier's organization (the walk exempts it): both still read `Renamed` and take the winner on
+    /// their void-net copies, and neither is counted. The same party with no identifier is.
+    #[test]
+    fn an_extracted_winner_counts_only_a_head_that_rebinds() {
+        use placeholder_511::*;
+        const PROMOCASH: &str = "Infructueux (1 offre irrégulière). Le lot a été relancé en procédure négociée (article 35.II.1 CMP) et a été attribué à l'entreprise Promocash (02100 Saint-Quentin)";
+        let outside_first =
+            multilingual(&[("ORG-1", &[(Some("EN"), "Promocash SAS"), (Some("FR"), PROMOCASH)])], &["ORG-1"]);
+        let (mentions, _, _, extracted) = NoticeState::mentions_and_dropped(false, 9, &outside_first);
+        assert_eq!(mentions[0].name, "Promocash SAS", "the head outside the net keeps its name");
+        let variants: Vec<&str> = mentions[0].variants.iter().map(|(_, name)| name.as_str()).collect();
+        assert_eq!(variants, vec!["Promocash SAS", "Promocash"], "the void-net copy takes the winner");
+        assert_eq!(extracted, ExtractedWinners::default(), "no head renamed, nothing counted");
+        let verdict = fold_parties("ted-export-r208", &outside_first).verdict("ORG-1");
+        assert_eq!(verdict, PartyVerdict::Renamed("Promocash".into()), "still renamed on its void-net copy");
+        let party = |raw: &str| {
+            eforms(&[("Procedure-Buyer", "Morsø Kommune", "DNK", ""), ("Tenderer", PROMOCASH, "DNK", raw)], Some("DAN"))
+        };
+        let (mentions, _, _, extracted) = NoticeState::mentions_and_dropped(false, 9, &party("38160540"));
+        let tenderer = mentions.iter().find(|m| m.section_id == "ORG-2").expect("the tenderer's mention");
+        assert_eq!(tenderer.name, "Promocash", "the identified party's head is renamed");
+        assert!(tenderer.identifier.is_some(), "premise: the gate admits the identifier");
+        assert_eq!(extracted, ExtractedWinners::default(), "its identifier binds it: not counted");
+        let (_, _, _, extracted) = NoticeState::mentions_and_dropped(false, 9, &party(""));
+        assert_eq!(
+            extracted,
+            ExtractedWinners { count: 1, sample: vec![(9, "ORG-2".into(), PROMOCASH.into(), "Promocash".into())] },
+            "the same party with no identifier is counted"
+        );
     }
 
     /// Issue 512: the text parser stores the "every tender was rejected" marker as a Code
