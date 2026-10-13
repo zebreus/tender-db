@@ -1,6 +1,7 @@
 # 528 — Dutch award prose in a winner slot (`… is gegund aan …`, `Zie bij nadere inlichtingen, 3 aannemers zijn gegund`) stands as a winner organization
 
-Status: ready-for-agent — filed 2026-10-13 from issue 527's census (job 2385, `../527-niet-gegunde/name-phrase-census-2385.json`, the 166 rows whose phrase set is `gegund` alone).
+Status: ready-for-agent — UNIT 1 DECIDED 2026-10-13 (`../528-dutch-award-prose/unit1-decision.md`; classifiers + challengers wf_d8bd6f3b-45c, `unit1-classified.json`). Today all 166 class `None` and none is in the void net, so no walk reaches them. Classes: P 58, A 56, B 34, N 8, V 8 (5 void + 3 later), X 2. The owner reverted 6 challenger moves after bounded seeks showed each result holds exactly one string. Treatment: P + V-later → Placeholder; V-void → VoidLot; A + N → an exact reviewed rename table (`NL_AWARD_REVIEWED`, 64 rows), as 520 U6 did, because no general shape survives review; B + X are kept. NEXT: U2, the P/V Dutch lexicon (simulate exactly on the 166, 0 moves elsewhere; check the placeholder walk's net, else drain via `refold-notices`). Then U3, the reviewed table, its fold consultation and a `refold-notices` drain.
+Was: ready-for-agent — filed 2026-10-13 from issue 527's census (job 2385, `../527-niet-gegunde/name-phrase-census-2385.json`, the 166 rows whose phrase set is `gegund` alone).
 Kind: data quality (results; organizations)
 Relates to:
 - 510 (VoidLot);

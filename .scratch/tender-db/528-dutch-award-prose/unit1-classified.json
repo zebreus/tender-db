@@ -1,0 +1,2997 @@
+[
+{
+"org": 1371455,
+"country": "NL",
+"name": "vijf partijen hebben gegund gekregen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'five parties have been awarded': counts the awardees and names none, so it is a plural non-name.",
+"challenged_from": null
+},
+{
+"org": 1625206,
+"country": "",
+"name": "De opdracht is gegund aan een panel van verzekeraars, informatie te verkrijgen via Willis BV of TenneT Holding BV",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"AWARD_AND_CONTRACT_VALUE": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Awarded to an unnamed 'panel of insurers' with a pointer to ask Willis BV or TenneT Holding BV for details. Those two are contacts for information, not the awardees.",
+"challenged_from": null
+},
+{
+"org": 3220609,
+"country": "NL",
+"name": "De raamovereenkomst is gegund aan 160 ondernemingen. Zie afdeling VI.2 Nadere inlichtingen voor de lijst met van ondernemers aan wie de raamovereenkomst is gegund.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Framework awarded to 160 companies, with a pointer to section VI.2 for the list. It counts parties and names none.",
+"challenged_from": null
+},
+{
+"org": 3354990,
+"country": "NL",
+"name": "Zie bijgevoegd overzicht voor de namen van de organisaties waaraan de 15 percelen van de aanbesteding zijn gegund.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Points to an attached overview for the names of the winners of the 15 lots. Names no organization.",
+"challenged_from": null
+},
+{
+"org": 3359177,
+"country": "NL",
+"name": "Perceel 3 wordt gegund en 1 en 2 niet.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "medium",
+"why": "'Lot 3 is awarded and 1 and 2 are not': a status note that names no awardee. It asserts an award with no negation, so per 520 it is not void; dropping the party keeps the decision. X is the alternative.",
+"challenged_from": null
+},
+{
+"org": 3543690,
+"country": "NL",
+"name": "Perceel K is gegund aan: Koeman en Bijkerk in combinatie met Grontmij, penvoerder Koeman en Bijkerk.",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "Lot K went to a combination (consortium) of Koeman en Bijkerk and Grontmij, with Koeman en Bijkerk as lead. Two awardees, so it is kept as a co-winner list.",
+"challenged_from": null
+},
+{
+"org": 3543691,
+"country": "NL",
+"name": "Perceel L is gegund aan: Koeman en Bijkerk B.V.",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Koeman en Bijkerk B.V.",
+"confidence": "high",
+"why": "'Perceel L is gegund aan: X' names exactly one awardee. | CHALLENGE: Hold as kept until one notice read (A 'Koeman en Bijkerk B.V.' stands if the read clears it). Each of the 7 sibling strings (lots J,K,L,M,N,P,Q: orgs 3543690-96) has exactly 7 mentions. A mention is one (notice, section) row, so each lot-scoped string almost certainly sits in all 7 lot results. Together the 7 strings are one per-lot winner list split across party slots, which 511 §5 / 520 keep. Extracting would bind Koeman en Bijkerk B.V. as a winner of lot M (Grontmij's alone) and four other lots. Revert to A if the read shows this string sits only in lot L's result or in results covering every lot. Confidence: medium.",
+"challenged_from": "A",
+"owner_ruling": "B -> A: each result holds exactly one string (tender 4816260: 49 RES, the 7 strings cycle J..Q; tender 5137318: DVG/Klomp alternate over 6 RES), so a rename never adds a winner beside another lot's; the challenger's own revert condition holds"
+},
+{
+"org": 3543692,
+"country": "NL",
+"name": "Perceel M is gegund aan: Grontmij",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Grontmij",
+"confidence": "high",
+"why": "'Perceel M is gegund aan: Grontmij' names exactly one awardee. | CHALLENGE: Same sibling set as 3543691: 7 mentions for a string scoped to lot M ('Perceel M is gegund aan: Grontmij'). Extraction would bind Grontmij as a winner of lots L, P and Q, which went to Koeman en Bijkerk alone. Keep until a read shows the mention sits only in lot M's result or in results covering every lot; then A 'Grontmij' stands. Confidence: medium.",
+"challenged_from": "A",
+"owner_ruling": "B -> A: each result holds exactly one string (tender 4816260: 49 RES, the 7 strings cycle J..Q; tender 5137318: DVG/Klomp alternate over 6 RES), so a rename never adds a winner beside another lot's; the challenger's own revert condition holds"
+},
+{
+"org": 3543693,
+"country": "NL",
+"name": "Perceel N is gegund aan: Grontmij, Waardenburg, Aqualab Zuid, Het Waterlaboratorium, Koeman en Bijkerk",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "Lot N awarded to five parties: Grontmij, Waardenburg, Aqualab Zuid, Het Waterlaboratorium, Koeman en Bijkerk.",
+"challenged_from": null
+},
+{
+"org": 3543694,
+"country": "NL",
+"name": "Perceel P is gegund aan: Koeman en Bijkerk",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Koeman en Bijkerk",
+"confidence": "high",
+"why": "'Perceel P is gegund aan: Koeman en Bijkerk' names one awardee. | CHALLENGE: Same sibling set: 7 mentions for a string scoped to lot P. Extraction would add Koeman en Bijkerk to lot M (Grontmij alone). Keep until read; if the mention sits only in lot P's result or in results covering every lot, A 'Koeman en Bijkerk' stands. Confidence: medium.",
+"challenged_from": "A",
+"owner_ruling": "B -> A: each result holds exactly one string (tender 4816260: 49 RES, the 7 strings cycle J..Q; tender 5137318: DVG/Klomp alternate over 6 RES), so a rename never adds a winner beside another lot's; the challenger's own revert condition holds"
+},
+{
+"org": 3543695,
+"country": "NL",
+"name": "Perceel Q is gegund aan: Koeman en Bijkerk",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Koeman en Bijkerk",
+"confidence": "high",
+"why": "'Perceel Q is gegund aan: Koeman en Bijkerk' names one awardee. | CHALLENGE: Same sibling set: 7 mentions for a string scoped to lot Q. Extraction would add Koeman en Bijkerk to lot M (Grontmij alone). Keep until read; if the mention sits only in lot Q's result or in results covering every lot, A 'Koeman en Bijkerk' stands. Confidence: medium.",
+"challenged_from": "A",
+"owner_ruling": "B -> A: each result holds exactly one string (tender 4816260: 49 RES, the 7 strings cycle J..Q; tender 5137318: DVG/Klomp alternate over 6 RES), so a rename never adds a winner beside another lot's; the challenger's own revert condition holds"
+},
+{
+"org": 3543696,
+"country": "NL",
+"name": "Perceel J is gegund aan: Grontmij in combinatie met Koeman en Bijkerk, penvoerder Grontmij",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "Lot J went to a combination of Grontmij and Koeman en Bijkerk, with Grontmij as lead. Two consortium members.",
+"challenged_from": null
+},
+{
+"org": 5275836,
+"country": "NL",
+"name": "DVG Personenvervoer (perceel 1 en 2 gegund; perceel 3 gegund aan Klomp Groepsvervoer)",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "N",
+"winner": "DVG Personenvervoer",
+"confidence": "medium",
+"why": "The leading company name is the party, plus a lot note. Lot 3's winner, Klomp, is its own sibling org (5275837) in the same tender, so stripping the note loses nobody. The issue text grouped it under B. | CHALLENGE: The issue's own grouping. DVG and Klomp (5275837) each have exactly 3 mentions, which matches lots 1-3, so each lot result very likely holds BOTH strings, and the notes are the only record of which lot went to whom. N would serve DVG as a winner of lot 3, which the note itself gives to Klomp. The kept string at least states the split. N 'DVG Personenvervoer' is correct only if a read shows DVG's mentions sit in lots 1 and 2 only, or in one whole-tender result. Confidence: medium.",
+"challenged_from": "N",
+"owner_ruling": "B -> N: each result holds exactly one string (tender 4816260: 49 RES, the 7 strings cycle J..Q; tender 5137318: DVG/Klomp alternate over 6 RES), so a rename never adds a winner beside another lot's; the challenger's own revert condition holds"
+},
+{
+"org": 5275837,
+"country": "NL",
+"name": "Klomp Groepsvervoer (perceel 3 gegund; perceel 1 en 2 gegund aan DVG)",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "N",
+"winner": "Klomp Groepsvervoer",
+"confidence": "medium",
+"why": "Mirror of 5275836: Klomp Groepsvervoer plus a note '(lot 3 awarded; lots 1 and 2 to DVG)'. DVG is its own sibling org, so the clean name stands. | CHALLENGE: Mirror of 5275836. 3 mentions = 3 lots, so Klomp's string likely sits in lots 1 and 2 too, and N would serve Klomp as a winner of lots the note gives to DVG. Keep as published until a read shows the mention sits only in lot 3's result or in a whole-tender result; then N 'Klomp Groepsvervoer' stands. Confidence: medium.",
+"challenged_from": "N",
+"owner_ruling": "B -> N: each result holds exactly one string (tender 4816260: 49 RES, the 7 strings cycle J..Q; tender 5137318: DVG/Klomp alternate over 6 RES), so a rename never adds a winner beside another lot's; the challenger's own revert condition holds"
+},
+{
+"org": 5752780,
+"country": "NL",
+"name": "Dit perceel wordt later gegund.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "V",
+"winner": null,
+"confidence": "high",
+"why": "'This lot will be awarded later': not yet awarded, names nobody.",
+"challenged_from": null
+},
+{
+"org": 5819913,
+"country": "NL",
+"name": "De opdracht is gegund aan de organisaties als vermeld in VI.2 Nadere inlichtingen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Awarded to 'the organisations listed in VI.2 Nadere inlichtingen': a pointer with no name.",
+"challenged_from": null
+},
+{
+"org": 5890355,
+"country": "NL",
+"name": "De Beijer Bladel BV (6 percelen gegund)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "N",
+"winner": "De Beijer Bladel BV",
+"confidence": "high",
+"why": "A real company name with the note '(6 lots awarded)' attached.",
+"challenged_from": null
+},
+{
+"org": 5890356,
+"country": "NL",
+"name": "Indaver Bio Energie BV (9 percelen gegund)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "N",
+"winner": "Indaver Bio Energie BV",
+"confidence": "high",
+"why": "A real company name with the note '(9 lots awarded)' attached.",
+"challenged_from": null
+},
+{
+"org": 5890357,
+"country": "NL",
+"name": "Van Berkel Biomassa & Bodemproducten BV (3 percelen gegund)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "N",
+"winner": "Van Berkel Biomassa & Bodemproducten BV",
+"confidence": "high",
+"why": "A real company name with the note '(3 lots awarded)' attached.",
+"challenged_from": null
+},
+{
+"org": 5890358,
+"country": "NL",
+"name": "Indaver Bio Energie BV (2 percelen gegund)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "N",
+"winner": "Indaver Bio Energie BV",
+"confidence": "high",
+"why": "A real company name with the note '(2 lots awarded)' attached.",
+"challenged_from": null
+},
+{
+"org": 6530135,
+"country": "NL",
+"name": "Gegund aan: ADC ArcheoProjecten; Archeologisch Onderzoek Leiden; BAAC; De Steekproef BV; Grontmij Nederland; RAAP Archeologisch adviesbureau; Rijksuniversiteit Groningen; Universiteit van Amsterdam",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'Gegund aan:' followed by eight parties separated by semicolons (ADC ArcheoProjecten, ..., Universiteit van Amsterdam): a multi-winner list.",
+"challenged_from": null
+},
+{
+"org": 6888340,
+"country": "NL",
+"name": "Melior verzekeringen — gegund layer 2 en 3",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "N",
+"winner": "Melior verzekeringen",
+"confidence": "medium",
+"why": "An insurer's name followed by the note '— gegund layer 2 en 3'. The name comes first and the award note trails, so it is the same shape as 'X (n percelen gegund)'.",
+"challenged_from": null
+},
+{
+"org": 6888341,
+"country": "NL",
+"name": "XL Insurance Company SE — gegund layer 1",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "N",
+"winner": "XL Insurance Company SE",
+"confidence": "medium",
+"why": "A company name followed by the note '— gegund layer 1'. The issue lists it as A1. The shape is name plus trailing note, and the winner is the same either way.",
+"challenged_from": null
+},
+{
+"org": 7813581,
+"country": "BE",
+"name": "Zie bij nadere inlichtingen, 3 aannemers zijn gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'See further information, 3 contractors have been awarded': a pointer plus a count, no name.",
+"challenged_from": null
+},
+{
+"org": 7813583,
+"country": "BE",
+"name": "Zie bij nadere inlichtingen, 4 aannemers zijn gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'See further information, 4 contractors have been awarded': a pointer plus a count, no name.",
+"challenged_from": null
+},
+{
+"org": 8105109,
+"country": "NL",
+"name": "Falck Consulting & Technology (perceel 2 nog niet definitief gegund: verificatiefase)",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "X",
+"winner": null,
+"confidence": "medium",
+"why": "A real company name with the note '(lot 2 not yet definitively awarded: verification phase)'. The not-yet tail is 520's A2 shape (name plus void tail), so check which lot this result covers before serving it as a winner. | CHALLENGE: Keep as published until the result is read. The note '(perceel 2 nog niet definitief gegund: verificatiefase)' qualifies the award; it is not an informational count like '(6 percelen gegund)'. The org has 3 mentions, so it likely sits in several lot results, lot 2's among them. Stripping the note would serve a provisional award as final on lot 2. Under 520's A2 policy, a name followed by a void tail stays as published until its row is reviewed. Never V, which would drop a real (at least provisional) winner. After a read, N 'Falck Consulting & Technology' is right for any result covering a lot Falck won outright. Confidence: medium.",
+"challenged_from": "N"
+},
+{
+"org": 8273820,
+"country": "",
+"name": "Perceel 2 wordt later gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "V",
+"winner": null,
+"confidence": "high",
+"why": "'Lot 2 will be awarded later': not yet awarded.",
+"challenged_from": null
+},
+{
+"org": 8314178,
+"country": "",
+"name": "Zie bij nadere inlichtingen, 3 aannemers zijn gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'See further information, 3 contractors have been awarded': a pointer plus a count.",
+"challenged_from": null
+},
+{
+"org": 8314179,
+"country": "",
+"name": "Zie bij nadere inlichtingen, 5 aannemers zijn gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'See further information, 5 contractors have been awarded': a pointer plus a count.",
+"challenged_from": null
+},
+{
+"org": 8314186,
+"country": "",
+"name": "Zie bij nadere inlichtingen, 4 aannemers zijn gegund",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'See further information, 4 contractors have been awarded': a pointer plus a count.",
+"challenged_from": null
+},
+{
+"org": 8453203,
+"country": "",
+"name": "Raamovereenkomst gegund aan Altran Belgium, Consol Partners UK, Capitol International Services LTD, Lupam/Qplox engineering, MBA Michael Bailey Associates, Oxford Global Resources, Randstad Professionals, Time Acquisition, Verotech",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "Framework awarded to nine named firms (Altran Belgium, Consol Partners UK, ..., Verotech): a multi-winner list.",
+"challenged_from": null
+},
+{
+"org": 9050747,
+"country": "NL",
+"name": "Fictief gegund — geen inschrijvers",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "V",
+"winner": null,
+"confidence": "high",
+"why": "'Fictitiously awarded — no tenderers': nothing was actually awarded.",
+"challenged_from": null
+},
+{
+"org": 9369271,
+"country": "NL",
+"name": "Aan alle inschrijvers is de opdracht gegund",
+"mentions": 5,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'The contract was awarded to all tenderers': a plural non-name that identifies no organization.",
+"challenged_from": null
+},
+{
+"org": 10703666,
+"country": "NL",
+"name": "Perceel 1 zal later gegund worden",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "V",
+"winner": null,
+"confidence": "high",
+"why": "'Lot 1 will be awarded later': not yet awarded.",
+"challenged_from": null
+},
+{
+"org": 10722366,
+"country": "NL",
+"name": "Zie voor de n.a.w.-gegevens van de ondernemers aan wie de opdracht is gegund, de bijgevoegde bijlage.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Points to the attached annex for the name and address details of the awardees. No name.",
+"challenged_from": null
+},
+{
+"org": 10774733,
+"country": "BE",
+"name": "Gegund aan 2 partijen, zie verder bij VI.3) Nadere Inlichtingen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Awarded to 2 parties, see VI.3 Nadere Inlichtingen': a count plus a pointer.",
+"challenged_from": null
+},
+{
+"org": 11425570,
+"country": "NL",
+"name": "Voor dit perceel (5) wordt er niets gegund.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "V",
+"winner": null,
+"confidence": "high",
+"why": "'For this lot (5) nothing is awarded.'",
+"challenged_from": null
+},
+{
+"org": 11425573,
+"country": "NL",
+"name": "Dit perceel wordt in een andere TenderNed omgeving gegund.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "medium",
+"why": "'This lot is (to be) awarded in another TenderNed environment': no award in this notice, and the issue's own void/future class. It is also a pointer elsewhere, so P is the alternative if the not-awarded reading is too strong. | CHALLENGE: 'Dit perceel wordt in een andere TenderNed omgeving gegund' says the lot IS awarded, with the award published elsewhere, and there is no negation. Its sibling in the same notice, 11425570, says 'Voor dit perceel (5) wordt er niets gegund', so this publisher separates 'not awarded' from 'awarded elsewhere'. V would turn an awarded lot into clos-nw, which is the costly direction and against 520's rule that award words with no negation are never read as void. P drops the junk party and leaves the decision as it is today. Confidence: high.",
+"challenged_from": "V"
+},
+{
+"org": 12408872,
+"country": "NL",
+"name": "De opdracht is aan 316 aanbieders gegund. U kunt de lijst vinden op de website van de Zorgregio",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Awarded to 316 providers; the list is on the Zorgregio website': a count plus a pointer.",
+"challenged_from": null
+},
+{
+"org": 12924415,
+"country": "NL",
+"name": "Geen inschrijving(en) ontvangen voor perceel 2, 3 en 4 en geen opdracht gegund in genoemde percelen",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "V",
+"winner": null,
+"confidence": "high",
+"why": "'No tenders received for lots 2, 3 and 4, and no contract awarded in those lots.'",
+"challenged_from": null
+},
+{
+"org": 13895140,
+"country": "NL",
+"name": "Open House – 7 inschrijvers gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Open House – 7 tenderers awarded': Open House is the Dutch admission procurement model, not a company. It counts awardees and names none.",
+"challenged_from": null
+},
+{
+"org": 15784363,
+"country": "NL",
+"name": "Gegund aan 44 Opdrachtnemers (zie VI.3) Nadere inlichtingen)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Awarded to 44 contractors (see VI.3 Nadere inlichtingen)': a count plus a pointer.",
+"challenged_from": null
+},
+{
+"org": 17089684,
+"country": "BE",
+"name": "Perceel 1 aan 5 personen gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Lot 1 awarded to 5 persons': counts the awardees and names none.",
+"challenged_from": null
+},
+{
+"org": 17202918,
+"country": "NL",
+"name": "Vertrouwelijk, Perceel 3 gegund aan 3 Opdrachtnemers",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Confidential, lot 3 awarded to 3 contractors': names withheld, only a count.",
+"challenged_from": null
+},
+{
+"org": 17202919,
+"country": "NL",
+"name": "Vertrouwelijk, Perceel 2 gegund aan 9 Opdrachtnemers",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Confidential, lot 2 awarded to 9 contractors': names withheld, only a count.",
+"challenged_from": null
+},
+{
+"org": 17202920,
+"country": "NL",
+"name": "Vertrouwelijk, Perceel 1 gegund aan 8 Opdrachtnemers",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Confidential, lot 1 awarded to 8 contractors': names withheld, only a count.",
+"challenged_from": null
+},
+{
+"org": 17841320,
+"country": "NL",
+"name": "De opdracht is gegund aan 7 EED aanbieders. Lijst met gegunde aanbieders is op te vragen bij SDF.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Awarded to 7 EED providers, and the list is available from SDF: a count plus a pointer elsewhere.",
+"challenged_from": null
+},
+{
+"org": 21530059,
+"country": "NL",
+"name": "In totaal is aan 96 zorgaanbieders voorlopig gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Provisionally awarded to 96 care providers in total': counts the parties and names none.",
+"challenged_from": null
+},
+{
+"org": 22813870,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 1 is gegund aan 2 opdrachtnemers (aan de 2 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Confidential: lot 1 awarded to 2 contractors (the 2 tenderers). Withheld count with no name. Its role is Tenderer/bid:tenderer, not winner.",
+"challenged_from": null
+},
+{
+"org": 22813871,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 2 is gegund aan 3 opdrachtnemers (de 3 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Confidential: lot 2 awarded to 3 contractors. Withheld count with no name. Its role is Tenderer/bid:tenderer.",
+"challenged_from": null
+},
+{
+"org": 22813968,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 1 is gegund aan 11 opdrachtnemers (aan de 11 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Confidential: lot 1 awarded to 11 contractors. Withheld count with no name. Its role is Tenderer/bid:tenderer.",
+"challenged_from": null
+},
+{
+"org": 22813969,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 2 is gegund aan 13 opdrachtnemers (aan de 13 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Confidential: lot 2 awarded to 13 contractors. Withheld count with no name. Its role is Tenderer/bid:tenderer.",
+"challenged_from": null
+},
+{
+"org": 22813970,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 3 is gegund aan 2 opdrachtnemers (aan 2 van de 3 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Confidential: lot 3 awarded to 2 of 3 tenderers. Withheld count with no name. Its role is Tenderer/bid:tenderer.",
+"challenged_from": null
+},
+{
+"org": 22813971,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 4 is gegund aan 4 opdrachtnemers (aan de 4 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Confidential: lot 4 awarded to 4 contractors. Withheld count with no name. Its role is Tenderer/bid:tenderer.",
+"challenged_from": null
+},
+{
+"org": 23407052,
+"country": "NL",
+"name": "Vertrouwelijk. De opdracht is gegund aan 1 opdrachtnemer (er was 1 inschrijver).",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Confidential. Awarded to 1 contractor (there was 1 tenderer)': there is one awardee but the name is withheld. Its role is Tenderer/bid:tenderer.",
+"challenged_from": null
+},
+{
+"org": 24976289,
+"country": "",
+"name": "De opdracht is gegund aan totaal 7 partijen.3 voor perceel A en 4 voor perceel B. Zie voor de naw-gegevens de overige inlichtingen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Awarded to 7 parties in total (3 for lot A, 4 for lot B), with 'see other information for the name/address details': a count plus a pointer.",
+"challenged_from": null
+},
+{
+"org": 26825531,
+"country": "",
+"name": "De opdracht is gegund aan: De Bouwcombinatie Korteweg-Boot v.o.f. i.o.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "De Bouwcombinatie Korteweg-Boot v.o.f. i.o.",
+"confidence": "high",
+"why": "'De opdracht is gegund aan: X' names one joint-venture entity (a v.o.f. in formation). I dropped the leading article 'De'; the published text reads 'De Bouwcombinatie Korteweg-Boot v.o.f. i.o.'. | CHALLENGE: The class is right, but the winner string should be exactly as published. 520 section 4.2 strips only lower-case articles ('la Sarltacavl' becomes 'Sarltacavl', 'La Poste' keeps 'La'), and this batch keeps the capital 'De' in 27073188 'De Meeuw Oirschot b.v.'. An extractor cannot tell the two 'De's apart, and the winner's name is its identity (issue 234), so keep 'De'. It is one v.o.f. in formation, so A, not B. Confidence: high.",
+"challenged_from": "A"
+},
+{
+"org": 26826676,
+"country": "",
+"name": "De opdracht is gegund aan: Getronics Infrastructure Solutions BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Getronics Infrastructure Solutions BV",
+"confidence": "high",
+"why": "'De opdracht is gegund aan: X' with one company named.",
+"challenged_from": null
+},
+{
+"org": 26866235,
+"country": "",
+"name": "Gegund rit A",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "medium",
+"why": "'Gegund rit A' (route A awarded) states an award but names no organization. It is like 520's F-P, award asserted with no name; X would also be defensible.",
+"challenged_from": null
+},
+{
+"org": 26886497,
+"country": "",
+"name": "Het werk is met inachtneming van het bepaalde in artikel 31 van het UAR-EG 1991 gegund aan Aannemerscombinatie Reef Wegenbouw BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Aannemerscombinatie Reef Wegenbouw BV",
+"confidence": "high",
+"why": "'Het werk is ... gegund aan X' names one contractor combination. The UAR-EG 1991 article reference is boilerplate.",
+"challenged_from": null
+},
+{
+"org": 26921671,
+"country": "",
+"name": "1998 gegund aan Dirk Verstoep BV te Rotterdam voor een bedrag (aannemingssom) van 41 153 000 NLG",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Dirk Verstoep BV",
+"confidence": "high",
+"why": "'1998 gegund aan X te Rotterdam voor een bedrag van ... NLG': one company. The location ('te Rotterdam') and the amount tail are stripped.",
+"challenged_from": null
+},
+{
+"org": 26963238,
+"country": "",
+"name": "Opdracht gegund aan NV Gemeentekrediet van België",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "NV Gemeentekrediet van België",
+"confidence": "high",
+"why": "'Opdracht gegund aan X' with one named company (Belgian Dutch).",
+"challenged_from": null
+},
+{
+"org": 27011278,
+"country": "",
+"name": "De opdracht is gegund aan Oce Nederlandse verkoopmaatschappij BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Oce Nederlandse verkoopmaatschappij BV",
+"confidence": "high",
+"why": "'De opdracht is gegund aan X' with one company.",
+"challenged_from": null
+},
+{
+"org": 27017668,
+"country": "",
+"name": "De levering is gegund aan de firma Sensicon BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Sensicon BV",
+"confidence": "high",
+"why": "'De levering is gegund aan de firma X': one company. The 'de firma' label is stripped, as 520 stripped 'la Société'.",
+"challenged_from": null
+},
+{
+"org": 27073188,
+"country": "",
+"name": "De opdracht is gegund aan: De Meeuw Oirschot b.v.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "De Meeuw Oirschot b.v.",
+"confidence": "high",
+"why": "'De opdracht is gegund aan: X' with one company. Here 'De Meeuw' is part of the real company name, not an article.",
+"challenged_from": null
+},
+{
+"org": 27104387,
+"country": "",
+"name": "De opdracht is gegund aan VGZ en IZA die een samenwerkingsverband vormen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "Awarded to two co-winners, VGZ and IZA, who form a partnership (B2 co-winners).",
+"challenged_from": null
+},
+{
+"org": 27109237,
+"country": "",
+"name": "Architect: de opdracht is gegund aan Erick van Egeraat Associated Architects",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Erick van Egeraat Associated Architects",
+"confidence": "high",
+"why": "'Architect: de opdracht is gegund aan X': one firm. The role label is a prefix.",
+"challenged_from": null
+},
+{
+"org": 27109239,
+"country": "",
+"name": "Adviseur technische installaties: de opdracht is gegund aan Sweegers en de Bruijn BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Sweegers en de Bruijn BV",
+"confidence": "high",
+"why": "'Adviseur technische installaties: ... gegund aan X': one firm. The 'en' belongs to the firm's name.",
+"challenged_from": null
+},
+{
+"org": 27109241,
+"country": "",
+"name": "Adviseur constructies: de opdracht is gegund aan ABT Adviesbureau voor bouwtechniek BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "ABT Adviesbureau voor bouwtechniek BV",
+"confidence": "high",
+"why": "'Adviseur constructies: ... gegund aan X': one firm.",
+"challenged_from": null
+},
+{
+"org": 27110819,
+"country": "",
+"name": "Er zijn 2 aanbestedingspartijen. Partij I is gegund aan: Van der Zee Internat. Transportbedrijf BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Van der Zee Internat. Transportbedrijf BV",
+"confidence": "medium",
+"why": "'Partij I is gegund aan: X' names one awardee for lot I, the same shape as 'Perceel L is gegund aan:'. There are 2 lots, so lot II may be named elsewhere or the string may be cut.",
+"challenged_from": null
+},
+{
+"org": 27113662,
+"country": "",
+"name": "De opdracht is gegund aan de combinatie van de taxibedrijven van v.o.f. Van de Krieke",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "medium",
+"why": "Awarded to 'the combination of the taxi companies of v.o.f. Van de Krieke': one combination entity under that v.o.f. No other members are named. B would also be defensible. | CHALLENGE: 'gegund aan de combinatie van de taxibedrijven van v.o.f. Van de Krieke' says the award went to a combination of several taxi companies (plural 'taxibedrijven'). This is a text-era row, and the text parser ends every winner name at its first comma (crates/ingest/src/text/parse.rs names_in_value). So the other members were most likely cut off after 'Krieke,'. Extracting 'v.o.f. Van de Krieke' would give the whole combination's award to one member. Keeping the string as published (B, consortium list, like the issue's 'Koeman en Bijkerk in combinatie met Grontmij') loses nothing. Confidence: medium.",
+"challenged_from": "A"
+},
+{
+"org": 27154691,
+"country": "",
+"name": "De opdracht is gegund aan: Tebodin BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Tebodin BV",
+"confidence": "high",
+"why": "'De opdracht is gegund aan: X' with one company.",
+"challenged_from": null
+},
+{
+"org": 27460296,
+"country": "",
+"name": "De zes percelen zijn als volgt gegund aan drie dienstverleners: 2 percelen: Schavemaker Containers BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'The six lots are awarded to three service providers as follows: 2 lots: Schavemaker Containers BV' is a per-lot list, and only its first entry is in this slot.",
+"challenged_from": null
+},
+{
+"org": 27503605,
+"country": "",
+"name": "De opdracht is in delen gegund aan: a. Escom BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "medium",
+"why": "'De opdracht is in delen gegund aan: a. Escom BV' is an enumerated list awarded in parts, with only item a (Escom BV) in this slot. Kept per 511 section 5.",
+"challenged_from": null
+},
+{
+"org": 28765477,
+"country": "",
+"name": "Aan 14 leveranciers raamovereenkomst gegund",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Framework agreement awarded to 14 suppliers': counts the parties and names none.",
+"challenged_from": null
+},
+{
+"org": 28858453,
+"country": "",
+"name": "alle inschrijvers zijn gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'All tenderers have been awarded': a plural non-name that identifies no organization.",
+"challenged_from": null
+},
+{
+"org": 29194063,
+"country": "",
+"name": "niet (combinatieperceel C is gegund)",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "V",
+"winner": null,
+"confidence": "medium",
+"why": "'niet (combinatieperceel C is gegund)': this lot was not awarded because combined lot C was awarded instead.",
+"challenged_from": null
+},
+{
+"org": 29208719,
+"country": "",
+"name": "de opdracht zal niet worden gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "V",
+"winner": null,
+"confidence": "high",
+"why": "'The contract will not be awarded': void.",
+"challenged_from": null
+},
+{
+"org": 29756654,
+"country": "",
+"name": "Aan alle 13 leveranciers gegund/PA Inkoopbureau Rivierenland",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Awarded to all 13 suppliers' is a count. The '/PA Inkoopbureau Rivierenland' tail is a p/a (care-of) address at the purchasing office, not a winner.",
+"challenged_from": null
+},
+{
+"org": 29798980,
+"country": "",
+"name": "de opdracht is gegund aan een drietal leveranciers. Nadere informatie hieromtrent vindt u onder punt VI.2",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Awarded to three suppliers; further information under VI.2': a count plus a section pointer.",
+"challenged_from": null
+},
+{
+"org": 29856095,
+"country": "",
+"name": "De opdracht werd per perceel gegund aan verschillende leveranciers",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'The contract was awarded per lot to various suppliers': a plural non-name that names nobody.",
+"challenged_from": null
+},
+{
+"org": 29882521,
+"country": "",
+"name": "zie bijlage Afdeling VI.7opdracht gegund aan 4 partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'See the annex, Section VI.7; contract awarded to 4 parties': a pointer plus a count.",
+"challenged_from": null
+},
+{
+"org": 30253671,
+"country": "",
+"name": "re-integratietrajecten gegund aan 2 bedrijven: Van Dreumel Depiro BV en Serin Mens en Werk BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'Awarded to 2 companies: Van Dreumel Depiro BV en Serin Mens en Werk BV' is a two-winner list.",
+"challenged_from": null
+},
+{
+"org": 30476252,
+"country": "",
+"name": "Totaal 3 inschrijvers gegund: FourStar B.V.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "medium",
+"why": "'Totaal 3 inschrijvers gegund: FourStar B.V.' says 3 awardees, with only the first (FourStar B.V.) in this slot. It is a cut multi-winner list (mentions=2).",
+"challenged_from": null
+},
+{
+"org": 30476529,
+"country": "",
+"name": "In totaal aan 3 partijen gegund: Randstad HR Solutions te 's-Hertogenbosch",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'In totaal aan 3 partijen gegund:' heads a list of three awardees; only the first item (Randstad HR Solutions te 's-Hertogenbosch) survived the cut. Keep it as published, per 511 §5.",
+"challenged_from": null
+},
+{
+"org": 30476531,
+"country": "",
+"name": "In totaal 3 partijen gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'In totaal 3 partijen gegund' counts the parties and names none of them. Placeholder.",
+"challenged_from": null
+},
+{
+"org": 30572645,
+"country": "",
+"name": "De opdracht is gegund aan: VOF Bergsingel",
+"mentions": 2,
+"winner_tenders": 2,
+"roles": {
+"winner": 2
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "VOF Bergsingel",
+"confidence": "high",
+"why": "Award clause 'De opdracht is gegund aan:' followed by one named winner.",
+"challenged_from": null
+},
+{
+"org": 30578397,
+"country": "",
+"name": "De opdracht is gegund aan: Schilderswacht BV statutair gevestigd en kantoor houdende te Almelo aan de van Weerden Poelmansweg 3",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Schilderswacht BV",
+"confidence": "high",
+"why": "One winner after 'De opdracht is gegund aan:'. The seat and address tail ('statutair gevestigd ... Poelmansweg 3') is not part of the name.",
+"challenged_from": null
+},
+{
+"org": 30578866,
+"country": "",
+"name": "De opdracht is gegund: perceel plaatmeubilair aan: Ahrend Inrichten bv mede kantoor houdende te Eindhoven",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "medium",
+"why": "'De opdracht is gegund: perceel plaatmeubilair aan: ...' is per-lot list grammar, and only the first lot's winner survived the cut. If every lot went to Ahrend, this would be A with winner 'Ahrend Inrichten bv'.",
+"challenged_from": null
+},
+{
+"org": 30593432,
+"country": "",
+"name": "Gegund aan Welzorg Revalidatie Techniek BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Welzorg Revalidatie Techniek BV",
+"confidence": "high",
+"why": "'Gegund aan' followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30625916,
+"country": "",
+"name": "De opdracht is gegund aan: Vera Yanovshtchinsky Architecten BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Vera Yanovshtchinsky Architecten BV",
+"confidence": "high",
+"why": "Award clause followed by one named winner.",
+"challenged_from": null
+},
+{
+"org": 30649356,
+"country": "",
+"name": "De opdracht is gegund aan de volgende partijen: Stichting Activa",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'gegund aan de volgende partijen:' (plural) heads a list of awardees; only the first one, Stichting Activa, is in the name.",
+"challenged_from": null
+},
+{
+"org": 30663641,
+"country": "",
+"name": "De opdracht is gegund aan Dexia Bank NV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Dexia Bank NV",
+"confidence": "high",
+"why": "'De opdracht is gegund aan' followed by one named bank.",
+"challenged_from": null
+},
+{
+"org": 30667025,
+"country": "",
+"name": "De opdracht is gegund aan Continental Breda bv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Continental Breda bv",
+"confidence": "high",
+"why": "Award clause followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30685869,
+"country": "",
+"name": "De opdracht is gegund aan Taxi Centrale Schoorl",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Taxi Centrale Schoorl",
+"confidence": "high",
+"why": "Award clause followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30695182,
+"country": "",
+"name": "De opdracht is gegund aan Taxi en Pakketdienst v.d. Wijst BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Taxi en Pakketdienst v.d. Wijst BV",
+"confidence": "high",
+"why": "Award clause followed by one named company. The 'en' is inside the company name, so this is not a list.",
+"challenged_from": null
+},
+{
+"org": 30695356,
+"country": "",
+"name": "De opdracht is gegund aan Buhrmann Office Products Nederland b.v",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Buhrmann Office Products Nederland b.v",
+"confidence": "high",
+"why": "Award clause followed by one named company. The final period of 'b.v.' was cut.",
+"challenged_from": null
+},
+{
+"org": 30696700,
+"country": "",
+"name": "De aanbesteding bestond uit 21 percelen die als volgt zijn gegund: Mechanisatie Hoogezand/Den Andel BV te NL-Hoogezand voor de percelen HAS 1-01",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'21 percelen die als volgt zijn gegund:' heads a per-lot winner list; the first entry is Mechanisatie Hoogezand ... voor de percelen HAS 1-01.",
+"challenged_from": null
+},
+{
+"org": 30702359,
+"country": "",
+"name": "De aanbesteding bestond uit 7 percelen die als volgt zijn gegund: - Hobelman-Halle te NL-Halle voor de percelen HAS 2-01",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'7 percelen die als volgt zijn gegund: - Hobelman-Halle ...' heads a per-lot winner list with dash bullets; only the first item survived.",
+"challenged_from": null
+},
+{
+"org": 30704924,
+"country": "",
+"name": "Het werk omschreven in bestek A-174-01 is gegund aan de laagste inschrijver",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'is gegund aan de laagste inschrijver' describes the winner ('the lowest bidder') but names no organization.",
+"challenged_from": null
+},
+{
+"org": 30704925,
+"country": "",
+"name": "Het werk omschreven in bestek A-175-01 is gegund aan BAM Techniek BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "BAM Techniek BV",
+"confidence": "high",
+"why": "'Het werk ... is gegund aan' followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30704927,
+"country": "",
+"name": "Percelen 1 en 2 zijn gegund aan aannemersbedrijf Landustrie uit Sneek",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Landustrie",
+"confidence": "medium",
+"why": "Lots 1 and 2 both went to one awardee, published as 'aannemersbedrijf Landustrie uit Sneek'; I stripped the descriptor and the place. The name may have been cut before entries for other lots.",
+"challenged_from": null
+},
+{
+"org": 30708328,
+"country": "",
+"name": "De aanbesteding bestond uit 5 percelen die als volgt zijn gegund: - Auto de Vries bv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'5 percelen die als volgt zijn gegund: - Auto de Vries bv' heads a per-lot list; only the first bullet survived.",
+"challenged_from": null
+},
+{
+"org": 30708697,
+"country": "",
+"name": "De opdracht is gegund aan Verstraeten Verbrugge Groep BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Verstraeten Verbrugge Groep BV",
+"confidence": "high",
+"why": "Award clause followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30709247,
+"country": "",
+"name": "De opdracht is gegund aan Arriva Personenvervoer Nederland BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Arriva Personenvervoer Nederland BV",
+"confidence": "high",
+"why": "Award clause followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30717675,
+"country": "",
+"name": "De volgende partij is de opdracht gegund: Sagenn Reïntegratie BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Sagenn Reïntegratie BV",
+"confidence": "high",
+"why": "'De volgende partij is de opdracht gegund:' (singular) followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30721438,
+"country": "",
+"name": "De levering is gegund aan: Gemco Mobile Systems bv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Gemco Mobile Systems bv",
+"confidence": "high",
+"why": "'De levering is gegund aan:' followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30731255,
+"country": "",
+"name": "De opdracht is gegund aan AVR",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "AVR",
+"confidence": "high",
+"why": "Award clause followed by one short company name (AVR, a waste processor).",
+"challenged_from": null
+},
+{
+"org": 30733365,
+"country": "",
+"name": "De opdracht is gegund aan: DELL Computer BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "DELL Computer BV",
+"confidence": "high",
+"why": "Award clause followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30739554,
+"country": "",
+"name": "De opdracht is gegund aan: ISSUE Information Technology BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "ISSUE Information Technology BV",
+"confidence": "high",
+"why": "Award clause followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30745854,
+"country": "",
+"name": "Aan onderstaande leveranciers zijn nieuwe Mirna-contracten gegund: 3-Angle",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'Aan onderstaande leveranciers zijn ... gegund:' (plural suppliers) heads a list; only the first item, 3-Angle, is in the name.",
+"challenged_from": null
+},
+{
+"org": 30746715,
+"country": "",
+"name": "Betreft een gesplitste gunning waarbij de opdracht deels aan beide onderstaande ondernemingen gegund is: Zwaluw Reizen BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "A split award to 'beide onderstaande ondernemingen' (both companies below). These are co-winners, and only Zwaluw Reizen BV is in the name.",
+"challenged_from": null
+},
+{
+"org": 30753186,
+"country": "",
+"name": "De opdracht is gegund aan: Syntegra Groep BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Syntegra Groep BV",
+"confidence": "high",
+"why": "Award clause followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30782835,
+"country": "",
+"name": "Zowel perceel l: telefoonsysteem als perceel 2: meldkamer (arbi) zijn aan de volgende leverancier gegund: Tenovis BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Tenovis BV",
+"confidence": "high",
+"why": "Both lots (telephone system and control room) 'zijn aan de volgende leverancier gegund:' (singular), which names one awardee.",
+"challenged_from": null
+},
+{
+"org": 30794369,
+"country": "",
+"name": "De opdracht is aan een consortium gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'De opdracht is aan een consortium gegund' asserts an award but names no organization.",
+"challenged_from": null
+},
+{
+"org": 30796487,
+"country": "",
+"name": "De opdracht is gegund aan Harting-Bank BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Harting-Bank BV",
+"confidence": "high",
+"why": "Award clause followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30798627,
+"country": "",
+"name": "De opdracht is gegund aan de volgende twee dienstverleners: Prened Beveiliging",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'gegund aan de volgende twee dienstverleners:' names two awardees; only the first, Prened Beveiliging, is in the name.",
+"challenged_from": null
+},
+{
+"org": 30800796,
+"country": "",
+"name": "De opdracht is gegund aan vier leveranciers: leverancier 1: Succes schoonmaakbedrijf",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'gegund aan vier leveranciers: leverancier 1: ...' is a four-supplier list; only the first, Succes schoonmaakbedrijf, is in the name.",
+"challenged_from": null
+},
+{
+"org": 30805665,
+"country": "",
+"name": "De opdracht is gegund aan Eindhoven Catering Services bv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Eindhoven Catering Services bv",
+"confidence": "high",
+"why": "Award clause followed by one named company.",
+"challenged_from": null
+},
+{
+"org": 30808838,
+"country": "",
+"name": "De opdracht per perceel is gegund aan de inschrijver met de laagste prijs",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'per perceel is gegund aan de inschrijver met de laagste prijs' describes the award rule per lot and names no organization.",
+"challenged_from": null
+},
+{
+"org": 30816015,
+"country": "",
+"name": "De opdracht werd gegund aan volgende leveranciers: perceel 1: Copy Fun BVBA",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "Belgian per-lot list: 'gegund aan volgende leveranciers: perceel 1: Copy Fun BVBA'. Plural suppliers; only lot 1 survived.",
+"challenged_from": null
+},
+{
+"org": 30816254,
+"country": "",
+"name": "a. Opdracht gegund aan de NV Bank Brussel Lambert",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "NV Bank Brussel Lambert",
+"confidence": "medium",
+"why": "'Opdracht gegund aan de' names one bank. The 'a.' prefix suggests an enumerated block that may have b./c. items naming other awardees, which would make it B.",
+"challenged_from": null
+},
+{
+"org": 30817894,
+"country": "",
+"name": "De opdracht is gegund aan: Stichting Pensioenfonds ABP",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Stichting Pensioenfonds ABP",
+"confidence": "high",
+"why": "Award clause followed by one named foundation.",
+"challenged_from": null
+},
+{
+"org": 30822172,
+"country": "",
+"name": "De opdracht is gegund aan Connexxion (Stationsplein 20",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Connexxion",
+"confidence": "high",
+"why": "Award clause followed by one company. The address in parentheses '(Stationsplein 20' was cut at a comma and is not part of the name.",
+"challenged_from": null
+},
+{
+"org": 30837740,
+"country": "",
+"name": "De percelen zijn gegund aan de volgende twee dienstverleners: A",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'De percelen zijn gegund aan de volgende twee dienstverleners:' names two awardees. The name is cut to 'A', so nothing usable remains. | CHALLENGE: 'De percelen zijn gegund aan de volgende twee dienstverleners: A' counts the parties ('twee dienstverleners') and names none of them. A lone 'A' cannot be a company. In the text-era parser (crates/ingest/src/text/parse.rs, names_in_value/winner_segments) a name ends at the first ',' or ';', or at a '.' that comes before a lot reference. So 'A' was an enumeration label, and any real winners after it would have been minted as their own sibling parties. B (kept as published under 511 §5) exists so that a list's winners are not lost, and this string holds no winner, so keeping it only keeps a junk winner org. P drops this party alone, and the result keeps its award decision, so no award and no named winner is lost. That makes it the safe direction. Confidence medium: if the build cannot single out the bare-letter body narrowly, leaving it kept costs only today's junk name.",
+"challenged_from": "B"
+},
+{
+"org": 30842293,
+"country": "",
+"name": "De opdracht is gegund aan: Rienks-DBM + Partners",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Rienks-DBM + Partners",
+"confidence": "medium",
+"why": "Award clause followed by one published awardee string. The '-' and '+' could join two firms into a combination, but it reads as one trade name.",
+"challenged_from": null
+},
+{
+"org": 30843499,
+"country": "",
+"name": "Perceel 1 werd gegund aan de vennootschap ''Triple-P Belgium nv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Triple-P Belgium nv",
+"confidence": "high",
+"why": "'Perceel 1 werd gegund aan de vennootschap ''X': one lot, one awardee in prose. Drop 'de vennootschap' and the stray opening quote marks.",
+"challenged_from": null
+},
+{
+"org": 30850942,
+"country": "",
+"name": "De opdracht werd gegund aan de NV Gemeentekrediet",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "NV Gemeentekrediet",
+"confidence": "high",
+"why": "'De opdracht werd gegund aan de X': one awardee. The article 'de' is dropped.",
+"challenged_from": null
+},
+{
+"org": 30853636,
+"country": "",
+"name": "De opdracht is gegund aan Getronics Networks & Services BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Getronics Networks & Services BV",
+"confidence": "high",
+"why": "'De opdracht is gegund aan X': one awardee in prose.",
+"challenged_from": null
+},
+{
+"org": 30854758,
+"country": "",
+"name": "De opdracht werd gegund aan: Gemeentekrediet NV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Gemeentekrediet NV",
+"confidence": "high",
+"why": "'De opdracht werd gegund aan: X': one awardee after the colon.",
+"challenged_from": null
+},
+{
+"org": 30854781,
+"country": "",
+"name": "De opdracht is gegund aan Koninklijke Roeiers Vereeniging Eendracht",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Koninklijke Roeiers Vereeniging Eendracht",
+"confidence": "high",
+"why": "'De opdracht is gegund aan X': one awardee in prose (an association).",
+"challenged_from": null
+},
+{
+"org": 30861318,
+"country": "",
+"name": "Perceel 1: de opdracht is bij brief van 29.12.1999 gegund aan de laagste inschrijver",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Lot 1 was awarded 'aan de laagste inschrijver' (to the lowest bidder). The award is asserted but no organization is named, so it is a placeholder, not void.",
+"challenged_from": null
+},
+{
+"org": 30861319,
+"country": "",
+"name": "perceel 2: de opdracht is bij brief van 29.12.1999 gegund aan de laagste inschrijver",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Sibling of 30861318 for lot 2: awarded to 'de laagste inschrijver'. No organization is named and the award is asserted.",
+"challenged_from": null
+},
+{
+"org": 30866369,
+"country": "",
+"name": "De opdracht is door de gemeente Bergen op Zoom gegund aan Aannemerscombinatie Van den Biggelaar te Kerkdriel en v.o.f. A. Prop Beplantingswerken te Hoogerheide",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "medium",
+"why": "Awarded to 'Aannemerscombinatie Van den Biggelaar te Kerkdriel en v.o.f. A. Prop Beplantingswerken te Hoogerheide': two firms, each with its own place and legal form, so a consortium or co-winner list. It could also be read as one combination (A), but the embedded 'te <place>' parts are not part of a name.",
+"challenged_from": null
+},
+{
+"org": 30870819,
+"country": "",
+"name": "Voor perceel A zijn mantelcontracten gegund aan de volgende drie dienstverleners: Ernst & Young",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'mantelcontracten gegund aan de volgende drie dienstverleners: Ernst & Young': a list of three, cut after the first. This is 520's B1 (list grammar with one surviving name).",
+"challenged_from": null
+},
+{
+"org": 30873242,
+"country": "",
+"name": "De opdracht is per partij gegund aan: partij 1: Firma Shape Technology NV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "medium",
+"why": "'De opdracht is per partij gegund aan: partij 1: Firma Shape Technology NV': a per-lot list, of which only lot 1 survives in this party (B1). The A reading would give 'Shape Technology NV'.",
+"challenged_from": null
+},
+{
+"org": 30873416,
+"country": "",
+"name": "De opdracht werd gegund aan: Clean Express Poty SA",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Clean Express Poty SA",
+"confidence": "high",
+"why": "'De opdracht werd gegund aan: X': one awardee.",
+"challenged_from": null
+},
+{
+"org": 30882216,
+"country": "",
+"name": "De opdracht werd gegund aan het Gemeentekrediet NV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Gemeentekrediet NV",
+"confidence": "high",
+"why": "'De opdracht werd gegund aan het X': one awardee. The article 'het' is dropped.",
+"challenged_from": null
+},
+{
+"org": 30882548,
+"country": "",
+"name": "De opdracht is gegund aan Novio Net bv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Novio Net bv",
+"confidence": "high",
+"why": "'De opdracht is gegund aan X': one awardee in prose.",
+"challenged_from": null
+},
+{
+"org": 30883149,
+"country": "",
+"name": "De mantelovereenkomsten zijn gegund aan de volgende vier dienstverleners: xBase Software Ontwikkeling",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'mantelovereenkomsten zijn gegund aan de volgende vier dienstverleners: xBase Software Ontwikkeling': a list of four, cut after the first (B1).",
+"challenged_from": null
+},
+{
+"org": 30887300,
+"country": "",
+"name": "a. Opdracht gegund aan de ASLK-groep Fortis",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "ASLK-groep Fortis",
+"confidence": "medium",
+"why": "'a. Opdracht gegund aan de ASLK-groep Fortis': one awardee in prose. The 'a.' enumerator hints that this is one item of a per-contract list, hence medium.",
+"challenged_from": null
+},
+{
+"org": 31427567,
+"country": "NL",
+"name": "Er is aan 3 partijen gegund: Astri, APE, Regioplan, zie voor nadere gegevens onder nadere inlichtingen (VI.2)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'Er is aan 3 partijen gegund: Astri, APE, Regioplan, zie ... VI.2': three named winners plus a pointer. A multi-winner list, kept.",
+"challenged_from": null
+},
+{
+"org": 31440006,
+"country": "NL",
+"name": "Er is aan twee partijen gegund: ROI Opleiding en KSG Berenschot, zie voor nadere gegevens onder nadere inlichtingen (VI.2),",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'Er is aan twee partijen gegund: ROI Opleiding en KSG Berenschot, zie ... VI.2': two named co-winners plus a pointer.",
+"challenged_from": null
+},
+{
+"org": 31465989,
+"country": "NL",
+"name": "Er is gegund aan 5 ondernemers. Zie sectie VI.2) Nadere inlichtingen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Er is gegund aan 5 ondernemers. Zie sectie VI.2) Nadere inlichtingen': counts the parties and points to VI.2, naming none.",
+"challenged_from": null
+},
+{
+"org": 31489184,
+"country": "",
+"name": "De opdracht is gegund aan een panel van verzekeraars, informatie te verkrijgen via Willis of TenneT Holding B.V.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"AWARD_AND_CONTRACT_VALUE": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Awarded to 'een panel van verzekeraars', with information via Willis or TenneT Holding B.V. Those two are the broker and the buyer, not winners, so they must not be extracted. The role is AWARD_AND_CONTRACT_VALUE.",
+"challenged_from": null
+},
+{
+"org": 31490382,
+"country": "",
+"name": "zie website aanbestedende dienst (www.stichtingimn.nl) voor de namen van de acht bergers waaraan is gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'zie website aanbestedende dienst (www.stichtingimn.nl) voor de namen van de acht bergers waaraan is gegund': a website pointer that counts eight winners and names none.",
+"challenged_from": null
+},
+{
+"org": 31492336,
+"country": "",
+"name": "Gegund aan meerdere inschrijvers. Evt. nader op te vragen bij Willis, de heer B. Wokke, Postbus 12733, 1100 AS Amsterdam.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Gegund aan meerdere inschrijvers. Evt. nader op te vragen bij Willis, de heer B. Wokke, Postbus ...': plural, names no winner, and points to a broker contact.",
+"challenged_from": null
+},
+{
+"org": 31525824,
+"country": "",
+"name": "Perceel 11 (Wierden ) is gegund aan Taxi- en Vervoerscentrale Almelo b.v. Perceel 12 (Twenterand) is gegund aan Sickman Personen Vervoer b.v.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "A per-lot list: lot 11 to Taxi- en Vervoerscentrale Almelo b.v. and lot 12 to Sickman Personen Vervoer b.v. Two winners in one block.",
+"challenged_from": null
+},
+{
+"org": 31680216,
+"country": "",
+"name": "perceel 3b (140-liter containers). De percelen 4 en 5 zijn aan geen der inschrijvers gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "X",
+"winner": null,
+"confidence": "medium",
+"why": "The spilled tail of a per-lot award list ('perceel 3b (140-liter containers).'), then 'De percelen 4 en 5 zijn aan geen der inschrijvers gegund'. Only some lots are void and earlier lots were evidently awarded, so VoidLot (V) risks closing an awarded result. It names no organization: drop the party as P does and keep the decision.",
+"challenged_from": null
+},
+{
+"org": 31682400,
+"country": "",
+"name": "De gemeente Vlissingen heeft het vervoer aan de volgende 3 inschrijvers gegund: AMZ Borssele te Borssele",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'heeft het vervoer aan de volgende 3 inschrijvers gegund: AMZ Borssele te Borssele': a list of three, cut after the first (B1).",
+"challenged_from": null
+},
+{
+"org": 31683722,
+"country": "",
+"name": "1998 gegund aan Infra Totaal B.V.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Infra Totaal B.V.",
+"confidence": "high",
+"why": "'1998 gegund aan X': the cut tail of a date clause, then one awardee. Siblings 31683723 to 31683725 have the same shape, each with its own winner.",
+"challenged_from": null
+},
+{
+"org": 31683723,
+"country": "",
+"name": "1998 gegund aan Draft Engineering Support BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Draft Engineering Support BV",
+"confidence": "high",
+"why": "'1998 gegund aan X': one awardee, sibling of 31683722. The roles map is empty even though winner_tenders is 1.",
+"challenged_from": null
+},
+{
+"org": 31683724,
+"country": "",
+"name": "1998 gegund aan Combinatie Randstad Polytechniek en Advin B.V.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "medium",
+"why": "'1998 gegund aan Combinatie X en Y B.V.': one named combination, i.e. a joint venture served as a single awardee. Read as a consortium list it would be B. The roles map is empty. | CHALLENGE: '1998 gegund aan Combinatie Randstad Polytechniek en Advin B.V.' names two member firms joined by 'en': Randstad Polytechniek and Advin B.V. That makes it a consortium, the same 'combinatie X en Y' shape the classifier itself put in B for 30866369 (Aannemerscombinatie Van den Biggelaar ... en v.o.f. A. Prop). Extracting the whole string would create a new winner org that is neither company. Keep it as published (511 §5 / 520 B2). This differs from single-entity combination names such as 26825531 'De Bouwcombinatie Korteweg-Boot v.o.f. i.o.' or 26886497 'Aannemerscombinatie Reef Wegenbouw BV'. Confidence medium.",
+"challenged_from": "A"
+},
+{
+"org": 31683725,
+"country": "",
+"name": "1998 gegund aan Multec MPO B.V.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Multec MPO B.V.",
+"confidence": "high",
+"why": "'1998 gegund aan X': one awardee, sibling of 31683722. The roles map is empty.",
+"challenged_from": null
+},
+{
+"org": 31700988,
+"country": "",
+"name": "perceel 3: de opdracht is bij brief van 29.12.1999 gegund aan de laagste inschrijver",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "Lot 3, sibling of 30861318/9: awarded to 'de laagste inschrijver' (the lowest bidder). No organization is named.",
+"challenged_from": null
+},
+{
+"org": 31744015,
+"country": "",
+"name": "Er zijn 2 aanbiedingspartijen: - Partij I is gegund aan: Oosterhof Wegvervoer BV te Grijpskerk. - Partij II is gegund aan: Exploitatie Mij G. Brijder te Harlingen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "high",
+"why": "'Er zijn 2 aanbiedingspartijen: Partij I ... Oosterhof Wegvervoer BV ...; Partij II ... Exploitatie Mij G. Brijder ...': a per-lot list with two winners.",
+"challenged_from": null
+},
+{
+"org": 31768300,
+"country": "",
+"name": "Gegund aan Bouter BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "A",
+"winner": "Bouter BV",
+"confidence": "high",
+"why": "'Gegund aan X': one awardee.",
+"challenged_from": null
+},
+{
+"org": 31844791,
+"country": "",
+"name": "Gegund aan navolgende 5 partijen",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Gegund aan navolgende 5 partijen': counts the parties and points to a following list, naming none.",
+"challenged_from": null
+},
+{
+"org": 31844794,
+"country": "",
+"name": "Gegund aan navolgende 4 partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Gegund aan navolgende 4 partijen': counts the parties and names none (same template as 31844791).",
+"challenged_from": null
+},
+{
+"org": 31844795,
+"country": "",
+"name": "Gegund aan de navolgende zes partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Gegund aan de navolgende zes partijen': counts the parties and names none.",
+"challenged_from": null
+},
+{
+"org": 31844796,
+"country": "",
+"name": "Gegund aan de navolgende 5 partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Gegund aan de navolgende 5 partijen': counts the parties and names none.",
+"challenged_from": null
+},
+{
+"org": 31844797,
+"country": "",
+"name": "Gegund aan de navolgende 6 partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Gegund aan de navolgende 6 partijen': counts the parties and names none.",
+"challenged_from": null
+},
+{
+"org": 31844799,
+"country": "",
+"name": "Gegund aan de navolgende 7 partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Gegund aan de navolgende 7 partijen': counts the parties and names none.",
+"challenged_from": null
+},
+{
+"org": 31846373,
+"country": "",
+"name": "Gegund aan navolgende 6 partijen",
+"mentions": 2,
+"winner_tenders": 2,
+"roles": {
+"winner": 2
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "P",
+"winner": null,
+"confidence": "high",
+"why": "'Gegund aan navolgende 6 partijen': counts the parties and names none. It is a winner in 2 tenders.",
+"challenged_from": null
+},
+{
+"org": 31892626,
+"country": "",
+"name": "Gegund aan drie leveranciers: Bio-Connect b.v.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "medium",
+"why": "'Gegund aan drie leveranciers: Bio-Connect b.v.': list grammar with one surviving name (B1). Sibling 31892628 carries the same prefix with another supplier, so each party may hold exactly one of the three. If so, A ('Bio-Connect b.v.') would be right.",
+"challenged_from": null
+},
+{
+"org": 31892628,
+"country": "",
+"name": "Gegund aan drie leveranciers: Boom b.v.",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false,
+"cls": "B",
+"winner": null,
+"confidence": "medium",
+"why": "'Gegund aan drie leveranciers: Boom b.v.': list grammar with one surviving name (B1), sibling of 31892626. If the publisher repeated the prefix per supplier slot, A ('Boom b.v.') fits.",
+"challenged_from": null
+}
+]
