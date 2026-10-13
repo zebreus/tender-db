@@ -1,10 +1,9 @@
 # 526 — text-era `Lot n)` winner lists are never split, so one list mints one org
 
-Status: ready-for-agent — filed 2026-10-12. Unit 1 (the pre-2004 drain) was DONE on 2026-10-13: 214ab64 was
-deployed, jobs 2397–2415 ran, 54,496 mentions were re-bound and 36,130 orphans swept. The Verify reads 0, and
-`lot 1)` went from 5,239 orgs to 6. NEXT: unit 2. Measure the 2004–2010 sectioned text era on a local body
-sample, as `dry-run.md` did for pre-2004: what changes, and whether the V.4 pairing (review D) moves figures.
-Then drain fetches 186–269 the way 509 did. Also unit 3: the residue shapes below.
+Status: ready-for-agent — filed 2026-10-12. Unit 1 (pre-2004) is DONE (2026-10-13). Unit 2 (2004–2010) was MEASURED,
+then DRAIN QUEUED 2026-10-14 ~00:40 UTC as jobs 2416–2437: 11 rounds of reparse plus project over fetches 186–269, on
+214ab64. NEXT: per round, read `unmatched` and `re-keyed` (both 0); then the auto sweep (by hand if over 10,000) and
+the residue counts. Unit 3 (residue shapes) after that.
 Kind: data quality (text parser; organizations)
 Relates to: 520 (unit 1 §4.4, `../520-award-summaries/unit1-decision.md`) (award summaries; its A1 extractor `partyname::award_winner`), 484/485/244 (`lot_prefix_len`, `winner_segments`), 491 (the reparse path), 510/511 (`plausible_name` refuses every non-name).
 
@@ -152,3 +151,45 @@ one `project`, sized well under the 500 k FULL-fallback line:
   - bare references: `Lots 39`, `lots 2`;
   - lettered and Roman labels (`Lot A)`, `Lot III:`, about 250 orgs);
   - a subject followed by an unmarked company (`Champagne`, `Canton Ouest`).
+
+## Unit 2 — the 2004–2010 sectioned era measured (2026-10-14)
+
+The method is the same as `dry-run.md`. The data is `../526-lot-word-references/u2-sample-{lot,ctrl}.jsonl`, plus
+the stored `RES` figures pulled beside them.
+- **Lot sample:** 800 notices, the first-mention notices of `lot*` organizations with ids from 2.24M to 4.5M.
+- **Control:** 529 notices, every 4,000th text id in the same range.
+
+**Results.**
+- **Control:** the names are identical in all 529 notices (519 unchanged and 10 reordered), and so are the figures
+  (529 of 529).
+- **Lot sample:** 0 clean names are lost, and no gained name lacks a capital. Names that keep a lot reference fall from
+  1,709 to 785. Every name in 3 or more notices is a company, among them `LOT-ORIEL`, a real firm that stays whole.
+- **Figures:** 783 match. In 16 notices a figure is lost: it was attached to a junk name (`Lot 10`, `Lot 2:
+  collecte`, `Lot 01: terrassements`), or the block now holds two winners (`Extreme Gaming Arena` and `Avanzit
+  Tecnología`, a joint award). 1 notice gains a figure. Spot checks show that each contract block pairs its one name
+  with its own V.4: 3994805 gives `Lots 1 et 4 à Ansell` 138,747 EUR and `Lot 16 à CAIR LGL` 14,400 EUR.
+- **Residue that is not a 526 regression:**
+  - relaunch and status phrases (`Lot relancé en marché négocié …`, `Lot reconsulté en Mapa`, `Lot en cours
+    d'analyse`) belong to the 510/511 lexicon;
+  - run-on form items (`Lot 24 V.1) Award and contract value …`) were in the old parse too;
+  - dash shapes (`Lot 1 - Aksel Sp. z o.o.`);
+  - `Lot(s) <list> à <Company>` (`Lots 2, 5 … et 27 à Asept In Med`) occurs in 9 of 800 lot bodies and 0 of the
+    control, so it stays in unit 3.
+
+**Drain queued (on 214ab64).** Each round is a reparse followed by a project, after × packages:
+
+| round | jobs | after × packages |
+| --- | --- | --- |
+| 1 | 2416/2417 | 185×7 |
+| 2 | 2418/2419 | 192×6 |
+| 3 | 2420/2421 | 198×8 |
+| 4 | 2422/2423 | 206×8 |
+| 5 | 2424/2425 | 214×8 |
+| 6 | 2426/2427 | 223×8 |
+| 7 | 2428/2429 | 231×8 |
+| 8 | 2430/2431 | 239×8 |
+| 9 | 2432/2433 | 247×8 |
+| 10 | 2434/2435 | 255×8 |
+| 11 | 2436/2437 | 263×6 |
+
+The rounds follow 508's and 509's sizing (106k–237k notices each). The 07:35 dailies queue behind them.
