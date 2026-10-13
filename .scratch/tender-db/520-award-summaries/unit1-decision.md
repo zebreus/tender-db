@@ -470,3 +470,18 @@ specimen `Humble Inpect B.V. (niet gegunde partij)` must stay a kept name.
 `curl -s "https://tenders.zebreus.click/v1/organizations?name_prefix=Humble%20Inpect&limit=10" | jq '[.items[].name]'`
 Open: includes "(niet gegunde partij)". Done: the annotation is gone and the org holds no winner role on 24400562.
 ```
+### U3 award-evidence read (2026-10-13, wf_2f835d23-17e; `u3-award-evidence.json`)
+
+- **Coverage:** all 187 re-queued mentions on 116 notices were read from public `/content`, with 0 unread. 186 read
+  `void`: the result block carries no award date, contract number or value; or carries only a decision date or a
+  procedure or file reference; or every sublot is void.
+- **One reads `award` (owner ruling: proceed, recorded residual).**
+  - The mention: 5101244 on 17854467 ORG-7 / RES-6 (lot 6). RES-6 carries no date, number or value, and its party
+    says the lot `a été déclaré sans suite`.
+  - The award: the notice's free-text ADDITIONAL_INFORMATION reports the lot's RELAUNCH and award (`Lot 6 relancé
+    après avoir été déclaré sans suite … Date d'attribution: 8.4.2014 … Marché nº 13PRA01 - Société
+    Birmann-Majuscule`).
+  - Why proceed: the stop rule targets results that are themselves awarded (1341883). The relaunch award was never
+    captured, before or after the drain. Today's served winner is the sentence `… a été déclaré sans suite`, which
+    already says no award. After the drain, RES-6 reads `clos-nw`. Birmann-Majuscule is in neither state.
+  - Residual: relaunch awards reported only in ADDITIONAL_INFORMATION are not captured; 1 known, 17854467 lot 6.
