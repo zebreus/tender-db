@@ -1,0 +1,1311 @@
+[
+{
+"org": 1171947,
+"notice": 12450748,
+"section": "ORG-3",
+"name": "Procédure incomplète. Le marché n'a pas été attribué. Appel d'offres sans suite",
+"why": "Pure void prose ('Le marché n'a pas été attribué. Appel d'offres sans suite'); names no winner, should be VoidLot."
+},
+{
+"org": 1300853,
+"notice": 12486158,
+"section": "ORG-3",
+"name": "Marché déclaré sans suite à relancer en MAPA compte tenu de son montant (l'accord cadre était multi attributaires hors une seule offres était conforme)",
+"why": "Void prose (sans suite, to be relaunched as MAPA); 'multi attributaires' is the framework's design, no winner named."
+},
+{
+"org": 1392146,
+"notice": 12511999,
+"section": "ORG-2",
+"name": "Le lot 1: secteur du canton d'Evian - Rd1005; Rd24 et Rd32 a été déclaré Infructueux",
+"why": "'Le lot 1: <title> a été déclaré Infructueux' template: the lot title plus a void verdict, no winner."
+},
+{
+"org": 1506401,
+"notice": 12543416,
+"section": "ORG-4",
+"name": "Aucune offre n'ayant été déposée, un marché négocié sans publicité et sans mise en concurrence, sera passé avec la STÉ France Télécom",
+"why": "'Aucune offre n'ayant été déposée, un marché négocié… sera passé avec la STÉ France Télécom'; one winner after the abbreviation 'STÉ'. Reason says only '0/1 names void' (no award-summary flag): the classifier does not read it as void at all."
+},
+{
+"org": 1513105,
+"notice": 12545120,
+"section": "ORG-3",
+"name": "Aucune offre n'a été déposée; le lot n° 2 a été déclaré infructueux",
+"why": "'Aucune offre n'a été déposée; le lot n° 2 a été déclaré infructueux'; no winner."
+},
+{
+"org": 1513898,
+"notice": 12545314,
+"section": "ORG-11",
+"name": "Le lot 3: Diagnostics sur bâtiments occupés à usage principal d'habitation Le présent lot a pour objet la réalisation par le titulaire de diagnostics sur bâtiments occupés à usage principal d'habitation à réaliser au fur et à mesure des besoins de Paris habitat-OPH. a été déclaré sans suite",
+"why": "'Le lot 3: <long lot description> a été déclaré sans suite'; no winner ('titulaire' appears in the description)."
+},
+{
+"org": 1537305,
+"notice": 12552163,
+"section": "ORG-4",
+"name": "Marché classé sans suite. Il a été décidé de lancer une nouvelle procédure en appel d'offres ouvert européen en vue de l'attribution de 2 marchés se décomposant de la manière suvante: lot no 3 - agence Paul Signac lot no 4 - agence Beaumonts.",
+"why": "'Marché classé sans suite… nouvelle procédure… lot no 3 - agence Paul Signac lot no 4 - agence Beaumonts': the agences are the buyer's sites, not winners."
+},
+{
+"org": 1537987,
+"notice": 12552268,
+"section": "ORG-2",
+"name": "le lot 1: Rédaction d'un feuillet du magazine qui sera constitué au maximum de: - 2 doubles pages de portraits d'entreprises, associations, clubs de sports .... - 1 double page patrimoine, faune ou flore du département a été déclaré Infructueux",
+"why": "'le lot 1: <description> a été déclaré Infructueux'; no winner."
+},
+{
+"org": 1610364,
+"notice": 12570200,
+"section": "ORG-5",
+"name": "Lot 4 est déclaré sans suite pour motif d'intérêt général. En effet, après évaluation des besoins à satisfaire, l'Université de Nice Sophia Antipolis est dans l'incapacité de prendre en charge budgétaire l'offre retenue",
+"why": "'Lot 4 est déclaré sans suite pour motif d'intérêt général…': the Université de Nice Sophia Antipolis is the buyer; no winner."
+},
+{
+"org": 1633917,
+"notice": 12576023,
+"section": "ORG-2",
+"name": "résultat du concours: déclaration sans suite pour motif de défaillance du mandataire de l'équipe, suite à la liquidation judiciaire de l'agence Toth-Fasquelle préalablement à la signature du marché de maîtrise d'oeuvre",
+"why": "Contest declared sans suite after the liquidation of the agence Toth-Fasquelle before signature: it names the failed would-be awardee, but no contract was awarded."
+},
+{
+"org": 1710867,
+"notice": 12596042,
+"section": "ORG-2",
+"name": "néant; la consultation a été déclarée infructueuse en raison de l'absence d'offre recevable",
+"why": "'néant; la consultation a été déclarée infructueuse en raison de l'absence d'offre recevable'; no winner."
+},
+{
+"org": 1753646,
+"notice": 16842815,
+"section": "ORG-2",
+"name": "lot declare sans suite pour motif D'Interet general une seule offre ayant ete Reçue alors que la rmn-gp souhaitait conclure un accord-cadre multi-attributaire",
+"why": "'lot declare sans suite pour motif d'interet general une seule offre…': rmn-gp is the buyer; no winner."
+},
+{
+"org": 1814340,
+"notice": 16859325,
+"section": "ORG-2",
+"name": "Zadanie unieważnione - Wykonawcy wykluczeni; oferty odrzucone",
+"why": "Polish 'Zadanie unieważnione - Wykonawcy wykluczeni; oferty odrzucone' (task cancelled, contractors excluded, offers rejected); no winner."
+},
+{
+"org": 1861834,
+"notice": 16872149,
+"section": "ORG-4",
+"name": "Lot classé \"sans suite\" et ce pour motif d'intérêt général (art. 59 du CMP). En effet, seul 1 candidat a déposé une offre conforme mais 1 attributaire ne convient pas pour le bon fonctionnement de l'établissement",
+"why": "'Lot classé \"sans suite\"… seul 1 candidat… 1 attributaire ne convient pas…'; no winner."
+},
+{
+"org": 1861839,
+"notice": 16872149,
+"section": "ORG-9",
+"name": "Lot classé \"sans suite\" et ce pour motif d'intérêt général et ce conformément à l'article 59 du code des marchés publics. En effet, seul 1 candidat a déposé une offre conforme mais 1 attributaire ne convient pas pour le bon fonctionnement de l'établissement",
+"why": "Same sentence as 1861834 (sans suite, intérêt général, art. 59); no winner."
+},
+{
+"org": 1943868,
+"notice": 16900069,
+"section": "ORG-2",
+"name": "Le lot 1: génie civil marché de travaux (lot pricipal) décomposé en une tranche ferme et 3 tranches conditionnelles: TF: parc Paul Vernet; TC1: parc Clos de la Tour; TC2: parc Porte d'Orée; TC3: parc Agricola. A été déclaré sans suite",
+"why": "'Le lot 1: génie civil… TF: parc Paul Vernet; TC1… A été déclaré sans suite': the parcs are sites; no winner."
+},
+{
+"org": 1943869,
+"notice": 16900069,
+"section": "ORG-3",
+"name": "Le lot 2: fourniture et pose de matériel d'exploitation de stationnement. Marché de fournitures décomposé en une tranche ferme et 4 tranches conditionnelles: TF: parc Paul Vernet; TC1: parc Clos de la Tour; TC2: parc Porte d'Orée; TC3: parc Agricola; TC4: parc Aubenas. A été déclaré sans suite",
+"why": "'Le lot 2: fourniture et pose… A été déclaré sans suite'; no winner."
+},
+{
+"org": 1974244,
+"notice": 16908456,
+"section": "ORG-2",
+"name": "la commission d'appel d'offres décide d'interrompre les discussions et déclare la consultation infructueuse car l'offre du groupement auxi+/ sas Viviani est inacceptable",
+"why": "The CAO declares the consultation infructueuse because 'l'offre du groupement auxi+/ sas Viviani est inacceptable': it names the rejected bidder, not a winner."
+},
+{
+"org": 2021395,
+"notice": 16921777,
+"section": "ORG-17",
+"name": "le lot 12: sans objet se reporter au lot no9 plomberie sanitaire a été déclaré infructueux",
+"why": "'le lot 12: sans objet se reporter au lot no9 plomberie sanitaire a été déclaré infructueux'; no winner."
+},
+{
+"org": 2131011,
+"notice": 16952519,
+"section": "ORG-2",
+"name": "Le marché n'a pas été attribué: la procédure est déclarée infructueuse le 17.4.2012",
+"why": "'Le marché n'a pas été attribué: la procédure est déclarée infructueuse le 17.4.2012'; no winner."
+},
+{
+"org": 2369100,
+"notice": 17019254,
+"section": "ORG-3",
+"name": "nie wpłynęła żadna oferta; postepowanie unieważniono art. 93 ust. 1 pkt 1 Pzp",
+"why": "Polish 'nie wpłynęła żadna oferta; postepowanie unieważniono art. 93…' (no offer, procedure cancelled); no winner."
+},
+{
+"org": 2378132,
+"notice": 17022086,
+"section": "ORG-6",
+"name": "Le lot 3: portage de courses et de personnes sur le Val de Marne Le présent lot porte sur la réalisation de missions d'accompagnement et d'aide à la personne relatives au portage de courses et de personnes sur Paris et petite couronne à réaliser au fur et à mesure des besoins. Les prestations donneront lieu à l'établissement d'un marché à bons de commande multi attributaires conformément à l'article 43.i du Décret no2005-1742 du 30 décembre 2005.trois (3) titulaires seront désignés pour exécuter les prestations sous réserve d'un nombre suffisant de candidats et d'offres.le marché est conclu pour une durée ferme de 12 mois à compter du 1er Juin 2012. Sa durée pourra être prolongée par 3 reconductions de 12 mois chacune, sans pouvoir excéder le 31 mai 2016. a été déclaré infructueux",
+"why": "Read notice 17022086, ORG-6/RES-5: 'Le lot 3: <long description incl. \"trois (3) titulaires seront désignés\"> … a été déclaré infructueux'; no winner. The batch name is truncated before the void tail."
+},
+{
+"org": 2528483,
+"notice": 17071684,
+"section": "ORG-2",
+"name": "Le lot 1: Lot 1-2012-225-01 Syndicat intercommunal de la Vallée d'abondance a été déclaré Sans suite",
+"why": "Read notice 17071684 RES-1: 'Syndicat intercommunal de la Vallée d'Abondance' is the lot title (a territory); 'Le lot 1: … a été déclaré Sans suite'; no winner."
+},
+{
+"org": 2678824,
+"notice": 17113383,
+"section": "ORG-3",
+"name": "Déclaré sans suite pour motif d'intérêt général et relancé (cf avis JOUE no 2012/s 133-221467 du 13.7.2012; et Annonce no 484, BOAMP no 134b, du 13.7.2012)",
+"why": "'Déclaré sans suite pour motif d'intérêt général et relancé (cf avis JOUE…; BOAMP…)'; no winner. 2 mentions."
+},
+{
+"org": 2678824,
+"notice": 17113383,
+"section": "ORG-4",
+"name": "déclaré sans suite pour motif d'intérêt général et relancé (cf avis JOUE no 2012/s 133-221467 du 13.7.2012; et Annonce no 484, BOAMP no 134b, du 13.7.2012)",
+"why": "'Déclaré sans suite pour motif d'intérêt général et relancé (cf avis JOUE…; BOAMP…)'; no winner. 2 mentions."
+},
+{
+"org": 2847767,
+"notice": 17161213,
+"section": "ORG-4",
+"name": "le lot 3: Lot 03 A: Ite parement pierre et lot et Lot 03 B: Ite enduits a été déclaré infructueux",
+"why": "'le lot 3: Lot 03 A: Ite parement pierre… Lot 03 B: Ite enduits a été déclaré infructueux'; no winner."
+},
+{
+"org": 2900386,
+"notice": 17175871,
+"section": "ORG-3",
+"name": "Le Lot 2: acheminement du trafic sortant sur les accès du lot 1 et accessible en présélection du transporteur. A été déclaré infructueux",
+"why": "'Le Lot 2: acheminement du trafic sortant… A été déclaré infructueux'; no winner."
+},
+{
+"org": 2900516,
+"notice": 17175927,
+"section": "ORG-3",
+"name": "Le lot 2: lot no2 a été déclaré infructueux",
+"why": "'Le lot 2: lot no2 a été déclaré infructueux'; no winner."
+},
+{
+"org": 2948392,
+"notice": 17189873,
+"section": "ORG-7",
+"name": "lot 9: Sans suite Lot 10: Infructueux",
+"why": "'lot 9: Sans suite Lot 10: Infructueux': a labelled list in which every entry is void; no winner."
+},
+{
+"org": 3066482,
+"notice": 17222502,
+"section": "ORG-4",
+"name": "le lot 3 : Lot no3 : Films Radiographiques Specifiques Aux Besoins De La Radiotherapie a été déclaré Sans Suite",
+"why": "'le lot 3 : Lot no3 : Films Radiographiques… a été déclaré Sans Suite'; no winner."
+},
+{
+"org": 3107850,
+"notice": 17233308,
+"section": "ORG-9",
+"name": "le lot 8 : Electricite, Courant Fort - courant Faible ; a été déclaré Infructueux",
+"why": "'le lot 8 : Electricite, Courant Fort - courant Faible ; a été déclaré Infructueux'; no winner."
+},
+{
+"org": 3238976,
+"notice": 17268024,
+"section": "ORG-3",
+"name": "le lot 2 : Lot no2 - sorties scolaires, périscolaires, extrascolaires et autres a été déclaré Infructueux",
+"why": "'le lot 2 : Lot no2 - sorties scolaires… a été déclaré Infructueux'; no winner."
+},
+{
+"org": 3314070,
+"notice": 17288229,
+"section": "ORG-15",
+"name": "le lot n'a pas été attribué, la procédure a été déclarée infructueuse",
+"why": "'le lot n'a pas été attribué, la procédure a été déclarée infructueuse'; no winner."
+},
+{
+"org": 3425880,
+"notice": 17321148,
+"section": "ORG-48",
+"name": "le lot 47 : Prothèse de tête radiale pivotante ; mise à disposition à la demande a été déclaré Infructueux",
+"why": "pure void: one lot's description, no winner; kept by mixed_segments (the ';' inside the lot title leaves a segment without a void stem)"
+},
+{
+"org": 3526206,
+"notice": 17358086,
+"section": "ORG-2",
+"name": "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - i - 1er alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 1 : société TIB",
+"why": "void lot to be renegotiated 'avec les sociétés ayant soumissionné : lot n : société X'; X is the sole bidder (and the equipment maker in the RES title), NOT an awardee — the award notice reports the lot infructueux; kept by award_clause ' avec les societes ' + Société token"
+},
+{
+"org": 3526207,
+"notice": 17358086,
+"section": "ORG-3",
+"name": "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - iI - 3ème alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 2 : société picot petit",
+"why": "void lot to be renegotiated 'avec les sociétés ayant soumissionné : lot n : société X'; X is the sole bidder (and the equipment maker in the RES title), NOT an awardee — the award notice reports the lot infructueux; kept by award_clause ' avec les societes ' + Société token"
+},
+{
+"org": 3526208,
+"notice": 17358086,
+"section": "ORG-4",
+"name": "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 I 1er du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 3 : société Sides",
+"why": "void lot to be renegotiated 'avec les sociétés ayant soumissionné : lot n : société X'; X is the sole bidder (and the equipment maker in the RES title), NOT an awardee — the award notice reports the lot infructueux; kept by award_clause ' avec les societes ' + Société token"
+},
+{
+"org": 3526209,
+"notice": 17358086,
+"section": "ORG-5",
+"name": "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - iI 3 ème alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 4 : société WAS",
+"why": "void lot to be renegotiated 'avec les sociétés ayant soumissionné : lot n : société X'; X is the sole bidder (and the equipment maker in the RES title), NOT an awardee — the award notice reports the lot infructueux; kept by award_clause ' avec les societes ' + Société token"
+},
+{
+"org": 3526210,
+"notice": 17358086,
+"section": "ORG-6",
+"name": "Déclaré infructueux - à relancer en marché négocié, en application de l'article 35 - i 1er alinéa du code des marchés publics, avec les sociétés ayant soumissionné à l'appel d'offre : lot 5 : Société Massias",
+"why": "void lot to be renegotiated 'avec les sociétés ayant soumissionné : lot n : société X'; X is the sole bidder (and the equipment maker in the RES title), NOT an awardee — the award notice reports the lot infructueux; kept by award_clause ' avec les societes ' + Société token"
+},
+{
+"org": 3526991,
+"notice": 17358323,
+"section": "ORG-3",
+"name": "décalré infructueux= le lot 2 infructueux et de le relancer en marché négocié en application de l'article 35 - iI - 3ème alinéa du code des marchés publics, avec la société LHENRY",
+"why": "same SDIS 33 shape (17358323 RES-2): lot 2 infructueux, to be renegotiated 'avec la société LHENRY' (the equipment maker named in the RES title), not an awardee; kept by award_clause ' avec la societe '"
+},
+{
+"org": 3534542,
+"notice": 17360753,
+"section": "ORG-2",
+"name": "La SEMAPA a déclaré sans suite l'appel d'offres relatif au marché de prestations de maquettistes ; le nombre d'offres conformes n'étant pas suffisant pour répondre aux besoins de la consultation",
+"why": "pure void: buyer (SEMAPA) declared the call sans suite, no winner; kept by mixed_segments (reason after ';')"
+},
+{
+"org": 3556403,
+"notice": 17367136,
+"section": "ORG-2",
+"name": "Infructuosité. Le lot no 3 a été déclarée infructueux. Le présent avis ne concerne que le lot no3 -Sud-Ouest). Date d'attribution : CAO du 17.4.2013.",
+"why": "pure void, no winner; kept by several_lots ('lot no 3' vs 'lot no3' counted as two lots)"
+},
+{
+"org": 3666893,
+"notice": 17427728,
+"section": "ORG-10",
+"name": "Le lot 102 : lot B10: Menuiseries bois PVC serrurerie vitrerie (Genevois) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3666894,
+"notice": 17427728,
+"section": "ORG-11",
+"name": "Le lot 103 : lot C10: Menuiseries bois PVC serrurerie vitrerie (Chablais) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3666895,
+"notice": 17427728,
+"section": "ORG-12",
+"name": "Le lot 104 : lot D10: Menuiseries bois PVS serrurerie vitrerie (Vallée de l'arve) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3666903,
+"notice": 17427728,
+"section": "ORG-6",
+"name": "Le lot 92 : lot B9: Stores volets occultation (Genevois) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3666904,
+"notice": 17427728,
+"section": "ORG-7",
+"name": "Le lot 93 : lot C9: Stores volets occultation (Chablais) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3666905,
+"notice": 17427728,
+"section": "ORG-8",
+"name": "Le lot 94 : lot D9: Stores volets occultation (Vallée de l'arve) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3666906,
+"notice": 17427728,
+"section": "ORG-9",
+"name": "Le lot 101 : lot A10: Menuiseries bois PVC serrurerie vitrerie (Annecy) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3717094,
+"notice": 17442992,
+"section": "ORG-3",
+"name": "lot 1 sans suite Lot 3 infructueux",
+"why": "pure void list 'lot 1 sans suite Lot 3 infructueux', no winner; several_lots"
+},
+{
+"org": 3720532,
+"notice": 17444126,
+"section": "ORG-2",
+"name": "le lot no2 a été déclaré infructueux, les offres reçues ont été déclarées irrégulières car ne respectant pas la rubrique Iv.2.1.2 de l'avis d'appel public à la concurrence (annexes financière dûment complétées). En vertu de l'article 35.i.1 du code des marchés publics, un marché négocié sera relancé par le pouvoir adjudicateur avec les entreprises dont la candidature a été retenue pour ce lot",
+"why": "pure void prose (offers irregular, negotiated procedure to be relaunched), no winner"
+},
+{
+"org": 3915725,
+"notice": 17504180,
+"section": "ORG-10",
+"name": "le lot 9 : Lot 9b : Ossature bois, Charpente - capitainerie a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3915726,
+"notice": 17504180,
+"section": "ORG-11",
+"name": "le lot 10 : Lot 9c : Couverture, Bardage, Etanchéité - capitainerie a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3915727,
+"notice": 17504180,
+"section": "ORG-12",
+"name": "le lot 11 : Lot 9d : Châssis, Murs Rideaux - capitainerie a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3915728,
+"notice": 17504180,
+"section": "ORG-13",
+"name": "le lot 12 : Lot 9e : Metallerie, Portes Métalliques - capitainerie a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3915729,
+"notice": 17504180,
+"section": "ORG-14",
+"name": "le lot 13 : Lot 9f : Menuiseries intérieures, Plâtrerie - capitainerie a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3915730,
+"notice": 17504180,
+"section": "ORG-15",
+"name": "le lot 14 : Lot 9g : Electricité Chauffage - capitainerie a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3915731,
+"notice": 17504180,
+"section": "ORG-16",
+"name": "le lot 15 : Lot 9h : Ventilation - capitainerie a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3915732,
+"notice": 17504180,
+"section": "ORG-17",
+"name": "le lot 16 : Lot 9i : Plomberie, Sanitaire - capitainerie a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3915733,
+"notice": 17504180,
+"section": "ORG-18",
+"name": "le lot 17 : Lot 9j : Peinture, revêtement de sols - capitainerie a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3915742,
+"notice": 17504180,
+"section": "ORG-9",
+"name": "le lot 8 : Lot 9a : Gros-Oeuvre - capitainerie a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3984070,
+"notice": 17524251,
+"section": "ORG-5",
+"name": "Le lot 4 : lot 7 : cloisons doublage et faux plafonds a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3984072,
+"notice": 17524251,
+"section": "ORG-7",
+"name": "Le lot 6 : lot 10 : équipements sportifs a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 3984073,
+"notice": 17524251,
+"section": "ORG-8",
+"name": "Le lot 7 : lot 11 : peintures interieures a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4032000,
+"notice": 17538199,
+"section": "ORG-4",
+"name": "Offres déclarées irrégulières. Lot déclaré donc infructueux. Il a donc été proposé de négocier avec les sociétés candidates dans le cadre de la procédure prévue à l'article 35-I-1 3ème alinéa du code des marchés publics par une lettre de consultation dont le formalisme est prévu à l'article 66 du code des marchés publics",
+"why": "pure void (full text read, 17538199 RES-3): offers irregular, negotiate 'avec les sociétés candidates' — no company named; kept by award_clause ' avec les societes '"
+},
+{
+"org": 4133918,
+"notice": 17569172,
+"section": "ORG-12",
+"name": "Le lot 91 : lot 9 A: Fourniture de pièces détachées pour l'entretien d'engins et matériel de marque JCB (type chargeur ou centrale hydraulique) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots; JCB is an equipment brand, not a winner"
+},
+{
+"org": 4133919,
+"notice": 17569172,
+"section": "ORG-13",
+"name": "Le lot 92 : Lot 9 B : Prestations de maintenance pour l'entretien d'engins et matériel de marque JCB (type chargeur ou centrale hydraulique) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots; JCB is an equipment brand, not a winner"
+},
+{
+"org": 4133921,
+"notice": 17569172,
+"section": "ORG-15",
+"name": "Le lot 11 : Fourniture de pièces détachées et prestations de maintenance pour l'entretien d'engins de TP de marque O&Amp;K (type Niveleuse) a été déclaré infructueux",
+"why": "pure void lot description, no winner (O&K is an equipment brand); kept by mixed_segments because the HTML entity 'O&Amp;K' contains ';'"
+},
+{
+"org": 4133935,
+"notice": 17569172,
+"section": "ORG-3",
+"name": "Le lot 21 : lot 2 A : Fourniture de pièces détachées pour l'entretien d'engins de TP de marque Dynapac (type Compacteur) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots; Dynapac is an equipment brand, not a winner"
+},
+{
+"org": 4133936,
+"notice": 17569172,
+"section": "ORG-4",
+"name": "Le lot 22 : lot 2 B : Prestations de maintenance pour l'entretien d'engins de TP de marque Dynapac (type Compacteur) a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots; Dynapac is an equipment brand, not a winner"
+},
+{
+"org": 4229970,
+"notice": 17597910,
+"section": "ORG-2",
+"name": "ce lot no 2 de la procédure n'a pas été attribué et a été déclaré infructueux",
+"why": "pure void 'n'a pas été attribué et a été déclaré infructueux'; kept because award_clause checks only the word right before 'attribué' ('ete'), missing 'pas été attribué'"
+},
+{
+"org": 4272807,
+"notice": 17610599,
+"section": "ORG-3",
+"name": "le lot 2 : 1 carrosserie de Bibliobus prévue pour aller sur un porteur nu caractéristiques du lot no1 (Aoo) a été déclaré sans suite",
+"why": "pure void: one lot's description ('Le lot N : ... a été déclaré sans suite'), no winner; kept only because several_lots counts the RES lot number and a back-reference 'lot no1' as two lots"
+},
+{
+"org": 4425125,
+"notice": 17657072,
+"section": "ORG-10",
+"name": "Le lot 115 : lot B11 C11 Sols souples Genevois et Chablais a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4425126,
+"notice": 17657072,
+"section": "ORG-11",
+"name": "Le lot 114 : lot D11 Sols souples Arve a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4425126,
+"notice": 17778304,
+"section": "ORG-8",
+"name": "le lot 114 : lot D11 Sols souples ARVE a été déclaré INFRUCTUEUX",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4425128,
+"notice": 17657072,
+"section": "ORG-3",
+"name": "Le lot 55 : lot B5 C5 Plomberie chauffage climatisation vmc genevois chablais a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4425128,
+"notice": 17778304,
+"section": "ORG-2",
+"name": "le lot 55 : lot B5 C5 Plomberie chauffage climatisation vmc genevois chablais a été déclaré INFRUCTUEUX",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4425129,
+"notice": 17657072,
+"section": "ORG-4",
+"name": "Le lot 54 : lot D5 Plomberie chauffage climatisation vmc arve a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4425130,
+"notice": 17657072,
+"section": "ORG-5",
+"name": "Le lot 61 : lot A6 Couverture charpente zinguerie Annecy a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4425131,
+"notice": 17657072,
+"section": "ORG-6",
+"name": "Le lot 65 : lot B6 C6 Couverture chapente zinguerie genevois chablais a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4425132,
+"notice": 17657072,
+"section": "ORG-7",
+"name": "Le lot 64 : lot D6 Couverture charpente zinguerie Arve a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré infructueux'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4726611,
+"notice": 17743907,
+"section": "ORG-11",
+"name": "Sublote 9.1: Declarado desierto. Sublote 9.2: Declarado desierto. Sublote 9.3: Declarado desierto.",
+"why": "pure void Spanish list: Sublote 9.1/9.2/9.3 Declarado desierto, no winner; several_lots"
+},
+{
+"org": 4764054,
+"notice": 17753792,
+"section": "ORG-2",
+"name": "le lot 1 : Lot no1 : réparation des volets roulants pour les RPA Balaÿ et Bel Horizon a été déclaré infructueux",
+"why": "pure void: one lot's description ('le lot 1 : Lot no1 : ... a été déclaré infructueux'), no winner; kept only because several_lots counts 'lot 1' and 'Lot no1' as two lots"
+},
+{
+"org": 4774593,
+"notice": 17756593,
+"section": "ORG-11",
+"name": "décision de déclarer infructueux le lot nº 10 - plomberie sanitaire pour le motif suivant : toutes les offres réceptionnées sur ce lot ont été déclarées soit irrégulières soit inacceptables et ne permettent pas d'en établir l'attribution, de plus les crédits budgétaires alloués au marché après évaluation du besoin à satisfaire ne permettent pas au pouvoir adjudicateur de financer l'offre",
+"why": "pure void (full text read, 17756593): 'décision de déclarer infructueux le lot nº N … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permettent pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+},
+{
+"org": 4774594,
+"notice": 17756593,
+"section": "ORG-12",
+"name": "décision de déclarer infructueux le Lot nº 11 - chauffage - ventilation - climatisation pour le motif suivant : toutes les offres réceptionnées sur ce lot ont été déclarées inacceptables et ne permettent pas d'en établir l'attribution car les crédits budgétaires alloués au marché après évaluation du besoin à satisfaire ne permettent pas au pouvoir adjudicateur de financer l'offre",
+"why": "pure void (full text read, 17756593): 'décision de déclarer infructueux le lot nº N … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permettent pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+},
+{
+"org": 4774596,
+"notice": 17756593,
+"section": "ORG-14",
+"name": "décision de déclarer infructueux le lot nº 13 - toiles tendues pour le motif suivant : la seule offre réceptionnée sur ce lot a été déclarée inacceptable et ne permet pas d'en établir l'attribution car les crédits budgétaires alloués au marché après évaluation du besoin à satisfaire ne permettent pas au pouvoir adjudicateur de financer l'offre",
+"why": "pure void (full text read, 17756593): 'décision de déclarer infructueux le lot nº N … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permet pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+},
+{
+"org": 4774599,
+"notice": 17756593,
+"section": "ORG-17",
+"name": "décision de déclarer infructueux le lot nº 16 - plomberie process pour le motif suivant : la seule offre réceptionnée pour ce lot a été déclarée inacceptables et ne permet pas d'en établir l'attribution car les crédits budgétaires alloués au marché après évaluation du besoin à satisfaire ne permettent pas au pouvoir adjudicateur de financer l'offre",
+"why": "pure void (full text read, 17756593): 'décision de déclarer infructueux le lot nº N … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permet pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+},
+{
+"org": 4774607,
+"notice": 17756593,
+"section": "ORG-6",
+"name": "décision de déclarer infructueux le lot nº 05 - menuiseries extérieures alu et pvc - serrurerie pour le motif suivant : toutes les offres réceptionnées sur ce lot ont été déclarées soit irrégulières soit inacceptables et ne permettent pas d'en établir l'attribution, de plus les crédits budgétaires alloués au marché après évaluation du besoin à satisfaire ne permettent pas au pouvoir adjudicateur de financer l'offre",
+"why": "pure void (full text read, 17756593): 'décision de déclarer infructueux le lot nº N … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permettent pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+},
+{
+"org": 4774610,
+"notice": 17756593,
+"section": "ORG-9",
+"name": "décision de déclarer sans suite le lot nº 08 - revêtements de sols durs et souples pour le motif suivant : toutes les offres réceptionnées sur ce lot ont été déclarées soit irrégulières soit inacceptables et ne permettent pas d'en établir l'attribution, de plus les crédits budgétaires alloués au marché après évaluation du besoin à satisfaire ne permettent pas au pouvoir adjudicateur de financer l'offre",
+"why": "pure void (full text read, 17756593): 'décision de déclarer sans suite le lot nº 08 … pour le motif suivant', no winner; kept by awardee_noun on 'attribution' ('ne permettent pas d'en établir l'attribution'; the negation 'pas' sits five words back, beyond the fillers)"
+},
+{
+"org": 4846679,
+"notice": 17778304,
+"section": "ORG-7",
+"name": "le lot 115 : lot B11 C11 Sols souples genevois chablais a été déclaré INFRUCTUEUX",
+"why": "pure void: one lot's description ('Le lot N : lot X: ... a été déclaré INFRUCTUEUX'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots"
+},
+{
+"org": 4877271,
+"notice": 17787731,
+"section": "ORG-6",
+"name": "décision de déclarer sans suite le Lot no15 - captage pompage et rejet pour le motif suivant : La seule offre réceptionnée pour ce lot a été déclarée inacceptable et ne permet pas d'en établir l'attribution car les crédits budgétaires alloués au marché après évaluation du besoin à satisfaire ne permettent pas au pouvoir adjudicateur de financer l'offre",
+"why": "pure void (full text read, 17787731 RES-5): 'décision de déclarer sans suite le Lot no15 … ne permet pas d'en établir l'attribution', no winner; awardee_noun on 'attribution'"
+},
+{
+"org": 4885215,
+"notice": 17789763,
+"section": "ORG-12",
+"name": "décision du pouvoir adjudicateur du 14 octobre 2013 - lot déclaré sans suite pour le motif suivant : \" l'organisation du lot par son contenu de prestations relatives à des métiers différents a rendu la réponse difficile. Donc pour un motif d'intérêt général, d'ordre économique et technique, ce lot est déclaré sans suite. \" Ce lot a été relancé en procédure adaptée (en vertu de l'article 28), en scindant ce lot en 2 : le lot 11 \" Habillages stratifiés \" et le lot 15 \" mobilier\"",
+"why": "pure void (full text read, 17789763 RES-11): lot sans suite, relaunched split into lots 11 and 15, no winner; several_lots"
+},
+{
+"org": 4885217,
+"notice": 17789763,
+"section": "ORG-14",
+"name": "ce lot a été déclaré sans suite par décision du pouvoir adjudicateur en date du 11 juillet 2013. En effet, les prestations objet du lot 13 sont couvertes par un accord-cadre multi-attributaire en cours de validité, conclu par l'université Joseph Fourier. Les titulaires de cet accord-cadre bénéficient d'un droit d'exclusivité partagé sur les prestations objet de l'accord-cadre, pendant la durée de celui-ci",
+"why": "pure void (full text read, 17789763 RES-13): lot sans suite because covered by an existing multi-award framework of université Joseph Fourier (the buyer); kept by awardee_noun 'titulaires' — names no winner"
+},
+{
+"org": 5101244,
+"notice": 17854467,
+"section": "ORG-7",
+"name": "Le lot 6: livres scolaires et documents pédagogiques d'accompagnement (SAU ouvrages distribués exclusivement par les éditeurs eux-mêmes et livres de fonction et documentaires pour les bibliothèques des écoles) a été déclaré sans suite",
+"why": "pure void lot description, no winner; kept by company_token on 'SAU' (a typo for 'sauf' in 'SAU ouvrages distribués exclusivement')"
+},
+{
+"org": 5148433,
+"notice": 17869715,
+"section": "ORG-2",
+"name": "Offres inacceptables ; lot déclaré infructueux",
+"why": "pure void 'Offres inacceptables ; lot déclaré infructueux', no winner; kept by mixed_segments (the reason segment has no void stem)"
+},
+{
+"org": 5425806,
+"notice": 17955715,
+"section": "ORG-4",
+"name": "Lots 2a et 2c: procédure infructueuse lot 2b: déclaration sans suite",
+"why": "pure void sub-lot list (procédure infructueuse / déclaration sans suite), no winner; several_lots (sub-lot codes 2a/2b)"
+},
+{
+"org": 5425808,
+"notice": 17955715,
+"section": "ORG-6",
+"name": "Lot 4a: procédure infructueuse lots 4b/4c: déclaration sans suite",
+"why": "pure void sub-lot list (procédure infructueuse / déclaration sans suite), no winner; several_lots (sub-lot codes 4a/4b)"
+},
+{
+"org": 5543579,
+"notice": 17991654,
+"section": "ORG-5",
+"name": "Aucun nom d'attributaire n'est mentionné compte tenu du fait que le lot 4 a été déclaré sans suite. un complément d'information est apporté à la Rubrique V.2 Autres informations point 2",
+"why": "pure void: 'Aucun nom d'attributaire n'est mentionné … le lot 4 a été déclaré sans suite'; kept by awardee_noun 'attributaire' (the negation 'aucun' sits two words back, past 'nom')"
+},
+{
+"org": 5605092,
+"notice": 18010517,
+"section": "ORG-6",
+"name": "Le lot 6 : lot M6 Palneca - ajaccio a été déclaré infructueux",
+"why": "pure void: one lot's description ('Le lot 6 : lot M6 ...'), no winner; kept only because several_lots counts the RES lot number and the buyer's own lot code as two lots; Palneca/Ajaccio are places"
+},
+{
+"org": 5611738,
+"notice": 18012294,
+"section": "ORG-6",
+"name": "Sans suite, en cours d'attribution",
+"why": "'Sans suite, en cours d'attribution' is a void lot with no winner. It is kept only because the awardee noun 'attribution' is not negated ('en cours d')."
+},
+{
+"org": 5611738,
+"notice": 18012294,
+"section": "ORG-7",
+"name": "Sans suite, en cours d'attribution",
+"why": "'Sans suite, en cours d'attribution' is a void lot with no winner. It is kept only because the awardee noun 'attribution' is not negated ('en cours d')."
+},
+{
+"org": 5772779,
+"notice": 18060898,
+"section": "ORG-3",
+"name": "le lot 002 : B Gros oeuvre étendu : Fondations spéciales (sous-lot nob02) - gros oeuvre (sous-lot nob03) - charpente métallique (sous-lot nob04) - etanchéité (sous-lot nob05) - façade brique (sous lot nob06) a été déclaré sans suite",
+"why": "One lot's description (sub-lots nob02..nob06) followed by 'a été déclaré sans suite'. several_lots fires on the 'sous-lot nobNN' codes. No winner."
+},
+{
+"org": 5772782,
+"notice": 18060898,
+"section": "ORG-6",
+"name": "le lot 005 : E Finitions : Menuiseries bois courantes (portes bois) (sous-lot noe09) - cloisons, Plafonds, Peinture (sous-lot noe10) - carrelage, Faïence, Sols souples (sous-lot noe11), a été déclaré sans suite",
+"why": "Same shape as 5772779 (lot 005 with sub-lots noe09..noe11, declared sans suite). several_lots fires on the sub-lot codes. No winner."
+},
+{
+"org": 5772784,
+"notice": 18060898,
+"section": "ORG-8",
+"name": "le lot 007 : G lots techniques : appareils élévateurs (sous-lot nog12) - cVC, Désenfumage, Plomberie Sanitaire (sous-lot nog13) - electricité courants forts et courants faibles,vdi,ssi (sous-lot nog14) a été déclaré sans suite",
+"why": "Same shape as 5772779 (lot 007 with sub-lots nog12..nog14, declared sans suite). several_lots fires on the sub-lot codes. No winner."
+},
+{
+"org": 5961568,
+"notice": 18119122,
+"section": "ORG-5",
+"name": "déclaré sans suite pour un motif d'intérêt général (redéfinition du besoin) - relance en 2 lots distincts (publicité de la relance: JOUE 2014/S 161-289268 du 23.8.2014 / BOAMP parution nº 20140161b; annonce nº 63 du 23.8.2014 / profil acheteur achatpublic.com et site de la ville: 21.8.2014)",
+"why": "Declared sans suite and relaunched as 2 lots. The rest is publication references (JOUE/BOAMP/annonce nº 63). Probably mixed_segments, on the ';' reference segment. No winner."
+},
+{
+"org": 6011832,
+"notice": 18134227,
+"section": "ORG-2",
+"name": "le lot 01: Terrassement substitution de sol: Lot déjà attribué a été déclaré sans suite",
+"why": "'Lot déjà attribué a été déclaré sans suite' is void. award_clause fires on 'attribué' even though it says the lot was already awarded. No winner named."
+},
+{
+"org": 6069583,
+"notice": 18151209,
+"section": "ORG-3",
+"name": "Le lot n° 2 du marché n'a pas été attribué. Le lot n° 2 est infructueux",
+"why": "'Le lot n° 2 du marché n'a pas été attribué. Le lot n° 2 est infructueux' is pure void. This is an award_clause negation gap: 'été' sits between 'pas' and 'attribué', so the negation check (words[i-1] only) misses it."
+},
+{
+"org": 6286857,
+"notice": 18213132,
+"section": "ORG-15",
+"name": "Suite à la cession de l'entreprise pressentie attributaire et conformément à l'article 59.IV du code des marchés publics, le marché est déclaré sans suite pour motif d'intérêt général. Avis nº 14-167620 publié au BOAMP et au JOUE",
+"why": "The market was declared sans suite after the presumed awardee was sold. The awardee noun 'attributaire' (in 'pressentie attributaire') fires, but no winner is named."
+},
+{
+"org": 6286857,
+"notice": 18213132,
+"section": "ORG-9",
+"name": "Suite à la cession de l'entreprise pressentie attributaire et conformément à l'article 59.IV du code des marchés publics, le marché est déclaré sans suite pour motif d'intérêt général. Avis nº 14-167620 publié au BOAMP et au JOUE",
+"why": "The market was declared sans suite after the presumed awardee was sold. The awardee noun 'attributaire' (in 'pressentie attributaire') fires, but no winner is named."
+},
+{
+"org": 6333652,
+"notice": 18226699,
+"section": "ORG-7",
+"name": "Le présent lot n'a reçu aucune offre. Il est déclaré sans suite à l'article 59-III du code des marchés publics. Ce lot a été décomposé en 2 nouveaux lots: lot nº 06 — bâtiments démontables, lot nº 07 — travaux d'installation des bâtiments démontables, et relancé en appel d'offres ouvert le 17.7.2014. Les offres ont été remises le 22.9.2014 et l'analyse des offres remises fait l'objet d'un second rapport qui est présenté séparément au contrôle de légalité",
+"why": "No offer, declared sans suite, split into new lots 06/07 and relaunched. several_lots fires on 'lot nº 06 … lot nº 07'. No winner."
+},
+{
+"org": 6357683,
+"notice": 18234183,
+"section": "ORG-3",
+"name": "Lot déclaré sans-suite et relancé en décembre 2014, sous les références suivantes: JOUE: n° 2014/S 250-444751 du 30.12.2014 — BOAMP: B n° 250 du 30.12.2014; annonce(s) n° 116",
+"why": "Lot declared sans suite and relaunched; the rest is JOUE/BOAMP references. Probably mixed_segments on the 'annonce(s) n° 116' segment. No winner."
+},
+{
+"org": 6499376,
+"notice": 18277818,
+"section": "ORG-8",
+"name": "infructueux suite à désistement du titulaire",
+"why": "'infructueux suite à désistement du titulaire' is void (the holder withdrew). It is kept by the awardee noun 'titulaire'. No winner."
+},
+{
+"org": 6654938,
+"notice": 18326698,
+"section": "ORG-15",
+"name": "L'attributaire pressenti pour ce lot ayant modifié son offre, elle ne correspond plus au besoin du pouvoir adjudicateur. Lot declare sans suite",
+"why": "The presumed awardee changed its offer, so the lot was declared sans suite. Kept by the awardee noun 'attributaire'. No winner."
+},
+{
+"org": 6688295,
+"notice": 18337211,
+"section": "ORG-10",
+"name": "Ce lot déclaré sans suite a fait l'objet d'une relance. Un avis d'attribution est en cours de publication",
+"why": "The lot was declared sans suite and relaunched, and its award notice is being published. Kept by the awardee noun 'attribution' ('avis d'attribution'). No winner."
+},
+{
+"org": 6825282,
+"notice": 18379778,
+"section": "ORG-7",
+"name": "Pour information, ce lot a été déclaré infructueux en commission d'appel d'offres. Par conséquent, ce lot n'a pas fait l'objet d'une attribution",
+"why": "Declared infructueux, so 'n'a pas fait l'objet d'une attribution'. The negation is not adjacent ('objet' intervenes), so the awardee noun fires. No winner."
+},
+{
+"org": 7024169,
+"notice": 18439138,
+"section": "ORG-5",
+"name": "Pas d'attributaire retenu pour l'instant. Décision de la commission d'appels d'offres repoussée",
+"why": "'Pas d'attributaire retenu pour l'instant. Décision … repoussée' says no awardee yet. No void stem matches, so the classifier reads it as a plain name. No winner."
+},
+{
+"org": 7075593,
+"notice": 18454294,
+"section": "ORG-12",
+"name": "postępowanie unieważniono – ofertę odrzucono; Wykonawca wykluczony – nie spełnia warunków udziału w postępowaniu",
+"why": "Polish: 'postępowanie unieważniono – ofertę odrzucono; Wykonawca wykluczony …' (proceedings annulled, offer rejected, contractor excluded). Probably kept by mixed_segments on the second segment. No winner."
+},
+{
+"org": 7075593,
+"notice": 18454294,
+"section": "ORG-13",
+"name": "postępowanie unieważniono – ofertę odrzucono; Wykonawca wykluczony – nie spełnia warunków udziału w postępowaniu",
+"why": "Polish: 'postępowanie unieważniono – ofertę odrzucono; Wykonawca wykluczony …' (proceedings annulled, offer rejected, contractor excluded). Probably kept by mixed_segments on the second segment. No winner."
+},
+{
+"org": 7075593,
+"notice": 18454294,
+"section": "ORG-8",
+"name": "postępowanie unieważniono – ofertę odrzucono; Wykonawca wykluczony – nie spełnia warunków udziału w postępowaniu",
+"why": "Polish: 'postępowanie unieważniono – ofertę odrzucono; Wykonawca wykluczony …' (proceedings annulled, offer rejected, contractor excluded). Probably kept by mixed_segments on the second segment. No winner."
+},
+{
+"org": 7093933,
+"notice": 18459932,
+"section": "ORG-3",
+"name": "Le lot n° 2 n'a pas été attribué et fut déclaré sans suite",
+"why": "'Le lot n° 2 n'a pas été attribué et fut déclaré sans suite' is pure void. Same award_clause negation gap ('pas été attribué')."
+},
+{
+"org": 7395857,
+"notice": 18548410,
+"section": "ORG-7",
+"name": "Declaré sans suite en raison de la liquidation judiciaire de la société attributaire",
+"why": "Declared sans suite because the awardee company went into liquidation. Kept by 'attributaire'. No winner."
+},
+{
+"org": 7517636,
+"notice": 18585286,
+"section": "ORG-10",
+"name": "Lot Déclaré sans suite pour motif d'intérêt général: les motifs sont fondés sur le besoin du pouvoir adjudicateur modifié entre le recensement des besoins et la date de la commission interne d'attribution",
+"why": "Declared sans suite in the general interest (changed needs before the 'commission interne d'attribution'). Kept by the awardee noun 'attribution'. No winner."
+},
+{
+"org": 7524029,
+"notice": 18587145,
+"section": "ORG-2",
+"name": "Le lot n° 1 n'a pas été attribué. Au regard de l'article 59-IV, ce lot est déclaré sans suite pour le motif d'intérêt général suivant: compte-tenu du contexte de fusion entre BBA et les communautés de communes avoisinantes, les besoins devront être redéfinis par rapport à ce qui avait été initialement prévu. De fait, la fourchette de prix (45 000 EUR — 65 000 EUR) n'a plus de sens et sera recalculée en fonction des nouveaux besoins",
+"why": "'Le lot n° 1 n'a pas été attribué … déclaré sans suite' (redefinition after a merger). award_clause negation gap ('pas été attribué'). No winner."
+},
+{
+"org": 7596880,
+"notice": 18607748,
+"section": "ORG-104",
+"name": "Not awarded (was retended and awarded as part of a new project)",
+"why": "'Not awarded (was retended and awarded as part of a new project)' is void. names_an_award fires on the second 'awarded', so the classifier returns a plain name. No winner."
+},
+{
+"org": 7596896,
+"notice": 18607748,
+"section": "ORG-119",
+"name": "Not awarded (was retendered and awarded as part of a new project)",
+"why": "'Not awarded (was retendered and awarded as part of a new project)'. Same as 7596880. No winner."
+},
+{
+"org": 7732764,
+"notice": 18645152,
+"section": "ORG-4",
+"name": "Marché déclaré sans suite en effet les réactifs de ce lot sont utilisés uniquement en cas de validation d'une nouvelle méthode d'analyse, ce qui n'a pas lieu d'être puisque le titulaire pressenti pour l'attribution du lot 1 est identique à celui du précédent marché",
+"why": "Declared sans suite (the reagents are only needed for a new method; the presumed holder of lot 1 is unchanged). Kept by 'titulaire'/'attribution'. No winner."
+},
+{
+"org": 7732765,
+"notice": 18645152,
+"section": "ORG-5",
+"name": "Marché déclaré sans suite en effet les réactifs de ces lots sont utilisés uniquement en cas de validation d'une nouvelle méthode d'analyse, ce qui n'a pas lieu d'être puisque le titulaire pressenti pour l'attribution du lot 1 est identique à celui du précédent marché",
+"why": "Same as 7732764 (plural 'ces lots'). No winner."
+},
+{
+"org": 7815395,
+"notice": 18669174,
+"section": "ORG-2",
+"name": "Les lots n° 1 et 3 ont été déclarés infructueux. Le lot n° 2 a été déclaré sans suite",
+"why": "'Les lots n° 1 et 3 ont été déclarés infructueux. Le lot n° 2 a été déclaré sans suite' is all void. several_lots fires. No winner."
+},
+{
+"org": 9907415,
+"notice": 19316159,
+"section": "ORG-3",
+"name": "Marché déclaré sans suite le 15.6.2017, en raison d'une modification opérée par l'attributaire de son offre initiale lors d'une demande de prolongation de validité de celle-ci post attribution.",
+"why": "Declared sans suite because the awardee modified its offer after the award. Kept by 'attributaire'. No winner."
+},
+{
+"org": 10528138,
+"notice": 19507317,
+"section": "ORG-2",
+"name": "Desierto, al retirar su oferta el único licitador propuesto adjudicatario",
+"why": "'Desierto, al retirar su oferta el único licitador propuesto adjudicatario' (void; the sole bidder withdrew). Kept by the un-negated noun 'adjudicatario', so read as a plain name. No winner."
+},
+{
+"org": 11251840,
+"notice": 19728833,
+"section": "ORG-3",
+"name": "Lotto non aggiudicato in quanto la commissione ha escluso dalla gara l’unica offerta ricevuta dalla compagnia UnipolSai S.p.A. — Ag. Marcantoni — in quanto le varianti proposte sono state ritenute in grado di comportare una sostanziale modifica della copertura assicurativa richiesta tali da evidenziare una palese diminuzione dell’efficacia generale della stessa qualora si verificassero determinati eventi.",
+"why": "Italian: 'Lotto non aggiudicato' because the only offer (UnipolSai S.p.A. — Ag. Marcantoni) was EXCLUDED. The S.p.A. names an excluded bidder, not a winner. Read as a plain name. A near miss for any A extractor."
+},
+{
+"org": 11663718,
+"notice": 19862416,
+"section": "ORG-4",
+"name": "Desierto; oferta excluida del proceso de valoración",
+"why": "'Desierto; oferta excluida del proceso de valoración' is pure void. Kept, probably by mixed_segments on the second segment, and read as a plain name."
+},
+{
+"org": 11663720,
+"notice": 19862416,
+"section": "ORG-6",
+"name": "Desierto; el licitador ha renunciado a la adjudicación del contrato",
+"why": "'Desierto; el licitador ha renunciado a la adjudicación del contrato' is pure void. Probably kept by mixed_segments, and read as a plain name."
+},
+{
+"org": 12169942,
+"notice": 20017172,
+"section": "ORG-3",
+"name": "Perceel 2 en Perceel 4 worden niet gegund. Er zijn geen geldige inschrijvingen ontvangen.",
+"why": "Dutch: 'Perceel 2 en Perceel 4 worden niet gegund. Er zijn geen geldige inschrijvingen ontvangen.' All void. several_lots fires on the two percelen. No winner."
+},
+{
+"org": 12169942,
+"notice": 20017172,
+"section": "ORG-4",
+"name": "Perceel 2 en Perceel 4 worden niet gegund. Er zijn geen geldige inschrijvingen ontvangen.",
+"why": "Dutch: 'Perceel 2 en Perceel 4 worden niet gegund. Er zijn geen geldige inschrijvingen ontvangen.' All void. several_lots fires on the two percelen. No winner."
+},
+{
+"org": 14580326,
+"notice": 20811400,
+"section": "ORG-2",
+"name": "No Contract awarded, see section VI.2",
+"why": "'No Contract awarded, see section VI.2' is void plus a pointer. Read as a plain name. No winner."
+},
+{
+"org": 25043000,
+"notice": 2643650,
+"section": "ORG-2",
+"name": "Gara deserta per mancanza di offerte valide. SECTION VI: OTHER INFORMATION VI.3) Date of contract award: 8.4.2005. VI.4) Number of tenders received: 3. VI.7) Other information:",
+"why": "Text-era 2005 spill: 'Gara deserta per mancanza di offerte valide. SECTION VI: … Date of contract award …'. Read as a plain name. No winner."
+},
+{
+"org": 25755356,
+"notice": 2251479,
+"section": "ORG-6",
+"name": "Desierto. SECTION VI: OTHER INFORMATION VI.3) Date of contract award: 2.1.2004. VI.4) Number of tenders received: 12. VI.5) This contract was subject to a notice in the OJ: Yes. Of: 21.10.2003. VI.7) Other information: I",
+"why": "Text-era spill: 'Desierto. SECTION VI: OTHER INFORMATION …'. Read as a plain name. No winner."
+},
+{
+"org": 25893172,
+"notice": 2181799,
+"section": "ORG-4",
+"name": "Nicht vergeben. SECTION VI: OTHER INFORMATION VI.3) Date of contract award: 25.7.2003. VI.4) Number of tenders received: Bis zu 4. VI.5) This contract was subject to a notice in the OJ: Yes. Of: 27.5.2003. VI.7) Other information: I",
+"why": "Text-era spill: 'Nicht vergeben. SECTION VI: …'. Read as a plain name. No winner."
+},
+{
+"org": 28821451,
+"notice": 3646042,
+"section": "ORG-10",
+"name": "Not Awarded - Other FE College awarded area. V.5) THE CONTRACT IS LIKELY TO BE SUB-CONTRACTED: No",
+"why": "'Not Awarded - Other FE College awarded area. V.5) …' is void plus a spill. The other college is not named. No winner."
+},
+{
+"org": 29760975,
+"notice": 2958075,
+"section": "ORG-2",
+"name": "No contract awarded. SECTION VI: COMPLEMENTARY INFORMATION VI.2) ADDITIONAL INFORMATION: (ET Ref:42985). VI.3) PROCEDURES FOR APPEAL: VI.3.1) Body responsible for appeal procedures: Limerick City Council",
+"why": "'No contract awarded. SECTION VI … appeal …: Limerick City Council'. Void plus a spill; the trailing body is the appeal body, not a winner."
+},
+{
+"org": 30336777,
+"notice": 3231746,
+"section": "ORG-2",
+"name": "Not awarded. Section VI: Complementary information VI.1) Contract related to a project and/or programme financed by EU funds: No. VI.2) Additional information:",
+"why": "'Not awarded. Section VI: Complementary information …' is a void spill. Read as a plain name."
+},
+{
+"org": 30535445,
+"notice": 2114492,
+"section": "ORG-10",
+"name": "Desiertos. SECTION VI: OTHER INFORMATION VI.1) Non-mandatory notice: No. VI.2) Reference number attributed to the file by the contracting authority: 15-3-2.1-0043/2003. VI.3) Date of contract award:",
+"why": "Text-era spill: 'Desiertos. SECTION VI: …'. Read as a plain name. No winner."
+},
+{
+"org": 30535976,
+"notice": 2169052,
+"section": "ORG-2",
+"name": "Desierto. SECTION VI: OTHER INFORMATION VI.1) Non-mandatory notice: No. VI.2) Reference number attributed to the file by the contracting authority: 06-5-2.1-0075/2003. VI.3) Date of contract award: 22.7.2003. VI.4) Number of tenders received:",
+"why": "Text-era spill: 'Desierto. SECTION VI: …'. Read as a plain name. No winner."
+},
+{
+"org": 30537999,
+"notice": 2337686,
+"section": "ORG-2",
+"name": "No award made. SECTION VI: OTHER INFORMATION VI.4) Number of tenders received:",
+"why": "Text-era spill: 'No award made. SECTION VI: …'. Read as a plain name. No winner."
+},
+{
+"org": 30538906,
+"notice": 2434122,
+"section": "ORG-5",
+"name": "Desierto. SECTION VI: OTHER INFORMATION VI.2) Reference number attributed to the file by the contracting authority: RQ/01/001/S. VI.3) Date of contract award:",
+"why": "Text-era spill: 'Desierto. SECTION VI: …'. Read as a plain name. No winner."
+},
+{
+"org": 30539882,
+"notice": 2500410,
+"section": "ORG-2",
+"name": "Desierto. SECTION VI: OTHER INFORMATION VI.1) Non-mandatory notice: No. VI.2) Reference number attributed to the file by the contracting authority: CC04/140. VI.3) Date of contract award:",
+"why": "Text-era spill: 'Desierto. SECTION VI: …'. Read as a plain name. No winner."
+},
+{
+"org": 30680275,
+"notice": 1818767,
+"section": "ORG-2",
+"name": "Marché numéro: 01072 - Lot 1) et lot 2) Marché classé sans suite",
+"why": "Text era. 'Marché numéro: 01072 - Lot 1) et lot 2) Marché classé sans suite' is void as a whole and names no winner. several_lots fires on lot 1/lot 2."
+},
+{
+"org": 30786740,
+"notice": 2100337,
+"section": "ORG-3",
+"name": "Desiertos.. SECTION VI: OTHER INFORMATION VI.1) Non-mandatory notice: No. VI.2) Reference number attributed to the file by the contracting authority: 15-3-2.1-0027/2003. VI.3) Date of contract award:",
+"why": "Spanish 2003 text: 'Desiertos..' plus a SECTION VI spill. No winner. Reason lacks 'award summary', so this is a VoidLot classifier miss (plural Desiertos plus spill), not a names_an_award keep."
+},
+{
+"org": 30899597,
+"notice": 21645990,
+"section": "ORG-2",
+"name": "No contract awarded — see section VI.2)",
+"why": "Notice 21645990, 2021 DK defence XML. 'No contract awarded — see section VI.2)'; VI.2 explains the termination. No winner. Not AwardSummary: a void miss, likely through the section-pointer handling."
+},
+{
+"org": 31383538,
+"notice": 4369863,
+"section": "ORG-11",
+"name": "Lot infructueux et relancer selon une procédure négocié après publicité préalable et mise en concurence selon l'article 35-1 du code des marchés publics. Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot.",
+"why": "Pointer prose 'Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot' names no winner (awardee_noun fires on attribution/attributaire). 5 mentions."
+},
+{
+"org": 31383538,
+"notice": 4369863,
+"section": "ORG-23",
+"name": "Lot infructueux et relancer selon une procédure négocié après publicité préalable et mise en concurence selon l'article 35-1 du code des marchés publics. Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot.",
+"why": "Pointer prose 'Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot' names no winner (awardee_noun fires on attribution/attributaire). 5 mentions."
+},
+{
+"org": 31383538,
+"notice": 4369863,
+"section": "ORG-24",
+"name": "Lot infructueux et relancer selon une procédure négocié après publicité préalable et mise en concurence selon l'article 35-1 du code des marchés publics. Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot.",
+"why": "Pointer prose 'Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot' names no winner (awardee_noun fires on attribution/attributaire). 5 mentions."
+},
+{
+"org": 31383538,
+"notice": 4369863,
+"section": "ORG-8",
+"name": "Lot infructueux et relancer selon une procédure négocié après publicité préalable et mise en concurence selon l'article 35-1 du code des marchés publics. Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot.",
+"why": "Pointer prose 'Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot' names no winner (awardee_noun fires on attribution/attributaire). 5 mentions."
+},
+{
+"org": 31383538,
+"notice": 4369863,
+"section": "ORG-9",
+"name": "Lot infructueux et relancer selon une procédure négocié après publicité préalable et mise en concurence selon l'article 35-1 du code des marchés publics. Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot.",
+"why": "Pointer prose 'Voir l'avis d'attribution no 10-279996 pour l'entreprise attributaire du lot' names no winner (awardee_noun fires on attribution/attributaire). 5 mentions."
+},
+{
+"org": 31383542,
+"notice": 4369863,
+"section": "ORG-4",
+"name": "Lot infructueux et relancer selon une procédure négocié après publicité préalable et mise en concurence selon l'article 35-1 du code des marchés publics. Voir l'avis d'attribution no10-279996 pour l'entreprise attributaire du lot.",
+"why": "Same pointer prose as 31383538 ('no10-279996'); no winner."
+},
+{
+"org": 31400142,
+"notice": 4401492,
+"section": "ORG-4",
+"name": "Le Lot n'a pas été attribué (lot infructueux)",
+"why": "'Le Lot n'a pas été attribué (lot infructueux)'. award_clause misses the negation because 'été' sits between 'pas' and 'attribué'."
+},
+{
+"org": 31415171,
+"notice": 4432111,
+"section": "ORG-12",
+"name": "Lot déclaré infructueux lors de l'attribution du 13.12.2010 relancé en procédure négociée selon l'art. 35-I-1 dernier alinéa du CMP) - en cours d'attribution",
+"why": "Infructueux, relaunched, 'en cours d'attribution'; no winner."
+},
+{
+"org": 31424633,
+"notice": 4452245,
+"section": "ORG-2",
+"name": "Attributaire non designe - lot infructueux",
+"why": "'Attributaire non designe - lot infructueux'. awardee_noun fires because the negation follows the noun."
+},
+{
+"org": 31425155,
+"notice": 8341786,
+"section": "ORG-5",
+"name": "Non attribuée - en cours d'analyse - attribution reportée",
+"why": "'Non attribuée - en cours d'analyse - attribution reportée' names no winner ('attribution' noun fires)."
+},
+{
+"org": 31427032,
+"notice": 8346012,
+"section": "ORG-4",
+"name": "Le lot 3: entretien des espaces verts aux aobrds de bâtiments et équipements entretien des ensemencements (tonte); entretien des espaces arborés, massifs et plantations et maintenance des barrières et clôtures. a été déclaré sans suite",
+"why": "Template 'Le lot 3: <lot title> a été déclaré sans suite'; no winner."
+},
+{
+"org": 31428159,
+"notice": 8348593,
+"section": "ORG-4",
+"name": "Lot 1 sans suite / lot 2 infructueux",
+"why": "'Lot 1 sans suite / lot 2 infructueux' is pure void; the triage already noted it as a VoidLot miss."
+},
+{
+"org": 31450417,
+"notice": 12316056,
+"section": "ORG-3",
+"name": "Le Lot 2: Gros Oeuvre - Clos et Couvert - Amenagements Interieurs. Le présent lot concerne tous les corps d'État techniques de bâtiment et intègre les spécialités suivantes: protection; gros oeuvre; charpente bois; charpente métallique; couverture ardoises et zinc; menuiseries extérieures bois; serrurerie - métallerie; menuiseries intérieures; plâtrerie - peinture - nettoyage; sols souples; carrelage - faïence - sol pierre; parquet; faux plafonds; chauffage - ventilation - désenfumage mécanique - plomberie; électricité courants forts et faibles; ascenseurs a été déclaré infructueux",
+"why": "Read 12316056: the full value is 'Le Lot 2: <long title>… ascenseurs a été déclaré infructueux', the lot-title template. No winner."
+},
+{
+"org": 31471384,
+"notice": 12369646,
+"section": "ORG-7",
+"name": "Le lot 6: service d'assurance pour les travaux de construction neuve de logements locatifs sociaux \"Zac Ballastière Sud lots 3-2, 3-3 - 94450 Limeil-Brévannes\" a été déclaré infructueux",
+"why": "Template 'Le lot 6: <title incl. Zac… lots 3-2, 3-3> a été déclaré infructueux'. several_lots fires on the numbers inside the title."
+},
+{
+"org": 31473527,
+"notice": 12375011,
+"section": "ORG-2",
+"name": "Le lot 1: Ressources humaines et sciences sociales. Emploi et droits sociaux, inclusion; Politique régionale et développement local,cohésion du territoire. Agriculture, pêche et qualité alimentaire; politique environnementale, innovation, entreprise. Culture, et a été déclaré Sans Suite",
+"why": "Template 'Le lot 1: <title> a été déclaré Sans Suite'; no winner."
+},
+{
+"org": 31481076,
+"notice": 12393496,
+"section": "ORG-6",
+"name": "Le lot 5: Lot 2011-210 02 Communauté de Communes de la Rive-Gauche-du-Lac a été déclaré infructueux",
+"why": "Template 'Le lot 5: Lot 2011-210 02 Communauté de Communes… a été déclaré infructueux'. The CC is the lot title, not a winner. several_lots fires on 'Lot 2011-210 02'."
+},
+{
+"org": 31481089,
+"notice": 12393517,
+"section": "ORG-10",
+"name": "Le lot 9: Lot 2011-216 01 Communauté de Communes du Pays de Cruseilles a été déclaré Infructueux",
+"why": "Same template (lot 9, CC du Pays de Cruseilles is the lot title); no winner."
+},
+{
+"org": 31481092,
+"notice": 12393517,
+"section": "ORG-7",
+"name": "Le lot 6: Lot 2011-231 01 Communauté de Communes du Genevois a été déclaré Infructueux",
+"why": "Same template (lot 6, CC du Genevois is the lot title); no winner."
+},
+{
+"org": 31481093,
+"notice": 12393517,
+"section": "ORG-8",
+"name": "Le lot 7: Lot 2011-231 02 Communauté de Communes du Genevois a été déclaré Infructueux",
+"why": "Same template (lot 7, CC du Genevois); no winner."
+},
+{
+"org": 31481094,
+"notice": 12393517,
+"section": "ORG-9",
+"name": "Le lot 8: Lot 2011-231 03 Communauté de Communes du Genevois a été déclaré Infructueux",
+"why": "Same template (lot 8, CC du Genevois); no winner."
+},
+{
+"org": 31481098,
+"notice": 12393519,
+"section": "ORG-4",
+"name": "Le lot 3: lot 2011-230 01 Communauté de communes de la Vallée Verte a été déclaré infructueux",
+"why": "Same template (lot 3, CC de la Vallée Verte); no winner."
+},
+{
+"org": 31481123,
+"notice": 12393545,
+"section": "ORG-3",
+"name": "Le lot 7: Lot 2011-231 02 Communauté de communes du Genevois a été déclaré sans suite",
+"why": "Same template, sans suite (lot 7, CC du Genevois); no winner."
+},
+{
+"org": 31489554,
+"notice": 12416219,
+"section": "ORG-10",
+"name": "Lot infructueux. En cours d'attribution, suite marché négocié sans publicité.",
+"why": "'Lot infructueux. En cours d'attribution, suite marché négocié sans publicité.' No winner. 3 mentions."
+},
+{
+"org": 31489554,
+"notice": 12416219,
+"section": "ORG-4",
+"name": "Lot infructueux. En cours d'attribution, suite marché négocié sans publicité.",
+"why": "'Lot infructueux. En cours d'attribution, suite marché négocié sans publicité.' No winner. 3 mentions."
+},
+{
+"org": 31489554,
+"notice": 12416219,
+"section": "ORG-7",
+"name": "Lot infructueux. En cours d'attribution, suite marché négocié sans publicité.",
+"why": "'Lot infructueux. En cours d'attribution, suite marché négocié sans publicité.' No winner. 3 mentions."
+},
+{
+"org": 31489559,
+"notice": 12416219,
+"section": "ORG-3",
+"name": "Lot infructueux. En cours d'attribution, suite marché négocié avec publicité.",
+"why": "Same 'Lot infructueux. En cours d'attribution…'; no winner."
+},
+{
+"org": 31491050,
+"notice": 12419775,
+"section": "ORG-14",
+"name": "Le lot 13: Agencement - TF: Etudes d'exécution; - TC1: Fauteuils pliants avec tablettes (300 unités env) - TC2: Fauteuils pliants (300 unités env. a été déclaré Sans Suite",
+"why": "Template 'Le lot 13: <title> a été déclaré Sans Suite'; no winner."
+},
+{
+"org": 31491056,
+"notice": 12419775,
+"section": "ORG-7",
+"name": "Le lot 6: Electricité courants forts et courants faibles 6.01 Courants forts - Poste de transformation (1000 kva); - Onduleur (220 kva); - Alimentation ASI (100 kva); - Tgbt et distribution principale (sur 11000 mètres carrés Shon); - Distribution secondaire (30 tableaux divisionnaires env.); - Eclairage intérieur et extérieur (2000 unités env.); - Prises et courant et petits appareillages (2500 unités env.). 6.02 Courants faibles - Alarme technique; - Alarme incendie; - Installation téléphonique; - Réseau multimédia; - Alarme anti-intrusion, contrôle d'accès; - Sonorisation; - Production audiovisuelle; - Interphonie. a été déclaré Sans Suite",
+"why": "Same notice and template as 31491050 ('Le lot 6: <long title>… a été déclaré…'); no winner."
+},
+{
+"org": 31527955,
+"notice": 27180984,
+"section": "ORG-10",
+"name": "Société Sindarro Lot déclaré infructueux relancé en marché négocié avec publicité et mise enconcurence (date limite le 10 juin 2008)",
+"why": "Named company, NOT a winner. Read 27180984 (Nice pool, 2008): 'Société Sindarro Lot déclaré infructueux relancé en marché négocié… (date limite le 10 juin 2008)'. The relaunch deadline falls after the 2008-05-24 publication, and the RES has no value fields (awarded RES do). So Sindarro is a failed bidder. Treat as void (drop) and never extract. A near-miss test for A."
+},
+{
+"org": 31527956,
+"notice": 27180984,
+"section": "ORG-11",
+"name": "Société Sanchez lot déclaré infructueux relancé en marché négocié avec publicité et mise en concurence (date limite le 10 juin 2008)",
+"why": "Same as 31527955: 'Société Sanchez lot déclaré infructueux relancé… (date limite le 10 juin 2008)'. Failed bidder, not a winner. Drop; do not extract."
+},
+{
+"org": 31527960,
+"notice": 27180984,
+"section": "ORG-16",
+"name": "Société Energys. Lot déclaré infructueux relancé en marché négocié avec publicité et mise en concurence (date limite le 10 juin 2008)",
+"why": "Same shape: 'Société Energys. Lot déclaré infructueux relancé…'. Energys legitimately won RES-12/14 of this notice but not this lot. Drop; do not extract."
+},
+{
+"org": 31527961,
+"notice": 27180984,
+"section": "ORG-17",
+"name": "Société SOTEP Lot Déclaré infructueux et sera relancé en marché negocié avec publicité et mise en concurence (date limite le 10 juin 2008)",
+"why": "Same shape: 'Société SOTEP Lot Déclaré infructueux et sera relancé…'. Not a winner. Drop; do not extract."
+},
+{
+"org": 31527964,
+"notice": 27180984,
+"section": "ORG-2",
+"name": "Société Spada. Lot déclarée infructueux relancé en procédure négocié avec publicité et mise en concurence (date limite le 10 juin 2008)",
+"why": "Same shape: 'Société Spada. Lot déclarée infructueux relancé…'. Not a winner. Drop; do not extract."
+},
+{
+"org": 31527968,
+"notice": 27180984,
+"section": "ORG-6",
+"name": "Société Herman Aluminium Lot déclaré infructueux, relancé en marché négocié avec publicité avec mise en concurence (date limite le 10 juin 2008)",
+"why": "Same shape: 'Société Herman Aluminium Lot déclaré infructueux, relancé…'. Not a winner. Drop; do not extract."
+},
+{
+"org": 31674188,
+"notice": 1067464,
+"section": "ORG-11",
+"name": "A 97.23.18) sans suite (déjà attribué au lots A 06 et A 12)",
+"why": "Text 1997: 'A 97.23.18) sans suite (déjà attribué au lots A 06 et A 12)'. award_clause fires on 'déjà attribué' (awarded under OTHER lots). No winner."
+},
+{
+"org": 31674189,
+"notice": 1067464,
+"section": "ORG-12",
+"name": "A 97.23.19) sans suite (déjà attribué au lot A 12)",
+"why": "Same: 'A 97.23.19) sans suite (déjà attribué au lot A 12)'; no winner."
+},
+{
+"org": 31854611,
+"notice": 3957664,
+"section": "ORG-11",
+"name": "Not awarded. Procedure cancelled according to FOA § 22-1.. SECTION VI: COMPLEMENTARY INFORMATION VI.2) ADDITIONAL INFORMATION: Criterias for area",
+"why": "'Not awarded. Procedure cancelled according to FOA § 22-1.. SECTION VI…' spill. No winner. Reason lacks 'award summary', so this is a VoidLot classifier miss (spill handling)."
+}
+]
