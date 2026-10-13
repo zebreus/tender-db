@@ -4834,12 +4834,22 @@ fn drop_decision(
 /// winner's, or the winner's hold its (`Promocash SAS` beside `Promocash`) — else (`Transgourmet
 /// Opérations`) the summary stays, rather than the winner's organization taking another company's name
 /// as a variant. `names` are the party's copies with their classes, as [`drop_decision`] tallies them.
+///
+/// Issue 520 U6 (A2): a copy no `award_winner` cue reads may name its winner before a void tail
+/// ([`crate::partyname::void_tail_winner`]: `BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a
+/// été déclarée sans suite pour les parts non couvertes des besoins`, `GRPT GCC (mandataire) et Andre BTP,
+/// suite à procédure négociée après AO infructueux`: five reviewed rows), read the same way — every
+/// void-net copy, the same winner — and, since the reviews, with no copy outside the net that lists
+/// anything beside it.
 fn extracted_winner(names: &[(&str, Option<NotAName>)]) -> Option<String> {
-    // The fold's hot loop: a party with no cue word in any copy reads nothing more.
-    if !names.iter().any(|(name, _)| crate::partyname::may_name_a_winner(name)) {
+    // The fold's hot loop: a party with no cue word and no award summary in any copy reads nothing more.
+    if !names.iter().any(|(name, class)| {
+        *class == Some(NotAName::AwardSummary) || crate::partyname::may_name_a_winner(name)
+    }) {
         return None;
     }
     let mut winner: Option<String> = None;
+    let mut from_tail = false;
     for (name, class) in names {
         if !crate::partyname::mentions_void(name) {
             continue;
@@ -4847,7 +4857,13 @@ fn extracted_winner(names: &[(&str, Option<NotAName>)]) -> Option<String> {
         if !matches!(class, None | Some(NotAName::AwardSummary)) {
             return None;
         }
-        let named = crate::partyname::award_winner(name)?;
+        let named = match crate::partyname::award_winner(name) {
+            Some(named) => named,
+            None => {
+                from_tail = true;
+                crate::partyname::void_tail_winner(name)?
+            }
+        };
         match &winner {
             Some(first) if *first != named => return None,
             Some(_) => {}
@@ -4857,12 +4873,28 @@ fn extracted_winner(names: &[(&str, Option<NotAName>)]) -> Option<String> {
     let winner = winner?;
     let words = |name: &str| format!(" {} ", crate::partyname::fold(name));
     let key = words(&winner);
+    // Issue 520 U6 (the reviews): a void tail carries no award clause whose own refusals vouch for the
+    // winner, so a copy outside the net that lists anything beside it keeps the summary — a separator the
+    // winner does not hold (`BGE Guyane / Equinoxe Formation`, `BGE Guyane, Equinoxe Formation`, `BGE
+    // Guyane & Equinoxe Formation`) or a conjunction past the winner's words (`BGE Guyane et Equinoxe
+    // Formation`). More words of the same company (`BGE Guyane Cayenne`) still bind.
+    let listed = |name: &str| {
+        let added = [';', '/', ',', '&', '+', '|', '–', '—', '\n']
+            .iter()
+            .any(|sep| name.contains(*sep) && !winner.contains(*sep))
+            || (name.contains(" - ") && !winner.contains(" - "));
+        let rest = words(name).replacen(&key, " ", 1);
+        added
+            || rest
+                .split(' ')
+                .any(|w| matches!(w, "et" | "and" | "und" | "y" | "e" | "en" | "ou" | "or" | "avec" | "puis" | "ainsi"))
+    };
     names
         .iter()
         .filter(|(name, _)| !crate::partyname::mentions_void(name))
         .all(|(name, _)| {
             let other = words(name);
-            other.contains(&key) || key.contains(&other)
+            (other.contains(&key) || key.contains(&other)) && !(from_tail && listed(name))
         })
         .then_some(winner)
 }
@@ -16213,6 +16245,75 @@ mod tests {
         assert_eq!(parties.verdict("ORG-2"), PartyVerdict::Renamed("Léo Lagrange".into()));
         assert!(matches!(parties.verdict("ORG-3"), PartyVerdict::Kept(_)), "an ordinary name is never read");
         assert!(matches!(parties.verdict("ORG-9"), PartyVerdict::Kept(_)));
+    }
+
+    /// Issue 520 U6 (A2, unit-1 decision §4.2; 1844226, 2734624 and 1844215): a party the fold keeps for an
+    /// award summary that names its winner before a void tail binds under that winner, as U4's do — the
+    /// mention's head and every void-net copy read `BGE Guyane` / the GRPT consortium, a copy outside the net
+    /// that names the same company keeps its text, nothing is dropped, the result stays `selec-w`, and the
+    /// walk's verdict is `Renamed`. The B2 list that names a second party after BGE's address keeps its
+    /// summary, and since the reviews so does a party whose copy outside the net lists a second party — by
+    /// a separator (ORG-4 `/`, ORG-6 `,`) or a conjunction (ORG-7 `et`): a void tail has no award clause to
+    /// vouch for the winner. `Bp innovis ; infructueux` (ORG-5, 4836476) keeps its summary: the review
+    /// withdrew the `;` shape.
+    #[test]
+    fn a_void_tail_party_binds_its_winner() {
+        use placeholder_511::*;
+        const BGE: &str = "BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins";
+        const GRPT: &str = "GRPT GCC (mandataire) et Andre BTP, suite à procédure négociée après AO infructueux";
+        const LIST: &str = "BGE Guyane 16 rue Lt Becker 97300 Cayenne / Equinoxe Formation Rocade Zéphir Centre Commercial Katoury 97300 Cayenne / La consultation a été déclarée sans suite pour la part non couverte des besoins";
+        const BP: &str = "Bp innovis ; infructueux";
+        let parsed = multilingual(
+            &[
+                ("ORG-1", &[(Some("FR"), BGE), (Some("EN"), "BGE Guyane Cayenne")]),
+                ("ORG-2", &[(Some("FR"), GRPT)]),
+                ("ORG-3", &[(Some("FR"), LIST)]),
+                ("ORG-4", &[(Some("FR"), BGE), (Some("EN"), "BGE Guyane / Equinoxe Formation")]),
+                ("ORG-5", &[(Some("FR"), BP)]),
+                ("ORG-6", &[(Some("FR"), BGE), (Some("EN"), "BGE Guyane, Equinoxe Formation")]),
+                ("ORG-7", &[(Some("FR"), BGE), (Some("EN"), "BGE Guyane et Equinoxe Formation")]),
+            ],
+            &["ORG-1", "ORG-2", "ORG-3", "ORG-4", "ORG-5", "ORG-6", "ORG-7"],
+        );
+        for name in [BGE, GRPT, LIST, BP] {
+            assert_eq!(crate::partyname::not_a_name(name), Some(NotAName::AwardSummary), "premise: {name}");
+        }
+        assert_eq!(decided(false, &parsed), BTreeMap::new(), "nothing is dropped");
+        let (mentions, retired, dropped, extracted) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        assert!(retired.is_empty() && dropped.total() == 0, "nothing is retired");
+        let named: Vec<(&str, &str)> = mentions.iter().map(|m| (m.section_id.as_str(), m.name.as_str())).collect();
+        assert_eq!(
+            named,
+            vec![
+                ("ORG-1", "BGE Guyane"),
+                ("ORG-2", "GRPT GCC (mandataire) et Andre BTP"),
+                ("ORG-3", LIST),
+                ("ORG-4", BGE),
+                ("ORG-5", BP),
+                ("ORG-6", BGE),
+                ("ORG-7", BGE),
+                ("ORG-9", "Ville de Lyon")
+            ]
+        );
+        let variants: Vec<&str> = mentions[0].variants.iter().map(|(_, name)| name.as_str()).collect();
+        assert_eq!(variants, vec!["BGE Guyane", "BGE Guyane Cayenne"], "the void-net copy renamed, the other as published");
+        assert_eq!(
+            extracted,
+            ExtractedWinners {
+                count: 2,
+                sample: vec![
+                    (9, "ORG-1".into(), BGE.into(), "BGE Guyane".into()),
+                    (9, "ORG-2".into(), GRPT.into(), "GRPT GCC (mandataire) et Andre BTP".into()),
+                ],
+            }
+        );
+        assert_eq!(results(&bound("ted-export-r208", &parsed)), vec![(Some("selec-w".into()), vec![1_001, 1_002, 1_003, 1_004, 1_005, 1_006, 1_007])]);
+        let parties = fold_parties("ted-export-r208", &parsed);
+        assert_eq!(parties.verdict("ORG-1"), PartyVerdict::Renamed("BGE Guyane".into()));
+        assert_eq!(parties.verdict("ORG-2"), PartyVerdict::Renamed("GRPT GCC (mandataire) et Andre BTP".into()));
+        for kept in ["ORG-3", "ORG-4", "ORG-5", "ORG-6", "ORG-7"] {
+            assert!(matches!(parties.verdict(kept), PartyVerdict::Kept(_)), "{kept} keeps its summary");
+        }
     }
 
     /// Issue 520 U4 (§4.2, "the party's copies disagree"): a kept party is renamed only when EVERY

@@ -4555,6 +4555,55 @@ pub fn award_winner(name: &str) -> Option<String> {
     (!lot_entry_names_another(name, &runs, &words, &starts)).then_some(winner)
 }
 
+/// Issue 520 U6 (A2, unit-1 decision §4.2): the one awardee a reviewed summary names before a void tail,
+/// as published, or `None`. A2's reliable subset is these five rows, read whole — the name's fold equals a
+/// row's (`/` or ` - ` between the same words reads the same) — and nothing else:
+/// - BGE Guyane before its address and BOAMP's partial void (1844226/29/32): `BGE Guyane 16 rue Lt Becker
+///   97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins`;
+/// - a GRPT consortium before the negotiated award after a void call (2734624/5): `GRPT GCC (mandataire)
+///   et Andre BTP, suite à procédure négociée après AO infructueux`.
+///
+/// No general shape is reliable. Two panels (wf_8883fc55-316: 97 probes; wf_421af829-0da: 37) broke each
+/// one in the costly direction — a winner named that is not the one contractor. A `;` void-only segment
+/// cannot tell a company from a lot title, a procedure, a status or a failed bidder (`Plomberie sanitaire ;
+/// infructueux`, `Dupont SARL ; offre infructueuse`), and is B1's list grammar, which 511 §5 keeps
+/// (`Bp innovis ; infructueux`, 4836476, stays). An address proves a place, not one contractor: a lot
+/// title with its site, a buyer, a generic role word or a second party beside the first all carry one
+/// (`Restauration scolaire 16 rue …`, `La Mairie de Cayenne 1 place …`, `BGE Guyane 16 rue … 97300
+/// Cayenne Point Com / …`). A consortium head admits members that are buyers, failed bidders or another
+/// lot's (`Groupement de commandes Ville de Cayenne (mandataire) et CACL`, `GRPT Dupont (mandataire) et
+/// Martin, Durand SA non conforme`). The fold reads this, like [`award_winner`], only for a kept party
+/// whose copies are in the void net; a name any `award_winner` cue reads is never one of these rows.
+pub fn void_tail_winner(name: &str) -> Option<String> {
+    let key = fold(name);
+    A2_REVIEWED.iter().find(|(published, _)| fold(published) == key).map(|(_, winner)| (*winner).to_owned())
+}
+
+/// Issue 520 U6: A2's reviewed rows (unit-1 decision §4.2, the walk's dry 2375), each as published and
+/// the winner [`void_tail_winner`] reads from it.
+const A2_REVIEWED: [(&str, &str); 5] = [
+    (
+        "BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins",
+        "BGE Guyane",
+    ),
+    (
+        "BGE Guyane 16 rue Lieutenant Becker 97300 Cayenne - la consultation a été déclarée sans suite pour les parts non couvertes des besoins",
+        "BGE Guyane",
+    ),
+    (
+        "BGE Guyane 16 rue Lieutenant Becker 97300 Cayenne/ la consultation a été déclarée sans suite pour les parts non couvertes des besoins",
+        "BGE Guyane",
+    ),
+    (
+        "GRPT GCC (mandataire) et Andre BTP, suite à procédure négociée après AO infructueux",
+        "GRPT GCC (mandataire) et Andre BTP",
+    ),
+    (
+        "GRPT vallée sas (mandataire), La Comec et Arbat System, suite à procédure négociée après AO infructueux",
+        "GRPT vallée sas (mandataire), La Comec et Arbat System",
+    ),
+];
+
 /// Issue 520 U4: one [`award_winner`] cue — where it opens (`at`, the next cue's name ends there), where
 /// its name opens, where that name ends at the latest when the cue says so (cue e: before `a été
 /// retenue`), and whether the name must close the text (cue d). Since the second review: whether the
@@ -5469,10 +5518,13 @@ mod tests {
     /// Issue 520 U4: [`assert_class`], and the A1 extractor names no winner in any of `names`
     /// ([`super::award_winner`]) — every class of unit 1 but A1: the D void prose, the B lists and
     /// co-winners, the C `Lot n)` lists, the F rows, the A2 names before a void tail and the D residual.
+    /// Since U6 the A2 extractor names none either ([`super::void_tail_winner`]), but on A2's reliable
+    /// subset ([`void_tail_winner_cuts_the_reliable_a2_tails`]).
     fn assert_class_and_no_winner(names: &[(u64, &str)], class: Option<NotAName>) {
         assert_class(names, class);
         for (org, name) in names {
             assert_eq!(super::award_winner(name), None, "{org}: {name}");
+            assert_eq!(super::void_tail_winner(name), None, "{org}: {name}");
         }
     }
 
@@ -6272,8 +6324,9 @@ mod tests {
     /// cut (`61 lots attribués à 29 fournisseurs`): on its cut name alone it reads void, as before.
     /// 7969717 (residual) reads void by itself, as before: EP 18715886's 24-language composite keeps its
     /// party by the fold's majority (2 of 24 copies void), a gap of issue 525's templates. Since U4
-    /// (§4.2) only the A1 rows name a winner ([`award_winner_names_the_one_awardee`]): no A2, B, C, F or
-    /// residual name does — a B list must never extract.
+    /// (§4.2) only the A1 rows name a winner ([`award_winner_names_the_one_awardee`]), and since U6 the
+    /// reliable A2 subset ([`void_tail_winner_cuts_the_reliable_a2_tails`]): no other A2, nor any B, C, F
+    /// or residual name does — a B list must never extract.
     #[test]
     fn every_kept_520_exemption_keeps_its_class() {
         // A1 (47): an award clause or an awardee label.
@@ -6334,8 +6387,9 @@ mod tests {
             ],
             None,
         );
-        // A2 (10): a name before a void tail.
-        assert_class_and_no_winner(
+        // A2 (10): a name before a void tail. A1's extractor reads none of them; since U6 the reliable
+        // subset names its winner before the tail ([`void_tail_winner_cuts_the_reliable_a2_tails`]).
+        assert_class(
             &[
                 (1844226, "BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins"),
                 (1844229, "BGE Guyane 16 rue Lieutenant Becker 97300 Cayenne - la consultation a été déclarée sans suite pour les parts non couvertes des besoins"),
@@ -6350,6 +6404,9 @@ mod tests {
             ],
             Some(NotAName::AwardSummary),
         );
+        for (org, name) in A2_WINNERS.iter().map(|&(org, name, _)| (org, name)).chain(A2_UNRELIABLE) {
+            assert_eq!(super::award_winner(name), None, "{org}: {name}");
+        }
         // B1 (13): one distinct winner in a list grammar.
         assert_class_and_no_winner(
             &[
@@ -6799,6 +6856,70 @@ mod tests {
             ("Lot infructueux puis attribué à la société Dupont pour le lot 2", "Dupont"),
         ] {
             assert_eq!(super::award_winner(name).as_deref(), Some(winner), "{name}");
+        }
+    }
+
+    /// Issue 520 U6 (A2, unit-1 decision §4.2): A2's reliable subset, each row as the walk's dry 2375 prints
+    /// it, and the winner [`super::void_tail_winner`] cuts from it.
+    const A2_WINNERS: [(u64, &str, &str); 5] = [
+        (1844226, "BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins", "BGE Guyane"),
+        (1844229, "BGE Guyane 16 rue Lieutenant Becker 97300 Cayenne - la consultation a été déclarée sans suite pour les parts non couvertes des besoins", "BGE Guyane"),
+        (1844232, "BGE Guyane 16 rue Lieutenant Becker 97300 Cayenne/ la consultation a été déclarée sans suite pour les parts non couvertes des besoins", "BGE Guyane"),
+        (2734624, "GRPT GCC (mandataire) et Andre BTP, suite à procédure négociée après AO infructueux", "GRPT GCC (mandataire) et Andre BTP"),
+        (2734625, "GRPT vallée sas (mandataire), La Comec et Arbat System, suite à procédure négociée après AO infructueux", "GRPT vallée sas (mandataire), La Comec et Arbat System"),
+    ];
+
+    /// Issue 520 U6: A2's other rows — the four the decision reads as unreliable, and 4836476, whose `;`
+    /// shape the review withdrew.
+    const A2_UNRELIABLE: [(u64, &str); 5] = [
+        (2035260, "LV Consultants Cv1 Simarouba - 97310 Kourou, FRANCE/ La consultation a été déclarée sans suite pour la part du marché non couverte des besoins"),
+        (3993625, "Pentax France life care montants mini : lot 10 : 10 054 EUR HT et lot 11 : 4 399 EUR HT Les lots 1 à 9 sont déclarés sans suite"),
+        (4836476, "Bp innovis ; infructueux"),
+        (31689490, "Procédure de marché négocié après appel d'offres infructueux: 5) Mepy Système"),
+        (31739133, "Importaciones Canarias de Automóviles SA (Lote A2.5). Se ha declarado desierto el Lote A3.2. Nacionalidad: española"),
+    ];
+
+    /// Issue 520 U6 (A2, unit-1 decision §4.2; panels wf_8883fc55-316 and wf_421af829-0da): the five
+    /// reviewed rows name their winner, read whole on the fold (a `/` for a ` - ` reads the same), and
+    /// nothing else does — not A2's other rows (4836476's `;` shape is withdrawn), not the same words with
+    /// one changed (`la part` for `les parts`), not a B2 list around BGE, and none of the shapes the panels
+    /// broke (a `;` tail, an address before a lot title, a buyer or two parties, a consortium with a buyer
+    /// or a failed bidder in it). Over the 402 names of the void walk's dry reports 2351–2375 it answers
+    /// exactly the five.
+    #[test]
+    fn void_tail_winner_cuts_the_reliable_a2_tails() {
+        for (org, name, winner) in A2_WINNERS {
+            assert_eq!(super::void_tail_winner(name).as_deref(), Some(winner), "{org}: {name}");
+            assert_eq!(not_a_name(name), Some(NotAName::AwardSummary), "{org}: the fold keeps it as a summary");
+            assert!(!super::may_name_a_winner(name), "{org}: no award_winner cue reads it");
+        }
+        for (org, name) in A2_UNRELIABLE {
+            assert_eq!(super::void_tail_winner(name), None, "{org}: {name}");
+        }
+        for (name, winner) in [
+            ("BGE Guyane 16 rue Lt Becker 97300 Cayenne - La consultation a été déclarée sans suite pour les parts non couvertes des besoins", "BGE Guyane"),
+            ("GRPT GCC (mandataire) et Andre BTP - suite à procédure négociée après AO infructueux.", "GRPT GCC (mandataire) et Andre BTP"),
+        ] {
+            assert_eq!(super::void_tail_winner(name).as_deref(), Some(winner), "{name}");
+        }
+        for name in [
+            "BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour la part non couverte des besoins",
+            "BGE Guyane 16 rue Lt Becker 97300 Cayenne / Equinoxe Formation Rocade Zéphir Centre Commercial Katoury 97300 Cayenne / La consultation a été déclarée sans suite pour la part non couverte des besoins",
+            "BGE Guyane 16 rue Lt Becker 97300 Cayenne Point Com / La consultation a été déclarée sans suite pour les parts non couvertes des besoins",
+            "Equinoxe Formation BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins",
+            "Restauration scolaire 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins",
+            "La Mairie de Cayenne 1 place Léopold Héder 97300 Cayenne / la consultation a été déclarée sans suite pour la part non couverte des besoins",
+            "Dupont SARL 3 avenue Foch 69006 Lyon / la consultation a été déclarée sans suite pour la part non couverte des besoins",
+            "GRPT GCC (mandataire) et Andre BTP, Martin SA, suite à procédure négociée après AO infructueux",
+            "GRPT GCC (mandataire) et Andre BTP, suite à procédure négociée sans offre après AO infructueux",
+            "Groupement de commandes Ville de Cayenne (mandataire) et CACL, suite à procédure négociée après AO infructueux",
+            "GRPT Dupont (mandataire) et Martin, Durand SA non conforme, suite à procédure négociée après AO infructueux",
+            "Dupont SARL ; infructueux",
+            "Plomberie sanitaire ; infructueux",
+            "GRPT GCC (mandataire) et Andre BTP",
+            "BGE Guyane",
+        ] {
+            assert_eq!(super::void_tail_winner(name), None, "{name}");
         }
     }
 

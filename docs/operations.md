@@ -1804,6 +1804,13 @@ as what moved. Before that wet run (U5) read
 every row against 520's unit-1 App. B and stop on one not there: `jq -r '.extracted[] | [.org, .winner,
 .notice] | @tsv'` on the report body, and `jq -r '.exempted[] | select(.reason | test("issue 520")) |
 [.org, .reason] | @tsv'` for the identified ones.
+Issue 520 U6: the same path also reads a winner named before a void tail
+(`partyname::void_tail_winner`: five reviewed rows only, read whole on the fold — `BGE Guyane 16 rue Lt
+Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les parts non couvertes des besoins` →
+`BGE Guyane`, and two `GRPT … (mandataire) …, suite à procédure négociée après AO infructueux` → the
+consortium). Two review panels broke every general shape, so a new such summary stays as published until its
+row is reviewed and added to `A2_REVIEWED`. Its rows land under `extracted` too. Read each one before the
+wet run, the same way.
 Before the wet run read three lists:
 `notices_by_profile` against the census shape (r208 ≈ 8.5k, text ≈ 0.7k, internal-ojs ≈ 150, r209 ≈ 140,
 eForms ≈ 50 notices), `identified` (matches carrying an identifier) and `legal_form` (matches whose name

@@ -4,6 +4,20 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 520) — an award summary that names one winner binds to that winner
+
+Issue 510 kept, as published, a winner "name" that states a void lot but also seemed to name an award. Three
+kinds of them have changed. Void prose that names no award after all (`Le lot 3 : … a été déclaré infructueux`)
+is now treated like any other "not awarded": its organization is removed and its result reads `decision: clos-nw`
+(about 170 organizations). A summary that names exactly one awardee now binds its winner mention to that awardee's
+organization, which takes the winner role. The awardee is named either in its award clause (`Lot déclaré
+infructueux … puis attribué à la Société Arrow Génériques suite à procédure négociée` → `Arrow Génériques`) or
+before a void tail (`BGE Guyane 16 rue Lt Becker 97300 Cayenne / La consultation a été déclarée sans suite pour les
+parts non couvertes des besoins` → `BGE Guyane`; `GRPT GCC (mandataire) et Andre BTP, suite à procédure négociée
+après AO infructueux` → the consortium). That is an existing organization of the same name and country where one
+exists, otherwise a new one; the result stays `selec-w`, and the summary organization is removed. Summaries that
+list several winners, and any summary whose reading is not certain, are still kept as published.
+
 ## Unreleased (issues 513, 519) — an NHS body is one organization under its ODS code, its PPON and its sub-codes
 
 An NHS trust, ICB or other body that Find a Tender publishes under its letter-only ODS code (`GB-NHS-QWU`) in some
