@@ -1014,6 +1014,11 @@ pub fn echo_seed(name: &str) -> bool {
 /// [`not_a_name_in`], reading unit 5's section-reference pointers only when `references`
 /// ([`echo_seed`] reads without them).
 fn classify(name: &str, lang: Option<&str>, references: bool) -> Option<NotAName> {
+    // Issue 527: TenderNed's award mark is no part of the name, so it is never read as the void verdict
+    // `niet gegund` (`Facilicom Solutions (niet gegunde partij)` is a losing tenderer, not a void lot).
+    if let Some((base, _)) = award_annotation(name) {
+        return classify(base, lang, references);
+    }
     if blank_raw(name) {
         return Some(NotAName::Blank);
     }
@@ -2863,6 +2868,10 @@ pub fn is_void_lot(name: &str) -> bool {
 /// exemption ([`names_an_award`]) — the `refold-void-names` walk's net, so its dry plan
 /// can list what the exemption keeps beside what the fold drops.
 pub fn mentions_void(name: &str) -> bool {
+    // Issue 527: the award mark is no void phrase ([`award_annotation`]).
+    if let Some((base, _)) = award_annotation(name) {
+        return mentions_void(base);
+    }
     let full = fold(name);
     if full.is_empty() {
         return false;
@@ -5446,8 +5455,8 @@ mod tests {
             "Mongin Jauffret : lots 1504 et 1505 Zi Delta industrie la Valentine lots infructueux : 1501, 1502 et 1503",
             "3a) SIAL 54520 3b) lot infructueux",
             "3a: SIAL 54520 - 3b: lot infructueux",
-            // The fourth dry run (job 2173): Dutch forms and lots.
-            "Humble Inpect B.V. (niet gegunde partij)",
+            // The fourth dry run (job 2173): Dutch forms and lots. (`Humble Inpect B.V. (niet gegunde
+            // partij)` reads as a plain name since issue 527: TenderNed's mark is no void verdict.)
             "Perceel 1: Agens de werkende kracht B.V. en SDW Arbeidsintegratie BV. Voor perceel 2 hebben wij geen geldige aanbieding ontvangen. Perceel 2 is derhalve niet gegund",
             // The seventh dry run (job 2182): the Polish company form.
             "Olprint Sp. z o.o. unieważnienie art. 94 ust. 1 pkt 4",
@@ -6598,10 +6607,14 @@ mod tests {
                 (31375951, "Au terme de cette analyse et conformément aux avis et suggestions émis par commission des dispositifs médicaux, réunie le 6 décembre dernier, les choix opérés sont les suivants: - 11 lots ont été déclarés \"Sans suite\", - 5 lots sont déclarés \"Infructueux\", en raison de l'absence de soumissionnaire,  … 61 lots attribués à 29 fournisseurs"),
                 (31377625, "La consultation comportait 310 lots (circuits). 220 lots ont été attribués le 22.7.2010. 90 lots ont été déclarés infructueux - aucune consultation n'a été relancé pour ces lots. La liste des attributaires des 220 marchés (circuits) est présentée ci-dessous. Le circuit se décompose de la façon suiva"),
                 (31486027, "attribué par marché négocié passé selon art. 35-I.1 du CMP suite à appel d'offres infructueux (publicité AAPC parue dans BOAMP no 83 du 28.4.2011 - annonce no 221 et JOUE no 2011/S 81-133894 du 27.4.2011)"),
-                (30533823, "Humble Inpect B.V. (niet gegunde partij)"),
-                (30533824, "Provadi B.V. (niet gegunde partij)"),
             ],
             Some(NotAName::AwardSummary),
+        );
+        // F-role: since issue 527 TenderNed's mark is no part of the name, so the two read as plain names
+        // (kept either way); the fold drops their winner role on the mark itself.
+        assert_class_and_no_winner(
+            &[(30533823, "Humble Inpect B.V. (niet gegunde partij)"), (30533824, "Provadi B.V. (niet gegunde partij)")],
+            None,
         );
         // The D residual (11 of 12): each costs a junk leaf name, never an award.
         assert_class_and_no_winner(
@@ -6913,6 +6926,13 @@ mod tests {
         ] {
             assert_eq!(super::award_annotation(name), Some((base, not_awarded)), "{name}");
         }
+        // The classifiers read the name without its mark: a losing tenderer is no void lot (24400562's
+        // `Facilicom Solutions`, which 510's Dutch stem `niet gegun` had dropped), and no void net catches it.
+        for name in ["Facilicom Solutions (niet gegunde partij)", "Humble Inpect B.V. (niet gegunde partij)", "Planon (gegunde partij)"] {
+            assert_eq!(not_a_name(name), None, "{name}");
+            assert!(!super::mentions_void(name), "{name}");
+        }
+        assert_eq!(not_a_name("Niet gegund"), Some(NotAName::VoidLot), "the bare verdict still reads void");
         for name in [
             "Gegunde Partijen Holding",
             "Dupont B.V. (gegund)",

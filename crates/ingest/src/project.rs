@@ -11307,23 +11307,29 @@ mod tests {
                 profile: "eforms:eforms-sdk-1.7".into(),
             };
             let mut state = NoticeState::read(&notice, parsed);
-            let orgs: HashMap<String, i64> = [("ORG-1", 1_001), ("ORG-2", 1_002), ("ORG-3", 1_003), ("ORG-9", 1_009)]
+            let orgs: HashMap<String, i64> =
+                [("ORG-1", 1_001), ("ORG-2", 1_002), ("ORG-3", 1_003), ("ORG-4", 1_004), ("ORG-9", 1_009)]
                 .into_iter()
                 .map(|(s, o)| (s.to_owned(), o))
                 .collect();
             state.bind_organizations(&orgs);
             state.round.expect("an award notice binds a round")
         };
+        // ORG-4 is 24400562's `Facilicom Solutions (niet gegunde partij)`: no legal form, so before the
+        // classifiers read the name without its mark, 510's Dutch void stem dropped it as a void lot and its
+        // bid lost its tenderer (the first refold, job 2387).
         let marked = award(&[
             ("ORG-1", "Planon Building Management B.V. (gegunde partij)"),
             ("ORG-2", "Humble Inpect B.V. (niet gegunde partij)"),
             ("ORG-3", "Provadi B.V. (niet-gegunde partij)"),
+            ("ORG-4", "Facilicom Solutions (niet gegunde partij)"),
         ]);
+        assert_eq!(placeholder_511::decided(false, &marked), BTreeMap::new(), "no marked party is dropped");
         let r = round(&marked);
         assert_eq!(r.lot_results[0].winners, vec![1_001], "the marked losers are no winners");
         let mut tenderers: Vec<i64> = r.bids.iter().flat_map(|b| b.parties.iter().map(|p| p.organization_id)).collect();
         tenderers.sort_unstable();
-        assert_eq!(tenderers, vec![1_001, 1_002, 1_003], "every tenderer keeps its bid");
+        assert_eq!(tenderers, vec![1_001, 1_002, 1_003, 1_004], "every tenderer keeps its bid");
         let (mentions, ..) = NoticeState::mentions_and_dropped(false, 24_400_562, &marked);
         let named: Vec<(&str, &str)> = mentions.iter().map(|m| (m.section_id.as_str(), m.name.as_str())).collect();
         assert_eq!(
@@ -11332,6 +11338,7 @@ mod tests {
                 ("ORG-1", "Planon Building Management B.V."),
                 ("ORG-2", "Humble Inpect B.V."),
                 ("ORG-3", "Provadi B.V."),
+                ("ORG-4", "Facilicom Solutions"),
                 ("ORG-9", "Gemeente Maastricht"),
             ]
         );
