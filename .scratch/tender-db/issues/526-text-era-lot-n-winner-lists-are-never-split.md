@@ -1,10 +1,10 @@
 # 526 — text-era `Lot n)` winner lists are never split, so one list mints one org
 
-Status: ready-for-agent — filed 2026-10-12 from 520 unit 1 (§4.4). Unit 1 BUILT and DEPLOYED 2026-10-13. The build
-went through four review rounds (9a87f98, ca096af, 5337b57, 6b6e92e, 214ab64); each round is in
-`../526-lot-word-references/dry-run.md`. DRAIN QUEUED 2026-10-13 ~17:55 UTC as jobs 2398–2413, eight rounds of reparse
-plus project over text fetches 270–401. NEXT: per round, read `unmatched` and `re-keyed` (both 0); then the auto orphan
-sweep (dry and wet by hand if over 10,000); then the Verify and the baseline counts in `dry-run.md`.
+Status: ready-for-agent — filed 2026-10-12. Unit 1 (the pre-2004 drain) was DONE on 2026-10-13: 214ab64 was
+deployed, jobs 2397–2415 ran, 54,496 mentions were re-bound and 36,130 orphans swept. The Verify reads 0, and
+`lot 1)` went from 5,239 orgs to 6. NEXT: unit 2. Measure the 2004–2010 sectioned text era on a local body
+sample, as `dry-run.md` did for pre-2004: what changes, and whether the V.4 pairing (review D) moves figures.
+Then drain fetches 186–269 the way 509 did. Also unit 3: the residue shapes below.
 Kind: data quality (text parser; organizations)
 Relates to: 520 (unit 1 §4.4, `../520-award-summaries/unit1-decision.md`) (award summaries; its A1 extractor `partyname::award_winner`), 484/485/244 (`lot_prefix_len`, `winner_segments`), 491 (the reparse path), 510/511 (`plausible_name` refuses every non-name).
 
@@ -107,3 +107,48 @@ one `project`, sized well under the 500 k FULL-fallback line:
 - **Rounds queued.** Each round is a reparse followed by one project. They are 2398/2399 (after 269, 13
   packages), 2400/2401 (282, 13), 2402/2403 (295, 15), 2404/2405 (310, 17), 2406/2407 (327, 18), 2408/2409 (345, 17),
   2410/2411 (362, 18) and 2412/2413 (380, 21).
+- **Drain finished at about 21:45 UTC.** The eight reparse rounds (2398, 2400, 2402, 2404, 2406, 2408, 2410 and
+  2412) re-parsed 255,469 + 215,264 + 216,378 + 245,351 + 240,018 + about 216k + about 190k + 136,521 notices. Every
+  round read 0 unmatched, 0 re-keyed and 0 now failing.
+- **The eight folds** (2399–2413) re-bound 7,209, 10,840, 13,322, 11,001, 6,269, 3,164, 2,036 and 655 mentions:
+  54,496 in all.
+- **The auto sweep 2414** stopped at its cap. It counted 36,130 orphans to sweep, all country-less, plus 10 kept by a
+  review table, and recorded the plan. The wet sweep **2415 swept 36,130 of 36,130**.
+- **Exhibits.**
+  - 1831781 (20187-2002) serves one winner per lot.
+  - 2017396 (3118-2003) mentions Entreprise Malet (3138733) and Société Colas Midi Méditerranée (6764874), both
+    existing organizations, which merged; Sacer Atlantique/Screg Sud Ouest, which is new; and Canton Ouest,
+    which is known residue.
+- **Verify** `name_prefix=Lot 1) Blin`: **0** (it was 1).
+- **Baselines** (bounded `name_norm` range counts):
+
+  | prefix | before | after |
+  | --- | ---: | ---: |
+  | `lot 1)` | 5,239 | 6 |
+  | `lot 2)` | 1,487 | 14 |
+  | `lot 3)` | 999 | 10 |
+  | `lots ` | 8,929 | 1,363 |
+  | `lote 1)` | 109 | 0 |
+  | `lot n` | 192 | 177 |
+  | `et 1` … `et 9` | 5,987 | 48 |
+  | `-1` | 147 | 8 |
+
+## What remains (units 2 and 3)
+
+- **Unit 2: the 2004–2010 sectioned text era**, which is not in this drain. Of the 1,363 remaining `lots ` orgs, 742
+  first appear there (2004–2010 ids). So do the remaining `lot 1)` / `lot 2)` names, for example
+  `Lot 2) V.1) Award and contract value V.1.1) Name and address …` (2306702) and `lot 2) bière et cidre. V.1) …`.
+  - First, measure on a local body sample (harness as in `dry-run.md`). The sectioned form is where the V.4 pairing
+    and the CONTRACT NO / LOT NO blocks apply, and the third review found the empty-slot duplicate there.
+  - Then drain fetches 186–269. 509's rounds are the template: after 198×8, 206×8, … 263×6, plus 186–198 for
+    2009-12 → 2010.
+- **Unit 3: pre-2004 shapes the reader leaves as published** (405 of the remaining `lots ` orgs). Each needs its own
+  measurement before a rule:
+  - no terminator: `Lots 1 à 5 - Taxis Doublet`, `Lots 1, 2, … et 10 Taxi JMC`;
+  - `à <company>`: `Lots 117-118-252-271 à Orgentec`;
+  - a spaced `: ` after a dash list: `Lots 110 - 203 - 212 : Cook France`;
+  - 4- or 5-digit lots: `lots 3300 à 3305`, `lots 21037) et 21038) Lupetti`;
+  - dotted lists: `Lots 15.19.20.21 …`;
+  - bare references: `Lots 39`, `lots 2`;
+  - lettered and Roman labels (`Lot A)`, `Lot III:`, about 250 orgs);
+  - a subject followed by an unmarked company (`Champagne`, `Canton Ouest`).
