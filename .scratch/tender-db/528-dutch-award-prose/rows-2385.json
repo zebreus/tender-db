@@ -1,0 +1,2161 @@
+[
+{
+"org": 1371455,
+"country": "NL",
+"name": "vijf partijen hebben gegund gekregen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 1625206,
+"country": "",
+"name": "De opdracht is gegund aan een panel van verzekeraars, informatie te verkrijgen via Willis BV of TenneT Holding BV",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"AWARD_AND_CONTRACT_VALUE": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 3220609,
+"country": "NL",
+"name": "De raamovereenkomst is gegund aan 160 ondernemingen. Zie afdeling VI.2 Nadere inlichtingen voor de lijst met van ondernemers aan wie de raamovereenkomst is gegund.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 3354990,
+"country": "NL",
+"name": "Zie bijgevoegd overzicht voor de namen van de organisaties waaraan de 15 percelen van de aanbesteding zijn gegund.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 3359177,
+"country": "NL",
+"name": "Perceel 3 wordt gegund en 1 en 2 niet.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 3543690,
+"country": "NL",
+"name": "Perceel K is gegund aan: Koeman en Bijkerk in combinatie met Grontmij, penvoerder Koeman en Bijkerk.",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 3543691,
+"country": "NL",
+"name": "Perceel L is gegund aan: Koeman en Bijkerk B.V.",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 3543692,
+"country": "NL",
+"name": "Perceel M is gegund aan: Grontmij",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 3543693,
+"country": "NL",
+"name": "Perceel N is gegund aan: Grontmij, Waardenburg, Aqualab Zuid, Het Waterlaboratorium, Koeman en Bijkerk",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 3543694,
+"country": "NL",
+"name": "Perceel P is gegund aan: Koeman en Bijkerk",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 3543695,
+"country": "NL",
+"name": "Perceel Q is gegund aan: Koeman en Bijkerk",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 3543696,
+"country": "NL",
+"name": "Perceel J is gegund aan: Grontmij in combinatie met Koeman en Bijkerk, penvoerder Grontmij",
+"mentions": 7,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 5275836,
+"country": "NL",
+"name": "DVG Personenvervoer (perceel 1 en 2 gegund; perceel 3 gegund aan Klomp Groepsvervoer)",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 5275837,
+"country": "NL",
+"name": "Klomp Groepsvervoer (perceel 3 gegund; perceel 1 en 2 gegund aan DVG)",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 5752780,
+"country": "NL",
+"name": "Dit perceel wordt later gegund.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 5819913,
+"country": "NL",
+"name": "De opdracht is gegund aan de organisaties als vermeld in VI.2 Nadere inlichtingen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 5890355,
+"country": "NL",
+"name": "De Beijer Bladel BV (6 percelen gegund)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 5890356,
+"country": "NL",
+"name": "Indaver Bio Energie BV (9 percelen gegund)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 5890357,
+"country": "NL",
+"name": "Van Berkel Biomassa & Bodemproducten BV (3 percelen gegund)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 5890358,
+"country": "NL",
+"name": "Indaver Bio Energie BV (2 percelen gegund)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 6530135,
+"country": "NL",
+"name": "Gegund aan: ADC ArcheoProjecten; Archeologisch Onderzoek Leiden; BAAC; De Steekproef BV; Grontmij Nederland; RAAP Archeologisch adviesbureau; Rijksuniversiteit Groningen; Universiteit van Amsterdam",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 6888340,
+"country": "NL",
+"name": "Melior verzekeringen — gegund layer 2 en 3",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 6888341,
+"country": "NL",
+"name": "XL Insurance Company SE — gegund layer 1",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 7813581,
+"country": "BE",
+"name": "Zie bij nadere inlichtingen, 3 aannemers zijn gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 7813583,
+"country": "BE",
+"name": "Zie bij nadere inlichtingen, 4 aannemers zijn gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 8105109,
+"country": "NL",
+"name": "Falck Consulting & Technology (perceel 2 nog niet definitief gegund: verificatiefase)",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 8273820,
+"country": "",
+"name": "Perceel 2 wordt later gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 8314178,
+"country": "",
+"name": "Zie bij nadere inlichtingen, 3 aannemers zijn gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 8314179,
+"country": "",
+"name": "Zie bij nadere inlichtingen, 5 aannemers zijn gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 8314186,
+"country": "",
+"name": "Zie bij nadere inlichtingen, 4 aannemers zijn gegund",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 8453203,
+"country": "",
+"name": "Raamovereenkomst gegund aan Altran Belgium, Consol Partners UK, Capitol International Services LTD, Lupam/Qplox engineering, MBA Michael Bailey Associates, Oxford Global Resources, Randstad Professionals, Time Acquisition, Verotech",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 9050747,
+"country": "NL",
+"name": "Fictief gegund — geen inschrijvers",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 9369271,
+"country": "NL",
+"name": "Aan alle inschrijvers is de opdracht gegund",
+"mentions": 5,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 10703666,
+"country": "NL",
+"name": "Perceel 1 zal later gegund worden",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 10722366,
+"country": "NL",
+"name": "Zie voor de n.a.w.-gegevens van de ondernemers aan wie de opdracht is gegund, de bijgevoegde bijlage.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 10774733,
+"country": "BE",
+"name": "Gegund aan 2 partijen, zie verder bij VI.3) Nadere Inlichtingen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 11425570,
+"country": "NL",
+"name": "Voor dit perceel (5) wordt er niets gegund.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 11425573,
+"country": "NL",
+"name": "Dit perceel wordt in een andere TenderNed omgeving gegund.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 12408872,
+"country": "NL",
+"name": "De opdracht is aan 316 aanbieders gegund. U kunt de lijst vinden op de website van de Zorgregio",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 12924415,
+"country": "NL",
+"name": "Geen inschrijving(en) ontvangen voor perceel 2, 3 en 4 en geen opdracht gegund in genoemde percelen",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 13895140,
+"country": "NL",
+"name": "Open House – 7 inschrijvers gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 15784363,
+"country": "NL",
+"name": "Gegund aan 44 Opdrachtnemers (zie VI.3) Nadere inlichtingen)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 17089684,
+"country": "BE",
+"name": "Perceel 1 aan 5 personen gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 17202918,
+"country": "NL",
+"name": "Vertrouwelijk, Perceel 3 gegund aan 3 Opdrachtnemers",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 17202919,
+"country": "NL",
+"name": "Vertrouwelijk, Perceel 2 gegund aan 9 Opdrachtnemers",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 17202920,
+"country": "NL",
+"name": "Vertrouwelijk, Perceel 1 gegund aan 8 Opdrachtnemers",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 17841320,
+"country": "NL",
+"name": "De opdracht is gegund aan 7 EED aanbieders. Lijst met gegunde aanbieders is op te vragen bij SDF.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 21530059,
+"country": "NL",
+"name": "In totaal is aan 96 zorgaanbieders voorlopig gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 22813870,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 1 is gegund aan 2 opdrachtnemers (aan de 2 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 22813871,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 2 is gegund aan 3 opdrachtnemers (de 3 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 22813968,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 1 is gegund aan 11 opdrachtnemers (aan de 11 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 22813969,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 2 is gegund aan 13 opdrachtnemers (aan de 13 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 22813970,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 3 is gegund aan 2 opdrachtnemers (aan 2 van de 3 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 22813971,
+"country": "NL",
+"name": "Vertrouwelijk - perceel 4 is gegund aan 4 opdrachtnemers (aan de 4 inschrijvers)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 23407052,
+"country": "NL",
+"name": "Vertrouwelijk. De opdracht is gegund aan 1 opdrachtnemer (er was 1 inschrijver).",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"Tenderer": 1,
+"bid:tenderer": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 24976289,
+"country": "",
+"name": "De opdracht is gegund aan totaal 7 partijen.3 voor perceel A en 4 voor perceel B. Zie voor de naw-gegevens de overige inlichtingen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 26825531,
+"country": "",
+"name": "De opdracht is gegund aan: De Bouwcombinatie Korteweg-Boot v.o.f. i.o.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 26826676,
+"country": "",
+"name": "De opdracht is gegund aan: Getronics Infrastructure Solutions BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 26866235,
+"country": "",
+"name": "Gegund rit A",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 26886497,
+"country": "",
+"name": "Het werk is met inachtneming van het bepaalde in artikel 31 van het UAR-EG 1991 gegund aan Aannemerscombinatie Reef Wegenbouw BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 26921671,
+"country": "",
+"name": "1998 gegund aan Dirk Verstoep BV te Rotterdam voor een bedrag (aannemingssom) van 41 153 000 NLG",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 26963238,
+"country": "",
+"name": "Opdracht gegund aan NV Gemeentekrediet van België",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27011278,
+"country": "",
+"name": "De opdracht is gegund aan Oce Nederlandse verkoopmaatschappij BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27017668,
+"country": "",
+"name": "De levering is gegund aan de firma Sensicon BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27073188,
+"country": "",
+"name": "De opdracht is gegund aan: De Meeuw Oirschot b.v.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27104387,
+"country": "",
+"name": "De opdracht is gegund aan VGZ en IZA die een samenwerkingsverband vormen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27109237,
+"country": "",
+"name": "Architect: de opdracht is gegund aan Erick van Egeraat Associated Architects",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27109239,
+"country": "",
+"name": "Adviseur technische installaties: de opdracht is gegund aan Sweegers en de Bruijn BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27109241,
+"country": "",
+"name": "Adviseur constructies: de opdracht is gegund aan ABT Adviesbureau voor bouwtechniek BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27110819,
+"country": "",
+"name": "Er zijn 2 aanbestedingspartijen. Partij I is gegund aan: Van der Zee Internat. Transportbedrijf BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27113662,
+"country": "",
+"name": "De opdracht is gegund aan de combinatie van de taxibedrijven van v.o.f. Van de Krieke",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27154691,
+"country": "",
+"name": "De opdracht is gegund aan: Tebodin BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27460296,
+"country": "",
+"name": "De zes percelen zijn als volgt gegund aan drie dienstverleners: 2 percelen: Schavemaker Containers BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 27503605,
+"country": "",
+"name": "De opdracht is in delen gegund aan: a. Escom BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 28765477,
+"country": "",
+"name": "Aan 14 leveranciers raamovereenkomst gegund",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 28858453,
+"country": "",
+"name": "alle inschrijvers zijn gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 29194063,
+"country": "",
+"name": "niet (combinatieperceel C is gegund)",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 29208719,
+"country": "",
+"name": "de opdracht zal niet worden gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 29756654,
+"country": "",
+"name": "Aan alle 13 leveranciers gegund/PA Inkoopbureau Rivierenland",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 29798980,
+"country": "",
+"name": "de opdracht is gegund aan een drietal leveranciers. Nadere informatie hieromtrent vindt u onder punt VI.2",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 29856095,
+"country": "",
+"name": "De opdracht werd per perceel gegund aan verschillende leveranciers",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 29882521,
+"country": "",
+"name": "zie bijlage Afdeling VI.7opdracht gegund aan 4 partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30253671,
+"country": "",
+"name": "re-integratietrajecten gegund aan 2 bedrijven: Van Dreumel Depiro BV en Serin Mens en Werk BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30476252,
+"country": "",
+"name": "Totaal 3 inschrijvers gegund: FourStar B.V.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30476529,
+"country": "",
+"name": "In totaal aan 3 partijen gegund: Randstad HR Solutions te 's-Hertogenbosch",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30476531,
+"country": "",
+"name": "In totaal 3 partijen gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30572645,
+"country": "",
+"name": "De opdracht is gegund aan: VOF Bergsingel",
+"mentions": 2,
+"winner_tenders": 2,
+"roles": {
+"winner": 2
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30578397,
+"country": "",
+"name": "De opdracht is gegund aan: Schilderswacht BV statutair gevestigd en kantoor houdende te Almelo aan de van Weerden Poelmansweg 3",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30578866,
+"country": "",
+"name": "De opdracht is gegund: perceel plaatmeubilair aan: Ahrend Inrichten bv mede kantoor houdende te Eindhoven",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30593432,
+"country": "",
+"name": "Gegund aan Welzorg Revalidatie Techniek BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30625916,
+"country": "",
+"name": "De opdracht is gegund aan: Vera Yanovshtchinsky Architecten BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30649356,
+"country": "",
+"name": "De opdracht is gegund aan de volgende partijen: Stichting Activa",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30663641,
+"country": "",
+"name": "De opdracht is gegund aan Dexia Bank NV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30667025,
+"country": "",
+"name": "De opdracht is gegund aan Continental Breda bv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30685869,
+"country": "",
+"name": "De opdracht is gegund aan Taxi Centrale Schoorl",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30695182,
+"country": "",
+"name": "De opdracht is gegund aan Taxi en Pakketdienst v.d. Wijst BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30695356,
+"country": "",
+"name": "De opdracht is gegund aan Buhrmann Office Products Nederland b.v",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30696700,
+"country": "",
+"name": "De aanbesteding bestond uit 21 percelen die als volgt zijn gegund: Mechanisatie Hoogezand/Den Andel BV te NL-Hoogezand voor de percelen HAS 1-01",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30702359,
+"country": "",
+"name": "De aanbesteding bestond uit 7 percelen die als volgt zijn gegund: - Hobelman-Halle te NL-Halle voor de percelen HAS 2-01",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30704924,
+"country": "",
+"name": "Het werk omschreven in bestek A-174-01 is gegund aan de laagste inschrijver",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30704925,
+"country": "",
+"name": "Het werk omschreven in bestek A-175-01 is gegund aan BAM Techniek BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30704927,
+"country": "",
+"name": "Percelen 1 en 2 zijn gegund aan aannemersbedrijf Landustrie uit Sneek",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30708328,
+"country": "",
+"name": "De aanbesteding bestond uit 5 percelen die als volgt zijn gegund: - Auto de Vries bv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30708697,
+"country": "",
+"name": "De opdracht is gegund aan Verstraeten Verbrugge Groep BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30709247,
+"country": "",
+"name": "De opdracht is gegund aan Arriva Personenvervoer Nederland BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30717675,
+"country": "",
+"name": "De volgende partij is de opdracht gegund: Sagenn Reïntegratie BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30721438,
+"country": "",
+"name": "De levering is gegund aan: Gemco Mobile Systems bv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30731255,
+"country": "",
+"name": "De opdracht is gegund aan AVR",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30733365,
+"country": "",
+"name": "De opdracht is gegund aan: DELL Computer BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30739554,
+"country": "",
+"name": "De opdracht is gegund aan: ISSUE Information Technology BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30745854,
+"country": "",
+"name": "Aan onderstaande leveranciers zijn nieuwe Mirna-contracten gegund: 3-Angle",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30746715,
+"country": "",
+"name": "Betreft een gesplitste gunning waarbij de opdracht deels aan beide onderstaande ondernemingen gegund is: Zwaluw Reizen BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30753186,
+"country": "",
+"name": "De opdracht is gegund aan: Syntegra Groep BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30782835,
+"country": "",
+"name": "Zowel perceel l: telefoonsysteem als perceel 2: meldkamer (arbi) zijn aan de volgende leverancier gegund: Tenovis BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30794369,
+"country": "",
+"name": "De opdracht is aan een consortium gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30796487,
+"country": "",
+"name": "De opdracht is gegund aan Harting-Bank BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30798627,
+"country": "",
+"name": "De opdracht is gegund aan de volgende twee dienstverleners: Prened Beveiliging",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30800796,
+"country": "",
+"name": "De opdracht is gegund aan vier leveranciers: leverancier 1: Succes schoonmaakbedrijf",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30805665,
+"country": "",
+"name": "De opdracht is gegund aan Eindhoven Catering Services bv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30808838,
+"country": "",
+"name": "De opdracht per perceel is gegund aan de inschrijver met de laagste prijs",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30816015,
+"country": "",
+"name": "De opdracht werd gegund aan volgende leveranciers: perceel 1: Copy Fun BVBA",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30816254,
+"country": "",
+"name": "a. Opdracht gegund aan de NV Bank Brussel Lambert",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30817894,
+"country": "",
+"name": "De opdracht is gegund aan: Stichting Pensioenfonds ABP",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30822172,
+"country": "",
+"name": "De opdracht is gegund aan Connexxion (Stationsplein 20",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30837740,
+"country": "",
+"name": "De percelen zijn gegund aan de volgende twee dienstverleners: A",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30842293,
+"country": "",
+"name": "De opdracht is gegund aan: Rienks-DBM + Partners",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30843499,
+"country": "",
+"name": "Perceel 1 werd gegund aan de vennootschap ''Triple-P Belgium nv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30850942,
+"country": "",
+"name": "De opdracht werd gegund aan de NV Gemeentekrediet",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30853636,
+"country": "",
+"name": "De opdracht is gegund aan Getronics Networks & Services BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30854758,
+"country": "",
+"name": "De opdracht werd gegund aan: Gemeentekrediet NV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30854781,
+"country": "",
+"name": "De opdracht is gegund aan Koninklijke Roeiers Vereeniging Eendracht",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30861318,
+"country": "",
+"name": "Perceel 1: de opdracht is bij brief van 29.12.1999 gegund aan de laagste inschrijver",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30861319,
+"country": "",
+"name": "perceel 2: de opdracht is bij brief van 29.12.1999 gegund aan de laagste inschrijver",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30866369,
+"country": "",
+"name": "De opdracht is door de gemeente Bergen op Zoom gegund aan Aannemerscombinatie Van den Biggelaar te Kerkdriel en v.o.f. A. Prop Beplantingswerken te Hoogerheide",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30870819,
+"country": "",
+"name": "Voor perceel A zijn mantelcontracten gegund aan de volgende drie dienstverleners: Ernst & Young",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30873242,
+"country": "",
+"name": "De opdracht is per partij gegund aan: partij 1: Firma Shape Technology NV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30873416,
+"country": "",
+"name": "De opdracht werd gegund aan: Clean Express Poty SA",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30882216,
+"country": "",
+"name": "De opdracht werd gegund aan het Gemeentekrediet NV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30882548,
+"country": "",
+"name": "De opdracht is gegund aan Novio Net bv",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30883149,
+"country": "",
+"name": "De mantelovereenkomsten zijn gegund aan de volgende vier dienstverleners: xBase Software Ontwikkeling",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 30887300,
+"country": "",
+"name": "a. Opdracht gegund aan de ASLK-groep Fortis",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31427567,
+"country": "NL",
+"name": "Er is aan 3 partijen gegund: Astri, APE, Regioplan, zie voor nadere gegevens onder nadere inlichtingen (VI.2)",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31440006,
+"country": "NL",
+"name": "Er is aan twee partijen gegund: ROI Opleiding en KSG Berenschot, zie voor nadere gegevens onder nadere inlichtingen (VI.2),",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31465989,
+"country": "NL",
+"name": "Er is gegund aan 5 ondernemers. Zie sectie VI.2) Nadere inlichtingen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31489184,
+"country": "",
+"name": "De opdracht is gegund aan een panel van verzekeraars, informatie te verkrijgen via Willis of TenneT Holding B.V.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"AWARD_AND_CONTRACT_VALUE": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31490382,
+"country": "",
+"name": "zie website aanbestedende dienst (www.stichtingimn.nl) voor de namen van de acht bergers waaraan is gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31492336,
+"country": "",
+"name": "Gegund aan meerdere inschrijvers. Evt. nader op te vragen bij Willis, de heer B. Wokke, Postbus 12733, 1100 AS Amsterdam.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31525824,
+"country": "",
+"name": "Perceel 11 (Wierden ) is gegund aan Taxi- en Vervoerscentrale Almelo b.v. Perceel 12 (Twenterand) is gegund aan Sickman Personen Vervoer b.v.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31680216,
+"country": "",
+"name": "perceel 3b (140-liter containers). De percelen 4 en 5 zijn aan geen der inschrijvers gegund",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31682400,
+"country": "",
+"name": "De gemeente Vlissingen heeft het vervoer aan de volgende 3 inschrijvers gegund: AMZ Borssele te Borssele",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31683722,
+"country": "",
+"name": "1998 gegund aan Infra Totaal B.V.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31683723,
+"country": "",
+"name": "1998 gegund aan Draft Engineering Support BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31683724,
+"country": "",
+"name": "1998 gegund aan Combinatie Randstad Polytechniek en Advin B.V.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31683725,
+"country": "",
+"name": "1998 gegund aan Multec MPO B.V.",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31700988,
+"country": "",
+"name": "perceel 3: de opdracht is bij brief van 29.12.1999 gegund aan de laagste inschrijver",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31744015,
+"country": "",
+"name": "Er zijn 2 aanbiedingspartijen: - Partij I is gegund aan: Oosterhof Wegvervoer BV te Grijpskerk. - Partij II is gegund aan: Exploitatie Mij G. Brijder te Harlingen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31768300,
+"country": "",
+"name": "Gegund aan Bouter BV",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31844791,
+"country": "",
+"name": "Gegund aan navolgende 5 partijen",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31844794,
+"country": "",
+"name": "Gegund aan navolgende 4 partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31844795,
+"country": "",
+"name": "Gegund aan de navolgende zes partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31844796,
+"country": "",
+"name": "Gegund aan de navolgende 5 partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31844797,
+"country": "",
+"name": "Gegund aan de navolgende 6 partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31844799,
+"country": "",
+"name": "Gegund aan de navolgende 7 partijen",
+"mentions": 1,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31846373,
+"country": "",
+"name": "Gegund aan navolgende 6 partijen",
+"mentions": 2,
+"winner_tenders": 2,
+"roles": {
+"winner": 2
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31892626,
+"country": "",
+"name": "Gegund aan drie leveranciers: Bio-Connect b.v.",
+"mentions": 2,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+},
+{
+"org": 31892628,
+"country": "",
+"name": "Gegund aan drie leveranciers: Boom b.v.",
+"mentions": 3,
+"winner_tenders": 1,
+"roles": {
+"winner": 1
+},
+"class_nld": "None",
+"class": "None",
+"void_net": false
+}
+]
