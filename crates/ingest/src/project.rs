@@ -5694,6 +5694,13 @@ impl NoticeState {
                         Some((base, _)) if !sdk01 && field == ORG_NAME_FIELD => base.to_owned(),
                         _ => value.clone(),
                     };
+                    // Issue 528: a reviewed Dutch award-prose name that names one awardee serves the
+                    // awardee (`De opdracht is gegund aan: Tebodin BV` → `Tebodin BV`), in every era — the
+                    // rows are the review's, read whole ([`crate::partyname::nl_award_reviewed`]).
+                    let value = match crate::partyname::nl_award_reviewed(&value) {
+                        Some(crate::partyname::NlAward::Winner(winner)) => winner.to_owned(),
+                        _ => value,
+                    };
                     let value = &value;
                     // The designated single head keeps its first-seen semantics.
                     if mention.name.is_empty() {
@@ -16515,6 +16522,51 @@ mod tests {
         for kept in ["ORG-3", "ORG-4", "ORG-5", "ORG-6", "ORG-7"] {
             assert!(matches!(parties.verdict(kept), PartyVerdict::Kept(_)), "{kept} keeps its summary");
         }
+    }
+
+    /// Issue 528 (unit-1 decision): the reviewed Dutch award prose at the fold. A reviewed awardee serves
+    /// under its own name on the same result (`De opdracht is gegund aan: Tebodin BV` → `Tebodin BV`, and a
+    /// company's name without its award note); a reviewed pointer or count drops its party as a
+    /// placeholder, a reviewed "nothing awarded" as void; an unreviewed name is untouched.
+    #[test]
+    fn reviewed_dutch_award_prose_is_read_as_the_review_read_it() {
+        use placeholder_511::*;
+        let parsed = multilingual(
+            &[
+                ("ORG-1", &[(Some("NL"), "De opdracht is gegund aan: Tebodin BV")]),
+                ("ORG-2", &[(Some("NL"), "Zie bij nadere inlichtingen, 3 aannemers zijn gegund")]),
+                ("ORG-3", &[(Some("NL"), "de opdracht zal niet worden gegund")]),
+                ("ORG-4", &[(Some("NL"), "De Beijer Bladel BV (6 percelen gegund)")]),
+                ("ORG-5", &[(Some("NL"), "De opdracht is gegund aan: Dupont BV")]),
+            ],
+            &["ORG-1", "ORG-2", "ORG-3", "ORG-4", "ORG-5"],
+        );
+        let dropped = decided(false, &parsed);
+        assert_eq!(dropped.get("ORG-2"), Some(&NotAName::Placeholder));
+        assert_eq!(dropped.get("ORG-3"), Some(&NotAName::VoidLot));
+        assert_eq!(dropped.len(), 2, "the awardees and the unreviewed name stay");
+        // The result each verdict leaves (the review): a reviewed "nothing awarded" alone reads not awarded,
+        // a reviewed pointer alone keeps the award its notice states.
+        for (org, decision) in [("ORG-2", "selec-w"), ("ORG-3", "clos-nw")] {
+            let alone = multilingual(&[(org, &[(Some("NL"), if org == "ORG-2" {
+                "Zie bij nadere inlichtingen, 3 aannemers zijn gegund"
+            } else {
+                "de opdracht zal niet worden gegund"
+            })])], &[org]);
+            assert_eq!(results(&bound("ted-export-r208", &alone)), vec![(Some(decision.into()), vec![])], "{org}");
+        }
+        let (mentions, ..) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        let named: Vec<(&str, &str)> = mentions.iter().map(|m| (m.section_id.as_str(), m.name.as_str())).collect();
+        assert_eq!(
+            named,
+            vec![
+                ("ORG-1", "Tebodin BV"),
+                ("ORG-4", "De Beijer Bladel BV"),
+                ("ORG-5", "De opdracht is gegund aan: Dupont BV"),
+                ("ORG-9", "Ville de Lyon"),
+            ]
+        );
+        assert_eq!(mentions[0].variants, vec![("NLD".to_owned(), "Tebodin BV".to_owned())], "the labelled copy too");
     }
 
     /// Issue 520 U4 (§4.2, "the party's copies disagree"): a kept party is renamed only when EVERY

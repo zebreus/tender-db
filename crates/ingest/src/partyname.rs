@@ -1019,6 +1019,14 @@ fn classify(name: &str, lang: Option<&str>, references: bool) -> Option<NotAName
     if let Some((base, _)) = award_annotation(name) {
         return classify(base, lang, references);
     }
+    // Issue 528: a reviewed Dutch award-prose name is what the review read it as; a reviewed awardee is a
+    // name (the fold serves the awardee).
+    match nl_award_reviewed(name) {
+        Some(NlAward::Placeholder) => return Some(NotAName::Placeholder),
+        Some(NlAward::VoidLot) => return Some(NotAName::VoidLot),
+        Some(NlAward::Winner(_)) => return None,
+        None => {}
+    }
     if blank_raw(name) {
         return Some(NotAName::Blank);
     }
@@ -1231,7 +1239,10 @@ pub fn mentions_placeholder(name: &str) -> bool {
     // language's (`r209::parse` walks the primary original first), so a copy the echo sweeps
     // unclassified can head the party while the English placeholder that drops it is a later
     // name no walk reads.
-    mentions_by_class(name) || echo_shaped(name)
+    mentions_by_class(name)
+        || echo_shaped(name)
+        // Issue 528: the reviewed Dutch pointers, counts and awards still to come drop their party too.
+        || nl_award_reviewed(name) == Some(NlAward::Placeholder)
 }
 
 /// [`mentions_placeholder`] without the echo's arm: every name the fold classes as a dropping
@@ -2871,6 +2882,13 @@ pub fn mentions_void(name: &str) -> bool {
     // Issue 527: the award mark is no void phrase ([`award_annotation`]).
     if let Some((base, _)) = award_annotation(name) {
         return mentions_void(base);
+    }
+    // Issue 528: a reviewed Dutch "nothing awarded" drops its party as void; the other reviewed rows are
+    // no void phrase, whatever their words.
+    match nl_award_reviewed(name) {
+        Some(NlAward::VoidLot) => return true,
+        Some(_) => return false,
+        None => {}
     }
     let full = fold(name);
     if full.is_empty() {
@@ -4562,6 +4580,296 @@ pub fn award_winner(name: &str) -> Option<String> {
     }
     let (winner, _) = winner?;
     (!lot_entry_names_another(name, &runs, &words, &starts)).then_some(winner)
+}
+
+/// Issue 528: what a reviewed Dutch award-prose "name" in a winner slot is ([`nl_award_reviewed`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NlAward {
+    /// A pointer, a count or a plural non-name, or an award still to come (`Zie bij nadere inlichtingen, 3
+    /// aannemers zijn gegund`, `Dit perceel wordt later gegund.`): the party is dropped, the result keeps
+    /// its decision (511's class).
+    Placeholder,
+    /// Nothing awarded (`de opdracht zal niet worden gegund`): the party is dropped and the result reads
+    /// not awarded (510's class).
+    VoidLot,
+    /// One awardee, as the review reads it (`De opdracht is gegund aan: Tebodin BV` → `Tebodin BV`), or a
+    /// company's name without its award note (`De Beijer Bladel BV (6 percelen gegund)`).
+    Winner(&'static str),
+}
+
+/// Issue 528 unit 1 (`../528-dutch-award-prose/unit1-decision.md`): the reviewed rows of census 2385's 166
+/// Dutch award-prose winner names, each as published — P and V-later as [`NlAward::Placeholder`], V-void as
+/// [`NlAward::VoidLot`], A and N as [`NlAward::Winner`]. The B lists (34) and the X rows (2) are kept as
+/// published and are not here. Like 520's `A2_REVIEWED`, no general shape: a new such name stays as published
+/// until its row is reviewed and added.
+const NL_AWARD_REVIEWED: [(&str, NlAward); 128] = [
+    // 1371455 (P)
+    ("vijf partijen hebben gegund gekregen", NlAward::Placeholder),
+    // 1625206 (P)
+    ("De opdracht is gegund aan een panel van verzekeraars, informatie te verkrijgen via Willis BV of TenneT Holding BV", NlAward::Placeholder),
+    // 3220609 (P)
+    ("De raamovereenkomst is gegund aan 160 ondernemingen. Zie afdeling VI.2 Nadere inlichtingen voor de lijst met van ondernemers aan wie de raamovereenkomst is gegund.", NlAward::Placeholder),
+    // 3354990 (P)
+    ("Zie bijgevoegd overzicht voor de namen van de organisaties waaraan de 15 percelen van de aanbesteding zijn gegund.", NlAward::Placeholder),
+    // 3359177 (P)
+    ("Perceel 3 wordt gegund en 1 en 2 niet.", NlAward::Placeholder),
+    // 5819913 (P)
+    ("De opdracht is gegund aan de organisaties als vermeld in VI.2 Nadere inlichtingen", NlAward::Placeholder),
+    // 7813581 (P)
+    ("Zie bij nadere inlichtingen, 3 aannemers zijn gegund", NlAward::Placeholder),
+    // 7813583 (P)
+    ("Zie bij nadere inlichtingen, 4 aannemers zijn gegund", NlAward::Placeholder),
+    // 8314179 (P)
+    ("Zie bij nadere inlichtingen, 5 aannemers zijn gegund", NlAward::Placeholder),
+    // 9369271 (P)
+    ("Aan alle inschrijvers is de opdracht gegund", NlAward::Placeholder),
+    // 10722366 (P)
+    ("Zie voor de n.a.w.-gegevens van de ondernemers aan wie de opdracht is gegund, de bijgevoegde bijlage.", NlAward::Placeholder),
+    // 10774733 (P)
+    ("Gegund aan 2 partijen, zie verder bij VI.3) Nadere Inlichtingen", NlAward::Placeholder),
+    // 11425573 (P)
+    ("Dit perceel wordt in een andere TenderNed omgeving gegund.", NlAward::Placeholder),
+    // 12408872 (P)
+    ("De opdracht is aan 316 aanbieders gegund. U kunt de lijst vinden op de website van de Zorgregio", NlAward::Placeholder),
+    // 13895140 (P)
+    ("Open House – 7 inschrijvers gegund", NlAward::Placeholder),
+    // 15784363 (P)
+    ("Gegund aan 44 Opdrachtnemers (zie VI.3) Nadere inlichtingen)", NlAward::Placeholder),
+    // 17089684 (P)
+    ("Perceel 1 aan 5 personen gegund", NlAward::Placeholder),
+    // 17202918 (P)
+    ("Vertrouwelijk, Perceel 3 gegund aan 3 Opdrachtnemers", NlAward::Placeholder),
+    // 17202919 (P)
+    ("Vertrouwelijk, Perceel 2 gegund aan 9 Opdrachtnemers", NlAward::Placeholder),
+    // 17202920 (P)
+    ("Vertrouwelijk, Perceel 1 gegund aan 8 Opdrachtnemers", NlAward::Placeholder),
+    // 17841320 (P)
+    ("De opdracht is gegund aan 7 EED aanbieders. Lijst met gegunde aanbieders is op te vragen bij SDF.", NlAward::Placeholder),
+    // 21530059 (P)
+    ("In totaal is aan 96 zorgaanbieders voorlopig gegund", NlAward::Placeholder),
+    // 22813870 (P)
+    ("Vertrouwelijk - perceel 1 is gegund aan 2 opdrachtnemers (aan de 2 inschrijvers)", NlAward::Placeholder),
+    // 22813871 (P)
+    ("Vertrouwelijk - perceel 2 is gegund aan 3 opdrachtnemers (de 3 inschrijvers)", NlAward::Placeholder),
+    // 22813968 (P)
+    ("Vertrouwelijk - perceel 1 is gegund aan 11 opdrachtnemers (aan de 11 inschrijvers)", NlAward::Placeholder),
+    // 22813969 (P)
+    ("Vertrouwelijk - perceel 2 is gegund aan 13 opdrachtnemers (aan de 13 inschrijvers)", NlAward::Placeholder),
+    // 22813970 (P)
+    ("Vertrouwelijk - perceel 3 is gegund aan 2 opdrachtnemers (aan 2 van de 3 inschrijvers)", NlAward::Placeholder),
+    // 22813971 (P)
+    ("Vertrouwelijk - perceel 4 is gegund aan 4 opdrachtnemers (aan de 4 inschrijvers)", NlAward::Placeholder),
+    // 23407052 (P)
+    ("Vertrouwelijk. De opdracht is gegund aan 1 opdrachtnemer (er was 1 inschrijver).", NlAward::Placeholder),
+    // 24976289 (P)
+    ("De opdracht is gegund aan totaal 7 partijen.3 voor perceel A en 4 voor perceel B. Zie voor de naw-gegevens de overige inlichtingen", NlAward::Placeholder),
+    // 26866235 (P)
+    ("Gegund rit A", NlAward::Placeholder),
+    // 28765477 (P)
+    ("Aan 14 leveranciers raamovereenkomst gegund", NlAward::Placeholder),
+    // 28858453 (P)
+    ("alle inschrijvers zijn gegund", NlAward::Placeholder),
+    // 29756654 (P)
+    ("Aan alle 13 leveranciers gegund/PA Inkoopbureau Rivierenland", NlAward::Placeholder),
+    // 29798980 (P)
+    ("de opdracht is gegund aan een drietal leveranciers. Nadere informatie hieromtrent vindt u onder punt VI.2", NlAward::Placeholder),
+    // 29856095 (P)
+    ("De opdracht werd per perceel gegund aan verschillende leveranciers", NlAward::Placeholder),
+    // 29882521 (P)
+    ("zie bijlage Afdeling VI.7opdracht gegund aan 4 partijen", NlAward::Placeholder),
+    // 30476531 (P)
+    ("In totaal 3 partijen gegund", NlAward::Placeholder),
+    // 30704924 (P)
+    ("Het werk omschreven in bestek A-174-01 is gegund aan de laagste inschrijver", NlAward::Placeholder),
+    // 30794369 (P)
+    ("De opdracht is aan een consortium gegund", NlAward::Placeholder),
+    // 30808838 (P)
+    ("De opdracht per perceel is gegund aan de inschrijver met de laagste prijs", NlAward::Placeholder),
+    // 30837740 (P)
+    ("De percelen zijn gegund aan de volgende twee dienstverleners: A", NlAward::Placeholder),
+    // 30861318 (P)
+    ("Perceel 1: de opdracht is bij brief van 29.12.1999 gegund aan de laagste inschrijver", NlAward::Placeholder),
+    // 30861319 (P)
+    ("perceel 2: de opdracht is bij brief van 29.12.1999 gegund aan de laagste inschrijver", NlAward::Placeholder),
+    // 31465989 (P)
+    ("Er is gegund aan 5 ondernemers. Zie sectie VI.2) Nadere inlichtingen", NlAward::Placeholder),
+    // 31489184 (P)
+    ("De opdracht is gegund aan een panel van verzekeraars, informatie te verkrijgen via Willis of TenneT Holding B.V.", NlAward::Placeholder),
+    // 31490382 (P)
+    ("zie website aanbestedende dienst (www.stichtingimn.nl) voor de namen van de acht bergers waaraan is gegund", NlAward::Placeholder),
+    // 31492336 (P)
+    ("Gegund aan meerdere inschrijvers. Evt. nader op te vragen bij Willis, de heer B. Wokke, Postbus 12733, 1100 AS Amsterdam.", NlAward::Placeholder),
+    // 31700988 (P)
+    ("perceel 3: de opdracht is bij brief van 29.12.1999 gegund aan de laagste inschrijver", NlAward::Placeholder),
+    // 31844791 (P)
+    ("Gegund aan navolgende 5 partijen", NlAward::Placeholder),
+    // 31844794 (P)
+    ("Gegund aan navolgende 4 partijen", NlAward::Placeholder),
+    // 31844795 (P)
+    ("Gegund aan de navolgende zes partijen", NlAward::Placeholder),
+    // 31844796 (P)
+    ("Gegund aan de navolgende 5 partijen", NlAward::Placeholder),
+    // 31844797 (P)
+    ("Gegund aan de navolgende 6 partijen", NlAward::Placeholder),
+    // 31844799 (P)
+    ("Gegund aan de navolgende 7 partijen", NlAward::Placeholder),
+    // 31846373 (P)
+    ("Gegund aan navolgende 6 partijen", NlAward::Placeholder),
+    // 5752780 (V)
+    ("Dit perceel wordt later gegund.", NlAward::Placeholder),
+    // 8273820 (V)
+    ("Perceel 2 wordt later gegund", NlAward::Placeholder),
+    // 9050747 (V)
+    ("Fictief gegund — geen inschrijvers", NlAward::VoidLot),
+    // 10703666 (V)
+    ("Perceel 1 zal later gegund worden", NlAward::Placeholder),
+    // 11425570 (V)
+    ("Voor dit perceel (5) wordt er niets gegund.", NlAward::VoidLot),
+    // 12924415 (V)
+    ("Geen inschrijving(en) ontvangen voor perceel 2, 3 en 4 en geen opdracht gegund in genoemde percelen", NlAward::VoidLot),
+    // 29194063 (V)
+    ("niet (combinatieperceel C is gegund)", NlAward::VoidLot),
+    // 29208719 (V)
+    ("de opdracht zal niet worden gegund", NlAward::VoidLot),
+    // 3543691 (A)
+    ("Perceel L is gegund aan: Koeman en Bijkerk B.V.", NlAward::Winner("Koeman en Bijkerk B.V.")),
+    // 3543692 (A)
+    ("Perceel M is gegund aan: Grontmij", NlAward::Winner("Grontmij")),
+    // 3543694 (A)
+    ("Perceel P is gegund aan: Koeman en Bijkerk", NlAward::Winner("Koeman en Bijkerk")),
+    // 3543695 (A)
+    ("Perceel Q is gegund aan: Koeman en Bijkerk", NlAward::Winner("Koeman en Bijkerk")),
+    // 26825531 (A)
+    ("De opdracht is gegund aan: De Bouwcombinatie Korteweg-Boot v.o.f. i.o.", NlAward::Winner("De Bouwcombinatie Korteweg-Boot v.o.f. i.o.")),
+    // 26826676 (A)
+    ("De opdracht is gegund aan: Getronics Infrastructure Solutions BV", NlAward::Winner("Getronics Infrastructure Solutions BV")),
+    // 26886497 (A)
+    ("Het werk is met inachtneming van het bepaalde in artikel 31 van het UAR-EG 1991 gegund aan Aannemerscombinatie Reef Wegenbouw BV", NlAward::Winner("Aannemerscombinatie Reef Wegenbouw BV")),
+    // 26921671 (A)
+    ("1998 gegund aan Dirk Verstoep BV te Rotterdam voor een bedrag (aannemingssom) van 41 153 000 NLG", NlAward::Winner("Dirk Verstoep BV")),
+    // 26963238 (A)
+    ("Opdracht gegund aan NV Gemeentekrediet van België", NlAward::Winner("NV Gemeentekrediet van België")),
+    // 27011278 (A)
+    ("De opdracht is gegund aan Oce Nederlandse verkoopmaatschappij BV", NlAward::Winner("Oce Nederlandse verkoopmaatschappij BV")),
+    // 27017668 (A)
+    ("De levering is gegund aan de firma Sensicon BV", NlAward::Winner("Sensicon BV")),
+    // 27073188 (A)
+    ("De opdracht is gegund aan: De Meeuw Oirschot b.v.", NlAward::Winner("De Meeuw Oirschot b.v.")),
+    // 27109237 (A)
+    ("Architect: de opdracht is gegund aan Erick van Egeraat Associated Architects", NlAward::Winner("Erick van Egeraat Associated Architects")),
+    // 27109239 (A)
+    ("Adviseur technische installaties: de opdracht is gegund aan Sweegers en de Bruijn BV", NlAward::Winner("Sweegers en de Bruijn BV")),
+    // 27109241 (A)
+    ("Adviseur constructies: de opdracht is gegund aan ABT Adviesbureau voor bouwtechniek BV", NlAward::Winner("ABT Adviesbureau voor bouwtechniek BV")),
+    // 27110819 (A)
+    ("Er zijn 2 aanbestedingspartijen. Partij I is gegund aan: Van der Zee Internat. Transportbedrijf BV", NlAward::Winner("Van der Zee Internat. Transportbedrijf BV")),
+    // 27154691 (A)
+    ("De opdracht is gegund aan: Tebodin BV", NlAward::Winner("Tebodin BV")),
+    // 30572645 (A)
+    ("De opdracht is gegund aan: VOF Bergsingel", NlAward::Winner("VOF Bergsingel")),
+    // 30578397 (A)
+    ("De opdracht is gegund aan: Schilderswacht BV statutair gevestigd en kantoor houdende te Almelo aan de van Weerden Poelmansweg 3", NlAward::Winner("Schilderswacht BV")),
+    // 30593432 (A)
+    ("Gegund aan Welzorg Revalidatie Techniek BV", NlAward::Winner("Welzorg Revalidatie Techniek BV")),
+    // 30625916 (A)
+    ("De opdracht is gegund aan: Vera Yanovshtchinsky Architecten BV", NlAward::Winner("Vera Yanovshtchinsky Architecten BV")),
+    // 30663641 (A)
+    ("De opdracht is gegund aan Dexia Bank NV", NlAward::Winner("Dexia Bank NV")),
+    // 30667025 (A)
+    ("De opdracht is gegund aan Continental Breda bv", NlAward::Winner("Continental Breda bv")),
+    // 30685869 (A)
+    ("De opdracht is gegund aan Taxi Centrale Schoorl", NlAward::Winner("Taxi Centrale Schoorl")),
+    // 30695182 (A)
+    ("De opdracht is gegund aan Taxi en Pakketdienst v.d. Wijst BV", NlAward::Winner("Taxi en Pakketdienst v.d. Wijst BV")),
+    // 30695356 (A)
+    ("De opdracht is gegund aan Buhrmann Office Products Nederland b.v", NlAward::Winner("Buhrmann Office Products Nederland b.v")),
+    // 30704925 (A)
+    ("Het werk omschreven in bestek A-175-01 is gegund aan BAM Techniek BV", NlAward::Winner("BAM Techniek BV")),
+    // 30704927 (A)
+    ("Percelen 1 en 2 zijn gegund aan aannemersbedrijf Landustrie uit Sneek", NlAward::Winner("Landustrie")),
+    // 30708697 (A)
+    ("De opdracht is gegund aan Verstraeten Verbrugge Groep BV", NlAward::Winner("Verstraeten Verbrugge Groep BV")),
+    // 30709247 (A)
+    ("De opdracht is gegund aan Arriva Personenvervoer Nederland BV", NlAward::Winner("Arriva Personenvervoer Nederland BV")),
+    // 30717675 (A)
+    ("De volgende partij is de opdracht gegund: Sagenn Reïntegratie BV", NlAward::Winner("Sagenn Reïntegratie BV")),
+    // 30721438 (A)
+    ("De levering is gegund aan: Gemco Mobile Systems bv", NlAward::Winner("Gemco Mobile Systems bv")),
+    // 30731255 (A)
+    ("De opdracht is gegund aan AVR", NlAward::Winner("AVR")),
+    // 30733365 (A)
+    ("De opdracht is gegund aan: DELL Computer BV", NlAward::Winner("DELL Computer BV")),
+    // 30739554 (A)
+    ("De opdracht is gegund aan: ISSUE Information Technology BV", NlAward::Winner("ISSUE Information Technology BV")),
+    // 30753186 (A)
+    ("De opdracht is gegund aan: Syntegra Groep BV", NlAward::Winner("Syntegra Groep BV")),
+    // 30782835 (A)
+    ("Zowel perceel l: telefoonsysteem als perceel 2: meldkamer (arbi) zijn aan de volgende leverancier gegund: Tenovis BV", NlAward::Winner("Tenovis BV")),
+    // 30796487 (A)
+    ("De opdracht is gegund aan Harting-Bank BV", NlAward::Winner("Harting-Bank BV")),
+    // 30805665 (A)
+    ("De opdracht is gegund aan Eindhoven Catering Services bv", NlAward::Winner("Eindhoven Catering Services bv")),
+    // 30816254 (A)
+    ("a. Opdracht gegund aan de NV Bank Brussel Lambert", NlAward::Winner("NV Bank Brussel Lambert")),
+    // 30817894 (A)
+    ("De opdracht is gegund aan: Stichting Pensioenfonds ABP", NlAward::Winner("Stichting Pensioenfonds ABP")),
+    // 30822172 (A)
+    ("De opdracht is gegund aan Connexxion (Stationsplein 20", NlAward::Winner("Connexxion")),
+    // 30842293 (A)
+    ("De opdracht is gegund aan: Rienks-DBM + Partners", NlAward::Winner("Rienks-DBM + Partners")),
+    // 30843499 (A)
+    ("Perceel 1 werd gegund aan de vennootschap ''Triple-P Belgium nv", NlAward::Winner("Triple-P Belgium nv")),
+    // 30850942 (A)
+    ("De opdracht werd gegund aan de NV Gemeentekrediet", NlAward::Winner("NV Gemeentekrediet")),
+    // 30853636 (A)
+    ("De opdracht is gegund aan Getronics Networks & Services BV", NlAward::Winner("Getronics Networks & Services BV")),
+    // 30854758 (A)
+    ("De opdracht werd gegund aan: Gemeentekrediet NV", NlAward::Winner("Gemeentekrediet NV")),
+    // 30854781 (A)
+    ("De opdracht is gegund aan Koninklijke Roeiers Vereeniging Eendracht", NlAward::Winner("Koninklijke Roeiers Vereeniging Eendracht")),
+    // 30873416 (A)
+    ("De opdracht werd gegund aan: Clean Express Poty SA", NlAward::Winner("Clean Express Poty SA")),
+    // 30882216 (A)
+    ("De opdracht werd gegund aan het Gemeentekrediet NV", NlAward::Winner("Gemeentekrediet NV")),
+    // 30882548 (A)
+    ("De opdracht is gegund aan Novio Net bv", NlAward::Winner("Novio Net bv")),
+    // 30887300 (A)
+    ("a. Opdracht gegund aan de ASLK-groep Fortis", NlAward::Winner("ASLK-groep Fortis")),
+    // 31683722 (A)
+    ("1998 gegund aan Infra Totaal B.V.", NlAward::Winner("Infra Totaal B.V.")),
+    // 31683723 (A)
+    ("1998 gegund aan Draft Engineering Support BV", NlAward::Winner("Draft Engineering Support BV")),
+    // 31683725 (A)
+    ("1998 gegund aan Multec MPO B.V.", NlAward::Winner("Multec MPO B.V.")),
+    // 31768300 (A)
+    ("Gegund aan Bouter BV", NlAward::Winner("Bouter BV")),
+    // 5275836 (N)
+    ("DVG Personenvervoer (perceel 1 en 2 gegund; perceel 3 gegund aan Klomp Groepsvervoer)", NlAward::Winner("DVG Personenvervoer")),
+    // 5275837 (N)
+    ("Klomp Groepsvervoer (perceel 3 gegund; perceel 1 en 2 gegund aan DVG)", NlAward::Winner("Klomp Groepsvervoer")),
+    // 5890355 (N)
+    ("De Beijer Bladel BV (6 percelen gegund)", NlAward::Winner("De Beijer Bladel BV")),
+    // 5890356 (N)
+    ("Indaver Bio Energie BV (9 percelen gegund)", NlAward::Winner("Indaver Bio Energie BV")),
+    // 5890357 (N)
+    ("Van Berkel Biomassa & Bodemproducten BV (3 percelen gegund)", NlAward::Winner("Van Berkel Biomassa & Bodemproducten BV")),
+    // 5890358 (N)
+    ("Indaver Bio Energie BV (2 percelen gegund)", NlAward::Winner("Indaver Bio Energie BV")),
+    // 6888340 (N)
+    ("Melior verzekeringen — gegund layer 2 en 3", NlAward::Winner("Melior verzekeringen")),
+    // 6888341 (N)
+    ("XL Insurance Company SE — gegund layer 1", NlAward::Winner("XL Insurance Company SE")),
+];
+
+/// Issue 528: the reviewed verdict on a Dutch award-prose name, read whole on the fold (a `/` for a ` - `
+/// reads the same), or `None` for any other name. Only a name holding `gegund` is folded at all.
+pub fn nl_award_reviewed(name: &str) -> Option<NlAward> {
+    static TABLE: std::sync::OnceLock<std::collections::HashMap<String, NlAward>> = std::sync::OnceLock::new();
+    if find_ascii_ci(name, "gegund").is_none() {
+        return None;
+    }
+    let table = TABLE.get_or_init(|| NL_AWARD_REVIEWED.iter().map(|(published, verdict)| (fold(published), *verdict)).collect());
+    table.get(&fold(name)).copied()
 }
 
 /// Issue 527: TenderNed's correction marks each tenderer of a re-published award after its name,
@@ -6913,6 +7221,93 @@ mod tests {
         (31689490, "Procédure de marché négocié après appel d'offres infructueux: 5) Mepy Système"),
         (31739133, "Importaciones Canarias de Automóviles SA (Lote A2.5). Se ha declarado desierto el Lote A3.2. Nacionalidad: española"),
     ];
+
+    /// Issue 528 (unit-1 decision): every reviewed row reads as the review classed it — Placeholder and
+    /// VoidLot rows drop their party, Winner rows are names whose awardee the fold serves — and the kept B
+    /// and X rows of census 2385 (34 + 2) are untouched plain names. A name the review did not read, however
+    /// close (another count), is no row: no general shape.
+    #[test]
+    fn nl_award_reviewed_reads_each_reviewed_row_and_nothing_else() {
+        let (mut placeholders, mut voids, mut winners) = (0, 0, 0);
+        for (published, verdict) in super::NL_AWARD_REVIEWED {
+            assert_eq!(super::nl_award_reviewed(published), Some(verdict), "{published}");
+            match verdict {
+                // The walks' nets hold every dropping row (511 unit 5's invariant), and no other.
+                super::NlAward::Placeholder => {
+                    placeholders += 1;
+                    assert_eq!(not_a_name(published), Some(NotAName::Placeholder), "{published}");
+                    assert!(mentions_placeholder(published) && !mentions_void(published), "{published}");
+                }
+                super::NlAward::VoidLot => {
+                    voids += 1;
+                    assert_eq!(not_a_name(published), Some(NotAName::VoidLot), "{published}");
+                    assert!(mentions_void(published), "{published}");
+                }
+                super::NlAward::Winner(winner) => {
+                    winners += 1;
+                    assert_eq!(not_a_name(published), None, "{published}");
+                    assert!(!mentions_placeholder(published) && !mentions_void(published), "{published}");
+                    assert!(!winner.to_lowercase().contains("gegund"), "{published} -> {winner}");
+                    assert_eq!(not_a_name(winner), None, "the awardee is a name: {winner}");
+                }
+            }
+        }
+        assert_eq!((placeholders, voids, winners), (59, 5, 64));
+        assert_eq!(
+            super::nl_award_reviewed("De opdracht is gegund aan: Tebodin BV"),
+            Some(super::NlAward::Winner("Tebodin BV"))
+        );
+        assert_eq!(
+            super::nl_award_reviewed("Zie bij nadere inlichtingen - 3 aannemers zijn gegund"),
+            Some(super::NlAward::Placeholder),
+            "read on the fold: punctuation aside, the same words"
+        );
+        for kept in [
+            "Perceel K is gegund aan: Koeman en Bijkerk in combinatie met Grontmij, penvoerder Koeman en Bijkerk.",
+            "Perceel N is gegund aan: Grontmij, Waardenburg, Aqualab Zuid, Het Waterlaboratorium, Koeman en Bijkerk",
+            "Perceel J is gegund aan: Grontmij in combinatie met Koeman en Bijkerk, penvoerder Grontmij",
+            "Gegund aan: ADC ArcheoProjecten; Archeologisch Onderzoek Leiden; BAAC; De Steekproef BV; Grontmij Nederland; RAAP Archeologisch adviesbureau; Rijksuniversiteit Groningen; Universiteit van Amsterdam",
+            "Falck Consulting & Technology (perceel 2 nog niet definitief gegund: verificatiefase)",
+            "Raamovereenkomst gegund aan Altran Belgium, Consol Partners UK, Capitol International Services LTD, Lupam/Qplox engineering, MBA Michael Bailey Associates, Oxford Global Resources, Randstad Professionals, Time Acquisition, Verotech",
+            "De opdracht is gegund aan VGZ en IZA die een samenwerkingsverband vormen",
+            "De opdracht is gegund aan de combinatie van de taxibedrijven van v.o.f. Van de Krieke",
+            "De zes percelen zijn als volgt gegund aan drie dienstverleners: 2 percelen: Schavemaker Containers BV",
+            "De opdracht is in delen gegund aan: a. Escom BV",
+            "re-integratietrajecten gegund aan 2 bedrijven: Van Dreumel Depiro BV en Serin Mens en Werk BV",
+            "Totaal 3 inschrijvers gegund: FourStar B.V.",
+            "In totaal aan 3 partijen gegund: Randstad HR Solutions te 's-Hertogenbosch",
+            "De opdracht is gegund: perceel plaatmeubilair aan: Ahrend Inrichten bv mede kantoor houdende te Eindhoven",
+            "De opdracht is gegund aan de volgende partijen: Stichting Activa",
+            "De aanbesteding bestond uit 21 percelen die als volgt zijn gegund: Mechanisatie Hoogezand/Den Andel BV te NL-Hoogezand voor de percelen HAS 1-01",
+            "De aanbesteding bestond uit 7 percelen die als volgt zijn gegund: - Hobelman-Halle te NL-Halle voor de percelen HAS 2-01",
+            "De aanbesteding bestond uit 5 percelen die als volgt zijn gegund: - Auto de Vries bv",
+            "Aan onderstaande leveranciers zijn nieuwe Mirna-contracten gegund: 3-Angle",
+            "Betreft een gesplitste gunning waarbij de opdracht deels aan beide onderstaande ondernemingen gegund is: Zwaluw Reizen BV",
+            "De opdracht is gegund aan de volgende twee dienstverleners: Prened Beveiliging",
+            "De opdracht is gegund aan vier leveranciers: leverancier 1: Succes schoonmaakbedrijf",
+            "De opdracht werd gegund aan volgende leveranciers: perceel 1: Copy Fun BVBA",
+            "De opdracht is door de gemeente Bergen op Zoom gegund aan Aannemerscombinatie Van den Biggelaar te Kerkdriel en v.o.f. A. Prop Beplantingswerken te Hoogerheide",
+            "Voor perceel A zijn mantelcontracten gegund aan de volgende drie dienstverleners: Ernst & Young",
+            "De opdracht is per partij gegund aan: partij 1: Firma Shape Technology NV",
+            "De mantelovereenkomsten zijn gegund aan de volgende vier dienstverleners: xBase Software Ontwikkeling",
+            "Er is aan 3 partijen gegund: Astri, APE, Regioplan, zie voor nadere gegevens onder nadere inlichtingen (VI.2)",
+            "Er is aan twee partijen gegund: ROI Opleiding en KSG Berenschot, zie voor nadere gegevens onder nadere inlichtingen (VI.2),",
+            "Perceel 11 (Wierden ) is gegund aan Taxi- en Vervoerscentrale Almelo b.v. Perceel 12 (Twenterand) is gegund aan Sickman Personen Vervoer b.v.",
+            "perceel 3b (140-liter containers). De percelen 4 en 5 zijn aan geen der inschrijvers gegund",
+            "De gemeente Vlissingen heeft het vervoer aan de volgende 3 inschrijvers gegund: AMZ Borssele te Borssele",
+            "1998 gegund aan Combinatie Randstad Polytechniek en Advin B.V.",
+            "Er zijn 2 aanbiedingspartijen: - Partij I is gegund aan: Oosterhof Wegvervoer BV te Grijpskerk. - Partij II is gegund aan: Exploitatie Mij G. Brijder te Harlingen",
+            "Gegund aan drie leveranciers: Bio-Connect b.v.",
+            "Gegund aan drie leveranciers: Boom b.v.",
+            // Not reviewed, however close.
+            "Zie bij nadere inlichtingen, 6 aannemers zijn gegund",
+            "De opdracht is gegund aan: Dupont BV",
+            "Dupont BV",
+        ] {
+            assert_eq!(super::nl_award_reviewed(kept), None, "{kept}");
+            assert_eq!(not_a_name(kept), None, "{kept}");
+        }
+    }
 
     /// Issue 527: TenderNed's award marks, read only as a closing bracket group whose fold is exactly a
     /// mark.

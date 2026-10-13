@@ -4,6 +4,21 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 528) — Dutch award prose in a winner slot is read as what it says
+
+About 130 organizations were named after Dutch award prose sitting in a winner slot rather than after a company.
+Each of these reviewed rows is now read as what it says:
+- one awardee named in prose is served under the awardee's name (`De opdracht is gegund aan: Tebodin BV` →
+  `Tebodin BV`), and a company name carrying an award note serves without it (`De Beijer Bladel BV (6 percelen
+  gegund)`). Most of these old notices carry no country, so the awardee is a new organization rather than an
+  existing one of the same name;
+- a pointer, a count, or an award still to come is no organization (`Zie bij nadere inlichtingen, 3 aannemers zijn
+  gegund`, `Dit perceel wordt later gegund.`), and the result keeps its decision;
+- a statement that nothing was awarded is no organization, and the result reads `decision: clos-nw`.
+
+Lists of several awardees are kept as published. The prose organizations are removed (`organization removed`), and
+the affected Tenders publish `tender changed`.
+
 ## Unreleased (issue 527) — a tenderer the notice marks "niet gegunde partij" is not served as a winner
 
 When TenderNed re-publishes an award with each tenderer marked after its name — `(gegunde partij)` for the one
