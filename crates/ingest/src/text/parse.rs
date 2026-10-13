@@ -538,6 +538,10 @@ const LOT_PREFIX_MAX: usize = 24;
 /// reference must be ONE run of digits: `(a)`/`a)` enumerate clauses, and a `)` after
 /// anything else closes a parenthesis inside a name (issue 484 review).
 fn lot_prefix_len(value: &str) -> Option<usize> {
+    // Issue 526: a reference that names its lot (`Lot 1) X`, `Lots 2), 3) et 4) X`, `Lote n° 3) X`).
+    if let Some(len) = lot_word_prefix_len(value) {
+        return Some(len);
+    }
     let (at, terminator) = value
         .char_indices()
         .take_while(|(i, _)| *i <= LOT_PREFIX_MAX)
@@ -577,6 +581,76 @@ fn lot_prefix_len(value: &str) -> Option<usize> {
         return None;
     }
     Some(at + terminator.len_utf8())
+}
+
+/// Issue 526: the length of a leading reference that names its lot — `Lot`, `Lots`, `Lote` or `Lotes` (any
+/// case, then a space), an optional number mark (`n°`, `nº`, `no`, `nr`), one to three digits with an
+/// optional `bis` or one-letter suffix, and `)` or `:` — chained by `,`, `et`, `and`, `y` or a space to
+/// further `<digits>)` references (`Lots 1) et 2)`, `Lots 2), 3) et 4)`, `Lots 2) 8) 20)`); or `None`.
+/// The 1997–2003 text print keys its winner lists this way (`Lot 1) Blin. Lot 2) Prodirest.`, 20187-2002),
+/// and the bare-digits rule ([`lot_prefix_len`]'s `)` branch) never read it, so one list minted one
+/// organization and every prefixed name split a company. A name that merely opens with the word stays whole:
+/// `LOT Polish Airlines` (no number), `Lot-et-Garonne` (no space), `Lot unique: X` and `Lot A) X` (no digits).
+/// Within [`LOT_PREFIX_MAX`].
+fn lot_word_prefix_len(value: &str) -> Option<usize> {
+    let bytes = value.as_bytes();
+    let word = ["lotes", "lots", "lote", "lot"]
+        .into_iter()
+        .find(|w| bytes.len() > w.len() && bytes[..w.len()].eq_ignore_ascii_case(w.as_bytes()))?;
+    let mut i = word.len();
+    if bytes.get(i) != Some(&b' ') {
+        return None;
+    }
+    while bytes.get(i) == Some(&b' ') {
+        i += 1;
+    }
+    // One reference at `i`: a number mark, digits, a suffix, then `)` (or `:` for the first). The byte
+    // after it, or `None`.
+    let reference = |mut i: usize, first: bool| -> Option<usize> {
+        let rest = &value[i..];
+        for mark in ["n°", "nº", "no.", "no", "nr.", "nr"] {
+            if rest.len() > mark.len() && rest.is_char_boundary(mark.len()) && rest[..mark.len()].eq_ignore_ascii_case(mark) {
+                let after = rest[mark.len()..].trim_start_matches(' ');
+                if after.starts_with(|c: char| c.is_ascii_digit()) {
+                    i += rest.len() - after.len();
+                }
+                break;
+            }
+        }
+        let start = i;
+        while bytes.get(i).is_some_and(u8::is_ascii_digit) {
+            i += 1;
+        }
+        if i == start || i - start > 3 {
+            return None;
+        }
+        if value.len() >= i + 3 && value.is_char_boundary(i + 3) && value[i..i + 3].eq_ignore_ascii_case("bis") {
+            i += 3;
+        } else if bytes.get(i).is_some_and(u8::is_ascii_alphabetic) && !bytes.get(i + 1).is_some_and(u8::is_ascii_alphabetic) {
+            i += 1;
+        }
+        match bytes.get(i) {
+            Some(b')') => Some(i + 1),
+            Some(b':') if first => Some(i + 1),
+            _ => None,
+        }
+    };
+    let mut end = reference(i, true)?;
+    if bytes[end - 1] == b')' {
+        // Further references, each behind a separator.
+        'chain: loop {
+            for sep in [", ", ",", " et ", " and ", " y ", " "] {
+                if value[end..].starts_with(sep) {
+                    if let Some(next) = reference(end + sep.len(), false) {
+                        end = next;
+                        continue 'chain;
+                    }
+                }
+            }
+            break;
+        }
+    }
+    (end - 1 <= LOT_PREFIX_MAX).then_some(end)
 }
 
 /// Whether `head` holds two runs of digits separated only by spaces — phone notation.
@@ -889,13 +963,28 @@ fn names_in_value(value: &str, bounded: bool, authority: Option<&Authority>) -> 
         // the segment is the raw 256-byte window, and a "name" that long mints one
         // organization per notice and poisons an identity that has no identifier to
         // fall back on. Refuse it instead.
-        let segment = strip_lot_prefix(segment);
+        let unprefixed = strip_lot_prefix(segment);
+        let prefixed = unprefixed.len() < segment.len();
+        let segment = unprefixed;
         let (name, bounded) = match segment.find(',') {
             Some(comma) => (&segment[..comma], true),
             None => (segment, bounded),
         };
         if !bounded {
             continue;
+        }
+        // Issue 526: a keyed lot entry that is an award sentence, not a name (`lot 3) la société Storz a
+        // été retenue`, `Lot 2) attribué à Dupont SA`), names its one awardee when 520's reader finds one
+        // in it ([`crate::partyname::award_winner`]: its cues and refusals); otherwise it is read as
+        // before. Only a keyed lot entry holding a cue word is read this way.
+        if prefixed && crate::partyname::may_name_a_winner(segment) {
+            if let Some(winner) = crate::partyname::award_winner(trim_sentence_period(segment.trim()))
+                .filter(|winner| plausible_name(winner))
+            {
+                let contact = authority.is_some_and(|a| a.contact_entry(&winner, segment));
+                found.push((winner, contact));
+                continue;
+            }
         }
         let name = trim_sentence_period(name.trim());
         if plausible_name(name) {
@@ -3452,6 +3541,63 @@ mod tests {
         assert_eq!(lot_prefix_len("1) CGC"), Some(2));
         assert_eq!(lot_prefix_len("a) clause"), None, "a letter list is not a lot key");
         assert_eq!(lot_prefix_len("Furic (Jules et Alain) et Fils"), None);
+    }
+
+    /// Issue 526: a reference that names its lot is a lot reference — `Lot 1)`, `Lots 2), 3) et 4)`,
+    /// `Lote n° 3)`, `Lot 8bis)`, `Lot 1:` — so the 1997–2003 lists split one winner per lot and a
+    /// prefixed name is the company's own. A name that only opens with the word stays whole, and a void
+    /// entry mints nothing.
+    #[test]
+    fn a_lot_word_reference_is_a_lot_reference() {
+        for (value, rest) in [
+            ("Lot 1) Blin", "Blin"),
+            ("lot 1) SARL Bonsignore & Olivetta", "SARL Bonsignore & Olivetta"),
+            ("LOT 12) Acme", "Acme"),
+            ("Lote 2) Limpiezas Luz", "Limpiezas Luz"),
+            ("Lot n° 3) Dupont", "Dupont"),
+            ("Lot nº 3) Dupont", "Dupont"),
+            ("Lot no 3) Dupont", "Dupont"),
+            ("Lot 8bis) Willecocq", "Willecocq"),
+            ("Lot 3a) Dupont", "Dupont"),
+            ("Lots 1) et 2) Dupont", "Dupont"),
+            ("Lots 2), 3) et 4) SA EVM", "SA EVM"),
+            ("Lots 2) 8) 20) Dupont", "Dupont"),
+            ("Lot 1: Dupont", "Dupont"),
+        ] {
+            let len = lot_prefix_len(value).unwrap_or_else(|| panic!("{value}"));
+            assert_eq!(value[len..].trim_start(), rest, "{value}");
+        }
+        for value in [
+            "LOT Polish Airlines",
+            "Lot-et-Garonne",
+            "Lot unique: Dupont",
+            "Lot A) Dupont",
+            "Lot 1 Holdings",
+            "Lotus Cars",
+            "Lote I: Dupont",
+            "Lot 1234) Dupont",
+            "Loterie Nationale",
+        ] {
+            assert_eq!(lot_prefix_len(value), None, "{value}");
+        }
+        assert_eq!(lot_prefix_len("1) CGC"), Some(2), "the bare digits keep their rule");
+        assert_eq!(
+            winner_segments("Lot 1) Blin. Lot 2) Prodirest. Lot 3) Société Dupont"),
+            vec!["Lot 1) Blin", "Lot 2) Prodirest", "Lot 3) Société Dupont"]
+        );
+        let body = "1.  Awarding authority: Ville de Toulon, Hôtel de Ville, F-83000 Toulon.\n\
+                    3.  Date of award: 1. 2. 2002.\n\
+                    6.  Supplier(s): Lot 1) Blin. Lot 2) Infructueux. Lot 3) la société Storz a été retenue. Lot 4) Prodirest.\n\
+                    9.  Notice published on: 3. 4. 2002.";
+        assert_eq!(
+            awarded_names(body),
+            vec!["Blin".to_owned(), "Storz".to_owned(), "Prodirest".to_owned()],
+            "one winner per lot; the void lot mints nothing; a keyed award sentence names its awardee"
+        );
+        let bare = "1.  Awarding authority: Ville de Toulon, Hôtel de Ville, F-83000 Toulon.\n\
+                    6.  Supplier(s): Lot 1).\n\
+                    9.  Notice published on: 3. 4. 2002.";
+        assert!(awarded_names(bare).is_empty(), "a bare `Lot 1)` mints nothing");
     }
 
     /// Issue 485: a phone number is not a lot reference, and a contact line is not a
