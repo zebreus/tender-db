@@ -110,3 +110,17 @@ The review confirmed seven findings. All are fixed and tested, mostly by narrowi
   - 2111622 goes from 12 to 10 names and 2120723 from 3 to 2 (the duplicates are gone);
   - 1293291 drops one junk fragment;
   - 1610125 regains `I. Siemens SAS`, the old parser's reading.
+
+## Final review (wf_9fb9f3fc-31f, 9 agents, on 6b6e92e)
+
+The review confirmed 4 findings and rejected 3. Each confirmed finding is fixed and tested:
+
+| finding | fix |
+| --- | --- |
+| **Real.** A parenthesised département or postcode refused the whole keyed entry (`Lot 1) Manathan (52); lot 2) Icob (14)`). Four sample notices lost every winner: 1569952, 1580962 (38 suppliers), 2093459 and 2096288. | A digit run opened by `(` is no reference mark. |
+| Company-word headings ended by `.` or `;` became hubs again (`Société retenue. Lot 1) …`). | The heading rule and the label rule share one `company_label` test: a legal form, or a company noun before a name, with no award word and no generic phrase. |
+| The lot-1 condition brought heading hubs back for lists that start after lot 1 (`Rabais. Lot 2) Exbrayat`). | A bare entry is a heading when the next entry opens at lot 1 OR names a winner. Only a void next entry keeps it (`Spie Trindel. Lot 2: infructueux`). |
+| A comma in a subject ended a company's own lot list (`lot 8) Hérault, Montpellier`). | Inside the list, only a signed or addressed (digit or `F-`) entry is read as a winner, and the list goes on. |
+
+**Re-measured (out10).** The control is unchanged. Exactly the 8 lot-sample notices the review predicted gain
+their `(NN)` winners, 50 names in all, and nothing else moves.

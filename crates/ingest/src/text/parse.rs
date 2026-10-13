@@ -1063,8 +1063,9 @@ fn names_in_value_counted(value: &str, bounded: bool, authority: Option<&Authori
     let last = segments.len() - 1;
     // Issue 526's review: whether each entry opens with a reference that names its lot — which makes a
     // bare entry right before it a heading (`Entreprises retenues; Notation; Rabais. Lot 1) Exbrayat`).
-    // The heading is the list's own: the entry after it opens the list at lot 1 (the third review: `Spie
-    // Trindel. Lot 2: infructueux` names Spie Trindel).
+    // The heading is the list's own: the entry after it opens the list at lot 1, or names a winner (the third
+    // review: `Spie Trindel. Lot 2: infructueux` names Spie Trindel; the final review: `Rabais. Lot 2) Exbrayat`
+    // does not name Rabais).
     let opens_lot: Vec<bool> = segments.iter().map(|s| lot_word_prefix_len(s.trim_start()).is_some()).collect();
     // Issue 526's review: inside a company's own lot list (`Société Laser: lot 1) Alpes Maritime; lot 3)
     // Bouches du Rhône`, 1354130), the keyed entries that follow name its lots' subjects, not winners.
@@ -1097,12 +1098,7 @@ fn names_in_value_counted(value: &str, bounded: bool, authority: Option<&Authori
                 let label = trim_sentence_period(segment[..colon].trim());
                 // The third review: a heading that opens with a company word is still a heading (`Entreprise
                 // retenue:`, `Société attributaire:`, `Groupement solidaire:`), and `Ste-` is Sainte.
-                if (crate::partyname::company_token(label) || crate::partyname::opens_with_company_noun(label))
-                    && !crate::partyname::may_name_a_winner(label)
-                    && !crate::partyname::generic_company_phrase(label)
-                    && plausible_name(label)
-                    && crate::partyname::plausible_winner(label)
-                {
+                if company_label(label) && plausible_name(label) && crate::partyname::plausible_winner(label) {
                     label_run = true;
                     let contact = authority.is_some_and(|a| a.contact_entry(label, segment));
                     found.push((label.to_owned(), contact));
@@ -1138,14 +1134,20 @@ fn names_in_value_counted(value: &str, bounded: bool, authority: Option<&Authori
         let keyed = names_lot(&segment[..segment.len() - unprefixed.len()]);
         let prefixed = unprefixed.len() < segment.len();
         let segment = unprefixed;
-        // A keyed entry with an address or a company of its own ends the label's lots (the third review:
-        // `Siemens SA: lots 1) et 3); lot 2) Philips SA, Suresnes` names Philips SA).
+        // Inside the label's lots, a keyed entry with a company of its own or an address names a winner (the
+        // third review: `Siemens SA: lots 1) et 3); lot 2) Philips SA, Suresnes` names Philips SA); one without
+        // stays a subject, after it too (the final review: `lot 8) Hérault, Montpellier` is a subject). Any
+        // other entry ends the list.
         if label_run {
-            let head = segment.split(',').next().unwrap_or(segment);
-            if keyed && !segment.contains(',') && !crate::partyname::company_sign(head) {
-                continue;
+            if !keyed {
+                label_run = false;
+            } else {
+                let (head, rest) = segment.split_once(',').unwrap_or((segment, ""));
+                let addressed = rest.bytes().any(|b| b.is_ascii_digit()) || rest.contains("F-");
+                if !crate::partyname::company_sign(head) && !addressed {
+                    continue;
+                }
             }
-            label_run = false;
         }
         // Issue 526's review: a bare entry with no address and no lot word right before the value's first lot
         // entry is the list's heading (`Rabais. Lot 1) Exbrayat`, 1986857; `Attributaires. Lot 1) …`), not a
@@ -1154,9 +1156,12 @@ fn names_in_value_counted(value: &str, bounded: bool, authority: Option<&Authori
             && !seen_keyed
             && !segment.contains(',')
             && find_ascii_ci(segment, "lot").is_none()
-            && !crate::partyname::company_sign(segment)
+            && !company_label(trim_sentence_period(segment.trim()))
             && opens_lot.get(k + 1) == Some(&true)
-            && segments.get(k + 1).is_some_and(|next| opens_lot_one(next.trim_start()))
+            && segments.get(k + 1).is_some_and(|next| {
+                let next = next.trim_start();
+                opens_lot_one(next) || !crate::partyname::mentions_void(strip_lot_prefix(next))
+            })
         {
             continue;
         }
@@ -1234,9 +1239,30 @@ fn keyed_bar(name: &str) -> bool {
 }
 
 /// Issue 526's review: whether `text` holds a digit closed by `)` — a lot reference left in a name (`oder 2)
-/// X`) or a form item a value ran into (`V.1)`, `V.1.1)`).
+/// X`) or a form item a value ran into (`V.1)`, `V.1.1)`) — but not a parenthesised number, the French
+/// département or postcode after a supplier (`Manathan (52)`, 1569952; `Société Ansell - Cergy-Pontoise (95)`,
+/// 1580962: the final review).
 fn holds_reference_mark(text: &str) -> bool {
-    text.as_bytes().windows(2).any(|w| w[0].is_ascii_digit() && w[1] == b')')
+    let bytes = text.as_bytes();
+    (1..bytes.len()).any(|i| {
+        bytes[i] == b')' && bytes[i - 1].is_ascii_digit() && {
+            let mut j = i - 1;
+            while j > 0 && bytes[j - 1].is_ascii_digit() {
+                j -= 1;
+            }
+            !(j > 0 && bytes[j - 1] == b'(')
+        }
+    })
+}
+
+/// Issue 526's final review: whether `label` names a company — a legal form, or `société`, `entreprise` or
+/// `groupement` before a name — and is no heading: no award word (`Entreprise retenue`, `Société
+/// attributaire`) and not only descriptor words (`Groupement solidaire`). One test for a label before its lot
+/// list and for a bare entry before the list.
+fn company_label(label: &str) -> bool {
+    (crate::partyname::company_token(label) || crate::partyname::opens_with_company_noun(label))
+        && !crate::partyname::may_name_a_winner(label)
+        && !crate::partyname::generic_company_phrase(label)
 }
 
 /// Issue 526's third review: whether a lot entry opens the list at lot 1 (`Lot 1)`, `Lots 1) et 2)`, `lot
@@ -4205,6 +4231,31 @@ mod tests {
             "an addressed lot entry ends a company's own list"
         );
         assert_eq!(names("Spie Trindel. Lot 2: infructueux."), vec!["Spie Trindel"], "a heading opens the list at lot 1");
+        // The final review.
+        assert_eq!(names("Lot 1) Manathan (52); lot 2) Icob (14); lot 3) Quadrat (14)."), vec!["Manathan (52)", "Icob (14)", "Quadrat (14)"]);
+        assert_eq!(names("lot 55) Société Ansell - Cergy-Pontoise (95); lot 23) Société Baxter - Maurepas (78)"), vec![
+            "Société Ansell - Cergy-Pontoise (95)",
+            "Société Baxter - Maurepas (78)"
+        ]);
+        for value in [
+            "Société retenue. Lot 1) Dupont SA; lot 2) Martin SARL",
+            "Entreprise attributaire. Lot 1) Dupont SA; lot 2) Martin SARL",
+            "Groupement solidaire. Lot 1) Dupont SA; lot 2) Martin SARL",
+            "Entreprise retenue; Lot 1) Dupont SA; lot 2) Martin SARL",
+            "Rabais. Lot 2) Dupont SA; lot 3) Martin SARL",
+        ] {
+            assert_eq!(names(value), vec!["Dupont SA", "Martin SARL"], "a heading names nobody: {value}");
+        }
+        assert_eq!(
+            names("Société Onet Propreté: lot 7) Gard; lot 8) Hérault, Montpellier; lot 10) Var"),
+            vec!["Société Onet Propreté"],
+            "an unaddressed subject stays a subject"
+        );
+        assert_eq!(
+            names("Siemens SA: lots 1) et 3); lot 2) Philips SA, Suresnes; lot 4) Var"),
+            vec!["Siemens SA", "Philips SA"],
+            "a signed entry names its winner inside the list, and the list goes on"
+        );
         assert!(names("Rabais. Lot 1) Exbrayat").contains(&"Exbrayat".to_owned()));
         assert!(!names("Rabais. Lot 1) Exbrayat").contains(&"Rabais".to_owned()));
         let section = "SECTION V: AWARD OF CONTRACT\nContract No: Lot 3) Sans suite\nV.1)  Award and contract value\n\
