@@ -1121,14 +1121,25 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
     (
         "*",
         "notice_subtype",
-        "eForms notice subtype id, e.g. '16' (contract notice), '29' (contract award).",
+        "The causing notice's subtype code: the eForms subtype (OPP-070, e.g. '16' contract \
+         notice, '29' contract award; TED eForms and eForms-DE) or, on FTS, the UK form code, \
+         else the release tags joined with '+' (e.g. 'award+contract'), and NULL when the \
+         release has neither. NULL for the pre-eForms TED formats (text, internal-ojs, \
+         r2.0.8, r2.0.9) and DÖE sdk-0.1, which publish no subtype (issue 535). Their own \
+         document type is kept out of this column (issue 235). It is in notice_codes, \
+         field_id 'TED-TD_DOCUMENT_TYPE' (r2.0.8, r2.0.9), 'TXT-TD' (text), \
+         'TED-NAT_NOTICE' (internal-ojs) or 'SDK01-NoticeTypeCode' (DÖE sdk-0.1).",
     ),
     (
         "*",
         "original_lang",
-        "The causing notice's ORIGINAL language (ISO 639-2/T, e.g. 'DEU'), as the era \
-         published it — TED LG_ORIG, eForms BT-702, text-era OL. NULL where the notice \
-         did not say. The ?lang= fallback's third leg (ADR-0013 D3). The eForms era \
+        "The causing notice's ORIGINAL language, as the era published it — TED LG_ORIG, \
+         eForms BT-702, text-era OL, the eForms-DE 1.x and DÖE sdk-0.1 NoticeLanguageCode; \
+         FTS its release language, 'ENG' when the release names none. The code is mapped \
+         to uppercase ISO 639-2/T (e.g. 'DEU'). A published code the mapping does not \
+         recognise passes through uppercased, e.g. 'FR NL' on some bilingual Belgian TED \
+         notices. NULL where the notice states no language, as many DÖE sdk-0.1 notices \
+         do not (issue 535). The ?lang= fallback's third leg (ADR-0013 D3). The eForms era \
          is served in this language: TED's per-language renderings are machine \
          translations outside the bulk feed and are not ingested, so ?lang= picks \
          only among languages the publisher wrote (issue 341).",
@@ -1223,7 +1234,7 @@ fn is_epoch_column(column: &str) -> bool {
 /// The note for a column — an exact `(table, column)` match wins over a `"*"`
 /// (any-table) one, so a table can override the generic vocabulary, and both win
 /// over the derived epoch note so a genuine exception can state its own truth.
-fn column_note(table: &str, column: &str) -> Option<&'static str> {
+pub(super) fn column_note(table: &str, column: &str) -> Option<&'static str> {
     let matches = |t: &str| t == table || t == "*";
     COLUMN_NOTES
         .iter()
@@ -1307,6 +1318,24 @@ fn schema_limit_notes(timeout_secs: u64) -> Vec<String> {
              including a slow aggregate — is 408)."
         ),
     ]
+}
+
+/// Every hand-written sentence `/v1/sql/schema` serves — the table, column, epoch and
+/// standing notes — joined, so `docs.rs`'s retired-claims walk reads this surface
+/// too (issue 535 unit 2). The wrong `notice_subtype` note lived here, outside the
+/// two surfaces that walk read.
+#[cfg(test)]
+pub(super) fn served_schema_notes() -> String {
+    TABLE_NOTES
+        .iter()
+        .map(|&(_, note)| note)
+        .chain(COLUMN_NOTES.iter().map(|&(_, _, note)| note))
+        .chain([EPOCH_NOTE])
+        .chain(SCHEMA_NOTES.iter().copied())
+        .map(str::to_owned)
+        .chain(schema_limit_notes(15))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// The queryable schema: every allow-listed table and view with its columns,

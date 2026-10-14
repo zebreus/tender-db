@@ -826,7 +826,10 @@ pub struct Params {
     buyer: Option<i64>,
     /// Tenders where this Organization won at least one Lot.
     winner: Option<i64>,
-    /// Tenders this Organization submitted a bid on (a `tenderer`), won or not.
+    /// Tenders that name this Organization as a tenderer on a bid. Won or not only
+    /// where the source publishes losing bids (TED eForms, eForms-DE); FTS's bids
+    /// are its award suppliers, and the pre-eForms TED formats and DÖE sdk-0.1
+    /// publish no bids, so their wins are under `winner` only (issue 531).
     bidder: Option<i64>,
     status: Option<String>,
     min_value: Option<i64>,

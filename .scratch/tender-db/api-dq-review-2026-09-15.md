@@ -232,7 +232,7 @@ Grouped by lens. Claims are shortened; the full titles are in the campaign JSON.
 | **dq-country-stats** — alpha-3 country codes minted again on organizations after issue 319's fold (13 rows from sdk-1.10 BT-514); Kosovo under three codes | not recorded |
 | **dq-country-stats** — DÖE `buyer_country` NULL on 90–93 % of tenders every year 2023–2026 (TED 0.0 %), so per-country statistics are blind to the German portal | not recorded |
 | **dq-results-winners** — r208-era award results never linked to their lots: every result serves `lot=null` although the notice publishes LOT_NUMBER | not recorded |
-| **dq-results-winners** — `notice_subtype` null on every legacy-TED and DÖE sdk-0.1 version, so award notices cannot be identified through the API | not recorded |
+| **dq-results-winners** — `notice_subtype` null on every legacy-TED and DÖE sdk-0.1 version, so award notices cannot be identified through the API | Recorded in issue 535 (2026-10-14): null by construction, since those formats publish no subtype; their own document type is served in `notice_codes` and `/v1/notices/{id}/content`, and the served docs now say so. |
 | **dq-classifications** — TED-XML era: every additional CPV code served as `field=main`; the "additional" label never fires | not recorded |
 | **dq-classifications** — FTS UK6/UK7/UK12 rows serve no NUTS place although the release publishes region under `awards[].items[].deliveryAddresses` | not recorded |
 | **dq-classifications** — DÖE eForms-DE (E3) "Untranslated value (…)" free text served as a NUTS place code, then split on the comma by the list echo | not recorded |
@@ -243,7 +243,7 @@ Grouped by lens. Claims are shortened; the full titles are in the campaign JSON.
 | **dq-tender-identity** — `publication_id` exact match needs the era-specific zero-padding: official TED/OJS spellings (615938-2024, 001662-2010) miss | not recorded |
 | **dq-lots** — r209 per-lot estimated values (TED-VAL_OBJECT) parsed into notice_amounts and dropped by the fold; every r209 lot serves `value: null` | not recorded |
 | **dq-lots** — r209 per-lot award values filed as tender-scope `result_value` rows beside the procedure total, so summing doubles the award | not recorded |
-| **dq-lots** — r208 undivided contracts project zero Lots while r209 and eForms project one; /v1/lots empty for ~70–78 % of 2011–2015 tenders | not recorded |
+| **dq-lots** — r208 undivided contracts project zero Lots while r209 and eForms project one; /v1/lots empty for ~70–78 % of 2011–2015 tenders | Recorded in issue 535 (2026-10-14): r2.0.8 publishes no lot section for an undivided contract, and synthesising one would serve a Lot nobody published; the served docs now state the per-format rule. |
 | **dq-lots** — untitled legacy lots: 19 % of the 6.0M (r208) and 32 % of the 12.0M (r209) lot band serve `title: null` | not recorded |
 | **dq-organizations** — text-era winner extraction mints organizations out of form headings, price labels and contact lines (21.5 % of the newest provisional rows) | not recorded |
 | **dq-organizations** — one eForms notice mints one organization row per ORG section for the same (country, kind, identifier) | not recorded |
@@ -251,7 +251,7 @@ Grouped by lens. Claims are shortened; the full titles are in the campaign JSON.
 | **dq-organizations** — organization served as `provisional=false` with no identifier, contradicting the documented flag semantics | not recorded |
 | **dq-organizations** — placeholder strings `N/A` and `-` stand as high-mention Organizations, one per country | not recorded |
 | **dq-text-era** — 2010 text-era award notices name the winner under a label variant the extractor does not know; 89 % of a 2,000-notice window has no lot_results | not recorded |
-| **dq-text-era** — PIN-only text-era tenders (TD 0/M/P) served as kind `procedure` with `notice_subtype` null, indistinguishable from a call for competition | not recorded |
+| **dq-text-era** — PIN-only text-era tenders (TD 0/M/P) served as kind `procedure` with `notice_subtype` null, indistinguishable from a call for competition | `notice_subtype` half: recorded in issue 535 (2026-10-14), null by construction; the text era's type is `TXT-TD` in `notice_codes`. `kind` half: not recorded. |
 | **dq-multilingual** — `original_lang` serves raw non-ISO-639-2/T compound codes ("FR;NL", "FR NL", "DE IT", "GR"), spelled differently per era | not recorded |
 | **dq-r208-r209** — R2.0.9 award notices publish DATE_CONCLUSION_CONTRACT but the projection never reads it; award-date coverage collapses 93 % → 8 % → 0.07 % | not recorded |
 | **dq-r208-r209** — R2.0.7 (2011) notices: every organisation mention nameless because the name is published as TED-ORGANISATION direct text | not recorded |

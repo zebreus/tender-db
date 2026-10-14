@@ -1,6 +1,6 @@
 # 535 — the served docs misdescribe `lots`, `notice_subtype` and `original_lang` per source: an empty value is the source's silence, and no surface says so
 
-Status: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, rewrite the served descriptions of the three fields (S, docs only; gate with unit 2, deploy with the next batch).
+Status: ready-for-agent — 535 units 1-3 BUILT 2026-10-14 (the three fields rewritten on `/v1/openapi.json`, the `/v1/sql/schema` notes and `/docs`; the retired-claims walk now reads the schema notes; a positive-half test; the 2026-09-15 board rows point here; two-reviewer round applied; focused tests green; see "Unit 1 — built" to "Review round"). Next: gate + deploy with the 522/524 batch, then read the Verify.
 Kind: docs (the served contract): `crates/app/data/openapi.json` (`Tender` :969/:970/:974, `TenderDetail.lots` :986,
 the `/v1/lots` description :156), the `/v1/sql/schema` column notes (`COLUMN_NOTES`, `crates/app/src/v1/sql.rs:1121-1135`),
 and `/docs` "Coverage varies by era" (`crates/app/src/v1/docs.rs:690`). No data change.
@@ -34,8 +34,8 @@ Four lines: OpenAPI `Tender.notice_subtype`, `.lots`, `.original_lang`, then the
 a board edit; check both in place.
 - **done**: line 1 names who fills `notice_subtype` (eForms OPP-070, DE 1.x via its alias, FTS form code or release
   tag), says it is NULL for pre-eForms TED and DÖE sdk-0.1, and points at where those eras' document type is served.
-  Line 2 states the single-lot rule per format (0 for text era, internal-ojs 2008 and r2.0.8; 1 for r2.0.9, eForms
-  and FTS). Line 3 says what NULL means. Line 4 no longer reads "eForms notice subtype id".
+  Line 2 states the single-lot rule per format (0 for the text era, internal-ojs 2008 without a LOTS section and
+  r2.0.8 without a contract-notice lot annex; 1 for r2.0.9 and eForms; FTS 0 until a release lists `tender.lots`). Line 3 says what NULL means. Line 4 no longer reads "eForms notice subtype id".
 - **open (2026-10-14)**: `The source's own notice-subtype code for the current version.` / `How many Lots the current
   version publishes; 0 is normal for a single-lot procurement.` / `Language the current version was originally
   published in, uppercase ISO 639-2/T (ADR-0013).` / `eForms notice subtype id, e.g. '16' (contract notice), '29'
@@ -170,3 +170,82 @@ decision.
 Out of scope (decided, or worth weighing only inside a corpus rebuild): projecting the legacy TD / NAT_NOTICE /
 sdk-0.1 types into `notice_subtype` (235) or mapping `cn-standard` into it; synthesising a Lot for undivided
 text-era, internal-ojs or r2.0.8 contracts (reason above); stamping `DEU` on sdk-0.1 (344, owner decision).
+
+## Unit 1 — built (2026-10-14)
+
+**The `original_lang` read the unit asked for first.** A bounded read (`sq.sh`, the PK range 1,000,000–1,000,999
+joined to the current version and its notice, `LIMIT 40`) returned the 32 sdk-0.1 current versions. All 32 have
+`DEU`. Three were read through `/v1/notices/{id}/content`: 26891435 (tender 1000005), 26168402 (1000028) and
+26487223 (1000195). Each carries its own `SDK01-NoticeLanguageCode` `DEU` on PROCEDURE. So these are the notice's
+own language, and "NULL means the notice states no language" holds. In the code, a version's language is its
+causing notice's own (`NoticeState.original_lang` → `TenderVersion`) and is not carried forward. One rule the
+issue did not list: FTS writes the release `language`, or `en` when the release has none (`fts/parse.rs:88`), so
+an FTS row is never NULL. The text says so.
+
+**What is served now:**
+- `Tender.notice_subtype`, the `notice_subtype` note on `/v1/sql/schema` (the `*` note, so also on
+  `v_tender_notices` and `tender_versions`) and the `/docs` bullet say the same thing. The column holds the causing
+  notice's subtype: the eForms subtype (OPP-070; TED eForms, eForms-DE), or on FTS the UK form code, else the
+  release tags joined with `+`. It is NULL for text, internal-ojs, r2.0.8, r2.0.9 and DÖE sdk-0.1, which publish
+  no subtype. Those eras' own type is in `/v1/notices/{id}/content` and `notice_codes`, under
+  `TED-TD_DOCUMENT_TYPE`, `TXT-TD`, `TED-NAT_NOTICE` or `SDK01-NoticeTypeCode`. Checked: only `fts/parse.rs`, the
+  eForms parser and the DE 1.x alias (`project.rs`) produce `OPP-070-notice`.
+- `Tender.lots` states the per-format rule. 1 for a single-lot procurement on r2.0.9 (`OBJECT_DESCR` is a Lot,
+  `r209/rules.rs`) and on eForms (DÖE sdk-0.1 included). 0 on the text era, and for an undivided contract notice
+  or award on internal-ojs without a `LOTS` section or r2.0.8 without a lot annex. FTS serves 0 until a release
+  lists a lot (corrected in the review round below). Also lot-less: a standalone r2.0.9 F14 corrigendum, and an
+  eForms prior-information notice with no lot or part section. Lot-less Tenders have no row on `/v1/lots` and are
+  on `/v1/tenders`. The count is written as what the current version "carries": lots carry forward by key across
+  the chain (`project.rs`, `previous.map(|p| p.lots.clone())`), and it includes LotsGroups and Parts (the count is
+  over `tender_version_lots`). The eForms PIN case is written as a rule ("no lot or part section"), not as
+  subtypes 1 and 3, which are only what was observed. `TenderDetail.lots` ("Lot count.") and the `/v1/lots`
+  description name the lot-less cases and point at `/v1/tenders`.
+- `Tender.original_lang` and the SQL note say what NULL means ("the notice states no language", many DÖE sdk-0.1
+  notices) and how FTS fills it. The SQL note's source list adds the DE 1.x and sdk-0.1 `NoticeLanguageCode`.
+- `/docs` → "Coverage varies by era" has one new bullet with all three rules.
+
+No percentage is served anywhere.
+
+## Unit 2 — built (2026-10-14)
+
+- RETIRED in `no_served_surface_repeats_a_retired_claim` gains `eForms notice subtype id` and
+  `0 is normal for a single-lot procurement`.
+- The walk now reads `/v1/sql/schema` as a third surface, through `sql::served_schema_notes()` (`#[cfg(test)]`):
+  every `TABLE_NOTES`, `COLUMN_NOTES`, `EPOCH_NOTE` and `SCHEMA_NOTES` text plus `schema_limit_notes`. Without it
+  the new subtype entry would check nothing. `sql::column_note` is now `pub(super)` so the positive half can read
+  one column's served note.
+- Positive half: `the_docs_say_which_sources_leave_lots_subtype_and_language_empty`. It reads each field's own
+  text, because "FTS" and "sdk-0.1" occur elsewhere on every surface. Those texts are the OpenAPI field, the
+  `v_tenders` schema note, and the one `/docs` coverage bullet that names `notice_subtype`. The subtype texts must
+  name FTS, sdk-0.1, r2.0.9, `notice_codes` and the four field ids. The lots texts must name r2.0.9, r2.0.8,
+  internal-ojs, the text era, F14, `/v1/lots` and `/v1/tenders`. `/v1/lots` and `TenderDetail.lots` must name
+  r2.0.8 and F14 and say "no row". The language texts must say "null where the/that notice states no language" and
+  name sdk-0.1.
+
+## Unit 3 — built (2026-10-14)
+
+In `.scratch/tender-db/api-dq-review-2026-09-15.md`, "not recorded" is replaced with a pointer to 535 on three
+rows: dq-results-winners `notice_subtype`, dq-lots "r208 undivided contracts project zero Lots", and the
+`notice_subtype` half of dq-text-era PIN-only. That row's `kind` half still reads "not recorded".
+`external-review-2026-09-07.md:24` is unchanged.
+
+## Review round (2026-10-14, two reviewers)
+
+The unit 1 text above was corrected where the reviewers found it overclaimed:
+- **FTS `lots`:** FTS does not always serve 1. `fts/parse.rs` makes a Lot only from `tender.lots[]`, so an FTS
+  Tender serves 0 until one of its releases lists a lot (8781543, 005947-2022, an `award+contract` notice, serves
+  0). The texts now say so, and FTS is on the lot-less lists of `Tender.lots`, `TenderDetail.lots` and `/v1/lots`.
+- **internal-ojs and r2.0.8 PINs:** a supplies/services prior-information notice's object section is a Lot there
+  (`OBJECT_SUPPLY_SERVICE_PRIOR_INFORMATION`, `r209/rules.rs`; 3871629 serves 1). The 0 rule is now stated for
+  an undivided contract notice or award only.
+- **`notice_subtype`:** an FTS release with neither a form code nor tags writes no `OPP-070-notice`, so NULL is
+  possible there too; the texts say so. The legacy NULL is now described as the column's scope (issue 235 keeps
+  their document type out of it), not "the source's silence". The `/docs` bullet notes once that r2.0.8 includes
+  the R2.0.7 files filed under that profile.
+- **`original_lang`:** "uppercase ISO 639-2/T" is qualified on `Tender.original_lang` and the SQL note: a code
+  `normalize_lang` does not recognise passes through uppercased (e.g. `FR NL` on some bilingual Belgian TED
+  notices). The dq-multilingual board row is still "not recorded".
+- **Tests:** the retired walk squashes whitespace on every surface. The positive test pins a phrase per corrected
+  sentence (e.g. "on FTS, the UK form code", "which publish no subtype", "sdk-0.1 notices do not") rather than
+  tokens another sentence also carries, after dropping `<code>` tags and backticks so the `/docs` and OpenAPI
+  spellings match. Deleting any one corrected sentence now fails it. Focused tests green.

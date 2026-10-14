@@ -1,6 +1,6 @@
 # 531 — `?bidder=` is not a superset of `?winner=` for sources without a bid graph, although the served contract says it is
 
-Status: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, correct the four copies of the "superset of winner" claim (S).
+Status: ready-for-agent — 531 unit 1 BUILT 2026-10-14 (the "superset of winner" claim corrected on `/docs` and `/v1/openapi.json`, and in the `read.rs` and `api.rs` comments; RETIRED guard plus a positive-half test; two-reviewer round applied; focused tests green; see "Unit 1 — built"). Next: gate + deploy with the 522/524 batch, then read the Verify (expect outcome (a) until unit 2 decides). Then unit 2, the decision.
 Kind: docs (the served contract), plus an API-semantics decision
 Relates to:
 - 217 (RESOLVED 2026-08-16/17): shipped `bidder=` with "a superset of `?winner=`" as its acceptance line. It was
@@ -85,8 +85,9 @@ Measured 2026-10-14 (bounded reads, by the verifier and the refute):
 - **Not measured:** the corpus-wide share of winner rows with no tenderer row. That needs a corpus scan, which has
   no compliant path from the agent. An in-app census could produce it if unit 2 needs the number.
 
-The gap follows the schema, not the date. TED R2.0.9 award notices run to October 2023, and DÖE still publishes
-sdk-0.1 in 2026.
+The gap follows the schema, not the date. TED R2.0.9 award notices run into 2024 (8536068, 336327-2024, published
+2024-06-07, 60 winners, 0 bids; the "October 2023" in the first sample was only that sample's edge), and DÖE still
+publishes sdk-0.1 in 2026.
 
 ### What the external review got wrong
 
@@ -108,7 +109,8 @@ sdk-0.1 in 2026.
    "An organization named as a tenderer on a published bid (TED eForms, eForms-DE), won or not. On FTS, an award
    supplier only: FTS publishes no losing bidders. Legacy TED (up to October 2023) and DÖE sdk-0.1 publish winners
    without bids, so a win there appears under `winner` only. To get every tender an organization took part in,
-   query both." If unit 2 later picks (b) or (c), unit 2 rewrites this sentence again. Until then, the served
+   query both." (As built, the date became the format list and "query both" was narrowed; see "Unit 1 — built".)
+   If unit 2 later picks (b) or (c), unit 2 rewrites this sentence again. Until then, the served
    claim is false today and this fix is correct.
 2. **Decide whether `bidder=` should also count winners (M, measure first).** A winner did submit a tender, so the
    inference is sound. Record the decision here. CONTEXT.md line 59 lists `bidder` as a participation role, so a
@@ -140,3 +142,40 @@ sdk-0.1 in 2026.
      (c), or is pinned as absent under (a), next to the documented wording;
    - an FTS fixture whose `bidder=` set equals its `winner=` set, so "won or not" cannot drift back over FTS;
    - an eForms fixture with a losing tenderer: present under `bidder=`, absent under `winner=`.
+
+## Unit 1 — built (2026-10-14)
+
+The re-grep for "superset of" in `crates/` and `docs/` found the four copies listed above and one more: the doc
+comment of `tenders_can_be_filtered_by_bidder` (`crates/app/tests/api.rs`). The other hits (`project.rs:4422`,
+`partyname.rs`, `canonical.rs`, `read.rs:2521`, two store tests, `operations.md`) describe other sets and are
+correct. No other copy appeared.
+- **Served:** the `/docs` bidder row (`docs.rs`) and `components.parameters.bidder` (`openapi.json`) now read:
+  "Organization id named as a tenderer on a published bid (TED eForms, eForms-DE), won or not. On FTS, an award
+  supplier only: FTS publishes no losing bidders. The pre-eForms TED formats (text, internal-ojs, r2.0.8, r2.0.9)
+  and DÖE sdk-0.1 publish winners without bids, so a win there appears under `winner` only. To find every tender
+  where an organization is named as a tenderer or a winner, query both (issue 531)." The OpenAPI copy says "a
+  published bid of the Tender". (Wording after the review round below.)
+- **Comments:** the `Filter.bidder` doc (`read.rs`) names the source of bid rows per format. The seed-precedence
+  comment no longer claims "winner rows ⊆ bidder rows". It now says the precedence is an order, not a containment.
+  The `api.rs` doc says `bidder` does not find every winner.
+- **Guard:** RETIRED in `no_served_surface_repeats_a_retired_claim` gains `a superset of winner` (the OpenAPI
+  spelling) and `a superset of <code>winner</code>` (the `/docs` HTML spelling). The positive half is the new test
+  `the_docs_say_bidder_misses_the_wins_of_sources_without_bids`. It reads the bidder row and the parameter, and
+  each must carry the corrected sentences as phrases (eForms "won or not", the FTS award-supplier sentence, the
+  pre-eForms format list with sdk-0.1, and the narrowed "query both" with its buyer carve-out).
+- **Checked against the code for the wording:** the filter SQL (`read.rs`: `winner` reads
+  `tender_version_result_winners`, `bidder` reads `tender_version_bid_parties` with role `tenderer`).
+  `read_results` (`project.rs`) returns early into `read_legacy_results` or `read_sdk01_results`, and neither
+  pushes a bid; only the eForms path pushes a `RawBid` per `LotTender`. `fts/parse.rs` builds one
+  `LotTender` + `TenderingParty` per `awards[].suppliers[]` entry. The rule is by format (`is_legacy_profile`:
+  text, internal-ojs, `ted-export*`), not by date.
+- **Not done here:** unit 2's decision and unit 3's behaviour fixtures.
+- **Review round (2026-10-14, two reviewers):** the first draft said "Legacy TED (up to October 2023)", but R2.0.9
+  award notices with winners and no bids ran into 2024 (8536068, 336327-2024, published 2024-06-07), so the text
+  now names the formats instead. "To get every tender an organization took part in" overclaimed, since no query
+  finds a losing bid that was never published; it now reads "To find every tender where an organization is named
+  as a tenderer or a winner". The `/docs` lookup example ("everything they ever bid on" over a lone `?bidder=`)
+  now asks `?winner=` and `?bidder=`, and that phrase joined RETIRED. The `Params.bidder` comment (`v1/mod.rs`)
+  no longer says "won or not" for every source. The retired walk now squashes whitespace on every surface, so a
+  retired sentence wrapped across source lines is still caught. The positive test now pins one phrase per
+  sentence of the bidder row, not single tokens that another sentence also carries. Focused tests green.

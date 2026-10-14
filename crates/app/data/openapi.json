@@ -153,7 +153,7 @@
       "get": {
         "tags": ["collections"],
         "summary": "List Lots",
-        "description": "Lots — subdivisions of Tenders. Same filters as every collection; `tender` restricts to one Tender's Lots. SSE-capable.",
+        "description": "Lots — subdivisions of Tenders. Same filters as every collection; `tender` restricts to one Tender's Lots. SSE-capable. A Tender whose notices published no lot section (the text era; internal-ojs 2008 without a `LOTS` section; r2.0.8 without a contract-notice lot annex, since an r2.0.8 award notice carries none; a standalone r2.0.9 F14 corrigendum; an eForms prior-information notice without lots; an FTS Tender whose releases list no `tender.lots`) has no row here: find it on /v1/tenders (issue 535).",
         "operationId": "listLots",
         "parameters": [
           { "$ref": "#/components/parameters/source" },
@@ -746,7 +746,7 @@
       "bidder": {
         "name": "bidder",
         "in": "query",
-        "description": "Organization id that submitted a bid (a tenderer) on the Tender, won or not — a superset of winner.",
+        "description": "Organization id named as a tenderer on a published bid of the Tender (TED eForms, eForms-DE), won or not. On FTS, an award supplier only: FTS publishes no losing bidders. The pre-eForms TED formats (text, internal-ojs, r2.0.8, r2.0.9) and DÖE sdk-0.1 publish winners without bids, so a win there appears under winner only. To find every tender where an organization is named as a tenderer or a winner, query both; on the formats without bids, an award to the tender's own buyer is in neither (issue 531).",
         "schema": { "type": "integer", "format": "int64" }
       },
       "status": {
@@ -966,12 +966,12 @@
           "version": { "type": "integer", "description": "The current version's sequence number in this Tender's chain (ADR-0001)." },
           "publication_id": { "type": "string", "nullable": true, "description": "Publication number of the notice that caused the current version, e.g. `00710890-2023`." },
           "procedure_key": { "type": "string", "nullable": true, "description": "The grouping key binding this chain's notices into one Tender; null for an island." },
-          "notice_subtype": { "type": "string", "nullable": true, "description": "The source's own notice-subtype code for the current version." },
-          "original_lang": { "type": "string", "nullable": true, "description": "Language the current version was originally published in, uppercase ISO 639-2/T (ADR-0013)." },
+          "notice_subtype": { "type": "string", "nullable": true, "description": "The subtype code of the notice that caused the current version: the eForms subtype (OPP-070, e.g. `16`, `29`; TED eForms and eForms-DE) or, on FTS, the UK form code, else the release tags joined with `+` (e.g. `award+contract`), and null when the release has neither. Null for the pre-eForms TED formats (text, internal-ojs, r2.0.8, r2.0.9) and DÖE sdk-0.1, which publish no subtype (issue 535). Their own document type is kept out of this column (issue 235). It is in /v1/notices/{id}/content and in `notice_codes` on /v1/sql, field `TED-TD_DOCUMENT_TYPE` (r2.0.8, r2.0.9), `TXT-TD` (text), `TED-NAT_NOTICE` (internal-ojs) or `SDK01-NoticeTypeCode` (DÖE sdk-0.1)." },
+          "original_lang": { "type": "string", "nullable": true, "description": "The language the notice that caused the current version says it was originally published in, mapped to uppercase ISO 639-2/T (ADR-0013). A published code the mapping does not recognise passes through uppercased, e.g. `FR NL` on some bilingual Belgian TED notices. Null where that notice states no language, as many DÖE sdk-0.1 notices do not (issue 535). FTS serves the release's language, English when the release names none." },
           "dispatched_at": { "type": "string", "nullable": true, "description": "When the buyer dispatched the notice for publication — earlier than published_at. Same rendering rule as published_at." },
           "submission_deadline": { "type": "string", "format": "date-time", "nullable": true, "description": "The instant deadline_after/deadline_before filter on and sort=deadline orders by." },
           "submission_deadline_scope": { "type": "string", "nullable": true, "description": "Which scope submission_deadline came from (issue 370): `procedure` for the procedure's own date, `lot` when the elected deadline is a lot-level date — the head election takes the newest over both scopes. Null exactly when submission_deadline is. Whether the newest notice republished the date or the row carries it forward from an earlier version is not on the row; see /docs → caveats → Dates." },
-          "lots": { "type": "integer", "description": "How many Lots the current version publishes; 0 is normal for a single-lot procurement." },
+          "lots": { "type": "integer", "description": "How many Lots (LotsGroups and Parts included) the current version carries: every one the Tender's notices published up to it. Whether a single-lot procurement serves 1 or 0 depends on the format (issue 535). It serves 1 on r2.0.9 (its object description is a Lot) and on eForms (DÖE sdk-0.1 included). It serves 0 on the text era (no lot structure), on internal-ojs 2008 without a `LOTS` section, and on r2.0.8 unless a contract notice published a lot annex (an r2.0.8 award notice carries no lot section, divided or not): the source publishes no lot, and none is invented. FTS makes a Lot only from a release's `tender.lots`, so an FTS Tender serves 0 until one of its releases lists a lot; award, contract and tenderUpdate releases often list none. Also lot-less: a Tender that is only an r2.0.9 F14 corrigendum, and an eForms prior-information notice with no lot or part section. A lot-less Tender has no row on /v1/lots; find it on /v1/tenders." },
           "value": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/Money" }], "description": "Headline value, or null when none was published." }
         },
         "additionalProperties": true
@@ -983,7 +983,7 @@
             "type": "object",
             "description": "The Tender plus its satellites.",
             "properties": {
-              "lots": { "type": "integer", "description": "Lot count." },
+              "lots": { "type": "integer", "description": "Lot count, as on the Tender row. 0 means no notice of the Tender published a lot section (the text era; internal-ojs 2008 without a `LOTS` section; r2.0.8 without a contract-notice lot annex, since an r2.0.8 award notice carries none; a standalone r2.0.9 F14 corrigendum; an eForms prior-information notice without lots; an FTS Tender whose releases list no `tender.lots`), so the Tender has no row on /v1/lots (issue 535)." },
               "lot_details": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
               "texts": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
               "amounts": { "type": "array", "items": { "type": "object", "additionalProperties": true } },

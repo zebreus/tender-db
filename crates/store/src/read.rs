@@ -181,8 +181,13 @@ pub struct Filter {
     pub buyer: Option<i64>,
     /// Canonical Organization id that won at least one Lot of the Tender.
     pub winner: Option<i64>,
-    /// Canonical Organization id that submitted a bid (role `tenderer`) on the
-    /// Tender — a superset of `winner` (issue 217).
+    /// Canonical Organization id named as a tenderer (role `tenderer`) on a bid of
+    /// the Tender (issue 217). Bid rows exist only where the projection builds a bid
+    /// graph, so not every winner is a bidder (issue 531): TED eForms and eForms-DE
+    /// publish losing tenderers too; FTS's bids are synthesised from the award
+    /// suppliers (`fts/parse.rs`), so there bidders are the winners; the legacy TED
+    /// and DÖE sdk-0.1 results paths (`read_legacy_results`, `read_sdk01_results`)
+    /// write no bid row, so their wins are under `winner` only.
     pub bidder: Option<i64>,
     pub status: Option<Status>,
     pub min_value: Option<i64>,
@@ -1111,7 +1116,8 @@ fn version_predicates(
     }
     if let Some(bidder) = f.bidder {
         // Any org that SUBMITTED a bid (role `tenderer`, verified against prod), won
-        // or not — the competitor-history reverse-lookup (issue 217). Subcontractors
+        // or not where the source publishes bids (eForms); FTS names only its award
+        // suppliers (issue 531) — the competitor-history reverse-lookup (issue 217). Subcontractors
         // are named in a bid but did not submit it, so they are excluded.
         q.push(
             &format!(" AND EXISTS (SELECT 1 FROM tender_version_bid_parties bp
@@ -1227,8 +1233,10 @@ fn version_predicates(
 /// joins the driven table to it. The seed is a SUPERSET of the true matches — the
 /// untouched `EXISTS` predicates still enforce the role narrowing and the
 /// current-version constraint — so the result is byte-identical to the walk, only
-/// bounded by the org's participation count instead of the corpus. Precedence is by
-/// expected selectivity (winner rows ⊆ bidder rows ⊆ a frequent buyer's), but any
+/// bounded by the org's participation count instead of the corpus. Precedence is
+/// winner, then bidder, then buyer. It is an order, not a containment: neither the
+/// winner nor the bidder row set contains the other (legacy TED and DÖE sdk-0.1 wins
+/// have no bid row, eForms losing tenderers have no winner row, issue 531). Any
 /// present filter is a correct seed because the `EXISTS` set, not the seed, decides
 /// membership.
 ///

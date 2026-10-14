@@ -2804,8 +2804,10 @@ async fn notice_detail_carries_the_quarantine_field() {
 }
 
 /// Issue 217-C: a Tender is reachable by an org that SUBMITTED a bid on it (a
-/// tenderer), won or not — the competitor-history reverse-lookup, a superset of
-/// `winner`. Honoured on tenders/lots, named ignored elsewhere (issue 118), and an
+/// tenderer), won or not where the source publishes bids (FTS names only its award
+/// suppliers) — the competitor-history reverse-lookup. It does not find
+/// every winner: a source that publishes no bids has no tenderer rows (issue 531).
+/// Honoured on tenders/lots, named ignored elsewhere (issue 118), and an
 /// org that bid on nothing short-circuits to an empty page (issue 219 / reachable()).
 #[tokio::test]
 async fn tenders_can_be_filtered_by_bidder() {

@@ -168,7 +168,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">cpv</td><td>CPV code prefix, e.g. <code>45</code> (construction).</td></tr>
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot &mdash; excluding awards where the winner is the tender's own buyer (<code>is_buyer</code>, see the <a href="#tender-detail-buyer">tender detail</a>).</td></tr>
-  <tr><td class="ep">bidder</td><td>Organization id that submitted a bid on at least one Lot — won or not, a superset of <code>winner</code>.</td></tr>
+  <tr><td class="ep">bidder</td><td>Organization id named as a tenderer on a published bid (TED eForms, eForms-DE), won or not. On FTS, an award supplier only: FTS publishes no losing bidders. The pre-eForms TED formats (text, internal-ojs, r2.0.8, r2.0.9) and DÖE sdk-0.1 publish winners without bids, so a win there appears under <code>winner</code> only. To find every tender where an organization is named as a tenderer or a winner, query both; on the formats without bids, an award to the tender's own buyer is in neither (issue 531).</td></tr>
   <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline). On <code>/v1/lots</code> the deadline may be the procedure's rather than the lot's &mdash; see <a href="#caveats">caveats &rarr; Dates</a>.</td></tr>
   <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the TENDER's elected headline figure converted to EUR at its publication date (on <code>/v1/lots</code> too: the bound reads the Tender's figure, not the lot's own <code>value</code>) (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount never matches a value bound.</td></tr>
   <tr><td class="ep">currency</td><td>ISO&nbsp;4217 code, case-insensitive (e.g. <code>EUR</code>, <code>sek</code>) — Tenders/Lots whose current version publishes at least one amount in that currency, <em>as published</em> &mdash; any amount row, including the partner-only award-notice framework values (issue 506).</td></tr>
@@ -272,8 +272,10 @@ a company name — resolve directly, without knowing any internal id:</p>
   <li><code>identifier</code> matches the official identifier <em>value</em>; <code>kind</code> names its scheme. This is the front door to participation history: resolve the identifier to a canonical org id, then ask <code>/v1/tenders?buyer=</code>, <code>?winner=</code> or <code>?bidder=</code> with it. An identifier can resolve to MORE THAN ONE canonical org — the identity index is deliberately not unique, and a shared VAT (an Organschaft) or an unfolded duplicate both occur — so take every id the lookup returns rather than the first (issue 329). It also finds an identifier a merge folded into an organization — a PPON whose organization was merged into the company-number one, another spelling of one register key: the survivor lists those in <code>merged_identifiers</code>, and a page that reached an organization that way says so in <code>"resolved_filters": {"identifier": {"asked": "GBPPONPWYP8439MZWY", "merged_into": [5718658]}}</code> (an array, for the same reason). With <code>kind</code>, the kind of the identifier that matched is what must agree. The value is matched as stored (normalised: upper-case letters and digits, no separators), so <code>GB-PPON-PWYP-8439-MZWY</code> is asked as <code>GBPPONPWYP8439MZWY</code>.</li>
   <li><code>name_prefix</code> is a prefix match on the organization's name, case-insensitive across the whole of Unicode (<code>müller</code>, <code>MÜLLER</code> and <code>Müller</code> all match); runs of whitespace and a trailing <code>.</code>, <code>,</code> or <code>;</code> do not matter (<code>ACME Ltd.</code> finds <code>ACME Ltd</code>), and switches the response to <strong>name order</strong> (id order otherwise breaks name-ordered pagination). It composes with <code>country=</code>/<code>kind=</code>; an empty prefix is <code>400</code>.</li>
 </ul>
-<pre><code># VAT → canonical org → everything they ever bid on
+<pre><code># VAT → canonical org → the tenders naming it as a winner, then as a tenderer
+# (ask both: a source without published bids serves its wins under winner only)
 curl -s "https://tenders.zebreus.click/v1/organizations?identifier=RO42283735"
+curl -s "https://tenders.zebreus.click/v1/tenders?winner=2"
 curl -s "https://tenders.zebreus.click/v1/tenders?bidder=2"</code></pre>
 
 <h2 id="detail">Tender detail</h2>
@@ -699,6 +701,30 @@ rates and the quarantine resolution ledger.</p>
   of award notices name nobody; where a winner <em>is</em> published it is resolved.
   Winner-coverage numbers on the dashboard exclude publisher silence from the
   denominator rather than reporting it as extraction failure.</li>
+  <li><strong>Whether <code>lots</code>, <code>notice_subtype</code> or
+  <code>original_lang</code> is empty follows the format</strong> (issue 535).
+  <code>notice_subtype</code> is the eForms subtype (OPP-070; TED eForms, eForms-DE) or,
+  on FTS, the UK form code, else the release tags joined with <code>+</code>, and null
+  when the release has neither. It is null for the pre-eForms TED formats (text,
+  internal-ojs, r2.0.8, r2.0.9) and DÖE sdk-0.1, which publish no subtype. Their own
+  document type is kept out of this column (issue 235). It is in
+  <code>/v1/notices/{id}/content</code> and in <code>notice_codes</code> on
+  <code>/v1/sql</code>, field <code>TED-TD_DOCUMENT_TYPE</code> (r2.0.8, r2.0.9),
+  <code>TXT-TD</code> (text), <code>TED-NAT_NOTICE</code> (internal-ojs) or
+  <code>SDK01-NoticeTypeCode</code> (DÖE sdk-0.1). In this bullet, r2.0.8 includes the
+  R2.0.7 files filed under that profile. A single-lot procurement serves <code>lots: 1</code> on
+  r2.0.9 (its object description is a Lot) and on eForms. It serves <code>lots: 0</code>
+  on the text era (no lot structure), on internal-ojs 2008 without a <code>LOTS</code>
+  section, and on r2.0.8 unless a contract notice published a lot annex: an r2.0.8 award
+  notice carries no lot section, divided or not. FTS makes a
+  Lot only from a release's <code>tender.lots</code>, so an FTS Tender serves 0 until one
+  of its releases lists a lot; award, contract and tenderUpdate releases often list none.
+  A Tender that is only an r2.0.9 F14 corrigendum, or an eForms prior-information notice
+  with no lot or part, has no Lot either. None is invented for them, so they have no row
+  on <code>/v1/lots</code>: find them on <code>/v1/tenders</code>.
+  <code>original_lang</code> is null where the notice states no language, as many DÖE
+  sdk-0.1 notices do not. FTS serves the release's language, English when the release
+  names none.</li>
   <li>About 2,650 award notices name the <strong>buyer as its own contractor</strong>
   (census, 2026-10): served as published with <code>is_buyer: true</code> on the winner,
   and left out of <code>?winner=</code> (see the <a href="#tender-detail-buyer">tender
@@ -1061,7 +1087,8 @@ mod tests {
     /// `/v1/openapi.json` got none, so the same sentence sat on prod for another
     /// eight days and was re-reported by the next reader to look.
     ///
-    /// This is that detector for the two remaining surfaces. It is a prose guard
+    /// This is that detector for the remaining surfaces (`/v1/sql/schema`'s notes
+    /// joined them in issue 535). It is a prose guard
     /// and deliberately narrow — it cannot prove a sentence is right, only that a
     /// specific retired reading does not come back. Narrow is the point: every
     /// entry below was served as fact and measurably false.
@@ -1077,8 +1104,25 @@ mod tests {
             // Issue 463: served from issue 55 (2026-08-09) on, after the snapshot
             // became keyset pages with a pooled read per page.
             ("single consistent transaction", "the SSE snapshot is paged, one read per page, at-least-once (issue 55)"),
+            // Issue 531: served from issue 217 on. Legacy TED and DÖE sdk-0.1 publish
+            // winners without bids, and FTS's bids are its award suppliers.
+            ("a superset of winner", "legacy TED and DÖE sdk-0.1 wins have no bid row (issue 531)"),
+            ("a superset of <code>winner</code>", "legacy TED and DÖE sdk-0.1 wins have no bid row (issue 531)"),
+            // Issue 535: FTS writes its form code or release tags into the column, and
+            // the pre-eForms TED eras and DÖE sdk-0.1 leave it NULL.
+            ("eForms notice subtype id", "FTS fills it too, and legacy TED and DÖE sdk-0.1 publish none (issue 535)"),
+            ("0 is normal for a single-lot procurement", "a single-lot tender serves 0 or 1 by format (issue 535)"),
+            // Issue 531: the /docs lookup example promised the whole bid history
+            // from `?bidder=` alone.
+            ("everything they ever bid on", "?bidder= misses the wins of sources without published bids (issue 531)"),
         ];
-        for (surface, text) in [("/docs", PAGE), ("/v1/openapi.json", SPEC)] {
+        // Issue 535 unit 2: the `/v1/sql/schema` notes are a served surface too; the
+        // wrong subtype note lived there, where this walk did not look.
+        let schema = crate::v1::sql::served_schema_notes();
+        for (surface, text) in [("/docs", PAGE), ("/v1/openapi.json", SPEC), ("/v1/sql/schema", schema.as_str())] {
+            // Whitespace squashed: `/docs` wraps its prose mid-phrase, so a retired
+            // sentence broken across two source lines must still be caught.
+            let text = squash(text);
             for (retired, why) in RETIRED {
                 assert!(
                     !text.contains(retired),
@@ -1101,6 +1145,191 @@ mod tests {
         for (surface, text) in [("/docs", PAGE), ("/v1/openapi.json", SPEC)] {
             assert!(!text.contains("no interrupt"), "{surface} must not claim the engine cannot stop a query");
             assert!(text.contains("issue 425"), "{surface}'s 408 must say the query is stopped at the limit");
+        }
+    }
+
+    /// Whitespace runs collapsed to one space, so a phrase matches however the
+    /// source wraps it.
+    fn squash(text: &str) -> String {
+        text.split_whitespace().collect::<Vec<_>>().join(" ")
+    }
+
+    /// A served text reduced to its words for phrase pins: `<code>` tags and
+    /// backticks dropped (the `/docs` and OpenAPI spellings of one sentence then
+    /// agree), whitespace squashed, lowercased (the SQL notes write NULL).
+    fn plain(text: &str) -> String {
+        squash(&text.replace("<code>", "").replace("</code>", "").replace('`', "")).to_lowercase()
+    }
+
+    /// Asserts each phrase is in `text`. Each phrase is one only its own sentence
+    /// contains, so deleting any one corrected sentence fails here.
+    fn assert_says(surface: &str, text: &str, phrases: &[&str]) {
+        let text = plain(text);
+        for phrase in phrases {
+            assert!(text.contains(phrase), "{surface} must say {phrase:?}:\n{text}");
+        }
+    }
+
+    /// Issue 531, the positive half of the retired "a superset of winner": both
+    /// surfaces say which sources serve a win under `winner` only, and that a
+    /// fuller participation history takes both filters. Read from the `bidder`
+    /// row and parameter, not the whole surface, so a mention elsewhere cannot
+    /// satisfy it. One phrase per sentence of the row.
+    #[test]
+    fn the_docs_say_bidder_misses_the_wins_of_sources_without_bids() {
+        let start = PAGE.find("<td class=\"ep\">bidder</td>").expect("/docs has a bidder filter row");
+        let docs = &PAGE[start..start + PAGE[start..].find("</tr>").expect("row end")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["parameters"]["bidder"]["description"]
+            .as_str()
+            .expect("the bidder parameter is described");
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi)] {
+            assert_says(
+                &format!("{surface}'s bidder text"),
+                text,
+                &[
+                    "(ted eforms, eforms-de), won or not",
+                    "on fts, an award supplier only: fts publishes no losing bidders",
+                    "the pre-eforms ted formats (text, internal-ojs, r2.0.8, r2.0.9) and döe sdk-0.1 \
+                     publish winners without bids, so a win there appears under winner only",
+                    "to find every tender where an organization is named as a tenderer or a winner, query both; \
+                     on the formats without bids, an award to the tender's own buyer is in neither",
+                ],
+            );
+        }
+        // The lookup example under "Lookups by real-world key" asks both filters.
+        let start = PAGE.find("# VAT → canonical org").expect("/docs has the identifier lookup example");
+        let example = &PAGE[start..start + PAGE[start..].find("</code></pre>").expect("example end")];
+        for ask in ["/v1/tenders?winner=2", "/v1/tenders?bidder=2"] {
+            assert!(example.contains(ask), "the /docs lookup example must ask {ask:?}:\n{example}");
+        }
+    }
+
+    /// Issue 535 unit 2, the positive half of the retired "eForms notice subtype
+    /// id" and "0 is normal for a single-lot procurement": every surface says who
+    /// fills `notice_subtype` (FTS too) and who leaves it NULL (sdk-0.1) and where
+    /// those eras' own type is, the per-format `lots` rule, and what a NULL
+    /// `original_lang` means.
+    ///
+    /// Read from each field's own text — the OpenAPI field, the `/v1/sql/schema`
+    /// note, and on `/docs` the one coverage bullet that names `notice_subtype` —
+    /// because "FTS" and "sdk-0.1" already occur elsewhere on every surface. Each
+    /// pin is a phrase only its own corrected sentence contains, not a token
+    /// another sentence of the same text also carries, so a rewrite that deletes
+    /// any one sentence fails here.
+    #[test]
+    fn the_docs_say_which_sources_leave_lots_subtype_and_language_empty() {
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let described = |value: &serde_json::Value, what: &str| -> String {
+            value.as_str().unwrap_or_else(|| panic!("{what} is described")).to_owned()
+        };
+        let field = |name: &str| {
+            described(&spec["components"]["schemas"]["Tender"]["properties"][name]["description"], name)
+        };
+        let note = |column: &str| {
+            crate::v1::sql::column_note("v_tenders", column)
+                .unwrap_or_else(|| panic!("v_tenders.{column} has a /v1/sql/schema note"))
+                .to_owned()
+        };
+        let start = PAGE.find("<h3>Coverage varies by era</h3>").expect("/docs has the coverage caveats");
+        let section = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h3>").expect("a section follows it")];
+        let docs = section
+            .split("<li>")
+            .find(|item| item.contains("<code>notice_subtype</code>"))
+            .expect("/docs's coverage caveats carry a notice_subtype bullet")
+            .to_owned();
+
+        for (surface, text) in [
+            ("/docs", docs.clone()),
+            ("Tender.notice_subtype", field("notice_subtype")),
+            ("/v1/sql/schema notice_subtype", note("notice_subtype")),
+        ] {
+            assert_says(
+                surface,
+                &text,
+                &[
+                    // Who fills it, FTS included, and FTS's own NULL.
+                    "on fts, the uk form code, else the release tags joined with",
+                    "null when the release has neither",
+                    // Who leaves it NULL.
+                    "null for the pre-eforms ted formats (text, internal-ojs, r2.0.8, r2.0.9) and döe \
+                     sdk-0.1, which publish no subtype",
+                    "kept out of this column (issue 235)",
+                    // Where their own type is: these ids occur in this sentence only.
+                    "notice_codes",
+                    "ted-td_document_type",
+                    "txt-td",
+                    "ted-nat_notice",
+                    "sdk01-noticetypecode",
+                ],
+            );
+        }
+
+        for (surface, text) in [("/docs", docs.clone()), ("Tender.lots", field("lots"))] {
+            assert_says(
+                &format!("{surface}'s lots rule"),
+                &text,
+                &[
+                    "r2.0.9 (its object description is a lot) and on eforms",
+                    "on the text era (no lot structure)",
+                    "on r2.0.8 unless a contract notice published a lot annex",
+                    "fts makes a lot only from a release's tender.lots, so an fts tender serves 0 until one \
+                     of its releases lists a lot",
+                    "only an r2.0.9 f14 corrigendum",
+                    "prior-information notice with no lot or part",
+                    "no row on /v1/lots",
+                    "on /v1/tenders",
+                ],
+            );
+        }
+        let lots_list = described(&spec["paths"]["/v1/lots"]["get"]["description"], "/v1/lots");
+        let detail_lots = described(
+            &spec["components"]["schemas"]["TenderDetail"]["allOf"][1]["properties"]["lots"]["description"],
+            "TenderDetail.lots",
+        );
+        for (surface, text) in [("/v1/lots", lots_list), ("TenderDetail.lots", detail_lots)] {
+            assert_says(
+                &format!("{surface}, on which Tenders have no Lot"),
+                &text,
+                &[
+                    "the text era",
+                    "r2.0.8 without a contract-notice lot annex, since an r2.0.8 award notice carries none",
+                    "a standalone r2.0.9 f14 corrigendum",
+                    "an eforms prior-information notice without lots",
+                    "an fts tender whose releases list no tender.lots",
+                    "no row",
+                ],
+            );
+        }
+
+        for (surface, text) in [
+            ("/docs", docs),
+            ("Tender.original_lang", field("original_lang")),
+            ("/v1/sql/schema original_lang", note("original_lang")),
+        ] {
+            let plain_text = plain(&text);
+            assert!(
+                plain_text.contains("null where the notice states no language")
+                    || plain_text.contains("null where that notice states no language"),
+                "{surface} must say what a NULL original_lang means:\n{plain_text}"
+            );
+            assert_says(surface, &text, &["as many döe sdk-0.1 notices do not", "when the release names none"]);
+        }
+        // The two surfaces that name the code's vocabulary also say a code outside
+        // it passes through.
+        for (surface, text) in [
+            ("Tender.original_lang", field("original_lang")),
+            ("/v1/sql/schema original_lang", note("original_lang")),
+        ] {
+            assert_says(
+                surface,
+                &text,
+                &[
+                    "uppercase iso 639-2/t",
+                    "a published code the mapping does not recognise passes through uppercased",
+                    "fr nl",
+                ],
+            );
         }
     }
 
