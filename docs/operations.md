@@ -431,8 +431,13 @@ tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 #                             satellite-orphans, drop-orphan-satellites,
 #                             anchor-wall-census, xb-packet, … — plus an FTS
 #                             `fetch` (issue 450: `stoppable` in supervisor.rs) and
-#                             `audit-fts-ids` (issue 477 unit 3).
+#                             `audit-fts-ids` (issue 477 unit 3) and
+#                             `backfill-org-name-variants` (issue 542; a restart
+#                             resumes it after its last committed window).
 #                             A TED/DÖE fetch is one download and answers 409.
+#                             To end a running 409 kind anyway: a service restart
+#                             with TENDER_DROP_JOBS=<id>, or the restart recovers
+#                             it at the FRONT of the queue.
 #   404                       no such job
 # A cancelled data-quality run stores NOTHING: a half-measured report would read like a
 # whole-corpus one, so the previous report stands.

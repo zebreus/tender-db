@@ -4455,6 +4455,8 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 477 unit 3: read before every by-id request; every answer is already in
     // the ledger, so a re-run asks only the rest.
     "audit-fts-ids",
+    // Issue 542: read before every notice window; each window is its own REPLACE commit.
+    "backfill-org-name-variants",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -7710,8 +7712,29 @@ impl Supervisor {
             }
             Spec::BackfillOrgNameVariants => {
                 let mut totals = store::OrgNameBackfill::default();
-                let mut watermark = 0i64;
+                // Issue 542: a restart recovers this job at the front of the queue. It resumes
+                // after the last committed window (the durable `process` cursor, issue 32)
+                // instead of re-walking from notice 0. A fresh enqueue has no cursor.
+                let resumed = job.resume_after.as_deref().and_then(|c| c.parse::<i64>().ok());
+                let mut watermark = resumed.unwrap_or(0);
+                let from = match resumed {
+                    Some(after) => format!(" (resumed after notice id {after})"),
+                    None => String::new(),
+                };
                 loop {
+                    // Issue 542: read before every window. A full walk is ~10 h at ~1.3k notices/s,
+                    // and job 2491 (one runbook step after a 7-mention dissolve) answered the cancel
+                    // with 409 while it held the queue past the dailies. Every window is its own
+                    // REPLACE commit, so a stop leaves nothing half-written; a fresh enqueue starts
+                    // again at notice 0 and re-writes the same rows.
+                    if self.cancelled(job.id) {
+                        return Ok(format!(
+                            "backfill-org-name-variants STOPPED by cancel after notice id {watermark}{from}: {} \
+                             notices, {} mentions visited, {} labelled variants written (the committed windows \
+                             stand)",
+                            totals.notices, totals.mentions, totals.written
+                        ));
+                    }
                     let (batch, next) = self
                         .db
                         .backfill_org_name_variants_batch(
@@ -7729,18 +7752,25 @@ impl Supervisor {
                     totals.mentions += batch.mentions;
                     totals.written += batch.written;
                     watermark = next;
+                    // Best-effort, as in `process`: a lost cursor write costs one window's re-walk.
+                    if let Err(e) = self.db.record_job_progress(job.id as i64, &watermark.to_string()).await {
+                        eprintln!("supervisor: job {} record progress {watermark}: {e}", job.id);
+                    }
                     self.set_phase(
                         "walking",
                         Some(totals.notices),
                         None,
-                        format!("{} mentions, {} variants written", totals.mentions, totals.written),
+                        format!(
+                            "notice id {watermark}{from}; {} mentions, {} variants written",
+                            totals.mentions, totals.written
+                        ),
                     );
                     if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
                         eprintln!("supervisor: checkpoint after org-name window: {e}");
                     }
                 }
                 Ok(format!(
-                    "organization_names backfilled over {} notices: {} mentions visited, \
+                    "organization_names backfilled over {} notices{from}: {} mentions visited, \
                      {} labelled variants written (issue 307)",
                     totals.notices, totals.mentions, totals.written
                 ))
@@ -16851,7 +16881,10 @@ mod tests {
                 "analyze",
                 // Issue 477 unit 3: `audit_fts_ids` reads the flag before every
                 // by-id request; the ledger keeps every answer for the resume.
-                "audit-fts-ids"
+                "audit-fts-ids",
+                // Issue 542: the `BackfillOrgNameVariants` arm reads the flag before
+                // every notice window; the committed windows stand.
+                "backfill-org-name-variants"
             ]
         );
     }
@@ -18769,6 +18802,58 @@ mod tests {
         assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
         let (body, _) = db.latest_report(PROCEDURE_KEY_CENSUS_REPORT).await.unwrap().expect("report");
         assert_eq!(body, "{\"marker\":1}", "a stopped census stores nothing");
+    }
+
+    /// Issue 542: `backfill-org-name-variants` reads the stop flag before every notice window,
+    /// so a cancel ends it there instead of answering 409 for a ~10 h walk (job 2491).
+    #[tokio::test]
+    async fn the_org_name_variant_backfill_stops_before_its_next_window() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        sup.enqueue_request(&JobRequest { kind: "backfill-org-name-variants".into(), ..Default::default() })
+            .await
+            .unwrap();
+        assert!(matches!(sup.queue.lock().expect("queue lock")[0].spec, Spec::BackfillOrgNameVariants));
+        assert!(stoppable("backfill-org-name-variants", "backfill-org-name-variants"));
+        let job = |id: u64| Job {
+            id,
+            kind: "backfill-org-name-variants".into(),
+            params: String::new(),
+            spec: Spec::BackfillOrgNameVariants,
+            resume_after: None,
+        };
+        // A notice to walk, so the stopped run below has a window it refuses.
+        let fetch_id = seed_fetch(&db).await;
+        db.record_notice(
+            &store::Notice {
+                source: "ted".into(),
+                publication_id: "00000001-2024".into(),
+                content_hash: "h".into(),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id,
+                member_path: "m".into(),
+                ingested_at: 0,
+                published_at: Some(store::Stamp::utc(0)),
+                dispatched_at: None,
+            },
+            &store::Parse::Parsed(store::Parsed::default()),
+        )
+        .await
+        .unwrap();
+        sup.cancel_running.store(2, Ordering::Relaxed);
+        let msg = sup.run_spec(&job(2)).await.expect("stopped backfill");
+        assert!(msg.starts_with("backfill-org-name-variants STOPPED by cancel after notice id 0: 0 notices"), "{msg}");
+        // Another job's flag does not stop it: the walk finishes over the one notice.
+        let msg = sup.run_spec(&job(3)).await.expect("backfill");
+        assert!(msg.starts_with("organization_names backfilled over 1 notices:"), "{msg}");
+        // A recovered job resumes after its durable cursor, so nothing past it is re-walked.
+        let resumed = Job { resume_after: Some("999999".into()), ..job(4) };
+        let msg = sup.run_spec(&resumed).await.expect("resumed backfill");
+        assert!(
+            msg.starts_with("organization_names backfilled over 0 notices (resumed after notice id 999999):"),
+            "{msg}"
+        );
     }
 
     /// Issue 477 unit 3: the job wiring around `fetch::audit_fts_ids`. It enqueues wet by

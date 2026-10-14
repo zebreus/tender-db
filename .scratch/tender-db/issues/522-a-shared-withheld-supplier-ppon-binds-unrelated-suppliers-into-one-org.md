@@ -168,7 +168,9 @@ guard 3 would keep an identified `Individual` and drop a bare one. Measure the c
   - 2 + 1 = 3 orgs and 6 + 1 = 7 mentions.
 - **Wet run 2489.** 3 dissolved, 7 mentions re-resolved (2 fresh provisionals, 5 reused), 27 party rows, 31 bid-party
   rows, 31 winner rows (2 duplicates removed), 0 skipped, 5 tenders touched.
-- **Follow-up jobs.** Project 2490 had nothing pending. Backfill-org-name-variants 2491 ran.
+- **Follow-up jobs.** Project 2490 had nothing pending. Backfill-org-name-variants 2491 started; it is a whole-corpus
+  walk for these 7 mentions, could not be cancelled (409) and holds the queue for hours. Issue 542 makes it stoppable
+  and resumable, and owns scoping this runbook step.
 - **Verify:** `SELECT count(*) … organization_id IN (30914328, 31548264)` reads 0, and both rows are gone.
 - **Where the mentions landed** (bounded reads):
 
