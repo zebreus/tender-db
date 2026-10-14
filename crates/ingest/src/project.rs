@@ -8996,22 +8996,46 @@ fn legacy_role(element: &str) -> String {
         | "WINNER"
         | "ECONOMIC_OPERATOR_NAME_ADDRESS"
         | "NAME_ADDRESS_WINNER"
-        | "DESCRIPTION_PROCUREMENT.ADDRESS_CONTRACTOR" => "winner".to_owned(),
+        | "DESCRIPTION_PROCUREMENT.ADDRESS_CONTRACTOR"
+        // Issue 534: the R2.0.7/R2.0.8 F06 (utilities award) nests the contractor's
+        // block (`CONTACT_DATA_WITHOUT_RESPONSIBLE_NAME_CHP`) DIRECTLY under the award
+        // block, so the walker names the role after the award element. It is the only
+        // org block there — every award of the r207 fixture (17 of 17) and the R2.0.8
+        // one — and prod agreed row for row: 279 of 279 such rows in `tender_id`
+        // 5.2M–5.203M are a result winner of the same version. The 2008 internal-ojs
+        // `AWARD_AND_CONTRACT_VALUE_SUM` aliases onto this name before the walker
+        // reads it, so it folds here too.
+        | "AWARD_AND_CONTRACT_VALUE" => "winner".to_owned(),
+        // R2.0.8 spells VI.4's three parties — review body, mediation body, appeal-
+        // information service — three ways: `APPEAL_PROCEDURE_BODY_RESPONSIBLE` /
+        // `MEDIATION_PROCEDURE_BODY_RESPONSIBLE` / `LODGING_INFORMATION_FOR_SERVICE`,
+        // `RESPONSIBLE_FOR_*` / `SERVICE_FROM_INFORMATION`, and `BODY_RESPONSIBLE_*` /
+        // `SERVICE_INFORMATION_LODGING_APPEALS` (issue 534: the last set and
+        // `RESPONSIBLE_FOR_MEDIATION_PROCEDURES` were served verbatim). R2.0.9 writes
+        // `ADDRESS_REVIEW_BODY` / `ADDRESS_MEDIATION_BODY` / `ADDRESS_REVIEW_INFO`.
         "ADDRESS_REVIEW_BODY"
-        | "ADDRESS_REVIEW_INFO"
         | "APPEAL_PROCEDURE_BODY_RESPONSIBLE"
-        | "RESPONSIBLE_FOR_APPEAL_PROCEDURES" => "review-body".to_owned(),
-        "MEDIATION_PROCEDURE_BODY_RESPONSIBLE" | "ADDRESS_MEDIATION_BODY" => {
-            "mediation-body".to_owned()
-        }
+        | "RESPONSIBLE_FOR_APPEAL_PROCEDURES"
+        | "BODY_RESPONSIBLE_APPEAL" => "review-body".to_owned(),
+        "MEDIATION_PROCEDURE_BODY_RESPONSIBLE"
+        | "ADDRESS_MEDIATION_BODY"
+        | "RESPONSIBLE_FOR_MEDIATION_PROCEDURES"
+        | "BODY_RESPONSIBLE_MEDIATION" => "mediation-body".to_owned(),
         "TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO" | "ADDRESS_PARTICIPATION" => {
             "tender-receipt".to_owned()
         }
         "FURTHER_INFORMATION" | "ADDRESS_FURTHER_INFO" => "further-information".to_owned(),
         "SPECIFICATIONS_AND_ADDITIONAL_DOCUMENTS" => "specifications-provider".to_owned(),
-        "LODGING_INFORMATION_FOR_SERVICE" | "SERVICE_FROM_INFORMATION" => {
-            "appeal-information".to_owned()
-        }
+        // Issue 534: R2.0.9's `ADDRESS_REVIEW_INFO` (VI.4.4, the service that gives
+        // information about review procedures) is the slot R2.0.8 calls
+        // `LODGING_INFORMATION_FOR_SERVICE` / `SERVICE_FROM_INFORMATION` /
+        // `SERVICE_INFORMATION_LODGING_APPEALS`, and eForms keeps `ReviewInfo` apart
+        // from `ReviewOrg` too. Folded to `review-body` it sat beside the review body
+        // proper — often the buyer itself, twice over on 19.9 % of tenders in band 8.4M.
+        "LODGING_INFORMATION_FOR_SERVICE"
+        | "SERVICE_FROM_INFORMATION"
+        | "SERVICE_INFORMATION_LODGING_APPEALS"
+        | "ADDRESS_REVIEW_INFO" => "appeal-information".to_owned(),
         "TAX_LEGISLATION" => "tax-legislation-information".to_owned(),
         "ENVIRONMENTAL_PROTECTION_LEGISLATION" => {
             "environmental-legislation-information".to_owned()
@@ -9019,16 +9043,110 @@ fn legacy_role(element: &str) -> String {
         "EMPLOYMENT_PROTECTION_WORKING_CONDITIONS" => {
             "employment-legislation-information".to_owned()
         }
-        // Deliberately NOT folded: `TRANSLITERATED_ADDR` no longer arrives here
-        // at all — issue 393 unit 1 claims and drops the block at the parse layer
-        // (`r209::rules`), a TED-generated transliteration that was never a party;
-        // standing rows still carry it until the legacy eras are re-projected.
-        // `AWARD_AND_CONTRACT_VALUE` is a section wrapper whose party meaning
-        // nobody has established. An unfolded name still reaches issue 368's
-        // sieve, which is where a new one should show up.
+        // Everything else is served AS the element name, and nothing downstream
+        // notices: issue 368's sieve cannot see it, because the pointer channel accepts
+        // any `TED-` id as a role (`role_name`). `AWARD_AND_CONTRACT_VALUE` sat here
+        // for years on the strength of a comment saying the sieve would catch it. What
+        // guards it now is a test (issue 534 unit 5), and only as far as its walk
+        // reaches: every party-bearing element the walk knows — the inventory's
+        // `Rule::Org` names, the `CONTACT_DATA*` parents listed by hand in the test's
+        // `CONTACT_DATA_WRAPPERS`, and any role a committed fixture emits — must fold
+        // above or sit on [`LEGACY_ROLE_REFUSED`] with its reason. An unlisted parent
+        // still falls through here, even when prod serves it.
         other => other.to_owned(),
     }
 }
+
+/// The canonical legacy party roles: everything [`legacy_role`] folds onto. The served
+/// docs (`openapi.json` `parties[]`, `sql.rs`'s `tender_version_parties.role` note) list
+/// exactly these (issue 534), and the app's docs test reads this constant to hold them
+/// to it, so a role added here without a docs line fails there. The walk in this
+/// crate's tests holds the other direction: each entry is something a legacy element
+/// folds onto.
+pub const LEGACY_PARTY_ROLES: &[&str] = &[
+    "buyer",
+    "purchasing-body",
+    "winner",
+    "review-body",
+    "mediation-body",
+    "tender-receipt",
+    "further-information",
+    "specifications-provider",
+    "appeal-information",
+    "tax-legislation-information",
+    "environmental-legislation-information",
+    "employment-legislation-information",
+];
+
+/// Legacy party elements served under their own element name ON PURPOSE, each with
+/// the reason (issue 534 unit 5). [`legacy_role`]'s fallback serves any element it
+/// does not fold verbatim, so a name is either folded there or listed here. The
+/// inventory walk in the tests refuses a third state for every element the walk
+/// knows; a `CONTACT_DATA*` parent nobody has listed in `CONTACT_DATA_WRAPPERS` or a
+/// committed fixture has not emitted is outside that walk.
+///
+/// A refusal means no canonical role fits, or the element names no party: an owner
+/// of the operator, an operator announced but not awarded, an address with no party
+/// behind it. Never "not looked at": each reason says what was read.
+#[cfg(test)]
+const LEGACY_ROLE_REFUSED: &[(&str, &str)] = &[
+    (
+        "TRANSLITERATED_ADDR",
+        "TED's own Latin transliteration of the buyer's block, not a party: claimed and dropped at \
+         the parse layer since issue 393 unit 1, so only rows projected before that carry it",
+    ),
+    (
+        "ADDRESS_PARTY",
+        "R2.0.9 MOVE (T02, Regulation 1370/2007) only: the R2.0.9.S03 reception schema's (MOVE.xsd) \
+         CONTRACTOR holds ADDRESS_CONTRACTOR, then OWNERSHIP, then 0-100 ADDRESS_PARTY, the slot its \
+         R2.0.8 twin PARTY_NAME_ADDRESS documents as the party or parties exercising legal control \
+         over the selected operator (Art. 7(3)(a)). An owner of the operator: neither the winner nor \
+         the buyer, and no canonical role means it. No fixture carries it, and no served role census \
+         read so far (511's, issue 534's bands) shows it",
+    ),
+    (
+        "PARTY_NAME_ADDRESS",
+        "the R2.0.8 MOVE contract award form's (T02) section V.3, documented in the R2.0.8.S02 \
+         eSender schema as the name and address of the party or parties exercising legal control \
+         over the selected operator: 0-99 CONTACT_DATA_WITHOUT_RESPONSIBLE_NAME blocks, while the \
+         operator itself is V.2, ECONOMIC_OPERATOR_NAME_ADDRESS, already `winner`. The R2.0.8 twin \
+         of ADDRESS_PARTY, refused for the same reason: an owner of the operator, neither winner nor \
+         buyer. Prod serves it: 7 rows on 6 of 505 deadline-less 2016 road-transport tenders, all \
+         the operator's public owners, e.g. 5782055 (382248-2016: Landkreis Barnim and Landkreis \
+         Märkisch-Oderland over the `winner` Barnimer Busgesellschaft) and 5804664 (427137-2016: \
+         Landratsamt Kyffhäuserkreis over VGS); issue 259's window showed it too. No fixture",
+    ),
+    (
+        "AWARD_CONTRACT_PI_MOVE",
+        "the R2.0.8 MOVE prior-information form's (T01) section V, the selected operator's name \
+         and address in the R2.0.8.S02 eSender schema. The payloads read are Art. 7(2) Regulation \
+         1370/2007 notices naming the operator the buyer INTENDS to award directly, ahead of the \
+         award: 5466221 (221723-2015, Kyffhäuserkreis names Verkehrsgesellschaft Südharz, \
+         PT_DA_INTERNAL_OPERATOR, service from 2017), 5572333 (438548-2015, Verkehrsbetriebe \
+         Hamburg-Holstein), 5303167 (343689-2014, Vogtlandbahn). Real operator names, on \
+         single-version tenders with no award decision and no deadline: about 14 rows in about 180 \
+         sampled 2012-2015 transport tenders, 43 in 520 deadline-less 2015 road-transport ones. An \
+         award intended, not made, so NOT `winner`: folded there it would name a winner no award \
+         notice published. Verbatim until a role for an announced direct-award operator exists",
+    ),
+    (
+        "ADDRESS_NOT_MANDATORY",
+        "an address that names no party itself: seen only inside prose (internal-ojs \
+         114238_2008, GROUP_NAME/TXT_MARK/P), which Rule::Text consumes whole; whose address it \
+         is, the surrounding text says",
+    ),
+    (
+        "ADDRESS_NOT_STRUCT",
+        "OTH_NOT's free-text address island (ted-legacy-mapping.md): seen only inside prose \
+         (r208/oth-not-000030-2014, STI_DOC/P), which Rule::Text consumes whole; whose address it \
+         is, the surrounding text says",
+    ),
+    (
+        "USER",
+        "the eSender's submitting user: published only under SENDER, which r209::rules claims \
+         and drops whole, and a submitter is no party to the procurement",
+    ),
+];
 
 /// What an eForms `OPT-30x` role suffix MEANS in the canonical vocabulary — the
 /// published mapping, deliberately not applied (issue 393 unit 2).
@@ -9053,6 +9171,9 @@ const EFORMS_ROLE_MEANING: &[(&str, &str)] = &[
     ("Procedure-SProvider", "service-provider"),
     ("Tenderer", "tenderer"),
     ("Lot-ReviewOrg", "review-body"),
+    // Issue 534 unit 2: the information service, NOT the review body — what R2.0.9's
+    // `ADDRESS_REVIEW_INFO` and R2.0.8's `LODGING_INFORMATION_FOR_SERVICE` fold to.
+    ("Lot-ReviewInfo", "appeal-information"),
     ("Lot-TenderReceipt", "tender-receipt"),
     ("Lot-AddInfo", "further-information"),
     ("Lot-Mediator", "mediation-body"),
@@ -14448,17 +14569,27 @@ mod tests {
             ("DESCRIPTION_PROCUREMENT.ADDRESS_CONTRACTOR", "winner"),
             ("ADDRESS_WINNER", "winner"),
             ("WINNER", "winner"),
+            // Issue 534 unit 1: the F06 contractor block sits directly under the award.
+            ("AWARD_AND_CONTRACT_VALUE", "winner"),
             ("APPEAL_PROCEDURE_BODY_RESPONSIBLE", "review-body"),
             ("RESPONSIBLE_FOR_APPEAL_PROCEDURES", "review-body"),
+            ("BODY_RESPONSIBLE_APPEAL", "review-body"),
+            // Issue 534 unit 2: the review body proper stays the review body …
             ("ADDRESS_REVIEW_BODY", "review-body"),
             ("MEDIATION_PROCEDURE_BODY_RESPONSIBLE", "mediation-body"),
             ("ADDRESS_MEDIATION_BODY", "mediation-body"),
+            // Issue 534 unit 1: the R2.0.8 twin of RESPONSIBLE_FOR_APPEAL_PROCEDURES.
+            ("RESPONSIBLE_FOR_MEDIATION_PROCEDURES", "mediation-body"),
+            ("BODY_RESPONSIBLE_MEDIATION", "mediation-body"),
             ("TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO", "tender-receipt"),
             ("ADDRESS_PARTICIPATION", "tender-receipt"),
             ("FURTHER_INFORMATION", "further-information"),
             ("SPECIFICATIONS_AND_ADDITIONAL_DOCUMENTS", "specifications-provider"),
             ("LODGING_INFORMATION_FOR_SERVICE", "appeal-information"),
             ("SERVICE_FROM_INFORMATION", "appeal-information"),
+            ("SERVICE_INFORMATION_LODGING_APPEALS", "appeal-information"),
+            // … and R2.0.9's information service joins its R2.0.8 spellings, apart from it.
+            ("ADDRESS_REVIEW_INFO", "appeal-information"),
             ("ADDRESS_CONTRACTING_BODY", "buyer"),
             ("PURCHASING_ON_BEHALF_YES", "purchasing-body"),
         ] {
@@ -14489,36 +14620,352 @@ mod tests {
         assert_eq!(role_name("OPT-301-Lot-ReviewOrg").as_deref(), Some("Lot-ReviewOrg"));
 
         // The published mapping must stay honest: every meaning it names is a role
-        // the legacy fold actually produces, so the two halves describe ONE
+        // the legacy fold actually produces (the walk below holds every
+        // `LEGACY_PARTY_ROLES` entry to that), so the two halves describe ONE
         // vocabulary even while only one of them is applied.
-        let canonical: std::collections::BTreeSet<String> = [
-            "ADDRESS_CONTRACTING_BODY",
-            "PURCHASING_ON_BEHALF_YES",
-            "ECONOMIC_OPERATOR_NAME_ADDRESS",
-            "APPEAL_PROCEDURE_BODY_RESPONSIBLE",
-            "MEDIATION_PROCEDURE_BODY_RESPONSIBLE",
-            "TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO",
-            "FURTHER_INFORMATION",
-            "SPECIFICATIONS_AND_ADDITIONAL_DOCUMENTS",
-            "LODGING_INFORMATION_FOR_SERVICE",
-        ]
-        .iter()
-        .map(|e| legacy_role(e))
-        .collect();
         for (suffix, meaning) in EFORMS_ROLE_MEANING {
             if ["tenderer", "service-provider"].contains(meaning) {
                 continue; // no legacy element produces these
             }
             assert!(
-                canonical.contains(*meaning),
+                LEGACY_PARTY_ROLES.contains(meaning),
                 "{suffix} claims to mean `{meaning}`, which the legacy fold never produces"
             );
         }
+        // Issue 534 unit 2: eForms keeps the information service apart from the review
+        // body, and so does the legacy fold now.
+        let meaning = |suffix: &str| EFORMS_ROLE_MEANING.iter().find(|(s, _)| *s == suffix).map(|(_, m)| *m);
+        assert_eq!(meaning("Lot-ReviewInfo"), Some("appeal-information"));
+        assert_eq!(meaning("Lot-ReviewOrg"), Some("review-body"));
+        assert_eq!(meaning("Lot-ReviewInfo").map(str::to_owned), Some(legacy_role("ADDRESS_REVIEW_INFO")));
+        assert_eq!(meaning("Lot-ReviewOrg").map(str::to_owned), Some(legacy_role("ADDRESS_REVIEW_BODY")));
 
-        // Refused on purpose, and the fallback is still the element name so a new
-        // one reaches issue 368's sieve rather than being silently renamed.
+        // Refused on purpose: the fallback is still the element name, verbatim, never
+        // a guess. What makes a NEW one visible is the inventory walk below, not
+        // issue 368's sieve (whose pointer channel accepts any `TED-` id as a role).
         assert_eq!(legacy_role("TRANSLITERATED_ADDR"), "TRANSLITERATED_ADDR");
         assert_eq!(legacy_role("SOMETHING_TED_INVENTS_NEXT"), "SOMETHING_TED_INVENTS_NEXT");
+    }
+
+    /// Issue 534 unit 5: no legacy party element is served under its element name by
+    /// accident. [`legacy_role`]'s fallback is verbatim and issue 368's sieve cannot see
+    /// a verbatim role, which is how `AWARD_AND_CONTRACT_VALUE` (F06 winners) and
+    /// `RESPONSIBLE_FOR_MEDIATION_PROCEDURES` were served raw for years after 393.
+    ///
+    /// The walker names a party's role after the element that opens its `ORG-n`
+    /// section, or — for the generic `CONTACT_DATA*` blocks — after that block's PARENT
+    /// (`r209/parse.rs`, `Rule::Org`). So the party-bearing elements are:
+    /// - every inventory element ruled `Rule::Org` that is not a `CONTACT_DATA*` block,
+    ///   DERIVED here from the vendored inventory and the rule table;
+    /// - every parent of a `CONTACT_DATA*` block, DECLARED in `CONTACT_DATA_WRAPPERS`,
+    ///   because the inventory lists names, not parent edges. Each entry is an
+    ///   inventory element and says where it was seen; the fixture walk at the end
+    ///   fails on any role a committed legacy fixture emits that the set lacks.
+    ///
+    /// Each one must fold onto [`LEGACY_PARTY_ROLES`] or sit on [`LEGACY_ROLE_REFUSED`]
+    /// with its reason — never both, never neither. The limit: the declared half is a
+    /// hand list, so a parent nobody has added (and no committed fixture emits) is
+    /// outside this walk even when prod serves it — the first cut missed
+    /// `PARTY_NAME_ADDRESS` although issue 259 had recorded it as a served role.
+    #[test]
+    fn every_legacy_party_element_folds_or_is_refused() {
+        use crate::r209::rules::{self, Rule};
+
+        // (wrapper, where seen). "fixture" = a committed r208/r209/internal-ojs fixture
+        // nests a CONTACT_DATA* block directly under it; "prod" = a served role census
+        // or a served tender returned the element name itself as a role, which only
+        // this path writes; "schema" = the R2.0.8.S02 eSender XSD puts a CONTACT_DATA*
+        // block (INC_05) directly under it.
+        const CONTACT_DATA_WRAPPERS: &[(&str, &str)] = &[
+            ("APPEAL_PROCEDURE_BODY_RESPONSIBLE", "fixture: r208 f03-099900-2018, internal-ojs 115165_2008.fr"),
+            ("AWARD_AND_CONTRACT_VALUE", "fixture: r208/f06-r207-070248-2010 (17 awards), r209/f06-002856-2017"),
+            (
+                "AWARD_CONTRACT_PI_MOVE",
+                "prod: 5466221's notice 18341410 (TED-AWARD_CONTRACT_PI_MOVE -> ORG-3), 43 of 520 2015 \
+                 road-transport tenders; schema: T01 section V",
+            ),
+            ("BODY_RESPONSIBLE_APPEAL", "prod: 511 placeholder census"),
+            ("BODY_RESPONSIBLE_MEDIATION", "prod: 511 placeholder census"),
+            ("ECONOMIC_OPERATOR_NAME_ADDRESS", "fixture: r208 F03s and VEAT, r209 f18-defence-001420-2019"),
+            ("EMPLOYMENT_PROTECTION_WORKING_CONDITIONS", "prod: served as employment-legislation-information (393)"),
+            ("ENVIRONMENTAL_PROTECTION_LEGISLATION", "prod: served as environmental-legislation-information (393)"),
+            ("FURTHER_INFORMATION", "fixture: internal-ojs 115165_2008"),
+            ("LODGING_INFORMATION_FOR_SERVICE", "fixture: r208 f03-annexd-neg-022211-2011, r209 f18-defence"),
+            ("MEDIATION_PROCEDURE_BODY_RESPONSIBLE", "prod: served as mediation-body (393)"),
+            ("NAME_ADDRESS_WINNER", "fixture: r208 f13-187010-2013 (AWARD_PRIZES)"),
+            // Issue 534 review: served as a role in issue 259's sampled window, and missed
+            // by the first cut of this list.
+            (
+                "PARTY_NAME_ADDRESS",
+                "prod: 5782055's notice 18999280 (TED-PARTY_NAME_ADDRESS -> ORG-3, ORG-4), 6 of 505 2016 \
+                 road-transport tenders, issue 259's window; schema: T02 section V.3 (0-99 blocks)",
+            ),
+            ("PURCHASING_ON_BEHALF_YES", "fixture: r208 f08-198630-2013"),
+            ("RESPONSIBLE_FOR_APPEAL_PROCEDURES", "fixture: r208 F07/F12/F13, r209 both F06s"),
+            ("RESPONSIBLE_FOR_MEDIATION_PROCEDURES", "prod: band 5.2M, 13 rows (issue 534)"),
+            ("SERVICE_FROM_INFORMATION", "fixture: r208 F07/F12/F13, r209 both F06s"),
+            ("SERVICE_INFORMATION_LODGING_APPEALS", "prod: 511 placeholder census"),
+            ("SPECIFICATIONS_AND_ADDITIONAL_DOCUMENTS", "fixture: r208 F12, r209 f02-co-original, internal-ojs 115165"),
+            ("TAX_LEGISLATION", "prod: served as tax-legislation-information (393)"),
+            ("TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO", "fixture: r209 f02-co-original, internal-ojs 115165"),
+        ];
+
+        let inventory: serde_json::Value =
+            serde_json::from_str(crate::r209::INVENTORY_JSON).expect("the vendored inventory");
+        let names: BTreeSet<&str> = inventory["elements"]
+            .as_array()
+            .expect("an elements array")
+            .iter()
+            .map(|e| e["name"].as_str().expect("a name"))
+            .collect();
+        assert!(names.len() > 1_300, "inventory suspiciously small: {}", names.len());
+
+        // Derived half: the Org elements whose role is their own name.
+        let own_name: BTreeSet<&str> = names
+            .iter()
+            .copied()
+            .filter(|n| rules::rule("", n) == Some(Rule::Org) && !n.starts_with("CONTACT_DATA"))
+            .collect();
+        assert!(own_name.contains("ADDRESS_CONTRACTOR") && own_name.contains("ADDRESS_PARTY"), "{own_name:?}");
+        // Declared half: real elements, and wrappers — walked into, not parties themselves.
+        for (wrapper, seen) in CONTACT_DATA_WRAPPERS {
+            assert!(!seen.is_empty());
+            assert!(names.contains(wrapper), "{wrapper} is no inventory element");
+            assert!(
+                matches!(rules::rule("", wrapper), Some(Rule::Group | Rule::Section(_))),
+                "{wrapper} must be a container the walker descends into: {:?}",
+                rules::rule("", wrapper)
+            );
+        }
+        let party_bearing: BTreeSet<&str> =
+            own_name.iter().copied().chain(CONTACT_DATA_WRAPPERS.iter().map(|(w, _)| *w)).collect();
+
+        // Groups read and found to hold NO CONTACT_DATA* child of their own, so they
+        // write no role; kept here so the next reader does not redo the read, and so
+        // one cannot be added to the wrapper list without this entry going too.
+        const NOT_CONTACT_DATA_WRAPPERS: &[(&str, &str)] = &[
+            (
+                "AWARD_CONTRACT_MOVE",
+                "T02 section V (R2.0.8.S02 eSender XSD): CONTRACT_AWARD_DATE, then the operator \
+                 under ECONOMIC_OPERATOR_NAME_ADDRESS (`winner`), the owners under \
+                 PARTY_NAME_ADDRESS (refused), value and subcontracting; no block of its own. \
+                 None of 2,427 sampled 2013-2016 road-transport tenders serves it as a role, \
+                 while 6 serve its sibling PARTY_NAME_ADDRESS",
+            ),
+            (
+                "ADDR_CORR",
+                "F14 (R2.0.8.S02 eSender XSD): WHERE, then MODIFIED_ADDRESS; no block of its own",
+            ),
+            (
+                "MODIFIED_ADDRESS",
+                "F14 (R2.0.8.S02 eSender XSD): CA_CE_CONCESSIONAIRE_PROFILE, an Org of its own \
+                 name, and MODIFIED_INTERNET. So per the schema the corrected block is a `buyer` \
+                 whichever address WHERE names; no F14 payload read (issue 534's review round)",
+            ),
+        ];
+        for (element, why) in NOT_CONTACT_DATA_WRAPPERS {
+            assert!(names.contains(element), "{element} is no inventory element");
+            assert!(why.len() > 40);
+            assert!(!party_bearing.contains(element), "{element} is listed as read-and-not-a-wrapper");
+        }
+
+        // The refusal list names real elements, each with its reason, and stays verbatim.
+        for (element, why) in LEGACY_ROLE_REFUSED {
+            assert!(names.contains(element), "{element} is no inventory element");
+            assert!(why.len() > 40, "{element}'s refusal must say what was read: {why:?}");
+            assert_eq!(legacy_role(element), *element, "{element} is refused, so it is served verbatim");
+        }
+        let refused = |e: &str| LEGACY_ROLE_REFUSED.iter().any(|(r, _)| *r == e);
+
+        // THE check: fold onto the vocabulary, or refused — never both, never neither.
+        let mut produced = BTreeSet::new();
+        for element in &party_bearing {
+            let role = legacy_role(element);
+            if refused(element) {
+                continue; // verbatim by decision, asserted above
+            }
+            assert!(
+                LEGACY_PARTY_ROLES.contains(&role.as_str()),
+                "legacy party element {element} is served as `{role}`, outside the canonical \
+                 vocabulary: fold it in legacy_role or put it on LEGACY_ROLE_REFUSED with a reason"
+            );
+            produced.insert(role);
+        }
+        // And the vocabulary has no dead entry: every canonical role is something folds.
+        for role in LEGACY_PARTY_ROLES {
+            assert!(produced.contains(*role), "no party-bearing element folds to `{role}`");
+        }
+        // The two candidates issue 534 named, resolved: one refused, one folded. And the
+        // review's find: the R2.0.8 owner slot is party-bearing and refused like its
+        // R2.0.9 twin.
+        assert!(refused("ADDRESS_PARTY"));
+        assert_eq!(legacy_role("SERVICE_INFORMATION_LODGING_APPEALS"), "appeal-information");
+        assert!(party_bearing.contains("PARTY_NAME_ADDRESS") && refused("PARTY_NAME_ADDRESS"));
+
+        // The fixture walk: every role a committed legacy fixture's parse emits is a
+        // party-bearing element (prefixed ones, F20's `DESCRIPTION_PROCUREMENT.`, by
+        // their last segment) and is folded or refused. A wrapper the list above lacks
+        // fails here the day a fixture shows it.
+        let mut emitted: BTreeSet<String> = BTreeSet::new();
+        let mut parses = 0;
+        for dir in ["tests/fixtures/r208", "tests/fixtures/r209", "tests/fixtures/internal_ojs"] {
+            let mut files: Vec<_> = std::fs::read_dir(dir)
+                .unwrap_or_else(|e| panic!("{dir}: {e}"))
+                .map(|e| e.expect("a fixture entry").path())
+                .collect();
+            files.sort();
+            for path in files {
+                let bytes = std::fs::read(&path).expect("a fixture");
+                let parse = if dir.ends_with("internal_ojs") {
+                    crate::internal_ojs::parse_payload(crate::internal_ojs::PROFILE, &bytes)
+                } else {
+                    crate::r209::parse_payload("ted-export-r209", &bytes, crate::r209::TranslationPolicy::EnOnly)
+                };
+                let parsed = match parse {
+                    store::Parse::Parsed(parsed) => parsed,
+                    other => panic!("{} does not parse: {other:?}", path.display()),
+                };
+                parses += 1;
+                let orgs: BTreeSet<&str> = parsed
+                    .sections
+                    .iter()
+                    .filter(|s| s.kind == ORGANIZATION_KIND)
+                    .map(|s| s.id.as_str())
+                    .collect();
+                for v in &parsed.values {
+                    if let NoticeValue::Id { value, is_ref: true, .. } = &v.value
+                        && orgs.contains(value.as_str())
+                        && let Some(element) = v.field_id.strip_prefix("TED-")
+                    {
+                        emitted.insert(element.to_owned());
+                    }
+                }
+            }
+        }
+        assert!(parses >= 25, "the fixture walk read {parses} fixtures");
+        for element in &emitted {
+            let last = element.rsplit('.').next().expect("a segment");
+            assert!(
+                party_bearing.contains(last),
+                "a fixture emits the role {element}, which the party-bearing set lacks: add its \
+                 wrapper to CONTACT_DATA_WRAPPERS"
+            );
+            assert!(
+                refused(element) || LEGACY_PARTY_ROLES.contains(&legacy_role(element).as_str()),
+                "a fixture emits the role {element}, served as `{}`",
+                legacy_role(element)
+            );
+        }
+        // Not vacuous: the F06 award element is among what the fixtures emit.
+        assert!(emitted.contains("AWARD_AND_CONTRACT_VALUE"), "{emitted:?}");
+    }
+
+    /// Issue 534 unit 1: once `AWARD_AND_CONTRACT_VALUE` folds to `winner`, an F06's
+    /// award winners follow the per-role carry-forward every other legacy winner
+    /// follows (`supersede` keys a party on its role): a later notice of the chain that
+    /// publishes a `winner` replaces them on `parties[]`. Before the fold they were a
+    /// role of their own, so no later winner ever displaced them. The award ROUND is
+    /// untouched — results accumulate — so `lot_results` and `?winner=` keep them.
+    #[test]
+    fn a_later_winner_replaces_the_f06_award_winners_on_the_parties() {
+        let notice = |id: i64, profile: &str| store::NoticeRef {
+            id,
+            source: "ted".into(),
+            publication_id: format!("{id:06}-2010"),
+            profile: profile.into(),
+        };
+        // Section `ORG-n` binds to org 1000·notice + n.
+        let bound = |n: &store::NoticeRef, parsed: &Parsed| -> NoticeState {
+            let mut state = NoticeState::read(n, parsed);
+            let orgs: HashMap<String, i64> = parsed
+                .sections
+                .iter()
+                .filter(|s| s.kind == ORGANIZATION_KIND)
+                .map(|s| {
+                    let k: i64 = s.id.rsplit('-').next().and_then(|k| k.parse().ok()).expect("ORG-n");
+                    (s.id.clone(), 1_000 * n.id + k)
+                })
+                .collect();
+            state.bind_organizations(&orgs);
+            state
+        };
+        let parties = |facts: &BTreeSet<Fact>, lots: &[LotState], role: &str| -> BTreeSet<i64> {
+            facts
+                .iter()
+                .chain(lots.iter().flat_map(|l| l.facts.iter()))
+                .filter_map(|f| match f {
+                    Fact::Party { role: r, organization_id, .. } if r == role => Some(*organization_id),
+                    _ => None,
+                })
+                .collect()
+        };
+
+        // The real R2.0.7 F06: 17 awards, the contractor directly under each.
+        let bytes = std::fs::read("tests/fixtures/r208/f06-r207-070248-2010.xml").expect("the r207 F06 fixture");
+        let store::Parse::Parsed(f06) =
+            crate::r209::parse_payload("ted-export-r208", &bytes, crate::r209::TranslationPolicy::EnOnly)
+        else {
+            panic!("the r207 F06 fixture parses")
+        };
+        let award_refs = f06.values.iter().filter(|v| v.field_id == "TED-AWARD_AND_CONTRACT_VALUE").count();
+        assert_eq!(award_refs, 17, "one contractor block per award");
+        let first = bound(&notice(1, "ted-export-r208"), &f06);
+        let f06_winners = parties(&first.facts, &first.lots, "winner");
+        assert_eq!(f06_winners.len(), 17, "every F06 contractor is a `winner` party");
+        assert!(
+            parties(&first.facts, &first.lots, "AWARD_AND_CONTRACT_VALUE").is_empty(),
+            "the element name is no longer a role"
+        );
+        let buyers = parties(&first.facts, &first.lots, "buyer");
+        assert!(!buyers.is_empty(), "the F06 names its buyer");
+        // Prod's 279-of-279, in the fixture: every such party is a result winner.
+        let round_winners: BTreeSet<i64> = first
+            .round
+            .as_ref()
+            .expect("an F06 binds a round")
+            .lot_results
+            .iter()
+            .flat_map(|r| r.winners.iter().copied())
+            .collect();
+        assert_eq!(round_winners, f06_winners, "the F06 winner parties are exactly the round's winners");
+
+        // A later notice of the chain publishes a winner (and no buyer).
+        let later = Parsed {
+            sections: vec![
+                store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                store::Section { id: "RES-1".into(), kind: "LotResult".into(), parent: None },
+                store::Section { id: "ORG-1".into(), kind: ORGANIZATION_KIND.into(), parent: None },
+            ],
+            values: vec![
+                text_value("ORG-1", "TED-OFFICIALNAME", 0, None, "Network Rail Infrastructure Ltd"),
+                store::ValueRow {
+                    section_id: "RES-1".into(),
+                    field_id: "TED-ADDRESS_CONTRACTOR".into(),
+                    ordinal: 0,
+                    value: NoticeValue::Id { scheme: None, value: "ORG-1".into(), is_ref: true },
+                },
+            ],
+        };
+        let second = bound(&notice(2, "ted-export-r209"), &later);
+        let versions = fold(&[&first, &second]);
+        assert_eq!(parties(&versions[0].facts, &versions[0].lots, "winner"), f06_winners);
+        assert_eq!(
+            parties(&versions[1].facts, &versions[1].lots, "winner"),
+            BTreeSet::from([2_001]),
+            "the later winner replaces the F06 rows: parties carry forward per role"
+        );
+        assert_eq!(
+            parties(&versions[1].facts, &versions[1].lots, "buyer"),
+            buyers,
+            "a role the later notice is silent on still carries"
+        );
+        // The rounds accumulate: the F06 winners stay on the award decisions.
+        let all_round_winners: BTreeSet<i64> = versions[1]
+            .rounds
+            .iter()
+            .flat_map(|r| r.lot_results.iter().flat_map(|l| l.winners.iter().copied()))
+            .collect();
+        assert!(all_round_winners.is_superset(&f06_winners), "{all_round_winners:?}");
     }
 
     /// Issue 462: [`REGISTRATION_SUBTYPES`] is the SDK's BRIN class, read from

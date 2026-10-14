@@ -1103,14 +1103,22 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         "TWO vocabularies, deliberately (issue 393). The LEGACY eras fold onto \
          canonical roles: 'buyer', 'purchasing-body', 'winner', 'review-body', \
          'mediation-body', 'tender-receipt', 'further-information', \
-         'specifications-provider', 'appeal-information' and the three \
-         '*-legislation-information' bodies. eForms is served AS PUBLISHED \
-         ('Procedure-Buyer', 'Tenderer', 'Lot-ReviewOrg'), because the suffix \
-         carries lot/procedure SCOPE the canonical name would lose. So buyers are \
-         'buyer' OR 'Procedure-Buyer' — match with role LIKE '%uyer%' — and \
-         winners are 'winner' OR 'Tenderer'. Rows written before the issue-393 \
-         re-projection may still carry the raw legacy element name, e.g. \
-         'ECONOMIC_OPERATOR_NAME_ADDRESS' for a winner.",
+         'specifications-provider', 'appeal-information', \
+         'tax-legislation-information', 'environmental-legislation-information' and \
+         'employment-legislation-information'. eForms is served AS PUBLISHED \
+         ('Procedure-Buyer', 'Tenderer', 'Lot-ReviewOrg', 'Lot-ReviewInfo'), because \
+         the suffix carries lot/procedure SCOPE the canonical name would lose; \
+         'Lot-ReviewOrg' means 'review-body', 'Lot-ReviewInfo' (where to get \
+         information on appeals) means 'appeal-information' and 'Lot-Mediator' means \
+         'mediation-body'. So buyers are 'buyer' OR 'Procedure-Buyer' — match with \
+         role LIKE '%uyer%'. A 'Tenderer' is a bidder, won or not (a losing bidder \
+         keeps the role), so do not read who won from this column: ask \
+         tender_version_result_winners (v_lot_results, v_awards), as ?winner= does. \
+         Any other value is a source element name not yet folded, kept verbatim \
+         rather than guessed at: treat it as unknown, not as canonical. Until the \
+         issue-534 refold has run, a tender projected before it may still serve \
+         R2.0.9's appeal-information slot (ADDRESS_REVIEW_INFO) as 'review-body', and \
+         a legacy award winner as 'AWARD_AND_CONTRACT_VALUE'.",
     ),
     (
         "*",

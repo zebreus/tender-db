@@ -134,9 +134,11 @@ pub(super) const ROLE_KINDS: &[(&str, RoleKind)] = &[
 ];
 
 /// Legacy address blocks read by their own element name, before [`role_name`]'s fold:
-/// the fold puts `ADDRESS_REVIEW_INFO` (where to get information about appeals — very
-/// often the buyer itself) under `review-body` beside the review body proper, and the
-/// census must keep the two apart.
+/// the fold used to put `ADDRESS_REVIEW_INFO` (where to get information about appeals —
+/// very often the buyer itself) under `review-body` beside the review body proper, and
+/// the census must keep the two apart. Issue 534 unit 2 folds it to `appeal-information`,
+/// which agrees with the row below; the element read stays, so the census's kinds do
+/// not hang on the fold.
 const LEGACY_ELEMENT_KINDS: &[(&str, RoleKind)] = &[
     ("ADDRESS_REVIEW_BODY", RoleKind::ReviewBody),
     ("APPEAL_PROCEDURE_BODY_RESPONSIBLE", RoleKind::ReviewBody),

@@ -1133,7 +1133,28 @@ mod tests {
             ("a TED OJS number) — exact match", "a TED number answers at every width it is stored at (issue 536)"),
             ("Exact-match an official publication number", "a TED number answers at every width it is stored at (issue 536)"),
             ("at most four seeks", "/v1/tenders reads the seed and the matched versions: four spellings, two statements (issue 536)"),
+            // Issue 534: served from issue 393 on. `Tenderer` is every bidder whose
+            // tender the notice lists, losers included (527's tender 229981), so the
+            // party role names no winner set; `lot_results[].winners` / `?winner=` do.
+            ("a winner is `winner` or `Tenderer`", "a Tenderer party is a bidder, won or not (issue 534)"),
+            ("winners are 'winner' OR 'Tenderer'", "a Tenderer party is a bidder, won or not (issue 534)"),
+            // The `/docs` spelling: this walk squashes whitespace only, so the HTML form
+            // needs its own entry (as 531's does); pinned against a wrapped sample below.
+            (
+                "a winner is <code>winner</code> or <code>Tenderer</code>",
+                "a Tenderer party is a bidder, won or not (issue 534)",
+            ),
+            // Issue 534: the issue-393 re-projection ran (job 1616); no band role list
+            // shows a pre-393 element name since.
+            ("before the issue-393 re-projection", "the issue-393 re-projection ran, job 1616 (issue 534)"),
         ];
+        // Issue 534 review: an entry is only as good as its spelling. The `/docs` form
+        // of the winner sentence, wrapped the way the page wraps prose, is caught.
+        let html = squash("<p>So a buyer is <code>buyer</code>, and a winner is <code>winner</code>\n    or <code>Tenderer</code>.</p>");
+        assert!(
+            RETIRED.iter().any(|(retired, _)| html.contains(retired)),
+            "no RETIRED entry matches the /docs spelling of the winner sentence: {html}"
+        );
         // Issue 535 unit 2: the `/v1/sql/schema` notes are a served surface too; the
         // wrong subtype note lived there, where this walk did not look.
         let schema = crate::v1::sql::served_schema_notes();
@@ -1163,6 +1184,80 @@ mod tests {
         for (surface, text) in [("/docs", PAGE), ("/v1/openapi.json", SPEC)] {
             assert!(!text.contains("no interrupt"), "{surface} must not claim the engine cannot stop a query");
             assert!(text.contains("issue 425"), "{surface}'s 408 must say the query is stopped at the limit");
+        }
+    }
+
+    /// Issue 534, the positive half of the retired "a winner is `winner` or
+    /// `Tenderer`" and the pre-393 caveat: both role texts say a `Tenderer` is any
+    /// bidder, send winner questions to the award decisions, publish what the eForms
+    /// review roles mean, and keep the "not yet folded" hedge. Read from the
+    /// `parties[]` description and the `tender_version_parties.role` note, not the
+    /// whole surface, so a mention elsewhere cannot satisfy it.
+    #[test]
+    fn the_role_docs_send_winner_questions_to_the_award_decisions() {
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let parties = spec["components"]["schemas"]["TenderDetail"]["allOf"][1]["properties"]["parties"]
+            ["description"]
+            .as_str()
+            .expect("TenderDetail.parties is described")
+            .to_owned();
+        let note = crate::v1::sql::column_note("tender_version_parties", "role")
+            .expect("tender_version_parties.role has a /v1/sql/schema note")
+            .to_owned();
+        for (surface, text, winners) in [
+            ("TenderDetail.parties", parties.as_str(), "ask lot_results[].winners, or ?winner= on /v1/tenders"),
+            (
+                "/v1/sql/schema tender_version_parties.role",
+                note.as_str(),
+                "ask tender_version_result_winners (v_lot_results, v_awards), as ?winner= does",
+            ),
+        ] {
+            assert_says(
+                surface,
+                text,
+                &[
+                    "is a bidder, won or not (a losing bidder keeps the role)",
+                    "so do not read who won from this",
+                    winners,
+                    "(where to get information on appeals) means",
+                    // Kept until a served-role detector exists (issue 534 unit 5 is a
+                    // test over the inventory, not a census of the served rows).
+                    "a source element name not yet folded",
+                    // Issue 534 review: stored rows keep their old roles until unit 3's
+                    // refold. When it lands, this sentence goes, and its phrase moves to
+                    // RETIRED (recorded in the issue's unit 3).
+                    "until the issue-534 refold has run, a tender projected before it may still serve",
+                ],
+            );
+        }
+
+        // Issue 534 review: the legacy role list on both surfaces IS the fold's
+        // vocabulary, read from the constant the ingest walk holds the fold to. A role
+        // added there without a docs line, or a docs line naming a role nothing folds
+        // onto, fails here.
+        let listed = |surface: &str, text: &str, quote: char| -> Vec<String> {
+            let start = text
+                .find("fold onto canonical roles:")
+                .unwrap_or_else(|| panic!("{surface} must introduce the legacy role list"));
+            let rest = &text[start..];
+            let end = rest
+                .find("eForms is served")
+                .unwrap_or_else(|| panic!("{surface}'s legacy role list must end before the eForms half"));
+            rest[..end].split(quote).skip(1).step_by(2).map(str::to_owned).collect()
+        };
+        let expected: std::collections::BTreeSet<&str> =
+            ingest::project::LEGACY_PARTY_ROLES.iter().copied().collect();
+        for (surface, text, quote) in [
+            ("TenderDetail.parties", parties.as_str(), '`'),
+            ("/v1/sql/schema tender_version_parties.role", note.as_str(), '\''),
+        ] {
+            let roles = listed(surface, text, quote);
+            let served: std::collections::BTreeSet<&str> = roles.iter().map(String::as_str).collect();
+            assert_eq!(roles.len(), served.len(), "{surface} lists a legacy role twice: {roles:?}");
+            assert_eq!(
+                served, expected,
+                "{surface}'s legacy role list must be exactly ingest::project::LEGACY_PARTY_ROLES"
+            );
         }
     }
 
