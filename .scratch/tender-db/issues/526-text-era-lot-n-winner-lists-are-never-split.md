@@ -319,3 +319,18 @@ The rounds follow 508's and 509's sizing (106k–237k notices each). The 07:35 d
   - a misspelt void (`Déclaré infrucuteux`, 2027050);
   - a Dutch address glued to its name with no comma (2513708).
 
+
+## Unit 3 drain — 2004–2010 half read (2026-10-14 18:5x UTC)
+
+Jobs 2449–2470, the 2004–2010 rounds, are done. Every reparse read 0 unmatched / 0 re-keyed / 0 failing. The
+projects re-bound 14, 131, 170, 31 … recorded mentions per round (issue 434). The 2004–2010 exhibits, read on the
+public API by notice → tender:
+- notice 3994805 (31946-2010) → tender 4107566. Nine results, each with its own figure: Ansell, Asept In Med,
+  CAIR LGL, Fresenius Kabi France, Medwin, Nutricia nutrition clinique, SEGAP, Teleflex Medical, Vygon.
+- notice 2874436 (162665-2006) → tender 3441486: Frantour, Frantour/Est Voyages, Frantour/Dernouvel. No address
+  names.
+- notice 3500348 (240253-2008) → tender 3798796: Informance, Planificación de Entornos Tecnológicos, Getronics.
+
+The exhibit numbers in this file are NOTICE ids. Read them via `/v1/notices/{id}`, then
+`/v1/tenders?publication_id=<it>`. Still to come after the pre-2004 rounds (2471–2486): 1829247 (17653-2002)
+and 109697 (24056-1994), then the sweep and the residue counts.
