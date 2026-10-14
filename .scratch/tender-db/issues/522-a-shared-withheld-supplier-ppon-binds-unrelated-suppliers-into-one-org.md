@@ -1,6 +1,6 @@
 # 522 — the UK's shared withheld-supplier PPON binds unrelated suppliers into one org
 
-Status: ready-for-agent — BUILT, REVIEWED, GATED 2026-10-14 (gate green at 3ad1238, 2026 tests; see "Unit 1"); next:
+Status: done — VERIFIED 2026-10-14 22:5x UTC. Deployed e2da1e9. The dissolve 2489 (dry 2488) removed 30914328 and 31548264; the Verify reads 0. HISCOX → 2123088, DOC-Labor → 31966281, the four withheld `Individual`s → 31966280 (the residual is issue 529). Was: ready-for-agent — BUILT, REVIEWED, GATED 2026-10-14 (gate green at 3ad1238, 2026 tests; see "Unit 1"); next:
 deploy after the 526 unit 3 drain (queue idle), then the `repair-placeholder-orgs` dissolve per the runbook. Filed 2026-10-12 from issue 511 unit 4's item 5 read.
 Kind: data quality (organization identity)
 Relates to:
@@ -156,3 +156,27 @@ more of them. `Individual` is FTS's stand-in name for a sole trader, so it does 
 A `Placeholder` has no identifier guard, so the identified 31570158 would be dropped with them. As a `Blank` word,
 guard 3 would keep an identified `Individual` and drop a bare one. Measure the class first: run
 `name-phrase-census` for `individual` (how many, how many identified, which roles).
+
+## Done (2026-10-14)
+
+- **Deployed** e2da1e9 at 22:2x UTC, together with 524 unit 1, 531/535 and 536.
+- **Pre-dissolve read.** By identifier, exactly 30914328 and 31548264 hold the two bodies, with 4 + 2 = 6 mentions.
+- **Dry run 2488.** It reported 3 condemned orgs and 7 mentions.
+  - **Reconciled.** The extra is one stock org in an older condemned class. The latest `org-merge-health` gate census
+    (3.8 days old) reads `sequence: 1`, the only non-zero condemned counter, so the extra row is drift from that
+    class, not an over-reach of the new rule.
+  - 2 + 1 = 3 orgs and 6 + 1 = 7 mentions.
+- **Wet run 2489.** 3 dissolved, 7 mentions re-resolved (2 fresh provisionals, 5 reused), 27 party rows, 31 bid-party
+  rows, 31 winner rows (2 duplicates removed), 0 skipped, 5 tenders touched.
+- **Follow-up jobs.** Project 2490 had nothing pending. Backfill-org-name-variants 2491 ran.
+- **Verify:** `SELECT count(*) … organization_id IN (30914328, 31548264)` reads 0, and both rows are gone.
+- **Where the mentions landed** (bounded reads):
+
+  | notice | mention | now binds |
+  | --- | --- | --- |
+  | 46800936 | HISCOX INSURANCE COMPANY LIMITED | 2123088 "Hiscox Insurance Company Limited" (GB, provisional) |
+  | 46818757 | DOC-Labor GmbH | 31966281, fresh GB provisional |
+  | 46806664, 46819715 | four withheld `Individual`s (PBXY and PGYY slots) | 31966280, one fresh GB provisional `Individual` |
+
+  The shared `Individual` row is the documented residual. Issue 529 owns it; its name-phrase census is queued as
+  job 2493.
