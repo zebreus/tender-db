@@ -183,7 +183,10 @@ fn events(
                 // and the snapshot ends when the read says there is no next
                 // page — never on page length, which a windowed page cannot
                 // promise. On the main pool the band is left open (`i64::MAX`):
-                // a shape that stays there cannot walk, so its pages fill. On the
+                // a shape that stays there cannot walk, so its pages fill — except a
+                // `publication_id` lookup, whose TED scope and companions filter after
+                // the read, so its page can be short or empty with `next` at the last
+                // row examined (issue 536). On the
                 // isolated pool each page examines at most one id band (issue
                 // 120, as the REST list does since 408 (b)) and may come back
                 // short or empty with `next` at the last id examined — so a sparse

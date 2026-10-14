@@ -152,7 +152,10 @@ and the page names the merge as
 never the organization's own (<code>identifier_status: register_mismatch</code>, or
 <code>related_entity</code> for a parent's, subsidiary's or sister company's number): when
 that organization is re-keyed onto its own number, the old number — in any spelling — stops
-answering it rather than following it.</p>
+answering it rather than following it. A publication number answered at another stored
+spelling of it is named the same way, as
+<code>"resolved_filters": {"publication_id": {"asked": "…", "matched": ["…"]}}</code>
+(see <a href="#lookups">lookups</a>).</p>
 <p>Tender rows echo the <code>cpv</code> (CPV codes) and <code>country</code>
 (NUTS place codes) they carry, so you can see why a row matched a
 <code>cpv</code>/<code>country</code> filter.</p>
@@ -176,7 +179,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">lang</td><td>Preferred language for the <em>picked</em> text values (the <code>title</code> on tenders, lots and the detail header): ISO&nbsp;639 code, case-insensitive (<code>de</code> and <code>DEU</code> both work). Fallback chain: requested &rarr; English &rarr; the notice's original language &rarr; any labelled &rarr; unlabelled. A <em>selector</em>, not a filter &mdash; it changes which title a row serves, never which rows match, so it is never reported in <code>ignored_filters</code>. The detail's <code>texts</code> array always carries every stored language variant regardless.</td></tr>
   <tr><td class="ep">kind</td><td>Tender/Lot kind flag &mdash; on <code>/v1/lots</code> one of <code>Lot</code>, <code>LotsGroup</code>, <code>Part</code> (any letter case; anything else is a 400); on <code>/v1/organizations</code>, the identifier scheme (e.g. <code>VAT</code>).</td></tr>
   <tr><td class="ep">tender</td><td>Restrict Lots to one Tender id; on <code>/v1/notices</code>, list the Notices that caused that Tender's versions.</td></tr>
-  <tr><td class="ep">publication_id</td><td>The official notice number a source prints on its notices (e.g. a TED OJS number) — exact match. On <code>/v1/notices</code> the notice itself; on <code>/v1/tenders</code> the tender it caused. See <a href="#lookups">lookups</a>.</td></tr>
+  <tr><td class="ep">publication_id</td><td>The official notice number a source prints on its notices. A TED number is found in any of its spellings &mdash; TED's own unpadded one, the 6 or 8 digits the archive stores, the OJ S form &mdash; on TED notices only; another source's number (FTS, DÖE) matches as that source stores it. On <code>/v1/notices</code> the notice itself; on <code>/v1/tenders</code> the tender it caused. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">identifier</td><td>An Organization's official identifier <em>value</em> (e.g. a VAT number); pair with <code>kind</code> for the scheme. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">name_prefix</td><td>Organization-name prefix, Unicode case-insensitive (<code>mü</code> matches <code>MÜLLER</code>); switches the list to name order. Must not be empty. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep"><code>published_after</code><br><code>published_before</code></td><td>Bound Tenders by their current version's publication time. Unix seconds, RFC 3339 or a bare date (midnight UTC); a single bound implies <code>sort=published_at</code>. See <a href="#ordering">ordering</a>.</td></tr>
@@ -210,8 +213,10 @@ envelope — not the German ones, and the field says so.</p>
 <p>Paginate by following <code>next_cursor</code> until <code>more</code> is false. A page
 can be short &mdash; even empty &mdash; while <code>more</code> is true: a filtered read that
 has to walk the id order examines one bounded band of ids per page, and its cursor is the last
-id <em>examined</em>, so following it never re-reads a range and always terminates. Page length
-is not an end-of-results signal; <code>more</code> is. One stream pages in a different order: a
+id <em>examined</em>, so following it never re-reads a range and always terminates. A
+<code>publication_id</code> page does the same when it narrows its number's rows after the
+read (by source, or by <code>source</code>/<code>kind</code> and the other filters): its cursor
+is the last row examined. Page length is not an end-of-results signal; <code>more</code> is. One stream pages in a different order: a
 lots read seeded by an organization (<code>winner</code> or <code>bidder</code>) is served in
 <em>(tender, lot)</em> order &mdash; the order its participation index provides, so a page costs a
 page however many lots the organization has &mdash; and its cursor is compound. Pass it back
@@ -263,12 +268,12 @@ curl -s "https://tenders.zebreus.click/v1/tenders?published_after=2026-08-01T00:
 a company name — resolve directly, without knowing any internal id:</p>
 <table>
   <tr><th>You hold</th><th>Query</th></tr>
-  <tr><td>An official notice number</td><td class="ep">GET /v1/notices?publication_id=123456-2026</td></tr>
+  <tr><td>An official notice number</td><td class="ep">GET /v1/notices?publication_id=79997-2017</td></tr>
   <tr><td>An organization's official identifier (VAT &amp; co.)</td><td class="ep">GET /v1/organizations?identifier=RO42283735&amp;kind=VAT</td></tr>
   <tr><td>An organization's name</td><td class="ep">GET /v1/organizations?name_prefix=müller</td></tr>
 </table>
 <ul>
-  <li><code>publication_id</code> is an exact match on the number the source printed on the notice; pair with <code>source=</code> if the same number could exist in two sources. An unknown number is an empty page, not a <code>404</code>. The same number on <code>/v1/tenders</code> resolves the <em>tender</em> it caused — through any of its versions, so a corrigendum's number still finds the procedure. From the notice, <code>/v1/notices/{id}/content</code> gives its parsed payload and a tender detail's <code>versions[].caused_by_notice_id</code> links back the other way.</li>
+  <li><code>publication_id</code> takes a TED number as TED prints it, unpadded (<code>79997-2017</code>), at the 6 or 8 digits the archive stores (<code>079997-2017</code>, <code>00079997-2017</code>), or in the OJ S form (<code>2017/S 044-079997</code>); surrounding whitespace is ignored. The stored width follows the notice's format, not its year — unpadded in the 1993–2010 text era, 6 digits in the XML era (2011–2024), 8 in eForms (2022 on) — and a TED number is one notice per year whichever width you send. Those widths answer TED notices only. Other sources match their own number exactly: a UK Find a Tender (FTS) number is its 6-digit release id, <code>083685-2026</code> (also asked as <code>2026/S 000-083685</code>: issue 000 is no TED issue, so that form looks up the FTS spelling only), and a DÖE number is <code>&lt;uuid or number&gt;-&lt;version&gt;</code>, version suffix included. FTS numbers from 2021 on coincide with TED's 6-digit ones, so <code>083685-2026</code> answers FTS's notice and TED's <code>00083685-2026</code> alike — pair with <code>source=</code>. When the page matched a stored spelling other than the one sent, it names it in <code>"resolved_filters": {"publication_id": {"asked": "79997-2017", "matched": ["079997-2017"]}}</code>. An unknown number is an empty page, not a <code>404</code>. The same number on <code>/v1/tenders</code> resolves the <em>tender</em> it caused — through any of its versions, so a corrigendum's number still finds the procedure. From the notice, <code>/v1/notices/{id}/content</code> gives its parsed payload and a tender detail's <code>versions[].caused_by_notice_id</code> links back the other way.</li>
   <li><code>identifier</code> matches the official identifier <em>value</em>; <code>kind</code> names its scheme. This is the front door to participation history: resolve the identifier to a canonical org id, then ask <code>/v1/tenders?buyer=</code>, <code>?winner=</code> or <code>?bidder=</code> with it. An identifier can resolve to MORE THAN ONE canonical org — the identity index is deliberately not unique, and a shared VAT (an Organschaft) or an unfolded duplicate both occur — so take every id the lookup returns rather than the first (issue 329). It also finds an identifier a merge folded into an organization — a PPON whose organization was merged into the company-number one, another spelling of one register key: the survivor lists those in <code>merged_identifiers</code>, and a page that reached an organization that way says so in <code>"resolved_filters": {"identifier": {"asked": "GBPPONPWYP8439MZWY", "merged_into": [5718658]}}</code> (an array, for the same reason). With <code>kind</code>, the kind of the identifier that matched is what must agree. The value is matched as stored (normalised: upper-case letters and digits, no separators), so <code>GB-PPON-PWYP-8439-MZWY</code> is asked as <code>GBPPONPWYP8439MZWY</code>.</li>
   <li><code>name_prefix</code> is a prefix match on the organization's name, case-insensitive across the whole of Unicode (<code>müller</code>, <code>MÜLLER</code> and <code>Müller</code> all match); runs of whitespace and a trailing <code>.</code>, <code>,</code> or <code>;</code> do not matter (<code>ACME Ltd.</code> finds <code>ACME Ltd</code>), and switches the response to <strong>name order</strong> (id order otherwise breaks name-ordered pagination). It composes with <code>country=</code>/<code>kind=</code>; an empty prefix is <code>400</code>.</li>
 </ul>
@@ -1115,6 +1120,19 @@ mod tests {
             // Issue 531: the /docs lookup example promised the whole bid history
             // from `?bidder=` alone.
             ("everything they ever bid on", "?bidder= misses the wins of sources without published bids (issue 531)"),
+            // Issue 536: served from issue 217 on. The lookup was exact, and the
+            // exact match missed TED's own (unpadded) spelling of every notice after
+            // 2010; the /docs example number answered `[]`.
+            (
+                "exact match on the number the source printed",
+                "TED's widths, its OJ S form and trimmed input all reach the notice (issue 536)",
+            ),
+            ("publication_id=123456-2026", "the /docs lookup example answered [] (issue 536)"),
+            // Issue 536 review: the filter table's row said it too, in other words,
+            // and so did the OpenAPI parameter before 536.
+            ("a TED OJS number) — exact match", "a TED number answers at every width it is stored at (issue 536)"),
+            ("Exact-match an official publication number", "a TED number answers at every width it is stored at (issue 536)"),
+            ("at most four seeks", "/v1/tenders reads the seed and the matched versions: four spellings, two statements (issue 536)"),
         ];
         // Issue 535 unit 2: the `/v1/sql/schema` notes are a served surface too; the
         // wrong subtype note lived there, where this walk did not look.
@@ -1411,5 +1429,58 @@ mod tests {
                 assert!(text.contains(must), "{surface} must say `{must}` about a null version:\n{text}");
             }
         }
+    }
+
+    /// Issue 536, the positive half of the retired "exact match on the number the
+    /// source printed": both surfaces say which spellings a publication number is
+    /// accepted in, that the widths are TED's alone, how FTS and DÖE numbers are
+    /// asked, that FTS's numbers collide with TED's 6-digit ones, and where the page
+    /// says which spelling it matched. Read from the `publication_id` bullet and the
+    /// parameter's own description, not the whole surface. One phrase per sentence,
+    /// each one only its own sentence contains, so deleting any fails here.
+    #[test]
+    fn the_docs_say_which_spellings_a_publication_number_answers() {
+        let start = PAGE.find("<li><code>publication_id</code>").expect("/docs has a publication_id lookup bullet");
+        let docs = &PAGE[start..start + PAGE[start..].find("</li>").expect("bullet end")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["parameters"]["publication_id"]["description"]
+            .as_str()
+            .expect("the publication_id parameter is described");
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi)] {
+            assert_says(
+                &format!("{surface}'s publication_id text"),
+                text,
+                &[
+                    "takes a ted number as ted prints it, unpadded (79997-2017), at the 6 or 8 digits the archive \
+                     stores (079997-2017, 00079997-2017), or in the oj s form (2017/s 044-079997)",
+                    "the stored width follows the notice's format, not its year",
+                    "a ted number is one notice per year whichever width you send",
+                    "those widths answer ted notices only",
+                    "issue 000 is no ted issue, so that form looks up the fts spelling only",
+                    "uuid or number",
+                    "version suffix included",
+                    "fts numbers from 2021 on coincide with ted's 6-digit ones",
+                    "pair with source=",
+                    "when the page matched a stored spelling other than the one sent",
+                ],
+            );
+        }
+        // The filter table's row says it too, not "exact match" (issue 536 review).
+        let start = PAGE.find("<td class=\"ep\">publication_id</td>").expect("/docs has a publication_id filter row");
+        let row = &PAGE[start..start + PAGE[start..].find("</tr>").expect("row end")];
+        assert_says(
+            "/docs's publication_id filter row",
+            row,
+            &[
+                "a ted number is found in any of its spellings",
+                "on ted notices only; another source's number (fts, döe) matches as that source stores it",
+            ],
+        );
+        // The lookups table's example is TED's own spelling of a real notice
+        // (19163916, stored `079997-2017`), which the exact match missed.
+        assert!(
+            PAGE.contains("GET /v1/notices?publication_id=79997-2017</td>"),
+            "the /docs lookups table must show TED's unpadded spelling"
+        );
     }
 }

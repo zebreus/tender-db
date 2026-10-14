@@ -848,7 +848,10 @@ pub struct Params {
     lang: Option<String>,
     kind: Option<String>,
     tender: Option<i64>,
-    /// Official notice number (`publication_id`); exact-match on `/v1/notices` (issue 217).
+    /// Official notice number (`publication_id`): the notice on `/v1/notices`, the
+    /// tender a version's number caused on `/v1/tenders` (issue 217/217-A). Since
+    /// issue 536 a TED number answers in every form TED and the archive spell it —
+    /// [`publication_lookup`] reads it once, in [`Params::filter`].
     publication_id: Option<String>,
     /// Official organization identifier value (e.g. a VAT number); exact-match on
     /// `/v1/organizations`, pair with `kind` for the scheme (issue 217).
@@ -986,7 +989,10 @@ impl Params {
             // documented example was the failing one.
             kind: self.kind.as_deref().map(|k| k.trim().to_ascii_lowercase()),
             tender: self.tender,
-            publication_id: self.publication_id.clone(),
+            // Issue 536: parsed HERE, once, like `kind` above and `name_prefix`
+            // below — trimmed, and a TED number expanded to the widths the archive
+            // stores (`publication_lookup`).
+            publication_id: self.publication_id.as_deref().map(publication_lookup),
             identifier: self.identifier.clone(),
             published_after: parse_instant(self.published_after.as_deref(), "published_after")?,
             published_before: parse_instant(self.published_before.as_deref(), "published_before")?,
@@ -1210,6 +1216,10 @@ pub async fn read_items(
 pub struct PageOut {
     pub items: Vec<Item>,
     pub next: Option<String>,
+    /// Issue 536 review: the versions a Tender page's `publication_id=` lookup
+    /// admitted, when its read had to read them (`read::Banded::publication_hits`)
+    /// — what `resolved_filters.publication_id` names, without a second read.
+    pub publication_hits: Option<Vec<read::PublicationHit>>,
 }
 
 /// The REST list's page (issue 408 (b)): [`read_items`] for the id-ordered page,
@@ -1244,20 +1254,29 @@ pub async fn read_page(
         return Ok(PageOut {
             items: page.rows.iter().map(|r| Item { id: r.id, json: json::lot(r) }).collect(),
             next: page.next.map(read::LotCursor::render),
+            publication_hits: None,
         });
     }
     let after: i64 = cursor.parse().unwrap_or(0);
     let probe = limit + 1;
-    let (mut items, examined_to) = match collection {
+    let (mut items, examined_to, publication_hits) = match collection {
         Collection::Tenders => {
             let page = read::tenders_page(conn, filter, after, probe, band).await?;
-            (page.rows.iter().map(|r| Item { id: r.id, json: json::tender(r) }).collect::<Vec<_>>(), page.examined_to)
+            let items = page.rows.iter().map(|r| Item { id: r.id, json: json::tender(r) }).collect::<Vec<_>>();
+            (items, page.examined_to, page.publication_hits)
         }
         Collection::Lots => {
             let page = read::lots_page(conn, filter, after, probe, band).await?;
-            (page.rows.iter().map(|r| Item { id: r.id, json: json::lot(r) }).collect(), page.examined_to)
+            (page.rows.iter().map(|r| Item { id: r.id, json: json::lot(r) }).collect(), page.examined_to, None)
         }
-        other => (read_items(other, conn, filter, Scope::Page { after, limit: probe }).await?, None),
+        // Issue 536 review: a `publication_id=` page filters its number's rows in
+        // Rust after the probe, so it can come up short with rows past it; its
+        // read hands back the last id it examined, as a banded walk does.
+        Collection::Notices => {
+            let page = read::notices_page(conn, filter, after, probe).await?;
+            (page.rows.iter().map(|r| Item { id: r.id, json: json::notice(r) }).collect(), page.examined_to, None)
+        }
+        other => (read_items(other, conn, filter, Scope::Page { after, limit: probe }).await?, None, None),
     };
     let mut next = (items.len() as i64 > limit).then(|| items[limit as usize - 1].id.to_string());
     items.truncate(limit as usize);
@@ -1265,13 +1284,15 @@ pub async fn read_page(
     // EXAMINED, never the last row it returned — the page may hold nothing at all,
     // and a cursor at the last returned row would re-walk the same band for ever.
     // `more` follows `next_cursor`, so the client's documented loop ("until `more`
-    // is false") carries it across the band with no new rule to learn.
+    // is false") carries it across the band with no new rule to learn. A
+    // `publication_id=` page whose Rust half shrank a full probe does the same
+    // (issue 536 review).
     if next.is_none()
         && let Some(end) = examined_to
     {
         next = Some(end.to_string());
     }
-    Ok(PageOut { items, next })
+    Ok(PageOut { items, next, publication_hits })
 }
 
 /// Whether a matching entity exists at `scope` — the SSE diff's classification need
@@ -1348,7 +1369,7 @@ async fn collection(
     // routing is derived from the read layer's own predicates, never a list here.
     // On that pool the walk is also BOUNDED (issue 408 (b)): one id band per page,
     // so a sparse value answers in a bounded time instead of crossing the corpus.
-    let PageOut { items, next } = if store::read::walks(collection.into(), &filter) {
+    let PageOut { items, next, publication_hits } = if store::read::walks(collection.into(), &filter) {
         match state.isolated.read_page(collection, filter.clone(), cursor, limit, state.fallback_band).await {
             Ok(result) => result?,
             Err(isolate::Shed) => {
@@ -1371,6 +1392,13 @@ async fn collection(
     // Issue 460: an identifier a merge folded into an organization finds it; name
     // the organizations the page reached that way.
     let followed = if honoured.contains(&"identifier") { identifier_resolution(&items, &filter) } else { None };
+    // Issue 536: a publication number that matched another stored spelling says so.
+    let publication = if honoured.contains(&"publication_id") {
+        let (lookup, asked) = (filter.publication_id.as_ref(), params.publication_id.as_deref());
+        publication_resolution(collection, &items, lookup, asked, publication_hits.as_deref())
+    } else {
+        None
+    };
     let mut page = json::page(items, next, &ignored);
     // Issue 455: say which org ids were followed to their survivor, so a page that
     // answers for a different id than the one sent is never silent about it. Only
@@ -1382,10 +1410,104 @@ async fn collection(
     if let Some(identifier) = followed {
         resolved_filters.insert("identifier".to_owned(), identifier);
     }
+    if let Some(publication) = publication {
+        resolved_filters.insert("publication_id".to_owned(), publication);
+    }
     if !resolved_filters.is_empty() {
         page["resolved_filters"] = Value::Object(resolved_filters);
     }
     Ok(axum::Json(page).into_response())
+}
+
+/// Issue 536: a `publication_id=` value as the lookup the reads apply.
+///
+/// The stored spelling is whatever each format's file carried, and the width
+/// follows the FORMAT, not the year: TED's text era unpadded (`123-2005`), its
+/// XML era 6 digits (`079997-2017`, into 2024), eForms 8 (`00083685-2026`); FTS
+/// its 6-digit release id; DÖE `<uuid or number>-<version>`. TED prints its own
+/// numbers unpadded (`79997-2017`, `83685-2026`, read off TED's search API) and
+/// treats one number per year as one notice — so the exact match answered `[]` to TED's
+/// own spelling for every notice after 2010, and to the OJ S form issue 217's
+/// own scenario used.
+///
+/// So: trim, then read the value with the fold's own OJS grammar
+/// (`ingest::project::ojs_ref` — one parser for the chain key and this lookup):
+///
+/// - an OJS number (`N-YYYY` at any padding, or `YYYY/S III-N`) reaches a TED
+///   notice at all three widths, and any notice at the trimmed value exactly;
+/// - **the OJ S form with issue `000`** is not TED's (its OJ S issues run from
+///   001). FTS numbers its notices `NNNNNN-YYYY` per year (its release id, the
+///   only form its API and our archive carry), and its notice pages print that
+///   number in the OJ S shape with issue `000` (`2026/S 000-083685`) — the
+///   service's known display form, NOT measured here (find-tender answered 403
+///   through the proxy; issue 536). So issue `000` reaches the 6-digit spelling
+///   on an FTS row only, and no TED width: if FTS does print it, it finds the FTS
+///   notice; if not, nothing was lost, because a TED row there — a width, or an
+///   XML-era notice stored under the same six digits — could only be a different
+///   notice that happens to share the number;
+/// - an OJ S reference with no `-<number>` (`2017/S 044`) names an ISSUE — the
+///   shape TED cites one in — not a notice: the fold's grammar reads its figure
+///   as the number (`OjsRef::issue_only`), so the lookup refuses it here and keeps
+///   it exact (issue 536 review: it answered notice `000044-2017`);
+/// - anything else (a DÖE id, the `00000000-1900` placeholder, free text) stays
+///   the exact trimmed value, as before.
+///
+/// The widths are TED's alone: FTS numbers share the 6-digit shape, so an
+/// unscoped expansion would make `83685-2026` (TED's) answer FTS's `083685-2026`
+/// too. Which row may answer at which spelling is `PublicationLookup::admits`.
+pub fn publication_lookup(raw: &str) -> read::PublicationLookup {
+    let trimmed = raw.trim();
+    let mut lookup = read::PublicationLookup::exact(trimmed);
+    if let Some(ojs) = ingest::project::ojs_ref(trimmed).filter(|ojs| !ojs.issue_only) {
+        let (n, y) = (ojs.number, ojs.year);
+        if ojs.issue == Some(0) {
+            lookup.fts.push(format!("{n:06}-{y}"));
+        } else {
+            lookup.ted = vec![format!("{n}-{y}"), format!("{n:06}-{y}"), format!("{n:08}-{y}")];
+        }
+    }
+    lookup
+}
+
+/// Issue 536: when a `publication_id=` page answered at a stored spelling other
+/// than the one sent, name them, as `{"asked": …, "matched": [spellings]}` — the
+/// shape the identifier lookup's `merged_into` uses, so a consumer learns that
+/// `83685-2026` is held as `00083685-2026`, or that `083685-2026` answered one
+/// notice of each source. `None` when the page is empty or matched only the
+/// value sent.
+///
+/// On `/v1/notices` the spellings are the rows' own. On `/v1/tenders` a row's
+/// `publication_id` is its CURRENT version's, not the version the number matched
+/// (any version resolves the tender), so they are the matched versions' — the
+/// `hits` the page's own read took to decide the TED scope
+/// (`read::Banded::publication_hits`; issue 536 review: this read them a second
+/// time), kept to the page's tenders. A read that took none had nothing to
+/// decide: its lookup is the one spelling every row matched at.
+fn publication_resolution(
+    collection: Collection,
+    items: &[Value],
+    lookup: Option<&read::PublicationLookup>,
+    asked: Option<&str>,
+    hits: Option<&[read::PublicationHit]>,
+) -> Option<Value> {
+    let (Some(lookup), Some(asked)) = (lookup, asked) else { return None };
+    if items.is_empty() || lookup.spellings() == [asked] {
+        return None;
+    }
+    let mut matched: Vec<String> = match (collection, hits) {
+        (Collection::Notices, _) => {
+            items.iter().filter_map(|item| item["publication_id"].as_str().map(str::to_owned)).collect()
+        }
+        (Collection::Tenders, Some(hits)) => {
+            let page: Vec<i64> = items.iter().filter_map(|item| item["id"].as_i64()).collect();
+            hits.iter().filter(|hit| page.contains(&hit.tender_id)).map(|hit| hit.publication_id.clone()).collect()
+        }
+        (Collection::Tenders, None) => lookup.spellings().into_iter().map(str::to_owned).collect(),
+        (Collection::Lots | Collection::Organizations, _) => return None,
+    };
+    matched.sort();
+    matched.dedup();
+    (!matched.is_empty() && matched != [asked]).then(|| json!({ "asked": asked, "matched": matched }))
 }
 
 /// A client-supplied instant: unix seconds, RFC 3339, or a bare `YYYY-MM-DD`
@@ -1569,7 +1691,12 @@ async fn tenders_ordered(
     // sparse version-predicate walks the ordered stream the same way it walks the
     // PK, so it must not hold a main-pool reader.
     let stripped = order.strip_served(&filter);
-    let mut rows = if store::read::walks(store::read::Collection::Tenders, &stripped) {
+    // Kept for `resolved_filters` below: the isolated branch moves `filter`.
+    let lookup = filter.publication_id.clone();
+    let read::Banded { mut rows, examined_to, publication_hits } = if store::read::walks(
+        store::read::Collection::Tenders,
+        &stripped,
+    ) {
         match state.isolated.read_ordered(filter, order, desc, cursor, limit + 1).await {
             Ok(result) => result?,
             Err(isolate::Shed) => {
@@ -1581,25 +1708,32 @@ async fn tenders_ordered(
         }
     } else {
         let reader = state.readers.get().await?;
-        read::tenders_ordered(&reader, &filter, order, desc, cursor, limit + 1).await?
+        read::tenders_ordered_page(&reader, &filter, order, desc, cursor, limit + 1).await?
     };
-    let next = (rows.len() as i64 > limit).then(|| {
-        let last = &rows[limit as usize - 1];
-        let key = match order {
-            read::HeadOrder::PublishedAt => last.published_at,
-            // The deadline the row was ordered by; the row always HAS one here
-            // (NULL-deadline rows are excluded from this ordering), and the list
-            // row\'s deadline is the same MAX the column materialises.
-            read::HeadOrder::Deadline => last.deadline.map(|d| d.utc_seconds).unwrap_or(0),
-        };
-        format!("{tag}{}.{}", key, last.id)
-    });
+    // The page's last row; else (issue 536 review) the last row a `publication_id=`
+    // read EXAMINED when its Rust half shrank the probe — the row the SQL stopped
+    // at, so the next page resumes past it rather than ending the list.
+    let next = (rows.len() as i64 > limit)
+        .then(|| {
+            let last = &rows[limit as usize - 1];
+            (order.key_of(last), last.id)
+        })
+        .or(examined_to)
+        .map(|(key, id)| format!("{tag}{key}.{id}"));
     rows.truncate(limit as usize);
     let honoured = store::read::Collection::Tenders.honoured_params();
     let ignored: Vec<&str> =
         params.provided_filters().into_iter().filter(|f| !honoured.contains(f)).collect();
     let items: Vec<serde_json::Value> = rows.iter().map(json::tender).collect();
-    Ok(axum::Json(json::page(items, next, &ignored)).into_response())
+    // Issue 536: the sorted list names a re-spelled publication number too.
+    let asked = params.publication_id.as_deref();
+    let publication =
+        publication_resolution(Collection::Tenders, &items, lookup.as_ref(), asked, publication_hits.as_deref());
+    let mut page = json::page(items, next, &ignored);
+    if let Some(publication) = publication {
+        page["resolved_filters"] = json!({ "publication_id": publication });
+    }
+    Ok(axum::Json(page).into_response())
 }
 
 async fn lots(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<Params>) -> ApiResult {
@@ -2232,6 +2366,56 @@ mod deadline_tests {
             .send();
         let outcome = tokio::time::timeout(Duration::from_millis(300), pending).await;
         assert!(outcome.is_err(), "an exempt stream request must NOT be cut at the deadline");
+    }
+}
+
+#[cfg(test)]
+mod publication_lookup_tests {
+    use super::publication_lookup;
+
+    /// Issue 536: what each accepted form expands to. TED's number at every stored
+    /// width (unpadded text era, 6-digit XML era, 8-digit eForms) whatever form it
+    /// was sent in; FTS's OJ S issue `000` to the 6-digit spelling only; anything
+    /// the OJS grammar refuses kept exact. The end-to-end answers are pinned on
+    /// fixture rows in `tests/api.rs`.
+    #[test]
+    fn a_ted_number_expands_to_every_stored_width_and_nothing_else_does() {
+        let widths = ["79997-2017", "079997-2017", "00079997-2017"];
+        for asked in ["79997-2017", "079997-2017", "00079997-2017", " 079997-2017 ", "2017/S 044-079997"] {
+            let lookup = publication_lookup(asked);
+            assert_eq!(lookup.exact, [asked.trim()], "{asked:?}: the value sent, trimmed, answers any source");
+            assert_eq!(lookup.ted, widths, "{asked:?}: TED's three widths");
+            assert!(lookup.fts.is_empty(), "{asked:?}: a TED form reaches no FTS-only spelling");
+            assert!(lookup.spellings().len() <= 4, "{asked:?}: at most four spellings");
+        }
+        // The text era is unpadded: a 6-digit pad of an old number still finds it.
+        assert_eq!(publication_lookup("000123-2005").ted, ["123-2005", "000123-2005", "00000123-2005"]);
+        // A number of 8 digits or more is its own every width.
+        assert_eq!(publication_lookup("00615938-2024").spellings(), ["00615938-2024", "615938-2024"]);
+
+        // FTS's OJ S form: issue 000 is no TED issue — FTS's spelling, FTS rows only.
+        let fts = publication_lookup("2026/S 000-083685");
+        assert_eq!(fts.exact, ["2026/S 000-083685"]);
+        assert_eq!(fts.fts, ["083685-2026"]);
+        assert!(fts.ted.is_empty(), "issue 000 must not reach a TED width: {fts:?}");
+
+        // Unparsed input stays exact: a DÖE id (with or without its version suffix,
+        // a uuid or a number), the placeholder, free text — and an OJ S ISSUE cited
+        // alone, which the fold's grammar reads as a number but a consumer means as
+        // the issue (it answered TED's `000044-2017`; issue 536 review).
+        for exact in [
+            "920ee1cf-ddd8-41c9-9cb5-aad114899550-01",
+            "920ee1cf-ddd8-41c9-9cb5-aad114899550",
+            "17846986-1",
+            "00000000-1900",
+            "nonesuch-9999",
+            "2017/S 044",
+            "2026/S 083",
+        ] {
+            let lookup = publication_lookup(exact);
+            assert_eq!(lookup.exact, [exact], "{exact:?} is kept as sent");
+            assert!(lookup.ted.is_empty() && lookup.fts.is_empty(), "{exact:?} is no OJS number: {lookup:?}");
+        }
     }
 }
 

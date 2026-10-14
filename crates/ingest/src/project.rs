@@ -9376,19 +9376,54 @@ fn is_placeholder_key(s: &str) -> bool {
 /// (`000001-2019`), and the text-era form (`154-2005`). The raw string is never
 /// the key — its shape is not stable across eras (research §1).
 fn ojs_key(raw: &str) -> Option<OjsKey> {
+    ojs_ref(raw).map(|r| (r.year, r.number))
+}
+
+/// An OJS publication reference as [`ojs_ref`] reads it: the year and the number
+/// (one integer per year, whatever padding it was printed with), and — in the
+/// display form only — the OJ S issue it was printed under.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct OjsRef {
+    pub year: i64,
+    pub number: i64,
+    /// The display form's OJ S issue (`2017/S 044-079997` → `Some(44)`); `None` for
+    /// the `<number>-<year>` forms, and for a display form whose issue does not
+    /// parse (the number still does — [`ojs_key`] never read the issue).
+    pub issue: Option<i64>,
+    /// A display form with no `-` in its tail (`2017/S 044`): its one figure is
+    /// read as the NUMBER, as the fold always has ([`ojs_key`] is unchanged), but
+    /// that is the shape TED cites an OJ S ISSUE in, so the API lookup refuses it
+    /// rather than answer notice 44 of 2017 (issue 536 review).
+    pub issue_only: bool,
+}
+
+/// The ONE grammar for an OJS publication reference, shared by the fold
+/// ([`ojs_key`]: the chain's join key) and the API boundary (issue 536: the
+/// `publication_id=` lookup, `v1::publication_lookup` in the app). Two parsers
+/// would drift; the lookup must accept exactly the spellings the fold already
+/// treats as one number.
+///
+/// Rejected, so a caller falls back to the raw string: anything without a year
+/// in 1900..=2100 and a positive number — a DÖE `<uuid>-<NN>` (its `NN` is no
+/// year), the `00000000-1900` placeholder (number 0), free text.
+pub fn ojs_ref(raw: &str) -> Option<OjsRef> {
     let s = raw.trim();
-    let (year, number) = if let Some((head, tail)) = split_ci(s, "/S") {
+    let (year, number, issue, issue_only) = if let Some((head, tail)) = split_ci(s, "/S") {
         // Display form: `<year>/S <issue>-<number>`; the number is the tail
-        // after the last '-'.
-        (head.trim(), tail.rsplit('-').next()?.trim())
+        // after the last '-', the issue what precedes it. With no '-' the whole
+        // tail is the number — the fold's reading since before issue 536.
+        match tail.rsplit_once('-') {
+            Some((issue, number)) => (head.trim(), number.trim(), issue.trim().parse::<i64>().ok(), false),
+            None => (head.trim(), tail.trim(), None, true),
+        }
     } else {
         // DOC / text-era form: `<number>-<year>`.
         let (number, year) = s.rsplit_once('-')?;
-        (year.trim(), number.trim())
+        (year.trim(), number.trim(), None, false)
     };
     let year: i64 = year.parse().ok()?;
     let number: i64 = number.parse().ok()?;
-    ((1900..=2100).contains(&year) && number > 0).then_some((year, number))
+    ((1900..=2100).contains(&year) && number > 0).then_some(OjsRef { year, number, issue, issue_only })
 }
 
 /// `split_once`, case-insensitive on the delimiter — the OJS separator is
@@ -12029,6 +12064,42 @@ mod tests {
         // Its publication_id shape is `<number>-<year>` — the DOC/text-era form
         // ojs_key parses, so ojs_self populates once the profile is legacy.
         assert_eq!(ojs_key("115165-2008"), Some((2008, 115165)));
+    }
+
+    /// Issue 536: the grammar the API's `publication_id=` lookup shares with the
+    /// fold. Every stored TED width and the OJ S display form read as ONE number
+    /// per year; the display form also yields its issue (the lookup routes FTS's
+    /// issue `000` on it); the shapes that are not OJS numbers are refused, so the
+    /// lookup keeps them exact.
+    #[test]
+    fn ojs_ref_reads_every_ted_width_and_the_display_form_as_one_number() {
+        let number = |year, number| Some(OjsRef { year, number, issue: None, issue_only: false });
+        let display = |year, number, issue| Some(OjsRef { year, number, issue: Some(issue), issue_only: false });
+        for raw in ["79997-2017", "079997-2017", "00079997-2017", " 079997-2017 "] {
+            assert_eq!(ojs_ref(raw), number(2017, 79997), "{raw:?}");
+        }
+        assert_eq!(ojs_ref("123-2005"), number(2005, 123), "the text era is unpadded");
+        assert_eq!(ojs_ref("2017/S 044-079997"), display(2017, 79997, 44));
+        assert_eq!(ojs_ref("2011/S 1-000181"), display(2011, 181, 1));
+        assert_eq!(ojs_ref("2026/s 000-083685"), display(2026, 83685, 0));
+        // The fold's key is the same pair, whatever the form.
+        assert_eq!(ojs_key("2017/S 044-079997"), ojs_key("79997-2017"));
+        // An OJ S issue cited alone (issue 536 review): the fold still reads its
+        // figure as the number, exactly as before — `issue_only` is what lets the
+        // API lookup refuse it instead.
+        for (raw, year, figure) in [("2017/S 044", 2017, 44), ("2026/S 083", 2026, 83), ("2026/s 83 ", 2026, 83)] {
+            assert_eq!(ojs_ref(raw), Some(OjsRef { year, number: figure, issue: None, issue_only: true }), "{raw:?}");
+            assert_eq!(ojs_key(raw), Some((year, figure)), "{raw:?}: the fold's key is unchanged");
+        }
+        for refused in [
+            "920ee1cf-ddd8-41c9-9cb5-aad114899550-01", // DÖE: `01` is no year
+            "920ee1cf-ddd8-41c9-9cb5-aad114899550",    // a bare DÖE uuid
+            "00000000-1900",                           // the placeholder: number 0
+            "nonesuch-9999",
+            "",
+        ] {
+            assert_eq!(ojs_ref(refused), None, "{refused:?} is not an OJS number");
+        }
     }
 
     /// Issue 385: the F14 target vocabulary, and the normalisation it depends on.

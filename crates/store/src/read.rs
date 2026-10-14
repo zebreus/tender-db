@@ -217,10 +217,12 @@ pub struct Filter {
     pub kind: Option<String>,
     /// Restrict Lots to one parent Tender.
     pub tender: Option<i64>,
-    /// Exact-match a Notice's official publication number (`publication_id`) on
-    /// `/v1/notices` (issue 217). Not a Tender/Lot/Org predicate — those collections
-    /// name it ignored rather than applying it.
-    pub publication_id: Option<String>,
+    /// A Notice's official publication number (`publication_id`) on `/v1/notices`
+    /// (issue 217), and the Tender a version's number caused on `/v1/tenders`
+    /// (217-A). Since issue 536 a [`PublicationLookup`]: the stored spellings the
+    /// asked number reaches, each scoped to the sources it may answer from. Not a
+    /// Lot/Org predicate — those collections name it ignored rather than applying it.
+    pub publication_id: Option<PublicationLookup>,
     /// Exact-match an Organization's official identifier VALUE (e.g. a VAT number) on
     /// `/v1/organizations` (issue 217). Pair with `kind` (the identifier scheme) to
     /// disambiguate a value reused across schemes. An Organizations-only predicate —
@@ -261,6 +263,97 @@ pub struct Filter {
     /// (any version carried the code); the head-version EXISTS still decides.
     /// Never set by callers, and below the country seed in precedence.
     pub procedure_seed: bool,
+}
+
+/// A `publication_id=` lookup (issue 536): every stored spelling the asked
+/// number reaches, split by which sources may answer at it.
+///
+/// The stored spelling is whatever each format's file carried (TED: unpadded in
+/// the text era, 6 digits in the XML era, 8 in eForms; FTS: its 6-digit release
+/// id; DÖE: `<uuid or number>-<version>`), and TED itself prints its numbers
+/// unpadded — so an exact match missed TED's own spelling for every notice after
+/// 2010. The API
+/// boundary (`v1::publication_lookup`, through ingest's `ojs_ref` grammar)
+/// expands a TED number to its three widths; this type carries that expansion
+/// to the reads, which apply it in two halves:
+///
+/// - **SQL**: [`Self::spellings`], at most four, is the ONLY predicate on the
+///   number (`= ?` for one, `IN (…)` for more — turso seeks each value on the
+///   index's leading column; issue 217-A's flatten hazard is why it stays the only
+///   one).
+/// - **Rust**: [`Self::admits`] keeps a row only if its source may answer at the
+///   spelling it was found under. The widths are TED's: FTS numbers share the
+///   6-digit shape, so `83685-2026` (TED's `00083685-2026`) found FTS's
+///   `083685-2026` too until this half dropped it. The converse holds for FTS's
+///   OJ S form (`2023/S 000-012345`): its 6-digit spelling answers an FTS row
+///   only, not the TED XML-era notice stored under the same digits.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PublicationLookup {
+    /// Spellings a row of ANY source answers at: the asked value, trimmed. Never
+    /// empty.
+    pub exact: Vec<String>,
+    /// Spellings only a `source = 'ted'` row answers at: TED's number at the
+    /// widths the archive stores (`{n}-{y}`, `{n:06}-{y}`, `{n:08}-{y}`). Empty
+    /// when the asked value is not a TED-form OJS number.
+    pub ted: Vec<String>,
+    /// Spellings only a `source = 'fts'` row answers at: for the OJ S form with
+    /// issue `000` (no TED issue; FTS's display form), the 6-digit `NNNNNN-YYYY`
+    /// FTS stores. Not `exact`: a TED XML-era notice can be stored under the same
+    /// six digits (`012345-2023`), and FTS's form must not answer it.
+    pub fts: Vec<String>,
+}
+
+impl PublicationLookup {
+    /// The pre-536 lookup: the value as given (trimmed), any source.
+    pub fn exact(value: &str) -> Self {
+        PublicationLookup { exact: vec![value.trim().to_owned()], ted: Vec::new(), fts: Vec::new() }
+    }
+
+    /// Every distinct spelling, in order — the SQL list. At most four by
+    /// construction (the trimmed value and three widths).
+    pub fn spellings(&self) -> Vec<&str> {
+        let mut out: Vec<&str> = Vec::new();
+        for s in self.exact.iter().chain(&self.ted).chain(&self.fts) {
+            if !out.contains(&s.as_str()) {
+                out.push(s);
+            }
+        }
+        out
+    }
+
+    /// Does a row of `source`, stored as `stored`, answer this lookup?
+    pub fn admits(&self, source: &str, stored: &str) -> bool {
+        let scoped = match source {
+            "ted" => &self.ted,
+            "fts" => &self.fts,
+            _ => return self.exact.iter().any(|s| s == stored),
+        };
+        self.exact.iter().chain(scoped).any(|s| s == stored)
+    }
+
+    /// True when the source cannot matter: every spelling the SQL seeks is one any
+    /// source answers at, so every row it finds is admitted and the Rust half has
+    /// nothing to decide (an unparsed value — a DÖE id, a placeholder).
+    pub fn source_blind(&self) -> bool {
+        self.ted.iter().chain(&self.fts).all(|s| self.exact.contains(s))
+    }
+}
+
+impl From<&str> for PublicationLookup {
+    fn from(value: &str) -> Self {
+        PublicationLookup::exact(value)
+    }
+}
+
+/// `column = ?` for one spelling, `column IN (?, …)` for several (issue 536).
+fn publication_predicate(column: &str, lookup: &PublicationLookup) -> (String, Vec<Value>) {
+    let spellings = lookup.spellings();
+    let params: Vec<Value> = spellings.iter().map(|s| t(*s)).collect();
+    if let [_] = spellings[..] {
+        (format!("{column} = ?"), params)
+    } else {
+        (format!("{column} IN ({})", vec!["?"; spellings.len()].join(", ")), params)
+    }
 }
 
 /// Which slice of the versioned layer a collection query reads.
@@ -777,8 +870,9 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 24] = [
                         index (issue 217-A, measured). Tenders: seeds the FROM off \
                         tender_versions_publication and SUPPRESSES isolation (issue-212 pattern) — \
                         every companion is bounded by the seed; de-isolated on prod measurement \
-                        (bare 3.4 ms, companioned 1.5-1.9 ms, rev 3a658ec). Ignored by \
-                        Lots/Organizations"),
+                        (bare 3.4 ms, companioned 1.5-1.9 ms, rev 3a658ec). Since issue 536 up to \
+                        four spellings, one IN on each index's leading column (InSeek: a seek per \
+                        value), the TED scope post-filtered in Rust. Ignored by Lots/Organizations"),
     ("identifier", "Organizations: index-served by organizations_identifier_id (identifier, id) \
                     (issue 217). Ignored by Tenders/Lots/Notices"),
     ("published_after", "Tenders, id-ordered shape: a narrow range filters the PK walk -> isolates. \
@@ -1753,16 +1847,123 @@ pub async fn tenders(
     let q = tenders_query(filter, scope);
     let mut rows = q.rows(conn, tender_row).await?;
     retain_publication_companions(&mut rows, filter);
+    retain_publication_scope(conn, &mut rows, filter).await?;
     Ok(rows)
+}
+
+/// One version a `publication_id=` lookup reached on `/v1/tenders` (issue 536):
+/// its Tender, the spelling it is stored under, and the source of the notice
+/// that caused it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PublicationHit {
+    pub tender_id: i64,
+    pub publication_id: String,
+    pub source: String,
+}
+
+/// The versions a lookup's spellings reach, with each version's causing notice's
+/// source: one seek per spelling on `tender_versions_publication`, then one
+/// primary-key seek on `notices` per version found (`caused_by_notice_id` is
+/// NOT NULL with a foreign key, so every version has one).
+fn publication_hits_query(lookup: &PublicationLookup) -> Query {
+    let (predicate, params) = publication_predicate("v.publication_id", lookup);
+    let mut q = Query::default();
+    q.push(
+        &format!(
+            "SELECT v.tender_id, v.publication_id,
+                    (SELECT n.source FROM notices n WHERE n.id = v.caused_by_notice_id)
+               FROM tender_versions v WHERE {predicate}"
+        ),
+        params,
+    );
+    q
+}
+
+/// [`publication_hits_query`] built but not run — the plan gate's seam.
+#[cfg(test)]
+pub(crate) fn publication_hits_statement(lookup: &PublicationLookup) -> (String, Vec<Value>) {
+    let q = publication_hits_query(lookup);
+    (q.sql, q.params)
+}
+
+/// The versions a `publication_id=` lookup ADMITS (issue 536): reached by one of
+/// its spellings, from a source that may answer at that spelling
+/// ([`PublicationLookup::admits`]). Read by the tender post-filter below and by
+/// the API's `resolved_filters.publication_id` (which spelling the page matched).
+pub async fn publication_hits(conn: &Connection, lookup: &PublicationLookup) -> turso::Result<Vec<PublicationHit>> {
+    let mut hits = publication_hits_query(lookup)
+        .rows(conn, |row| PublicationHit {
+            tender_id: int(row, 0),
+            publication_id: text(row, 1),
+            source: opt_text_of(row, 2).unwrap_or_default(),
+        })
+        .await?;
+    hits.retain(|h| lookup.admits(&h.source, &h.publication_id));
+    Ok(hits)
+}
+
+/// Issue 536, the tender half of the TED scope. The seed (`tender_from`) finds
+/// every tender a version of which is stored under one of the lookup's spellings,
+/// whatever source caused that version; a TED width may only answer a TED
+/// version. `tenders.source` cannot decide it — a shared procedure key merges
+/// Sources into one tender (`primary_source` then names it `ted`), and since
+/// issue 481 so does a DÖE notice linked to its TED twin — so the matched
+/// VERSION's own notice does ([`publication_hits`]).
+///
+/// Returns the admitted hits it read, so the API names the matched spellings
+/// (`resolved_filters.publication_id`) off this one read instead of a second
+/// (issue 536 review). Reads nothing, and returns `None`, when there is nothing
+/// to decide or name: no rows came back, or the lookup is ONE spelling that every
+/// source answers at (an unparsed value — a DÖE id, the placeholder), which every
+/// row admitted and every row matched at.
+///
+/// Like the companions above it filters AFTER the SQL `LIMIT`; a paged caller
+/// hands back [`shrunk_probe`]'s cursor so a page that came up short from it
+/// never reads as the last.
+async fn retain_publication_scope(
+    conn: &Connection,
+    rows: &mut Vec<TenderRow>,
+    f: &Filter,
+) -> turso::Result<Option<Vec<PublicationHit>>> {
+    let Some(lookup) = &f.publication_id else { return Ok(None) };
+    if rows.is_empty() || (lookup.source_blind() && lookup.spellings().len() == 1) {
+        return Ok(None);
+    }
+    let hits = publication_hits(conn, lookup).await?;
+    let admitted: std::collections::HashSet<i64> = hits.iter().map(|h| h.tender_id).collect();
+    rows.retain(|r| admitted.contains(&r.id));
+    Ok(Some(hits))
+}
+
+/// Issue 536 review: the cursor a read hands back when its Rust half dropped rows
+/// from a FULL probe. A `publication_id=` number is the only SQL predicate
+/// (217-A), so the TED scope and the source/kind/date companions filter AFTER the
+/// `LIMIT`: a probe of `limit` rows that loses one comes back short, and the
+/// caller's "is there another page?" (more rows than the page size) read the end
+/// of the results with rows still past it. Measured on prod, `033562-2023` is one
+/// TED notice and 15 FTS ones, so `2023/S 000-033562&limit=5` (the TED row
+/// dropped) stranded ten, and `033562-2023&source=fts` did the same before 536.
+///
+/// So such a page hands back the last row the SQL EXAMINED — issue 408 (b)'s
+/// contract ([`Banded`]): a page may be short, even empty, while `more` is true;
+/// following the cursor never re-reads a row and reaches every one; each page is
+/// still one bounded read. `None` when nothing was dropped (the ordinary cursor,
+/// the page's own last row, applies) or the SQL came back short (nothing lies
+/// past it). `limit` is the probe the SQL ran with; `C` is the read's cursor (an
+/// id, or an ordered list's `(key, id)`).
+fn shrunk_probe<C>(limit: i64, examined: usize, kept: usize, last_examined: Option<C>) -> Option<C> {
+    if examined as i64 >= limit && kept < examined { last_examined } else { None }
 }
 
 /// issue 217-A: a publication seed leaves every `t.`-column companion out of the
 /// SQL (see `tenders_query` — the planner otherwise flattens onto the companion's
 /// index and walks its slice, measured 35 s). They apply here, over the ≤handful
-/// of rows one publication number maps to. A page can only UNDER-fill from this
-/// (the number is nearly unique, its whole result is one page), never
-/// mis-paginate. The bounds read the returned row's own version values, which at
-/// the head equal the `current_*` pointer columns the SQL form reads.
+/// of rows one publication number maps to — AFTER the SQL `LIMIT`, so a page can
+/// come up short with rows still past it; the paged readers hand back
+/// [`shrunk_probe`]'s cursor for exactly that (issue 536 review: "never
+/// mis-paginate" was false). The bounds read the returned row's own version
+/// values, which at the head equal the `current_*` pointer columns the SQL form
+/// reads.
 fn retain_publication_companions(rows: &mut Vec<TenderRow>, f: &Filter) {
     if f.publication_id.is_none() {
         return;
@@ -1825,6 +2026,18 @@ impl HeadOrder {
         }
     }
 
+    /// The key `row` is ordered by under this ordering: the first half of the
+    /// list's `(key, id)` keyset cursor.
+    pub fn key_of(self, row: &TenderRow) -> i64 {
+        match self {
+            HeadOrder::PublishedAt => row.published_at,
+            // The deadline the row was ordered by; the row always HAS one here
+            // (NULL-deadline rows are excluded from this ordering), and the list
+            // row's deadline is the same MAX the column materialises.
+            HeadOrder::Deadline => row.deadline.map(|d| d.utc_seconds).unwrap_or(0),
+        }
+    }
+
     /// The `(source, column, id)` index a `source` companion pins (issue 503).
     pub fn source_index(self) -> &'static str {
         match self {
@@ -1881,8 +2094,23 @@ pub async fn tenders_ordered(
     cursor: Option<(i64, i64)>,
     limit: i64,
 ) -> turso::Result<Vec<TenderRow>> {
+    Ok(tenders_ordered_page(conn, filter, order, desc, cursor, limit).await?.rows)
+}
+
+/// The REST list's ordered Tender page: [`tenders_ordered`], plus the `(key, id)`
+/// of the last row the SQL examined when a `publication_id=` page's Rust half
+/// shrank a full probe ([`shrunk_probe`], issue 536 review), and the publication
+/// hits the TED scope read. `limit` is the probe.
+pub async fn tenders_ordered_page(
+    conn: &Connection,
+    filter: &Filter,
+    order: HeadOrder,
+    desc: bool,
+    cursor: Option<(i64, i64)>,
+    limit: i64,
+) -> turso::Result<Banded<TenderRow, (i64, i64)>> {
     if !reachable(conn, filter, Collection::Tenders).await? {
-        return Ok(Vec::new());
+        return Ok(Banded::plain(Vec::new(), None));
     }
     let filter = &with_country_seed(conn, filter).await?;
     let pin = match source_pin(filter, order) {
@@ -1898,8 +2126,11 @@ pub async fn tenders_ordered(
         }
         rows => rows?,
     };
+    let (examined, last_examined) = (rows.len(), rows.last().map(|r| (order.key_of(r), r.id)));
     retain_publication_companions(&mut rows, filter);
-    Ok(rows)
+    let publication_hits = retain_publication_scope(conn, &mut rows, filter).await?;
+    let examined_to = shrunk_probe(limit, examined, rows.len(), last_examined);
+    Ok(Banded { rows, examined_to, publication_hits })
 }
 
 /// The `(source, column, id)` index an ordered Tender read should pin (issue 503), or `None`
@@ -2208,12 +2439,20 @@ fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
     // MUST take precedence here: seeded any other way, publication_id would
     // silently stop filtering. A companion winner/bidder/buyer keeps its own
     // EXISTS predicate and narrows as usual.
-    if let Some(pub_id) = &filter.publication_id {
+    //
+    // Issue 536: the seed seeks every spelling of the number (at most four, one
+    // `IN` on the index's leading column). It is exact on the SPELLINGS, a
+    // superset on the SOURCES — `tender_versions` carries none — so which seeded
+    // tenders a TED width may answer is decided after the read, by
+    // `retain_publication_scope` (the matched version's own notice).
+    if let Some(lookup) = &filter.publication_id {
+        let (predicate, params) = publication_predicate("publication_id", lookup);
         return (
-            "(SELECT DISTINCT tender_id FROM tender_versions WHERE publication_id = ?) hits
+            format!(
+                "(SELECT DISTINCT tender_id FROM tender_versions WHERE {predicate}) hits
                JOIN tenders t ON t.id = hits.tender_id"
-                .to_owned(),
-            vec![t(pub_id)],
+            ),
+            params,
         );
     }
     match participation_seed(filter) {
@@ -2435,10 +2674,26 @@ pub const DEFAULT_FALLBACK_BAND: i64 = 500_000;
 /// caller resumes from it, never from the last row RETURNED (which would re-walk the
 /// band and could loop for ever on a value with no rows in it). `None` means the
 /// page is complete in the ordinary sense: full, or the walk reached the end.
+///
+/// Since issue 536's review the same contract covers a `publication_id=` page
+/// whose Rust half shrank a full probe ([`shrunk_probe`]); `C` is the read's
+/// cursor — an id, or the ordered Tender list's `(key, id)`.
 #[derive(Debug)]
-pub struct Banded<T> {
+pub struct Banded<T, C = i64> {
     pub rows: Vec<T>,
-    pub examined_to: Option<i64>,
+    pub examined_to: Option<C>,
+    /// Issue 536 review: the versions a `publication_id=` lookup ADMITTED, when the
+    /// read had to read them to decide the TED scope (`retain_publication_scope`);
+    /// `None` when it read none. Handed up so the API names the matched spellings
+    /// (`resolved_filters.publication_id`) without reading them again.
+    pub publication_hits: Option<Vec<PublicationHit>>,
+}
+
+impl<T, C> Banded<T, C> {
+    /// A page no publication lookup decided anything on.
+    fn plain(rows: Vec<T>, examined_to: Option<C>) -> Self {
+        Banded { rows, examined_to, publication_hits: None }
+    }
 }
 
 /// Does THIS read's fallback walk get bounded? Exactly the isolated reads that no
@@ -2501,15 +2756,23 @@ pub async fn tenders_page(
         return tenders_seeded_page(conn, filter, after, limit, seed_window(limit), seed_windows(limit)).await;
     }
     if !reachable(conn, filter, Collection::Tenders).await? {
-        return Ok(Banded { rows: Vec::new(), examined_to: None });
+        return Ok(Banded::plain(Vec::new(), None));
     }
     let filter = &with_country_seed(conn, filter).await?;
     let band_end = bounded_walk(Collection::Tenders, filter).then(|| after.saturating_add(band.max(1)));
     let q = tenders_page_query(filter, Scope::Page { after, limit }, band_end);
     let mut rows = q.rows(conn, tender_row).await?;
+    let (examined, last_examined) = (rows.len(), rows.last().map(|r| r.id));
     retain_publication_companions(&mut rows, filter);
-    let examined_to = examined_to(conn, "tenders", band_end, rows.len() as i64, limit).await?;
-    Ok(Banded { rows, examined_to })
+    let publication_hits = retain_publication_scope(conn, &mut rows, filter).await?;
+    // Issue 536 review: a publication page the Rust half shrank hands back the last
+    // row the SQL examined. (A publication seed is never band-bounded, so at most
+    // one of the two cursors can apply.)
+    let examined_to = match shrunk_probe(limit, examined, rows.len(), last_examined) {
+        Some(end) => Some(end),
+        None => examined_to(conn, "tenders", band_end, rows.len() as i64, limit).await?,
+    };
+    Ok(Banded { rows, examined_to, publication_hits })
 }
 
 fn tenders_query(filter: &Filter, scope: Scope) -> Query {
@@ -2700,7 +2963,7 @@ pub async fn tenders_seeded_page(
     window: i64,
     windows: usize,
 ) -> turso::Result<Banded<TenderRow>> {
-    let empty = || Banded { rows: Vec::new(), examined_to: None };
+    let empty = || Banded::plain(Vec::new(), None);
     let Some((table, _, org)) = participation_seed(filter) else { return Ok(empty()) };
     let Some(window_sql) = seeded_window_sql(filter, false) else { return Ok(empty()) };
     if !reachable(conn, filter, Collection::Tenders).await? {
@@ -2738,7 +3001,7 @@ pub async fn tenders_seeded_page(
             break;
         }
     }
-    Ok(Banded { rows, examined_to })
+    Ok(Banded::plain(rows, examined_to))
 }
 
 /// A `group_concat` result — a comma-joined code list, or `None` when the
@@ -3306,7 +3569,7 @@ pub async fn lots_page(
     band: i64,
 ) -> turso::Result<Banded<LotRow>> {
     if !reachable(conn, filter, Collection::Lots).await? {
-        return Ok(Banded { rows: Vec::new(), examined_to: None });
+        return Ok(Banded::plain(Vec::new(), None));
     }
     let seeded;
     let filter = if filter.tender.is_none() {
@@ -3321,7 +3584,7 @@ pub async fn lots_page(
         .await?;
     summarise(conn, &mut rows, filter.lang.as_deref()).await?;
     let examined_to = examined_to(conn, "lots", band_end, rows.len() as i64, limit).await?;
-    Ok(Banded { rows, examined_to })
+    Ok(Banded::plain(rows, examined_to))
 }
 
 /// The PREVIOUS stream shape, kept so the equivalence test can compare the shipped
@@ -4547,6 +4810,22 @@ pub async fn notices(
     filter: &Filter,
     scope: Scope,
 ) -> turso::Result<Vec<NoticeRow>> {
+    Ok(notices_read(conn, filter, scope).await?.rows)
+}
+
+/// The REST list's id-ordered Notice page: [`notices`], plus the last id the SQL
+/// examined when a `publication_id=` page's Rust half shrank a full probe
+/// ([`shrunk_probe`], issue 536 review). `limit` is the probe.
+pub async fn notices_page(
+    conn: &Connection,
+    filter: &Filter,
+    after: i64,
+    limit: i64,
+) -> turso::Result<Banded<NoticeRow>> {
+    notices_read(conn, filter, Scope::Page { after, limit }).await
+}
+
+async fn notices_read(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Banded<NoticeRow>> {
     let q = notices_query(filter, scope);
     let mut rows = q
         .rows(conn, |row| NoticeRow {
@@ -4567,10 +4846,15 @@ pub async fn notices(
         .await?;
     // A publication_id read seeks its own index and leaves `source`/`kind` out of
     // the SQL (see notices_query) — apply them here, over the ≤handful of rows one
-    // publication number maps to. A page can only UNDER-fill from this (the number
-    // is nearly unique), never mis-paginate: the cursor advances on row ids the
-    // seek actually returned.
-    if filter.publication_id.is_some() {
+    // publication number maps to. They filter AFTER the `LIMIT`, so a page can come
+    // up short with rows still past it (issue 536 review: the "never
+    // mis-paginate" this said was false — 033562-2023 is one TED and 15 FTS
+    // notices); such a page hands back the last id the SQL examined.
+    let (examined, last_examined) = (rows.len(), rows.last().map(|r| r.id));
+    if let Some(lookup) = &filter.publication_id {
+        // Issue 536: a TED width reaches a TED notice only; any other source only
+        // at a spelling it answers exactly (`PublicationLookup::admits`).
+        rows.retain(|r| lookup.admits(&r.source, &r.publication_id));
         if let Some(source) = &filter.source {
             rows.retain(|r| r.source == *source);
         }
@@ -4578,7 +4862,11 @@ pub async fn notices(
             rows.retain(|r| r.profile == *kind);
         }
     }
-    Ok(rows)
+    let examined_to = match scope {
+        Scope::Page { limit, .. } => shrunk_probe(limit, examined, rows.len(), last_examined),
+        Scope::At { .. } => None,
+    };
+    Ok(Banded::plain(rows, examined_to))
 }
 
 /// The statement [`notices`] builds, without running it — the seam 112's plan gate
@@ -4616,8 +4904,15 @@ fn notices_query(filter: &Filter, scope: Scope) -> Query {
     // both sides are `notices`. So companion filters are applied by [`notices`] in
     // Rust, over the ≤handful of rows one publication number maps to — semantically
     // identical, deterministically fast, no planner statistics involved.
-    if let Some(publication_id) = &filter.publication_id {
-        q.push(" AND publication_id = ?", [t(publication_id)]);
+    //
+    // Issue 536: the number is up to four spellings (`PublicationLookup`), as one
+    // `IN` on the index's leading column — turso's InSeek, one equality seek per
+    // value, then a sort of the ≤handful of rows for `ORDER BY id`; a single
+    // spelling keeps the `= ?` seek that rides the cursor. Which source may answer
+    // at which spelling is decided by [`notices`] in Rust, like the companions.
+    if let Some(lookup) = &filter.publication_id {
+        let (predicate, params) = publication_predicate("publication_id", lookup);
+        q.push(&format!(" AND {predicate}"), params);
     } else {
         if let Some(source) = &filter.source {
             q.push(" AND source = ?", [t(source)]);
@@ -5093,6 +5388,8 @@ mod head_pointer_plan_tests {
                 Filter { procedure_type: vec!["innovation".into(), "comp-dial".into()], procedure_seed: true, ..base.clone() },
             ),
             ("publication_id", Filter { publication_id: Some("00018218-2024".into()), ..base.clone() }),
+            // Issue 536: a TED number at all four spellings, the seed's `IN` form.
+            ("publication_id-ted", Filter { publication_id: Some(publication_lookup_tests::ted_number()), ..base.clone() }),
             ("published_after", Filter { published_after: Some(1_754_000_000), ..base.clone() }),
             ("deadline_before", Filter { deadline_before: Some(1_786_000_000), ..base.clone() }),
             ("winner+country", Filter { winner: Some(7), country: Some("DE".into()), ..base.clone() }),
@@ -5716,5 +6013,209 @@ mod buyer_party_flag_tests {
         let results = [result(9, None, &[(7, true)])];
         let parties = [party("winner", None, 7), party("buyer", None, 7), party("winner", Some("LOT-9"), 7)];
         assert_eq!(flags(&parties, &[Some(9); 3], &results), vec![true, false, true]);
+    }
+}
+
+/// Issue 536: the `publication_id=` lookup — a TED number at the widths the archive
+/// stores, scoped to TED rows — asserted on the type's two halves and on the
+/// statements the builders emit.
+#[cfg(test)]
+pub(crate) mod publication_lookup_tests {
+    use super::*;
+
+    const NOW: i64 = 1_790_000_000;
+
+    /// TED's 83685-2026 asked in the OJ S form: the four-spelling worst case — the
+    /// form as sent, then the three widths (`v1::publication_lookup` builds it).
+    pub(crate) fn ted_number() -> PublicationLookup {
+        PublicationLookup {
+            exact: vec!["2026/S 012-083685".into()],
+            ted: vec!["83685-2026".into(), "083685-2026".into(), "00083685-2026".into()],
+            fts: Vec::new(),
+        }
+    }
+
+    /// FTS's OJ S form, issue 000: the form as sent, and FTS's 6-digit spelling
+    /// for an FTS row only.
+    fn fts_issue_000() -> PublicationLookup {
+        PublicationLookup { exact: vec!["2026/S 000-083685".into()], ted: Vec::new(), fts: vec!["083685-2026".into()] }
+    }
+
+    /// A value no OJS grammar reads: exact, as before the issue.
+    fn doe() -> PublicationLookup {
+        PublicationLookup::exact("920ee1cf-ddd8-41c9-9cb5-aad114899550-01")
+    }
+
+    /// The acceptance list's admission rule, on the type: a TED width reaches a TED
+    /// row only; the value as sent reaches any row.
+    #[test]
+    fn a_ted_width_answers_a_ted_row_and_the_value_sent_answers_any() {
+        let widths = || vec!["83685-2026".to_owned(), "083685-2026".to_owned(), "00083685-2026".to_owned()];
+        // TED's own spelling: the FTS notice at the 6-digit width is NOT its answer.
+        let teds = PublicationLookup { exact: vec!["83685-2026".into()], ted: widths(), fts: Vec::new() };
+        assert!(teds.admits("ted", "00083685-2026"));
+        assert!(!teds.admits("fts", "083685-2026"), "83685-2026 is TED's spelling; FTS's notice is 083685-2026");
+        assert_eq!(teds.spellings(), ["83685-2026", "083685-2026", "00083685-2026"], "deduplicated, in order");
+        // FTS's own spelling: genuinely ambiguous, both answer.
+        let six = PublicationLookup { exact: vec!["083685-2026".into()], ted: widths(), fts: Vec::new() };
+        assert!(six.admits("fts", "083685-2026") && six.admits("ted", "00083685-2026"));
+        // A non-TED row never answers at a width it was not asked by.
+        assert!(!six.admits("doe", "00083685-2026"));
+        assert!(!teds.source_blind() && !six.source_blind());
+        // Trimmed, and blind to the source when nothing was expanded.
+        assert_eq!(PublicationLookup::exact(" 079997-2017 ").exact, ["079997-2017"]);
+        assert!(doe().source_blind());
+        // FTS's OJ S form (issue 000) reaches FTS's spelling on an FTS row only: a
+        // TED XML-era notice stored under the same six digits is not its answer.
+        let fts = fts_issue_000();
+        assert!(fts.admits("fts", "083685-2026"));
+        assert!(!fts.admits("ted", "083685-2026") && !fts.admits("ted", "00083685-2026"));
+        assert!(!fts.source_blind(), "a TED row can share FTS's spelling, so the source decides");
+        assert_eq!(ted_number().spellings().len(), 4, "the worst case is four spellings");
+    }
+
+    async fn plan_of(conn: &Connection, sql: &str, params: Vec<Value>) -> String {
+        let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Ok(Value::Text(detail)) = row.get_value(3) {
+                plan.push_str(&detail);
+                plan.push('\n');
+            }
+        }
+        assert!(!plan.is_empty(), "no plan came back for: {sql}");
+        plan
+    }
+
+    /// The plan lines that walk a TABLE. A materialised seed or page window (`hits`,
+    /// `w`, a `(subquery-N)`) holds the ≤handful of rows the seeks found, so
+    /// scanning it is not a walk.
+    fn table_scans(plan: &str) -> Vec<&str> {
+        plan.lines()
+            .map(str::trim_start)
+            .filter(|l| l.starts_with("SCAN "))
+            .filter(|l| {
+                let subject = l["SCAN ".len()..].split_whitespace().next().unwrap_or_default();
+                !(subject.starts_with("(subquery") || subject == "hits" || subject == "w")
+            })
+            .collect()
+    }
+
+    /// What is wrong with a lookup statement's plan — empty when it seeks `index`
+    /// by the number and walks no table. Both halves, because a walk need not print
+    /// `SCAN`: the cursor's `id > ?` turns a walk of `notices` into a rowid-range
+    /// `SEARCH`, so the seek on the number's own index must be PRESENT too.
+    fn faults(plan: &str, index: &str) -> Vec<String> {
+        let mut why = Vec::new();
+        let scans = table_scans(plan);
+        if !scans.is_empty() {
+            why.push(format!("walks a table: {scans:?}"));
+        }
+        if !plan.contains(index) {
+            why.push(format!("does not seek `{index}`"));
+        }
+        why
+    }
+
+    /// Every statement the lookup runs, for one lookup, with the access it must
+    /// show: the notice list (first page, a cursor page — the number's index — and
+    /// the SSE diff's one-row probe, by primary key), the tender seed under each
+    /// list shape, and the matched-version read.
+    fn statements(lookup: &PublicationLookup) -> Vec<(String, String, Vec<Value>, &'static str)> {
+        let f = Filter { publication_id: Some(lookup.clone()), now: NOW, ..Filter::default() };
+        let notices_index = "notices_publication_id_id (publication_id=?";
+        let versions_index = "tender_versions_publication (publication_id=?";
+        let mut out = Vec::new();
+        for after in [0i64, 49_377] {
+            let (sql, params) = notices_statement(&f, Scope::Page { after, limit: 101 });
+            out.push((format!("notices after={after}"), sql, params, notices_index));
+            let q = tenders_page_query(&f, Scope::Page { after, limit: 101 }, None);
+            out.push((format!("tenders_page after={after}"), q.sql, q.params, versions_index));
+        }
+        // The SSE diff's probe names its one notice by primary key; the number
+        // only filters that row.
+        let (sql, params) = notices_statement(&f, Scope::At { id: 7, seq: 0 });
+        out.push(("notices at".to_owned(), sql, params, "SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)"));
+        let q = tenders_query(&f, Scope::At { id: 7, seq: 1 });
+        out.push(("tenders at".to_owned(), q.sql, q.params, versions_index));
+        for order in [HeadOrder::PublishedAt, HeadOrder::Deadline] {
+            for cursor in [None, Some((1_780_000_000, 4_242))] {
+                let q = tenders_ordered_query(&f, order, true, cursor, 101, None);
+                out.push((format!("tenders_ordered {order:?} cursor={cursor:?}"), q.sql, q.params, versions_index));
+            }
+        }
+        let (sql, params) = publication_hits_statement(lookup);
+        out.push(("publication hits".to_owned(), sql, params, versions_index));
+        out
+    }
+
+    /// Each statement the lookup runs seeks at most four spellings — one index seek
+    /// each, on the leading column of `notices_publication_id_id` /
+    /// `tender_versions_publication` — and none walks a table (issue 536's acceptance; issue 217-A's
+    /// flatten is the shape this must not regress into). Read on `Db::open`'s
+    /// schema plus the deferred notice and tender indexes prod carries, no
+    /// statistics, per docs/agents/prod-box-reads.md. `TDB_PRINT_PLANS=1` prints them.
+    #[tokio::test]
+    async fn the_lookup_seeks_each_spelling_and_scans_no_table() {
+        let path = format!("/tmp/tender-db-536-plans-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = crate::Db::open(&path).await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        db.build_notice_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let print = std::env::var("TDB_PRINT_PLANS").is_ok();
+
+        let mut failures = Vec::new();
+        for (name, lookup) in [("ted", ted_number()), ("fts-000", fts_issue_000()), ("doe", doe())] {
+            let n = lookup.spellings().len();
+            assert!((1..=4).contains(&n), "{name}: {n} spellings — the lookup is bounded at four");
+            // The number's own predicate: `= ?` for one spelling, an `IN` of exactly
+            // the spellings otherwise, and no second predicate on it.
+            let (predicate, params) = publication_predicate("publication_id", &lookup);
+            assert_eq!(params.len(), n, "{name}: one bound value per spelling");
+            assert_eq!(predicate.matches('?').count(), n, "{name}: {predicate}");
+            for (label, sql, params, index) in statements(&lookup) {
+                let label = format!("{name} {label}");
+                assert!(sql.contains(&predicate.replace("publication_id", "")), "{label}: the predicate is emitted");
+                let plan = plan_of(&conn, &sql, params).await;
+                if print {
+                    println!("PLAN {label}\n{plan}");
+                }
+                for why in faults(&plan, index) {
+                    failures.push(format!("{label}: {why}\n{plan}"));
+                }
+                if label.ends_with("publication hits") && !plan.contains("SEARCH n USING INTEGER PRIMARY KEY") {
+                    failures.push(format!("{label}: the causing notice's source is not a primary-key seek\n{plan}"));
+                }
+            }
+        }
+
+        // The check can say NO: the number taken out of the index's reach (`+`)
+        // leaves the IN as a per-row filter, and the plan walks.
+        let f = Filter { publication_id: Some(ted_number()), now: NOW, ..Filter::default() };
+        let (sql, params) = notices_statement(&f, Scope::Page { after: 0, limit: 101 });
+        let walked = sql.replace("AND publication_id IN", "AND +publication_id IN");
+        assert_ne!(walked, sql, "the control rewrote nothing");
+        let plan = plan_of(&conn, &walked, params).await;
+        assert!(
+            !faults(&plan, "notices_publication_id_id (publication_id=?").is_empty(),
+            "the check cannot see a walk:\n{plan}"
+        );
+        let (sql, params) = publication_hits_statement(&ted_number());
+        let walked = sql.replace("WHERE v.publication_id IN", "WHERE +v.publication_id IN");
+        assert_ne!(walked, sql, "the hits control rewrote nothing");
+        let plan = plan_of(&conn, &walked, params).await;
+        assert!(
+            !faults(&plan, "tender_versions_publication (publication_id=?").is_empty(),
+            "the check cannot see a walk of the versions:\n{plan}"
+        );
+
+        drop(conn);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        assert!(failures.is_empty(), "{} plan(s) failed:\n{}", failures.len(), failures.join("\n"));
     }
 }

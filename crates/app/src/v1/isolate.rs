@@ -300,9 +300,9 @@ impl IsolatedReads {
         desc: bool,
         cursor: Option<(i64, i64)>,
         limit: i64,
-    ) -> Result<store::turso::Result<Vec<store::read::TenderRow>>, Shed> {
+    ) -> Result<store::turso::Result<store::read::Banded<store::read::TenderRow, (i64, i64)>>, Shed> {
         self.run(move |reader| async move {
-            store::read::tenders_ordered(&reader, &filter, order, desc, cursor, limit).await
+            store::read::tenders_ordered_page(&reader, &filter, order, desc, cursor, limit).await
         })
         .await
     }

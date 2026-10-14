@@ -115,6 +115,28 @@ impl Server {
         response.json().await.expect("json body")
     }
 
+    /// [`Self::get`] for a test that sends more requests than the limiter's burst
+    /// (`RATE_BURST`, 50): a `429` waits out its `Retry-After` (at least 100 ms, the
+    /// refill period) and asks again, so the limiter paces the test instead of
+    /// failing it. Any other non-2xx still fails.
+    async fn get_paced(&self, path: &str) -> Value {
+        loop {
+            let response = self.http.get(format!("{}{path}", self.base)).send().await.expect("request");
+            if response.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
+                let wait = response
+                    .headers()
+                    .get("retry-after")
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(|v| v.parse::<u64>().ok())
+                    .unwrap_or(0);
+                tokio::time::sleep(Duration::from_millis((wait * 1_000).max(100))).await;
+                continue;
+            }
+            assert!(response.status().is_success(), "GET {path} → {}", response.status());
+            return response.json().await.expect("json body");
+        }
+    }
+
     /// Like [`Self::get`] but does not assert success — for endpoints whose
     /// unhealthy answer is a non-2xx with a JSON body (e.g. `/health/deep`).
     async fn get_allow_error(&self, path: &str) -> Value {
@@ -1170,6 +1192,400 @@ async fn tenders_can_be_looked_up_by_publication_id() {
             .is_empty(),
         "a non-matching companion filter still excludes"
     );
+}
+
+/// Issue 536: a publication number answers in every form a consumer holds it in —
+/// TED's own unpadded spelling, the 6/8-digit widths the archive stores, the OJ S
+/// form, surrounding whitespace — and the widths answer TED rows only, so a TED
+/// number never reaches the FTS notice that shares its 6-digit shape.
+///
+/// The fixture is the issue's own prod repro, one row per stored shape:
+/// TED eForms `00083685-2026` beside FTS `083685-2026` (TED's 83685-2026 at 6
+/// digits is FTS's number), TED's XML-era 6-digit `079997-2017`, the text era's
+/// unpadded `123-2005`, the known TED/FTS collision `012345-2023` (an R2.0.9 notice
+/// and an FTS one), and DÖE's `<uuid>-<NN>` and `00000000-1900` placeholder, which
+/// no OJS grammar reads and stay exact. Notices and tenders both, through every
+/// acceptance line; `resolved_filters.publication_id` names the spelling matched.
+///
+/// Review round: the sorted list (`sort=published_at`, and a date bound, which
+/// implies it) applies the scope and names the spelling too; a tender holding
+/// versions of two Sources (a TED and an FTS notice under one procedure key —
+/// `source: ted`) is decided by the matched VERSION's notice, not by `t.source`;
+/// and an OJ S issue cited alone (`2017/S 044`) is no notice number.
+#[tokio::test]
+async fn a_publication_number_answers_every_ted_form_and_its_widths_stay_on_ted() {
+    let server = Server::start("pubid-536").await;
+    // A synthetic notice of `source`/`profile`, stored under `publication_id`, keyed
+    // by its own number and published on a day of its own.
+    let mut day = 20_400;
+    let mut notice = |source: &str, profile: &str, publication_id: &str| -> (Notice, Parse) {
+        day += 1;
+        let key = format!("procedure-{publication_id}");
+        notice_536(server.fetch_id, (source, profile, publication_id), &key, day, 0)
+    };
+    const EFORMS: &str = "eforms:eforms-sdk-1.13";
+    // Projected: the tenders half reads these.
+    for (source, profile, publication_id) in [
+        ("ted", EFORMS, "00083685-2026"),
+        ("fts", "fts:ocds-1.1", "083685-2026"),
+        ("ted", EFORMS, "079997-2017"),
+    ] {
+        let (n, p) = notice(source, profile, publication_id);
+        server.db.record_notice(&n, &p).await.expect("record");
+    }
+    // One procedure key, two Sources: a TED and an FTS notice fold into ONE tender,
+    // which `primary_source` names `ted` although its FTS version is FTS's.
+    for (source, profile, publication_id, day) in
+        [("ted", EFORMS, "00099991-2025", 20_100), ("fts", "fts:ocds-1.1", "054321-2025", 20_101)]
+    {
+        let (n, p) = notice_536(server.fetch_id, (source, profile, publication_id), "procedure-536-mixed", day, 0);
+        server.db.record_notice(&n, &p).await.expect("record");
+    }
+    project::project(&server.db, false).await.expect("project");
+    // Notice rows only, recorded after the projection: each format's own stored
+    // shape under its own profile, which the notices half reads as stored.
+    for (source, profile, publication_id) in [
+        ("ted", "text", "123-2005"),
+        ("ted", "ted-export-r209", "012345-2023"),
+        ("fts", "fts:ocds-1.1", "012345-2023"),
+        ("doe", EFORMS, "920ee1cf-ddd8-41c9-9cb5-aad114899550-01"),
+        ("doe", EFORMS, "00000000-1900"),
+        // Notice 44 of 2017, which an OJ S ISSUE cited alone (`2017/S 044`) must not reach.
+        ("ted", "ted-export-r209", "000044-2017"),
+    ] {
+        let (n, p) = notice(source, profile, publication_id);
+        server.db.record_notice(&n, &p).await.expect("record");
+    }
+
+    let all = items(&server.get_paced("/v1/notices?limit=100").await).clone();
+    let id = |source: &str, publication_id: &str| -> i64 {
+        all.iter()
+            .find(|n| n["source"] == source && n["publication_id"] == publication_id)
+            .and_then(|n| n["id"].as_i64())
+            .unwrap_or_else(|| panic!("no {source} notice {publication_id}"))
+    };
+    let (ted8, fts6, ted6) = (id("ted", "00083685-2026"), id("fts", "083685-2026"), id("ted", "079997-2017"));
+    let (text, r209, fts_collision) = (id("ted", "123-2005"), id("ted", "012345-2023"), id("fts", "012345-2023"));
+    let (doe, placeholder) = (id("doe", "920ee1cf-ddd8-41c9-9cb5-aad114899550-01"), id("doe", "00000000-1900"));
+    let (mixed_ted, mixed_fts, issue44) = (id("ted", "00099991-2025"), id("fts", "054321-2025"), id("ted", "000044-2017"));
+
+    let sorted = |page: &Value| -> Vec<i64> {
+        let mut ids: Vec<i64> = items(page).iter().map(|n| n["id"].as_i64().expect("id")).collect();
+        ids.sort();
+        ids
+    };
+    let both = |a: i64, b: i64| if a < b { vec![a, b] } else { vec![b, a] };
+
+    // --- /v1/notices: the acceptance list --------------------------------------
+    for (asked, want) in [
+        // TED's own spelling reaches its eForms notice, and NOT FTS's 083685-2026.
+        ("83685-2026", vec![ted8]),
+        // FTS's spelling is genuinely ambiguous: both, and `source=` narrows.
+        ("083685-2026", both(ted8, fts6)),
+        ("00083685-2026", vec![ted8]),
+        // The XML era's 6 digits, from TED's spelling, the OJ S form and a padded space.
+        ("79997-2017", vec![ted6]),
+        ("2017%2FS%20044-079997", vec![ted6]),
+        ("%20079997-2017", vec![ted6]),
+        ("00079997-2017", vec![ted6]),
+        // The text era is unpadded; a 6-digit pad finds it now.
+        ("000123-2005", vec![text]),
+        ("123-2005", vec![text]),
+        // The known collision: the stored 6 digits answer both sources; TED's own
+        // spelling and the OJ S form answer TED's alone.
+        ("012345-2023", both(r209, fts_collision)),
+        ("12345-2023", vec![r209]),
+        ("2023%2FS%20012-012345", vec![r209]),
+        // FTS's OJ S form (issue 000, no TED issue): the FTS notice, no TED width.
+        ("2026%2FS%20000-083685", vec![fts6]),
+        ("2023%2FS%20000-012345", vec![fts_collision]),
+        // No OJS number: exact, as before.
+        ("920ee1cf-ddd8-41c9-9cb5-aad114899550-01", vec![doe]),
+        ("920ee1cf-ddd8-41c9-9cb5-aad114899550", vec![]),
+        ("00000000-1900", vec![placeholder]),
+        ("nonesuch-9999", vec![]),
+        // An OJ S issue cited alone names no notice; notice 44 answers its own forms.
+        ("2017%2FS%20044", vec![]),
+        ("44-2017", vec![issue44]),
+        ("2017%2FS%20001-000044", vec![issue44]),
+        // The mixed tender's notices: each Source at its own spelling, and TED's
+        // spelling of 54321 reaches no FTS notice.
+        ("99991-2025", vec![mixed_ted]),
+        ("054321-2025", vec![mixed_fts]),
+        ("54321-2025", vec![]),
+    ] {
+        let page = server.get_paced(&format!("/v1/notices?publication_id={asked}")).await;
+        assert_eq!(sorted(&page), want, "/v1/notices?publication_id={asked}: {page}");
+        assert!(page["ignored_filters"].as_array().expect("ignored_filters").is_empty(), "{asked}: honoured");
+    }
+    // A companion narrows the same answer, in Rust, after the scope.
+    for (query, want) in [
+        ("publication_id=083685-2026&source=fts", vec![fts6]),
+        ("publication_id=083685-2026&source=ted", vec![ted8]),
+        // TED's spelling is TED's: it never answers FTS's notice, paired or not.
+        ("publication_id=83685-2026&source=fts", vec![]),
+    ] {
+        let page = server.get_paced(&format!("/v1/notices?{query}")).await;
+        assert_eq!(sorted(&page), want, "/v1/notices?{query}: {page}");
+    }
+
+    // resolved_filters names the stored spelling when it differs from the one sent.
+    let resolved = |page: &Value| page["resolved_filters"]["publication_id"].clone();
+    let page = server.get_paced("/v1/notices?publication_id=83685-2026").await;
+    assert_eq!(resolved(&page), serde_json::json!({ "asked": "83685-2026", "matched": ["00083685-2026"] }));
+    let page = server.get_paced("/v1/notices?publication_id=083685-2026").await;
+    assert_eq!(
+        resolved(&page),
+        serde_json::json!({ "asked": "083685-2026", "matched": ["00083685-2026", "083685-2026"] }),
+        "the ambiguous number says TED holds it at 8 digits"
+    );
+    let page = server.get_paced("/v1/notices?publication_id=%20079997-2017").await;
+    assert_eq!(resolved(&page), serde_json::json!({ "asked": " 079997-2017", "matched": ["079997-2017"] }));
+    for unchanged in ["00083685-2026", "nonesuch-9999", "920ee1cf-ddd8-41c9-9cb5-aad114899550-01"] {
+        let page = server.get_paced(&format!("/v1/notices?publication_id={unchanged}")).await;
+        assert!(page.get("resolved_filters").is_none(), "{unchanged}: nothing re-spelled, nothing named: {page}");
+    }
+
+    // --- /v1/tenders: the matched VERSION's notice decides TED-ness ------------
+    let tender_of = |source: &'static str, publication_id: &'static str| {
+        let db = server.db.clone();
+        async move {
+            match db
+                .scalar(&format!(
+                    "SELECT v.tender_id FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id
+                      WHERE n.source = '{source}' AND n.publication_id = '{publication_id}'"
+                ))
+                .await
+                .expect("tender of a notice")
+            {
+                Some(store::turso::Value::Integer(id)) => id,
+                other => panic!("{source} {publication_id} projected no tender: {other:?}"),
+            }
+        }
+    };
+    let (ted8_tender, fts_tender, ted6_tender) = (
+        tender_of("ted", "00083685-2026").await,
+        tender_of("fts", "083685-2026").await,
+        tender_of("ted", "079997-2017").await,
+    );
+    assert_ne!(ted8_tender, fts_tender, "the TED and FTS notices are two procedures");
+    for (asked, want) in [
+        ("83685-2026", vec![ted8_tender]),
+        ("083685-2026", both(ted8_tender, fts_tender)),
+        ("00083685-2026", vec![ted8_tender]),
+        ("79997-2017", vec![ted6_tender]),
+        ("2017%2FS%20044-079997", vec![ted6_tender]),
+        ("%20079997-2017", vec![ted6_tender]),
+        ("2026%2FS%20000-083685", vec![fts_tender]),
+    ] {
+        let page = server.get_paced(&format!("/v1/tenders?publication_id={asked}")).await;
+        assert_eq!(sorted(&page), want, "/v1/tenders?publication_id={asked}: {page}");
+    }
+    let page = server.get_paced("/v1/tenders?publication_id=79997-2017").await;
+    assert_eq!(resolved(&page), serde_json::json!({ "asked": "79997-2017", "matched": ["079997-2017"] }));
+    let page = server.get_paced("/v1/tenders?publication_id=83685-2026&source=fts").await;
+    assert!(items(&page).is_empty(), "TED's spelling never answers the FTS tender: {page}");
+
+    // --- the sorted list: the same scope, the same resolved_filters -------------
+    // `sort=published_at` takes `tenders_ordered`; a date bound implies the sort.
+    for shape in ["&sort=published_at", "&sort=published_at&order=asc", "&published_after=2000-01-01"] {
+        for (asked, want, matched) in [
+            ("83685-2026", vec![ted8_tender], Some(serde_json::json!(["00083685-2026"]))),
+            ("79997-2017", vec![ted6_tender], Some(serde_json::json!(["079997-2017"]))),
+            ("2017%2FS%20044-079997", vec![ted6_tender], Some(serde_json::json!(["079997-2017"]))),
+            ("083685-2026", both(ted8_tender, fts_tender), Some(serde_json::json!(["00083685-2026", "083685-2026"]))),
+            ("00083685-2026", vec![ted8_tender], None),
+            ("2026%2FS%20000-083685", vec![fts_tender], Some(serde_json::json!(["083685-2026"]))),
+        ] {
+            let path = format!("/v1/tenders?publication_id={asked}{shape}");
+            let page = server.get_paced(&path).await;
+            assert_eq!(sorted(&page), want, "{path}: {page}");
+            match matched {
+                Some(matched) => assert_eq!(resolved(&page)["matched"], matched, "{path}: {page}"),
+                None => assert!(page.get("resolved_filters").is_none(), "{path}: nothing re-spelled: {page}"),
+            }
+        }
+        let path = format!("/v1/tenders?publication_id=83685-2026&source=fts{shape}");
+        assert!(items(&server.get_paced(&path).await).is_empty(), "{path}: TED's spelling never answers the FTS tender");
+    }
+
+    // --- a tender of two Sources: the matched VERSION decides --------------------
+    let mixed = tender_of("ted", "00099991-2025").await;
+    assert_eq!(tender_of("fts", "054321-2025").await, mixed, "one procedure key, one tender");
+    let page = server.get_paced("/v1/tenders?publication_id=054321-2025").await;
+    assert_eq!(items(&page)[0]["source"], "ted", "the mixed tender is named TED's: {page}");
+    for shape in ["", "&sort=published_at"] {
+        for (asked, want, matched) in [
+            // TED's spelling of 54321: the tender is `source: ted`, but the version
+            // stored at that number is FTS's, which no TED width answers. Deciding
+            // by `t.source` would return the tender here.
+            ("54321-2025", vec![], None),
+            // FTS's own spelling: the value as sent answers any Source.
+            ("054321-2025", vec![mixed], None),
+            // TED's spelling of 99991: its TED version, at 8 digits.
+            ("99991-2025", vec![mixed], Some(serde_json::json!(["00099991-2025"]))),
+        ] {
+            let path = format!("/v1/tenders?publication_id={asked}{shape}");
+            let page = server.get_paced(&path).await;
+            assert_eq!(sorted(&page), want, "{path}: {page}");
+            match matched {
+                Some(matched) => assert_eq!(resolved(&page)["matched"], matched, "{path}: {page}"),
+                None => assert!(page.get("resolved_filters").is_none(), "{path}: {page}"),
+            }
+        }
+    }
+}
+
+/// Issue 536: a synthetic notice of `source`/`profile` stored under
+/// `publication_id`, its procedure keyed `key` (BT-04 — a key shared across Sources
+/// merges them into one tender), published on `day` (days since the epoch); `n`
+/// tells apart twins stored under one number.
+fn notice_536(
+    fetch_id: i64,
+    (source, profile, publication_id): (&str, &str, &str),
+    key: &str,
+    day: i64,
+    n: usize,
+) -> (Notice, Parse) {
+    let (mut notice, mut parse) = notice_456(fetch_id, publication_id, ("Buyer 536", None), None);
+    notice.source = source.into();
+    notice.profile = profile.into();
+    notice.content_hash = format!("hash-{source}-{publication_id}-{n}");
+    notice.member_path = format!("{source}/{publication_id}-{n}.xml");
+    notice.published_at = Some(store::Stamp::utc(day * 86_400));
+    notice.dispatched_at = notice.published_at;
+    if let Parse::Parsed(parsed) = &mut parse {
+        for value in parsed.values.iter_mut().filter(|v| v.field_id == "BT-04-notice") {
+            value.value = store::NoticeValue::Id { scheme: None, value: key.into(), is_ref: false };
+        }
+        // The fold dates a version off the parsed notice: its dispatch date
+        // (eForms BT-05) stands in for a publication date it does not carry.
+        parsed.values.push(store::ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: "BT-05(a)-notice".into(),
+            ordinal: 0,
+            value: store::NoticeValue::Date { utc_seconds: day * 86_400, offset_minutes: 0, has_time: false },
+        });
+    }
+    (notice, parse)
+}
+
+/// Follow `next_cursor` from `path` (a query without a cursor) to the end: every
+/// id served in order, and each page's ids. Panics on an id served twice, on
+/// `more` disagreeing with `next_cursor`, or on a walk that does not end.
+async fn walk_pages(server: &Server, path: &str) -> (Vec<i64>, Vec<Vec<i64>>) {
+    let (mut ids, mut pages) = (Vec::new(), Vec::new());
+    let mut cursor: Option<String> = None;
+    for _ in 0..64 {
+        let url = match &cursor {
+            None => path.to_owned(),
+            Some(cursor) => format!("{path}&cursor={cursor}"),
+        };
+        let page = server.get_paced(&url).await;
+        assert_eq!(page["more"].as_bool(), Some(page["next_cursor"].is_string()), "{url}: more follows next_cursor");
+        let got: Vec<i64> = items(&page).iter().map(|row| row["id"].as_i64().expect("id")).collect();
+        for id in &got {
+            assert!(!ids.contains(id), "{url}: id {id} served twice: {page}");
+        }
+        ids.extend(&got);
+        pages.push(got);
+        match page["next_cursor"].as_str() {
+            Some(next) => cursor = Some(next.to_owned()),
+            None => return (ids, pages),
+        }
+    }
+    panic!("{path}: the walk did not end in 64 pages");
+}
+
+/// Issue 536 review: a `publication_id=` page filters its number's rows in Rust
+/// AFTER the SQL probe (the TED scope, and the `source=`/`kind=` companions since
+/// 217-A), so a full probe that loses a row comes back short with rows still past
+/// it. The page must hand back a cursor then — the last row the SQL examined —
+/// or every later row is unreachable.
+///
+/// The prod shape (`033562-2023`: TED 22890368 and 15 FTS notices), scaled down:
+/// one TED notice, the lowest id, then four FTS notices, all stored `033562-2023`
+/// and each its own tender. FTS's OJ S form (issue 000) drops the TED row; so does
+/// `source=fts`. Every page size below the matched count, on notices, tenders by
+/// id, and tenders by publication date both ways, reaches every row exactly once.
+#[tokio::test]
+async fn a_publication_page_that_drops_a_row_still_reaches_every_row() {
+    let server = Server::start("pubid-536-pages").await;
+    const NUMBER: &str = "033562-2023";
+    // The TED notice is recorded first (the lowest id) and published first.
+    for (i, (source, profile)) in [("ted", "eforms:eforms-sdk-1.13")]
+        .into_iter()
+        .chain(std::iter::repeat_n(("fts", "fts:ocds-1.1"), 4))
+        .enumerate()
+    {
+        let key = format!("procedure-536-page-{i}");
+        let (n, p) = notice_536(server.fetch_id, (source, profile, NUMBER), &key, 20_000 + i as i64, i);
+        server.db.record_notice(&n, &p).await.expect("record");
+    }
+    project::project(&server.db, false).await.expect("project");
+
+    let all = items(&server.get_paced(&format!("/v1/notices?publication_id={NUMBER}")).await).clone();
+    let of = |source: &str| -> Vec<i64> {
+        all.iter().filter(|n| n["source"] == source).map(|n| n["id"].as_i64().expect("id")).collect()
+    };
+    let (ted, fts) = (of("ted"), of("fts"));
+    assert_eq!((ted.len(), fts.len()), (1, 4), "the fixture: {all:?}");
+    assert!(ted[0] < fts[0], "the dropped TED row must come first, or nothing is stranded behind it");
+
+    for limit in [1, 2, 3] {
+        for (query, want) in [
+            (format!("publication_id=2023%2FS%20000-{}&limit={limit}", &NUMBER[..6]), fts.clone()),
+            (format!("publication_id={NUMBER}&source=fts&limit={limit}"), fts.clone()),
+            (format!("publication_id={NUMBER}&source=ted&limit={limit}"), ted.clone()),
+            (format!("publication_id={NUMBER}&limit={limit}"), [ted.clone(), fts.clone()].concat()),
+        ] {
+            let path = format!("/v1/notices?{query}");
+            let (ids, pages) = walk_pages(&server, &path).await;
+            assert_eq!(ids, want, "{path}: every row, once, in id order ({pages:?})");
+        }
+    }
+    // The defect itself: the first page lost the TED row from a full probe, and
+    // must still say there is more.
+    let page = server.get_paced("/v1/notices?publication_id=2023%2FS%20000-033562&limit=2").await;
+    assert_eq!(items(&page).len(), 2, "{page}");
+    assert_eq!(page["more"], true, "a probe that lost a row is not the last page: {page}");
+
+    // Tenders: each notice caused its own tender.
+    let mut tenders: Vec<(String, i64)> = Vec::new();
+    for notice in &all {
+        let id = notice["id"].as_i64().expect("id");
+        let tender = server
+            .db
+            .scalar(&format!("SELECT tender_id FROM tender_versions WHERE caused_by_notice_id = {id}"))
+            .await
+            .expect("tender of a notice");
+        let Some(store::turso::Value::Integer(tender)) = tender else { panic!("notice {id} projected no tender") };
+        tenders.push((notice["source"].as_str().expect("source").to_owned(), tender));
+    }
+    // In notice order, which is publication order: the TED tender oldest.
+    let ted_tender = vec![tenders[0].1];
+    let fts_by_date: Vec<i64> = tenders[1..].iter().map(|(_, tender)| *tender).collect();
+    assert_eq!(tenders[0].0, "ted", "{tenders:?}");
+    assert!(tenders[1..].iter().all(|(source, _)| source == "fts"), "{tenders:?}");
+    let mut fts_tenders = fts_by_date.clone();
+    fts_tenders.sort();
+    assert!(ted_tender[0] < fts_tenders[0], "the dropped TED tender must come first by id: {tenders:?}");
+    let newest_first: Vec<i64> = fts_by_date.iter().rev().copied().collect();
+    for limit in [1, 2, 3] {
+        for (query, want) in [
+            (format!("publication_id=2023%2FS%20000-033562&limit={limit}"), fts_tenders.clone()),
+            (format!("publication_id={NUMBER}&source=fts&limit={limit}"), fts_tenders.clone()),
+            // Ordered: oldest first puts the TED tender (published first) at the head.
+            (format!("publication_id=2023%2FS%20000-033562&sort=published_at&order=asc&limit={limit}"), fts_by_date.clone()),
+            (format!("publication_id={NUMBER}&source=fts&sort=published_at&order=asc&limit={limit}"), fts_by_date.clone()),
+            (format!("publication_id=2023%2FS%20000-033562&sort=published_at&limit={limit}"), newest_first.clone()),
+            (format!("publication_id={NUMBER}&source=ted&sort=published_at&limit={limit}"), ted_tender.clone()),
+        ] {
+            let path = format!("/v1/tenders?{query}");
+            let (ids, pages) = walk_pages(&server, &path).await;
+            assert_eq!(ids, want, "{path}: every tender, once, in order ({pages:?})");
+        }
+    }
 }
 
 /// Issue 217: an Organization is reachable by its official identifier VALUE (e.g. a

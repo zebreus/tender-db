@@ -800,7 +800,7 @@
       "publication_id": {
         "name": "publication_id",
         "in": "query",
-        "description": "Exact-match an official publication number (the OJ S / TED notice id). On /v1/notices it matches the notice carrying that number; on /v1/tenders it resolves the tender whose versions that number caused — current or superseded. Index-served, so present and absent values are both fast; companions (source/kind, or any tender filter) narrow the same fast result.",
+        "description": "An official publication number. On /v1/notices it matches the notice carrying that number; on /v1/tenders it resolves the tender whose versions that number caused — current or superseded. Takes a TED number as TED prints it, unpadded (`79997-2017`), at the 6 or 8 digits the archive stores (`079997-2017`, `00079997-2017`), or in the OJ S form (`2017/S 044-079997`); surrounding whitespace is ignored. The stored width follows the notice's format, not its year (unpadded in the 1993–2010 text era, 6 digits in the XML era 2011–2024, 8 in eForms from 2022), and a TED number is one notice per year whichever width you send. Those widths answer TED notices only. Other sources match their own number exactly: a UK Find a Tender (FTS) number is its 6-digit release id, `083685-2026` (also asked as `2026/S 000-083685`: issue 000 is no TED issue, so that form looks up the FTS spelling only), and a DÖE number is `<uuid or number>-<version>`, version suffix included. FTS numbers from 2021 on coincide with TED's 6-digit ones, so `083685-2026` answers FTS's notice and TED's `00083685-2026` alike — pair with `source=`. When the page matched a stored spelling other than the one sent, it names it in `resolved_filters.publication_id` as `{\"asked\": \"79997-2017\", \"matched\": [\"079997-2017\"]}`. Index-served (up to four spellings of the number, each found by an index seek), so present and absent values are both fast; the TED scope above and the source/kind companions narrow the same fast result after the read (the other tender filters are part of the SQL), so a page of it can be short, or empty, while more is true, its next_cursor the last row examined.",
         "schema": { "type": "string" }
       },
       "published_after": {
@@ -922,7 +922,7 @@
       },
       "Page": {
         "type": "object",
-        "description": "The collection envelope. Paginate by following next_cursor until more is false. A page can be short or empty while more is true: a filtered read that walks the id order is bounded to one band of ids per page and its cursor is the last id examined, so page length is never an end-of-results signal. An organization-seeded lots read (winner/bidder) pages in (tender, lot) order off its participation index and its cursor is compound; pass it back verbatim.",
+        "description": "The collection envelope. Paginate by following next_cursor until more is false. A page can be short or empty while more is true: a filtered read that walks the id order is bounded to one band of ids per page and its cursor is the last id examined, and a publication_id page that narrows its number's rows after the read hands back the last row examined the same way, so page length is never an end-of-results signal. An organization-seeded lots read (winner/bidder) pages in (tender, lot) order off its participation index and its cursor is compound; pass it back verbatim.",
         "properties": {
           "items": { "type": "array", "items": {} },
           "next_cursor": { "$ref": "#/components/schemas/Cursor" },
@@ -934,11 +934,12 @@
           },
           "resolved_filters": {
             "type": "object",
-            "description": "Present only when the page answers through a merge. An organization-id filter (`buyer`, `winner`, `bidder`) that named an organization a merge folded into another is applied to the survivor and named here as `{\"asked\": <the id sent>, \"merged_into\": <the survivor>}` (issue 455); store the survivor's id, and note that an id that never was an organization is not rewritten and answers an empty page. On /v1/organizations, `identifier` matches an identifier a merge folded into an organization too, and the organizations the page reached that way are named as `{\"identifier\": {\"asked\": \"<the value sent>\", \"merged_into\": [<ids>]}}` — an array, because one identifier can answer several organizations (issue 460). A match on an organization's own identifier is not named.",
+            "description": "Present only when the page answers through a merge, or at another spelling of a publication number. An organization-id filter (`buyer`, `winner`, `bidder`) that named an organization a merge folded into another is applied to the survivor and named here as `{\"asked\": <the id sent>, \"merged_into\": <the survivor>}` (issue 455); store the survivor's id, and note that an id that never was an organization is not rewritten and answers an empty page. On /v1/organizations, `identifier` matches an identifier a merge folded into an organization too, and the organizations the page reached that way are named as `{\"identifier\": {\"asked\": \"<the value sent>\", \"merged_into\": [<ids>]}}` — an array, because one identifier can answer several organizations (issue 460). A match on an organization's own identifier is not named. On /v1/notices and /v1/tenders, a `publication_id` that the page matched at another stored spelling of the number (a TED width, a trimmed space, FTS's OJ S issue 000) is named as `{\"publication_id\": {\"asked\": \"<the value sent>\", \"matched\": [<the stored spellings>]}}` (issue 536); on /v1/tenders the spelling is the matched version's, which need not be the current one's.",
             "additionalProperties": {
               "type": "object",
               "properties": {
-                "asked": { "oneOf": [ { "type": "integer", "format": "int64" }, { "type": "string" } ], "description": "The value sent: an organization id, or (for `identifier`) the identifier." },
+                "asked": { "oneOf": [ { "type": "integer", "format": "int64" }, { "type": "string" } ], "description": "The value sent: an organization id, or (for `identifier` and `publication_id`) the string." },
+                "matched": { "type": "array", "items": { "type": "string" }, "description": "For `publication_id`: the stored spellings of the number the page's rows were found under (issue 536)." },
                 "merged_into": {
                   "oneOf": [
                     { "type": "integer", "format": "int64" },
