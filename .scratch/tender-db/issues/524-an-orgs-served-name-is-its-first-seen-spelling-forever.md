@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — triaged 2026-10-12; claims verified on prod (31558903 'Sheffield Hallam University' over 16 of 17 Sheffield mentions; 22713056 's.o.' over 28 of 28 'Vergabekammer bei der Bezirksregierung'). NEXT: unit 1, an in-app dry census (`org-head-drift`, or an arm on 456's planned unit-1 walk, built once for both). For orgs with ≥2 mentions it reports: - orgs whose head key (`name_norm` and `altid_name_key`) matches no mention; - orgs where the head key is a count-minority; - orgs whose head is `not_a_name`. Each is split by identifier NULL vs not, merge survivor vs not, and casing-only vs real drift, with 30 samples per bucket. Then the unit-2 decision (an ADR-0013 D4 amendment).
+Status: ready-for-agent — UNIT 1 BUILT 2026-10-14 (`org-head-drift` dry census; build + 3-lens review + fix round + re-check; see "Unit 1 — built"). NEXT: gate, deploy with 522 after the 526 unit 3 drain, one dry run when the queue is idle, then the unit-2 decision.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -142,3 +142,57 @@ The value claim is not measured. Only 2 real exhibits exist; the third, 30914328
 The next unit as proposed is M: a new Spec arm, the gate (~35 min, Box::pin for the arm), a deploy and a dry run. Its bonus is that it also delivers 456's census, pending since 2026-10-01.
 
 It could shrink to S first. Take about 50 recent merge survivors from org_merge_log keeps (indexed reads) and compare each head with its mention names. That gives a drift rate before committing to the M build. Any head refresh has to wait for 511's drains, which is fine because the census is read-only.
+
+## Unit 1 — built (2026-10-14)
+
+A read-only census job, `{"kind":"org-head-drift"}`. It accepts optional `min_mentions` (default 2; under 2 is
+refused) and `samples` (default 30, clamped to 1–200). Code:
+- `Db::org_head_drift` in `crates/store/src/canonical.rs`;
+- the supervisor arm, which is Box::pin'd and sits in the `run_census_spec` group;
+- tests in `crates/store/tests/org_head_drift.rs`;
+- the operations.md job row.
+
+The issue 456 unit-1 stray buckets ride the same walk.
+
+**What it reports.**
+- **Who votes.** Mentions VOTE unless their name is NULL or blank, or is a `partyname::not_a_name` class other than
+  `award_summary`. Those classes are counted in `non_name_mentions`.
+- **Buckets** on the `altid_name_key`:
+  - `aligned` (the head's key is the top key, or tied for it);
+  - `minority`;
+  - `absent`;
+  - `unnamed`, when no mention votes.
+- **Flags:**
+  - `cosmetic`;
+  - `not_a_name`, with `head_class`;
+  - `single_stray` (the Sheffield shape);
+  - `below_half` (the issue's (b): head key under 50% of voting mentions);
+  - `form_only` (a GB legal form apart, under `altid_keys_agree`);
+  - the norm-key twins `minority_norm` / `absent_norm`.
+- **Splits:** every bucket and flag is split by identifier NULL or not, by provisional, and by merge survivor.
+  - A merge survivor has an `organization_merged_identifiers` row with `loser <> org_id`.
+  - Carried rows count, which is how 514's E0 survivors read `merged`.
+  - p0/p1 folds and rekeys are invisible.
+- **456's `stray_mentions`:** a key held once that agrees with no other voting key of its org, under a top key of 2
+  or more. Split `by_scheme`.
+- **Samples and canaries:** 30 samples per bucket or flag. Canaries are 31558903, 22713056 and 30914328.
+
+**Cost on prod.** Not yet measured. The walk reads every mention through `organization_mentions_org` (about 49.6M
+rowid lookups), 2,000 orgs per page. It can be stopped between pages. It refuses while either index is absent (a
+rebuild's Phase 1).
+
+**Review.** Three lenses (semantics / cost / conventions), then a fix round, an adversarial re-check, and the
+re-check's D1–D5. Fixes:
+- **F1:** an alias row (`loser = org_id`) is not a merge.
+- **F2:** `below_half` added.
+- **F3:** non-name mentions do not vote. Without this, `0` and `-` manufactured the Sheffield shape.
+- **F4:** 456's agreement rule replaces exact key equality, and one `STRAY_TOP_MIN = 2` bar serves both strays.
+- **F5:** schemes are measured.
+- **F6:** test gaps closed (norm vs alt key, a head that sorts last in a tie, provisional apart from identifier).
+- **F7:** docs.
+- **D1:** the merged-basis wording now covers carried rows.
+- **D2:** the voting class label is a store constant, pinned by a supervisor test.
+- **D3:** the `below_half` samples list only the aligned plurality heads.
+- **D4:** a stray is judged against every other key, not only the top key, so the count no longer depends on which key
+  a tie put on top.
+- **D5:** the scheme-cap wording.

@@ -67,3 +67,15 @@ orgs first. It is a corpus walk, so it is a dry job (a census-style report) and 
   updated.
 - Live: tender 8751605's Tenderer reads `[5718658,"Sellafield Ltd","Schneider Electric"]`. The bind is still wrong
   (design 1), but it is no longer hidden.
+
+## Unit 1 rides 524's census (2026-10-14)
+
+The measurement unit is built as part of issue 524 unit 1's `org-head-drift` dry census. Its pieces:
+- `single_stray`: "the foreign mention is the HEAD";
+- `stray_mentions`: mentions whose key agrees with no other voting key of the org, using `altid_name_key` +
+  `altid_keys_agree`, under a top key of 2 or more;
+- splits by identifier NULL or not and by `by_scheme`.
+
+Roles are `not_measured`: a per-mention role needs a join on the party rows, so it is left for a follow-up if the
+counts warrant it. Read the report after 524's first dry run, then decide designs 1 and 2 (524 owns the head
+election).

@@ -60,6 +60,8 @@ pub use canonical::{
     GhostCensusReport, GhostNotice,
     NameAttribution, NameAttributionReport,
     AddressStrip, NAME_PHRASE_CEILING, NamePhraseHit, NamePhraseReport, NamePollutionReport, PollutedName,
+    HeadDriftCount, HeadDriftSample, HeadDriftSamples, HeadDriftTally, ORG_HEAD_DRIFT_PAGE, OrgHeadDriftArgs,
+    OrgHeadDriftReport, HEAD_DRIFT_AWARD_SUMMARY, STRAY_SCHEME_NONE, STRAY_SCHEME_OTHER, STRAY_SCHEMES_MAX, STRAY_TOP_MIN, StrayMentionTally,
     MintedCountryFix, MintedCountryReport,
     AltIdAliasCounts, AltIdAliasRules, AltIdListing, AltIdMergeArgs, AltIdMergeReport, RegistryMember, RegistryPairCounts, RegistrySample,
     RegistryNhsEntry, RegistryNhsHolder, REGISTRY_NHS_LISTING_CAP, REGISTRY_NHS_PPON_HOLDERS, REGISTRY_NHS_REGISTER_HOLDERS,

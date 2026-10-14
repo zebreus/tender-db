@@ -496,6 +496,9 @@ enum Spec {
     /// Issue 527 unit 1: which organizations a phrase reaches through their served name (and, with
     /// `mentions`, any mention's published name), and what they serve. Read-only.
     NamePhraseCensus { phrases: Vec<String>, mentions: bool },
+    /// Issue 524 unit 1: whether each organization's served head (written at mint, never again) still
+    /// names what its mentions say, with issue 456 unit 1's stray buckets. Read-only.
+    OrgHeadDrift { min_mentions: u64, samples: usize },
     /// Issue 331: does duplication actually push a name key over the
     /// genericness wall? Read-only measurement.
     GenericWallCensus,
@@ -1202,10 +1205,158 @@ pub struct JobRequest {
     /// organization walk), so an organization whose served name is clean but whose mentions carry the
     /// phrase is found too. Omitted, the served names only.
     pub mentions: Option<bool>,
+    /// `org-head-drift` only (issue 524 unit 1): the census reads organizations with at least this many
+    /// mention rows. Omitted, [`ORG_HEAD_DRIFT_MIN_MENTIONS`]; under 2 is refused (one mention is aligned
+    /// or absent by construction).
+    pub min_mentions: Option<u64>,
+    /// `org-head-drift` only: the samples listed per bucket and flag. Omitted, 30; clamped to 1 to
+    /// [`ORG_HEAD_DRIFT_SAMPLES_MAX`].
+    pub samples: Option<u64>,
 }
 
 /// Issue 527 unit 1: the most phrases one `name-phrase-census` takes.
 const NAME_PHRASE_MAX: usize = 20;
+
+/// Issue 524 unit 1: `org-head-drift`'s default `min_mentions`.
+const ORG_HEAD_DRIFT_MIN_MENTIONS: u64 = 2;
+/// Issue 524 unit 1: `org-head-drift`'s default samples per bucket, and the most it lists.
+const ORG_HEAD_DRIFT_SAMPLES: u64 = 30;
+const ORG_HEAD_DRIFT_SAMPLES_MAX: u64 = 200;
+/// Issue 524 unit 1: the exhibits `org-head-drift` always reports, whatever their bucket — 31558903
+/// (the University of Sheffield served as `Sheffield Hallam University`), 22713056 (a review chamber
+/// served as `s.o.`) and 30914328 (`Withheld Section94 Supplier`, issue 522's fix).
+const ORG_HEAD_DRIFT_CANARIES: &[i64] = &[31_558_903, 22_713_056, 30_914_328];
+
+/// Issue 524 unit 1: `partyname::not_a_name` as the census's class label. A mention of any class but
+/// `award_summary` (a non-name phrase BESIDE a name, which the fold keeps) holds no key, and a head of
+/// one is flagged `not_a_name`.
+fn head_drift_name_class(name: &str) -> Option<&'static str> {
+    use ingest::partyname::NotAName;
+    ingest::partyname::not_a_name(name).map(|class| match class {
+        NotAName::VoidLot => "void_lot",
+        NotAName::Placeholder => "placeholder",
+        NotAName::Blank => "blank",
+        NotAName::AwardSummary => store::HEAD_DRIFT_AWARD_SUMMARY,
+    })
+}
+
+/// Issue 524 unit 1: `org-head-drift` as stored — the report as serialised, with the keys, the page and
+/// the canary ids it was read with. A sync free fn, so its temporaries stay off the boxed arm's poll
+/// frame (issue 467's lesson).
+fn org_head_drift_json(r: &store::OrgHeadDriftReport) -> Result<String, String> {
+    let mut body = serde_json::to_value(r).map_err(|e| e.to_string())?;
+    if let Some(all) = body.as_object_mut() {
+        all.insert(
+            "keys".to_owned(),
+            serde_json::json!({
+                "primary": "ingest::crosswalk::altid_name_key",
+                "secondary": "store::org_name_norm",
+                "agree": "ingest::crosswalk::altid_keys_agree",
+                "not_a_name": "ingest::partyname::not_a_name",
+            }),
+        );
+        all.insert("page".to_owned(), store::ORG_HEAD_DRIFT_PAGE.into());
+        all.insert("canary_ids".to_owned(), serde_json::json!(ORG_HEAD_DRIFT_CANARIES));
+        all.insert(
+            "merged_basis".to_owned(),
+            "an organization_merged_identifiers row on the org with loser <> org_id: an identifier-bearing \
+             merge whose loser's identifier was recorded (issue 460 on, and the backfill before it). Rows \
+             naming the org as its own loser record no merge and are not read (altid-alias binds, \
+             renormalise pre-images, nhs-body aliases, the nhs-body wet path's keep alias). A merge carries \
+             the loser's own rows to the keep with their original loser, alias and pre-image rows \
+             included, and those mark the keep (issue 514's E0 survivors, 31558903 among them, read merged \
+             only through a carried renormalise pre-image); identifier-less (p0/p1) folds, rekeys and \
+             same-identifier merges whose loser carried no row are invisible; org_merge_log is not read \
+             (no index on keep)"
+                .into(),
+        );
+    }
+    Ok(body.to_string())
+}
+
+/// Issue 524 unit 1: `org-head-drift`'s job summary.
+fn org_head_drift_summary(r: &store::OrgHeadDriftReport) -> String {
+    let split = |t: &store::HeadDriftTally| {
+        format!(
+            "{} org(s), {} mention(s); identifier NULL {}, provisional {}, merge survivor {}",
+            t.orgs, t.mentions, t.identifier_null.orgs, t.provisional.orgs, t.merged.orgs
+        )
+    };
+    let classes = |m: &std::collections::BTreeMap<&'static str, u64>| {
+        if m.is_empty() {
+            "none".to_owned()
+        } else {
+            m.iter().map(|(class, n)| format!("{class} {n}")).collect::<Vec<_>>().join(", ")
+        }
+    };
+    let heads = if r.head_class.is_empty() {
+        "none".to_owned()
+    } else {
+        r.head_class.iter().map(|(class, c)| format!("{class} {}", c.orgs)).collect::<Vec<_>>().join(", ")
+    };
+    let schemes = if r.stray_mentions.by_scheme.is_empty() {
+        "none".to_owned()
+    } else {
+        r.stray_mentions
+            .by_scheme
+            .iter()
+            .map(|(scheme, c)| format!("{scheme} {}", c.mentions))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    // Every minority and absent head is below half; what is left is the aligned plurality heads.
+    let aligned_below_half = r.below_half.orgs.saturating_sub(r.minority.orgs + r.absent.orgs);
+    let canaries = ORG_HEAD_DRIFT_CANARIES
+        .iter()
+        .map(|id| match r.canaries.iter().find(|c| c.org_id == *id) {
+            Some(c) => format!(
+                "{id} {}{} (head key {} of {} voting of {} mention rows, top {:?} {})",
+                c.bucket,
+                if c.in_census { "" } else { ", outside the census" },
+                c.head_key_count,
+                c.voting,
+                c.n,
+                c.top_spelling,
+                c.top_key_count
+            ),
+            None => format!("{id} not found"),
+        })
+        .collect::<Vec<_>>()
+        .join("; ");
+    format!(
+        "org-head-drift (issue 524 unit 1): {} organization(s) and {} mention row(s) walked; {} in the census \
+         ({}+ mention rows and a voting one; {} below, {} with no voting mention, {} nameless mention row(s), \
+         non-name mention rows kept out of every key: {}; {} award_summary mention row(s) still vote). \
+         On the altid key: aligned {}; MINORITY {}; ABSENT {}; cosmetic (aligned, no mention spells the head) \
+         {}; head not_a_name {} (head classes: {heads}); single stray head {}; below half {} ({aligned_below_half} \
+         of them aligned); form only (a GB legal form apart) {}. On org_name_norm: minority {}, absent {}. \
+         Issue 456 (top key {}+): {} stray mention(s) in {} org(s), {} of them on identifier-bearing orgs; by \
+         scheme: {schemes}. Canaries: {canaries}. NOTHING IS WRITTEN.",
+        r.orgs_walked,
+        r.mentions_walked,
+        r.population.orgs,
+        r.min_mentions,
+        r.below_min.orgs,
+        r.unnamed.orgs,
+        r.nameless,
+        classes(&r.non_name_mentions),
+        r.award_summary_mentions,
+        r.aligned.orgs,
+        split(&r.minority),
+        split(&r.absent),
+        r.cosmetic.orgs,
+        split(&r.not_a_name),
+        split(&r.single_stray),
+        split(&r.below_half),
+        split(&r.form_only),
+        r.minority_norm.orgs,
+        r.absent_norm.orgs,
+        r.stray_top_min,
+        r.stray_mentions.all.mentions,
+        r.stray_mentions.all.orgs,
+        r.stray_mentions.identifier.mentions,
+    )
+}
 
 impl Supervisor {
     /// The store handle, for read-only operator surfaces that need it (the stored
@@ -1966,6 +2117,24 @@ impl Supervisor {
                     if mentions { " +mentions" } else { "" }
                 );
                 Ok(vec![self.push("name-phrase-census", params, Spec::NamePhraseCensus { phrases, mentions }).await])
+            }
+            "org-head-drift" => {
+                let min_mentions = req.min_mentions.unwrap_or(ORG_HEAD_DRIFT_MIN_MENTIONS);
+                if min_mentions < 2 {
+                    return Err(format!(
+                        "org-head-drift needs `min_mentions` of 2 or more, got {min_mentions}: an organization \
+                         with one mention is aligned or absent by construction"
+                    ));
+                }
+                let samples = req.samples.unwrap_or(ORG_HEAD_DRIFT_SAMPLES).clamp(1, ORG_HEAD_DRIFT_SAMPLES_MAX) as usize;
+                Ok(vec![
+                    self.push(
+                        "org-head-drift",
+                        format!("org-head-drift min_mentions={min_mentions} samples={samples}"),
+                        Spec::OrgHeadDrift { min_mentions, samples },
+                    )
+                    .await,
+                ])
             }
             "duplicate-identity-census" => Ok(vec![
                 self.push(
@@ -4232,6 +4401,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 527 unit 1: read before every page of both walks and every chunk of the seeks; a
     // stopped run stores no report.
     "name-phrase-census",
+    // Issue 524 unit 1: read before every page of the organization walk; a stopped run stores no
+    // report.
+    "org-head-drift",
     "generic-wall-census",
     "generic-statistic-census",
     "name-attribution-probe",
@@ -6612,6 +6784,7 @@ impl Supervisor {
             | Spec::GenericWallCensus
             | Spec::NamePollutionCensus
             | Spec::NamePhraseCensus { .. }
+            | Spec::OrgHeadDrift { .. }
             | Spec::ProvisionalEchoCensus { .. }
             | Spec::DuplicateIdentityCensus
             | Spec::CountryTypoCensus
@@ -12859,6 +13032,37 @@ impl Supervisor {
                     },
                 ))
             }).await,
+            Spec::OrgHeadDrift { min_mentions, samples } => Box::pin(async move {
+                // BOXED, as every census arm here: `run_spec`'s one future must not grow with it. The
+                // report body and the summary are built by sync free fns, off this frame.
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("walking", None, None, "issue 524: reading organization heads and mention names".to_owned());
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                let r = self
+                    .db
+                    .org_head_drift(store::OrgHeadDriftArgs {
+                        alt_key: ingest::crosswalk::altid_name_key,
+                        keys_agree: ingest::crosswalk::altid_keys_agree,
+                        not_a_name: head_drift_name_class,
+                        min_mentions: *min_mentions,
+                        samples: *samples,
+                        page: store::ORG_HEAD_DRIFT_PAGE,
+                        canaries: ORG_HEAD_DRIFT_CANARIES,
+                        stop: &stop,
+                        progress: &progress,
+                    })
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("org-head-drift STOPPED by cancel — no report stored".to_owned());
+                }
+                let body = org_head_drift_json(&r)?;
+                self.db.put_report("org-head-drift", &body, store::now_unix()).await.map_err(|e| e.to_string())?;
+                Ok(org_head_drift_summary(&r))
+            }).await,
             Spec::NamePollutionCensus => Box::pin(async move {
                 // BOXED. `run_spec` is one async match over every `Spec` arm,
                 // so every arm's locals live in ONE future — and adding this
@@ -16602,6 +16806,7 @@ mod tests {
                 "fold-provisional-echoes",
                 "name-pollution-census",
                 "name-phrase-census",
+                "org-head-drift",
                 "generic-wall-census",
                 "generic-statistic-census",
                 "name-attribution-probe",
@@ -20234,6 +20439,44 @@ mod tests {
         assert_eq!(queued[1].params, r#"name-phrase-census "niet gegunde partij","gegunde partij" +mentions"#);
         assert_eq!(queued[2].params, r#"name-phrase-census "gegunde partij""#);
         assert!(!heavy_write_kind("name-phrase-census"), "read-only: coverage keeps refreshing");
+    }
+
+    /// Issue 524 unit 1 (review D2): the census's class mapping spells the voting class from the store
+    /// constant, so a real award summary keeps its vote and is no flagged non-name head.
+    #[test]
+    fn head_drift_name_class_maps_a_real_award_summary_to_the_voting_class() {
+        let awarded = "Infructueux, marché attribué à: Berthelet";
+        assert_eq!(head_drift_name_class(awarded), Some(store::HEAD_DRIFT_AWARD_SUMMARY));
+        assert_eq!(head_drift_name_class("s.o."), Some("placeholder"));
+        assert_eq!(head_drift_name_class("Vergabekammer bei der Bezirksregierung"), None);
+    }
+
+    /// Issue 524 unit 1: `org-head-drift` defaults to 2 mention rows and 30 samples, refuses a
+    /// `min_mentions` under 2, clamps `samples` to 1..=200, and records both in its params line.
+    #[tokio::test]
+    async fn org_head_drift_defaults_refuses_and_clamps_its_params() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ask = |min_mentions: Option<u64>, samples: Option<u64>| JobRequest {
+            kind: "org-head-drift".into(),
+            min_mentions,
+            samples,
+            ..Default::default()
+        };
+        for low in [0, 1] {
+            let err = sup.enqueue_request(&ask(Some(low), None)).await.expect_err("one mention is no census");
+            assert!(err.contains("min_mentions") && err.contains("2 or more"), "{err}");
+        }
+        sup.enqueue_request(&ask(None, None)).await.expect("the defaults");
+        sup.enqueue_request(&ask(Some(5), Some(0))).await.expect("samples clamp up");
+        sup.enqueue_request(&ask(Some(3), Some(10_000))).await.expect("samples clamp down");
+        let queued = sup.queued();
+        assert_eq!(queued.len(), 3, "the refused asks queued nothing");
+        assert_eq!(queued[0].kind, "org-head-drift");
+        assert_eq!(queued[0].params, "org-head-drift min_mentions=2 samples=30");
+        assert_eq!(queued[1].params, "org-head-drift min_mentions=5 samples=1");
+        assert_eq!(queued[2].params, "org-head-drift min_mentions=3 samples=200");
+        assert!(!heavy_write_kind("org-head-drift"), "read-only: coverage keeps refreshing");
+        assert!(stoppable("org-head-drift", &queued[0].params), "a cancel reaches the walk between pages");
     }
 
     /// Issue 58 v2, step 3: `refold-notices` takes a NAMED list, and its guard is a

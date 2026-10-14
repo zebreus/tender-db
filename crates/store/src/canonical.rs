@@ -10763,6 +10763,285 @@ pub struct NamePhraseReport {
 /// Issue 527 unit 1: the most organizations [`Db::name_phrase_census`] carries into its second pass.
 pub const NAME_PHRASE_CEILING: usize = 200_000;
 
+// ---- Issue 524 unit 1: the `org-head-drift` census (and issue 456 unit 1's stray buckets).
+
+/// Issue 524 unit 1: the organizations [`Db::org_head_drift`] reads per page of its id walk.
+pub const ORG_HEAD_DRIFT_PAGE: i64 = 2_000;
+
+/// Issue 524 unit 1 / issue 456 unit 1: the fewest voting mentions an org's top key must hold before
+/// [`Db::org_head_drift`] calls anything beside it a stray — ONE bar for both the `single_stray` head
+/// flag and the `stray_mentions` count, reported as `stray_top_min`. Two: one mention against one is a
+/// tie, not a stray, and two against one is the smallest majority a lone mention can sit under.
+pub const STRAY_TOP_MIN: u64 = 2;
+
+/// Issue 456 unit 1: the most distinct schemes `stray_mentions.by_scheme` names; the stray mentions of
+/// any further scheme count under [`STRAY_SCHEME_OTHER`].
+pub const STRAY_SCHEMES_MAX: usize = 20;
+
+/// Issue 456 unit 1: `stray_mentions.by_scheme`'s label for a NULL `organization_mentions.scheme`.
+pub const STRAY_SCHEME_NONE: &str = "none";
+
+/// Issue 456 unit 1: `stray_mentions.by_scheme`'s label past [`STRAY_SCHEMES_MAX`] distinct schemes.
+pub const STRAY_SCHEME_OTHER: &str = "other";
+
+/// Issue 524 unit 1: the `not_a_name` class that still votes — a non-name phrase BESIDE a name (the
+/// fold keeps it), so a mention of that class keeps its key and a head of it is not flagged. Public so
+/// the supervisor's class mapping spells it from here: a rename on one side alone would silently stop
+/// every award-summary mention from voting.
+pub const HEAD_DRIFT_AWARD_SUMMARY: &str = "award_summary";
+
+/// Issue 524 unit 1: the page read of [`Db::org_head_drift`] — a rowid range of `organizations`.
+const ORG_HEAD_DRIFT_ORGS_SQL: &str =
+    "SELECT id, country, identifier, provisional, name FROM organizations WHERE id > ? ORDER BY id LIMIT ?";
+
+/// Issue 524 unit 1: one page's mention names and schemes, `n` org ids at a time, through
+/// `organization_mentions_org`.
+fn org_head_drift_mentions_sql(n: usize) -> String {
+    format!(
+        "SELECT organization_id, name, scheme FROM organization_mentions WHERE organization_id IN ({})",
+        placeholders(n)
+    )
+}
+
+/// Issue 524 unit 1: which of `n` org ids survived an identifier-bearing merge, through
+/// `organization_merged_identifiers_org`. `loser <> org_id` keeps out the rows that name the org as
+/// its own loser, which record no merge: the `altid-alias` resolver binds, the `renormalise`
+/// pre-images and the `nhs-body` alias rows.
+fn org_head_drift_merged_sql(n: usize) -> String {
+    format!(
+        "SELECT DISTINCT org_id FROM organization_merged_identifiers WHERE org_id IN ({}) AND loser <> org_id",
+        placeholders(n)
+    )
+}
+
+/// Issue 524 unit 1: an organization count and the mention rows behind it.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct HeadDriftCount {
+    pub orgs: u64,
+    pub mentions: u64,
+}
+
+impl HeadDriftCount {
+    fn add(&mut self, mentions: u64) {
+        self.orgs += 1;
+        self.mentions += mentions;
+    }
+}
+
+/// Issue 524 unit 1: one [`Db::org_head_drift`] bucket or flag — its organizations and their mention
+/// rows (`n`, nameless and non-name ones included), whole and split three ways: by `identifier IS
+/// NULL` (where `name_norm` is a bind key, and a refresh may only stay within the key), by
+/// `provisional`, and by merge survivor (`merged`: see [`Db::org_head_drift`] for what that reads).
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct HeadDriftTally {
+    pub orgs: u64,
+    pub mentions: u64,
+    pub identifier_null: HeadDriftCount,
+    pub identifier: HeadDriftCount,
+    pub provisional: HeadDriftCount,
+    pub not_provisional: HeadDriftCount,
+    pub merged: HeadDriftCount,
+    pub not_merged: HeadDriftCount,
+}
+
+impl HeadDriftTally {
+    fn add(&mut self, identifier_null: bool, provisional: bool, merged: bool, mentions: u64) {
+        self.orgs += 1;
+        self.mentions += mentions;
+        (if identifier_null { &mut self.identifier_null } else { &mut self.identifier }).add(mentions);
+        (if provisional { &mut self.provisional } else { &mut self.not_provisional }).add(mentions);
+        (if merged { &mut self.merged } else { &mut self.not_merged }).add(mentions);
+    }
+}
+
+/// Issue 456 unit 1, measured by [`Db::org_head_drift`]: STRAY mentions — a voting mention whose alt
+/// key no other voting mention of its org holds and which agrees with no other voting key of its org
+/// (`altid_keys_agree`: a GB legal form one side carries is no stray), in a census org whose top key
+/// holds at least [`STRAY_TOP_MIN`]. `mentions` counts the stray mentions, `orgs` the organizations
+/// holding at least one.
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
+pub struct StrayMentionTally {
+    pub all: HeadDriftCount,
+    pub identifier_null: HeadDriftCount,
+    pub identifier: HeadDriftCount,
+    /// By the stray mention's `organization_mentions.scheme` ([`STRAY_SCHEME_NONE`] for NULL): the
+    /// first [`STRAY_SCHEMES_MAX`] distinct schemes the walk meets, the rest under
+    /// [`STRAY_SCHEME_OTHER`]. `orgs` counts the organizations holding a stray of that label.
+    pub by_scheme: std::collections::BTreeMap<String, HeadDriftCount>,
+}
+
+/// Issue 524 unit 1: one organization as [`Db::org_head_drift`] reads it — a sample or a canary.
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
+pub struct HeadDriftSample {
+    pub org_id: i64,
+    pub country: Option<String>,
+    pub identifier: Option<String>,
+    pub provisional: bool,
+    /// A merge survivor: it holds an `organization_merged_identifiers` row with `loser <> org_id`.
+    pub merged: bool,
+    /// The served name, `organizations.name`.
+    pub head: String,
+    /// The head's `not_a_name` class (`award_summary` included), `None` for a name.
+    pub head_class: Option<&'static str>,
+    /// Mention rows, nameless and non-name ones included.
+    pub n: u64,
+    /// Voting mentions: named, and not a non-name (an `award_summary` mention still votes).
+    pub voting: u64,
+    /// Voting mentions whose alt key is the head's.
+    pub head_key_count: u64,
+    /// Voting mentions holding the top alt key.
+    pub top_key_count: u64,
+    pub top_key: String,
+    /// The most frequent exact voting spelling inside the top key; on a tie, a spelling that is not
+    /// ALL-CAPS, then the lexicographically smallest.
+    pub top_spelling: String,
+    /// Distinct alt keys among the voting mentions.
+    pub distinct_keys: u64,
+    /// `aligned` | `minority` | `absent` on the alt key, or `unnamed` when no mention votes.
+    pub bucket: &'static str,
+    /// The same test on the `org_name_norm` key.
+    pub norm_bucket: &'static str,
+    /// In the census: at least `min_mentions` mention rows and a voting one. Only a canary can read
+    /// `false`; its bucket and flags are then computed all the same, and counted in no tally but
+    /// `below_min` or `unnamed`.
+    pub in_census: bool,
+    pub cosmetic: bool,
+    pub not_a_name: bool,
+    pub single_stray: bool,
+    pub below_half: bool,
+    pub form_only: bool,
+}
+
+/// Issue 524 unit 1: the first `samples` organizations by id of each bucket and flag. `below_half` lists
+/// only its ALIGNED orgs (the plurality heads): its minority and absent ones are listed under those.
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
+pub struct HeadDriftSamples {
+    pub minority: Vec<HeadDriftSample>,
+    pub absent: Vec<HeadDriftSample>,
+    pub single_stray: Vec<HeadDriftSample>,
+    pub not_a_name: Vec<HeadDriftSample>,
+    pub cosmetic: Vec<HeadDriftSample>,
+    pub below_half: Vec<HeadDriftSample>,
+    pub form_only: Vec<HeadDriftSample>,
+}
+
+/// Issue 524 unit 1: [`Db::org_head_drift`]'s inputs. The keys are injected (store never depends on
+/// ingest): `alt_key` is the app's `crosswalk::altid_name_key`, the primary key; `keys_agree` is
+/// `crosswalk::altid_keys_agree`; `not_a_name` is `partyname::not_a_name` as its class label. The
+/// secondary key is [`org_name_norm`], read directly.
+pub struct OrgHeadDriftArgs<'a> {
+    pub alt_key: fn(&str) -> String,
+    /// Whether two `alt_key` outputs name one entity: equal, or equal but for a GB legal form
+    /// (`§ltd`, `§plc`, `§llp`, `§lp`, `§cic`) only one side carries (issue 456's agreement).
+    pub keys_agree: fn(&str, &str) -> bool,
+    /// A name's non-name class — `void_lot` | `placeholder` | `blank` | `award_summary` — or `None`.
+    /// A mention of any class but `award_summary` holds no key; a head of one is `not_a_name`.
+    pub not_a_name: fn(&str) -> Option<&'static str>,
+    /// The census reads organizations with at least this many mention rows; fewer is `below_min`.
+    pub min_mentions: u64,
+    /// The listing per bucket and flag.
+    pub samples: usize,
+    /// Organizations per page of the id walk: [`ORG_HEAD_DRIFT_PAGE`] in the job.
+    pub page: i64,
+    /// Organizations reported in `canaries` whatever their bucket, when the walk passes them.
+    pub canaries: &'a [i64],
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+    pub progress: &'a (dyn Fn(u64, &str) + Sync),
+}
+
+/// Issue 524 unit 1: [`Db::org_head_drift`]'s answer. Read-only.
+///
+/// A mention VOTES when its name is neither NULL/blank (`nameless`) nor a non-name (a `not_a_name`
+/// class other than `award_summary`). The census is the organizations with at least `min_mentions`
+/// mention rows and at least one voting one (`population`). Each is in exactly one of `aligned`,
+/// `minority` and `absent`, judged on the alt key over the voting mentions; `cosmetic`, `not_a_name`,
+/// `single_stray`, `below_half` and `form_only` are flags over them, and `minority_norm` /
+/// `absent_norm` repeat the bucket test on the `org_name_norm` key so the two keys can be compared.
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
+pub struct OrgHeadDriftReport {
+    pub min_mentions: u64,
+    pub samples_per_bucket: usize,
+    /// [`STRAY_TOP_MIN`], the top-key bar of `single_stray` and `stray_mentions`.
+    pub stray_top_min: u64,
+    pub orgs_walked: u64,
+    pub mentions_walked: u64,
+    /// Organizations with fewer than `min_mentions` mention rows (zero included), and those rows.
+    pub below_min: HeadDriftCount,
+    /// Mention rows walked whose name is NULL or blank, every organization's; they hold no key.
+    pub nameless: u64,
+    /// Mention rows walked whose name is a non-name, by class, every organization's (as `nameless`);
+    /// they hold no key. `award_summary` is not here: it votes.
+    pub non_name_mentions: std::collections::BTreeMap<&'static str, u64>,
+    /// Mention rows walked whose name is classed `award_summary`, every organization's. They vote.
+    pub award_summary_mentions: u64,
+    /// Organizations with enough mention rows but no voting one (every name NULL, blank or a
+    /// non-name): in no bucket.
+    pub unnamed: HeadDriftCount,
+    /// The census: the denominators of every bucket and flag below.
+    pub population: HeadDriftTally,
+    /// The head's alt key is the top key, or tied for it.
+    pub aligned: HeadDriftTally,
+    /// The head's alt key is held by at least one voting mention, but by fewer than the top key.
+    pub minority: HeadDriftTally,
+    /// The head's alt key is held by no voting mention.
+    pub absent: HeadDriftTally,
+    /// Aligned, but no voting mention spells the head byte for byte (casing, punctuation or spelling
+    /// within the key).
+    pub cosmetic: HeadDriftTally,
+    /// The head is a non-name: a `not_a_name` class other than `award_summary`.
+    pub not_a_name: HeadDriftTally,
+    /// The census heads by `not_a_name` class, `award_summary` included (counted here, not flagged).
+    pub head_class: std::collections::BTreeMap<&'static str, HeadDriftCount>,
+    /// The head's key held by exactly one voting mention, the top key by [`STRAY_TOP_MIN`] or more,
+    /// and the head's key agrees with no other voting key (a GB form one side carries is `form_only`,
+    /// not a stray), whichever key a tie put on top: the
+    /// Sheffield shape, and issue 456's "the foreign mention is the HEAD". Always a minority.
+    pub single_stray: HeadDriftTally,
+    /// Issue 524 (b): the head's key holds under half the voting mentions (`head_key_count * 2 <
+    /// voting`). Every minority and absent org is below half, so `below_half` less those two is the
+    /// ALIGNED heads that lead only a plurality.
+    pub below_half: HeadDriftTally,
+    /// Minority or absent, but the head's key agrees with a key at the top count (any of a tie): the
+    /// drift is a GB legal form only (`Carnall Farrar` served over `Carnall Farrar Ltd`).
+    pub form_only: HeadDriftTally,
+    pub minority_norm: HeadDriftTally,
+    pub absent_norm: HeadDriftTally,
+    pub stray_mentions: StrayMentionTally,
+    pub samples: HeadDriftSamples,
+    pub canaries: Vec<HeadDriftSample>,
+    /// What issue 456's census asked for that this walk does not read.
+    pub not_measured: Vec<&'static str>,
+    pub stopped: bool,
+}
+
+/// Issue 524 unit 1: the bucket of a head key among an org's key counts, and the top key. The top key
+/// holds the most voting mentions; on a tie the head's key if it is tied, else the lexicographically
+/// smallest. `None` when no mention votes.
+fn head_drift_bucket<'a>(
+    counts: &'a std::collections::BTreeMap<String, u64>,
+    head_key: &str,
+) -> Option<(&'static str, &'a str, u64, u64)> {
+    let top_count = counts.values().copied().max()?;
+    let head_count = counts.get(head_key).copied().unwrap_or(0);
+    let top = if head_count == top_count {
+        counts.get_key_value(head_key).map(|(k, _)| k.as_str())
+    } else {
+        // A BTreeMap iterates its keys in order: the first at the top count is the smallest.
+        counts.iter().find(|(_, c)| **c == top_count).map(|(k, _)| k.as_str())
+    }?;
+    let bucket = match head_count {
+        0 => "absent",
+        c if c < top_count => "minority",
+        _ => "aligned",
+    };
+    Some((bucket, top, head_count, top_count))
+}
+
+/// Issue 524 unit 1: whether a spelling is ALL-CAPS — it has an upper-case letter and no lower-case one.
+fn all_caps(name: &str) -> bool {
+    name.chars().any(char::is_uppercase) && !name.chars().any(char::is_lowercase)
+}
+
 /// One address-shaped name (issue 330's second measurement): what a
 /// key-builder-side strip of the trailing postal block would change for it.
 #[derive(Debug, Default, Clone)]
@@ -35313,6 +35592,321 @@ impl Db {
         Ok(report)
     }
 
+    /// Issue 524 unit 1: the `org-head-drift` census. `organizations.name` is written at mint and never
+    /// again, so after merges and mention drops the served head can name what none of the org's mentions
+    /// say. For every organization with at least `min_mentions` mention rows this groups the VOTING
+    /// mention names (not NULL or blank, and not a non-name: `args.not_a_name` classes other than
+    /// `award_summary` hold no key) by the alt key (`args.alt_key`, primary) and by [`org_name_norm`]
+    /// (secondary) and asks where the head's key stands among them; [`OrgHeadDriftReport`] names the
+    /// buckets. Issue 456 unit 1's stray buckets ride the same walk: `single_stray` (the foreign mention
+    /// is the head) and `stray_mentions`, both behind [`STRAY_TOP_MIN`] and `args.keys_agree`: a stray
+    /// agrees with NO other voting key of its org (issue 456: "shares no key with the org's other
+    /// mentions"), so a GB legal form one side carries is never a stray, and the head is `form_only`.
+    ///
+    /// This writes nothing. It walks `organizations` by id, `args.page` rows at a time, and reads each
+    /// page's mention names and schemes through `organization_mentions_org` and its merge survivors
+    /// through `organization_merged_identifiers_org`, both in [`IN_CHUNK`] id chunks, so memory is one
+    /// page's distinct spellings. The stop flag is read before every page; a stopped walk returns an
+    /// empty report marked `stopped`. Both indexes must stand — a rebuild's Phase 1 drops the mention
+    /// index, and without them every chunk would scan its table — so the census refuses before reading.
+    ///
+    /// "Merge survivor" (`merged`) is an `organization_merged_identifiers` row with `loser <> org_id`:
+    /// an identifier-bearing merge whose loser's identifier was recorded (every one since issue 460,
+    /// and `backfill-merged-identifiers` for the earlier ones). The rows that name the org as its own
+    /// loser record no merge and are not read — the `altid-alias` resolver binds, the `renormalise`
+    /// pre-images, the `nhs-body` alias rows — and with them the nhs-body WET path's code alias (the
+    /// keep's own `GBNHS<code>`, `loser = keep`). A merge also CARRIES the loser's own rows to the keep
+    /// with their original `loser` ([`MERGED_CARRY_SQL`]), alias and pre-image rows included, and those
+    /// mark the keep: issue 514's E0 survivors (31558903 among them) read `merged` only through the
+    /// carried `renormalise` pre-image of the loser they absorbed. A fold of identifier-less losers
+    /// (p0/p1), a `rekey`, and a same-identifier merge whose loser carried no row record nothing here,
+    /// so those survivors are invisible. `org_merge_log` has no index on `keep`, so it is not read.
+    pub async fn org_head_drift(&self, args: OrgHeadDriftArgs<'_>) -> turso::Result<OrgHeadDriftReport> {
+        use std::collections::{BTreeMap, HashMap, HashSet};
+        struct PageOrg {
+            id: i64,
+            country: Option<String>,
+            identifier: Option<String>,
+            provisional: bool,
+            head: String,
+            /// Mention rows, nameless ones included.
+            n: u64,
+            /// Named mentions per exact spelling, with the scheme of the first one read — THE
+            /// mention's scheme when the spelling is held once, which is all a stray reads.
+            spellings: HashMap<String, (u64, Option<String>)>,
+            merged: bool,
+        }
+        for index in ["organization_mentions_org", "organization_merged_identifiers_org"] {
+            if !self.has_index(index).await? {
+                return Err(turso::Error::Error(format!(
+                    "org-head-drift refused: {index} is absent (a rebuild's Phase 1?), so every chunk would scan \
+                     its table; run `reindex` first. Nothing was read"
+                )));
+            }
+        }
+        let mut report = OrgHeadDriftReport {
+            min_mentions: args.min_mentions,
+            samples_per_bucket: args.samples,
+            stray_top_min: STRAY_TOP_MIN,
+            not_measured: vec!["roles"],
+            ..Default::default()
+        };
+        let canaries: HashSet<i64> = args.canaries.iter().copied().collect();
+        let reader = self.reader().await?;
+        let mut after = 0i64;
+        loop {
+            if (args.stop)() {
+                return Ok(OrgHeadDriftReport { stopped: true, ..Default::default() });
+            }
+            let mut page: Vec<PageOrg> = Vec::new();
+            let mut rows = reader
+                .query(ORG_HEAD_DRIFT_ORGS_SQL, (Value::Integer(after), Value::Integer(args.page.max(1))))
+                .await?;
+            while let Some(row) = rows.next().await? {
+                page.push(PageOrg {
+                    id: int(&row, 0),
+                    country: opt_text_of(&row, 1),
+                    identifier: opt_text_of(&row, 2),
+                    provisional: int(&row, 3) != 0,
+                    head: text(&row, 4),
+                    n: 0,
+                    spellings: HashMap::new(),
+                    merged: false,
+                });
+            }
+            drop(rows);
+            let Some(last) = page.last() else { break };
+            after = last.id;
+            report.orgs_walked += page.len() as u64;
+            let at: HashMap<i64, usize> = page.iter().enumerate().map(|(i, org)| (org.id, i)).collect();
+
+            // The page's mention names and schemes.
+            let ids: Vec<i64> = page.iter().map(|org| org.id).collect();
+            for chunk in ids.chunks(IN_CHUNK) {
+                let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+                let mut rows = reader.query(&org_head_drift_mentions_sql(chunk.len()), params).await?;
+                while let Some(row) = rows.next().await? {
+                    let Some(&i) = at.get(&int(&row, 0)) else { continue };
+                    report.mentions_walked += 1;
+                    let org = &mut page[i];
+                    org.n += 1;
+                    match opt_text_of(&row, 1) {
+                        Some(name) if !name.trim().is_empty() => {
+                            org.spellings.entry(name).or_insert_with(|| (0, opt_text_of(&row, 2))).0 += 1;
+                        }
+                        _ => report.nameless += 1,
+                    }
+                }
+            }
+
+            // Merge survivors, read for the census and the canaries only.
+            let asked: Vec<i64> = page
+                .iter()
+                .filter(|org| org.n >= args.min_mentions || canaries.contains(&org.id))
+                .map(|org| org.id)
+                .collect();
+            for chunk in asked.chunks(IN_CHUNK) {
+                let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+                let mut rows = reader.query(&org_head_drift_merged_sql(chunk.len()), params).await?;
+                while let Some(row) = rows.next().await? {
+                    if let Some(&i) = at.get(&int(&row, 0)) {
+                        page[i].merged = true;
+                    }
+                }
+            }
+
+            for org in &page {
+                // The voters, and the non-names that hold no key — every org's, as `nameless`.
+                // (spelling, its mentions, its first mention's scheme)
+                let mut voters: Vec<(&str, u64, Option<&str>)> = Vec::with_capacity(org.spellings.len());
+                for (spelling, (count, scheme)) in &org.spellings {
+                    match (args.not_a_name)(spelling) {
+                        Some(class) if class != HEAD_DRIFT_AWARD_SUMMARY => {
+                            *report.non_name_mentions.entry(class).or_default() += count;
+                        }
+                        class => {
+                            if class.is_some() {
+                                report.award_summary_mentions += count;
+                            }
+                            voters.push((spelling.as_str(), *count, scheme.as_deref()));
+                        }
+                    }
+                }
+                let canary = canaries.contains(&org.id);
+                let below = org.n < args.min_mentions;
+                if below {
+                    report.below_min.add(org.n);
+                    if !canary {
+                        continue;
+                    }
+                }
+                let head_alt = (args.alt_key)(&org.head);
+                let head_norm = org_name_norm(&org.head);
+                let mut alt: BTreeMap<String, u64> = BTreeMap::new();
+                let mut norm: BTreeMap<String, u64> = BTreeMap::new();
+                // (spelling, its alt key, its mentions, its first mention's scheme)
+                let mut keyed: Vec<(&str, String, u64, Option<&str>)> = Vec::with_capacity(voters.len());
+                for &(spelling, count, scheme) in &voters {
+                    let key = (args.alt_key)(spelling);
+                    *alt.entry(key.clone()).or_default() += count;
+                    *norm.entry(org_name_norm(spelling)).or_default() += count;
+                    keyed.push((spelling, key, count, scheme));
+                }
+                let voting: u64 = alt.values().sum();
+                let head_class = (args.not_a_name)(&org.head);
+                let not_a_name = head_class.is_some_and(|class| class != HEAD_DRIFT_AWARD_SUMMARY);
+                let judged = head_drift_bucket(&alt, &head_alt);
+                let (bucket, top, head_count, top_count) = judged.unwrap_or(("unnamed", "", 0, 0));
+                let norm_bucket = head_drift_bucket(&norm, &head_norm).map_or("unnamed", |(b, ..)| b);
+                let cosmetic = bucket == "aligned" && !voters.iter().any(|(spelling, ..)| *spelling == org.head);
+                // Issue 456's stray: a key that "shares no key with the org's other mentions" — it agrees
+                // (`args.keys_agree`) with NO other voting key, not merely with the top one. Judging
+                // against the top alone made a mention-level count depend on which key a tie elected,
+                // and so on the head (`Hallam` beside `Hallam Ltd`×3 is no stray, whatever leads).
+                let agrees_with_another =
+                    |key: &str| alt.keys().any(|other| other != key && (args.keys_agree)(key, other));
+                // One mention under a top of STRAY_TOP_MIN or more is always a minority.
+                let single_stray = head_count == 1 && top_count >= STRAY_TOP_MIN && !agrees_with_another(&head_alt);
+                let below_half = judged.is_some() && head_count * 2 < voting;
+                // Form-only: the head agrees with A key at the top count — any of them, so a tie the
+                // head does not lead cannot hide it.
+                let form_only = matches!(bucket, "minority" | "absent")
+                    && alt.iter().any(|(key, count)| *count == top_count && (args.keys_agree)(&head_alt, key));
+                let in_census = !below && judged.is_some();
+                if !below && judged.is_none() {
+                    report.unnamed.add(org.n);
+                }
+                // The most frequent spelling inside the top key; on a tie not ALL-CAPS, then the smallest.
+                let top_spelling = keyed
+                    .iter()
+                    .filter(|(_, key, ..)| judged.is_some() && key == top)
+                    .max_by(|a, b| {
+                        a.2.cmp(&b.2).then_with(|| all_caps(b.0).cmp(&all_caps(a.0))).then_with(|| b.0.cmp(a.0))
+                    })
+                    .map(|(spelling, ..)| (*spelling).to_owned())
+                    .unwrap_or_default();
+                let sample = || HeadDriftSample {
+                    org_id: org.id,
+                    country: org.country.clone(),
+                    identifier: org.identifier.clone(),
+                    provisional: org.provisional,
+                    merged: org.merged,
+                    head: org.head.clone(),
+                    head_class,
+                    n: org.n,
+                    voting,
+                    head_key_count: head_count,
+                    top_key_count: top_count,
+                    top_key: top.to_owned(),
+                    top_spelling: top_spelling.clone(),
+                    distinct_keys: alt.len() as u64,
+                    bucket,
+                    norm_bucket,
+                    in_census,
+                    cosmetic,
+                    not_a_name,
+                    single_stray,
+                    below_half,
+                    form_only,
+                };
+                if canary {
+                    report.canaries.push(sample());
+                }
+                if !in_census {
+                    continue;
+                }
+                let (id_null, provisional, merged, n) = (org.identifier.is_none(), org.provisional, org.merged, org.n);
+                let cap = args.samples;
+                let listed = |list: &mut Vec<HeadDriftSample>| {
+                    if list.len() < cap {
+                        list.push(sample());
+                    }
+                };
+                report.population.add(id_null, provisional, merged, n);
+                match bucket {
+                    "aligned" => report.aligned.add(id_null, provisional, merged, n),
+                    "minority" => {
+                        report.minority.add(id_null, provisional, merged, n);
+                        listed(&mut report.samples.minority);
+                    }
+                    _ => {
+                        report.absent.add(id_null, provisional, merged, n);
+                        listed(&mut report.samples.absent);
+                    }
+                }
+                // Every minority and absent head is below half and already listed under its bucket, so
+                // the below-half samples list the ALIGNED plurality heads only: otherwise the first N
+                // minority/absent orgs by id would crowd them out of the list entirely.
+                for (on, list_it, tally, list) in [
+                    (cosmetic, true, &mut report.cosmetic, &mut report.samples.cosmetic),
+                    (not_a_name, true, &mut report.not_a_name, &mut report.samples.not_a_name),
+                    (single_stray, true, &mut report.single_stray, &mut report.samples.single_stray),
+                    (below_half, bucket == "aligned", &mut report.below_half, &mut report.samples.below_half),
+                    (form_only, true, &mut report.form_only, &mut report.samples.form_only),
+                ] {
+                    if on {
+                        tally.add(id_null, provisional, merged, n);
+                        if list_it {
+                            listed(list);
+                        }
+                    }
+                }
+                if let Some(class) = head_class {
+                    report.head_class.entry(class).or_default().add(n);
+                }
+                match norm_bucket {
+                    "minority" => report.minority_norm.add(id_null, provisional, merged, n),
+                    "absent" => report.absent_norm.add(id_null, provisional, merged, n),
+                    _ => {}
+                }
+                // Issue 456: a voting mention whose key no other voting mention holds and which agrees
+                // with no other voting key, beside a top key of STRAY_TOP_MIN or more. Its key is held
+                // once, so its spelling is held once and the scheme read with it is its own.
+                if top_count >= STRAY_TOP_MIN {
+                    let mut strays: BTreeMap<&str, u64> = BTreeMap::new();
+                    for (_, key, _, scheme) in &keyed {
+                        if alt.get(key) == Some(&1) && !agrees_with_another(key) {
+                            *strays.entry(scheme.unwrap_or(STRAY_SCHEME_NONE)).or_default() += 1;
+                        }
+                    }
+                    let found: u64 = strays.values().sum();
+                    if found > 0 {
+                        let stray = &mut report.stray_mentions;
+                        for count in [&mut stray.all, if id_null { &mut stray.identifier_null } else { &mut stray.identifier }] {
+                            count.orgs += 1;
+                            count.mentions += found;
+                        }
+                        // In scheme order, so the first STRAY_SCHEMES_MAX named are the same however
+                        // the walk is paged; an org counts once under `other` however many it puts there.
+                        let mut other = false;
+                        for (scheme, mentions) in strays {
+                            let named = stray.by_scheme.len() - usize::from(stray.by_scheme.contains_key(STRAY_SCHEME_OTHER));
+                            let label = if stray.by_scheme.contains_key(scheme) || named < STRAY_SCHEMES_MAX {
+                                scheme
+                            } else {
+                                STRAY_SCHEME_OTHER
+                            };
+                            let count = stray.by_scheme.entry(label.to_owned()).or_default();
+                            count.mentions += mentions;
+                            if label != STRAY_SCHEME_OTHER || !other {
+                                count.orgs += 1;
+                            }
+                            other |= label == STRAY_SCHEME_OTHER;
+                        }
+                    }
+                }
+            }
+            (args.progress)(
+                report.orgs_walked,
+                &format!(
+                    "walking organizations: {} walked, {} in the census, {} minority, {} absent",
+                    report.orgs_walked, report.population.orgs, report.minority.orgs, report.absent.orgs
+                ),
+            );
+        }
+        Ok(report)
+    }
+
     /// The issue-330 measurement: organization names carrying a line break, and
     /// whether the notice published it that way.
     ///
@@ -41320,6 +41914,57 @@ mod tests {
                 "{reader} must seek tender_version_parties_org_role at {} ids — plan was:\n{plan}",
                 super::IN_CHUNK
             );
+            assert!(!plan.lines().any(|l| l.trim_start().starts_with("SCAN ")), "{reader} scans — plan was:\n{plan}");
+        }
+        drop(conn);
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// Issue 524 unit 1: `org-head-drift` walks every organization on prod, so each of its three reads
+    /// is planned at the width it SENDS (`IN_CHUNK` ids for the two chunked ones) and must seek: the
+    /// page by rowid, the mention names and schemes through `organization_mentions_org`, the merge
+    /// survivors through `organization_merged_identifiers_org` (`loser <> org_id` a filter on that
+    /// seek, not a scan). A `SCAN` in any is a whole-table read per page.
+    #[tokio::test]
+    async fn the_head_drift_census_reads_by_index_at_the_chunk_width() {
+        let path = format!("/tmp/tender-db-524-eqp-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = crate::Db::open(&path).await.unwrap();
+        db.build_organization_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let ids: Vec<turso::Value> = (1..=super::IN_CHUNK as i64).map(turso::Value::Integer).collect();
+        for (reader, sql, params, needle) in [
+            (
+                "page",
+                super::ORG_HEAD_DRIFT_ORGS_SQL.to_owned(),
+                vec![turso::Value::Integer(0), turso::Value::Integer(super::ORG_HEAD_DRIFT_PAGE)],
+                "SEARCH organizations",
+            ),
+            (
+                "mention names",
+                super::org_head_drift_mentions_sql(super::IN_CHUNK),
+                ids.clone(),
+                "USING INDEX organization_mentions_org",
+            ),
+            (
+                "merge survivors",
+                super::org_head_drift_merged_sql(super::IN_CHUNK),
+                ids.clone(),
+                "organization_merged_identifiers_org",
+            ),
+        ] {
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+            let mut plan = String::new();
+            while let Some(r) = rows.next().await.unwrap() {
+                plan.push_str(&r.get_value(3).ok().and_then(|v| v.as_text().cloned()).unwrap_or_default());
+                plan.push('\n');
+            }
+            println!("PLAN {reader}:\n{plan}");
+            assert!(plan.contains(needle), "{reader} must read `{needle}` — plan was:\n{plan}");
             assert!(!plan.lines().any(|l| l.trim_start().starts_with("SCAN ")), "{reader} scans — plan was:\n{plan}");
         }
         drop(conn);
