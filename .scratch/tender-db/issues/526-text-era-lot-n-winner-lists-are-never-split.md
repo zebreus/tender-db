@@ -1,6 +1,6 @@
 # 526 — text-era `Lot n)` winner lists are never split, so one list mints one org
 
-Status: ready-for-agent — filed 2026-10-12. Units 1 (pre-2004) and 2 (2004–2010) are DONE. Unit 3 (lettered and
+Status: ready-for-agent — UNIT 3 DONE 2026-10-14 (deployed 6792e5f; drain 2449–2486 all 0/0/0; auto sweep 2487 swept 8,523 of 8,523; the five exhibits read as built; residue `lots ` 1,016 → 667, `lot a`–`lot z` 1,338 → 869). NEXT: the residue list under "Residue left (unit 3's own)" if a unit 4 is warranted. Was: ready-for-agent — filed 2026-10-12. Units 1 (pre-2004) and 2 (2004–2010) are DONE. Unit 3 (lettered and
 Roman labels, `à <Company>`, address columns, `3M`-style keyed names; see below) is BUILT, reviewed in three adversarial
 rounds, gated green (148 suites) and DEPLOYED 2026-10-14 10:09 UTC as 6792e5f. Its DRAIN is QUEUED as jobs 2449–2486:
 19 reparse + project rounds over fetches 186–401 (2004–2010 first, then pre-2004). NEXT: per round, read `unmatched`
@@ -334,3 +334,27 @@ public API by notice → tender:
 The exhibit numbers in this file are NOTICE ids. Read them via `/v1/notices/{id}`, then
 `/v1/tenders?publication_id=<it>`. Still to come after the pre-2004 rounds (2471–2486): 1829247 (17653-2002)
 and 109697 (24056-1994), then the sweep and the residue counts.
+
+## Unit 3 drain — done (2026-10-14 22:2x UTC)
+
+- **Pre-2004 rounds 2471–2486** re-parsed 0 unmatched / 0 re-keyed / 0 failing, as did every 2004–2010 round. The
+  drain ended at 22:23 UTC, about 9 h before the 07:35 dailies.
+- **The auto sweep 2487** walked 5,685,007 organizations. It swept 8,523 of the 8,523 orphans it counted (all
+  country-less) and kept 10 by a review table. It stayed under the 10,000 cap, so no sweep by hand was needed.
+- **The pre-2004 exhibits** read as built:
+  - notice 1829247 (17653-2002) → tender 2830358 serves Somaco, Geneton, PPS, SGFI, La Louisiane, UTB, ALS and Apie
+    (`Lot A) Somaco. Lot B) Geneton …`);
+  - notice 109697 (24056-1994) → tender 1870006 serves `3M Italia SpA` and `Kodak`.
+  - The 2004–2010 exhibits were read above.
+- **Residue** (bounded `name_norm` range counts, 22:3x UTC):
+
+  | prefix | after unit 2 | after unit 3 |
+  | --- | ---: | ---: |
+  | `lots ` | 1,016 | 667 |
+  | `lot a` … `lot z` (whole range, words too) | 1,338 | 869 |
+  | `lot 1)` | 0 | 0 |
+  | `et 1` … `et 9` | 48 | 47 |
+
+What remains is the unit-3 residue list above: no terminator, `X à <town>`, space-joined lower-case references,
+unlisted quoted forms, OCR-broken numbers, a misspelt void, and a Dutch address glued to a name. Some of these rows
+are real company names that begin with `Lot` or `Lots`.
