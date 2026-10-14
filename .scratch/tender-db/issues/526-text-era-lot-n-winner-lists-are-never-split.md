@@ -1,9 +1,10 @@
 # 526 — text-era `Lot n)` winner lists are never split, so one list mints one org
 
-Status: ready-for-agent — filed 2026-10-12. Unit 1 (pre-2004) is DONE (2026-10-13). Unit 2 (2004–2010) was MEASURED,
-then DRAIN QUEUED 2026-10-14 ~00:40 UTC as jobs 2416–2437: 11 rounds of reparse plus project over fetches 186–269, on
-214ab64. NEXT: per round, read `unmatched` and `re-keyed` (both 0); then the auto sweep (by hand if over 10,000) and
-the residue counts. Unit 3 (residue shapes) after that.
+Status: ready-for-agent — filed 2026-10-12. Units 1 (pre-2004) and 2 (2004–2010) are DONE (unit 2 drain landed
+2026-10-14 06:45 UTC: 2,217,754 notices re-parsed 0/0/0, 3,288 mentions re-bound, sweep 2438 removed 2,203). Unit 3a
+(lettered and Roman labels, `3M`-style keyed names) is BUILT and MEASURED as WIP 1d41698 on claude/cool-sagan-5bk0rc,
+under adversarial review (wf_aeb4902e-97e). NEXT: fold the review's confirmed findings, gate, deploy, drain both text
+eras (fetches 186–401), then unit 3b (`Lots … à <Company>`, 161 orgs in 2004–2010).
 Kind: data quality (text parser; organizations)
 Relates to: 520 (unit 1 §4.4, `../520-award-summaries/unit1-decision.md`) (award summaries; its A1 extractor `partyname::award_winner`), 484/485/244 (`lot_prefix_len`, `winner_segments`), 491 (the reparse path), 510/511 (`plausible_name` refuses every non-name).
 
@@ -193,3 +194,75 @@ the stored `RES` figures pulled beside them.
 | 11 | 2436/2437 | 263×6 |
 
 The rounds follow 508's and 509's sizing (106k–237k notices each). The 07:35 dailies queue behind them.
+
+## Unit 2 — drain log (2026-10-14)
+
+- **Rounds 2416–2437** (11 reparse + project pairs on 214ab64) re-parsed 234,469 + 187,532 + 248,655 + 245,571 +
+  239,390 + 219,834 + 197,404 + 187,768 + 175,041 + 164,951 + 117,139 = **2,217,754 notices**. Every round read 0
+  unmatched, 0 re-keyed and 0 now failing. The fetch ids are contiguous: each round's `after` is the previous round's
+  last package, ending at 269.
+- **The folds re-bound** 102, 274, 233, 514, 197, 202, 214, 362, 457, 371 and 362 mentions: **3,288** in all.
+- **The auto sweep 2438** stayed under its cap. It walked 5,678,631 organizations and swept **2,203 of 2,203**
+  orphans (all country-less), keeping 10 by a review table. No sweep by hand was needed.
+- **Residue** (bounded `name_norm` range counts, 06:50 UTC):
+
+  | prefix | after unit 1 | after unit 2 |
+  | --- | ---: | ---: |
+  | `lot 1)` | 6 | 0 |
+  | `lot 2)` | 14 | 0 |
+  | `lot 3)` | 10 | 0 |
+  | `lots ` | 1,363 | 1,016 |
+  | `lote 1)` | 0 | 0 |
+  | `et 1` … `et 9` | 48 | 48 |
+  | `-1` | 8 | 8 |
+  | `lot a` … `lot z` (whole range, words too) | 1,450 (05:50, mid-drain) | 1,338 |
+
+  - `lot n` (`'lot n'` to `'lot o'`) reads 280. That is not comparable with the 177 above, which was a narrower range.
+    By first mention, 101 are structured-era, 131 come from 2004–2010 and 48 are pre-2004, almost all old
+    organizations: `Lot No 1 — Telelink AD`, `Lot n°1 Quadria`, `Lot non encore attribué`. A few were minted by this
+    drain, `Lot not applicable. V.5) The contract is likely to be subcontracted: No` (3426018) among them.
+  - **`lots ` by first mention:** 404 pre-2004, 396 from 2004–2010, 216 structured.
+    - In 2004–2010 the largest shape is `Lots <list> à <Company>`: 161 organizations.
+    - Dash or colon lists come next, with 89.
+    - Pre-2004, 142 are lettered labels, which unit 3a reads; 38 are 4- or 5-digit lots and 29 are bare references.
+
+## Unit 3a — lettered and Roman labels, measured (2026-10-14)
+
+- **Scope.** In the `lot a`–`lot z` range, 344 organizations carry a lettered label and 57 a Roman one (by regex).
+  Of those 401, 377 first appear pre-2004, 23 in 2004–2010 and 1 is structured.
+- **Rule.**
+  - `lot_number_end` falls back to `lot_label_end`: one letter plus up to two digits (`Lot A)`, `lot B21)`, `lot
+    C7b)`, `lot M00.14)`), or 2–5 Roman letters (`Lot III:`). No letter may follow (`Lot Atlas`, `Lot IVECO`).
+  - `keyed_name` stops at a field labelled with the next lot (`…, SA, Lote II: …`) and hops a parenthesised subject.
+  - `Lote II::X` is one terminator.
+  - The heading rule skips entries after a lot-word entry and entries with their own label.
+  - `keyed_bar` reads a name opening on a company's digits and capitals (`3M France`) and a quoted company with a
+    legal form (`'Sagem' SA`).
+- **Sample.** 217 first-mention notices of those organizations were pulled with `pull.py` and kept in the session
+  scratchpad. The harness is the one in `../526-lot-word-references/dry-run.md`.
+
+  | sample | notices changed | names | lettered names | figures |
+  | --- | ---: | --- | --- | --- |
+  | letter sample (217) | 210 | 705 → 902 | 453 → 0 | 9 → 9 |
+  | unit 1 lot sample, pre-2004 (912) | 33 | 5,530 → 5,555 | 84 → 0 | — |
+  | unit 1 control (596) | 1 | | | |
+  | unit 2 lot sample, 2004–2010 (800) | 19 | 4,045 → 4,054 | 6 → 0 | 812 → 810 |
+  | unit 2 control (529) | 0 | | | |
+
+  - **Unit 1 control:** the one change is a correct split into four groupements (1468001).
+  - **Unit 2 lot sample:** the 2 figures move off blocks that now name both of their winners (`Lotes I y II:
+    Señalizaciones Villar … Lotes III y IV: Postigo`, 3099855), as in unit 2.
+- **Found while measuring: a unit 1 loss.** `plausible_winner` opens a name only on a letter. So unit 1's keyed
+  entries refused `3M France` and `3M Santé`, which the old parser had kept inside a junk `Lot 2) 3M France`. The
+  pre-2004 sample shows 11 such notices (`3M` ×2, `3M France` ×4, `3M Santé` ×5). They come back under unit 3a's
+  `keyed_probe`, and so do `2SDA`, `4S Bilgisayar … Ltd. Sti`, `'Helisota' Ltd` and `'Sagem' SA`.
+- **Residue left as the numbered form leaves it:**
+  - `X à <town> (NN)`: `plausible_winner` refuses another party's `à` (520), and 1750421's 8 junk names now read
+    as none;
+  - `X et lot E5) Y` (1562647);
+  - a contract number before the company (`Lot B) marché n° 2002/106CUMPM. Bergerat Monnoyeur`);
+  - two-letter and slash labels (`PB)`, `EN.01)`, `A.1/01)`);
+  - ` / ` chains (`Lot A) / lot B) / lot C):`);
+  - ordinals (`36e heure`);
+  - quoted names with no listed legal form (`'Donserv'`, `'Nota Bene' UAB`).
+
