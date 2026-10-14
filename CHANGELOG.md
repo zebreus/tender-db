@@ -4,6 +4,34 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 526, unit 3) — lettered lot labels, `à <Company>` lists and address columns in 1993–2010 winner lists
+
+The re-parse of 1993–2010 winner lists now reads several shapes the first one left as published.
+
+- **Lettered and Roman labels** split the list as numbers do:
+  - `Lot A) Somaco. Lot B) Geneton`, `Lot III: Dompe Biotec SpA`;
+  - `lots B1) et B2) Buhrmann France Image`, `lot M00.14) Commune de Spincourt`;
+  - `Lot BEY 01) Dumas TP`, `lot 6/1) Imprimerie Dessaint`;
+  - the Italian `Lotto 1: Team Service`.
+  On a sample of 217 such notices, names that keep a label fall from 453 to 0. A word that only starts like a
+  label stays whole (`Lot Atlas`, `LOT Polish Airlines`, `Lot IVECO`).
+- **`à` and `pour` award the lots** in the 2007–2010 hospital lists (`Lots 1 et 4 à Ansell`, `Lot 22 pour
+  Sophysa`), and each lot keeps its own figure. `1 à 4` is still a range.
+- **A company that opens on its digit** is a winner (`3M France`, `3M Santé`, `2SDA`, `Trois M Santé`). The first
+  re-parse had refused these. A figure, a quantity or a description is not (`12 véhicules`, `3D Scanners`).
+- **Entries joined by a comma, dash or slash** before the next lot's reference name both winners (`Seguridad
+  Gallega Nosa Tera, SA, Lote II: Centro de Seguridad Marítima Integral "Jovellanos"`). A lot whose sub-references
+  share one winner names it once (`lot 1) Tr. 5 et 6, lot 2) Tr. 1 et 2: Planète Aventures`).
+- **The addresses some 2004–2010 values repeat lot by lot** after the winners are no organizations (`Lot 1:
+  Frantour, … Lot 1: rue des Clercs, …`), nor are a column header (`Lot`) or a street (`Rua do Cinzeiro`, `Avda.
+  Cortes Valencianas`).
+- **A label that only describes a consortium** gives way to its name (`groupement d'entreprises: Falconnet Denis`
+  → `Falconnet Denis`). A head cut inside a département list reads past it (`Île-de-France (75, 78, 92, 95)
+  Lamos SA` → `Lamos SA`).
+
+The organizations that carried a reference are removed (`organization removed`), and the affected Tenders publish
+`tender changed`. A block that now names two winners keeps its total unattributed, as a joint award does.
+
 ## Unreleased (issue 526) — 1993–2003 winner lists keyed by lot are read one winner per lot
 
 The oldest award notices list their winners lot by lot — `Lot 1) Blin. Lot 2) Prodirest.`, `Lot 1: Spie
@@ -21,7 +49,7 @@ was split across one organization per lot-number spelling. After the re-parse of
   lot list (`Société Laser: lot 1) Alpes Maritime; lot 3) …`) names the company once.
 
 On a 912-notice sample, names carrying a lot reference fell from 4,423 to 208. Lettered and Roman lot labels
-(`Lot A)`, `Lot III:`, about 250 organizations) are kept as published. The prefixed organizations are removed
+(`Lot A)`, `Lot III:`) were kept as published until unit 3 (above). The prefixed organizations are removed
 (`organization removed`), and the affected Tenders publish `tender changed`.
 
 ## Unreleased (issue 528) — Dutch award prose in a winner slot is read as what it says
