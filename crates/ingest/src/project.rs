@@ -8878,7 +8878,7 @@ fn push_guard_acronym(words: &[String], jurisdiction: &str, out: &mut GuardEvide
 /// jurisdiction — or `None` for a value of a placeholder class: shorter than five,
 /// without a digit, all zeros, one repeated character, or a class `idgate` measured
 /// fusing strangers (the lexicon, digit runs, phone numbers, routing scopes, TED
-/// notice numbers, bare short numbers). A checksum failure does not refuse it: one
+/// notice numbers, the withheld-supplier PPON, bare short numbers). A checksum failure does not refuse it: one
 /// buyer publishing one mistyped number is still one buyer.
 ///
 /// Issue 481 unit 2c review: a leading VAT prefix of the buyer's own register (`ES` for
@@ -8912,6 +8912,7 @@ fn raw_identifier_token(raw: &str, jurisdiction: &str) -> Option<String> {
         || census.phone
         || census.routing_scope
         || census.notice_number
+        || census.withheld_placeholder
         || census.short_numeric
         || census.bare_four_digit
     {

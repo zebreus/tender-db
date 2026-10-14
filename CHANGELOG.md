@@ -4,6 +4,15 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 522) — the UK's withheld-supplier PPONs no longer name an organization
+
+Find a Tender publishes placeholder PPONs on the suppliers a notice withholds under s.94 of the Procurement Act 2023:
+`GB-PPON-PBXY-3232-WNHZ` ("Withheld Section94 Supplier") and its second profile `GB-PPON-PGYY-2165-QXNQ`. They were
+read as identifiers, so every party carrying one was filed under one organization, with an insurer and a German
+laboratory among them. These PPONs now key nothing. Each party binds by its published name, and the placeholder organizations are removed
+(`organization removed`). The affected Tenders publish `tender changed`. Every other PPON is one supplier's own and
+keys it as before.
+
 ## Unreleased (issue 526, unit 3) — lettered lot labels, `à <Company>` lists and address columns in 1993–2010 winner lists
 
 The re-parse of 1993–2010 winner lists now reads several shapes the first one left as published.

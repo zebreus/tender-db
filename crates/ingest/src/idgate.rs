@@ -109,6 +109,16 @@ pub struct GateCensus {
     /// of DB Netz AG's "Knoten Lindau Kabeltiefbau" contract notice, holding
     /// 30 distinct names over 129 mentions.
     pub notice_number: bool,
+    /// One of the identifiers a register issued to stand for any party whose
+    /// identity a notice withholds — CONDEMNING (issue 522); see
+    /// [`withheld_placeholder`].
+    ///
+    /// A category rule, like [`GateCensus::notice_number`]: the value names the
+    /// withholding, never a supplier. Org 30914328, keyed by the first, is served
+    /// as "Withheld Section94 Supplier" and on 2026-10-12 held the s.94 sentences,
+    /// two "Individual"s, an insurer (HISCOX INSURANCE COMPANY LIMITED) and a
+    /// German lab (DOC-Labor GmbH) — every party the value reached.
+    pub withheld_placeholder: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -162,6 +172,9 @@ pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCen
     // Issue 440: kind- and country-blind on purpose — a notice number is not
     // an organization's identifier under ANY register.
     out.notice_number = ojs_notice_number(value);
+    // Issue 522: kind- and country-blind for the same reason — the PPON body
+    // is the register's own, so no other register's value can spell it.
+    out.withheld_placeholder = withheld_placeholder(value);
     // Scheme resolution is census-only: vat keys resolve by their own
     // prefix, national keys by (country, shape). Never used for merging.
     // Issue 358: a national key under a regional code resolves in the
@@ -283,6 +296,49 @@ pub fn ojs_notice_number(value: &str) -> bool {
         && rest.iter().all(u8::is_ascii_digit)
 }
 
+/// The PPON bodies the UK's Find a Tender service issued as stand-ins for a
+/// withheld party (issue 522), upper-case alphanumerics as the normaliser keeps
+/// them. They are numbered placeholder registrations, one per withheld slot on a
+/// notice, so each covers a different supplier on every notice that uses it:
+/// - `PBXY-3232-WNHZ`, "Withheld Section94 Supplier" (org 30914328). Issue 511's
+///   unit 1 read found it on all 123 of its mentions, covering different
+///   withheld suppliers (`unit1-decision.md` line 188). On 2026-10-12 it held an
+///   insurer and a German laboratory.
+/// - `PGYY-2165-QXNQ`, "Withheld Section94 supplier - 2nd profile" (org 31548264),
+///   the second withheld supplier beside it on notices 46806664 and 46819715. All
+///   14 of its mentions in issue 511's unit 3 read carried a placeholder name.
+///
+/// A withheld NAME is not enough. `PMBM-2912-XLDW` was published once as
+/// "Withheld for Security Reasons - Section 94 Supplier", but it is EPI-USE
+/// LIMITED's own PPON: on two publications (`087781-2026`, `035915-2026`) one
+/// party carries it beside Companies House number 03707885, and issue 448's
+/// altid review merged the two (case
+/// `03707885~PMBM2912XLDW`, high). Only a PPON the register itself names as a
+/// withheld-supplier profile belongs here.
+///
+/// An explicit list, not a shape: every other PPON is one supplier's own
+/// (`PBXY-6699-ZZGN` is FINYX CONSULTING LIMITED's, org 31564985).
+const WITHHELD_PLACEHOLDER_PPONS: &[&str] = &["PBXY3232WNHZ", "PGYY2165QXNQ"];
+
+/// Whether `value` is a withheld-party stand-in from [`WITHHELD_PLACEHOLDER_PPONS`]
+/// (see [`GateCensus::withheld_placeholder`]), in any spelling the corpus keys a
+/// PPON under: the stored `GBPPON…` key, the bare body, or `PPON…` (the GB prefix
+/// stripped — the 481 raw-identifier token's form). The normaliser's compaction
+/// is applied here too, so the published `GB-PPON-PBXY-3232-WNHZ` answers the
+/// same as its stored key.
+pub fn withheld_placeholder(value: &str) -> bool {
+    let compact: String = value
+        .chars()
+        .filter(char::is_ascii_alphanumeric)
+        .map(|c| c.to_ascii_uppercase())
+        .collect();
+    let body = ["GBPPON", "PPON", "GB"]
+        .iter()
+        .find_map(|p| compact.strip_prefix(p))
+        .unwrap_or(&compact);
+    WITHHELD_PLACEHOLDER_PPONS.contains(&body)
+}
+
 /// The generic-name cap: a corroboration name carried by MORE than this many
 /// orgs is generic, and agreement on it is agreement nobody chose to make.
 ///
@@ -328,7 +384,7 @@ pub fn hard_scheme(scheme: &str) -> bool {
 /// false-merge classes only: the placeholder lexicon, suspicious digit
 /// runs, short VAT stubs, PHONE NUMBERS (issue 365 unit 1), bare four-digit
 /// numbers and routing/reporting ids (units 2-3), TED NOTICE NUMBERS (issue
-/// 440), and a HARD-scheme checksum failure. Letter-run and hex/compound classes
+/// 440), the WITHHELD-SUPPLIER PPON (issue 522), and a HARD-scheme checksum failure. Letter-run and hex/compound classes
 /// deliberately stay census-only — the letter-run composition is not fully
 /// sampled (issue 365 unit 3 owes that read) and the compound class is
 /// RECOVERABLE (Stage 2's canonical_key splits it at match time; rejecting
@@ -386,6 +442,14 @@ pub fn hard_scheme(scheme: &str) -> bool {
 /// | class | values | >=2 names | worst |
 /// | --- | --- | --- | --- |
 /// | `notice_number` (condemned) | 425 | 8.5 % | 30 |
+///
+/// `withheld_placeholder` (issue 522) is a category rule of two values. The
+/// register names them "Withheld Section94 Supplier" and its "2nd profile". Each
+/// is published on whichever supplier fills that withheld slot under s.94 of the
+/// Procurement Act 2023: the first covered different suppliers on all 123 of its
+/// mentions in issue 511's unit 1 read. They identify the withholding, not a
+/// supplier. A real PPON published under a withheld NAME is not in the class
+/// (EPI-USE's, see [`withheld_placeholder`]).
 pub fn condemns(country: Option<&str>, kind: &str, value: &str) -> bool {
     let c = census(country, Some(kind), value);
     c.lexicon
@@ -395,6 +459,7 @@ pub fn condemns(country: Option<&str>, kind: &str, value: &str) -> bool {
         || c.bare_four_digit
         || c.routing_scope
         || c.notice_number
+        || c.withheld_placeholder
         || (c.checksum == Checksum::Fail && hard_scheme(c.scheme))
 }
 
@@ -1496,6 +1561,68 @@ mod tests {
         let normalised = crate::project::normalise_identifier("556364-2023", Some("SE"))
             .expect("a Swedish orgnr is an identifier");
         assert_eq!(normalised.value, "5563642023");
+    }
+
+    /// Issue 522: the s.94 PPONs stand for whichever supplier a notice withholds, so
+    /// they key none of them — not the mention (it binds or mints by its name), not
+    /// the altid pairing, not the stock (`repair-placeholder-orgs` dissolves org
+    /// 30914328 and 31548264). Every other PPON is one supplier's own and keeps
+    /// merge-key status.
+    #[test]
+    fn the_withheld_supplier_ppon_is_never_an_organization_identifier() {
+        // The published party id, its stored key, the bare body, and the 481 token's
+        // `GB`-stripped form; the 2nd profile.
+        for v in [
+            "GB-PPON-PBXY-3232-WNHZ",
+            "GBPPONPBXY3232WNHZ",
+            "PBXY-3232-WNHZ",
+            "PPONPBXY3232WNHZ",
+            "gb-ppon-pbxy-3232-wnhz",
+            "GB-PPON-PGYY-2165-QXNQ",
+            "GBPPONPGYY2165QXNQ",
+        ] {
+            assert!(withheld_placeholder(v), "{v} is the withheld-supplier PPON");
+            for country in [Some("GB"), None] {
+                assert!(condemns(country, "national", v), "{v} under {country:?} must not key");
+            }
+        }
+        // End to end, as org 30914328's four mentions publish it (notices 46800936, 46806664,
+        // 46818757, 46819715): no identifier, so HISCOX and DOC-Labor no longer bind the
+        // placeholder's org.
+        let raw = "GB-PPON-PBXY-3232-WNHZ";
+        assert_eq!(crate::project::normalise_identifier(raw, Some("GB")), None);
+        assert_eq!(crate::project::gated_identifier(Some(raw), Some("GB-PPON"), Some("GB")), None);
+        assert_eq!(crate::crosswalk::altid_pair_key("GB-PPON", raw, Some("GB")), None);
+
+        // Near misses: real suppliers' PPONs, one of them a neighbour of the placeholder
+        // (FINYX CONSULTING LIMITED, org 31564985), two published on an `Individual`
+        // beside it on notice 46806664 (org 31570158's own, and UK Research & Innovation's,
+        // org 30913706), and EPI-USE LIMITED's, once published under a withheld name
+        // (the 448 altid case `03707885~PMBM2912XLDW`); a body with a character more or less.
+        for v in [
+            "GB-PPON-PBXY-6699-ZZGN",
+            "GBPPONPBXY6699ZZGN",
+            "GB-PPON-PMGL-5552-GJZX",
+            "GB-PPON-PDQJ-7126-JDHG",
+            "GB-PPON-PMBM-2912-XLDW",
+            "GBPPONPMBM2912XLDW",
+            "PBHV7537LCTH",
+            "GBPPONPBXY3232WNH",
+            "GBPPONPBXY3232WNHZZ",
+            "GBPPONXPBXY3232WNHZ",
+        ] {
+            assert!(!withheld_placeholder(v), "{v} is a supplier's own PPON");
+            assert!(!condemns(Some("GB"), "national", v), "{v} must keep merge-key status");
+        }
+        let own = crate::project::gated_identifier(Some("GB-PPON-PMGL-5552-GJZX"), Some("GB-PPON"), Some("GB"))
+            .expect("a PPON published on an `Individual` is still that party's own key");
+        assert_eq!(own.value, "GBPPONPMGL5552GJZX");
+        assert!(crate::crosswalk::altid_pair_key("GB-PPON", "GB-PPON-PBXY-6699-ZZGN", Some("GB")).is_some());
+        // EPI-USE's pairing with its company number stays live.
+        assert!(crate::crosswalk::altid_pair_key("GB-PPON", "GB-PPON-PMBM-2912-XLDW", Some("GB")).is_some());
+        for &(_, _, v) in REAL_REGISTRANTS {
+            assert!(!withheld_placeholder(v), "{v} is a real registrant");
+        }
     }
 }
 
