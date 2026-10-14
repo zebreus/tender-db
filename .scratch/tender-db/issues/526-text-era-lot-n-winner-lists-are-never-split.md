@@ -1,10 +1,10 @@
 # 526 — text-era `Lot n)` winner lists are never split, so one list mints one org
 
-Status: ready-for-agent — filed 2026-10-12. Units 1 (pre-2004) and 2 (2004–2010) are DONE (unit 2 drain landed
-2026-10-14 06:45 UTC: 2,217,754 notices re-parsed 0/0/0, 3,288 mentions re-bound, sweep 2438 removed 2,203). Unit 3a
-(lettered and Roman labels, `3M`-style keyed names) is BUILT and MEASURED as WIP 1d41698 on claude/cool-sagan-5bk0rc,
-under adversarial review (wf_aeb4902e-97e). NEXT: fold the review's confirmed findings, gate, deploy, drain both text
-eras (fetches 186–401), then unit 3b (`Lots … à <Company>`, 161 orgs in 2004–2010).
+Status: ready-for-agent — filed 2026-10-12. Units 1 (pre-2004) and 2 (2004–2010) are DONE. Unit 3 (lettered and
+Roman labels, `à <Company>`, address columns, `3M`-style keyed names; see below) is BUILT, reviewed in three adversarial
+rounds, gated green (148 suites) and DEPLOYED 2026-10-14 10:09 UTC as 6792e5f. Its DRAIN is QUEUED as jobs 2449–2486:
+19 reparse + project rounds over fetches 186–401 (2004–2010 first, then pre-2004). NEXT: per round, read `unmatched`
+and `re-keyed` (both 0); then the auto sweep (by hand if over 10,000), the residue counts and the exhibits below.
 Kind: data quality (text parser; organizations)
 Relates to: 520 (unit 1 §4.4, `../520-award-summaries/unit1-decision.md`) (award summaries; its A1 extractor `partyname::award_winner`), 484/485/244 (`lot_prefix_len`, `winner_segments`), 491 (the reparse path), 510/511 (`plausible_name` refuses every non-name).
 
@@ -249,7 +249,9 @@ The rounds follow 508's and 509's sizing (106k–237k notices each). The 07:35 d
   | unit 2 lot sample, 2004–2010 (800) | 19 | 4,045 → 4,054 | 6 → 0 | 812 → 810 |
   | unit 2 control (529) | 0 | | | |
 
-  - **Unit 1 control:** the one change is a correct split into four groupements (1468001).
+  - **Unit 1 control:** the one change splits 1468001 into its four groupements. In this first build each name
+    still carried the `groupement d'entreprises:` label; the second review fixed that, and the shipped build names
+    `Falconnet Denis` and the other three.
   - **Unit 2 lot sample:** the 2 figures move off blocks that now name both of their winners (`Lotes I y II:
     Señalizaciones Villar … Lotes III y IV: Postigo`, 3099855), as in unit 2.
 - **Found while measuring: a unit 1 loss.** `plausible_winner` opens a name only on a letter. So unit 1's keyed
@@ -265,4 +267,55 @@ The rounds follow 508's and 509's sizing (106k–237k notices each). The 07:35 d
   - ` / ` chains (`Lot A) / lot B) / lot C):`);
   - ordinals (`36e heure`);
   - quoted names with no listed legal form (`'Donserv'`, `'Nota Bene' UAB`).
+
+## Unit 3 — built, reviewed, gated, deployed (2026-10-14)
+
+- **Reviews.** Three adversarial rounds, each folded in before the next:
+  - wf_aeb4902e-97e: 27 confirmed, 19 caused by the change;
+  - wf_3318a4b4-ffb: 41 confirmed, of which 1 major (the address stop missed 3500348);
+  - wf_58082746-03b: 15 confirmed, all minor or nit.
+  The rules each round added or narrowed are listed in commit 6792e5f's message and in the unit 3 test
+  (`a_lettered_or_roman_lot_label_is_a_lot_reference`, one case per rule, each with a real notice id).
+- **Final measurement** (n17 against main):
+
+  | sample | notices changed | names | figures |
+  | --- | ---: | --- | --- |
+  | letter sample (217) | 210 | 705 → 927 | 9 → 8 |
+  | unit 1 lot sample, pre-2004 (912) | 79 | 5,530 → 5,655 | — |
+  | unit 1 control (596) | 4 | 354 → 367 | — |
+  | unit 2 lot sample, 2004–2010 (800) | 98 | 4,045 → 4,174 | 812 → 808 |
+  | unit 2 control (529) | 0 | | 281 → 281 |
+
+  - **Letter sample:** names that keep a lettered label fall from 453 to 0.
+  - **`à` sample (16 notices):** names that keep a lot reference fall from 197 to 11 (OCR-broken lists,
+    lower-case companies).
+  - **Unit 1 control:** the 4 changes are Italian `Lotto`/`Lotti` lists now split (1242001: `Lotti 1` → 6
+    companies) and 1468001.
+  - **Unit 2 lot sample:** every figure lost sits on a block that now names two or more winners, as in unit 2.
+    3776831 and 3994805 gain 6 and 4 figures.
+- **Gate** green at 6792e5f (1,506 s, 148 suites). **Deployed** 10:09 UTC: health 200, rev 6792e5f.
+- **Drain queued (on 6792e5f).** Each round is a reparse followed by a project, after × packages, reusing unit 2's
+  and unit 1's job files (`/root/526u2/r*.json`, `/root/526d/r*.json`):
+
+  | jobs | era | rounds |
+  | --- | --- | --- |
+  | 2449–2470 | 2004–2010, fetches 186–269 | 185×7, 192×6, 198×8, 206×8, 214×8, 223×8, 231×8, 239×8, 247×8, 255×8, 263×6 |
+  | 2471–2486 | pre-2004, fetches 270–401 | 269×13, 282×13, 295×15, 310×17, 327×18, 345×17, 362×18, 380×21 |
+
+  - **Expected:** about 12 h, finishing before the 2026-10-15 07:35 dailies.
+  - **Exhibits to read after the drain:**
+    - 3994805 (Ansell … SEGAP each with its own figure; Asept In Med, Medwin, Teleflex Medical, Vygon added);
+    - 1829247 (`Lot A) Somaco. Lot B) Geneton …`);
+    - 109697 (`3M Italia SpA`, `Kodak`);
+    - 2874436 (Frantour ×3, no address names);
+    - 3500348 (Informance, Planificación de entornos tecnológicos, Getronics).
+  - **Residue counts:** `lot a`–`lot z` (1,338 before), `lots ` (1,016 before).
+- **Residue left (unit 3's own):**
+  - entries with no terminator (`Lots 1 à 5 - Taxis Doublet`, `lote 2 Sanofi Pasteur MSD`);
+  - `X à <town> (NN)`;
+  - space-joined lower-case references (`société Jouve lot n°3 : société …`, 2602352);
+  - quoted names without a listed legal form (`'Donserv'`, `'Nota Bene' UAB`);
+  - OCR-broken numbers (`113-1\n16`);
+  - a misspelt void (`Déclaré infrucuteux`, 2027050);
+  - a Dutch address glued to its name with no comma (2513708).
 
