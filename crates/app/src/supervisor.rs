@@ -1282,9 +1282,9 @@ struct RefreshCanary {
 /// - 178 is a rename the other way: every buyer procedure from 2024-05 to 2026-07 names the full head,
 ///   and `CA Plaine Vallée` (which 2a.3 accepted as neutral) is the pre-eForms usage, ended 2023-12.
 /// - The five 2517 wrongs (reverted by 2518) and 1076 (k = 3) are `hold:recent`.
-/// - 2517's rights (reverted with them) are `change:R1`; 1919 is undated (a review body only): if it
-///   reads `hold:recent` or `hold:residue`, date-check it with one bounded `/v1/sql` read before
-///   counting a no-go.
+/// - 2517's rights (reverted with them) are `change:R1`, and so is 1919 (a review body only; plan
+///   2526 dated it). A flip to `hold:recent`/`hold:residue` is judged by the plan's own dates
+///   (docs/operations.md, the runbook's step 2).
 /// - Rule v8: 10603 is `hold:recent` (plan 2523 dated it fully: its head form names the newest
 ///   procedure); 3909 (a lower-case brand) and 1846 (the acronym `CA2BM`) are `hold:recent`, no
 ///   longer released by the junk exemption; 3740262 (an organ, `Junta de Gobierno …`, for its entity)
@@ -8440,15 +8440,22 @@ impl Supervisor {
                 // job carries it back as `resume_after`; a fresh enqueue has none and starts at
                 // the first tender. Before, every run obeyed the stored watermark, so one a
                 // stopped or failed run left behind made a later walk, the one enqueued after a
-                // rates repair say, skip every tender below it and still report ok.
+                // rates repair say, skip every tender below it and still report ok. The
+                // recovered job resumes from its OWN cursor (543's follow-up), as
+                // `backfill-org-name-variants` does, not from the stored watermark, which any
+                // run writes: the cursor is recorded after its window commits, so it is never
+                // ahead of this job's work, and a lost write only re-walks a window.
                 let stored = self.db.rederive_watermark().await.map_err(|e| e.to_string())?;
-                let mut watermark = if job.resume_after.is_some() { stored } else { 0 };
-                if watermark == 0 && stored > 0 {
-                    eprintln!(
-                        "[rederive-eur] a fresh run starts at the first tender; clearing the watermark \
-                         at tender id {stored} that an earlier run left"
-                    );
-                    self.db.set_rederive_watermark(0).await.map_err(|e| e.to_string())?;
+                let mut watermark =
+                    job.resume_after.as_deref().and_then(|c| c.parse::<i64>().ok()).filter(|&w| w > 0).unwrap_or(0);
+                if watermark != stored {
+                    if watermark == 0 {
+                        eprintln!(
+                            "[rederive-eur] a fresh run starts at the first tender; clearing the watermark \
+                             at tender id {stored} that an earlier run left"
+                        );
+                    }
+                    self.db.set_rederive_watermark(watermark).await.map_err(|e| e.to_string())?;
                 }
                 let resumed = watermark;
                 if resumed > 0 {
@@ -24208,9 +24215,11 @@ mod tests {
         assert_eq!(db.rederive_watermark().await.unwrap(), 0);
 
         // The same job recovered after a restart, its window up to tender 1 committed: it
-        // resumes past that window, so tender 1 is not walked again.
+        // resumes past that window, so tender 1 is not walked again. It resumes from its OWN
+        // cursor (543's follow-up), not the stored watermark, which another run may have
+        // moved: here it reads 2, and obeying it would have walked nothing.
         sup.cancel_running.store(0, Ordering::Relaxed);
-        db.set_rederive_watermark(1).await.unwrap();
+        db.set_rederive_watermark(2).await.unwrap();
         let recovered = |id: u64| Job { resume_after: Some("1".into()), ..run(id) };
         let msg = sup.run_spec(&recovered(3)).await.expect("recovered rederive-eur");
         assert!(msg.contains("over 1 tenders (resumed past tender id 1):"), "{msg}");
@@ -24236,6 +24245,29 @@ mod tests {
         assert_eq!(eur(1).await, Some(store::turso::Value::Integer(5000)));
         assert_eq!(eur(2).await, Some(store::turso::Value::Integer(5000)));
         assert_eq!(db.rederive_watermark().await.unwrap(), 0);
+
+        // Each window records the job's own cursor (543's follow-up), and a restart carries it
+        // back: a queued job that walked through tender 2 is recovered past it.
+        let ids = sup
+            .enqueue_request(&JobRequest { kind: "rederive-eur".into(), ..Default::default() })
+            .await
+            .unwrap();
+        let msg = sup.run_spec(&run(ids[0])).await.expect("rederive-eur");
+        assert!(msg.contains("over 2 tenders:"), "{msg}");
+        assert_eq!(
+            db.scalar(&format!("SELECT progress FROM job_queue WHERE id = {}", ids[0])).await.unwrap(),
+            Some(store::turso::Value::Text("2".into())),
+            "the last committed window's tender id"
+        );
+        let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        restarted.recover().await;
+        let back = {
+            let queue = restarted.queue.lock().expect("queue lock");
+            queue.iter().find(|j| j.id == ids[0]).cloned().expect("the rederive-eur job is restored")
+        };
+        assert_eq!(back.resume_after.as_deref(), Some("2"));
+        let msg = restarted.run_spec(&back).await.expect("recovered rederive-eur");
+        assert!(msg.contains("over 0 tenders (resumed past tender id 2):"), "{msg}");
         remove_db(&path);
     }
 

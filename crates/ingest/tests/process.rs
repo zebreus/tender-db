@@ -692,6 +692,105 @@ async fn a_stop_inside_a_whole_file_family_finishes_the_family_first() {
     let _ = std::fs::remove_dir_all(&archive);
 }
 
+/// Issue 543 unit 3 (the follow-up's container override): a HELD container is one family,
+/// however many store families its members fall in. A monthly's inner daily held whole
+/// (issue 196) holds ONE row at the container path; its XML member resolves that row (the
+/// container stamp address), while a text bundle inside it is a family of its own by
+/// [`store::quarantine_family`] (`<daily>.tar.gz/<bundle>.zip`) and stamps no row of its own.
+/// Without the override a stop after the XML landed between the two: the container row
+/// resolved, the bundle's 199 records never written, and nothing left for any reprocess to
+/// find. Now the whole container lands, the stop falls before the next held family, and a
+/// fresh pass finishes the package.
+#[tokio::test]
+async fn a_stop_inside_a_mixed_held_container_finishes_the_container_first() {
+    const DAILY: &str = "20240102_1.tar.gz";
+    const BUNDLE: &str = "EN_19930102_1993001_ISO_ORG.zip";
+    const NEXT: &str = "20240103_1/00001506_2024.xml";
+    async fn held(db: &store::Db) -> std::collections::HashSet<String> {
+        db.quarantine_held_member_files(1, "not-utf8", None, None).await.unwrap()
+    }
+    fn tar_gz(entries: &[(&str, Vec<u8>)]) -> Vec<u8> {
+        let gz = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
+        let mut tar = tar::Builder::new(gz);
+        for (name, bytes) in entries {
+            let mut header = tar::Header::new_gnu();
+            header.set_size(bytes.len() as u64);
+            header.set_mode(0o644);
+            header.set_cksum();
+            tar.append_data(&mut header, name, &bytes[..]).unwrap();
+        }
+        tar.into_inner().unwrap().finish().unwrap()
+    }
+    let archive = temp_dir("reclaim-mixed-container-stop");
+    std::fs::create_dir_all(archive.join("ted/monthly")).unwrap();
+    let pkg = archive.join("ted/monthly/2024-01.tar.gz");
+    let text = std::fs::read("tests/fixtures/text/1993-daily-en-19930102.txt").unwrap();
+    let daily = tar_gz(&[
+        // The XML first: it resolves the container row before the bundle is read.
+        ("00001505_2024.xml", std::fs::read("tests/fixtures/eforms/cn-16-00494343-2026.xml").unwrap()),
+        (BUNDLE, zip_bytes("EN_19930102_1993001_ISO_ORG", &text)),
+    ]);
+    std::fs::write(
+        &pkg,
+        tar_gz(&[(DAILY, daily), (NEXT, std::fs::read("tests/fixtures/eforms/change-16-00494185-2026.xml").unwrap())]),
+    )
+    .unwrap();
+    // The two store families inside the held container differ: the override is what joins them.
+    assert_eq!(store::quarantine_family(&format!("{DAILY}/00001505_2024.xml")), DAILY);
+    assert_eq!(
+        store::quarantine_family(&format!("{DAILY}/{BUNDLE}!EN_19930102_1993001_ISO_ORG#3")),
+        format!("{DAILY}/{BUNDLE}")
+    );
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    db.record_fetch(&store::Fetch {
+        source: "ted".into(),
+        kind: "monthly".into(),
+        period: "2024-01".into(),
+        url: "u".into(),
+        sha256: "aa".into(),
+        bytes: 1,
+        fetched_at: 1,
+        path: "ted/monthly/2024-01.tar.gz".into(),
+    })
+    .await
+    .unwrap();
+    // The pre-recursion walker's whole-container row, and a held member after it.
+    hold_member(&archive.join("test.db"), 1, DAILY, "not-utf8", "").await;
+    hold_member(&archive.join("test.db"), 1, NEXT, "not-utf8", "").await;
+    assert_eq!(held(&db).await.len(), 2);
+
+    let stopped = process::reclaim_package(&db, &pkg, "ted", 1, held(&db).await, |_, _, _| {}, after_first())
+        .await
+        .unwrap();
+    assert!(stopped.cancelled, "the stop lands, after the container: {stopped:?}");
+    assert_eq!(stopped.reclaimed, 200, "the XML and all 199 bundle records landed: {stopped:?}");
+    assert_eq!(
+        cell_i64(
+            &db,
+            &format!("SELECT COUNT(*) FROM notices WHERE member_path LIKE '{DAILY}/{BUNDLE}!%' AND parse_state = 'parsed'")
+        )
+        .await,
+        Some(199)
+    );
+    assert!(
+        cell_i64(&db, &format!("SELECT reprocessed_at FROM quarantine WHERE member_path = '{DAILY}'")).await.is_some(),
+        "the container row is resolved, and rightly: everything in it is in"
+    );
+    assert_eq!(held(&db).await, [NEXT.to_owned()].into(), "the next family is still held, untouched");
+    assert_eq!(cell_i64(&db, &format!("SELECT COUNT(*) FROM notices WHERE member_path = '{NEXT}'")).await, Some(0));
+
+    // A fresh pass finishes the package; nothing was stranded, nothing doubles.
+    let again = process::reclaim_package(&db, &pkg, "ted", 1, held(&db).await, |_, _, _| {}, || false)
+        .await
+        .unwrap();
+    assert!(!again.cancelled);
+    assert_eq!(again.reclaimed, 1, "{again:?}");
+    assert!(held(&db).await.is_empty());
+    assert_eq!(cell_i64(&db, "SELECT COUNT(*) FROM notices").await, Some(201));
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 /// Issue 543 unit 3: a reclaim stops between members when asked, and the stop is safe:
 /// the member that committed before it is reclaimed whole, the next one is still held and
 /// untouched, and a second pass over the re-derived held set finishes the package.
