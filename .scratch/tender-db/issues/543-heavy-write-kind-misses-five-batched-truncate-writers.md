@@ -1,6 +1,11 @@
 # 543 — `heavy_write_kind` leaves out five batched TRUNCATE writers, and the job-control lists are opt-in
 
-Status: ready-for-agent — unit 1 DEPLOYED `4d4fe13` 2026-10-15 02:04 UTC: five batched writers joined heavy_write_kind. Unit 2 on main at `f25ddc7` (gate green): LIGHT_KINDS and UNSTOPPABLE_KINDS, with source-scan contract tests. It is tests only and ships with the next deploy. Unit 3 built at `0209343` (2026-10-15, focused tests green, not gated): reprocess stops before every package and after every member; refold-fields stops between sweep windows and before its first write, and a stopped run writes nothing; rederive-eur stops before every window and the next run resumes past its watermark. All three moved to STOPPABLE_KINDS. Next: gate, then deploy.
+Status: ready-for-agent — unit 1 DEPLOYED `4d4fe13` 2026-10-15 02:04 UTC: five batched writers joined heavy_write_kind. Unit 2 on main at `f25ddc7` (gate green): LIGHT_KINDS and UNSTOPPABLE_KINDS, with source-scan contract tests. It is tests only and ships with the next deploy. Unit 3 built at `0209343`, with its review fixes at `ee603e0` (2026-10-15, focused tests green, not gated). All three kinds moved to STOPPABLE_KINDS:
+  - reprocess stops before every package, and between quarantine families inside one, so a whole-file or whole-container row's records finish together;
+  - refold-fields stops between sweep windows and before its first write, and a stopped run writes nothing;
+  - rederive-eur stops before every window; a stop clears the watermark and a fresh enqueue starts at the first tender (only a recovered job resumes).
+
+  Next: gate, then deploy.
 Was: ready-for-agent — filed 2026-10-15 from the 542 audit (an Explore survey of every non-stoppable kind, then
 four adversarial verifiers). Unit 1 built 2026-10-15 01:0x UTC (gate, then main; it deploys with 534 and 542). Unit 2
 built 2026-10-15 in the working tree (focused tests green; not gated or committed yet). Next: gate and commit unit 2, then
