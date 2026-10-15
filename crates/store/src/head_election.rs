@@ -26,8 +26,10 @@ use crate::{Db, int, opt_text_of, text};
 /// Issue 524 unit 2a: the election rule's epoch, stamped on every plan. Bump it whenever
 /// [`elect_head`] or an injected function it is run with changes what it decides, so unit 2b's wet
 /// path refuses a plan another rule wrote. `v2`: the 2a review's ALL-CAPS test reads `ß`, `ª` and
-/// `º` as caseless (`all_caps`), which reorders display spellings.
-pub const HEAD_ELECTION_EPOCH: &str = "524u2-v2";
+/// `º` as caseless (`all_caps`), which reorders display spellings. `v3` (unit 2a.1): the vote key
+/// folds Latin diacritics, the display order prefers the diacritic-bearing spelling, and R2 holds a
+/// shorthand of the head ([`HeadElectFns::r2_hold`]).
+pub const HEAD_ELECTION_EPOCH: &str = "524u2-v3";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
 /// cluster of one or two mentions ever moves a head.
@@ -108,9 +110,10 @@ impl HeadKeep {
 pub enum HeadVerdict {
     Keep(HeadKeep),
     /// A change the rule elected but does not apply: [`HEAD_HOLD_NO_FIT`] (the winning cluster has no
-    /// fit spelling, so `new` is `None`), or a bind guard's reason (the injected
-    /// [`HeadElectFns::hold`]: `family`, `gb_family`, `consortium_removed`, `nhs_check`) with the
-    /// spelling it would have served.
+    /// fit spelling, so `new` is `None`), a bind guard's reason (the injected [`HeadElectFns::hold`]:
+    /// `family`, `gb_family`, `consortium_removed`, `nhs_check`), or, for R2 only, a shorthand's
+    /// ([`HeadElectFns::r2_hold`]: `initialism`, `truncation`), with the spelling it would have
+    /// served.
     Hold { reason: &'static str, rule: HeadRule, new: Option<String> },
     Change { rule: HeadRule, new: String },
 }
@@ -159,10 +162,11 @@ impl HeadVerdict {
 
 /// Issue 524 unit 2: the ingest functions [`elect_head`] runs with (store never depends on ingest). The
 /// app passes `crosswalk::head_vote_key`, `partyname::not_a_name` as its class label,
-/// `crosswalk::head_spelling_unfit` and `crosswalk::head_change_hold`.
+/// `crosswalk::head_spelling_unfit`, `crosswalk::head_change_hold` and `crosswalk::head_r2_hold`.
 #[derive(Clone, Copy)]
 pub struct HeadElectFns {
-    /// The key mentions vote under: `altid_name_key` with every legal-form token dropped.
+    /// The key mentions vote under: `altid_name_key` of the diacritic-folded name, with every
+    /// legal-form token dropped.
     pub vote_key: fn(&str) -> String,
     /// A name's non-name class (`void_lot` | `placeholder` | `blank` | [`HEAD_DRIFT_AWARD_SUMMARY`]) or
     /// `None`. A mention of any class but `award_summary` does not vote; a head of one is R0's.
@@ -171,6 +175,10 @@ pub struct HeadElectFns {
     pub unfit: fn(&str, &str) -> Option<&'static str>,
     /// `(old, new, identifier_kind, identifier)`: why a change is held for review, or `None`.
     pub hold: fn(&str, &str, Option<&str>, Option<&str>) -> Option<&'static str>,
+    /// Issue 524 unit 2a.1, `(old, new)`: why an R2 change is held as a shorthand of the head it would
+    /// replace (an initialism of its words, or the head cut down to some of them), or `None`. Asked of
+    /// R2 changes only, after [`HeadElectFns::hold`]: R1's majority is not second-guessed.
+    pub r2_hold: fn(&str, &str) -> Option<&'static str>,
 }
 
 /// Issue 524 unit 2: the organization [`elect_head`] decides for.
@@ -230,11 +238,14 @@ struct Cluster<'a> {
 /// 6. **R2**: H ≤ 1, the top is unique, T ≥ [`HEAD_ELECT_TOP_MIN`], and T × 4 ≥ V (25%).
 /// 7. Otherwise KEEP (`bar`).
 ///
-/// The elected cluster serves its DISPLAY spelling: the fit spellings only ([`HeadElectFns::unfit`]),
-/// not-ALL-CAPS before ALL-CAPS, then the most mentions, then the byte-wise smallest — never the
-/// census's count-first `top_spelling`, which serves `UNIVERSITY OF SHEFFIELD`. No fit spelling is a
-/// HOLD ([`HEAD_HOLD_NO_FIT`]); a change the bind guards ([`HeadElectFns::hold`]) name is a HOLD with
-/// the spelling it would serve.
+/// The elected cluster serves its DISPLAY spelling (`spelling_order`): the fit spellings only
+/// ([`HeadElectFns::unfit`]); not-ALL-CAPS before ALL-CAPS; then the spelling with more non-ASCII
+/// letters, so a diacritic-bearing spelling beats its ASCII-folded twin (one cluster is one vote key,
+/// which folds diacritics, so every two of its spellings are such twins); then the most mentions;
+/// then the byte-wise smallest — never the census's count-first `top_spelling`, which serves
+/// `UNIVERSITY OF SHEFFIELD`. No fit spelling is a HOLD ([`HEAD_HOLD_NO_FIT`]); a change the bind
+/// guards ([`HeadElectFns::hold`]) name, or an R2 change [`HeadElectFns::r2_hold`] reads as a
+/// shorthand of the head, is a HOLD with the spelling it would serve.
 pub fn elect_head(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &HeadElectFns) -> HeadVerdict {
     elect_head_counted(votes, org, fns).verdict
 }
@@ -275,10 +286,14 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
     }
     let serve = |rule: HeadRule, cluster: &Cluster<'_>| match display_spelling(cluster, org.head, fns) {
         None => HeadVerdict::Hold { reason: HEAD_HOLD_NO_FIT, rule, new: None },
-        Some(new) => match (fns.hold)(org.head, new, org.identifier_kind, org.identifier) {
-            Some(reason) => HeadVerdict::Hold { reason, rule, new: Some(new.to_owned()) },
-            None => HeadVerdict::Change { rule, new: new.to_owned() },
-        },
+        Some(new) => {
+            let held = (fns.hold)(org.head, new, org.identifier_kind, org.identifier)
+                .or_else(|| if rule == HeadRule::R2 { (fns.r2_hold)(org.head, new) } else { None });
+            match held {
+                Some(reason) => HeadVerdict::Hold { reason, rule, new: Some(new.to_owned()) },
+                None => HeadVerdict::Change { rule, new: new.to_owned() },
+            }
+        }
     };
 
     // R0: a defective head. `not_a_name("")` is None, so the empty head is tested on its own.
@@ -330,10 +345,16 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
     counted(HeadVerdict::Keep(HeadKeep::Bar))
 }
 
-/// The display order of two spellings for `max_by`: not-ALL-CAPS before ALL-CAPS, then the most
-/// mentions, then the byte-wise smallest.
+/// The display order of two spellings of one cluster for `max_by`: not-ALL-CAPS before ALL-CAPS, then
+/// more non-ASCII letters (issue 524 unit 2a.1: `Comuna Dumbrăveni` over `Comuna Dumbraveni`), then
+/// the most mentions, then the byte-wise smallest.
 fn spelling_order(a: (&str, u64), b: (&str, u64)) -> std::cmp::Ordering {
-    all_caps(b.0).cmp(&all_caps(a.0)).then(a.1.cmp(&b.1)).then_with(|| b.0.cmp(a.0))
+    let marked = |s: &str| s.chars().filter(|c| c.is_alphabetic() && !c.is_ascii()).count();
+    all_caps(b.0)
+        .cmp(&all_caps(a.0))
+        .then_with(|| marked(a.0).cmp(&marked(b.0)))
+        .then(a.1.cmp(&b.1))
+        .then_with(|| b.0.cmp(a.0))
 }
 
 /// The cluster's display spelling: the best FIT spelling in [`spelling_order`], or `None`.
@@ -918,7 +939,18 @@ mod tests {
         let mut out: Vec<String> = Vec::new();
         let mut initials = String::new();
         for word in name.split(|c: char| !c.is_alphanumeric()).filter(|w| !w.is_empty()) {
-            let word = word.to_lowercase();
+            // The diacritics the tests spell, folded as `crosswalk::fold_diacritics` folds them.
+            let word: String = word
+                .to_lowercase()
+                .chars()
+                .map(|c| match c {
+                    'ă' => 'a',
+                    'ó' => 'o',
+                    'é' => 'e',
+                    'í' => 'i',
+                    other => other,
+                })
+                .collect();
             if word.chars().count() == 1 {
                 initials.push_str(&word);
                 continue;
@@ -965,7 +997,12 @@ mod tests {
         }
     }
 
-    const FNS: HeadElectFns = HeadElectFns { vote_key: key, not_a_name: class, unfit, hold };
+    /// Stand-in for `crosswalk::head_r2_hold`: the head cut to a prefix of itself.
+    fn r2_hold(old: &str, new: &str) -> Option<&'static str> {
+        (old.len() > new.len() && old.starts_with(new)).then_some("truncation")
+    }
+
+    const FNS: HeadElectFns = HeadElectFns { vote_key: key, not_a_name: class, unfit, hold, r2_hold };
 
     fn org(head: &str) -> HeadElectOrg<'_> {
         HeadElectOrg { head, identifier_kind: Some("national"), identifier: Some("GB1"), bind_defect: false }
@@ -1142,6 +1179,44 @@ mod tests {
             elect_head(&escolas, &org("Escola Norte"), &FNS),
             HeadVerdict::Change { rule: HeadRule::R1, new: "Agrupamento de Escolas nº 1".into() }
         );
+    }
+
+    /// Issue 524 unit 2a.1: the R2 shorthand hold is asked of R2 alone. The same pair (the head cut to
+    /// its first words) holds under R2's minority top and changes under R1's majority.
+    #[test]
+    fn the_shorthand_hold_is_r2_only() {
+        let r2 = [("Main Body", 3), ("Nord", 2), ("Sued", 2), ("Ost", 2), ("West", 2), ("Main Body Annex", 1)];
+        assert_eq!(
+            elect_head(&r2, &org("Main Body Annex"), &FNS),
+            HeadVerdict::Hold { reason: "truncation", rule: HeadRule::R2, new: Some("Main Body".into()) }
+        );
+        let r1 = [("Main Body", 10), ("Main Body Annex", 1)];
+        assert_eq!(
+            elect_head(&r1, &org("Main Body Annex"), &FNS),
+            HeadVerdict::Change { rule: HeadRule::R1, new: "Main Body".into() }
+        );
+        // An R2 change the hold does not read as a shorthand still changes.
+        let other = [("Other Body", 3), ("Nord", 2), ("Sued", 2), ("Ost", 2), ("West", 2), ("Main Body Annex", 1)];
+        assert_eq!(elect_head(&other, &org("Main Body Annex"), &FNS).kind(), "change");
+    }
+
+    /// Issue 524 unit 2a.1: one vote key folds the diacritics, so an accented head and its ASCII
+    /// ALL-CAPS twin are one cluster (13731240 is an S1 keep), and inside a cluster the
+    /// diacritic-bearing spelling is served over its ASCII twin, after case and before votes.
+    #[test]
+    fn diacritics_are_one_cluster_and_the_marked_spelling_is_served() {
+        let dumbraveni = [("Comuna Dumbrăveni", 10), ("COMUNA DUMBRAVENI", 32)];
+        let counted = elect_head_counted(&dumbraveni, &org("Comuna Dumbrăveni"), &FNS);
+        assert_eq!(counted.verdict, HeadVerdict::Keep(HeadKeep::S1));
+        assert_eq!((counted.clusters, counted.top, counted.head_votes), (1, 42, 42));
+        let dotacion = [("Dotacion y Equipamiento S.L.", 4), ("Dotación y Equipamiento, S. L.", 1), ("Equipos Norte", 1)];
+        assert_eq!(
+            elect_head(&dotacion, &org("Equipos Norte"), &FNS),
+            HeadVerdict::Change { rule: HeadRule::R1, new: "Dotación y Equipamiento, S. L.".into() }
+        );
+        // Case still comes first: the mixed-case ASCII spelling beats the ALL-CAPS accented one.
+        let caps = [("COMUNA DUMBRĂVENI", 5), ("Comuna Dumbraveni", 1), ("Primaria Sat", 1)];
+        assert_eq!(elect_head(&caps, &org("Primaria Sat"), &FNS).new_name(), Some("Comuna Dumbraveni"));
     }
 
     #[test]

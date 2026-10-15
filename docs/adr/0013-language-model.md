@@ -166,15 +166,18 @@ Decided:
    predicate `ORG_COLUMNS` serves `identifier_verdict` by), keeps its head as well: there the bind is
    the defect (issue 456 design 1), and the mentions it gathered do not name the entity.
 2. **Votes.** A mention votes unless its name is NULL, blank, or a `not_a_name` class other than
-   `award_summary`. Votes group by the head vote key: `crosswalk::altid_name_key` with every legal-form
-   token dropped. Casing, spelling marks, "the" and a legal form (Ltd/Limited/none, S.R.L./SRL/none) are
-   therefore one name.
+   `award_summary`. Votes group by the head vote key: `crosswalk::altid_name_key` of the name with its
+   Latin diacritics folded (NFD with the combining marks dropped; `ø` → `o`, `ł` → `l`, `ß` → `ss`,
+   `æ` → `ae`, `œ` → `oe`), with every legal-form token dropped. Casing, spelling marks, diacritics,
+   "the" and a legal form (Ltd/Limited/none, S.R.L./SRL/none) are therefore one name: `Comuna
+   Dumbrăveni` and `COMUNA DUMBRAVENI` vote together. The fold is the vote key's alone; the N2/N3 keys
+   and `altid_name_key` keep their diacritics.
 3. **When the head changes.** Only when one of these holds:
    - (a) the head is empty or a non-name (placeholder, blank, void_lot) and some name votes;
    - (b) a cluster other than the head's holds at least 55% of the votes, at least 3 votes, and at
      least twice the head's votes;
    - (c) the head's cluster holds at most 1 vote, and a unique top cluster holds at least 3 votes and
-     at least 25%.
+     at least 25% — unless the change is a shorthand of the head (6).
 
    Otherwise the head stays byte for byte. No single mention, near tie or legal-form difference moves
    it.
@@ -191,17 +194,25 @@ Decided:
    - not all lower case.
 
    Among the fit spellings, case decides first (a spelling that is not ALL-CAPS before one that is;
-   `ß`, `ª` and `º` have no one-letter capital and do not make a spelling mixed case), then the most
-   votes, then byte order. So "The University of Sheffield" (1 vote) is served over "UNIVERSITY OF
-   SHEFFIELD" (14). With no fit spelling, nothing changes. Register names are not used until a
-   register-name cache exists.
+   `ß`, `ª` and `º` have no one-letter capital and do not make a spelling mixed case), then a spelling
+   that carries diacritics over its ASCII-folded twin (the one with more non-ASCII letters; every two
+   spellings of one cluster are such twins, since the vote key folds diacritics), then the most votes,
+   then byte order. So "The University of Sheffield" (1 vote) is served over "UNIVERSITY OF SHEFFIELD"
+   (14), and "Dotación y Equipamiento, S. L." (1) over "Dotacion y Equipamiento S.L." (4). With no fit
+   spelling, nothing changes. Register names are not used until a register-name cache exists.
 6. **Held for review.** A change is held when it would:
    - swap one legal-form family for another (`legal_form_family` or `gb_legal_family` set on both sides
      and different);
    - drop a consortium mark;
-   - fail the NHS ODS name check the old head passed.
+   - fail the NHS ODS name check the old head passed;
+   - by (c) only, replace the head with a shorthand of it: a token of 2 to 5 upper-case letters that is
+     the initials of a run of the head's words (`CDC` for `Communauté de communes`), or the head's words
+     cut to a proper subset that drops only words, one of three letters or more (`SAS C3i` for `C 3 I -
+     CONCEPT EN INGENIERIE D'INFRASTRUCTURES INNOVANTES`). A head that loses digits, a postcode or an
+     address with its number still changes. (b)'s majority is not second-guessed.
 
-   The head is an input to the resolver's and merge planners' name gates.
+   The head is an input to the resolver's and merge planners' name gates. (c)'s 25% minority can be a
+   publisher's shorthand of a correct full head (dry plan 2501's judged samples).
 7. **Keys.** `name_norm` follows, as `org_name_norm(new head)`. For identifier-bearing rows it is the
    name-search key, never a bind key. `organization_names` and `org_name_verdicts` are untouched.
    `org_match_keys` catches up at its next wholesale build.

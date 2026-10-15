@@ -1449,20 +1449,118 @@ pub fn gb_legal_family(name: &str) -> Option<&'static str> {
 /// `§srl`; dropping both makes `WECO TMC`, `WECO TMC S.R.L.` and `WECO TMC SRL` one name. When
 /// nothing is left (`S.R.L.` alone), the alt key itself, so no name keys empty.
 ///
-/// It groups the spellings of ONE organization — casing, punctuation, a leading `the`,
+/// Issue 524 unit 2a.1: the name is lower-cased and its Latin diacritics folded first
+/// ([`fold_diacritics`]), because publishers drop accents in capitals: dry plan 2501 split
+/// `Comuna Dumbrăveni` from `COMUNA DUMBRAVENI` into two clusters and served the ALL-CAPS ASCII
+/// form (13731240), and made accent-only flips of `Szervíz`, `Dotación` and `Géosat`. The fold is
+/// this key's alone; `match_norm` (N2), [`n3_key`] and [`altid_name_key`] keep their diacritics.
+///
+/// It groups the spellings of ONE organization — casing, punctuation, diacritics, a leading `the`,
 /// Ltd/Limited/none, S.R.L./SRL/none — and so subsumes [`altid_keys_agree`] (a GB form one side
 /// carries) as a plain key: no union-find, no transitivity question. It merges no organizations
 /// and feeds no bind: [`altid_name_key`], [`altid_keys_agree`], [`family_token`] and
 /// [`NAME_KEY_EPOCH`] stay as they are, so the altid arm, the R2/R3 vetoes and every N3 key do
 /// not move.
 pub fn head_vote_key(name: &str) -> String {
-    let alt = altid_name_key(name);
+    let alt = altid_name_key(&fold_diacritics(&name.to_lowercase()));
     let kept: Vec<&str> = alt
         .split(' ')
         .filter(|t| !t.is_empty() && !t.starts_with('§') && family_token(t).is_none())
         .collect();
     if kept.is_empty() { alt } else { kept.join(" ") }
 }
+
+/// Issue 524 unit 2a.1: a LOWER-CASE name with its Latin diacritics folded, for
+/// [`head_vote_key`] — what NFD followed by dropping the combining marks gives, done by table
+/// because the crate carries no normalisation data:
+/// - the generic combining marks (U+0300–U+036F, U+1AB0–U+1AFF, U+1DC0–U+1DFF, U+20D0–U+20FF,
+///   U+FE20–U+FE2F) are dropped, so decomposed input folds like precomposed input (and Turkish
+///   `İ`, which lower-cases to `i` and a combining dot, folds to `i`). Without that, `match_norm`
+///   would read each mark as a word break;
+/// - the precomposed lower-case Latin letters fold to their base letter: Latin-1, Extended-A, the
+///   Extended-B letters with a diacritic, and Latin Extended Additional (Vietnamese, `ṣ`, `ẓ`, …);
+/// - the letters NFD leaves whole fold as store's issue-359 table (`fold_latin`, the R2 name gate
+///   and the buyer guard) folds them: `ø` → `o`, `đ` → `d`, `ł` → `l`, `ı` → `i`, `ð` → `d`. Except
+///   three, which expand to the two letters an ASCII writer uses, so the ALL-CAPS twin joins the
+///   cluster: `ß` → `ss` (`STRASSENBAU` beside `Straßenbau`; its capital is `SS`), `æ` → `ae`,
+///   `œ` → `oe` (and `þ` → `th`, `ĳ` → `ij`). `fold_latin` keeps one letter for them and is not
+///   changed.
+///
+/// Every other character, Cyrillic and Greek included, passes through.
+pub fn fold_diacritics(lower: &str) -> String {
+    let mut out = String::with_capacity(lower.len());
+    for c in lower.chars() {
+        let cp = u32::from(c);
+        if matches!(cp, 0x300..=0x36F | 0x1AB0..=0x1AFF | 0x1DC0..=0x1DFF | 0x20D0..=0x20FF | 0xFE20..=0xFE2F) {
+            continue;
+        }
+        match fold_latin_letter(c) {
+            Some(base) => out.push_str(base),
+            None => out.push(c),
+        }
+    }
+    out
+}
+
+/// Latin Extended Additional's base letters, one per upper/lower pair: U+1E00–U+1E95, then
+/// U+1EA0–U+1EF9 (the Vietnamese letters).
+const LATIN_ADDITIONAL_LOW: &[u8; 75] = b"abbbcdddddeeeeefghhhhhiikkkllllmmmnnnnoooopprrrrsssssttttuuuuuvvwwwwwxxyzzz";
+const LATIN_ADDITIONAL_HIGH: &[u8; 45] = b"aaaaaaaaaaaaeeeeeeeeiioooooooooooouuuuuuuyyyy";
+
+/// [`fold_diacritics`]' table: the base letter(s) of a lower-case Latin letter with a diacritic.
+fn fold_latin_letter(c: char) -> Option<&'static str> {
+    let base = match c {
+        'à' | 'á' | 'â' | 'ã' | 'ä' | 'å' | 'ā' | 'ă' | 'ą' | 'ǎ' | 'ǟ' | 'ǡ' | 'ǻ' | 'ȁ' | 'ȃ' | 'ȧ' => "a",
+        'æ' | 'ǣ' | 'ǽ' => "ae",
+        'ƀ' => "b",
+        'ç' | 'ć' | 'ĉ' | 'ċ' | 'č' | 'ƈ' => "c",
+        'ď' | 'đ' | 'ð' | 'ƌ' => "d",
+        'è' | 'é' | 'ê' | 'ë' | 'ē' | 'ĕ' | 'ė' | 'ę' | 'ě' | 'ȅ' | 'ȇ' | 'ȩ' => "e",
+        'ƒ' => "f",
+        'ĝ' | 'ğ' | 'ġ' | 'ģ' | 'ǥ' | 'ǧ' | 'ǵ' => "g",
+        'ĥ' | 'ħ' | 'ȟ' => "h",
+        'ì' | 'í' | 'î' | 'ï' | 'ĩ' | 'ī' | 'ĭ' | 'į' | 'ı' | 'ǐ' | 'ȉ' | 'ȋ' => "i",
+        'ĳ' => "ij",
+        'ĵ' | 'ǰ' => "j",
+        'ķ' | 'ĸ' | 'ǩ' => "k",
+        'ĺ' | 'ļ' | 'ľ' | 'ŀ' | 'ł' => "l",
+        'ñ' | 'ń' | 'ņ' | 'ň' | 'ŉ' | 'ŋ' | 'ǹ' => "n",
+        'ò' | 'ó' | 'ô' | 'õ' | 'ö' | 'ø' | 'ō' | 'ŏ' | 'ő' | 'ơ' | 'ǒ' | 'ǫ' | 'ǭ' | 'ǿ' | 'ȍ' | 'ȏ' | 'ȫ' | 'ȭ'
+        | 'ȯ' | 'ȱ' => "o",
+        'œ' => "oe",
+        'ŕ' | 'ŗ' | 'ř' | 'ȑ' | 'ȓ' => "r",
+        'ś' | 'ŝ' | 'ş' | 'š' | 'ſ' | 'ș' => "s",
+        'ß' => "ss",
+        'ţ' | 'ť' | 'ŧ' | 'ț' => "t",
+        'þ' => "th",
+        'ù' | 'ú' | 'û' | 'ü' | 'ũ' | 'ū' | 'ŭ' | 'ů' | 'ű' | 'ų' | 'ư' | 'ǔ' | 'ǖ' | 'ǘ' | 'ǚ' | 'ǜ' | 'ȕ' | 'ȗ' => "u",
+        'ŵ' => "w",
+        'ý' | 'ÿ' | 'ŷ' | 'ƴ' | 'ȳ' => "y",
+        'ź' | 'ż' | 'ž' | 'ƶ' => "z",
+        _ => {
+            let cp = u32::from(c);
+            let byte = match cp {
+                0x1E00..=0x1E95 => LATIN_ADDITIONAL_LOW[((cp - 0x1E00) / 2) as usize],
+                0x1E96 => b'h',
+                0x1E97 => b't',
+                0x1E98 => b'w',
+                0x1E99 => b'y',
+                0x1E9A => b'a',
+                0x1E9B => b's',
+                0x1EA0..=0x1EF9 => LATIN_ADDITIONAL_HIGH[((cp - 0x1EA0) / 2) as usize],
+                _ => return None,
+            };
+            return Some(ASCII_LETTERS[(byte - b'a') as usize]);
+        }
+    };
+    Some(base)
+}
+
+/// One `&'static str` per ASCII lower-case letter, for [`fold_latin_letter`]'s byte tables.
+const ASCII_LETTERS: [&str; 26] = [
+    "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v",
+    "w", "x", "y", "z",
+];
 
 /// Issue 524 unit 2: why `candidate` may not be SERVED as an organization's head in place of
 /// `head` — the display-spelling filter `store::elect_head` applies inside the winning cluster —
@@ -1548,6 +1646,71 @@ pub fn head_change_hold(
     None
 }
 
+/// Issue 524 unit 2a.1: why an R2 change is HELD as a shorthand of the head it would replace, or
+/// `None`. R2 replaces a stray head (one vote) by a top cluster of only 25%, and dry plan 2501's
+/// judged samples showed that minority to be a publisher's shorthand of a correct full head:
+/// `Communauté de communes Terroir de Caux` → `CDC Terroir de Caux` (15075247), `C 3 I - CONCEPT EN
+/// INGENIERIE D'INFRASTRUCTURES INNOVANTES` → `SAS C3i` (13839658). Store applies this to R2 alone;
+/// R1's 55% majority with twice the head's votes is not second-guessed. The first that holds
+/// answers:
+/// - `initialism`: `new` has a token of 2 to 5 letters, all upper case as published, that equals
+///   (diacritics folded) the initials of a run of as many consecutive words of `old` — the words
+///   split on whitespace and punctuation, lower-cased and folded, short ones like `de` counted
+///   (`CDC` ↔ `Communauté de communes`);
+/// - `truncation`: `new`'s [`head_vote_key`] tokens, each run of one-character tokens joined into one
+///   (`c 3 i` → `c3i`), are a proper subset of `old`'s read the same way, every dropped token is
+///   letters only, and at least one dropped token has three letters or more. So a head that only
+///   loses digits, a postcode, a NIP or an address with its number (`… ul. Polna 1 00-001 Warszawa
+///   NIP 1234567890` → `Firma Kowalski`, samples 764/765) is no truncation, nor one that loses only
+///   an initial or a particle; a name that GROWS (`FREGONESE` → `FREGONESE ET FILS`) never is.
+pub fn head_r2_hold(old: &str, new: &str) -> Option<&'static str> {
+    let folded_words = |name: &str| -> Vec<String> {
+        fold_diacritics(&name.to_lowercase())
+            .split(|c: char| !c.is_alphanumeric())
+            .filter(|w| !w.is_empty())
+            .map(str::to_owned)
+            .collect()
+    };
+    let initials: Vec<char> = folded_words(old).iter().filter_map(|w| w.chars().next()).collect();
+    let initialism = new.split(|c: char| !c.is_alphanumeric()).any(|token| {
+        if !(2..=5).contains(&token.chars().count()) || !token.chars().all(|c| c.is_alphabetic() && c.is_uppercase()) {
+            return false;
+        }
+        let token: Vec<char> = fold_diacritics(&token.to_lowercase()).chars().collect();
+        initials.windows(token.len()).any(|run| run == token.as_slice())
+    });
+    if initialism {
+        return Some("initialism");
+    }
+    // The vote key's tokens, a run of one-character tokens joined (`c 3 i` → `c3i`).
+    let joined = |name: &str| -> std::collections::BTreeSet<String> {
+        let mut out = std::collections::BTreeSet::new();
+        let mut run = String::new();
+        for token in head_vote_key(name).split(' ').filter(|t| !t.is_empty()) {
+            if token.chars().count() == 1 {
+                run.push_str(token);
+                continue;
+            }
+            if !run.is_empty() {
+                out.insert(std::mem::take(&mut run));
+            }
+            out.insert(token.to_owned());
+        }
+        if !run.is_empty() {
+            out.insert(run);
+        }
+        out
+    };
+    let (old_tokens, new_tokens) = (joined(old), joined(new));
+    if new_tokens.is_empty() || new_tokens.len() >= old_tokens.len() || !new_tokens.is_subset(&old_tokens) {
+        return None;
+    }
+    let dropped: Vec<&String> = old_tokens.difference(&new_tokens).collect();
+    let words = dropped.iter().all(|t| t.chars().all(char::is_alphabetic));
+    let long = dropped.iter().any(|t| t.chars().count() >= 3);
+    (words && long).then_some("truncation")
+}
+
 /// Issue 524 unit 2: the legal-form family a head names, for the dry plan's `family_old` /
 /// `family_new` and its family-move counts — [`legal_form_family`], else [`gb_legal_family`].
 pub fn head_family(name: &str) -> Option<&'static str> {
@@ -1557,9 +1720,81 @@ pub fn head_family(name: &str) -> Option<&'static str> {
 #[cfg(test)]
 mod head_vote {
     use super::{
-        NAME_KEY_EPOCH, altid_keys_agree, altid_name_key, family_token, head_change_hold, head_family,
-        head_spelling_unfit, head_vote_key,
+        NAME_KEY_EPOCH, altid_keys_agree, altid_name_key, family_token, fold_diacritics, head_change_hold, head_family,
+        head_r2_hold, head_spelling_unfit, head_vote_key,
     };
+
+    /// Issue 524 unit 2a.1: dry plan 2501's accent-only splits are one vote key each.
+    #[test]
+    fn a_spelling_with_its_diacritics_dropped_is_the_same_vote_key() {
+        for (accented, plain) in [
+            ("Comuna Dumbrăveni", "COMUNA DUMBRAVENI"),
+            ("Szervíz", "Szerviz"),
+            ("Dotación y Equipamiento, S. L.", "Dotacion y Equipamiento S.L."),
+            ("Géosat", "Geosat"),
+            ("Łódź", "Lodz"),
+            ("Straßenbau NRW", "STRASSENBAU NRW"),
+            ("Ærø Kommune", "AERO KOMMUNE"),
+            ("Œuvre Sociale", "OEUVRE SOCIALE"),
+            ("Ørsted", "Orsted"),
+            ("Đakovo", "Dakovo"),
+            ("Diyarbakır", "DIYARBAKIR"),
+            ("İstanbul", "Istanbul"),
+            ("Hà Nội", "Ha Noi"),
+        ] {
+            assert_eq!(head_vote_key(accented), head_vote_key(plain), "{accented} / {plain}");
+        }
+        assert_eq!(head_vote_key("Comuna Dumbrăveni"), "comuna dumbraveni");
+        // Decomposed (NFD) input folds like precomposed input, instead of breaking the word.
+        assert_eq!(head_vote_key("Ge\u{301}osat"), "geosat");
+        // `ø` folds to `o`, as `fold_latin` folds it; the Danish `oe` is a spelling the key does not guess.
+        assert_ne!(head_vote_key("Ærø"), head_vote_key("AEROE"));
+        // Other scripts pass through; the Greek tonos fold is N2's, as before.
+        assert_eq!(head_vote_key("ОБЩИНА БЕЛОВО"), "община белово");
+        assert_eq!(head_vote_key("Δήμος Αθηναίων"), head_vote_key("ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ"));
+        // A legal form written with a diacritic is still a form once folded (`S.à r.l.`).
+        assert_eq!(head_vote_key("Acme S.à r.l."), "acme");
+        // The fold is the vote key's alone.
+        assert_eq!(altid_name_key("Géosat"), "géosat");
+        assert_ne!(altid_name_key("Géosat"), altid_name_key("Geosat"));
+    }
+
+    #[test]
+    fn the_fold_follows_nfd_through_the_latin_blocks() {
+        assert_eq!(fold_diacritics("àéîõüçñ ăčęğıłńőřșțůž"), "aeioucn acegilnorstuz");
+        assert_eq!(fold_diacritics("ḍ ṃ ṕ ṭ ẅ ẍ ẏ ẓ"), "d m p t w x y z");
+        assert_eq!(fold_diacritics("ạ ặ ẹ ể ỉ ọ ộ ợ ụ ự ỳ ỹ"), "a a e e i o o o u u y y");
+        assert_eq!(fold_diacritics("ß æ œ þ ø đ ð"), "ss ae oe th o d d");
+        assert_eq!(fold_diacritics("a\u{300}\u{1dc0}"), "a", "combining marks are dropped");
+        assert_eq!(fold_diacritics("москва αθήνα 東京"), "москва αθήνα 東京");
+    }
+
+    /// Issue 524 unit 2a.1: R2's shorthand holds — an initialism of a run of the head's words, or the
+    /// head cut to a proper subset of its words — and what they leave alone.
+    #[test]
+    fn an_r2_shorthand_of_the_head_is_held_and_a_strip_down_is_not() {
+        // 15075247: `CDC` is the initials of `Communauté de communes`.
+        assert_eq!(head_r2_hold("Communauté de communes Terroir de Caux", "CDC Terroir de Caux"), Some("initialism"));
+        // 13839658: `c3i` is the head's `C 3 I`, every other word dropped.
+        assert_eq!(
+            head_r2_hold("C 3 I - CONCEPT EN INGENIERIE D'INFRASTRUCTURES INNOVANTES", "SAS C3i"),
+            Some("truncation")
+        );
+        assert_eq!(head_r2_hold("Tribunal administratif de Nice Greffe", "Tribunal administratif de Nice"), Some("truncation"));
+        // Samples 764/765's shape: the address and the NIP go, digits with them. Changes.
+        assert_eq!(head_r2_hold("Firma Kowalski ul. Polna 1 00-001 Warszawa NIP 1234567890", "Firma Kowalski"), None);
+        // A name that grows is no shorthand.
+        assert_eq!(head_r2_hold("FREGONESE", "FREGONESE ET FILS"), None);
+        // Only a particle dropped (`TA`, two letters): no truncation.
+        assert_eq!(head_r2_hold("TRIBUNAL ADMINISTRATIF DE NICE (TA)", "Tribunal administratif de Nice"), None);
+        // An upper-case token that abbreviates nothing in the head, and a mixed-case one that does.
+        assert_eq!(head_r2_hold("Stadtwerke Bonn", "SWB Energie"), None, "s-b, not s-w-b");
+        assert_eq!(head_r2_hold("Communauté de communes Terroir de Caux", "Cdc Terroir de Caux"), None, "not upper case");
+        // Diacritics are folded on both sides: `ÉDF` ↔ `Électricité de France`.
+        assert_eq!(head_r2_hold("Électricité de France Renouvelables", "ÉDF Renouvelables"), Some("initialism"));
+        // A different name entirely is neither.
+        assert_eq!(head_r2_hold("Sheffield Hallam University", "University of Sheffield"), None);
+    }
 
     #[test]
     fn a_legal_form_dotted_bare_marked_or_absent_is_one_vote_key() {

@@ -1271,7 +1271,11 @@ const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
     RefreshCanary { id: 131, expect: Some("keep:bar"), serves: None },
     RefreshCanary { id: 99, expect: Some("keep:bar"), serves: None },
     RefreshCanary { id: 10, expect: Some("keep:S1"), serves: None },
-    RefreshCanary { id: 334, expect: Some("hold:no_fit"), serves: None },
+    // Issue 524 unit 2a: dry plan 2501 read R1 here, and rightly — its mentions are `les alchimistes`
+    // x2, `LES ALCHIMISTES` x2, `Les Alchimistes SAS` and `Les Alchimistes Loire Atlantique`; the vote
+    // key drops `SAS`, so five of six votes are one cluster, served by the SIREN's own mixed-case name.
+    // The decision's `hold:no_fit` read its census sample before the vote key existed.
+    RefreshCanary { id: 334, expect: Some("change:R1"), serves: Some("Les Alchimistes SAS") },
     RefreshCanary { id: 1_165_973, expect: Some("keep:E1"), serves: None },
     RefreshCanary { id: 30_914_328, expect: None, serves: None },
 ];
@@ -1283,6 +1287,7 @@ fn head_elect_fns() -> store::HeadElectFns {
         not_a_name: head_drift_name_class,
         unfit: ingest::crosswalk::head_spelling_unfit,
         hold: ingest::crosswalk::head_change_hold,
+        r2_hold: ingest::crosswalk::head_r2_hold,
     }
 }
 
@@ -1338,6 +1343,7 @@ fn org_name_refresh_json(plan: &store::OrgNameRefreshPlan, scope: Option<&[i64]>
                 "not_a_name": "ingest::partyname::not_a_name",
                 "unfit": "ingest::crosswalk::head_spelling_unfit",
                 "hold": "ingest::crosswalk::head_change_hold",
+                "r2_hold": "ingest::crosswalk::head_r2_hold",
                 "family": "ingest::crosswalk::head_family",
             }),
         );
@@ -1371,12 +1377,16 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
     let canaries =
         ORG_NAME_REFRESH_CANARIES.iter().map(|c| refresh_canary_reading(c, plan, scope)).collect::<Vec<_>>();
     let unexpected = canaries.iter().filter(|c| c.contains("UNEXPECTED")).count();
+    // Issue 524 unit 2a.1: R2's shorthand holds are named whether or not any fired, so a reader can tell
+    // "none held" from "not built".
+    let shorthand = |reason: &str| plan.by_hold.get(reason).map_or(0, |c| c.orgs);
     format!(
         "refresh-org-names DRY (issue 524 unit 2a, rule {}): {} organization(s) and {} mention row(s) walked{}; \
          {} elected ({}+ mention rows; {} below), {} with an empty head. CHANGES {} ({} mentions; {} on merge \
-         survivors): {}. HOLDS {}: {}. Keeps {}: {}. Listed {} planned{} and {} held{}. Family moves of the \
-         changes: {}. D4 keeps' ENG satellites: {}. {} identifier-verdict probe(s). Canaries ({unexpected} \
-         unexpected): {}. NOTHING IS WRITTEN — the wet path is unit 2b.",
+         survivors): {}. HOLDS {}: {} (R2's shorthand holds: initialism {}, truncation {}). Keeps {}: {}. \
+         Listed {} planned{} and {} held{}. Family moves of the changes: {}. D4 keeps' ENG satellites: {}. \
+         {} identifier-verdict probe(s). Canaries ({unexpected} unexpected): {}. NOTHING IS WRITTEN — the \
+         wet path is unit 2b.",
         plan.epoch,
         plan.orgs_walked,
         plan.mentions_walked,
@@ -1391,6 +1401,8 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
         counts(&plan.by_rule),
         plan.holds.orgs,
         counts(&plan.by_hold),
+        shorthand("initialism"),
+        shorthand("truncation"),
         plan.keeps.orgs,
         counts(&plan.by_keep),
         plan.planned.len(),
@@ -20984,8 +20996,16 @@ mod tests {
         ];
         let hallam: &[(&str, usize)] = &[("University of Sheffield", 4), ("Sheffield Hallam University", 1)];
         let belovo: &[(&str, usize)] = &[("ОБЩИНА БЕЛОВО", 5), ("Obshtina Belovo", 1)];
+        let alchimistes: &[(&str, usize)] = &[
+            ("les alchimistes", 2),
+            ("LES ALCHIMISTES", 2),
+            ("Les Alchimistes SAS", 1),
+            ("Les Alchimistes Loire Atlantique", 1),
+        ];
         let orgs: &[(i64, &str, Option<&str>, &str, &[(&str, usize)])] = &[
-            (334, "FR", Some("FR33400000000"), "Atelier Nord", &[("les alchimistes", 3), ("Atelier Nord", 1)]),
+            (334, "FR", Some("FR33400000000"), "Les Alchimistes Loire Atlantique", alchimistes),
+            // Not a canary: the winning cluster spells only lower case, so the change is held.
+            (500, "FR", Some("FR50000000000"), "Atelier Nord", &[("les alchimistes", 3), ("Atelier Nord", 1)]),
             (1_165_973, "GB", None, "Sheffield Hallam University", hallam),
             (6_341_366, "SE", Some("2120000829"), "", &[("Kalmar kommun", 4)]),
             (7_912_592, "BG", Some("000215853"), "Obshtina Belovo", belovo),
@@ -21068,7 +21088,7 @@ mod tests {
             r#"22713056 change:R0n "Vergabekammer bei der Bezirksregierung" as expected"#,
             r#"6341366 change:R0e "Kalmar kommun" as expected"#,
             "7912592 keep:D4 as expected",
-            "334 hold:no_fit as expected",
+            r#"334 change:R1 "Les Alchimistes SAS" as expected"#,
             "1165973 keep:E1 as expected",
             // Not seeded: an expected canary the walk does not find is no pass.
             r#"760 not found UNEXPECTED (want change:R1 "Getinge Polska Sp. z o.o.")"#,
@@ -21084,10 +21104,11 @@ mod tests {
         assert_eq!(plan["dry_run"], true);
         assert_eq!(plan["epoch"], store::HEAD_ELECTION_EPOCH);
         let planned: Vec<i64> = plan["planned"].as_array().unwrap().iter().map(|e| e["org_id"].as_i64().unwrap()).collect();
-        assert_eq!(planned, vec![6_341_366, 22_713_056, 31_558_903], "by org id");
-        assert_eq!(plan["planned"][2]["old_name_norm"], "sheffield hallam university");
-        assert_eq!(plan["planned"][2]["new_name_norm"], "the university of sheffield");
-        assert_eq!(plan["held"][0]["org_id"], 334);
+        assert_eq!(planned, vec![334, 6_341_366, 22_713_056, 31_558_903], "by org id");
+        assert_eq!(plan["planned"][3]["old_name_norm"], "sheffield hallam university");
+        assert_eq!(plan["planned"][3]["new_name_norm"], "the university of sheffield");
+        assert_eq!(plan["held"][0]["org_id"], 500);
+        assert_eq!(plan["held"][0]["reason"], "no_fit");
         assert_eq!(plan["d4_eng"]["equal"], 1, "TED's ENG rendering is the head the guard keeps");
         assert_eq!(plan["canary_readings"].as_array().unwrap().len(), ORG_NAME_REFRESH_CANARIES.len());
         assert_eq!(heads().await, before, "dry: no organization's (name, name_norm) moved");
@@ -21117,6 +21138,69 @@ mod tests {
         let err = sup.run_spec(&dry(false)).await.expect_err("the arm refuses a wet spec too");
         assert!(err.contains("REFUSED") && err.contains("unit 2b"), "{err}");
         remove_db(&path);
+    }
+
+    /// Issue 524 unit 2a.1, with the REAL ingest functions: the vote key folds diacritics, so dry plan
+    /// 2501's accent-only split (13731240) is one cluster and an S1 keep; the diacritic-bearing spelling
+    /// is served over its ASCII twin; and an R2 change that abbreviates (15075247) or truncates
+    /// (13839658) the head is held, while an address strip-down, a name that grows and every R1
+    /// shorthand still change.
+    #[test]
+    fn the_head_election_folds_diacritics_and_holds_r2_shorthands_with_the_real_keys() {
+        use store::{HeadKeep, HeadRule, HeadVerdict, elect_head};
+        let fns = head_elect_fns();
+        let org = |head| store::HeadElectOrg {
+            head,
+            identifier_kind: Some("national"),
+            identifier: Some("RO12345678"),
+            bind_defect: false,
+        };
+        let dumbraveni = [("Comuna Dumbrăveni", 10), ("COMUNA DUMBRAVENI", 32)];
+        assert_eq!(elect_head(&dumbraveni, &org("Comuna Dumbrăveni"), &fns), HeadVerdict::Keep(HeadKeep::S1));
+        let dotacion = [("Dotacion y Equipamiento S.L.", 4), ("Dotación y Equipamiento, S. L.", 1), ("Equipos Norte", 1)];
+        assert_eq!(
+            elect_head(&dotacion, &org("Equipos Norte"), &fns),
+            HeadVerdict::Change { rule: HeadRule::R1, new: "Dotación y Equipamiento, S. L.".into() }
+        );
+        // R2's shape: the top holds 3 of 12, the stray head 1.
+        let r2 = |new: &'static str, head: &'static str| {
+            [(new, 3), ("Alpha Nord", 2), ("Beta Sud", 2), ("Gamma Est", 2), ("Delta West", 2), (head, 1)]
+        };
+        let caux = "Communauté de communes Terroir de Caux";
+        assert_eq!(
+            elect_head(&r2("CDC Terroir de Caux", caux), &org(caux), &fns),
+            HeadVerdict::Hold { reason: "initialism", rule: HeadRule::R2, new: Some("CDC Terroir de Caux".into()) }
+        );
+        let c3i = "C 3 I - CONCEPT EN INGENIERIE D'INFRASTRUCTURES INNOVANTES";
+        assert_eq!(
+            elect_head(&r2("SAS C3i", c3i), &org(c3i), &fns),
+            HeadVerdict::Hold { reason: "truncation", rule: HeadRule::R2, new: Some("SAS C3i".into()) }
+        );
+        let address = "Firma Kowalski ul. Polna 1 00-001 Warszawa NIP 1234567890";
+        assert_eq!(
+            elect_head(&r2("Firma Kowalski", address), &org(address), &fns),
+            HeadVerdict::Change { rule: HeadRule::R2, new: "Firma Kowalski".into() },
+            "the address and NIP strip-down still changes"
+        );
+        assert_eq!(
+            elect_head(&r2("FREGONESE ET FILS", "FREGONESE"), &org("FREGONESE"), &fns),
+            HeadVerdict::Change { rule: HeadRule::R2, new: "FREGONESE ET FILS".into() },
+            "a name that grows is no shorthand"
+        );
+        // R1 is untouched: a shorthand the R2 hold would read as a truncation still changes under R1.
+        let ta = "TRIBUNAL ADMINISTRATIF DE NICE (TA)";
+        let nice = [("Tribunal administratif de Nice", 10), (ta, 1)];
+        assert_eq!(
+            elect_head(&nice, &org(ta), &fns),
+            HeadVerdict::Change { rule: HeadRule::R1, new: "Tribunal administratif de Nice".into() }
+        );
+        let greffe = "Tribunal administratif de Nice Greffe";
+        assert_eq!(ingest::crosswalk::head_r2_hold(greffe, "Tribunal administratif de Nice"), Some("truncation"));
+        let cut = [("Tribunal administratif de Nice", 10), (greffe, 1)];
+        assert_eq!(
+            elect_head(&cut, &org(greffe), &fns),
+            HeadVerdict::Change { rule: HeadRule::R1, new: "Tribunal administratif de Nice".into() }
+        );
     }
 
     /// Issue 58 v2, step 3: `refold-notices` takes a NAMED list, and its guard is a

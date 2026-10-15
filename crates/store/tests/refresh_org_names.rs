@@ -230,7 +230,34 @@ fn hold(old: &str, new: &str, _kind: Option<&str>, _identifier: Option<&str>) ->
     None
 }
 
-const FNS: store::HeadElectFns = store::HeadElectFns { vote_key: vote, not_a_name: class, unfit, hold };
+/// Stand-in for `crosswalk::head_r2_hold`: an upper-case token of 2-5 letters that is the initials of a
+/// run of the head's words, or the head's vote tokens cut to a proper subset that drops only words, one
+/// of three letters or more.
+fn r2_hold(old: &str, new: &str) -> Option<&'static str> {
+    let initials: String = old
+        .split(|c: char| !c.is_alphanumeric())
+        .filter_map(|w| w.chars().next())
+        .flat_map(char::to_lowercase)
+        .collect();
+    let abbreviates = new.split(|c: char| !c.is_alphanumeric()).any(|t| {
+        (2..=5).contains(&t.chars().count())
+            && t.chars().all(|c| c.is_alphabetic() && c.is_uppercase())
+            && initials.contains(&t.to_lowercase())
+    });
+    if abbreviates {
+        return Some("initialism");
+    }
+    let tokens = |name: &str| -> std::collections::BTreeSet<String> { vote(name).split(' ').map(str::to_owned).collect() };
+    let (was, is) = (tokens(old), tokens(new));
+    if is.len() >= was.len() || !is.is_subset(&was) {
+        return None;
+    }
+    let dropped: Vec<&String> = was.difference(&is).collect();
+    (dropped.iter().all(|t| t.chars().all(char::is_alphabetic)) && dropped.iter().any(|t| t.chars().count() >= 3))
+        .then_some("truncation")
+}
+
+const FNS: store::HeadElectFns = store::HeadElectFns { vote_key: vote, not_a_name: class, unfit, hold, r2_hold };
 
 fn never() -> bool {
     false
@@ -340,6 +367,17 @@ async fn corpus(conn: &turso::Connection) {
     // the hold lets it through and the plan counts it `x->y`.
     org(conn, 23, "GB", Some("GB00000023"), "Foo Trading GmbH", &[("Bar Services Ltd", 5), ("Foo Trading GmbH", 1)])
         .await;
+    // 24 — 15075247's shape: R2 would serve the initialism of the head's first words. Held.
+    let caux = "Communauté de communes Terroir de Caux";
+    let others = [("Nord", 2), ("Sued", 2), ("Ost", 2), ("West", 2)];
+    let mut cdc = vec![("CDC Terroir de Caux", 3), (caux, 1)];
+    cdc.extend(others);
+    org(conn, 24, "FR", Some("FR24"), caux, &cdc).await;
+    // 25 — R2 would serve the head cut to its first words. Held.
+    let greffe = "Tribunal administratif de Nice Greffe";
+    let mut nice = vec![("Tribunal administratif de Nice", 3), (greffe, 1)];
+    nice.extend(others);
+    org(conn, 25, "FR", Some("FR25"), greffe, &nice).await;
 }
 
 /// Every organization's `(id, name, name_norm)`, by id.
@@ -378,13 +416,13 @@ async fn the_plan_elects_each_shape_as_the_decision_reads_it() {
     .await
     .unwrap();
     let before = heads(&conn).await;
-    assert_eq!(before.len(), 23);
+    assert_eq!(before.len(), 25);
     let r = plan(&db, 2_000, None, &[]).await;
     assert!(!r.stopped);
     assert_eq!(r.epoch, store::HEAD_ELECTION_EPOCH);
-    assert_eq!((r.orgs_walked, r.mentions_walked), (23, 455));
+    assert_eq!((r.orgs_walked, r.mentions_walked), (25, 479));
     assert_eq!(r.below_min, count(1, 1), "org 18");
-    assert_eq!(r.population, count(22, 454));
+    assert_eq!(r.population, count(24, 478));
     assert_eq!(r.empty_heads, count(1, 4), "org 3");
     assert_eq!(r.changes.orgs + r.holds.orgs + r.keeps.orgs, r.population.orgs, "every elected org has one verdict");
 
@@ -393,9 +431,11 @@ async fn the_plan_elects_each_shape_as_the_decision_reads_it() {
     assert_eq!(r.by_rule["R0n"], count(1, 28));
     assert_eq!(r.by_rule["R1"], count(3, 28), "1, 13 and 23");
     assert_eq!(r.by_rule["R2"], count(1, 12));
-    assert_eq!(r.by_hold.len(), 2);
+    assert_eq!(r.by_hold.len(), 4);
     assert_eq!(r.by_hold["no_fit"], count(1, 4));
     assert_eq!(r.by_hold["gb_family"], count(1, 6));
+    assert_eq!(r.by_hold["initialism"], count(1, 12), "24, R2 only");
+    assert_eq!(r.by_hold["truncation"], count(1, 12), "25, R2 only");
     assert_eq!(r.by_keep.len(), 6);
     assert_eq!(r.by_keep["D4"], count(4, 42), "4, 20, 21 and 22");
     assert_eq!(r.by_keep["bar"], count(5, 306), "5, 6, 7, 14 and 16");
@@ -414,7 +454,7 @@ async fn the_plan_elects_each_shape_as_the_decision_reads_it() {
         (r.d4_eng["equal"], r.d4_eng["agrees"], r.d4_eng["differs"], r.d4_eng["absent"]),
         (1, 1, 1, 1)
     );
-    assert_eq!(r.verdict_probes, 10, "the candidates only: 1, 2, 3, 9, 11, 12, 13, 15, 17, 23");
+    assert_eq!(r.verdict_probes, 12, "the candidates only: 1, 2, 3, 9, 11, 12, 13, 15, 17, 23, 24, 25");
 
     assert_eq!(ids(&r.planned), vec![1, 2, 3, 13, 15, 23]);
     assert!(!r.truncated && !r.held_truncated);
@@ -450,20 +490,24 @@ async fn the_plan_elects_each_shape_as_the_decision_reads_it() {
     assert_eq!((stray.voting, stray.top, stray.head, stray.second), (12, 3, 1, 2));
     assert_eq!((stray.family_old, stray.family_new), (None, Some("ltd")));
 
-    assert_eq!(ids(&r.held), vec![9, 17]);
+    assert_eq!(ids(&r.held), vec![9, 17, 24, 25]);
     let lower = &r.held[0];
     assert_eq!((lower.verdict, lower.reason, lower.rule, lower.new_name.as_deref()), ("hold", "no_fit", Some("R1"), None));
     let plc = &r.held[1];
     assert_eq!((plc.reason, plc.rule, plc.new_name.as_deref()), ("gb_family", Some("R1"), Some("Bar Services Ltd")));
     assert_eq!((plc.family_old, plc.family_new), (Some("plc"), Some("ltd")));
+    let cdc = &r.held[2];
+    assert_eq!((cdc.reason, cdc.rule, cdc.new_name.as_deref()), ("initialism", Some("R2"), Some("CDC Terroir de Caux")));
+    let cut = &r.held[3];
+    assert_eq!((cut.reason, cut.rule, cut.new_name.as_deref()), ("truncation", Some("R2"), Some("Tribunal administratif de Nice")));
 
     // One sample list per verdict and reason, every org of these small classes listed.
     let labels: Vec<&str> = r.samples.keys().map(String::as_str).collect();
     assert_eq!(
         labels,
         vec![
-            "change:R0e", "change:R0n", "change:R1", "change:R2", "hold:gb_family", "hold:no_fit", "keep:D4", "keep:E1",
-            "keep:E2", "keep:E3", "keep:S1", "keep:bar"
+            "change:R0e", "change:R0n", "change:R1", "change:R2", "hold:gb_family", "hold:initialism", "hold:no_fit",
+            "hold:truncation", "keep:D4", "keep:E1", "keep:E2", "keep:E3", "keep:S1", "keep:bar"
         ]
     );
     let mut bar = ids(&r.samples["keep:bar"]);
@@ -507,7 +551,7 @@ async fn the_canaries_are_reported_whatever_their_verdict_and_paging_changes_not
     assert_eq!((below.verdict, below.reason, below.in_population, below.n), ("keep", "S1", false, 1));
     assert_eq!(one_page.canaries[0].new_name.as_deref(), Some("The University of Sheffield"));
     assert!(one_page.canaries[0].merged);
-    assert_eq!(one_page.population.orgs, 22, "a canary below the population is counted there only");
+    assert_eq!(one_page.population.orgs, 24, "a canary below the population is counted there only");
     // Pages of three: the same plan, field for field — the samples are hash-chosen, not page-chosen.
     let paged = plan(&db, 3, None, &[18, 1, 99]).await;
     assert_eq!(paged, one_page);
