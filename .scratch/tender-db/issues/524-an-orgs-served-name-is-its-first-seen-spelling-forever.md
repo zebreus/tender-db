@@ -738,3 +738,30 @@ These figures come from job 2492's totals and its 30-per-bucket samples, simulat
 4. Re-run the dry plan, re-judge the samples with the same workflow, and decide 2b's go from that reading. Refine the
    holds (consortium lead-member identifier, legal_form_family first-token misreads, gb_legal_family `Public Ltd
    Company` and trailing ownership notes) as a later unit; they only block.
+
+### Unit 2a.1 — built, reviewed, held back (2026-10-15)
+
+- Built as `0c52fef` and gated green (1,835 s). It is NOT on main: its review (workflow wf_970120c3-cb0, with a
+  Python port of the keys replayed over the judged samples) found:
+  - **The fold alone fixes 3 of the 4 judged wrongs.** 13731240 and 13839658 become S1 keeps. 17348355 becomes a bar
+    keep (H=10, 12/22 < 55%). 15075247 (CDC) is caught only by the initialism hold. Six accent-only R1 flips also
+    become S1. Cost: two right R1 changes are lost (2969471 õ→ő, 10982286 → Hydria).
+  - **The R2 holds over-block.** 447 of 1,948 R2 changes are held (123 initialism, 324 truncation), 4 of the 13 right
+    samples among them. The initialism arm fires on legal-form abbreviations (`SRL`, `SA`), on 2-letter tokens (`EY`
+    ↔ Ernst & Young) and on short words in ALL-CAPS names. The truncation arm's motivating case is already fixed by
+    the fold.
+  - **The display order regressed.** "More non-ASCII letters first" applied across a whole cluster, which also merges
+    t/a clauses, parentheticals and legal forms. So `Acme Ltd t/a Café Rouge` (1) beat `Acme Ltd` (20), and
+    `Acme Sàrl` (1) beat `Acme GmbH` (20).
+  - **A family-hold blind spot.** `Sàrl` / `S.à r.l.` drop out of the folded vote key, but the unfolded
+    `legal_form_family` cannot see them, so AG→Sàrl changed with no hold.
+  - **Mojibake.** Italian word-final `UniversitÃ\u00a0…` folds into the right cluster and wins on marked letters.
+- **Unit 2a.2** (builder running):
+  - the marked-letter preference applies only between true twins (equal after lower, fold and dropping punctuation);
+  - the family hold folds before reading the family;
+  - a `mojibake` unfit reason;
+  - the truncation arm is dropped;
+  - the initialism arm needs a 3–5 letter upper-case token in a non-ALL-CAPS spelling, never a legal-form token,
+    matching a run of 2 or more head words;
+  - rule epoch `524u2-v4`.
+  Deploy after the 534 unit-3 refold, then re-run dry and re-judge.
