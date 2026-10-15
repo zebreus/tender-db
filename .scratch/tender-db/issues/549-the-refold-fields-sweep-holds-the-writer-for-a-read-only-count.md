@@ -1,8 +1,7 @@
 # 549 — `refold-fields`' carrier sweep holds the single writer for ~9 minutes of read-only work, even on a sizing run that writes nothing
 
-Status: ready-for-agent — unit 1 SCOPED 2026-10-15 (below). Next: unit 2a (move `notice_ids_carrying_fields`, `notice_ids_with_section_kind` and `projected_notice_count_for_profiles` to the reader pool, with a borrow per window) and unit 2b (the dry R2/R3 plans on a reader), as one build with tests.
-507). Next: unit 1, list every read-only accessor that runs on the writer for more than a second, then move them to
-the reader pool.
+Status: ready-for-agent — units 2a and 2b built at 79fccdb (2026-10-15). Next: gate and deploy, then a sizing
+`refold-fields` (`expect: 1`) that journals no `writer acquired after a … s wait` line.
 Kind: operations (writer contention)
 Relates to:
 - 20 (read-only accessors use a pooled reader, "never the writer");
