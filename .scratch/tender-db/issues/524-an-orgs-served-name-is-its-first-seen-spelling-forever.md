@@ -1,9 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — UNIT 1 DONE (job 2492). UNIT 2 DECIDED (panel wf_8a507dec-00b). UNIT 2a BUILT, reviewed,
-gated and DEPLOYED `fa2677c` 2026-10-15 05:11 UTC. The dry plan (job 2501) was judged on its uniform samples (below):
-about 3.7% of changes would serve a worse name, from two systemic causes. NEXT: unit 2a.1 (fold Latin diacritics in
-the vote key; an R2 abbreviation and truncation hold; the 334 canary's expectation), re-run dry, re-judge, then 2b.
+Status: ready-for-agent — UNIT 2b DEPLOYED `11803dd` 2026-10-15 12:3x UTC, and its wet run has begun. Plan 2515 (rule `524u2-v5`) has 28,707 changes, 553 holds and 0 unexpected canaries. Its uniform samples, judged: 39 right, 21 neutral, 0 wrong of 63; plan 2501 was ~3.7% worse. Canaries 2516: 5 renamed. Capped run 2517: 500 renamed, 0 drifted, 0 raced. The full run is HELD: 137 planned display spellings carry a whitespace run (org 22609166 serves `Julius Brune GmbH  Co. KG`, its `&` dropped, on a byte-order tie), and S1 would make each of them permanent. NEXT: rule `524u2-v6` (serve the display spelling whitespace-collapsed, spellings that differ only in whitespace counted together), gate, deploy, re-plan, diff against 2515, then the full run, re-dry, org-head-drift and build-org-match-keys. Unit 2c (weekly upkeep) follows. Hold over-blocking is filed as 548.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -797,3 +794,42 @@ These figures come from job 2492's totals and its 30-per-bucket samples, simulat
      32 (2x passes). It is the buyer's own published form, the same body as `Communauté d'agglomération Plaine
      Vallée`. A 2-letter R1 initialism guard would also hold right brand changes (`EY`), so R1 stays un-second-
      guessed. The canary now expects change:R1 "CA Plaine Vallée".
+
+## Unit 2b — deployed and the wet run started (2026-10-15)
+
+- **Deploy `11803dd`** at 12:3x UTC, after the 534 refold (2513) ended. It carries unit 2b and both review rounds
+  (`f3d5d06`, `e6ffd22`, `50b1e67`).
+- **Dry plan 2515** (rule `524u2-v5`, binary `11803dd`):
+  - **Walked:** 5,677,877 orgs and 49,688,766 mention rows.
+  - **CHANGES 28,707:** R0e 1, R0n 2, R1 27,132 and R2 1,572.
+  - **HOLDS 553:**
+    - consortium_removed 251;
+    - family 84;
+    - gb_family 13;
+    - initialism 34;
+    - nhs_check 1;
+    - no_fit 170.
+  - **Canaries:** 0 unexpected.
+- **Judged on its uniform samples** (workflow wf_f9b41c3f-643):
+  - **Changes:** of 63 sampled, 39 right, 21 neutral and 0 wrong. Three first-reader "wrong" calls were all refuted:
+    - 21558007 and 11206874 checked out as renames in the French register;
+    - 22550865 has a majority short form.
+  - **Holds and keeps** over-block rather than mis-serve. These holds would have stopped a change judged right:
+    - consortium_removed 9 of 12;
+    - family 9 of 12;
+    - gb_family 10 of 12;
+    - initialism 10 of 30;
+    - no_fit 1 of 12 (`vivida bkk`, lower-case by design).
+  - **bar keeps:** 3 of 12, the known 2x cases (6071658 EPF, 10982286 Hydria) and 5778 (issue 456).
+  - **D4 keeps:** 12 of 12 justified. Filed as 548.
+- **Canaries 2516:** the 5 decided canaries, 5 ready, 5 renamed, in 1 window. Live on `/v1/organizations`.
+- **Capped 2517** (`max_groups` 500): 28,702 ready, 5 already, 0 drifted, 0 gone; 500 renamed; 0 raced. All 30
+  `applied_samples` serve their new name live.
+- **Full run held: whitespace runs in the display spelling.**
+  - 137 planned new names carry a whitespace run. In 36 of them a spelling with no run ties on votes.
+  - Org 22609166: `Julius Brune GmbH  Co. KG` (the `&` dropped) ties 2-2 with `Julius Brune GmbH & Co. KG`, and
+    the byte-wise tie-break picks it (0x20 < 0x26).
+  - S1 keeps an applied head byte for byte, so these spellings would stay forever.
+  - None of the 505 applied heads has one: they are the lowest org ids, up to 11,210.
+  - Fix, rule `524u2-v6`: group a cluster's fit spellings by their whitespace-collapsed form, summing their votes,
+    and serve the collapsed form.
