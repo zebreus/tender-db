@@ -1,6 +1,6 @@
 # 533 — `status=open` serves procedures their newest notice closed or awarded: a no-winner result or UK12 termination inherits the contract notice's deadline, and DÖE sdk-0.1 award notices publish one of their own
 
-Status: ready-for-agent — unit 1 DECIDED 2026-10-15, and 1(a)'s exemptions RE-DECIDED the same day after step 0a's stop rule fired (`## Decision 1(a) re-made`, below; panel wf_18caa669-8aa): exempt = K1 over the chain (+ legacy `TED-DPS`) || K2 || E2 || (W: an admission window over 365 days && !D: an explicit legacy no-award). 1(b) and 1(c) stand; step 0c done. Step 0d DONE 2026-10-15 (no stop: 153 close, 33 open). NEXT: step 0b (per-lot population), and issue 550 (R2.0.9 award blocks read `clos-nw` by inference) decided before the build, since a wrongly inferred `clos-nw` closes a Tender here.
+Status: ready-for-agent — unit 1 DECIDED 2026-10-15, and 1(a)'s exemptions RE-DECIDED the same day after step 0a's stop rule fired (`## Decision 1(a) re-made`, below; panel wf_18caa669-8aa): exempt = K1 over the chain (+ legacy `TED-DPS`) || K2 || E2 || (W: an admission window over 365 days && !D: an explicit legacy no-award). 1(b) and 1(c) stand; step 0c done. Step 0d DONE 2026-10-15 (no stop: 153 close, 33 open); step 0b DONE (the lot term closes 11 lots in 7 open Tenders, all one-shots). NEXT: issue 550 (R2.0.9 award blocks read `clos-nw` by inference) decided before the build, since a wrongly inferred `clos-nw` closes a Tender here.
 Kind: API semantics / data quality (read layer: `status` on `/v1/tenders` and `/v1/lots`, SSE and webhook filters; the fold's head deadline)
 Relates to:
 - 273 (RESOLVED): `status` is a range on the indexed head column `t.current_deadline`; a fix must stay one.
@@ -408,6 +408,16 @@ first one), W's anchor, the window, own(H)'s reasons and markers, and the first-
   head notice carries `TED-PROCUREMENT_UNSUCCESSFUL` beside `TED-NO_AWARDED_CONTRACT`).
 - Stop rules: no row read as a live scheme closes; W keeps open no row that reads as a one-shot with a window over 400
   days (the long-window rows are schemes, ended schemes or the typo). Latency of the closers: median 10.7 days.
+
+**Step 0b — read 2026-10-15.** One bounded read (plan read locally first: `SEARCH t USING INDEX
+tenders_current_deadline`, then `(tender_id, seq)` and PK seeks): the open-head Lot-kind lots whose head notice gives a
+`clos-nw` result and whose every result is `clos-nw` — 418 lots in 200 Tenders, 186 of them the closing cohort above.
+Outside it, the lot term alone would close **27 lots in 14 Tenders** that stay open. Read on the public API with the
+re-made exemptions: **11 lots in 7 Tenders close**, all one-shot calls (windows 17–277 days: 517841, 8804700, 8805828,
+8579112, 190875, 734185, 8585745 — e.g. 8585745's LOT-0001 `clos-nw` beside five lots with no result); **16 lots in 7
+Tenders stay open** through W or K1 — the two `Arzneimittelverträge mit Beitrittsoption` open-houses (1040643 717 days,
+893495 682), the DPSes 8460540, 7842081, 8419587 and the DIS 643970 (K1 and W), and 934849 (a one-shot telemedicine
+call whose 394-day window keeps its one `clos-nw` lot open beside seven awarded lots — an accepted wrongly-open lot).
 
 **Rule-branch tests to add:** a CN `dps-list` then a CAN `none` keeps K1; `TED-DPS` on a CAN keeps K1; W at 366 days
 open and at 364 closes; a deadline-less PIN or UK2 does not anchor W; D overrides W but not K1.
