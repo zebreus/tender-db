@@ -299,7 +299,8 @@ chain). A missing id is <code>404</code>.</p>
 <p><strong>A party names its organization twice.</strong> Each <code>parties[]</code>
 entry, and each bid's <code>parties[]</code> entry, carries <code>organization_name</code>,
 the organization's <em>head</em> name &mdash; one name for every tender the organization
-appears on &mdash; and <code>mention_name</code>, the name the party's anchoring notice
+appears on, the <code>name</code> <code>/v1/organizations</code> serves &mdash; and
+<code>mention_name</code>, the name the party's anchoring notice
 published for it, served whether or not the two agree (null only when that notice published
 no name). The anchoring notice is the version's own, or an earlier one of the chain when a
 later notice republished no party in that role: parties carry forward role by role. The two
@@ -308,7 +309,18 @@ They also differ for a bad one: a party binds to an organization by its official
 identifier before its name, so a notice that published another organization's identifier
 on a party puts that party &mdash; and its <code>organization_id</code> &mdash; on the
 other organization, whose head then names it. <code>mention_name</code> still says what
-the notice said (issue 456). <code>lot_results[].winners[]</code> carry the head only: a
+the notice said (issue 456). For an organization with an identifier the head is
+<em>elected</em> from the names its notice mentions published (issue 524): the operator's
+<code>refresh-org-names</code> job serves the spelling most of them agree on (casing,
+diacritics, <code>the</code> and a legal form count as one name), and only past a
+conservative bar &mdash; at least 55% of the mentions and twice the current head's, or a head
+no more than one mention says, or an empty or placeholder one; a head in another script than
+its mentions (TED's English rendering) stays. So the head can change with no new notice, and
+every tender the organization is on shows the new name at once. The rename arrives as an
+<code>organization</code> <code>changed</code> event, not a Tender one: the parties join the
+organization when read. Until the job has run on an organization, and always for one without
+an identifier (whose name is its matching key), the head is the first spelling a notice
+published. <code>lot_results[].winners[]</code> carry the head only: a
 winner has no anchor to the notice's party block. In eForms the winning bid's
 <code>parties[]</code> normally carry its published name. The detail's <code>parties[]</code>
 (role <code>winner</code> or <code>Tenderer</code>) carry it only while the version's parties

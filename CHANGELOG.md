@@ -4,6 +4,64 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 524, unit 2b) — an organization's `name` is elected from its mentions, not its first-seen spelling
+
+`name` on `/v1/organizations` (and `parties[].organization_name`, `lot_results[].winners[].organization_name`,
+`bids[].parties[].organization_name`, `organizations.name` on `/v1/sql`) was the first spelling any notice
+published for the organization, kept forever. Merges and refreshed mentions left heads that few or none of
+an organization's notices say: the University of Sheffield served as `Sheffield Hallam University` over 16
+Sheffield mentions, a German review chamber as `s.o.`.
+
+For an organization WITH an identifier, the head is now elected from the names its mentions published
+(ADR-0013's 2026-10-15 amendment). The operator's `refresh-org-names` job serves the spelling of the mention
+cluster most of them agree on (casing, diacritics, `the` and a legal form count as one name), and only past a
+conservative bar: at least 55% of the mentions and twice the current head's, a head no more than one mention
+says, or an empty or placeholder head. A head in another script than its mentions (TED's English rendering)
+stays, and so does every head the bar does not clear.
+
+- A rename arrives as `organization changed` on `/v1/changes`, the SSE streams and webhooks. No `tender
+  changed` is published: the parties join the organization when read, so every tender it is on shows the new
+  name at once.
+- `name_norm` follows the head, so `?name_prefix=` finds an organization by its elected name; its first-seen
+  spelling is matched no longer.
+- An organization WITHOUT an identifier keeps its first-seen name: there the name is its matching key.
+- What one notice published is unchanged, on `parties[].mention_name` and `organization_mentions.name`.
+
+Also: the `next_cursor` of a `?name_prefix=` search is now the last row's stored search key. It was rebuilt
+from the lower-cased name, which differs from the key where a name has a doubled space or a trailing `.`,
+`,` or `;`, and the next page then repeated a row. A cursor issued before is still accepted.
+
+## Unreleased (issue 529) — Find a Tender's withheld sole trader `Individual` is no longer a party without an identifier
+
+Find a Tender publishes a withheld sole-trader supplier under the name `Individual`. A bare one, or one carrying the
+s.94 placeholder PPONs (issue 522), bound by name, so every withheld UK sole trader pooled into one organization named
+`Individual`. Such a party is now dropped, like the other withheld-supplier stand-ins. It is not served in
+`parties[]`, `bids[].parties` or `lot_results[].winners`, and the pooled organization is removed (`organization
+removed`). The result keeps the publisher's decision (`selec-w`) and its awarded value. An `Individual` that carries an
+identifier of its own is still a party. A name that merely contains the word (`Individual Centred Care`) is unchanged.
+
+## Unreleased (issue 534) — legacy TED parties serve canonical roles for award winners, mediation and appeal bodies
+
+Legacy TED notices (R2.0.8/R2.0.9) serve a party's role from the element that names it. Several elements were served
+verbatim:
+- `AWARD_AND_CONTRACT_VALUE` now serves `winner`;
+- `RESPONSIBLE_FOR_MEDIATION_PROCEDURES` and `BODY_RESPONSIBLE_MEDIATION` serve `mediation-body`;
+- `BODY_RESPONSIBLE_APPEAL` serves `review-body`;
+- `SERVICE_INFORMATION_LODGING_APPEALS` and R2.0.9's `ADDRESS_REVIEW_INFO` serve `appeal-information` (it was served as
+  `review-body`).
+
+The tenders projected before the change are refolded (about 2.0M notices, 1.1M tenders) and publish `tender changed`.
+Until that refold has finished, an older tender may still serve the previous value.
+
+## Unreleased (issue 536) — `publication_id=` matches TED's own spelling, the OJ S form and every stored width
+
+`/v1/notices?publication_id=` and `/v1/tenders?publication_id=` were an exact string match on the stored form, so
+TED's own spelling (`83685-2026`), the OJ S form (`2017/S 044-079997`) and the `/docs` example found nothing, while a
+wrong-width pad could return an FTS notice. A TED lookup now tries every stored width of the same number (at most four
+spellings), and widths that only TED stores match only TED rows. When the page matched, `resolved_filters.publication_id`
+reports `{"asked": <the raw value>, "matched": [<stored spellings>]}`. A padded width only TED uses no longer returns a
+Find a Tender notice that happens to share it.
+
 ## Unreleased (issue 522) — the UK's withheld-supplier PPONs no longer name an organization
 
 Find a Tender publishes placeholder PPONs on the suppliers a notice withholds under s.94 of the Procurement Act 2023:

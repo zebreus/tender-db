@@ -145,9 +145,12 @@ selector, never a predicate; the fold-time surfaces keep the deterministic defau
 
 ## Amendment 2026-10-15 — D4's head is ELECTED from the org's mentions, not first-seen (issue 524)
 
-Status: recorded with unit 2a, the dry `refresh-org-names` plan (`store::elect_head`,
-`Db::plan_org_name_refresh`), so the plan's semantics are written down before any head moves. It
-takes effect at unit 2b's first wet run, which marks it effective; until then no head is rewritten.
+Status: **effective** with unit 2b. Recorded with unit 2a, the dry `refresh-org-names` plan
+(`store::elect_head`, `Db::plan_org_name_refresh`), so the plan's semantics were written down before
+any head moved; unit 2b builds the wet run (`refresh-org-names` with `dry_run: false`,
+`Db::apply_org_name_refresh`) and its undo (`revert-org-name-refresh`). A head is rewritten only by
+an operator's wet run of a stored dry plan elected under the same rule epoch by the same binary, and
+from that run on `organizations.name` is the elected head, not the first-seen spelling.
 
 D4 called `organizations.name` "the ENG-or-original denormalized head". The mint never did that. It
 writes the first mention's first-seen spelling, in whatever language (`ingest::project`: "the
@@ -228,7 +231,11 @@ Decided:
    name-search key, never a bind key. `organization_names` and `org_name_verdicts` are untouched.
    `org_match_keys` catches up at its next wholesale build.
 8. **Announcement.** Every change writes a byte-exact pre-image to `org_name_refresh_log` (revertible by
-   job) and one seq-less `organization changed` row. No Tender or lot rows are written:
+   job: `revert-org-name-refresh` restores it under a compare-and-set on the pair the job wrote) and
+   one seq-less `organization changed` row. The rename itself is a compare-and-set on the plan's
+   pre-image (`name`, `name_norm`, `identifier IS NOT NULL`), after a pre-pass that re-elects every
+   planned organization and aborts the run, writing nothing, when more than max(2%, 5) have drifted
+   or gone since the plan. No Tender or lot rows are written:
    `parties[].organization_name` is a read-time join of the organization, so under ADR-0017 D5 the
    moved entity is the organization. This follows the identifier-restore precedent.
 9. **Upkeep.** A weekly capped auto-run keeps heads current after merges and drops. A from-archive

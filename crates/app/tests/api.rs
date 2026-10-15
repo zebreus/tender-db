@@ -2089,6 +2089,43 @@ async fn organizations_can_be_searched_by_name_prefix() {
     assert!(ig.iter().any(|f| f == "name_prefix"));
 }
 
+/// Issue 524 unit 2b: the name search's cursor is the last row's STORED `name_norm`. It was rebuilt
+/// from `name.to_lowercase()`, which diverges wherever `org_name_norm` collapses whitespace or strips
+/// trailing punctuation: `ZZQ  Alpha Ltd.` (stored `zzq alpha ltd`) gave the cursor `zzq  alpha ltd.`,
+/// which sorts BEFORE its own row, so page two repeated it. One-row pages must reassemble the list.
+#[tokio::test]
+async fn the_name_cursor_survives_a_name_that_diverges_from_its_key() {
+    let server = Server::start("org_name_cursor").await;
+    let raw = store::turso::Builder::new_local(&server.path).build().await.expect("raw");
+    let conn = raw.connect().expect("connect");
+    for (id, name) in [(9101i64, "ZZQ  Alpha Ltd."), (9102, "ZZQ Beta,"), (9103, "zzq   gamma")] {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, 'DE', 'vat', ?, ?, ?, 0, 1700000000)",
+            (
+                store::turso::Value::Integer(id),
+                store::turso::Value::Text(format!("DE{id}")),
+                store::turso::Value::Text(name.into()),
+                store::turso::Value::Text(store::org_name_norm(name)),
+            ),
+        )
+        .await
+        .expect("insert org");
+    }
+    let mut seen: Vec<i64> = Vec::new();
+    let mut cursors: Vec<String> = Vec::new();
+    let mut url = "/v1/organizations?name_prefix=zzq&limit=1".to_owned();
+    for _ in 0..5 {
+        let page = server.get(&url).await;
+        seen.extend(items(&page).iter().map(|o| o["id"].as_i64().expect("id")));
+        let Some(next) = page["next_cursor"].as_str() else { break };
+        cursors.push(next.to_owned());
+        url = format!("/v1/organizations?name_prefix=zzq&limit=1&cursor={}", urlenc(next));
+    }
+    assert_eq!(seen, vec![9101, 9102, 9103], "each row once, in key order");
+    assert_eq!(cursors, vec!["9101~zzq alpha ltd", "9102~zzq beta"], "the stored key, not the lower-cased name");
+}
+
 fn urlenc(s: &str) -> String {
     // Percent-encode per UTF-8 BYTE (an umlaut is two %XX escapes, not one).
     s.bytes()

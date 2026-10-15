@@ -498,6 +498,30 @@ pub(crate) const SCHEMA: &str = "
     -- through this partial index over those rows alone.
     CREATE INDEX IF NOT EXISTS org_merge_log_nhs_body ON org_merge_log(rule) WHERE rule = 'nhs-body';
 
+    -- Issue 524 unit 2b: every served head `refresh-org-names` rewrote, with its byte-exact
+    -- pre-image (`old_name`, `old_name_norm`), what it wrote, the rule and the election's
+    -- counts (`evidence`, JSON), so `revert-org-name-refresh` can restore one job's renames
+    -- under a compare-and-set on the pair it wrote. No FK and not on /v1/sql's allow-list
+    -- (the org_merge_log precedent): a later merge or rebuild can retire the org, and the
+    -- row stays as history. A from-archive rebuild re-mints first-seen heads under new
+    -- ids, so after one this ledger is historical only.
+    CREATE TABLE IF NOT EXISTS org_name_refresh_log (
+        org_id        INTEGER NOT NULL,
+        at            INTEGER NOT NULL, -- unix seconds
+        job_id        INTEGER,
+        rule          TEXT NOT NULL,    -- R0e | R0n | R1 | R2
+        old_name      TEXT NOT NULL,
+        old_name_norm TEXT,
+        new_name      TEXT NOT NULL,
+        new_name_norm TEXT NOT NULL,
+        evidence      TEXT NOT NULL,    -- JSON
+        reverted_at   INTEGER,
+        reverted_job  INTEGER,
+        PRIMARY KEY (org_id, at)
+    ) STRICT;
+    -- The revert reads one job's rows; a seek instead of a ledger scan.
+    CREATE INDEX IF NOT EXISTS org_name_refresh_log_job ON org_name_refresh_log(job_id);
+
     -- Issue 460: the identifiers a merge folded into an organization. The
     -- identity index is ONE column on `organizations`, and every merge deletes
     -- the loser's row, so before this table a loser's identifier (a PPON beside

@@ -4734,6 +4734,21 @@ pub async fn organizations_by_name(
     cursor: Option<(String, i64)>,
     limit: i64,
 ) -> turso::Result<Vec<OrganizationRow>> {
+    Ok(organizations_by_name_keyed(conn, filter, prefix, cursor, limit).await?.into_iter().map(|(_, r)| r).collect())
+}
+
+/// [`organizations_by_name`] with each row's STORED `name_norm` beside it — the key the page is
+/// ordered by, so the next cursor is built from it (issue 524 unit 2b). A cursor rebuilt from the
+/// served name (`name.to_lowercase()`) diverges wherever `org_name_norm` collapses whitespace or
+/// strips trailing punctuation (`ACME  Ltd.` is keyed `acme ltd`), and the next page then repeats
+/// or skips rows. `None` only for a row with no `name_norm`, which no prefix range can reach.
+pub async fn organizations_by_name_keyed(
+    conn: &Connection,
+    filter: &Filter,
+    prefix: &str,
+    cursor: Option<(String, i64)>,
+    limit: i64,
+) -> turso::Result<Vec<(Option<String>, OrganizationRow)>> {
     let q = organizations_by_name_query(filter, prefix, cursor.as_ref(), limit);
     let mut rows = q.rows(conn, organization_row).await?;
     let merged = merged_leg(conn, filter, Some(prefix), &rows, |id, norm| {
@@ -4745,7 +4760,7 @@ pub async fn organizations_by_name(
         rows.sort_by(|(a_norm, a), (b_norm, b)| (a_norm, a.id).cmp(&(b_norm, b.id)));
         rows.truncate(usize::try_from(limit).unwrap_or(0));
     }
-    Ok(rows.into_iter().map(|(_, r)| r).collect())
+    Ok(rows)
 }
 
 /// The statement [`organizations_by_name`] builds, without running it — the plan

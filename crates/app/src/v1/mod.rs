@@ -1801,13 +1801,17 @@ async fn organizations_by_name(
         }
     } else {
         let reader = state.readers.get().await?;
-        read::organizations_by_name(&reader, &filter, &prefix, cursor, limit + 1).await?
+        read::organizations_by_name_keyed(&reader, &filter, &prefix, cursor, limit + 1).await?
     };
+    // Issue 524 unit 2b: the cursor is the last row's STORED `name_norm`, the key the page is
+    // ordered by. `name.to_lowercase()` diverged from it wherever `org_name_norm` collapses
+    // whitespace or strips trailing punctuation, and the next page repeated or skipped rows.
     let next = (rows.len() as i64 > limit).then(|| {
-        let last = &rows[limit as usize - 1];
-        format!("{}~{}", last.id, last.name.to_lowercase())
+        let (norm, last) = &rows[limit as usize - 1];
+        format!("{}~{}", last.id, norm.clone().unwrap_or_else(|| store::org_name_norm(&last.name)))
     });
     rows.truncate(limit as usize);
+    let rows: Vec<read::OrganizationRow> = rows.into_iter().map(|(_, row)| row).collect();
     let honoured = store::read::Collection::Organizations.honoured_params();
     let ignored: Vec<&str> =
         params.provided_filters().into_iter().filter(|f| !honoured.contains(f)).collect();

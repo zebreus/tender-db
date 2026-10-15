@@ -89,8 +89,10 @@ pub use canonical::{
 };
 pub use head_election::{
     HEAD_ELECT_TOP_MIN, HEAD_ELECTION_EPOCH, HEAD_HOLD_NO_FIT, HeadElectFns, HeadElectOrg, HeadElection, HeadKeep,
-    HeadRefreshEntry, HeadRule, HeadVerdict, ORG_NAME_REFRESH_LISTING_CAP, ORG_NAME_REFRESH_SPELLINGS, OrgNameRefreshArgs,
-    OrgNameRefreshPlan, elect_head, elect_head_counted,
+    HeadRefreshEntry, HeadRule, HeadVerdict, ORG_NAME_REFRESH_APPLIED_SAMPLES, ORG_NAME_REFRESH_DRIFT_SAMPLES,
+    ORG_NAME_REFRESH_LISTING_CAP, ORG_NAME_REFRESH_SPELLINGS, ORG_NAME_REFRESH_WINDOW, OrgNameRefreshApplied,
+    OrgNameRefreshApplyArgs, OrgNameRefreshArgs, OrgNameRefreshDrift, OrgNameRefreshPlan, OrgNameRefreshRename,
+    OrgNameRefreshReverted, OrgNameRefreshRevertArgs, OrgNameRefreshTarget, elect_head, elect_head_counted,
 };
 pub use jobs::QueuedJobRow;
 pub use publication_audit::PublicationAudit;

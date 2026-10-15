@@ -18,10 +18,11 @@ use serde::Serialize;
 use turso::Value;
 
 use crate::canonical::{
-    HEAD_DRIFT_AWARD_SUMMARY, HeadDriftCount, IN_CHUNK, ORG_HEAD_DRIFT_ORGS_SQL, all_caps, org_head_drift_merged_sql,
-    org_head_drift_mentions_sql, org_name_norm, placeholders,
+    HEAD_DRIFT_AWARD_SUMMARY, HeadDriftCount, IN_CHUNK, ORG_HEAD_DRIFT_ORGS_SQL, all_caps, append_change,
+    org_head_drift_merged_sql, org_head_drift_mentions_sql, org_name_norm, placeholders,
 };
-use crate::{Db, int, opt_text_of, text};
+use crate::checkpoint::{CheckpointMode, checkpoint_on};
+use crate::{Db, int, opt_int_of, opt_text_of, text};
 
 /// Issue 524 unit 2a: the election rule's epoch, stamped on every plan. Bump it whenever
 /// [`elect_head`] or an injected function it is run with changes what it decides, so unit 2b's wet
@@ -952,6 +953,603 @@ fn refresh_entry(org: &PageOrg, j: &Judged, args: &OrgNameRefreshArgs<'_>) -> He
         eng: j.eng,
         in_population: j.in_population,
         spellings,
+    }
+}
+
+// ---- Issue 524 unit 2b: the wet path — apply a stored plan, and revert one job's renames.
+
+/// Issue 524 unit 2b: the planned changes one write transaction of [`Db::apply_org_name_refresh`]
+/// (and one of [`Db::revert_org_name_refresh`]) holds.
+pub const ORG_NAME_REFRESH_WINDOW: usize = 2_000;
+
+/// Issue 524 unit 2b: the compare-and-set rename. It writes only a row still holding the plan's
+/// byte-exact pre-image, and only an identifier-bearing one: the election excludes `identifier IS
+/// NULL` (E1, the issue-234 bind key), and an identifier a case review stripped since the plan must
+/// not let a provisional row's key move.
+pub(crate) const ORG_NAME_REFRESH_CAS_SQL: &str = "UPDATE organizations SET name = ?, name_norm = ? \
+     WHERE id = ? AND name = ? AND name_norm IS ? AND identifier IS NOT NULL";
+
+/// Issue 524 unit 2b: one ledger row per rename, in the rename's transaction.
+pub(crate) const ORG_NAME_REFRESH_LEDGER_SQL: &str = "INSERT INTO org_name_refresh_log \
+     (org_id, at, job_id, rule, old_name, old_name_norm, new_name, new_name_norm, evidence) \
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+/// Issue 524 unit 2b: an organization's latest ledger instant, a seek on the primary key. A rename's
+/// `at` is `max(now, latest + 1)`, so a revert and a re-apply inside one second cannot collide on
+/// `(org_id, at)`.
+pub(crate) const ORG_NAME_REFRESH_LATEST_AT_SQL: &str = "SELECT MAX(at) FROM org_name_refresh_log WHERE org_id = ?";
+
+/// Issue 524 unit 2b: the renames one job has committed (a resumed run's `max_groups` counts them).
+pub(crate) const ORG_NAME_REFRESH_JOB_COUNT_SQL: &str = "SELECT COUNT(*) FROM org_name_refresh_log WHERE job_id = ?";
+
+/// Issue 524 unit 2b: one job's unreverted renames, through `org_name_refresh_log_job`.
+pub(crate) const ORG_NAME_REFRESH_JOB_ROWS_SQL: &str = "SELECT org_id, at, old_name, old_name_norm, new_name, \
+     new_name_norm FROM org_name_refresh_log WHERE job_id = ? AND reverted_at IS NULL ORDER BY org_id, at";
+
+/// Issue 524 unit 2b: the compare-and-set restore, guarded on the pair the rename wrote.
+pub(crate) const ORG_NAME_REVERT_CAS_SQL: &str =
+    "UPDATE organizations SET name = ?, name_norm = ? WHERE id = ? AND name = ? AND name_norm IS ?";
+
+/// Issue 524 unit 2b: one planned change as the wet path takes it — a stored plan's `planned` entry
+/// (the app reads the report; store carries no JSON parser).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OrgNameRefreshTarget {
+    pub org_id: i64,
+    /// `R0e` | `R0n` | `R1` | `R2`: the rule the plan elected the change by.
+    pub rule: String,
+    /// The pre-image the plan read: the compare-and-set's guard.
+    pub old_name: String,
+    pub old_name_norm: Option<String>,
+    pub new_name: String,
+}
+
+/// Issue 524 unit 2b: [`Db::apply_org_name_refresh`]'s inputs.
+pub struct OrgNameRefreshApplyArgs<'a> {
+    /// The functions the plan was elected with: the pre-pass re-elects every target with them.
+    pub fns: HeadElectFns,
+    /// The stored plan's `planned` entries, already scoped to `org_ids` by the caller.
+    pub targets: Vec<OrgNameRefreshTarget>,
+    /// Apply at most this many of the targets that are still ready (the first by org id). A resumed
+    /// run counts the renames its job already committed against it.
+    pub max_groups: Option<u64>,
+    /// The job: the ledger's `job_id`, and whose resume cursor each window advances.
+    pub job_id: Option<i64>,
+    /// A resumed job's cursor: targets at or below this org id were committed by its earlier run.
+    pub resume_after: Option<i64>,
+    /// Targets per write transaction: [`ORG_NAME_REFRESH_WINDOW`] in the job.
+    pub window: usize,
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+    pub progress: &'a (dyn Fn(u64, &str) + Sync),
+}
+
+/// Issue 524 unit 2b: one target the pre-pass found drifted (or gone), and why.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct OrgNameRefreshDrift {
+    pub org_id: i64,
+    pub why: String,
+}
+
+/// Issue 524 unit 2b: the most drift samples [`OrgNameRefreshApplied`] lists.
+pub const ORG_NAME_REFRESH_DRIFT_SAMPLES: usize = 30;
+
+/// Issue 524 unit 2b: one rename a wet run committed, as its report samples it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct OrgNameRefreshRename {
+    pub org_id: i64,
+    pub rule: String,
+    pub old_name: String,
+    pub new_name: String,
+}
+
+/// Issue 524 unit 2b: the committed renames [`OrgNameRefreshApplied`] samples — the operator's spot
+/// check, since `org_name_refresh_log` is not on `/v1/sql`'s allow-list.
+pub const ORG_NAME_REFRESH_APPLIED_SAMPLES: usize = 30;
+
+/// Issue 524 unit 2b: what [`Db::apply_org_name_refresh`] did.
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
+pub struct OrgNameRefreshApplied {
+    /// Targets in scope (deduplicated), and those a resumed run skipped (at or below its cursor).
+    pub targets: u64,
+    pub resumed_past: u64,
+    /// A resumed run: the cursor it resumed after, and the renames its job's earlier run committed
+    /// (its ledger rows).
+    pub resumed_after: Option<i64>,
+    pub prior_applied: u64,
+    /// The pre-pass: still the plan's change (`ready`), already renamed to the plan's new pair
+    /// (`already`, a replayed window), changed since the plan (`drifted`), or deleted (`gone`).
+    pub ready: u64,
+    pub already: u64,
+    pub drifted: u64,
+    pub gone: u64,
+    /// `max(2% of the targets read, 5)`: drifted plus gone above it aborts the run before any write.
+    pub drift_limit: u64,
+    pub aborted: bool,
+    /// Ready targets past `max_groups`, left for a later run.
+    pub capped: u64,
+    /// Renamed (the compare-and-set held), with one ledger row and one `organization changed` row each.
+    pub applied: u64,
+    /// Ready at the pre-pass but changed before the window's compare-and-set: nothing written.
+    pub raced: u64,
+    pub windows: u64,
+    /// The last org id a committed window covered: the job's resume cursor.
+    pub cursor: Option<i64>,
+    pub stopped: bool,
+    /// The first [`ORG_NAME_REFRESH_DRIFT_SAMPLES`] drifted or gone targets, by org id.
+    pub drift_samples: Vec<OrgNameRefreshDrift>,
+    /// [`ORG_NAME_REFRESH_APPLIED_SAMPLES`] committed renames, uniform over the run (the planner's
+    /// sample order, the smallest `(org_id × 2654435761) mod 2³²`), listed by org id. A run of that
+    /// many renames or fewer lists every one.
+    pub applied_samples: Vec<OrgNameRefreshRename>,
+}
+
+/// Issue 524 unit 2b: [`Db::revert_org_name_refresh`]'s inputs.
+pub struct OrgNameRefreshRevertArgs<'a> {
+    /// The `refresh-org-names` job whose renames to restore.
+    pub job: i64,
+    /// The reverting job, stamped as `reverted_job`.
+    pub revert_job: Option<i64>,
+    pub window: usize,
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+    pub progress: &'a (dyn Fn(u64, &str) + Sync),
+}
+
+/// Issue 524 unit 2b: what [`Db::revert_org_name_refresh`] did.
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
+pub struct OrgNameRefreshReverted {
+    pub job: i64,
+    /// The job's ledger rows not yet reverted.
+    pub ledger_rows: u64,
+    /// Restored to the pre-image, stamped `reverted_at`, announced `organization changed`.
+    pub reverted: u64,
+    /// The row no longer holds the pair the rename wrote (renamed again since): left as it is.
+    pub renamed_again: u64,
+    /// The organization is gone (merged away, swept): nothing to restore.
+    pub gone: u64,
+    pub windows: u64,
+    pub stopped: bool,
+}
+
+/// The [`ORG_NAME_REFRESH_APPLIED_SAMPLES`] smallest-keyed renames, kept sorted by key.
+#[derive(Default)]
+struct Sampled {
+    items: Vec<((u64, i64), OrgNameRefreshRename)>,
+}
+
+impl Sampled {
+    fn admits(&self, key: (u64, i64)) -> bool {
+        self.items.len() < ORG_NAME_REFRESH_APPLIED_SAMPLES || self.items.last().is_some_and(|(last, _)| key < *last)
+    }
+
+    fn insert(&mut self, key: (u64, i64), rename: OrgNameRefreshRename) {
+        let at = self.items.partition_point(|(k, _)| *k < key);
+        self.items.insert(at, (key, rename));
+        self.items.truncate(ORG_NAME_REFRESH_APPLIED_SAMPLES);
+    }
+
+    fn into_by_org_id(self) -> Vec<OrgNameRefreshRename> {
+        let mut out: Vec<OrgNameRefreshRename> = self.items.into_iter().map(|(_, rename)| rename).collect();
+        out.sort_by_key(|rename| rename.org_id);
+        out
+    }
+}
+
+/// One target's pre-pass reading.
+enum Readiness {
+    Ready(HeadElection),
+    Already,
+    Drifted(String),
+    Gone,
+}
+
+/// The pre-pass: each target's organization read and re-elected as the planner read it (the same
+/// page SQL, mention read, voters and verdict probe), then compared with what the plan recorded.
+async fn read_readiness(
+    reader: &turso::Connection,
+    fns: &HeadElectFns,
+    targets: &[OrgNameRefreshTarget],
+) -> turso::Result<Vec<Readiness>> {
+    let mut out = Vec::with_capacity(targets.len());
+    for chunk in targets.chunks(IN_CHUNK) {
+        let ids: Vec<Value> = chunk.iter().map(|t| Value::Integer(t.org_id)).collect();
+        let mut orgs: HashMap<i64, PageOrg> = HashMap::new();
+        let mut rows = reader.query(&org_name_refresh_ids_sql(chunk.len()), ids.clone()).await?;
+        while let Some(row) = rows.next().await? {
+            orgs.insert(
+                int(&row, 0),
+                PageOrg {
+                    id: int(&row, 0),
+                    country: opt_text_of(&row, 1),
+                    identifier: opt_text_of(&row, 2),
+                    provisional: int(&row, 3) != 0,
+                    head: text(&row, 4),
+                    identifier_kind: opt_text_of(&row, 5),
+                    name_norm: opt_text_of(&row, 6),
+                    n: 0,
+                    spellings: HashMap::new(),
+                },
+            );
+        }
+        drop(rows);
+        let mut rows = reader.query(&org_head_drift_mentions_sql(chunk.len()), ids).await?;
+        while let Some(row) = rows.next().await? {
+            let Some(org) = orgs.get_mut(&int(&row, 0)) else { continue };
+            org.n += 1;
+            if let Some(name) = opt_text_of(&row, 1).filter(|name| !name.trim().is_empty()) {
+                *org.spellings.entry(name).or_default() += 1;
+            }
+        }
+        drop(rows);
+        for target in chunk {
+            let Some(org) = orgs.get(&target.org_id) else {
+                out.push(Readiness::Gone);
+                continue;
+            };
+            let new_norm = org_name_norm(&target.new_name);
+            if org.head == target.new_name && org.name_norm.as_deref() == Some(new_norm.as_str()) {
+                out.push(Readiness::Already);
+                continue;
+            }
+            if org.head != target.old_name || org.name_norm != target.old_name_norm {
+                let why = format!("the head is {:?} now, not the plan's {:?}", org.head, target.old_name);
+                out.push(Readiness::Drifted(why));
+                continue;
+            }
+            let Some(identifier) = org.identifier.as_deref() else {
+                out.push(Readiness::Drifted("the identifier is NULL now (E1)".to_owned()));
+                continue;
+            };
+            let mut election = org.elect(fns, false);
+            if matches!(election.verdict, HeadVerdict::Change { .. }) {
+                let mut rows = reader
+                    .query(
+                        HEAD_ELECT_VERDICT_PROBE_SQL,
+                        (
+                            Value::Text(identifier.to_owned()),
+                            Value::Text(org.identifier_kind.clone().unwrap_or_default()),
+                            Value::Text(org.country.clone().unwrap_or_default()),
+                        ),
+                    )
+                    .await?;
+                if rows.next().await?.is_some() {
+                    election = org.elect(fns, true);
+                }
+            }
+            match &election.verdict {
+                HeadVerdict::Change { rule, new } if rule.label() == target.rule && *new == target.new_name => {
+                    out.push(Readiness::Ready(election));
+                }
+                other => out.push(Readiness::Drifted(format!(
+                    "re-elected {}{}, not the plan's change:{} {:?}",
+                    other.label(),
+                    other.new_name().map(|n| format!(" {n:?}")).unwrap_or_default(),
+                    target.rule,
+                    target.new_name
+                ))),
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// The ledger's `evidence`: the epoch and the counts the rename was elected by. Every value is a
+/// number or a fixed ASCII label, so nothing needs escaping.
+fn refresh_evidence(rule: &str, election: &HeadElection) -> String {
+    format!(
+        "{{\"epoch\":\"{HEAD_ELECTION_EPOCH}\",\"rule\":\"{rule}\",\"voting\":{},\"top\":{},\"head\":{},\"second\":{},\
+         \"clusters\":{}}}",
+        election.voting, election.top, election.head_votes, election.second, election.clusters
+    )
+}
+
+impl Db {
+    /// Issue 524 unit 2b: the WET `refresh-org-names` — rename the heads a stored dry plan planned
+    /// (ADR-0013's 2026-10-15 amendment), each with a byte-exact pre-image in `org_name_refresh_log`
+    /// and one seq-less `organization changed` row.
+    ///
+    /// The caller has already refused a missing, truncated, other-epoch or other-binary plan and
+    /// scoped `targets` to `org_ids`. This refuses while `organization_mentions_org` or
+    /// `organization_merged_identifiers_org` is absent, as the planner does. Then:
+    /// 1. **Pre-pass.** Every target's organization is read and re-elected with `fns` as the planner
+    ///    elected it (the verdict probe included). A target is `ready` when the row still holds the
+    ///    plan's pre-image, still carries an identifier, and re-elects to the plan's rule and
+    ///    spelling; `already` when it holds the plan's new pair (a replayed window); `gone` when
+    ///    deleted; `drifted` otherwise. Drifted plus gone above `max(2%, 5)` of the targets read
+    ///    aborts the run here, before any write.
+    /// 2. **Windows** of `args.window` ready targets (the first `max_groups` by org id), each one
+    ///    [`Db::immediate`] transaction of compare-and-set renames ([`ORG_NAME_REFRESH_CAS_SQL`]:
+    ///    `name_norm` follows as [`org_name_norm`], the mint's derivation), their ledger rows and
+    ///    their `organization changed` rows. A row changed since the pre-pass fails its compare and
+    ///    is counted `raced`, with nothing written. After each COMMIT: the cursor doorbell, the job's
+    ///    resume cursor (the window's last org id), a TRUNCATE checkpoint, the progress line, and the
+    ///    stop flag (read before every window).
+    ///
+    /// No Tender or lot row is written: `parties[].organization_name` is a read-time join of the
+    /// organization, so under ADR-0017 D5 the moved entity is the organization alone.
+    pub async fn apply_org_name_refresh(
+        &self,
+        args: OrgNameRefreshApplyArgs<'_>,
+    ) -> turso::Result<OrgNameRefreshApplied> {
+        for index in ["organization_mentions_org", "organization_merged_identifiers_org"] {
+            if !self.has_index(index).await? {
+                return Err(turso::Error::Error(format!(
+                    "refresh-org-names (wet) refused: {index} is absent (a rebuild's Phase 1?), so the pre-pass \
+                     would scan its table; run `reindex` first. Nothing was read or written"
+                )));
+            }
+        }
+        let mut targets = args.targets;
+        targets.sort_by_key(|t| t.org_id);
+        targets.dedup_by_key(|t| t.org_id);
+        let mut report = OrgNameRefreshApplied { targets: targets.len() as u64, ..Default::default() };
+        if let Some(after) = args.resume_after {
+            let before = targets.len();
+            targets.retain(|t| t.org_id > after);
+            report.resumed_past = (before - targets.len()) as u64;
+            report.resumed_after = Some(after);
+            report.cursor = Some(after);
+            if let Some(job) = args.job_id {
+                let reader = self.reader().await?;
+                let mut rows = reader.query(ORG_NAME_REFRESH_JOB_COUNT_SQL, (Value::Integer(job),)).await?;
+                report.prior_applied = match rows.next().await? {
+                    Some(row) => int(&row, 0).max(0) as u64,
+                    None => 0,
+                };
+            }
+        }
+
+        (args.progress)(0, &format!("pre-pass: re-electing {} planned organization(s)", targets.len()));
+        let readiness = {
+            let reader = self.reader().await?;
+            read_readiness(&reader, &args.fns, &targets).await?
+        };
+        let mut ready: Vec<(&OrgNameRefreshTarget, HeadElection)> = Vec::new();
+        for (target, reading) in targets.iter().zip(readiness) {
+            match reading {
+                Readiness::Ready(election) => ready.push((target, election)),
+                Readiness::Already => report.already += 1,
+                Readiness::Gone | Readiness::Drifted(_) => {
+                    let why = match reading {
+                        Readiness::Drifted(why) => {
+                            report.drifted += 1;
+                            why
+                        }
+                        _ => {
+                            report.gone += 1;
+                            "the organization is gone".to_owned()
+                        }
+                    };
+                    if report.drift_samples.len() < ORG_NAME_REFRESH_DRIFT_SAMPLES {
+                        report.drift_samples.push(OrgNameRefreshDrift { org_id: target.org_id, why });
+                    }
+                }
+            }
+        }
+        report.ready = ready.len() as u64;
+        report.drift_limit = std::cmp::max(targets.len() as u64 / 50, 5);
+        if report.drifted + report.gone > report.drift_limit {
+            report.aborted = true;
+            return Ok(report);
+        }
+        if let Some(cap) = args.max_groups.map(|cap| cap.saturating_sub(report.prior_applied))
+            && ready.len() as u64 > cap
+        {
+            report.capped = ready.len() as u64 - cap;
+            ready.truncate(cap as usize);
+        }
+
+        let mut samples = Sampled::default();
+        for window in ready.chunks(args.window.max(1)) {
+            if (args.stop)() {
+                report.stopped = true;
+                break;
+            }
+            let now = crate::now_unix();
+            let conn = self.conn().await;
+            let (applied, raced) = Self::immediate(&conn, async {
+                let (mut applied, mut raced) = (Vec::new(), 0u64);
+                for (target, election) in window {
+                    let new_norm = org_name_norm(&target.new_name);
+                    let changed = conn
+                        .execute(
+                            ORG_NAME_REFRESH_CAS_SQL,
+                            (
+                                Value::Text(target.new_name.clone()),
+                                Value::Text(new_norm.clone()),
+                                Value::Integer(target.org_id),
+                                Value::Text(target.old_name.clone()),
+                                target.old_name_norm.clone().map_or(Value::Null, Value::Text),
+                            ),
+                        )
+                        .await?;
+                    if changed == 0 {
+                        raced += 1;
+                        continue;
+                    }
+                    let mut latest = conn.query(ORG_NAME_REFRESH_LATEST_AT_SQL, (Value::Integer(target.org_id),)).await?;
+                    let at = match latest.next().await? {
+                        Some(row) => opt_int_of(&row, 0).map_or(now, |last| now.max(last + 1)),
+                        None => now,
+                    };
+                    drop(latest);
+                    conn.execute(
+                        ORG_NAME_REFRESH_LEDGER_SQL,
+                        vec![
+                            Value::Integer(target.org_id),
+                            Value::Integer(at),
+                            args.job_id.map_or(Value::Null, Value::Integer),
+                            Value::Text(target.rule.clone()),
+                            Value::Text(target.old_name.clone()),
+                            target.old_name_norm.clone().map_or(Value::Null, Value::Text),
+                            Value::Text(target.new_name.clone()),
+                            Value::Text(new_norm),
+                            Value::Text(refresh_evidence(&target.rule, election)),
+                        ],
+                    )
+                    .await?;
+                    append_change(&conn, "organization", target.org_id, None, "changed", now).await?;
+                    applied.push(*target);
+                }
+                Ok((applied, raced))
+            })
+            .await?;
+            report.applied += applied.len() as u64;
+            report.raced += raced;
+            report.windows += 1;
+            for target in &applied {
+                let key = sample_key(target.org_id);
+                if samples.admits(key) {
+                    samples.insert(
+                        key,
+                        OrgNameRefreshRename {
+                            org_id: target.org_id,
+                            rule: target.rule.clone(),
+                            old_name: target.old_name.clone(),
+                            new_name: target.new_name.clone(),
+                        },
+                    );
+                }
+            }
+            let last = window.last().map(|(target, _)| target.org_id);
+            report.cursor = last;
+            if !applied.is_empty() {
+                self.publish_cursor(&conn).await?;
+            }
+            // Best-effort, as every window walk: a lost cursor costs one window's replay, which the
+            // pre-pass reads as `already` and the compare-and-set would refuse anyway.
+            if let (Some(job), Some(last)) = (args.job_id, last)
+                && let Err(e) = conn
+                    .execute(
+                        "UPDATE job_queue SET progress = ? WHERE id = ?",
+                        (Value::Text(last.to_string()), Value::Integer(job)),
+                    )
+                    .await
+            {
+                eprintln!("[refresh-org-names] job {job} record progress {last}: {e}");
+            }
+            if let Err(e) = checkpoint_on(&conn, CheckpointMode::Truncate).await {
+                eprintln!("[refresh-org-names] checkpoint after a window: {e}");
+            }
+            drop(conn);
+            (args.progress)(
+                report.applied,
+                &format!(
+                    "renaming heads: {} applied, {} raced, {} window(s), through org id {}",
+                    report.applied,
+                    report.raced,
+                    report.windows,
+                    last.unwrap_or_default()
+                ),
+            );
+        }
+        report.applied_samples = samples.into_by_org_id();
+        Ok(report)
+    }
+
+    /// Issue 524 unit 2b: undo one `refresh-org-names` job's renames. Each of the job's unreverted
+    /// `org_name_refresh_log` rows is restored to its pre-image under a compare-and-set on the pair
+    /// the rename wrote ([`ORG_NAME_REVERT_CAS_SQL`]), stamped `reverted_at` / `reverted_job`, and
+    /// announced as one `organization changed` row, in windows of `args.window` through
+    /// [`Db::immediate`]; the stop flag is read before every window, and a re-run takes up the
+    /// rows still unreverted. A row renamed again since (by a later job, or a merge) is left as it
+    /// is and counted `renamed_again`; a deleted organization counts `gone`. Neither is stamped.
+    pub async fn revert_org_name_refresh(
+        &self,
+        args: OrgNameRefreshRevertArgs<'_>,
+    ) -> turso::Result<OrgNameRefreshReverted> {
+        struct Row {
+            org_id: i64,
+            at: i64,
+            old_name: String,
+            old_name_norm: Option<String>,
+            new_name: String,
+            new_name_norm: String,
+        }
+        let mut report = OrgNameRefreshReverted { job: args.job, ..Default::default() };
+        let rows: Vec<Row> = {
+            let reader = self.reader().await?;
+            let mut rows = reader.query(ORG_NAME_REFRESH_JOB_ROWS_SQL, (Value::Integer(args.job),)).await?;
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await? {
+                out.push(Row {
+                    org_id: int(&row, 0),
+                    at: int(&row, 1),
+                    old_name: text(&row, 2),
+                    old_name_norm: opt_text_of(&row, 3),
+                    new_name: text(&row, 4),
+                    new_name_norm: text(&row, 5),
+                });
+            }
+            out
+        };
+        report.ledger_rows = rows.len() as u64;
+        for window in rows.chunks(args.window.max(1)) {
+            if (args.stop)() {
+                report.stopped = true;
+                break;
+            }
+            let now = crate::now_unix();
+            let conn = self.conn().await;
+            let (reverted, renamed_again, gone) = Self::immediate(&conn, async {
+                let (mut reverted, mut renamed_again, mut gone) = (0u64, 0u64, 0u64);
+                for row in window {
+                    let changed = conn
+                        .execute(
+                            ORG_NAME_REVERT_CAS_SQL,
+                            (
+                                Value::Text(row.old_name.clone()),
+                                row.old_name_norm.clone().map_or(Value::Null, Value::Text),
+                                Value::Integer(row.org_id),
+                                Value::Text(row.new_name.clone()),
+                                Value::Text(row.new_name_norm.clone()),
+                            ),
+                        )
+                        .await?;
+                    if changed == 0 {
+                        let mut exists =
+                            conn.query("SELECT 1 FROM organizations WHERE id = ?", (Value::Integer(row.org_id),)).await?;
+                        if exists.next().await?.is_some() {
+                            renamed_again += 1;
+                        } else {
+                            gone += 1;
+                        }
+                        continue;
+                    }
+                    conn.execute(
+                        "UPDATE org_name_refresh_log SET reverted_at = ?, reverted_job = ? WHERE org_id = ? AND at = ?",
+                        (
+                            Value::Integer(now),
+                            args.revert_job.map_or(Value::Null, Value::Integer),
+                            Value::Integer(row.org_id),
+                            Value::Integer(row.at),
+                        ),
+                    )
+                    .await?;
+                    append_change(&conn, "organization", row.org_id, None, "changed", now).await?;
+                    reverted += 1;
+                }
+                Ok((reverted, renamed_again, gone))
+            })
+            .await?;
+            report.reverted += reverted;
+            report.renamed_again += renamed_again;
+            report.gone += gone;
+            report.windows += 1;
+            if reverted > 0 {
+                self.publish_cursor(&conn).await?;
+            }
+            if let Err(e) = checkpoint_on(&conn, CheckpointMode::Truncate).await {
+                eprintln!("[revert-org-name-refresh] checkpoint after a window: {e}");
+            }
+            drop(conn);
+            (args.progress)(
+                report.reverted,
+                &format!(
+                    "restoring heads: {} reverted, {} renamed again, {} gone",
+                    report.reverted, report.renamed_again, report.gone
+                ),
+            );
+        }
+        Ok(report)
     }
 }
 

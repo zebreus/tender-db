@@ -501,8 +501,9 @@ enum Spec {
     OrgHeadDrift { min_mentions: u64, samples: usize },
     /// Issue 524 unit 2a: re-elect each identifier-bearing organization's served head from its mentions
     /// (`store::elect_head`, ADR-0013's 2026-10-15 amendment) and store what a wet run would change,
-    /// hold and keep as `org-name-refresh-plan`. Only `dry_run: true` exists: unit 2b builds the wet
-    /// path (ledger, revert, compare-and-set writes), and until then the arm refuses `false` too.
+    /// hold and keep as `org-name-refresh-plan`. Always dry: since unit 2b a `dry_run: false` request
+    /// enqueues [`Spec::RefreshOrgNamesWet`] under the same kind, so `dry_run` here is `true` on every
+    /// job ever queued (unit 2a refused `false` at enqueue) and the arm still refuses `false`.
     RefreshOrgNames {
         dry_run: bool,
         min_mentions: u64,
@@ -510,6 +511,16 @@ enum Spec {
         #[serde(default)]
         org_ids: Option<Vec<i64>>,
     },
+    /// Issue 524 unit 2b: the WET `refresh-org-names` (kind `refresh-org-names`, params `… wet …`) —
+    /// rename the heads the stored `org-name-refresh-plan` planned, each under a compare-and-set on the
+    /// plan's pre-image, with an `org_name_refresh_log` row and one `organization changed` row
+    /// (`store::Db::apply_org_name_refresh`). Refused without a plan, on a truncated one, or on one
+    /// elected under another epoch or binary. `org_ids` scopes it to those planned ids; `max_groups`
+    /// caps the renames (the first by org id).
+    RefreshOrgNamesWet { org_ids: Option<Vec<i64>>, max_groups: Option<u64> },
+    /// Issue 524 unit 2b: restore one wet `refresh-org-names` job's renames from `org_name_refresh_log`
+    /// under a compare-and-set on the pair it wrote (`store::Db::revert_org_name_refresh`).
+    RevertOrgNameRefresh { job: i64 },
     /// Issue 331: does duplication actually push a name key over the
     /// genericness wall? Read-only measurement.
     GenericWallCensus,
@@ -1122,7 +1133,9 @@ pub struct JobRequest {
     /// `restore-dropped-satellites` only: undo just this drop job's pass
     /// (issue 321). Omitted means every outstanding pre-image — which is the
     /// right default for one pass and the wrong one for two, so an operator
-    /// unwinding a bad run names it.
+    /// unwinding a bad run names it. Also `revert-org-name-refresh` (issue 524
+    /// unit 2b), where it is required: the wet `refresh-org-names` job whose
+    /// renames to restore.
     pub job: Option<i64>,
     pub profile: Option<String>,
     /// `reprocess` only: skip the trailing incremental fold, leaving reclaimed
@@ -1170,7 +1183,8 @@ pub struct JobRequest {
     pub expect_gaps: Option<u64>,
     /// `match-org-identifiers` wet runs only: merge at most this many groups —
     /// the design's capped first prod run (issue 300 Stage 2). Omitted means
-    /// the whole plan.
+    /// the whole plan. Also a wet `refresh-org-names` (issue 524 unit 2b): rename
+    /// at most this many of the plan's still-ready heads, the first by org id.
     pub max_groups: Option<u64>,
     /// `match-org-identifiers` only: which merge rule to run — `r2` (the
     /// Stage-2 same-country canonical-key merge, the default), `r3` (the
@@ -1226,7 +1240,8 @@ pub struct JobRequest {
     pub samples: Option<u64>,
     /// `refresh-org-names` only (issue 524 unit 2a): plan only these organizations instead of walking
     /// every one (a merge campaign's keeps, the canaries). 1 to [`ORG_NAME_REFRESH_ORG_IDS_MAX`] ids,
-    /// each positive. Every other kind ignores it.
+    /// each positive. On a wet run (unit 2b), rename only these of the stored plan's planned ids.
+    /// Every other kind ignores it.
     pub org_ids: Option<Vec<i64>>,
 }
 
@@ -1394,8 +1409,8 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
          {} elected ({}+ mention rows; {} below), {} with an empty head. CHANGES {} ({} mentions; {} on merge \
          survivors): {}. HOLDS {}: {} (R2's initialism hold: {}). Keeps {}: {}. \
          Listed {} planned{} and {} held{}. Family moves of the changes: {}. D4 keeps' ENG satellites: {}. \
-         {} identifier-verdict probe(s). Canaries ({unexpected} unexpected): {}. NOTHING IS WRITTEN — the \
-         wet path is unit 2b.",
+         {} identifier-verdict probe(s). Canaries ({unexpected} unexpected): {}. NOTHING IS WRITTEN — a wet \
+         run (`dry_run: false`, issue 524 unit 2b) applies this plan.",
         plan.epoch,
         plan.orgs_walked,
         plan.mentions_walked,
@@ -1421,6 +1436,215 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
         tally(&plan.d4_eng),
         plan.verdict_probes,
         canaries.join("; "),
+    )
+}
+
+/// Issue 524 unit 2b: what a wet `refresh-org-names` takes from the stored plan.
+struct RefreshPlanTargets {
+    /// The planned changes in scope, as the wet path takes them.
+    targets: Vec<store::OrgNameRefreshTarget>,
+    /// The plan's whole `planned` listing.
+    planned: usize,
+    /// Asked `org_ids` the plan did not plan (kept, held, gone, or outside a scoped plan).
+    unplanned: Vec<i64>,
+    /// When the plan was stored.
+    computed_at: i64,
+}
+
+/// Issue 524 unit 2b: a wet run's refusal, with the line every one ends on.
+fn refresh_wet_refused(why: String) -> String {
+    format!("refresh-org-names (wet) REFUSED: {why}. Nothing was written")
+}
+
+/// Issue 524 unit 2b: read a wet run's targets off the stored `org-name-refresh-plan` (`body`, stored at
+/// `computed_at`), or refuse the plan. Refused: one that does not parse, one elected under another
+/// [`store::HEAD_ELECTION_EPOCH`] or by another binary (`rev`: the ingest functions are the binary's,
+/// so a plan from an older deploy may not be what this one would elect), a stopped one, a truncated one
+/// (its unlisted changes would be skipped silently), a scoped one for an unscoped run (it would rename
+/// only the scope while reading as the whole run), and a malformed planned entry. A sync free fn, so
+/// the parsed plan stays off the boxed arm's poll frame.
+fn org_name_refresh_targets(
+    body: &str,
+    computed_at: i64,
+    org_ids: Option<&[i64]>,
+) -> Result<RefreshPlanTargets, String> {
+    let plan: serde_json::Value = serde_json::from_str(body)
+        .map_err(|e| refresh_wet_refused(format!("the stored org-name-refresh-plan does not parse ({e})")))?;
+    let epoch = plan["epoch"].as_str().unwrap_or("none");
+    if epoch != store::HEAD_ELECTION_EPOCH {
+        return Err(refresh_wet_refused(format!(
+            "the stored plan was elected under rule epoch {epoch:?}, this binary's is {:?}; re-run the dry plan",
+            store::HEAD_ELECTION_EPOCH
+        )));
+    }
+    let rev = plan["rev"].as_str().unwrap_or("none");
+    if rev != crate::v1::rev() {
+        return Err(refresh_wet_refused(format!(
+            "the stored plan was elected by binary {rev:?}, this one is {:?}; re-run the dry plan on this binary",
+            crate::v1::rev()
+        )));
+    }
+    if plan["stopped"].as_bool() == Some(true) {
+        return Err(refresh_wet_refused("the stored plan is a stopped walk; re-run the dry plan".to_owned()));
+    }
+    if plan["truncated"].as_bool() != Some(false) {
+        return Err(refresh_wet_refused(format!(
+            "the stored plan's planned listing is truncated at {} entries, so its unlisted changes would be \
+             skipped; scope dry plans with `org_ids` and apply each",
+            plan["listing_cap"]
+        )));
+    }
+    if org_ids.is_none() && !plan["scope_ids"].is_null() {
+        return Err(refresh_wet_refused(format!(
+            "the stored plan is scoped to {} org id(s), and an unscoped wet run applies a whole-corpus plan; \
+             pass the same `org_ids`, or re-run the dry plan without them",
+            plan["scope_ids"]
+        )));
+    }
+    let listed = plan["planned"]
+        .as_array()
+        .ok_or_else(|| refresh_wet_refused("the stored plan has no `planned` listing".to_owned()))?;
+    let mut targets = Vec::with_capacity(org_ids.map_or(listed.len(), |ids| ids.len().min(listed.len())));
+    let asked: Option<std::collections::HashSet<i64>> = org_ids.map(|ids| ids.iter().copied().collect());
+    let mut found: std::collections::HashSet<i64> = std::collections::HashSet::new();
+    for entry in listed {
+        let target = (|| {
+            if entry["verdict"].as_str()? != "change" {
+                return None;
+            }
+            Some(store::OrgNameRefreshTarget {
+                org_id: entry["org_id"].as_i64()?,
+                rule: entry["rule"].as_str()?.to_owned(),
+                old_name: entry["old_name"].as_str()?.to_owned(),
+                old_name_norm: match &entry["old_name_norm"] {
+                    serde_json::Value::Null => None,
+                    norm => Some(norm.as_str()?.to_owned()),
+                },
+                new_name: entry["new_name"].as_str()?.to_owned(),
+            })
+        })()
+        .ok_or_else(|| refresh_wet_refused(format!("the stored plan's planned entry {entry} is malformed")))?;
+        if asked.as_ref().is_some_and(|ids| !ids.contains(&target.org_id)) {
+            continue;
+        }
+        found.insert(target.org_id);
+        targets.push(target);
+    }
+    let mut unplanned: Vec<i64> =
+        asked.map_or_else(Vec::new, |ids| ids.into_iter().filter(|id| !found.contains(id)).collect());
+    unplanned.sort_unstable();
+    Ok(RefreshPlanTargets { targets, planned: listed.len(), unplanned, computed_at })
+}
+
+/// Issue 524 unit 2b: the most asked-but-unplanned `org_ids` the wet report lists.
+const ORG_NAME_REFRESH_UNPLANNED_LISTED: usize = 30;
+
+/// Issue 524 unit 2b: a wet `refresh-org-names` as stored (`org-name-refresh-applied`): the store's
+/// counts and samples, the job, the plan it applied and the asked ids it did not plan. Sync, off the
+/// boxed arm's poll frame.
+fn org_name_refresh_applied_json(
+    r: &store::OrgNameRefreshApplied,
+    job: u64,
+    plan: &RefreshPlanTargets,
+    max_groups: Option<u64>,
+) -> Result<String, String> {
+    let mut body = serde_json::to_value(r).map_err(|e| e.to_string())?;
+    if let Some(all) = body.as_object_mut() {
+        all.insert("job".to_owned(), job.into());
+        all.insert("epoch".to_owned(), store::HEAD_ELECTION_EPOCH.into());
+        all.insert("rev".to_owned(), crate::v1::rev().into());
+        all.insert("plan_computed_at".to_owned(), plan.computed_at.into());
+        all.insert("plan_planned".to_owned(), plan.planned.into());
+        all.insert("max_groups".to_owned(), serde_json::json!(max_groups));
+        all.insert("unplanned".to_owned(), plan.unplanned.len().into());
+        all.insert(
+            "unplanned_ids".to_owned(),
+            serde_json::json!(plan.unplanned.iter().take(ORG_NAME_REFRESH_UNPLANNED_LISTED).collect::<Vec<_>>()),
+        );
+    }
+    Ok(body.to_string())
+}
+
+/// Issue 524 unit 2b: a wet `refresh-org-names`' job summary. An aborted run's is its error.
+fn org_name_refresh_applied_summary(r: &store::OrgNameRefreshApplied, job: u64, plan: &RefreshPlanTargets) -> String {
+    let drift = if r.drift_samples.is_empty() {
+        String::new()
+    } else {
+        format!(
+            " Drift: {}.",
+            r.drift_samples.iter().map(|d| format!("{} {}", d.org_id, d.why)).collect::<Vec<_>>().join("; ")
+        )
+    };
+    let unplanned = if plan.unplanned.is_empty() {
+        String::new()
+    } else {
+        format!(
+            " {} asked org id(s) the plan does not plan (kept, held, gone or outside its scope): {:?}.",
+            plan.unplanned.len(),
+            plan.unplanned.iter().take(ORG_NAME_REFRESH_UNPLANNED_LISTED).collect::<Vec<_>>()
+        )
+    };
+    let resumed = match r.resumed_after {
+        None => String::new(),
+        Some(after) => format!(
+            " Resumed after org id {after}: {} target(s) skipped, {} renamed by the earlier run.",
+            r.resumed_past, r.prior_applied
+        ),
+    };
+    let head = format!(
+        "refresh-org-names WET (issue 524 unit 2b, rule {}, job {job}): {} of the plan's {} planned change(s) in \
+         scope.{resumed}{unplanned} Pre-pass: {} ready, {} already renamed, {} drifted, {} gone (limit {}).",
+        store::HEAD_ELECTION_EPOCH,
+        r.targets,
+        plan.planned,
+        r.ready,
+        r.already,
+        r.drifted,
+        r.gone,
+        r.drift_limit
+    );
+    if r.aborted {
+        return format!(
+            "{head} ABORTED before any write: drifted + gone exceed max(2%, 5) of the targets read, so the plan \
+             is stale; re-run the dry plan.{drift} Recorded as org-name-refresh-applied"
+        );
+    }
+    format!(
+        "{head} RENAMED {} head(s) in {} window(s) (each with an org_name_refresh_log row and an `organization \
+         changed` row), {} raced (changed between the pre-pass and its write, left as found){}{}.{drift} \
+         Recorded as org-name-refresh-applied; undo with {{\"kind\":\"revert-org-name-refresh\",\"job\":{job}}}",
+        r.applied,
+        r.windows,
+        r.raced,
+        if r.capped > 0 { format!(", {} ready left by max_groups", r.capped) } else { String::new() },
+        if r.stopped {
+            ". STOPPED by cancel: the committed windows stand, and a re-run reads them as already renamed"
+        } else {
+            ""
+        },
+    )
+}
+
+/// Issue 524 unit 2b: `revert-org-name-refresh`'s job summary.
+fn org_name_refresh_reverted_summary(r: &store::OrgNameRefreshReverted) -> String {
+    if r.ledger_rows == 0 {
+        return format!(
+            "revert-org-name-refresh (issue 524 unit 2b): job {} has no unreverted org_name_refresh_log row (never a \
+             wet refresh-org-names, or already reverted). Nothing was written",
+            r.job
+        );
+    }
+    format!(
+        "revert-org-name-refresh (issue 524 unit 2b): job {}'s {} unreverted rename(s): {} RESTORED to their \
+         pre-image (stamped reverted_at, each with an `organization changed` row), {} renamed again since (left \
+         as found), {} gone, in {} window(s){}",
+        r.job,
+        r.ledger_rows,
+        r.reverted,
+        r.renamed_again,
+        r.gone,
+        r.windows,
+        if r.stopped { ". STOPPED by cancel: the restored windows stand, and a re-run restores the rest" } else { "" },
     )
 }
 
@@ -2334,23 +2558,9 @@ impl Supervisor {
                 ])
             }
             "refresh-org-names" => {
-                // Issue 524 unit 2a: dry only. An omitted `dry_run` is the dry plan, and `false` is
-                // refused here rather than queued as a job that could only fail.
-                if req.dry_run == Some(false) {
-                    return Err("refresh-org-names refuses `dry_run: false`: the wet path (issue 524 unit 2b — \
-                                the org_name_refresh_log ledger, the revert, the compare-and-set writes and \
-                                their change rows) is not built. Only the dry plan exists; run it without \
-                                `dry_run` or with `dry_run: true`"
-                        .to_owned());
-                }
-                let min_mentions = req.min_mentions.unwrap_or(ORG_HEAD_DRIFT_MIN_MENTIONS);
-                if min_mentions < 2 {
-                    return Err(format!(
-                        "refresh-org-names needs `min_mentions` of 2 or more, got {min_mentions}: the election's \
-                         population is the census's (an organization with one mention has nothing to elect from)"
-                    ));
-                }
-                let samples = req.samples.unwrap_or(ORG_HEAD_DRIFT_SAMPLES).clamp(1, ORG_HEAD_DRIFT_SAMPLES_MAX) as usize;
+                // Issue 524 unit 2a: an omitted `dry_run` is the dry plan. Since unit 2b `false` is the
+                // wet run: it applies the STORED plan, so the plan's `min_mentions` and `samples` are
+                // what it applies and the request's are not read.
                 let org_ids = match &req.org_ids {
                     None => None,
                     Some(ids) => {
@@ -2370,6 +2580,30 @@ impl Supervisor {
                         Some(ids)
                     }
                 };
+                if req.dry_run == Some(false) {
+                    if req.max_groups == Some(0) {
+                        return Err("refresh-org-names refuses `max_groups: 0`: a wet run that may rename nothing; \
+                                    omit it to apply the whole plan"
+                            .to_owned());
+                    }
+                    let max_groups = req.max_groups;
+                    let params = format!(
+                        "refresh-org-names wet{}{}",
+                        org_ids.as_ref().map(|ids| format!(" org_ids={}", ids.len())).unwrap_or_default(),
+                        max_groups.map(|n| format!(" max_groups={n}")).unwrap_or_default()
+                    );
+                    return Ok(vec![
+                        self.push("refresh-org-names", params, Spec::RefreshOrgNamesWet { org_ids, max_groups }).await,
+                    ]);
+                }
+                let min_mentions = req.min_mentions.unwrap_or(ORG_HEAD_DRIFT_MIN_MENTIONS);
+                if min_mentions < 2 {
+                    return Err(format!(
+                        "refresh-org-names needs `min_mentions` of 2 or more, got {min_mentions}: the election's \
+                         population is the census's (an organization with one mention has nothing to elect from)"
+                    ));
+                }
+                let samples = req.samples.unwrap_or(ORG_HEAD_DRIFT_SAMPLES).clamp(1, ORG_HEAD_DRIFT_SAMPLES_MAX) as usize;
                 let params = format!(
                     "refresh-org-names dry min_mentions={min_mentions} samples={samples}{}",
                     org_ids.as_ref().map(|ids| format!(" org_ids={}", ids.len())).unwrap_or_default()
@@ -2379,6 +2613,24 @@ impl Supervisor {
                         "refresh-org-names",
                         params,
                         Spec::RefreshOrgNames { dry_run: true, min_mentions, samples, org_ids },
+                    )
+                    .await,
+                ])
+            }
+            "revert-org-name-refresh" => {
+                // Issue 524 unit 2b: the job is required. Restoring "every rename ever" is never the
+                // unwind of one bad run, and two runs' renames of one organization restore in reverse
+                // order only when each is named.
+                let Some(target) = req.job.filter(|&id| id > 0) else {
+                    return Err("revert-org-name-refresh needs `job`: the wet refresh-org-names job whose renames \
+                                to restore (its id in the job list, the `job_id` of its org_name_refresh_log rows)"
+                        .to_owned());
+                };
+                Ok(vec![
+                    self.push(
+                        "revert-org-name-refresh",
+                        format!("revert-org-name-refresh job={target}"),
+                        Spec::RevertOrgNameRefresh { job: target },
                     )
                     .await,
                 ])
@@ -4654,8 +4906,11 @@ const STOPPABLE_KINDS: &[&str] = &[
     // report.
     "org-head-drift",
     // Issue 524 unit 2a: `plan_org_name_refresh` reads it before every page (and every scoped id
-    // chunk); a stopped run stores no plan.
+    // chunk); a stopped run stores no plan. Unit 2b: the wet run reads it before every rename
+    // window, and the committed windows stand.
     "refresh-org-names",
+    // Issue 524 unit 2b: read before every restore window; a re-run restores the rest.
+    "revert-org-name-refresh",
     "generic-wall-census",
     "generic-statistic-census",
     "name-attribution-probe",
@@ -7087,6 +7342,11 @@ impl Supervisor {
             | Spec::R3Census
             | Spec::FusionCensus
             | Spec::OrgEdgeCensus => off_frame(|| self.run_identity_census_spec(job)).await,
+            // Issue 524 unit 2b: the wet head refresh and its revert, their own family (the census
+            // family below is read-only, and its poll frame stays so).
+            Spec::RefreshOrgNamesWet { .. } | Spec::RevertOrgNameRefresh { .. } => {
+                off_frame(|| self.run_org_name_refresh_spec(job)).await
+            }
             Spec::CountryClusterCensus
             | Spec::DiskCensus
             | Spec::NameAttributionProbe
@@ -11704,6 +11964,81 @@ impl Supervisor {
         ))
     }
 
+    /// `run_spec`'s family of issue 524 unit 2b's writes: the wet `refresh-org-names` and
+    /// `revert-org-name-refresh`. Issue 467: reached through `off_frame`, each arm boxed, and each store
+    /// future boxed inside it, so neither this fn's future nor its poll frame grows with the walk.
+    async fn run_org_name_refresh_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
+            Spec::RefreshOrgNamesWet { org_ids, max_groups } => Box::pin(async move {
+                let Some((body, computed_at)) =
+                    self.db.latest_report("org-name-refresh-plan").await.map_err(|e| e.to_string())?
+                else {
+                    return Err(refresh_wet_refused(
+                        "no org-name-refresh-plan is stored; run the dry plan (`{\"kind\":\"refresh-org-names\"}`) \
+                         on this binary first"
+                            .to_owned(),
+                    ));
+                };
+                let mut plan = org_name_refresh_targets(&body, computed_at, org_ids.as_deref())?;
+                drop(body);
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                // A restart recovers this job at the front of the queue: it resumes after the last
+                // committed window (the durable cursor, issue 32), and a fresh enqueue has none.
+                let resume_after = job.resume_after.as_deref().and_then(|c| c.parse::<i64>().ok());
+                self.set_phase(
+                    "checking",
+                    None,
+                    None,
+                    format!("issue 524: re-electing {} planned head(s) before renaming", plan.targets.len()),
+                );
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("renaming", Some(done), None, detail.to_owned());
+                };
+                let r = Box::pin(self.db.apply_org_name_refresh(store::OrgNameRefreshApplyArgs {
+                    fns: head_elect_fns(),
+                    targets: std::mem::take(&mut plan.targets),
+                    max_groups: *max_groups,
+                    job_id: Some(job_id as i64),
+                    resume_after,
+                    window: store::ORG_NAME_REFRESH_WINDOW,
+                    stop: &stop,
+                    progress: &progress,
+                }))
+                .await
+                .map_err(|e| e.to_string())?;
+                let body = org_name_refresh_applied_json(&r, job_id, &plan, *max_groups)?;
+                self.db
+                    .put_report("org-name-refresh-applied", &body, store::now_unix())
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let summary = org_name_refresh_applied_summary(&r, job_id, &plan);
+                if r.aborted { Err(summary) } else { Ok(summary) }
+            })
+            .await,
+            Spec::RevertOrgNameRefresh { job: target } => Box::pin(async move {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("restoring", None, None, format!("issue 524: restoring job {target}'s renamed heads"));
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("restoring", Some(done), None, detail.to_owned());
+                };
+                let r = Box::pin(self.db.revert_org_name_refresh(store::OrgNameRefreshRevertArgs {
+                    job: *target,
+                    revert_job: Some(job_id as i64),
+                    window: store::ORG_NAME_REFRESH_WINDOW,
+                    stop: &stop,
+                    progress: &progress,
+                }))
+                .await
+                .map_err(|e| e.to_string())?;
+                Ok(org_name_refresh_reverted_summary(&r))
+            })
+            .await,
+            _ => Err(misrouted(job, "run_org_name_refresh_spec")),
+        }
+    }
+
     /// `run_spec`'s family of the country folds and verdicts, the rehoming, and their review
     /// packets. Issue 467: one family per fn, reached through `off_frame`, so its poll frame
     /// holds only these arms' locals.
@@ -13428,8 +13763,10 @@ impl Supervisor {
                 // family's future nor its poll frame grows with the planner (issue 467's budgets). The
                 // stored body and the summary are built by sync free fns, off this frame.
                 if !*dry_run {
-                    return Err("refresh-org-names REFUSED: only the dry plan is built (issue 524 unit 2a); the \
-                                wet path is unit 2b. Nothing was read or written"
+                    // Unreachable from the queue: a `dry_run: false` request enqueues
+                    // `Spec::RefreshOrgNamesWet` (issue 524 unit 2b), and unit 2a refused it at enqueue.
+                    return Err("refresh-org-names REFUSED: this arm plans only; a wet run is \
+                                `Spec::RefreshOrgNamesWet` (issue 524 unit 2b). Nothing was read or written"
                         .to_owned());
                 }
                 let job_id = job.id;
@@ -16364,6 +16701,11 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "repair-notice-instants"
             | "repair-version-instants"
             | "repair-provisional-name-norm"
+            // Issue 524 unit 2b: 2,000-rename `BEGIN IMMEDIATE` windows, each followed by
+            // `checkpoint_on(Truncate)`. The kind's dry plan is read-only and rides along: one
+            // skipped coverage refresh per plan, the cheap side of this list.
+            | "refresh-org-names"
+            | "revert-org-name-refresh"
     )
 }
 
@@ -16409,7 +16751,6 @@ const LIGHT_KINDS: &[(&str, &str)] = &[
     ("provisional-echo-census", "report only: `provisional_echo_census` reads on the pool"),
     ("r2-census", "report only: `org_merge_health_batch` reads on the pool"),
     ("r3-census", "report only: `null_country_ident_orgs` and `org_all_names` read on the pool"),
-    ("refresh-org-names", "report only: the dry plan reads on the pool; a wet run is refused at enqueue"),
     ("registry-contiguity", "report only: one `monthly_fetch_periods` read (issue 543 unit 1)"),
     ("rehoming-packet", "report only: `rehoming_packet` reads on the pool"),
     ("reveal-recheck", "reports only: one 100k-section slice read on the pool, then three report rows"),
@@ -17293,7 +17634,10 @@ mod tests {
                 "name-pollution-census",
                 "name-phrase-census",
                 "org-head-drift",
+                // Issue 524 unit 2b: `apply_org_name_refresh` and `revert_org_name_refresh` read the
+                // flag before every window; the committed windows stand.
                 "refresh-org-names",
+                "revert-org-name-refresh",
                 "generic-wall-census",
                 "generic-statistic-census",
                 "name-attribution-probe",
@@ -21247,33 +21591,66 @@ mod tests {
         assert!(stoppable("org-head-drift", &queued[0].params), "a cancel reaches the walk between pages");
     }
 
-    /// Issue 524 unit 2a: `refresh-org-names` is dry only — an omitted `dry_run` is the plan and `false`
-    /// is refused at enqueue, since unit 2b is not built — takes the census's `min_mentions` and
-    /// `samples` rules, and checks `org_ids` (1 to the cap once deduplicated, each positive).
+    /// Issue 524 unit 2a: `refresh-org-names` takes the census's `min_mentions` and `samples` rules and
+    /// checks `org_ids` (1 to the cap once deduplicated, each positive); an omitted `dry_run` is the
+    /// plan. Unit 2b: `dry_run: false` queues the wet run under the same kind (`org_ids` checked alike,
+    /// `max_groups: 0` refused), and `revert-org-name-refresh` requires its `job`. Both kinds are heavy
+    /// writers and stoppable.
     #[tokio::test]
-    async fn refresh_org_names_is_dry_only_and_checks_its_params() {
+    async fn refresh_org_names_checks_its_params_dry_and_wet() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         let ask = |dry_run: Option<bool>, min_mentions: Option<u64>, samples: Option<u64>, org_ids: Option<Vec<i64>>| {
             JobRequest { kind: "refresh-org-names".into(), dry_run, min_mentions, samples, org_ids, ..Default::default() }
         };
-        let err = sup.enqueue_request(&ask(Some(false), None, None, None)).await.expect_err("unit 2b is not built");
-        assert!(err.contains("dry_run: false") && err.contains("unit 2b"), "{err}");
         let err = sup.enqueue_request(&ask(None, Some(1), None, None)).await.expect_err("one mention elects nothing");
         assert!(err.contains("min_mentions") && err.contains("2 or more"), "{err}");
         assert!(sup.enqueue_request(&ask(None, None, None, Some(vec![]))).await.is_err(), "an empty scope");
         let err = sup.enqueue_request(&ask(None, None, None, Some(vec![5, 0]))).await.expect_err("id 0");
         assert!(err.contains("positive"), "{err}");
+        let err = sup.enqueue_request(&ask(Some(false), None, None, Some(vec![-1]))).await.expect_err("wet, id -1");
+        assert!(err.contains("positive"), "{err}");
         let too_many: Vec<i64> = (1..=ORG_NAME_REFRESH_ORG_IDS_MAX as i64 + 1).collect();
         assert!(sup.enqueue_request(&ask(None, None, None, Some(too_many))).await.is_err(), "over the cap");
+        let zero = JobRequest { max_groups: Some(0), ..ask(Some(false), None, None, None) };
+        let err = sup.enqueue_request(&zero).await.expect_err("a wet run that may rename nothing");
+        assert!(err.contains("max_groups"), "{err}");
+        let revert = |job: Option<i64>| JobRequest { kind: "revert-org-name-refresh".into(), job, ..Default::default() };
+        let err = sup.enqueue_request(&revert(None)).await.expect_err("the job is required");
+        assert!(err.contains("`job`"), "{err}");
+        assert!(sup.enqueue_request(&revert(Some(0))).await.is_err(), "job 0");
         sup.enqueue_request(&ask(None, None, None, None)).await.expect("the defaults");
         sup.enqueue_request(&ask(Some(true), Some(3), Some(0), Some(vec![760, 61, 760]))).await.expect("scoped");
+        sup.enqueue_request(&ask(Some(false), Some(1), None, None)).await.expect("wet: the plan's min_mentions apply");
+        let capped = JobRequest { max_groups: Some(500), ..ask(Some(false), None, None, Some(vec![61, 760, 61])) };
+        sup.enqueue_request(&capped).await.expect("wet, scoped and capped");
+        sup.enqueue_request(&revert(Some(2601))).await.expect("the revert");
         let queued = sup.queued();
-        assert_eq!(queued.len(), 2, "the refused asks queued nothing");
+        assert_eq!(queued.len(), 5, "the refused asks queued nothing");
         assert_eq!(queued[0].kind, "refresh-org-names");
         assert_eq!(queued[0].params, "refresh-org-names dry min_mentions=2 samples=30");
         assert_eq!(queued[1].params, "refresh-org-names dry min_mentions=3 samples=1 org_ids=2", "deduplicated");
-        assert!(!heavy_write_kind("refresh-org-names"), "read-only: coverage keeps refreshing");
+        assert_eq!((queued[2].kind.as_str(), queued[2].params.as_str()), ("refresh-org-names", "refresh-org-names wet"));
+        assert_eq!(queued[3].params, "refresh-org-names wet org_ids=2 max_groups=500");
+        assert_eq!(
+            (queued[4].kind.as_str(), queued[4].params.as_str()),
+            ("revert-org-name-refresh", "revert-org-name-refresh job=2601")
+        );
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            let specs: Vec<&Spec> = queue.iter().map(|j| &j.spec).collect();
+            assert!(matches!(specs[2], Spec::RefreshOrgNamesWet { org_ids: None, max_groups: None }));
+            assert!(matches!(
+                specs[3],
+                Spec::RefreshOrgNamesWet { org_ids: Some(ids), max_groups: Some(500) } if ids == &vec![61, 760]
+            ));
+            assert!(matches!(specs[4], Spec::RevertOrgNameRefresh { job: 2601 }));
+        }
+        for kind in ["refresh-org-names", "revert-org-name-refresh"] {
+            assert!(heavy_write_kind(kind), "{kind}: TRUNCATE-checkpointed write windows");
+        }
         assert!(stoppable("refresh-org-names", &queued[0].params), "a cancel reaches the walk between pages");
+        assert!(stoppable("refresh-org-names", &queued[2].params), "and the wet run between windows");
+        assert!(stoppable("revert-org-name-refresh", &queued[4].params), "and the revert between windows");
         // The decision's twelve canaries plus the census's third exhibit, each id once.
         let ids: std::collections::BTreeSet<i64> = ORG_NAME_REFRESH_CANARIES.iter().map(|c| c.id).collect();
         assert_eq!(ids.len(), 13);
@@ -21388,6 +21765,14 @@ mod tests {
         assert_eq!(before.len(), orgs.len());
         let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
         let dry = |dry_run: bool| job(Spec::RefreshOrgNames { dry_run, min_mentions: 2, samples: 30, org_ids: None });
+        // Issue 524 unit 2b: a wet job with a distinct id (the ledger's `job_id`, the revert's handle).
+        let wet = |id: u64, org_ids: Option<Vec<i64>>| Job {
+            id,
+            kind: "refresh-org-names".into(),
+            ..job(Spec::RefreshOrgNamesWet { org_ids, max_groups: None })
+        };
+        let err = sup.run_spec(&wet(2, None)).await.expect_err("no plan is stored yet");
+        assert!(err.contains("REFUSED") && err.contains("no org-name-refresh-plan is stored"), "{err}");
         let msg = sup.run_spec(&dry(true)).await.expect("the dry plan");
         for reading in [
             r#"31558903 change:R1 "The University of Sheffield" as expected"#,
@@ -21444,8 +21829,112 @@ mod tests {
         }
         assert_eq!(heads().await, before);
         assert_eq!(db.scalar("SELECT COUNT(*) FROM changes").await.unwrap(), Some(Value::Integer(1)));
-        let err = sup.run_spec(&dry(false)).await.expect_err("the arm refuses a wet spec too");
-        assert!(err.contains("REFUSED") && err.contains("unit 2b"), "{err}");
+        let err = sup.run_spec(&dry(false)).await.expect_err("the dry arm plans only");
+        assert!(err.contains("REFUSED") && err.contains("RefreshOrgNamesWet"), "{err}");
+
+        // Issue 524 unit 2b, the wet path. An unscoped wet run refuses the scoped plan just stored.
+        let err = sup.run_spec(&wet(2, None)).await.expect_err("a scoped plan, unscoped");
+        assert!(err.contains("scoped to 2 org id(s)") && err.contains("Nothing was written"), "{err}");
+        // The whole plan again, then three tampered copies of it: each refused, nothing written.
+        sup.run_spec(&dry(true)).await.expect("the dry plan");
+        let (genuine, at) = db.latest_report("org-name-refresh-plan").await.unwrap().unwrap();
+        for (field, value, needle) in [
+            ("epoch", serde_json::json!("524u2-v0"), "rule epoch \"524u2-v0\""),
+            ("rev", serde_json::json!("another-binary"), "binary \"another-binary\""),
+            ("truncated", serde_json::json!(true), "truncated"),
+        ] {
+            let mut plan: serde_json::Value = serde_json::from_str(&genuine).unwrap();
+            plan[field] = value;
+            db.put_report("org-name-refresh-plan", &plan.to_string(), at).await.unwrap();
+            let err = sup.run_spec(&wet(2, None)).await.expect_err(field);
+            assert!(err.contains("REFUSED") && err.contains(needle), "{field}: {err}");
+        }
+        assert_eq!(heads().await, before, "a refused wet run writes nothing");
+        assert_eq!(db.scalar("SELECT COUNT(*) FROM changes").await.unwrap(), Some(Value::Integer(1)));
+        db.put_report("org-name-refresh-plan", &genuine, at).await.unwrap();
+
+        // The runbook's first wet run: the five positive canaries. Three are seeded and planned; 760
+        // and 61 are not, and the summary names them.
+        let canaries = vec![31_558_903, 22_713_056, 6_341_366, 760, 61];
+        let msg = sup.run_spec(&wet(2, Some(canaries.clone()))).await.expect("the canary wet run");
+        for needle in ["RENAMED 3 head(s)", "3 ready", "0 drifted", "2 asked org id(s) the plan does not plan", "[61, 760]"] {
+            assert!(msg.contains(needle), "missing {needle:?} in: {msg}");
+        }
+        let after = heads().await;
+        let named = |id: i64| {
+            after
+                .iter()
+                .find(|(i, _, _)| *i == Value::Integer(id))
+                .map(|(_, name, norm)| (name.clone(), norm.clone()))
+                .expect("the organization")
+        };
+        let text = |s: &str| Value::Text(s.to_owned());
+        assert_eq!(named(31_558_903), (text("The University of Sheffield"), text("the university of sheffield")));
+        assert_eq!(
+            named(22_713_056),
+            (text("Vergabekammer bei der Bezirksregierung"), text(&store::org_name_norm("Vergabekammer bei der Bezirksregierung")))
+        );
+        assert_eq!(named(6_341_366), (text("Kalmar kommun"), text("kalmar kommun")));
+        for id in [334, 500, 1_165_973, 7_912_592] {
+            let was = before.iter().find(|(i, _, _)| *i == Value::Integer(id)).unwrap();
+            assert_eq!(after.iter().find(|(i, _, _)| *i == Value::Integer(id)).unwrap(), was, "{id} is untouched");
+        }
+        let changed = "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND op = 'changed' \
+                       AND version_seq IS NULL";
+        assert_eq!(db.scalar(changed).await.unwrap(), Some(Value::Integer(3)), "one change row per moved org");
+        assert_eq!(
+            db.scalar("SELECT COUNT(*) FROM org_name_refresh_log WHERE job_id = 2 AND reverted_at IS NULL").await.unwrap(),
+            Some(Value::Integer(3))
+        );
+        assert_eq!(
+            db.scalar("SELECT old_name FROM org_name_refresh_log WHERE org_id = 22713056").await.unwrap(),
+            Some(text("s.o.")),
+            "the byte-exact pre-image"
+        );
+        let (body, _) = db.latest_report("org-name-refresh-applied").await.unwrap().expect("the wet report");
+        let applied: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!((applied["job"].as_u64(), applied["applied"].as_u64(), applied["unplanned"].as_u64()), (Some(2), Some(3), Some(2)));
+        let sampled: Vec<i64> = applied["applied_samples"].as_array().unwrap().iter().map(|r| r["org_id"].as_i64().unwrap()).collect();
+        assert_eq!(sampled, vec![6_341_366, 22_713_056, 31_558_903], "a run under the sample size lists every rename");
+
+        // A replay of the same run renames nothing and announces nothing.
+        let msg = sup.run_spec(&wet(3, Some(canaries))).await.expect("the replay");
+        assert!(msg.contains("3 already renamed") && msg.contains("RENAMED 0 head(s)"), "{msg}");
+        assert_eq!(heads().await, after);
+        assert_eq!(db.scalar(changed).await.unwrap(), Some(Value::Integer(3)));
+        // A recovered job resumes after its durable cursor (`job_queue.progress`): the three targets at
+        // or below it are skipped, so 334 is not reached.
+        let resumed = Job { resume_after: Some("22713056".into()), ..wet(4, None) };
+        let msg = sup.run_spec(&resumed).await.expect("a resumed wet run");
+        assert!(msg.contains("Resumed after org id 22713056: 3 target(s) skipped"), "{msg}");
+        assert!(msg.contains("1 already renamed") && msg.contains("RENAMED 0 head(s)"), "{msg}");
+        // The whole plan: only 334 is left to rename.
+        let msg = sup.run_spec(&wet(4, None)).await.expect("the full wet run");
+        assert!(msg.contains("RENAMED 1 head(s)") && msg.contains("3 already renamed"), "{msg}");
+        assert_eq!(db.scalar(changed).await.unwrap(), Some(Value::Integer(4)));
+
+        // The revert of job 2 restores its three pre-images and announces each; job 4's rename stands.
+        let revert = Job { id: 5, kind: "revert-org-name-refresh".into(), ..job(Spec::RevertOrgNameRefresh { job: 2 }) };
+        let msg = sup.run_spec(&revert).await.expect("the revert");
+        assert!(msg.contains("3 RESTORED") && msg.contains("0 renamed again") && msg.contains("0 gone"), "{msg}");
+        let restored = heads().await;
+        for id in [6_341_366, 22_713_056, 31_558_903] {
+            let was = before.iter().find(|(i, _, _)| *i == Value::Integer(id)).unwrap();
+            assert_eq!(restored.iter().find(|(i, _, _)| *i == Value::Integer(id)).unwrap(), was, "{id} restored");
+        }
+        assert_ne!(
+            restored.iter().find(|(i, _, _)| *i == Value::Integer(334)),
+            before.iter().find(|(i, _, _)| *i == Value::Integer(334)),
+            "another job's rename stands"
+        );
+        assert_eq!(db.scalar(changed).await.unwrap(), Some(Value::Integer(7)));
+        assert_eq!(
+            db.scalar("SELECT COUNT(*) FROM org_name_refresh_log WHERE job_id = 2 AND reverted_job = 5").await.unwrap(),
+            Some(Value::Integer(3))
+        );
+        let msg = sup.run_spec(&revert).await.expect("a second revert");
+        assert!(msg.contains("no unreverted org_name_refresh_log row"), "{msg}");
+        assert_eq!(db.scalar(changed).await.unwrap(), Some(Value::Integer(7)));
         remove_db(&path);
     }
 
@@ -23228,6 +23717,9 @@ mod tests {
         // Issue 513 U4: the nhs-body canary, its own fn because the family above is full
         // (264 bytes measured 2026-10-12).
         gauge("run_nhs_body_canary", std::mem::size_of_val(&sup.run_nhs_body_canary(&j)), 512);
+        // Issue 524 unit 2b: the wet head refresh and its revert, a family of two boxed arms
+        // (32 bytes measured 2026-10-15: each arm holds one box).
+        gauge("run_org_name_refresh_spec", std::mem::size_of_val(&sup.run_org_name_refresh_spec(&j)), 128);
         gauge("run_country_spec", std::mem::size_of_val(&sup.run_country_spec(&j)), 2_688);
         gauge("run_identity_census_spec", std::mem::size_of_val(&sup.run_identity_census_spec(&j)), 1_792);
         gauge("run_census_spec", std::mem::size_of_val(&sup.run_census_spec(&j)), 1_792);
@@ -23255,6 +23747,7 @@ mod tests {
         poll_once_within("run_org_merge_health_spec", 39 * 1024, || sup.run_org_merge_health_spec(&refused));
         poll_once_within("run_match_identifiers_spec", 71 * 1024, || sup.run_match_identifiers_spec(&refused));
         poll_once_within("run_nhs_body_canary", 39 * 1024, || sup.run_nhs_body_canary(&refused));
+        poll_once_within("run_org_name_refresh_spec", 39 * 1024, || sup.run_org_name_refresh_spec(&refused));
         poll_once_within("run_country_spec", 63 * 1024, || sup.run_country_spec(&refused));
         poll_once_within("run_identity_census_spec", 56 * 1024, || sup.run_identity_census_spec(&refused));
         poll_once_within("run_census_spec", 69 * 1024, || sup.run_census_spec(&refused));

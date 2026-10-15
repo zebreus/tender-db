@@ -285,9 +285,9 @@ impl IsolatedReads {
         prefix: String,
         cursor: Option<(String, i64)>,
         limit: i64,
-    ) -> Result<store::turso::Result<Vec<store::read::OrganizationRow>>, Shed> {
+    ) -> Result<store::turso::Result<Vec<(Option<String>, store::read::OrganizationRow)>>, Shed> {
         self.run(move |reader| async move {
-            store::read::organizations_by_name(&reader, &filter, &prefix, cursor, limit).await
+            store::read::organizations_by_name_keyed(&reader, &filter, &prefix, cursor, limit).await
         })
         .await
     }

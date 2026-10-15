@@ -910,7 +910,8 @@ const TABLE_NOTES: &[(&str, &str)] = &[
         "organization_names",
         "Language variants of an Organization's name (ADR-0013 D4): one row per \
          (org_id, lang), lang in ISO 639-2/T uppercase, name_norm Unicode-lowercased. \
-         `organizations.name` stays the designated single head; this satellite carries \
+         `organizations.name` is the designated single head (elected from the mentions \
+         since issue 524; see its column note); this satellite carries \
          the labelled variants multilingual notices publish (populated for newly \
          ingested notices from 2026-08-28; the standing corpus backfills later). \
          Join organizations on org_id.",
@@ -1206,7 +1207,29 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
          hold many mentions (issues 234, 351). It is not a promise of one mention, and a \
          later identifier can still canonicalise or split it (issue 370).",
     ),
+    // Issue 524 unit 2b: the column's meaning changed (ADR-0015 D1, the CHANGELOG entry).
+    ("organizations", "name", ORGANIZATION_NAME_NOTE),
+    ("v_organizations", "name", ORGANIZATION_NAME_NOTE),
+    (
+        "organizations",
+        "name_norm",
+        "The name's search key: Unicode-lowercased, whitespace collapsed, trailing `.`/`,`/`;` \
+         stripped (`org_name_norm`). ?name_prefix= seeks it. With an identifier it follows the \
+         elected head (issue 524) and is never a bind key; with `identifier IS NULL` it IS the \
+         identity (with the country), and the head election never moves it.",
+    ),
 ];
+
+/// Issue 524 unit 2b: `organizations.name` (and `v_organizations.name`) since the head election.
+const ORGANIZATION_NAME_NOTE: &str = "The organization's head name, one per organization, served \
+    on every tender it appears on (`parties[].organization_name` is a read-time join). With an \
+    identifier it is ELECTED from the names its `organization_mentions` published (issue 524, \
+    ADR-0013's 2026-10-15 amendment): the operator's refresh-org-names job serves the spelling \
+    most of them agree on, only past a conservative bar (at least 55% of the mentions and twice \
+    the current head's, a head no more than one mention says, or an empty or placeholder head), \
+    and rewrites it in place with an `organization` `changed` row in `changes`. Before that job \
+    has run on a row, and always where `identifier IS NULL`, it is the first spelling a notice \
+    published. What one notice said is `organization_mentions.name`.";
 
 /// The description for a table/view, if one is curated.
 fn table_note(name: &str) -> Option<&'static str> {
