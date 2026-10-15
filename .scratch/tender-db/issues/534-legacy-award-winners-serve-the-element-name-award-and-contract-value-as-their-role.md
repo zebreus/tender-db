@@ -431,3 +431,13 @@ No blocking defects. Low items fixed in place:
 
 The two side observations from the review round are filed as their own issues: 540 (R2.0.8 corrected address served
 as `buyer`) and 541 (T02 transport awards name a `winner` party but write no award decision).
+
+## Deployed, and unit 3 sized (2026-10-15)
+
+- **Deployed** `4d4fe13` at 02:04 UTC, with 542 unit 1 and 543 unit 1. Health ok on that rev.
+- **Sizing run 2494** (`refold-fields`, `tables: ["notice_ids"]`, the six field ids, `expect: 1`) took 531 s and
+  aborted as designed: **2,006,441 notices** carry the six elements, and nothing was written. Its paired `project`
+  (2495) was empty.
+- **The real run** is the same request with `"expect": 2006441`. That is past `LEGACY_CLOSURE_CAP`, so the fold falls
+  back to a full projection, ~7.5 h. Window rule: start it once today's (2026-10-15) daily chain has drained, so it
+  spans no 07:35 UTC tick.
