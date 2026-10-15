@@ -228,19 +228,7 @@ fn spawn_record_producer(
     // exact-path check below can never dispatch it and the row is unreachable
     // by any reprocess. A member INSIDE a held container counts as held; its
     // records resolve the container row via the container stamp address.
-    let containers: Vec<String> = only
-        .as_ref()
-        .map(|set| {
-            set.iter()
-                .filter(|p| !p.contains('!') && !p.contains('#'))
-                .filter(|p| {
-                    let lower = p.to_ascii_lowercase();
-                    lower.ends_with(".tar.gz") || lower.ends_with(".zip")
-                })
-                .map(|p| format!("{p}/"))
-                .collect()
-        })
-        .unwrap_or_default();
+    let containers: Vec<String> = only.as_ref().map(held_containers).unwrap_or_default();
     let walker = std::thread::spawn(move || -> Result<WalkTally, package::Error> {
         let (mut members, mut ingested, mut skipped) = (0u64, 0u64, 0u64);
         // Which held members a dispatch policy declined, and which policy. Only
@@ -314,6 +302,33 @@ fn spawn_record_producer(
         Ok(WalkTally { members, ingested, skipped, declined })
     });
     Ok((rx, walker, estimated))
+}
+
+/// The held CONTAINER paths among a reprocess's held member files (issue 196), each as
+/// the `<container>/` prefix its members' paths start with: a member under one counts as
+/// held. Shared by the producer, which dispatches by it, and by [`reclaim_package`]'s
+/// stop, which must not split a container (issue 543 unit 3).
+fn held_containers(held: &std::collections::HashSet<String>) -> Vec<String> {
+    held.iter()
+        .filter(|p| !p.contains('!') && !p.contains('#'))
+        .filter(|p| {
+            let lower = p.to_ascii_lowercase();
+            lower.ends_with(".tar.gz") || lower.ends_with(".zip")
+        })
+        .map(|p| format!("{p}/"))
+        .collect()
+}
+
+/// The quarantine family a reclaimed record belongs to (issue 543 unit 3): the outermost
+/// held container its path sits under, else the store's own widest stamp address for it
+/// ([`store::quarantine_family`]: its bundle or inner package, else its member file). Every
+/// record of one family resolves the same held row, so [`reclaim_package`] stops only
+/// where the family changes.
+fn reclaim_family(member_path: &str, containers: &[String]) -> String {
+    match containers.iter().filter(|c| member_path.starts_with(c.as_str())).min_by_key(|c| c.len()) {
+        Some(prefix) => prefix.trim_end_matches('/').to_owned(),
+        None => store::quarantine_family(member_path),
+    }
 }
 
 /// Pull the next streamed record. `recv` blocks, so it hops to the blocking
@@ -471,11 +486,15 @@ pub struct ReclaimReport {
     /// distinct reasons; later arrivals fold into `(other)` so the counts stay
     /// honest without the map growing with the data.
     pub still_held_reasons: std::collections::BTreeMap<String, u64>,
-    /// The pass stopped at an operator's request (issue 543 unit 3), after the member in
-    /// flight. Each reclaim is its own transaction, so the members before the stop are
-    /// reclaimed and the rest are still held, untouched; the reprocess that redoes the
-    /// package picks them up. The walker still reads the archive to its end, so the
+    /// The pass stopped at an operator's request (issue 543 unit 3), between two
+    /// quarantine FAMILIES ([`store::quarantine_family`]): a whole-file or whole-container
+    /// rejection is ONE held row that the family's first reclaimed record resolves for all
+    /// of its records (issues 181, 196), so a family is always finished once begun. Each
+    /// reclaim is its own transaction. Every family before the stop is done, and every
+    /// family after it is still held and untouched, so the reprocess that redoes the
+    /// package picks it up. The walker still reads the archive to its end, so the
     /// package's declined-member flags (`flag_skipped_members`) still cover all of it.
+    /// Never set when the stop came after the package's last record: that package is done.
     pub cancelled: bool,
 }
 
@@ -511,9 +530,11 @@ const FLAG_BATCH: usize = 500;
 /// fail (or are still unrecognised profile-level quarantines / corruption) stay
 /// held. Memory stays flat: the producer streams one record at a time.
 ///
-/// `should_stop` is read after every member (issue 543 unit 3), the shape
-/// [`reparse_package`] and [`process_package`] already have; see
-/// [`ReclaimReport::cancelled`].
+/// `should_stop` is read before every record (issue 543 unit 3), and honoured only where
+/// the record starts a new quarantine family: see [`ReclaimReport::cancelled`]. The
+/// per-record stop [`reparse_package`] and [`process_package`] use would be unsafe here,
+/// because a reclaim resolves a whole-file or whole-container row on its family's first
+/// record.
 pub async fn reclaim_package(
     db: &store::Db,
     archive: &Path,
@@ -523,13 +544,31 @@ pub async fn reclaim_package(
     mut on_progress: impl FnMut(u64, u64, &ReclaimReport),
     should_stop: impl Fn() -> bool,
 ) -> Result<ReclaimReport, Error> {
+    let containers = held_containers(&held);
     let (rx, walker, estimated) =
         spawn_record_producer(archive, Some(held), &db.unreadable_bundle_members(fetch_id).await?)?;
     let mut report = ReclaimReport::default();
     let now = store::now_unix();
     let mut done = 0u64;
     let mut slot = Some(rx);
+    // Issue 543 unit 3: the family of the last record written, and whether a stop is
+    // pending. A record that opens a NEW family is dropped unwritten once a stop is asked.
+    let mut family: Option<String> = None;
+    let mut stopping = false;
     while let Some((record, parse)) = recv_next(&mut slot).await {
+        let this = reclaim_family(
+            match &record {
+                Record::Notice(n) => &n.member_path,
+                Record::Quarantine(q) => &q.member_path,
+            },
+            &containers,
+        );
+        stopping = stopping || should_stop();
+        if stopping && family.as_deref() != Some(this.as_str()) {
+            report.cancelled = true;
+            break;
+        }
+        family = Some(this);
         match record {
             Record::Notice(n) => {
                 match db.reclaim_notice(&resolved_notice(source, fetch_id, now, n, &parse), &parse).await? {
@@ -575,12 +614,6 @@ pub async fn reclaim_package(
             let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
         }
         on_progress(done, estimated.max(done), &report);
-        // A cooperative stop between members (issue 543 unit 3): this member's reclaim
-        // has committed, and the next one has not started.
-        if should_stop() {
-            report.cancelled = true;
-            break;
-        }
     }
     drop(slot);
 

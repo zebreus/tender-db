@@ -435,17 +435,21 @@ tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 #                             `backfill-org-name-variants` (issue 542; a restart
 #                             resumes it after its last committed window).
 #                             Issue 543 unit 3 added three:
-#                             - `reprocess` stops before every package and after
-#                               every member; each reclaim is its own commit, and
-#                               a fresh enqueue with the same params re-derives
-#                               the rest;
+#                             - `reprocess` stops before every package and between
+#                               quarantine families inside one: a whole-file or
+#                               whole-container row's records finish together,
+#                               because the first of them resolves the row. Each
+#                               reclaim is its own commit, and a fresh enqueue
+#                               with the same params re-derives the rest;
 #                             - `refold-fields` stops between carrier-sweep
 #                               windows, or after the sweep, and then writes
 #                               nothing. Once its re-queue starts, the re-queue
 #                               and the stamp run to the end together;
 #                             - `rederive-eur` stops before every window. The
-#                               committed watermark stands, and the next
-#                               `rederive-eur` resumes past it.
+#                               committed windows stand, and the next
+#                               `rederive-eur` starts again at the first tender
+#                               (~10 min; only a job recovered after a restart
+#                               resumes from its watermark).
 #                             A TED/DÖE fetch is one download and answers 409.
 #                             Every other kind is in UNSTOPPABLE_KINDS beside it,
 #                             each with the reason it answers 409: short, one
@@ -513,9 +517,10 @@ tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 # wait their turn. A sizing run (`expect: 1`) holds no writer at all. A wet run still holds
 # the writer for its re-queue and stamp phase, so do not expect it to journal zero waits.
 # A cancel stops the sweep before its next window (issue 543 unit 3), or after the sweep:
-# the job answers "STOPPED by cancel …", names the table and notice id it reached, and has
-# re-queued and stamped nothing. A re-run sweeps from the start. Once the re-queue starts,
-# a cancel waits for it and its stamp to finish, so the issue-179 pair lands whole.
+# the job answers "STOPPED by cancel …", says how far the sweep got (the table and notice
+# id, or that it had finished), and has re-queued and stamped nothing. A re-run sweeps from
+# the start. Once the re-queue starts, a cancel waits for it and its stamp to finish, so the
+# issue-179 pair lands whole.
 /root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-LOT_TITLE","TED-LOT_DESCRIPTION"],"expect":1}'
 #   → error "refold-fields aborted: 345203 notices carry [...], expected ~1 (nothing was written)"
 /root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-DATE_OF_CONTRACT_AWARD"],"tables":["notice_dates"],"expect":1}'
@@ -1216,8 +1221,10 @@ Any job that stamps Tenders epoch-stale (`rederive-eur`, the resolver, `refold-n
   correction rows it announced; run `project` afterwards, and the fold announces whatever its election
   then moves.
 - Since issue 543 unit 3, a cancel stops `rederive-eur` before its next window. The committed windows
-  and their watermark stand. The next `rederive-eur`, a fresh enqueue included, resumes past that
-  watermark, and the stop line says so. Only a walk that finishes clears the watermark.
+  stand, and the stop clears the watermark: the next `rederive-eur` walks every tender again, so a rates
+  repair made after the stop reaches the whole corpus. A window whose rates have not changed rewrites
+  nothing. Only the same job, recovered after a restart, resumes from its watermark; a fresh enqueue
+  always starts at the first tender.
 
 **After deploy B:**
 

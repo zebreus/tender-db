@@ -4841,6 +4841,17 @@ fn member_container(member_path: &str) -> Option<String> {
     best.map(|i| file[..i].to_owned())
 }
 
+/// The quarantine FAMILY a record's `member_path` belongs to (issue 543 unit 3): its
+/// container ([`member_container`]: a `!` bundle, or the deepest `.tar.gz` inside a
+/// package) when it has one, else its member file ([`member_file`]). These are the
+/// widest addresses a reclaim stamps. The first record reclaimed out of a whole-file
+/// or whole-container rejection resolves that ONE held row for every record in it
+/// (issues 181, 196), so the rest of the family must follow in the same pass: a
+/// reprocess may stop only between families, never inside one.
+pub fn quarantine_family(member_path: &str) -> String {
+    member_container(member_path).unwrap_or_else(|| member_file(member_path.to_owned()))
+}
+
 pub(crate) fn opt_text_of(row: &turso::Row, idx: usize) -> Option<String> {
     match row.get_value(idx) {
         Ok(Value::Text(s)) => Some(s),
@@ -10759,6 +10770,18 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert_eq!(member_container("pkg/EN_X.ZIP!EN_X").as_deref(), Some("pkg/EN_X.ZIP"));
         assert_eq!(member_container("pkg/m1"), None, "a plain directory prefix is not a container");
         assert_eq!(member_container("m1.xml"), None);
+    }
+
+    /// Issue 543 unit 3: a reprocess stops only between these, so a family must cover every
+    /// row the reclaim of any of its records can stamp: the container when there is one,
+    /// else the member file, never the single `#<ordinal>` record.
+    #[test]
+    fn the_quarantine_family_is_the_widest_stamp_address() {
+        assert_eq!(super::quarantine_family("pkg.tar.gz/EN_CF1.ZIP!EN_CF1#7"), "pkg.tar.gz/EN_CF1.ZIP");
+        assert_eq!(super::quarantine_family("EN_X.ZIP!EN_X#0"), "EN_X.ZIP");
+        assert_eq!(super::quarantine_family("06/20260601_2026103.tar.gz/00364561_2026.xml"), "06/20260601_2026103.tar.gz");
+        assert_eq!(super::quarantine_family("FILE#12"), "FILE");
+        assert_eq!(super::quarantine_family("20240102_1/00001505_2024.xml"), "20240102_1/00001505_2024.xml");
     }
 
     /// Issue 196: the pre-recursion walker recorded a monthly's inner dailies

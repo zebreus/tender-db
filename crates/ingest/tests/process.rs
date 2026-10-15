@@ -363,6 +363,55 @@ async fn reclaiming_a_held_container_resolves_its_whole_container_row() {
     let _ = std::fs::remove_dir_all(&archive);
 }
 
+/// Issue 543 unit 3 (the review's blocker, container shape): a stop asked after the first
+/// record out of a held WHOLE-CONTAINER row (issue 196) waits for the container to finish,
+/// because that first record resolved the container row for every member in it. Here the
+/// container is the package's last family, so the pass simply completes.
+#[tokio::test]
+async fn a_stop_inside_a_held_container_finishes_the_container() {
+    let (archive, db) = fixture("reclaim-container-stop").await;
+    run(&db, &archive).await;
+    std::fs::create_dir_all(archive.join("ted/monthly")).unwrap();
+    let monthly_path = archive.join("ted/monthly/2026-06.tar");
+    let daily_bytes = std::fs::read(archive.join("ted/daily/2026-00137.tar.gz")).unwrap();
+    let mut tar = tar::Builder::new(std::fs::File::create(&monthly_path).unwrap());
+    let mut header = tar::Header::new_gnu();
+    header.set_size(daily_bytes.len() as u64);
+    header.set_mode(0o644);
+    header.set_cksum();
+    tar.append_data(&mut header, "20260601_2026137.tar.gz", &daily_bytes[..]).unwrap();
+    tar.into_inner().unwrap();
+    db.record_fetch(&store::Fetch {
+        source: "ted".into(),
+        kind: "monthly".into(),
+        period: "2026-06".into(),
+        url: "https://ted.europa.eu/packages/monthly/2026-06".into(),
+        sha256: "bb".into(),
+        bytes: 1,
+        fetched_at: 2,
+        path: "ted/monthly/2026-06.tar".into(),
+    })
+    .await
+    .unwrap();
+    hold_member(&archive.join("test.db"), 2, "20260601_2026137.tar.gz", "not-utf8", "").await;
+    let held = db.quarantine_held_member_files(2, "not-utf8", None, None).await.unwrap();
+
+    let report =
+        process::reclaim_package(&db, &monthly_path, "ted", 2, held, |_, _, _| {}, after_first()).await.unwrap();
+    assert_eq!(
+        (report.already, report.still_held, report.cancelled),
+        (4, 4, false),
+        "every member of the container was dispatched despite the stop: {report:?}"
+    );
+    assert!(
+        cell_i64(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path = '20260601_2026137.tar.gz'")
+            .await
+            .is_some()
+    );
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 #[tokio::test]
 async fn reprocessing_is_idempotent() {
     let (archive, db) = fixture("process-idem").await;
@@ -544,6 +593,105 @@ async fn reclaim_package_reclaims_only_the_held_members() {
     let _ = std::fs::remove_dir_all(&archive);
 }
 
+/// A stop that is asked from the second check on: the first record is read, and every
+/// later one sees the stop.
+fn after_first() -> impl Fn() -> bool {
+    let checks = std::cell::Cell::new(0u32);
+    move || {
+        checks.set(checks.get() + 1);
+        checks.get() > 1
+    }
+}
+
+/// A one-file zip bundle from raw bytes (a text-era delivery may not be UTF-8).
+fn zip_bytes(name: &str, body: &[u8]) -> Vec<u8> {
+    let mut w = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+    let opts = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    w.start_file(name, opts).unwrap();
+    w.write_all(body).unwrap();
+    w.finish().unwrap().into_inner()
+}
+
+/// Issue 543 unit 3 (the review's blocker): a stop inside a WHOLE-FILE quarantine family
+/// waits for the family to finish. A not-utf8 or unparsable-xml rejection is ONE held row
+/// for a text file of ~200 records, and the first record reclaimed resolves it for all of
+/// them (issue 181). Stopping after that record used to strand the rest: no notice rows, no
+/// held row, and no reprocess could find them again. Now every record of the file lands,
+/// the stop lands before the next family (an XML member, still held), and a fresh pass
+/// finishes the package with nothing stranded.
+#[tokio::test]
+async fn a_stop_inside_a_whole_file_family_finishes_the_family_first() {
+    const FILE: &str = "EN_19930102_1993001_ISO_ORG.zip!EN_19930102_1993001_ISO_ORG";
+    const XML: &str = "20240102_1/00001505_2024.xml";
+    async fn held(db: &store::Db) -> std::collections::HashSet<String> {
+        db.quarantine_held_member_files(1, "not-utf8", None, None).await.unwrap()
+    }
+    let archive = temp_dir("reclaim-family-stop");
+    std::fs::create_dir_all(archive.join("ted/daily")).unwrap();
+    let pkg = archive.join("ted/daily/1993-00001.tar.gz");
+    {
+        let gz = flate2::write::GzEncoder::new(std::fs::File::create(&pkg).unwrap(), flate2::Compression::fast());
+        let mut tar = tar::Builder::new(gz);
+        let text = std::fs::read("tests/fixtures/text/1993-daily-en-19930102.txt").unwrap();
+        for (name, bytes) in [
+            ("EN_19930102_1993001_ISO_ORG.zip", zip_bytes("EN_19930102_1993001_ISO_ORG", &text)),
+            (XML, std::fs::read("tests/fixtures/eforms/cn-16-00494343-2026.xml").unwrap()),
+        ] {
+            let mut header = tar::Header::new_gnu();
+            header.set_size(bytes.len() as u64);
+            header.set_mode(0o644);
+            header.set_cksum();
+            tar.append_data(&mut header, name, &bytes[..]).unwrap();
+        }
+        tar.into_inner().unwrap().finish().unwrap();
+    }
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    db.record_fetch(&store::Fetch {
+        source: "ted".into(),
+        kind: "daily".into(),
+        period: "1993-00001".into(),
+        url: "u".into(),
+        sha256: "aa".into(),
+        bytes: 1,
+        fetched_at: 1,
+        path: "ted/daily/1993-00001.tar.gz".into(),
+    })
+    .await
+    .unwrap();
+    // Both members rejected whole before any identity existed: two families, one row each.
+    hold_member(&archive.join("test.db"), 1, FILE, "not-utf8", "").await;
+    hold_member(&archive.join("test.db"), 1, XML, "not-utf8", "").await;
+    assert_eq!(held(&db).await.len(), 2);
+
+    let stopped = process::reclaim_package(&db, &pkg, "ted", 1, held(&db).await, |_, _, _| {}, after_first())
+        .await
+        .unwrap();
+    assert!(stopped.cancelled, "the stop lands, between the families: {stopped:?}");
+    assert_eq!(stopped.reclaimed, 199, "every record of the file landed, not just the first: {stopped:?}");
+    assert_eq!(
+        cell_i64(&db, &format!("SELECT COUNT(*) FROM notices WHERE member_path LIKE '{FILE}#%' AND parse_state = 'parsed'"))
+            .await,
+        Some(199)
+    );
+    assert!(
+        cell_i64(&db, &format!("SELECT reprocessed_at FROM quarantine WHERE member_path = '{FILE}'")).await.is_some(),
+        "the file row is resolved, and rightly: its whole family is in"
+    );
+    assert_eq!(held(&db).await, [XML.to_owned()].into(), "the next family is still held, untouched");
+    assert_eq!(cell_i64(&db, &format!("SELECT COUNT(*) FROM notices WHERE member_path = '{XML}'")).await, Some(0));
+
+    // A fresh pass finishes the package; nothing was stranded, nothing doubles.
+    let again = process::reclaim_package(&db, &pkg, "ted", 1, held(&db).await, |_, _, _| {}, || false)
+        .await
+        .unwrap();
+    assert!(!again.cancelled);
+    assert_eq!(again.reclaimed, 1, "{again:?}");
+    assert!(held(&db).await.is_empty());
+    assert_eq!(cell_i64(&db, "SELECT COUNT(*) FROM notices").await, Some(200));
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 /// Issue 543 unit 3: a reclaim stops between members when asked, and the stop is safe:
 /// the member that committed before it is reclaimed whole, the next one is still held and
 /// untouched, and a second pass over the re-derived held set finishes the package.
@@ -569,8 +717,17 @@ async fn a_stopped_reclaim_keeps_what_it_reclaimed_and_a_re_run_finishes_the_pac
     assert_eq!(held(&db).await.len(), 2, "two held member files in this bucket");
     assert_eq!(parsed(&db, &ids).await, Some(0));
 
-    // Stop after the first member: exactly one reclaim committed, the other is held as before.
-    let stopped = process::reclaim_package(&db, &pkg, "ted", 1, held(&db).await, |_, _, _| {}, || true)
+    // A stop asked before anything is read drops the first record unwritten.
+    let at_once = process::reclaim_package(&db, &pkg, "ted", 1, held(&db).await, |_, _, _| {}, || true)
+        .await
+        .unwrap();
+    assert!(at_once.cancelled, "{at_once:?}");
+    assert_eq!((at_once.reclaimed, at_once.still_held, at_once.already), (0, 0, 0), "{at_once:?}");
+    assert_eq!(held(&db).await.len(), 2, "nothing was reclaimed");
+
+    // Stop after the first member: each XML member is its own family, so exactly one
+    // reclaim committed and the other is held as before.
+    let stopped = process::reclaim_package(&db, &pkg, "ted", 1, held(&db).await, |_, _, _| {}, after_first())
         .await
         .unwrap();
     assert!(stopped.cancelled, "the pass must report that it stopped: {stopped:?}");
