@@ -441,3 +441,7 @@ as `buyer`) and 541 (T02 transport awards name a `winner` party but write no awa
 - **The real run** is the same request with `"expect": 2006441`. That is past `LEGACY_CLOSURE_CAP`, so the fold falls
   back to a full projection, ~7.5 h. Window rule: start it once today's (2026-10-15) daily chain has drained, so it
   spans no 07:35 UTC tick.
+- **The real run started** 2026-10-15 07:47 UTC, after the daily chain drained (2502–2511 all ok, last at 07:47:12):
+  `refold-fields` 2512 with `expect: 2006441`, then `project` 2513, a full-projection fallback of ~7.5 h. That ends
+  well before the next 07:35 tick. When 2513 finishes: run `## Verify`, re-read band 5.2M, and move the docs caveat
+  to RETIRED (unit 3's docs step).
