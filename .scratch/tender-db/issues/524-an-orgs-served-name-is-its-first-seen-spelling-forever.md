@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — UNIT 2b DEPLOYED `11803dd`; its wet run is PAUSED and the capped run is REVERTED. Canaries 2516 (5 renames) stand. Capped run 2517 (500 renames) was reverted by job 2518 (500 restored): a dated spot check of its 30 applied samples found 5 confirmed WRONG (2186, 3262, 3694, 6867, 10671), all of one shape. The head was already the organization's CURRENT name, and R1's all-history majority put back the FORMER name. The dry-plan judges had no dates and could not see this. NEXT: rule `524u2-v7`, DECIDED (the recency hold, section below), plus v6's two review should-fixes, on top of v6's whitespace collapse (`208c09c`, gating). Then build, gate, deploy, re-plan, re-judge WITH dates, canaries, capped run, a dated spot check, the full run. Unit 2c follows. Hold over-blocking is filed as 548.
+Status: ready-for-agent — RULE v7 DEPLOYED `d23ce5a` 2026-10-15 16:5x UTC. Dry plan 2523: 28,338 changes, 370 recent holds, undated 0, 1 explained canary (10603). The DATED RE-JUDGE (wf_b6d9f416-8dd) FAILS two go bars: recent_released 2 of 10 wrong, and residue:head_newest 9 of 30 wrong (the decision says stop and re-decide at 3). change:R1 (0 of 30 wrong), change:R2 (0 of 30) and hold:recent (1 of 30 harmful) pass. NEXT: rule `524u2-v8`, below: a residue holdout, and a junk exemption that counts only all-digit tokens and drops `lowercase`. Then build, gate, deploy, re-plan, re-judge the changed lists, canaries, capped run, dated spot check, full run. No wet run under v7.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1124,4 +1124,72 @@ Run each plan and its wet run back to back, outside the daily ingest, so a new p
 - Counting notices or mentions instead of procedures: it holds 445 (three notices of tender 1051275, TED plus eForms-DE twins) and 3406, and lets lot or role multiplicity (18872111's 11 Lot-AddInfo sections) weigh in.
 - A symmetric R3 change rule ('renamed away from the head', 6071658) inside v7: it is a new change kind that needs its own judged samples. Later unit, report-only first.
 - Using notice id, org id, created_at or ingested_at as a time proxy: the live feed's notice ids 64, 149 and 1333 are dated 2026-07, below the 2023–26 backfill ids.
+
+## Rule v7 on prod: the dated re-judge (2026-10-15, plan 2523, wf_b6d9f416-8dd)
+
+**Plan 2523** (binary `d23ce5a`, epoch `524u2-v7`):
+- CHANGES 28,338: R0n 1, R1 26,765, R2 1,572.
+- HOLDS 917, of which `recent` 370.
+- Undated 0.
+- Junk releases 10: 8 for digits, 2 for unfit.
+- Residue (planned changes whose org's newest dated procedure is the head's): R1 795, R2 8.
+- Canaries: 26 of 27 as expected. 10603 reads `hold:recent` where `change:R1` was expected. Its head form `… (PV)` has 2
+  procedures, the newest 2026-09-24, while the elected spelling's newest is 2025-09-15. The decision's dates for it were
+  incomplete. The hold is the rule working as specified: at worst it misses a role suffix, and it is no regression.
+  The expectation is corrected with v8.
+
+**The re-judge.** Each verdict read dated notices on the public API. Each `wrong` went to a skeptic.
+
+| list | right | neutral | wrong (after verify) | bar |
+| --- | --- | --- | --- | --- |
+| change:R1 (30) | 24 | 6 | 0 | ≤ 1: pass |
+| change:R2 (30) | 24 | 6 | 0 | ≤ 1: pass |
+| hold:recent (30) | 13 | 16 | 1 harmful | ≤ 1: pass, at the bar |
+| recent_released (10) | 6 | 2 | **2** | ≤ 1: **FAIL** |
+| residue:head_newest (30) | 6 | 15 | **9** | ≥ 3 means stop: **FAIL** |
+
+**Wrong releases:**
+- **1846** (`digits`): the digit is in the body's own acronym, `CA2BM`, and every recent notice prints the head.
+- **3909** (`unfit`, lowercase): `act legal s.r.o., advokátní kancelář` is the registered current name (ARES; renamed
+  2026-03-01 from `act Řanda Havel Legal …`). The release reverted it to the former name.
+
+**Residue wrongs**, mostly not former-name reverts:
+- an organ served for the entity: 5831168 Rectorado, 3740262 Junta de Gobierno, 4911107 Alcaldía;
+- a majority made of one notice's lot repeats: 12463423 `Consultorís`, 7 votes from one 2022 notice;
+- misspellings: 3835747 `Vôľa`, 12268 `Stolecznego`;
+- a placeholder-identifier pile-up (22183903, `08AXXXXX`) and another entity sharing a code (22754404);
+- one estate-succession rename (10870, `w spadku`).
+
+The residue holds the cases where the head is printed newest, and there the head is more often the right name.
+
+**Harmful hold:** 10662302 keeps a `Sp. zo.o.` typo. This is accepted, and filed with 548's over-hold classes.
+
+## Rule v8 — decided (2026-10-15, owner, from the re-judge above)
+
+1. **Residue holdout.** After R1/R2 elect a change and before `serve`, when the dated reading has `newest_is_head`
+   true (the org's single newest dated item is a head item) and the junk exemption does not apply, the verdict is
+   `Hold{reason: "residue", rule, new: display}`.
+   - R0 is exempt: a defective head always changes.
+   - Undated orgs stay governed by `hold:undated` (H ≥ 2) or change as before (H ≤ 1, `Some(&[])`).
+   - Cost: the plan's ~803 residue changes become holds. By the sample that is about 6/30 right fixes lost against
+     about 9/30 wrong renames avoided.
+   - The Sheffield shape (an H=1 stray printed newest) is held too. That is a missed fix, never a regression. It is
+     listed in 548.
+2. **Junk exemption, narrowed.**
+   - (b) counts only tokens made entirely of decimal digits (an address number, postcode, NIP, `LOT 2`'s `2`), so
+     `CA2BM` no longer counts.
+   - (a) drops the `lowercase` unfit class, so a deliberately lower-case brand is protected. Control, mojibake, long
+     and non_name still release.
+3. **Epoch `524u2-v8`.** Canary 10603 expects `hold:recent`. Add canaries:
+   - 3909: `hold:recent` (the lowercase brand);
+   - 1846: `hold:recent` (the digit acronym);
+   - one residue case, e.g. 3740262: `hold:residue`.
+4. **Re-judge after v8**, dated as before:
+   - change:R1 and change:R2 (30 each, fresh samples);
+   - `hold:residue` (30): harmful ≤ 2;
+   - `recent_released` (all): wrong ≤ 1.
+
+   Then the canaries, the capped 500 run with a dated spot check, and the full run.
+5. **Follow-up, not in v8:** count votes per procedure rather than per mention, so lot repeats cannot make a majority
+   (`Consultorís`). Filed under 548.
 
